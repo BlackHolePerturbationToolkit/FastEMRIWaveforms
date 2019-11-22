@@ -27,7 +27,9 @@ class Linear:
 
 
 class NN:
-    def __init__(self, input_str="SE_", folder="files/weights/", activation_kwargs={}):
+    def __init__(
+        self, input_str="SE_", folder="few/files/weights/", activation_kwargs={}
+    ):
         self.layers = []
         file_list = os.listdir(folder)
 

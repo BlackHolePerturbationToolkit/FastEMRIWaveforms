@@ -12,7 +12,7 @@ from .ylm import get_ylms
 
 class GetZlmnk:
     def __init__(
-        self, batch_size, transform_file="files/reduced_basis.dat", nn_kwargs={}
+        self, batch_size, transform_file="few/files/reduced_basis.dat", nn_kwargs={}
     ):
         self.neural_net = NN(**nn_kwargs)
 
@@ -49,14 +49,9 @@ class CreateWaveform:
         self.buffer = xp.zeros(54, dtype=xp.complex64)
 
     def __call__(self, p, e, Phi_r, Phi_phi, l, m, n, theta, phi):
-        st = time.perf_counter()
-        for i in range(10):
-
-            self.ylms[:] = xp.tile(
-                get_ylms(l[0::41], m[0::41], theta, phi, self.buffer), (41,)
-            )
-        et = time.perf_counter()
-        print((et - st) / 10)
+        self.ylms[:] = xp.tile(
+            get_ylms(l[0::41], m[0::41], theta, phi, self.buffer), (41,)
+        )
         self.zlmnk[:] = self.get_zlmnk(p, e)
         self.expiphases[:] = xp.exp(
             -1j
@@ -70,9 +65,9 @@ class CreateWaveform:
 
 
 if __name__ == "__main__":
-    nn_kwargs = dict(input_str="SE_", folder="files/weights/", activation_kwargs={})
+    nn_kwargs = dict(input_str="SE_", folder="few/files/weights/", activation_kwargs={})
 
-    kwargs = dict(transform_file="files/reduced_basis.dat", nn_kwargs=nn_kwargs)
+    kwargs = dict(transform_file="few/files/reduced_basis.dat", nn_kwargs=nn_kwargs)
 
     traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")[0::3][:100000]
 

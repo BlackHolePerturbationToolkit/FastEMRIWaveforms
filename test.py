@@ -8,9 +8,9 @@ except ImportError:
 
 from few.create_waveform import CreateWaveform
 
-nn_kwargs = dict(input_str="SE_", folder="files/weights/", activation_kwargs={})
+nn_kwargs = dict(input_str="SE_", folder="few/files/weights/", activation_kwargs={})
 
-kwargs = dict(transform_file="files/reduced_basis.dat", nn_kwargs=nn_kwargs)
+kwargs = dict(transform_file="few/files/reduced_basis.dat", nn_kwargs=nn_kwargs)
 
 traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")[0::3][:100000]
 
