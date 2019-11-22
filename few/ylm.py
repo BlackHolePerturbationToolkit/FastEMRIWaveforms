@@ -5,7 +5,7 @@ except ImportError:
 
 import numpy as np
 
-
+# These are the spin-weighted spherical harmonics with s=2
 def get_ylms(l, m, theta, phi, buffer):
     costheta = np.cos(theta / 2.0)
     sintheta = np.sin(theta / 2.0)
