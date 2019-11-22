@@ -12,6 +12,7 @@ nn_kwargs = dict(input_str="SE_", folder="few/files/weights/", activation_kwargs
 
 kwargs = dict(transform_file="few/files/reduced_basis.dat", nn_kwargs=nn_kwargs)
 
+# Load the inspiral data. This should be in the format (p, e, Phi_phi, Phi_r)
 traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")[0::3][:100000]
 
 batch_size = kwargs["batch_size"] = len(traj)
