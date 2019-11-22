@@ -6,12 +6,14 @@ try:
 except ImportError:
     import numpy as xp
 
-from nn import NN
-from ylm import get_ylms
+from .nn import NN
+from .ylm import get_ylms
 
 
 class GetZlmnk:
-    def __init__(self, batch_size, transform_file="reduced_basis.dat", nn_kwargs={}):
+    def __init__(
+        self, batch_size, transform_file="files/reduced_basis.dat", nn_kwargs={}
+    ):
         self.neural_net = NN(**nn_kwargs)
 
         self.transform_matrix = xp.asarray(
@@ -68,9 +70,9 @@ class CreateWaveform:
 
 
 if __name__ == "__main__":
-    nn_kwargs = dict(input_str="SE_", folder="weights/", activation_kwargs={})
+    nn_kwargs = dict(input_str="SE_", folder="files/weights/", activation_kwargs={})
 
-    kwargs = dict(transform_file="reduced_basis.dat", nn_kwargs=nn_kwargs)
+    kwargs = dict(transform_file="files/reduced_basis.dat", nn_kwargs=nn_kwargs)
 
     traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")[0::3][:100000]
 
