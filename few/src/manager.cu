@@ -12,6 +12,8 @@ This class will get translated into python via cython
 #include <assert.h>
 #include <iostream>
 #include "global.h"
+#include <complex>
+#include "cuComplex.h"
 
 using namespace std;
 
@@ -28,33 +30,37 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 }
 
 FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int *dim1_, int *dim2_,
-    fod *flatten_weight_matrix, fod *flattened_bias_matrix)
+    fod *flatten_weight_matrix, fod *flattened_bias_matrix,
+    std::complex<float>*transform_matrix, int trans_dim1_, int trans_dim2_, fod transform_factor_)
 {
     time_batch_size = time_batch_size_;
     num_layers = num_layers_;
     dim1 = dim1_;
     dim2 = dim2_;
 
-    layers_matrix = new (fod *)[num_layers];
-    layers_bias = new (fod *)[num_layers];
-    layers_matrix_dim1 = new int[num_layers];
-    layers_matrix_dim2 = new int[num_layers];
+    trans_dim1 = trans_dim1_;
+    trans_dim2 = trans_dim2_;
+    transform_factor = transform_factor_;
+
+    d_layers_matrix = new fod*[num_layers];
+    d_layers_bias = new fod*[num_layers];
+
 
     int start_int_weights = 0;
     int start_int_bias = 0;
     for (int i=0; i<num_layers; i++){
-      gpuErrchk(cudaMalloc(&(layers_matrix[i]), dim1*dim2*sizeof(fod)));
-      gpuErrchk(cudaMemcpy(layers_matrix[i], &flattened_matrix[start_int_weights], dim1*dim2*sizeof(fod), cudaMemcpyHostToDevice));
+      gpuErrchk(cudaMalloc(&(d_layers_matrix[i]), dim1[i]*dim2[i]*sizeof(fod)));
+      gpuErrchk(cudaMemcpy(d_layers_matrix[i], &flatten_weight_matrix[start_int_weights], dim1[i]*dim2[i]*sizeof(fod), cudaMemcpyHostToDevice));
 
-      gpuErrchk(cudaMalloc(&(layers_bias[i]), dim2*sizeof(fod)));
-      gpuErrchk(cudaMemcpy(layers_bias[i], &flattened_bias_matrix[start_int_bias], dim2*sizeof(fod), cudaMemcpyHostToDevice));
+      gpuErrchk(cudaMalloc(&d_layers_bias[i], dim2[i]*sizeof(fod)));
+      gpuErrchk(cudaMemcpy(d_layers_bias[i], &flattened_bias_matrix[start_int_bias], dim2[i]*sizeof(fod), cudaMemcpyHostToDevice));
 
-      layers_matrix_dim1[i] = dim1;
-      layers_matrix_dim2[i] = dim2;
-
-      start_int_weights += dim1*dim2;
-      start_int_bias += dim2;
+      start_int_weights += dim1[i]*dim2[i];
+      start_int_bias += dim2[i];
     }
+
+    gpuErrchk(cudaMalloc(&d_transform_matrix, trans_dim1*trans_dim2*sizeof(cuDoubleComplex)));
+    gpuErrchk(cudaMemcpy(d_transform_matrix, transform_matrix, trans_dim1*trans_dim2*sizeof(cuDoubleComplex), cudaMemcpyHostToDevice));
 
 }
 
@@ -62,11 +68,10 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
 FastEMRIWaveforms::~FastEMRIWaveforms()
 {
     for (int i=0; i<num_layers; i++){
-      gpuErrchk(cudaFree(layers_matrix[i]));
-      gpuErrchk(cudaFree(layers_bias[i]));
+      gpuErrchk(cudaFree(d_layers_matrix[i]));
+      gpuErrchk(cudaFree(d_layers_bias[i]));
     }
-    delete[] layers_matrix;
-    delete[] layers_bias;
-    delete[] layers_matrix_dim1;
-    delete[] layers_matrix_dim2;
+    gpuErrchk(cudaFree(d_transform_matrix));
+    delete[] d_layers_matrix;
+    delete[] d_layers_bias;
 }
