@@ -5,7 +5,16 @@ try:
 except ImportError:
     pass
 
+import argparse
+import time
+
 from nn import NN
+
+import argparse
+
+parser = argparse.ArgumentParser(description="Process some integers.")
+parser.add_argument("--time", "-t", default=0, type=int)
+args = parser.parse_args()
 
 check = NN()
 
@@ -31,7 +40,7 @@ trans_dim1, trans_dim2 = transform_matrix.shape
 transform_matrix = transform_matrix.flatten()
 transform_factor = 1000.0
 
-input_len = 100
+input_len = 100000
 traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")[0::3][:input_len]
 
 p = np.asarray(traj[:, 0], dtype=np.float32)
@@ -77,6 +86,12 @@ few_class = FastEMRIWaveforms(
 )
 
 check = few_class.run_nn(input_mat, input_len, Phi_phi, Phi_r)
+if args.time:
+    st = time.perf_counter()
+    for _ in range(args.time):
+        check = few_class.run_nn(input_mat, input_len, Phi_phi, Phi_r)
+    et = time.perf_counter()
+    print("time per:", (et - st) / args.time)
 
 import pdb
 

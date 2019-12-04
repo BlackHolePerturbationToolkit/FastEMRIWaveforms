@@ -83,24 +83,29 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     gpuErrchk(cudaMemcpy(d_l, l_, num_teuk_modes*sizeof(int), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_m, m_, num_teuk_modes*sizeof(int), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_n, n_, num_teuk_modes*sizeof(int), cudaMemcpyHostToDevice));
-}
 
-void FastEMRIWaveforms::run_nn(std::complex<float> *waveform, fod *input_mat, int input_len, fod *Phi_phi, fod *Phi_r){
-    fod *d_C, *d_Phi_phi, *d_Phi_r;
+    int input_len = (int) 1e5;
+
     gpuErrchk(cudaMalloc(&d_C, input_len*dim_max*sizeof(fod)));
-    gpuErrchk(cudaMemcpy(d_C, input_mat, input_len*dim1[0]*sizeof(fod), cudaMemcpyHostToDevice));
 
     gpuErrchk(cudaMalloc(&d_Phi_phi, input_len*sizeof(fod)));
     gpuErrchk(cudaMalloc(&d_Phi_r, input_len*sizeof(fod)));
 
-    gpuErrchk(cudaMemcpy(d_Phi_phi, Phi_phi, input_len*sizeof(fod), cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(d_Phi_r, Phi_r, input_len*sizeof(fod), cudaMemcpyHostToDevice));
-
-    cuComplex *d_nn_output_mat, *d_teuk_modes, *d_waveform;
     int complex_dim = (int)((float) dim2[num_layers - 1]/ 2.0);
     gpuErrchk(cudaMalloc(&d_nn_output_mat, complex_dim*input_len*sizeof(cuComplex)));
     gpuErrchk(cudaMalloc(&d_teuk_modes, trans_dim2*input_len*sizeof(cuComplex)));
     gpuErrchk(cudaMalloc(&d_waveform, input_len*sizeof(cuComplex)));
+}
+
+void FastEMRIWaveforms::run_nn(std::complex<float> *waveform, fod *input_mat, int input_len, fod *Phi_phi, fod *Phi_r){
+
+    gpuErrchk(cudaMemcpy(d_C, input_mat, input_len*dim1[0]*sizeof(fod), cudaMemcpyHostToDevice));
+
+    gpuErrchk(cudaMemcpy(d_Phi_phi, Phi_phi, input_len*sizeof(fod), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_Phi_r, Phi_r, input_len*sizeof(fod), cudaMemcpyHostToDevice));
+
+
+    gpuErrchk(cudaMemcpy(d_waveform, waveform, input_len*sizeof(cuComplex), cudaMemcpyHostToDevice));
 
     for (int layer_i=0; layer_i<num_layers; layer_i++){
       run_layer(d_C, d_layers_matrix[layer_i], d_layers_bias[layer_i], dim1[layer_i], dim2[layer_i], input_len);
@@ -108,12 +113,9 @@ void FastEMRIWaveforms::run_nn(std::complex<float> *waveform, fod *input_mat, in
 
     transform_output(d_teuk_modes, d_transform_matrix, d_nn_output_mat, d_C, input_len, break_index, d_transform_factor_inv, trans_dim2);
 
-    gpuErrchk(cudaFree(d_C));
-    gpuErrchk(cudaFree(d_nn_output_mat));
-    gpuErrchk(cudaFree(d_teuk_modes));
-    gpuErrchk(cudaFree(d_Phi_phi));
-    gpuErrchk(cudaFree(d_Phi_r));
-    gpuErrchk(cudaFree(d_waveform));
+    get_waveform(d_waveform, d_teuk_modes, d_Phi_phi, d_Phi_r, d_m, d_n, input_len, num_teuk_modes);
+
+    gpuErrchk(cudaMemcpy(waveform, d_waveform, input_len*sizeof(cuComplex), cudaMemcpyDeviceToHost));
 }
 
 
@@ -127,6 +129,12 @@ FastEMRIWaveforms::~FastEMRIWaveforms()
     gpuErrchk(cudaFree(d_l));
     gpuErrchk(cudaFree(d_m));
     gpuErrchk(cudaFree(d_n));
+    gpuErrchk(cudaFree(d_C));
+    gpuErrchk(cudaFree(d_nn_output_mat));
+    gpuErrchk(cudaFree(d_teuk_modes));
+    gpuErrchk(cudaFree(d_Phi_phi));
+    gpuErrchk(cudaFree(d_Phi_r));
+    gpuErrchk(cudaFree(d_waveform));
     delete[] d_layers_matrix;
     delete[] d_layers_bias;
 }

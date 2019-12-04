@@ -22,6 +22,9 @@ class FastEMRIWaveforms {
   int num_teuk_modes;
   int *d_m, *d_n, *d_l;
 
+  fod *d_C, *d_Phi_phi, *d_Phi_r;
+  cuComplex *d_nn_output_mat, *d_teuk_modes, *d_waveform;
+
 public:
 
   FastEMRIWaveforms(int time_batch_size_, int num_layers_, int *dim1_, int *dim2_,
