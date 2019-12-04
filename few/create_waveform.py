@@ -32,7 +32,7 @@ class GetZlmnk:
         re = output[:, :80]
         im = output[:, 80:]
 
-        temp = re + 1j * im
+        temp = (re + 1j * im).astype(xp.complex64)
 
         Zlmkn = xp.matmul(temp / self.transform_factor, self.transform_matrix)
 

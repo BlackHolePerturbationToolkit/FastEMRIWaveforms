@@ -56,9 +56,7 @@ class NN:
         x = x_in.copy()
         for i, layer in enumerate(self.layers):
             x = layer(x)
-            import pdb
 
-            pdb.set_trace()
             if i < self.num_layers - 1:
                 x = self.activation(x)
         return x

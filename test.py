@@ -3,8 +3,12 @@ import time
 
 try:
     import cupy as xp
+
+    print("running cupy")
 except ImportError:
     import numpy as xp
+
+    print("running numpy")
 
 from few.create_waveform import CreateWaveform
 
@@ -45,5 +49,6 @@ check = []
 for _ in range(num):
     st = time.perf_counter()
     out = cw(p, e, Phi_r, Phi_phi, l, m, n, theta, phi)
+    xp.cuda.Device(0).synchronize()
     et = time.perf_counter()
     print("Timing:", (et - st))
