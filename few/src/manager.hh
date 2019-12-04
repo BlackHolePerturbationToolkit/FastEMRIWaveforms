@@ -31,7 +31,8 @@ public:
       fod *flatten_weight_matrix, fod *flattened_bias_matrix,
     std::complex<float>*transform_matrix, int trans_dim1_, int trans_dim2_, fod transform_factor_,
     int break_index_,
-    int *d_l, int *m_, int *n_); // constructor (copies to GPU)
+    int *d_l, int *m_, int *n_,
+    int max_input_len); // constructor (copies to GPU)
 
   void run_nn(std::complex<float> *waveform, fod *input_mat, int input_len, fod *Phi_phi, fod *Phi_r);
 

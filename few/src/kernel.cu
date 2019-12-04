@@ -210,18 +210,23 @@ __global__
 void make_waveform(cuComplex *waveform, cuComplex *teuk_modes, fod *Phi_phi, fod *Phi_r,
               int *m, int *n, int input_len, int num_teuk_modes){
 
+    cuComplex trans = make_cuComplex(0.0, 0.0);
     cuComplex mode_val;
+    float Phi_phi_i, Phi_r_i;
     for (int i = blockIdx.x * blockDim.x + threadIdx.x;
          i < input_len;
          i += blockDim.x * gridDim.x){
 
-     for (int j = blockIdx.y * blockDim.y + threadIdx.y;
+     Phi_phi_i = Phi_phi[i];
+     Phi_r_i = Phi_r[i];
+     for (int j = 0;
           j < num_teuk_modes;
-          j += blockDim.y * gridDim.y){
+          j += 1){
 
-            mode_val = get_mode_value(teuk_modes[j*input_len + i], Phi_phi[i], Phi_r[i], m[j], n[j]);
-            atomicAddComplex(&waveform[i], mode_val);
+            mode_val = get_mode_value(teuk_modes[j*input_len + i], Phi_phi_i, Phi_r_i, m[j], n[j]);
+            trans = cuCaddf(trans, mode_val);
     }
+    waveform[i] = trans;
   }
 }
 
@@ -229,7 +234,7 @@ void make_waveform(cuComplex *waveform, cuComplex *teuk_modes, fod *Phi_phi, fod
 void get_waveform(cuComplex *d_waveform, cuComplex *d_teuk_modes, fod *d_Phi_phi, fod *d_Phi_r,
               int *d_m, int *d_n, int input_len, int num_teuk_modes){
       int num_blocks = std::ceil((input_len + NUM_THREADS -1)/NUM_THREADS);
-      dim3 gridDim(num_blocks, num_teuk_modes);
+      dim3 gridDim(num_blocks); //, num_teuk_modes);
       make_waveform<<<gridDim, NUM_THREADS>>>(d_waveform, d_teuk_modes, d_Phi_phi, d_Phi_r, d_m, d_n, input_len, num_teuk_modes);
       cudaDeviceSynchronize();
       gpuErrchk_here(cudaGetLastError());

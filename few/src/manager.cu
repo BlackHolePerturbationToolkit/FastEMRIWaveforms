@@ -33,7 +33,8 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     fod *flatten_weight_matrix, fod *flattened_bias_matrix,
     std::complex<float>*transform_matrix, int trans_dim1_, int trans_dim2_, fod transform_factor_,
     int break_index_,
-    int *l_, int *m_, int *n_)
+    int *l_, int *m_, int *n_,
+    int max_input_len)
 {
     time_batch_size = time_batch_size_;
     num_layers = num_layers_;
@@ -84,17 +85,15 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     gpuErrchk(cudaMemcpy(d_m, m_, num_teuk_modes*sizeof(int), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_n, n_, num_teuk_modes*sizeof(int), cudaMemcpyHostToDevice));
 
-    int input_len = (int) 1e5;
+    gpuErrchk(cudaMalloc(&d_C, max_input_len*dim_max*sizeof(fod)));
 
-    gpuErrchk(cudaMalloc(&d_C, input_len*dim_max*sizeof(fod)));
-
-    gpuErrchk(cudaMalloc(&d_Phi_phi, input_len*sizeof(fod)));
-    gpuErrchk(cudaMalloc(&d_Phi_r, input_len*sizeof(fod)));
+    gpuErrchk(cudaMalloc(&d_Phi_phi, max_input_len*sizeof(fod)));
+    gpuErrchk(cudaMalloc(&d_Phi_r, max_input_len*sizeof(fod)));
 
     int complex_dim = (int)((float) dim2[num_layers - 1]/ 2.0);
-    gpuErrchk(cudaMalloc(&d_nn_output_mat, complex_dim*input_len*sizeof(cuComplex)));
-    gpuErrchk(cudaMalloc(&d_teuk_modes, trans_dim2*input_len*sizeof(cuComplex)));
-    gpuErrchk(cudaMalloc(&d_waveform, input_len*sizeof(cuComplex)));
+    gpuErrchk(cudaMalloc(&d_nn_output_mat, complex_dim*max_input_len*sizeof(cuComplex)));
+    gpuErrchk(cudaMalloc(&d_teuk_modes, trans_dim2*max_input_len*sizeof(cuComplex)));
+    gpuErrchk(cudaMalloc(&d_waveform, max_input_len*sizeof(cuComplex)));
 }
 
 void FastEMRIWaveforms::run_nn(std::complex<float> *waveform, fod *input_mat, int input_len, fod *Phi_phi, fod *Phi_r){
