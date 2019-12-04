@@ -31,16 +31,23 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 
 FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int *dim1_, int *dim2_,
     fod *flatten_weight_matrix, fod *flattened_bias_matrix,
-    std::complex<float>*transform_matrix, int trans_dim1_, int trans_dim2_, fod transform_factor_)
+    std::complex<float>*transform_matrix, int trans_dim1_, int trans_dim2_, fod transform_factor_,
+    int break_index_,
+    int *l_, int *m_, int *n_)
 {
     time_batch_size = time_batch_size_;
     num_layers = num_layers_;
     dim1 = dim1_;
     dim2 = dim2_;
+    break_index = break_index_;
 
     trans_dim1 = trans_dim1_;
     trans_dim2 = trans_dim2_;
     transform_factor = transform_factor_;
+
+    num_teuk_modes = trans_dim2;
+
+    d_transform_factor_inv = make_cuComplex(1./transform_factor, 0.0);
 
     d_layers_matrix = new fod*[num_layers];
     d_layers_bias = new fod*[num_layers];
@@ -59,9 +66,54 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
       start_int_bias += dim2[i];
     }
 
-    gpuErrchk(cudaMalloc(&d_transform_matrix, trans_dim1*trans_dim2*sizeof(cuDoubleComplex)));
-    gpuErrchk(cudaMemcpy(d_transform_matrix, transform_matrix, trans_dim1*trans_dim2*sizeof(cuDoubleComplex), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&d_transform_matrix, trans_dim1*trans_dim2*sizeof(cuComplex)));
+    gpuErrchk(cudaMemcpy(d_transform_matrix, transform_matrix, trans_dim1*trans_dim2*sizeof(cuComplex), cudaMemcpyHostToDevice));
 
+    // allocate buffer matrix
+    dim_max = 0;
+    for (int i=0; i<num_layers; i++){
+        if (dim2[i] > dim_max) dim_max = dim2[i];
+    }
+    if (dim1[0] > dim_max) dim_max = dim1[0];
+
+    gpuErrchk(cudaMalloc(&d_l, num_teuk_modes*sizeof(int)));
+    gpuErrchk(cudaMalloc(&d_m, num_teuk_modes*sizeof(int)));
+    gpuErrchk(cudaMalloc(&d_n, num_teuk_modes*sizeof(int)));
+
+    gpuErrchk(cudaMemcpy(d_l, l_, num_teuk_modes*sizeof(int), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_m, m_, num_teuk_modes*sizeof(int), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_n, n_, num_teuk_modes*sizeof(int), cudaMemcpyHostToDevice));
+}
+
+void FastEMRIWaveforms::run_nn(std::complex<float> *waveform, fod *input_mat, int input_len, fod *Phi_phi, fod *Phi_r){
+    fod *d_C, *d_Phi_phi, *d_Phi_r;
+    gpuErrchk(cudaMalloc(&d_C, input_len*dim_max*sizeof(fod)));
+    gpuErrchk(cudaMemcpy(d_C, input_mat, input_len*dim1[0]*sizeof(fod), cudaMemcpyHostToDevice));
+
+    gpuErrchk(cudaMalloc(&d_Phi_phi, input_len*sizeof(fod)));
+    gpuErrchk(cudaMalloc(&d_Phi_r, input_len*sizeof(fod)));
+
+    gpuErrchk(cudaMemcpy(d_Phi_phi, Phi_phi, input_len*sizeof(fod), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_Phi_r, Phi_r, input_len*sizeof(fod), cudaMemcpyHostToDevice));
+
+    cuComplex *d_nn_output_mat, *d_teuk_modes, *d_waveform;
+    int complex_dim = (int)((float) dim2[num_layers - 1]/ 2.0);
+    gpuErrchk(cudaMalloc(&d_nn_output_mat, complex_dim*input_len*sizeof(cuComplex)));
+    gpuErrchk(cudaMalloc(&d_teuk_modes, trans_dim2*input_len*sizeof(cuComplex)));
+    gpuErrchk(cudaMalloc(&d_waveform, input_len*sizeof(cuComplex)));
+
+    for (int layer_i=0; layer_i<num_layers; layer_i++){
+      run_layer(d_C, d_layers_matrix[layer_i], d_layers_bias[layer_i], dim1[layer_i], dim2[layer_i], input_len);
+    }
+
+    transform_output(d_teuk_modes, d_transform_matrix, d_nn_output_mat, d_C, input_len, break_index, d_transform_factor_inv, trans_dim2);
+
+    gpuErrchk(cudaFree(d_C));
+    gpuErrchk(cudaFree(d_nn_output_mat));
+    gpuErrchk(cudaFree(d_teuk_modes));
+    gpuErrchk(cudaFree(d_Phi_phi));
+    gpuErrchk(cudaFree(d_Phi_r));
+    gpuErrchk(cudaFree(d_waveform));
 }
 
 
@@ -72,6 +124,9 @@ FastEMRIWaveforms::~FastEMRIWaveforms()
       gpuErrchk(cudaFree(d_layers_bias[i]));
     }
     gpuErrchk(cudaFree(d_transform_matrix));
+    gpuErrchk(cudaFree(d_l));
+    gpuErrchk(cudaFree(d_m));
+    gpuErrchk(cudaFree(d_n));
     delete[] d_layers_matrix;
     delete[] d_layers_bias;
 }

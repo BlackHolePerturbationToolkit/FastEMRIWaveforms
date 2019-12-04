@@ -31,6 +31,33 @@ trans_dim1, trans_dim2 = transform_matrix.shape
 transform_matrix = transform_matrix.flatten()
 transform_factor = 1000.0
 
+input_len = 100
+traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")[0::3][:input_len]
+
+p = np.asarray(traj[:, 0], dtype=np.float32)
+e = np.asarray(traj[:, 1], dtype=np.float32)
+Phi_phi = np.asarray(traj[:, 2], dtype=np.float32)
+Phi_r = np.asarray(traj[:, 3], dtype=np.float32)
+
+l = np.zeros(2214, dtype=np.int32)
+m = np.zeros(2214, dtype=np.int32)
+n = np.zeros(2214, dtype=np.int32)
+
+ind = 0
+for l_i in range(2, 10 + 1):
+    for m_i in range(1, l_i + 1):
+        for n_i in range(-20, 20 + 1):
+            l[ind] = l_i
+            m[ind] = m_i
+            n[ind] = n_i
+            ind += 1
+
+
+input_mat = np.concatenate([p, e]).astype(np.float32)
+
+
+break_index = 80
+
 time_batch_size = 10
 few_class = FastEMRIWaveforms(
     time_batch_size,
@@ -43,7 +70,13 @@ few_class = FastEMRIWaveforms(
     trans_dim1,
     trans_dim2,
     transform_factor,
+    break_index,
+    l,
+    m,
+    n,
 )
+
+check = few_class.run_nn(input_mat, input_len, Phi_phi, Phi_r)
 
 import pdb
 
