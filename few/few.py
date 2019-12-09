@@ -42,6 +42,7 @@ transform_factor = 1000.0
 
 traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")
 input_len = len(traj)
+print(input_len)
 
 p = np.asarray(traj[:, 0], dtype=np.float32)
 e = np.asarray(traj[:, 1], dtype=np.float32)

@@ -47,8 +47,15 @@ static char *_cudaGetErrorEnum(cublasStatus_t error)
     return "<unknown>";
 }
 
+__device__ __host__ fod LeakyReLU(fod x){
+     fod out = 0.0;
+     if (x>= 0.0) {out = x;}
+     else {out = 0.2*x;}
+     return out;
+}
+
 __global__
-void add_bias(fod *C, fod *bias, int input_len, int dim2){
+void add_bias_relu(fod *C, fod *bias, int input_len, int dim2){
 
  for (int j = blockIdx.y * blockDim.y + threadIdx.y;
       j < dim2;
@@ -58,7 +65,7 @@ for (int i = blockIdx.x * blockDim.x + threadIdx.x;
      i < input_len;
      i += blockDim.x * gridDim.x){
 
-       C[input_len*j + i] = C[input_len*j + i] + bias[j];
+       C[input_len*j + i] = LeakyReLU(C[input_len*j + i] + bias[j]);
   }
 }
 }
@@ -97,7 +104,7 @@ void run_layer(fod *C, fod *layer_weight, fod *layer_bias, int dim1, int dim2, i
 
   int num_blocks = std::ceil((input_len + NUM_THREADS -1)/NUM_THREADS);
   dim3 gridDim(num_blocks, dim2);
-  add_bias<<<gridDim, NUM_THREADS>>>(C, layer_bias, input_len, dim2);
+  add_bias_relu<<<gridDim, NUM_THREADS>>>(C, layer_bias, input_len, dim2);
   cudaDeviceSynchronize();
   gpuErrchk_here(cudaGetLastError());
 }
@@ -190,8 +197,8 @@ __device__ void atomicAddComplex(cuComplex* a, cuComplex b){
 
 __host__ __device__ cuComplex complex_exp(cuComplex arg){
   cuComplex res;
-  double s, c;
-  double e = exp(arg.x);
+  fod s, c;
+  fod e = exp(arg.x);
   sincos(arg.y, &s, &c);
   res.x = c * e;
   res.y = s * e;
