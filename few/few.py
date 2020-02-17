@@ -1,4 +1,5 @@
 import numpy as np
+from ylm import get_ylms
 
 try:
     from FEW import FastEMRIWaveforms
@@ -23,10 +24,16 @@ weight = []
 dim1 = []
 dim2 = []
 for i in range(check.num_layers):
-    weight.append(check.layers[i].w.get().flatten())
+    try:
+        weight.append(check.layers[i].w.get().flatten())
+        bias.append(check.layers[i].b.get())
+
+    except AttributeError:
+        weight.append(check.layers[i].w.flatten())
+        bias.append(check.layers[i].b)
     dim1.append(check.layers[i].w.shape[0])
     dim2.append(check.layers[i].w.shape[1])
-    bias.append(check.layers[i].b.get())
+
 
 weight = np.concatenate(weight)
 bias = np.concatenate(bias)
@@ -54,13 +61,33 @@ m = np.zeros(2214, dtype=np.int32)
 n = np.zeros(2214, dtype=np.int32)
 
 ind = 0
+l_m_only = []
 for l_i in range(2, 10 + 1):
     for m_i in range(1, l_i + 1):
         for n_i in range(-20, 20 + 1):
             l[ind] = l_i
             m[ind] = m_i
             n[ind] = n_i
+            l_m_only.append([l_i, m_i])
             ind += 1
+
+ls, ms = np.asarray(l_m_only).T
+buffer = np.zeros_like(ls, dtype=np.complex128)
+
+theta = np.pi / 3.0
+phi = np.pi / 4.0
+
+num = 100
+
+st = time.perf_counter()
+for _ in range(num):
+    buffer = get_ylms(ls, ms, theta, phi, buffer)
+et = time.perf_counter()
+print((et - st) / num)
+
+import pdb
+
+pdb.set_trace()
 
 
 input_mat = np.concatenate([p, e]).astype(np.float32)
