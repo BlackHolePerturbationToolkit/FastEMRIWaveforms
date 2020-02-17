@@ -117,7 +117,7 @@ except AttributeError:
 
 ext = Extension(
     "FEW",
-    sources=["few/src/manager.cu", "few/FastEMRIWaveforms.pyx"],
+    sources=["few/src/elliptic.cu", "few/src/manager.cu", "few/FastEMRIWaveforms.pyx"],
     library_dirs=[CUDA["lib64"]],
     libraries=["cudart", "cublas"],
     language="c++",
