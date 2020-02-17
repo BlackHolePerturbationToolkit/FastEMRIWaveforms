@@ -7,7 +7,7 @@ you perform actions with the GPU
 This class will get translated into python via cython
 */
 
-#include <kernel.cu>
+#include <kernel.hh>
 #include <manager.hh>
 #include <assert.h>
 #include <iostream>

@@ -523,7 +523,7 @@ void ellpe_test(){
   cudaGetLastError();
 
   cudaMemcpy(outn, out, num*sizeof(fod), cudaMemcpyDeviceToHost);
-  printf("%e %e\n", outn[0], outn[1]);
+  printf("hmmm %e %e\n", outn[0], outn[1]);
 
   delete[] outn;
   delete[] inn;
