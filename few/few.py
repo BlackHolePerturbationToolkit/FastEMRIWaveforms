@@ -85,11 +85,6 @@ for _ in range(num):
 et = time.perf_counter()
 print((et - st) / num)
 
-import pdb
-
-pdb.set_trace()
-
-
 input_mat = np.concatenate([p, e]).astype(np.float32)
 
 
