@@ -23,10 +23,10 @@ weight = []
 dim1 = []
 dim2 = []
 for i in range(check.num_layers):
-    weight.append(check.layers[i].w.flatten())
+    weight.append(check.layers[i].w.get().flatten())
     dim1.append(check.layers[i].w.shape[0])
     dim2.append(check.layers[i].w.shape[1])
-    bias.append(check.layers[i].b)
+    bias.append(check.layers[i].b.get())
 
 weight = np.concatenate(weight)
 bias = np.concatenate(bias)
@@ -68,7 +68,7 @@ input_mat = np.concatenate([p, e]).astype(np.float32)
 
 break_index = 80
 
-time_batch_size = 10
+time_batch_size = 100
 few_class = FastEMRIWaveforms(
     time_batch_size,
     check.num_layers,

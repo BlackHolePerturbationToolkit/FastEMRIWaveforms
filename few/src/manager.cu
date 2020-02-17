@@ -14,6 +14,7 @@ This class will get translated into python via cython
 #include "global.h"
 #include <complex>
 #include "cuComplex.h"
+#include "utils.cu"
 
 using namespace std;
 
@@ -115,6 +116,8 @@ void FastEMRIWaveforms::run_nn(std::complex<float> *waveform, fod *input_mat, in
     get_waveform(d_waveform, d_teuk_modes, d_Phi_phi, d_Phi_r, d_m, d_n, input_len, num_teuk_modes);
 
     gpuErrchk(cudaMemcpy(waveform, d_waveform, input_len*sizeof(cuComplex), cudaMemcpyDeviceToHost));
+
+    ellpe_test();
 }
 
 
