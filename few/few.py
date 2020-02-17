@@ -64,11 +64,11 @@ ind = 0
 l_m_only = []
 for l_i in range(2, 10 + 1):
     for m_i in range(1, l_i + 1):
+        l_m_only.append([l_i, m_i])
         for n_i in range(-20, 20 + 1):
             l[ind] = l_i
             m[ind] = m_i
             n[ind] = n_i
-            l_m_only.append([l_i, m_i])
             ind += 1
 
 ls, ms = np.asarray(l_m_only).T
