@@ -530,51 +530,61 @@ Get_U0(_Tp p, _Tp e, _Tp xi)
 
 
 __global__
-void ellpe_kernel(fod *out, fod *in, int num){
+void ellpe_kernel(fod *parr, fod *earr, fod *U_out, fod *V_out, int num){
   for (int i = blockIdx.x * blockDim.x + threadIdx.x;
        i < num;
        i += blockDim.x * gridDim.x){
-         double n=0.6;
-         double m=0.4;
-         double phi = PI/4;
-         double p = 10.0;
-         double e = 0.5;
+         double p = parr[i];
+         double e = earr[i];
+         //double n=0.6;
+         //double m=0.4;
+         //double phi = PI/4;
+         //double p = 10.0;
+         //double e = 0.5;
          double xi = 0.1;
         //out[i] = EllipticE(0.5);
         //out[i] = EllipticF(PI/2, 0.5);
         //out[i] = EllipticPi(n=0.6, phi=3.1415926535897932384626433832795028841971/4., m=0.4);
         //out[i] = EllipticPi(n,phi, m);
-        out[i] = Get_U0(p, e, xi);
-        //out[i] = Get_V0(p, e, xi);
+        U_out[i] = Get_U0(p, e, xi);
+        V_out[i] = Get_V0(p, e, xi);
         //out[i] = Get_T_osc(p, e);
     }
 }
 
 
 
-void ellpe_test(){
-  int num = 10;
-  fod *out, *in;
-  fod *outn = new fod[num];
-  fod *inn = new fod[num];
-  cudaMalloc(&out, num*sizeof(fod));
-  cudaMalloc(&in, num*sizeof(fod));
+void ellpe_test(fod *input_mat, int num){
 
-  for (int i=0; i<num; i++){
-    inn[i] = 0.2389239;
-  }
-  cudaMemcpy(in, inn, num*sizeof(fod), cudaMemcpyHostToDevice);
+  fod *p, *e;
+
+  cudaMalloc(&p, num*sizeof(fod));
+  cudaMalloc(&e, num*sizeof(fod));
+
+  cudaMemcpy(p, input_mat, num*sizeof(fod), cudaMemcpyHostToDevice);
+  cudaMemcpy(e, &input_mat[num], num*sizeof(fod), cudaMemcpyHostToDevice);
+
+  fod *U_out, *V_out;
+  cudaMalloc(&U_out, num*sizeof(fod));
+  cudaMalloc(&V_out, num*sizeof(fod));
+
   int num_blocks = ceil((num + NUM_THREADS -1)/NUM_THREADS);
   dim3 gridDim(num_blocks); //, num_teuk_modes);
-  ellpe_kernel<<<gridDim, NUM_THREADS>>>(out, in, num);
+  ellpe_kernel<<<gridDim, NUM_THREADS>>>(p, e, U_out, V_out, num);
   cudaDeviceSynchronize();
   cudaGetLastError();
 
-  cudaMemcpy(outn, out, num*sizeof(fod), cudaMemcpyDeviceToHost);
-  //printf("hmmm %e %e\n", outn[0], outn[1]);
+  fod *check = new fod[num];
+  fod *check2 = new fod[num];
+  cudaMemcpy(check, U_out, num*sizeof(fod), cudaMemcpyDeviceToHost);
+  cudaMemcpy(check2, V_out, num*sizeof(fod), cudaMemcpyDeviceToHost);
 
-  delete[] outn;
-  delete[] inn;
-  cudaFree(out);
-  cudaFree(in);
+  //printf("%lf, %lf, %lf, %lf\n", input_mat[0], input_mat[num], check[0], check2[0]);
+
+  delete[] check;
+  delete[] check2;
+  cudaFree(p);
+  cudaFree(e);
+  cudaFree(U_out);
+  cudaFree(V_out);
 }

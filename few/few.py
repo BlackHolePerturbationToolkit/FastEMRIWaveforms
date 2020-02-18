@@ -101,7 +101,9 @@ import pdb
 pdb.set_trace()
 """
 input_mat = np.concatenate([p, e]).astype(np.float32)
+import pdb
 
+pdb.set_trace()
 
 break_index = 80
 

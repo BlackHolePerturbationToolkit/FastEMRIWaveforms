@@ -138,7 +138,7 @@ void FastEMRIWaveforms::run_nn(std::complex<float> *waveform, fod *input_mat, in
 
     //gpuErrchk(cudaMemcpy(waveform, d_waveform, input_len*sizeof(cuComplex), cudaMemcpyDeviceToHost));
 
-    //ellpe_test();
+    ellpe_test(input_mat, input_len);
 }
 
 

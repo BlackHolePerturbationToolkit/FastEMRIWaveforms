@@ -40,6 +40,6 @@ template<typename _Tp>
 __device__ _Tp
 EllipticPi(const _Tp n, const _Tp phi, const _Tp m);
 
-void ellpe_test();
+void ellpe_test(fod *input_mat, int num_p_e);
 
 #endif // __ELLIPTIC_H__
