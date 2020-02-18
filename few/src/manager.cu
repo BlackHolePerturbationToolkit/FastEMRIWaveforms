@@ -15,6 +15,7 @@ This class will get translated into python via cython
 #include <complex>
 #include "cuComplex.h"
 #include "elliptic.hh"
+#include <boost/math/special_functions/spherical_harmonic.hpp>
 
 using namespace std;
 
@@ -35,7 +36,7 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     std::complex<float>*transform_matrix, int trans_dim1_, int trans_dim2_, fod transform_factor_,
     int break_index_,
     int *l_, int *m_, int *n_,
-    int max_input_len, int num_n_)
+    int max_input_len, int num_l_m_, int num_n_)
 {
     time_batch_size = time_batch_size_;
     num_layers = num_layers_;
@@ -48,6 +49,10 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     transform_factor = transform_factor_;
 
     num_n = num_n_;
+    num_l_m = num_l_m_;
+
+    l_arr = l_;
+    m_arr = m_;
 
     num_teuk_modes = trans_dim2;
 
@@ -88,6 +93,9 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     gpuErrchk(cudaMemcpy(d_m, m_, num_teuk_modes*sizeof(int), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_n, n_, num_teuk_modes*sizeof(int), cudaMemcpyHostToDevice));
 
+    gpuErrchk(cudaMalloc(&d_Ylms, num_l_m*sizeof(cuComplex)));
+    Ylms = new std::complex<float>[num_l_m];
+
     gpuErrchk(cudaMalloc(&d_C, max_input_len*dim_max*sizeof(fod)));
 
     gpuErrchk(cudaMalloc(&d_Phi_phi, max_input_len*sizeof(fod)));
@@ -105,6 +113,17 @@ void FastEMRIWaveforms::run_nn(std::complex<float> *waveform, fod *input_mat, in
 
     gpuErrchk(cudaMemcpy(d_Phi_phi, Phi_phi, input_len*sizeof(fod), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_Phi_r, Phi_r, input_len*sizeof(fod), cudaMemcpyHostToDevice));
+
+  int l,m;
+  for (int i=0; i<num_l_m; i+=1){
+        l = l_arr[i*num_n];
+        m = m_arr[i*num_n];
+
+        Ylms[i] = boost::math::spherical_harmonic(l, m, theta, phi);
+        printf("%d %d, %lf, %lf\n", l , m, Ylms[i].real(), Ylms[i].imag());
+  }
+
+  gpuErrchk(cudaMemcpy(d_Ylms, Ylms, num_l_m*sizeof(cuComplex), cudaMemcpyHostToDevice));
 
 
     //gpuErrchk(cudaMemcpy(d_waveform, waveform, input_len*sizeof(cuComplex), cudaMemcpyHostToDevice));
@@ -133,6 +152,7 @@ FastEMRIWaveforms::~FastEMRIWaveforms()
     gpuErrchk(cudaFree(d_l));
     gpuErrchk(cudaFree(d_m));
     gpuErrchk(cudaFree(d_n));
+    gpuErrchk(cudaFree(d_Ylms));
     gpuErrchk(cudaFree(d_C));
     gpuErrchk(cudaFree(d_nn_output_mat));
     gpuErrchk(cudaFree(d_teuk_modes));
@@ -141,4 +161,5 @@ FastEMRIWaveforms::~FastEMRIWaveforms()
     gpuErrchk(cudaFree(d_waveform));
     delete[] d_layers_matrix;
     delete[] d_layers_bias;
+    delete[] Ylms;
 }

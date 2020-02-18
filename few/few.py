@@ -79,17 +79,16 @@ for l_i in range_l:
             n[ind] = n_i
             ind += 1
 
+num_l_m = len(l_m_only)
 ls, ms = np.asarray(l_m_only).T
 buffer = np.zeros_like(ls, dtype=np.complex128)
 
-theta = np.pi / 3.0
-phi = np.pi / 4.0
-
+theta = 1.5
+phi = 2.5
 """
 num = 100
 
-theta = 1.5
-phi = 2.5
+
 
 st = time.perf_counter()
 for _ in range(num):
@@ -122,6 +121,7 @@ few_class = FastEMRIWaveforms(
     l,
     m,
     n,
+    num_l_m,
     num_n,
     input_len,
 )

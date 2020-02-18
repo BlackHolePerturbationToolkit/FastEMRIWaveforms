@@ -21,8 +21,11 @@ class FastEMRIWaveforms {
   int break_index;
   int num_teuk_modes;
   int *d_m, *d_n, *d_l;
+  cuComplex *d_Ylms;
+  std::complex<float> *Ylms;
 
-  int num_n;
+  int num_n, num_l_m;
+  int *m_arr, *l_arr;
 
   fod *d_C, *d_Phi_phi, *d_Phi_r;
   cuComplex *d_nn_output_mat, *d_teuk_modes, *d_waveform;
@@ -34,7 +37,7 @@ public:
     std::complex<float>*transform_matrix, int trans_dim1_, int trans_dim2_, fod transform_factor_,
     int break_index_,
     int *d_l, int *m_, int *n_,
-    int max_input_len, int num_n_); // constructor (copies to GPU)
+    int max_input_len, int num_l_m_, int num_n_); // constructor (copies to GPU)
 
   void run_nn(std::complex<float> *waveform, fod *input_mat, int input_len, fod *Phi_phi, fod *Phi_r, fod theta, fod phi);
 
