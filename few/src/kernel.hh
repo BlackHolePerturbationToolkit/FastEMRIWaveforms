@@ -57,7 +57,7 @@ void transform_output(cuComplex *d_teuk_modes, cuComplex *d_transform_matrix, cu
                       int num_teuk_modes);
 
 void get_waveform(cuComplex *d_waveform, cuComplex *d_teuk_modes, fod *d_Phi_phi, fod *d_Phi_r,
-              int *d_m, int *d_n, int input_len, int num_teuk_modes);
+              int *d_m, int *d_n, int input_len, int num_teuk_modes, cuComplex *d_Ylms, int num_n);
 
 void ellpe_test();
 

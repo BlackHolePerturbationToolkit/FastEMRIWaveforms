@@ -120,7 +120,7 @@ void FastEMRIWaveforms::run_nn(std::complex<float> *waveform, fod *input_mat, in
         m = m_arr[i*num_n];
 
         Ylms[i] = boost::math::spherical_harmonic(l, m, theta, phi);
-        printf("%d %d, %lf, %lf\n", l , m, Ylms[i].real(), Ylms[i].imag());
+        //printf("%d %d, %lf, %lf\n", l , m, Ylms[i].real(), Ylms[i].imag());
   }
 
   gpuErrchk(cudaMemcpy(d_Ylms, Ylms, num_l_m*sizeof(cuComplex), cudaMemcpyHostToDevice));
@@ -134,11 +134,11 @@ void FastEMRIWaveforms::run_nn(std::complex<float> *waveform, fod *input_mat, in
 
     transform_output(d_teuk_modes, d_transform_matrix, d_nn_output_mat, d_C, input_len, break_index, d_transform_factor_inv, trans_dim2);
 
-    get_waveform(d_waveform, d_teuk_modes, d_Phi_phi, d_Phi_r, d_m, d_n, input_len, num_teuk_modes);
+    get_waveform(d_waveform, d_teuk_modes, d_Phi_phi, d_Phi_r, d_m, d_n, input_len, num_teuk_modes, d_Ylms, num_n);
 
-    gpuErrchk(cudaMemcpy(waveform, d_waveform, input_len*sizeof(cuComplex), cudaMemcpyDeviceToHost));
+    //gpuErrchk(cudaMemcpy(waveform, d_waveform, input_len*sizeof(cuComplex), cudaMemcpyDeviceToHost));
 
-    ellpe_test();
+    //ellpe_test();
 }
 
 
