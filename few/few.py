@@ -62,10 +62,18 @@ n = np.zeros(2214, dtype=np.int32)
 
 ind = 0
 l_m_only = []
-for l_i in range(2, 10 + 1):
+
+range_l = range(2, 10 + 1)
+range_n = range(-20, 20 + 1)
+
+num_n = 0
+for _ in range_n:
+    num_n += 1
+
+for l_i in range_l:
     for m_i in range(1, l_i + 1):
         l_m_only.append([l_i, m_i])
-        for n_i in range(-20, 20 + 1):
+        for n_i in range_n:
             l[ind] = l_i
             m[ind] = m_i
             n[ind] = n_i
@@ -77,7 +85,11 @@ buffer = np.zeros_like(ls, dtype=np.complex128)
 theta = np.pi / 3.0
 phi = np.pi / 4.0
 
+"""
 num = 100
+
+theta = 1.5
+phi = 2.5
 
 st = time.perf_counter()
 for _ in range(num):
@@ -85,6 +97,10 @@ for _ in range(num):
 et = time.perf_counter()
 print((et - st) / num)
 
+import pdb
+
+pdb.set_trace()
+"""
 input_mat = np.concatenate([p, e]).astype(np.float32)
 
 
@@ -106,14 +122,15 @@ few_class = FastEMRIWaveforms(
     l,
     m,
     n,
+    num_n,
     input_len,
 )
 
-check = few_class.run_nn(input_mat, input_len, Phi_phi, Phi_r)
+check = few_class.run_nn(input_mat, input_len, Phi_phi, Phi_r, theta, phi)
 if args.time:
     st = time.perf_counter()
     for _ in range(args.time):
-        check = few_class.run_nn(input_mat, input_len, Phi_phi, Phi_r)
+        check = few_class.run_nn(input_mat, input_len, Phi_phi, Phi_r, theta, phi)
     et = time.perf_counter()
     print("time per:", (et - st) / args.time)
 
