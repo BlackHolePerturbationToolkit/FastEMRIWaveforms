@@ -6,6 +6,7 @@
 #include "cublas_v2.h"
 #include "elliptic.hh"
 #include "kernel.hh"
+#include "stdio.h"
 
 #define gpuErrchk_here(ans) { gpuAssert_here((ans), __FILE__, __LINE__); }
 inline void gpuAssert_here(cudaError_t code, const char *file, int line, bool abort=true)
