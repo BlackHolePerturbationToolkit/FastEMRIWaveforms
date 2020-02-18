@@ -467,7 +467,7 @@ EllipticE(const _Tp phi, const _Tp m)
     if (phi == PI/2)
         return __comp_ellint_2(__k);
 
-    return __ellint_1(__k, phi);
+    return __ellint_2(__k, phi);
 }
 
 /*
@@ -487,6 +487,48 @@ EllipticPi(_Tp n, _Tp phi, _Tp m)
     return __ellint_3(__k, n, phi);
 }
 
+template<typename _Tp>
+__device__ _Tp
+Get_Phi_osc(_Tp p, _Tp e)
+{
+
+  return 4*sqrt(p/(-6 + 2*e + p))*EllipticK((4*e)/(-6 + 2*e + p));
+
+}
+
+template<typename _Tp>
+__device__ _Tp
+Get_T_osc(_Tp p, _Tp e)
+{
+
+  return (2*p*sqrt((-4*pow(e,2) + pow(-2 + p,2))*(-6 + 2*e + p))*EllipticE(PI/2, (4*e)/(-6 + 2*e + p)))/((1 - pow(e,2))*(-4 + p)) -
+     (2*sqrt(-4*pow(e,2) + pow(-2 + p,2))*p*EllipticK((4*e)/(-6 + 2*e + p)))/((1 - pow(e,2))*sqrt(-6 + 2*e + p)) -
+     (4*sqrt(-4*pow(e,2) + pow(-2 + p,2))*(8*(1 - pow(e,2)) + (1 + 3*pow(e,2) - p)*p)*EllipticPi((-2*e)/(1 - e),PI/2.,(4*e)/(-6 + 2*e + p)))/
+      ((1 - e)*(1 - pow(e,2))*(-4 + p)*sqrt(-6 + 2*e + p)) + (16*sqrt(-4*pow(e,2) + pow(-2 + p,2))*EllipticPi((4*e)/(-2 + 2*e + p),PI/2.,(4*e)/(-6 + 2*e + p)))/
+      (sqrt(-6 + 2*e + p)*(-2 + 2*e + p));
+}
+
+template<typename _Tp>
+__device__ _Tp
+Get_V0(_Tp p, _Tp e, _Tp xi)
+{
+  return Get_Phi_osc(p, e)/(2.*PI)*(xi - PI) - 2*sqrt(p/(-6 + 2*e + p))*EllipticF(xi/2. - PI/2.,(4*e)/(-6 + 2*e + p));
+}
+
+template<typename _Tp>
+__device__ _Tp
+Get_U0(_Tp p, _Tp e, _Tp xi)
+{
+  return Get_T_osc(p, e)/(2.*PI)*(xi - PI) - (-((p*sqrt((-4*pow(e,2) + pow(-2 + p,2))*(-6 + 2*e + p))*EllipticE(PI/2. - xi/2.,(4*e)/(-6 + 2*e + p)))/((1 - pow(e,2))*(-4 + p))) +
+   (sqrt(-4*pow(e,2) + pow(-2 + p,2))*p*EllipticF(PI/2. - xi/2.,(4*e)/(-6 + 2*e + p)))/((1 - pow(e,2))*sqrt(-6 + 2*e + p)) -
+   (2*sqrt(-4*pow(e,2) + pow(-2 + p,2))*(8*(1 - pow(e,2)) + (1 + 3*pow(e,2) - p)*p)*EllipticPi((-2*e)/(1 - e),-PI/2. + xi/2.,(4*e)/(-6 + 2*e + p)))/
+    ((1 - e)*(1 - pow(e,2))*(-4 + p)*sqrt(-6 + 2*e + p)) + (8*sqrt(-4*pow(e,2) + pow(-2 + p,2))*
+      EllipticPi((4*e)/(-2 + 2*e + p),-PI/2. + xi/2.,(4*e)/(-6 + 2*e + p)))/(sqrt(-6 + 2*e + p)*(-2 + 2*e + p)) -
+   (e*p*sqrt((-4*pow(e,2) + pow(-2 + p,2))*(-6 + p - 2*e*cos(xi)))*sin(xi))/((1 - pow(e,2))*(-4 + p)*(1 + e*cos(xi))));
+}
+
+
+
 __global__
 void ellpe_kernel(fod *out, fod *in, int num){
   for (int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -495,10 +537,16 @@ void ellpe_kernel(fod *out, fod *in, int num){
          double n=0.6;
          double m=0.4;
          double phi = PI/4;
+         double p = 10.0;
+         double e = 0.5;
+         double xi = 0.1;
         //out[i] = EllipticE(0.5);
         //out[i] = EllipticF(PI/2, 0.5);
         //out[i] = EllipticPi(n=0.6, phi=3.1415926535897932384626433832795028841971/4., m=0.4);
-        out[i] = EllipticPi(n,phi, m);
+        //out[i] = EllipticPi(n,phi, m);
+        out[i] = Get_U0(p, e, xi);
+        //out[i] = Get_V0(p, e, xi);
+        //out[i] = Get_T_osc(p, e);
     }
 }
 
