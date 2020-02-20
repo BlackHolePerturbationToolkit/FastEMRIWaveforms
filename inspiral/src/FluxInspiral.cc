@@ -164,11 +164,13 @@ int main (void) {
        		printf ("error, return value=%d\n", status);
           	break;
         }
+		// Stop the inspiral when close to the separatrix
 		if(y[0] - 6 -2*y[1] < 0.1){
 			cout << "# Separatrix reached: exiting inspiral" << endl;
 			break;
 		}
-
+		
+		// Output format: p, e, Phi_phi, Phi_r
       	printf ("%.5e %.5e %.5e %.5e %.5e\n", t, y[0], y[1], y[2], y[3]);
     }
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
