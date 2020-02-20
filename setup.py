@@ -118,6 +118,7 @@ except AttributeError:
 ext = Extension(
     "FEW",
     sources=[
+        "few/src/ylm.cpp",
         "few/src/elliptic.cu",
         "few/src/kernel.cu",
         "few/src/manager.cu",
@@ -132,9 +133,9 @@ ext = Extension(
     # and not with gcc the implementation of this trick is in
     # customize_compiler()
     extra_compile_args={
-        "gcc": ["-std=c99"],  # '-g'],
+        "gcc": [],  # '-g'],
         "nvcc": [
-            "-arch=sm_50",
+            "-arch=sm_70",
             "-gencode=arch=compute_30,code=sm_30",
             "-gencode=arch=compute_50,code=sm_50",
             "-gencode=arch=compute_52,code=sm_52",

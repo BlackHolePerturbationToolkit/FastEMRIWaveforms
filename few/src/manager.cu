@@ -15,7 +15,7 @@ This class will get translated into python via cython
 #include <complex>
 #include "cuComplex.h"
 #include "elliptic.hh"
-#include <boost/math/special_functions/spherical_harmonic.hpp>
+#include "ylm.hh"
 
 using namespace std;
 
@@ -33,7 +33,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 
 FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int *dim1_, int *dim2_,
     fod *flatten_weight_matrix, fod *flattened_bias_matrix,
-    std::complex<float>*transform_matrix, int trans_dim1_, int trans_dim2_, fod transform_factor_,
+    cmplx*transform_matrix, int trans_dim1_, int trans_dim2_, fod transform_factor_,
     int break_index_,
     int *l_, int *m_, int *n_,
     int max_input_len, int num_l_m_, int num_n_)
@@ -94,7 +94,7 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     gpuErrchk(cudaMemcpy(d_n, n_, num_teuk_modes*sizeof(int), cudaMemcpyHostToDevice));
 
     gpuErrchk(cudaMalloc(&d_Ylms, num_l_m*sizeof(cuComplex)));
-    Ylms = new std::complex<float>[num_l_m];
+    Ylms = new cmplx[num_l_m];
 
     gpuErrchk(cudaMalloc(&d_C, max_input_len*dim_max*sizeof(fod)));
 
@@ -107,7 +107,7 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     gpuErrchk(cudaMalloc(&d_waveform, max_input_len*sizeof(cuComplex)));
 }
 
-void FastEMRIWaveforms::run_nn(std::complex<float> *waveform, fod *input_mat, int input_len, fod *Phi_phi, fod *Phi_r, fod theta, fod phi){
+void FastEMRIWaveforms::run_nn(cmplx *waveform, fod *input_mat, int input_len, fod *Phi_phi, fod *Phi_r, fod theta, fod phi){
 
     gpuErrchk(cudaMemcpy(d_C, input_mat, input_len*dim1[0]*sizeof(fod), cudaMemcpyHostToDevice));
 
@@ -119,7 +119,7 @@ void FastEMRIWaveforms::run_nn(std::complex<float> *waveform, fod *input_mat, in
         l = l_arr[i*num_n];
         m = m_arr[i*num_n];
 
-        Ylms[i] = boost::math::spherical_harmonic(l, m, theta, phi);
+        Ylms[i] = SpinWeightedSpheroidalHarmonic(l, m, theta, phi);
         //printf("%d %d, %lf, %lf\n", l , m, Ylms[i].real(), Ylms[i].imag());
   }
 
