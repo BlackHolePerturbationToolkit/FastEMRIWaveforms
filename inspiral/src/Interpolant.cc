@@ -17,7 +17,6 @@
 #include <Interpolant.h>
 #include <algorithm>
 
-
 //Construct a 1D interpolant of f(x)
 Interpolant::Interpolant(Vector x, Vector f){
 	
@@ -52,9 +51,10 @@ Interpolant::Interpolant(Vector x, Vector y, Vector f){
 	
 	// Create the interpolant
     const gsl_interp2d_type *T = gsl_interp2d_bicubic;
-	
+		
     const size_t nx = xs.size(); /* x grid points */
     const size_t ny = ys.size(); /* y grid points */
+	
 	
     double *za = (double *)malloc(nx * ny * sizeof(double));
     spline2d = gsl_spline2d_alloc(T, nx, ny);

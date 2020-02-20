@@ -74,8 +74,8 @@ int func (double t, const double y[], double f[], void *params){
 	(e*(4*Power(e,2) - Power(-6 + p,2))*p));
 	
 	// Need to evaluate 4 different elliptic integrals here. Cache them first to avoid repeated calls.	
-	double EllipE 	= EllipticE(4*e/(p-6.+2*e));
-	double EllipK 	= EllipticK(4*e/(p-6.+2*e));;
+	double EllipE 	= EllipticE(4*e/(p-6.0+2*e));
+	double EllipK 	= EllipticK(4*e/(p-6.0+2*e));;
 	double EllipPi1 = EllipticPi(16*e/(12.0 + 8*e - 4*e*e - 8*p + p*p), 4*e/(p-6.0+2*e));
 	double EllipPi2 = EllipticPi(2*e*(p-4)/((1.0+e)*(p-6.0+2*e)), 4*e/(p-6.0+2*e));
 	
@@ -130,9 +130,12 @@ void load_and_interpolate_flux_data(struct interp_params *interps){
 int main (void) {
 	
 	struct interp_params interps;
+	//Set the mass ratio
 	interps.epsilon = 1e-3;
+	
 	load_and_interpolate_flux_data(&interps);
 	
+	// Set the initial values
 	double p0 = 12.5;
 	double e0 = 0.7;
 	double t0 = 0;
