@@ -1,0 +1,10 @@
+import os
+env = Environment()
+
+env['CXX']      = 'g++'
+env['CPPPATH']  = ['../include']
+env['LIBS']     = ['gsl' , 'gslcblas']
+
+sources = ['FluxInspiral.cc', 'Interpolant.cc']
+
+env.Program('../FluxInspiral', sources)
