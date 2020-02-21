@@ -139,7 +139,7 @@ NITHolder run_NIT(double t0, double p0, double e0){
 
 	double tmax = 1e7;
 
-	high_resolution_clock::time_point t1 = high_resolution_clock::now();
+	//high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
 	// Initial values
 	// TODO do we want to set initial phases here?
@@ -177,14 +177,14 @@ NITHolder run_NIT(double t0, double p0, double e0){
 				ind++;
 		}
 	nit_out.length = ind;
-	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	//high_resolution_clock::time_point t2 = high_resolution_clock::now();
 
-		duration<double> time_span = duration_cast<duration<double> >(t2 - t1);
+		//duration<double> time_span = duration_cast<duration<double> >(t2 - t1);
 
 		gsl_odeiv2_evolve_free (e);
 		gsl_odeiv2_control_free (c);
 		gsl_odeiv2_step_free (s);
-		cout << "# Computing the inspiral took: " << time_span.count() << " seconds." << endl;
+		//cout << "# Computing the inspiral took: " << time_span.count() << " seconds." << endl;
 		return nit_out;
 
 }
