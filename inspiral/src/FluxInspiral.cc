@@ -5,6 +5,7 @@
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv2.h>
 #include <gsl/gsl_sf_ellint.h>
+#include <memory.h>
 
 #include "Interpolant.h"
 #include "FluxInspiral.hh"
@@ -186,6 +187,21 @@ NITHolder run_NIT(double t0, double p0, double e0){
 		gsl_odeiv2_step_free (s);
 		//cout << "# Computing the inspiral took: " << time_span.count() << " seconds." << endl;
 		return nit_out;
+
+}
+
+void NITWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double p0, double e0, int *length){
+
+	double t0;
+		NITHolder nit_vals = run_NIT(t0, p0, e0);
+
+		memcpy(t, &nit_vals.t_arr[0], nit_vals.length*sizeof(double));
+		memcpy(p, &nit_vals.p_arr[0], nit_vals.length*sizeof(double));
+		memcpy(e, &nit_vals.e_arr[0], nit_vals.length*sizeof(double));
+		memcpy(Phi_phi, &nit_vals.Phi_phi_arr[0], nit_vals.length*sizeof(double));
+		memcpy(Phi_r, &nit_vals.Phi_r_arr[0], nit_vals.length*sizeof(double));
+
+		*length = nit_vals.length;
 
 }
 

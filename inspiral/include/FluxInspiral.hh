@@ -56,4 +56,6 @@ public:
 
 NITHolder run_NIT(double t0, double p0, double e0);
 
+void NITWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double p0, double e0, int *length);
+
 #endif //__FLUX_H__

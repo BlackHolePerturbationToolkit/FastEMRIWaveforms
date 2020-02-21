@@ -103,8 +103,11 @@ class custom_build_ext(build_ext):
         customize_compiler_for_nvcc(self.compiler)
         build_ext.build_extensions(self)
 
-
-CUDA = locate_cuda()
+try:
+    CUDA = locate_cuda()
+    run_cuda_install = True
+except OSError:
+    run_cuda_install = False
 
 # Obtain the numpy include directory. This logic works across numpy versions.
 try:
@@ -115,58 +118,87 @@ except AttributeError:
 # lib_gsl_dir = "/opt/local/lib"
 # include_gsl_dir = "/opt/local/include"
 
-ext = Extension(
-    "FEW",
+if run_cuda_install:
+    ext = Extension(
+        "FEW",
+        sources=[
+            "inspiral/src/Interpolant.cc",
+            "inspiral/src/FluxInspiral.cc",
+            "few/src/ylm.cpp",
+            "few/src/elliptic.cu",
+            "few/src/kernel.cu",
+            "few/src/manager.cu",
+            "few/FastEMRIWaveforms.pyx",
+        ],
+        library_dirs=[CUDA["lib64"]],
+        libraries=["cudart", "cublas", "gsl", "gslcblas"],
+        language="c++",
+        runtime_library_dirs=[CUDA["lib64"]],
+        # This syntax is specific to this build system
+        # we're only going to use certain compiler args with nvcc
+        # and not with gcc the implementation of this trick is in
+        # customize_compiler()
+        extra_compile_args={
+            "gcc": ["-std=c++11",],  # '-g'],
+            "nvcc": [
+                "-arch=sm_70",
+                "-gencode=arch=compute_30,code=sm_30",
+                "-gencode=arch=compute_50,code=sm_50",
+                "-gencode=arch=compute_52,code=sm_52",
+                "-gencode=arch=compute_60,code=sm_60",
+                "-gencode=arch=compute_61,code=sm_61",
+                "-gencode=arch=compute_70,code=sm_70",
+                #'-gencode=arch=compute_75,code=sm_75',
+                #'-gencode=arch=compute_75,code=compute_75',
+                "-std=c++11",
+                "--default-stream=per-thread",
+                "--ptxas-options=-v",
+                "-c",
+                "--compiler-options",
+                "'-fPIC'",
+                # "-G",
+                # "-g",
+                # "-O0",
+                # "-lineinfo",
+            ],  # for debugging
+        },
+        include_dirs=[numpy_include, CUDA["include"], "few/src", "inspiral/include", "/home/mlk667/.conda/envs/few_env/include/"],
+    )
+
+NIT_ext = Extension(
+    "pyNIT",
     sources=[
         "inspiral/src/Interpolant.cc",
         "inspiral/src/FluxInspiral.cc",
-        "few/src/ylm.cpp",
-        "few/src/elliptic.cu",
-        "few/src/kernel.cu",
-        "few/src/manager.cu",
-        "few/FastEMRIWaveforms.pyx",
+        "inspiral/NIT.pyx",
     ],
-    library_dirs=[CUDA["lib64"]],
-    libraries=["cudart", "cublas", "gsl", "gslcblas"],
+    library_dirs=[],
+    libraries=["gsl", "gslcblas"],
     language="c++",
-    runtime_library_dirs=[CUDA["lib64"]],
+    runtime_library_dirs=[],
     # This syntax is specific to this build system
     # we're only going to use certain compiler args with nvcc
     # and not with gcc the implementation of this trick is in
     # customize_compiler()
     extra_compile_args={
         "gcc": ["-std=c++11",],  # '-g'],
-        "nvcc": [
-            "-arch=sm_70",
-            "-gencode=arch=compute_30,code=sm_30",
-            "-gencode=arch=compute_50,code=sm_50",
-            "-gencode=arch=compute_52,code=sm_52",
-            "-gencode=arch=compute_60,code=sm_60",
-            "-gencode=arch=compute_61,code=sm_61",
-            "-gencode=arch=compute_70,code=sm_70",
-            #'-gencode=arch=compute_75,code=sm_75',
-            #'-gencode=arch=compute_75,code=compute_75',
-            "-std=c++11",
-            "--default-stream=per-thread",
-            "--ptxas-options=-v",
-            "-c",
-            "--compiler-options",
-            "'-fPIC'",
-            # "-G",
-            # "-g",
-            # "-O0",
-            # "-lineinfo",
-        ],  # for debugging
     },
-    include_dirs=[numpy_include, CUDA["include"], "few/src", "inspiral/include", "/home/mlk667/.conda/envs/few_env/include/"],
+    include_dirs=[numpy_include, "few/src", "inspiral/include", "/home/mlk667/.conda/envs/few_env/include/"],
 )
+
+if run_cuda_install:
+    extensions = [ext, NIT_ext]
+else:
+    extensions = [NIT_ext]
+
+
 
 setup(
     name="few",
     # Random metadata. there's more you can supply
     author="Michael Katz",
     version="0.1",
-    ext_modules=[ext],
+    ext_modules=extensions,
     packages=["few"],
     # py_modules=[],
     # Inject our custom trigger

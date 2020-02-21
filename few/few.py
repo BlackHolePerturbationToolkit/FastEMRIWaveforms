@@ -47,7 +47,7 @@ trans_dim1, trans_dim2 = transform_matrix.shape
 transform_matrix = transform_matrix.flatten()
 transform_factor = 1000.0
 
-traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")
+traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")[:400]
 input_len = len(traj)
 print(input_len)
 
