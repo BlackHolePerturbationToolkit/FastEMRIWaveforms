@@ -103,6 +103,7 @@ class custom_build_ext(build_ext):
         customize_compiler_for_nvcc(self.compiler)
         build_ext.build_extensions(self)
 
+
 try:
     CUDA = locate_cuda()
     run_cuda_install = True
@@ -139,7 +140,7 @@ if run_cuda_install:
         # and not with gcc the implementation of this trick is in
         # customize_compiler()
         extra_compile_args={
-            "gcc": ["-std=c++11",],  # '-g'],
+            "gcc": ["-std=c++11"],  # '-g'],
             "nvcc": [
                 "-arch=sm_70",
                 "-gencode=arch=compute_30,code=sm_30",
@@ -162,7 +163,13 @@ if run_cuda_install:
                 # "-lineinfo",
             ],  # for debugging
         },
-        include_dirs=[numpy_include, CUDA["include"], "few/src", "inspiral/include", "/home/mlk667/.conda/envs/few_env/include/"],
+        include_dirs=[
+            numpy_include,
+            CUDA["include"],
+            "few/src",
+            "inspiral/include",
+            "/home/mlk667/.conda/envs/few_env/include/",
+        ],
     )
 
 NIT_ext = Extension(
@@ -180,17 +187,19 @@ NIT_ext = Extension(
     # we're only going to use certain compiler args with nvcc
     # and not with gcc the implementation of this trick is in
     # customize_compiler()
-    extra_compile_args={
-        "gcc": ["-std=c++11",],  # '-g'],
-    },
-    include_dirs=[numpy_include, "few/src", "inspiral/include", "/home/mlk667/.conda/envs/few_env/include/"],
+    extra_compile_args={"gcc": ["-std=c++11"]},  # '-g'],
+    include_dirs=[
+        numpy_include,
+        "few/src",
+        "inspiral/include",
+        "/home/mlk667/.conda/envs/few_env/include/",
+    ],
 )
 
 if run_cuda_install:
     extensions = [ext, NIT_ext]
 else:
     extensions = [NIT_ext]
-
 
 
 setup(
