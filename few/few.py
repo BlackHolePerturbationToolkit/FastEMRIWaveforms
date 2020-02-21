@@ -47,7 +47,7 @@ trans_dim1, trans_dim2 = transform_matrix.shape
 transform_matrix = transform_matrix.flatten()
 transform_factor = 1000.0
 
-traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")[:400]
+traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")
 input_len = len(traj)
 print(input_len)
 
@@ -129,7 +129,9 @@ check = few_class.run_nn(input_mat, input_len, p[0], e[0], Phi_phi, Phi_r, theta
 if args.time:
     st = time.perf_counter()
     for _ in range(args.time):
-        check = few_class.run_nn(input_mat, input_len, p[0], e[0], Phi_phi, Phi_r, theta, phi)
+        check = few_class.run_nn(
+            input_mat, input_len, p[0], e[0], Phi_phi, Phi_r, theta, phi
+        )
     et = time.perf_counter()
     print("time per:", (et - st) / args.time)
 

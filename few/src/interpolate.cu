@@ -232,3 +232,80 @@ void setup_interpolate(InterpContainer *d_interp_p, InterpContainer *d_interp_e,
   gpuErrchk(cudaFree(B));
 
 }
+
+void find_start_inds(int start_inds[], int unit_length[], fod *t_arr, fod delta_t, int length, int new_length)
+{
+
+  start_inds[0] = 0;
+  for (int i = 1;
+       i < length;
+       i += 1){
+
+          fod t = t_arr[i];
+
+          start_inds[i] = (int)std::ceil(t/delta_t);
+          unit_length[i-1] = start_inds[i] - start_inds[i-1];
+
+      }
+
+  start_inds[length -1] = new_length;
+  unit_length[length - 2] = start_inds[length -1] - start_inds[length -2];
+}
+
+__global__
+void do_interp(fod *p_out, fod *e_out, fod *Phi_phi_out, fod *Phi_r_out, InterpContainer *p_, InterpContainer *e_, InterpContainer *Phi_phi_, InterpContainer *Phi_r_,
+               fod delta_t, double start_t, int old_ind, int start_ind, int end_ind)
+{
+  fod t, x, x2, x3;
+  for (int i = start_ind + blockIdx.x * blockDim.x + threadIdx.x;
+       i < end_ind;
+       i += blockDim.x * gridDim.x){
+
+         t = delta_t*i;
+        x = t - start_t;
+        x2 = x*x;
+        x3 = x*x2;
+
+        p_out[i] = p_->y[i] + p_->c1[i]*x + p_->c2[i]*x2  + p_->c3[i]*x3;
+        e_out[i] = e_->y[i] + e_->c1[i]*x + e_->c2[i]*x2  + e_->c3[i]*x3;
+        Phi_phi_out[i] = Phi_phi_->y[i] + Phi_phi_->c1[i]*x + Phi_phi_->c2[i]*x2  + Phi_phi_->c3[i]*x3;
+        Phi_r_out[i] = Phi_r_->y[i] + Phi_r_->c1[i]*x + Phi_r_->c2[i]*x2  + Phi_r_->c3[i]*x3;
+
+  }
+}
+
+void perform_interp(fod *p_out, fod *e_out, fod *Phi_phi_out, fod *Phi_r_out,
+                    InterpContainer *d_interp_p, InterpContainer *d_interp_e, InterpContainer *d_interp_Phi_phi, InterpContainer *d_interp_Phi_r,
+                       fod *d_t, fod *h_t, int length, int new_length, fod delta_t)
+
+{
+
+  int start_inds[length];
+  int unit_length[length-1];
+
+  find_start_inds(start_inds, unit_length, h_t, delta_t, length, new_length);
+
+  cudaStream_t streams[length-1];
+
+  int NUM_THREADS = 128;
+  int num_blocks;
+  for (int i = 0; i < length-2; i++) {
+        cudaStreamCreate(&streams[i]);
+        num_blocks = std::ceil((unit_length[i] + NUM_THREADS -1)/NUM_THREADS);
+        //printf("%d %d %d %d\n", i, start_inds[i], unit_length[i], num_blocks);
+        if (num_blocks == 0) continue;
+        dim3 gridDim(num_blocks); //, num_teuk_modes);
+        // launch one worker kernel per stream
+        do_interp<<<num_blocks, NUM_THREADS, 0, streams[i]>>>(p_out, e_out, Phi_phi_out, Phi_r_out,
+                                                              d_interp_p, d_interp_e, d_interp_Phi_phi, d_interp_Phi_r,
+                                                              delta_t, h_t[i], i, start_inds[i], start_inds[i+1]);
+
+    }
+    cudaDeviceSynchronize();
+    gpuErrchk(cudaGetLastError());
+    for (int i = 0; i < length-2; i++) {
+          cudaStreamDestroy(streams[i]);
+
+      }
+
+}

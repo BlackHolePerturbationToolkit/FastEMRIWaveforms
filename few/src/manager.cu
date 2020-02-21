@@ -93,18 +93,27 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     gpuErrchk(cudaMalloc(&d_Phi_phi, max_input_len*sizeof(fod)));
     gpuErrchk(cudaMalloc(&d_Phi_r, max_input_len*sizeof(fod)));
 
+    gpuErrchk(cudaMalloc(&d_p, max_input_len*sizeof(fod)));
+    gpuErrchk(cudaMalloc(&d_e, max_input_len*sizeof(fod)));
+
     int complex_dim = (int)((float) dim2[num_layers - 1]/ 2.0);
     gpuErrchk(cudaMalloc(&d_nn_output_mat, complex_dim*max_input_len*sizeof(cuComplex)));
     gpuErrchk(cudaMalloc(&d_teuk_modes, trans_dim2*max_input_len*sizeof(cuComplex)));
     gpuErrchk(cudaMalloc(&d_waveform, max_input_len*sizeof(cuComplex)));
 }
 
+
+
+
+
 void FastEMRIWaveforms::run_nn(cmplx *waveform, fod *input_mat, int input_len, double p0, double e0, fod *Phi_phi, fod *Phi_r, fod theta, fod phi){
+
+    assert(input_len <= max_input_len);
 
     gpuErrchk(cudaMemcpy(d_C, input_mat, input_len*dim1[0]*sizeof(fod), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMemcpy(d_Phi_phi, Phi_phi, input_len*sizeof(fod), cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(d_Phi_r, Phi_r, input_len*sizeof(fod), cudaMemcpyHostToDevice));
+    //gpuErrchk(cudaMemcpy(d_Phi_phi, Phi_phi, input_len*sizeof(fod), cudaMemcpyHostToDevice));
+    //gpuErrchk(cudaMemcpy(d_Phi_r, Phi_r, input_len*sizeof(fod), cudaMemcpyHostToDevice));
 
     double t0 = 0.0;
 
@@ -161,6 +170,11 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, fod *input_mat, int input_len, d
 
     setup_interpolate(d_interp_p, d_interp_e, d_interp_Phi_phi, d_interp_Phi_r,
                            d_init_t, nit_vals.length);
+
+    fod delta_t = 10.0;
+    perform_interp(d_p, d_e, d_Phi_phi, d_Phi_r,
+                    d_interp_p, d_interp_e, d_interp_Phi_phi, d_interp_Phi_r,
+                    d_init_t, temp_t, nit_vals.length, input_len, delta_t);
 
     delete[] temp_t;
     delete[] temp_p;
@@ -235,6 +249,8 @@ FastEMRIWaveforms::~FastEMRIWaveforms()
     gpuErrchk(cudaFree(d_teuk_modes));
     gpuErrchk(cudaFree(d_Phi_phi));
     gpuErrchk(cudaFree(d_Phi_r));
+    gpuErrchk(cudaFree(d_p));
+    gpuErrchk(cudaFree(d_e));
     gpuErrchk(cudaFree(d_waveform));
     delete[] d_layers_matrix;
     delete[] d_layers_bias;

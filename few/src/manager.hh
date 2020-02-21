@@ -27,7 +27,7 @@ class FastEMRIWaveforms {
   int num_n, num_l_m;
   int *m_arr, *l_arr;
 
-  fod *d_C, *d_Phi_phi, *d_Phi_r;
+  fod *d_C, *d_Phi_phi, *d_Phi_r, *d_p, *d_e;
   cuComplex *d_nn_output_mat, *d_teuk_modes, *d_waveform;
 
 public:
