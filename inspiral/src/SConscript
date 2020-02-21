@@ -5,7 +5,7 @@ env['CXX']      = 'g++'
 env['CPPPATH']  = ['../include']
 env['LIBS']     = ['gsl' , 'gslcblas']
 env['CPPFLAGS'] = ['-std=c++11', '-O3']
- 
+
 sources = ['FluxInspiral.cc', 'Interpolant.cc']
 
 env.Program('../FluxInspiral', sources)

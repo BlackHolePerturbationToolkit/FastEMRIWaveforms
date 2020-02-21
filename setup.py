@@ -118,6 +118,8 @@ except AttributeError:
 ext = Extension(
     "FEW",
     sources=[
+        "inspiral/src/Interpolant.cc",
+        "inspiral/src/FluxInspiral.cc",
         "few/src/ylm.cpp",
         "few/src/elliptic.cu",
         "few/src/kernel.cu",
@@ -125,7 +127,7 @@ ext = Extension(
         "few/FastEMRIWaveforms.pyx",
     ],
     library_dirs=[CUDA["lib64"]],
-    libraries=["cudart", "cublas"],
+    libraries=["cudart", "cublas", "gsl", "gslcblas"],
     language="c++",
     runtime_library_dirs=[CUDA["lib64"]],
     # This syntax is specific to this build system
@@ -133,7 +135,7 @@ ext = Extension(
     # and not with gcc the implementation of this trick is in
     # customize_compiler()
     extra_compile_args={
-        "gcc": [],  # '-g'],
+        "gcc": ["-std=c++11",],  # '-g'],
         "nvcc": [
             "-arch=sm_70",
             "-gencode=arch=compute_30,code=sm_30",
@@ -156,7 +158,7 @@ ext = Extension(
             # "-lineinfo",
         ],  # for debugging
     },
-    include_dirs=[numpy_include, CUDA["include"], "few/src"],
+    include_dirs=[numpy_include, CUDA["include"], "few/src", "inspiral/include", "/home/mlk667/.conda/envs/few_env/include/"],
 )
 
 setup(

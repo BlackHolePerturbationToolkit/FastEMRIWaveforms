@@ -16,6 +16,7 @@ This class will get translated into python via cython
 #include "cuComplex.h"
 #include "elliptic.hh"
 #include "ylm.hh"
+#include "FluxInspiral.hh"
 
 using namespace std;
 
@@ -113,6 +114,17 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, fod *input_mat, int input_len, f
 
     gpuErrchk(cudaMemcpy(d_Phi_phi, Phi_phi, input_len*sizeof(fod), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_Phi_r, Phi_r, input_len*sizeof(fod), cudaMemcpyHostToDevice));
+
+    double p0 = input_mat[0];
+    double e0 = input_mat[input_len];
+    double t0 = 0.0;
+
+    NITHolder nit_vals = run_NIT(t0, p0, e0);
+
+    for (int i=0; i<nit_vals.length; i++){
+  			printf("%e %e %e, %e, %e\n", nit_vals.t_arr[i], nit_vals.p_arr[i], nit_vals.e_arr[i], nit_vals.Phi_phi_arr[i], nit_vals.Phi_r_arr[i]);
+  	}
+  	printf("length is %d\n", nit_vals.length);
 
   int l,m;
   for (int i=0; i<num_l_m; i+=1){

@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#ifndef __INTERPOLANT_H__
+#define __INTERPOLANT_H__
+
 #include <vector>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_interp2d.h>
@@ -28,20 +31,22 @@ class Interpolant{
 		// 1D interpolation
 		Interpolant(Vector x, Vector f);
 		double eval(double x);
-		
+
 		// 2D interpolation
 		Interpolant(Vector x, Vector y, Vector f);
 		double eval(double x, double y);
-		
+
 		// Destructor
 		~Interpolant();
-		
-		
+
+
 	private:
 		int interp_type;	// Set to 1 for 1D interpolation and 2 for 2D interpolation
-		
+
 		gsl_spline *spline;
 		gsl_spline2d *spline2d;
 		gsl_interp_accel *xacc;
 		gsl_interp_accel *yacc;
 };
+
+#endif // __INTERPOLANT_H__
