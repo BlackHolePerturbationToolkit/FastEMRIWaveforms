@@ -131,8 +131,6 @@ void load_and_interpolate_flux_data(struct interp_params *interps){
 NITHolder run_NIT(double t0, double p0, double e0){
 	NITHolder nit_out(t0, p0, e0);
 
-		printf("here: %e %e %e\n", t0, p0, e0);
-
 	struct interp_params interps;
 	//Set the mass ratio
 	interps.epsilon = 1e-3;
@@ -167,7 +165,7 @@ NITHolder run_NIT(double t0, double p0, double e0){
 				}
 		// Stop the inspiral when close to the separatrix
 		if(y[0] - 6 -2*y[1] < 0.1){
-			cout << "# Separatrix reached: exiting inspiral" << endl;
+			//cout << "# Separatrix reached: exiting inspiral" << endl;
 			break;
 		}
 

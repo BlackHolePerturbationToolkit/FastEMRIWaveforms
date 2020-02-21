@@ -9,7 +9,7 @@ cdef extern from "src/manager.hh":
              np.float32_t *, np.float32_t *,
              np.complex64_t*, int, int, float, int, np.int32_t*, np.int32_t*, np.int32_t*, int, int num_l_m_, int num_n_)
 
-        void run_nn(np.complex64_t*, np.float32_t *, int, np.float32_t *, np.float32_t *, np.float32_t theta, np.float32_t phi)
+        void run_nn(np.complex64_t*, np.float32_t *, int, np.float64_t p0, np.float64_t e0, np.float32_t *, np.float32_t *, np.float32_t theta, np.float32_t phi)
 
 cdef class FastEMRIWaveforms:
     cdef FastEMRIWaveformsWrap* g
@@ -36,6 +36,7 @@ cdef class FastEMRIWaveforms:
                             trans_dim1, trans_dim2, np.float32(transform_factor), break_index, &l[0], &m[0], &n[0], max_input_len, num_l_m, num_n)
 
     def run_nn(self, np.ndarray[ndim=1, dtype=np.float32_t] input_mat, input_len,
+                     p0, e0,
                      np.ndarray[ndim=1, dtype=np.float32_t] Phi_phi,
                      np.ndarray[ndim=1, dtype=np.float32_t] Phi_r,
                      theta,
@@ -43,5 +44,5 @@ cdef class FastEMRIWaveforms:
 
         cdef np.ndarray[ndim=1, dtype=np.complex64_t] waveform = np.zeros(input_len, dtype=np.complex64)
 
-        self.g.run_nn(&waveform[0], &input_mat[0], input_len, &Phi_phi[0], &Phi_r[0], theta, phi)
+        self.g.run_nn(&waveform[0], &input_mat[0], input_len, p0, e0, &Phi_phi[0], &Phi_r[0], theta, phi)
         return waveform

@@ -39,7 +39,7 @@ public:
     int *d_l, int *m_, int *n_,
     int max_input_len, int num_l_m_, int num_n_); // constructor (copies to GPU)
 
-  void run_nn(cmplx *waveform, fod *input_mat, int input_len, fod *Phi_phi, fod *Phi_r, fod theta, fod phi);
+  void run_nn(cmplx *waveform, fod *input_mat, int input_len, double p0, double e0, fod *Phi_phi, fod *Phi_r, fod theta, fod phi);
 
   ~FastEMRIWaveforms(); // destructor
 };
