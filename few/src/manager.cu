@@ -17,20 +17,11 @@ This class will get translated into python via cython
 #include "elliptic.hh"
 #include "ylm.hh"
 #include "FluxInspiral.hh"
+#include "interpolate.hh"
 
 using namespace std;
 
 #define NUM_THREADS 256
-
-#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
-{
-   if (code != cudaSuccess)
-   {
-      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-      if (abort) exit(code);
-   }
-}
 
 FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int *dim1_, int *dim2_,
     fod *flatten_weight_matrix, fod *flattened_bias_matrix,
@@ -150,12 +141,32 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, fod *input_mat, int input_len, d
     gpuErrchk(cudaMemcpy(d_init_Phi_phi, temp_Phi_phi, nit_vals.length*sizeof(fod), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_init_Phi_r, temp_Phi_r, nit_vals.length*sizeof(fod), cudaMemcpyHostToDevice));
 
+    InterpContainer *d_interp_p, *d_interp_e, *d_interp_Phi_phi, *d_interp_Phi_r;
+    InterpContainer *h_interp_p, *h_interp_e, *h_interp_Phi_phi, *h_interp_Phi_r;
+
+    gpuErrchk(cudaMalloc(&d_interp_p, sizeof(InterpContainer)));
+    gpuErrchk(cudaMalloc(&d_interp_e, sizeof(InterpContainer)));
+    gpuErrchk(cudaMalloc(&d_interp_Phi_phi, sizeof(InterpContainer)));
+    gpuErrchk(cudaMalloc(&d_interp_Phi_r, sizeof(InterpContainer)));
+
+    h_interp_p = new InterpContainer;
+    h_interp_e = new InterpContainer;
+    h_interp_Phi_phi = new InterpContainer;
+    h_interp_Phi_r = new InterpContainer;
+
+    create_interp_containers(d_interp_p, h_interp_p, temp_p, nit_vals.length);
+    create_interp_containers(d_interp_e, h_interp_e, temp_e, nit_vals.length);
+    create_interp_containers(d_interp_Phi_phi, h_interp_Phi_phi, temp_Phi_phi, nit_vals.length);
+    create_interp_containers(d_interp_Phi_r, h_interp_Phi_r, temp_Phi_r, nit_vals.length);
+
+    setup_interpolate(d_interp_p, d_interp_e, d_interp_Phi_phi, d_interp_Phi_r,
+                           d_init_t, nit_vals.length);
+
     delete[] temp_t;
     delete[] temp_p;
     delete[] temp_e;
     delete[] temp_Phi_phi;
     delete[] temp_Phi_r;
-
 
   int l,m;
   for (int i=0; i<num_l_m; i+=1){
@@ -188,6 +199,23 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, fod *input_mat, int input_len, d
     gpuErrchk(cudaFree(d_init_e));
     gpuErrchk(cudaFree(d_init_Phi_phi));
     gpuErrchk(cudaFree(d_init_Phi_r));
+
+    destroy_interp_containers(d_interp_p, h_interp_p);
+    destroy_interp_containers(d_interp_e, h_interp_e);
+    destroy_interp_containers(d_interp_Phi_phi, h_interp_Phi_phi);
+    destroy_interp_containers(d_interp_Phi_r, h_interp_Phi_r);
+
+
+    gpuErrchk(cudaFree(d_interp_p));
+    gpuErrchk(cudaFree(d_interp_e));
+    gpuErrchk(cudaFree(d_interp_Phi_phi));
+    gpuErrchk(cudaFree(d_interp_Phi_r));
+
+    delete h_interp_p;
+    delete h_interp_e;
+    delete h_interp_Phi_phi;
+    delete h_interp_Phi_r;
+
 }
 
 

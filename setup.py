@@ -128,11 +128,12 @@ if run_cuda_install:
             "few/src/ylm.cpp",
             "few/src/elliptic.cu",
             "few/src/kernel.cu",
+            "few/src/interpolate.cu",
             "few/src/manager.cu",
             "few/FastEMRIWaveforms.pyx",
         ],
         library_dirs=[CUDA["lib64"]],
-        libraries=["cudart", "cublas", "gsl", "gslcblas"],
+        libraries=["cudart", "cublas", "cusparse", "gsl", "gslcblas"],
         language="c++",
         runtime_library_dirs=[CUDA["lib64"]],
         # This syntax is specific to this build system
