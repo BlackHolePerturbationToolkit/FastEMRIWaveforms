@@ -124,34 +124,7 @@ void transform_output(cuComplex *d_teuk_modes, cuComplex *d_transform_matrix, cu
 
 }
 
-/*#if __CUDA_ARCH__ < 600
-__device__ float atomicAdd(float* address, float val)
-{
-    unsigned long long int* address_as_ull =
-                              (unsigned long long int*)address;
-    unsigned long long int old = *address_as_ull, assumed;
 
-    do {
-        assumed = old;
-        old = atomicCAS(address_as_ull, assumed,
-                        __float_as_longlong(val +
-                               __longlong_as_float(assumed)));
-
-    // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
-    } while (assumed != old);
-
-    return __longlong_as_float(old);
-}
-#endif*/
-
-__device__ void atomicAddComplex(cuComplex* a, cuComplex b){
-  //transform the addresses of real and imag. parts to float pointers
-  float *x = (float*)a;
-  float *y = x+1;
-  //use atomicAdd for float variables
-  atomicAdd(x, cuCrealf(b));
-  atomicAdd(y, cuCimagf(b));
-}
 
 
 __host__ __device__ cuComplex complex_exp(cuComplex arg){
@@ -172,6 +145,33 @@ cuComplex get_mode_value(cuComplex teuk_mode, fod Phi_phi, fod Phi_r, int m, int
     return out;
 }
 
+__device__ double atomicAddDouble(double* address, double val)
+{
+    unsigned long long* address_as_ull =
+                              (unsigned long long*)address;
+    unsigned long long old = *address_as_ull, assumed;
+
+    do {
+        assumed = old;
+        old = atomicCAS(address_as_ull, assumed,
+                        __double_as_longlong(val +
+                               __longlong_as_double(assumed)));
+
+    // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
+    } while (assumed != old);
+
+    return __longlong_as_double(old);
+}
+
+__device__ void atomicAddComplex(cuComplex* a, cuComplex b){
+  //transform the addresses of real and imag. parts to double pointers
+  double *x = (double*)a;
+  double *y = x+1;
+  //use atomicAdd for double variables
+  atomicAddDouble(x, cuCrealf(b));
+  atomicAddDouble(y, cuCimagf(b));
+}
+
 __global__
 void make_waveform(cuComplex *waveform, cuComplex *teuk_modes, fod *Phi_phi, fod *Phi_r,
               int *m, int *n, int input_len, int num_teuk_modes, cuComplex *Ylms, int num_n){
@@ -180,23 +180,24 @@ void make_waveform(cuComplex *waveform, cuComplex *teuk_modes, fod *Phi_phi, fod
     cuComplex mode_val, Ylm;
     float Phi_phi_i, Phi_r_i;
     int lm_i;
+
     for (int i = blockIdx.x * blockDim.x + threadIdx.x;
          i < input_len;
          i += blockDim.x * gridDim.x){
 
      Phi_phi_i = Phi_phi[i];
      Phi_r_i = Phi_r[i];
-     for (int j = 0;
+     for (int j = blockIdx.y * blockDim.y + threadIdx.y;
           j < num_teuk_modes;
-          j += 1){
+          j += blockDim.y * gridDim.y){
 
             lm_i = j / num_n;
             Ylm = Ylms[lm_i];
             //if (i==0) printf("%d %d, %lf + %lfi\n", m[j], n[j], cuCrealf(Ylm), cuCimagf(Ylm));
             mode_val = get_mode_value(teuk_modes[j*input_len + i], Phi_phi_i, Phi_r_i, m[j], n[j], Ylm);
-            trans = cuCaddf(trans, mode_val);
+            atomicAddComplex(&waveform[i], mode_val);
+
     }
-    waveform[i] = trans;
   }
 }
 
@@ -204,7 +205,7 @@ void make_waveform(cuComplex *waveform, cuComplex *teuk_modes, fod *Phi_phi, fod
 void get_waveform(cuComplex *d_waveform, cuComplex *d_teuk_modes, fod *d_Phi_phi, fod *d_Phi_r,
               int *d_m, int *d_n, int input_len, int num_teuk_modes, cuComplex *d_Ylms, int num_n){
       int num_blocks = std::ceil((input_len + NUM_THREADS -1)/NUM_THREADS);
-      dim3 gridDim(num_blocks); //, num_teuk_modes);
+      dim3 gridDim(num_blocks, num_teuk_modes); //, num_teuk_modes);
       make_waveform<<<gridDim, NUM_THREADS>>>(d_waveform, d_teuk_modes, d_Phi_phi, d_Phi_r, d_m, d_n, input_len, num_teuk_modes, d_Ylms, num_n);
       cudaDeviceSynchronize();
       gpuErrchk_here(cudaGetLastError());
