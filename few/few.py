@@ -104,6 +104,8 @@ input_mat = np.concatenate([p, e]).astype(np.float32)
 
 break_index = 80
 
+delta_t = 10.0
+
 time_batch_size = 100
 few_class = FastEMRIWaveforms(
     time_batch_size,
@@ -123,15 +125,14 @@ few_class = FastEMRIWaveforms(
     num_l_m,
     num_n,
     input_len,
+    delta_t,
 )
 
-check = few_class.run_nn(input_mat, input_len, p[0], e[0], Phi_phi, Phi_r, theta, phi)
+check = few_class.run_nn(p[0], e[0], theta, phi)
 if args.time:
     st = time.perf_counter()
     for _ in range(args.time):
-        check = few_class.run_nn(
-            input_mat, input_len, p[0], e[0], Phi_phi, Phi_r, theta, phi
-        )
+        check = few_class.run_nn(p[0], e[0], theta, phi)
     et = time.perf_counter()
     print("time per:", (et - st) / args.time)
 
