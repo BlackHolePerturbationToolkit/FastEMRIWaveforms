@@ -128,11 +128,13 @@ few_class = FastEMRIWaveforms(
     delta_t,
 )
 
-check = few_class.run_nn(p[0], e[0], theta, phi)
+p0 = 16.5
+e0 = 0.4
+check = few_class.run_nn(p0, e0, theta, phi)
 if args.time:
     st = time.perf_counter()
     for _ in range(args.time):
-        check = few_class.run_nn(p[0], e[0], theta, phi)
+        check = few_class.run_nn(p0, e0, theta, phi)
     et = time.perf_counter()
     print("time per:", (et - st) / args.time)
 

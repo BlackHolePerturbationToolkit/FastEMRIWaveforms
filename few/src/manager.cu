@@ -171,14 +171,14 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, double p0, double e0, fod theta,
 
     int num_points = std::floor(temp_t[nit_vals.length-1]/delta_t);
     *out_len = num_points;
-    //printf("%d num_points\n", num_points);
+    //printf("%d num_points, %d max\n", num_points, max_input_len);
     assert(num_points <= max_input_len);
     perform_interp(d_p, d_e, d_Phi_phi, d_Phi_r,
                     d_interp_p, d_interp_e, d_interp_Phi_phi, d_interp_Phi_r,
                     d_init_t, temp_t, nit_vals.length, num_points, delta_t);
 
     gpuErrchk(cudaMemcpy(d_C, d_p, num_points*sizeof(fod), cudaMemcpyDeviceToDevice));
-    gpuErrchk(cudaMemcpy(&d_C[num_points], d_p, num_points*sizeof(fod), cudaMemcpyDeviceToDevice));
+    gpuErrchk(cudaMemcpy(&d_C[num_points], d_e, num_points*sizeof(fod), cudaMemcpyDeviceToDevice));
 
     ellpe_test(d_C, num_points);
 
