@@ -266,10 +266,10 @@ void do_interp(fod *p_out, fod *e_out, fod *Phi_phi_out, fod *Phi_r_out, InterpC
         x2 = x*x;
         x3 = x*x2;
 
-        p_out[i] = p_->y[i] + p_->c1[i]*x + p_->c2[i]*x2  + p_->c3[i]*x3;
-        e_out[i] = e_->y[i] + e_->c1[i]*x + e_->c2[i]*x2  + e_->c3[i]*x3;
-        Phi_phi_out[i] = Phi_phi_->y[i] + Phi_phi_->c1[i]*x + Phi_phi_->c2[i]*x2  + Phi_phi_->c3[i]*x3;
-        Phi_r_out[i] = Phi_r_->y[i] + Phi_r_->c1[i]*x + Phi_r_->c2[i]*x2  + Phi_r_->c3[i]*x3;
+        p_out[i] = p_->y[old_ind] + p_->c1[old_ind]*x + p_->c2[old_ind]*x2  + p_->c3[old_ind]*x3;
+        e_out[i] = e_->y[old_ind] + e_->c1[old_ind]*x + e_->c2[old_ind]*x2  + e_->c3[old_ind]*x3;
+        Phi_phi_out[i] = Phi_phi_->y[old_ind] + Phi_phi_->c1[old_ind]*x + Phi_phi_->c2[old_ind]*x2  + Phi_phi_->c3[old_ind]*x3;
+        Phi_r_out[i] = Phi_r_->y[old_ind] + Phi_r_->c1[old_ind]*x + Phi_r_->c2[old_ind]*x2  + Phi_r_->c3[old_ind]*x3;
 
   }
 }
@@ -292,7 +292,7 @@ void perform_interp(fod *p_out, fod *e_out, fod *Phi_phi_out, fod *Phi_r_out,
   for (int i = 0; i < length-2; i++) {
         cudaStreamCreate(&streams[i]);
         num_blocks = std::ceil((unit_length[i] + NUM_THREADS -1)/NUM_THREADS);
-        //printf("%d %d %d %d\n", i, start_inds[i], unit_length[i], num_blocks);
+        //printf("%d %d %d %d, %d %d\n", i, start_inds[i], unit_length[i], num_blocks, length, new_length);
         if (num_blocks == 0) continue;
         dim3 gridDim(num_blocks); //, num_teuk_modes);
         // launch one worker kernel per stream
