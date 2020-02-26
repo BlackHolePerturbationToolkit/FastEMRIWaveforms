@@ -3,9 +3,6 @@
 
 #include <stdlib.h>
 #include <complex>
-#ifdef __CUDACC__
-#include "cusparse.h"
-#endif
 
 #define PI_2 1.57079632679
 #define PI 3.141592653589793

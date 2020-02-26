@@ -28,7 +28,8 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     cmplx*transform_matrix, int trans_dim1_, int trans_dim2_, fod transform_factor_,
     int break_index_,
     int *l_, int *m_, int *n_,
-    int max_input_len_, int num_l_m_, int num_n_, fod delta_t_)
+    int max_input_len_, int num_l_m_, int num_n_, fod delta_t_,
+    int max_init_len_)
 {
     max_input_len = max_input_len_;
     time_batch_size = time_batch_size_;
@@ -47,6 +48,7 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
 
     l_arr = l_;
     m_arr = m_;
+    max_init_len = max_init_len_;
 
     num_teuk_modes = trans_dim2;
 
@@ -102,6 +104,42 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     gpuErrchk(cudaMalloc(&d_nn_output_mat, complex_dim*max_input_len*sizeof(cuComplex)));
     gpuErrchk(cudaMalloc(&d_teuk_modes, trans_dim2*max_input_len*sizeof(cuComplex)));
     gpuErrchk(cudaMalloc(&d_waveform, max_input_len*sizeof(cuComplex)));
+
+    //printf("length is %d\n", nit_vals.length);
+    temp_t = new fod[max_init_len];
+    temp_p = new fod[max_init_len];
+    temp_e = new fod[max_init_len];
+    temp_Phi_phi = new fod[max_init_len];
+    temp_Phi_r = new fod[max_init_len];
+
+    gpuErrchk(cudaMalloc(&d_init_t, max_init_len*sizeof(fod)));
+    gpuErrchk(cudaMalloc(&d_init_p, max_init_len*sizeof(fod)));
+    gpuErrchk(cudaMalloc(&d_init_e, max_init_len*sizeof(fod)));
+    gpuErrchk(cudaMalloc(&d_init_Phi_phi, max_init_len*sizeof(fod)));
+    gpuErrchk(cudaMalloc(&d_init_Phi_r, max_init_len*sizeof(fod)));
+
+    gpuErrchk(cudaMalloc(&d_interp_p, sizeof(InterpContainer)));
+    gpuErrchk(cudaMalloc(&d_interp_e, sizeof(InterpContainer)));
+    gpuErrchk(cudaMalloc(&d_interp_Phi_phi, sizeof(InterpContainer)));
+    gpuErrchk(cudaMalloc(&d_interp_Phi_r, sizeof(InterpContainer)));
+
+    h_interp_p = new InterpContainer;
+    h_interp_e = new InterpContainer;
+    h_interp_Phi_phi = new InterpContainer;
+    h_interp_Phi_r = new InterpContainer;
+
+    h_interp_modes = new InterpContainer[num_teuk_modes*2];
+    gpuErrchk(cudaMalloc(&d_interp_modes, num_teuk_modes*2*sizeof(InterpContainer)));
+
+    create_interp_containers(d_interp_p, h_interp_p, max_init_len);
+    create_interp_containers(d_interp_e, h_interp_e, max_init_len);
+    create_interp_containers(d_interp_Phi_phi, h_interp_Phi_phi, max_init_len);
+    create_interp_containers(d_interp_Phi_r, h_interp_Phi_r, max_init_len);
+
+    create_mode_interp_containers(d_interp_modes, h_interp_modes, max_init_len, num_teuk_modes);
+
+    interp = new InterpClass(num_teuk_modes, max_init_len);
+
 }
 
 
@@ -117,15 +155,6 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, double p0, double e0, fod theta,
 
     NITHolder nit_vals = run_NIT(t0, p0, e0);
 
-  	//printf("length is %d\n", nit_vals.length);
-
-    fod *temp_t, *temp_p, *temp_e, *temp_Phi_phi, *temp_Phi_r;
-    temp_t = new fod[nit_vals.length];
-    temp_p = new fod[nit_vals.length];
-    temp_e = new fod[nit_vals.length];
-    temp_Phi_phi = new fod[nit_vals.length];
-    temp_Phi_r = new fod[nit_vals.length];
-
     for (int i=0; i<nit_vals.length; i++){
         //printf("%e %e %e, %e, %e\n", nit_vals.t_arr[i], nit_vals.p_arr[i], nit_vals.e_arr[i], nit_vals.Phi_phi_arr[i], nit_vals.Phi_r_arr[i]);
         temp_t[i] = nit_vals.t_arr[i];
@@ -135,41 +164,22 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, double p0, double e0, fod theta,
         temp_Phi_r[i] = nit_vals.Phi_r_arr[i];
     }
 
-    fod *d_init_t, *d_init_p, *d_init_e, *d_init_Phi_phi, *d_init_Phi_r, *d_input_mat;
-    gpuErrchk(cudaMalloc(&d_init_t, nit_vals.length*sizeof(fod)));
-    gpuErrchk(cudaMalloc(&d_init_p, nit_vals.length*sizeof(fod)));
-    gpuErrchk(cudaMalloc(&d_init_e, nit_vals.length*sizeof(fod)));
-    gpuErrchk(cudaMalloc(&d_init_Phi_phi, nit_vals.length*sizeof(fod)));
-    gpuErrchk(cudaMalloc(&d_init_Phi_r, nit_vals.length*sizeof(fod)));
-
     gpuErrchk(cudaMemcpy(d_init_t, temp_t, nit_vals.length*sizeof(fod), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_init_p, temp_p, nit_vals.length*sizeof(fod), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_init_e, temp_e, nit_vals.length*sizeof(fod), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_init_Phi_phi, temp_Phi_phi, nit_vals.length*sizeof(fod), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_init_Phi_r, temp_Phi_r, nit_vals.length*sizeof(fod), cudaMemcpyHostToDevice));
 
-    InterpContainer *d_interp_p, *d_interp_e, *d_interp_Phi_phi, *d_interp_Phi_r;
-    InterpContainer *h_interp_p, *h_interp_e, *h_interp_Phi_phi, *h_interp_Phi_r;
-
-    gpuErrchk(cudaMalloc(&d_interp_p, sizeof(InterpContainer)));
-    gpuErrchk(cudaMalloc(&d_interp_e, sizeof(InterpContainer)));
-    gpuErrchk(cudaMalloc(&d_interp_Phi_phi, sizeof(InterpContainer)));
-    gpuErrchk(cudaMalloc(&d_interp_Phi_r, sizeof(InterpContainer)));
-
-    h_interp_p = new InterpContainer;
-    h_interp_e = new InterpContainer;
-    h_interp_Phi_phi = new InterpContainer;
-    h_interp_Phi_r = new InterpContainer;
-
-    create_interp_containers(d_interp_p, h_interp_p, temp_p, nit_vals.length);
-    create_interp_containers(d_interp_e, h_interp_e, temp_e, nit_vals.length);
-    create_interp_containers(d_interp_Phi_phi, h_interp_Phi_phi, temp_Phi_phi, nit_vals.length);
-    create_interp_containers(d_interp_Phi_r, h_interp_Phi_r, temp_Phi_r, nit_vals.length);
+    gpuErrchk(cudaMemcpy(h_interp_p->y, temp_p, nit_vals.length*sizeof(fod), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(h_interp_e->y, temp_e, nit_vals.length*sizeof(fod), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(h_interp_Phi_phi->y, temp_Phi_phi, nit_vals.length*sizeof(fod), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(h_interp_Phi_r->y, temp_Phi_r, nit_vals.length*sizeof(fod), cudaMemcpyHostToDevice));
 
     int num_points = std::floor(temp_t[nit_vals.length-1]/delta_t);
     *out_len = num_points;
     //printf("%d num_points, %d max\n", num_points, max_input_len);
     assert(num_points <= max_input_len);
+    assert(nit_vals.length <= max_init_len);
 
     gpuErrchk(cudaMemcpy(d_C, d_init_p, nit_vals.length*sizeof(fod), cudaMemcpyDeviceToDevice));
     gpuErrchk(cudaMemcpy(&d_C[nit_vals.length], d_init_e, nit_vals.length*sizeof(fod), cudaMemcpyDeviceToDevice));
@@ -188,21 +198,15 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, double p0, double e0, fod theta,
   gpuErrchk(cudaMemcpy(d_Ylms, Ylms, num_l_m*sizeof(cuComplex), cudaMemcpyHostToDevice));
 
 
-    //gpuErrchk(cudaMemcpy(d_waveform, waveform, input_len*sizeof(cuComplex), cudaMemcpyHostToDevice));
-
     for (int layer_i=0; layer_i<num_layers; layer_i++){
       run_layer(d_C, d_layers_matrix[layer_i], d_layers_bias[layer_i], dim1[layer_i], dim2[layer_i], nit_vals.length);
     }
 
     transform_output(d_teuk_modes, d_transform_matrix, d_nn_output_mat, d_C, nit_vals.length, break_index, d_transform_factor_inv, trans_dim2);
 
-    InterpContainer *h_interp_modes = new InterpContainer[num_teuk_modes*2];
-    InterpContainer *d_interp_modes;
-    gpuErrchk(cudaMalloc(&d_interp_modes, num_teuk_modes*2*sizeof(InterpContainer)));
+    fill_complex_y_vals(d_interp_modes, d_teuk_modes, nit_vals.length, num_teuk_modes);
 
-    create_mode_interp_containers(d_interp_modes, h_interp_modes, d_teuk_modes, nit_vals.length, num_teuk_modes);
-
-    setup_interpolate(d_interp_p, d_interp_e, d_interp_Phi_phi, d_interp_Phi_r,
+    interp->setup_interpolate(d_interp_p, d_interp_e, d_interp_Phi_phi, d_interp_Phi_r,
                       d_interp_modes, num_teuk_modes,
                            d_init_t, nit_vals.length);
 
@@ -212,39 +216,6 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, double p0, double e0, fod theta,
                   delta_t, temp_t);
 
     //gpuErrchk(cudaMemcpy(waveform, d_waveform, num_points*sizeof(cuComplex), cudaMemcpyDeviceToHost));
-
-    delete[] temp_t;
-    delete[] temp_p;
-    delete[] temp_e;
-    delete[] temp_Phi_phi;
-    delete[] temp_Phi_r;
-
-    gpuErrchk(cudaFree(d_init_t));
-    gpuErrchk(cudaFree(d_init_p));
-    gpuErrchk(cudaFree(d_init_e));
-    gpuErrchk(cudaFree(d_init_Phi_phi));
-    gpuErrchk(cudaFree(d_init_Phi_r));
-
-    destroy_interp_containers(d_interp_p, h_interp_p);
-    destroy_interp_containers(d_interp_e, h_interp_e);
-    destroy_interp_containers(d_interp_Phi_phi, h_interp_Phi_phi);
-    destroy_interp_containers(d_interp_Phi_r, h_interp_Phi_r);
-
-
-    gpuErrchk(cudaFree(d_interp_p));
-    gpuErrchk(cudaFree(d_interp_e));
-    gpuErrchk(cudaFree(d_interp_Phi_phi));
-    gpuErrchk(cudaFree(d_interp_Phi_r));
-
-    delete h_interp_p;
-    delete h_interp_e;
-    delete h_interp_Phi_phi;
-    delete h_interp_Phi_r;
-
-    destroy_mode_interp_containers(d_interp_modes, h_interp_modes, num_teuk_modes);
-    gpuErrchk(cudaFree(d_interp_modes));
-    delete[] h_interp_modes;
-
 }
 
 
@@ -270,4 +241,38 @@ FastEMRIWaveforms::~FastEMRIWaveforms()
     delete[] d_layers_matrix;
     delete[] d_layers_bias;
     delete[] Ylms;
+
+    delete[] temp_t;
+    delete[] temp_p;
+    delete[] temp_e;
+    delete[] temp_Phi_phi;
+    delete[] temp_Phi_r;
+
+    destroy_interp_containers(d_interp_p, h_interp_p);
+    destroy_interp_containers(d_interp_e, h_interp_e);
+    destroy_interp_containers(d_interp_Phi_phi, h_interp_Phi_phi);
+    destroy_interp_containers(d_interp_Phi_r, h_interp_Phi_r);
+
+    gpuErrchk(cudaFree(d_init_t));
+    gpuErrchk(cudaFree(d_init_p));
+    gpuErrchk(cudaFree(d_init_e));
+    gpuErrchk(cudaFree(d_init_Phi_phi));
+    gpuErrchk(cudaFree(d_init_Phi_r));
+
+    gpuErrchk(cudaFree(d_interp_p));
+    gpuErrchk(cudaFree(d_interp_e));
+    gpuErrchk(cudaFree(d_interp_Phi_phi));
+    gpuErrchk(cudaFree(d_interp_Phi_r));
+
+    delete h_interp_p;
+    delete h_interp_e;
+    delete h_interp_Phi_phi;
+    delete h_interp_Phi_r;
+
+    destroy_mode_interp_containers(d_interp_modes, h_interp_modes, num_teuk_modes);
+
+    gpuErrchk(cudaFree(d_interp_modes));
+    delete[] h_interp_modes;
+
+    delete interp;
 }

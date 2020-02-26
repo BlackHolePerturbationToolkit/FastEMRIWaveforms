@@ -1,7 +1,8 @@
 #include "global.h"
 #include "interpolate.hh"
+#include "cusparse.h"
 
-void create_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, fod *y, int length)
+void create_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int length)
 {
 
 
@@ -9,8 +10,6 @@ void create_interp_containers(InterpContainer *d_interp, InterpContainer *h_inte
   gpuErrchk(cudaMalloc(&h_interp->c1, length*sizeof(fod)-1));
   gpuErrchk(cudaMalloc(&h_interp->c2, length*sizeof(fod)-1));
   gpuErrchk(cudaMalloc(&h_interp->c3, length*sizeof(fod)-1));
-
-  gpuErrchk(cudaMemcpy(h_interp->y, y, length*sizeof(fod), cudaMemcpyHostToDevice));
 
   gpuErrchk(cudaMemcpy(d_interp, h_interp, sizeof(InterpContainer), cudaMemcpyHostToDevice));
 
@@ -26,8 +25,36 @@ void destroy_interp_containers(InterpContainer *d_interp, InterpContainer *h_int
 
 }
 
+
+void create_mode_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int length, int num_modes)
+{
+  // TODO: openmp
+  for (int i=0; i<num_modes*2; i++){
+      gpuErrchk(cudaMalloc(&(h_interp[i].y), length*sizeof(fod)));
+      gpuErrchk(cudaMalloc(&(h_interp[i].c1), length*sizeof(fod)-1));
+      gpuErrchk(cudaMalloc(&(h_interp[i].c2), length*sizeof(fod)-1));
+      gpuErrchk(cudaMalloc(&(h_interp[i].c3), length*sizeof(fod)-1));
+
+      //gpuErrchk(cudaMemcpy(h_interp[i].y, y, length*sizeof(fod), cudaMemcpyHostToDevice));
+  }
+  gpuErrchk(cudaMemcpy(d_interp, h_interp, num_modes*2*sizeof(InterpContainer), cudaMemcpyHostToDevice));
+
+}
+
+void destroy_mode_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int num_modes)
+{
+  // TODO: openmp
+  for (int i=0; i<num_modes*2; i++){
+      gpuErrchk(cudaFree(h_interp[i].y));
+      gpuErrchk(cudaFree(h_interp[i].c1));
+      gpuErrchk(cudaFree(h_interp[i].c2));
+      gpuErrchk(cudaFree(h_interp[i].c3));
+  }
+}
+
+
 __global__
-void fill_complex_y_vals(InterpContainer *modes, cuComplex *y, int length, int num_modes)
+void kernel_fill_complex_y_vals(InterpContainer *modes, cuComplex *y, int length, int num_modes)
 {
 
   cuComplex trans;
@@ -47,37 +74,17 @@ void fill_complex_y_vals(InterpContainer *modes, cuComplex *y, int length, int n
   }
 }
 
-void create_mode_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, cuComplex *y, int length, int num_modes)
-{
-  // TODO: openmp
-  for (int i=0; i<num_modes*2; i++){
-      gpuErrchk(cudaMalloc(&(h_interp[i].y), length*sizeof(fod)));
-      gpuErrchk(cudaMalloc(&(h_interp[i].c1), length*sizeof(fod)-1));
-      gpuErrchk(cudaMalloc(&(h_interp[i].c2), length*sizeof(fod)-1));
-      gpuErrchk(cudaMalloc(&(h_interp[i].c3), length*sizeof(fod)-1));
 
-      //gpuErrchk(cudaMemcpy(h_interp[i].y, y, length*sizeof(fod), cudaMemcpyHostToDevice));
-  }
-  gpuErrchk(cudaMemcpy(d_interp, h_interp, num_modes*2*sizeof(InterpContainer), cudaMemcpyHostToDevice));
+void fill_complex_y_vals(InterpContainer *d_interp, cuComplex *y, int length, int num_modes)
+{
 
   int NUM_THREADS = 256;
   int num_blocks = std::ceil((num_modes + NUM_THREADS -1)/NUM_THREADS);
   dim3 gridDim(num_blocks, length); //, num_teuk_modes);
-  fill_complex_y_vals<<<gridDim, NUM_THREADS>>>(d_interp, y, length, num_modes);
+  kernel_fill_complex_y_vals<<<gridDim, NUM_THREADS>>>(d_interp, y, length, num_modes);
   cudaDeviceSynchronize();
   gpuErrchk(cudaGetLastError());
 
-}
-
-void destroy_mode_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int num_modes)
-{
-  // TODO: openmp
-  for (int i=0; i<num_modes*2; i++){
-      gpuErrchk(cudaFree(h_interp[i].y));
-      gpuErrchk(cudaFree(h_interp[i].c1));
-      gpuErrchk(cudaFree(h_interp[i].c2));
-      gpuErrchk(cudaFree(h_interp[i].c3));
-  }
 }
 
 __device__
@@ -169,17 +176,7 @@ void fill_B_wrap(InterpContainer *p_, InterpContainer *e_, InterpContainer *Phi_
 }
 }
 
-void fit_constants_serial_wrap(int m, int n, fod *a, fod *b, fod *c, fod *d_in){
-
-  void *pBuffer;
-  cusparseStatus_t stat;
-  cusparseHandle_t handle;
-
-  size_t bufferSizeInBytes;
-
-  CUSPARSE_CALL(cusparseCreate(&handle));
-  CUSPARSE_CALL( cusparseSgtsv2StridedBatch_bufferSizeExt(handle, m, a, b, c, d_in, n, m, &bufferSizeInBytes));
-  gpuErrchk(cudaMalloc(&pBuffer, bufferSizeInBytes));
+void fit_constants_serial_wrap(int m, int n, fod *a, fod *b, fod *c, fod *d_in, cusparseHandle_t handle, void *pBuffer){
 
     CUSPARSE_CALL(cusparseSgtsv2StridedBatch(handle,
                                               m,
@@ -191,9 +188,6 @@ void fit_constants_serial_wrap(int m, int n, fod *a, fod *b, fod *c, fod *d_in){
                                               m,
                                               pBuffer));
 
-
-CUSPARSE_CALL(cusparseDestroy(handle));
-gpuErrchk(cudaFree(pBuffer));
 }
 
 __device__
@@ -319,18 +313,28 @@ void modes_set_spline_constants_wrap(InterpContainer *modes,
 }
 
 
-void setup_interpolate(InterpContainer *d_interp_p, InterpContainer *d_interp_e, InterpContainer *d_interp_Phi_phi, InterpContainer *d_interp_Phi_r,
-                       InterpContainer *d_modes, int num_modes,
-                       fod *d_t, int length)
+InterpClass::InterpClass(int num_modes, int length)
 {
-
-  int num_pars = 4;
-  fod *upper_diag, *lower_diag, *diag, *B;
 
   gpuErrchk(cudaMalloc(&upper_diag, 2*num_modes*length*sizeof(fod)));
   gpuErrchk(cudaMalloc(&lower_diag, 2*num_modes*length*sizeof(fod)));
   gpuErrchk(cudaMalloc(&diag, 2*num_modes*length*sizeof(fod)));
   gpuErrchk(cudaMalloc(&B, 2*num_modes*length*sizeof(fod)));
+
+  size_t bufferSizeInBytes;
+
+  CUSPARSE_CALL(cusparseCreate(&handle));
+  CUSPARSE_CALL( cusparseSgtsv2StridedBatch_bufferSizeExt(handle, length, lower_diag, diag, upper_diag, B, num_modes, length, &bufferSizeInBytes));
+  gpuErrchk(cudaMalloc(&pBuffer, bufferSizeInBytes));
+
+}
+
+void InterpClass::setup_interpolate(InterpContainer *d_interp_p, InterpContainer *d_interp_e, InterpContainer *d_interp_Phi_phi, InterpContainer *d_interp_Phi_r,
+                       InterpContainer *d_modes, int num_modes,
+                       fod *d_t, int length)
+{
+
+  int num_pars = 4;
 
   int NUM_THREADS = 256;
   int num_blocks = std::ceil((length + NUM_THREADS -1)/NUM_THREADS);
@@ -340,7 +344,7 @@ void setup_interpolate(InterpContainer *d_interp_p, InterpContainer *d_interp_e,
   cudaDeviceSynchronize();
   gpuErrchk(cudaGetLastError());
 
-  fit_constants_serial_wrap(length, num_pars, lower_diag, diag, upper_diag, B);
+  fit_constants_serial_wrap(length, num_pars, lower_diag, diag, upper_diag, B, handle, pBuffer);
 
   set_spline_constants_wrap<<<gridDim, NUM_THREADS>>>(d_interp_p, d_interp_e, d_interp_Phi_phi, d_interp_Phi_r,
                                  B, length, d_t);
@@ -357,17 +361,25 @@ void setup_interpolate(InterpContainer *d_interp_p, InterpContainer *d_interp_e,
   cudaDeviceSynchronize();
   gpuErrchk(cudaGetLastError());
 
-  fit_constants_serial_wrap(length, 2*num_modes, lower_diag, diag, upper_diag, B);
+  fit_constants_serial_wrap(length, 2*num_modes, lower_diag, diag, upper_diag, B, handle, pBuffer);
 
   modes_set_spline_constants_wrap<<<gridDimModes, NUM_THREADS>>>(d_modes,
                                                       B, length, d_t, num_modes);
   cudaDeviceSynchronize();
   gpuErrchk(cudaGetLastError());
 
+}
+
+InterpClass::~InterpClass()
+{
+
   gpuErrchk(cudaFree(upper_diag));
   gpuErrchk(cudaFree(lower_diag));
   gpuErrchk(cudaFree(diag));
   gpuErrchk(cudaFree(B));
+
+  CUSPARSE_CALL(cusparseDestroy(handle));
+  gpuErrchk(cudaFree(pBuffer));
 
 }
 

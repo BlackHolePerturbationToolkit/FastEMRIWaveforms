@@ -105,6 +105,7 @@ input_mat = np.concatenate([p, e]).astype(np.float32)
 break_index = 80
 
 delta_t = 10.0
+max_init_len = 1000
 
 time_batch_size = 100
 few_class = FastEMRIWaveforms(
@@ -125,6 +126,7 @@ few_class = FastEMRIWaveforms(
     num_l_m,
     num_n,
     input_len,
+    max_init_len,
     delta_t,
 )
 

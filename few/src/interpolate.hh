@@ -2,6 +2,8 @@
 #define __INTERP_H__
 
 #include "global.h"
+#include "cusparse.h"
+
 
 typedef struct tagInterpContainer{
   fod *y;
@@ -12,12 +14,31 @@ typedef struct tagInterpContainer{
 
 } InterpContainer;
 
+class InterpClass {
 
-void create_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, fod *y, int length);
+public:
+    fod *B, *upper_diag, *lower_diag, *diag;
+
+    void *pBuffer;
+    cusparseStatus_t stat;
+    cusparseHandle_t handle;
+
+    InterpClass(int num_modes, int length);
+    ~InterpClass();
+
+    void setup_interpolate(InterpContainer *d_interp_p, InterpContainer *d_interp_e, InterpContainer *d_interp_Phi_phi, InterpContainer *d_interp_Phi_r,
+                           InterpContainer *d_modes, int num_modes,
+                           fod *d_t, int length);
+
+};
+
+
+void create_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int length);
 void destroy_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp);
 
-void create_mode_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, cuComplex *y, int length, int num_modes);
+void create_mode_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int length, int num_modes);
 void destroy_mode_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int num_modes);
+void fill_complex_y_vals(InterpContainer *d_interp, cuComplex *y, int length, int num_modes);
 
 void setup_interpolate(InterpContainer *h_interp_p, InterpContainer *h_interp_e, InterpContainer *h_interp_Phi_phi, InterpContainer *h_interp_Phi_r,
                        InterpContainer *d_modes, int num_modes,
