@@ -176,12 +176,6 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, double p0, double e0, fod theta,
 
     //ellpe_test(d_C, num_points);
 
-    delete[] temp_t;
-    delete[] temp_p;
-    delete[] temp_e;
-    delete[] temp_Phi_phi;
-    delete[] temp_Phi_r;
-
   int l,m;
   for (int i=0; i<num_l_m; i+=1){
         l = l_arr[i*num_n];
@@ -212,14 +206,18 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, double p0, double e0, fod theta,
                       d_interp_modes, num_teuk_modes,
                            d_init_t, nit_vals.length);
 
-     //perform_interp(d_p, d_e, d_Phi_phi, d_Phi_r,
-     //                d_interp_p, d_interp_e, d_interp_Phi_phi, d_interp_Phi_r,
-     //                d_init_t, temp_t, nit_vals.length, num_points, delta_t);
-
-
-    //get_waveform(d_waveform, d_teuk_modes, d_Phi_phi, d_Phi_r, d_m, d_n, num_points, num_teuk_modes, d_Ylms, num_n);
+     get_waveform(d_waveform,
+                  d_interp_Phi_phi, d_interp_Phi_r, d_interp_modes,
+                  d_m, d_n, nit_vals.length, num_points, num_teuk_modes, d_Ylms, num_n,
+                  delta_t, temp_t);
 
     //gpuErrchk(cudaMemcpy(waveform, d_waveform, num_points*sizeof(cuComplex), cudaMemcpyDeviceToHost));
+
+    delete[] temp_t;
+    delete[] temp_p;
+    delete[] temp_e;
+    delete[] temp_Phi_phi;
+    delete[] temp_Phi_r;
 
     gpuErrchk(cudaFree(d_init_t));
     gpuErrchk(cudaFree(d_init_p));

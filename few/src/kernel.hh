@@ -7,6 +7,7 @@
 #include "elliptic.hh"
 #include "kernel.hh"
 #include "stdio.h"
+#include "interpolate.hh"
 
 #define gpuErrchk_here(ans) { gpuAssert_here((ans), __FILE__, __LINE__); }
 inline void gpuAssert_here(cudaError_t code, const char *file, int line, bool abort=true)
@@ -56,8 +57,10 @@ void transform_output(cuComplex *d_teuk_modes, cuComplex *d_transform_matrix, cu
                       int input_len, int break_index, cuComplex d_transform_factor_inv,
                       int num_teuk_modes);
 
-void get_waveform(cuComplex *d_waveform, cuComplex *d_teuk_modes, fod *d_Phi_phi, fod *d_Phi_r,
-              int *d_m, int *d_n, int input_len, int num_teuk_modes, cuComplex *d_Ylms, int num_n);
+void get_waveform(cuComplex *d_waveform,
+              InterpContainer *d_interp_Phi_phi, InterpContainer *d_interp_Phi_r, InterpContainer *d_modes,
+              int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cuComplex *d_Ylms, int num_n,
+              fod delta_t, fod *h_t);
 
 void ellpe_test();
 

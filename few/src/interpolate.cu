@@ -359,7 +359,7 @@ void setup_interpolate(InterpContainer *d_interp_p, InterpContainer *d_interp_e,
 
   fit_constants_serial_wrap(length, 2*num_modes, lower_diag, diag, upper_diag, B);
 
-  modes_set_spline_constants_wrap<<<gridDim, NUM_THREADS>>>(d_modes,
+  modes_set_spline_constants_wrap<<<gridDimModes, NUM_THREADS>>>(d_modes,
                                                       B, length, d_t, num_modes);
   cudaDeviceSynchronize();
   gpuErrchk(cudaGetLastError());
@@ -371,6 +371,7 @@ void setup_interpolate(InterpContainer *d_interp_p, InterpContainer *d_interp_e,
 
 }
 
+/*
 void find_start_inds(int start_inds[], int unit_length[], fod *t_arr, fod delta_t, int length, int new_length)
 {
 
@@ -447,3 +448,4 @@ void perform_interp(fod *p_out, fod *e_out, fod *Phi_phi_out, fod *Phi_r_out,
       }
 
 }
+*/

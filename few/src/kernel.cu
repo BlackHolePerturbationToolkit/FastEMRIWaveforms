@@ -3,6 +3,7 @@
 #include "global.h"
 #include "cublas_v2.h"
 #include "kernel.hh"
+#include "interpolate.hh"
 
 #define NUM_THREADS 256
 
@@ -173,40 +174,116 @@ __device__ void atomicAddComplex(cuComplex* a, cuComplex b){
 }
 
 __global__
-void make_waveform(cuComplex *waveform, cuComplex *teuk_modes, fod *Phi_phi, fod *Phi_r,
-              int *m, int *n, int input_len, int num_teuk_modes, cuComplex *Ylms, int num_n){
+void make_waveform(cuComplex *waveform,
+              InterpContainer *Phi_phi_, InterpContainer *Phi_r_, InterpContainer *modes,
+              int *m_arr, int *n_arr, int num_teuk_modes, cuComplex *Ylms, int num_n,
+              fod delta_t, fod start_t, int old_ind, int start_ind, int end_ind){
 
     cuComplex trans = make_cuComplex(0.0, 0.0);
-    cuComplex mode_val, Ylm;
-    float Phi_phi_i, Phi_r_i;
+    cuComplex mode_val;
+    fod Phi_phi_i, Phi_r_i, t, x, x2, x3, mode_val_re, mode_val_im;
     int lm_i;
+    __shared__ fod re_y, re_c1, re_c2, re_c3, im_y, im_c1, im_c2, im_c3;
+    __shared__ fod pp_y, pp_c1, pp_c2, pp_c3, pr_y, pr_c1, pr_c2, pr_c3;
+    __shared__ int m, n;
+    __shared__ cuComplex Ylm;
 
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x;
-         i < input_len;
-         i += blockDim.x * gridDim.x){
+    if (threadIdx.x == 0){
 
-     Phi_phi_i = Phi_phi[i];
-     Phi_r_i = Phi_r[i];
-     for (int j = blockIdx.y * blockDim.y + threadIdx.y;
-          j < num_teuk_modes;
-          j += blockDim.y * gridDim.y){
+    pp_y = Phi_phi_->y[old_ind]; pp_c1 = Phi_phi_->c1[old_ind]; pp_c2 = Phi_phi_->c2[old_ind]; pp_c3 = Phi_phi_->c3[old_ind];
+    pr_y = Phi_phi_->y[old_ind]; pr_c1 = Phi_phi_->c1[old_ind]; pr_c2 = Phi_phi_->c2[old_ind]; pr_c3 = Phi_phi_->c3[old_ind];
 
-            lm_i = j / num_n;
-            Ylm = Ylms[lm_i];
-            //if (i==0) printf("%d %d, %lf + %lfi\n", m[j], n[j], cuCrealf(Ylm), cuCimagf(Ylm));
-            mode_val = get_mode_value(teuk_modes[j*input_len + i], Phi_phi_i, Phi_r_i, m[j], n[j], Ylm);
-            atomicAddComplex(&waveform[i], mode_val);
+    int j = blockIdx.y * blockDim.y + threadIdx.y;
+
+       lm_i = j / num_n;
+       Ylm = Ylms[lm_i];
+
+        re_y = modes[2*j].y[old_ind]; re_c1 = modes[2*j].c1[old_ind]; re_c2 = modes[2*j].c2[old_ind]; re_c3 = modes[2*j].c3[old_ind];
+        im_y = modes[2*j].y[old_ind]; im_c1 = modes[2*j].c1[old_ind]; im_c2 = modes[2*j].c2[old_ind]; im_c3 = modes[2*j].c3[old_ind];
+
+        m = m_arr[j];
+        n = n_arr[j];
 
     }
+    __syncthreads();
+
+    for (int i = start_ind + blockIdx.x * blockDim.x + threadIdx.x;
+         i < end_ind;
+         i += blockDim.x * gridDim.x){
+
+     t = delta_t*i;
+      x = t - start_t;
+      x2 = x*x;
+      x3 = x*x2;
+
+      Phi_phi_i = pp_y + pp_c1*x + pp_c2*x2  + pp_c3*x3;
+      Phi_r_i = pr_y + pr_c1*x + pr_c2*x2  + pr_c3*x3;
+
+        mode_val_re =  re_y + re_c1*x + re_c2*x2  + re_c3*x3;
+        mode_val_im = im_y + im_c1*x + im_c2*x2  + im_c3*x3;
+        mode_val = make_cuComplex(mode_val_re, mode_val_im);
+
+        //if (i==0) printf("%d %d, %lf + %lfi\n", m[j], n[j], cuCrealf(Ylm), cuCimagf(Ylm));
+            mode_val = get_mode_value(mode_val, Phi_phi_i, Phi_r_i, m, n, Ylm);
+            atomicAddComplex(&waveform[i], mode_val);
+
   }
 }
 
+void find_start_inds(int start_inds[], int unit_length[], fod *t_arr, fod delta_t, int length, int new_length)
+{
 
-void get_waveform(cuComplex *d_waveform, cuComplex *d_teuk_modes, fod *d_Phi_phi, fod *d_Phi_r,
-              int *d_m, int *d_n, int input_len, int num_teuk_modes, cuComplex *d_Ylms, int num_n){
-      int num_blocks = std::ceil((input_len + NUM_THREADS -1)/NUM_THREADS);
+  start_inds[0] = 0;
+  for (int i = 1;
+       i < length;
+       i += 1){
+
+          fod t = t_arr[i];
+
+          start_inds[i] = (int)std::ceil(t/delta_t);
+          unit_length[i-1] = start_inds[i] - start_inds[i-1];
+
+      }
+
+  start_inds[length -1] = new_length;
+  unit_length[length - 2] = start_inds[length -1] - start_inds[length -2];
+}
+
+void get_waveform(cuComplex *d_waveform,
+              InterpContainer *d_interp_Phi_phi, InterpContainer *d_interp_Phi_r, InterpContainer *d_modes,
+              int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cuComplex *d_Ylms, int num_n,
+              fod delta_t, fod *h_t){
+
+    int start_inds[init_len];
+    int unit_length[init_len-1];
+
+    find_start_inds(start_inds, unit_length, h_t, delta_t, init_len, out_len);
+
+    cudaStream_t streams[init_len-1];
+
+    for (int i = 0; i < init_len-2; i++) {
+          cudaStreamCreate(&streams[i]);
+          int num_blocks = std::ceil((unit_length[i] + NUM_THREADS -1)/NUM_THREADS);
+          //printf("%d %d %d %d, %d %d\n", i, start_inds[i], unit_length[i], num_blocks, init_len, out_len);
+          if (num_blocks == 0) continue;
+          dim3 gridDim(num_blocks, num_teuk_modes); //, num_teuk_modes);
+          // launch one worker kernel per stream
+          make_waveform<<<num_blocks, NUM_THREADS, 0, streams[i]>>>(d_waveform,
+                        d_interp_Phi_phi, d_interp_Phi_r, d_modes,
+                        d_m, d_n, num_teuk_modes, d_Ylms, num_n,
+                        delta_t, h_t[i], i, start_inds[i], start_inds[i+1]);
+
+      }
+      cudaDeviceSynchronize();
+      gpuErrchk(cudaGetLastError());
+      for (int i = 0; i < init_len-2; i++) {
+            cudaStreamDestroy(streams[i]);
+
+        }
+
+      /*int num_blocks = std::ceil((input_len + NUM_THREADS -1)/NUM_THREADS);
       dim3 gridDim(num_blocks, num_teuk_modes); //, num_teuk_modes);
       make_waveform<<<gridDim, NUM_THREADS>>>(d_waveform, d_teuk_modes, d_Phi_phi, d_Phi_r, d_m, d_n, input_len, num_teuk_modes, d_Ylms, num_n);
       cudaDeviceSynchronize();
-      gpuErrchk_here(cudaGetLastError());
+      gpuErrchk_here(cudaGetLastError());*/
 }
