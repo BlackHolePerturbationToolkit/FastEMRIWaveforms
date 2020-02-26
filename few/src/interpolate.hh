@@ -12,10 +12,15 @@ typedef struct tagInterpContainer{
 
 } InterpContainer;
 
+
 void create_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, fod *y, int length);
 void destroy_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp);
 
+void create_mode_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, cuComplex *y, int length, int num_modes);
+void destroy_mode_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int num_modes);
+
 void setup_interpolate(InterpContainer *h_interp_p, InterpContainer *h_interp_e, InterpContainer *h_interp_Phi_phi, InterpContainer *h_interp_Phi_r,
+                       InterpContainer *d_modes, int num_modes,
                        fod *d_t, int length);
 
 void perform_interp(fod *p_out, fod *e_out, fod *Phi_phi_out, fod *Phi_r_out,
