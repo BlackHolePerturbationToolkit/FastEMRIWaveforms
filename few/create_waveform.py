@@ -61,7 +61,26 @@ class CreateWaveform:
             )
         )
 
-        return xp.sum(self.zlmnk * self.ylms[xp.newaxis, :] * self.expiphases, axis=1)
+        waveform = xp.sum(
+            self.zlmnk * self.ylms[xp.newaxis, :] * self.expiphases, axis=1
+        )
+
+        self.ylms[:] = xp.tile(
+            get_ylms(l[0::41], -m[0::41], theta, phi, self.buffer), (41,)
+        )
+        self.expiphases[:] = xp.exp(
+            -1j
+            * (
+                -m[xp.newaxis, :] * Phi_phi[:, xp.newaxis]
+                + -n[xp.newaxis, :] * Phi_r[:, xp.newaxis]
+            )
+        )
+
+        waveform = waveform + xp.sum(
+            self.zlmnk.conj() * self.ylms[xp.newaxis, :] * self.expiphases, axis=1
+        )
+
+        return waveform
 
 
 if __name__ == "__main__":
