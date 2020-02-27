@@ -89,8 +89,8 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     gpuErrchk(cudaMemcpy(d_m, m_, num_teuk_modes*sizeof(int), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_n, n_, num_teuk_modes*sizeof(int), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&d_Ylms, num_l_m*sizeof(cuComplex)));
-    Ylms = new cmplx[num_l_m];
+    gpuErrchk(cudaMalloc(&d_Ylms, 2*num_l_m*sizeof(cuComplex)));
+    Ylms = new cmplx[2*num_l_m];
 
     gpuErrchk(cudaMalloc(&d_C, max_init_len*dim_max*sizeof(fod)));
 
@@ -186,10 +186,11 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, double p0, double e0, fod theta,
         m = m_arr[i*num_n];
 
         Ylms[i] = SpinWeightedSpheroidalHarmonic(l, m, theta, phi);
+        Ylms[num_l_m + i] = SpinWeightedSpheroidalHarmonic(l, -m, theta, phi);
         //printf("%d %d, %lf, %lf\n", l , m, Ylms[i].real(), Ylms[i].imag());
   }
 
-  gpuErrchk(cudaMemcpy(d_Ylms, Ylms, num_l_m*sizeof(cuComplex), cudaMemcpyHostToDevice));
+  gpuErrchk(cudaMemcpy(d_Ylms, Ylms, 2*num_l_m*sizeof(cuComplex), cudaMemcpyHostToDevice));
 
 
     for (int layer_i=0; layer_i<num_layers; layer_i++){
@@ -207,7 +208,7 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, double p0, double e0, fod theta,
      get_waveform(d_waveform,
                   d_interp_Phi_phi, d_interp_Phi_r, d_interp_modes,
                   d_m, d_n, nit_vals.length, num_points, num_teuk_modes, d_Ylms, num_n,
-                  delta_t, temp_t);
+                  delta_t, temp_t, num_l_m);
 
     //gpuErrchk(cudaMemcpy(waveform, d_waveform, num_points*sizeof(cuComplex), cudaMemcpyDeviceToHost));
 }

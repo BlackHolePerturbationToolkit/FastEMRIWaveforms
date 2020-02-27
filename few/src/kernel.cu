@@ -177,16 +177,17 @@ __global__
 void make_waveform(cuComplex *waveform,
               InterpContainer *Phi_phi_, InterpContainer *Phi_r_, InterpContainer *modes,
               int *m_arr, int *n_arr, int num_teuk_modes, cuComplex *Ylms, int num_n,
-              fod delta_t, fod start_t, int old_ind, int start_ind, int end_ind){
+              fod delta_t, fod start_t, int old_ind, int start_ind, int end_ind, int num_l_m){
 
     cuComplex trans = make_cuComplex(0.0, 0.0);
     cuComplex mode_val;
+    cuComplex trans_plus_m, trans_minus_m;
     fod Phi_phi_i, Phi_r_i, t, x, x2, x3, mode_val_re, mode_val_im;
     int lm_i;
      fod re_y, re_c1, re_c2, re_c3, im_y, im_c1, im_c2, im_c3;
      fod pp_y, pp_c1, pp_c2, pp_c3, pr_y, pr_c1, pr_c2, pr_c3;
      int m, n;
-     cuComplex Ylm;
+     cuComplex Ylm_plus_m, Ylm_minus_m;
 
     pp_y = Phi_phi_->y[old_ind]; pp_c1 = Phi_phi_->c1[old_ind]; pp_c2 = Phi_phi_->c2[old_ind]; pp_c3 = Phi_phi_->c3[old_ind];
     pr_y = Phi_phi_->y[old_ind]; pr_c1 = Phi_phi_->c1[old_ind]; pr_c2 = Phi_phi_->c2[old_ind]; pr_c3 = Phi_phi_->c3[old_ind];
@@ -208,7 +209,8 @@ void make_waveform(cuComplex *waveform,
 
         for (int j=0; j<num_teuk_modes; j++){
             lm_i = j / num_n;
-            Ylm = Ylms[lm_i];
+            Ylm_plus_m = Ylms[lm_i];
+            Ylm_minus_m = Ylms[num_l_m + lm_i];
 
              re_y = modes[2*j].y[old_ind]; re_c1 = modes[2*j].c1[old_ind]; re_c2 = modes[2*j].c2[old_ind]; re_c3 = modes[2*j].c3[old_ind];
              im_y = modes[2*j].y[old_ind]; im_c1 = modes[2*j].c1[old_ind]; im_c2 = modes[2*j].c2[old_ind]; im_c3 = modes[2*j].c3[old_ind];
@@ -221,8 +223,12 @@ void make_waveform(cuComplex *waveform,
             mode_val = make_cuComplex(mode_val_re, mode_val_im);
 
             //if (i==0) printf("%d %d, %lf + %lfi\n", m[j], n[j], cuCrealf(Ylm), cuCimagf(Ylm));
-                mode_val = get_mode_value(mode_val, Phi_phi_i, Phi_r_i, m, n, Ylm);
-                trans = cuCaddf(mode_val, trans);
+                trans_plus_m = get_mode_value(mode_val, Phi_phi_i, Phi_r_i, m, n, Ylm_plus_m);
+                trans = cuCaddf(trans_plus_m, trans);
+
+                // minus m
+                trans_minus_m = get_mode_value(cuConjf(mode_val), Phi_phi_i, Phi_r_i, -m, -n, Ylm_minus_m);
+                trans = cuCaddf(trans_minus_m, trans);
                 //atomicAddComplex(&waveform[i], mode_val);
         }
       waveform[i] = trans;
@@ -251,7 +257,7 @@ void find_start_inds(int start_inds[], int unit_length[], fod *t_arr, fod delta_
 void get_waveform(cuComplex *d_waveform,
               InterpContainer *d_interp_Phi_phi, InterpContainer *d_interp_Phi_r, InterpContainer *d_modes,
               int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cuComplex *d_Ylms, int num_n,
-              fod delta_t, fod *h_t){
+              fod delta_t, fod *h_t, int num_l_m){
 
     int start_inds[init_len];
     int unit_length[init_len-1];
@@ -270,7 +276,7 @@ void get_waveform(cuComplex *d_waveform,
           make_waveform<<<gridDim, NUM_THREADS, 0, streams[i]>>>(d_waveform,
                         d_interp_Phi_phi, d_interp_Phi_r, d_modes,
                         d_m, d_n, num_teuk_modes, d_Ylms, num_n,
-                        delta_t, h_t[i], i, start_inds[i], start_inds[i+1]);
+                        delta_t, h_t[i], i, start_inds[i], start_inds[i+1], num_l_m);
 
       }
       cudaDeviceSynchronize();

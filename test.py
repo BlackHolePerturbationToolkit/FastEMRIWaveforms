@@ -17,7 +17,7 @@ nn_kwargs = dict(input_str="SE_", folder="few/files/weights/", activation_kwargs
 kwargs = dict(transform_file="few/files/reduced_basis.dat", nn_kwargs=nn_kwargs)
 
 # Load the inspiral data. This should be in the format (p, e, Phi_phi, Phi_r)
-traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")[0::3][-250:]
+traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")[0::3][:1000]
 
 batch_size = kwargs["batch_size"] = len(traj)
 
@@ -40,8 +40,8 @@ for l_i in range(2, 10 + 1):
             ind += 1
 
 cw = CreateWaveform(**kwargs)
-theta = np.pi / 4
-phi = np.pi / 3
+theta = np.pi / 2
+phi = 0.0  # np.pi / 3
 
 num = 1
 out = cw(p, e, Phi_r, Phi_phi, l, m, n, theta, phi)
@@ -59,7 +59,7 @@ import pdb
 
 plt.plot(out.imag)
 plt.plot(out.real)
-plt.savefig("orig_traj_zoom.pdf")
+# plt.savefig("orig_traj_zoom.pdf")
 plt.show()
 plt.close()
 
@@ -68,7 +68,7 @@ from scipy.interpolate import CubicSpline
 
 t, p, e, Phi_phi, Phi_r = NIT(p[0], e[0])
 dt = 1.0
-t_new = np.arange(0.0, t[-1] + dt, dt)[:100000]
+t_new = np.arange(0.0, t[-1] + dt, dt)[:10000]
 
 p_spline = CubicSpline(t, p)
 e_spline = CubicSpline(t, e)
@@ -88,6 +88,6 @@ out = cw(p, e, Phi_r, Phi_phi, l, m, n, theta, phi)
 
 plt.plot(out.imag)
 plt.plot(out.real)
-plt.savefig("flux_traj_zoom.pdf")
+plt.savefig("flux_traj_reversing_Zlmnk_bad_ylm.pdf")
 plt.show()
 pdb.set_trace()
