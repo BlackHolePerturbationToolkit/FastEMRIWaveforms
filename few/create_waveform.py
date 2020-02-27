@@ -76,6 +76,14 @@ class CreateWaveform:
             )
         )
 
+        """
+        # I think this pairs the wrong Zlmnk for the conjugate transformation to -m and -n.
+        # I think all that needs to happen is take -m and -n and then conj(Zlmnk)
+        inds = np.arange(len(l))[::41]
+        for start_ind, end_ind in zip(inds[:-1], inds[1:]):
+            self.zlmnk[start_ind:end_ind] = self.zlmnk[start_ind:end_ind][::-1]
+        """
+
         waveform = waveform + xp.sum(
             self.zlmnk.conj() * self.ylms[xp.newaxis, :] * self.expiphases, axis=1
         )
