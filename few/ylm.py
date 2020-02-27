@@ -1085,6 +1085,6 @@ def get_ylms(l, m, theta, phi, buffer):
         * sintheta ** 12,
     }
     for i, (l_i, m_i) in enumerate(zip(l, m)):
-        buffer[i] = ylms_dict[(l_i.item(), m_i.item())]
+        buffer[i] = (-1) ** l_i * ylms_dict[(l_i.item(), m_i.item())]
 
     return buffer

@@ -139,8 +139,8 @@ else if ((l==10)&&(m==10)){temp = 3.*exp(10.*I*phi)*sqrt(146965./(2.*PI))*pow(co
         printf("Not implemented l=%d m=%d.\n", l, m);
         assert(0);
     }
-
-    return temp;
+double parity = pow(-1.0, l);
+    return parity*temp;
 
 }
 
