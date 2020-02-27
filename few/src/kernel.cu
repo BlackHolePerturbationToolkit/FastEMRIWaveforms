@@ -183,34 +183,21 @@ void make_waveform(cuComplex *waveform,
     cuComplex mode_val;
     fod Phi_phi_i, Phi_r_i, t, x, x2, x3, mode_val_re, mode_val_im;
     int lm_i;
-    __shared__ fod re_y, re_c1, re_c2, re_c3, im_y, im_c1, im_c2, im_c3;
-    __shared__ fod pp_y, pp_c1, pp_c2, pp_c3, pr_y, pr_c1, pr_c2, pr_c3;
-    __shared__ int m, n;
-    __shared__ cuComplex Ylm;
-
-    if (threadIdx.x == 0){
+     fod re_y, re_c1, re_c2, re_c3, im_y, im_c1, im_c2, im_c3;
+     fod pp_y, pp_c1, pp_c2, pp_c3, pr_y, pr_c1, pr_c2, pr_c3;
+     int m, n;
+     cuComplex Ylm;
 
     pp_y = Phi_phi_->y[old_ind]; pp_c1 = Phi_phi_->c1[old_ind]; pp_c2 = Phi_phi_->c2[old_ind]; pp_c3 = Phi_phi_->c3[old_ind];
     pr_y = Phi_phi_->y[old_ind]; pr_c1 = Phi_phi_->c1[old_ind]; pr_c2 = Phi_phi_->c2[old_ind]; pr_c3 = Phi_phi_->c3[old_ind];
 
-    int j = blockIdx.y * blockDim.y + threadIdx.y;
-
-       lm_i = j / num_n;
-       Ylm = Ylms[lm_i];
-
-        re_y = modes[2*j].y[old_ind]; re_c1 = modes[2*j].c1[old_ind]; re_c2 = modes[2*j].c2[old_ind]; re_c3 = modes[2*j].c3[old_ind];
-        im_y = modes[2*j].y[old_ind]; im_c1 = modes[2*j].c1[old_ind]; im_c2 = modes[2*j].c2[old_ind]; im_c3 = modes[2*j].c3[old_ind];
-
-        m = m_arr[j];
-        n = n_arr[j];
-
-    }
-    __syncthreads();
+    //int j = blockIdx.y * blockDim.y + threadIdx.y;
 
     for (int i = start_ind + blockIdx.x * blockDim.x + threadIdx.x;
          i < end_ind;
          i += blockDim.x * gridDim.x){
 
+      trans = make_cuComplex(0.0, 0.0);
      t = delta_t*i;
       x = t - start_t;
       x2 = x*x;
@@ -219,14 +206,26 @@ void make_waveform(cuComplex *waveform,
       Phi_phi_i = pp_y + pp_c1*x + pp_c2*x2  + pp_c3*x3;
       Phi_r_i = pr_y + pr_c1*x + pr_c2*x2  + pr_c3*x3;
 
-        mode_val_re =  re_y + re_c1*x + re_c2*x2  + re_c3*x3;
-        mode_val_im = im_y + im_c1*x + im_c2*x2  + im_c3*x3;
-        mode_val = make_cuComplex(mode_val_re, mode_val_im);
+        for (int j=0; j<num_teuk_modes; j++){
+            lm_i = j / num_n;
+            Ylm = Ylms[lm_i];
 
-        //if (i==0) printf("%d %d, %lf + %lfi\n", m[j], n[j], cuCrealf(Ylm), cuCimagf(Ylm));
-            mode_val = get_mode_value(mode_val, Phi_phi_i, Phi_r_i, m, n, Ylm);
-            atomicAddComplex(&waveform[i], mode_val);
+             re_y = modes[2*j].y[old_ind]; re_c1 = modes[2*j].c1[old_ind]; re_c2 = modes[2*j].c2[old_ind]; re_c3 = modes[2*j].c3[old_ind];
+             im_y = modes[2*j].y[old_ind]; im_c1 = modes[2*j].c1[old_ind]; im_c2 = modes[2*j].c2[old_ind]; im_c3 = modes[2*j].c3[old_ind];
 
+             m = m_arr[j];
+             n = n_arr[j];
+
+            mode_val_re =  re_y + re_c1*x + re_c2*x2  + re_c3*x3;
+            mode_val_im = im_y + im_c1*x + im_c2*x2  + im_c3*x3;
+            mode_val = make_cuComplex(mode_val_re, mode_val_im);
+
+            //if (i==0) printf("%d %d, %lf + %lfi\n", m[j], n[j], cuCrealf(Ylm), cuCimagf(Ylm));
+                mode_val = get_mode_value(mode_val, Phi_phi_i, Phi_r_i, m, n, Ylm);
+                trans = cuCaddf(mode_val, trans);
+                //atomicAddComplex(&waveform[i], mode_val);
+        }
+      waveform[i] = trans;
   }
 }
 
@@ -266,9 +265,9 @@ void get_waveform(cuComplex *d_waveform,
           int num_blocks = std::ceil((unit_length[i] + NUM_THREADS -1)/NUM_THREADS);
           //printf("%d %d %d %d, %d %d\n", i, start_inds[i], unit_length[i], num_blocks, init_len, out_len);
           if (num_blocks == 0) continue;
-          dim3 gridDim(num_blocks, num_teuk_modes); //, num_teuk_modes);
+          dim3 gridDim(num_blocks, 1); //, num_teuk_modes);
           // launch one worker kernel per stream
-          make_waveform<<<num_blocks, NUM_THREADS, 0, streams[i]>>>(d_waveform,
+          make_waveform<<<gridDim, NUM_THREADS, 0, streams[i]>>>(d_waveform,
                         d_interp_Phi_phi, d_interp_Phi_r, d_modes,
                         d_m, d_n, num_teuk_modes, d_Ylms, num_n,
                         delta_t, h_t[i], i, start_inds[i], start_inds[i+1]);

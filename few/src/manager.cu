@@ -92,17 +92,11 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     gpuErrchk(cudaMalloc(&d_Ylms, num_l_m*sizeof(cuComplex)));
     Ylms = new cmplx[num_l_m];
 
-    gpuErrchk(cudaMalloc(&d_C, max_input_len*dim_max*sizeof(fod)));
-
-    gpuErrchk(cudaMalloc(&d_Phi_phi, max_input_len*sizeof(fod)));
-    gpuErrchk(cudaMalloc(&d_Phi_r, max_input_len*sizeof(fod)));
-
-    gpuErrchk(cudaMalloc(&d_p, max_input_len*sizeof(fod)));
-    gpuErrchk(cudaMalloc(&d_e, max_input_len*sizeof(fod)));
+    gpuErrchk(cudaMalloc(&d_C, max_init_len*dim_max*sizeof(fod)));
 
     int complex_dim = (int)((float) dim2[num_layers - 1]/ 2.0);
-    gpuErrchk(cudaMalloc(&d_nn_output_mat, complex_dim*max_input_len*sizeof(cuComplex)));
-    gpuErrchk(cudaMalloc(&d_teuk_modes, trans_dim2*max_input_len*sizeof(cuComplex)));
+    gpuErrchk(cudaMalloc(&d_nn_output_mat, complex_dim*max_init_len*sizeof(cuComplex)));
+    gpuErrchk(cudaMalloc(&d_teuk_modes, trans_dim2*max_init_len*sizeof(cuComplex)));
     gpuErrchk(cudaMalloc(&d_waveform, max_input_len*sizeof(cuComplex)));
 
     //printf("length is %d\n", nit_vals.length);
@@ -233,10 +227,7 @@ FastEMRIWaveforms::~FastEMRIWaveforms()
     gpuErrchk(cudaFree(d_C));
     gpuErrchk(cudaFree(d_nn_output_mat));
     gpuErrchk(cudaFree(d_teuk_modes));
-    gpuErrchk(cudaFree(d_Phi_phi));
-    gpuErrchk(cudaFree(d_Phi_r));
-    gpuErrchk(cudaFree(d_p));
-    gpuErrchk(cudaFree(d_e));
+
     gpuErrchk(cudaFree(d_waveform));
     delete[] d_layers_matrix;
     delete[] d_layers_bias;
