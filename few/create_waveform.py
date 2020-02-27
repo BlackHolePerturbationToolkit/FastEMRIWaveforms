@@ -49,8 +49,8 @@ class CreateWaveform:
         self.buffer = xp.zeros(54, dtype=xp.complex64)
 
     def __call__(self, p, e, Phi_r, Phi_phi, l, m, n, theta, phi):
-        self.ylms[:] = xp.tile(
-            get_ylms(l[0::41], m[0::41], theta, phi, self.buffer), (41,)
+        self.ylms[:] = xp.repeat(
+            get_ylms(l[0::41], m[0::41], theta, phi, self.buffer), 41
         )
         self.zlmnk[:] = self.get_zlmnk(p, e)
         self.expiphases[:] = xp.exp(
@@ -65,8 +65,8 @@ class CreateWaveform:
             self.zlmnk * self.ylms[xp.newaxis, :] * self.expiphases, axis=1
         )
 
-        self.ylms[:] = xp.tile(
-            get_ylms(l[0::41], -m[0::41], theta, phi, self.buffer), (41,)
+        self.ylms[:] = xp.repeat(
+            get_ylms(l[0::41], m[0::41], theta, phi, self.buffer), 41
         )
         self.expiphases[:] = xp.exp(
             -1j
