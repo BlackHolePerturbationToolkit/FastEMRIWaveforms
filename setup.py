@@ -180,7 +180,7 @@ NIT_ext = Extension(
         "inspiral/src/FluxInspiral.cc",
         "inspiral/NIT.pyx",
     ],
-    library_dirs=[],
+    library_dirs=["/home/ajchua/lib/"],
     libraries=["gsl", "gslcblas"],
     language="c++",
     runtime_library_dirs=[],
