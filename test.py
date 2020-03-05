@@ -19,7 +19,7 @@ kwargs = dict(transform_file="few/files/reduced_basis.dat", nn_kwargs=nn_kwargs)
 # Load the inspiral data. This should be in the format (p, e, Phi_phi, Phi_r)
 traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")[0::3][:1000]
 
-batch_size = kwargs["batch_size"] = len(traj)
+batch_size = kwargs["batch_size"] = 50000  # len(traj)
 
 p = xp.asarray(traj[:, 0], dtype=xp.float32)
 e = xp.asarray(traj[:, 1], dtype=xp.float32)
@@ -51,18 +51,68 @@ for l_i in range(2, 10 + 1):
 
 kwargs["mode_inds"] = mode_inds
 cw = CreateWaveform(**kwargs)
-theta = np.pi / 2
-phi = 0.0  # np.pi / 3
+theta = np.pi / 3
+phi = np.pi / 3
+M = 1e5
+mu = 1e1
+dt = 10.0
 
 num = 1
-get_modes = [(2, 2, 0), (3, 2, 2), (4, -2, -18), (7, 7, 10)]
-out = cw(p, e, Phi_r, Phi_phi, l, m, n, theta, phi, get_modes=get_modes,)
+get_modes = [(3, 2, 2)]  # , (3, 2, 2), (4, -2, -18), (7, 7, 10)]
+
+Phi_phi = None
+Phi_r = None
+nit_err = 1e-10
+spline_modes = False
+
+p = 12.5
+e = 0.4
+out1 = cw(
+    M,
+    mu,
+    p,
+    e,
+    l,
+    m,
+    n,
+    theta,
+    phi,
+    dt,
+    Phi_phi=Phi_phi,
+    Phi_r=Phi_r,
+    nit_err=nit_err,
+    spline_modes=True,
+    get_modes=None,
+)
 
 import matplotlib.pyplot as plt
 
-for mode in get_modes:
-    plt.plot(out[mode].real, label=mode)
+# for mode in get_modes:
+#    plt.plot(out1[mode].real, label=mode)
 
+out2 = cw(
+    M,
+    mu,
+    p,
+    e,
+    l,
+    m,
+    n,
+    theta,
+    phi,
+    dt,
+    Phi_phi=Phi_phi,
+    Phi_r=Phi_r,
+    nit_err=nit_err * 1e-2,
+    spline_modes=False,
+    get_modes=None,
+)
+
+# for mode in get_modes:
+#    plt.plot(out2[mode].real, label=mode)
+
+plt.plot(out1.real)
+plt.plot(out2.real)
 plt.legend()
 plt.show()
 import pdb

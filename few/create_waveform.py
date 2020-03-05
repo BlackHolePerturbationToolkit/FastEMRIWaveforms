@@ -9,6 +9,9 @@ except ImportError:
 from .nn import NN
 from .ylm import get_ylms
 
+from pyNIT import NIT
+from scipy.interpolate import CubicSpline
+
 
 class GetZlmnk:
     def __init__(
@@ -29,8 +32,17 @@ class GetZlmnk:
         self.buffer = xp.zeros((batch_size, 2))
 
     def __call__(self, p, e):
-        self.buffer[:, 0] = p
-        self.buffer[:, 1] = e
+        if len(p) != len(self.buffer):
+            self.buffer[: len(p), 0] = p
+            self.buffer[: len(p), 1] = e
+
+            self.buffer[len(p) :, 0] = 0.0
+            self.buffer[len(p) :, 1] = 0.0
+
+        else:
+            self.buffer[:, 0] = p
+            self.buffer[:, 1] = e
+
         output = self.neural_net(self.buffer)
 
         re = output[:, :80]
@@ -46,22 +58,88 @@ class GetZlmnk:
 class CreateWaveform:
     def __init__(self, **kwargs):
         batch_size = kwargs["batch_size"]
+        self.num_modes = 2214
         self.get_zlmnk = GetZlmnk(**kwargs)
-        self.expiphases = xp.zeros((batch_size, 2214), dtype=xp.complex64)
-        self.zlmnk = xp.zeros((batch_size, 2214), dtype=xp.complex64)
-        self.ylms = xp.zeros(2214, dtype=xp.complex64)
+        self.expiphases = xp.zeros((batch_size, self.num_modes), dtype=xp.complex64)
+        self.zlmnk = xp.zeros((batch_size, self.num_modes), dtype=xp.complex64)
+        self.ylms = xp.zeros(self.num_modes, dtype=xp.complex64)
         self.buffer = xp.zeros(54, dtype=xp.complex64)
         self.mode_inds = kwargs["mode_inds"]
+        self.batch_size = kwargs["batch_size"]
 
-    def __call__(self, p, e, Phi_r, Phi_phi, l, m, n, theta, phi, get_modes=None):
+    def __call__(
+        self,
+        M,
+        mu,
+        p,
+        e,
+        l,
+        m,
+        n,
+        theta,
+        phi,
+        dt,
+        get_modes=None,
+        Phi_phi=None,
+        Phi_r=None,
+        nit_err=1e-10,
+        spline_modes=True,
+    ):
+
+        if Phi_phi is None or Phi_r is None:
+            if isinstance(p, np.ndarray) or isinstance(e, np.ndarray):
+                raise ValueError(
+                    "if not providing Phi_phi, please provide scalar p and e"
+                )
+
+            t_, p_, e_, Phi_phi_, Phi_r_ = NIT(M, mu, p, e, err=nit_err)
+
+            t = np.arange(0.0, t_[-1] + dt, dt)
+
+            Phi_phi = CubicSpline(t_, Phi_phi_)(t)
+            Phi_r = CubicSpline(t_, Phi_r_)(t)
+
+            if spline_modes is False:
+                p = CubicSpline(t_, p_)(t)
+                e = CubicSpline(t_, e_)(t)
+
+        if len(Phi_phi) > self.batch_size:
+            print(
+                "Raise the batch size. Only running first {} points.".format(
+                    self.batch_size
+                )
+            )
+
+            Phi_phi = Phi_phi[: self.batch_size]
+            Phi_r = Phi_r[: self.batch_size]
+            t = t[: self.batch_size]
+
+            if spline_modes is False:
+                p = p[: self.batch_size]
+                e = e[: self.batch_size]
+
         if get_modes is not None:
             mode_out = {}
 
         self.ylms[:] = xp.repeat(
             get_ylms(l[0::41], m[0::41], theta, phi, self.buffer), 41
         )
-        self.zlmnk[:] = self.get_zlmnk(p, e)
-        self.expiphases[:] = xp.exp(
+
+        if spline_modes:
+            # only :len(p_) are good
+            self.zlmnk[:] = self.get_zlmnk(p_, e_)
+            for mode_i in range(self.num_modes):
+                self.zlmnk[: len(t), mode_i] = CubicSpline(
+                    t_, self.zlmnk[: len(p_), mode_i]
+                )(t)
+            print("interpolated modes: init shape {}".format(p_.shape))
+
+        else:
+            self.zlmnk[: len(Phi_phi)] = self.get_zlmnk(p, e)
+
+            print("direct solve: init shape {}".format(p.shape))
+
+        self.expiphases[: len(Phi_phi)] = xp.exp(
             -1j
             * (
                 m[xp.newaxis, :] * Phi_phi[:, xp.newaxis]
@@ -70,24 +148,31 @@ class CreateWaveform:
         )
 
         if get_modes is not None:
-            temp = self.zlmnk * self.ylms[xp.newaxis, :] * self.expiphases
+            temp = (
+                self.zlmnk[: len(Phi_phi)]
+                * self.ylms[xp.newaxis, :]
+                * self.expiphases[: len(Phi_phi)]
+            )
 
             for i, mode in enumerate(get_modes):
                 l_here, m_here, n_here = mode
                 if m_here < 0:
                     continue
                 ind = self.mode_inds[mode]
-                mode_out[mode] = temp[:, ind]
+                mode_out[mode] = temp[: len(Phi_phi), ind]
 
         else:
             waveform = xp.sum(
-                self.zlmnk * self.ylms[xp.newaxis, :] * self.expiphases, axis=1
+                self.zlmnk[: len(Phi_phi)]
+                * self.ylms[xp.newaxis, :]
+                * self.expiphases[: len(Phi_phi)],
+                axis=1,
             )
 
         self.ylms[:] = xp.repeat(
             get_ylms(l[0::41], m[0::41], theta, phi, self.buffer), 41
         )
-        self.expiphases[:] = xp.exp(
+        self.expiphases[: len(Phi_phi)] = xp.exp(
             -1j
             * (
                 -m[xp.newaxis, :] * Phi_phi[:, xp.newaxis]
@@ -104,18 +189,25 @@ class CreateWaveform:
         """
 
         if get_modes is not None:
-            temp = self.zlmnk.conj() * self.ylms[xp.newaxis, :] * self.expiphases
+            temp = (
+                self.zlmnk[: len(Phi_phi)].conj()
+                * self.ylms[xp.newaxis, :]
+                * self.expiphases[: len(Phi_phi)]
+            )
 
             for i, mode in enumerate(get_modes):
                 l_here, m_here, n_here = mode
                 if m_here >= 0:
                     continue
                 ind = self.mode_inds[mode]
-                mode_out[mode] = temp[:, ind]
+                mode_out[mode] = temp[: len(Phi_phi), ind]
 
         else:
             waveform = waveform + xp.sum(
-                self.zlmnk.conj() * self.ylms[xp.newaxis, :] * self.expiphases, axis=1
+                self.zlmnk[: len(Phi_phi)].conj()
+                * self.ylms[xp.newaxis, :]
+                * self.expiphases[: len(Phi_phi)],
+                axis=1,
             )
 
         if get_modes is not None:
