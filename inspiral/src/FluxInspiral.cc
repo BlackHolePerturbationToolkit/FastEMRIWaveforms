@@ -23,6 +23,7 @@ using namespace std::chrono;
 #define Power(x, y)     (pow((double)(x), (double)(y)))
 #define Sqrt(x)         (sqrt((double)(x)))
 #define Pi              M_PI
+#define MTSUN_SI 4.925491025543575903411922162094833998e-6
 
 // Used to pass the interpolants to the ODE solver
 struct interp_params{
@@ -129,12 +130,14 @@ void load_and_interpolate_flux_data(struct interp_params *interps){
 }
 
 
-NITHolder run_NIT(double t0, double p0, double e0){
-	NITHolder nit_out(t0, p0, e0);
+NITHolder run_NIT(double t0, double M, double mu, double p0, double e0, double err){
+	NITHolder nit_out(t0, M, mu, p0, e0);
 
 	struct interp_params interps;
 	//Set the mass ratio
-	interps.epsilon = 1e-3;
+	interps.epsilon = mu/M;
+
+    double Msec = MTSUN_SI*M;
 
 	load_and_interpolate_flux_data(&interps);
 
@@ -151,7 +154,7 @@ NITHolder run_NIT(double t0, double p0, double e0){
 		const gsl_odeiv2_step_type *T = gsl_odeiv2_step_rk8pd;
 
 		gsl_odeiv2_step *s 		= gsl_odeiv2_step_alloc (T, 4);
-		gsl_odeiv2_control *c 	= gsl_odeiv2_control_y_new (1e-10, 1e-10);
+		gsl_odeiv2_control *c 	= gsl_odeiv2_control_y_new (err, err);
 		gsl_odeiv2_evolve *e 	= gsl_odeiv2_evolve_alloc (4);
 
 	double t = t0;
@@ -170,7 +173,7 @@ NITHolder run_NIT(double t0, double p0, double e0){
 			break;
 		}
 
-		nit_out.add_point(t, y[0], y[1], y[2], y[3]);
+		nit_out.add_point(t*Msec, y[0], y[1], y[2], y[3]); // adds time in seconds
 
 		// Output format: t, p, e, Phi_phi, Phi_r
 				//printf ("%.5e %.5e %.5e %.5e %.5e\n", nit_out.t_arr.push_back(t), nit_out.p_arr.push_back(y[0]), nit_out.e_arr.push_back(y[1]), y[2], y[3]);
@@ -190,10 +193,10 @@ NITHolder run_NIT(double t0, double p0, double e0){
 
 }
 
-void NITWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double p0, double e0, int *length){
+void NITWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double M, double mu, double p0, double e0, int *length, double err){
 
-	double t0;
-		NITHolder nit_vals = run_NIT(t0, p0, e0);
+	double t0 = 0.0;
+		NITHolder nit_vals = run_NIT(t0, M, mu, p0, e0, err);
 
 		memcpy(t, &nit_vals.t_arr[0], nit_vals.length*sizeof(double));
 		memcpy(p, &nit_vals.p_arr[0], nit_vals.length*sizeof(double));

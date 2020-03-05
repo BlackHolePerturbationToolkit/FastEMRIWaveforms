@@ -25,7 +25,7 @@ class FastEMRIWaveforms {
   cuComplex *d_Ylms;
   cmplx *Ylms;
 
-  int max_init_len;
+  int max_init_len, int_err;
   int num_n, num_l_m;
   int *m_arr, *l_arr;
   int max_input_len;
@@ -49,9 +49,9 @@ public:
     int break_index_,
     int *d_l, int *m_, int *n_,
     int max_input_len, int num_l_m_, int num_n_, fod delta_t_,
-    int max_init_len_); // constructor (copies to GPU)
+    int max_init_len_, double int_err_); // constructor (copies to GPU)
 
-  void run_nn(cmplx *waveform, double p0, double e0, fod theta, fod phi, int* out_len);
+  void run_nn(cmplx *waveform, double M, double mu, double p0, double e0, fod theta, fod phi, int* out_len);
 
   ~FastEMRIWaveforms(); // destructor
 };

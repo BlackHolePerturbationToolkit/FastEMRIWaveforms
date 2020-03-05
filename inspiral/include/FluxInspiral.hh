@@ -28,10 +28,12 @@ public:
 		std::vector<double> e_arr;
 		std::vector<double> Phi_phi_arr;
 		std::vector<double> Phi_r_arr;
-		double t0, p0, e0;
+		double t0, M, mu, p0, e0;
 
-		NITHolder(double t0_, double p0_, double e0_){
+		NITHolder(double t0_, double M_, double mu_, double p0_, double e0_){
 				t0 = t0_;
+                M = M_;
+                mu = mu_;
 				p0 = p0_;
 				e0 = e0_;
 
@@ -54,8 +56,8 @@ public:
 
 };
 
-NITHolder run_NIT(double t0, double p0, double e0);
+NITHolder run_NIT(double t0, double M, double mu, double p0, double e0, double err);
 
-void NITWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double p0, double e0, int *length);
+void NITWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double M, double mu, double p0, double e0, int *length, double err);
 
 #endif //__FLUX_H__

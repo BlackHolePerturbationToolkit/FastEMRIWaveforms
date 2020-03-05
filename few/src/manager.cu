@@ -29,7 +29,7 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     int break_index_,
     int *l_, int *m_, int *n_,
     int max_input_len_, int num_l_m_, int num_n_, fod delta_t_,
-    int max_init_len_)
+    int max_init_len_, double int_err_)
 {
     max_input_len = max_input_len_;
     time_batch_size = time_batch_size_;
@@ -45,6 +45,8 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
 
     num_n = num_n_;
     num_l_m = num_l_m_;
+
+    int_err = int_err_;
 
     l_arr = l_;
     m_arr = m_;
@@ -140,14 +142,14 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
 
 
 
-void FastEMRIWaveforms::run_nn(cmplx *waveform, double p0, double e0, fod theta, fod phi, int* out_len){
+void FastEMRIWaveforms::run_nn(cmplx *waveform, double M, double mu, double p0, double e0, fod theta, fod phi, int* out_len, double int_err){
 
     //gpuErrchk(cudaMemcpy(d_Phi_phi, Phi_phi, input_len*sizeof(fod), cudaMemcpyHostToDevice));
     //gpuErrchk(cudaMemcpy(d_Phi_r, Phi_r, input_len*sizeof(fod), cudaMemcpyHostToDevice));
 
     double t0 = 0.0;
 
-    NITHolder nit_vals = run_NIT(t0, p0, e0);
+    NITHolder nit_vals = run_NIT(t0, M, mu, p0, e0, int_err);
 
     for (int i=0; i<nit_vals.length; i++){
         //printf("%e %e %e, %e, %e\n", nit_vals.t_arr[i], nit_vals.p_arr[i], nit_vals.e_arr[i], nit_vals.Phi_phi_arr[i], nit_vals.Phi_r_arr[i]);
