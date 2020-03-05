@@ -31,20 +31,43 @@ m = xp.zeros(2214, dtype=int)
 n = xp.zeros(2214, dtype=int)
 
 ind = 0
+mode_inds = {}
+total_n = 41
 for l_i in range(2, 10 + 1):
     for m_i in range(1, l_i + 1):
+        ind_start = ind
+        num_n_here = 0
         for n_i in range(-20, 20 + 1):
             l[ind] = l_i
             m[ind] = m_i
             n[ind] = n_i
-            ind += 1
 
+            mode_inds[(l_i, m_i, n_i)] = ind
+            mode_inds[(l_i, -m_i, n_i)] = ind_start + total_n - 1 - num_n_here
+
+            ind += 1
+            num_n_here += 1
+
+
+kwargs["mode_inds"] = mode_inds
 cw = CreateWaveform(**kwargs)
 theta = np.pi / 2
 phi = 0.0  # np.pi / 3
 
 num = 1
-out = cw(p, e, Phi_r, Phi_phi, l, m, n, theta, phi)
+get_modes = [(2, 2, 0), (3, 2, 2), (4, -2, -18), (7, 7, 10)]
+out = cw(p, e, Phi_r, Phi_phi, l, m, n, theta, phi, get_modes=get_modes,)
+
+import matplotlib.pyplot as plt
+
+for mode in get_modes:
+    plt.plot(out[mode].real, label=mode)
+
+plt.legend()
+plt.show()
+import pdb
+
+pdb.set_trace()
 check = []
 for _ in range(num):
     st = time.perf_counter()

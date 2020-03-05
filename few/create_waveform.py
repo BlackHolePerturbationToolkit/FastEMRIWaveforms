@@ -12,7 +12,11 @@ from .ylm import get_ylms
 
 class GetZlmnk:
     def __init__(
-        self, batch_size, transform_file="few/files/reduced_basis.dat", nn_kwargs={}
+        self,
+        batch_size,
+        transform_file="few/files/reduced_basis.dat",
+        nn_kwargs={},
+        **kwargs,
     ):
         self.neural_net = NN(**nn_kwargs)
 
@@ -47,8 +51,12 @@ class CreateWaveform:
         self.zlmnk = xp.zeros((batch_size, 2214), dtype=xp.complex64)
         self.ylms = xp.zeros(2214, dtype=xp.complex64)
         self.buffer = xp.zeros(54, dtype=xp.complex64)
+        self.mode_inds = kwargs["mode_inds"]
 
-    def __call__(self, p, e, Phi_r, Phi_phi, l, m, n, theta, phi):
+    def __call__(self, p, e, Phi_r, Phi_phi, l, m, n, theta, phi, get_modes=None):
+        if get_modes is not None:
+            mode_out = {}
+
         self.ylms[:] = xp.repeat(
             get_ylms(l[0::41], m[0::41], theta, phi, self.buffer), 41
         )
@@ -61,9 +69,20 @@ class CreateWaveform:
             )
         )
 
-        waveform = xp.sum(
-            self.zlmnk * self.ylms[xp.newaxis, :] * self.expiphases, axis=1
-        )
+        if get_modes is not None:
+            temp = self.zlmnk * self.ylms[xp.newaxis, :] * self.expiphases
+
+            for i, mode in enumerate(get_modes):
+                l_here, m_here, n_here = mode
+                if m_here < 0:
+                    continue
+                ind = self.mode_inds[mode]
+                mode_out[mode] = temp[:, ind]
+
+        else:
+            waveform = xp.sum(
+                self.zlmnk * self.ylms[xp.newaxis, :] * self.expiphases, axis=1
+            )
 
         self.ylms[:] = xp.repeat(
             get_ylms(l[0::41], m[0::41], theta, phi, self.buffer), 41
@@ -84,9 +103,23 @@ class CreateWaveform:
             self.zlmnk[start_ind:end_ind] = self.zlmnk[start_ind:end_ind][::-1]
         """
 
-        waveform = waveform + xp.sum(
-            self.zlmnk.conj() * self.ylms[xp.newaxis, :] * self.expiphases, axis=1
-        )
+        if get_modes is not None:
+            temp = self.zlmnk.conj() * self.ylms[xp.newaxis, :] * self.expiphases
+
+            for i, mode in enumerate(get_modes):
+                l_here, m_here, n_here = mode
+                if m_here >= 0:
+                    continue
+                ind = self.mode_inds[mode]
+                mode_out[mode] = temp[:, ind]
+
+        else:
+            waveform = waveform + xp.sum(
+                self.zlmnk.conj() * self.ylms[xp.newaxis, :] * self.expiphases, axis=1
+            )
+
+        if get_modes is not None:
+            return mode_out
 
         return waveform
 
