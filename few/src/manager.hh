@@ -25,11 +25,11 @@ class FastEMRIWaveforms {
   cuComplex *d_Ylms;
   cmplx *Ylms;
 
-  int max_init_len, int_err;
+  int max_init_len;
   int num_n, num_l_m;
   int *m_arr, *l_arr;
   int max_input_len;
-  double delta_t;
+  double delta_t, int_err;
   fod *temp_t, *temp_p, *temp_e, *temp_Phi_phi, *temp_Phi_r;
   fod *d_init_t, *d_init_p, *d_init_e, *d_init_Phi_phi, *d_init_Phi_r, *d_input_mat;
   InterpContainer *d_interp_p, *d_interp_e, *d_interp_Phi_phi, *d_interp_Phi_r;

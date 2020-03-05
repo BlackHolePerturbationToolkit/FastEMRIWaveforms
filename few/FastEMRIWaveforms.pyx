@@ -40,7 +40,7 @@ cdef class FastEMRIWaveforms:
                             &transform_matrix[0],
                             trans_dim1, trans_dim2, np.float32(transform_factor), break_index, &l[0], &m[0], &n[0], max_wave_len, num_l_m, num_n, dt, max_init_len, int_err)
 
-    def run_nn(self, M, mu p0, e0, theta, phi):
+    def run_nn(self, M, mu, p0, e0, theta, phi):
 
         cdef np.ndarray[ndim=1, dtype=np.complex64_t] waveform = np.zeros(self.max_wave_len, dtype=np.complex64)
         cdef int out_len;

@@ -142,7 +142,7 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
 
 
 
-void FastEMRIWaveforms::run_nn(cmplx *waveform, double M, double mu, double p0, double e0, fod theta, fod phi, int* out_len, double int_err){
+void FastEMRIWaveforms::run_nn(cmplx *waveform, double M, double mu, double p0, double e0, fod theta, fod phi, int* out_len){
 
     //gpuErrchk(cudaMemcpy(d_Phi_phi, Phi_phi, input_len*sizeof(fod), cudaMemcpyHostToDevice));
     //gpuErrchk(cudaMemcpy(d_Phi_r, Phi_r, input_len*sizeof(fod), cudaMemcpyHostToDevice));
