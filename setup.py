@@ -210,7 +210,7 @@ setup(
     version="0.1",
     ext_modules=extensions,
     packages=["few"],
-    # py_modules=[],
+    py_modules=["few.nit"],
     # Inject our custom trigger
     cmdclass={"build_ext": custom_build_ext},
     # Since the package has c code, the egg cannot be zipped
