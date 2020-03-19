@@ -3,7 +3,7 @@
 #include "global.h"
 #include "cublas_v2.h"
 #include "kernel.hh"
-#include "interpolate.hh"
+//#include "interpolate.hh"
 #include <thrust/sort.h>
 
 #define NUM_THREADS 256
@@ -201,7 +201,7 @@ void select_modes(int *filter_modes_buffer, float *working_modes_all, int *ind_w
 }
 
 __global__
-void produce_info_array(int *mode_keep_inds, int *filter_modes_buffer, int num_teuk_modes, int *modes_kept)
+void produce_info_array(int *mode_keep_inds, int *filter_modes_buffer, int num_teuk_modes, int *num_modes_kept)
 {
 
     int j = 0;
@@ -213,7 +213,7 @@ void produce_info_array(int *mode_keep_inds, int *filter_modes_buffer, int num_t
         }
 
     }
-    *modes_kept = j;
+    *num_modes_kept = j;
 }
 
 
@@ -265,14 +265,14 @@ void filter_modes(FilterContainer *filter, cuComplex *d_teuk_modes, cuComplex *d
 
 
     produce_info_array<<<1,1>>>(filter->d_mode_keep_inds, filter->d_filter_modes_buffer,
-                                num_teuk_modes, filter->d_modes_kept);
+                                num_teuk_modes, filter->d_num_modes_kept);
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());
 
-    gpuErrchk(cudaMemcpy(&filter->modes_kept, filter->d_modes_kept, sizeof(int), cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(&filter->num_modes_kept, filter->d_num_modes_kept, sizeof(int), cudaMemcpyDeviceToHost));
 
-    /*printf("OUTOFIT: %d\n", modes_kept);
-    printit2<<<1,1>>>(working_modes_all, d_mode_keep_inds, modes_kept+1);
+    /*printf("OUTOFIT: %d\n", num_modes_kept);
+    printit2<<<1,1>>>(working_modes_all, d_mode_keep_inds, num_modes_kept+1);
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());*/
 
@@ -330,7 +330,7 @@ __global__
 void make_waveform(cuComplex *waveform,
               InterpContainer *Phi_phi_, InterpContainer *Phi_r_, InterpContainer *modes,
               int *m_arr, int *n_arr, int num_teuk_modes, cuComplex *Ylms, int num_n,
-              fod delta_t, fod start_t, int old_ind, int start_ind, int end_ind, int num_l_m, int *run_mode){
+              fod delta_t, fod start_t, int old_ind, int start_ind, int end_ind, int num_l_m, int*mode_keep_inds){
 
     cuComplex trans = make_cuComplex(0.0, 0.0);
     cuComplex mode_val;
@@ -339,8 +339,15 @@ void make_waveform(cuComplex *waveform,
     int lm_i;
      fod re_y, re_c1, re_c2, re_c3, im_y, im_c1, im_c2, im_c3;
      fod pp_y, pp_c1, pp_c2, pp_c3, pr_y, pr_c1, pr_c2, pr_c3;
-     int m, n;
+     int m, n, actual_mode_index;
      cuComplex Ylm_plus_m, Ylm_minus_m;
+
+    //__shared__ int mode_keep_inds[2214];
+
+    //for (int i=threadIdx.x; i<num_teuk_modes; i+=blockDim.x) {
+    //    mode_keep_inds[i] = mode_keep_inds_trans[i];
+    //}
+    __syncthreads();
 
     pp_y = Phi_phi_->y[old_ind]; pp_c1 = Phi_phi_->c1[old_ind]; pp_c2 = Phi_phi_->c2[old_ind]; pp_c3 = Phi_phi_->c3[old_ind];
     pr_y = Phi_phi_->y[old_ind]; pr_c1 = Phi_phi_->c1[old_ind]; pr_c2 = Phi_phi_->c2[old_ind]; pr_c3 = Phi_phi_->c3[old_ind];
@@ -362,16 +369,16 @@ void make_waveform(cuComplex *waveform,
 
         for (int j=0; j<num_teuk_modes; j++){
 
-            if (run_mode[j] == 0) continue;
-            lm_i = j / num_n;
+            actual_mode_index = mode_keep_inds[j];
+            lm_i = actual_mode_index / num_n;
             Ylm_plus_m = Ylms[lm_i];
             Ylm_minus_m = Ylms[num_l_m + lm_i];
 
              re_y = modes[2*j].y[old_ind]; re_c1 = modes[2*j].c1[old_ind]; re_c2 = modes[2*j].c2[old_ind]; re_c3 = modes[2*j].c3[old_ind];
              im_y = modes[2*j].y[old_ind]; im_c1 = modes[2*j].c1[old_ind]; im_c2 = modes[2*j].c2[old_ind]; im_c3 = modes[2*j].c3[old_ind];
 
-             m = m_arr[j];
-             n = n_arr[j];
+             m = m_arr[actual_mode_index];
+             n = n_arr[actual_mode_index];
 
             mode_val_re =  re_y + re_c1*x + re_c2*x2  + re_c3*x3;
             mode_val_im = im_y + im_c1*x + im_c2*x2  + im_c3*x3;
@@ -414,19 +421,7 @@ void find_start_inds(int start_inds[], int unit_length[], fod *t_arr, fod delta_
 void get_waveform(cuComplex *d_waveform,
               InterpContainer *d_interp_Phi_phi, InterpContainer *d_interp_Phi_r, InterpContainer *d_modes,
               int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cuComplex *d_Ylms, int num_n,
-              fod delta_t, fod *h_t, int num_l_m){
-
-    int *h_run_mode = new int[num_teuk_modes];
-    int *d_run_mode;
-    gpuErrchk(cudaMalloc(&d_run_mode, num_teuk_modes*sizeof(int)));
-
-    for (int i=0; i<num_teuk_modes; i++){
-        if (i % 4 == 0) h_run_mode[i] = 1;
-        else h_run_mode[i] = 0;
-
-    }
-
-    gpuErrchk(cudaMemcpy(d_run_mode, h_run_mode, num_teuk_modes*sizeof(int), cudaMemcpyHostToDevice));
+              fod delta_t, fod *h_t, int num_l_m, FilterContainer *filter){
 
 
     int start_inds[init_len];
@@ -435,7 +430,6 @@ void get_waveform(cuComplex *d_waveform,
     find_start_inds(start_inds, unit_length, h_t, delta_t, init_len, out_len);
 
     cudaStream_t streams[init_len-1];
-
     for (int i = 0; i < init_len-2; i++) {
           cudaStreamCreate(&streams[i]);
           int num_blocks = std::ceil((unit_length[i] + NUM_THREADS -1)/NUM_THREADS);
@@ -443,10 +437,11 @@ void get_waveform(cuComplex *d_waveform,
           if (num_blocks == 0) continue;
           dim3 gridDim(num_blocks, 1); //, num_teuk_modes);
           // launch one worker kernel per stream
+
           make_waveform<<<gridDim, NUM_THREADS, 0, streams[i]>>>(d_waveform,
                         d_interp_Phi_phi, d_interp_Phi_r, d_modes,
                         d_m, d_n, num_teuk_modes, d_Ylms, num_n,
-                        delta_t, h_t[i], i, start_inds[i], start_inds[i+1], num_l_m, d_run_mode);
+                        delta_t, h_t[i], i, start_inds[i], start_inds[i+1], num_l_m, filter->d_mode_keep_inds);
 
       }
       cudaDeviceSynchronize();
@@ -455,9 +450,6 @@ void get_waveform(cuComplex *d_waveform,
             cudaStreamDestroy(streams[i]);
 
         }
-
-      gpuErrchk(cudaFree(d_run_mode));
-      delete[] h_run_mode;
 
       /*int num_blocks = std::ceil((input_len + NUM_THREADS -1)/NUM_THREADS);
       dim3 gridDim(num_blocks, num_teuk_modes); //, num_teuk_modes);

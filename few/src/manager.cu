@@ -144,7 +144,7 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     gpuErrchk(cudaMalloc(&filter->working_modes_all, num_teuk_modes*max_init_len*sizeof(float)));
     gpuErrchk(cudaMalloc(&filter->ind_working_modes_all, num_teuk_modes*max_init_len*sizeof(int)));
 
-    gpuErrchk(cudaMalloc(&filter->d_modes_kept, sizeof(int)));
+    gpuErrchk(cudaMalloc(&filter->d_num_modes_kept, sizeof(int)));
 
     filter->tol = tol_;
 
@@ -213,16 +213,16 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, double M, double mu, double p0, 
 
     filter_modes(filter, d_teuk_modes, d_Ylms, d_m, num_teuk_modes, nit_vals.length, num_n, num_l_m);
 
-    fill_complex_y_vals(d_interp_modes, d_teuk_modes, nit_vals.length, num_teuk_modes);
+    fill_complex_y_vals(d_interp_modes, d_teuk_modes, nit_vals.length, num_teuk_modes, filter);
 
     interp->setup_interpolate(d_interp_p, d_interp_e, d_interp_Phi_phi, d_interp_Phi_r,
-                      d_interp_modes, num_teuk_modes,
+                      d_interp_modes, filter->num_modes_kept, // replaces num_teuk_modes
                            d_init_t, nit_vals.length);
 
      get_waveform(d_waveform,
                   d_interp_Phi_phi, d_interp_Phi_r, d_interp_modes,
-                  d_m, d_n, nit_vals.length, num_points, num_teuk_modes, d_Ylms, num_n,
-                  delta_t, temp_t, num_l_m);
+                  d_m, d_n, nit_vals.length, num_points, filter->num_modes_kept, d_Ylms, num_n,
+                  delta_t, temp_t, num_l_m, filter);
 
     //gpuErrchk(cudaMemcpy(waveform, d_waveform, num_points*sizeof(cuComplex), cudaMemcpyDeviceToHost));
 }
@@ -281,7 +281,7 @@ FastEMRIWaveforms::~FastEMRIWaveforms()
     gpuErrchk(cudaFree(filter->d_mode_keep_inds));
     gpuErrchk(cudaFree(filter->working_modes_all));
     gpuErrchk(cudaFree(filter->ind_working_modes_all));
-    gpuErrchk(cudaFree(filter->d_modes_kept));
+    gpuErrchk(cudaFree(filter->d_num_modes_kept));
 
     gpuErrchk(cudaFree(d_interp_modes));
     delete[] h_interp_modes;

@@ -7,7 +7,6 @@
 #include "elliptic.hh"
 #include "kernel.hh"
 #include "stdio.h"
-#include "interpolate.hh"
 
 static char *_cudaGetErrorEnum(cublasStatus_t error)
 {
@@ -42,18 +41,6 @@ static char *_cudaGetErrorEnum(cublasStatus_t error)
 }
 
 
-typedef struct tagFilterContainer {
-
-    int *d_mode_keep_inds;
-    int *d_filter_modes_buffer;
-    float *working_modes_all;
-    int *ind_working_modes_all;
-    int *d_modes_kept;
-    int modes_kept;
-    float tol;
-
-} FilterContainer;
-
 void run_layer(fod *C, fod *layer_weight, fod *layer_bias, int dim1, int dim2, int input_len);
 
 void transform_output(cuComplex *d_teuk_modes, cuComplex *d_transform_matrix, cuComplex *d_nn_output_mat, fod *d_C,
@@ -66,7 +53,7 @@ void filter_modes(FilterContainer *filter, cuComplex *d_teuk_modes, cuComplex *d
 void get_waveform(cuComplex *d_waveform,
               InterpContainer *d_interp_Phi_phi, InterpContainer *d_interp_Phi_r, InterpContainer *d_modes,
               int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cuComplex *d_Ylms, int num_n,
-              fod delta_t, fod *h_t, int num_l_m);
+              fod delta_t, fod *h_t, int num_l_m, FilterContainer *filter);
 
 void ellpe_test();
 

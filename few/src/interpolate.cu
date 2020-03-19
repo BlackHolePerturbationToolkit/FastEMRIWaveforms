@@ -54,34 +54,35 @@ void destroy_mode_interp_containers(InterpContainer *d_interp, InterpContainer *
 
 
 __global__
-void kernel_fill_complex_y_vals(InterpContainer *modes, cuComplex *y, int length, int num_modes)
+void kernel_fill_complex_y_vals(InterpContainer *modes, cuComplex *y, int length, int num_modes, int *mode_keep_inds)
 {
 
   cuComplex trans;
-      for (int i = blockIdx.y * blockDim.y + threadIdx.y;
+      for (int i = blockIdx.x * blockDim.x + threadIdx.x;
            i < length;
-           i += blockDim.y * gridDim.y){
+           i += blockDim.x * gridDim.x){
 
-       for (int mode_i = blockIdx.x * blockDim.x + threadIdx.x;
-            mode_i < length;
-            mode_i += blockDim.x * gridDim.x){
+       for (int mode_i = blockIdx.y * blockDim.y + threadIdx.y;
+            mode_i < num_modes;
+            mode_i += blockDim.y * gridDim.y){
 
-             trans = y[mode_i*length + i];
-             modes[2*mode_i].y[i] = cuCrealf(trans);
-             modes[2*mode_i + 1].y[i] = cuCimagf(trans);
+             int actual_mode_index = mode_keep_inds[mode_i];
+             trans = y[actual_mode_index*length + i];
+             modes[2*actual_mode_index].y[i] = cuCrealf(trans);
+             modes[2*actual_mode_index + 1].y[i] = cuCimagf(trans);
 
       }
   }
 }
 
 
-void fill_complex_y_vals(InterpContainer *d_interp, cuComplex *y, int length, int num_modes)
+void fill_complex_y_vals(InterpContainer *d_interp, cuComplex *y, int length, int num_modes, FilterContainer *filter)
 {
 
-  int NUM_THREADS = 256;
-  int num_blocks = std::ceil((num_modes + NUM_THREADS -1)/NUM_THREADS);
-  dim3 gridDim(num_blocks, length); //, num_teuk_modes);
-  kernel_fill_complex_y_vals<<<gridDim, NUM_THREADS>>>(d_interp, y, length, num_modes);
+  int NUM_THREADS = 128; //less because of general lengths
+  int num_blocks = std::ceil((length + NUM_THREADS -1)/NUM_THREADS);
+  dim3 gridDim(num_blocks, filter->num_modes_kept); //, num_teuk_modes);
+  kernel_fill_complex_y_vals<<<gridDim, NUM_THREADS>>>(d_interp, y, length, filter->num_modes_kept, filter->d_mode_keep_inds);
   cudaDeviceSynchronize();
   gpuErrchk(cudaGetLastError());
 

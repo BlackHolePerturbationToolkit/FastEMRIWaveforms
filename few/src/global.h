@@ -23,4 +23,26 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 
 #endif
 
+typedef struct tagInterpContainer{
+  fod *y;
+  fod *c1;
+  fod *c2;
+  fod *c3;
+  int length;
+
+} InterpContainer;
+
+typedef struct tagFilterContainer {
+
+    int *d_mode_keep_inds;
+    int *d_filter_modes_buffer;
+    float *working_modes_all;
+    int *ind_working_modes_all;
+    int *d_num_modes_kept;
+    int num_modes_kept;
+    float tol;
+
+} FilterContainer;
+
+
 #endif
