@@ -4,6 +4,7 @@
 #include "cuComplex.h"
 #include <complex>
 #include "interpolate.hh"
+#include "kernel.hh"
 
 class FastEMRIWaveforms {
   // pointer to the GPU memory where the array is stored
@@ -24,6 +25,10 @@ class FastEMRIWaveforms {
   int *d_m, *d_n, *d_l;
   cuComplex *d_Ylms;
   cmplx *Ylms;
+
+  FilterContainer *filter;
+
+  int *d_mode_keep_inds, *d_filter_modes_buffer;
 
   int max_init_len;
   int num_n, num_l_m;
@@ -49,7 +54,7 @@ public:
     int break_index_,
     int *d_l, int *m_, int *n_,
     int max_input_len, int num_l_m_, int num_n_, fod delta_t_,
-    int max_init_len_, double int_err_); // constructor (copies to GPU)
+    int max_init_len_, double int_err_, float tol_); // constructor (copies to GPU)
 
   void run_nn(cmplx *waveform, double M, double mu, double p0, double e0, fod theta, fod phi, int* out_len);
 

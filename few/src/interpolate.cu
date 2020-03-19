@@ -66,7 +66,7 @@ void kernel_fill_complex_y_vals(InterpContainer *modes, cuComplex *y, int length
             mode_i < length;
             mode_i += blockDim.x * gridDim.x){
 
-             trans = y[mode_i*num_modes + i];
+             trans = y[mode_i*length + i];
              modes[2*mode_i].y[i] = cuCrealf(trans);
              modes[2*mode_i + 1].y[i] = cuCimagf(trans);
 

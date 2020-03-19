@@ -29,7 +29,7 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     int break_index_,
     int *l_, int *m_, int *n_,
     int max_input_len_, int num_l_m_, int num_n_, fod delta_t_,
-    int max_init_len_, double int_err_)
+    int max_init_len_, double int_err_, float tol_)
 {
     max_input_len = max_input_len_;
     time_batch_size = time_batch_size_;
@@ -136,9 +136,19 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
 
     interp = new InterpClass(num_teuk_modes, max_init_len);
 
+
+    filter = new FilterContainer;
+    gpuErrchk(cudaMalloc(&filter->d_mode_keep_inds, num_teuk_modes*sizeof(int)));
+    gpuErrchk(cudaMalloc(&filter->d_filter_modes_buffer, num_teuk_modes*sizeof(int)));
+
+    gpuErrchk(cudaMalloc(&filter->working_modes_all, num_teuk_modes*max_init_len*sizeof(float)));
+    gpuErrchk(cudaMalloc(&filter->ind_working_modes_all, num_teuk_modes*max_init_len*sizeof(int)));
+
+    gpuErrchk(cudaMalloc(&filter->d_modes_kept, sizeof(int)));
+
+    filter->tol = tol_;
+
 }
-
-
 
 
 
@@ -200,6 +210,8 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, double M, double mu, double p0, 
     }
 
     transform_output(d_teuk_modes, d_transform_matrix, d_nn_output_mat, d_C, nit_vals.length, break_index, d_transform_factor_inv, trans_dim2);
+
+    filter_modes(filter, d_teuk_modes, d_Ylms, d_m, num_teuk_modes, nit_vals.length, num_n, num_l_m);
 
     fill_complex_y_vals(d_interp_modes, d_teuk_modes, nit_vals.length, num_teuk_modes);
 
@@ -265,8 +277,15 @@ FastEMRIWaveforms::~FastEMRIWaveforms()
 
     destroy_mode_interp_containers(d_interp_modes, h_interp_modes, num_teuk_modes);
 
+    gpuErrchk(cudaFree(filter->d_filter_modes_buffer));
+    gpuErrchk(cudaFree(filter->d_mode_keep_inds));
+    gpuErrchk(cudaFree(filter->working_modes_all));
+    gpuErrchk(cudaFree(filter->ind_working_modes_all));
+    gpuErrchk(cudaFree(filter->d_modes_kept));
+
     gpuErrchk(cudaFree(d_interp_modes));
     delete[] h_interp_modes;
 
+    delete filter;
     delete interp;
 }

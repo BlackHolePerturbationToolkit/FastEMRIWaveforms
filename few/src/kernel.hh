@@ -9,16 +9,6 @@
 #include "stdio.h"
 #include "interpolate.hh"
 
-#define gpuErrchk_here(ans) { gpuAssert_here((ans), __FILE__, __LINE__); }
-inline void gpuAssert_here(cudaError_t code, const char *file, int line, bool abort=true)
-{
-   if (code != cudaSuccess)
-   {
-      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-      if (abort) exit(code);
-   }
-}
-
 static char *_cudaGetErrorEnum(cublasStatus_t error)
 {
     switch (error)
@@ -51,11 +41,27 @@ static char *_cudaGetErrorEnum(cublasStatus_t error)
     return "<unknown>";
 }
 
+
+typedef struct tagFilterContainer {
+
+    int *d_mode_keep_inds;
+    int *d_filter_modes_buffer;
+    float *working_modes_all;
+    int *ind_working_modes_all;
+    int *d_modes_kept;
+    int modes_kept;
+    float tol;
+
+} FilterContainer;
+
 void run_layer(fod *C, fod *layer_weight, fod *layer_bias, int dim1, int dim2, int input_len);
 
 void transform_output(cuComplex *d_teuk_modes, cuComplex *d_transform_matrix, cuComplex *d_nn_output_mat, fod *d_C,
                       int input_len, int break_index, cuComplex d_transform_factor_inv,
                       int num_teuk_modes);
+
+void filter_modes(FilterContainer *filter, cuComplex *d_teuk_modes, cuComplex *d_Ylms,
+                  int *m_arr, int num_teuk_modes, int length, int num_n, int num_l_m);
 
 void get_waveform(cuComplex *d_waveform,
               InterpContainer *d_interp_Phi_phi, InterpContainer *d_interp_Phi_r, InterpContainer *d_modes,
