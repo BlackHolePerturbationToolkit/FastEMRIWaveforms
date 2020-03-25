@@ -12,9 +12,9 @@ except ImportError:
 
 from few.create_waveform import CreateWaveform
 
-nn_kwargs = dict(input_str="SE_", folder="few/files/weights/", activation_kwargs={})
+nn_kwargs = dict(input_str="SE_n30_", folder="few/files/weights/", activation_kwargs={})
 
-kwargs = dict(transform_file="few/files/reduced_basis.dat", nn_kwargs=nn_kwargs)
+kwargs = dict(transform_file="few/files/reduced_basis_n30.dat", nn_kwargs=nn_kwargs)
 
 # Load the inspiral data. This should be in the format (p, e, Phi_phi, Phi_r)
 traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")[0::3][:1000]
@@ -26,18 +26,18 @@ e = xp.asarray(traj[:, 1], dtype=xp.float32)
 Phi_phi = xp.asarray(traj[:, 2], dtype=xp.float32)
 Phi_r = xp.asarray(traj[:, 3], dtype=xp.float32)
 
-l = xp.zeros(2214, dtype=int)
-m = xp.zeros(2214, dtype=int)
-n = xp.zeros(2214, dtype=int)
+l = xp.zeros(3843, dtype=int)
+m = xp.zeros(3843, dtype=int)
+n = xp.zeros(3843, dtype=int)
 
 ind = 0
 mode_inds = {}
-total_n = 41
+total_n = 61
 for l_i in range(2, 10 + 1):
-    for m_i in range(1, l_i + 1):
+    for m_i in range(0, l_i + 1):
         ind_start = ind
         num_n_here = 0
-        for n_i in range(-20, 20 + 1):
+        for n_i in range(-30, 30 + 1):
             l[ind] = l_i
             m[ind] = m_i
             n[ind] = n_i
@@ -48,9 +48,8 @@ for l_i in range(2, 10 + 1):
             ind += 1
             num_n_here += 1
 
-
 kwargs["mode_inds"] = mode_inds
-cw = CreateWaveform(**kwargs)
+cw = CreateWaveform(num_n_here, **kwargs)
 theta = np.pi / 3
 phi = np.pi / 3
 M = 1e5
@@ -63,7 +62,7 @@ get_modes = [(3, 2, 2)]  # , (3, 2, 2), (4, -2, -18), (7, 7, 10)]
 Phi_phi = None
 Phi_r = None
 nit_err = 1e-10
-spline_modes = False
+spline_modes = True
 
 p = 12.5
 e = 0.4
@@ -84,6 +83,10 @@ out1 = cw(
     spline_modes=True,
     get_modes=None,
 )
+
+import pdb
+
+pdb.set_trace()
 
 import matplotlib.pyplot as plt
 

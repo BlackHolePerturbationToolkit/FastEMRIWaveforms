@@ -28,7 +28,7 @@ class Linear:
 
 class NN:
     def __init__(
-        self, input_str="SE_", folder="few/files/weights/", activation_kwargs={}
+        self, input_str="SE_n30_", folder="few/files/weights/", activation_kwargs={}
     ):
         self.layers = []
         file_list = os.listdir(folder)
@@ -36,7 +36,7 @@ class NN:
         # get highest layer number
         self.num_layers = 0
         for fp in file_list:
-            layer_num = int(fp.split("SE_")[1][1:].split(".")[0])
+            layer_num = int(fp.split(input_str)[1][1:].split(".")[0])
             if layer_num > self.num_layers:
                 self.num_layers = layer_num
 

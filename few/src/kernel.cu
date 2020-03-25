@@ -28,7 +28,24 @@ for (int i = blockIdx.x * blockDim.x + threadIdx.x;
      i < input_len;
      i += blockDim.x * gridDim.x){
 
-       C[input_len*j + i] = LeakyReLU(C[input_len*j + i] + bias[j]);
+        C[input_len*j + i] = LeakyReLU(C[input_len*j + i] + bias[j]);
+
+  }
+}
+}
+
+__global__
+void add_bias(fod *C, fod *bias, int input_len, int dim2){
+
+ for (int j = blockIdx.y * blockDim.y + threadIdx.y;
+      j < dim2;
+      j += blockDim.y * gridDim.y){
+
+for (int i = blockIdx.x * blockDim.x + threadIdx.x;
+     i < input_len;
+     i += blockDim.x * gridDim.x){
+
+       C[input_len*j + i] = C[input_len*j + i] + bias[j];
   }
 }
 }
@@ -47,6 +64,7 @@ void run_layer(fod *C, fod *layer_weight, fod *layer_bias, int dim1, int dim2, i
              exit(0);
          }
 
+
   stat = cublasSgemm(handle,
                          CUBLAS_OP_N, CUBLAS_OP_N,
                          m, n, k,
@@ -55,8 +73,6 @@ void run_layer(fod *C, fod *layer_weight, fod *layer_bias, int dim1, int dim2, i
                          layer_weight, k,
                          &beta,
                          C, m);
-
-
 
    status = _cudaGetErrorEnum(stat);
     cudaDeviceSynchronize();
@@ -67,9 +83,11 @@ void run_layer(fod *C, fod *layer_weight, fod *layer_bias, int dim1, int dim2, i
 
   int num_blocks = std::ceil((input_len + NUM_THREADS -1)/NUM_THREADS);
   dim3 gridDim(num_blocks, dim2);
-  add_bias_relu<<<gridDim, NUM_THREADS>>>(C, layer_bias, input_len, dim2);
+  if (dim2 == 194) add_bias<<<gridDim, NUM_THREADS>>>(C, layer_bias, input_len, dim2);
+  else add_bias_relu<<<gridDim, NUM_THREADS>>>(C, layer_bias, input_len, dim2);
   cudaDeviceSynchronize();
   gpuErrchk(cudaGetLastError());
+
 }
 
 __global__
@@ -97,6 +115,7 @@ void transform_output(cuComplex *d_teuk_modes, cuComplex *d_transform_matrix, cu
   form_complex_output<<<gridDim, NUM_THREADS>>>(d_nn_output_mat, d_C, input_len, break_index, d_transform_factor_inv);
   cudaDeviceSynchronize();
   gpuErrchk(cudaGetLastError());
+
 
   int m=input_len, k=break_index, n=num_teuk_modes;
   char * status;
@@ -147,6 +166,7 @@ void check_mode_power(cuComplex *input_mode_vals,  cuComplex *Ylms, int length, 
                  lm_i = mode_i / num_n;
                  Ylm = Ylms[lm_i];
                  working_modes_all[i*num_teuk_modes + mode_i] = (1+m_fac)*pow(cuCabsf(cuCmulf(input_mode_vals[mode_i*length + i], Ylm)), 2.0);
+                 //if ((i==0) && (mode_i < 10)) printf("%d %d %e %e\n", length, mode_i, cuCrealf(input_mode_vals[mode_i*length + i]), cuCimagf(input_mode_vals[mode_i*length + i]));
                  ind_working_modes_all[i*num_teuk_modes + mode_i] = mode_i;
              }
          }

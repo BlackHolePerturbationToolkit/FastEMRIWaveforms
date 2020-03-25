@@ -45,10 +45,14 @@ class GetZlmnk:
 
         output = self.neural_net(self.buffer)
 
-        re = output[:, :80]
-        im = output[:, 80:]
+        re = output[:, :97]
+        im = output[:, 97:]
 
         temp = (re + 1j * im).astype(xp.complex64)
+
+        import pdb
+
+        pdb.set_trace()
 
         Zlmkn = xp.matmul(temp / self.transform_factor, self.transform_matrix)
 
@@ -56,14 +60,14 @@ class GetZlmnk:
 
 
 class CreateWaveform:
-    def __init__(self, **kwargs):
+    def __init__(self, num_n, **kwargs):
         batch_size = kwargs["batch_size"]
-        self.num_modes = 2214
+        self.num_modes = 3843
         self.get_zlmnk = GetZlmnk(**kwargs)
         self.expiphases = xp.zeros((batch_size, self.num_modes), dtype=xp.complex64)
         self.zlmnk = xp.zeros((batch_size, self.num_modes), dtype=xp.complex64)
         self.ylms = xp.zeros(self.num_modes, dtype=xp.complex64)
-        self.buffer = xp.zeros(54, dtype=xp.complex64)
+        self.buffer = xp.zeros(int(self.num_modes / num_n), dtype=xp.complex64)
         self.mode_inds = kwargs["mode_inds"]
         self.batch_size = kwargs["batch_size"]
 
@@ -122,12 +126,15 @@ class CreateWaveform:
             mode_out = {}
 
         self.ylms[:] = xp.repeat(
-            get_ylms(l[0::41], m[0::41], theta, phi, self.buffer), 41
+            get_ylms(l[0::61], m[0::61], theta, phi, self.buffer), 61
         )
 
         if spline_modes:
             # only :len(p_) are good
             self.zlmnk[:] = self.get_zlmnk(p_, e_)
+            import pdb
+
+            pdb.set_trace()
             for mode_i in range(self.num_modes):
                 self.zlmnk[: len(t), mode_i] = CubicSpline(
                     t_, self.zlmnk[: len(p_), mode_i]
@@ -170,7 +177,7 @@ class CreateWaveform:
             )
 
         self.ylms[:] = xp.repeat(
-            get_ylms(l[0::41], m[0::41], theta, phi, self.buffer), 41
+            get_ylms(l[0::61], m[0::61], theta, phi, self.buffer), 61
         )
         self.expiphases[: len(Phi_phi)] = xp.exp(
             -1j
@@ -183,7 +190,7 @@ class CreateWaveform:
         """
         # I think this pairs the wrong Zlmnk for the conjugate transformation to -m and -n.
         # I think all that needs to happen is take -m and -n and then conj(Zlmnk)
-        inds = np.arange(len(l))[::41]
+        inds = np.arange(len(l))[::61]
         for start_ind, end_ind in zip(inds[:-1], inds[1:]):
             self.zlmnk[start_ind:end_ind] = self.zlmnk[start_ind:end_ind][::-1]
         """
@@ -217,9 +224,11 @@ class CreateWaveform:
 
 
 if __name__ == "__main__":
-    nn_kwargs = dict(input_str="SE_", folder="few/files/weights/", activation_kwargs={})
+    nn_kwargs = dict(
+        input_str="SE_n30_", folder="few/files/weights/", activation_kwargs={}
+    )
 
-    kwargs = dict(transform_file="few/files/reduced_basis.dat", nn_kwargs=nn_kwargs)
+    kwargs = dict(transform_file="few/files/reduced_basis_n30.dat", nn_kwargs=nn_kwargs)
 
     traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")[0::3][:100000]
 
@@ -230,9 +239,9 @@ if __name__ == "__main__":
     Phi_phi = xp.asarray(traj[:, 2], dtype=xp.float32)
     Phi_r = xp.asarray(traj[:, 3], dtype=xp.float32)
 
-    l = xp.zeros(2214, dtype=int)
-    m = xp.zeros(2214, dtype=int)
-    n = xp.zeros(2214, dtype=int)
+    l = xp.zeros(3843, dtype=int)
+    m = xp.zeros(3843, dtype=int)
+    n = xp.zeros(3843, dtype=int)
 
     ind = 0
     for l_i in range(2, 10 + 1):
