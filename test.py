@@ -21,10 +21,10 @@ traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")[0::3][:1000]
 
 batch_size = kwargs["batch_size"] = 50000  # len(traj)
 
-p = xp.asarray(traj[:, 0], dtype=xp.float32)
-e = xp.asarray(traj[:, 1], dtype=xp.float32)
-Phi_phi = xp.asarray(traj[:, 2], dtype=xp.float32)
-Phi_r = xp.asarray(traj[:, 3], dtype=xp.float32)
+p = xp.asarray(traj[:, 0], dtype=xp.float64)
+e = xp.asarray(traj[:, 1], dtype=xp.float64)
+Phi_phi = xp.asarray(traj[:, 2], dtype=xp.float64)
+Phi_r = xp.asarray(traj[:, 3], dtype=xp.float64)
 
 l = xp.zeros(3843, dtype=int)
 m = xp.zeros(3843, dtype=int)

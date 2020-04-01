@@ -12,8 +12,8 @@ class FastEMRIWaveforms {
   int num_layers;
   fod ** d_layers_matrix;
   fod ** d_layers_bias;
-  cuComplex * d_transform_matrix;
-  cuComplex d_transform_factor_inv;
+  cuDoubleComplex * d_transform_matrix;
+  cuDoubleComplex d_transform_factor_inv;
   int * dim1;
   int * dim2;
   int trans_dim1;
@@ -23,7 +23,7 @@ class FastEMRIWaveforms {
   int break_index;
   int num_teuk_modes;
   int *d_m, *d_n, *d_l;
-  cuComplex *d_Ylms;
+  cuDoubleComplex *d_Ylms;
   cmplx *Ylms;
 
   FilterContainer *filter;
@@ -42,7 +42,7 @@ class FastEMRIWaveforms {
   InterpContainer *h_interp_modes, *d_interp_modes;
 
   fod *d_C, *d_Phi_phi, *d_Phi_r, *d_p, *d_e;
-  cuComplex *d_nn_output_mat, *d_teuk_modes, *d_waveform;
+  cuDoubleComplex *d_nn_output_mat, *d_teuk_modes, *d_waveform;
 
   InterpClass *interp;
 
@@ -54,7 +54,7 @@ public:
     int break_index_,
     int *d_l, int *m_, int *n_,
     int max_input_len, int num_l_m_, int num_n_, fod delta_t_,
-    int max_init_len_, double int_err_, float tol_); // constructor (copies to GPU)
+    int max_init_len_, double int_err_, fod tol_); // constructor (copies to GPU)
 
   void run_nn(cmplx *waveform, double M, double mu, double p0, double e0, fod theta, fod phi, int* out_len);
 

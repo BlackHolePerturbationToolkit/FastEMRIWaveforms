@@ -41,7 +41,7 @@ dim1 = np.asarray(dim1).astype(np.int32)
 dim2 = np.asarray(dim2).astype(np.int32)
 
 transform_matrix = np.asarray(
-    np.genfromtxt("few/files/reduced_basis_n30.dat", dtype=np.complex64)
+    np.genfromtxt("few/files/reduced_basis_n30.dat", dtype=np.complex128)
 )
 trans_dim1, trans_dim2 = transform_matrix.shape
 transform_matrix = transform_matrix.T.flatten()
@@ -51,10 +51,10 @@ traj = np.genfromtxt("insp_p12.5_e0.7_tspacing_1M.dat")
 input_len = len(traj)
 print(input_len)
 
-p = np.asarray(traj[:, 0], dtype=np.float32)
-e = np.asarray(traj[:, 1], dtype=np.float32)
-Phi_phi = np.asarray(traj[:, 2], dtype=np.float32)
-Phi_r = np.asarray(traj[:, 3], dtype=np.float32)
+p = np.asarray(traj[:, 0], dtype=np.float64)
+e = np.asarray(traj[:, 1], dtype=np.float64)
+Phi_phi = np.asarray(traj[:, 2], dtype=np.float64)
+Phi_r = np.asarray(traj[:, 3], dtype=np.float64)
 
 l = np.zeros(3843, dtype=np.int32)
 m = np.zeros(3843, dtype=np.int32)
@@ -100,13 +100,13 @@ import pdb
 
 pdb.set_trace()
 """
-input_mat = np.concatenate([p, e]).astype(np.float32)
+input_mat = np.concatenate([p, e]).astype(np.float64)
 
 break_index = 97
 
-delta_t = 10.0
+delta_t = 0.6
 max_init_len = 1000
-input_len = 40000000
+input_len = 3155760
 
 time_batch_size = 100
 few_class = FastEMRIWaveforms(
@@ -129,7 +129,7 @@ few_class = FastEMRIWaveforms(
     input_len,
     max_init_len,
     delta_t,
-    tol=1e-5,
+    tol=1e-15,
 )
 
 theta = np.pi / 3
@@ -138,7 +138,7 @@ M = 1e5
 mu = 1e1
 
 
-p0 = 12.5
+p0 = 14.0
 e0 = 0.1
 check = few_class.run_nn(M, mu, p0, e0, theta, phi)
 
@@ -149,10 +149,10 @@ if args.time:
         for _ in range(args.time):
             check = few_class.run_nn(M, mu, p0, e0, theta, phi)
         et = time.perf_counter()
-        print("time per:", (et - st) / args.time)
+        print(e0, len(check), "time per:", (et - st) / args.time, "\n")
 
         out_time.append([e0, (et - st) / args.time])
-    np.save("few_timing.npy", np.asarray(out_time))
+    # np.save("few_timing.npy", np.asarray(out_time))
 
 import pdb
 

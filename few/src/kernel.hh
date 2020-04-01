@@ -40,19 +40,20 @@ static char *_cudaGetErrorEnum(cublasStatus_t error)
     return "<unknown>";
 }
 
+void test_layer(long ptr_mat_out, long ptr_mat_in, long ptr_layer_weight, long ptr_bias, int m, int n, int k, int run_bias, int run_activation);
 
 void run_layer(fod *C, fod *layer_weight, fod *layer_bias, int dim1, int dim2, int input_len);
 
-void transform_output(cuComplex *d_teuk_modes, cuComplex *d_transform_matrix, cuComplex *d_nn_output_mat, fod *d_C,
-                      int input_len, int break_index, cuComplex d_transform_factor_inv,
+void transform_output(cuDoubleComplex *d_teuk_modes, cuDoubleComplex *d_transform_matrix, cuDoubleComplex *d_nn_output_mat, fod *d_C,
+                      int input_len, int break_index, cuDoubleComplex d_transform_factor_inv,
                       int num_teuk_modes);
 
-void filter_modes(FilterContainer *filter, cuComplex *d_teuk_modes, cuComplex *d_Ylms,
+void filter_modes(FilterContainer *filter, cuDoubleComplex *d_teuk_modes, cuDoubleComplex *d_Ylms,
                   int *m_arr, int num_teuk_modes, int length, int num_n, int num_l_m);
 
-void get_waveform(cuComplex *d_waveform,
+void get_waveform(cuDoubleComplex *d_waveform,
               InterpContainer *d_interp_Phi_phi, InterpContainer *d_interp_Phi_r, InterpContainer *d_modes,
-              int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cuComplex *d_Ylms, int num_n,
+              int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cuDoubleComplex *d_Ylms, int num_n,
               fod delta_t, fod *h_t, int num_l_m, FilterContainer *filter);
 
 void ellpe_test();

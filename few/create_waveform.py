@@ -24,7 +24,7 @@ class GetZlmnk:
         self.neural_net = NN(**nn_kwargs)
 
         self.transform_matrix = xp.asarray(
-            np.genfromtxt(transform_file, dtype=xp.complex64)
+            np.genfromtxt(transform_file, dtype=xp.complex128)
         )
 
         self.transform_factor = 1000.0
@@ -48,7 +48,7 @@ class GetZlmnk:
         re = output[:, :97]
         im = output[:, 97:]
 
-        temp = (re + 1j * im).astype(xp.complex64)
+        temp = (re + 1j * im).astype(xp.complex128)
 
         import pdb
 
@@ -64,10 +64,10 @@ class CreateWaveform:
         batch_size = kwargs["batch_size"]
         self.num_modes = 3843
         self.get_zlmnk = GetZlmnk(**kwargs)
-        self.expiphases = xp.zeros((batch_size, self.num_modes), dtype=xp.complex64)
-        self.zlmnk = xp.zeros((batch_size, self.num_modes), dtype=xp.complex64)
-        self.ylms = xp.zeros(self.num_modes, dtype=xp.complex64)
-        self.buffer = xp.zeros(int(self.num_modes / num_n), dtype=xp.complex64)
+        self.expiphases = xp.zeros((batch_size, self.num_modes), dtype=xp.complex128)
+        self.zlmnk = xp.zeros((batch_size, self.num_modes), dtype=xp.complex128)
+        self.ylms = xp.zeros(self.num_modes, dtype=xp.complex128)
+        self.buffer = xp.zeros(int(self.num_modes / num_n), dtype=xp.complex128)
         self.mode_inds = kwargs["mode_inds"]
         self.batch_size = kwargs["batch_size"]
 
@@ -234,10 +234,10 @@ if __name__ == "__main__":
 
     batch_size = kwargs["batch_size"] = len(traj)
 
-    p = xp.asarray(traj[:, 0], dtype=xp.float32)
-    e = xp.asarray(traj[:, 1], dtype=xp.float32)
-    Phi_phi = xp.asarray(traj[:, 2], dtype=xp.float32)
-    Phi_r = xp.asarray(traj[:, 3], dtype=xp.float32)
+    p = xp.asarray(traj[:, 0], dtype=xp.float64)
+    e = xp.asarray(traj[:, 1], dtype=xp.float64)
+    Phi_phi = xp.asarray(traj[:, 2], dtype=xp.float64)
+    Phi_r = xp.asarray(traj[:, 3], dtype=xp.float64)
 
     l = xp.zeros(3843, dtype=int)
     m = xp.zeros(3843, dtype=int)

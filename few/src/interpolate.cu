@@ -54,10 +54,10 @@ void destroy_mode_interp_containers(InterpContainer *d_interp, InterpContainer *
 
 
 __global__
-void kernel_fill_complex_y_vals(InterpContainer *modes, cuComplex *y, int length, int num_modes, int *mode_keep_inds)
+void kernel_fill_complex_y_vals(InterpContainer *modes, cuDoubleComplex *y, int length, int num_modes, int *mode_keep_inds)
 {
 
-  cuComplex trans;
+  cuDoubleComplex trans;
       for (int i = blockIdx.x * blockDim.x + threadIdx.x;
            i < length;
            i += blockDim.x * gridDim.x){
@@ -68,15 +68,15 @@ void kernel_fill_complex_y_vals(InterpContainer *modes, cuComplex *y, int length
 
              int actual_mode_index = mode_keep_inds[mode_i];
              trans = y[actual_mode_index*length + i];
-             modes[2*actual_mode_index].y[i] = cuCrealf(trans);
-             modes[2*actual_mode_index + 1].y[i] = cuCimagf(trans);
+             modes[2*actual_mode_index].y[i] = cuCreal(trans);
+             modes[2*actual_mode_index + 1].y[i] = cuCimag(trans);
 
       }
   }
 }
 
 
-void fill_complex_y_vals(InterpContainer *d_interp, cuComplex *y, int length, int num_modes, FilterContainer *filter)
+void fill_complex_y_vals(InterpContainer *d_interp, cuDoubleComplex *y, int length, int num_modes, FilterContainer *filter)
 {
 
   int NUM_THREADS = 128; //less because of general lengths
@@ -179,7 +179,7 @@ void fill_B_wrap(InterpContainer *p_, InterpContainer *e_, InterpContainer *Phi_
 
 void fit_constants_serial_wrap(int m, int n, fod *a, fod *b, fod *c, fod *d_in, cusparseHandle_t handle, void *pBuffer){
 
-    CUSPARSE_CALL(cusparseSgtsv2StridedBatch(handle,
+    CUSPARSE_CALL(cusparseDgtsv2StridedBatch(handle,
                                               m,
                                               a, // dl
                                               b, //diag
@@ -325,7 +325,7 @@ InterpClass::InterpClass(int num_modes, int length)
   size_t bufferSizeInBytes;
 
   CUSPARSE_CALL(cusparseCreate(&handle));
-  CUSPARSE_CALL( cusparseSgtsv2StridedBatch_bufferSizeExt(handle, length, lower_diag, diag, upper_diag, B, num_modes, length, &bufferSizeInBytes));
+  CUSPARSE_CALL( cusparseDgtsv2StridedBatch_bufferSizeExt(handle, length, lower_diag, diag, upper_diag, B, num_modes, length, &bufferSizeInBytes));
   gpuErrchk(cudaMalloc(&pBuffer, bufferSizeInBytes));
 
 }

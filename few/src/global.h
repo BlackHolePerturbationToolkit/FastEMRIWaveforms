@@ -7,8 +7,8 @@
 #define PI_2 1.57079632679
 #define PI 3.141592653589793
 
-typedef float fod;
-typedef std::complex<float> cmplx;
+typedef double fod;
+typedef std::complex<double> cmplx;
 
 #ifdef __CUDACC__
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
@@ -36,11 +36,11 @@ typedef struct tagFilterContainer {
 
     int *d_mode_keep_inds;
     int *d_filter_modes_buffer;
-    float *working_modes_all;
+    fod *working_modes_all;
     int *ind_working_modes_all;
     int *d_num_modes_kept;
     int num_modes_kept;
-    float tol;
+    fod tol;
 
 } FilterContainer;
 

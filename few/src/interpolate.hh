@@ -31,7 +31,7 @@ void destroy_interp_containers(InterpContainer *d_interp, InterpContainer *h_int
 
 void create_mode_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int length, int num_modes);
 void destroy_mode_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int num_modes);
-void fill_complex_y_vals(InterpContainer *d_interp, cuComplex *y, int length, int num_modes, FilterContainer *filter);
+void fill_complex_y_vals(InterpContainer *d_interp, cuDoubleComplex *y, int length, int num_modes, FilterContainer *filter);
 
 void setup_interpolate(InterpContainer *h_interp_p, InterpContainer *h_interp_e, InterpContainer *h_interp_Phi_phi, InterpContainer *h_interp_Phi_r,
                        InterpContainer *d_modes, int num_modes,
