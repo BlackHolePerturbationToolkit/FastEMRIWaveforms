@@ -41,9 +41,10 @@ class FastEMRIWaveforms {
   InterpContainer *h_interp_p, *h_interp_e, *h_interp_Phi_phi, *h_interp_Phi_r;
   InterpContainer *h_interp_modes, *d_interp_modes;
 
-  fod *d_C, *d_Phi_phi, *d_Phi_r, *d_p, *d_e;
+  fod *d_C, *d_Phi_phi, *d_Phi_r, *d_p, *d_e, *d_C_temp;
   cuDoubleComplex *d_nn_output_mat, *d_teuk_modes, *d_waveform;
 
+  ModeReImContainer *mode_holder;
   InterpClass *interp;
 
 public:

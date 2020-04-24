@@ -95,6 +95,7 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
     Ylms = new cmplx[2*num_l_m];
 
     gpuErrchk(cudaMalloc(&d_C, max_init_len*dim_max*sizeof(fod)));
+    gpuErrchk(cudaMalloc(&d_C_temp, max_init_len*dim_max*sizeof(fod)));
 
     int complex_dim = (int)((fod) dim2[num_layers - 1]/ 2.0);
     gpuErrchk(cudaMalloc(&d_nn_output_mat, complex_dim*max_init_len*sizeof(cuDoubleComplex)));
@@ -148,6 +149,17 @@ FastEMRIWaveforms::FastEMRIWaveforms (int time_batch_size_, int num_layers_, int
 
     filter->tol = tol_;
 
+    mode_holder = new ModeReImContainer;
+    gpuErrchk(cudaMalloc(&mode_holder->re_y, num_teuk_modes*max_init_len*sizeof(double)));
+    gpuErrchk(cudaMalloc(&mode_holder->re_c1, num_teuk_modes*max_init_len*sizeof(double)));
+    gpuErrchk(cudaMalloc(&mode_holder->re_c2, num_teuk_modes*max_init_len*sizeof(double)));
+    gpuErrchk(cudaMalloc(&mode_holder->re_c3, num_teuk_modes*max_init_len*sizeof(double)));
+
+    gpuErrchk(cudaMalloc(&mode_holder->im_y, num_teuk_modes*max_init_len*sizeof(double)));
+    gpuErrchk(cudaMalloc(&mode_holder->im_c1, num_teuk_modes*max_init_len*sizeof(double)));
+    gpuErrchk(cudaMalloc(&mode_holder->im_c2, num_teuk_modes*max_init_len*sizeof(double)));
+    gpuErrchk(cudaMalloc(&mode_holder->im_c3, num_teuk_modes*max_init_len*sizeof(double)));
+
 }
 
 
@@ -187,8 +199,6 @@ void FastEMRIWaveforms::run_nn(cmplx *waveform, double M, double mu, double p0, 
     temp_e = &nit_vals.e_arr[0];
     temp_Phi_phi = &nit_vals.Phi_phi_arr[0];
     temp_Phi_r = &nit_vals.Phi_r_arr[0];
-
-
 
     gpuErrchk(cudaMemcpy(d_init_t, temp_t, nit_vals.length*sizeof(fod), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_init_p, temp_p, nit_vals.length*sizeof(fod), cudaMemcpyHostToDevice));
@@ -241,7 +251,10 @@ cudaEventRecord(start);
 
   cudaEventRecord(start);
     for (int layer_i=0; layer_i<num_layers; layer_i++){
-      run_layer(d_C, d_layers_matrix[layer_i], d_layers_bias[layer_i], dim1[layer_i], dim2[layer_i], nit_vals.length);
+      run_layer(d_C, d_C_temp, d_layers_matrix[layer_i], d_layers_bias[layer_i], dim1[layer_i], dim2[layer_i], nit_vals.length);
+      fod *temptemp = d_C;
+      d_C = d_C_temp;
+      d_C_temp = temptemp;
     }
 
     transform_output(d_teuk_modes, d_transform_matrix, d_nn_output_mat, d_C, nit_vals.length, break_index, d_transform_factor_inv, trans_dim2);
@@ -278,7 +291,7 @@ cudaEventRecord(start);
      get_waveform(d_waveform,
                   d_interp_Phi_phi, d_interp_Phi_r, d_interp_modes,
                   d_m, d_n, nit_vals.length, num_points, filter->num_modes_kept, d_Ylms, num_n,
-                  delta_t, temp_t, num_l_m, filter);
+                  delta_t, temp_t, num_l_m, filter, mode_holder);
 
   cudaEventRecord(stop);
 
@@ -350,4 +363,17 @@ FastEMRIWaveforms::~FastEMRIWaveforms()
 
     delete filter;
     delete interp;
+
+    gpuErrchk(cudaFree(mode_holder->re_y));
+    gpuErrchk(cudaFree(mode_holder->re_c1));
+    gpuErrchk(cudaFree(mode_holder->re_c2));
+    gpuErrchk(cudaFree(mode_holder->re_c3));
+
+
+    gpuErrchk(cudaFree(mode_holder->im_y));
+    gpuErrchk(cudaFree(mode_holder->im_c1));
+    gpuErrchk(cudaFree(mode_holder->im_c2));
+    gpuErrchk(cudaFree(mode_holder->im_c3));
+    delete mode_holder;
+
 }
