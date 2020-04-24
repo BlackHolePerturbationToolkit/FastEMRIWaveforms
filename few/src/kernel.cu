@@ -8,7 +8,7 @@
 #include "omp.h"
 
 #define NUM_THREADS 256
-#define MAX_MODES_BLOCK 600
+#define MAX_MODES_BLOCK 650
 
 typedef thrust::device_vector<double>::iterator Iterator;
 
@@ -532,11 +532,22 @@ void make_waveform(cuDoubleComplex *waveform,
     cuDoubleComplex mode_val;
     cuDoubleComplex trans_plus_m, trans_minus_m;
     fod Phi_phi_i, Phi_r_i, t, x, x2, x3, mode_val_re, mode_val_im;
-    int lm_i;
+    int lm_i, num_teuk_here;
     fod re_y, re_c1, re_c2, re_c3, im_y, im_c1, im_c2, im_c3;
      __shared__ fod pp_y, pp_c1, pp_c2, pp_c3, pr_y, pr_c1, pr_c2, pr_c3;
 
      __shared__ cuDoubleComplex Ylms[2*63];
+
+     __shared__ int mode_keep_inds[MAX_MODES_BLOCK];
+     __shared__ double mode_re_y[MAX_MODES_BLOCK];
+     __shared__ double mode_re_c1[MAX_MODES_BLOCK];
+     __shared__ double mode_re_c2[MAX_MODES_BLOCK];
+     __shared__ double mode_re_c3[MAX_MODES_BLOCK];
+
+     __shared__ double mode_im_y[MAX_MODES_BLOCK];
+     __shared__ double mode_im_c1[MAX_MODES_BLOCK];
+     __shared__ double mode_im_c2[MAX_MODES_BLOCK];
+     __shared__ double mode_im_c3[MAX_MODES_BLOCK];
      //cuDoubleComplex *Ylms = (cuDoubleComplex*) array;
 
      for (int i = threadIdx.x;
@@ -560,25 +571,19 @@ void make_waveform(cuDoubleComplex *waveform,
      int m, n, actual_mode_index;
      cuDoubleComplex Ylm_plus_m, Ylm_minus_m;
 
-    num_teuk_modes = (MAX_MODES_BLOCK < num_teuk_modes) ? (num_teuk_modes = MAX_MODES_BLOCK):(num_teuk_modes = num_teuk_modes);
+     int num_breaks = (num_teuk_modes / MAX_MODES_BLOCK) + 1;
 
-    __shared__ int mode_keep_inds[MAX_MODES_BLOCK];
-    __shared__ double mode_re_y[MAX_MODES_BLOCK];
-    __shared__ double mode_re_c1[MAX_MODES_BLOCK];
-    __shared__ double mode_re_c2[MAX_MODES_BLOCK];
-    __shared__ double mode_re_c3[MAX_MODES_BLOCK];
+     for (int block_y=0; block_y<num_breaks; block_y+=1){
+    (((block_y + 1)*MAX_MODES_BLOCK) <= num_teuk_modes) ? (num_teuk_here = MAX_MODES_BLOCK):(num_teuk_here = num_teuk_modes - (block_y*MAX_MODES_BLOCK));
+    //if ((threadIdx.x == 0) && (blockIdx.x == 0)) printf("BLOCKY = %d %d\n", block_y, num_breaks);
+    int init_ind = block_y*MAX_MODES_BLOCK;
 
-    __shared__ double mode_im_y[MAX_MODES_BLOCK];
-    __shared__ double mode_im_c1[MAX_MODES_BLOCK];
-    __shared__ double mode_im_c2[MAX_MODES_BLOCK];
-    __shared__ double mode_im_c3[MAX_MODES_BLOCK];
-
-    for (int i=threadIdx.x; i<num_teuk_modes; i+=blockDim.x) {
+    for (int i=threadIdx.x; i<num_teuk_here; i+=blockDim.x) {
         mode_keep_inds[i] = mode_keep_inds_trans[i];
-        mode_re_y[i] = re_y_in[old_ind*num_teuk_modes + i]; mode_re_c1[i] = re_c1_in[old_ind*num_teuk_modes + i];
-        mode_re_c2[i] = re_c2_in[old_ind*num_teuk_modes + i]; mode_re_c3[i] = re_c3_in[old_ind*num_teuk_modes + i];
-        mode_im_y[i] = im_y_in[old_ind*num_teuk_modes + i]; mode_im_c1[i] = im_c1_in[old_ind*num_teuk_modes + i];
-        mode_im_c2[i] = im_c2_in[old_ind*num_teuk_modes + i]; mode_im_c3[i] = im_c3_in[old_ind*num_teuk_modes + i];
+        mode_re_y[i] = re_y_in[old_ind*num_teuk_modes + init_ind + i]; mode_re_c1[i] = re_c1_in[old_ind*num_teuk_modes + init_ind + i];
+        mode_re_c2[i] = re_c2_in[old_ind*num_teuk_modes + init_ind + i]; mode_re_c3[i] = re_c3_in[old_ind*num_teuk_modes + init_ind + i];
+        mode_im_y[i] = im_y_in[old_ind*num_teuk_modes + init_ind + i]; mode_im_c1[i] = im_c1_in[old_ind*num_teuk_modes + init_ind + i];
+        mode_im_c2[i] = im_c2_in[old_ind*num_teuk_modes + init_ind + i]; mode_im_c3[i] = im_c3_in[old_ind*num_teuk_modes + init_ind + i];
     }
 
     __syncthreads();
@@ -601,7 +606,7 @@ void make_waveform(cuDoubleComplex *waveform,
       Phi_phi_i = pp_y + pp_c1*x + pp_c2*x2  + pp_c3*x3;
       Phi_r_i = pr_y + pr_c1*x + pr_c2*x2  + pr_c3*x3;
 
-        for (int j=0; j<num_teuk_modes; j+=1){
+        for (int j=0; j<num_teuk_here; j+=1){
 
             actual_mode_index = mode_keep_inds[j];
             lm_i = actual_mode_index / num_n;
@@ -627,8 +632,10 @@ void make_waveform(cuDoubleComplex *waveform,
                 //atomicAddComplex(&waveform[i], mode_val);
         }
 
-        waveform[i] = trans;
+        atomicAddComplex(&waveform[i], trans);
     }
+    __syncthreads();
+}
 }
 
 void find_start_inds(int start_inds[], int unit_length[], fod *t_arr, fod delta_t, int length, int new_length)
@@ -712,13 +719,16 @@ void get_waveform(cuDoubleComplex *d_waveform,
     gpuErrchk(cudaGetLastError());
 
     size_t dynamic_memmory_alloc = 2*num_l_m*sizeof(cuDoubleComplex);
-    printf("lm: %d, modes: %d\n", num_l_m, num_teuk_modes);
 
     cudaEventRecord(stop);
 
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&milliseconds, start, stop);
     printf("first: %e\n", milliseconds);
+
+    int num_breaks = num_teuk_modes/MAX_MODES_BLOCK;
+
+    printf("lm: %d, modes: %d %d\n", num_l_m, num_teuk_modes, num_breaks);
 
     cudaEventRecord(start);
     #pragma omp parallel for
