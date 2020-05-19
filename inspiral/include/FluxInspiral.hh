@@ -20,7 +20,7 @@ using namespace std;
 using namespace std::chrono;
 
 
-class NITHolder{
+class FluxHolder{
 public:
 		int length;
 		std::vector<double> t_arr;
@@ -30,7 +30,7 @@ public:
 		std::vector<double> Phi_r_arr;
 		double t0, M, mu, p0, e0;
 
-		NITHolder(double t0_, double M_, double mu_, double p0_, double e0_){
+		FluxHolder(double t0_, double M_, double mu_, double p0_, double e0_){
 				t0 = t0_;
                 M = M_;
                 mu = mu_;
@@ -52,12 +52,12 @@ public:
 			Phi_r_arr.push_back(Phi_r);
 		}
 
-	//	~NITHolder();
+	//	~FluxHolder();
 
 };
 
-NITHolder run_NIT(double t0, double M, double mu, double p0, double e0, double err);
+FluxHolder run_FluxInspiral(double t0, double M, double mu, double p0, double e0, double err);
 
-void NITWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double M, double mu, double p0, double e0, int *length, double err);
+void FluxInspiralWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double M, double mu, double p0, double e0, int *length, double err);
 
 #endif //__FLUX_H__

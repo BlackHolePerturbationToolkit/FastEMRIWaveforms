@@ -1,4 +1,4 @@
-// Code to compute an eccentric flux driven insipral
+Flux// Code to compute an eccentric flux driven insipral
 // into a Schwarzschild black hole
 #include <math.h>
 #include <stdio.h>
@@ -130,8 +130,8 @@ void load_and_interpolate_flux_data(struct interp_params *interps){
 }
 
 
-NITHolder run_NIT(double t0, double M, double mu, double p0, double e0, double err){
-	NITHolder nit_out(t0, M, mu, p0, e0);
+FluxHolder run_FluxInspiral(double t0, double M, double mu, double p0, double e0, double err){
+	FluxHolder flux_out(t0, M, mu, p0, e0);
 
 	struct interp_params interps;
 	//Set the mass ratio
@@ -173,14 +173,14 @@ NITHolder run_NIT(double t0, double M, double mu, double p0, double e0, double e
 			break;
 		}
 
-		nit_out.add_point(t*Msec, y[0], y[1], y[2], y[3]); // adds time in seconds
+		flux_out.add_point(t*Msec, y[0], y[1], y[2], y[3]); // adds time in seconds
 
 		// Output format: t, p, e, Phi_phi, Phi_r
-				//printf ("%.5e %.5e %.5e %.5e %.5e\n", nit_out.t_arr.push_back(t), nit_out.p_arr.push_back(y[0]), nit_out.e_arr.push_back(y[1]), y[2], y[3]);
+				//printf ("%.5e %.5e %.5e %.5e %.5e\n", flux_out.t_arr.push_back(t), flux_out.p_arr.push_back(y[0]), flux_out.e_arr.push_back(y[1]), y[2], y[3]);
 
 				ind++;
 		}
-	nit_out.length = ind;
+	flux_out.length = ind;
 	//high_resolution_clock::time_point t2 = high_resolution_clock::now();
 
 		//duration<double> time_span = duration_cast<duration<double> >(t2 - t1);
@@ -189,22 +189,22 @@ NITHolder run_NIT(double t0, double M, double mu, double p0, double e0, double e
 		gsl_odeiv2_control_free (c);
 		gsl_odeiv2_step_free (s);
 		//cout << "# Computing the inspiral took: " << time_span.count() << " seconds." << endl;
-		return nit_out;
+		return flux_out;
 
 }
 
-void NITWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double M, double mu, double p0, double e0, int *length, double err){
+void FluxInspiralWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double M, double mu, double p0, double e0, int *length, double err){
 
 	double t0 = 0.0;
-		NITHolder nit_vals = run_NIT(t0, M, mu, p0, e0, err);
+		FluxHolder flux_vals = run_Flux(t0, M, mu, p0, e0, err);
 
-		memcpy(t, &nit_vals.t_arr[0], nit_vals.length*sizeof(double));
-		memcpy(p, &nit_vals.p_arr[0], nit_vals.length*sizeof(double));
-		memcpy(e, &nit_vals.e_arr[0], nit_vals.length*sizeof(double));
-		memcpy(Phi_phi, &nit_vals.Phi_phi_arr[0], nit_vals.length*sizeof(double));
-		memcpy(Phi_r, &nit_vals.Phi_r_arr[0], nit_vals.length*sizeof(double));
+		memcpy(t, &flux_vals.t_arr[0], flux_vals.length*sizeof(double));
+		memcpy(p, &flux_vals.p_arr[0], flux_vals.length*sizeof(double));
+		memcpy(e, &flux_vals.e_arr[0], flux_vals.length*sizeof(double));
+		memcpy(Phi_phi, &flux_vals.Phi_phi_arr[0], flux_vals.length*sizeof(double));
+		memcpy(Phi_r, &flux_vals.Phi_r_arr[0], flux_vals.length*sizeof(double));
 
-		*length = nit_vals.length;
+		*length = flux_vals.length;
 
 }
 
@@ -216,7 +216,7 @@ int main (void) {
 	double e0 = 0.5;
 	double t0 = 0;
 
-	NITHolder check = run_NIT(t0, p0, e0);
+	FluxHolder check = run_Flux(t0, p0, e0);
 
 	for (int i=0; i<check.length; i++){
 			printf("%e %e %e\n", check.t_arr[i], check.p_arr[i], check.e_arr[i]);
