@@ -175,6 +175,56 @@ if run_cuda_install:
         ],
     )
 
+    test_EXT = Extension(
+        "testmatmul",
+        sources=["few/src/test.cu", "few/src/testmatmul.pyx"],
+        library_dirs=[CUDA["lib64"]],
+        libraries=["cudart", "cublas", "cusparse", "gsl", "gslcblas"],
+        language="c++",
+        runtime_library_dirs=[CUDA["lib64"]],
+        # This syntax is specific to this build system
+        # we're only going to use certain compiler args with nvcc
+        # and not with gcc the implementation of this trick is in
+        # customize_compiler()
+        extra_compile_args={
+            "gcc": ["-std=c++11"],  # '-g'],
+            "nvcc": [
+                "-arch=sm_70",
+                # "-gencode=arch=compute_30,code=sm_30",
+                # "-gencode=arch=compute_50,code=sm_50",
+                # "-gencode=arch=compute_52,code=sm_52",
+                # "-gencode=arch=compute_60,code=sm_60",
+                # "-gencode=arch=compute_61,code=sm_61",
+                "-gencode=arch=compute_70,code=sm_70",
+                #'-gencode=arch=compute_75,code=sm_75',
+                #'-gencode=arch=compute_75,code=compute_75',
+                "-std=c++11",
+                "--default-stream=per-thread",
+                "--ptxas-options=-v",
+                "-c",
+                "--compiler-options",
+                "'-fPIC'",
+                "-Xcompiler",
+                "-fopenmp",
+                # "-fmad=true",
+                # "-ftz=true",
+                # "-prec-div=false",
+                # "-prec-sqrt=false",
+                # "-G",
+                # "-g",
+                # "-O0",
+                # "-lineinfo",
+            ],  # for debugging
+        },
+        include_dirs=[
+            numpy_include,
+            CUDA["include"],
+            "few/src",
+            "inspiral/include",
+            "/home/mlk667/.conda/envs/few_env/include/",
+        ],
+    )
+
 NIT_ext = Extension(
     "pyNIT",
     sources=[
@@ -199,12 +249,13 @@ NIT_ext = Extension(
     ],
 )
 
+
 if run_cuda_install:
-    extensions = [ext, NIT_ext]
+    extensions = [ext, NIT_ext, test_EXT]
 else:
     extensions = [NIT_ext]
 
-
+extensions = [test_EXT]
 setup(
     name="few",
     # Random metadata. there's more you can supply

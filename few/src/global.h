@@ -44,5 +44,17 @@ typedef struct tagFilterContainer {
 
 } FilterContainer;
 
+typedef struct tagModeReImContainer {
+    fod *re_y;
+    fod *re_c1;
+    fod *re_c2;
+    fod *re_c3;
+
+    fod *im_y;
+    fod *im_c1;
+    fod *im_c2;
+    fod *im_c3;
+
+} ModeReImContainer;
 
 #endif

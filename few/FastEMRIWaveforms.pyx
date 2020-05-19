@@ -14,10 +14,8 @@ cdef extern from "src/manager.hh":
 
         void run_nn(np.complex128_t*, np.float64_t M, np.float64_t mu, np.float64_t p0, np.float64_t e0, np.float64_t theta, np.float64_t phi, int* out_len)
 
-
 cdef extern from "src/kernel.hh":
     void test_layer(long ptr_mat_out, long ptr_mat_in, long ptr_layer_weight, long ptr_bias, int m, int n, int k, int run_bias, int run_activation);
-
 
 cdef class FastEMRIWaveforms:
     cdef FastEMRIWaveformsWrap* g
