@@ -1,11 +1,17 @@
 import os
 import time
+from testmatmul import check_mat_multiply_here
 
 try:
     import cupy as xp
     from FEW import cublas_test_layer
+
+    dtype = xp.float64
+
 except ImportError:
     import numpy as xp
+
+    dtype = xp.float64
 
 import numpy as np
 
@@ -15,6 +21,7 @@ class LeakyReLU:
         self.alpha = 0.2
 
     def __call__(self, x):
+
         return x * (x >= 0.0) + 0.2 * x * (x < 0.0)
 
 
@@ -25,9 +32,9 @@ class Linear:
 
     def __call__(self, x):
 
-        out = xp.zeros((x.shape[0], self.w.shape[1]), dtype=xp.float64).T.flatten()
-
         """
+        out = xp.zeros((x.shape[0], self.w.shape[1]), dtype=dtype).T.flatten()
+
         if self.w.shape[1] == 128:
             x_c = x.copy().T.flatten()
             w_c = self.w.copy().T.flatten()
@@ -52,7 +59,33 @@ class Linear:
 
             pdb.set_trace()
             """
-        return xp.matmul(x, self.w) + self.b
+        """
+        if self.w.shape[0] == 16:
+
+            sum = 0
+            for i in range(16):
+                sum += x[0][i] * self.w[i, 0]
+            import pdb
+
+            pdb.set_trace()
+        """
+
+        m, k = x.shape
+        _, n = self.w.shape
+        try:
+            check1 = check_mat_multiply_here(
+                x.get().T.flatten(), self.w.get().T.flatten(), m, k, n
+            )
+
+        except AttributeError:
+            check1 = check_mat_multiply_here(x.T.flatten(), self.w.T.flatten(), m, k, n)
+
+        check = xp.matmul(x, self.w)
+
+        import pdb
+
+        pdb.set_trace()
+        return check + self.b
 
 
 class NN:
@@ -73,7 +106,7 @@ class NN:
             temp = {}
             for let in ["w", "b"]:
                 mat = np.genfromtxt(folder + input_str + let + str(i) + ".txt")
-                temp[let] = xp.asarray(mat, dtype=xp.float64)
+                temp[let] = xp.asarray(mat, dtype=dtype)
 
             self.layers.append(Linear(temp["w"], temp["b"]))
 
@@ -1083,7 +1116,7 @@ if __name__ == "__main__":
     e = test_vals[:, 2]
     p = test_vals[:, 1]
 
-    test = xp.asarray([p, e], dtype=xp.float64).T
+    test = xp.asarray([p, e], dtype=dtype).T
     check = NN()
 
     out = check(test)
