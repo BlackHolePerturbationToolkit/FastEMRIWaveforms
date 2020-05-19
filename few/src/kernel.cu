@@ -409,14 +409,16 @@ void filter_modes(FilterContainer *filter, cuDoubleComplex *d_teuk_modes, cuDoub
 
 
     //printf("\n\n");
-    //cudaEvent_t start, stop;
-    //cudaEventCreate(&start);
-    //cudaEventCreate(&stop);
-    //float milliseconds = 0;
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    float milliseconds = 0;
 
     fod * cpu_modes = new fod[num_teuk_modes*length];
     int * inds_cpu_modes = new int[num_teuk_modes*length];
 
+
+    //cudaEventRecord(start);
     #pragma omp parallel for
     for (int i=0; i<length; i++){
         //printf("%d sort\n", omp_get_thread_num());
@@ -441,6 +443,12 @@ void filter_modes(FilterContainer *filter, cuDoubleComplex *d_teuk_modes, cuDoub
 
     delete[] cpu_modes;
     delete[] inds_cpu_modes;
+
+    //cudaEventRecord(stop);
+
+    //cudaEventSynchronize(stop);
+    //cudaEventElapsedTime(&milliseconds, start, stop);
+    //printf("after: %e\n", milliseconds);
 
     select_modes<<<length, number_of_threads>>>(filter->d_filter_modes_buffer,
                                                 filter->working_modes_all,
@@ -685,11 +693,11 @@ void get_waveform(cuDoubleComplex *d_waveform,
               int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cuDoubleComplex *d_Ylms, int num_n,
               fod delta_t, fod *h_t, int num_l_m, FilterContainer *filter, ModeReImContainer * mode_holder){
 
-  cudaEvent_t start, stop;
+  /*cudaEvent_t start, stop;
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
   float milliseconds = 0;
-    cudaEventRecord(start);
+    cudaEventRecord(start);*/
 
     int start_inds[init_len];
     int unit_length[init_len-1];
@@ -718,19 +726,17 @@ void get_waveform(cuDoubleComplex *d_waveform,
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());
 
-    size_t dynamic_memmory_alloc = 2*num_l_m*sizeof(cuDoubleComplex);
+    //cudaEventRecord(stop);
 
-    cudaEventRecord(stop);
-
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    printf("first: %e\n", milliseconds);
+    //cudaEventSynchronize(stop);
+    //cudaEventElapsedTime(&milliseconds, start, stop);
+    //printf("first: %e\n", milliseconds);
 
     int num_breaks = num_teuk_modes/MAX_MODES_BLOCK;
 
-    printf("lm: %d, modes: %d %d\n", num_l_m, num_teuk_modes, num_breaks);
+    //printf("lm: %d, modes: %d %d\n", num_l_m, num_teuk_modes, num_breaks);
 
-    cudaEventRecord(start);
+    //cudaEventRecord(start);
     #pragma omp parallel for
     for (int i = 0; i < init_len-2; i++) {
           cudaStreamCreate(&streams[i]);
@@ -758,11 +764,11 @@ void get_waveform(cuDoubleComplex *d_waveform,
 
         }
 
-        cudaEventRecord(stop);
+        //cudaEventRecord(stop);
 
-        cudaEventSynchronize(stop);
-        cudaEventElapsedTime(&milliseconds, start, stop);
-        printf("after: %e\n", milliseconds);
+        //cudaEventSynchronize(stop);
+        //cudaEventElapsedTime(&milliseconds, start, stop);
+        //printf("after: %e\n", milliseconds);
 
       /*int num_blocks = std::ceil((input_len + NUM_THREADS -1)/NUM_THREADS);
       dim3 gridDim(num_blocks, num_teuk_modes); //, num_teuk_modes);
