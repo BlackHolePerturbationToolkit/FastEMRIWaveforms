@@ -19,8 +19,20 @@
 using namespace std;
 using namespace std::chrono;
 
+// Definitions needed for Mathematicas CForm output
+#define Power(x, y)     (pow((double)(x), (double)(y)))
+#define Sqrt(x)         (sqrt((double)(x)))
+#define Pi              M_PI
+#define MTSUN_SI 4.925491025543575903411922162094833998e-6
 
-class FluxHolder{
+// Used to pass the interpolants to the ODE solver
+struct interp_params{
+	double epsilon;
+	Interpolant *Edot;
+	Interpolant *Ldot;
+};
+
+class FLUXHolder{
 public:
 		int length;
 		std::vector<double> t_arr;
@@ -30,7 +42,7 @@ public:
 		std::vector<double> Phi_r_arr;
 		double t0, M, mu, p0, e0;
 
-		FluxHolder(double t0_, double M_, double mu_, double p0_, double e0_){
+		FLUXHolder(double t0_, double M_, double mu_, double p0_, double e0_){
 				t0 = t0_;
                 M = M_;
                 mu = mu_;
@@ -52,12 +64,20 @@ public:
 			Phi_r_arr.push_back(Phi_r);
 		}
 
-	//	~FluxHolder();
+	//	~FLUXHolder();
 
 };
 
-FluxHolder run_FluxInspiral(double t0, double M, double mu, double p0, double e0, double err);
+class FluxCarrier{
+public:
+    interp_params *interps;
 
-void FluxInspiralWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double M, double mu, double p0, double e0, int *length, double err);
+    FluxCarrier();
+    void dealloc();
+};
+
+FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, FluxCarrier *flux_carrier, double err);
+
+void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double M, double mu, double p0, double e0, int *length, FluxCarrier *flux_carrier, double err);
 
 #endif //__FLUX_H__
