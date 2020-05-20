@@ -175,6 +175,52 @@ if run_cuda_install:
         ],
     )
 
+    matmul_ext = Extension(
+        "pymatmul",
+        sources=["few/src/matmul.cu", "few/src/pymatmul.pyx"],
+        library_dirs=[CUDA["lib64"]],
+        libraries=["cudart", "cublas", "cusparse", "gsl", "gslcblas"],
+        language="c++",
+        runtime_library_dirs=[CUDA["lib64"]],
+        # This syntax is specific to this build system
+        # we're only going to use certain compiler args with nvcc
+        # and not with gcc the implementation of this trick is in
+        # customize_compiler()
+        extra_compile_args={
+            "gcc": ["-std=c++11"],  # '-g'],
+            "nvcc": [
+                "-arch=sm_70",
+                # "-gencode=arch=compute_30,code=sm_30",
+                # "-gencode=arch=compute_50,code=sm_50",
+                # "-gencode=arch=compute_52,code=sm_52",
+                # "-gencode=arch=compute_60,code=sm_60",
+                # "-gencode=arch=compute_61,code=sm_61",
+                "-gencode=arch=compute_70,code=sm_70",
+                #'-gencode=arch=compute_75,code=sm_75',
+                #'-gencode=arch=compute_75,code=compute_75',
+                "-std=c++11",
+                "--default-stream=per-thread",
+                "--ptxas-options=-v",
+                "-c",
+                "--compiler-options",
+                "'-fPIC'",
+                "-Xcompiler",
+                "-fopenmp",
+                # "-G",
+                # "-g",
+                # "-O0",
+                # "-lineinfo",
+            ],  # for debugging
+        },
+        include_dirs=[
+            numpy_include,
+            CUDA["include"],
+            "few/src",
+            "inspiral/include",
+            "/home/mlk667/.conda/envs/few_env/include/",
+        ],
+    )
+
     test_EXT = Extension(
         "testmatmul",
         sources=["few/src/test.cu", "few/src/testmatmul.pyx"],
@@ -253,6 +299,7 @@ FLUX_ext = Extension(
 if run_cuda_install:
     extensions = [ext, FLUX_ext, test_EXT]
     # extensions = [test_EXT]
+    extensions = [matmul_ext, FLUX_ext]
 else:
     extensions = [FLUX_ext]
 
