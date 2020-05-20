@@ -225,12 +225,12 @@ if run_cuda_install:
         ],
     )
 
-NIT_ext = Extension(
-    "pyNIT",
+FLUX_ext = Extension(
+    "pyFLUX",
     sources=[
         "inspiral/src/Interpolant.cc",
         "inspiral/src/FluxInspiral.cc",
-        "inspiral/NIT.pyx",
+        "inspiral/FLUX.pyx",
     ],
     library_dirs=["/home/ajchua/lib/"],
     libraries=["gsl", "gslcblas"],
@@ -251,11 +251,12 @@ NIT_ext = Extension(
 
 
 if run_cuda_install:
-    extensions = [ext, NIT_ext, test_EXT]
+    extensions = [ext, FLUX_ext, test_EXT]
+    # extensions = [test_EXT]
 else:
-    extensions = [NIT_ext]
+    extensions = [FLUX_ext]
 
-extensions = [test_EXT]
+
 setup(
     name="few",
     # Random metadata. there's more you can supply
@@ -263,7 +264,7 @@ setup(
     version="0.1",
     ext_modules=extensions,
     packages=["few"],
-    py_modules=["few.nit"],
+    py_modules=["few.flux", "few.few"],
     # Inject our custom trigger
     cmdclass={"build_ext": custom_build_ext},
     # Since the package has c code, the egg cannot be zipped
