@@ -1,4 +1,4 @@
-Flux// Code to compute an eccentric flux driven insipral
+// Code to compute an eccentric flux driven insipral
 // into a Schwarzschild black hole
 #include <math.h>
 #include <stdio.h>
@@ -19,18 +19,6 @@ Flux// Code to compute an eccentric flux driven insipral
 using namespace std;
 using namespace std::chrono;
 
-// Definitions needed for Mathematicas CForm output
-#define Power(x, y)     (pow((double)(x), (double)(y)))
-#define Sqrt(x)         (sqrt((double)(x)))
-#define Pi              M_PI
-#define MTSUN_SI 4.925491025543575903411922162094833998e-6
-
-// Used to pass the interpolants to the ODE solver
-struct interp_params{
-	double epsilon;
-	Interpolant *Edot;
-	Interpolant *Ldot;
-};
 
 // Define elliptic integrals that use Mathematica's conventions
 double EllipticK(double k){
@@ -102,7 +90,15 @@ int func (double t, const double y[], double f[], void *params){
 
 void load_and_interpolate_flux_data(struct interp_params *interps){
 
-	// Load and interpolate the flux data
+
+}
+
+
+FluxCarrier::FluxCarrier()
+{
+    interps = new interp_params;
+
+    // Load and interpolate the flux data
 	ifstream Flux_file("inspiral/data/Flux.dat");
 
 	// Load the flux data into arrays
@@ -129,21 +125,29 @@ void load_and_interpolate_flux_data(struct interp_params *interps){
 
 }
 
+void FluxCarrier::dealloc()
+{
 
-FluxHolder run_FluxInspiral(double t0, double M, double mu, double p0, double e0, double err){
-	FluxHolder flux_out(t0, M, mu, p0, e0);
+    delete interps->Edot;
+    delete interps->Ldot;
+    delete interps;
 
-	struct interp_params interps;
+}
+
+
+FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double err, FluxCarrier *flux_carrier){
+	FLUXHolder flux_out(t0, M, mu, p0, e0);
+
+	interp_params interps = *(flux_carrier->interps);
 	//Set the mass ratio
 	interps.epsilon = mu/M;
 
     double Msec = MTSUN_SI*M;
 
-	load_and_interpolate_flux_data(&interps);
+    //high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
 	double tmax = 1e7;
 
-	//high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
 	// Initial values
 	// TODO do we want to set initial phases here?
@@ -183,7 +187,7 @@ FluxHolder run_FluxInspiral(double t0, double M, double mu, double p0, double e0
 	flux_out.length = ind;
 	//high_resolution_clock::time_point t2 = high_resolution_clock::now();
 
-		//duration<double> time_span = duration_cast<duration<double> >(t2 - t1);
+	//	duration<double> time_span = duration_cast<duration<double> >(t2 - t1);
 
 		gsl_odeiv2_evolve_free (e);
 		gsl_odeiv2_control_free (c);
@@ -193,10 +197,10 @@ FluxHolder run_FluxInspiral(double t0, double M, double mu, double p0, double e0
 
 }
 
-void FluxInspiralWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double M, double mu, double p0, double e0, int *length, double err){
+void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double M, double mu, double p0, double e0, int *length, FluxCarrier *flux_carrier, double err){
 
 	double t0 = 0.0;
-		FluxHolder flux_vals = run_Flux(t0, M, mu, p0, e0, err);
+		FLUXHolder flux_vals = run_FLUX(t0, M, mu, p0, e0, err, flux_carrier);
 
 		memcpy(t, &flux_vals.t_arr[0], flux_vals.length*sizeof(double));
 		memcpy(p, &flux_vals.p_arr[0], flux_vals.length*sizeof(double));
@@ -216,7 +220,7 @@ int main (void) {
 	double e0 = 0.5;
 	double t0 = 0;
 
-	FluxHolder check = run_Flux(t0, p0, e0);
+	FLUXHolder check = run_FLUX(t0, p0, e0);
 
 	for (int i=0; i<check.length; i++){
 			printf("%e %e %e\n", check.t_arr[i], check.p_arr[i], check.e_arr[i]);
