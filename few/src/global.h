@@ -3,12 +3,13 @@
 
 #include <stdlib.h>
 #include <complex>
+#include "cuda_complex.hpp"
 
 #define PI_2 1.57079632679
 #define PI 3.141592653589793
 
 typedef double fod;
-typedef std::complex<double> cmplx;
+typedef gcmplx::complex<double> cmplx;
 
 #ifdef __CUDACC__
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
