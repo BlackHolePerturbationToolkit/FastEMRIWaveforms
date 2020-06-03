@@ -17,11 +17,14 @@
 #include <Interpolant.h>
 #include <algorithm>
 
+#include <iostream>
+
+
 //Construct a 1D interpolant of f(x)
 Interpolant::Interpolant(Vector x, Vector f){
-	
+
 	interp_type = 1;
-	
+
 	xacc = gsl_interp_accel_alloc();
     spline = gsl_spline_alloc (gsl_interp_cspline, x.size());
 
@@ -36,48 +39,29 @@ double Interpolant::eval(double x){
 
 // Construct a 2D interpolant of f(x,y)
 Interpolant::Interpolant(Vector x, Vector y, Vector f){
-	
+
 	interp_type = 2;
-	
-	// Create Vectors that contain the ordered, unique entries in x and y
-	Vector xs = x;
-	Vector ys = y;
-	
-	sort( xs.begin(), xs.end() );
-	xs.erase( unique( xs.begin(), xs.end() ), xs.end() );
-	
-	sort( ys.begin(), ys.end() );
-	ys.erase( unique( ys.begin(), ys.end() ), ys.end() );
-	
+
 	// Create the interpolant
     const gsl_interp2d_type *T = gsl_interp2d_bicubic;
-		
-    const size_t nx = xs.size(); /* x grid points */
-    const size_t ny = ys.size(); /* y grid points */
-	
-	
+
+    const size_t nx = x.size(); /* number of x grid points */
+    const size_t ny = y.size(); /* number of y grid points */
+
     double *za = (double *)malloc(nx * ny * sizeof(double));
     spline2d = gsl_spline2d_alloc(T, nx, ny);
     xacc = gsl_interp_accel_alloc();
     yacc = gsl_interp_accel_alloc();
-	
-	
-    vector<double>::iterator it_x;
-    vector<double>::iterator it_y;
-	for(unsigned int i = 0; i < x.size(); i++){
-		
-	    it_x = find(xs.begin(), xs.end(), x[i]);
-	    it_y = find(ys.begin(), ys.end(), y[i]);
-		
-		auto pos_x = distance(xs.begin(), it_x);
-		auto pos_y = distance(ys.begin(), it_y);		
 
-	    gsl_spline2d_set(spline2d, za, pos_x, pos_y, f[i]);
+	for(unsigned int i = 0; i < nx; i++){
+		for(unsigned int j = 0; j < ny; j++){
+	    	gsl_spline2d_set(spline2d, za, i, j, f[j*nx + i]);
+		}
 	}
-	
+
 	/* initialize interpolation */
-	gsl_spline2d_init(spline2d, &xs[0], &ys[0], za, nx, ny);
-	
+	gsl_spline2d_init(spline2d, &x[0], &y[0], za, nx, ny);
+
 }
 
 // Function that is called to evaluate the 2D interpolant

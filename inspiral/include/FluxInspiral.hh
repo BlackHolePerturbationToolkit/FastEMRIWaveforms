@@ -8,7 +8,6 @@
 #include <gsl/gsl_sf_ellint.h>
 
 #include "Interpolant.h"
-#include "FluxInspiral.hh"
 
 #include <iostream>
 #include <fstream>
