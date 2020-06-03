@@ -258,7 +258,8 @@ int main (int argc, char* argv[]) {
 	}else{
 		lmax = atoi(argv[1]); 
 	}
-	int nmax = 30;
+	const int nmax = 30;
+
 	
 	struct waveform_amps amps;
 	
@@ -279,7 +280,7 @@ int main (int argc, char* argv[]) {
 	double samplerate = 0.1;
 	
 	// Signal length (in seconds)
-	double max_signal_length = 1*YearInSeconds/356.*1;
+	double max_signal_length = 1*YearInSeconds/356.*60;
 	
 	// Compute the adimensionalized time steps and max time
 	double dt = 1/samplerate /(M*SolarMassInSeconds);
@@ -380,8 +381,11 @@ int main (int argc, char* argv[]) {
 		
 		double y1 = log((p -2.*e - 2.1));
 			
+		// Code to compute the waveform is below	
 		complex<double> hwave = 0;
-		#pragma omp parallel for reduction(+:hwave) 
+		
+		// The follow code uses nested loops and is a little slower than the code below.
+		/*#pragma omp parallel for reduction(+:hwave)
 		for(int l = 2; l <= lmax; l++){
 			for(int m = 0; m <= l; m++){
 				complex<double> hwavelm = 0;
@@ -392,8 +396,23 @@ int main (int argc, char* argv[]) {
 				hwavelm *= Ylm[l][m];
 				hwave += hwavelm;
 			}
+		}*/
+	
+		// The following code fuses the nested loops into a single loop. This is quicker to run using OpenMP.
+		#pragma omp parallel for reduction(+:hwave)
+		for(int k=0; k<(lmax+1)*(lmax+2)/2; k++) {
+		    int l = k/(lmax+2), m = k%(lmax+2);
+		    if(m>l) l = lmax - l, m = lmax + 1 - m;
+			if(l < 2) continue;
+			complex<double> hwavelm = 0;
+			for(int n = -nmax; n <= nmax; n++){
+				double Phi = m*Phi_phi + n*Phi_r;
+		 		hwavelm += (amps.re[l][m][n+nmax]->eval(y1,e) + 1i*amps.im[l][m][n+nmax]->eval(y1,e))*exp(-1i*Phi);
+			}
+			hwavelm *= Ylm[l][m];
+			hwave += hwavelm;
 		}
-		
+				
 		// Output format: t, p, e, Phi_phi, Phi_r
       	printf ("%.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", t, p, e, Phi_phi, Phi_r, hwave.real(), hwave.imag() );
     }
