@@ -3,8 +3,8 @@ env = Environment()
 
 env['CXX']      = 'g++'
 env['CPPPATH']  = ['../include']
-env['LIBS']     = ['gsl' , 'gslcblas','hdf5','hdf5_hl']
-env['CPPFLAGS'] = ['-std=c++14', '-O3']
+env['LIBS']     = ['gsl' , 'gslcblas','hdf5','hdf5_hl', 'omp']
+env['CPPFLAGS'] = ['-std=c++14', '-O3', '-Xpreprocessor', '-fopenmp']
  
 sources = ['FluxInspiral.cc', 'Interpolant.cc', 'SpinWeightedSphericalHarmonics.cc']
 

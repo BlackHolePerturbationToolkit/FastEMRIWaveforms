@@ -22,6 +22,8 @@
 #include <chrono>
 #include <iomanip>      // std::setprecision
 
+#include <omp.h>
+
 
 using namespace std;
 using namespace std::chrono;
@@ -277,7 +279,7 @@ int main (int argc, char* argv[]) {
 	double samplerate = 0.1;
 	
 	// Signal length (in seconds)
-	double max_signal_length = 1*YearInSeconds/356.*60;
+	double max_signal_length = 1*YearInSeconds/356.*1;
 	
 	// Compute the adimensionalized time steps and max time
 	double dt = 1/samplerate /(M*SolarMassInSeconds);
@@ -379,6 +381,7 @@ int main (int argc, char* argv[]) {
 		double y1 = log((p -2.*e - 2.1));
 			
 		complex<double> hwave = 0;
+		#pragma omp parallel for reduction(+:hwave) 
 		for(int l = 2; l <= lmax; l++){
 			for(int m = 0; m <= l; m++){
 				complex<double> hwavelm = 0;
