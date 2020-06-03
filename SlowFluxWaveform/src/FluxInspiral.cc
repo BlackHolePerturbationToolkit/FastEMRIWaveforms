@@ -260,7 +260,7 @@ int main (int argc, char* argv[]) {
 	
 	struct waveform_amps amps;
 	
-	cout << "Loading and interpolating the amplitude data (this will take a few seconds)" << endl;
+	cout << "# Loading and interpolating the amplitude data (this will take a few seconds)" << endl;
 	load_and_interpolate_amplitude_data(lmax, nmax, &amps);
 	
 	
@@ -283,8 +283,8 @@ int main (int argc, char* argv[]) {
 	double dt = 1/samplerate /(M*SolarMassInSeconds);
 	double tmax = max_signal_length/(M*SolarMassInSeconds);
 	
-	printf("tmax =  %lf\n", tmax);
-	printf("time step = %lf\n", dt);
+	printf("# tmax =  %lf\n", tmax);
+	printf("# time step = %lf\n", dt);
 	
 	// Sky position
 	double theta_d  = M_PI/2.0;
@@ -294,7 +294,7 @@ int main (int argc, char* argv[]) {
 	//Set the mass ratio
 	interps.epsilon = 1e-5;
 	
-	cout << "Loading and interpolating the flux data" << endl;
+	cout << "# Loading and interpolating the flux data" << endl;
 	load_and_interpolate_flux_data(&interps);
 	
 	
@@ -339,6 +339,7 @@ int main (int argc, char* argv[]) {
 	
 	
 	// Output format: t, p, e, Phi_phi, Phi_r
+	printf ("# Output format: t p e Phi_phi Phi_r h+ h×\n");
   	printf ("%.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", t0, p0, e0, Phi_phi0, Phi_r0, hwave0.real(), hwave0.imag() );
 	
 	// Initialize the ODE solver
@@ -390,7 +391,7 @@ int main (int argc, char* argv[]) {
 		}
 		
 		// Output format: t, p, e, Phi_phi, Phi_r
-      	printf ("%.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", t, p, e, y[2], y[3], hwave.real(), hwave.imag() );
+      	printf ("%.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", t, p, e, Phi_phi, Phi_r, hwave.real(), hwave.imag() );
     }
 	high_resolution_clock::time_point wallclock2 = high_resolution_clock::now();
 	
