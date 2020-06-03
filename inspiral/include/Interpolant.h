@@ -48,5 +48,4 @@ class Interpolant{
 		gsl_interp_accel *xacc;
 		gsl_interp_accel *yacc;
 };
-
 #endif // __INTERPOLANT_H__
