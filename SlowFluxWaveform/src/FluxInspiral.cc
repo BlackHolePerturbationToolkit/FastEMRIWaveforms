@@ -277,7 +277,7 @@ int main (int argc, char* argv[]) {
 	double samplerate = 0.1;
 	
 	// Signal length (in seconds)
-	double max_signal_length = 1*YearInSeconds/356./12.;
+	double max_signal_length = 1*YearInSeconds/356.*60;
 	
 	// Compute the adimensionalized time steps and max time
 	double dt = 1/samplerate /(M*SolarMassInSeconds);
@@ -289,6 +289,7 @@ int main (int argc, char* argv[]) {
 	// Sky position
 	double theta_d  = M_PI/2.0;
 	double phi_d 	= 0.0;
+	printf("# sky position: theta = %.12lf, phi = %.12lf\n", theta_d, phi_d);
 	
 	struct interp_params interps;
 	//Set the mass ratio
