@@ -17,12 +17,12 @@ NO_RELU = 0
 class Amplitude:
     def __init__(
         self,
-        input_str="SE_n30_",
+        input_str="SE_n30_double_",
         folder="few/files/weights/",
         activation_kwargs={},
-        num_teuk_modes=3864,
+        num_teuk_modes=3843,
         transform_factor=1000.0,
-        transform_file="few/files/reduced_basis.dat",
+        transform_file="few/files/reduced_basis_n30_new.dat",
         max_input_len=1000,
     ):
         self.num_teuk_modes = num_teuk_modes
@@ -31,13 +31,15 @@ class Amplitude:
 
         self.transform_matrix = xp.asarray(
             np.genfromtxt(transform_file, dtype=xp.complex128)
-        )
+        ).flatten()
         self.break_index = 97
         self.max_input_len = max_input_len
 
         self._initialize_weights(input_str=input_str, folder=folder)
 
-    def _initialize_weights(self, input_str="SE_n30_", folder="few/files/weights/"):
+    def _initialize_weights(
+        self, input_str="SE_n30_double_", folder="few/files/weights/"
+    ):
         self.weights = []
         self.bias = []
         self.dim1 = []
@@ -64,6 +66,7 @@ class Amplitude:
             self.dim2.append(temp["w"].shape[1])
 
         self.max_num = np.max([self.dim1, self.dim2])
+
         self.temp_mats = [
             xp.zeros((self.max_num * self.max_input_len,), dtype=xp.float64),
             xp.zeros((self.max_num * self.max_input_len,), dtype=xp.float64),
@@ -74,10 +77,10 @@ class Amplitude:
     def __call__(self, p, e):
         input_len = len(p)
         input = xp.concatenate([p, e])
-        self.temp_mats[0][: len(input)] = input
+        self.temp_mats[0][: 2 * input_len] = input
 
-        teuk_modes = xp.zeros((len(input) * self.num_teuk_modes,), dtype=xp.complex128)
-        nn_out_mat = xp.zeros((len(input) * 2 * self.break_index))
+        teuk_modes = xp.zeros((input_len * self.num_teuk_modes,), dtype=xp.complex128)
+        nn_out_mat = xp.zeros((input_len * self.break_index))
 
         for i, (weight, bias, run_relu) in enumerate(
             zip(self.weights, self.bias, self.run_relu_arr)
@@ -103,3 +106,4 @@ class Amplitude:
             self.transform_factor_inv,
             self.num_teuk_modes,
         )
+        return teuk_modes.reshape(input_len, self.num_teuk_modes)
