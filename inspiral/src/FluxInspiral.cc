@@ -193,8 +193,6 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
     double dt = 1/samplerate /(M*SolarMassInSeconds);
     double tmax = max_signal_length/(M*SolarMassInSeconds);
 
-    printf("%e %e %e %e\n", dt, tmax, max_signal_length, samplerate);
-
     // Initial values
 	// TODO do we want to set initial phases here?
 	double y[4] = { p0, e0, 0.0, 0.0 };
@@ -230,7 +228,7 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
         ind++;
         // Stop the inspiral when close to the separatrix
         if(p - 6 -2*e < 0.1){
-            cout << "# Separatrix reached: exiting inspiral" << endl;
+            //cout << "# Separatrix reached: exiting inspiral" << endl;
             break;
         }
 
