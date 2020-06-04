@@ -40,7 +40,7 @@ const int Ny = 50;
 const double SolarMassInSeconds = 4.925e-6;
 const double YearInSeconds 		= 60*60*25*365.25;
 
-const int DENSE_STEPPING = 1;
+const int DENSE_STEPPING = 0;
 
 // Define elliptic integrals that use Mathematica's conventions
 double EllipticK(double k){
@@ -127,8 +127,11 @@ FluxCarrier::FluxCarrier()
     interps = new interp_params;
 
     // Load and interpolate the flux data
-	ifstream Flux_file("data/FluxNewMinusPNScaled.dat");
-
+	ifstream Flux_file("inspiral/data/FluxNewMinusPNScaled.dat");
+    if (Flux_file.fail())
+    {
+        throw std::runtime_error("Did not read flux data.");
+    }
 	// Load the flux data into arrays
 	string Flux_string;
 	vector<double> ys, es, Edots, Ldots;
@@ -136,10 +139,9 @@ FluxCarrier::FluxCarrier()
 	while(getline(Flux_file, Flux_string)){
 
 		stringstream Flux_ss(Flux_string);
+        Flux_ss >> y >> e >> Edot >> Ldot;
 
-		Flux_ss >> y >> e >> Edot >> Ldot;
-
-		ys.push_back(y);
+        ys.push_back(y);
 		es.push_back(e);
 		Edots.push_back(Edot);
 		Ldots.push_back(Ldot);
@@ -152,10 +154,10 @@ FluxCarrier::FluxCarrier()
 	sort( es.begin(), es.end() );
 	es.erase( unique( es.begin(), es.end() ), es.end() );
 
-	Interpolant *Edot_interp = new Interpolant(ys, es, Edots);
+    Interpolant *Edot_interp = new Interpolant(ys, es, Edots);
 	Interpolant *Ldot_interp = new Interpolant(ys, es, Ldots);
 
-	interps->Edot = Edot_interp;
+    interps->Edot = Edot_interp;
 	interps->Ldot = Ldot_interp;
 
 }
@@ -173,7 +175,7 @@ void FluxCarrier::dealloc()
 FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double err, FluxCarrier *flux_carrier){
 	FLUXHolder flux_out(t0, M, mu, p0, e0);
 
-	interp_params interps = *(flux_carrier->interps);
+    interp_params interps = *(flux_carrier->interps);
 	//Set the mass ratio
 	interps.epsilon = mu/M;
 
@@ -181,36 +183,44 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
 
     //high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-	double tmax = 1e7;
-    double dt = 10.0;
+    // Set the samplerate in Hertz
+    double samplerate = 0.1;
 
+    // Signal length (in seconds)
+    double max_signal_length = 1*YearInSeconds/356.*60;
 
-	// Initial values
+    // Compute the adimensionalized time steps and max time
+    double dt = 1/samplerate /(M*SolarMassInSeconds);
+    double tmax = max_signal_length/(M*SolarMassInSeconds);
+
+    printf("%e %e %e %e\n", dt, tmax, max_signal_length, samplerate);
+
+    // Initial values
 	// TODO do we want to set initial phases here?
 	double y[4] = { p0, e0, 0.0, 0.0 };
 
     // Initialize the ODE solver
-  	gsl_odeiv2_system sys = {func, NULL, 4, &interps};
+    gsl_odeiv2_system sys = {func, NULL, 4, &interps};
     const gsl_odeiv2_step_type *T = gsl_odeiv2_step_rk8pd;
 
     gsl_odeiv2_step *step 			= gsl_odeiv2_step_alloc (T, 4);
     gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (1e-10, 0);
     gsl_odeiv2_evolve *evolve 		= gsl_odeiv2_evolve_alloc (4);
 
-	// Compute the inspiral
+    // Compute the inspiral
 	double t = t0;
 	double h = dt;
 	double t1 = tmax;
     int ind = 0;
 	if(DENSE_STEPPING) t1 = dt;
 	while (t < tmax){
-      	int status = gsl_odeiv2_evolve_apply (evolve, control, step, &sys, &t, t1, &h, y);
+
+        int status = gsl_odeiv2_evolve_apply (evolve, control, step, &sys, &t, t1, &h, y);
 		if(DENSE_STEPPING) t1 += dt;
       	if (status != GSL_SUCCESS){
        		printf ("error, return value=%d\n", status);
           	break;
         }
-
 
 		flux_out.add_point(t*Msec, y[0], y[1], y[2], y[3]); // adds time in seconds
 
