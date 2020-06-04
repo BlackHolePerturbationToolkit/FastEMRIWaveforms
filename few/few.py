@@ -34,7 +34,21 @@ class FEW:
         Phi_r = xp.asarray(Phi_r)
 
         # amplitudes
-        self.amplitude_gen(p, e)
+        teuk_modes = self.amplitude_gen(p, e)
+
+        power = xp.abs(teuk_modes) ** 2
+
+        inds_sort = xp.argsort(power, axis=1)[:, ::-1]
+        power = xp.sort(power, axis=1)[:, ::-1]
+        cumsum = xp.cumsum(power, axis=1)
+
+        eps = 1e-2
+
+        inds_keep = xp.full(cumsum.shape, True)
+
+        inds_keep[:, 1:] = cumsum[:, :-1] < cumsum[:, -1][:, xp.newaxis] * (1 - eps)
+
+        keep_modes = xp.unique(inds_sort[inds_keep])
 
         return
 
@@ -42,7 +56,7 @@ class FEW:
 if __name__ == "__main__":
     import time
 
-    few = FEW(inspiral_kwargs={}, amplitude_kwargs={"max_input_len": 3000000})
+    few = FEW(inspiral_kwargs={}, amplitude_kwargs={"max_input_len": 3000})
     M = 1e5
     mu = 1e1
     p0 = 10.0
