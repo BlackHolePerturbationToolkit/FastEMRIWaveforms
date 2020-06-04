@@ -46,11 +46,8 @@ class FEW:
 if __name__ == "__main__":
     import time
 
-    few = FEW(
-        inspiral_kwargs={"new_t": np.arange(0, 3e7, 15.0)},
-        amplitude_kwargs={"max_input_len": 3000000},
-    )
-    M = 1e6
+    few = FEW(inspiral_kwargs={}, amplitude_kwargs={"max_input_len": 3000000})
+    M = 1e5
     mu = 1e1
     p0 = 10.0
     e0 = 0.3
