@@ -27,10 +27,6 @@ class FEW:
             M, mu, p0, e0, **self.inspiral_kwargs
         )
 
-        import pdb
-
-        pdb.set_trace()
-
         # convert for gpu
         p = xp.asarray(p)
         e = xp.asarray(e)
@@ -55,7 +51,7 @@ if __name__ == "__main__":
     phi = np.pi / 4.0
 
     check = few(M, mu, p0, e0, theta, phi)
-    num = 1
+    num = 100
 
     st = time.perf_counter()
     for _ in range(num):
