@@ -109,7 +109,8 @@ void set_spline_constants(double *t_arr, double *y_all, double *B,
               dt = t_arr[i + 1] - t_arr[i];
 
               int lead_ind = interp_i*length;
-              fill_coefficients(i, length, &B[lead_ind], dt, &y_all[lead_ind], &c1[lead_ind], &c2[lead_ind], &c3[lead_ind]);
+              int lead_ind2 = interp_i*(length - 1);
+              fill_coefficients(i, length, &B[lead_ind], dt, &y_all[lead_ind], &c1[lead_ind2], &c2[lead_ind2], &c3[lead_ind2]);
 
 
 }
