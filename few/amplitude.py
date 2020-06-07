@@ -22,7 +22,7 @@ class Amplitude:
         activation_kwargs={},
         num_teuk_modes=3843,
         transform_factor=1000.0,
-        transform_file="few/files/reduced_basis_n30_new.dat",
+        transform_file="few/files/reduced_basis_n30_new_sorted.dat",
         max_input_len=1000,
     ):
         self.num_teuk_modes = num_teuk_modes
@@ -31,8 +31,8 @@ class Amplitude:
 
         self.transform_matrix = xp.asarray(
             np.genfromtxt(transform_file, dtype=xp.complex128)
-        ).flatten()
-        self.break_index = 97
+        )
+        self.break_index = 99
         self.max_input_len = max_input_len
 
         self._initialize_weights(input_str=input_str, folder=folder)
@@ -74,13 +74,19 @@ class Amplitude:
         self.run_relu_arr = np.ones(self.num_layers, dtype=int)
         self.run_relu_arr[-1] = 0
 
+    def _p_to_y(self, p, e):
+
+        return xp.log(-(21 / 10) - 2 * e + p)
+
     def __call__(self, p, e):
         input_len = len(p)
-        input = xp.concatenate([p, e])
+
+        y = self._p_to_y(p, e)
+        input = xp.concatenate([y, e])
         self.temp_mats[0][: 2 * input_len] = input
 
         teuk_modes = xp.zeros((input_len * self.num_teuk_modes,), dtype=xp.complex128)
-        nn_out_mat = xp.zeros((input_len * self.break_index))
+        nn_out_mat = xp.zeros((input_len * self.break_index), dtype=xp.complex128)
 
         for i, (weight, bias, run_relu) in enumerate(
             zip(self.weights, self.bias, self.run_relu_arr)
@@ -93,12 +99,12 @@ class Amplitude:
             k, n = weight.shape
 
             neural_layer_wrap(
-                mat_out, mat_in, weight.flatten(), bias, m, k, n, run_relu
+                mat_out, mat_in, weight.T.flatten(), bias, m, k, n, run_relu
             )
 
         transform_output_wrap(
             teuk_modes,
-            self.transform_matrix,
+            self.transform_matrix.T.flatten(),
             nn_out_mat,
             mat_out,
             input_len,
@@ -106,4 +112,5 @@ class Amplitude:
             self.transform_factor_inv,
             self.num_teuk_modes,
         )
-        return teuk_modes.reshape(input_len, self.num_teuk_modes)
+
+        return teuk_modes.reshape(self.num_teuk_modes, input_len).T
