@@ -14,9 +14,7 @@ using namespace std::chrono;
 
 
 __device__ __host__ double LeakyReLU(double x){
-     double out = 0.0;
-     if (x>= 0.0) {out = x;}
-     else {out = 0.2*x;}
+     double out = (x >= 0.0) ? x : 0.2*x;
      return out;
 }
 
@@ -130,6 +128,8 @@ void form_complex_output(cmplx *complex_output, double *nn_output, int input_len
         ind += blockDim.y * gridDim.y){
             temp = cmplx(nn_output[ind*input_len + i], nn_output[(break_index+ind)*input_len + i]);
             complex_output[ind*input_len + i] = temp*transform_factor_inv;
+
+            if ((i == 40) && (ind == 0)) printf("%e + %e j\n", complex_output[ind*input_len + i].real(), complex_output[ind*input_len + i].imag());
          }
   }
 }
