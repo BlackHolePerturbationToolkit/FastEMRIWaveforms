@@ -39,10 +39,6 @@ class FEW:
         # amplitudes
         teuk_modes = self.amplitude_gen(p, e)
 
-        import pdb
-
-        pdb.set_trace()
-
         # TODO: implement normalization to flux
         power = xp.abs(teuk_modes) ** 2
 
@@ -50,7 +46,8 @@ class FEW:
         power = xp.sort(power, axis=1)[:, ::-1]
         cumsum = xp.cumsum(power, axis=1)
 
-        eps = 1e-2
+        # TODO: make adjustable
+        eps = 2e-4
 
         inds_keep = xp.full(cumsum.shape, True)
 
@@ -58,7 +55,7 @@ class FEW:
 
         keep_modes = xp.unique(inds_sort[inds_keep])
 
-        self.sum(t, p, e, phi_phi, phi_r, teuk_modes, mode_keep_inds=keep_modes)
+        self.sum(t, p, e, Phi_phi, Phi_r, teuk_modes[:, keep_modes])
         return
 
 
