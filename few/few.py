@@ -8,6 +8,7 @@ except ImportError:
 
 from flux import RunFluxInspiral
 from amplitude import Amplitude
+from interpolated_mode_sum import InterpolatedModeSum
 
 
 class FEW:
@@ -19,6 +20,7 @@ class FEW:
         self.inspiral_kwargs = inspiral_kwargs
 
         self.amplitude_gen = Amplitude(**amplitude_kwargs)
+        self.sum = InterpolatedModeSum()
 
     def __call__(self, M, mu, p0, e0, theta, phi):
 
@@ -28,6 +30,7 @@ class FEW:
         )
 
         # convert for gpu
+        t = xp.asarray(t)
         p = xp.asarray(p)
         e = xp.asarray(e)
         Phi_phi = xp.asarray(Phi_phi)
@@ -36,6 +39,11 @@ class FEW:
         # amplitudes
         teuk_modes = self.amplitude_gen(p, e)
 
+        import pdb
+
+        pdb.set_trace()
+
+        # TODO: implement normalization to flux
         power = xp.abs(teuk_modes) ** 2
 
         inds_sort = xp.argsort(power, axis=1)[:, ::-1]
@@ -50,6 +58,7 @@ class FEW:
 
         keep_modes = xp.unique(inds_sort[inds_keep])
 
+        self.sum(t, p, e, phi_phi, phi_r, teuk_modes, mode_keep_inds=keep_modes)
         return
 
 
