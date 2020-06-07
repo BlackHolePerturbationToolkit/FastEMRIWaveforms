@@ -128,8 +128,6 @@ void form_complex_output(cmplx *complex_output, double *nn_output, int input_len
         ind += blockDim.y * gridDim.y){
             temp = cmplx(nn_output[ind*input_len + i], nn_output[(break_index+ind)*input_len + i]);
             complex_output[ind*input_len + i] = temp*transform_factor_inv;
-
-            if ((i == 40) && (ind == 0)) printf("%e + %e j\n", complex_output[ind*input_len + i].real(), complex_output[ind*input_len + i].imag());
          }
   }
 }
