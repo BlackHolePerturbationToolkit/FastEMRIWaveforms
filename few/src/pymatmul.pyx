@@ -13,6 +13,7 @@ cdef extern from "matmul.hh":
                           int input_len, int break_index, double transform_factor_inv,
                           int num_teuk_modes)
 
+
 @pointer_adjust
 def neural_layer_wrap(mat_out, mat_in, weight, bias, m, k, n, run_relu):
 
