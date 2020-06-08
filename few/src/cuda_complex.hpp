@@ -187,6 +187,7 @@ template<class T, class charT, class traits>
 #include <sstream>
 #include <complex>
 
+using namespace std;
 namespace gcmplx {
 template<class _Tp> class  complex;
 
@@ -454,7 +455,7 @@ operator*(const complex<_Tp>& __z, const complex<_Tp>& __w)
     if (isnan(__x) && isnan(__y))
     {
         bool __recalc = false;
-        if (isinf(__a) || isinf(__b))
+        if (std::isinf(__a) || isinf(__b))
         {
             __a = copysign(isinf(__a) ? _Tp(1) : _Tp(0), __a);
             __b = copysign(isinf(__b) ? _Tp(1) : _Tp(0), __b);
@@ -464,7 +465,7 @@ operator*(const complex<_Tp>& __z, const complex<_Tp>& __w)
                 __d = copysign(_Tp(0), __d);
             __recalc = true;
         }
-        if (isinf(__c) || isinf(__d))
+        if (std::isinf(__c) || isinf(__d))
         {
             __c = copysign(isinf(__c) ? _Tp(1) : _Tp(0), __c);
             __d = copysign(isinf(__d) ? _Tp(1) : _Tp(0), __d);
@@ -550,7 +551,7 @@ operator/(const complex<_Tp>& __z, const complex<_Tp>& __w)
             __x = _Tp(INFINITY) * (__a * __c + __b * __d);
             __y = _Tp(INFINITY) * (__b * __c - __a * __d);
         }
-        else if (isinf(__logbw) && __logbw > _Tp(0) && isfinite(__a) && isfinite(__b))
+        else if (std::isinf(__logbw) && __logbw > _Tp(0) && isfinite(__a) && isfinite(__b))
         {
             __c = copysign(isinf(__c) ? _Tp(1) : _Tp(0), __c);
             __d = copysign(isinf(__d) ? _Tp(1) : _Tp(0), __d);
@@ -599,7 +600,7 @@ operator/(const complex<float>& __z, const complex<float>& __w)
 #pragma warning(suppress: 4756) // Ignore INFINITY related warning
             __y = INFINITY * (__b * __c - __a * __d);
         }
-        else if (isinf(__logbw) && __logbw > float(0) && isfinite(__a) && isfinite(__b))
+        else if (std::isinf(__logbw) && __logbw > float(0) && isfinite(__a) && isfinite(__b))
         {
             __c = copysignf(isinf(__c) ? float(1) : float(0), __c);
             __d = copysignf(isinf(__d) ? float(1) : float(0), __d);
@@ -783,9 +784,9 @@ inline CUDA_CALLABLE_MEMBER
 _Tp
 norm(const complex<_Tp>& __c)
 {
-    if (isinf(__c.real()))
+    if (std::isinf(__c.real()))
         return fabs(__c.real());
-    if (isinf(__c.imag()))
+    if (std::isinf(__c.imag()))
         return fabs(__c.imag());
     return __c.real() * __c.real() + __c.imag() * __c.imag();
 }
@@ -836,7 +837,7 @@ complex<_Tp>
 proj(const complex<_Tp>& __c)
 {
     complex<_Tp> __r = __c;
-    if (isinf(__c.real()) || isinf(__c.imag()))
+    if (std::isinf(__c.real()) || isinf(__c.imag()))
         __r = complex<_Tp>(INFINITY, copysign(_Tp(0), __c.imag()));
     return __r;
 }
@@ -845,7 +846,7 @@ inline CUDA_CALLABLE_MEMBER
 complex<double>
 proj(double __re)
 {
-    if (isinf(__re))
+    if (std::isinf(__re))
         __re = fabs(__re);
     return complex<double>(__re);
 }
@@ -854,7 +855,7 @@ inline CUDA_CALLABLE_MEMBER
 complex<float>
 proj(float __re)
 {
-    if (isinf(__re))
+    if (std::isinf(__re))
         __re = fabs(__re);
     return complex<float>(__re);
 }
@@ -870,13 +871,13 @@ polar(const _Tp& __rho, const _Tp& __theta = _Tp(0))
         return complex<_Tp>(_Tp(NAN), _Tp(NAN));
     if (isnan(__theta))
     {
-        if (isinf(__rho))
+        if (std::isinf(__rho))
             return complex<_Tp>(__rho, __theta);
         return complex<_Tp>(__theta, __theta);
     }
-    if (isinf(__theta))
+    if (std::isinf(__theta))
     {
-        if (isinf(__rho))
+        if (std::isinf(__rho))
             return complex<_Tp>(__rho, _Tp(NAN));
         return complex<_Tp>(_Tp(NAN), _Tp(NAN));
     }
@@ -916,9 +917,9 @@ CUDA_CALLABLE_MEMBER
 complex<_Tp>
 sqrt(const complex<_Tp>& __x)
 {
-    if (isinf(__x.imag()))
+    if (std::isinf(__x.imag()))
         return complex<_Tp>(_Tp(INFINITY), __x.imag());
-    if (isinf(__x.real()))
+    if (std::isinf(__x.real()))
     {
         if (__x.real() > _Tp(0))
             return complex<_Tp>(__x.real(), isnan(__x.imag()) ? __x.imag() : copysign(_Tp(0), __x.imag()));
@@ -936,7 +937,7 @@ exp(const complex<_Tp>& __x)
 {
     using namespace std;
     _Tp __i = __x.imag();
-    if (isinf(__x.real()))
+    if (std::isinf(__x.real()))
     {
         if (__x.real() < _Tp(0))
         {
@@ -945,7 +946,7 @@ exp(const complex<_Tp>& __x)
         }
         else if (__i == 0 || !isfinite(__i))
         {
-            if (isinf(__i))
+            if (std::isinf(__i))
                 __i = _Tp(NAN);
             return complex<_Tp>(__x.real(), __i);
         }
@@ -990,23 +991,23 @@ complex<_Tp>
 asinh(const complex<_Tp>& __x)
 {
     const _Tp __pi(atan2(+0., -0.));
-    if (isinf(__x.real()))
+    if (std::isinf(__x.real()))
     {
         if (isnan(__x.imag()))
             return __x;
-        if (isinf(__x.imag()))
+        if (std::isinf(__x.imag()))
             return complex<_Tp>(__x.real(), copysign(__pi * _Tp(0.25), __x.imag()));
         return complex<_Tp>(__x.real(), copysign(_Tp(0), __x.imag()));
     }
     if (isnan(__x.real()))
     {
-        if (isinf(__x.imag()))
+        if (std::isinf(__x.imag()))
             return complex<_Tp>(__x.imag(), __x.real());
         if (__x.imag() == 0)
             return __x;
         return complex<_Tp>(__x.real(), __x.real());
     }
-    if (isinf(__x.imag()))
+    if (std::isinf(__x.imag()))
         return complex<_Tp>(copysign(__x.imag(), __x.real()), copysign(__pi/_Tp(2), __x.imag()));
     complex<_Tp> __z = log(__x + sqrt(pow(__x, _Tp(2)) + _Tp(1)));
     return complex<_Tp>(copysign(__z.real(), __x.real()), copysign(__z.imag(), __x.imag()));
@@ -1020,11 +1021,11 @@ complex<_Tp>
 acosh(const complex<_Tp>& __x)
 {
     const _Tp __pi(atan2(+0., -0.));
-    if (isinf(__x.real()))
+    if (std::isinf(__x.real()))
     {
         if (isnan(__x.imag()))
             return complex<_Tp>(fabs(__x.real()), __x.imag());
-        if (isinf(__x.imag()))
+        if (std::isinf(__x.imag()))
             if (__x.real() > 0)
                 return complex<_Tp>(__x.real(), copysign(__pi * _Tp(0.25), __x.imag()));
             else
@@ -1035,11 +1036,11 @@ acosh(const complex<_Tp>& __x)
     }
     if (isnan(__x.real()))
     {
-        if (isinf(__x.imag()))
+        if (std::isinf(__x.imag()))
             return complex<_Tp>(fabs(__x.imag()), __x.real());
         return complex<_Tp>(__x.real(), __x.real());
     }
-    if (isinf(__x.imag()))
+    if (std::isinf(__x.imag()))
         return complex<_Tp>(fabs(__x.imag()), copysign(__pi/_Tp(2), __x.imag()));
     complex<_Tp> __z = log(__x + sqrt(pow(__x, _Tp(2)) - _Tp(1)));
     return complex<_Tp>(copysign(__z.real(), _Tp(0)), copysign(__z.imag(), __x.imag()));
@@ -1053,13 +1054,13 @@ complex<_Tp>
 atanh(const complex<_Tp>& __x)
 {
     const _Tp __pi(atan2(+0., -0.));
-    if (isinf(__x.imag()))
+    if (std::isinf(__x.imag()))
     {
         return complex<_Tp>(copysign(_Tp(0), __x.real()), copysign(__pi/_Tp(2), __x.imag()));
     }
     if (isnan(__x.imag()))
     {
-        if (isinf(__x.real()) || __x.real() == 0)
+        if (std::isinf(__x.real()) || __x.real() == 0)
             return complex<_Tp>(copysign(_Tp(0), __x.real()), __x.imag());
         return complex<_Tp>(__x.imag(), __x.imag());
     }
@@ -1067,7 +1068,7 @@ atanh(const complex<_Tp>& __x)
     {
         return complex<_Tp>(__x.real(), __x.real());
     }
-    if (isinf(__x.real()))
+    if (std::isinf(__x.real()))
     {
         return complex<_Tp>(copysign(_Tp(0), __x.real()), copysign(__pi/_Tp(2), __x.imag()));
     }
@@ -1086,7 +1087,7 @@ CUDA_CALLABLE_MEMBER
 complex<_Tp>
 sinh(const complex<_Tp>& __x)
 {
-    if (isinf(__x.real()) && !isfinite(__x.imag()))
+    if (std::isinf(__x.real()) && !isfinite(__x.imag()))
         return complex<_Tp>(__x.real(), _Tp(NAN));
     if (__x.real() == 0 && !isfinite(__x.imag()))
         return complex<_Tp>(__x.real(), _Tp(NAN));
@@ -1102,7 +1103,7 @@ CUDA_CALLABLE_MEMBER
 complex<_Tp>
 cosh(const complex<_Tp>& __x)
 {
-    if (isinf(__x.real()) && !isfinite(__x.imag()))
+    if (std::isinf(__x.real()) && !isfinite(__x.imag()))
         return complex<_Tp>(fabs(__x.real()), _Tp(NAN));
     if (__x.real() == 0 && !isfinite(__x.imag()))
         return complex<_Tp>(_Tp(NAN), __x.real());
@@ -1120,7 +1121,7 @@ CUDA_CALLABLE_MEMBER
 complex<_Tp>
 tanh(const complex<_Tp>& __x)
 {
-    if (isinf(__x.real()))
+    if (std::isinf(__x.real()))
     {
         if (!isfinite(__x.imag()))
             return complex<_Tp>(_Tp(1), _Tp(0));
@@ -1153,11 +1154,11 @@ complex<_Tp>
 acos(const complex<_Tp>& __x)
 {
     const _Tp __pi(atan2(+0., -0.));
-    if (isinf(__x.real()))
+    if (std::isinf(__x.real()))
     {
         if (isnan(__x.imag()))
             return complex<_Tp>(__x.imag(), __x.real());
-        if (isinf(__x.imag()))
+        if (std::isinf(__x.imag()))
         {
             if (__x.real() < _Tp(0))
                 return complex<_Tp>(_Tp(0.75) * __pi, -__x.imag());
@@ -1169,11 +1170,11 @@ acos(const complex<_Tp>& __x)
     }
     if (isnan(__x.real()))
     {
-        if (isinf(__x.imag()))
+        if (std::isinf(__x.imag()))
             return complex<_Tp>(__x.real(), -__x.imag());
         return complex<_Tp>(__x.real(), __x.real());
     }
-    if (isinf(__x.imag()))
+    if (std::isinf(__x.imag()))
         return complex<_Tp>(__pi/_Tp(2), -__x.imag());
     if (__x.real() == 0)
         return complex<_Tp>(__pi/_Tp(2), -__x.imag());
