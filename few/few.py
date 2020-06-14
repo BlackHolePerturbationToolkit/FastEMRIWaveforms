@@ -151,7 +151,7 @@ if __name__ == "__main__":
     num_modes = []
     eps_all = np.logspace(-10, -3)
 
-    eps_all = np.concatenate([np.array([1e-25]), eps_all])
+    eps_all = np.concatenate([np.array([1e-25]), eps_all])[:1]
     fullwave = np.load("control.npy")  # [:57684]
 
     for i, eps in enumerate(eps_all):
@@ -170,6 +170,9 @@ if __name__ == "__main__":
         mismatch.append(mm)
         num_modes.append(few.num_modes_kept)
 
+    import pdb
+
+    pdb.set_trace()
     np.save("info_check", np.asarray([eps_all, mismatch, num_modes]).T)
     num = 0
 
