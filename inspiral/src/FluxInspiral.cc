@@ -199,7 +199,7 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
 
     // Initialize the ODE solver
     gsl_odeiv2_system sys = {func, NULL, 4, &interps};
-    const gsl_odeiv2_step_type *T = gsl_odeiv2_step_rk8pd;
+    const gsl_odeiv2_step_type *T = gsl_odeiv2_step_rk4;
 
     gsl_odeiv2_step *step 			= gsl_odeiv2_step_alloc (T, 4);
     gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (1e-10, 0);
