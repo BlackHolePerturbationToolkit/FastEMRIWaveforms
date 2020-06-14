@@ -231,7 +231,7 @@ void make_waveform(cmplx *waveform,
     double re_y, re_c1, re_c2, re_c3, im_y, im_c1, im_c2, im_c3;
      __shared__ double pp_y, pp_c1, pp_c2, pp_c3, pr_y, pr_c1, pr_c2, pr_c3;
 
-     __shared__ cmplx Ylms[2*MAX_MODES_BLOCK];
+     __shared__ cmplx Ylms[MAX_MODES_BLOCK];
 
      __shared__ double mode_re_y[MAX_MODES_BLOCK];
      __shared__ double mode_re_c1[MAX_MODES_BLOCK];
@@ -271,7 +271,7 @@ void make_waveform(cmplx *waveform,
      int num_breaks = (num_teuk_modes / MAX_MODES_BLOCK) + 1;
 
      for (int block_y=0; block_y<num_breaks; block_y+=1){
-    (((block_y + 1)*MAX_MODES_BLOCK) <= num_teuk_modes) ? (num_teuk_here = MAX_MODES_BLOCK):(num_teuk_here = num_teuk_modes - (block_y*MAX_MODES_BLOCK));
+    num_teuk_here = (((block_y + 1)*MAX_MODES_BLOCK) <= num_teuk_modes) ? MAX_MODES_BLOCK : num_teuk_modes - (block_y*MAX_MODES_BLOCK);
     //if ((threadIdx.x == 0) && (blockIdx.x == 0)) printf("BLOCKY = %d %d\n", block_y, num_breaks);
     int init_ind = block_y*MAX_MODES_BLOCK;
 
@@ -284,10 +284,11 @@ void make_waveform(cmplx *waveform,
         mode_im_y[i] = y_all[ind_im]; mode_im_c1[i] = c1[ind_im];
         mode_im_c2[i] = c2[ind_im]; mode_im_c3[i] = c3[ind_im];
 
+        //printf("%d %d %d %d\n", init_ind, i, m_arr_in[init_ind + i], n_arr_in[init_ind + i]);
         m_arr[i] = m_arr_in[init_ind + i];
         n_arr[i] = n_arr_in[init_ind + i];
-        Ylms[2*i] = Ylms_in[2*(init_ind + i)];
-        Ylms[2*i + 1] = Ylms_in[2*(init_ind + i) + 1];
+        Ylms[i] = Ylms_in[(init_ind + i)];
+        //Ylms[2*i + 1] = Ylms_in[2*(init_ind + i) + 1];
     }
 
     __syncthreads();
@@ -309,10 +310,9 @@ void make_waveform(cmplx *waveform,
 
       Phi_phi_i = pp_y + pp_c1*x + pp_c2*x2  + pp_c3*x3;
       Phi_r_i = pr_y + pr_c1*x + pr_c2*x2  + pr_c3*x3;
-
         for (int j=0; j<num_teuk_here; j+=1){
 
-            Ylm_plus_m = Ylms[2*j];
+            Ylm_plus_m = Ylms[j];
 
              m = m_arr[j];
              n = n_arr[j];
@@ -321,17 +321,23 @@ void make_waveform(cmplx *waveform,
             mode_val_im = mode_im_y[j] + mode_im_c1[j]*x + mode_im_c2[j]*x2  + mode_im_c3[j]*x3;
             mode_val = mode_val_re + I*mode_val_im;
 
-            //if (i==0) printf("%d %d, %lf + %lfi\n", m[j], n[j], cuCrealf(Ylm), cuCimagf(Ylm));
-                trans_plus_m = get_mode_value(mode_val, Phi_phi_i, Phi_r_i, m, n, Ylm_plus_m);
-                trans = trans_plus_m + trans;
+                cmplx minus_I(0.0, -1.0);
+                fod phase = m*Phi_phi_i + n*Phi_r_i;
+                cmplx angle = gcmplx::exp(minus_I*phase);
+                trans_plus_m = (mode_val*Ylm_plus_m)*gcmplx::exp(minus_I*phase);
+                //trans_plus_m = get_mode_value(mode_val, Phi_phi_i, Phi_r_i, m, n, Ylm_plus_m);
 
-                // minus m
+                //if ((i == 1) && (i < 10000)) printf("%d, %d: %.10e %.10e, %.10e; %.10e + 1j %.10e; %.10e + 1j %.10e; %.10e + 1j %.10e %d %d %.10e %.10e\n", i, j, t, mode_val_re, mode_val_im, trans_plus_m.real(), trans_plus_m.imag(), Ylm_plus_m.real(), Ylm_plus_m.imag(), angle.real(), angle.imag(), m, n, Phi_phi_i, Phi_r_i);
+
+                trans = (m == 0) ? trans + trans_plus_m : trans + trans_plus_m + gcmplx::conj(trans_plus_m);
+
+                /*// minus m
                 if (m != 0){
                     Ylm_minus_m = Ylms[2*j + 1];
                     trans_minus_m = get_mode_value(gcmplx::conj(mode_val), Phi_phi_i, Phi_r_i, -m, -n, Ylm_minus_m);
                     trans = trans_minus_m + trans;
                 }
-                //atomicAddComplex(&waveform[i], mode_val);
+                //atomicAddComplex(&waveform[i], mode_val);*/
         }
 
         atomicAddComplex(&waveform[i], trans);
