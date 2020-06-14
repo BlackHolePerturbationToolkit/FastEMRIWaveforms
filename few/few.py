@@ -140,19 +140,20 @@ if __name__ == "__main__":
     M = 1e5
     mu = 1e1
     p0 = 10.0
-    e0 = 0.7
+    e0 = 0.1
     theta = np.pi / 2
     phi = 0.0
-    dt = 10.0
+    dt = 0.015
     T = 1.0
-    eps = 2e-4
+    eps = 1e-6
 
+    """
     mismatch = []
     num_modes = []
     eps_all = np.logspace(-10, -3)
 
     eps_all = np.concatenate([np.array([1e-25]), eps_all])[:1]
-    fullwave = np.load("control.npy")  # [:57684]
+    fullwave = np.load("control.npy")[:57684]
 
     for i, eps in enumerate(eps_all):
         all_modes = False if i > 0 else True
@@ -174,8 +175,9 @@ if __name__ == "__main__":
 
     pdb.set_trace()
     np.save("info_check", np.asarray([eps_all, mismatch, num_modes]).T)
-    num = 0
+    """
 
+    num = 20
     st = time.perf_counter()
     for _ in range(num):
         check = few(M, mu, p0, e0, theta, phi, dt=dt, T=T, eps=eps)
@@ -184,5 +186,6 @@ if __name__ == "__main__":
     import pdb
 
     pdb.set_trace()
-    print(check.shape)
+
+    # print(check.shape)
     print((et - st) / num)
