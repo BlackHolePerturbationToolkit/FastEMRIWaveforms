@@ -11,11 +11,12 @@ class GetYlms:
         self.num_teuk_modes = num_teuk_modes
         self.assume_positive_m = assume_positive_m
 
-        self.buffer = xp.zeros((2 * self.num_teuk_modes,), dtype=xp.complex128)
+        self.buffer = xp.zeros((self.num_teuk_modes,), dtype=xp.complex128)
 
     # These are the spin-weighted spherical harmonics with s=2
     def __call__(self, l_in, m_in, theta, phi):
 
+        """
         if self.assume_positive_m:
             l = xp.zeros(2 * l_in.shape[0], dtype=int)
             m = xp.zeros(2 * l_in.shape[0], dtype=int)
@@ -29,6 +30,9 @@ class GetYlms:
         else:
             l = l_in
             m = m_in
+        """
+        l = l_in
+        m = m_in
 
         costheta = np.cos(theta / 2.0)
         sintheta = np.sin(theta / 2.0)
@@ -1149,6 +1153,11 @@ class GetYlms:
             * sintheta ** 12,
         }
         for i, (l_i, m_i) in enumerate(zip(l, m)):
-            self.buffer[i] = (-1) ** l_i * ylms_dict[(l_i.item(), m_i.item())]
+            # import pdb
+
+            # pdb.set_trace()
+            self.buffer[i] = (
+                (-1) ** l_i * (-1) ** m_i * ylms_dict[(l_i.item(), m_i.item())]
+            )
 
         return self.buffer[: len(l)]
