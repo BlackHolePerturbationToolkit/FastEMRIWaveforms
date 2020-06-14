@@ -138,7 +138,7 @@ int func (double t, const double y[], double f[], void *params){
 void load_and_interpolate_flux_data(struct interp_params *interps){
 
 	// Load and interpolate the flux data
-	ifstream Flux_file("data/FluxNewMinusPNScaled.dat");
+	ifstream Flux_file("data/FluxNewMinusPNScaled_fixed_y_order.dat");
 	
 	// Load the flux data into arrays
 	string Flux_string;
@@ -156,7 +156,7 @@ void load_and_interpolate_flux_data(struct interp_params *interps){
 		Ldots.push_back(Ldot);
 	}	
 	
-	// Remove duplicate elements (only works if ys are perfectly repeatined with no round off errors)
+	// Remove duplicate elements (only works if ys are perfectly repeating with no round off errors)
 	sort( ys.begin(), ys.end() );
 	ys.erase( unique( ys.begin(), ys.end() ), ys.end() );
 	
@@ -169,6 +169,36 @@ void load_and_interpolate_flux_data(struct interp_params *interps){
 	interps->Edot = Edot_interp;
 	interps->Ldot = Ldot_interp;
 	
+}
+
+void load_and_interpolate_amp_vec_norm_data(Interpolant **amp_vec_norm_interp){
+
+	// Load and interpolate the flux data
+	ifstream Flux_file("data/AmplitudeVectorNorm.dat");
+	
+	// Load the flux data into arrays
+	string Flux_string;
+	vector<double> ys, es, vec_norms;
+	double y, e, vec_norm;
+	while(getline(Flux_file, Flux_string)){
+		
+		stringstream Flux_ss(Flux_string);
+		
+		Flux_ss >> y >> e >> vec_norm;
+		
+		ys.push_back(y);
+		es.push_back(e);
+		vec_norms.push_back(vec_norm);
+	}	
+	
+	// Remove duplicate elements (only works if ys are perfectly repeating with no round off errors)
+	sort( ys.begin(), ys.end() );
+	ys.erase( unique( ys.begin(), ys.end() ), ys.end() );
+	
+	sort( es.begin(), es.end() );
+	es.erase( unique( es.begin(), es.end() ), es.end() );
+	
+	*amp_vec_norm_interp = new Interpolant(ys, es, vec_norms);
 }
 
 void create_amplitude_interpolant(hid_t file_id, int l, int m, int n, int Ne, int Ny, vector<double>& ys, vector<double>& es, Interpolant **re, Interpolant **im){
@@ -301,6 +331,12 @@ int main (int argc, char* argv[]) {
 	cout << "# Loading and interpolating the flux data" << endl;
 	load_and_interpolate_flux_data(&interps);
 	
+	cout << "# Loading the interpolating the vector norm data" << endl;
+	Interpolant *amp_vec_norm_interp;
+	load_and_interpolate_amp_vec_norm_data(&amp_vec_norm_interp);
+	
+	amp_vec_norm_interp->eval(3.0, 0.0);
+	
 	
 	// Set the initial values
 	double p0 = 12.5;
@@ -343,12 +379,12 @@ int main (int argc, char* argv[]) {
 	
 	
 	// Output format: t, p, e, Phi_phi, Phi_r
-	printf ("# Output format: t p e Phi_phi Phi_r h+ h×\n");
-  	printf ("%.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", t0, p0, e0, Phi_phi0, Phi_r0, hwave0.real(), hwave0.imag() );
+	printf ("# Output format: t p e Phi_phi Phi_r h+ h× vec_norm\n");
+  	printf ("%.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", t0, p0, e0, Phi_phi0, Phi_r0, hwave0.real(), hwave0.imag(), amp_vec_norm_interp->eval(y0, e0));
 	
 	// Initialize the ODE solver
   	gsl_odeiv2_system sys = {func, NULL, 4, &interps};
-    const gsl_odeiv2_step_type *T = gsl_odeiv2_step_rk8pd;
+    const gsl_odeiv2_step_type *T = gsl_odeiv2_step_rk8pd; //Othet choices include: gsl_odeiv2_step_rk2, gsl_odeiv2_step_rkf45, gsl_odeiv2_step_rk8pd
 
     gsl_odeiv2_step *step 			= gsl_odeiv2_step_alloc (T, 4);
     gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (1e-10, 0);
@@ -414,7 +450,7 @@ int main (int argc, char* argv[]) {
 		}
 				
 		// Output format: t, p, e, Phi_phi, Phi_r
-      	printf ("%.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", t, p, e, Phi_phi, Phi_r, hwave.real(), hwave.imag() );
+      	printf ("%.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", t, p, e, Phi_phi, Phi_r, hwave.real(), hwave.imag(), amp_vec_norm_interp->eval(y1, e) );
     }
 	high_resolution_clock::time_point wallclock2 = high_resolution_clock::now();
 	
