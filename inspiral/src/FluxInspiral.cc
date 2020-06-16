@@ -120,12 +120,10 @@ int func (double t, const double y[], double f[], void *params){
   return GSL_SUCCESS;
 }
 
-
-<<<<<<< HEAD
 void load_and_interpolate_amp_vec_norm_data(Interpolant **amp_vec_norm_interp){
 
 	// Load and interpolate the flux data
-	ifstream Flux_file("data/AmplitudeVectorNorm.dat");
+	ifstream Flux_file("inspiral/data/AmplitudeVectorNorm.dat");
 
 	// Load the flux data into arrays
 	string Flux_string;
@@ -156,20 +154,8 @@ void load_and_interpolate_amp_vec_norm_data(Interpolant **amp_vec_norm_interp){
 void load_and_interpolate_flux_data(struct interp_params *interps){
 
 	// Load and interpolate the flux data
-	ifstream Flux_file("data/FluxNewMinusPNScaled_fixed_y_order.dat");
-=======
+	ifstream Flux_file("inspiral/data/FluxNewMinusPNScaled_fixed_y_order.dat");
 
-FluxCarrier::FluxCarrier()
-{
-    interps = new interp_params;
->>>>>>> 589777fcc8cd877ad1c32081d4d844f6bfedf055
-
-    // Load and interpolate the flux data
-	ifstream Flux_file("inspiral/data/FluxNewMinusPNScaled.dat");
-    if (Flux_file.fail())
-    {
-        throw std::runtime_error("Did not read flux data.");
-    }
 	// Load the flux data into arrays
 	string Flux_string;
 	vector<double> ys, es, Edots, Ldots;
@@ -177,19 +163,16 @@ FluxCarrier::FluxCarrier()
 	while(getline(Flux_file, Flux_string)){
 
 		stringstream Flux_ss(Flux_string);
-        Flux_ss >> y >> e >> Edot >> Ldot;
 
-        ys.push_back(y);
+		Flux_ss >> y >> e >> Edot >> Ldot;
+
+		ys.push_back(y);
 		es.push_back(e);
 		Edots.push_back(Edot);
 		Ldots.push_back(Ldot);
 	}
 
-<<<<<<< HEAD
 	// Remove duplicate elements (only works if ys are perfectly repeating with no round off errors)
-=======
-	// Remove duplicate elements (only works if ys are perfectly repeatined with no round off errors)
->>>>>>> 589777fcc8cd877ad1c32081d4d844f6bfedf055
 	sort( ys.begin(), ys.end() );
 	ys.erase( unique( ys.begin(), ys.end() ), ys.end() );
 
@@ -199,17 +182,8 @@ FluxCarrier::FluxCarrier()
 	Interpolant *Edot_interp = new Interpolant(ys, es, Edots);
 	Interpolant *Ldot_interp = new Interpolant(ys, es, Ldots);
 
-    interps->Edot = Edot_interp;
+	interps->Edot = Edot_interp;
 	interps->Ldot = Ldot_interp;
-
-}
-
-void FluxCarrier::dealloc()
-{
-
-    delete interps->Edot;
-    delete interps->Ldot;
-    delete interps;
 
 }
 
@@ -246,7 +220,6 @@ double get_step_flux(double p, double e, Interpolant *amp_vec_norm_interp)
 
 
 FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double err, FluxCarrier *flux_carrier){
-
 
     double init_flux = get_step_flux(p0, e0, flux_carrier->amp_vec_norm_interp);
 
@@ -304,7 +277,7 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
 
         double step_flux = get_step_flux(p, e, flux_carrier->amp_vec_norm_interp);
 
-		flux_out.add_point(t*Msec, y[0], y[1], y[2], y[3], step_flux); // adds time in seconds
+        flux_out.add_point(t*Msec, y[0], y[1], y[2], y[3], step_flux); // adds time in seconds
 
         ind++;
         // Stop the inspiral when close to the separatrix
@@ -330,7 +303,7 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
 
 }
 
-void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double M, double mu, double p0, double e0, int *length, FluxCarrier *flux_carrier, double err){
+void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, int *length, FluxCarrier *flux_carrier, double err){
 
 	double t0 = 0.0;
 		FLUXHolder flux_vals = run_FLUX(t0, M, mu, p0, e0, err, flux_carrier);
@@ -340,6 +313,7 @@ void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r
 		memcpy(e, &flux_vals.e_arr[0], flux_vals.length*sizeof(double));
 		memcpy(Phi_phi, &flux_vals.Phi_phi_arr[0], flux_vals.length*sizeof(double));
 		memcpy(Phi_r, &flux_vals.Phi_r_arr[0], flux_vals.length*sizeof(double));
+        memcpy(amp_norm, &flux_vals.amp_norm_out_arr[0], flux_vals.length*sizeof(double));
 
 		*length = flux_vals.length;
 

@@ -50,6 +50,9 @@ class Amplitude:
         # get highest layer number
         self.num_layers = 0
         for fp in file_list:
+            if fp[: len(input_str)] != input_str:
+                continue
+
             layer_num = int(fp.split(input_str)[1][1:].split(".")[0])
             if layer_num > self.num_layers:
                 self.num_layers = layer_num
