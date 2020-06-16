@@ -121,6 +121,7 @@ int func (double t, const double y[], double f[], void *params){
 }
 
 
+<<<<<<< HEAD
 void load_and_interpolate_amp_vec_norm_data(Interpolant **amp_vec_norm_interp){
 
 	// Load and interpolate the flux data
@@ -156,7 +157,19 @@ void load_and_interpolate_flux_data(struct interp_params *interps){
 
 	// Load and interpolate the flux data
 	ifstream Flux_file("data/FluxNewMinusPNScaled_fixed_y_order.dat");
+=======
 
+FluxCarrier::FluxCarrier()
+{
+    interps = new interp_params;
+>>>>>>> 589777fcc8cd877ad1c32081d4d844f6bfedf055
+
+    // Load and interpolate the flux data
+	ifstream Flux_file("inspiral/data/FluxNewMinusPNScaled.dat");
+    if (Flux_file.fail())
+    {
+        throw std::runtime_error("Did not read flux data.");
+    }
 	// Load the flux data into arrays
 	string Flux_string;
 	vector<double> ys, es, Edots, Ldots;
@@ -164,16 +177,19 @@ void load_and_interpolate_flux_data(struct interp_params *interps){
 	while(getline(Flux_file, Flux_string)){
 
 		stringstream Flux_ss(Flux_string);
+        Flux_ss >> y >> e >> Edot >> Ldot;
 
-		Flux_ss >> y >> e >> Edot >> Ldot;
-
-		ys.push_back(y);
+        ys.push_back(y);
 		es.push_back(e);
 		Edots.push_back(Edot);
 		Ldots.push_back(Ldot);
 	}
 
+<<<<<<< HEAD
 	// Remove duplicate elements (only works if ys are perfectly repeating with no round off errors)
+=======
+	// Remove duplicate elements (only works if ys are perfectly repeatined with no round off errors)
+>>>>>>> 589777fcc8cd877ad1c32081d4d844f6bfedf055
 	sort( ys.begin(), ys.end() );
 	ys.erase( unique( ys.begin(), ys.end() ), ys.end() );
 
@@ -183,8 +199,17 @@ void load_and_interpolate_flux_data(struct interp_params *interps){
 	Interpolant *Edot_interp = new Interpolant(ys, es, Edots);
 	Interpolant *Ldot_interp = new Interpolant(ys, es, Ldots);
 
-	interps->Edot = Edot_interp;
+    interps->Edot = Edot_interp;
 	interps->Ldot = Ldot_interp;
+
+}
+
+void FluxCarrier::dealloc()
+{
+
+    delete interps->Edot;
+    delete interps->Ldot;
+    delete interps;
 
 }
 
