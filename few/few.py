@@ -67,7 +67,7 @@ class FEW:
 
         T = 1.0 * ct.Julian_year
         # get trajectory
-        (t, p, e, Phi_phi, Phi_r) = self.inspiral_gen(
+        (t, p, e, Phi_phi, Phi_r, amp_norm) = self.inspiral_gen(
             M, mu, p0, e0, **self.inspiral_kwargs
         )
 
@@ -77,6 +77,7 @@ class FEW:
         e = xp.asarray(e)
         Phi_phi = xp.asarray(Phi_phi)
         Phi_r = xp.asarray(Phi_r)
+        amp_norm = xp.asarray(amp_norm)
 
         """
         insp = np.loadtxt("inspiral_new.txt")[45000:55000]
@@ -101,6 +102,9 @@ class FEW:
         inds_sort = xp.argsort(power, axis=1)[:, ::-1]
         power = xp.sort(power, axis=1)[:, ::-1]
         cumsum = xp.cumsum(power, axis=1)
+
+        factor = amp_norm / cumsum[:, -1]
+        teuk_modes = teuk_modes * factor[:, np.newaxis]
 
         inds_keep = xp.full(cumsum.shape, True)
 
@@ -143,7 +147,7 @@ if __name__ == "__main__":
     e0 = 0.1
     theta = np.pi / 2
     phi = 0.0
-    dt = 0.015
+    dt = 10.0
     T = 1.0
     eps = 1e-6
 

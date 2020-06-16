@@ -39,7 +39,7 @@ public:
 		std::vector<double> e_arr;
 		std::vector<double> Phi_phi_arr;
 		std::vector<double> Phi_r_arr;
-        std::vector<double> amp_norm_out;
+        std::vector<double> amp_norm_out_arr;
 
 		double t0, M, mu, p0, e0, init_flux;
 
@@ -56,7 +56,7 @@ public:
 				e_arr.push_back(e0);
 				Phi_phi_arr.push_back(0.0);
 				Phi_r_arr.push_back(0.0);
-                amp_norm_out.push_back(init_flux);
+                amp_norm_out_arr.push_back(init_flux);
 		};
 
 		void add_point(double t, double p, double e, double Phi_phi, double Phi_r, double step_flux){
@@ -65,7 +65,7 @@ public:
 			e_arr.push_back(e);
 			Phi_phi_arr.push_back(Phi_phi);
 			Phi_r_arr.push_back(Phi_r);
-            amp_norm_out.push_back(step_flux);
+            amp_norm_out_arr.push_back(step_flux);
 		}
 
 	//	~FLUXHolder();
@@ -83,6 +83,6 @@ public:
 
 FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, FluxCarrier *flux_carrier, double err);
 
-void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double M, double mu, double p0, double e0, int *length, FluxCarrier *flux_carrier, double err);
+void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, int *length, FluxCarrier *flux_carrier, double err);
 
 #endif //__FLUX_H__
