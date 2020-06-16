@@ -121,17 +121,42 @@ int func (double t, const double y[], double f[], void *params){
 }
 
 
+void load_and_interpolate_amp_vec_norm_data(Interpolant **amp_vec_norm_interp){
 
-FluxCarrier::FluxCarrier()
-{
-    interps = new interp_params;
+	// Load and interpolate the flux data
+	ifstream Flux_file("data/AmplitudeVectorNorm.dat");
 
-    // Load and interpolate the flux data
-	ifstream Flux_file("inspiral/data/FluxNewMinusPNScaled.dat");
-    if (Flux_file.fail())
-    {
-        throw std::runtime_error("Did not read flux data.");
-    }
+	// Load the flux data into arrays
+	string Flux_string;
+	vector<double> ys, es, vec_norms;
+	double y, e, vec_norm;
+	while(getline(Flux_file, Flux_string)){
+
+		stringstream Flux_ss(Flux_string);
+
+		Flux_ss >> y >> e >> vec_norm;
+
+		ys.push_back(y);
+		es.push_back(e);
+		vec_norms.push_back(vec_norm);
+	}
+
+	// Remove duplicate elements (only works if ys are perfectly repeating with no round off errors)
+	sort( ys.begin(), ys.end() );
+	ys.erase( unique( ys.begin(), ys.end() ), ys.end() );
+
+	sort( es.begin(), es.end() );
+	es.erase( unique( es.begin(), es.end() ), es.end() );
+
+	*amp_vec_norm_interp = new Interpolant(ys, es, vec_norms);
+}
+
+
+void load_and_interpolate_flux_data(struct interp_params *interps){
+
+	// Load and interpolate the flux data
+	ifstream Flux_file("data/FluxNewMinusPNScaled_fixed_y_order.dat");
+
 	// Load the flux data into arrays
 	string Flux_string;
 	vector<double> ys, es, Edots, Ldots;
@@ -139,26 +164,38 @@ FluxCarrier::FluxCarrier()
 	while(getline(Flux_file, Flux_string)){
 
 		stringstream Flux_ss(Flux_string);
-        Flux_ss >> y >> e >> Edot >> Ldot;
 
-        ys.push_back(y);
+		Flux_ss >> y >> e >> Edot >> Ldot;
+
+		ys.push_back(y);
 		es.push_back(e);
 		Edots.push_back(Edot);
 		Ldots.push_back(Ldot);
 	}
 
-	// Remove duplicate elements (only works if ys are perfectly repeatined with no round off errors)
+	// Remove duplicate elements (only works if ys are perfectly repeating with no round off errors)
 	sort( ys.begin(), ys.end() );
 	ys.erase( unique( ys.begin(), ys.end() ), ys.end() );
 
 	sort( es.begin(), es.end() );
 	es.erase( unique( es.begin(), es.end() ), es.end() );
 
-    Interpolant *Edot_interp = new Interpolant(ys, es, Edots);
+	Interpolant *Edot_interp = new Interpolant(ys, es, Edots);
 	Interpolant *Ldot_interp = new Interpolant(ys, es, Ldots);
 
-    interps->Edot = Edot_interp;
+	interps->Edot = Edot_interp;
 	interps->Ldot = Ldot_interp;
+
+}
+
+
+
+FluxCarrier::FluxCarrier()
+{
+    interps = new interp_params;
+
+    load_and_interpolate_flux_data(interps);
+	load_and_interpolate_amp_vec_norm_data(&amp_vec_norm_interp);
 
 }
 
@@ -169,11 +206,26 @@ void FluxCarrier::dealloc()
     delete interps->Ldot;
     delete interps;
 
+    delete amp_vec_norm_interp;
+
+}
+
+double get_step_flux(double p, double e, Interpolant *amp_vec_norm_interp)
+{
+
+    double y0 = log((p -2.*e - 2.1));
+    double step_flux = amp_vec_norm_interp->eval(y0, e);
+    return step_flux;
+
 }
 
 
 FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double err, FluxCarrier *flux_carrier){
-	FLUXHolder flux_out(t0, M, mu, p0, e0);
+
+
+    double init_flux = get_step_flux(p0, e0, flux_carrier->amp_vec_norm_interp);
+
+    FLUXHolder flux_out(t0, M, mu, p0, e0, init_flux);
 
     interp_params interps = *(flux_carrier->interps);
 	//Set the mass ratio
@@ -195,6 +247,8 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
 
     // Initial values
 	// TODO do we want to set initial phases here?
+
+
 	double y[4] = { p0, e0, 0.0, 0.0 };
 
     // Initialize the ODE solver
@@ -220,10 +274,12 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
           	break;
         }
 
-		flux_out.add_point(t*Msec, y[0], y[1], y[2], y[3]); // adds time in seconds
-
         double p 		= y[0];
         double e 		= y[1];
+
+        double step_flux = get_step_flux(p, e, flux_carrier->amp_vec_norm_interp);
+
+		flux_out.add_point(t*Msec, y[0], y[1], y[2], y[3], step_flux); // adds time in seconds
 
         ind++;
         // Stop the inspiral when close to the separatrix
