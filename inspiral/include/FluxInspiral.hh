@@ -39,28 +39,33 @@ public:
 		std::vector<double> e_arr;
 		std::vector<double> Phi_phi_arr;
 		std::vector<double> Phi_r_arr;
-		double t0, M, mu, p0, e0;
+        std::vector<double> amp_norm_out;
 
-		FLUXHolder(double t0_, double M_, double mu_, double p0_, double e0_){
+		double t0, M, mu, p0, e0, init_flux;
+
+		FLUXHolder(double t0_, double M_, double mu_, double p0_, double e0_, double init_flux_){
 				t0 = t0_;
                 M = M_;
                 mu = mu_;
 				p0 = p0_;
 				e0 = e0_;
+                init_flux = init_flux_;
 
 				t_arr.push_back(t0);
 				p_arr.push_back(p0);
 				e_arr.push_back(e0);
 				Phi_phi_arr.push_back(0.0);
 				Phi_r_arr.push_back(0.0);
+                amp_norm_out.push_back(init_flux);
 		};
 
-		void add_point(double t, double p, double e, double Phi_phi, double Phi_r){
+		void add_point(double t, double p, double e, double Phi_phi, double Phi_r, double step_flux){
 			t_arr.push_back(t);
 			p_arr.push_back(p);
 			e_arr.push_back(e);
 			Phi_phi_arr.push_back(Phi_phi);
 			Phi_r_arr.push_back(Phi_r);
+            amp_norm_out.push_back(step_flux);
 		}
 
 	//	~FLUXHolder();
@@ -70,6 +75,7 @@ public:
 class FluxCarrier{
 public:
     interp_params *interps;
+    Interpolant *amp_vec_norm_interp;
 
     FluxCarrier();
     void dealloc();
