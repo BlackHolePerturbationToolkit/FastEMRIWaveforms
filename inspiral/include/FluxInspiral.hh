@@ -81,8 +81,8 @@ public:
     void dealloc();
 };
 
-FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, FluxCarrier *flux_carrier, double err);
+FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double err, FluxCarrier *flux_carrier, int DENSE_STEPPING);
 
-void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, int *length, FluxCarrier *flux_carrier, double err);
+void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, int *length, FluxCarrier *flux_carrier, double err, int DENSE_STEPPING);
 
 #endif //__FLUX_H__

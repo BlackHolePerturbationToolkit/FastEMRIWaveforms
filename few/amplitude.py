@@ -13,6 +13,8 @@ except ImportError:
 RUN_RELU = 1
 NO_RELU = 0
 
+# TODO: Add normalization to here
+
 
 class Amplitude:
     def __init__(

@@ -37,10 +37,9 @@ using namespace std::chrono;
 const int Ne = 33;
 const int Ny = 50;
 
-const double SolarMassInSeconds = 4.925e-6;
 const double YearInSeconds 		= 60*60*25*365.25;
 
-const int DENSE_STEPPING = 0;
+//const int DENSE_STEPPING = 0;
 
 // Define elliptic integrals that use Mathematica's conventions
 double EllipticK(double k){
@@ -219,7 +218,7 @@ double get_step_flux(double p, double e, Interpolant *amp_vec_norm_interp)
 }
 
 
-FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double err, FluxCarrier *flux_carrier){
+FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double err, FluxCarrier *flux_carrier, int DENSE_STEPPING){
 
     double init_flux = get_step_flux(p0, e0, flux_carrier->amp_vec_norm_interp);
 
@@ -237,11 +236,11 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
     double samplerate = 0.1;
 
     // Signal length (in seconds)
-    double max_signal_length = 1*YearInSeconds/356.*60;
+    double max_signal_length = 1*YearInSeconds;
 
     // Compute the adimensionalized time steps and max time
-    double dt = 1/samplerate /(M*SolarMassInSeconds);
-    double tmax = max_signal_length/(M*SolarMassInSeconds);
+    double dt = 1/samplerate /(M*MTSUN_SI);
+    double tmax = max_signal_length/(M*MTSUN_SI);
 
     // Initial values
 	// TODO do we want to set initial phases here?
@@ -303,10 +302,10 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
 
 }
 
-void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, int *length, FluxCarrier *flux_carrier, double err){
+void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, int *length, FluxCarrier *flux_carrier, double err, int DENSE_STEPPING){
 
 	double t0 = 0.0;
-		FLUXHolder flux_vals = run_FLUX(t0, M, mu, p0, e0, err, flux_carrier);
+		FLUXHolder flux_vals = run_FLUX(t0, M, mu, p0, e0, err, flux_carrier, DENSE_STEPPING);
 
 		memcpy(t, &flux_vals.t_arr[0], flux_vals.length*sizeof(double));
 		memcpy(p, &flux_vals.p_arr[0], flux_vals.length*sizeof(double));

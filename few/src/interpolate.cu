@@ -329,14 +329,14 @@ void make_waveform(cmplx *waveform,
                 //trans = (m == 0) ? trans + trans_plus_m : trans + trans_plus_m + gcmplx::conj(trans_plus_m);
                 //trans = trans_plus_m + trans;
                 // minus m
-                if (m != 0){
+                /*if (m != 0){
 
                     Ylm_minus_m = Ylms[2*j + 1];
                     trans_minus_m = get_mode_value(gcmplx::conj(mode_val), Phi_phi_i, Phi_r_i, -m, -n, Ylm_minus_m);
                     //trans_minus_m = gcmplx::conj(trans_plus_m);
 
                     //trans = trans_minus_m + trans;
-                } else trans_minus_m = 0.0 + 0.0*I;
+                } else*/ trans_minus_m = 0.0 + 0.0*I;
 
                 trans = trans + trans_minus_m + trans_plus_m;
                 //if (i == 0) printf("%d %d %d: %.10e + %.10e 1j; %.10e + %.10e 1j;\n", i, m, n, trans_plus_m.real(), trans_plus_m.imag(), trans_minus_m.real(),trans_minus_m.imag());
@@ -403,7 +403,9 @@ void get_waveform(cmplx *d_waveform, double *y_vals, double *c1, double *c2, dou
           cudaStreamCreate(&streams[i]);
           int num_blocks = std::ceil((unit_length[i] + NUM_THREADS -1)/NUM_THREADS);
           //printf("%d %d %d %d, %d %d\n", i, start_inds[i], unit_length[i], num_blocks, init_len, out_len);
-          if (num_blocks == 0) continue;
+          if (num_blocks <= 0) continue;
+
+          //printf("%d %d %d\n", i, num_blocks, unit_length[i]);
           dim3 gridDim(num_blocks, 1); //, num_teuk_modes);
           //dim3 threadDim(32, 32);
           // launch one worker kernel per stream
