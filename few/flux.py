@@ -23,10 +23,19 @@ class RunFluxInspiral:
         T=None,
         new_t=None,
         spline_kwargs={},
+        DENSE_STEPPING=0,
+        max_init_len=1000,
     ):
         # this will return in coordinate time
         t, p, e, Phi_phi, Phi_r, amp_norm = flux_inspiral(
-            M, mu, p0, e0, self.flux_carrier, err=err
+            M,
+            mu,
+            p0,
+            e0,
+            self.flux_carrier,
+            err=err,
+            DENSE_STEPPING=DENSE_STEPPING,
+            max_init_len=max_init_len,
         )
 
         if in_coordinate_time is False:
@@ -82,12 +91,17 @@ class RunFluxInspiral:
 
 if __name__ == "__main__":
     flux = RunFluxInspiral()
-    M = 1e5
-    mu = 1e1
-    p0 = 10.0
-    e0 = 0.1
 
-    check = flux(M, mu, p0, e0)
+    M = 1e6
+    mu = 1e1
+    p0 = 8.0
+    e0 = 0.6
+    DENSE_STEPPING = 1
+    max_init_len = int(1e7)
+
+    check = flux(
+        M, mu, p0, e0, DENSE_STEPPING=DENSE_STEPPING, max_init_len=max_init_len
+    )
     import pdb
 
     pdb.set_trace()

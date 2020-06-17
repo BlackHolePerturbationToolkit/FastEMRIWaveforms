@@ -65,7 +65,7 @@ class FEW:
         self, M, mu, p0, e0, theta, phi, dt=10.0, T=1.0, eps=2e-4, all_modes=False
     ):
 
-        T = 1.0 * ct.Julian_year
+        T = T * ct.Julian_year
         # get trajectory
         (t, p, e, Phi_phi, Phi_r, amp_norm) = self.inspiral_gen(
             M, mu, p0, e0, **self.inspiral_kwargs
@@ -103,16 +103,24 @@ class FEW:
         power = xp.sort(power, axis=1)[:, ::-1]
         cumsum = xp.cumsum(power, axis=1)
 
-        factor = amp_norm / cumsum[:, -1]
+        factor = amp_norm / cumsum[:, -1] ** (1 / 2)
+
         teuk_modes = teuk_modes * factor[:, np.newaxis]
+        cumsum = cumsum * factor[:, np.newaxis] ** 2
 
         inds_keep = xp.full(cumsum.shape, True)
 
         inds_keep[:, 1:] = cumsum[:, :-1] < cumsum[:, -1][:, xp.newaxis] * (1 - eps)
 
-        keep_modes = xp.unique(inds_sort[inds_keep])
+        if all_modes:
+            keep_modes = xp.arange(3843)
+        else:
+            keep_modes = xp.unique(inds_sort[inds_keep])
 
         self.num_modes_kept = len(keep_modes)
+
+        # keep_modes = xp.array([646])
+
         # keep_modes = xp.arange(3843)
         self.ls = self.l_arr[keep_modes]
         self.ms = self.m_arr[keep_modes]
@@ -140,24 +148,29 @@ class FEW:
 if __name__ == "__main__":
     import time
 
-    few = FEW(inspiral_kwargs={}, amplitude_kwargs={"max_input_len": 11000})
-    M = 1e5
+    few = FEW(
+        inspiral_kwargs={"DENSE_STEPPING": 0, "max_init_len": int(1e3)},
+        amplitude_kwargs={"max_input_len": 11000},
+    )
+
+    M = 1e6
     mu = 1e1
-    p0 = 10.0
-    e0 = 0.1
+    p0 = 11.0
+    e0 = 0.6
     theta = np.pi / 2
     phi = 0.0
     dt = 10.0
-    T = 1.0
-    eps = 1e-6
+    T = 1.0  # 1124936.040602 / ct.Julian_year
+    eps = 1e-2
+    all_modes = False
 
-    """
     mismatch = []
     num_modes = []
     eps_all = np.logspace(-10, -3)
 
-    eps_all = np.concatenate([np.array([1e-25]), eps_all])[:1]
-    fullwave = np.load("control.npy")[:57684]
+    eps_all = np.concatenate([np.array([1e-25]), eps_all])
+    fullwave = np.genfromtxt("checkslow.txt")[:3155760]
+    fullwave = fullwave[:, 5] + 1j * fullwave[:, 6]
 
     for i, eps in enumerate(eps_all):
         all_modes = False if i > 0 else True
@@ -165,11 +178,16 @@ if __name__ == "__main__":
             M, mu, p0, e0, theta, phi, dt=dt, T=T, eps=eps, all_modes=all_modes
         ).get()
 
+        wc_fft = np.fft.fft(wc)
+        fullwave_fft = np.fft.fft(fullwave)
         mm = (
             1.0
             - (
-                np.dot(wc.conj(), fullwave)
-                / np.sqrt(np.dot(wc.conj(), wc) * np.dot(fullwave.conj(), fullwave))
+                np.dot(wc_fft.conj(), fullwave_fft)
+                / np.sqrt(
+                    np.dot(wc_fft.conj(), wc_fft)
+                    * np.dot(fullwave_fft.conj(), fullwave_fft)
+                )
             ).real
         )
         mismatch.append(mm)
@@ -179,12 +197,11 @@ if __name__ == "__main__":
 
     pdb.set_trace()
     np.save("info_check", np.asarray([eps_all, mismatch, num_modes]).T)
-    """
 
     num = 20
     st = time.perf_counter()
     for _ in range(num):
-        check = few(M, mu, p0, e0, theta, phi, dt=dt, T=T, eps=eps)
+        check = few(M, mu, p0, e0, theta, phi, dt=dt, T=T, eps=eps, all_modes=all_modes)
     et = time.perf_counter()
 
     import pdb
