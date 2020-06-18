@@ -166,7 +166,8 @@ if __name__ == "__main__":
 
     mismatch = []
     num_modes = []
-    eps_all = np.logspace(-10, -3)
+    timing = []
+    eps_all = 10.0 ** np.arange(-10, -2)
 
     eps_all = np.concatenate([np.array([1e-25]), eps_all])
     fullwave = np.genfromtxt("checkslow.txt")[:3155760]
@@ -174,9 +175,13 @@ if __name__ == "__main__":
 
     for i, eps in enumerate(eps_all):
         all_modes = False if i > 0 else True
-        wc = few(
-            M, mu, p0, e0, theta, phi, dt=dt, T=T, eps=eps, all_modes=all_modes
-        ).get()
+        num = 40
+        st = time.perf_counter()
+        for _ in range(num):
+            wc = few(
+                M, mu, p0, e0, theta, phi, dt=dt, T=T, eps=eps, all_modes=all_modes
+            ).get()
+        et = time.perf_counter()
 
         wc_fft = np.fft.fft(wc)
         fullwave_fft = np.fft.fft(fullwave)
@@ -192,11 +197,20 @@ if __name__ == "__main__":
         )
         mismatch.append(mm)
         num_modes.append(few.num_modes_kept)
+        timing.append((et - st) / num)
+        print(
+            "eps:",
+            eps,
+            "Mismatch:",
+            mm,
+            "Num modes:",
+            few.num_modes_kept,
+            "timing:",
+            (et - st) / num,
+        )
 
-    import pdb
-
-    pdb.set_trace()
-    np.save("info_check", np.asarray([eps_all, mismatch, num_modes]).T)
+    np.save("info_check", np.asarray([eps_all, mismatch, num_modes, timing]).T)
+    et = time.perf_counter()
 
     num = 20
     st = time.perf_counter()

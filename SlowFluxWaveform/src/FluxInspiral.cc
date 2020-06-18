@@ -359,13 +359,16 @@ void slow_wave () {
 
 	// Precompute the spherical harmonics
 	complex<double> *Ylm[lmax+1];
+    complex<double> *minus_m_Ylm[lmax+1];
 	for(int l = 2; l <= lmax; l++){
 		Ylm[l] = new complex<double>[l + 1];
+        minus_m_Ylm[l] = new complex<double>[l + 1];
 	}
 
 	for(int l = 2; l <= lmax; l++){
 		for(int m = 0; m <= l; m++){
 			 Ylm[l][m] = SpinWeightedSphericalHarmonic(l, m, theta_d, phi_d);
+             minus_m_Ylm[l][m] = SpinWeightedSphericalHarmonic(l, -m, theta_d, phi_d);
 			 //cout << l << " " << m << " " << Ylm[l][m] << endl;
 		 }
 	 }
@@ -380,9 +383,15 @@ void slow_wave () {
 			complex<double> hwavelm0 = 0;
 			for(int n = -nmax; n <= nmax; n++){
 				double Phi0 = m*Phi_phi0 + n*Phi_r0;
-				hwavelm0 += (amps.re[l][m][n+nmax]->eval(y0,e0) + I*amps.im[l][m][n+nmax]->eval(y0,e0))*exp(-I*Phi0);
+				hwavelm0 += (amps.re[l][m][n+nmax]->eval(y0,e0) + I*amps.im[l][m][n+nmax]->eval(y0,e0))*exp(-I*Phi0)*Ylm[l][m];
+
+                if (m > 0){
+                    Phi0 = -m*Phi_phi0 - n*Phi_r0;
+                    hwavelm0 += std::conj(amps.re[l][m][n+nmax]->eval(y0,e0) + I*amps.im[l][m][n+nmax]->eval(y0,e0))*exp(-I*Phi0)*minus_m_Ylm[l][m];
+                }
 			}
-			hwavelm0 *= Ylm[l][m];
+
+			//hwavelm0 *= Ylm[l][m];
 			hwave0 += hwavelm0;
 		}
 	}
@@ -463,11 +472,16 @@ void slow_wave () {
                 //if ((m == 2) && (n == -6)) continue;
                 //if ((m == -2) && (n == 6)) continue;
 				double Phi = m*Phi_phi + n*Phi_r;
-		 		hwavelm += (amps.re[l][m][n+nmax]->eval(y1,e) + I*amps.im[l][m][n+nmax]->eval(y1,e))*exp(-I*Phi);
+		 		hwavelm += (amps.re[l][m][n+nmax]->eval(y1,e) + I*amps.im[l][m][n+nmax]->eval(y1,e))*exp(-I*Phi)*Ylm[l][m];
+
+                if (m > 0){
+                    Phi = -m*Phi_phi - n*Phi_r;
+                    hwavelm += std::conj(amps.re[l][m][n+nmax]->eval(y1,e) + I*amps.im[l][m][n+nmax]->eval(y1,e))*exp(-I*Phi)*minus_m_Ylm[l][m];
+                }
 
                 //printf("(%d %d %d): %e %e\n", l, m, n, hwavelm.real(), hwavelm.imag());
 			}
-			hwavelm *= Ylm[l][m];
+			//hwavelm *= Ylm[l][m];
 
             #pragma omp critical
 			hwave += hwavelm;
