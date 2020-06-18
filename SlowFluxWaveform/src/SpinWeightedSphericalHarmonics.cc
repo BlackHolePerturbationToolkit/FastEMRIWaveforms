@@ -138,6 +138,8 @@ else if ((l==10)&&(m==10)){temp = 3.*exp(10.*I*phi)*sqrt(146965./(2.*PI))*pow(co
         assert(0);
     }
 
+    if (m < 0)
+        temp = pow(-1, l) * temp;
 	return temp;
 
 }

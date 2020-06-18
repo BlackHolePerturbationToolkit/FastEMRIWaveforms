@@ -329,14 +329,14 @@ void make_waveform(cmplx *waveform,
                 //trans = (m == 0) ? trans + trans_plus_m : trans + trans_plus_m + gcmplx::conj(trans_plus_m);
                 //trans = trans_plus_m + trans;
                 // minus m
-                /*if (m != 0){
+                if (m != 0){
 
                     Ylm_minus_m = Ylms[2*j + 1];
                     trans_minus_m = get_mode_value(gcmplx::conj(mode_val), Phi_phi_i, Phi_r_i, -m, -n, Ylm_minus_m);
                     //trans_minus_m = gcmplx::conj(trans_plus_m);
 
                     //trans = trans_minus_m + trans;
-                } else*/ trans_minus_m = 0.0 + 0.0*I;
+                } else trans_minus_m = 0.0 + 0.0*I;
 
                 trans = trans + trans_minus_m + trans_plus_m;
                 //if (i == 0) printf("%d %d %d: %.10e + %.10e 1j; %.10e + %.10e 1j;\n", i, m, n, trans_plus_m.real(), trans_plus_m.imag(), trans_minus_m.real(),trans_minus_m.imag());
