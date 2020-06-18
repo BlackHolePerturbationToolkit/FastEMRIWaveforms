@@ -5,6 +5,7 @@
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv2.h>
 #include <gsl/gsl_sf_ellint.h>
+#include <algorithm>
 
 #include <hdf5.h>
 #include <hdf5_hl.h>
@@ -23,11 +24,16 @@
 #include <iomanip>      // std::setprecision
 
 #include <omp.h>
+#include <stdio.h>
+
+#include "FluxInspiral.hh"
+
+#include "omp.h"
 
 
 using namespace std;
 using namespace std::chrono;
-using namespace std::complex_literals;
+// using namespace std::complex_literals;
 
 // Definitions needed for Mathematicas CForm output
 #define Power(x, y)     (pow((double)(x), (double)(y)))
@@ -51,7 +57,7 @@ struct waveform_amps{
 const int Ne = 33;
 const int Ny = 50;
 
-const double SolarMassInSeconds = 4.925e-6;
+const double SolarMassInSeconds = 4.925491025543575903411922162094833998e-6;
 const double YearInSeconds 		= 60*60*25*365.25;
 
 const int DENSE_STEPPING = 1;
@@ -89,21 +95,21 @@ int func (double t, const double y[], double f[], void *params){
 	double epsilon = interps->epsilon;
 	double p = y[0];
 	double e = y[1];
-	
+
 	double y1 = log((p -2.*e - 2.1));
 
-	// Need to evaluate 4 different elliptic integrals here. Cache them first to avoid repeated calls.	
+	// Need to evaluate 4 different elliptic integrals here. Cache them first to avoid repeated calls.
 	double EllipE 	= EllipticE(4*e/(p-6.0+2*e));
 	double EllipK 	= EllipticK(4*e/(p-6.0+2*e));;
 	double EllipPi1 = EllipticPi(16*e/(12.0 + 8*e - 4*e*e - 8*p + p*p), 4*e/(p-6.0+2*e));
 	double EllipPi2 = EllipticPi(2*e*(p-4)/((1.0+e)*(p-6.0+2*e)), 4*e/(p-6.0+2*e));
 
-	double Omega_phi = (2*Power(p,1.5))/(Sqrt(-4*Power(e,2) + Power(-2 + p,2))*(8 + ((-2*EllipPi2*(6 + 2*e - p)*(3 + Power(e,2) - p)*Power(p,2))/((-1 + e)*Power(1 + e,2)) - (EllipE*(-4 + p)*Power(p,2)*(-6 + 2*e + p))/(-1 + Power(e,2)) + 
+	double Omega_phi = (2*Power(p,1.5))/(Sqrt(-4*Power(e,2) + Power(-2 + p,2))*(8 + ((-2*EllipPi2*(6 + 2*e - p)*(3 + Power(e,2) - p)*Power(p,2))/((-1 + e)*Power(1 + e,2)) - (EllipE*(-4 + p)*Power(p,2)*(-6 + 2*e + p))/(-1 + Power(e,2)) +
           (EllipK*Power(p,2)*(28 + 4*Power(e,2) - 12*p + Power(p,2)))/(-1 + Power(e,2)) + (4*(-4 + p)*p*(2*(1 + e)*EllipK + EllipPi2*(-6 - 2*e + p)))/(1 + e) + 2*Power(-4 + p,2)*(EllipK*(-4 + p) + (EllipPi1*p*(-6 - 2*e + p))/(2 + 2*e - p)))/
         (EllipK*Power(-4 + p,2))));
-	
+
 	double yPN = pow(Omega_phi,2./3.);
-	
+
 	double EdotPN = (96 + 292*Power(e,2) + 37*Power(e,4))/(15.*Power(1 - Power(e,2),3.5)) * pow(yPN, 5);
 	double LdotPN = (4*(8 + 7*Power(e,2)))/(5.*Power(-1 + Power(e,2),2)) * pow(yPN, 7./2.);
 
@@ -113,19 +119,19 @@ int func (double t, const double y[], double f[], void *params){
 	double pdot = (-2*(Edot*Sqrt((4*Power(e,2) - Power(-2 + p,2))/(3 + Power(e,2) - p))*(3 + Power(e,2) - p)*Power(p,1.5) + Ldot*Power(-4 + p,2)*Sqrt(-3 - Power(e,2) + p)))/(4*Power(e,2) - Power(-6 + p,2));
 
 	double edot = -((Edot*Sqrt((4*Power(e,2) - Power(-2 + p,2))/(3 + Power(e,2) - p))*Power(p,1.5)*
-	  (18 + 2*Power(e,4) - 3*Power(e,2)*(-4 + p) - 9*p + Power(p,2)) + 
+	  (18 + 2*Power(e,4) - 3*Power(e,2)*(-4 + p) - 9*p + Power(p,2)) +
 	 (-1 + Power(e,2))*Ldot*Sqrt(-3 - Power(e,2) + p)*(12 + 4*Power(e,2) - 8*p + Power(p,2)))/
 	(e*(4*Power(e,2) - Power(-6 + p,2))*p));
-	
 
-	
+
+
 	double Phi_phi_dot 	= Omega_phi;
-	
+
 	double Phi_r_dot 	= (p*Sqrt((-6 + 2*e + p)/(-4*Power(e,2) + Power(-2 + p,2)))*Pi)/
-   (8*EllipK + ((-2*EllipPi2*(6 + 2*e - p)*(3 + Power(e,2) - p)*Power(p,2))/((-1 + e)*Power(1 + e,2)) - (EllipE*(-4 + p)*Power(p,2)*(-6 + 2*e + p))/(-1 + Power(e,2)) + 
+   (8*EllipK + ((-2*EllipPi2*(6 + 2*e - p)*(3 + Power(e,2) - p)*Power(p,2))/((-1 + e)*Power(1 + e,2)) - (EllipE*(-4 + p)*Power(p,2)*(-6 + 2*e + p))/(-1 + Power(e,2)) +
         (EllipK*Power(p,2)*(28 + 4*Power(e,2) - 12*p + Power(p,2)))/(-1 + Power(e,2)) + (4*(-4 + p)*p*(2*(1 + e)*EllipK + EllipPi2*(-6 - 2*e + p)))/(1 + e) + 2*Power(-4 + p,2)*(EllipK*(-4 + p) + (EllipPi1*p*(-6 - 2*e + p))/(2 + 2*e - p)))/
       Power(-4 + p,2));
-	
+
 	f[0] = pdot;
 	f[1] = edot;
 	f[2] = Phi_phi_dot;
@@ -138,76 +144,76 @@ int func (double t, const double y[], double f[], void *params){
 void load_and_interpolate_flux_data(struct interp_params *interps){
 
 	// Load and interpolate the flux data
-	ifstream Flux_file("data/FluxNewMinusPNScaled_fixed_y_order.dat");
-	
+	ifstream Flux_file("SlowFluxWaveform/data/FluxNewMinusPNScaled_fixed_y_order.dat");
+
 	// Load the flux data into arrays
 	string Flux_string;
 	vector<double> ys, es, Edots, Ldots;
 	double y, e, Edot, Ldot;
 	while(getline(Flux_file, Flux_string)){
-		
+
 		stringstream Flux_ss(Flux_string);
-		
+
 		Flux_ss >> y >> e >> Edot >> Ldot;
-		
+
 		ys.push_back(y);
 		es.push_back(e);
 		Edots.push_back(Edot);
 		Ldots.push_back(Ldot);
-	}	
-	
+	}
+
 	// Remove duplicate elements (only works if ys are perfectly repeating with no round off errors)
 	sort( ys.begin(), ys.end() );
 	ys.erase( unique( ys.begin(), ys.end() ), ys.end() );
-	
+
 	sort( es.begin(), es.end() );
 	es.erase( unique( es.begin(), es.end() ), es.end() );
-	
+
 	Interpolant *Edot_interp = new Interpolant(ys, es, Edots);
 	Interpolant *Ldot_interp = new Interpolant(ys, es, Ldots);
-	
+
 	interps->Edot = Edot_interp;
 	interps->Ldot = Ldot_interp;
-	
+
 }
 
 void load_and_interpolate_amp_vec_norm_data(Interpolant **amp_vec_norm_interp){
 
 	// Load and interpolate the flux data
-	ifstream Flux_file("data/AmplitudeVectorNorm.dat");
-	
+	ifstream Flux_file("SlowFluxWaveform/data/AmplitudeVectorNorm.dat");
+
 	// Load the flux data into arrays
 	string Flux_string;
 	vector<double> ys, es, vec_norms;
 	double y, e, vec_norm;
 	while(getline(Flux_file, Flux_string)){
-		
+
 		stringstream Flux_ss(Flux_string);
-		
+
 		Flux_ss >> y >> e >> vec_norm;
-		
+
 		ys.push_back(y);
 		es.push_back(e);
 		vec_norms.push_back(vec_norm);
-	}	
-	
+	}
+
 	// Remove duplicate elements (only works if ys are perfectly repeating with no round off errors)
 	sort( ys.begin(), ys.end() );
 	ys.erase( unique( ys.begin(), ys.end() ), ys.end() );
-	
+
 	sort( es.begin(), es.end() );
 	es.erase( unique( es.begin(), es.end() ), es.end() );
-	
+
 	*amp_vec_norm_interp = new Interpolant(ys, es, vec_norms);
 }
 
 void create_amplitude_interpolant(hid_t file_id, int l, int m, int n, int Ne, int Ny, vector<double>& ys, vector<double>& es, Interpolant **re, Interpolant **im){
-	
+
 	// amplitude data has a real and imaginary part
 	double *modeData = new double[2*Ne*Ny];
 
 	char dataset_name[50];
-	
+
 	sprintf( dataset_name, "/l%dm%d/n%dk0", l,m,n );
 
 	/* read dataset */
@@ -228,11 +234,11 @@ void create_amplitude_interpolant(hid_t file_id, int l, int m, int n, int Ne, in
 }
 
 void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amps *amps){
-	
+
 	hid_t 	file_id;
 	hsize_t	dims[2];
-	
-	file_id = H5Fopen ("/Volumes/GoogleDrive/My Drive/FastEMRIWaveforms/Teuk_amps_a0.0_lmax_10_nmax_30_new.h5", H5F_ACC_RDONLY, H5P_DEFAULT);
+
+	file_id = H5Fopen ("Teuk_amps_a0.0_lmax_10_nmax_30_new.h5", H5F_ACC_RDONLY, H5P_DEFAULT);
 
 	/* get the dimensions of the dataset */
 	H5LTget_dataset_info(file_id, "/grid", dims, NULL, NULL);
@@ -249,14 +255,14 @@ void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amp
 	for(int i = 0; i < Ny; i++){
 		double p = gridRaw[1 + 4*i];
 		double e = 0;
-		
+
 		ys[Ny - 1 - i] = log(0.1 * (10.*p -20*e -21.) );
 	}
-	
+
 	for(int i = 0; i < Ne; i++){
 		es[i] = gridRaw[2 + 4*Ny*i];
 	}
-	
+
 	for(int l = 2; l <= lmax; l++){
 			amps->re[l] = new Interpolant**[l+1];
 			amps->im[l] = new Interpolant**[l+1];
@@ -265,95 +271,98 @@ void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amp
 				amps->im[l][m] = new Interpolant*[2*nmax +1];
 			}
 	}
-	
-	
+
+
 	// Load the amplitude data
 	for(int l = 2; l <= lmax; l++){
 		for(int m = 0; m <= l; m++){
 			for(int n = -nmax; n <= nmax; n++){
- 				create_amplitude_interpolant(file_id, l, m, n, Ne, Ny, ys, es, &amps->re[l][m][n+nmax], &amps->im[l][m][n+nmax]);		
+ 				create_amplitude_interpolant(file_id, l, m, n, Ne, Ny, ys, es, &amps->re[l][m][n+nmax], &amps->im[l][m][n+nmax]);
 			}
 		}
 	}
-	
+
 }
 
-int main (int argc, char* argv[]) {
-	
+void slow_wave () {
+
 	int lmax;
-	
+
+    /*
 	if ( argc != 2 ){
 		cout << "Usage: ./FluxInspiral lmax" << endl;
 		exit(0);
 	}else{
-		lmax = atoi(argv[1]); 
-	}
+		lmax = atoi(argv[1]);
+	}*/
+    lmax = 10;
 	const int nmax = 30;
 
-	
+
 	struct waveform_amps amps;
-	
+
 	cout << "# Loading and interpolating the amplitude data (this will take a few seconds)" << endl;
 	load_and_interpolate_amplitude_data(lmax, nmax, &amps);
-	
-	
+
+
 	// double p1 = 12;
 	// double e1 = 0.5;
 	// double y1 = log(0.1 * (10.*p1 -20*e1 -21.));
 	//
 	// cout << amps.re[2][2][-5+nmax]->eval(y1, e1) << " " << amps.im[2][2][-5+nmax]->eval(y1, e1) << endl;
-		
+
 	// Set the mass of the primary in units of solar masses
 	double M = 1e6;
-	
+
 	// Set the samplerate in Hertz
 	double samplerate = 0.1;
-	
+
 	// Signal length (in seconds)
-	double max_signal_length = 1*YearInSeconds/356.*60;
-	
+	double max_signal_length = 1*YearInSeconds;
+
 	// Compute the adimensionalized time steps and max time
 	double dt = 1/samplerate /(M*SolarMassInSeconds);
 	double tmax = max_signal_length/(M*SolarMassInSeconds);
-	
+
 	printf("# tmax =  %lf\n", tmax);
 	printf("# time step = %lf\n", dt);
-	
+
 	// Sky position
 	double theta_d  = M_PI/2.0;
 	double phi_d 	= 0.0;
 	printf("# sky position: theta = %.12lf, phi = %.12lf\n", theta_d, phi_d);
-	
+
+    printf("# Msec = %.18e\n", M*SolarMassInSeconds);
 	struct interp_params interps;
 	//Set the mass ratio
 	interps.epsilon = 1e-5;
-	
+
 	cout << "# Loading and interpolating the flux data" << endl;
 	load_and_interpolate_flux_data(&interps);
-	
+
 	cout << "# Loading the interpolating the vector norm data" << endl;
 	Interpolant *amp_vec_norm_interp;
 	load_and_interpolate_amp_vec_norm_data(&amp_vec_norm_interp);
-	
+
 	amp_vec_norm_interp->eval(3.0, 0.0);
-	
-	
+
+
 	// Set the initial values
-	double p0 = 12.5;
+	double p0 = 11.0;
 	double e0 = 0.6;
 	double Phi_phi0 = 0;
 	double Phi_r0 = 0;
 	double t0 = 0;
-	
+
 	// Initial values - must start at periastron (otherwise extra phasing factors come in)
 	double y[4] = { p0, e0, Phi_phi0, Phi_r0 };
-	
+
 	// Precompute the spherical harmonics
 	complex<double> *Ylm[lmax+1];
 	for(int l = 2; l <= lmax; l++){
 		Ylm[l] = new complex<double>[l + 1];
 	}
-		
+
 	for(int l = 2; l <= lmax; l++){
 		for(int m = 0; m <= l; m++){
 			 Ylm[l][m] = SpinWeightedSphericalHarmonic(l, m, theta_d, phi_d);
@@ -363,25 +372,29 @@ int main (int argc, char* argv[]) {
 
 	// print out the data at the initial timestep
 	double y0 = log((p0 -2.*e0 - 2.1));
-	
+
+    complex<double> I(0.0, 1.0);
 	complex<double> hwave0 = 0;
 	for(int l = 2; l <= lmax; l++){
 		for(int m = 0; m <= l; m++){
 			complex<double> hwavelm0 = 0;
 			for(int n = -nmax; n <= nmax; n++){
 				double Phi0 = m*Phi_phi0 + n*Phi_r0;
-				hwavelm0 += (amps.re[l][m][n+nmax]->eval(y0,e0) + 1i*amps.im[l][m][n+nmax]->eval(y0,e0))*exp(-1i*Phi0);
+				hwavelm0 += (amps.re[l][m][n+nmax]->eval(y0,e0) + I*amps.im[l][m][n+nmax]->eval(y0,e0))*exp(-I*Phi0);
 			}
 			hwavelm0 *= Ylm[l][m];
 			hwave0 += hwavelm0;
 		}
 	}
-	
-	
+
+    FILE * pFile;
+   pFile = fopen ("checkslow.txt","w");
+
+
 	// Output format: t, p, e, Phi_phi, Phi_r
-	printf ("# Output format: t p e Phi_phi Phi_r h+ h× vec_norm\n");
-  	printf ("%.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", t0, p0, e0, Phi_phi0, Phi_r0, hwave0.real(), hwave0.imag(), amp_vec_norm_interp->eval(y0, e0));
-	
+	fprintf (pFile, "# Output format: t p e Phi_phi Phi_r h+ h× vec_norm\n");
+  	fprintf (pFile, "%.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", t0, p0, e0, Phi_phi0, Phi_r0, hwave0.real(), hwave0.imag(), amp_vec_norm_interp->eval(y0, e0));
+
 	// Initialize the ODE solver
   	gsl_odeiv2_system sys = {func, NULL, 4, &interps};
     const gsl_odeiv2_step_type *T = gsl_odeiv2_step_rk8pd; //Othet choices include: gsl_odeiv2_step_rk2, gsl_odeiv2_step_rkf45, gsl_odeiv2_step_rk8pd
@@ -391,12 +404,13 @@ int main (int argc, char* argv[]) {
     gsl_odeiv2_evolve *evolve 		= gsl_odeiv2_evolve_alloc (4);
 
 	high_resolution_clock::time_point wallclock1 = high_resolution_clock::now();
-	
+
 	// Compute the inspiral
 	double t = t0;
 	double h = dt;
 	double t1 = tmax;
 	if(DENSE_STEPPING) t1 = dt;
+    int i = 0;
 	while (t < tmax){
       	int status = gsl_odeiv2_evolve_apply (evolve, control, step, &sys, &t, t1, &h, y);
 		if(DENSE_STEPPING) t1 += dt;
@@ -408,18 +422,18 @@ int main (int argc, char* argv[]) {
 		double e 		= y[1];
 		double Phi_phi 	= y[2];
 		double Phi_r 	= y[3];
-		
+
 		// Stop the inspiral when close to the separatrix
 		if(p - 6 -2*e < 0.1){
 			cout << "# Separatrix reached: exiting inspiral" << endl;
 			break;
 		}
-		
+
 		double y1 = log((p -2.*e - 2.1));
-			
-		// Code to compute the waveform is below	
+
+		// Code to compute the waveform is below
 		complex<double> hwave = 0;
-		
+
 		// The follow code uses nested loops and is a little slower than the code below.
 		/*#pragma omp parallel for reduction(+:hwave)
 		for(int l = 2; l <= lmax; l++){
@@ -433,32 +447,51 @@ int main (int argc, char* argv[]) {
 				hwave += hwavelm;
 			}
 		}*/
-	
+
 		// The following code fuses the nested loops into a single loop. This is quicker to run using OpenMP.
-		#pragma omp parallel for reduction(+:hwave)
+
+        //reduction (+:hwave)
+        #pragma omp parallel for
 		for(int k=0; k<(lmax+1)*(lmax+2)/2; k++) {
 		    int l = k/(lmax+2), m = k%(lmax+2);
 		    if(m>l) l = lmax - l, m = lmax + 1 - m;
+            //if ((l != 2) || (abs(m) != 2)) continue;
 			if(l < 2) continue;
 			complex<double> hwavelm = 0;
 			for(int n = -nmax; n <= nmax; n++){
+                //if (n != 6) continue;
+                //if ((m == 2) && (n == -6)) continue;
+                //if ((m == -2) && (n == 6)) continue;
 				double Phi = m*Phi_phi + n*Phi_r;
-		 		hwavelm += (amps.re[l][m][n+nmax]->eval(y1,e) + 1i*amps.im[l][m][n+nmax]->eval(y1,e))*exp(-1i*Phi);
+		 		hwavelm += (amps.re[l][m][n+nmax]->eval(y1,e) + I*amps.im[l][m][n+nmax]->eval(y1,e))*exp(-I*Phi);
+
+                //printf("(%d %d %d): %e %e\n", l, m, n, hwavelm.real(), hwavelm.imag());
 			}
 			hwavelm *= Ylm[l][m];
+
+            #pragma omp critical
 			hwave += hwavelm;
 		}
-				
+
 		// Output format: t, p, e, Phi_phi, Phi_r
-      	printf ("%.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", t, p, e, Phi_phi, Phi_r, hwave.real(), hwave.imag(), amp_vec_norm_interp->eval(y1, e) );
+      	fprintf (pFile, "%.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", t*M*SolarMassInSeconds, p, e, Phi_phi, Phi_r, hwave.real(), hwave.imag(), amp_vec_norm_interp->eval(y1, e) );
+
+
+        if (i %100 == 0) printf("%e\n", t/tmax);
+        i += 1;
     }
 	high_resolution_clock::time_point wallclock2 = high_resolution_clock::now();
-	
+
     duration<double> time_span = duration_cast<duration<double> >(wallclock2 - wallclock1);
     cout << "# Computing the inspiral took: " << time_span.count() << " seconds." << endl;
 
+    fclose (pFile);
   	gsl_odeiv2_evolve_free (evolve);
   	gsl_odeiv2_control_free (control);
   	gsl_odeiv2_step_free (step);
-  	return 0;
+  	//return 0;
 }
+
+/*int main(){
+    slow_wave();
+}*/
