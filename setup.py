@@ -324,7 +324,7 @@ FLUX_ext = Extension(
         "inspiral/src/FluxInspiral.cc",
         "inspiral/FLUX.pyx",
     ],
-    library_dirs=["/home/ajchua/lib/"],
+    # library_dirs=["/home/ajchua/lib/"],
     libraries=["gsl", "gslcblas"],
     language="c++",
     runtime_library_dirs=[],
@@ -342,12 +342,58 @@ FLUX_ext = Extension(
 )
 
 
+spher_harm_ext = Extension(
+    "pySpinWeightedSpherHarm",
+    sources=["few/src/SWSH.cc", "few/src/pySWSH.pyx"],
+    # library_dirs=["/home/ajchua/lib/"],
+    libraries=["gsl", "gslcblas"],
+    language="c++",
+    runtime_library_dirs=[],
+    # This syntax is specific to this build system
+    # we're only going to use certain compiler args with nvcc
+    # and not with gcc the implementation of this trick is in
+    # customize_compiler()
+    extra_compile_args={"gcc": ["-std=c++11"]},  # '-g'],
+    include_dirs=[
+        numpy_include,
+        "few/src",
+        "/home/mlk667/.conda/envs/few_env/include/",
+    ],
+)
+
+SlowFlux_ext = Extension(
+    "pySlowFlux",
+    sources=[
+        "SlowFluxWaveform/src/SpinWeightedSphericalHarmonics.cc",
+        "SlowFluxWaveform/src/Interpolant.cc",
+        "SlowFluxWaveform/src/FluxInspiral.cc",
+        "SlowFluxWaveform/SlowFluxInspiral.pyx",
+    ],
+    library_dirs=["/home/ajchua/lib/"],
+    libraries=["gsl", "gslcblas", "hdf5", "hdf5_hl", "gomp"],
+    language="c++",
+    runtime_library_dirs=[],
+    # This syntax is specific to this build system
+    # we're only going to use certain compiler args with nvcc
+    # and not with gcc the implementation of this trick is in
+    # customize_compiler()
+    extra_compile_args={"gcc": ["-std=c++11", "-Xpreprocessor", "-fopenmp"]},  # '-g'],
+    include_dirs=[
+        numpy_include,
+        # "few/src",
+        # "inspiral/include",
+        "SlowFluxWaveform/include",
+        "/home/mlk667/.conda/envs/few_env/include/",
+    ],
+)
+
+
 if run_cuda_install:
     extensions = [ext, FLUX_ext, test_EXT]
     # extensions = [test_EXT]
-    extensions = [matmul_ext, FLUX_ext, interp_ext]
+    extensions = [matmul_ext, FLUX_ext, interp_ext, SlowFlux_ext, spher_harm_ext]
 else:
-    extensions = [FLUX_ext]
+    extensions = [FLUX_ext, SlowFlux_ext, spher_harm_ext]
 
 
 setup(
