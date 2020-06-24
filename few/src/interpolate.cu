@@ -405,7 +405,7 @@ void get_waveform(cmplx *d_waveform, double *y_vals, double *c1, double *c2, dou
           //printf("%d %d %d %d, %d %d\n", i, start_inds[i], unit_length[i], num_blocks, init_len, out_len);
           if (num_blocks <= 0) continue;
 
-          //printf("%d %d %d\n", i, num_blocks, unit_length[i]);
+          //printf("%d %d %d %d\n", i, num_blocks, unit_length[i], init_len);
           dim3 gridDim(num_blocks, 1); //, num_teuk_modes);
           //dim3 threadDim(32, 32);
           // launch one worker kernel per stream
@@ -418,6 +418,8 @@ void get_waveform(cmplx *d_waveform, double *y_vals, double *c1, double *c2, dou
       }
       cudaDeviceSynchronize();
       gpuErrchk(cudaGetLastError());
+
+      #pragma omp parallel for
       for (int i = 0; i < init_len-1; i++) {
             cudaStreamDestroy(streams[i]);
 
