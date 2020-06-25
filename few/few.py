@@ -64,7 +64,10 @@ class FEW:
         self.l_arr, self.m_arr, self.n_arr = md[0], md[1], md[2]
 
         self.m0mask = self.m_arr != 0
-        self.num_pos_m = len(self.m_arr)
+        self.num_m_zero_up = len(self.m_arr)
+        self.num_m0 = len(xp.arange(self.num_teuk_modes)[m0mask])
+
+        self.num_m_1_up = self.num_m_zero_up - self.num_m0
         self.l_arr = xp.concatenate([self.l_arr, self.l_arr[self.m0mask]])
         self.m_arr = xp.concatenate([self.m_arr, -self.m_arr[self.m0mask]])
         self.n_arr = xp.concatenate([self.n_arr, self.n_arr[self.m0mask]])
@@ -110,7 +113,9 @@ class FEW:
         t = xp.arange(len(p)) * dt
         """
 
-        ylms = self.ylm_gen(self.unique_l, self.unique_m, theta, phi)[self.inverse_lm]
+        ylms = self.ylm_gen(self.unique_l, self.unique_m, theta, phi).copy()[
+            self.inverse_lm
+        ]
 
         # amplitudes
         teuk_modes = self.amplitude_gen(p, e)
@@ -144,11 +149,17 @@ class FEW:
         else:
             temp = inds_sort[inds_keep]
 
-            temp = temp * (temp < self.num_pos_m) + (temp - self.num_pos_m) * (
-                temp >= self.num_pos_m
+            temp = temp * (temp < self.num_m_zero_up) + (temp - self.num_m_1_up) * (
+                temp >= self.num_m_zero_up
             )
 
             keep_modes = xp.unique(temp)
+
+            temp2 = keep_modes * (keep_modes < self.num_m0) + (
+                keep_modes + self.num_m_1_up
+            ) * (keep_modes >= self.num_m0)
+
+            ylmkeep = xp.concatenate([keep_modes, temp2])
 
         self.num_modes_kept = len(keep_modes)
 
@@ -168,7 +179,7 @@ class FEW:
             teuk_modes[:, keep_modes],
             self.ms,
             self.ns,
-            ylms,
+            ylms[ylmkeep],
             dt,
             T,
         )
@@ -187,10 +198,10 @@ if __name__ == "__main__":
 
     M = 1e6
     mu = 1e1
-    p0 = 14.0
+    p0 = 12.0
     e0 = 0.5
-    theta = np.pi / 3
-    phi = 1.0
+    theta = np.pi / 2
+    phi = 0.0
     dt = 10.0
     T = 1.0  # 1124936.040602 / ct.Julian_year
     eps = 1e-2
@@ -201,8 +212,8 @@ if __name__ == "__main__":
     timing = []
     eps_all = 10.0 ** np.arange(-10, -2)
 
-    eps_all = np.concatenate([np.array([1e-25]), eps_all])[-1:]
-    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_05.txt")
+    eps_all = np.concatenate([np.array([1e-25]), eps_all])
+    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_12_05.txt")
     fullwave = fullwave[:, 5] + 1j * fullwave[:, 6]
 
     for i, eps in enumerate(eps_all):
