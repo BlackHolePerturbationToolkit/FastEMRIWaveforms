@@ -10,11 +10,13 @@ from flux import RunFluxInspiral
 from amplitude import Amplitude
 from interpolated_mode_sum import InterpolatedModeSum
 from ylm import GetYlms
+from direct_mode_sum import DirectModeSum
 
 # TODO: make sure constants are same
 from scipy import constants as ct
 
 
+# TODO: free memory in trajectory
 class FEW:
     def __init__(
         self, inspiral_kwargs={}, amplitude_kwargs={}, Ylm_kwargs={}, sum_kwargs={}
@@ -27,6 +29,7 @@ class FEW:
 
         self.amplitude_gen = Amplitude(**amplitude_kwargs)
         self.sum = InterpolatedModeSum(**sum_kwargs)
+        # self.sum = DirectModeSum(**sum_kwargs)
 
         m_arr = xp.zeros((3843,), dtype=int)
         n_arr = xp.zeros_like(m_arr)
@@ -48,6 +51,7 @@ class FEW:
                 for n in range(-30, 30 + 1)
             ]
         )
+
         self.m0sort = m0sort = xp.concatenate(
             [
                 xp.arange(self.num_teuk_modes)[m0mask],
@@ -58,6 +62,21 @@ class FEW:
         md = xp.asarray(md).T[:, m0sort].astype(xp.int32)
 
         self.l_arr, self.m_arr, self.n_arr = md[0], md[1], md[2]
+
+        self.m0mask = self.m_arr != 0
+        self.num_pos_m = len(self.m_arr)
+        self.l_arr = xp.concatenate([self.l_arr, self.l_arr[self.m0mask]])
+        self.m_arr = xp.concatenate([self.m_arr, -self.m_arr[self.m0mask]])
+        self.n_arr = xp.concatenate([self.n_arr, self.n_arr[self.m0mask]])
+
+        temp, self.inverse_lm = np.unique(
+            np.asarray([self.l_arr.get(), self.m_arr.get()]).T,
+            axis=0,
+            return_inverse=True,
+        )
+
+        self.unique_l, self.unique_m = xp.asarray(temp).T
+        self.num_unique_lm = len(self.unique_l)
 
         self.ylm_gen = GetYlms(self.num_teuk_modes, **Ylm_kwargs)
 
@@ -72,12 +91,12 @@ class FEW:
         )
 
         # convert for gpu
-        t = xp.asarray(t)
-        p = xp.asarray(p)
-        e = xp.asarray(e)
-        Phi_phi = xp.asarray(Phi_phi)
-        Phi_r = xp.asarray(Phi_r)
-        amp_norm = xp.asarray(amp_norm)
+        t = xp.asarray(t)[: int(1e4)]
+        p = xp.asarray(p)[: int(1e4)]
+        e = xp.asarray(e)[: int(1e4)]
+        Phi_phi = xp.asarray(Phi_phi)[: int(1e4)]
+        Phi_r = xp.asarray(Phi_r)[: int(1e4)]
+        amp_norm = xp.asarray(amp_norm)[: int(1e4)]
 
         """
         insp = np.loadtxt("inspiral_new.txt")[45000:55000]
@@ -91,22 +110,30 @@ class FEW:
         t = xp.arange(len(p)) * dt
         """
 
+        ylms = self.ylm_gen(self.unique_l, self.unique_m, theta, phi)[self.inverse_lm]
+
         # amplitudes
         teuk_modes = self.amplitude_gen(p, e)
 
-        # TODO: implement normalization to flux
-        power = xp.abs(teuk_modes) ** 2
-
-        power = power + (self.m_arr != 0.0) * power
+        # TODO: check normalization of flux
+        power = (
+            xp.abs(
+                xp.concatenate(
+                    [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])], axis=1
+                )
+                * ylms
+            )
+            ** 2
+        )
 
         inds_sort = xp.argsort(power, axis=1)[:, ::-1]
         power = xp.sort(power, axis=1)[:, ::-1]
         cumsum = xp.cumsum(power, axis=1)
 
-        factor = amp_norm / cumsum[:, -1] ** (1 / 2)
+        # factor = amp_norm / cumsum[:, -1] ** (1 / 2)
 
-        teuk_modes = teuk_modes * factor[:, np.newaxis]
-        cumsum = cumsum * factor[:, np.newaxis] ** 2
+        # teuk_modes = teuk_modes * factor[:, np.newaxis]
+        # cumsum = cumsum * factor[:, np.newaxis] ** 2
 
         inds_keep = xp.full(cumsum.shape, True)
 
@@ -115,7 +142,13 @@ class FEW:
         if all_modes:
             keep_modes = xp.arange(3843)
         else:
-            keep_modes = xp.unique(inds_sort[inds_keep])
+            temp = inds_sort[inds_keep]
+
+            temp = temp * (temp < self.num_pos_m) + (temp - self.num_pos_m) * (
+                temp >= self.num_pos_m
+            )
+
+            keep_modes = xp.unique(temp)
 
         self.num_modes_kept = len(keep_modes)
 
@@ -125,8 +158,6 @@ class FEW:
         self.ls = self.l_arr[keep_modes]
         self.ms = self.m_arr[keep_modes]
         self.ns = self.n_arr[keep_modes]
-
-        ylms = self.ylm_gen(self.ls, self.ms, theta, phi)
 
         waveform = self.sum(
             t,
@@ -150,15 +181,16 @@ if __name__ == "__main__":
 
     few = FEW(
         inspiral_kwargs={"DENSE_STEPPING": 0, "max_init_len": int(1e3)},
-        amplitude_kwargs={"max_input_len": 11000},
+        amplitude_kwargs={"max_input_len": int(1e3)},
+        Ylm_kwargs={"assume_positive_m": False},
     )
 
     M = 1e6
     mu = 1e1
-    p0 = 11.0
-    e0 = 0.6
-    theta = np.pi / 2
-    phi = 0.0
+    p0 = 14.0
+    e0 = 0.5
+    theta = np.pi / 3
+    phi = 1.0
     dt = 10.0
     T = 1.0  # 1124936.040602 / ct.Julian_year
     eps = 1e-2
@@ -169,22 +201,29 @@ if __name__ == "__main__":
     timing = []
     eps_all = 10.0 ** np.arange(-10, -2)
 
-    eps_all = np.concatenate([np.array([1e-25]), eps_all])
-    fullwave = np.genfromtxt("checkslow.txt")[:3155760]
+    eps_all = np.concatenate([np.array([1e-25]), eps_all])[-1:]
+    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_05.txt")
     fullwave = fullwave[:, 5] + 1j * fullwave[:, 6]
 
     for i, eps in enumerate(eps_all):
-        all_modes = False if i > 0 else True
-        num = 40
+        # all_modes = False if i > 0 else True
+        num = 30
         st = time.perf_counter()
-        for _ in range(num):
+        for jjj in range(num):
+
+            # print(jjj, "\n")
             wc = few(
                 M, mu, p0, e0, theta, phi, dt=dt, T=T, eps=eps, all_modes=all_modes
             ).get()
         et = time.perf_counter()
 
-        wc_fft = np.fft.fft(wc)
-        fullwave_fft = np.fft.fft(fullwave)
+        # if i == 0:
+        #    np.save("dircheck", wc)
+
+        min_len = np.min([len(wc), len(fullwave)])
+
+        wc_fft = np.fft.fft(wc[:min_len])
+        fullwave_fft = np.fft.fft(fullwave[:min_len])
         mm = (
             1.0
             - (
@@ -209,9 +248,11 @@ if __name__ == "__main__":
             (et - st) / num,
         )
 
-    np.save("info_check", np.asarray([eps_all, mismatch, num_modes, timing]).T)
-    et = time.perf_counter()
+    # np.save(
+    #    "info_check_1e6_1e1_14_05", np.asarray([eps_all, mismatch, num_modes, timing]).T
+    # )
 
+    """
     num = 20
     st = time.perf_counter()
     for _ in range(num):
@@ -221,6 +262,6 @@ if __name__ == "__main__":
     import pdb
 
     pdb.set_trace()
-
+    """
     # print(check.shape)
     print((et - st) / num)
