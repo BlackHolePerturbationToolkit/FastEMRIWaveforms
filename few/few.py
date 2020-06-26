@@ -145,6 +145,14 @@ class FEW:
             self.ms = self.m_arr
             self.ns = self.n_arr
 
+            keep_modes = xp.arange(teuk_modes.shape[1])
+            temp2 = keep_modes * (keep_modes < self.num_m0) + (
+                keep_modes + self.num_m_1_up
+            ) * (keep_modes >= self.num_m0)
+
+            ylmkeep = xp.concatenate([keep_modes, temp2])
+            ylms = ylms[ylmkeep]
+
         else:
             (teuk_modes, ylms, self.ls, self.ms, self.ns) = self.mode_filter(
                 eps, teuk_modes, ylms, self.l_arr, self.m_arr, self.n_arr
