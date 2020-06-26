@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
     M = 1e6
     mu = 1e1
-    p0 = 12.0
+    p0 = 14.0
     e0 = 0.5
     theta = np.pi / 2
     phi = 0.0
@@ -181,7 +181,7 @@ if __name__ == "__main__":
     eps_all = 10.0 ** np.arange(-10, -2)
 
     eps_all = np.concatenate([np.array([1e-25]), eps_all])
-    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_12_05.txt")
+    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_05.txt")
     fullwave = fullwave[:, 5] + 1j * fullwave[:, 6]
 
     for i, eps in enumerate(eps_all):
