@@ -175,6 +175,52 @@ if run_cuda_install:
         ],
     )
 
+    matmul_ext = Extension(
+        "pymatmul",
+        sources=["few/src/matmul.cu", "few/src/pymatmul.pyx"],
+        library_dirs=[CUDA["lib64"]],
+        libraries=["cudart", "cublas", "cusparse", "gsl", "gslcblas"],
+        language="c++",
+        runtime_library_dirs=[CUDA["lib64"]],
+        # This syntax is specific to this build system
+        # we're only going to use certain compiler args with nvcc
+        # and not with gcc the implementation of this trick is in
+        # customize_compiler()
+        extra_compile_args={
+            "gcc": ["-std=c++11"],  # '-g'],
+            "nvcc": [
+                "-arch=sm_70",
+                # "-gencode=arch=compute_30,code=sm_30",
+                # "-gencode=arch=compute_50,code=sm_50",
+                # "-gencode=arch=compute_52,code=sm_52",
+                # "-gencode=arch=compute_60,code=sm_60",
+                # "-gencode=arch=compute_61,code=sm_61",
+                "-gencode=arch=compute_70,code=sm_70",
+                #'-gencode=arch=compute_75,code=sm_75',
+                #'-gencode=arch=compute_75,code=compute_75',
+                "-std=c++11",
+                "--default-stream=per-thread",
+                "--ptxas-options=-v",
+                "-c",
+                "--compiler-options",
+                "'-fPIC'",
+                "-Xcompiler",
+                "-fopenmp",
+                # "-G",
+                # "-g",
+                # "-O0",
+                # "-lineinfo",
+            ],  # for debugging
+        },
+        include_dirs=[
+            numpy_include,
+            CUDA["include"],
+            "few/src",
+            "inspiral/include",
+            "/home/mlk667/.conda/envs/few_env/include/",
+        ],
+    )
+
     test_EXT = Extension(
         "testmatmul",
         sources=["few/src/test.cu", "few/src/testmatmul.pyx"],
@@ -225,14 +271,60 @@ if run_cuda_install:
         ],
     )
 
-NIT_ext = Extension(
-    "pyNIT",
+    interp_ext = Extension(
+        "pyinterp",
+        sources=["few/src/interpolate.cu", "few/src/pyinterp.pyx"],
+        library_dirs=[CUDA["lib64"]],
+        libraries=["cudart", "cublas", "cusparse", "gsl", "gslcblas"],
+        language="c++",
+        runtime_library_dirs=[CUDA["lib64"]],
+        # This syntax is specific to this build system
+        # we're only going to use certain compiler args with nvcc
+        # and not with gcc the implementation of this trick is in
+        # customize_compiler()
+        extra_compile_args={
+            "gcc": ["-std=c++11"],  # '-g'],
+            "nvcc": [
+                "-arch=sm_70",
+                # "-gencode=arch=compute_30,code=sm_30",
+                # "-gencode=arch=compute_50,code=sm_50",
+                # "-gencode=arch=compute_52,code=sm_52",
+                # "-gencode=arch=compute_60,code=sm_60",
+                # "-gencode=arch=compute_61,code=sm_61",
+                "-gencode=arch=compute_70,code=sm_70",
+                #'-gencode=arch=compute_75,code=sm_75',
+                #'-gencode=arch=compute_75,code=compute_75',
+                "-std=c++11",
+                "--default-stream=per-thread",
+                "--ptxas-options=-v",
+                "-c",
+                "--compiler-options",
+                "'-fPIC'",
+                "-Xcompiler",
+                "-fopenmp",
+                # "-G",
+                # "-g",
+                # "-O0",
+                # "-lineinfo",
+            ],  # for debugging
+        },
+        include_dirs=[
+            numpy_include,
+            CUDA["include"],
+            "few/src",
+            "inspiral/include",
+            "/home/mlk667/.conda/envs/few_env/include/",
+        ],
+    )
+
+FLUX_ext = Extension(
+    "pyFLUX",
     sources=[
         "inspiral/src/Interpolant.cc",
         "inspiral/src/FluxInspiral.cc",
-        "inspiral/NIT.pyx",
+        "inspiral/FLUX.pyx",
     ],
-    library_dirs=["/home/ajchua/lib/"],
+    # library_dirs=["/home/ajchua/lib/"],
     libraries=["gsl", "gslcblas"],
     language="c++",
     runtime_library_dirs=[],
@@ -250,12 +342,60 @@ NIT_ext = Extension(
 )
 
 
-if run_cuda_install:
-    extensions = [ext, NIT_ext, test_EXT]
-else:
-    extensions = [NIT_ext]
+spher_harm_ext = Extension(
+    "pySpinWeightedSpherHarm",
+    sources=["few/src/SWSH.cc", "few/src/pySWSH.pyx"],
+    # library_dirs=["/home/ajchua/lib/"],
+    libraries=["gsl", "gslcblas"],
+    language="c++",
+    runtime_library_dirs=[],
+    # This syntax is specific to this build system
+    # we're only going to use certain compiler args with nvcc
+    # and not with gcc the implementation of this trick is in
+    # customize_compiler()
+    extra_compile_args={"gcc": ["-std=c++11"]},  # '-g'],
+    include_dirs=[
+        numpy_include,
+        "few/src",
+        "/home/mlk667/.conda/envs/few_env/include/",
+    ],
+)
 
-extensions = [test_EXT]
+SlowFlux_ext = Extension(
+    "pySlowFlux",
+    sources=[
+        "SlowFluxWaveform/src/SpinWeightedSphericalHarmonics.cc",
+        "SlowFluxWaveform/src/Interpolant.cc",
+        "SlowFluxWaveform/src/FluxInspiral.cc",
+        "SlowFluxWaveform/SlowFluxInspiral.pyx",
+    ],
+    library_dirs=["/home/ajchua/lib/"],
+    libraries=["gsl", "gslcblas", "hdf5", "hdf5_hl", "gomp"],
+    language="c++",
+    runtime_library_dirs=[],
+    # This syntax is specific to this build system
+    # we're only going to use certain compiler args with nvcc
+    # and not with gcc the implementation of this trick is in
+    # customize_compiler()
+    extra_compile_args={"gcc": ["-std=c++11", "-Xpreprocessor", "-fopenmp"]},  # '-g'],
+    include_dirs=[
+        numpy_include,
+        # "few/src",
+        # "inspiral/include",
+        "SlowFluxWaveform/include",
+        "/home/mlk667/.conda/envs/few_env/include/",
+    ],
+)
+
+
+if run_cuda_install:
+    extensions = [ext, FLUX_ext, test_EXT]
+    # extensions = [test_EXT]
+    extensions = [matmul_ext, FLUX_ext, interp_ext, SlowFlux_ext, spher_harm_ext]
+else:
+    extensions = [FLUX_ext, SlowFlux_ext, spher_harm_ext]
+
+
 setup(
     name="few",
     # Random metadata. there's more you can supply
@@ -263,7 +403,7 @@ setup(
     version="0.1",
     ext_modules=extensions,
     packages=["few"],
-    py_modules=["few.nit"],
+    py_modules=["few.flux", "few.few"],
     # Inject our custom trigger
     cmdclass={"build_ext": custom_build_ext},
     # Since the package has c code, the egg cannot be zipped

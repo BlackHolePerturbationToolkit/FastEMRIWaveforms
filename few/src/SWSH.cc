@@ -1,6 +1,7 @@
 #include "math.h"
 #include <complex>
 #include <assert.h>
+#include "SWSH.hh"
 
 //template<typename double>
 std::complex<double> SpinWeightedSphericalHarmonic (int l, int m, double theta, double phi)

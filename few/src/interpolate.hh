@@ -6,40 +6,11 @@
 #include "global.h"
 #include "cusparse.h"
 
+void interpolate_arrays(double *t_arr, double *y_all, double *c1, double *c2, double *c3, int ninterps, int length, double *B, double *upper_diag, double *diag, double *lower_diag);
 
-class InterpClass {
-
-public:
-    fod *B, *upper_diag, *lower_diag, *diag;
-
-    void *pBuffer;
-    cusparseStatus_t stat;
-    cusparseHandle_t handle;
-
-    InterpClass(int num_modes, int length);
-    ~InterpClass();
-
-    void setup_interpolate(InterpContainer *d_interp_p, InterpContainer *d_interp_e, InterpContainer *d_interp_Phi_phi, InterpContainer *d_interp_Phi_r,
-                           InterpContainer *d_modes, int num_modes,
-                           fod *d_t, int length);
-
-};
-
-
-void create_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int length);
-void destroy_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp);
-
-void create_mode_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int length, int num_modes);
-void destroy_mode_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int num_modes);
-void fill_complex_y_vals(InterpContainer *d_interp, cuDoubleComplex *y, int length, int num_modes, FilterContainer *filter);
-
-void setup_interpolate(InterpContainer *h_interp_p, InterpContainer *h_interp_e, InterpContainer *h_interp_Phi_phi, InterpContainer *h_interp_Phi_r,
-                       InterpContainer *d_modes, int num_modes,
-                       fod *d_t, int length);
-
-void perform_interp(fod *p_out, fod *e_out, fod *Phi_phi_out, fod *Phi_r_out,
-                    InterpContainer *d_interp_p, InterpContainer *d_interp_e, InterpContainer *d_interp_Phi_phi, InterpContainer *d_interp_Phi_r,
-                    fod *d_t, fod *h_t, int length, int new_length, fod delta_t);
+void get_waveform(cmplx *d_waveform, double *y_vals, double *c1, double *c2, double *c3,
+              int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cmplx *d_Ylms,
+              double delta_t, double *h_t);
 
 /*
 CuSparse error checking

@@ -2,95 +2,28 @@
 #include "interpolate.hh"
 #include "cusparse.h"
 
-void create_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int length)
-{
 
-
-  gpuErrchk(cudaMalloc(&h_interp->y, length*sizeof(fod)));
-  gpuErrchk(cudaMalloc(&h_interp->c1, length*sizeof(fod)-1));
-  gpuErrchk(cudaMalloc(&h_interp->c2, length*sizeof(fod)-1));
-  gpuErrchk(cudaMalloc(&h_interp->c3, length*sizeof(fod)-1));
-
-  gpuErrchk(cudaMemcpy(d_interp, h_interp, sizeof(InterpContainer), cudaMemcpyHostToDevice));
-
-}
-
-void destroy_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp)
-{
-
-  gpuErrchk(cudaFree(h_interp->y));
-  gpuErrchk(cudaFree(h_interp->c1));
-  gpuErrchk(cudaFree(h_interp->c2));
-  gpuErrchk(cudaFree(h_interp->c3));
-
-}
-
-
-void create_mode_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int length, int num_modes)
-{
-  // TODO: openmp
-  for (int i=0; i<num_modes*2; i++){
-      gpuErrchk(cudaMalloc(&(h_interp[i].y), length*sizeof(fod)));
-      gpuErrchk(cudaMalloc(&(h_interp[i].c1), length*sizeof(fod)-1));
-      gpuErrchk(cudaMalloc(&(h_interp[i].c2), length*sizeof(fod)-1));
-      gpuErrchk(cudaMalloc(&(h_interp[i].c3), length*sizeof(fod)-1));
-
-      //gpuErrchk(cudaMemcpy(h_interp[i].y, y, length*sizeof(fod), cudaMemcpyHostToDevice));
-  }
-  gpuErrchk(cudaMemcpy(d_interp, h_interp, num_modes*2*sizeof(InterpContainer), cudaMemcpyHostToDevice));
-
-}
-
-void destroy_mode_interp_containers(InterpContainer *d_interp, InterpContainer *h_interp, int num_modes)
-{
-  // TODO: openmp
-  for (int i=0; i<num_modes*2; i++){
-      gpuErrchk(cudaFree(h_interp[i].y));
-      gpuErrchk(cudaFree(h_interp[i].c1));
-      gpuErrchk(cudaFree(h_interp[i].c2));
-      gpuErrchk(cudaFree(h_interp[i].c3));
-  }
-}
-
-
-__global__
-void kernel_fill_complex_y_vals(InterpContainer *modes, cuDoubleComplex *y, int length, int num_modes, int *mode_keep_inds)
-{
-
-  cuDoubleComplex trans;
-      for (int i = blockIdx.x * blockDim.x + threadIdx.x;
-           i < length;
-           i += blockDim.x * gridDim.x){
-
-       for (int mode_i = blockIdx.y * blockDim.y + threadIdx.y;
-            mode_i < num_modes;
-            mode_i += blockDim.y * gridDim.y){
-
-             int actual_mode_index = mode_keep_inds[mode_i];
-             trans = y[actual_mode_index*length + i];
-             modes[2*actual_mode_index].y[i] = cuCreal(trans);
-             modes[2*actual_mode_index + 1].y[i] = cuCimag(trans);
-
-      }
-  }
-}
-
-
-void fill_complex_y_vals(InterpContainer *d_interp, cuDoubleComplex *y, int length, int num_modes, FilterContainer *filter)
-{
-
-  int NUM_THREADS = 128; //less because of general lengths
-  int num_blocks = std::ceil((length + NUM_THREADS -1)/NUM_THREADS);
-  dim3 gridDim(num_blocks, filter->num_modes_kept); //, num_teuk_modes);
-  kernel_fill_complex_y_vals<<<gridDim, NUM_THREADS>>>(d_interp, y, length, filter->num_modes_kept, filter->d_mode_keep_inds);
-  cudaDeviceSynchronize();
-  gpuErrchk(cudaGetLastError());
-
-}
+#define MAX_MODES_BLOCK 450
 
 __device__
-void prep_splines(int i, int length, fod *b, fod *ud, fod *diag, fod *ld, fod *x, fod *y){
-  fod dx1, dx2, d, slope1, slope2;
+void fill_coefficients(int i, int length, double *dydx, double dx, double *y, double *coeff1, double *coeff2, double *coeff3){
+  double slope, t, dydx_i;
+
+  slope = (y[i+1] - y[i])/dx;
+
+  dydx_i = dydx[i];
+
+  t = (dydx_i + dydx[i+1] - 2*slope)/dx;
+
+  coeff1[i] = dydx_i;
+  coeff2[i] = (slope - dydx_i) / dx - t;
+  coeff3[i] = t/dx;
+}
+
+
+__device__
+void prep_splines(int i, int length, double *b, double *ud, double *diag, double *ld, double *x, double *y){
+  double dx1, dx2, d, slope1, slope2;
   if (i == length - 1){
     dx1 = x[length - 2] - x[length - 3];
     dx2 = x[length - 1] - x[length - 2];
@@ -136,48 +69,68 @@ void prep_splines(int i, int length, fod *b, fod *ud, fod *diag, fod *ld, fod *x
 }
 
 
-__device__
-void fill_B(fod *p, fod *e, fod *Phi_phi, fod *Phi_r,
-                 fod *B, fod *t_arr, fod *upper_diag, fod *diag, fod *lower_diag, int length, int i){
-    int lead_ind;
-
-    // p
-    lead_ind = 0*length;
-    prep_splines(i, length, &B[lead_ind], &upper_diag[lead_ind], &diag[lead_ind], &lower_diag[lead_ind], t_arr, p);
-
-    // e
-    lead_ind = 1*length;
-    prep_splines(i, length, &B[lead_ind], &upper_diag[lead_ind], &diag[lead_ind], &lower_diag[lead_ind], t_arr, e);
-
-    // Phi_phi
-    lead_ind = 2*length;
-    prep_splines(i, length, &B[lead_ind], &upper_diag[lead_ind], &diag[lead_ind], &lower_diag[lead_ind], t_arr, Phi_phi);
-
-    // Phi_r
-    lead_ind = 3*length;
-    prep_splines(i, length, &B[lead_ind], &upper_diag[lead_ind], &diag[lead_ind], &lower_diag[lead_ind], t_arr, Phi_r);
-
-}
 
 __global__
-void fill_B_wrap(InterpContainer *p_, InterpContainer *e_, InterpContainer *Phi_phi_, InterpContainer *Phi_r_,
-                      fod *t_arr, fod *B, fod *upper_diag, fod *diag, fod *lower_diag, int length){
+void fill_B(double *t_arr, double *y_all, double *B, double *upper_diag, double *diag, double *lower_diag,
+                      int ninterps, int length){
 
-        fod *p = p_->y;
-        fod *e = e_->y;
-        fod *Phi_phi = Phi_phi_->y;
-        fod *Phi_r = Phi_r_->y;
+    for (int interp_i= blockIdx.y*blockDim.y + threadIdx.y;
+         interp_i<ninterps; // 2 for re and im
+         interp_i+= blockDim.y*gridDim.y){
 
        for (int i = blockIdx.x * blockDim.x + threadIdx.x;
             i < length;
             i += blockDim.x * gridDim.x){
 
-              fill_B(p, e, Phi_phi, Phi_r, B, t_arr, upper_diag, diag, lower_diag, length, i);
+
+
+            int lead_ind = interp_i*length;
+            prep_splines(i, length, &B[lead_ind], &upper_diag[lead_ind], &diag[lead_ind], &lower_diag[lead_ind], t_arr, &y_all[interp_i*length]);
 
 }
 }
+}
 
-void fit_constants_serial_wrap(int m, int n, fod *a, fod *b, fod *c, fod *d_in, cusparseHandle_t handle, void *pBuffer){
+
+
+__global__
+void set_spline_constants(double *t_arr, double *y_all, double *B,
+                      double *c1, double *c2, double *c3,
+                      int ninterps, int length){
+
+    double dt;
+    InterpContainer mode_vals;
+    for (int interp_i= blockIdx.y*blockDim.y + threadIdx.y;
+         interp_i<ninterps; // 2 for re and im
+         interp_i+= blockDim.y*gridDim.y){
+
+        for (int i = blockIdx.x * blockDim.x + threadIdx.x;
+             i < length-1;
+             i += blockDim.x * gridDim.x){
+
+              dt = t_arr[i + 1] - t_arr[i];
+
+              int lead_ind = interp_i*length;
+              int lead_ind2 = interp_i*(length - 1);
+              fill_coefficients(i, length, &B[lead_ind], dt, &y_all[lead_ind], &c1[lead_ind2], &c2[lead_ind2], &c3[lead_ind2]);
+
+
+}
+}
+}
+
+
+
+void fit_wrap(int m, int n, double *a, double *b, double *c, double *d_in){
+
+    size_t bufferSizeInBytes;
+
+    cusparseHandle_t handle;
+    void *pBuffer;
+
+    CUSPARSE_CALL(cusparseCreate(&handle));
+    CUSPARSE_CALL( cusparseDgtsv2StridedBatch_bufferSizeExt(handle, m, a, b, c, d_in, n, m, &bufferSizeInBytes));
+    gpuErrchk(cudaMalloc(&pBuffer, bufferSizeInBytes));
 
     CUSPARSE_CALL(cusparseDgtsv2StridedBatch(handle,
                                               m,
@@ -189,203 +142,217 @@ void fit_constants_serial_wrap(int m, int n, fod *a, fod *b, fod *c, fod *d_in, 
                                               m,
                                               pBuffer));
 
-}
-
-__device__
-void fill_coefficients(int i, int length, fod *dydx, fod dx, fod *y, fod *coeff1, fod *coeff2, fod *coeff3){
-  fod slope, t, dydx_i;
-
-  slope = (y[i+1] - y[i])/dx;
-
-  dydx_i = dydx[i];
-
-  t = (dydx_i + dydx[i+1] - 2*slope)/dx;
-
-  coeff1[i] = dydx_i;
-  coeff2[i] = (slope - dydx_i) / dx - t;
-  coeff3[i] = t/dx;
-}
-
-
-__device__
-void set_spline_constants(InterpContainer *p_, InterpContainer *e_, InterpContainer *Phi_phi_, InterpContainer *Phi_r_,
-                          fod *B, int length, int i, fod dt){
-
-  int lead_ind;
-
-  // p
-  lead_ind = 0*length;
-  fill_coefficients(i, length, &B[lead_ind], dt, p_->y, p_->c1, p_->c2, p_->c3);
-
-  // e
-  lead_ind = 1*length;
-  fill_coefficients(i, length, &B[lead_ind], dt, e_->y, e_->c1, e_->c2, e_->c3);
-
-  // Phi_phi
-  lead_ind = 2*length;
-  fill_coefficients(i, length, &B[lead_ind], dt, Phi_phi_->y, Phi_phi_->c1, Phi_phi_->c2, Phi_phi_->c3);
-
-  // Phi_r
-  lead_ind = 3*length;
-  fill_coefficients(i, length, &B[lead_ind], dt, Phi_r_->y, Phi_r_->c1, Phi_r_->c2, Phi_r_->c3);
-
-}
-
-__global__
-void set_spline_constants_wrap(InterpContainer *p_, InterpContainer *e_, InterpContainer *Phi_phi_, InterpContainer *Phi_r_,
-                               fod *B, int length, fod *t_arr){
-
-    fod dt;
-
-        for (int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < length-1;
-             i += blockDim.x * gridDim.x){
-
-              dt = t_arr[i + 1] - t_arr[i];
-
-               set_spline_constants(p_, e_, Phi_phi_, Phi_r_, B, length, i, dt);
-}
-}
-
-
-
-/// MODES
-
-__device__
-void modes_fill_B(InterpContainer mode,
-                 fod *B, fod *t_arr, fod *upper_diag, fod *diag, fod *lower_diag, int length, int i, int mode_i){
-    int lead_ind;
-
-    lead_ind = mode_i*length;
-    prep_splines(i, length, &B[lead_ind], &upper_diag[lead_ind], &diag[lead_ind], &lower_diag[lead_ind], t_arr, mode.y);
-
-}
-
-__global__
-void modes_fill_B_wrap(InterpContainer *modes,
-                      fod *t_arr, fod *B, fod *upper_diag, fod *diag, fod *lower_diag, int length, int num_modes){
-
-    InterpContainer mode_vals;
-    for (int mode_i= blockIdx.y*blockDim.y + threadIdx.y;
-         mode_i<num_modes*2; // 2 for re and im
-         mode_i+= blockDim.y*gridDim.y){
-           mode_vals = modes[mode_i];
-
-       for (int i = blockIdx.x * blockDim.x + threadIdx.x;
-            i < length;
-            i += blockDim.x * gridDim.x){
-
-              modes_fill_B(mode_vals, B, t_arr, upper_diag, diag, lower_diag, length, i, mode_i);
-
-}
-}
-}
-
-__device__
-void modes_set_spline_constants(InterpContainer mode,
-                          fod *B, int length, int i, fod dt, int mode_i){
-
-  int lead_ind;
-
-  lead_ind = mode_i*length;
-  fill_coefficients(i, length, &B[lead_ind], dt, mode.y, mode.c1, mode.c2, mode.c3);
-
-}
-
-__global__
-void modes_set_spline_constants_wrap(InterpContainer *modes,
-                               fod *B, int length, fod *t_arr, int num_modes){
-
-    fod dt;
-    InterpContainer mode_vals;
-    for (int mode_i= blockIdx.y*blockDim.y + threadIdx.y;
-         mode_i<num_modes*2; // 2 for re and im
-         mode_i+= blockDim.y*gridDim.y){
-           mode_vals = modes[mode_i];
-        for (int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < length-1;
-             i += blockDim.x * gridDim.x){
-
-              dt = t_arr[i + 1] - t_arr[i];
-
-               modes_set_spline_constants(mode_vals, B, length, i, dt, mode_i);
-}
-}
-}
-
-
-InterpClass::InterpClass(int num_modes, int length)
-{
-
-  gpuErrchk(cudaMalloc(&upper_diag, 2*num_modes*length*sizeof(fod)));
-  gpuErrchk(cudaMalloc(&lower_diag, 2*num_modes*length*sizeof(fod)));
-  gpuErrchk(cudaMalloc(&diag, 2*num_modes*length*sizeof(fod)));
-  gpuErrchk(cudaMalloc(&B, 2*num_modes*length*sizeof(fod)));
-
-  size_t bufferSizeInBytes;
-
-  CUSPARSE_CALL(cusparseCreate(&handle));
-  CUSPARSE_CALL( cusparseDgtsv2StridedBatch_bufferSizeExt(handle, length, lower_diag, diag, upper_diag, B, num_modes, length, &bufferSizeInBytes));
-  gpuErrchk(cudaMalloc(&pBuffer, bufferSizeInBytes));
-
-}
-
-void InterpClass::setup_interpolate(InterpContainer *d_interp_p, InterpContainer *d_interp_e, InterpContainer *d_interp_Phi_phi, InterpContainer *d_interp_Phi_r,
-                       InterpContainer *d_modes, int num_modes,
-                       fod *d_t, int length)
-{
-
-  int num_pars = 4;
-
-  int NUM_THREADS = 256;
-  int num_blocks = std::ceil((length + NUM_THREADS -1)/NUM_THREADS);
-  dim3 gridDim(num_blocks); //, num_teuk_modes);
-  fill_B_wrap<<<gridDim, NUM_THREADS>>>(d_interp_p, d_interp_e, d_interp_Phi_phi, d_interp_Phi_r,
-                        d_t, B, upper_diag, diag, lower_diag, length);
-  cudaDeviceSynchronize();
-  gpuErrchk(cudaGetLastError());
-
-  fit_constants_serial_wrap(length, num_pars, lower_diag, diag, upper_diag, B, handle, pBuffer);
-
-  set_spline_constants_wrap<<<gridDim, NUM_THREADS>>>(d_interp_p, d_interp_e, d_interp_Phi_phi, d_interp_Phi_r,
-                                 B, length, d_t);
-  cudaDeviceSynchronize();
-  gpuErrchk(cudaGetLastError());
-
-  // MODES
-
-  NUM_THREADS = 256;
-  num_blocks = std::ceil((length + NUM_THREADS -1)/NUM_THREADS);
-  dim3 gridDimModes(num_blocks, num_modes); //, num_teuk_modes);
-  modes_fill_B_wrap<<<gridDimModes, NUM_THREADS>>>(d_modes,
-                                        d_t, B, upper_diag, diag, lower_diag, length, num_modes);
-  cudaDeviceSynchronize();
-  gpuErrchk(cudaGetLastError());
-
-  fit_constants_serial_wrap(length, 2*num_modes, lower_diag, diag, upper_diag, B, handle, pBuffer);
-
-  modes_set_spline_constants_wrap<<<gridDimModes, NUM_THREADS>>>(d_modes,
-                                                      B, length, d_t, num_modes);
-  cudaDeviceSynchronize();
-  gpuErrchk(cudaGetLastError());
-
-}
-
-InterpClass::~InterpClass()
-{
-
-  gpuErrchk(cudaFree(upper_diag));
-  gpuErrchk(cudaFree(lower_diag));
-  gpuErrchk(cudaFree(diag));
-  gpuErrchk(cudaFree(B));
-
   CUSPARSE_CALL(cusparseDestroy(handle));
   gpuErrchk(cudaFree(pBuffer));
 
 }
 
-/*
-void find_start_inds(int start_inds[], int unit_length[], fod *t_arr, fod delta_t, int length, int new_length)
+void interpolate_arrays(double *t_arr, double *y_all, double *c1, double *c2, double *c3, int ninterps, int length, double *B, double *upper_diag, double *diag, double *lower_diag)
+{
+
+  // TODO: Accelerate (?)
+
+  int NUM_THREADS = 64;
+  int num_blocks = std::ceil((length + NUM_THREADS -1)/NUM_THREADS);
+  dim3 gridDim(num_blocks); //, num_teuk_modes);
+  fill_B<<<gridDim, NUM_THREADS>>>(t_arr, y_all, B, upper_diag, diag, lower_diag, ninterps, length);
+  cudaDeviceSynchronize();
+  gpuErrchk(cudaGetLastError());
+
+  fit_wrap(length, ninterps, lower_diag, diag, upper_diag, B);
+
+  set_spline_constants<<<gridDim, NUM_THREADS>>>(t_arr, y_all, B, c1, c2, c3,
+                                 ninterps, length);
+  cudaDeviceSynchronize();
+  gpuErrchk(cudaGetLastError());
+
+}
+
+
+
+
+
+
+
+
+__device__
+cmplx get_mode_value(cmplx teuk_mode, fod Phi_phi, fod Phi_r, int m, int n, cmplx Ylm){
+    cmplx minus_I(0.0, -1.0);
+    fod phase = m*Phi_phi + n*Phi_r;
+    cmplx out = (teuk_mode*Ylm)*gcmplx::exp(minus_I*phase);
+    return out;
+}
+
+
+__device__ double atomicAddDouble(double* address, double val)
+{
+    unsigned long long* address_as_ull =
+                              (unsigned long long*)address;
+    unsigned long long old = *address_as_ull, assumed;
+
+    do {
+        assumed = old;
+        old = atomicCAS(address_as_ull, assumed,
+                        __double_as_longlong(val +
+                               __longlong_as_double(assumed)));
+
+    // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
+    } while (assumed != old);
+
+    return __longlong_as_double(old);
+}
+
+
+__device__ void atomicAddComplex(cmplx* a, cmplx b){
+  //transform the addresses of real and imag. parts to double pointers
+  double *x = (double*)a;
+  double *y = x+1;
+  //use atomicAdd for double variables
+  atomicAddDouble(x, b.real());
+  atomicAddDouble(y, b.imag());
+}
+
+
+
+__global__
+void make_waveform(cmplx *waveform,
+             double *y_all, double *c1, double *c2, double *c3,
+              int *m_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
+              double delta_t, double start_t, int old_ind, int start_ind, int end_ind, int init_length){
+
+    int num_pars = 2;
+    cmplx trans(0.0, 0.0);
+    cmplx trans2(0.0, 0.0);
+    cmplx I(0.0, 1.0);
+    cmplx mode_val;
+    cmplx trans_plus_m(0.0, 0.0), trans_minus_m(0.0, 0.0);
+    double Phi_phi_i, Phi_r_i, t, x, x2, x3, mode_val_re, mode_val_im;
+    int lm_i, num_teuk_here;
+    double re_y, re_c1, re_c2, re_c3, im_y, im_c1, im_c2, im_c3;
+     __shared__ double pp_y, pp_c1, pp_c2, pp_c3, pr_y, pr_c1, pr_c2, pr_c3;
+
+     __shared__ cmplx Ylms[2*MAX_MODES_BLOCK];
+
+     __shared__ double mode_re_y[MAX_MODES_BLOCK];
+     __shared__ double mode_re_c1[MAX_MODES_BLOCK];
+     __shared__ double mode_re_c2[MAX_MODES_BLOCK];
+     __shared__ double mode_re_c3[MAX_MODES_BLOCK];
+
+     __shared__ double mode_im_y[MAX_MODES_BLOCK];
+     __shared__ double mode_im_c1[MAX_MODES_BLOCK];
+     __shared__ double mode_im_c2[MAX_MODES_BLOCK];
+     __shared__ double mode_im_c3[MAX_MODES_BLOCK];
+
+     __shared__ int m_arr[MAX_MODES_BLOCK];
+     __shared__ int n_arr[MAX_MODES_BLOCK];
+
+
+     //cmplx *Ylms = (cmplx*) array;
+
+     __syncthreads();
+
+     if ((threadIdx.x == 0)){
+         int ind_Phi_phi = num_teuk_modes*2 + 0;
+         int ind_Phi_r = num_teuk_modes*2 + 1;
+         pp_y = y_all[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_phi]; pp_c1 = c1[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_phi];
+         pp_c2= c2[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_phi];  pp_c3 = c3[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_phi];
+
+         pr_y = y_all[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_r]; pr_c1 = c1[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_r];
+         pr_c2= c2[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_r];  pr_c3 = c3[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_r];
+     }
+
+     __syncthreads();
+
+
+
+     int m, n, actual_mode_index;
+     cmplx Ylm_plus_m, Ylm_minus_m;
+
+     int num_breaks = (num_teuk_modes / MAX_MODES_BLOCK) + 1;
+
+     for (int block_y=0; block_y<num_breaks; block_y+=1){
+    num_teuk_here = (((block_y + 1)*MAX_MODES_BLOCK) <= num_teuk_modes) ? MAX_MODES_BLOCK : num_teuk_modes - (block_y*MAX_MODES_BLOCK);
+    //if ((threadIdx.x == 0) && (blockIdx.x == 0)) printf("BLOCKY = %d %d\n", block_y, num_breaks);
+    int init_ind = block_y*MAX_MODES_BLOCK;
+
+        for (int i=threadIdx.x; i<num_teuk_here; i+=blockDim.x) {
+
+        int ind_re = old_ind*(2*num_teuk_modes+num_pars) + (init_ind + i);
+        int ind_im = old_ind*(2*num_teuk_modes+num_pars)  + num_teuk_modes + (init_ind + i);
+        mode_re_y[i] = y_all[ind_re]; mode_re_c1[i] = c1[ind_re];
+        mode_re_c2[i] = c2[ind_re]; mode_re_c3[i] = c3[ind_re];
+        mode_im_y[i] = y_all[ind_im]; mode_im_c1[i] = c1[ind_im];
+        mode_im_c2[i] = c2[ind_im]; mode_im_c3[i] = c3[ind_im];
+
+        //printf("%d %d %d %d\n", init_ind, i, m_arr_in[init_ind + i], n_arr_in[init_ind + i]);
+        m_arr[i] = m_arr_in[init_ind + i];
+        n_arr[i] = n_arr_in[init_ind + i];
+        Ylms[2*i] = Ylms_in[(init_ind + i)];
+        Ylms[2*i + 1] = Ylms_in[num_teuk_modes + (init_ind + i)];
+    }
+
+    __syncthreads();
+
+
+    //l'int j = blockIdx.y * blockDim.y + threadIdx.y;
+
+    for (int i = start_ind + blockIdx.x * blockDim.x + threadIdx.x;
+         i < end_ind;
+         i += blockDim.x * gridDim.x){
+
+     trans2 = 0.0 + 0.0*I;
+
+     trans = 0.0 + 0.0*I;
+     t = delta_t*i;
+      x = t - start_t;
+      x2 = x*x;
+      x3 = x*x2;
+
+      Phi_phi_i = pp_y + pp_c1*x + pp_c2*x2  + pp_c3*x3;
+      Phi_r_i = pr_y + pr_c1*x + pr_c2*x2  + pr_c3*x3;
+        for (int j=0; j<num_teuk_here; j+=1){
+
+            Ylm_plus_m = Ylms[2*j];
+
+             m = m_arr[j];
+             n = n_arr[j];
+
+            mode_val_re =  mode_re_y[j] + mode_re_c1[j]*x + mode_re_c2[j]*x2  + mode_re_c3[j]*x3;
+            mode_val_im = mode_im_y[j] + mode_im_c1[j]*x + mode_im_c2[j]*x2  + mode_im_c3[j]*x3;
+            mode_val = mode_val_re + I*mode_val_im;
+
+                trans_plus_m = get_mode_value(mode_val, Phi_phi_i, Phi_r_i, m, n, Ylm_plus_m);
+
+                //trans = trans + trans_plus_m;
+                //if ((i == 1) && (i < 10000)) printf("%d, %d: %.10e %.10e, %.10e; %.10e + 1j %.10e; %.10e + 1j %.10e; %.10e + 1j %.10e %d %d %.10e %.10e\n", i, j, t, mode_val_re, mode_val_im, trans_plus_m.real(), trans_plus_m.imag(), Ylm_plus_m.real(), Ylm_plus_m.imag(), angle.real(), angle.imag(), m, n, Phi_phi_i, Phi_r_i);
+
+                //trans = (m == 0) ? trans + trans_plus_m : trans + trans_plus_m + gcmplx::conj(trans_plus_m);
+                //trans = trans_plus_m + trans;
+                // minus m
+                if (m != 0){
+
+                    Ylm_minus_m = Ylms[2*j + 1];
+                    trans_minus_m = get_mode_value(gcmplx::conj(mode_val), Phi_phi_i, Phi_r_i, -m, -n, Ylm_minus_m);
+                    //trans_minus_m = gcmplx::conj(trans_plus_m);
+
+                    //trans = trans_minus_m + trans;
+                } else trans_minus_m = 0.0 + 0.0*I;
+
+                trans = trans + trans_minus_m + trans_plus_m;
+                //if (i == 0) printf("%d %d %d: %.10e + %.10e 1j; %.10e + %.10e 1j;\n", i, m, n, trans_plus_m.real(), trans_plus_m.imag(), trans_minus_m.real(),trans_minus_m.imag());
+
+                //atomicAddComplex(&waveform[i], mode_val);
+        }
+
+        atomicAddComplex(&waveform[i], trans);
+    }
+    __syncthreads();
+}
+}
+
+
+
+void find_start_inds(int start_inds[], int unit_length[], double *t_arr, double delta_t, int length, int new_length)
 {
 
   start_inds[0] = 0;
@@ -393,7 +360,7 @@ void find_start_inds(int start_inds[], int unit_length[], fod *t_arr, fod delta_
        i < length;
        i += 1){
 
-          fod t = t_arr[i];
+          double t = t_arr[i];
 
           start_inds[i] = (int)std::ceil(t/delta_t);
           unit_length[i-1] = start_inds[i] - start_inds[i-1];
@@ -402,63 +369,71 @@ void find_start_inds(int start_inds[], int unit_length[], fod *t_arr, fod delta_
 
   start_inds[length -1] = new_length;
   unit_length[length - 2] = start_inds[length -1] - start_inds[length -2];
+
+  //for (int i=0; i < length; i++) printf("%d %d\n", start_inds[i], unit_length[i]);
 }
 
-__global__
-void do_interp(fod *p_out, fod *e_out, fod *Phi_phi_out, fod *Phi_r_out, InterpContainer *p_, InterpContainer *e_, InterpContainer *Phi_phi_, InterpContainer *Phi_r_,
-               fod delta_t, double start_t, int old_ind, int start_ind, int end_ind)
-{
-  fod t, x, x2, x3;
-  for (int i = start_ind + blockIdx.x * blockDim.x + threadIdx.x;
-       i < end_ind;
-       i += blockDim.x * gridDim.x){
 
-         t = delta_t*i;
-        x = t - start_t;
-        x2 = x*x;
-        x3 = x*x2;
+void get_waveform(cmplx *d_waveform, double *y_vals, double *c1, double *c2, double *c3,
+              int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cmplx *d_Ylms,
+              double delta_t, double *h_t){
 
-        p_out[i] = p_->y[old_ind] + p_->c1[old_ind]*x + p_->c2[old_ind]*x2  + p_->c3[old_ind]*x3;
-        e_out[i] = e_->y[old_ind] + e_->c1[old_ind]*x + e_->c2[old_ind]*x2  + e_->c3[old_ind]*x3;
-        Phi_phi_out[i] = Phi_phi_->y[old_ind] + Phi_phi_->c1[old_ind]*x + Phi_phi_->c2[old_ind]*x2  + Phi_phi_->c3[old_ind]*x3;
-        Phi_r_out[i] = Phi_r_->y[old_ind] + Phi_r_->c1[old_ind]*x + Phi_r_->c2[old_ind]*x2  + Phi_r_->c3[old_ind]*x3;
+  /*cudaEvent_t start, stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+  float milliseconds = 0;
+    cudaEventRecord(start);*/
 
-  }
-}
+    int NUM_THREADS = 256;
+    int start_inds[init_len];
+    int unit_length[init_len-1];
 
-void perform_interp(fod *p_out, fod *e_out, fod *Phi_phi_out, fod *Phi_r_out,
-                    InterpContainer *d_interp_p, InterpContainer *d_interp_e, InterpContainer *d_interp_Phi_phi, InterpContainer *d_interp_Phi_r,
-                       fod *d_t, fod *h_t, int length, int new_length, fod delta_t)
+    find_start_inds(start_inds, unit_length, h_t, delta_t, init_len, out_len);
 
-{
+    //printf("Num modes: %d\n", num_teuk_modes);
+    cudaStream_t streams[init_len-1];
 
-  int start_inds[length];
-  int unit_length[length-1];
+    int num_breaks = num_teuk_modes/MAX_MODES_BLOCK;
 
-  find_start_inds(start_inds, unit_length, h_t, delta_t, length, new_length);
+    //printf("lm: %d, modes: %d %d\n", num_l_m, num_teuk_modes, num_breaks);
 
-  cudaStream_t streams[length-1];
+    //cudaEventRecord(start);
+    #pragma omp parallel for
+    for (int i = 0; i < init_len-1; i++) {
+          cudaStreamCreate(&streams[i]);
+          int num_blocks = std::ceil((unit_length[i] + NUM_THREADS -1)/NUM_THREADS);
+          //printf("%d %d %d %d, %d %d\n", i, start_inds[i], unit_length[i], num_blocks, init_len, out_len);
+          if (num_blocks <= 0) continue;
 
-  int NUM_THREADS = 128;
-  int num_blocks;
-  for (int i = 0; i < length-2; i++) {
-        cudaStreamCreate(&streams[i]);
-        num_blocks = std::ceil((unit_length[i] + NUM_THREADS -1)/NUM_THREADS);
-        //printf("%d %d %d %d, %d %d\n", i, start_inds[i], unit_length[i], num_blocks, length, new_length);
-        if (num_blocks == 0) continue;
-        dim3 gridDim(num_blocks); //, num_teuk_modes);
-        // launch one worker kernel per stream
-        do_interp<<<num_blocks, NUM_THREADS, 0, streams[i]>>>(p_out, e_out, Phi_phi_out, Phi_r_out,
-                                                              d_interp_p, d_interp_e, d_interp_Phi_phi, d_interp_Phi_r,
-                                                              delta_t, h_t[i], i, start_inds[i], start_inds[i+1]);
+          //printf("%d %d %d %d\n", i, num_blocks, unit_length[i], init_len);
+          dim3 gridDim(num_blocks, 1); //, num_teuk_modes);
+          //dim3 threadDim(32, 32);
+          // launch one worker kernel per stream
 
-    }
-    cudaDeviceSynchronize();
-    gpuErrchk(cudaGetLastError());
-    for (int i = 0; i < length-2; i++) {
-          cudaStreamDestroy(streams[i]);
+          make_waveform<<<gridDim, NUM_THREADS, 0, streams[i]>>>(d_waveform,
+                        y_vals, c1, c2, c3,
+                        d_m, d_n, num_teuk_modes, d_Ylms,
+                        delta_t, h_t[i], i, start_inds[i], start_inds[i+1], init_len);
 
       }
+      cudaDeviceSynchronize();
+      gpuErrchk(cudaGetLastError());
 
+      #pragma omp parallel for
+      for (int i = 0; i < init_len-1; i++) {
+            cudaStreamDestroy(streams[i]);
+
+        }
+
+        //cudaEventRecord(stop);
+
+        //cudaEventSynchronize(stop);
+        //cudaEventElapsedTime(&milliseconds, start, stop);
+        //printf("after: %e\n", milliseconds);
+
+      /*int num_blocks = std::ceil((input_len + NUM_THREADS -1)/NUM_THREADS);
+      dim3 gridDim(num_blocks, num_teuk_modes); //, num_teuk_modes);
+      make_waveform<<<gridDim, NUM_THREADS>>>(d_waveform, d_teuk_modes, d_Phi_phi, d_Phi_r, d_m, d_n, input_len, num_teuk_modes, d_Ylms, num_n);
+      cudaDeviceSynchronize();
+      gpuErrchk(cudaGetLastError());*/
 }
-*/

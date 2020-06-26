@@ -2,8 +2,9 @@ import os
 env = Environment()
 
 env['CXX']      = 'g++'
-env['CPPPATH']  = ['../include']
+env['CPPPATH']  = ['../include', '/Users/michaelkatz/anaconda3/envs/few_env/include']
 env['LIBS']     = ['gsl' , 'gslcblas','hdf5','hdf5_hl', 'omp']
+env['LIBDIR'] = ['/Users/michaelkatz/anaconda3/envs/few_env/lib/']
 env['CPPFLAGS'] = ['-std=c++14', '-O3', '-Xpreprocessor', '-fopenmp']
  
 sources = ['FluxInspiral.cc', 'Interpolant.cc', 'SpinWeightedSphericalHarmonics.cc']
