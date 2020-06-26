@@ -120,17 +120,6 @@ class FEW:
         # amplitudes
         teuk_modes = self.amplitude_gen(p, e)
 
-        # TODO: check normalization of flux
-        power = (
-            xp.abs(
-                xp.concatenate(
-                    [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])], axis=1
-                )
-                * ylms
-            )
-            ** 2
-        )
-
         amp_for_norm = xp.sum(
             xp.abs(
                 xp.concatenate(
@@ -141,22 +130,33 @@ class FEW:
             axis=1,
         ) ** (1 / 2)
 
-        inds_sort = xp.argsort(power, axis=1)[:, ::-1]
-        power = xp.sort(power, axis=1)[:, ::-1]
-        cumsum = xp.cumsum(power, axis=1)
-
         factor = amp_norm / amp_for_norm
-
         teuk_modes = teuk_modes * factor[:, np.newaxis]
-        cumsum = cumsum * factor[:, np.newaxis] ** 2
 
-        inds_keep = xp.full(cumsum.shape, True)
-
-        inds_keep[:, 1:] = cumsum[:, :-1] < cumsum[:, -1][:, xp.newaxis] * (1 - eps)
+        # TODO: check normalization of flux
 
         if all_modes:
-            keep_modes = xp.arange(3843)
+            keep_modes = xp.arange(teuk_modes.shape[1])
+
         else:
+            power = (
+                xp.abs(
+                    xp.concatenate(
+                        [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])], axis=1
+                    )
+                    * ylms
+                )
+                ** 2
+            )
+
+            inds_sort = xp.argsort(power, axis=1)[:, ::-1]
+            power = xp.sort(power, axis=1)[:, ::-1]
+            cumsum = xp.cumsum(power, axis=1)
+
+            inds_keep = xp.full(cumsum.shape, True)
+
+            inds_keep[:, 1:] = cumsum[:, :-1] < cumsum[:, -1][:, xp.newaxis] * (1 - eps)
+
             temp = inds_sort[inds_keep]
 
             temp = temp * (temp < self.num_m_zero_up) + (temp - self.num_m_1_up) * (
@@ -165,11 +165,23 @@ class FEW:
 
             keep_modes = xp.unique(temp)
 
-            temp2 = keep_modes * (keep_modes < self.num_m0) + (
-                keep_modes + self.num_m_1_up
-            ) * (keep_modes >= self.num_m0)
+        # set ylms
+        temp2 = keep_modes * (keep_modes < self.num_m0) + (
+            keep_modes + self.num_m_1_up
+        ) * (keep_modes >= self.num_m0)
 
-            ylmkeep = xp.concatenate([keep_modes, temp2])
+        ylmkeep = xp.concatenate([keep_modes, temp2])
+
+        # TODO: check normalization of flux
+        power = (
+            xp.abs(
+                xp.concatenate(
+                    [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])], axis=1
+                )
+                * ylms
+            )
+            ** 2
+        )
 
         self.num_modes_kept = len(keep_modes)
 
@@ -227,7 +239,7 @@ if __name__ == "__main__":
     fullwave = fullwave[:, 5] + 1j * fullwave[:, 6]
 
     for i, eps in enumerate(eps_all):
-        # all_modes = False if i > 0 else True
+        all_modes = False if i > 0 else True
         num = 30
         st = time.perf_counter()
         for jjj in range(num):
