@@ -131,14 +131,24 @@ class FEW:
             ** 2
         )
 
+        amp_for_norm = xp.sum(
+            xp.abs(
+                xp.concatenate(
+                    [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])], axis=1
+                )
+            )
+            ** 2,
+            axis=1,
+        ) ** (1 / 2)
+
         inds_sort = xp.argsort(power, axis=1)[:, ::-1]
         power = xp.sort(power, axis=1)[:, ::-1]
         cumsum = xp.cumsum(power, axis=1)
 
-        # factor = amp_norm / cumsum[:, -1] ** (1 / 2)
+        factor = amp_norm / amp_for_norm
 
-        # teuk_modes = teuk_modes * factor[:, np.newaxis]
-        # cumsum = cumsum * factor[:, np.newaxis] ** 2
+        teuk_modes = teuk_modes * factor[:, np.newaxis]
+        cumsum = cumsum * factor[:, np.newaxis] ** 2
 
         inds_keep = xp.full(cumsum.shape, True)
 
