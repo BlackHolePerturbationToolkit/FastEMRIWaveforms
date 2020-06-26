@@ -1,0 +1,118 @@
+try:
+    import cupy as xp
+
+except ImportError:
+    import numpy as xp
+
+from pyinterp import interpolate_arrays_wrap, get_waveform_wrap
+
+
+class InterpolatedModeSum:
+    def __init__(self, pad_output=False):
+        self.num_phases = 2
+        self.pad_output = pad_output
+
+    def _interp(self, t, p, e, Phi_phi, Phi_r, teuk_modes):
+        self.length, num_modes_keep = teuk_modes.shape
+
+        self.ninterps = self.num_phases + 2 * num_modes_keep  # 2 for re and im
+        self.y_all = xp.zeros((self.ninterps, self.length))
+
+        self.y_all[:num_modes_keep] = teuk_modes.T.real
+        self.y_all[num_modes_keep : 2 * num_modes_keep] = teuk_modes.T.imag
+
+        self.y_all[-2] = Phi_phi
+        self.y_all[-1] = Phi_r
+
+        self.y_all = self.y_all.flatten()
+        self.c1 = xp.zeros((self.ninterps, self.length - 1)).flatten()
+        self.c2 = xp.zeros_like(self.c1).flatten()
+        self.c3 = xp.zeros_like(self.c1).flatten()
+
+        B = xp.zeros((self.ninterps * self.length,))
+        upper_diag = xp.zeros_like(B)
+        diag = xp.zeros_like(B)
+        lower_diag = xp.zeros_like(B)
+
+        interpolate_arrays_wrap(
+            t,
+            self.y_all,
+            self.c1,
+            self.c2,
+            self.c3,
+            self.ninterps,
+            self.length,
+            B,
+            upper_diag,
+            diag,
+            lower_diag,
+        )
+
+        self.y_all = self.y_all.reshape(self.ninterps, self.length).T.flatten()
+        self.c1 = self.c1.reshape(self.ninterps, self.length - 1).T.flatten()
+        self.c2 = self.c2.reshape(self.ninterps, self.length - 1).T.flatten()
+        self.c3 = self.c3.reshape(self.ninterps, self.length - 1).T.flatten()
+
+    def _sum(self, m_arr, n_arr, init_len, num_pts, num_teuk_modes, ylms, dt, h_t):
+
+        get_waveform_wrap(
+            self.waveform,
+            self.y_all,
+            self.c1,
+            self.c2,
+            self.c3,
+            m_arr,
+            n_arr,
+            init_len,
+            num_pts,
+            num_teuk_modes,
+            ylms,
+            dt,
+            h_t,
+        )
+
+    def __call__(self, t, p, e, Phi_phi, Phi_r, teuk_modes, m_arr, n_arr, ylms, dt, T):
+
+        if T < t[-1].item():
+            num_pts = int(T / dt)
+            num_pts_pad = 0
+
+        else:
+            num_pts = int(t[-1] / dt)
+            if self.pad_output:
+                num_pts_pad = int(T / dt) - num_pts
+            else:
+                num_pts_pad = 0
+
+        # TODO: make sure num points adjusts for zero padding
+        self.num_pts, self.num_pts_pad = num_pts, num_pts_pad
+        self.dt = dt
+        init_len = len(t)
+        num_teuk_modes = teuk_modes.shape[1]
+
+        self.waveform = xp.zeros(
+            (self.num_pts + self.num_pts_pad,), dtype=xp.complex128
+        )
+
+        self._interp(t, p, e, Phi_phi, Phi_r, teuk_modes)
+
+        """
+        from scipy.interpolate import CubicSpline
+        import numpy as np
+
+        Phi_phi_spl = CubicSpline(t.get(), Phi_phi.get())
+        Phi_r_spl = CubicSpline(t.get(), Phi_r.get())
+
+        mode_re_spl = CubicSpline(t.get(), teuk_modes[:, 5].get().real)
+        mode_im_spl = CubicSpline(t.get(), teuk_modes[:, 5].get().imag)
+
+        t_nn = np.arange(0, 10000, dt)
+        Phi_phi_nn = Phi_phi_spl(t_nn)
+        Phi_r_nn = Phi_r_spl(t_nn)
+        mode_re_nn = mode_re_spl(t_nn)
+        mode_im_nn = mode_im_spl(t_nn)
+        """
+
+        self._sum(m_arr, n_arr, init_len, num_pts, num_teuk_modes, ylms, dt, t.get())
+
+        return self.waveform
