@@ -397,7 +397,7 @@ void slow_wave () {
 	}
 
     FILE * pFile;
-   pFile = fopen ("checkslow.txt","w");
+   pFile = fopen ("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_05.txt","w");
 
 
 	// Output format: t, p, e, Phi_phi, Phi_r
