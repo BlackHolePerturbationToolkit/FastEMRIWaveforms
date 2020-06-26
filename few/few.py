@@ -99,24 +99,12 @@ class FEW:
         )
 
         # convert for gpu
-        t = xp.asarray(t)[: int(1e4)]
-        p = xp.asarray(p)[: int(1e4)]
-        e = xp.asarray(e)[: int(1e4)]
-        Phi_phi = xp.asarray(Phi_phi)[: int(1e4)]
-        Phi_r = xp.asarray(Phi_r)[: int(1e4)]
-        amp_norm = xp.asarray(amp_norm)[: int(1e4)]
-
-        """
-        insp = np.loadtxt("inspiral_new.txt")[45000:55000]
-        t, p, e = xp.asarray(insp[:, :3].T)
-
-        Phi_phi, Phi_r = xp.asarray(insp[:, 3:5]).T
-
-        Ylms_check = np.tile(
-            np.loadtxt("few/files/Ylm_pi2_0.dat"), (61, 1)
-        ).T.flatten()[self.m0sort.get()]
-        t = xp.arange(len(p)) * dt
-        """
+        t = xp.asarray(t)
+        p = xp.asarray(p)
+        e = xp.asarray(e)
+        Phi_phi = xp.asarray(Phi_phi)
+        Phi_r = xp.asarray(Phi_r)
+        amp_norm = xp.asarray(amp_norm)
 
         ylms = self.ylm_gen(self.unique_l, self.unique_m, theta, phi).copy()[
             self.inverse_lm
