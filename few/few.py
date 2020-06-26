@@ -11,6 +11,7 @@ from amplitude import Amplitude
 from interpolated_mode_sum import InterpolatedModeSum
 from ylm import GetYlms
 from direct_mode_sum import DirectModeSum
+from mode_filter import ModeFilter
 
 # TODO: make sure constants are same
 from scipy import constants as ct
@@ -83,6 +84,10 @@ class FEW:
 
         self.ylm_gen = GetYlms(self.num_teuk_modes, **Ylm_kwargs)
 
+        self.mode_filter = ModeFilter(
+            self.m0mask, self.num_m_zero_up, self.num_m_1_up, self.num_m0
+        )
+
     def __call__(
         self, M, mu, p0, e0, theta, phi, dt=10.0, T=1.0, eps=2e-4, all_modes=False
     ):
@@ -136,74 +141,19 @@ class FEW:
         # TODO: check normalization of flux
 
         if all_modes:
-            keep_modes = xp.arange(teuk_modes.shape[1])
+            self.ls = self.l_arr
+            self.ms = self.m_arr
+            self.ns = self.n_arr
 
         else:
-            power = (
-                xp.abs(
-                    xp.concatenate(
-                        [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])], axis=1
-                    )
-                    * ylms
-                )
-                ** 2
+            (teuk_modes, ylms, self.ls, self.ms, self.ns) = self.mode_filter(
+                eps, teuk_modes, ylms, self.l_arr, self.m_arr, self.n_arr
             )
 
-            inds_sort = xp.argsort(power, axis=1)[:, ::-1]
-            power = xp.sort(power, axis=1)[:, ::-1]
-            cumsum = xp.cumsum(power, axis=1)
-
-            inds_keep = xp.full(cumsum.shape, True)
-
-            inds_keep[:, 1:] = cumsum[:, :-1] < cumsum[:, -1][:, xp.newaxis] * (1 - eps)
-
-            temp = inds_sort[inds_keep]
-
-            temp = temp * (temp < self.num_m_zero_up) + (temp - self.num_m_1_up) * (
-                temp >= self.num_m_zero_up
-            )
-
-            keep_modes = xp.unique(temp)
-
-        # set ylms
-        temp2 = keep_modes * (keep_modes < self.num_m0) + (
-            keep_modes + self.num_m_1_up
-        ) * (keep_modes >= self.num_m0)
-
-        ylmkeep = xp.concatenate([keep_modes, temp2])
-
-        # TODO: check normalization of flux
-        power = (
-            xp.abs(
-                xp.concatenate(
-                    [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])], axis=1
-                )
-                * ylms
-            )
-            ** 2
-        )
-
-        self.num_modes_kept = len(keep_modes)
-
-        # keep_modes = xp.array([646])
-
-        # keep_modes = xp.arange(3843)
-        self.ls = self.l_arr[keep_modes]
-        self.ms = self.m_arr[keep_modes]
-        self.ns = self.n_arr[keep_modes]
+        self.num_modes_kept = teuk_modes.shape[1]
 
         waveform = self.sum(
-            t,
-            p,
-            e,
-            Phi_phi,
-            Phi_r,
-            teuk_modes[:, keep_modes],
-            self.ms,
-            self.ns,
-            ylms[ylmkeep],
-            dt,
-            T,
+            t, p, e, Phi_phi, Phi_r, teuk_modes, self.ms, self.ns, ylms, dt, T
         )
 
         return waveform
