@@ -7,6 +7,7 @@ try:
 except ImportError:
     import numpy as xp
 
+import numpy as xp
 from flux import RunFluxInspiral
 from amplitude import ROMANAmplitude, Interp2DAmplitude
 from interpolated_mode_sum import InterpolatedModeSum
@@ -15,6 +16,7 @@ from direct_mode_sum import DirectModeSum
 from mode_filter import ModeFilter
 
 # TODO: make sure constants are same
+# TODO: batching and mode selection
 from scipy import constants as ct
 
 
@@ -80,11 +82,17 @@ class SchwarzschildEccentricBase:
         self.m_arr = xp.concatenate([self.m_arr, -self.m_arr[self.m0mask]])
         self.n_arr = xp.concatenate([self.n_arr, self.n_arr[self.m0mask]])
 
-        temp, self.inverse_lm = np.unique(
-            np.asarray([self.l_arr.get(), self.m_arr.get()]).T,
-            axis=0,
-            return_inverse=True,
-        )
+        try:
+            temp, self.inverse_lm = np.unique(
+                np.asarray([self.l_arr.get(), self.m_arr.get()]).T,
+                axis=0,
+                return_inverse=True,
+            )
+
+        except AttributeError:
+            temp, self.inverse_lm = np.unique(
+                np.asarray([self.l_arr, self.m_arr]).T, axis=0, return_inverse=True
+            )
 
         self.unique_l, self.unique_m = xp.asarray(temp).T
         self.num_unique_lm = len(self.unique_l)
@@ -101,7 +109,7 @@ class SchwarzschildEccentricBase:
         T = T * ct.Julian_year
         # get trajectory
         (t, p, e, Phi_phi, Phi_r, amp_norm) = self.inspiral_generator(
-            M, mu, p0, e0, **self.inspiral_kwargs
+            M, mu, p0, e0, T=T, dt=dt, **self.inspiral_kwargs
         )
 
         # convert for gpu
@@ -117,10 +125,7 @@ class SchwarzschildEccentricBase:
         ]
 
         # amplitudes
-        teuk_modes = self.amplitude_generator(p, e)
-        import pdb
-
-        pdb.set_trace()
+        teuk_modes = self.amplitude_generator(p, e, self.l_arr, self.m_arr, self.n_arr)
 
         amp_for_norm = xp.sum(
             xp.abs(
@@ -138,9 +143,9 @@ class SchwarzschildEccentricBase:
         # TODO: check normalization of flux
 
         if all_modes:
-            self.ls = self.l_arr
-            self.ms = self.m_arr
-            self.ns = self.n_arr
+            self.ls = self.l_arr[: teuk_modes.shape[1]]
+            self.ms = self.m_arr[: teuk_modes.shape[1]]
+            self.ns = self.n_arr[: teuk_modes.shape[1]]
 
             keep_modes = xp.arange(teuk_modes.shape[1])
             temp2 = keep_modes * (keep_modes < self.num_m0) + (
@@ -190,15 +195,10 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricBase):
     def __init__(self, *args, **kwargs):
         if "inspiral_kwargs" not in kwargs:
             kwargs["inspiral_kwargs"] = {}
-        kwargs["inspiral_kwargs"]["DENSE_STEPPING"] = 0
+        kwargs["inspiral_kwargs"]["DENSE_STEPPING"] = 1
 
         SchwarzschildEccentricBase.__init__(
-            self,
-            RunFluxInspiral,
-            Interp2DAmplitude,
-            InterpolatedModeSum,
-            *args,
-            **kwargs
+            self, RunFluxInspiral, Interp2DAmplitude, DirectModeSum, *args, **kwargs
         )
 
 
@@ -206,20 +206,20 @@ if __name__ == "__main__":
     import time
 
     few = SlowSchwarzschildEccentricFlux(
-        inspiral_kwargs={"DENSE_STEPPING": 0, "max_init_len": int(1e3)},
-        # amplitude_kwargs={"max_input_len": int(1e3)},
+        inspiral_kwargs={"DENSE_STEPPING": 1, "max_init_len": int(1e5)},
+        # amplitude_kwargs={"max_input_len": int(1e5)},
         amplitude_kwargs=dict(num_teuk_modes=3843, lmax=10, nmax=30),
         Ylm_kwargs={"assume_positive_m": False},
     )
 
     M = 1e6
     mu = 1e1
-    p0 = 10.0
-    e0 = 0.7
+    p0 = 14.0
+    e0 = 0.5
     theta = np.pi / 2
     phi = 0.0
     dt = 10.0
-    T = 1.0  # 1124936.040602 / ct.Julian_year
+    T = 1 / 1e2  # 1124936.040602 / ct.Julian_year
     eps = 1e-2
     all_modes = False
 
@@ -228,23 +228,26 @@ if __name__ == "__main__":
     timing = []
     eps_all = 10.0 ** np.arange(-10, -2)
 
-    eps_all = np.concatenate([np.array([1e-25]), eps_all])
-    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_10_07.txt")
+    eps_all = np.concatenate([np.array([1e-25]), eps_all])[:1]
+    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_05.txt")
     fullwave = fullwave[:, 5] + 1j * fullwave[:, 6]
 
     for i, eps in enumerate(eps_all):
         all_modes = False if i > 0 else True
-        num = 30
+        num = 1
         st = time.perf_counter()
         for jjj in range(num):
 
             # print(jjj, "\n")
             wc = few(
                 M, mu, p0, e0, theta, phi, dt=dt, T=T, eps=eps, all_modes=all_modes
-            ).get()
-            import pdb
+            )
 
-            pdb.set_trace()
+            try:
+                wc = wc.get()
+            except AttributeError:
+                pass
+
         et = time.perf_counter()
 
         # if i == 0:

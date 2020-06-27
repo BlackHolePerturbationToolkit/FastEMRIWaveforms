@@ -218,7 +218,7 @@ double get_step_flux(double p, double e, Interpolant *amp_vec_norm_interp)
 }
 
 
-FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double err, FluxCarrier *flux_carrier, int DENSE_STEPPING){
+FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double err, double tmax, double dt, FluxCarrier *flux_carrier, int DENSE_STEPPING){
 
     double init_flux = get_step_flux(p0, e0, flux_carrier->amp_vec_norm_interp);
 
@@ -233,14 +233,15 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
     //high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
     // Set the samplerate in Hertz
-    double samplerate = 0.1;
+    //double samplerate = 0.1;
 
     // Signal length (in seconds)
     double max_signal_length = 1*YearInSeconds;
 
     // Compute the adimensionalized time steps and max time
-    double dt = 1/samplerate /(M*MTSUN_SI);
-    double tmax = max_signal_length/(M*MTSUN_SI);
+
+    dt = dt /(M*MTSUN_SI);
+    tmax = tmax/(M*MTSUN_SI);
 
     // Initial values
 	// TODO do we want to set initial phases here?
@@ -302,10 +303,10 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
 
 }
 
-void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, int *length, FluxCarrier *flux_carrier, double err, int DENSE_STEPPING){
+void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, int *length, double tmax, double dt, FluxCarrier *flux_carrier, double err, int DENSE_STEPPING){
 
 	double t0 = 0.0;
-		FLUXHolder flux_vals = run_FLUX(t0, M, mu, p0, e0, err, flux_carrier, DENSE_STEPPING);
+		FLUXHolder flux_vals = run_FLUX(t0, M, mu, p0, e0, err, tmax, dt, flux_carrier, DENSE_STEPPING);
 
 		memcpy(t, &flux_vals.t_arr[0], flux_vals.length*sizeof(double));
 		memcpy(p, &flux_vals.p_arr[0], flux_vals.length*sizeof(double));

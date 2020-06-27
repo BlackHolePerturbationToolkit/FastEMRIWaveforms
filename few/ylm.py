@@ -2,6 +2,7 @@ try:
     import cupy as xp
 except ImportError:
     import numpy as xp
+import numpy as xp
 
 import numpy as np
 
@@ -32,8 +33,15 @@ class GetYlms:
             l = l_in
             m = m_in
 
+        try:
+            l = l.get()
+            m = m.get()
+
+        except AttributeError:
+            pass
+
         return xp.asarray(
             get_spin_weighted_spher_harm_wrap(
-                l.get().astype(np.int32), m.get().astype(np.int32), theta, phi
+                l.astype(np.int32), m.astype(np.int32), theta, phi
             )
         )

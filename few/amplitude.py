@@ -86,7 +86,7 @@ class ROMANAmplitude:
 
         return xp.log(-(21 / 10) - 2 * e + p)
 
-    def __call__(self, p, e):
+    def __call__(self, p, e, *args):
         input_len = len(p)
 
         y = self._p_to_y(p, e)
@@ -130,10 +130,17 @@ class Interp2DAmplitude:
         self.amplitude_carrier = pyAmplitudeCarrier(lmax, nmax)
         self.num_modes = num_teuk_modes
 
-    def __call__(self, p, e):
+    def __call__(self, p, e, l_arr, m_arr, n_arr):
 
         input_len = len(p)
         teuk_modes = Interp2DAmplitude_wrap(
-            p.get(), e.get(), input_len, self.num_modes, self.amplitude_carrier
+            p,
+            e,
+            l_arr.astype(np.int32),
+            m_arr.astype(np.int32),
+            n_arr.astype(np.int32),
+            input_len,
+            self.num_modes,
+            self.amplitude_carrier,
         )
         return teuk_modes

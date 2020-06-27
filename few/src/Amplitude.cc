@@ -170,14 +170,13 @@ void AmplitudeCarrier::dealloc()
 }
 
 
-void Interp2DAmplitude(std::complex<double> *amplitude_out, double *p_arr, double *e_arr, int num, AmplitudeCarrier *amps_carrier)
+void Interp2DAmplitude(std::complex<double> *amplitude_out, double *p_arr, double *e_arr, int *l_arr, int *m_arr, int *n_arr, int num, int num_modes, AmplitudeCarrier *amps_carrier)
 {
 
     struct waveform_amps *amps = amps_carrier->amps;
     int lmax = amps_carrier->lmax;
     int nmax = amps_carrier->nmax;
 
-    int num_modes = 3843;
     complex<double> I(0.0, 1.0);
 
     //reduction (+:hwave)
@@ -189,15 +188,11 @@ void Interp2DAmplitude(std::complex<double> *amplitude_out, double *p_arr, doubl
 
         double y = log((p -2.*e - 2.1));
 
-        int mode_num = 0;
-    	for(int l = 2; l <= lmax; l++){
-    		for(int m = 0; m <= l; m++){
-    			for(int n = -nmax; n <= nmax; n++){
+    	for(int mode_i = 0; mode_i < num_modes; mode_i++){
+            int l = l_arr[mode_i]; int m = m_arr[mode_i]; int n = n_arr[mode_i];
+			amplitude_out[i*num_modes + mode_i]= amps->re[l][m][n+nmax]->eval(y,e) + I*amps->im[l][m][n+nmax]->eval(y,e);
 
-    				amplitude_out[i*num_modes + mode_num]= amps->re[l][m][n+nmax]->eval(y,e) + I*amps->im[l][m][n+nmax]->eval(y,e);
-                    mode_num += 1;
-    			}
-    	    }
+            //if ((l == 2) && (m ==0)) printf("%d %d %d %e %e\n", l, m, n, amps->re[l][m][n+nmax]->eval(y,e), amps->im[l][m][n+nmax]->eval(y,e));
         }
     }
 }

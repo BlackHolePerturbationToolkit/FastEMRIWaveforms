@@ -348,8 +348,8 @@ void slow_wave () {
 
 
 	// Set the initial values
-	double p0 = 11.0;
-	double e0 = 0.6;
+	double p0 = 14.0;
+	double e0 = 0.5;
 	double Phi_phi0 = 0;
 	double Phi_r0 = 0;
 	double t0 = 0;

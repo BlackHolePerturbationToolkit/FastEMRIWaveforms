@@ -54,6 +54,6 @@ public:
     void dealloc();
 };
 
-void Interp2DAmplitude(std::complex<double> *amplitude_out, double *p_arr, double *e_arr, int num, AmplitudeCarrier *amps_carrier);
+void Interp2DAmplitude(std::complex<double> *amplitude_out, double *p_arr, double *e_arr, int *l_arr, int *m_arr, int *n_arr, int num, int num_modes, AmplitudeCarrier *amps_carrier);
 
 #endif //__AMPLITUDE_H__

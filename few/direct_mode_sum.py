@@ -4,6 +4,8 @@ try:
 except ImportError:
     import numpy as xp
 
+import numpy as xp
+
 
 class DirectModeSum:
     def __init__(self, pad_output=False):
@@ -37,21 +39,23 @@ class DirectModeSum:
             axis=1,
         )
 
+        inds = xp.where(m_arr > 0)[0]
+
         w2 = xp.sum(
-            (m_arr[xp.newaxis, :] > 0)
-            * ylms[xp.newaxis, teuk_modes.shape[1] :]
-            * xp.conj(teuk_modes)
+            (m_arr[xp.newaxis, inds] > 0)
+            * ylms[xp.newaxis, teuk_modes.shape[1] :][:, inds]
+            * xp.conj(teuk_modes[:, inds])
             * xp.exp(
                 -1j
                 * (
-                    -m_arr[xp.newaxis, :] * Phi_phi[:, xp.newaxis]
-                    - n_arr[xp.newaxis, :] * Phi_r[:, xp.newaxis]
+                    -m_arr[xp.newaxis, inds] * Phi_phi[:, xp.newaxis]
+                    - n_arr[xp.newaxis, inds] * Phi_r[:, xp.newaxis]
                 )
             ),
             axis=1,
         )
 
-        self.waveform = w1 + w1
+        self.waveform = w1 + w2
 
         """
         i = 0
