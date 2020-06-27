@@ -7,7 +7,6 @@ try:
 except ImportError:
     import numpy as xp
 
-import numpy as xp
 from flux import RunFluxInspiral
 from amplitude import ROMANAmplitude, Interp2DAmplitude
 from interpolated_mode_sum import InterpolatedModeSum
@@ -30,10 +29,18 @@ class SchwarzschildEccentricBase:
         amplitude_kwargs={},
         sum_kwargs={},
         Ylm_kwargs={},
+        use_gpu=False,
     ):
         """
         Carrier class for FEW
         """
+
+        if use_gpu:
+            self.xp = xp
+
+        else:
+            self.xp = np
+
         self.inspiral_kwargs = inspiral_kwargs
         self.inspiral_generator = inspiral_module()
 
@@ -41,8 +48,8 @@ class SchwarzschildEccentricBase:
         self.sum = sum_module(**sum_kwargs)
         # self.sum = DirectModeSum(**sum_kwargs)
 
-        m_arr = xp.zeros((3843,), dtype=int)
-        n_arr = xp.zeros_like(m_arr)
+        m_arr = self.xp.zeros((3843,), dtype=int)
+        n_arr = self.xp.zeros_like(m_arr)
 
         md = []
 
@@ -53,7 +60,7 @@ class SchwarzschildEccentricBase:
 
         self.num_teuk_modes = len(md)
 
-        m0mask = xp.array(
+        m0mask = self.xp.array(
             [
                 m == 0
                 for l in range(2, 10 + 1)
@@ -62,25 +69,25 @@ class SchwarzschildEccentricBase:
             ]
         )
 
-        self.m0sort = m0sort = xp.concatenate(
+        self.m0sort = m0sort = self.xp.concatenate(
             [
-                xp.arange(self.num_teuk_modes)[m0mask],
-                xp.arange(self.num_teuk_modes)[~m0mask],
+                self.xp.arange(self.num_teuk_modes)[m0mask],
+                self.xp.arange(self.num_teuk_modes)[~m0mask],
             ]
         )
 
-        md = xp.asarray(md).T[:, m0sort].astype(xp.int32)
+        md = self.xp.asarray(md).T[:, m0sort].astype(self.xp.int32)
 
         self.l_arr, self.m_arr, self.n_arr = md[0], md[1], md[2]
 
         self.m0mask = self.m_arr != 0
         self.num_m_zero_up = len(self.m_arr)
-        self.num_m0 = len(xp.arange(self.num_teuk_modes)[m0mask])
+        self.num_m0 = len(self.xp.arange(self.num_teuk_modes)[m0mask])
 
         self.num_m_1_up = self.num_m_zero_up - self.num_m0
-        self.l_arr = xp.concatenate([self.l_arr, self.l_arr[self.m0mask]])
-        self.m_arr = xp.concatenate([self.m_arr, -self.m_arr[self.m0mask]])
-        self.n_arr = xp.concatenate([self.n_arr, self.n_arr[self.m0mask]])
+        self.l_arr = self.xp.concatenate([self.l_arr, self.l_arr[self.m0mask]])
+        self.m_arr = self.xp.concatenate([self.m_arr, -self.m_arr[self.m0mask]])
+        self.n_arr = self.xp.concatenate([self.n_arr, self.n_arr[self.m0mask]])
 
         try:
             temp, self.inverse_lm = np.unique(
@@ -94,10 +101,10 @@ class SchwarzschildEccentricBase:
                 np.asarray([self.l_arr, self.m_arr]).T, axis=0, return_inverse=True
             )
 
-        self.unique_l, self.unique_m = xp.asarray(temp).T
+        self.unique_l, self.unique_m = self.xp.asarray(temp).T
         self.num_unique_lm = len(self.unique_l)
 
-        self.ylm_gen = GetYlms(self.num_teuk_modes, **Ylm_kwargs)
+        self.ylm_gen = GetYlms(self.num_teuk_modes, use_gpu=use_gpu, **Ylm_kwargs)
 
         self.mode_filter = ModeFilter(
             self.m0mask, self.num_m_zero_up, self.num_m_1_up, self.num_m0
@@ -113,12 +120,12 @@ class SchwarzschildEccentricBase:
         )
 
         # convert for gpu
-        t = xp.asarray(t)
-        p = xp.asarray(p)
-        e = xp.asarray(e)
-        Phi_phi = xp.asarray(Phi_phi)
-        Phi_r = xp.asarray(Phi_r)
-        amp_norm = xp.asarray(amp_norm)
+        t = self.xp.asarray(t)
+        p = self.xp.asarray(p)
+        e = self.xp.asarray(e)
+        Phi_phi = self.xp.asarray(Phi_phi)
+        Phi_r = self.xp.asarray(Phi_r)
+        amp_norm = self.xp.asarray(amp_norm)
 
         ylms = self.ylm_gen(self.unique_l, self.unique_m, theta, phi).copy()[
             self.inverse_lm
@@ -127,10 +134,10 @@ class SchwarzschildEccentricBase:
         # amplitudes
         teuk_modes = self.amplitude_generator(p, e, self.l_arr, self.m_arr, self.n_arr)
 
-        amp_for_norm = xp.sum(
-            xp.abs(
-                xp.concatenate(
-                    [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])], axis=1
+        amp_for_norm = self.xp.sum(
+            self.xp.abs(
+                self.xp.concatenate(
+                    [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])], axis=1
                 )
             )
             ** 2,
@@ -147,12 +154,12 @@ class SchwarzschildEccentricBase:
             self.ms = self.m_arr[: teuk_modes.shape[1]]
             self.ns = self.n_arr[: teuk_modes.shape[1]]
 
-            keep_modes = xp.arange(teuk_modes.shape[1])
+            keep_modes = self.xp.arange(teuk_modes.shape[1])
             temp2 = keep_modes * (keep_modes < self.num_m0) + (
                 keep_modes + self.num_m_1_up
             ) * (keep_modes >= self.num_m0)
 
-            ylmkeep = xp.concatenate([keep_modes, temp2])
+            ylmkeep = self.xp.concatenate([keep_modes, temp2])
             ylms = ylms[ylmkeep]
 
         else:
@@ -186,40 +193,59 @@ class SchwarzschildEccentricBase:
 # TODO: free memory in trajectory
 class FastSchwarzschildEccentricFlux(SchwarzschildEccentricBase):
     def __init__(self, *args, **kwargs):
+
+        self.gpu_capability = True
+
         SchwarzschildEccentricBase.__init__(
-            self, RunFluxInspiral, ROMANAmplitude, InterpolatedModeSum, *args, **kwargs
+            self,
+            RunFluxInspiral,
+            ROMANAmplitude,
+            InterpolatedModeSum,
+            *args,
+            use_gpu=self.gpu_capability,
+            **kwargs
         )
 
 
 class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricBase):
     def __init__(self, *args, **kwargs):
+
+        # declare specific properties
         if "inspiral_kwargs" not in kwargs:
             kwargs["inspiral_kwargs"] = {}
         kwargs["inspiral_kwargs"]["DENSE_STEPPING"] = 1
 
+        self.gpu_capability = False
+
         SchwarzschildEccentricBase.__init__(
-            self, RunFluxInspiral, Interp2DAmplitude, DirectModeSum, *args, **kwargs
+            self,
+            RunFluxInspiral,
+            Interp2DAmplitude,
+            DirectModeSum,
+            *args,
+            use_gpu=self.gpu_capability,
+            **kwargs
         )
 
 
 if __name__ == "__main__":
     import time
 
-    few = SlowSchwarzschildEccentricFlux(
-        inspiral_kwargs={"DENSE_STEPPING": 1, "max_init_len": int(1e5)},
-        # amplitude_kwargs={"max_input_len": int(1e5)},
-        amplitude_kwargs=dict(num_teuk_modes=3843, lmax=10, nmax=30),
+    few = FastSchwarzschildEccentricFlux(
+        inspiral_kwargs={"DENSE_STEPPING": 0, "max_init_len": int(1e5)},
+        amplitude_kwargs={"max_input_len": int(1e5)},
+        # amplitude_kwargs=dict(num_teuk_modes=3843, lmax=10, nmax=30),
         Ylm_kwargs={"assume_positive_m": False},
     )
 
     M = 1e6
     mu = 1e1
     p0 = 14.0
-    e0 = 0.5
+    e0 = 0.7
     theta = np.pi / 2
     phi = 0.0
     dt = 10.0
-    T = 1 / 1e2  # 1124936.040602 / ct.Julian_year
+    T = 1  # / 1e2  # 1124936.040602 / ct.Julian_year
     eps = 1e-2
     all_modes = False
 
@@ -228,13 +254,13 @@ if __name__ == "__main__":
     timing = []
     eps_all = 10.0 ** np.arange(-10, -2)
 
-    eps_all = np.concatenate([np.array([1e-25]), eps_all])[:1]
-    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_05.txt")
+    eps_all = np.concatenate([np.array([1e-25]), eps_all])
+    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_07.txt")
     fullwave = fullwave[:, 5] + 1j * fullwave[:, 6]
 
     for i, eps in enumerate(eps_all):
         all_modes = False if i > 0 else True
-        num = 1
+        num = 30
         st = time.perf_counter()
         for jjj in range(num):
 
