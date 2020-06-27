@@ -1,4 +1,5 @@
 import numpy as np
+from abc import ABC
 
 try:
     import cupy as xp
@@ -17,19 +18,25 @@ from mode_filter import ModeFilter
 from scipy import constants as ct
 
 
-# TODO: free memory in trajectory
-class FEW:
+class SchwarzschildEccentricBase:
     def __init__(
-        self, inspiral_kwargs={}, amplitude_kwargs={}, Ylm_kwargs={}, sum_kwargs={}
+        self,
+        inspiral_module,
+        amplitude_module,
+        sum_module,
+        inspiral_kwargs={},
+        amplitude_kwargs={},
+        sum_kwargs={},
+        Ylm_kwargs={},
     ):
         """
         Carrier class for FEW
         """
-        self.inspiral_gen = RunFluxInspiral()
         self.inspiral_kwargs = inspiral_kwargs
+        self.inspiral_generator = inspiral_module()
 
-        self.amplitude_gen = Amplitude(**amplitude_kwargs)
-        self.sum = InterpolatedModeSum(**sum_kwargs)
+        self.amplitude_generator = amplitude_module(**amplitude_kwargs)
+        self.sum = sum_module(**sum_kwargs)
         # self.sum = DirectModeSum(**sum_kwargs)
 
         m_arr = xp.zeros((3843,), dtype=int)
@@ -91,10 +98,9 @@ class FEW:
     def __call__(
         self, M, mu, p0, e0, theta, phi, dt=10.0, T=1.0, eps=2e-4, all_modes=False
     ):
-
         T = T * ct.Julian_year
         # get trajectory
-        (t, p, e, Phi_phi, Phi_r, amp_norm) = self.inspiral_gen(
+        (t, p, e, Phi_phi, Phi_r, amp_norm) = self.inspiral_generator(
             M, mu, p0, e0, **self.inspiral_kwargs
         )
 
@@ -111,7 +117,7 @@ class FEW:
         ]
 
         # amplitudes
-        teuk_modes = self.amplitude_gen(p, e)
+        teuk_modes = self.amplitude_generator(p, e)
 
         amp_for_norm = xp.sum(
             xp.abs(
@@ -154,11 +160,33 @@ class FEW:
 
         return waveform
 
+    """
+    @classmethod
+    def inspiral_generator(self, *args, **kwargs):
+        raise NotImplementedError
+
+    @classmethod
+    def amplitude_genertor(self, *args, **kwargs):
+        raise NotImplementedError
+
+    @classmethod
+    def create_waveform(self, *args, **kwargs):
+        raise NotImplementedError
+    """
+
+
+# TODO: free memory in trajectory
+class SchwarzschildEccentricFlux(SchwarzschildEccentricBase):
+    def __init__(self, *args, **kwargs):
+        SchwarzschildEccentricBase.__init__(
+            self, RunFluxInspiral, Amplitude, InterpolatedModeSum, *args, **kwargs
+        )
+
 
 if __name__ == "__main__":
     import time
 
-    few = FEW(
+    few = SchwarzschildEccentricFlux(
         inspiral_kwargs={"DENSE_STEPPING": 0, "max_init_len": int(1e3)},
         amplitude_kwargs={"max_input_len": int(1e3)},
         Ylm_kwargs={"assume_positive_m": False},
@@ -166,8 +194,8 @@ if __name__ == "__main__":
 
     M = 1e6
     mu = 1e1
-    p0 = 14.0
-    e0 = 0.5
+    p0 = 10.0
+    e0 = 0.7
     theta = np.pi / 2
     phi = 0.0
     dt = 10.0
@@ -181,7 +209,7 @@ if __name__ == "__main__":
     eps_all = 10.0 ** np.arange(-10, -2)
 
     eps_all = np.concatenate([np.array([1e-25]), eps_all])
-    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_05.txt")
+    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_10_07.txt")
     fullwave = fullwave[:, 5] + 1j * fullwave[:, 6]
 
     for i, eps in enumerate(eps_all):
