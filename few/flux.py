@@ -26,6 +26,7 @@ class RunFluxInspiral:
         DENSE_STEPPING=0,
         max_init_len=1000,
         upsample=False,
+        step_eps=1e-11,
     ):
         # this will return in coordinate time
         t, p, e, Phi_phi, Phi_r, amp_norm = flux_inspiral(
@@ -39,6 +40,7 @@ class RunFluxInspiral:
             err=err,
             DENSE_STEPPING=DENSE_STEPPING,
             max_init_len=max_init_len,
+            step_eps=step_eps,
         )
 
         if in_coordinate_time is False:
@@ -87,9 +89,16 @@ if __name__ == "__main__":
     e0 = 0.6
     DENSE_STEPPING = 1
     max_init_len = int(1e7)
+    step_eps = 1e-11
 
     check = flux(
-        M, mu, p0, e0, DENSE_STEPPING=DENSE_STEPPING, max_init_len=max_init_len
+        M,
+        mu,
+        p0,
+        e0,
+        DENSE_STEPPING=DENSE_STEPPING,
+        max_init_len=max_init_len,
+        step_eps=step_eps,
     )
     import pdb
 

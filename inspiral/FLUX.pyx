@@ -20,7 +20,9 @@ cdef extern from "../inspiral/include/FluxInspiral.hh":
                       double dt,
                       FluxCarrierWrap* flux_carrier,
                       np.float64_t err,
-                      int  DENSE_STEPPING)
+                      int  DENSE_STEPPING,
+                      double step_eps,
+                      int init_len)
 
 
 
@@ -40,7 +42,7 @@ cdef class pyFluxCarrier:
         return <long int>self.g
 
 @pointer_adjust
-def flux_inspiral(M, mu, p0, e0, flux_carrier, tmax=1.0, dt=-1, err=1e-10, max_init_len=1000, DENSE_STEPPING=0):
+def flux_inspiral(M, mu, p0, e0, flux_carrier, tmax=1.0, dt=-1, err=1e-10, max_init_len=1000, DENSE_STEPPING=0, step_eps=1e-11):
     cdef np.ndarray[ndim=1, dtype=np.float64_t] t = np.zeros(max_init_len, dtype=np.float64)
     cdef np.ndarray[ndim=1, dtype=np.float64_t] p = np.zeros(max_init_len, dtype=np.float64)
     cdef np.ndarray[ndim=1, dtype=np.float64_t] e = np.zeros(max_init_len, dtype=np.float64)
@@ -52,6 +54,6 @@ def flux_inspiral(M, mu, p0, e0, flux_carrier, tmax=1.0, dt=-1, err=1e-10, max_i
 
     cdef size_t flux_carrier_in = flux_carrier
 
-    FLUXWrapper(&t[0], &p[0], &e[0], &Phi_phi[0], &Phi_r[0], &amp_norm[0], M, mu, p0, e0, &length, tmax, dt, <FluxCarrierWrap*>flux_carrier_in, err, DENSE_STEPPING)
+    FLUXWrapper(&t[0], &p[0], &e[0], &Phi_phi[0], &Phi_r[0], &amp_norm[0], M, mu, p0, e0, &length, tmax, dt, <FluxCarrierWrap*>flux_carrier_in, err, DENSE_STEPPING, step_eps, max_init_len)
 
     return (t[:length], p[:length], e[:length], Phi_phi[:length], Phi_r[:length], amp_norm[:length])

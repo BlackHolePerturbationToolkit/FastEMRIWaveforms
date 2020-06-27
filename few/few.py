@@ -232,8 +232,12 @@ if __name__ == "__main__":
     import time
 
     few = FastSchwarzschildEccentricFlux(
-        inspiral_kwargs={"DENSE_STEPPING": 0, "max_init_len": int(1e5)},
-        amplitude_kwargs={"max_input_len": int(1e5)},
+        inspiral_kwargs={
+            "DENSE_STEPPING": 0,
+            "max_init_len": int(1e3),
+            "step_eps": 1e-10,
+        },
+        amplitude_kwargs={"max_input_len": int(1e4)},
         # amplitude_kwargs=dict(num_teuk_modes=3843, lmax=10, nmax=30),
         Ylm_kwargs={"assume_positive_m": False},
     )
@@ -241,13 +245,14 @@ if __name__ == "__main__":
     M = 1e6
     mu = 1e1
     p0 = 14.0
-    e0 = 0.7
+    e0 = 0.5
     theta = np.pi / 2
     phi = 0.0
     dt = 10.0
-    T = 1  # / 1e2  # 1124936.040602 / ct.Julian_year
+    T = 12 / 12  # 1124936.040602 / ct.Julian_year
     eps = 1e-2
     all_modes = False
+    step_eps = 1e-11
 
     mismatch = []
     num_modes = []
@@ -255,7 +260,7 @@ if __name__ == "__main__":
     eps_all = 10.0 ** np.arange(-10, -2)
 
     eps_all = np.concatenate([np.array([1e-25]), eps_all])
-    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_07.txt")
+    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_05.txt")
     fullwave = fullwave[:, 5] + 1j * fullwave[:, 6]
 
     for i, eps in enumerate(eps_all):

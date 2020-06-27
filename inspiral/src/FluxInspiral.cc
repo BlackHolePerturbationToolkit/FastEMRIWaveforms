@@ -218,7 +218,7 @@ double get_step_flux(double p, double e, Interpolant *amp_vec_norm_interp)
 }
 
 
-FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double err, double tmax, double dt, FluxCarrier *flux_carrier, int DENSE_STEPPING){
+FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double err, double tmax, double dt, FluxCarrier *flux_carrier, int DENSE_STEPPING, double step_eps){
 
     double init_flux = get_step_flux(p0, e0, flux_carrier->amp_vec_norm_interp);
 
@@ -241,6 +241,9 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
     // Compute the adimensionalized time steps and max time
 
     dt = dt /(M*MTSUN_SI);
+
+    if (!DENSE_STEPPING) tmax = max_signal_length;
+
     tmax = tmax/(M*MTSUN_SI);
 
     // Initial values
@@ -254,14 +257,14 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
     const gsl_odeiv2_step_type *T = gsl_odeiv2_step_rk8pd;
 
     gsl_odeiv2_step *step 			= gsl_odeiv2_step_alloc (T, 4);
-    gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (1e-10, 0);
+    gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (step_eps, 0);
     gsl_odeiv2_evolve *evolve 		= gsl_odeiv2_evolve_alloc (4);
 
     // Compute the inspiral
 	double t = t0;
 	double h = dt;
 	double t1 = tmax;
-    int ind = 0;
+    int ind = 1;
 	if(DENSE_STEPPING) t1 = dt;
 	while (t < tmax){
 
@@ -303,11 +306,15 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
 
 }
 
-void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, int *length, double tmax, double dt, FluxCarrier *flux_carrier, double err, int DENSE_STEPPING){
+void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, int *length, double tmax, double dt, FluxCarrier *flux_carrier, double err, int DENSE_STEPPING, double step_eps, int init_len){
 
 	double t0 = 0.0;
-		FLUXHolder flux_vals = run_FLUX(t0, M, mu, p0, e0, err, tmax, dt, flux_carrier, DENSE_STEPPING);
+		FLUXHolder flux_vals = run_FLUX(t0, M, mu, p0, e0, err, tmax, dt, flux_carrier, DENSE_STEPPING, step_eps);
 
+        if (flux_vals.length > init_len){
+            printf("\nError: Initial length is too short (length: %d, max_init_len: %d). Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n", *length, init_len);
+            exit(0);
+        }
 		memcpy(t, &flux_vals.t_arr[0], flux_vals.length*sizeof(double));
 		memcpy(p, &flux_vals.p_arr[0], flux_vals.length*sizeof(double));
 		memcpy(e, &flux_vals.e_arr[0], flux_vals.length*sizeof(double));
