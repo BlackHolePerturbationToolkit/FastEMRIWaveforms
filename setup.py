@@ -388,12 +388,45 @@ SlowFlux_ext = Extension(
 )
 
 
+Interp2DAmplitude_ext = Extension(
+    "pyInterp2DAmplitude",
+    sources=[
+        "inspiral/src/Interpolant.cc",
+        "few/src/Amplitude.cc",
+        "few/src/pyinterp2damp.pyx",
+    ],
+    library_dirs=["/home/ajchua/lib/"],
+    libraries=["gsl", "gslcblas", "hdf5", "hdf5_hl", "gomp"],
+    language="c++",
+    runtime_library_dirs=[],
+    # This syntax is specific to this build system
+    # we're only going to use certain compiler args with nvcc
+    # and not with gcc the implementation of this trick is in
+    # customize_compiler()
+    extra_compile_args={"gcc": ["-std=c++11", "-Xpreprocessor", "-fopenmp"]},  # '-g'],
+    include_dirs=[
+        numpy_include,
+        "few/src",
+        "inspiral/include",
+        "/home/mlk667/.conda/envs/few_env/include/",
+    ],
+)
+
+
 if run_cuda_install:
     extensions = [ext, FLUX_ext, test_EXT]
     # extensions = [test_EXT]
-    extensions = [matmul_ext, FLUX_ext, interp_ext, SlowFlux_ext, spher_harm_ext]
+    extensions = [
+        matmul_ext,
+        FLUX_ext,
+        interp_ext,
+        SlowFlux_ext,
+        spher_harm_ext,
+        Interp2DAmplitude_ext,
+    ]
 else:
-    extensions = [FLUX_ext, SlowFlux_ext, spher_harm_ext]
+    # extensions = [FLUX_ext, SlowFlux_ext, spher_harm_ext, Interp2DAmplitude_ext]
+    extensions = [Interp2DAmplitude_ext]
 
 
 setup(

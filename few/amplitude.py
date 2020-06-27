@@ -1,22 +1,25 @@
 import numpy as np
 import os
 
-from pymatmul import neural_layer_wrap, transform_output_wrap
 
+from pyInterp2DAmplitude import Interp2DAmplitude_wrap, pyAmplitudeCarrier
 
 try:
     import cupy as xp
+    from pymatmul import neural_layer_wrap, transform_output_wrap
+
+    run_gpu = True
 
 except ImportError:
     import numpy as xp
 
+    run_gpu = False
+
 RUN_RELU = 1
 NO_RELU = 0
 
-# TODO: Add normalization to here
 
-
-class Amplitude:
+class ROMANAmplitude:
     def __init__(
         self,
         input_str="SE_n30_double_",
@@ -119,3 +122,18 @@ class Amplitude:
         )
 
         return teuk_modes.reshape(self.num_teuk_modes, input_len).T
+
+
+class Interp2DAmplitude:
+    def __init__(self, num_teuk_modes=3843, lmax=10, nmax=30):
+
+        self.amplitude_carrier = pyAmplitudeCarrier(lmax, nmax)
+        self.num_modes = num_teuk_modes
+
+    def __call__(self, p, e):
+
+        input_len = len(p)
+        teuk_modes = Interp2DAmplitude_wrap(
+            p.get(), e.get(), input_len, self.num_modes, self.amplitude_carrier
+        )
+        return teuk_modes

@@ -8,7 +8,7 @@ except ImportError:
     import numpy as xp
 
 from flux import RunFluxInspiral
-from amplitude import Amplitude
+from amplitude import ROMANAmplitude, Interp2DAmplitude
 from interpolated_mode_sum import InterpolatedModeSum
 from ylm import GetYlms
 from direct_mode_sum import DirectModeSum
@@ -118,6 +118,9 @@ class SchwarzschildEccentricBase:
 
         # amplitudes
         teuk_modes = self.amplitude_generator(p, e)
+        import pdb
+
+        pdb.set_trace()
 
         amp_for_norm = xp.sum(
             xp.abs(
@@ -176,19 +179,36 @@ class SchwarzschildEccentricBase:
 
 
 # TODO: free memory in trajectory
-class SchwarzschildEccentricFlux(SchwarzschildEccentricBase):
+class FastSchwarzschildEccentricFlux(SchwarzschildEccentricBase):
     def __init__(self, *args, **kwargs):
         SchwarzschildEccentricBase.__init__(
-            self, RunFluxInspiral, Amplitude, InterpolatedModeSum, *args, **kwargs
+            self, RunFluxInspiral, ROMANAmplitude, InterpolatedModeSum, *args, **kwargs
+        )
+
+
+class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricBase):
+    def __init__(self, *args, **kwargs):
+        if "inspiral_kwargs" not in kwargs:
+            kwargs["inspiral_kwargs"] = {}
+        kwargs["inspiral_kwargs"]["DENSE_STEPPING"] = 0
+
+        SchwarzschildEccentricBase.__init__(
+            self,
+            RunFluxInspiral,
+            Interp2DAmplitude,
+            InterpolatedModeSum,
+            *args,
+            **kwargs
         )
 
 
 if __name__ == "__main__":
     import time
 
-    few = SchwarzschildEccentricFlux(
+    few = SlowSchwarzschildEccentricFlux(
         inspiral_kwargs={"DENSE_STEPPING": 0, "max_init_len": int(1e3)},
-        amplitude_kwargs={"max_input_len": int(1e3)},
+        # amplitude_kwargs={"max_input_len": int(1e3)},
+        amplitude_kwargs=dict(num_teuk_modes=3843, lmax=10, nmax=30),
         Ylm_kwargs={"assume_positive_m": False},
     )
 
@@ -222,6 +242,9 @@ if __name__ == "__main__":
             wc = few(
                 M, mu, p0, e0, theta, phi, dt=dt, T=T, eps=eps, all_modes=all_modes
             ).get()
+            import pdb
+
+            pdb.set_trace()
         et = time.perf_counter()
 
         # if i == 0:
