@@ -189,7 +189,9 @@ class SchwarzschildEccentricBase:
             factor = amp_norm_temp / amp_for_norm
             teuk_modes = teuk_modes * factor[:, np.newaxis]
 
-            # TODO: check normalization of flux
+            import pdb
+
+            pdb.set_trace()
 
             if all_modes:
                 self.ls = self.l_arr[: teuk_modes.shape[1]]
@@ -234,6 +236,16 @@ class SchwarzschildEccentricBase:
 
         return waveform
 
+    def check_gpu_capability(self, use_gpu):
+        if use_gpu is True and self.gpu_capability is True:
+            return
+
+        elif use_gpu is True and self.gpu_capability is False:
+            raise ValueError(
+                "This waveform does not have the capability to run on the gpu."
+            )
+        return
+
     """
     @classmethod
     def inspiral_generator(self, *args, **kwargs):
@@ -257,13 +269,7 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricBase):
         self.allow_batching = False
 
         SchwarzschildEccentricBase.__init__(
-            self,
-            RunFluxInspiral,
-            ROMANAmplitude,
-            InterpolatedModeSum,
-            *args,
-            use_gpu=self.gpu_capability,
-            **kwargs
+            self, RunFluxInspiral, ROMANAmplitude, InterpolatedModeSum, *args, **kwargs
         )
 
 
@@ -292,15 +298,16 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricBase):
 if __name__ == "__main__":
     import time
 
-    few = SlowSchwarzschildEccentricFlux(
+    few = FastSchwarzschildEccentricFlux(
         inspiral_kwargs={
-            "DENSE_STEPPING": 1,
-            "max_init_len": int(1e7),
+            "DENSE_STEPPING": 0,
+            "max_init_len": int(1e3),
             "step_eps": 1e-10,
         },
-        # amplitude_kwargs={"max_input_len": int(1e5)},
-        amplitude_kwargs=dict(num_teuk_modes=3843, lmax=10, nmax=30),
+        amplitude_kwargs={"max_input_len": int(1e3), "use_gpu": False},
+        # amplitude_kwargs=dict(num_teuk_modes=3843, lmax=10, nmax=30),
         Ylm_kwargs={"assume_positive_m": False},
+        use_gpu=False,
     )
 
     M = 1e6

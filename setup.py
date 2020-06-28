@@ -5,6 +5,7 @@ from setuptools import setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
 import numpy
+import shutil
 
 
 def find_in_path(name, path):
@@ -341,6 +342,29 @@ FLUX_ext = Extension(
     ],
 )
 
+shutil.copy("few/src/matmul.cu", "few/src/matmul.cpp")
+shutil.copy("few/src/pymatmul.pyx", "few/src/pymatmul_cpu.pyx")
+
+matmul_cpu_ext = Extension(
+    "pymatmul_cpu",
+    sources=["few/src/matmul.cpp", "few/src/pymatmul_cpu.pyx"],
+    # library_dirs=["/home/ajchua/lib/"],
+    libraries=["gsl", "gslcblas"],
+    language="c++",
+    runtime_library_dirs=[],
+    # This syntax is specific to this build system
+    # we're only going to use certain compiler args with nvcc
+    # and not with gcc the implementation of this trick is in
+    # customize_compiler()
+    extra_compile_args={"gcc": ["-std=c++11"]},  # '-g'],
+    include_dirs=[
+        numpy_include,
+        "few/src",
+        "inspiral/include",
+        "/home/mlk667/.conda/envs/few_env/include/",
+    ],
+)
+
 
 spher_harm_ext = Extension(
     "pySpinWeightedSpherHarm",
@@ -418,6 +442,7 @@ if run_cuda_install:
     # extensions = [test_EXT]
     extensions = [
         matmul_ext,
+        matmul_cpu_ext,
         FLUX_ext,
         interp_ext,
         SlowFlux_ext,
@@ -442,3 +467,6 @@ setup(
     # Since the package has c code, the egg cannot be zipped
     zip_safe=False,
 )
+
+os.remove("few/src/matmul.cpp")
+os.remove("few/src/pymatmul_cpu.pyx")

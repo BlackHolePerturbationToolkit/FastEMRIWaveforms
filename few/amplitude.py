@@ -1,8 +1,8 @@
 import numpy as np
 import os
 
-
-from pyInterp2DAmplitude import Interp2DAmplitude_wrap, pyAmplitudeCarrier
+from pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
+from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 
 try:
     import cupy as xp
@@ -12,6 +12,7 @@ try:
 
 except ImportError:
     import numpy as xp
+    from pyInterp2DAmplitude import Interp2DAmplitude_wrap, pyAmplitudeCarrier
 
     run_gpu = False
 
@@ -29,13 +30,26 @@ class ROMANAmplitude:
         transform_factor=1000.0,
         transform_file="few/files/reduced_basis_n30_new_sorted.dat",
         max_input_len=1000,
+        use_gpu=False,
     ):
+
+        self.use_gpu = use_gpu
+        if use_gpu:
+            self.xp = xp
+            self.neural_layer = neural_layer_wrap
+            self.transform_output = transform_output_wrap
+
+        else:
+            self.xp = np
+            self.neural_layer = neural_layer_wrap_cpu
+            self.transform_output = transform_output_wrap_cpu
+
         self.num_teuk_modes = num_teuk_modes
         self.transform_factor_inv = 1 / transform_factor
         self.transform_file = transform_file
 
-        self.transform_matrix = xp.asarray(
-            np.genfromtxt(transform_file, dtype=xp.complex128)
+        self.transform_matrix = self.xp.asarray(
+            np.genfromtxt(transform_file, dtype=self.xp.complex128)
         )
         self.break_index = 99
         self.max_input_len = max_input_len
@@ -66,7 +80,7 @@ class ROMANAmplitude:
             temp = {}
             for let in ["w", "b"]:
                 mat = np.genfromtxt(folder + input_str + let + str(i) + ".txt")
-                temp[let] = xp.asarray(mat)
+                temp[let] = self.xp.asarray(mat)
 
             self.weights.append(temp["w"])
             self.bias.append(temp["b"])
@@ -76,25 +90,29 @@ class ROMANAmplitude:
         self.max_num = np.max([self.dim1, self.dim2])
 
         self.temp_mats = [
-            xp.zeros((self.max_num * self.max_input_len,), dtype=xp.float64),
-            xp.zeros((self.max_num * self.max_input_len,), dtype=xp.float64),
+            self.xp.zeros((self.max_num * self.max_input_len,), dtype=self.xp.float64),
+            self.xp.zeros((self.max_num * self.max_input_len,), dtype=self.xp.float64),
         ]
         self.run_relu_arr = np.ones(self.num_layers, dtype=int)
         self.run_relu_arr[-1] = 0
 
     def _p_to_y(self, p, e):
 
-        return xp.log(-(21 / 10) - 2 * e + p)
+        return self.xp.log(-(21 / 10) - 2 * e + p)
 
     def __call__(self, p, e, *args):
         input_len = len(p)
 
         y = self._p_to_y(p, e)
-        input = xp.concatenate([y, e])
+        input = self.xp.concatenate([y, e])
         self.temp_mats[0][: 2 * input_len] = input
 
-        teuk_modes = xp.zeros((input_len * self.num_teuk_modes,), dtype=xp.complex128)
-        nn_out_mat = xp.zeros((input_len * self.break_index), dtype=xp.complex128)
+        teuk_modes = self.xp.zeros(
+            (input_len * self.num_teuk_modes,), dtype=self.xp.complex128
+        )
+        nn_out_mat = self.xp.zeros(
+            (input_len * self.break_index), dtype=self.xp.complex128
+        )
 
         for i, (weight, bias, run_relu) in enumerate(
             zip(self.weights, self.bias, self.run_relu_arr)
@@ -106,11 +124,11 @@ class ROMANAmplitude:
             m = len(p)
             k, n = weight.shape
 
-            neural_layer_wrap(
+            self.neural_layer(
                 mat_out, mat_in, weight.T.flatten(), bias, m, k, n, run_relu
             )
 
-        transform_output_wrap(
+        self.transform_output(
             teuk_modes,
             self.transform_matrix.T.flatten(),
             nn_out_mat,

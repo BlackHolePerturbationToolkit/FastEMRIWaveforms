@@ -5,6 +5,7 @@
 #include "global.h"
 #include "cuda_complex.hpp"
 
+#ifdef __CUDACC__
 #include "cublas_v2.h"
 
 static char *_cudaGetErrorEnum(cublasStatus_t error)
@@ -38,6 +39,7 @@ static char *_cudaGetErrorEnum(cublasStatus_t error)
 
     return "<unknown>";
 }
+#endif
 
 void neural_layer(double *mat_out, double *mat_in, double *layer_weight, double *bias, int m, int k, int n, int run_relu);
 

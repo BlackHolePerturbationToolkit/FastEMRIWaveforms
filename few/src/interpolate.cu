@@ -5,7 +5,7 @@
 
 #define MAX_MODES_BLOCK 450
 
-__device__
+CUDA_CALLABLE_MEMBER
 void fill_coefficients(int i, int length, double *dydx, double dx, double *y, double *coeff1, double *coeff2, double *coeff3){
   double slope, t, dydx_i;
 
@@ -21,7 +21,7 @@ void fill_coefficients(int i, int length, double *dydx, double dx, double *y, do
 }
 
 
-__device__
+CUDA_CALLABLE_MEMBER
 void prep_splines(int i, int length, double *b, double *ud, double *diag, double *ld, double *x, double *y){
   double dx1, dx2, d, slope1, slope2;
   if (i == length - 1){
@@ -70,7 +70,7 @@ void prep_splines(int i, int length, double *b, double *ud, double *diag, double
 
 
 
-__global__
+CUDA_KERNEL
 void fill_B(double *t_arr, double *y_all, double *B, double *upper_diag, double *diag, double *lower_diag,
                       int ninterps, int length){
 
@@ -93,7 +93,7 @@ void fill_B(double *t_arr, double *y_all, double *B, double *upper_diag, double 
 
 
 
-__global__
+CUDA_KERNEL
 void set_spline_constants(double *t_arr, double *y_all, double *B,
                       double *c1, double *c2, double *c3,
                       int ninterps, int length){
@@ -175,7 +175,7 @@ void interpolate_arrays(double *t_arr, double *y_all, double *c1, double *c2, do
 
 
 
-__device__
+CUDA_CALLABLE_MEMBER
 cmplx get_mode_value(cmplx teuk_mode, fod Phi_phi, fod Phi_r, int m, int n, cmplx Ylm){
     cmplx minus_I(0.0, -1.0);
     fod phase = m*Phi_phi + n*Phi_r;
@@ -184,7 +184,7 @@ cmplx get_mode_value(cmplx teuk_mode, fod Phi_phi, fod Phi_r, int m, int n, cmpl
 }
 
 
-__device__ double atomicAddDouble(double* address, double val)
+CUDA_CALLABLE_MEMBER double atomicAddDouble(double* address, double val)
 {
     unsigned long long* address_as_ull =
                               (unsigned long long*)address;
@@ -203,7 +203,7 @@ __device__ double atomicAddDouble(double* address, double val)
 }
 
 
-__device__ void atomicAddComplex(cmplx* a, cmplx b){
+CUDA_CALLABLE_MEMBER void atomicAddComplex(cmplx* a, cmplx b){
   //transform the addresses of real and imag. parts to double pointers
   double *x = (double*)a;
   double *y = x+1;
@@ -214,7 +214,7 @@ __device__ void atomicAddComplex(cmplx* a, cmplx b){
 
 
 
-__global__
+CUDA_KERNEL
 void make_waveform(cmplx *waveform,
              double *y_all, double *c1, double *c2, double *c3,
               int *m_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
