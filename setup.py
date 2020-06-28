@@ -202,7 +202,7 @@ cpu_extension = dict(
 
 FLUX_ext = Extension(
     "pyFLUX",
-    sources=["src/Interpolant.cc", "src/FluxInspiral.cc", "inspiral/FLUX.pyx"],
+    sources=["src/Interpolant.cc", "src/FluxInspiral.cc", "src/FLUX.pyx"],
     **cpu_extension,
 )
 
