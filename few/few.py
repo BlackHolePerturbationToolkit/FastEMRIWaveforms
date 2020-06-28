@@ -15,10 +15,12 @@ from direct_mode_sum import DirectModeSum
 from mode_filter import ModeFilter
 from tqdm import tqdm
 
+# TODO: unit tests
+# TODO: deal with libs and includes
 # TODO: make sure constants are same
-# TODO: mode selection
 # TODO: Allow for use of gpu in one module but not another (?)
 # TODO: add omp to CPU modules
+# compress weight data
 from scipy import constants as ct
 
 
@@ -317,30 +319,25 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricBase):
         self.allow_batching = True
 
         SchwarzschildEccentricBase.__init__(
-            self,
-            RunFluxInspiral,
-            Interp2DAmplitude,
-            DirectModeSum,
-            *args,
-            use_gpu=self.gpu_capability,
-            **kwargs
+            self, RunFluxInspiral, Interp2DAmplitude, DirectModeSum, *args, **kwargs
         )
 
 
 if __name__ == "__main__":
     import time
 
+    use_gpu = False
     few = FastSchwarzschildEccentricFlux(
         inspiral_kwargs={
             "DENSE_STEPPING": 0,
             "max_init_len": int(1e3),
             "step_eps": 1e-10,
         },
-        amplitude_kwargs={"max_input_len": int(1e3), "use_gpu": True},
+        amplitude_kwargs={"max_input_len": int(1e3), "use_gpu": use_gpu},
         # amplitude_kwargs=dict(num_teuk_modes=3843, lmax=10, nmax=30),
         Ylm_kwargs={"assume_positive_m": False},
-        sum_kwargs={"use_gpu": True},
-        use_gpu=True,
+        sum_kwargs={"use_gpu": use_gpu},
+        use_gpu=use_gpu,
     )
 
     M = 1e6
@@ -350,9 +347,9 @@ if __name__ == "__main__":
     theta = np.pi / 2
     phi = 0.0
     dt = 10.0
-    T = 1.0 / 12.0  # 1124936.040602 / ct.Julian_year
+    T = 1.0 / 50.0  # 1124936.040602 / ct.Julian_year
     eps = 1e-2
-    mode_selection = []
+    mode_selection = None
     step_eps = 1e-11
     show_progress = False
     batch_size = 10000
@@ -368,7 +365,7 @@ if __name__ == "__main__":
 
     for i, eps in enumerate(eps_all):
         all_modes = False if i > 0 else True
-        num = 30
+        num = 1
         st = time.perf_counter()
         for jjj in range(num):
 

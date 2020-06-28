@@ -128,23 +128,14 @@ else:
 # lib_gsl_dir = "/opt/local/lib"
 # include_gsl_dir = "/opt/local/include"
 
+# if installing for CUDA, build Cython extensions for gpu modules
 if run_cuda_install:
-    ext = Extension(
-        "FEW",
-        sources=[
-            "inspiral/src/Interpolant.cc",
-            "inspiral/src/FluxInspiral.cc",
-            "few/src/ylm.cpp",
-            "few/src/elliptic.cu",
-            "few/src/interpolate.cu",
-            "few/src/kernel.cu",
-            "few/src/manager.cu",
-            "few/FastEMRIWaveforms.pyx",
-        ],
-        library_dirs=[CUDA["lib64"]],
+
+    gpu_extension = dict(
         libraries=["cudart", "cublas", "cusparse", "gsl", "gslcblas"],
-        language="c++",
+        library_dirs=[CUDA["lib64"]],
         runtime_library_dirs=[CUDA["lib64"]],
+        language="c++",
         # This syntax is specific to this build system
         # we're only going to use certain compiler args with nvcc
         # and not with gcc the implementation of this trick is in
@@ -187,144 +178,31 @@ if run_cuda_install:
     matmul_ext = Extension(
         "pymatmul",
         sources=["few/src/matmul.cu", "few/src/pymatmul.pyx"],
-        library_dirs=[CUDA["lib64"]],
-        libraries=["cudart", "cublas", "cusparse", "gsl", "gslcblas"],
-        language="c++",
-        runtime_library_dirs=[CUDA["lib64"]],
-        # This syntax is specific to this build system
-        # we're only going to use certain compiler args with nvcc
-        # and not with gcc the implementation of this trick is in
-        # customize_compiler()
-        extra_compile_args={
-            "gcc": ["-std=c++11"],  # '-g'],
-            "nvcc": [
-                "-arch=sm_70",
-                # "-gencode=arch=compute_30,code=sm_30",
-                # "-gencode=arch=compute_50,code=sm_50",
-                # "-gencode=arch=compute_52,code=sm_52",
-                # "-gencode=arch=compute_60,code=sm_60",
-                # "-gencode=arch=compute_61,code=sm_61",
-                "-gencode=arch=compute_70,code=sm_70",
-                #'-gencode=arch=compute_75,code=sm_75',
-                #'-gencode=arch=compute_75,code=compute_75',
-                "-std=c++11",
-                "--default-stream=per-thread",
-                "--ptxas-options=-v",
-                "-c",
-                "--compiler-options",
-                "'-fPIC'",
-                "-Xcompiler",
-                "-fopenmp",
-                # "-G",
-                # "-g",
-                # "-O0",
-                # "-lineinfo",
-            ],  # for debugging
-        },
-        include_dirs=[
-            numpy_include,
-            CUDA["include"],
-            "few/src",
-            "inspiral/include",
-            "/home/mlk667/.conda/envs/few_env/include/",
-        ],
-    )
-
-    test_EXT = Extension(
-        "testmatmul",
-        sources=["few/src/test.cu", "few/src/testmatmul.pyx"],
-        library_dirs=[CUDA["lib64"]],
-        libraries=["cudart", "cublas", "cusparse", "gsl", "gslcblas"],
-        language="c++",
-        runtime_library_dirs=[CUDA["lib64"]],
-        # This syntax is specific to this build system
-        # we're only going to use certain compiler args with nvcc
-        # and not with gcc the implementation of this trick is in
-        # customize_compiler()
-        extra_compile_args={
-            "gcc": ["-std=c++11"],  # '-g'],
-            "nvcc": [
-                "-arch=sm_70",
-                # "-gencode=arch=compute_30,code=sm_30",
-                # "-gencode=arch=compute_50,code=sm_50",
-                # "-gencode=arch=compute_52,code=sm_52",
-                # "-gencode=arch=compute_60,code=sm_60",
-                # "-gencode=arch=compute_61,code=sm_61",
-                "-gencode=arch=compute_70,code=sm_70",
-                #'-gencode=arch=compute_75,code=sm_75',
-                #'-gencode=arch=compute_75,code=compute_75',
-                "-std=c++11",
-                "--default-stream=per-thread",
-                "--ptxas-options=-v",
-                "-c",
-                "--compiler-options",
-                "'-fPIC'",
-                "-Xcompiler",
-                "-fopenmp",
-                # "-fmad=true",
-                # "-ftz=true",
-                # "-prec-div=false",
-                # "-prec-sqrt=false",
-                # "-G",
-                # "-g",
-                # "-O0",
-                # "-lineinfo",
-            ],  # for debugging
-        },
-        include_dirs=[
-            numpy_include,
-            CUDA["include"],
-            "few/src",
-            "inspiral/include",
-            "/home/mlk667/.conda/envs/few_env/include/",
-        ],
+        **gpu_extension,
     )
 
     interp_ext = Extension(
         "pyinterp",
         sources=["few/src/interpolate.cu", "few/src/pyinterp.pyx"],
-        library_dirs=[CUDA["lib64"]],
-        libraries=["cudart", "cublas", "cusparse", "gsl", "gslcblas"],
-        language="c++",
-        runtime_library_dirs=[CUDA["lib64"]],
-        # This syntax is specific to this build system
-        # we're only going to use certain compiler args with nvcc
-        # and not with gcc the implementation of this trick is in
-        # customize_compiler()
-        extra_compile_args={
-            "gcc": ["-std=c++11"],  # '-g'],
-            "nvcc": [
-                "-arch=sm_70",
-                # "-gencode=arch=compute_30,code=sm_30",
-                # "-gencode=arch=compute_50,code=sm_50",
-                # "-gencode=arch=compute_52,code=sm_52",
-                # "-gencode=arch=compute_60,code=sm_60",
-                # "-gencode=arch=compute_61,code=sm_61",
-                "-gencode=arch=compute_70,code=sm_70",
-                #'-gencode=arch=compute_75,code=sm_75',
-                #'-gencode=arch=compute_75,code=compute_75',
-                "-std=c++11",
-                "--default-stream=per-thread",
-                "--ptxas-options=-v",
-                "-c",
-                "--compiler-options",
-                "'-fPIC'",
-                "-Xcompiler",
-                "-fopenmp",
-                # "-G",
-                # "-g",
-                # "-O0",
-                # "-lineinfo",
-            ],  # for debugging
-        },
-        include_dirs=[
-            numpy_include,
-            CUDA["include"],
-            "few/src",
-            "inspiral/include",
-            "/home/mlk667/.conda/envs/few_env/include/",
-        ],
+        **gpu_extension,
     )
+
+# build all cpu modules
+cpu_extension = dict(
+    libraries=["gsl", "gslcblas", "lapack", "gomp", "hdf5", "hdf5_hl"],
+    language="c++",
+    runtime_library_dirs=[],
+    extra_compile_args={"gcc": ["-std=c++11", "-Xpreprocessor", "-fopenmp"]},  # '-g'
+    include_dirs=[
+        numpy_include,
+        "few/src",
+        "inspiral/include",
+        "/home/mlk667/.conda/envs/few_env/include/",
+    ]
+    + lapack_include,
+    library_dirs=lapack_lib,
+    # library_dirs=["/home/ajchua/lib/"],
+)
 
 FLUX_ext = Extension(
     "pyFLUX",
@@ -333,44 +211,28 @@ FLUX_ext = Extension(
         "inspiral/src/FluxInspiral.cc",
         "inspiral/FLUX.pyx",
     ],
-    # library_dirs=["/home/ajchua/lib/"],
-    libraries=["gsl", "gslcblas"],
-    language="c++",
-    runtime_library_dirs=[],
-    # This syntax is specific to this build system
-    # we're only going to use certain compiler args with nvcc
-    # and not with gcc the implementation of this trick is in
-    # customize_compiler()
-    extra_compile_args={"gcc": ["-std=c++11"]},  # '-g'],
-    include_dirs=[
-        numpy_include,
-        "few/src",
-        "inspiral/include",
-        "/home/mlk667/.conda/envs/few_env/include/",
-    ],
+    **cpu_extension,
 )
 
-shutil.copy("few/src/matmul.cu", "few/src/matmul.cpp")
-shutil.copy("few/src/pymatmul.pyx", "few/src/pymatmul_cpu.pyx")
+# Install cpu versions of gpu modules
+
+# need to copy cuda files to cpp for this special compiler we are using
+# also copy pyx files to cpu version
+src = "few/src/"
+
+cp_cu_files = ["matmul", "interpolate"]
+cp_pyx_files = ["pymatmul", "pyinterp"]
+
+for fp in cp_cu_files:
+    shutil.copy(src + fp + ".cu", src + fp + ".cpp")
+
+for fp in cp_pyx_files:
+    shutil.copy(src + fp + ".pyx", src + fp + "_cpu.pyx")
 
 matmul_cpu_ext = Extension(
     "pymatmul_cpu",
     sources=["few/src/matmul.cpp", "few/src/pymatmul_cpu.pyx"],
-    # library_dirs=["/home/ajchua/lib/"],
-    libraries=["gsl", "gslcblas"],
-    language="c++",
-    runtime_library_dirs=[],
-    # This syntax is specific to this build system
-    # we're only going to use certain compiler args with nvcc
-    # and not with gcc the implementation of this trick is in
-    # customize_compiler()
-    extra_compile_args={"gcc": ["-std=c++11"]},  # '-g'],
-    include_dirs=[
-        numpy_include,
-        "few/src",
-        "inspiral/include",
-        "/home/mlk667/.conda/envs/few_env/include/",
-    ],
+    **cpu_extension,
 )
 
 shutil.copy("few/src/interpolate.cu", "few/src/interpolate.cpp")
@@ -379,71 +241,15 @@ shutil.copy("few/src/pyinterp.pyx", "few/src/pyinterp_cpu.pyx")
 interp_cpu_ext = Extension(
     "pyinterp_cpu",
     sources=["few/src/interpolate.cpp", "few/src/pyinterp_cpu.pyx"],
-    # library_dirs=["/home/ajchua/lib/"],
-    libraries=["gsl", "gslcblas", "lapack", "gomp"],
-    library_dirs=lapack_lib,
-    language="c++",
-    runtime_library_dirs=[],
-    # This syntax is specific to this build system
-    # we're only going to use certain compiler args with nvcc
-    # and not with gcc the implementation of this trick is in
-    # customize_compiler()
-    extra_compile_args={"gcc": ["-std=c++11", "-Xpreprocessor", "-fopenmp"]},  # '-g'],
-    include_dirs=[
-        numpy_include,
-        "few/src",
-        "inspiral/include",
-        "/home/mlk667/.conda/envs/few_env/include/",
-    ]
-    + lapack_include,
+    **cpu_extension,
 )
 
 
 spher_harm_ext = Extension(
     "pySpinWeightedSpherHarm",
     sources=["few/src/SWSH.cc", "few/src/pySWSH.pyx"],
-    # library_dirs=["/home/ajchua/lib/"],
-    libraries=["gsl", "gslcblas"],
-    language="c++",
-    runtime_library_dirs=[],
-    # This syntax is specific to this build system
-    # we're only going to use certain compiler args with nvcc
-    # and not with gcc the implementation of this trick is in
-    # customize_compiler()
-    extra_compile_args={"gcc": ["-std=c++11"]},  # '-g'],
-    include_dirs=[
-        numpy_include,
-        "few/src",
-        "/home/mlk667/.conda/envs/few_env/include/",
-    ],
+    **cpu_extension,
 )
-
-SlowFlux_ext = Extension(
-    "pySlowFlux",
-    sources=[
-        "SlowFluxWaveform/src/SpinWeightedSphericalHarmonics.cc",
-        "SlowFluxWaveform/src/Interpolant.cc",
-        "SlowFluxWaveform/src/FluxInspiral.cc",
-        "SlowFluxWaveform/SlowFluxInspiral.pyx",
-    ],
-    library_dirs=["/home/ajchua/lib/"],
-    libraries=["gsl", "gslcblas", "hdf5", "hdf5_hl", "gomp"],
-    language="c++",
-    runtime_library_dirs=[],
-    # This syntax is specific to this build system
-    # we're only going to use certain compiler args with nvcc
-    # and not with gcc the implementation of this trick is in
-    # customize_compiler()
-    extra_compile_args={"gcc": ["-std=c++11", "-Xpreprocessor", "-fopenmp"]},  # '-g'],
-    include_dirs=[
-        numpy_include,
-        # "few/src",
-        # "inspiral/include",
-        "SlowFluxWaveform/include",
-        "/home/mlk667/.conda/envs/few_env/include/",
-    ],
-)
-
 
 Interp2DAmplitude_ext = Extension(
     "pyInterp2DAmplitude",
@@ -452,58 +258,67 @@ Interp2DAmplitude_ext = Extension(
         "few/src/Amplitude.cc",
         "few/src/pyinterp2damp.pyx",
     ],
-    library_dirs=["/home/ajchua/lib/"],
-    libraries=["gsl", "gslcblas", "hdf5", "hdf5_hl", "gomp"],
-    language="c++",
-    runtime_library_dirs=[],
-    # This syntax is specific to this build system
-    # we're only going to use certain compiler args with nvcc
-    # and not with gcc the implementation of this trick is in
-    # customize_compiler()
-    extra_compile_args={"gcc": ["-std=c++11", "-Xpreprocessor", "-fopenmp"]},  # '-g'],
-    include_dirs=[
-        numpy_include,
-        "few/src",
-        "inspiral/include",
-        "/home/mlk667/.conda/envs/few_env/include/",
-    ],
+    **cpu_extension,
 )
 
+cpu_extensions = [
+    matmul_cpu_ext,
+    FLUX_ext,
+    interp_cpu_ext,
+    spher_harm_ext,
+    Interp2DAmplitude_ext,
+]
 
 if run_cuda_install:
-    extensions = [ext, FLUX_ext, test_EXT]
-    # extensions = [test_EXT]
-    extensions = [
-        matmul_ext,
-        matmul_cpu_ext,
-        FLUX_ext,
-        interp_ext,
-        interp_cpu_ext,
-        SlowFlux_ext,
-        spher_harm_ext,
-        Interp2DAmplitude_ext,
-    ]
+    gpu_extensions = [matmul_ext, interp_ext]
+    extensions = gpu_extensions + cpu_extensions
 else:
     # extensions = [FLUX_ext, SlowFlux_ext, spher_harm_ext, Interp2DAmplitude_ext]
-    extensions = [Interp2DAmplitude_ext]
+    extensions = cpu_extensions
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
 
 setup(
     name="few",
-    # Random metadata. there's more you can supply
     author="Michael Katz",
-    version="0.1",
+    author_email="mikekatz04@gmail.com",
+    description="Fast and accurate EMRI Waveforms.",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    version="0.1.0",
+    url="https://github.com/mikekatz04/FastEMRIWaveforms",
     ext_modules=extensions,
-    packages=["few"],
-    py_modules=["few.flux", "few.few"],
+    packages=["few", "few.utils"],
+    py_modules=[
+        "few.flux",
+        "few.few",
+        "few.amplitude",
+        "few.mode_filter",
+        "few.direct_mode_sum",
+        "few.ylm",
+        "few.direct_mode_sum",
+    ],
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: GNU General Public License (GPL)",
+        "Environment :: GPU :: NVIDIA CUDA",
+        "Natural Language :: English",
+        "Programming Language :: C++",
+        "Programming Language :: Cython",
+        "Programming Language :: Python :: 3.7",
+    ],
     # Inject our custom trigger
     cmdclass={"build_ext": custom_build_ext},
     # Since the package has c code, the egg cannot be zipped
     zip_safe=False,
+    python_requires=">=3.6",
 )
 
-os.remove("few/src/matmul.cpp")
-os.remove("few/src/pymatmul_cpu.pyx")
 
-os.remove("few/src/interpolate.cpp")
-os.remove("few/src/pyinterp_cpu.pyx")
+# remove src files created in this setup (cpp, pyx cpu files for gpu modules)
+for fp in cp_cu_files:
+    os.remove(src + fp + ".cpp")
+
+for fp in cp_pyx_files:
+    os.remove(src + fp + "_cpu.pyx")
