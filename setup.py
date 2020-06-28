@@ -170,7 +170,7 @@ if run_cuda_install:
             numpy_include,
             CUDA["include"],
             "few/src",
-            "inspiral/include",
+            "include",
             "/home/mlk667/.conda/envs/few_env/include/",
         ],
     )
@@ -192,7 +192,7 @@ cpu_extension = dict(
     include_dirs=[
         numpy_include,
         "few/src",
-        "inspiral/include",
+        "include",
         "/home/mlk667/.conda/envs/few_env/include/",
     ]
     + lapack_include,
@@ -202,11 +202,7 @@ cpu_extension = dict(
 
 FLUX_ext = Extension(
     "pyFLUX",
-    sources=[
-        "inspiral/src/Interpolant.cc",
-        "inspiral/src/FluxInspiral.cc",
-        "inspiral/FLUX.pyx",
-    ],
+    sources=["src/Interpolant.cc", "src/FluxInspiral.cc", "inspiral/FLUX.pyx"],
     **cpu_extension,
 )
 
@@ -247,11 +243,7 @@ spher_harm_ext = Extension(
 
 Interp2DAmplitude_ext = Extension(
     "pyInterp2DAmplitude",
-    sources=[
-        "inspiral/src/Interpolant.cc",
-        "src/Amplitude.cc",
-        "src/pyinterp2damp.pyx",
-    ],
+    sources=["src/Interpolant.cc", "src/Amplitude.cc", "src/pyinterp2damp.pyx"],
     **cpu_extension,
 )
 
