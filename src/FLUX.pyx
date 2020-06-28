@@ -5,7 +5,7 @@ from utils.pointer_adjust import pointer_adjust
 
 assert sizeof(int) == sizeof(np.int32_t)
 
-cdef extern from "../inspiral/include/FluxInspiral.hh":
+cdef extern from "../include/FluxInspiral.hh":
     cdef cppclass FluxCarrierWrap "FluxCarrier":
         FluxCarrierWrap()
         void dealloc()
