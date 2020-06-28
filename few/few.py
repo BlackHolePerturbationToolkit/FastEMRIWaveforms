@@ -326,7 +326,7 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricBase):
 if __name__ == "__main__":
     import time
 
-    use_gpu = False
+    use_gpu = True
     few = FastSchwarzschildEccentricFlux(
         inspiral_kwargs={
             "DENSE_STEPPING": 0,
