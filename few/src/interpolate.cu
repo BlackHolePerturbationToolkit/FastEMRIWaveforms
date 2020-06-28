@@ -1,9 +1,19 @@
 #include "global.h"
 #include "interpolate.hh"
+
+#ifdef __CUDACC__
 #include "cusparse.h"
+#else
+#include "omp.h"
+#include "lapacke.h"
+#endif
 
 
+#ifdef __CUDACC__
 #define MAX_MODES_BLOCK 450
+#else
+#define MAX_MODES_BLOCK 5000
+#endif
 
 CUDA_CALLABLE_MEMBER
 void fill_coefficients(int i, int length, double *dydx, double dx, double *y, double *coeff1, double *coeff2, double *coeff3){
@@ -74,15 +84,33 @@ CUDA_KERNEL
 void fill_B(double *t_arr, double *y_all, double *B, double *upper_diag, double *diag, double *lower_diag,
                       int ninterps, int length){
 
-    for (int interp_i= blockIdx.y*blockDim.y + threadIdx.y;
-         interp_i<ninterps; // 2 for re and im
-         interp_i+= blockDim.y*gridDim.y){
+    #ifdef __CUDACC__
 
-       for (int i = blockIdx.x * blockDim.x + threadIdx.x;
-            i < length;
-            i += blockDim.x * gridDim.x){
+    int start1 = blockIdx.y*blockDim.y + threadIdx.y;
+    int end1 = ninterps;
+    int diff1 = blockDim.y*gridDim.y;
 
+    int start2 = blockIdx.x*blockDim.x + threadIdx.x;
+    int end2 = length;
+    int diff2 = blockDim.x * gridDim.x;
+    #else
 
+    int start1 = 0;
+    int end1 = ninterps;
+    int diff1 = 1;
+
+    int start2 = 0;
+    int end2 = length;
+    int diff2 = 1;
+
+    #endif
+    for (int interp_i= start1;
+         interp_i<end1; // 2 for re and im
+         interp_i+= diff1){
+
+       for (int i = start2;
+            i < end2;
+            i += diff2){
 
             int lead_ind = interp_i*length;
             prep_splines(i, length, &B[lead_ind], &upper_diag[lead_ind], &diag[lead_ind], &lower_diag[lead_ind], t_arr, &y_all[interp_i*length]);
@@ -100,13 +128,34 @@ void set_spline_constants(double *t_arr, double *y_all, double *B,
 
     double dt;
     InterpContainer mode_vals;
-    for (int interp_i= blockIdx.y*blockDim.y + threadIdx.y;
-         interp_i<ninterps; // 2 for re and im
-         interp_i+= blockDim.y*gridDim.y){
 
-        for (int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < length-1;
-             i += blockDim.x * gridDim.x){
+    #ifdef __CUDACC__
+    int start1 = blockIdx.y*blockDim.y + threadIdx.y;
+    int end1 = ninterps;
+    int diff1 = blockDim.y*gridDim.y;
+
+    int start2 = blockIdx.x*blockDim.x + threadIdx.x;
+    int end2 = length;
+    int diff2 = blockDim.x * gridDim.x;
+    #else
+
+    int start1 = 0;
+    int end1 = ninterps;
+    int diff1 = 1;
+
+    int start2 = 0;
+    int end2 = length - 1;
+    int diff2 = 1;
+
+    #endif
+
+    for (int interp_i= start1;
+         interp_i<end1; // 2 for re and im
+         interp_i+= diff1){
+
+       for (int i = start2;
+            i < end2;
+            i += diff2){
 
               dt = t_arr[i + 1] - t_arr[i];
 
@@ -123,6 +172,7 @@ void set_spline_constants(double *t_arr, double *y_all, double *B,
 
 void fit_wrap(int m, int n, double *a, double *b, double *c, double *d_in){
 
+    #ifdef __CUDACC__
     size_t bufferSizeInBytes;
 
     cusparseHandle_t handle;
@@ -145,6 +195,20 @@ void fit_wrap(int m, int n, double *a, double *b, double *c, double *d_in){
   CUSPARSE_CALL(cusparseDestroy(handle));
   gpuErrchk(cudaFree(pBuffer));
 
+  #else
+
+ //#pragma omp parallel for
+for (int j = 0;
+     j < n;
+     j += 1){
+       //fit_constants_serial(m, n, w, a, b, c, d_in, x_in, j);
+       int info = LAPACKE_dgtsv(LAPACK_COL_MAJOR, m, 1, &a[j*m + 1], &b[j*m], &c[j*m], &d_in[j*m], m);
+       //if (info != m) printf("lapack info check: %d\n", info);
+
+   }
+
+  #endif
+
 }
 
 void interpolate_arrays(double *t_arr, double *y_all, double *c1, double *c2, double *c3, int ninterps, int length, double *B, double *upper_diag, double *diag, double *lower_diag)
@@ -152,6 +216,7 @@ void interpolate_arrays(double *t_arr, double *y_all, double *c1, double *c2, do
 
   // TODO: Accelerate (?)
 
+  #ifdef __CUDACC__
   int NUM_THREADS = 64;
   int num_blocks = std::ceil((length + NUM_THREADS -1)/NUM_THREADS);
   dim3 gridDim(num_blocks); //, num_teuk_modes);
@@ -165,6 +230,17 @@ void interpolate_arrays(double *t_arr, double *y_all, double *c1, double *c2, do
                                  ninterps, length);
   cudaDeviceSynchronize();
   gpuErrchk(cudaGetLastError());
+
+  #else
+
+  fill_B(t_arr, y_all, B, upper_diag, diag, lower_diag, ninterps, length);
+
+  fit_wrap(length, ninterps, lower_diag, diag, upper_diag, B);
+
+  set_spline_constants(t_arr, y_all, B, c1, c2, c3,
+                                 ninterps, length);
+
+  #endif
 
 }
 
@@ -183,8 +259,8 @@ cmplx get_mode_value(cmplx teuk_mode, fod Phi_phi, fod Phi_r, int m, int n, cmpl
     return out;
 }
 
-
-CUDA_CALLABLE_MEMBER double atomicAddDouble(double* address, double val)
+#ifdef __CUDACC__
+__device__ double atomicAddDouble(double* address, double val)
 {
     unsigned long long* address_as_ull =
                               (unsigned long long*)address;
@@ -203,7 +279,7 @@ CUDA_CALLABLE_MEMBER double atomicAddDouble(double* address, double val)
 }
 
 
-CUDA_CALLABLE_MEMBER void atomicAddComplex(cmplx* a, cmplx b){
+__device__ void atomicAddComplex(cmplx* a, cmplx b){
   //transform the addresses of real and imag. parts to double pointers
   double *x = (double*)a;
   double *y = x+1;
@@ -211,6 +287,8 @@ CUDA_CALLABLE_MEMBER void atomicAddComplex(cmplx* a, cmplx b){
   atomicAddDouble(x, b.real());
   atomicAddDouble(y, b.imag());
 }
+
+#endif
 
 
 
@@ -223,35 +301,41 @@ void make_waveform(cmplx *waveform,
     int num_pars = 2;
     cmplx trans(0.0, 0.0);
     cmplx trans2(0.0, 0.0);
-    cmplx I(0.0, 1.0);
+
+    // TODO: FIXME: won't let me you I
+    cmplx complexI(0.0, 1.0);
     cmplx mode_val;
     cmplx trans_plus_m(0.0, 0.0), trans_minus_m(0.0, 0.0);
     double Phi_phi_i, Phi_r_i, t, x, x2, x3, mode_val_re, mode_val_im;
     int lm_i, num_teuk_here;
     double re_y, re_c1, re_c2, re_c3, im_y, im_c1, im_c2, im_c3;
-     __shared__ double pp_y, pp_c1, pp_c2, pp_c3, pr_y, pr_c1, pr_c2, pr_c3;
+     CUDA_SHARED double pp_y, pp_c1, pp_c2, pp_c3, pr_y, pr_c1, pr_c2, pr_c3;
 
-     __shared__ cmplx Ylms[2*MAX_MODES_BLOCK];
+     CUDA_SHARED cmplx Ylms[2*MAX_MODES_BLOCK];
 
-     __shared__ double mode_re_y[MAX_MODES_BLOCK];
-     __shared__ double mode_re_c1[MAX_MODES_BLOCK];
-     __shared__ double mode_re_c2[MAX_MODES_BLOCK];
-     __shared__ double mode_re_c3[MAX_MODES_BLOCK];
+     CUDA_SHARED double mode_re_y[MAX_MODES_BLOCK];
+     CUDA_SHARED double mode_re_c1[MAX_MODES_BLOCK];
+     CUDA_SHARED double mode_re_c2[MAX_MODES_BLOCK];
+     CUDA_SHARED double mode_re_c3[MAX_MODES_BLOCK];
 
-     __shared__ double mode_im_y[MAX_MODES_BLOCK];
-     __shared__ double mode_im_c1[MAX_MODES_BLOCK];
-     __shared__ double mode_im_c2[MAX_MODES_BLOCK];
-     __shared__ double mode_im_c3[MAX_MODES_BLOCK];
+     CUDA_SHARED double mode_im_y[MAX_MODES_BLOCK];
+     CUDA_SHARED double mode_im_c1[MAX_MODES_BLOCK];
+     CUDA_SHARED double mode_im_c2[MAX_MODES_BLOCK];
+     CUDA_SHARED double mode_im_c3[MAX_MODES_BLOCK];
 
-     __shared__ int m_arr[MAX_MODES_BLOCK];
-     __shared__ int n_arr[MAX_MODES_BLOCK];
+     CUDA_SHARED int m_arr[MAX_MODES_BLOCK];
+     CUDA_SHARED int n_arr[MAX_MODES_BLOCK];
 
 
      //cmplx *Ylms = (cmplx*) array;
+     CUDA_SYNC_THREADS;
 
-     __syncthreads();
+     #ifdef __CUDACC__
 
      if ((threadIdx.x == 0)){
+     #else
+     if (true){
+     #endif
          int ind_Phi_phi = num_teuk_modes*2 + 0;
          int ind_Phi_r = num_teuk_modes*2 + 1;
          pp_y = y_all[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_phi]; pp_c1 = c1[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_phi];
@@ -261,9 +345,7 @@ void make_waveform(cmplx *waveform,
          pr_c2= c2[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_r];  pr_c3 = c3[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_r];
      }
 
-     __syncthreads();
-
-
+     CUDA_SYNC_THREADS;
 
      int m, n, actual_mode_index;
      cmplx Ylm_plus_m, Ylm_minus_m;
@@ -275,7 +357,20 @@ void make_waveform(cmplx *waveform,
     //if ((threadIdx.x == 0) && (blockIdx.x == 0)) printf("BLOCKY = %d %d\n", block_y, num_breaks);
     int init_ind = block_y*MAX_MODES_BLOCK;
 
-        for (int i=threadIdx.x; i<num_teuk_here; i+=blockDim.x) {
+
+    #ifdef __CUDACC__
+
+    int start = threadIdx.x;
+    int end = num_teuk_here;
+    int diff = blockDim.x;
+
+    #else
+
+    int start = 0;
+    int end = num_teuk_here;
+    int diff = 1;
+    #endif
+        for (int i=start; i<end; i+=diff) {
 
         int ind_re = old_ind*(2*num_teuk_modes+num_pars) + (init_ind + i);
         int ind_im = old_ind*(2*num_teuk_modes+num_pars)  + num_teuk_modes + (init_ind + i);
@@ -291,18 +386,32 @@ void make_waveform(cmplx *waveform,
         Ylms[2*i + 1] = Ylms_in[num_teuk_modes + (init_ind + i)];
     }
 
-    __syncthreads();
+    CUDA_SYNC_THREADS;
 
 
     //l'int j = blockIdx.y * blockDim.y + threadIdx.y;
 
-    for (int i = start_ind + blockIdx.x * blockDim.x + threadIdx.x;
-         i < end_ind;
-         i += blockDim.x * gridDim.x){
 
-     trans2 = 0.0 + 0.0*I;
+    #ifdef __CUDACC__
 
-     trans = 0.0 + 0.0*I;
+    start = start_ind + blockIdx.x * blockDim.x + threadIdx.x;
+    end = end_ind;
+    diff = blockDim.x * gridDim.x;
+
+    #else
+
+    start = start_ind;
+    end = end_ind;
+    diff = 1;
+
+    #endif
+    for (int i = start;
+         i < end;
+         i += diff){
+
+     trans2 = 0.0 + 0.0*complexI;
+
+     trans = 0.0 + 0.0*complexI;
      t = delta_t*i;
       x = t - start_t;
       x2 = x*x;
@@ -319,7 +428,7 @@ void make_waveform(cmplx *waveform,
 
             mode_val_re =  mode_re_y[j] + mode_re_c1[j]*x + mode_re_c2[j]*x2  + mode_re_c3[j]*x3;
             mode_val_im = mode_im_y[j] + mode_im_c1[j]*x + mode_im_c2[j]*x2  + mode_im_c3[j]*x3;
-            mode_val = mode_val_re + I*mode_val_im;
+            mode_val = mode_val_re + complexI*mode_val_im;
 
                 trans_plus_m = get_mode_value(mode_val, Phi_phi_i, Phi_r_i, m, n, Ylm_plus_m);
 
@@ -336,7 +445,7 @@ void make_waveform(cmplx *waveform,
                     //trans_minus_m = gcmplx::conj(trans_plus_m);
 
                     //trans = trans_minus_m + trans;
-                } else trans_minus_m = 0.0 + 0.0*I;
+                } else trans_minus_m = 0.0 + 0.0*complexI;
 
                 trans = trans + trans_minus_m + trans_plus_m;
                 //if (i == 0) printf("%d %d %d: %.10e + %.10e 1j; %.10e + %.10e 1j;\n", i, m, n, trans_plus_m.real(), trans_plus_m.imag(), trans_minus_m.real(),trans_minus_m.imag());
@@ -344,31 +453,42 @@ void make_waveform(cmplx *waveform,
                 //atomicAddComplex(&waveform[i], mode_val);
         }
 
+        #ifdef __CUDACC__
         atomicAddComplex(&waveform[i], trans);
+        #else
+        waveform[i] += trans;
+        #endif
     }
-    __syncthreads();
+    CUDA_SYNC_THREADS;
 }
 }
 
 
 
-void find_start_inds(int start_inds[], int unit_length[], double *t_arr, double delta_t, int length, int new_length)
+void find_start_inds(int start_inds[], int unit_length[], double *t_arr, double delta_t, int *length, int new_length)
 {
 
+    double T = new_length * delta_t;
   start_inds[0] = 0;
-  for (int i = 1;
-       i < length;
+  int i = 1;
+  for (i = 1;
+       i < *length;
        i += 1){
 
           double t = t_arr[i];
 
-          start_inds[i] = (int)std::ceil(t/delta_t);
-          unit_length[i-1] = start_inds[i] - start_inds[i-1];
+          if (t < T){
+              start_inds[i] = (int)std::ceil(t/delta_t);
+              unit_length[i-1] = start_inds[i] - start_inds[i-1];
+        } else {
+            start_inds[i] = new_length;
+            unit_length[i-1] = new_length - start_inds[i-1];
+            break;
+        }
 
       }
 
-  start_inds[length -1] = new_length;
-  unit_length[length - 2] = start_inds[length -1] - start_inds[length -2];
+  *length = i + 1;
 
   //for (int i=0; i < length; i++) printf("%d %d\n", start_inds[i], unit_length[i]);
 }
@@ -384,22 +504,26 @@ void get_waveform(cmplx *d_waveform, double *y_vals, double *c1, double *c2, dou
   float milliseconds = 0;
     cudaEventRecord(start);*/
 
-    int NUM_THREADS = 256;
+
     int start_inds[init_len];
     int unit_length[init_len-1];
 
-    find_start_inds(start_inds, unit_length, h_t, delta_t, init_len, out_len);
+    find_start_inds(start_inds, unit_length, h_t, delta_t, &init_len, out_len);
 
     //printf("Num modes: %d\n", num_teuk_modes);
-    cudaStream_t streams[init_len-1];
 
+    #ifdef __CUDACC__
+    int NUM_THREADS = 256;
+    cudaStream_t streams[init_len-1];
     int num_breaks = num_teuk_modes/MAX_MODES_BLOCK;
+    #endif
 
     //printf("lm: %d, modes: %d %d\n", num_l_m, num_teuk_modes, num_breaks);
 
     //cudaEventRecord(start);
     #pragma omp parallel for
     for (int i = 0; i < init_len-1; i++) {
+            #ifdef __CUDACC__
           cudaStreamCreate(&streams[i]);
           int num_blocks = std::ceil((unit_length[i] + NUM_THREADS -1)/NUM_THREADS);
           //printf("%d %d %d %d, %d %d\n", i, start_inds[i], unit_length[i], num_blocks, init_len, out_len);
@@ -410,12 +534,21 @@ void get_waveform(cmplx *d_waveform, double *y_vals, double *c1, double *c2, dou
           //dim3 threadDim(32, 32);
           // launch one worker kernel per stream
 
+
           make_waveform<<<gridDim, NUM_THREADS, 0, streams[i]>>>(d_waveform,
                         y_vals, c1, c2, c3,
                         d_m, d_n, num_teuk_modes, d_Ylms,
                         delta_t, h_t[i], i, start_inds[i], start_inds[i+1], init_len);
+         #else
+         make_waveform(d_waveform,
+                       y_vals, c1, c2, c3,
+                       d_m, d_n, num_teuk_modes, d_Ylms,
+                       delta_t, h_t[i], i, start_inds[i], start_inds[i+1], init_len);
+         #endif
 
       }
+
+      #ifdef __CUDACC__
       cudaDeviceSynchronize();
       gpuErrchk(cudaGetLastError());
 
@@ -424,6 +557,7 @@ void get_waveform(cmplx *d_waveform, double *y_vals, double *c1, double *c2, dou
             cudaStreamDestroy(streams[i]);
 
         }
+        #endif
 
         //cudaEventRecord(stop);
 

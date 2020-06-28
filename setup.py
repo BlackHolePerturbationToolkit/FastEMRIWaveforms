@@ -117,6 +117,14 @@ try:
 except AttributeError:
     numpy_include = numpy.get_numpy_include()
 
+if os.path.isdir("/home/mlk667/GPU4GW"):
+    lapack_include = ["/software/lapack/3.6.0_gcc/include/"]
+    lapack_lib = ["/software/lapack/3.6.0_gcc/lib64/"]
+
+else:
+    lapack_include = ["/usr/local/opt/lapack/include"]
+    lapack_lib = ["/usr/local/opt/lapack/lib"]
+
 # lib_gsl_dir = "/opt/local/lib"
 # include_gsl_dir = "/opt/local/include"
 
@@ -365,6 +373,31 @@ matmul_cpu_ext = Extension(
     ],
 )
 
+shutil.copy("few/src/interpolate.cu", "few/src/interpolate.cpp")
+shutil.copy("few/src/pyinterp.pyx", "few/src/pyinterp_cpu.pyx")
+
+interp_cpu_ext = Extension(
+    "pyinterp_cpu",
+    sources=["few/src/interpolate.cpp", "few/src/pyinterp_cpu.pyx"],
+    # library_dirs=["/home/ajchua/lib/"],
+    libraries=["gsl", "gslcblas", "lapack", "gomp"],
+    library_dirs=lapack_lib,
+    language="c++",
+    runtime_library_dirs=[],
+    # This syntax is specific to this build system
+    # we're only going to use certain compiler args with nvcc
+    # and not with gcc the implementation of this trick is in
+    # customize_compiler()
+    extra_compile_args={"gcc": ["-std=c++11", "-Xpreprocessor", "-fopenmp"]},  # '-g'],
+    include_dirs=[
+        numpy_include,
+        "few/src",
+        "inspiral/include",
+        "/home/mlk667/.conda/envs/few_env/include/",
+    ]
+    + lapack_include,
+)
+
 
 spher_harm_ext = Extension(
     "pySpinWeightedSpherHarm",
@@ -445,6 +478,7 @@ if run_cuda_install:
         matmul_cpu_ext,
         FLUX_ext,
         interp_ext,
+        interp_cpu_ext,
         SlowFlux_ext,
         spher_harm_ext,
         Interp2DAmplitude_ext,
@@ -470,3 +504,6 @@ setup(
 
 os.remove("few/src/matmul.cpp")
 os.remove("few/src/pymatmul_cpu.pyx")
+
+os.remove("few/src/interpolate.cpp")
+os.remove("few/src/pyinterp_cpu.pyx")

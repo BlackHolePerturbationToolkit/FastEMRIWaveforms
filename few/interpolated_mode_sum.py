@@ -1,14 +1,29 @@
+from pyinterp_cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
+from pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
+
 try:
     import cupy as xp
+    from pyinterp import interpolate_arrays_wrap, get_waveform_wrap
 
 except ImportError:
     import numpy as xp
-
-from pyinterp import interpolate_arrays_wrap, get_waveform_wrap
+import numpy as np
 
 
 class InterpolatedModeSum:
-    def __init__(self, pad_output=False):
+    def __init__(self, pad_output=False, use_gpu=False):
+
+        self.use_gpu = use_gpu
+        if use_gpu:
+            self.xp = xp
+            self.interpolate_arrays = interpolate_arrays_wrap
+            self.get_waveform = get_waveform_wrap
+
+        else:
+            self.xp = np
+            self.interpolate_arrays = interpolate_arrays_wrap_cpu
+            self.get_waveform = get_waveform_wrap_cpu
+
         self.num_phases = 2
         self.pad_output = pad_output
 
@@ -16,7 +31,7 @@ class InterpolatedModeSum:
         self.length, num_modes_keep = teuk_modes.shape
 
         self.ninterps = self.num_phases + 2 * num_modes_keep  # 2 for re and im
-        self.y_all = xp.zeros((self.ninterps, self.length))
+        self.y_all = self.xp.zeros((self.ninterps, self.length))
 
         self.y_all[:num_modes_keep] = teuk_modes.T.real
         self.y_all[num_modes_keep : 2 * num_modes_keep] = teuk_modes.T.imag
@@ -25,16 +40,16 @@ class InterpolatedModeSum:
         self.y_all[-1] = Phi_r
 
         self.y_all = self.y_all.flatten()
-        self.c1 = xp.zeros((self.ninterps, self.length - 1)).flatten()
-        self.c2 = xp.zeros_like(self.c1).flatten()
-        self.c3 = xp.zeros_like(self.c1).flatten()
+        self.c1 = self.xp.zeros((self.ninterps, self.length - 1)).flatten()
+        self.c2 = self.xp.zeros_like(self.c1).flatten()
+        self.c3 = self.xp.zeros_like(self.c1).flatten()
 
-        B = xp.zeros((self.ninterps * self.length,))
-        upper_diag = xp.zeros_like(B)
-        diag = xp.zeros_like(B)
-        lower_diag = xp.zeros_like(B)
+        B = self.xp.zeros((self.ninterps * self.length,))
+        upper_diag = self.xp.zeros_like(B)
+        diag = self.xp.zeros_like(B)
+        lower_diag = self.xp.zeros_like(B)
 
-        interpolate_arrays_wrap(
+        self.interpolate_arrays(
             t,
             self.y_all,
             self.c1,
@@ -55,7 +70,7 @@ class InterpolatedModeSum:
 
     def _sum(self, m_arr, n_arr, init_len, num_pts, num_teuk_modes, ylms, dt, h_t):
 
-        get_waveform_wrap(
+        self.get_waveform(
             self.waveform,
             self.y_all,
             self.c1,
@@ -90,8 +105,8 @@ class InterpolatedModeSum:
         init_len = len(t)
         num_teuk_modes = teuk_modes.shape[1]
 
-        self.waveform = xp.zeros(
-            (self.num_pts + self.num_pts_pad,), dtype=xp.complex128
+        self.waveform = self.xp.zeros(
+            (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
         )
 
         self._interp(t, p, e, Phi_phi, Phi_r, teuk_modes)
@@ -113,6 +128,11 @@ class InterpolatedModeSum:
         mode_im_nn = mode_im_spl(t_nn)
         """
 
-        self._sum(m_arr, n_arr, init_len, num_pts, num_teuk_modes, ylms, dt, t.get())
+        try:
+            t = t.get()
+        except:
+            pass
+
+        self._sum(m_arr, n_arr, init_len, num_pts, num_teuk_modes, ylms, dt, t)
 
         return self.waveform

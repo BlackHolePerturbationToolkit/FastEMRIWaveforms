@@ -16,7 +16,9 @@ from mode_filter import ModeFilter
 from tqdm import tqdm
 
 # TODO: make sure constants are same
-# TODO: batching and mode selection
+# TODO: mode selection
+# TODO: Allow for use of gpu in once module but not another (?)
+# TODO: add omp to CPU modules
 from scipy import constants as ct
 
 
@@ -108,7 +110,11 @@ class SchwarzschildEccentricBase:
         self.ylm_gen = GetYlms(self.num_teuk_modes, use_gpu=use_gpu, **Ylm_kwargs)
 
         self.mode_filter = ModeFilter(
-            self.m0mask, self.num_m_zero_up, self.num_m_1_up, self.num_m0
+            self.m0mask,
+            self.num_m_zero_up,
+            self.num_m_1_up,
+            self.num_m0,
+            use_gpu=use_gpu,
         )
 
     def __call__(
@@ -189,10 +195,6 @@ class SchwarzschildEccentricBase:
             factor = amp_norm_temp / amp_for_norm
             teuk_modes = teuk_modes * factor[:, np.newaxis]
 
-            import pdb
-
-            pdb.set_trace()
-
             if all_modes:
                 self.ls = self.l_arr[: teuk_modes.shape[1]]
                 self.ms = self.m_arr[: teuk_modes.shape[1]]
@@ -212,7 +214,7 @@ class SchwarzschildEccentricBase:
                     eps, teuk_modes, ylms, self.l_arr, self.m_arr, self.n_arr
                 )
 
-            self.num_modes_kept = teuk_modes.shape[1]
+            self.num_modes_kept = teuk_modes_in.shape[1]
 
             waveform_temp = self.sum(
                 t_temp,
@@ -304,10 +306,11 @@ if __name__ == "__main__":
             "max_init_len": int(1e3),
             "step_eps": 1e-10,
         },
-        amplitude_kwargs={"max_input_len": int(1e3), "use_gpu": False},
+        amplitude_kwargs={"max_input_len": int(1e3), "use_gpu": True},
         # amplitude_kwargs=dict(num_teuk_modes=3843, lmax=10, nmax=30),
         Ylm_kwargs={"assume_positive_m": False},
-        use_gpu=False,
+        sum_kwargs={"use_gpu": True},
+        use_gpu=True,
     )
 
     M = 1e6
@@ -317,11 +320,11 @@ if __name__ == "__main__":
     theta = np.pi / 2
     phi = 0.0
     dt = 10.0
-    T = 1.0  # 1124936.040602 / ct.Julian_year
+    T = 1.0 / 12.0  # 1124936.040602 / ct.Julian_year
     eps = 1e-2
     all_modes = False
     step_eps = 1e-11
-    show_progress = True
+    show_progress = False
     batch_size = 10000
 
     mismatch = []
@@ -335,7 +338,7 @@ if __name__ == "__main__":
 
     for i, eps in enumerate(eps_all):
         all_modes = False if i > 0 else True
-        num = 1
+        num = 30
         st = time.perf_counter()
         for jjj in range(num):
 
