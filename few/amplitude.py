@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import h5py
 
 from pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
 from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
@@ -21,17 +22,15 @@ NO_RELU = 0
 
 
 class ROMANAmplitude:
-    def __init__(
-        self,
-        input_str="SE_n30_double_",
-        folder="few/files/weights/",
-        activation_kwargs={},
-        num_teuk_modes=3843,
-        transform_factor=1000.0,
-        transform_file="few/files/reduced_basis_n30_new_sorted.dat",
-        max_input_len=1000,
-        use_gpu=False,
-    ):
+    def __init__(self, activation_kwargs={}, max_input_len=1000, use_gpu=False):
+
+        self.folder = "few/files/"
+        self.data_file = "SchwarzschildEccentricInput.hdf5"
+
+        with h5py.File(self.folder + self.data_file, "r") as fp:
+            num_teuk_modes = fp.attrs["num_teuk_modes"]
+            transform_factor = fp.attrs["transform_factor"]
+            self.break_index = fp.attrs["break_index"]
 
         self.use_gpu = use_gpu
         if use_gpu:
@@ -46,46 +45,41 @@ class ROMANAmplitude:
 
         self.num_teuk_modes = num_teuk_modes
         self.transform_factor_inv = 1 / transform_factor
-        self.transform_file = transform_file
 
-        self.transform_matrix = self.xp.asarray(
-            np.genfromtxt(transform_file, dtype=self.xp.complex128)
-        )
-        self.break_index = 99
         self.max_input_len = max_input_len
 
-        self._initialize_weights(input_str=input_str, folder=folder)
+        self._initialize_weights()
 
-    def _initialize_weights(
-        self, input_str="SE_n30_double_", folder="few/files/weights/"
-    ):
+    def _initialize_weights(self):
         self.weights = []
         self.bias = []
         self.dim1 = []
         self.dim2 = []
 
-        file_list = os.listdir(folder)
-
         # get highest layer number
         self.num_layers = 0
-        for fp in file_list:
-            if fp[: len(input_str)] != input_str:
-                continue
+        with h5py.File(self.folder + self.data_file, "r") as fp:
+            for key, value in fp.items():
+                if key == "reduced_basis":
+                    continue
 
-            layer_num = int(fp.split(input_str)[1][1:].split(".")[0])
-            if layer_num > self.num_layers:
-                self.num_layers = layer_num
+                layer_num = int(key[1:])
 
-        for i in range(1, self.num_layers + 1):
-            temp = {}
-            for let in ["w", "b"]:
-                mat = np.genfromtxt(folder + input_str + let + str(i) + ".txt")
-                temp[let] = self.xp.asarray(mat)
+                if layer_num > self.num_layers:
+                    self.num_layers = layer_num
 
-            self.weights.append(temp["w"])
-            self.bias.append(temp["b"])
-            self.dim1.append(temp["w"].shape[0])
-            self.dim2.append(temp["w"].shape[1])
+            for i in range(1, self.num_layers + 1):
+                temp = {}
+                for let in ["w", "b"]:
+                    mat = fp.get(let + str(i))[:]
+                    temp[let] = self.xp.asarray(mat)
+
+                self.weights.append(temp["w"])
+                self.bias.append(temp["b"])
+                self.dim1.append(temp["w"].shape[0])
+                self.dim2.append(temp["w"].shape[1])
+
+            self.transform_matrix = self.xp.asarray(fp["reduced_basis"])
 
         self.max_num = np.max([self.dim1, self.dim2])
 
@@ -111,7 +105,7 @@ class ROMANAmplitude:
             (input_len * self.num_teuk_modes,), dtype=self.xp.complex128
         )
         nn_out_mat = self.xp.zeros(
-            (input_len * self.break_index), dtype=self.xp.complex128
+            (input_len * self.break_index,), dtype=self.xp.complex128
         )
 
         for i, (weight, bias, run_relu) in enumerate(
