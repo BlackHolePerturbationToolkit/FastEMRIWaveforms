@@ -13,6 +13,7 @@ from interpolated_mode_sum import InterpolatedModeSum
 from ylm import GetYlms
 from direct_mode_sum import DirectModeSum
 from mode_filter import ModeFilter
+from tqdm import tqdm
 
 # TODO: make sure constants are same
 # TODO: batching and mode selection
@@ -111,7 +112,19 @@ class SchwarzschildEccentricBase:
         )
 
     def __call__(
-        self, M, mu, p0, e0, theta, phi, dt=10.0, T=1.0, eps=2e-4, all_modes=False
+        self,
+        M,
+        mu,
+        p0,
+        e0,
+        theta,
+        phi,
+        dt=10.0,
+        T=1.0,
+        eps=2e-4,
+        all_modes=False,
+        show_progress=False,
+        batch_size=-1,
     ):
         T = T * ct.Julian_year
         # get trajectory
@@ -131,47 +144,93 @@ class SchwarzschildEccentricBase:
             self.inverse_lm
         ]
 
-        # amplitudes
-        teuk_modes = self.amplitude_generator(p, e, self.l_arr, self.m_arr, self.n_arr)
+        # split into batches
 
-        amp_for_norm = self.xp.sum(
-            self.xp.abs(
-                self.xp.concatenate(
-                    [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])], axis=1
-                )
-            )
-            ** 2,
-            axis=1,
-        ) ** (1 / 2)
-
-        factor = amp_norm / amp_for_norm
-        teuk_modes = teuk_modes * factor[:, np.newaxis]
-
-        # TODO: check normalization of flux
-
-        if all_modes:
-            self.ls = self.l_arr[: teuk_modes.shape[1]]
-            self.ms = self.m_arr[: teuk_modes.shape[1]]
-            self.ns = self.n_arr[: teuk_modes.shape[1]]
-
-            keep_modes = self.xp.arange(teuk_modes.shape[1])
-            temp2 = keep_modes * (keep_modes < self.num_m0) + (
-                keep_modes + self.num_m_1_up
-            ) * (keep_modes >= self.num_m0)
-
-            ylmkeep = self.xp.concatenate([keep_modes, temp2])
-            ylms = ylms[ylmkeep]
-
+        if batch_size == -1 or self.allow_batching is False:
+            inds_split_all = [self.xp.arange(len(t))]
         else:
-            (teuk_modes, ylms, self.ls, self.ms, self.ns) = self.mode_filter(
-                eps, teuk_modes, ylms, self.l_arr, self.m_arr, self.n_arr
+            split_inds = []
+            i = 0
+            while i < len(t):
+                i += batch_size
+                if i >= len(t):
+                    break
+                split_inds.append(i)
+
+            inds_split_all = self.xp.split(self.xp.arange(len(t)), split_inds)
+
+        iterator = enumerate(inds_split_all)
+        iterator = tqdm(iterator, desc="time batch") if show_progress else iterator
+
+        for i, inds_in in iterator:
+
+            t_temp = t[inds_in]
+            p_temp = p[inds_in]
+            e_temp = e[inds_in]
+            Phi_phi_temp = Phi_phi[inds_in]
+            Phi_r_temp = Phi_r[inds_in]
+            amp_norm_temp = amp_norm[inds_in]
+
+            # amplitudes
+            teuk_modes = self.amplitude_generator(
+                p_temp, e_temp, self.l_arr, self.m_arr, self.n_arr
             )
 
-        self.num_modes_kept = teuk_modes.shape[1]
+            amp_for_norm = self.xp.sum(
+                self.xp.abs(
+                    self.xp.concatenate(
+                        [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])], axis=1
+                    )
+                )
+                ** 2,
+                axis=1,
+            ) ** (1 / 2)
 
-        waveform = self.sum(
-            t, p, e, Phi_phi, Phi_r, teuk_modes, self.ms, self.ns, ylms, dt, T
-        )
+            factor = amp_norm_temp / amp_for_norm
+            teuk_modes = teuk_modes * factor[:, np.newaxis]
+
+            # TODO: check normalization of flux
+
+            if all_modes:
+                self.ls = self.l_arr[: teuk_modes.shape[1]]
+                self.ms = self.m_arr[: teuk_modes.shape[1]]
+                self.ns = self.n_arr[: teuk_modes.shape[1]]
+
+                keep_modes = self.xp.arange(teuk_modes.shape[1])
+                temp2 = keep_modes * (keep_modes < self.num_m0) + (
+                    keep_modes + self.num_m_1_up
+                ) * (keep_modes >= self.num_m0)
+
+                ylmkeep = self.xp.concatenate([keep_modes, temp2])
+                ylms_in = ylms[ylmkeep]
+                teuk_modes_in = teuk_modes
+
+            else:
+                (teuk_modes_in, ylms_in, self.ls, self.ms, self.ns) = self.mode_filter(
+                    eps, teuk_modes, ylms, self.l_arr, self.m_arr, self.n_arr
+                )
+
+            self.num_modes_kept = teuk_modes.shape[1]
+
+            waveform_temp = self.sum(
+                t_temp,
+                p_temp,
+                e_temp,
+                Phi_phi_temp,
+                Phi_r_temp,
+                teuk_modes_in,
+                self.ms,
+                self.ns,
+                ylms_in,
+                dt,
+                T,
+            )
+
+            if i > 0:
+                waveform = self.xp.concatenate([waveform, waveform_temp])
+
+            else:
+                waveform = waveform_temp
 
         return waveform
 
@@ -195,6 +254,7 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricBase):
     def __init__(self, *args, **kwargs):
 
         self.gpu_capability = True
+        self.allow_batching = False
 
         SchwarzschildEccentricBase.__init__(
             self,
@@ -216,6 +276,7 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricBase):
         kwargs["inspiral_kwargs"]["DENSE_STEPPING"] = 1
 
         self.gpu_capability = False
+        self.allow_batching = True
 
         SchwarzschildEccentricBase.__init__(
             self,
@@ -231,14 +292,14 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricBase):
 if __name__ == "__main__":
     import time
 
-    few = FastSchwarzschildEccentricFlux(
+    few = SlowSchwarzschildEccentricFlux(
         inspiral_kwargs={
-            "DENSE_STEPPING": 0,
-            "max_init_len": int(1e3),
+            "DENSE_STEPPING": 1,
+            "max_init_len": int(1e7),
             "step_eps": 1e-10,
         },
-        amplitude_kwargs={"max_input_len": int(1e4)},
-        # amplitude_kwargs=dict(num_teuk_modes=3843, lmax=10, nmax=30),
+        # amplitude_kwargs={"max_input_len": int(1e5)},
+        amplitude_kwargs=dict(num_teuk_modes=3843, lmax=10, nmax=30),
         Ylm_kwargs={"assume_positive_m": False},
     )
 
@@ -249,10 +310,12 @@ if __name__ == "__main__":
     theta = np.pi / 2
     phi = 0.0
     dt = 10.0
-    T = 12 / 12  # 1124936.040602 / ct.Julian_year
+    T = 1.0  # 1124936.040602 / ct.Julian_year
     eps = 1e-2
     all_modes = False
     step_eps = 1e-11
+    show_progress = True
+    batch_size = 10000
 
     mismatch = []
     num_modes = []
@@ -265,13 +328,24 @@ if __name__ == "__main__":
 
     for i, eps in enumerate(eps_all):
         all_modes = False if i > 0 else True
-        num = 30
+        num = 1
         st = time.perf_counter()
         for jjj in range(num):
 
             # print(jjj, "\n")
             wc = few(
-                M, mu, p0, e0, theta, phi, dt=dt, T=T, eps=eps, all_modes=all_modes
+                M,
+                mu,
+                p0,
+                e0,
+                theta,
+                phi,
+                dt=dt,
+                T=T,
+                eps=eps,
+                all_modes=all_modes,
+                show_progress=show_progress,
+                batch_size=batch_size,
             )
 
             try:
