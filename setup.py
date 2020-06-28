@@ -176,15 +176,11 @@ if run_cuda_install:
     )
 
     matmul_ext = Extension(
-        "pymatmul",
-        sources=["few/src/matmul.cu", "few/src/pymatmul.pyx"],
-        **gpu_extension,
+        "pymatmul", sources=["src/matmul.cu", "src/pymatmul.pyx"], **gpu_extension
     )
 
     interp_ext = Extension(
-        "pyinterp",
-        sources=["few/src/interpolate.cu", "few/src/pyinterp.pyx"],
-        **gpu_extension,
+        "pyinterp", sources=["src/interpolate.cu", "src/pyinterp.pyx"], **gpu_extension
     )
 
 # build all cpu modules
@@ -218,7 +214,7 @@ FLUX_ext = Extension(
 
 # need to copy cuda files to cpp for this special compiler we are using
 # also copy pyx files to cpu version
-src = "few/src/"
+src = "src/"
 
 cp_cu_files = ["matmul", "interpolate"]
 cp_pyx_files = ["pymatmul", "pyinterp"]
@@ -230,24 +226,22 @@ for fp in cp_pyx_files:
     shutil.copy(src + fp + ".pyx", src + fp + "_cpu.pyx")
 
 matmul_cpu_ext = Extension(
-    "pymatmul_cpu",
-    sources=["few/src/matmul.cpp", "few/src/pymatmul_cpu.pyx"],
-    **cpu_extension,
+    "pymatmul_cpu", sources=["src/matmul.cpp", "src/pymatmul_cpu.pyx"], **cpu_extension
 )
 
-shutil.copy("few/src/interpolate.cu", "few/src/interpolate.cpp")
-shutil.copy("few/src/pyinterp.pyx", "few/src/pyinterp_cpu.pyx")
+shutil.copy("src/interpolate.cu", "src/interpolate.cpp")
+shutil.copy("src/pyinterp.pyx", "src/pyinterp_cpu.pyx")
 
 interp_cpu_ext = Extension(
     "pyinterp_cpu",
-    sources=["few/src/interpolate.cpp", "few/src/pyinterp_cpu.pyx"],
+    sources=["src/interpolate.cpp", "src/pyinterp_cpu.pyx"],
     **cpu_extension,
 )
 
 
 spher_harm_ext = Extension(
     "pySpinWeightedSpherHarm",
-    sources=["few/src/SWSH.cc", "few/src/pySWSH.pyx"],
+    sources=["src/SWSH.cc", "src/pySWSH.pyx"],
     **cpu_extension,
 )
 
@@ -255,8 +249,8 @@ Interp2DAmplitude_ext = Extension(
     "pyInterp2DAmplitude",
     sources=[
         "inspiral/src/Interpolant.cc",
-        "few/src/Amplitude.cc",
-        "few/src/pyinterp2damp.pyx",
+        "src/Amplitude.cc",
+        "src/pyinterp2damp.pyx",
     ],
     **cpu_extension,
 )
