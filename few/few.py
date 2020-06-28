@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 # TODO: make sure constants are same
 # TODO: mode selection
-# TODO: Allow for use of gpu in once module but not another (?)
+# TODO: Allow for use of gpu in one module but not another (?)
 # TODO: add omp to CPU modules
 from scipy import constants as ct
 
@@ -83,6 +83,12 @@ class SchwarzschildEccentricBase:
 
         self.l_arr, self.m_arr, self.n_arr = md[0], md[1], md[2]
 
+        try:
+            self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T.get())}
+
+        except AttributeError:
+            self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
+
         self.m0mask = self.m_arr != 0
         self.num_m_zero_up = len(self.m_arr)
         self.num_m0 = len(self.xp.arange(self.num_teuk_modes)[m0mask])
@@ -128,9 +134,9 @@ class SchwarzschildEccentricBase:
         dt=10.0,
         T=1.0,
         eps=2e-4,
-        all_modes=False,
         show_progress=False,
         batch_size=-1,
+        mode_selection=None,
     ):
         T = T * ct.Julian_year
         # get trajectory
@@ -195,19 +201,43 @@ class SchwarzschildEccentricBase:
             factor = amp_norm_temp / amp_for_norm
             teuk_modes = teuk_modes * factor[:, np.newaxis]
 
-            if all_modes:
-                self.ls = self.l_arr[: teuk_modes.shape[1]]
-                self.ms = self.m_arr[: teuk_modes.shape[1]]
-                self.ns = self.n_arr[: teuk_modes.shape[1]]
+            if isinstance(mode_selection, str):
+                if mode_selection == "all":
+                    self.ls = self.l_arr[: teuk_modes.shape[1]]
+                    self.ms = self.m_arr[: teuk_modes.shape[1]]
+                    self.ns = self.n_arr[: teuk_modes.shape[1]]
 
-                keep_modes = self.xp.arange(teuk_modes.shape[1])
+                    keep_modes = self.xp.arange(teuk_modes.shape[1])
+                    temp2 = keep_modes * (keep_modes < self.num_m0) + (
+                        keep_modes + self.num_m_1_up
+                    ) * (keep_modes >= self.num_m0)
+
+                    ylmkeep = self.xp.concatenate([keep_modes, temp2])
+                    ylms_in = ylms[ylmkeep]
+                    teuk_modes_in = teuk_modes
+
+                else:
+                    raise ValueError("If mode selection is a string, must be `all`.")
+
+            elif isinstance(mode_selection, list):
+                if mode_selection == []:
+                    raise ValueError("If mode selection is a list, cannot be empty.")
+
+                keep_modes = self.xp.zeros(len(mode_selection), dtype=self.xp.int32)
+                for jj, lmn in enumerate(mode_selection):
+                    keep_modes[jj] = self.xp.int32(self.lmn_indices[tuple(lmn)])
+
+                self.ls = self.l_arr[keep_modes]
+                self.ms = self.m_arr[keep_modes]
+                self.ns = self.n_arr[keep_modes]
+
                 temp2 = keep_modes * (keep_modes < self.num_m0) + (
                     keep_modes + self.num_m_1_up
                 ) * (keep_modes >= self.num_m0)
 
                 ylmkeep = self.xp.concatenate([keep_modes, temp2])
                 ylms_in = ylms[ylmkeep]
-                teuk_modes_in = teuk_modes
+                teuk_modes_in = teuk_modes[:, keep_modes]
 
             else:
                 (teuk_modes_in, ylms_in, self.ls, self.ms, self.ns) = self.mode_filter(
@@ -322,7 +352,7 @@ if __name__ == "__main__":
     dt = 10.0
     T = 1.0 / 12.0  # 1124936.040602 / ct.Julian_year
     eps = 1e-2
-    all_modes = False
+    mode_selection = []
     step_eps = 1e-11
     show_progress = False
     batch_size = 10000
@@ -353,7 +383,7 @@ if __name__ == "__main__":
                 dt=dt,
                 T=T,
                 eps=eps,
-                all_modes=all_modes,
+                mode_selection=mode_selection,
                 show_progress=show_progress,
                 batch_size=batch_size,
             )
