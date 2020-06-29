@@ -122,7 +122,7 @@ int func (double t, const double y[], double f[], void *params){
 void load_and_interpolate_amp_vec_norm_data(Interpolant **amp_vec_norm_interp){
 
 	// Load and interpolate the flux data
-	ifstream Flux_file("inspiral/data/AmplitudeVectorNorm.dat");
+	ifstream Flux_file("few/files/AmplitudeVectorNorm.dat");
 
 	// Load the flux data into arrays
 	string Flux_string;
@@ -153,7 +153,7 @@ void load_and_interpolate_amp_vec_norm_data(Interpolant **amp_vec_norm_interp){
 void load_and_interpolate_flux_data(struct interp_params *interps){
 
 	// Load and interpolate the flux data
-	ifstream Flux_file("inspiral/data/FluxNewMinusPNScaled_fixed_y_order.dat");
+	ifstream Flux_file("few/files/FluxNewMinusPNScaled_fixed_y_order.dat");
 
 	// Load the flux data into arrays
 	string Flux_string;
