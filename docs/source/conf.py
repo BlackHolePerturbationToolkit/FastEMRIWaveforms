@@ -14,6 +14,10 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+import sys, os
+
+sys.path.insert(0, os.path.abspath("/Users/michaelkatz/Research/few/"))
+#sys.path.insert(0, os.path.abspath("/Users/michaelkatz/Research/gce/"))
 
 # -- Project information -----------------------------------------------------
 
