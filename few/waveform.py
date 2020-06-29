@@ -9,8 +9,10 @@ except (ImportError, ModuleNotFoundError) as e:
 
 from trajectory.flux import RunFluxInspiral
 
+from amplitude.interp2dcubicspline import Interp2DAmplitude
+
 try:
-    from amplitude.amplitude import ROMANAmplitude, Interp2DAmplitude
+    from amplitude.romannet import ROMANAmplitude
     from summation.interpolated_mode_sum import InterpolatedModeSum
 
 except (ModuleNotFoundError, ImportError) as e:
