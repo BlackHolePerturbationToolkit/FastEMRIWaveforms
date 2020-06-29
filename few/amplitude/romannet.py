@@ -27,7 +27,7 @@ class ROMANAmplitude(SchwarzschildEccentric):
 
     ROMAN stands for reduced-order models with artificial neurons. Please see
     the documentations for
-    :class:`few.amplitude.ampbaseclasses.SchwarzschildEccentricAmplitudeBase`
+    :class:`few.utils.baseclasses.SchwarzschildEccentric`
     for overall aspects of these models.
 
     A reduced order model is computed for :math:`A_{lmn}`. The data sets that
@@ -124,7 +124,7 @@ class ROMANAmplitude(SchwarzschildEccentric):
 
         return self.xp.log(-(21 / 10) - 2 * e + p)
 
-    def __call__(self, p, e, *args):
+    def __call__(self, p, e, *args, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays
@@ -132,11 +132,13 @@ class ROMANAmplitude(SchwarzschildEccentric):
         each step of the trajectory.
 
         args:
-            p (1D numpy.ndarray): Array containing the trajectory for values of
+            p (1D double numpy.ndarray): Array containing the trajectory for values of
                 the semi-latus rectum.
-            e (1D numpy.ndarray): Array containing the trajectory for values of
+            e (1D double numpy.ndarray): Array containing the trajectory for values of
                 the eccentricity.
-            *args (tuple): Added to create flexibility when calling different
+            *args (tuple, placeholder): Added to create flexibility when calling different
+                amplitude modules. It is not used.
+            **kwargs (dict, placeholder): Added to create flexibility when calling different
                 amplitude modules. It is not used.
 
 
