@@ -415,6 +415,17 @@ in the model.</p>
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt id="few.utils.baseclasses.SchwarzschildEccentric.ndim">
+<code class="sig-name descname">ndim</code><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.ndim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dimensionality in terms of orbital parameters and phases.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt id="few.utils.baseclasses.SchwarzschildEccentric.sanity_check_traj">
 <code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
@@ -466,7 +477,7 @@ the trajectory module.</p></li>
 <dl class="py class">
 <dt id="few.waveform.SchwarzschildEccentricWaveformBase">
 <em class="property">class </em><code class="sig-prename descclassname">few.waveform.</code><code class="sig-name descname">SchwarzschildEccentricWaveformBase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inspiral_module</span></em>, <em class="sig-param"><span class="n">amplitude_module</span></em>, <em class="sig-param"><span class="n">sum_module</span></em>, <em class="sig-param"><span class="n">inspiral_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">amplitude_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">sum_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">Ylm_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">utils.baseclasses.SchwarzschildEccentric</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a></p>
 <p>Carrier class for FEW</p>
 <dl class="py method">
 <dt id="few.waveform.SchwarzschildEccentricWaveformBase.__call__">
@@ -496,35 +507,25 @@ the trajectory module.</p></li>
 phase-space trajectories (orbital phases and orbital parameters). These are
 determined by numerical integrators that interpolate over the relevant
 quantities.</p>
-<div class="section" id="module-few.trajectory.flux">
-<span id="flux-inspiral"></span><h3>Flux Inspiral<a class="headerlink" href="#module-few.trajectory.flux" title="Permalink to this headline">¶</a></h3>
-<p>This module contains flux-based or adiabatic trajectory modules.
-TODO: more info (?), Specific papers to cite</p>
 <dl class="py class">
-<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral">
-<em class="property">class </em><code class="sig-prename descclassname">few.trajectory.flux.</code><code class="sig-name descname">RunSchwarzEccFluxInspiral</code><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral" title="Permalink to this definition">¶</a></dt>
+<dt id="few.utils.baseclasses.TrajectoryBase">
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.baseclasses.</code><code class="sig-name descname">TrajectoryBase</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Flux-based trajectory module.</p>
-<p>This module implements a flux-based trajectory by integrating with an
-RK8 integrator. It can also adjust the output time-spacing using
-cubic spline interpolation. Additionally, it gives the option for
-a dense trajectory, which integrates the trajectory at the user-defined
-timestep.</p>
+<p>Base class used for trajectory modules.</p>
+<p>This class provides a flexible interface to various trajectory
+implementations. Specific arguments to each trajectory can be found with
+each associated trajectory module discussed below.</p>
 <dl class="py method">
-<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">err</span><span class="o">=</span><span class="default_value">1e-10</span></em>, <em class="sig-param"><span class="n">in_coordinate_time</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">new_t</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">spline_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">DENSE_STEPPING</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">max_init_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">upsample</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">step_eps</span><span class="o">=</span><span class="default_value">1e-11</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.__call__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Call function for this class.</p>
-<p>This is the function for calling the creation of the flux-based
+<dt id="few.utils.baseclasses.TrajectoryBase.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">in_coordinate_time</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">new_t</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">spline_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">max_init_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">upsample</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">step_eps</span><span class="o">=</span><span class="default_value">1e-11</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call function for trajectory interface.</p>
+<p>This is the function for calling the creation of the
 trajectory. Inputs define the output time spacing.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>M</strong> (<em>double</em>) – Mass of massive black hole in solar masses.</p></li>
-<li><p><strong>mu</strong> (<em>double</em>) – Mass of compact object in solar masses.</p></li>
-<li><p><strong>p0</strong> (<em>double</em>) – Initial semi-latus rectum in terms units of M (p/M).
-This model can handle (p0 &lt;= 18.0).</p></li>
-<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity (dimensionless).
-This model can handle (e0 &lt;= 0.7).</p></li>
+<li><p><strong>*args</strong> (<em>list</em>) – Input of variable number of arguments specific to the
+inspiral model (see the trajectory class’ <cite>get_inspiral</cite> method).</p></li>
 <li><p><strong>err</strong> (<em>double</em><em>, </em><em>optional</em>) – Tolerance for integrator. Default is 1e-10.
 Decreasing this parameter will give more steps over the
 trajectory, but if it is too small, memory issues will occur as
@@ -569,6 +570,96 @@ the trajectories from 0 to T in steps of dt. Default is False.</p></li>
 
 </dd></dl>
 
+<div class="section" id="module-few.trajectory.flux">
+<span id="flux-inspiral"></span><h3>Flux Inspiral<a class="headerlink" href="#module-few.trajectory.flux" title="Permalink to this headline">¶</a></h3>
+<p>This module contains flux-based or adiabatic trajectory modules.
+TODO: more info (?), Specific papers to cite</p>
+<dl class="py class">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral">
+<em class="property">class </em><code class="sig-prename descclassname">few.trajectory.flux.</code><code class="sig-name descname">RunSchwarzEccFluxInspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a>, <a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a></p>
+<p>Flux-based trajectory module.</p>
+<p>This module implements a flux-based trajectory by integrating with an
+RK8 integrator. It can also adjust the output time-spacing using
+cubic spline interpolation. Additionally, it gives the option for
+a dense trajectory, which integrates the trajectory at the user-defined
+timestep.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> (<em>list</em>) – Any arguments for parent
+class <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a> or
+class <a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – Any keyword arguments for parent
+class <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a> or
+class <a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">flux carrier</code></dt>
+<dd><p>Unaccessible from python. It carries c++ classes
+for the integration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.specific_kwarg_keys">
+<code class="sig-name descname">specific_kwarg_keys</code><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.specific_kwarg_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>specific kwargs from
+<a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a> that apply this
+inspiral generator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.get_inspiral">
+<code class="sig-name descname">get_inspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.get_inspiral" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate the inspiral.</p>
+<p>This is the function for calling the creation of the flux-based
+trajectory. Inputs define the output time spacing. This class can be
+used on its own. However, it is generally accessed through the __call__
+method associated with its base class:
+(<a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a>). See its documentation
+for information on a more flexible interface to the trajectory modules.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Mass of massive black hole in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – Mass of compact object in solar masses.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semi-latus rectum in terms units of M (p/M).
+This model can handle (p0 &lt;= 18.0).</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity (dimensionless).
+This model can handle (e0 &lt;= 0.7).</p></li>
+<li><p><strong>err</strong> (<em>double</em><em>, </em><em>optional</em>) – Tolerance for integrator. Default is 1e-10.
+Decreasing this parameter will give more steps over the
+trajectory, but if it is too small, memory issues will occur as
+the trajectory length will blow up. We recommend not adjusting
+this parameter.</p></li>
+<li><p><strong>*args</strong> (<em>list</em><em>, </em><em>placeholder</em>) – Added for flexibility.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – kwargs</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Tuple of (t, p, e, Phi_phi, Phi_r, flux_norm).</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 </div>
 <div class="section" id="module-few.amplitude">
@@ -582,7 +673,7 @@ various methods documented below. Some amplitude modules have gpu capabilities.<
 <span id="roman-network"></span><h4>ROMAN Network<a class="headerlink" href="#module-few.amplitude.romannet" title="Permalink to this headline">¶</a></h4>
 <dl class="py class">
 <dt id="few.amplitude.romannet.ROMANAmplitude">
-<em class="property">class </em><code class="sig-prename descclassname">few.amplitude.romannet.</code><code class="sig-name descname">ROMANAmplitude</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">max_input_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.ROMANAmplitude" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">few.amplitude.romannet.</code><code class="sig-name descname">ROMANAmplitude</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">max_input_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.ROMANAmplitude" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a></p>
 <p>Calculate Teukolsky amplitudes with a ROMAN.</p>
 <p>ROMAN stands for reduced-order models with artificial neurons. Please see
@@ -603,7 +694,9 @@ amplitude space.</p>
 <li><p><strong>max_input_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of points to initialize for
 buffers. This should be the same as the value from the user chosen
 trajectory module. Default is 1000.</p></li>
-<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, use GPU resources. Default is False.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments for the base class:
+<a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>. Default is
+{}.</p></li>
 </ul>
 </dd>
 </dl>
