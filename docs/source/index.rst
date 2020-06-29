@@ -16,12 +16,41 @@ Documentation
 .. automodule:: few.waveform
     :members:
     :show-inheritance:
-    :special-members:
 
-.. autoclass:: few.trajectory.flux.RunFluxInspiral
+
+Trajectory Module
+------------------
+
+.. automodule:: few.trajectory
+
+Flux Inspiral
+~~~~~~~~~~~~~~
+
+.. automodule:: few.trajectory.flux
     :members:
     :show-inheritance:
-    :special-members:
+
+
+Amplitude Module
+-----------------
+
+.. automodule:: few.amplitude
+
+ROMAN Network
+~~~~~~~~~~~~~~
+
+.. automodule:: few.amplitude.romannet
+    :members:
+    :show-inheritance:
+
+2D Cubic Spline Interpolation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: interp2dcubicspline
+    :members:
+    :show-inheritance:
+
+
 
 
 

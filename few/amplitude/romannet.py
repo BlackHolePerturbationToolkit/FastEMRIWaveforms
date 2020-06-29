@@ -4,7 +4,6 @@ import h5py
 
 from pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
 from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
-from pyInterp2DAmplitude import Interp2DAmplitude_wrap, pyAmplitudeCarrier
 
 try:
     import cupy as xp
@@ -22,7 +21,42 @@ NO_RELU = 0
 
 
 class ROMANAmplitude:
-    def __init__(self, activation_kwargs={}, max_input_len=1000, use_gpu=False):
+    """Calculate Teukolsky amplitudes with a ROMAN.
+
+    ROMAN stands for reduced-order models with artificial neurons. The user
+    inputs orbital parameter trajectories and is returned the complex amplitudes
+    of each harmonic mode, :math:`A_{lmn}`, given by,
+
+    .. math:: A_{lmn}=-2Z_{lmn}/\omega_{mn}^2,
+
+    where :math:`Z_{lmn}` and :math:`\omega_{mn}` are functions of the
+    orbital paramters. :math:`l` ranges from 2 to 10; :math:`m` from :math:`-l` to :math:`l`;
+    and :math:`n` from -30 to 30. This is for Schwarzschild eccentric.
+    The model validity ranges from (TODO: add limits).
+
+    A reduced order model is computed for :math:`A_{lmn}`. The data sets that
+    are provided over a grid of :math:`(p,e)` were provided by Scott Hughes.
+
+    A feed-foward neural network is then trained on the ROM. Its weights are
+    used in this module.
+
+    When the user inputs :math:`(p,e)`, the neural network determines
+    coefficients for the modes in the reduced basic and transforms it back to
+    amplitude space.
+
+    This module is available for GPU and CPU. 
+
+
+    args:
+        max_input_len (int, optional): Number of points to initialize for
+            buffers. This should be the same as the value from the user chosen
+            trajectory module. Default is 1000.
+
+        use_gpu (bool, optional): If True, use GPU resources. Default is False.
+
+    """
+
+    def __init__(self, max_input_len=1000, use_gpu=False):
 
         self.folder = "few/files/"
         self.data_file = "SchwarzschildEccentricInput.hdf5"
@@ -95,6 +129,22 @@ class ROMANAmplitude:
         return self.xp.log(-(21 / 10) - 2 * e + p)
 
     def __call__(self, p, e, *args):
+        """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
+
+        This function takes the inputs the trajectory in :math:`(p,e)` as arrays
+        and returns the complex amplitude of all modes to adiabatic order at
+        each step of the trajectory.
+
+        args:
+            p (1D numpy.ndarray): Array containing the trajectory for values of
+                the semi-latus rectum.
+            e (1D numpy.ndarray): Array containing the trajectory for values of
+                the eccentricity.
+            *args (tuple): Added to create flexibility when calling different
+                amplitude modules. It is not used.
+
+
+        """
         input_len = len(p)
 
         y = self._p_to_y(p, e)
@@ -134,25 +184,3 @@ class ROMANAmplitude:
         )
 
         return teuk_modes.reshape(self.num_teuk_modes, input_len).T
-
-
-class Interp2DAmplitude:
-    def __init__(self, num_teuk_modes=3843, lmax=10, nmax=30):
-
-        self.amplitude_carrier = pyAmplitudeCarrier(lmax, nmax)
-        self.num_modes = num_teuk_modes
-
-    def __call__(self, p, e, l_arr, m_arr, n_arr):
-
-        input_len = len(p)
-        teuk_modes = Interp2DAmplitude_wrap(
-            p,
-            e,
-            l_arr.astype(np.int32),
-            m_arr.astype(np.int32),
-            n_arr.astype(np.int32),
-            input_len,
-            self.num_modes,
-            self.amplitude_carrier,
-        )
-        return teuk_modes

@@ -1,6 +1,5 @@
 import numpy as np
 cimport numpy as np
-import cupy as cp
 
 from utils.pointer_adjust import pointer_adjust
 

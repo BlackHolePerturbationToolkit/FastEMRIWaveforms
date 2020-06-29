@@ -36,9 +36,12 @@ sys.path.insert(0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveform
 sys.path.insert(
     0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveforms/few/")
 )
-# sys.path.insert(
-#    0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveforms/few/trajectory/")
-# )
+sys.path.insert(
+    0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveforms/few/amplitude/")
+)
+sys.path.insert(
+    0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveforms/few/trajectory/")
+)
 
 
 # -- General configuration ---------------------------------------------------
@@ -52,6 +55,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "sphinx_rtd_theme",
+    "sphinx.ext.mathjax",
 ]
 
 source_suffix = [".rst"]
@@ -70,8 +74,8 @@ autodoc_member_order = "bysource"
 
 
 def skip(app, what, name, obj, would_skip, options):
-    if name == "__weakref__":
-        return True
+    if name == "__call__":
+        return False
     return would_skip
 
 
