@@ -48,11 +48,15 @@ class ROMANAmplitude(SchwarzschildEccentric):
             buffers. This should be the same as the value from the user chosen
             trajectory module. Default is 1000.
 
-        use_gpu (bool, optional): If True, use GPU resources. Default is False.
+        **kwargs (dict, optional): Keyword arguments for the base class:
+            :class:`few.utils.baseclasses.SchwarzschildEccentric`. Default is
+            {}.
 
     """
 
-    def __init__(self, max_input_len=1000, use_gpu=False):
+    def __init__(self, max_input_len=1000, **kwargs):
+
+        SchwarzschildEccentric.__init__(self, **kwargs)
 
         self.folder = "few/files/"
         self.data_file = "SchwarzschildEccentricInput.hdf5"
