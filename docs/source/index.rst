@@ -8,7 +8,7 @@
    :caption: Contents:
 
 
-.. mdinclude:: ../README.md
+.. mdinclude:: ../../README.md
 
 Documentation
 =============
