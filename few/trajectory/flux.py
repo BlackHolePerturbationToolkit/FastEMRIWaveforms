@@ -11,7 +11,7 @@ from pyFLUX import flux_inspiral, pyFluxCarrier
 MTSUN_SI = 4.925491025543575903411922162094833998e-6
 
 
-class RunFluxInspiral:
+class RunSchwarzEccFluxInspiral:
     """Flux-based trajectory module.
 
     This module implements a flux-based trajectory by integrating with an

@@ -7,7 +7,9 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
-from trajectory.flux import RunFluxInspiral
+from utils.baseclasses import SchwarzschildEccentric
+
+from trajectory.flux import RunSchwarzEccFluxInspiral
 
 from amplitude.interp2dcubicspline import Interp2DAmplitude
 
@@ -38,7 +40,7 @@ from summation.direct_mode_sum import DirectModeSum
 from scipy import constants as ct
 
 
-class SchwarzschildEccentricBase:
+class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric):
     """Carrier class for FEW
 
     """
@@ -311,18 +313,18 @@ class SchwarzschildEccentricBase:
 
 
 # TODO: free memory in trajectory
-class FastSchwarzschildEccentricFlux(SchwarzschildEccentricBase):
+class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
     def __init__(self, *args, **kwargs):
 
         self.gpu_capability = True
         self.allow_batching = False
 
-        SchwarzschildEccentricBase.__init__(
+        SchwarzschildEccentricWaveformBase.__init__(
             self, RunFluxInspiral, ROMANAmplitude, InterpolatedModeSum, *args, **kwargs
         )
 
 
-class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricBase):
+class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
     def __init__(self, *args, **kwargs):
 
         # declare specific properties
@@ -333,7 +335,7 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricBase):
         self.gpu_capability = False
         self.allow_batching = True
 
-        SchwarzschildEccentricBase.__init__(
+        SchwarzschildEccentricWaveformBase.__init__(
             self, RunFluxInspiral, Interp2DAmplitude, DirectModeSum, *args, **kwargs
         )
 

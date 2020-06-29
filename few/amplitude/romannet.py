@@ -5,6 +5,8 @@ import h5py
 from pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
 from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 
+from few.utils.baseclasses import SchwarzschildEccentric
+
 try:
     import cupy as xp
     from pymatmul import neural_layer_wrap, transform_output_wrap
@@ -20,19 +22,13 @@ RUN_RELU = 1
 NO_RELU = 0
 
 
-class ROMANAmplitude:
+class ROMANAmplitude(SchwarzschildEccentric):
     """Calculate Teukolsky amplitudes with a ROMAN.
 
-    ROMAN stands for reduced-order models with artificial neurons. The user
-    inputs orbital parameter trajectories and is returned the complex amplitudes
-    of each harmonic mode, :math:`A_{lmn}`, given by,
-
-    .. math:: A_{lmn}=-2Z_{lmn}/\omega_{mn}^2,
-
-    where :math:`Z_{lmn}` and :math:`\omega_{mn}` are functions of the
-    orbital paramters. :math:`l` ranges from 2 to 10; :math:`m` from :math:`-l` to :math:`l`;
-    and :math:`n` from -30 to 30. This is for Schwarzschild eccentric.
-    The model validity ranges from (TODO: add limits).
+    ROMAN stands for reduced-order models with artificial neurons. Please see
+    the documentations for
+    :class:`few.amplitude.ampbaseclasses.SchwarzschildEccentricAmplitudeBase`
+    for overall aspects of these models.
 
     A reduced order model is computed for :math:`A_{lmn}`. The data sets that
     are provided over a grid of :math:`(p,e)` were provided by Scott Hughes.
@@ -44,7 +40,7 @@ class ROMANAmplitude:
     coefficients for the modes in the reduced basic and transforms it back to
     amplitude space.
 
-    This module is available for GPU and CPU. 
+    This module is available for GPU and CPU.
 
 
     args:

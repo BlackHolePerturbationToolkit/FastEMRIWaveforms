@@ -2,10 +2,12 @@ import numpy as np
 import os
 import h5py
 
+from few.utils.baseclasses import SchwarzschildEccentric
+
 from pyInterp2DAmplitude import Interp2DAmplitude_wrap, pyAmplitudeCarrier
 
 
-class Interp2DAmplitude:
+class Interp2DAmplitude(SchwarzschildEccentric):
     def __init__(self, num_teuk_modes=3843, lmax=10, nmax=30):
 
         self.amplitude_carrier = pyAmplitudeCarrier(lmax, nmax)
