@@ -7,7 +7,7 @@ try:
 except ImportError:
     import numpy as xp
 
-from flux import RunFluxInspiral
+from trajectory.flux import RunFluxInspiral
 from amplitude.amplitude import ROMANAmplitude, Interp2DAmplitude
 from summation.interpolated_mode_sum import InterpolatedModeSum
 from utils.ylm import GetYlms
