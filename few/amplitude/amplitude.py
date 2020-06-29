@@ -4,6 +4,7 @@ import h5py
 
 from pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
 from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
+from pyInterp2DAmplitude import Interp2DAmplitude_wrap, pyAmplitudeCarrier
 
 try:
     import cupy as xp
@@ -11,9 +12,8 @@ try:
 
     run_gpu = True
 
-except ImportError:
+except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
-    from pyInterp2DAmplitude import Interp2DAmplitude_wrap, pyAmplitudeCarrier
 
     run_gpu = False
 

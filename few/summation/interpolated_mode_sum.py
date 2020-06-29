@@ -5,7 +5,7 @@ try:
     import cupy as xp
     from pyinterp import interpolate_arrays_wrap, get_waveform_wrap
 
-except ImportError:
+except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 import numpy as np
 

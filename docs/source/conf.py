@@ -14,19 +14,31 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-import sys, os
-
-sys.path.insert(0, os.path.abspath("/Users/michaelkatz/Research/few/"))
-#sys.path.insert(0, os.path.abspath("/Users/michaelkatz/Research/gce/"))
 
 # -- Project information -----------------------------------------------------
 
-project = 'few'
-copyright = '2020, Michael Katz, Alvin Chua, Niels Warburton'
-author = 'Michael Katz, Alvin Chua, Niels Warburton'
+project = "few: Fast EMRI Waveforms"
+copyright = "2020, Michael Katz, Alvin Chua, Niels Warburton"
+author = "Michael Katz, Alvin Chua, Niels Warburton"
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = "0.1.0"
+
+import pypandoc
+
+output = pypandoc.convert_file("../../README.md", "rst")
+with open("README.rst", "w") as fp:
+    fp.write(output)
+
+import sys, os
+
+sys.path.insert(0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveforms/"))
+sys.path.insert(
+    0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveforms/few/")
+)
+# sys.path.insert(
+#    0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveforms/few/trajectory/")
+# )
 
 
 # -- General configuration ---------------------------------------------------
@@ -34,19 +46,15 @@ release = '0.1.0'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-import sphinx_rtd_theme
-
 html_theme = "sphinx_rtd_theme"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
-    "m2r",
     "sphinx_rtd_theme",
 ]
 
-# source_suffix = '.rst'
-source_suffix = [".rst", ".md"]
+source_suffix = [".rst"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -54,7 +62,21 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+
+import sphinx_rtd_theme
+
+autodoc_member_order = "bysource"
+
+
+def skip(app, what, name, obj, would_skip, options):
+    if name == "__weakref__":
+        return True
+    return would_skip
+
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip)
 
 
 # -- Options for HTML output -------------------------------------------------
