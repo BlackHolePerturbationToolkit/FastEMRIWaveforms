@@ -1,15 +1,18 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>few: Fast EMRI Waveforms &mdash; few 0.1.0 documentation</title>
+  <title>few: Fast EMRI Waveforms &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
   
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
 
   
   
@@ -17,7 +20,9 @@
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -29,10 +34,6 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
 </head>
@@ -48,7 +49,7 @@
           
 
           
-            <a href="#" class="icon icon-home"> few
+            <a href="#" class="icon icon-home" alt="Documentation Home"> few: Fast EMRI Waveforms
           
 
           
@@ -71,6 +72,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -97,13 +99,14 @@
 <li><a class="reference internal" href="#acknowledgments">Acknowledgments</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#documentation">Documentation</a></li>
+<li><a class="reference internal" href="#module-few.waveform">Documentation</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 </div>
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -113,7 +116,7 @@
       <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">few</a>
+          <a href="#">few: Fast EMRI Waveforms</a>
         
       </nav>
 
@@ -142,7 +145,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="#">Docs</a> &raquo;</li>
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
         
       <li>few: Fast EMRI Waveforms</li>
     
@@ -167,77 +170,95 @@
 </div>
 <div class="section" id="few-fast-emri-waveforms">
 <h1>few: Fast EMRI Waveforms<a class="headerlink" href="#few-fast-emri-waveforms" title="Permalink to this headline">¶</a></h1>
-<p>This package contains the highly modular framework for fast and accurate extreme mass ratio inspiral (EMRI) waveforms from (TODO: add arXiv). The waveforms in this package combine a variety of separately accessible modules to form EMRI waveforms on both CPUs and GPUs. Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the documentation (TODO: add documentation site) for further information on these modules.</p>
-<p>If you use all or any parts of this code, please cite (TODO: add papers to cite. Do we want this to be per module or general use.).</p>
+<p>This package contains the highly modular framework for fast and accurate
+extreme mass ratio inspiral (EMRI) waveforms from (TODO: add arXiv). The
+waveforms in this package combine a variety of separately accessible
+modules to form EMRI waveforms on both CPUs and GPUs. Generally, the
+modules fall into four categories: trajectory, amplitudes, summation,
+and utilities. Please see the documentation (TODO: add documentation
+site) for further information on these modules.</p>
+<p>If you use all or any parts of this code, please cite (TODO: add papers
+to cite. Do we want this to be per module or general use.).</p>
 <div class="section" id="getting-started">
 <h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple" start="0">
-<li><p><a class="reference external" href="https://docs.anaconda.com/anaconda/install/">Install Anaconda</a> if you do not have it.</p></li>
+<li><p><a class="reference external" href="https://docs.anaconda.com/anaconda/install/">Install Anaconda</a> if
+you do not have it.</p></li>
 <li><p>Create a virtual environment.</p></li>
 </ol>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>conda create -n few_env numpy Cython scipy tqdm python=3.8
-conda activate few_env
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.8</span>
+<span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
-<li><p>Use pip to <a class="reference external" href="https://docs-cupy.chainer.org/en/stable/install.html">install cupy</a>. If you have cuda version 9.2, for example:</p></li>
+<li><p>Use pip to <a class="reference external" href="https://docs-cupy.chainer.org/en/stable/install.html">install
+cupy</a>. If
+you have cuda version 9.2, for example:</p></li>
 </ol>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>pip install cupy-cuda92
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">cupy</span><span class="o">-</span><span class="n">cuda92</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
 <li><p>Clone the repository.</p></li>
 </ol>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/mikekatz04/FastEMRIWaveforms.git
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">mikekatz04</span><span class="o">/</span><span class="n">FastEMRIWaveforms</span><span class="o">.</span><span class="n">git</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="4">
 <li><p>Run install. Make sure CUDA is on your PATH.</p></li>
 </ol>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>python setup.py install
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="5">
 <li><p>To import few:</p></li>
 </ol>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span><span class="c">TODO: import of high level waveform</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">TODO</span><span class="p">:</span> <span class="kn">import</span> <span class="nn">of</span> <span class="n">high</span> <span class="n">level</span> <span class="n">waveform</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="6">
 <li><p>Perform test:</p></li>
 </ol>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>python tests/test.py
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">tests</span><span class="o">/</span><span class="n">test</span><span class="o">.</span><span class="n">py</span>
 </pre></div>
 </div>
 <div class="section" id="prerequisites">
 <h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
-<p>To install this software, you need the <a class="reference external" href="https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html">CUDA toolkit</a>, [gsl] (<a class="reference external" href="https://www.gnu.org/software/gsl/">https://www.gnu.org/software/gsl/</a>), <a class="reference external" href="https://www.netlib.org/lapack/lug/node14.html">lapack</a> Python &gt;3.4, numpy, and <a class="reference external" href="https://cupy.chainer.org/">cupy</a>. The CUDA toolkit must have cuda version &gt;8.0. To run this software you need an NVIDIA GPU of compute capability &gt;2.0.</p>
+<p>To install this software, you need the <a class="reference external" href="https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html">CUDA
+toolkit</a>,
+[gsl] (<a class="reference external" href="https://www.gnu.org/software/gsl/">https://www.gnu.org/software/gsl/</a>),
+<a class="reference external" href="https://www.netlib.org/lapack/lug/node14.html">lapack</a> Python &gt;3.4,
+numpy, and <a class="reference external" href="https://cupy.chainer.org/">cupy</a>. The CUDA toolkit must
+have cuda version &gt;8.0. To run this software you need an NVIDIA GPU of
+compute capability &gt;2.0.</p>
 </div>
 <div class="section" id="installing">
 <h3>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h3>
 <ol class="arabic simple">
 <li><p>Create a virtual environment.</p></li>
 </ol>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>conda create -n few_env numpy Cython scipy tqdm python=3.8
-conda activate few_env
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.8</span>
+<span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
-<li><p>Use pip to <a class="reference external" href="https://docs-cupy.chainer.org/en/stable/install.html">install cupy</a>. If you have cuda version 9.2, for example:</p></li>
+<li><p>Use pip to <a class="reference external" href="https://docs-cupy.chainer.org/en/stable/install.html">install
+cupy</a>. If
+you have cuda version 9.2, for example:</p></li>
 </ol>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>pip install cupy-cuda92
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">cupy</span><span class="o">-</span><span class="n">cuda92</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
 <li><p>Clone the repository.</p></li>
 </ol>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/mikekatz04/FastEMRIWaveforms.git
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">mikekatz04</span><span class="o">/</span><span class="n">FastEMRIWaveforms</span><span class="o">.</span><span class="n">git</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="4">
 <li><p>Run install. Make sure CUDA is on your PATH.</p></li>
 </ol>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>python setup.py install
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
 </pre></div>
 </div>
 </div>
@@ -248,11 +269,14 @@ conda activate few_env
 </div>
 <div class="section" id="contributing">
 <h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h2>
-<p>Please read <a class="reference external" href="CONTRIBUTING.md">CONTRIBUTING.md</a> for details on our code of conduct, and the process for submitting pull requests to us.</p>
+<p>Please read <a class="reference external" href="CONTRIBUTING.md">CONTRIBUTING.md</a> for details on our
+code of conduct, and the process for submitting pull requests to us.</p>
 </div>
 <div class="section" id="versioning">
 <h2>Versioning<a class="headerlink" href="#versioning" title="Permalink to this headline">¶</a></h2>
-<p>We use <a class="reference external" href="http://semver.org/">SemVer</a> for versioning. For the versions available, see the <a class="reference external" href="https://github.com/mikekatz04/gce/tags">tags on this repository</a>.</p>
+<p>We use <a class="reference external" href="http://semver.org/">SemVer</a> for versioning. For the versions
+available, see the <a class="reference external" href="https://github.com/mikekatz04/gce/tags">tags on this
+repository</a>.</p>
 <p>Current Version: 0.1.0</p>
 </div>
 <div class="section" id="authors">
@@ -269,18 +293,141 @@ conda activate few_env
 </div>
 <div class="section" id="license">
 <h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
-<p>This project is licensed under the GNU License - see the <a class="reference external" href="LICENSE.md">LICENSE.md</a> file for details.</p>
+<p>This project is licensed under the GNU License - see the
+<a class="reference external" href="LICENSE.md">LICENSE.md</a> file for details.</p>
 </div>
 <div class="section" id="acknowledgments">
 <h2>Acknowledgments<a class="headerlink" href="#acknowledgments" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>This research resulting in this code was supported by National Science Foundation under grant DGE-0948017 and the Chateaubriand Fellowship from the Office for Science &amp; Technology of the Embassy of France in the United States.</p></li>
-<li><p>It was also supported in part through the computational resources and staff contributions provided for the Quest/Grail high performance computing facility at Northwestern University.</p></li>
+<li><p>This research resulting in this code was supported by National
+Science Foundation under grant DGE-0948017 and the Chateaubriand
+Fellowship from the Office for Science &amp; Technology of the Embassy of
+France in the United States.</p></li>
+<li><p>It was also supported in part through the computational resources and
+staff contributions provided for the Quest/Grail high performance
+computing facility at Northwestern University.</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="documentation">
-<h1>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-few.waveform">
+<span id="documentation"></span><h1>Documentation<a class="headerlink" href="#module-few.waveform" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="few.waveform.SchwarzschildEccentricBase">
+<em class="property">class </em><code class="sig-prename descclassname">few.waveform.</code><code class="sig-name descname">SchwarzschildEccentricBase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inspiral_module</span></em>, <em class="sig-param"><span class="n">amplitude_module</span></em>, <em class="sig-param"><span class="n">sum_module</span></em>, <em class="sig-param"><span class="n">inspiral_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">amplitude_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">sum_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">Ylm_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Carrier class for FEW</p>
+<dl class="py method">
+<dt id="few.waveform.SchwarzschildEccentricBase.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inspiral_module</span></em>, <em class="sig-param"><span class="n">amplitude_module</span></em>, <em class="sig-param"><span class="n">sum_module</span></em>, <em class="sig-param"><span class="n">inspiral_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">amplitude_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">sum_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">Ylm_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricBase.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SchwarzschildEccentricBase.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">0.0002</span></em>, <em class="sig-param"><span class="n">show_progress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">mode_selection</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricBase.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call self as a function.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux">
+<em class="property">class </em><code class="sig-prename descclassname">few.waveform.</code><code class="sig-name descname">FastSchwarzschildEccentricFlux</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#few.waveform.SchwarzschildEccentricBase" title="few.waveform.SchwarzschildEccentricBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.SchwarzschildEccentricBase</span></code></a></p>
+<dl class="py method">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux">
+<em class="property">class </em><code class="sig-prename descclassname">few.waveform.</code><code class="sig-name descname">SlowSchwarzschildEccentricFlux</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#few.waveform.SchwarzschildEccentricBase" title="few.waveform.SchwarzschildEccentricBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.SchwarzschildEccentricBase</span></code></a></p>
+<dl class="py method">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="few.trajectory.flux.RunFluxInspiral">
+<em class="property">class </em><code class="sig-prename descclassname">few.trajectory.flux.</code><code class="sig-name descname">RunFluxInspiral</code><a class="headerlink" href="#few.trajectory.flux.RunFluxInspiral" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="few.trajectory.flux.RunFluxInspiral.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunFluxInspiral.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flux-based trajectory module.</p>
+<p>This module implements a flux-based trajectory by integrating with an
+RK8 integrator. It can also adjust the output time-spacing using
+cubic spline interpolation. Additionally, it gives the option for
+a dense trajectory, which integrates the trajectory at the user-defined
+timestep.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.flux.RunFluxInspiral.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">err</span><span class="o">=</span><span class="default_value">1e-10</span></em>, <em class="sig-param"><span class="n">in_coordinate_time</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">new_t</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">spline_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">DENSE_STEPPING</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">max_init_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">upsample</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">step_eps</span><span class="o">=</span><span class="default_value">1e-11</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunFluxInspiral.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call function for this class.</p>
+<p>This is the function for calling the creation of the flux-based
+trajectory. Inputs define the output time spacing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Mass of massive black hole in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – Mass of compact object in solar masses.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semi-latus rectum in terms units of M (p/M).
+This model can handle (p0 &lt;= 18.0).</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity (dimensionless).
+This model can handle (e0 &lt;= 0.7).</p></li>
+<li><p><strong>err</strong> (<em>double</em><em>, </em><em>optional</em>) – Tolerance for integrator. Default is 1e-10.
+Decreasing this parameter will give more steps over the
+trajectory, but if it is too small, memory issues will occur as
+the trajectory length will blow up. We recommend not adjusting
+this parameter.</p></li>
+<li><p><strong>in_coordinate_time</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the trajectory will be
+outputted in coordinate time. If False, the trajectory will be
+outputted in units of M. Default is True.</p></li>
+<li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time step for output waveform in seconds. Also sets
+initial step for integrator. Default is 10.0.</p></li>
+<li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Total observation time in years. Sets the maximum time
+for the integrator to run. Default is 1.0.</p></li>
+<li><p><strong>new_t</strong> (<em>1D np.ndarray</em><em>, </em><em>optional</em>) – If given, this represents the final
+time array at which the trajectory is analyzed. This is
+performed by using a cubic spline on the integrator output.
+Default is None.</p></li>
+<li><p><strong>spline_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – If using upsampling, spline_kwargs
+provides the kwargs desired for scipy.interpolate.CubicSpline.
+Default is {}.</p></li>
+<li><p><strong>DENSE_STEPPING</strong> (<em>int</em><em>, </em><em>optional</em>) – If 1, the trajectory used in the
+integrator will be densely stepped at steps of <code class="xref py py-obj docutils literal notranslate"><span class="pre">dt</span></code>. If 0,
+the integrator will determine its stepping. Default is 0.</p></li>
+<li><p><strong>max_init_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Sets the allocation of memory for
+trajectory parameters. This should be the maximum length
+expected for a trajectory. Trajectories with default settings
+will be ~100 points. Default is 1000.</p></li>
+<li><p><strong>upsample</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, upsample, with a cubic spline,
+the trajectories from 0 to T in steps of dt. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Tuple of (t, p, e, Phi_phi, Phi_r, flux_norm).</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If input parameters are not allowed in this model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
@@ -302,11 +449,19 @@ conda activate few_env
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2020, Michael Katz, Alvin Chua, Niels Warburton
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -317,7 +472,6 @@ conda activate few_env
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

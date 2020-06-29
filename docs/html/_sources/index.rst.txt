@@ -4,14 +4,24 @@
    contain the root `toctree` directive.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: Contents:
 
 
-.. mdinclude:: ../../README.md
+.. include:: README.rst
 
 Documentation
 =============
+
+.. automodule:: few.waveform
+    :members:
+    :show-inheritance:
+    :special-members:
+
+.. autoclass:: few.trajectory.flux.RunFluxInspiral
+    :members:
+    :show-inheritance:
+    :special-members:
 
 
 

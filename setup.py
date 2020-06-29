@@ -278,7 +278,7 @@ setup(
     packages=["few", "few.utils", "few.trajectory", "few.amplitude", "few.summation"],
     py_modules=[
         "few.trajectory.flux",
-        "few.few",
+        "few.waveform",
         "few.amplitude.amplitude",
         "few.utils.mode_filter",
         "few.summation.direct_mode_sum",

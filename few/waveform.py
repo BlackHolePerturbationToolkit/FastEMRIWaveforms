@@ -4,16 +4,24 @@ from tqdm import tqdm
 try:
     import cupy as xp
 
-except ImportError:
+except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
 from trajectory.flux import RunFluxInspiral
-from amplitude.amplitude import ROMANAmplitude, Interp2DAmplitude
-from summation.interpolated_mode_sum import InterpolatedModeSum
+
+try:
+    from amplitude.amplitude import ROMANAmplitude, Interp2DAmplitude
+    from summation.interpolated_mode_sum import InterpolatedModeSum
+
+except (ModuleNotFoundError, ImportError) as e:
+    pass
+
+from utils.mode_filter import ModeFilter
 from utils.ylm import GetYlms
 from summation.direct_mode_sum import DirectModeSum
-from utils.mode_filter import ModeFilter
 
+
+# work out imports with sphinx
 # TODO: unit tests
 # TODO: deal with libs and includes
 # TODO: make sure constants are same
@@ -23,10 +31,16 @@ from utils.mode_filter import ModeFilter
 # TODO: highest level waveform that uses kwargs to pick waveform.
 # TODO: shared memory based on CUDA_ARCH
 # TODO: adjust into packages
+# TODO: choice of integrator
+# TODO: remove step_eps in flux.py
 from scipy import constants as ct
 
 
 class SchwarzschildEccentricBase:
+    """Carrier class for FEW
+
+    """
+
     def __init__(
         self,
         inspiral_module,
@@ -38,9 +52,6 @@ class SchwarzschildEccentricBase:
         Ylm_kwargs={},
         use_gpu=False,
     ):
-        """
-        Carrier class for FEW
-        """
 
         if use_gpu:
             self.xp = xp
