@@ -1,5 +1,5 @@
 import numpy as np
-from abc import ABC
+from tqdm import tqdm
 
 try:
     import cupy as xp
@@ -8,12 +8,11 @@ except ImportError:
     import numpy as xp
 
 from flux import RunFluxInspiral
-from amplitude import ROMANAmplitude, Interp2DAmplitude
-from interpolated_mode_sum import InterpolatedModeSum
-from ylm import GetYlms
-from direct_mode_sum import DirectModeSum
-from mode_filter import ModeFilter
-from tqdm import tqdm
+from amplitude.amplitude import ROMANAmplitude, Interp2DAmplitude
+from summation.interpolated_mode_sum import InterpolatedModeSum
+from utils.ylm import GetYlms
+from summation.direct_mode_sum import DirectModeSum
+from utils.mode_filter import ModeFilter
 
 # TODO: unit tests
 # TODO: deal with libs and includes
@@ -23,6 +22,7 @@ from tqdm import tqdm
 # TODO: associated files for install
 # TODO: highest level waveform that uses kwargs to pick waveform.
 # TODO: shared memory based on CUDA_ARCH
+# TODO: adjust into packages
 from scipy import constants as ct
 
 
