@@ -90,7 +90,7 @@ class RunFluxInspiral:
         if e0 > 0.7:
             raise ValueError("e0 = {} not allowed. e0 must be <= 0.7.".format(e0))
 
-        if p0 > 0.7:
+        if p0 > 18.0:
             raise ValueError("p0 = {} not allowed. p0 must be <= 18.0.".format(p0))
 
         # this will return in coordinate time
