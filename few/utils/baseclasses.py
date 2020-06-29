@@ -41,6 +41,7 @@ class SchwarzschildEccentric(ABC):
         num_modes, num_teuk_modes (int): Total number of Tuekolsky modes
             in the model.
         lmax, nmax (int): Maximum :math:`l`, :math:`n`  values
+        ndim (int): Dimensionality in terms of orbital parameters and phases.
 
     """
 
@@ -58,6 +59,8 @@ class SchwarzschildEccentric(ABC):
 
         self.lmax = 10
         self.nmax = 30
+
+        self.ndim = 2
 
     def sanity_check_traj(self, p, e):
         """Sanity check on parameters output from thte trajectory module.
@@ -122,3 +125,111 @@ class SchwarzschildEccentric(ABC):
                     mu / M
                 )
             )
+
+
+class TrajectoryBase:
+    """Base class used for trajectory modules.
+
+    This class provides a flexible interface to various trajectory
+    implementations. Specific arguments to each trajectory can be found with
+    each associated trajectory module discussed below.
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __call__(
+        self,
+        *args,
+        in_coordinate_time=True,
+        dt=-1,
+        T=1.0,
+        new_t=None,
+        spline_kwargs={},
+        max_init_len=1000,
+        upsample=False,
+        step_eps=1e-11,
+    ):
+        """Call function for trajectory interface.
+
+        This is the function for calling the creation of the
+        trajectory. Inputs define the output time spacing.
+
+        args:
+            *args (list): Input of variable number of arguments specific to the
+                inspiral model (see the trajectory class' `get_inspiral` method).
+            err (double, optional): Tolerance for integrator. Default is 1e-10.
+                Decreasing this parameter will give more steps over the
+                trajectory, but if it is too small, memory issues will occur as
+                the trajectory length will blow up. We recommend not adjusting
+                this parameter.
+            in_coordinate_time (bool, optional): If True, the trajectory will be
+                outputted in coordinate time. If False, the trajectory will be
+                outputted in units of M. Default is True.
+            dt (double, optional): Time step for output waveform in seconds. Also sets
+                initial step for integrator. Default is 10.0.
+            T (double, optional): Total observation time in years. Sets the maximum time
+                for the integrator to run. Default is 1.0.
+            new_t (1D np.ndarray, optional): If given, this represents the final
+                time array at which the trajectory is analyzed. This is
+                performed by using a cubic spline on the integrator output.
+                Default is None.
+            spline_kwargs (dict, optional): If using upsampling, spline_kwargs
+                provides the kwargs desired for scipy.interpolate.CubicSpline.
+                Default is {}.
+            DENSE_STEPPING (int, optional): If 1, the trajectory used in the
+                integrator will be densely stepped at steps of :obj:`dt`. If 0,
+                the integrator will determine its stepping. Default is 0.
+            max_init_len (int, optional): Sets the allocation of memory for
+                trajectory parameters. This should be the maximum length
+                expected for a trajectory. Trajectories with default settings
+                will be ~100 points. Default is 1000.
+            upsample (bool, optional): If True, upsample, with a cubic spline,
+                the trajectories from 0 to T in steps of dt. Default is False.
+
+        Returns:
+            tuple: Tuple of (t, p, e, Phi_phi, Phi_r, flux_norm).
+
+        Raises:
+            ValueError: If input parameters are not allowed in this model.
+
+        """
+
+        kwargs["dt"] = dt
+        kwargs["T"] = (T,)
+        kwargs["max_init_len"] = 1000
+        kwargs["err"] = err
+        kwargs["DENSE_STEPPING"] = "DENSE_STEPPING"
+
+        out = self.get_inspiral(*args, **kwargs)
+
+        t = out[0]
+        params = out[1:]
+
+        if in_coordinate_time is False:
+            Msec = M * MTSUN_SI
+            t = t / Msec
+
+        if not upsample:
+            return (t,) + params
+
+        splines = [CubicSpline(t, temp, **spline_kwargs) for temp in list(params)]
+
+        if new_t is not None:
+            if isinstance(new_t, np.ndarray) is False:
+                raise ValueError("new_t parameter, if provided, must be numpy array.")
+
+        elif dt != -1:
+            new_t = np.arange(0.0, T + dt, dt)
+
+        else:
+            raise ValueError(
+                "If upsampling trajectory, must provide dt or new_t array."
+            )
+
+        if new_t[-1] > t[-1]:
+            print("Warning: new_t array goes beyond generated t array.")
+
+        out = tuple([spl(new_t) for spl in splines])
+        return (new_t,) + out

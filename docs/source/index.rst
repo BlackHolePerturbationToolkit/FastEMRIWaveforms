@@ -43,6 +43,10 @@ Trajectory Package
 
 .. automodule:: few.trajectory
 
+.. autoclass:: few.utils.baseclasses.TrajectoryBase
+    :members:
+    :show-inheritance:
+
 Flux Inspiral
 ~~~~~~~~~~~~~~
 
