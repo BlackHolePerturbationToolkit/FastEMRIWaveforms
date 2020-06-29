@@ -20,7 +20,7 @@ from tqdm import tqdm
 # TODO: make sure constants are same
 # TODO: Allow for use of gpu in one module but not another (?)
 # TODO: add omp to CPU modules
-# compress weight data
+# TODO: associated files for install
 from scipy import constants as ct
 
 
