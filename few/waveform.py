@@ -7,22 +7,22 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
-from utils.baseclasses import SchwarzschildEccentric
+from few.utils.baseclasses import SchwarzschildEccentric
 
-from trajectory.flux import RunSchwarzEccFluxInspiral
+from few.trajectory.flux import RunSchwarzEccFluxInspiral
 
-from amplitude.interp2dcubicspline import Interp2DAmplitude
+from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 
 try:
-    from amplitude.romannet import ROMANAmplitude
-    from summation.interpolated_mode_sum import InterpolatedModeSum
+    from few.amplitude.romannet import ROMANAmplitude
+    from few.summation.interpolated_mode_sum import InterpolatedModeSum
 
 except (ModuleNotFoundError, ImportError) as e:
     pass
 
-from utils.mode_filter import ModeFilter
-from utils.ylm import GetYlms
-from summation.direct_mode_sum import DirectModeSum
+from few.utils.mode_filter import ModeFilter
+from few.utils.ylm import GetYlms
+from few.summation.direct_mode_sum import DirectModeSum
 
 
 # work out imports with sphinx
@@ -320,7 +320,12 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         self.allow_batching = False
 
         SchwarzschildEccentricWaveformBase.__init__(
-            self, RunFluxInspiral, ROMANAmplitude, InterpolatedModeSum, *args, **kwargs
+            self,
+            RunSchwarzEccFluxInspiral,
+            ROMANAmplitude,
+            InterpolatedModeSum,
+            *args,
+            **kwargs
         )
 
 
@@ -336,7 +341,12 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         self.allow_batching = True
 
         SchwarzschildEccentricWaveformBase.__init__(
-            self, RunFluxInspiral, Interp2DAmplitude, DirectModeSum, *args, **kwargs
+            self,
+            RunSchwarzEccFluxInspiral,
+            Interp2DAmplitude,
+            DirectModeSum,
+            *args,
+            **kwargs
         )
 
 
