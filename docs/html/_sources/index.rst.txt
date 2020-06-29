@@ -69,7 +69,7 @@ ROMAN Network
 2D Cubic Spline Interpolation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: interp2dcubicspline
+.. automodule:: few.amplitude.interp2dcubicspline
     :members:
     :show-inheritance:
 
