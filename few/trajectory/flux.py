@@ -1,3 +1,8 @@
+"""
+This module contains flux-based or adiabatic trajectory modules.
+TODO: more info (?), Specific papers to cite
+"""
+
 import numpy as np
 from scipy.interpolate import CubicSpline
 
@@ -7,16 +12,17 @@ MTSUN_SI = 4.925491025543575903411922162094833998e-6
 
 
 class RunFluxInspiral:
+    """Flux-based trajectory module.
+
+    This module implements a flux-based trajectory by integrating with an
+    RK8 integrator. It can also adjust the output time-spacing using
+    cubic spline interpolation. Additionally, it gives the option for
+    a dense trajectory, which integrates the trajectory at the user-defined
+    timestep.
+
+    """
+
     def __init__(self):
-        """Flux-based trajectory module.
-
-        This module implements a flux-based trajectory by integrating with an
-        RK8 integrator. It can also adjust the output time-spacing using
-        cubic spline interpolation. Additionally, it gives the option for
-        a dense trajectory, which integrates the trajectory at the user-defined
-        timestep.
-
-        """
 
         self.flux_carrier = pyFluxCarrier()
 

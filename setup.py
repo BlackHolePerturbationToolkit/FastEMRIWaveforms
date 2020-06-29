@@ -279,7 +279,8 @@ setup(
     py_modules=[
         "few.trajectory.flux",
         "few.waveform",
-        "few.amplitude.amplitude",
+        "few.amplitude.romannet",
+        "few.amplitude.interp2dcubicspline",
         "few.utils.mode_filter",
         "few.summation.direct_mode_sum",
         "few.utils.ylm",

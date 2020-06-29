@@ -5,7 +5,7 @@ try:
 
     gpu = True
 
-except ImportError:
+except (ImportError, ModuleNotFoundError) as e:
     gpu = False
 
 
