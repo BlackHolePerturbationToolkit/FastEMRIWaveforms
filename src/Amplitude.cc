@@ -102,7 +102,7 @@ void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amp
 	hid_t 	file_id;
 	hsize_t	dims[2];
 
-	file_id = H5Fopen ("Teuk_amps_a0.0_lmax_10_nmax_30_new.h5", H5F_ACC_RDONLY, H5P_DEFAULT);
+	file_id = H5Fopen ("few/files/Teuk_amps_a0.0_lmax_10_nmax_30_new.h5", H5F_ACC_RDONLY, H5P_DEFAULT);
 
 	/* get the dimensions of the dataset */
 	H5LTget_dataset_info(file_id, "/grid", dims, NULL, NULL);
