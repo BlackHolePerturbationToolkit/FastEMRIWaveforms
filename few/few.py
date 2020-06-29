@@ -21,6 +21,8 @@ from tqdm import tqdm
 # TODO: Allow for use of gpu in one module but not another (?)
 # TODO: add omp to CPU modules
 # TODO: associated files for install
+# TODO: highest level waveform that uses kwargs to pick waveform.
+# TODO: shared memory based on CUDA_ARCH
 from scipy import constants as ct
 
 
