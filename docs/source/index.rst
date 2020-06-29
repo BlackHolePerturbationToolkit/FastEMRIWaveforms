@@ -13,12 +13,32 @@
 Documentation
 =============
 
-.. automodule:: few.waveform
+Overall Waveform Models
+------------------------
+
+The Fast EMRI Waveform (few) package provides multiple complete models/waveforms to generate waveforms from start to finish. These are detailed in this section. Please note there are other modules available in each subpackage that may not be listed as a part of complete model here.
+
+Schwarzschild Eccentric
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: few.utils.baseclasses.SchwarzschildEccentric
+    :members:
+    :show-inheritance:
+
+.. autoclass:: few.waveform.SchwarzschildEccentricWaveformBase
+    :members:
+    :show-inheritance:
+
+.. autoclass:: few.waveform.FastSchwarzschildEccentricFlux
+    :members:
+    :show-inheritance:
+
+.. autoclass:: few.waveform.SlowSchwarzschildEccentricFlux
     :members:
     :show-inheritance:
 
 
-Trajectory Module
+Trajectory Package
 ------------------
 
 .. automodule:: few.trajectory
@@ -31,13 +51,16 @@ Flux Inspiral
     :show-inheritance:
 
 
-Amplitude Module
+Amplitude Package
 -----------------
 
 .. automodule:: few.amplitude
 
+Schwarzschild Eccentric Amplitudes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 ROMAN Network
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 
 .. automodule:: few.amplitude.romannet
     :members:
