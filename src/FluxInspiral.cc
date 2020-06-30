@@ -312,7 +312,7 @@ void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r
 		FLUXHolder flux_vals = run_FLUX(t0, M, mu, p0, e0, err, tmax, dt, flux_carrier, DENSE_STEPPING, step_eps);
 
         if (flux_vals.length > init_len){
-            printf("\nError: Initial length is too short (length: %d, max_init_len: %d). Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n", *length, init_len);
+            printf("\nError: Initial length is too short (length: %d, max_init_len: %d). Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n", flux_vals.length, init_len);
             exit(0);
         }
 		memcpy(t, &flux_vals.t_arr[0], flux_vals.length*sizeof(double));

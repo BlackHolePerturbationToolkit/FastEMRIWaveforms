@@ -50,6 +50,7 @@ from abc import ABC
 # TODO: free memory in trajectory
 # TODO: deal with attributes
 # TODO: ABC for specific classes
+# TODO: Add more safeguards on settings.
 from scipy import constants as ct
 
 
@@ -553,9 +554,7 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
     ):
 
         # declare specific properties
-        if "inspiral_kwargs" not in kwargs:
-            kwargs["inspiral_kwargs"] = {}
-        kwargs["inspiral_kwargs"]["DENSE_STEPPING"] = 1
+        inspiral_kwargs["DENSE_STEPPING"] = 1
 
         self.gpu_capability = False
         self.allow_batching = True
@@ -578,7 +577,7 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
 if __name__ == "__main__":
     import time
 
-    use_gpu = True
+    use_gpu = False
     few = FastSchwarzschildEccentricFlux(
         inspiral_kwargs={
             "DENSE_STEPPING": 0,
@@ -586,7 +585,7 @@ if __name__ == "__main__":
             "step_eps": 1e-10,
         },
         amplitude_kwargs={"max_input_len": int(1e3), "use_gpu": use_gpu},
-        # amplitude_kwargs=dict(num_teuk_modes=3843, lmax=10, nmax=30),
+        # amplitude_kwargs=dict(),
         Ylm_kwargs={"assume_positive_m": False},
         sum_kwargs={"use_gpu": use_gpu},
         use_gpu=use_gpu,
@@ -599,11 +598,11 @@ if __name__ == "__main__":
     theta = np.pi / 2
     phi = 0.0
     dt = 10.0
-    T = 1.0  # / 50.0  # 1124936.040602 / ct.Julian_year
+    T = 1.0 / 100.0  # 1124936.040602 / ct.Julian_year
     eps = 1e-2
     mode_selection = None
     step_eps = 1e-11
-    show_progress = False
+    show_progress = True
     batch_size = 10000
 
     mismatch_out = []
@@ -612,8 +611,16 @@ if __name__ == "__main__":
     eps_all = 10.0 ** np.arange(-10, -2)
 
     eps_all = np.concatenate([np.array([1e-25]), eps_all])
-    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_05.txt")
-    fullwave = xp.asarray(fullwave[:, 5] + 1j * fullwave[:, 6])
+
+    try:
+        fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_05.txt")
+    except OSError:
+        fullwave = np.genfromtxt("slow_1e6_1e1_14_05.txt")
+
+    if use_gpu:
+        fullwave = xp.asarray(fullwave[:, 5] + 1j * fullwave[:, 6])
+    else:
+        fullwave = np.asarray(fullwave[:, 5] + 1j * fullwave[:, 6])
 
     for i, eps in enumerate(eps_all):
         all_modes = False if i > 0 else True

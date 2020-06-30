@@ -227,7 +227,7 @@ class TrajectoryBase(ABC):
 
         kwargs["dt"] = dt
         kwargs["T"] = T
-        kwargs["max_init_len"] = 1000
+        kwargs["max_init_len"] = max_init_len
         kwargs["err"] = err
         kwargs["DENSE_STEPPING"] = DENSE_STEPPING
 

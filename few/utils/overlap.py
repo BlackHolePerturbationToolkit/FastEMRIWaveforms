@@ -1,4 +1,5 @@
 import numpy as np
+import numpy
 
 try:
     import cupy
@@ -29,7 +30,6 @@ def get_overlap(time_series_1, time_series_2, use_gpu=False):
             is False.
 
     """
-
     if use_gpu:
         xp = cupy
     else:
