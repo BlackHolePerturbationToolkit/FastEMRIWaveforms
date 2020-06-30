@@ -141,6 +141,10 @@ Mode Filtering
 Analysis Tools
 ~~~~~~~~~~~~~~~
 
+.. automodule:: few.utils.overlap
+    :members:
+    :show-inheritance:
+
 
 
 
