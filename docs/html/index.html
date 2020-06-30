@@ -117,6 +117,11 @@
 <li><a class="reference internal" href="#module-few.amplitude.interp2dcubicspline">2D Cubic Spline Interpolation</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#module-few.summation">Summation Package</a><ul>
+<li><a class="reference internal" href="#module-few.summation.interpolated_mode_sum">Interpolated Summation</a></li>
+<li><a class="reference internal" href="#module-few.summation.direct_mode_sum">Direct Summation</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
@@ -510,7 +515,7 @@ quantities.</p>
 <dl class="py class">
 <dt id="few.utils.baseclasses.TrajectoryBase">
 <em class="property">class </em><code class="sig-prename descclassname">few.utils.baseclasses.</code><code class="sig-name descname">TrajectoryBase</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Base class used for trajectory modules.</p>
 <p>This class provides a flexible interface to various trajectory
 implementations. Specific arguments to each trajectory can be found with
@@ -646,7 +651,7 @@ trajectory, but if it is too small, memory issues will occur as
 the trajectory length will blow up. We recommend not adjusting
 this parameter.</p></li>
 <li><p><strong>*args</strong> (<em>list</em><em>, </em><em>placeholder</em>) – Added for flexibility.</p></li>
-<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – kwargs</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – kwargs passed from parent.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -768,6 +773,309 @@ the eccentricity.</p></li>
 amplitude modules. It is not used.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added to create flexibility when calling different
 amplitude modules. It is not used.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-few.summation">
+<span id="summation-package"></span><h2>Summation Package<a class="headerlink" href="#module-few.summation" title="Permalink to this headline">¶</a></h2>
+<p>The summation package houses codes used for combining amplitude and phase
+information over the course of an inspiral. It does contain GPU accelerated
+options.</p>
+<dl class="py class">
+<dt id="few.utils.baseclasses.SummationBase">
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.baseclasses.</code><code class="sig-name descname">SummationBase</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">pad_output</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SummationBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Base class used for summation modules.</p>
+<p>This class provides a common flexible interface to various summation
+implementations. Specific arguments to each summation module can be found
+with each associated module discussed below.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>pad_output</strong> (<em>bool</em><em>, </em><em>optional</em>) – Add zero padding to the waveform for time
+between plunge and observation time. Default is False.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="few.utils.baseclasses.SummationBase.waveform">
+<code class="sig-name descname">waveform</code><a class="headerlink" href="#few.utils.baseclasses.SummationBase.waveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Complex waveform given by
+<span class="math notranslate nohighlight">\(h_+ + i*h_x\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D complex128 np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.SummationBase.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">T</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SummationBase.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Common call function for summation modules.</p>
+<p>Provides a common interface for summation modules. It can adjust for
+more dimensions in a model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<em>1D double xp.ndarray</em>) – Array of t values.</p></li>
+<li><p><strong>teuk_modes</strong> (<em>2D double xp.array</em>) – Array of complex amplitudes.
+Shape: (len(t), num_teuk_modes).</p></li>
+<li><p><strong>ylms</strong> (<em>1D double xp.ndarray</em>) – Array of ylm values for each mode,
+including m&lt;0. Shape is (num of m==0,) + (2*num of m&gt;0,).</p></li>
+<li><p><strong>dt</strong> (<em>double</em>) – Time spacing between observations in seconds (inverse of sampling
+rate).</p></li>
+<li><p><strong>T</strong> (<em>double</em>) – Maximum observing time in years.</p></li>
+<li><p><strong>*args</strong> (<em>list</em>) – This should be a tuple of phases combined with mode
+index arrays. For equatorial, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_r, m, n)\)</span>.
+For generic, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_\Theta, \Phi_r, m, k, n)\)</span>.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added for future flexibility.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<div class="section" id="module-few.summation.interpolated_mode_sum">
+<span id="interpolated-summation"></span><h3>Interpolated Summation<a class="headerlink" href="#module-few.summation.interpolated_mode_sum" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="few.summation.interpolated_mode_sum.CubicSplineInterpolant">
+<em class="property">class </em><code class="sig-prename descclassname">few.summation.interpolated_mode_sum.</code><code class="sig-name descname">CubicSplineInterpolant</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolated_mode_sum.CubicSplineInterpolant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>GPU-accelerated Multiple Cubic Splines</p>
+<p>This class produces multiple cubic splines on a GPU. It has a CPU option
+as well. The cubic splines are produced with “not-a-knot” boundary
+conditions.</p>
+<p>This class can be run on GPUs and CPUs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, prepare arrays for a GPU. Default is
+False.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="few.summation.interpolated_mode_sum.CubicSplineInterpolant.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.summation.interpolated_mode_sum.CubicSplineInterpolant.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>cupy or numpy depending on GPU usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.interpolated_mode_sum.CubicSplineInterpolant.interpolate_arrays">
+<code class="sig-name descname">interpolate_arrays</code><a class="headerlink" href="#few.summation.interpolated_mode_sum.CubicSplineInterpolant.interpolate_arrays" title="Permalink to this definition">¶</a></dt>
+<dd><p>CPU or GPU function for mode interpolation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>func</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.interpolated_mode_sum.CubicSplineInterpolant.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">y_all</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolated_mode_sum.CubicSplineInterpolant.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call method for performing the spline interpolation.</p>
+<p>All splines must be the same length.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<em>1D double xp.ndarray</em>) – t values as input for the spline.</p></li>
+<li><p><strong>y_all</strong> (<em>2D double xp.ndarray</em>) – y values for the spline.
+Shape: (ninterps, length).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="few.summation.interpolated_mode_sum.InterpolatedModeSum">
+<em class="property">class </em><code class="sig-prename descclassname">few.summation.interpolated_mode_sum.</code><code class="sig-name descname">InterpolatedModeSum</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolated_mode_sum.InterpolatedModeSum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.SummationBase" title="few.utils.baseclasses.SummationBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SummationBase</span></code></a>, <a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a></p>
+<p>Create waveform by interpolating sparse trajectory.</p>
+<p>It interpolates all of the modes of interest and phases at sparse
+trajectories. Within the summation phase, the values are calculated using
+the interpolants and summed.</p>
+<p>This class can be run on GPUs and CPUs.</p>
+<dl class="py attribute">
+<dt id="few.summation.interpolated_mode_sum.InterpolatedModeSum.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.summation.interpolated_mode_sum.InterpolatedModeSum.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>cupy or numpy depending on GPU usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.interpolated_mode_sum.InterpolatedModeSum.get_waveform">
+<code class="sig-name descname">get_waveform</code><a class="headerlink" href="#few.summation.interpolated_mode_sum.InterpolatedModeSum.get_waveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>CPU or GPU function for waveform creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>func</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.interpolated_mode_sum.InterpolatedModeSum.ninterps">
+<code class="sig-name descname">ninterps</code><a class="headerlink" href="#few.summation.interpolated_mode_sum.InterpolatedModeSum.ninterps" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of interpolants. It is the (number of phases) +
+2*(number of modes).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.interpolated_mode_sum.InterpolatedModeSum.y_all">
+<code class="sig-name descname">y_all</code><a class="headerlink" href="#few.summation.interpolated_mode_sum.InterpolatedModeSum.y_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>All of the y values for the
+interpolants. Real and imaginary values from the complex amplitudes
+are separated giving all real numbers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>2D double xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">c1, c2, c3</code></dt>
+<dd><p>(1st, 2nd, 3rd) constants for each
+cubic spline.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>2D double xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.interpolated_mode_sum.InterpolatedModeSum.waveform">
+<code class="sig-name descname">waveform</code><a class="headerlink" href="#few.summation.interpolated_mode_sum.InterpolatedModeSum.waveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Complex waveform given by
+<span class="math notranslate nohighlight">\(h_+ + i*h_x\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D complex128 np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.interpolated_mode_sum.InterpolatedModeSum.interp">
+<code class="sig-name descname">interp</code><a class="headerlink" href="#few.summation.interpolated_mode_sum.InterpolatedModeSum.interp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interpolant. See
+<a class="reference internal" href="#few.summation.interpolated_mode_sum.CubicSplineInterpolant" title="few.summation.interpolated_mode_sum.CubicSplineInterpolant"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.summation.interpolated_mode_sum.CubicSplineInterpolant</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.interpolated_mode_sum.InterpolatedModeSum.sum">
+<code class="sig-name descname">sum</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">Phi_phi</span></em>, <em class="sig-param"><span class="n">Phi_r</span></em>, <em class="sig-param"><span class="n">m_arr</span></em>, <em class="sig-param"><span class="n">n_arr</span></em>, <em class="sig-param"><span class="n">init_len</span></em>, <em class="sig-param"><span class="n">num_pts</span></em>, <em class="sig-param"><span class="n">num_teuk_modes</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolated_mode_sum.InterpolatedModeSum.sum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interpolated summation function.</p>
+<p>This function interpolates the amplitude and phase information, and
+creates the final waveform with the combination of ylm values for each
+mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<em>1D double xp.ndarray</em>) – Array of t values.</p></li>
+<li><p><strong>teuk_modes</strong> (<em>2D double xp.array</em>) – Array of complex amplitudes.
+Shape: (len(t), num_teuk_modes).</p></li>
+<li><p><strong>ylms</strong> (<em>1D double xp.ndarray</em>) – Array of ylm values for each mode,
+including m&lt;0. Shape is (num of m==0,) + (2*num of m&gt;0,).</p></li>
+<li><p><strong>Phi_phi</strong> (<em>1D double xp.ndarray</em>) – Array of azimuthal phase values
+(<span class="math notranslate nohighlight">\(\Phi_\phi\)</span>).</p></li>
+<li><p><strong>Phi_r</strong> (<em>1D double xp.ndarray</em>) – Array of radial phase values
+(<span class="math notranslate nohighlight">\(\Phi_r\)</span>).</p></li>
+<li><p><strong>m_arr</strong> (<em>1D int xp.ndarray</em>) – <span class="math notranslate nohighlight">\(m\)</span> values associated with each mode.</p></li>
+<li><p><strong>n_arr</strong> (<em>1D int xp.ndarray</em>) – <span class="math notranslate nohighlight">\(n\)</span> values associated with each mode.</p></li>
+<li><p><strong>init_len</strong> (<em>int</em>) – len(t).</p></li>
+<li><p><strong>num_pts</strong> (<em>int</em>) – len(self.waveform).</p></li>
+<li><p><strong>num_teuk_modes</strong> (<em>int</em>) – Number of amplitude modes included.</p></li>
+<li><p><strong>dt</strong> (<em>double</em>) – Time spacing between observations (inverse of sampling
+rate).</p></li>
+<li><p><strong>*args</strong> (<em>list</em><em>, </em><em>placeholder</em>) – Added for future flexibility.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added for future flexibility.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-few.summation.direct_mode_sum">
+<span id="direct-summation"></span><h3>Direct Summation<a class="headerlink" href="#module-few.summation.direct_mode_sum" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="few.summation.direct_mode_sum.DirectModeSum">
+<em class="property">class </em><code class="sig-prename descclassname">few.summation.direct_mode_sum.</code><code class="sig-name descname">DirectModeSum</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.direct_mode_sum.DirectModeSum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.SummationBase" title="few.utils.baseclasses.SummationBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SummationBase</span></code></a>, <a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a></p>
+<p>Create waveform by direct summation.</p>
+<p>This class sums the amplitude and phase information as received.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> (<em>list</em><em>, </em><em>placeholder</em>) – Added for flexibility.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added for flexibility.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="few.summation.direct_mode_sum.DirectModeSum.waveform">
+<code class="sig-name descname">waveform</code><a class="headerlink" href="#few.summation.direct_mode_sum.DirectModeSum.waveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Complex waveform given by
+<span class="math notranslate nohighlight">\(h_+ + i*h_x\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D complex128 np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.direct_mode_sum.DirectModeSum.sum">
+<code class="sig-name descname">sum</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">Phi_phi</span></em>, <em class="sig-param"><span class="n">Phi_r</span></em>, <em class="sig-param"><span class="n">m_arr</span></em>, <em class="sig-param"><span class="n">n_arr</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.direct_mode_sum.DirectModeSum.sum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Direct summation function.</p>
+<p>This function directly sums the amplitude and phase information, as well
+as the spin-weighted spherical harmonic values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<em>1D double np.ndarray</em>) – Array of t values.</p></li>
+<li><p><strong>teuk_modes</strong> (<em>2D double np.array</em>) – Array of complex amplitudes.
+Shape: (len(t), num_teuk_modes).</p></li>
+<li><p><strong>ylms</strong> (<em>1D double np.ndarray</em>) – Array of ylm values for each mode,
+including m&lt;0. Shape is (num of m==0,) + (2*num of m&gt;0,).</p></li>
+<li><p><strong>Phi_phi</strong> (<em>1D double np.ndarray</em>) – Array of azimuthal phase values
+(<span class="math notranslate nohighlight">\(\Phi_\phi\)</span>).</p></li>
+<li><p><strong>Phi_r</strong> (<em>1D double np.ndarray</em>) – Array of radial phase values
+(<span class="math notranslate nohighlight">\(\Phi_r\)</span>).</p></li>
+<li><p><strong>m_arr</strong> (<em>1D int np.ndarray</em>) – <span class="math notranslate nohighlight">\(m\)</span> values associated with each mode.</p></li>
+<li><p><strong>n_arr</strong> (<em>1D int np.ndarray</em>) – <span class="math notranslate nohighlight">\(n\)</span> values associated with each mode.</p></li>
+<li><p><strong>*args</strong> (<em>list</em><em>, </em><em>placeholder</em>) – Added for future flexibility.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added for future flexibility.</p></li>
 </ul>
 </dd>
 </dl>

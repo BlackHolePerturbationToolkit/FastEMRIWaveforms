@@ -369,12 +369,12 @@ if __name__ == "__main__":
 
     M = 1e6
     mu = 1e1
-    p0 = 14.0
-    e0 = 0.5
+    p0 = 10.0
+    e0 = 0.7
     theta = np.pi / 2
     phi = 0.0
     dt = 10.0
-    T = 1.0 / 50.0  # 1124936.040602 / ct.Julian_year
+    T = 1.0  # / 50.0  # 1124936.040602 / ct.Julian_year
     eps = 1e-2
     mode_selection = None
     step_eps = 1e-11
@@ -387,12 +387,12 @@ if __name__ == "__main__":
     eps_all = 10.0 ** np.arange(-10, -2)
 
     eps_all = np.concatenate([np.array([1e-25]), eps_all])
-    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_05.txt")
+    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_10_07.txt")
     fullwave = fullwave[:, 5] + 1j * fullwave[:, 6]
 
     for i, eps in enumerate(eps_all):
         all_modes = False if i > 0 else True
-        num = 1
+        num = 20
         st = time.perf_counter()
         for jjj in range(num):
 

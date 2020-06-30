@@ -127,7 +127,7 @@ class SchwarzschildEccentric(ABC):
             )
 
 
-class TrajectoryBase:
+class TrajectoryBase(ABC):
     """Base class used for trajectory modules.
 
     This class provides a flexible interface to various trajectory
@@ -138,6 +138,10 @@ class TrajectoryBase:
 
     def __init__(self, *args, **kwargs):
         pass
+
+    @classmethod
+    def get_inspiral(self, *args, **kwargs):
+        raise NotImplementedError
 
     def __call__(
         self,
@@ -233,3 +237,81 @@ class TrajectoryBase:
 
         out = tuple([spl(new_t) for spl in splines])
         return (new_t,) + out
+
+
+class SummationBase(ABC):
+    """Base class used for summation modules.
+
+    This class provides a common flexible interface to various summation
+    implementations. Specific arguments to each summation module can be found
+    with each associated module discussed below.
+
+    args:
+        pad_output (bool, optional): Add zero padding to the waveform for time
+            between plunge and observation time. Default is False.
+
+    attributes:
+        waveform (1D complex128 np.ndarray): Complex waveform given by
+            :math:`h_+ + i*h_x`.
+
+    """
+
+    def __init__(self, *args, pad_output=False, **kwargs):
+        self.pad_output = pad_output
+
+    @classmethod
+    def sum(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def __call__(self, t, teuk_modes, ylms, dt, T, *args, **kwargs):
+        """Common call function for summation modules.
+
+        Provides a common interface for summation modules. It can adjust for
+        more dimensions in a model.
+
+        args:
+            t (1D double xp.ndarray): Array of t values.
+            teuk_modes (2D double xp.array): Array of complex amplitudes.
+                Shape: (len(t), num_teuk_modes).
+            ylms (1D double xp.ndarray): Array of ylm values for each mode,
+                including m<0. Shape is (num of m==0,) + (2*num of m>0,).
+            dt (double): Time spacing between observations in seconds (inverse of sampling
+                rate).
+            T (double): Maximum observing time in years.
+            *args (list): This should be a tuple of phases combined with mode
+                index arrays. For equatorial, :math:`(\Phi_\phi, \Phi_r, m, n)`.
+                For generic, :math:`(\Phi_\phi, \Phi_\Theta, \Phi_r, m, k, n)`.
+            **kwargs (dict, placeholder): Added for future flexibility.
+
+        """
+
+        if T < t[-1].item():
+            num_pts = int(T / dt)
+            num_pts_pad = 0
+
+        else:
+            num_pts = int(t[-1] / dt)
+            if self.pad_output:
+                num_pts_pad = int(T / dt) - num_pts
+            else:
+                num_pts_pad = 0
+
+        # TODO: make sure num points adjusts for zero padding
+        self.num_pts, self.num_pts_pad = num_pts, num_pts_pad
+        self.dt = dt
+        init_len = len(t)
+        num_teuk_modes = teuk_modes.shape[1]
+
+        self.waveform = self.xp.zeros(
+            (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
+        )
+
+        try:
+            t = t.get()
+        except:
+            pass
+
+        args_in = (t, teuk_modes, ylms) + args + (init_len, num_pts, num_teuk_modes, dt)
+        self.sum(*args_in)
+
+        return self.waveform

@@ -1,6 +1,8 @@
 from pyinterp_cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
 from pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
 
+from few.utils.baseclasses import SummationBase, SchwarzschildEccentric
+
 try:
     import cupy as xp
     from pyinterp import interpolate_arrays_wrap, get_waveform_wrap
@@ -10,72 +12,169 @@ except (ImportError, ModuleNotFoundError) as e:
 import numpy as np
 
 
-class InterpolatedModeSum:
-    def __init__(self, pad_output=False, use_gpu=False):
+class CubicSplineInterpolant:
+    """GPU-accelerated Multiple Cubic Splines
 
-        self.use_gpu = use_gpu
+    This class produces multiple cubic splines on a GPU. It has a CPU option
+    as well. The cubic splines are produced with "not-a-knot" boundary
+    conditions.
+
+    This class can be run on GPUs and CPUs.
+
+    args:
+        use_gpu (bool, optional): If True, prepare arrays for a GPU. Default is
+            False.
+
+    attributes:
+        xp (obj): cupy or numpy depending on GPU usage.
+        interpolate_arrays (func): CPU or GPU function for mode interpolation.
+
+    """
+
+    def __init__(self, use_gpu=False):
+
         if use_gpu:
             self.xp = xp
             self.interpolate_arrays = interpolate_arrays_wrap
-            self.get_waveform = get_waveform_wrap
 
         else:
             self.xp = np
             self.interpolate_arrays = interpolate_arrays_wrap_cpu
-            self.get_waveform = get_waveform_wrap_cpu
 
-        self.num_phases = 2
-        self.pad_output = pad_output
+    def __call__(self, t, y_all):
+        """Call method for performing the spline interpolation.
 
-    def _interp(self, t, p, e, Phi_phi, Phi_r, teuk_modes):
-        self.length, num_modes_keep = teuk_modes.shape
+        All splines must be the same length.
 
-        self.ninterps = self.num_phases + 2 * num_modes_keep  # 2 for re and im
-        self.y_all = self.xp.zeros((self.ninterps, self.length))
+        args:
+            t (1D double xp.ndarray): t values as input for the spline.
+            y_all (2D double xp.ndarray): y values for the spline.
+                Shape: (ninterps, length).
+        """
+        ninterps, length = y_all.shape
+        y_all = y_all.flatten()
+        c1 = self.xp.zeros((ninterps, length - 1)).flatten()
+        c2 = self.xp.zeros_like(c1).flatten()
+        c3 = self.xp.zeros_like(c1).flatten()
 
-        self.y_all[:num_modes_keep] = teuk_modes.T.real
-        self.y_all[num_modes_keep : 2 * num_modes_keep] = teuk_modes.T.imag
-
-        self.y_all[-2] = Phi_phi
-        self.y_all[-1] = Phi_r
-
-        self.y_all = self.y_all.flatten()
-        self.c1 = self.xp.zeros((self.ninterps, self.length - 1)).flatten()
-        self.c2 = self.xp.zeros_like(self.c1).flatten()
-        self.c3 = self.xp.zeros_like(self.c1).flatten()
-
-        B = self.xp.zeros((self.ninterps * self.length,))
+        B = self.xp.zeros((ninterps * length,))
         upper_diag = self.xp.zeros_like(B)
         diag = self.xp.zeros_like(B)
         lower_diag = self.xp.zeros_like(B)
 
         self.interpolate_arrays(
-            t,
-            self.y_all,
-            self.c1,
-            self.c2,
-            self.c3,
-            self.ninterps,
-            self.length,
-            B,
-            upper_diag,
-            diag,
-            lower_diag,
+            t, y_all, c1, c2, c3, ninterps, length, B, upper_diag, diag, lower_diag,
         )
 
-        self.y_all = self.y_all.reshape(self.ninterps, self.length).T.flatten()
-        self.c1 = self.c1.reshape(self.ninterps, self.length - 1).T.flatten()
-        self.c2 = self.c2.reshape(self.ninterps, self.length - 1).T.flatten()
-        self.c3 = self.c3.reshape(self.ninterps, self.length - 1).T.flatten()
+        y_all = y_all.reshape(ninterps, length).T.flatten()
+        c1 = c1.reshape(ninterps, length - 1).T.flatten()
+        c2 = c2.reshape(ninterps, length - 1).T.flatten()
+        c3 = c3.reshape(ninterps, length - 1).T.flatten()
 
-    def _sum(self, m_arr, n_arr, init_len, num_pts, num_teuk_modes, ylms, dt, h_t):
+        return (y_all, c1, c2, c3)
+
+
+class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
+    """Create waveform by interpolating sparse trajectory.
+
+    It interpolates all of the modes of interest and phases at sparse
+    trajectories. Within the summation phase, the values are calculated using
+    the interpolants and summed.
+
+    This class can be run on GPUs and CPUs.
+
+    attributes:
+        xp (obj): cupy or numpy depending on GPU usage.
+        get_waveform (func): CPU or GPU function for waveform creation.
+        ninterps (int): number of interpolants. It is the (number of phases) +
+            2*(number of modes).
+        y_all (2D double xp.ndarray): All of the y values for the
+            interpolants. Real and imaginary values from the complex amplitudes
+            are separated giving all real numbers.
+        c1, c2, c3 (2D double xp.ndarray): (1st, 2nd, 3rd) constants for each
+            cubic spline.
+        waveform (1D complex128 np.ndarray): Complex waveform given by
+            :math:`h_+ + i*h_x`.
+        interp (obj): Interpolant. See
+            :class:`few.summation.interpolated_mode_sum.CubicSplineInterpolant`.
+
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        SchwarzschildEccentric.__init__(self, *args, **kwargs)
+        SummationBase.__init__(self, *args, **kwargs)
+
+        self.interp = CubicSplineInterpolant(**kwargs)
+
+        if self.use_gpu:
+            self.xp = xp
+            self.get_waveform = get_waveform_wrap
+
+        else:
+            self.xp = np
+            self.get_waveform = get_waveform_wrap_cpu
+
+    def sum(
+        self,
+        t,
+        teuk_modes,
+        ylms,
+        Phi_phi,
+        Phi_r,
+        m_arr,
+        n_arr,
+        init_len,
+        num_pts,
+        num_teuk_modes,
+        dt,
+        *args,
+        **kwargs
+    ):
+        """Interpolated summation function.
+
+        This function interpolates the amplitude and phase information, and
+        creates the final waveform with the combination of ylm values for each
+        mode.
+
+        args:
+            t (1D double xp.ndarray): Array of t values.
+            teuk_modes (2D double xp.array): Array of complex amplitudes.
+                Shape: (len(t), num_teuk_modes).
+            ylms (1D double xp.ndarray): Array of ylm values for each mode,
+                including m<0. Shape is (num of m==0,) + (2*num of m>0,).
+            Phi_phi (1D double xp.ndarray): Array of azimuthal phase values
+                (:math:`\Phi_\phi`).
+            Phi_r (1D double xp.ndarray): Array of radial phase values
+                 (:math:`\Phi_r`).
+            m_arr (1D int xp.ndarray): :math:`m` values associated with each mode.
+            n_arr (1D int xp.ndarray): :math:`n` values associated with each mode.
+            init_len (int): len(t).
+            num_pts (int): len(self.waveform).
+            num_teuk_modes (int): Number of amplitude modes included.
+            dt (double): Time spacing between observations (inverse of sampling
+                rate).
+            *args (list, placeholder): Added for future flexibility.
+            **kwargs (dict, placeholder): Added for future flexibility.
+
+        """
+        ninterps = self.ndim + 2 * num_modes_keep  # 2 for re and im
+        y_all = self.xp.zeros((ninterps, length))
+
+        y_all[:num_modes_keep] = teuk_modes.T.real
+        y_all[num_modes_keep : 2 * num_modes_keep] = teuk_modes.T.imag
+
+        y_all[-2] = Phi_phi
+        y_all[-1] = Phi_r
+
+        y_all, c1, c2, c3 = self.interp(t, y_all)
 
         self.get_waveform(
             self.waveform,
-            self.y_all,
-            self.c1,
-            self.c2,
-            self.c3,
+            y_all,
+            c1,
+            c2,
+            c3,
             m_arr,
             n_arr,
             init_len,
@@ -85,54 +184,3 @@ class InterpolatedModeSum:
             dt,
             h_t,
         )
-
-    def __call__(self, t, p, e, Phi_phi, Phi_r, teuk_modes, m_arr, n_arr, ylms, dt, T):
-
-        if T < t[-1].item():
-            num_pts = int(T / dt)
-            num_pts_pad = 0
-
-        else:
-            num_pts = int(t[-1] / dt)
-            if self.pad_output:
-                num_pts_pad = int(T / dt) - num_pts
-            else:
-                num_pts_pad = 0
-
-        # TODO: make sure num points adjusts for zero padding
-        self.num_pts, self.num_pts_pad = num_pts, num_pts_pad
-        self.dt = dt
-        init_len = len(t)
-        num_teuk_modes = teuk_modes.shape[1]
-
-        self.waveform = self.xp.zeros(
-            (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
-        )
-
-        self._interp(t, p, e, Phi_phi, Phi_r, teuk_modes)
-
-        """
-        from scipy.interpolate import CubicSpline
-        import numpy as np
-
-        Phi_phi_spl = CubicSpline(t.get(), Phi_phi.get())
-        Phi_r_spl = CubicSpline(t.get(), Phi_r.get())
-
-        mode_re_spl = CubicSpline(t.get(), teuk_modes[:, 5].get().real)
-        mode_im_spl = CubicSpline(t.get(), teuk_modes[:, 5].get().imag)
-
-        t_nn = np.arange(0, 10000, dt)
-        Phi_phi_nn = Phi_phi_spl(t_nn)
-        Phi_r_nn = Phi_r_spl(t_nn)
-        mode_re_nn = mode_re_spl(t_nn)
-        mode_im_nn = mode_im_spl(t_nn)
-        """
-
-        try:
-            t = t.get()
-        except:
-            pass
-
-        self._sum(m_arr, n_arr, init_len, num_pts, num_teuk_modes, ylms, dt, t)
-
-        return self.waveform
