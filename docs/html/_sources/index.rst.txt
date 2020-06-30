@@ -77,6 +77,30 @@ ROMAN Network
     :members:
     :show-inheritance:
 
+Summation Package
+------------------
+
+.. automodule:: few.summation
+
+.. autoclass:: few.utils.baseclasses.SummationBase
+    :members:
+    :show-inheritance:
+
+Interpolated Summation
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: few.summation.interpolated_mode_sum
+    :members:
+    :show-inheritance:
+
+Direct Summation
+~~~~~~~~~~~~~~~~~~
+
+.. automodule:: few.summation.direct_mode_sum
+    :members:
+    :show-inheritance:
+
+
 
 
 

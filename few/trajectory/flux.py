@@ -76,7 +76,7 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
                 the trajectory length will blow up. We recommend not adjusting
                 this parameter.
             *args (list, placeholder): Added for flexibility.
-            **kwargs (dict, optional): kwargs
+            **kwargs (dict, optional): kwargs passed from parent.
         Returns:
             tuple: Tuple of (t, p, e, Phi_phi, Phi_r, flux_norm).
 
