@@ -15,7 +15,7 @@ conda create -n few_env numpy Cython scipy tqdm python=3.8
 conda activate few_env
 ```
 
-2) Use pip to [install cupy](https://docs-cupy.chainer.org/en/stable/install.html). If you have cuda version 9.2, for example:
+2) If using GPUs, use pip to [install cupy](https://docs-cupy.chainer.org/en/stable/install.html). If you have cuda version 9.2, for example:
 
 ```
 pip install cupy-cuda92
@@ -59,7 +59,7 @@ conda create -n few_env numpy Cython scipy tqdm python=3.8
 conda activate few_env
 ```
 
-2) Use pip to [install cupy](https://docs-cupy.chainer.org/en/stable/install.html). If you have cuda version 9.2, for example:
+2) If using GPUs, use pip to [install cupy](https://docs-cupy.chainer.org/en/stable/install.html). If you have cuda version 9.2, for example:
 
 ```
 pip install cupy-cuda92
