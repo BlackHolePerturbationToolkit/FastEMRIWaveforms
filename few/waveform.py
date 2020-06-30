@@ -49,6 +49,7 @@ from abc import ABC
 # TODO: remove step_eps in flux.py
 # TODO: free memory in trajectory
 # TODO: deal with attributes
+# TODO: ABC for specific classes
 from scipy import constants as ct
 
 
@@ -127,7 +128,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         use_gpu=False,
     ):
 
-        self.sanity_check_gpu(**kwargs)
+        self.sanity_check_gpu(use_gpu)
 
         if use_gpu:
             self.xp = xp
@@ -405,13 +406,11 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
         return waveform
 
-    def sanity_check_gpu(self, **kwargs):
-        if "use_gpu" in kwargs:
-            if kwargs["use_gpu"] is True:
-                if self.gpu_capability is False:
-                    raise Exception(
-                        "The use_gpu kwarg is True, but this class does not have GPU capabilites."
-                    )
+    def sanity_check_gpu(self, use_gpu):
+        if self.gpu_capability is False and use_gpu is True:
+            raise Exception(
+                "The use_gpu kwarg is True, but this class does not have GPU capabilites."
+            )
 
 
 class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
@@ -480,6 +479,11 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
             RunSchwarzEccFluxInspiral,
             ROMANAmplitude,
             InterpolatedModeSum,
+            inspiral_kwargs=inspiral_kwargs,
+            amplitude_kwargs=amplitude_kwargs,
+            sum_kwargs=sum_kwargs,
+            Ylm_kwargs=Ylm_kwargs,
+            use_gpu=use_gpu,
             *args,
             **kwargs
         )
@@ -561,6 +565,11 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
             RunSchwarzEccFluxInspiral,
             Interp2DAmplitude,
             DirectModeSum,
+            inspiral_kwargs=inspiral_kwargs,
+            amplitude_kwargs=amplitude_kwargs,
+            sum_kwargs=sum_kwargs,
+            Ylm_kwargs=Ylm_kwargs,
+            use_gpu=use_gpu,
             *args,
             **kwargs
         )
