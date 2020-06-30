@@ -19,7 +19,7 @@ from few.trajectory.flux import RunSchwarzEccFluxInspiral
 
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 
-from few.utils.overlap import mismatch
+from few.utils.overlap import get_mismatch
 
 try:
     from few.amplitude.romannet import ROMANAmplitude
@@ -399,11 +399,11 @@ if __name__ == "__main__":
 
     eps_all = np.concatenate([np.array([1e-25]), eps_all])
     fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_05.txt")
-    fullwave = fullwave[:, 5] + 1j * fullwave[:, 6]
+    fullwave = xp.asarray(fullwave[:, 5] + 1j * fullwave[:, 6])
 
     for i, eps in enumerate(eps_all):
         all_modes = False if i > 0 else True
-        num = 20
+        num = 1
         st = time.perf_counter()
         for jjj in range(num):
 
@@ -423,14 +423,14 @@ if __name__ == "__main__":
                 batch_size=batch_size,
             )
 
-            try:
-                wc = wc.get()
-            except AttributeError:
-                pass
+            # try:
+            #    wc = wc.get()
+            # except AttributeError:
+            #    pass
 
         et = time.perf_counter()
 
-        mm = mismatch(wc, fullwave)
+        mm = get_mismatch(wc, fullwave, use_gpu=use_gpu)
         mismatch_out.append(mm)
         num_modes.append(few.num_modes_kept)
         timing.append((et - st) / num)
