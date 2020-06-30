@@ -10,6 +10,37 @@ import numpy as np
 
 
 class ModeFilter:
+    """Filter teukolsky amplitudes based on power contribution.
+
+    This module takes teukolsky modes, combines them with their associated ylms,
+    and determines the power contribution from each mode. It then filters the
+    modes bases on the fractional accuracy on the total power (eps) parameter.
+
+    The mode filtering is a major contributing factor to the speed of these
+    waveforms as it removes large numbers of useles modes from the final
+    summation calculation.
+
+    Be careful as this is built based on the construction that input mode arrays
+    will in order of :math:`m=0`, :math:`m>0`, and then :math:`m<0`.
+
+    TODO: adjust inputs
+
+
+    args:
+        m0mask (1D bool xp.ndarray): This mask highlights which modes have
+            :math:`m=0`. Value is True if :math:`m=0`, False if not.
+        num_m_zero_up (int): Number of modes with :math:`m\geq0`.
+        num_m_1_up (int): Number of modes with :math:`m\geq1`.
+        num_m0 (int): Number of modes with :math:`m=0`.
+        use_gpu (bool, optional): If True, allocate arrays for usage on a GPU.
+            Default is False.
+
+        Attributes:
+            xp: cupy or numpy depending on GPU usage.
+
+
+    """
+
     def __init__(self, m0mask, num_m_zero_up, num_m_1_up, num_m0, use_gpu=False):
 
         if use_gpu:
@@ -22,7 +53,34 @@ class ModeFilter:
         self.num_m_zero_up, self.num_m_1_up = num_m_zero_up, num_m_1_up
         self.num_m0 = num_m0
 
-    def __call__(self, eps, teuk_modes, ylms, l_arr, m_arr, n_arr):
+    def __call__(self, teuk_modes, ylms, modeinds, eps=1e-5):
+        """Call to sort and filer teukolsky modes.
+
+        This is the call function that takes the teukolsky modes, ylms,
+        mode indices and fractional accuracy of the total power and returns
+        filtered teukolsky modes and ylms.
+
+        args:
+            teuk_modes (2D complex128 xp.ndarray): Complex teukolsky amplitudes
+                from the amplitude modules.
+                Shape: (number of trajectory points, number of modes).
+            ylms (1D complex128 xp.ndarray): Array of ylm values for each mode,
+                including m<0. Shape is (num of m==0,) + (num of m>0,)
+                + (num of m<0). Number of m<0 and m>0 is the same, but they are
+                ordered as (m==0 first then) m>0 then m<0.
+            modeinds (list of int xp.ndarrays): List containing the mode index arrays. If in an
+                equatorial model, need :math:`(l,m,n)` arrays. If generic,
+                :math:`(l,m,k,n)` arrays. e.g. [l_arr, m_arr, n_arr].
+            eps (double, optional): Fractional accuracy of the total power used
+                to determine the contributing modes. Lowering this value will
+                calculate more modes slower the waveform down, but generally
+                improving accuracy. Increasing this value removes modes from
+                consideration and can have a considerable affect on the speed of
+                the waveform, albeit at the cost of some accuracy (usually an
+                acceptable loss). Default that gives good mismatch qualities is
+                1e-5.
+
+        """
         power = (
             self.xp.abs(
                 self.xp.concatenate(
@@ -58,10 +116,11 @@ class ModeFilter:
 
         ylmkeep = self.xp.concatenate([keep_modes, temp2])
 
-        return (
+        out1 = (
             teuk_modes[:, keep_modes],
             ylms[ylmkeep],
-            l_arr[keep_modes],
-            m_arr[keep_modes],
-            n_arr[keep_modes],
         )
+
+        out2 = tuple([arg[keep_modes] for arg in args])
+
+        return out1 + out2
