@@ -20,13 +20,16 @@ class SchwarzschildEccentric(ABC):
     this model. This method can be overwritten if necessary. Here we describe
     the overall qualities of this base class.
 
-    The user inputs orbital parameter trajectories and is returned the complex
-    amplitudes of each harmonic mode, :math:`A_{lmn}`, given by,
 
-    .. math:: A_{lmn}=-2Z_{lmn}/\omega_{mn}^2,
+    In this limit, Eq. :eq:`emri_wave_eq` is reduced to the equatortial plane
+    with no spin. Therefore, we only concerned with :math:`(l,m,n)` indices and
+    the parameters :math:`(p,e)` because :math:`k=a=\iota=0`. Therefore, in this
+    model we calculate :math:`A_{lmn}` and :math:`\Phi_{mn}=m\Phi_\phi+n\Phi_r`.
+    This also allows us to use -2 spin-weighted spherical harmonics
+    (:math:`(s=-2)Y_{l,m}`) in place of the more generic angular function from
+    Eq. :eq:`emri_wave_eq`.
 
-    where :math:`Z_{lmn}` and :math:`\omega_{mn}` are functions of the
-    orbital paramters. :math:`l` ranges from 2 to 10; :math:`m` from :math:`-l` to :math:`l`;
+    :math:`l` ranges from 2 to 10; :math:`m` from :math:`-l` to :math:`l`;
     and :math:`n` from -30 to 30. This is for Schwarzschild eccentric.
     The model validity ranges from (TODO: add limits).
 
