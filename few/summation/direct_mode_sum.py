@@ -35,8 +35,10 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric):
             t (1D double np.ndarray): Array of t values.
             teuk_modes (2D double np.array): Array of complex amplitudes.
                 Shape: (len(t), num_teuk_modes).
-            ylms (1D double np.ndarray): Array of ylm values for each mode,
-                including m<0. Shape is (num of m==0,) + (2*num of m>0,).
+            ylms (1D complex128 xp.ndarray): Array of ylm values for each mode,
+                including m<0. Shape is (num of m==0,) + (num of m>0,)
+                + (num of m<0). Number of m<0 and m>0 is the same, but they are
+                ordered as (m==0 first then) m>0 then m<0.
             Phi_phi (1D double np.ndarray): Array of azimuthal phase values
                 (:math:`\Phi_\phi`).
             Phi_r (1D double np.ndarray): Array of radial phase values

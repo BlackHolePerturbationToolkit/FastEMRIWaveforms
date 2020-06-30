@@ -122,6 +122,12 @@
 <li><a class="reference internal" href="#module-few.summation.direct_mode_sum">Direct Summation</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#module-few.utils">Utilities</a><ul>
+<li><a class="reference internal" href="#module-few.utils.mode_filter">Mode Filtering</a></li>
+<li><a class="reference internal" href="#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a></li>
+<li><a class="reference internal" href="#analysis-tools">Analysis Tools</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
@@ -338,7 +344,7 @@ computing facility at Northwestern University.</p></li>
 <p>Fast EMRI Waveform models are built for fast evaluation of the EMRI waveform summation equation, given by (<a class="reference external" href="https://arxiv.org/abs/gr-qc/0509101">Drasco &amp; Hughes 2006</a>),</p>
 <div class="math notranslate nohighlight" id="equation-emri-wave-eq">
 <span class="eqno">(1)<a class="headerlink" href="#equation-emri-wave-eq" title="Permalink to this equation">¶</a></span>\[h_+ + ih_x=r^{-1}\sum_{lmkn}A_{lmkn}(t)e^{-i\Phi_{mkn}(t)}V_{lmkn}(\theta,\phi),\]</div>
-<p>where <span class="math notranslate nohighlight">\(h_+ + ih_x\)</span> is the two polarizations of the gravitational wave; <span class="math notranslate nohighlight">\(r\)</span> is the distance; <span class="math notranslate nohighlight">\(l,m,k,n\)</span> are orbital angular momentum, azimuthal, polar, and radial harmonic indices, respectively; <span class="math notranslate nohighlight">\(A_{lmkn}(t)\)</span> is a complex amplitude function at time <span class="math notranslate nohighlight">\(t\)</span>; <span class="math notranslate nohighlight">\(A(t)\)</span> is a complex amplitude function at time <span class="math notranslate nohighlight">\(t\)</span>; <span class="math notranslate nohighlight">\(\Phi_{mkn}(t)=m\omega_\phi + k\omega_\theta + n\omega_r\)</span> where <span class="math notranslate nohighlight">\(\omega\)</span> is the fundamental frequency for a given direction; and <span class="math notranslate nohighlight">\(V_{lmkn}(\theta,\phi\)</span>) is the harmonic projection functions based on viewing angles <span class="math notranslate nohighlight">\(\theta,phi\)</span>. The various modules in this package deal with separate pieces of this equation. The amplitude (<a class="reference internal" href="#module-few.amplitude" title="few.amplitude"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.amplitude</span></code></a>) module deals with <span class="math notranslate nohighlight">\(A_{lmkn}(t)\)</span>. The trajectory (<a class="reference internal" href="#module-few.trajectory" title="few.trajectory"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.trajectory</span></code></a>) module finds the orbital trajectories (<span class="math notranslate nohighlight">\(p(t), e(t), \iota(t)\)</span>) which are fed into the amplitude module and phase trajectories (<span class="math notranslate nohighlight">\(\Phi_\phi, \Phi_\theta, \Phi_r\)</span>) that are fed into the final summation. Utility modules aid this process from the utilities package (<code class="xref py py-mod docutils literal notranslate"><span class="pre">few.utils</span></code>). Once such utility module is the calculation of <span class="math notranslate nohighlight">\(V_{lmkn}(\theta,\phi\)</span>) (this is currently limited to the spin-weighted spherical harmonics for Schwarzschild eccentric). For completeness, <span class="math notranslate nohighlight">\(A_{lmkn}\)</span> is given by,</p>
+<p>where <span class="math notranslate nohighlight">\(h_+ + ih_x\)</span> is the two polarizations of the gravitational wave; <span class="math notranslate nohighlight">\(r\)</span> is the distance; <span class="math notranslate nohighlight">\(l,m,k,n\)</span> are orbital angular momentum, azimuthal, polar, and radial harmonic indices, respectively; <span class="math notranslate nohighlight">\(A_{lmkn}(t)\)</span> is a complex amplitude function at time <span class="math notranslate nohighlight">\(t\)</span>; <span class="math notranslate nohighlight">\(A(t)\)</span> is a complex amplitude function at time <span class="math notranslate nohighlight">\(t\)</span>; <span class="math notranslate nohighlight">\(\Phi_{mkn}(t)=m\omega_\phi + k\omega_\theta + n\omega_r\)</span> where <span class="math notranslate nohighlight">\(\omega\)</span> is the fundamental frequency for a given direction; and <span class="math notranslate nohighlight">\(V_{lmkn}(\theta,\phi\)</span>) is the harmonic projection functions based on viewing angles <span class="math notranslate nohighlight">\(\theta,phi\)</span>. The various modules in this package deal with separate pieces of this equation. The amplitude (<a class="reference internal" href="#module-few.amplitude" title="few.amplitude"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.amplitude</span></code></a>) module deals with <span class="math notranslate nohighlight">\(A_{lmkn}(t)\)</span>. The trajectory (<a class="reference internal" href="#module-few.trajectory" title="few.trajectory"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.trajectory</span></code></a>) module finds the orbital trajectories (<span class="math notranslate nohighlight">\(p(t), e(t), \iota(t)\)</span>) which are fed into the amplitude module and phase trajectories (<span class="math notranslate nohighlight">\(\Phi_\phi, \Phi_\theta, \Phi_r\)</span>) that are fed into the final summation. Utility modules aid this process from the utilities package (<a class="reference internal" href="#module-few.utils" title="few.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.utils</span></code></a>). Once such utility module is the calculation of <span class="math notranslate nohighlight">\(V_{lmkn}(\theta,\phi\)</span>) (this is currently limited to the spin-weighted spherical harmonics for Schwarzschild eccentric). For completeness, <span class="math notranslate nohighlight">\(A_{lmkn}\)</span> is given by,</p>
 <div class="math notranslate nohighlight">
 \[A_{lmkn} = -2Z_{lmkn}(a, p, e, \iota)/\omega_{mkn}^2,\]</div>
 <p>where <span class="math notranslate nohighlight">\(Z_{lmkn}(a, p, e, \iota)\)</span> is the teukolsky amplitudes associated with a geodesic with spin, <span class="math notranslate nohighlight">\(a\)</span>; semilatus rectum, <span class="math notranslate nohighlight">\(p\)</span>; and inclination, <span class="math notranslate nohighlight">\(\iota\)</span>. <span class="math notranslate nohighlight">\(\omega_{mkn}\)</span> is the summation of fundamental frequencies of the geodesic with integer weights equivalent to the mode indices. The angular function, <span class="math notranslate nohighlight">\(V_{lmkn}\)</span> is given by,</p>
@@ -839,8 +845,10 @@ more dimensions in a model.</p>
 <li><p><strong>t</strong> (<em>1D double xp.ndarray</em>) – Array of t values.</p></li>
 <li><p><strong>teuk_modes</strong> (<em>2D double xp.array</em>) – Array of complex amplitudes.
 Shape: (len(t), num_teuk_modes).</p></li>
-<li><p><strong>ylms</strong> (<em>1D double xp.ndarray</em>) – Array of ylm values for each mode,
-including m&lt;0. Shape is (num of m==0,) + (2*num of m&gt;0,).</p></li>
+<li><p><strong>ylms</strong> (<em>1D complex128 xp.ndarray</em>) – Array of ylm values for each mode,
+including m&lt;0. Shape is (num of m==0,) + (num of m&gt;0,)
++ (num of m&lt;0). Number of m&lt;0 and m&gt;0 is the same, but they are
+ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
 <li><p><strong>dt</strong> (<em>double</em>) – Time spacing between observations in seconds (inverse of sampling
 rate).</p></li>
 <li><p><strong>T</strong> (<em>double</em>) – Maximum observing time in years.</p></li>
@@ -1017,8 +1025,10 @@ mode.</p>
 <li><p><strong>t</strong> (<em>1D double xp.ndarray</em>) – Array of t values.</p></li>
 <li><p><strong>teuk_modes</strong> (<em>2D double xp.array</em>) – Array of complex amplitudes.
 Shape: (len(t), num_teuk_modes).</p></li>
-<li><p><strong>ylms</strong> (<em>1D double xp.ndarray</em>) – Array of ylm values for each mode,
-including m&lt;0. Shape is (num of m==0,) + (2*num of m&gt;0,).</p></li>
+<li><p><strong>ylms</strong> (<em>1D complex128 xp.ndarray</em>) – Array of ylm values for each mode,
+including m&lt;0. Shape is (num of m==0,) + (num of m&gt;0,)
++ (num of m&lt;0). Number of m&lt;0 and m&gt;0 is the same, but they are
+ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
 <li><p><strong>Phi_phi</strong> (<em>1D double xp.ndarray</em>) – Array of azimuthal phase values
 (<span class="math notranslate nohighlight">\(\Phi_\phi\)</span>).</p></li>
 <li><p><strong>Phi_r</strong> (<em>1D double xp.ndarray</em>) – Array of radial phase values
@@ -1080,8 +1090,10 @@ as the spin-weighted spherical harmonic values.</p>
 <li><p><strong>t</strong> (<em>1D double np.ndarray</em>) – Array of t values.</p></li>
 <li><p><strong>teuk_modes</strong> (<em>2D double np.array</em>) – Array of complex amplitudes.
 Shape: (len(t), num_teuk_modes).</p></li>
-<li><p><strong>ylms</strong> (<em>1D double np.ndarray</em>) – Array of ylm values for each mode,
-including m&lt;0. Shape is (num of m==0,) + (2*num of m&gt;0,).</p></li>
+<li><p><strong>ylms</strong> (<em>1D complex128 xp.ndarray</em>) – Array of ylm values for each mode,
+including m&lt;0. Shape is (num of m==0,) + (num of m&gt;0,)
++ (num of m&lt;0). Number of m&lt;0 and m&gt;0 is the same, but they are
+ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
 <li><p><strong>Phi_phi</strong> (<em>1D double np.ndarray</em>) – Array of azimuthal phase values
 (<span class="math notranslate nohighlight">\(\Phi_\phi\)</span>).</p></li>
 <li><p><strong>Phi_r</strong> (<em>1D double np.ndarray</em>) – Array of radial phase values
@@ -1097,6 +1109,153 @@ including m&lt;0. Shape is (num of m==0,) + (2*num of m&gt;0,).</p></li>
 
 </dd></dl>
 
+</div>
+</div>
+<div class="section" id="module-few.utils">
+<span id="utilities"></span><h2>Utilities<a class="headerlink" href="#module-few.utils" title="Permalink to this headline">¶</a></h2>
+<p>The Utilities package houses scripts that aid in our calculation including
+harmonic angular calculations, overlap calculators, and mode filtering modules.</p>
+<div class="section" id="module-few.utils.mode_filter">
+<span id="mode-filtering"></span><h3>Mode Filtering<a class="headerlink" href="#module-few.utils.mode_filter" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="few.utils.mode_filter.ModeFilter">
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.mode_filter.</code><code class="sig-name descname">ModeFilter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m0mask</span></em>, <em class="sig-param"><span class="n">num_m_zero_up</span></em>, <em class="sig-param"><span class="n">num_m_1_up</span></em>, <em class="sig-param"><span class="n">num_m0</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.mode_filter.ModeFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Filter teukolsky amplitudes based on power contribution.</p>
+<p>This module takes teukolsky modes, combines them with their associated ylms,
+and determines the power contribution from each mode. It then filters the
+modes bases on the fractional accuracy on the total power (eps) parameter.</p>
+<p>The mode filtering is a major contributing factor to the speed of these
+waveforms as it removes large numbers of useles modes from the final
+summation calculation.</p>
+<p>Be careful as this is built based on the construction that input mode arrays
+will in order of <span class="math notranslate nohighlight">\(m=0\)</span>, <span class="math notranslate nohighlight">\(m&gt;0\)</span>, and then <span class="math notranslate nohighlight">\(m&lt;0\)</span>.</p>
+<p>TODO: adjust inputs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m0mask</strong> (<em>1D bool xp.ndarray</em>) – This mask highlights which modes have
+<span class="math notranslate nohighlight">\(m=0\)</span>. Value is True if <span class="math notranslate nohighlight">\(m=0\)</span>, False if not.</p></li>
+<li><p><strong>num_m_zero_up</strong> (<em>int</em>) – Number of modes with <span class="math notranslate nohighlight">\(m\geq0\)</span>.</p></li>
+<li><p><strong>num_m_1_up</strong> (<em>int</em>) – Number of modes with <span class="math notranslate nohighlight">\(m\geq1\)</span>.</p></li>
+<li><p><strong>num_m0</strong> (<em>int</em>) – Number of modes with <span class="math notranslate nohighlight">\(m=0\)</span>.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, allocate arrays for usage on a GPU.
+Default is False.</p></li>
+<li><p><strong>Attributes</strong> – xp: cupy or numpy depending on GPU usage.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="few.utils.mode_filter.ModeFilter.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">modeinds</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.mode_filter.ModeFilter.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call to sort and filer teukolsky modes.</p>
+<p>This is the call function that takes the teukolsky modes, ylms,
+mode indices and fractional accuracy of the total power and returns
+filtered teukolsky modes and ylms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>teuk_modes</strong> (<em>2D complex128 xp.ndarray</em>) – Complex teukolsky amplitudes
+from the amplitude modules.
+Shape: (number of trajectory points, number of modes).</p></li>
+<li><p><strong>ylms</strong> (<em>1D complex128 xp.ndarray</em>) – Array of ylm values for each mode,
+including m&lt;0. Shape is (num of m==0,) + (num of m&gt;0,)
++ (num of m&lt;0). Number of m&lt;0 and m&gt;0 is the same, but they are
+ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
+<li><p><strong>modeinds</strong> (<em>list of int xp.ndarrays</em>) – List containing the mode index arrays. If in an
+equatorial model, need <span class="math notranslate nohighlight">\((l,m,n)\)</span> arrays. If generic,
+<span class="math notranslate nohighlight">\((l,m,k,n)\)</span> arrays. e.g. [l_arr, m_arr, n_arr].</p></li>
+<li><p><strong>eps</strong> (<em>double</em><em>, </em><em>optional</em>) – Fractional accuracy of the total power used
+to determine the contributing modes. Lowering this value will
+calculate more modes slower the waveform down, but generally
+improving accuracy. Increasing this value removes modes from
+consideration and can have a considerable affect on the speed of
+the waveform, albeit at the cost of some accuracy (usually an
+acceptable loss). Default that gives good mismatch qualities is
+1e-5.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-few.utils.ylm">
+<span id="spin-weighted-spherical-harmonics"></span><h3>(-2) Spin-Weighted Spherical Harmonics<a class="headerlink" href="#module-few.utils.ylm" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="few.utils.ylm.GetYlms">
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.ylm.</code><code class="sig-name descname">GetYlms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_teuk_modes</span></em>, <em class="sig-param"><span class="n">assume_positive_m</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>(-2) Spin-weighted Spherical Harmonics</p>
+<p>The class generates (-2) spin-weighted spherical hackarmonics,
+<span class="math notranslate nohighlight">\(Y_{lm}(\Theta,\phi)\)</span>. <strong>Important Note</strong>: this class also applies
+the parity operator (<span class="math notranslate nohighlight">\(-1^l\)</span>) to modes with <span class="math notranslate nohighlight">\(m&lt;0\)</span>.</p>
+<p>This currently works by assigning a buffer upfront.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_teuk_modes</strong> (<em>int</em>) – Number of teukolsky modes for buffer.</p></li>
+<li><p><strong>assume_positive_m</strong> (<em>bool</em><em>, </em><em>optional</em>) – Set true if only providing <span class="math notranslate nohighlight">\(m\geq0\)</span>,
+it will return twice the number of requested modes with the seconds
+half as modes with <span class="math notranslate nohighlight">\(m&lt;0\)</span>. <strong>Warning</strong>: It will also duplicate
+the <span class="math notranslate nohighlight">\(m=0\)</span> modes. Default is False.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, allocate arrays for GPU.
+Default is False.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="few.utils.ylm.GetYlms.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.utils.ylm.GetYlms.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>cupy or numpy based on GPU usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.ylm.GetYlms.buffer">
+<code class="sig-name descname">buffer</code><a class="headerlink" href="#few.utils.ylm.GetYlms.buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Buffer for outputing Ylm values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D complex128 xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.ylm.GetYlms.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">l_in</span></em>, <em class="sig-param"><span class="n">m_in</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call method for Ylms.</p>
+<p>This returns ylms based on requested <span class="math notranslate nohighlight">\((l,m)\)</span> values and viewing
+angles.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l_in</strong> (<em>1D int xp.ndarray</em>) – <span class="math notranslate nohighlight">\(l\)</span> values requested.</p></li>
+<li><p><strong>m_in</strong> (<em>1D int xp.ndarray</em>) – <span class="math notranslate nohighlight">\(m\)</span> values requested.</p></li>
+<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle.</p></li>
+<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Ylm values.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>1D complex128 xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="analysis-tools">
+<h3>Analysis Tools<a class="headerlink" href="#analysis-tools" title="Permalink to this headline">¶</a></h3>
 </div>
 </div>
 </div>

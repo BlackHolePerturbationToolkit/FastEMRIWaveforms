@@ -260,7 +260,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric):
 
             else:
                 (teuk_modes_in, ylms_in, self.ls, self.ms, self.ns) = self.mode_filter(
-                    eps, teuk_modes, ylms, self.l_arr, self.m_arr, self.n_arr
+                    teuk_modes, ylms, [self.l_arr, self.m_arr, self.n_arr], eps=eps
                 )
 
             self.num_modes_kept = teuk_modes_in.shape[1]

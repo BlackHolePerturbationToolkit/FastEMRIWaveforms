@@ -276,8 +276,10 @@ class SummationBase(ABC):
             t (1D double xp.ndarray): Array of t values.
             teuk_modes (2D double xp.array): Array of complex amplitudes.
                 Shape: (len(t), num_teuk_modes).
-            ylms (1D double xp.ndarray): Array of ylm values for each mode,
-                including m<0. Shape is (num of m==0,) + (2*num of m>0,).
+            ylms (1D complex128 xp.ndarray): Array of ylm values for each mode,
+                including m<0. Shape is (num of m==0,) + (num of m>0,)
+                + (num of m<0). Number of m<0 and m>0 is the same, but they are
+                ordered as (m==0 first then) m>0 then m<0.
             dt (double): Time spacing between observations in seconds (inverse of sampling
                 rate).
             T (double): Maximum observing time in years.

@@ -119,6 +119,29 @@ Direct Summation
     :members:
     :show-inheritance:
 
+Utilities
+----------
+
+.. automodule:: few.utils
+
+Mode Filtering
+~~~~~~~~~~~~~~~
+
+.. automodule:: few.utils.mode_filter
+    :show-inheritance:
+    :members:
+
+(-2) Spin-Weighted Spherical Harmonics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: few.utils.ylm
+    :show-inheritance:
+    :members:
+
+Analysis Tools
+~~~~~~~~~~~~~~~
+
+
 
 
 
