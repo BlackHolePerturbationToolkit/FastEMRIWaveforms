@@ -160,16 +160,22 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
             **kwargs (dict, placeholder): Added for future flexibility.
 
         """
-        ninterps = self.ndim + 2 * num_modes_keep  # 2 for re and im
+        length = init_len
+        ninterps = self.ndim + 2 * num_teuk_modes  # 2 for re and im
         y_all = self.xp.zeros((ninterps, length))
 
-        y_all[:num_modes_keep] = teuk_modes.T.real
-        y_all[num_modes_keep : 2 * num_modes_keep] = teuk_modes.T.imag
+        y_all[:num_teuk_modes] = teuk_modes.T.real
+        y_all[num_teuk_modes : 2 * num_teuk_modes] = teuk_modes.T.imag
 
         y_all[-2] = Phi_phi
         y_all[-1] = Phi_r
 
         y_all, c1, c2, c3 = self.interp(t, y_all)
+
+        try:
+            h_t = t.get()
+        except:
+            h_t = t
 
         self.get_waveform(
             self.waveform,

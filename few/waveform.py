@@ -1,3 +1,9 @@
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath("/home/mlk667/FastEMRIWaveforms/"))
+
+
 import numpy as np
 from tqdm import tqdm
 
@@ -67,7 +73,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric):
         self.inspiral_generator = inspiral_module()
 
         self.amplitude_generator = amplitude_module(**amplitude_kwargs)
-        self.sum = sum_module(**sum_kwargs)
+        self.create_waveform = sum_module(**sum_kwargs)
         # self.sum = DirectModeSum(**sum_kwargs)
 
         m_arr = self.xp.zeros((3843,), dtype=int)
@@ -157,11 +163,15 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric):
         batch_size=-1,
         mode_selection=None,
     ):
+
+        theta, phi = self.sanity_check_viewing_angles(theta, phi)
+        self.sanity_check_init(M, mu, p0, e0)
         T = T * ct.Julian_year
         # get trajectory
         (t, p, e, Phi_phi, Phi_r, amp_norm) = self.inspiral_generator(
             M, mu, p0, e0, T=T, dt=dt, **self.inspiral_kwargs
         )
+        self.sanity_check_traj(p, e)
 
         # convert for gpu
         t = self.xp.asarray(t)
@@ -259,24 +269,23 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric):
                 teuk_modes_in = teuk_modes[:, keep_modes]
 
             else:
+                modeinds = [self.l_arr, self.m_arr, self.n_arr]
                 (teuk_modes_in, ylms_in, self.ls, self.ms, self.ns) = self.mode_filter(
-                    teuk_modes, ylms, [self.l_arr, self.m_arr, self.n_arr], eps=eps
+                    teuk_modes, ylms, modeinds, eps=eps
                 )
 
             self.num_modes_kept = teuk_modes_in.shape[1]
 
-            waveform_temp = self.sum(
+            waveform_temp = self.create_waveform(
                 t_temp,
-                p_temp,
-                e_temp,
-                Phi_phi_temp,
-                Phi_r_temp,
                 teuk_modes_in,
-                self.ms,
-                self.ns,
                 ylms_in,
                 dt,
                 T,
+                Phi_phi_temp,
+                Phi_r_temp,
+                self.ms,
+                self.ns,
             )
 
             if i > 0:
@@ -369,8 +378,8 @@ if __name__ == "__main__":
 
     M = 1e6
     mu = 1e1
-    p0 = 10.0
-    e0 = 0.7
+    p0 = 14.0
+    e0 = 0.5
     theta = np.pi / 2
     phi = 0.0
     dt = 10.0
@@ -387,7 +396,7 @@ if __name__ == "__main__":
     eps_all = 10.0 ** np.arange(-10, -2)
 
     eps_all = np.concatenate([np.array([1e-25]), eps_all])
-    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_10_07.txt")
+    fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_05.txt")
     fullwave = fullwave[:, 5] + 1j * fullwave[:, 6]
 
     for i, eps in enumerate(eps_all):
