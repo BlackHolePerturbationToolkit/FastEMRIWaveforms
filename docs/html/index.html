@@ -102,7 +102,11 @@
 </li>
 <li><a class="reference internal" href="#documentation">Documentation</a><ul>
 <li><a class="reference internal" href="#overall-waveform-models">Overall Waveform Models</a><ul>
+<li><a class="reference internal" href="#prebuilt-waveform-models">Prebuilt Waveform Models</a></li>
+<li><a class="reference internal" href="#base-classes">Base Classes</a><ul>
 <li><a class="reference internal" href="#schwarzschild-eccentric">Schwarzschild Eccentric</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-few.trajectory">Trajectory Package</a><ul>
@@ -354,9 +358,743 @@ computing facility at Northwestern University.</p></li>
 <p>When these modules complete their calculations, the summation (<a class="reference internal" href="#module-few.summation" title="few.summation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.summation</span></code></a>) module takes all of this information and creates an EMRI waveform.</p>
 <div class="section" id="overall-waveform-models">
 <h2>Overall Waveform Models<a class="headerlink" href="#overall-waveform-models" title="Permalink to this headline">¶</a></h2>
-<p>The Fast EMRI Waveform (few) package provides multiple complete models/waveforms to generate waveforms from start to finish. These are detailed in this section. Please note there are other modules available in each subpackage that may not be listed as a part of complete model here.</p>
+<p>The Fast EMRI Waveform (few) package provides multiple complete models/waveforms to generate waveforms from start to finish. These are detailed in this section. Please note there are other modules available in each subpackage that may not be listed as a part of a complete model here. We will also provide documentation in this section for the base classes that help standardize and build complete waveform models.</p>
+<div class="section" id="prebuilt-waveform-models">
+<h3>Prebuilt Waveform Models<a class="headerlink" href="#prebuilt-waveform-models" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux">
+<em class="property">class </em><code class="sig-prename descclassname">few.waveform.</code><code class="sig-name descname">FastSchwarzschildEccentricFlux</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inspiral_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">amplitude_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">sum_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">Ylm_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#few.waveform.SchwarzschildEccentricWaveformBase" title="few.waveform.SchwarzschildEccentricWaveformBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.SchwarzschildEccentricWaveformBase</span></code></a></p>
+<p>Prebuilt model for fast Schwarzschild eccentric flux-based waveforms.</p>
+<p>This model combines the most efficient modules to produce the fastest
+accurate EMRI waveforms. It leverages GPU hardware for maximal acceleration,
+but is also available on for CPUs. Please see
+<a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a> for general
+information on this class of models.</p>
+<p>The trajectory module used here is <a class="reference internal" href="#module-few.trajectory.flux" title="few.trajectory.flux"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.trajectory.flux</span></code></a> for a
+flux-based, sparse trajectory. This returns approximately 100 points.</p>
+<p>The amplitudes are then determined with
+<a class="reference internal" href="#few.amplitude.romannet.ROMANAmplitude" title="few.amplitude.romannet.ROMANAmplitude"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.amplitude.romannet.ROMANAmplitude</span></code></a> along these sparse
+trajectories. This gives complex amplitudes for all modes in this model at
+each point in the trajectory. These are then filtered with
+<a class="reference internal" href="#few.utils.mode_filter.ModeFilter" title="few.utils.mode_filter.ModeFilter"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.mode_filter.ModeFilter</span></code></a>.</p>
+<p>The modes that make it through the filter are then summed by
+<a class="reference internal" href="#few.summation.interpolated_mode_sum.InterpolatedModeSum" title="few.summation.interpolated_mode_sum.InterpolatedModeSum"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.summation.interpolated_mode_sum.InterpolatedModeSum</span></code></a>.</p>
+<p>See <a class="reference internal" href="#few.waveform.SchwarzschildEccentricWaveformBase" title="few.waveform.SchwarzschildEccentricWaveformBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.SchwarzschildEccentricWaveformBase</span></code></a> for information
+on inputs. See examples as well.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inspiral_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
+inspiral generator. <strong>Important Note</strong>: These kwargs are passed
+online, not during instantiation like other kwargs here. Default is
+{}.</p></li>
+<li><p><strong>amplitude_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
+amplitude generator during instantiation. Default is {}.</p></li>
+<li><p><strong>sum_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
+sum module during instantiation. Default is {}.</p></li>
+<li><p><strong>Ylm_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
+Ylm generator during instantiation. Default is {}.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, use GPU resources. Default is False.</p></li>
+<li><p><strong>*args</strong> (<em>list</em><em>, </em><em>placeholder</em>) – args for waveform model.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – kwargs for waveform model.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.gpu_capability">
+<code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, this wavefrom can leverage gpu
+resources. For this class it is True.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.allow_batching">
+<code class="sig-name descname">allow_batching</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, this waveform can use the batch_size
+kwarg. For this class it is False.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em>, <em class="sig-param"><span class="n">show_progress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">mode_selection</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call function for SchwarzschildEccentric models.</p>
+<p>This function will take input parameters and produce Schwarzschild
+eccentric waveforms. It will use all of the modules preloaded to
+compute desired outputs.</p>
+<p>TODO: add limits on p0</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Mass of larger black hole in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – Mass of compact object in solar masses.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (<span class="math notranslate nohighlight">\(6.0\leq p_0\leq18.0\)</span>).</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity (<span class="math notranslate nohighlight">\(0.0\leq e_0\leq0.7\)</span>).</p></li>
+<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle (<span class="math notranslate nohighlight">\(-\pi/2\leq\Theta\leq\pi/2\)</span>).</p></li>
+<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+<li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time between samples in seconds (inverse of
+sampling frequency). Default is 10.0.</p></li>
+<li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Total observation time in years.
+Default is 1.0.</p></li>
+<li><p><strong>eps</strong> (<em>double</em><em>, </em><em>optional</em>) – Controls the fractional accuracy during mode
+filtering. Raising this parameter will remove modes. Lowering
+this parameter will add modes. Default that gives a good overalp
+is 1e-5.</p></li>
+<li><p><strong>show_progress</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, show progress through
+amplitude/waveform batches using
+<a class="reference external" href="https://tqdm.github.io/">tqdm</a>. Default is False.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – If less than 0, create the waveform
+without batching. If greater than zero, create the waveform
+batching in sizes of batch_size. Default is -1.</p></li>
+<li><p><strong>mode_selection</strong> (<em>str</em><em> or </em><em>list</em><em> or </em><em>None</em>) – Determines the type of mode
+filtering to perform. If None, perform our base mode filtering
+with eps as the fractional accuracy on the total power.
+If ‘all’, it will run all modes without filtering. If a list of
+tuples (or lists) of mode indices
+(e.g. [(<span class="math notranslate nohighlight">\(l_1,m_1,n_1\)</span>), (<span class="math notranslate nohighlight">\(l_2,m_2,n_2\)</span>)]) is
+provided, it will return those modes combined into a
+single waveform.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The output waveform.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>1D complex128 xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.attributes_SchwarzschildEccentricWaveformBase">
+<code class="sig-name descname">attributes_SchwarzschildEccentricWaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.attributes_SchwarzschildEccentricWaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>cupy or numpy based on GPU usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.inspiral_generator">
+<code class="sig-name descname">inspiral_generator</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.inspiral_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated trajectory module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.amplitude_generator">
+<code class="sig-name descname">amplitude_generator</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.amplitude_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated amplitude module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.create_waveform">
+<code class="sig-name descname">create_waveform</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.create_waveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated summation module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.ylm_gen">
+<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.ylm_gen" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated Ylm module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.num_teuk_modes">
+<code class="sig-name descname">num_teuk_modes</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.num_teuk_modes" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of Teukolsky modes in the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.m0sort">
+<code class="sig-name descname">m0sort</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.m0sort" title="Permalink to this definition">¶</a></dt>
+<dd><p>array of indices to sort accoring to
+<span class="math notranslate nohighlight">\((m=0)\)</span> parts first and then <span class="math notranslate nohighlight">\(m&gt;0\)</span> parts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">l_arr, m_arr, n_arr</code></dt>
+<dd><p><span class="math notranslate nohighlight">\((l,m,n)\)</span> arrays
+containing indices for each mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.lmn_indices">
+<code class="sig-name descname">lmn_indices</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.lmn_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary mapping a tuple of <span class="math notranslate nohighlight">\((l,m,n)\)</span> to
+the respective index in l_arr, m_arr, and n_arr.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.num_m_zero_up">
+<code class="sig-name descname">num_m_zero_up</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.num_m_zero_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.num_m0">
+<code class="sig-name descname">num_m0</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.num_m0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes with <span class="math notranslate nohighlight">\(m=0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.num_m_1_up">
+<code class="sig-name descname">num_m_1_up</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.num_m_1_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq1\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">unique_l, unique_m</code></dt>
+<dd><p>Arrays of unique <span class="math notranslate nohighlight">\(l\)</span> and
+<span class="math notranslate nohighlight">\(m\)</span> values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.inverse_lm">
+<code class="sig-name descname">inverse_lm</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.inverse_lm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Array of indices that expands unique
+<span class="math notranslate nohighlight">\((l, m)\)</span> values to the full array of <span class="math notranslate nohighlight">\((l,m,n)\)</span> values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">ls, ms, ns</code></dt>
+<dd><p>Arrays of mode indices <span class="math notranslate nohighlight">\((l,m,n)\)</span>
+after filtering operation. If no filtering, these are equivalent
+to l_arr, m_arr, n_arr.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.sanity_check_init">
+<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.sanity_check_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check initial parameters.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the parameters are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.sanity_check_traj">
+<code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on parameters output from thte trajectory module.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>1D np.ndarray</em>) – Array of semi-latus rectum values produced by
+the trajectory module.</p></li>
+<li><p><strong>e</strong> (<em>1D np.ndarray</em>) – Array of eccentricity values produced by
+the trajectory module.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p></li>
+<li><p><strong>warn</strong> – If any points in the trajectory are allowable,
+    but outside calibration region.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.sanity_check_viewing_angles">
+<code class="sig-name descname">sanity_check_viewing_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.sanity_check_viewing_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on viewing angles.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle.</p></li>
+<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(theta, phi). Phi is wrapped.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux">
+<em class="property">class </em><code class="sig-prename descclassname">few.waveform.</code><code class="sig-name descname">SlowSchwarzschildEccentricFlux</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inspiral_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">amplitude_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">sum_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">Ylm_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#few.waveform.SchwarzschildEccentricWaveformBase" title="few.waveform.SchwarzschildEccentricWaveformBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.SchwarzschildEccentricWaveformBase</span></code></a></p>
+<p>Prebuilt model for slow Schwarzschild eccentric flux-based waveforms.</p>
+<p>This model combines the various modules to produce the a reference waveform
+against which we test our fast models. Please see
+<a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a> for general
+information on this class of models.</p>
+<p>The trajectory module used here is <a class="reference internal" href="#module-few.trajectory.flux" title="few.trajectory.flux"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.trajectory.flux</span></code></a> for a
+flux-based trajectory. For this slow waveform, the DENSE_SAMPLING parameter
+from <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a> is fixed to 1 to create
+a densely sampled trajectory.</p>
+<p>The amplitudes are then determined with
+<a class="reference internal" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude" title="few.amplitude.interp2dcubicspline.Interp2DAmplitude"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.amplitude.interp2dcubicspline.Interp2DAmplitude</span></code></a>
+along a densely sampled trajectory. This gives complex amplitudes
+for all modes in this model at each point in the trajectory. These, can be
+chosent to be filtered, but for reference waveforms, they should not be.</p>
+<p>The modes that make it through the filter are then summed by
+<a class="reference internal" href="#few.summation.direct_mode_sum.DirectModeSum" title="few.summation.direct_mode_sum.DirectModeSum"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.summation.direct_mode_sum.DirectModeSum</span></code></a>.</p>
+<p>See <a class="reference internal" href="#few.waveform.SchwarzschildEccentricWaveformBase" title="few.waveform.SchwarzschildEccentricWaveformBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.SchwarzschildEccentricWaveformBase</span></code></a> for information
+on inputs. See examples as well.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inspiral_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
+inspiral generator. <strong>Important Note</strong>: These kwargs are passed
+online, not during instantiation like other kwargs here. Default is
+{}.</p></li>
+<li><p><strong>amplitude_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
+amplitude generator during instantiation. Default is {}.</p></li>
+<li><p><strong>sum_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
+sum module during instantiation. Default is {}.</p></li>
+<li><p><strong>Ylm_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
+Ylm generator during instantiation. Default is {}.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, use GPU resources. Default is False.</p></li>
+<li><p><strong>*args</strong> (<em>list</em><em>, </em><em>placeholder</em>) – args for waveform model.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – kwargs for waveform model.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.attributes_SlowSchwarzschildEccentricFlux">
+<code class="sig-name descname">attributes_SlowSchwarzschildEccentricFlux</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.attributes_SlowSchwarzschildEccentricFlux" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.gpu_capability">
+<code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, this wavefrom can leverage gpu
+resources. For this class it is False.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.allow_batching">
+<code class="sig-name descname">allow_batching</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, this waveform can use the batch_size
+kwarg. For this class it is True.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em>, <em class="sig-param"><span class="n">show_progress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">mode_selection</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call function for SchwarzschildEccentric models.</p>
+<p>This function will take input parameters and produce Schwarzschild
+eccentric waveforms. It will use all of the modules preloaded to
+compute desired outputs.</p>
+<p>TODO: add limits on p0</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Mass of larger black hole in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – Mass of compact object in solar masses.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (<span class="math notranslate nohighlight">\(6.0\leq p_0\leq18.0\)</span>).</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity (<span class="math notranslate nohighlight">\(0.0\leq e_0\leq0.7\)</span>).</p></li>
+<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle (<span class="math notranslate nohighlight">\(-\pi/2\leq\Theta\leq\pi/2\)</span>).</p></li>
+<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+<li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time between samples in seconds (inverse of
+sampling frequency). Default is 10.0.</p></li>
+<li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Total observation time in years.
+Default is 1.0.</p></li>
+<li><p><strong>eps</strong> (<em>double</em><em>, </em><em>optional</em>) – Controls the fractional accuracy during mode
+filtering. Raising this parameter will remove modes. Lowering
+this parameter will add modes. Default that gives a good overalp
+is 1e-5.</p></li>
+<li><p><strong>show_progress</strong> (<em>bool</em><em>, </em><em>optional</em>) – <p>If True, show progress through
+amplitude/waveform batches using
+<a class="reference external" href="https://tqdm.github.io/">tqdm</a>. Default is False.</p>
+</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – If less than 0, create the waveform
+without batching. If greater than zero, create the waveform
+batching in sizes of batch_size. Default is -1.</p></li>
+<li><p><strong>mode_selection</strong> (<em>str</em><em> or </em><em>list</em><em> or </em><em>None</em>) – Determines the type of mode
+filtering to perform. If None, perform our base mode filtering
+with eps as the fractional accuracy on the total power.
+If ‘all’, it will run all modes without filtering. If a list of
+tuples (or lists) of mode indices
+(e.g. [(<span class="math notranslate nohighlight">\(l_1,m_1,n_1\)</span>), (<span class="math notranslate nohighlight">\(l_2,m_2,n_2\)</span>)]) is
+provided, it will return those modes combined into a
+single waveform.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The output waveform.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>1D complex128 xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.attributes_SchwarzschildEccentricWaveformBase">
+<code class="sig-name descname">attributes_SchwarzschildEccentricWaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.attributes_SchwarzschildEccentricWaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>cupy or numpy based on GPU usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.inspiral_generator">
+<code class="sig-name descname">inspiral_generator</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.inspiral_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated trajectory module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.amplitude_generator">
+<code class="sig-name descname">amplitude_generator</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.amplitude_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated amplitude module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.create_waveform">
+<code class="sig-name descname">create_waveform</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.create_waveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated summation module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.ylm_gen">
+<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.ylm_gen" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated Ylm module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.num_teuk_modes">
+<code class="sig-name descname">num_teuk_modes</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.num_teuk_modes" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of Teukolsky modes in the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.m0sort">
+<code class="sig-name descname">m0sort</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.m0sort" title="Permalink to this definition">¶</a></dt>
+<dd><p>array of indices to sort accoring to
+<span class="math notranslate nohighlight">\((m=0)\)</span> parts first and then <span class="math notranslate nohighlight">\(m&gt;0\)</span> parts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">l_arr, m_arr, n_arr</code></dt>
+<dd><p><span class="math notranslate nohighlight">\((l,m,n)\)</span> arrays
+containing indices for each mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.lmn_indices">
+<code class="sig-name descname">lmn_indices</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.lmn_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary mapping a tuple of <span class="math notranslate nohighlight">\((l,m,n)\)</span> to
+the respective index in l_arr, m_arr, and n_arr.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.num_m_zero_up">
+<code class="sig-name descname">num_m_zero_up</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.num_m_zero_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.num_m0">
+<code class="sig-name descname">num_m0</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.num_m0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes with <span class="math notranslate nohighlight">\(m=0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.num_m_1_up">
+<code class="sig-name descname">num_m_1_up</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.num_m_1_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq1\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">unique_l, unique_m</code></dt>
+<dd><p>Arrays of unique <span class="math notranslate nohighlight">\(l\)</span> and
+<span class="math notranslate nohighlight">\(m\)</span> values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.inverse_lm">
+<code class="sig-name descname">inverse_lm</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.inverse_lm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Array of indices that expands unique
+<span class="math notranslate nohighlight">\((l, m)\)</span> values to the full array of <span class="math notranslate nohighlight">\((l,m,n)\)</span> values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">ls, ms, ns</code></dt>
+<dd><p>Arrays of mode indices <span class="math notranslate nohighlight">\((l,m,n)\)</span>
+after filtering operation. If no filtering, these are equivalent
+to l_arr, m_arr, n_arr.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.sanity_check_init">
+<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.sanity_check_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check initial parameters.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the parameters are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.sanity_check_traj">
+<code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on parameters output from thte trajectory module.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>1D np.ndarray</em>) – Array of semi-latus rectum values produced by
+the trajectory module.</p></li>
+<li><p><strong>e</strong> (<em>1D np.ndarray</em>) – Array of eccentricity values produced by
+the trajectory module.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p></li>
+<li><p><strong>warn</strong> – If any points in the trajectory are allowable,
+    but outside calibration region.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.sanity_check_viewing_angles">
+<code class="sig-name descname">sanity_check_viewing_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.sanity_check_viewing_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on viewing angles.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle.</p></li>
+<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(theta, phi). Phi is wrapped.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="base-classes">
+<h3>Base Classes<a class="headerlink" href="#base-classes" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="schwarzschild-eccentric">
-<h3>Schwarzschild Eccentric<a class="headerlink" href="#schwarzschild-eccentric" title="Permalink to this headline">¶</a></h3>
+<h4>Schwarzschild Eccentric<a class="headerlink" href="#schwarzschild-eccentric" title="Permalink to this headline">¶</a></h4>
 <dl class="py class">
 <dt id="few.utils.baseclasses.SchwarzschildEccentric">
 <em class="property">class </em><code class="sig-prename descclassname">few.utils.baseclasses.</code><code class="sig-name descname">SchwarzschildEccentric</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
@@ -523,32 +1261,344 @@ the trajectory module.</p></li>
 <dl class="py class">
 <dt id="few.waveform.SchwarzschildEccentricWaveformBase">
 <em class="property">class </em><code class="sig-prename descclassname">few.waveform.</code><code class="sig-name descname">SchwarzschildEccentricWaveformBase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inspiral_module</span></em>, <em class="sig-param"><span class="n">amplitude_module</span></em>, <em class="sig-param"><span class="n">sum_module</span></em>, <em class="sig-param"><span class="n">inspiral_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">amplitude_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">sum_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">Ylm_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a></p>
-<p>Carrier class for FEW</p>
+<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Base class for the actual Schwarzschild eccentric waveforms.</p>
+<p>This class carries information and methods that are common to any
+implementation of Schwarzschild eccentric waveforms. These include
+initialization and the actual base code for building a waveform. This base
+code calls the various modules chosen by the user or according to the
+predefined waveform classes available. See
+<a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a> for information
+high level information on these waveform models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inspiral_module</strong> (<em>obj</em>) – Class object representing the module
+for creating the inspiral. This returns the phases and orbital
+parameters. See <a class="reference internal" href="#trajectory-label"><span class="std std-ref">Trajectory Package</span></a>.</p></li>
+<li><p><strong>amplitude_module</strong> (<em>obj</em>) – Class object representing the module for
+generating amplitudes. See <a class="reference internal" href="#amplitude-label"><span class="std std-ref">Amplitude Package</span></a> for more
+information.</p></li>
+<li><p><strong>sum_module</strong> (<em>obj</em>) – Class object representing the module for summing the
+final waveform from the amplitude and phase information. See
+<a class="reference internal" href="#summation-label"><span class="std std-ref">Summation Package</span></a>.</p></li>
+<li><p><strong>inspiral_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
+inspiral generator. <strong>Important Note</strong>: These kwargs are passed
+online, not during instantiation like other kwargs here. Default is
+{}.</p></li>
+<li><p><strong>amplitude_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
+amplitude generator during instantiation. Default is {}.</p></li>
+<li><p><strong>sum_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
+sum module during instantiation. Default is {}.</p></li>
+<li><p><strong>Ylm_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
+Ylm generator during instantiation. Default is {}.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, use GPU resources. Default is False.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.attributes_SchwarzschildEccentricWaveformBase">
+<code class="sig-name descname">attributes_SchwarzschildEccentricWaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.attributes_SchwarzschildEccentricWaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>cupy or numpy based on GPU usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.inspiral_generator">
+<code class="sig-name descname">inspiral_generator</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.inspiral_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated trajectory module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.amplitude_generator">
+<code class="sig-name descname">amplitude_generator</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.amplitude_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated amplitude module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.create_waveform">
+<code class="sig-name descname">create_waveform</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.create_waveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated summation module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.ylm_gen">
+<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.ylm_gen" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated Ylm module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.num_teuk_modes">
+<code class="sig-name descname">num_teuk_modes</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.num_teuk_modes" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of Teukolsky modes in the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.m0sort">
+<code class="sig-name descname">m0sort</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.m0sort" title="Permalink to this definition">¶</a></dt>
+<dd><p>array of indices to sort accoring to
+<span class="math notranslate nohighlight">\((m=0)\)</span> parts first and then <span class="math notranslate nohighlight">\(m&gt;0\)</span> parts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">l_arr, m_arr, n_arr</code></dt>
+<dd><p><span class="math notranslate nohighlight">\((l,m,n)\)</span> arrays
+containing indices for each mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.lmn_indices">
+<code class="sig-name descname">lmn_indices</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.lmn_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary mapping a tuple of <span class="math notranslate nohighlight">\((l,m,n)\)</span> to
+the respective index in l_arr, m_arr, and n_arr.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.num_m_zero_up">
+<code class="sig-name descname">num_m_zero_up</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.num_m_zero_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.num_m0">
+<code class="sig-name descname">num_m0</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.num_m0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes with <span class="math notranslate nohighlight">\(m=0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.num_m_1_up">
+<code class="sig-name descname">num_m_1_up</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.num_m_1_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq1\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">unique_l, unique_m</code></dt>
+<dd><p>Arrays of unique <span class="math notranslate nohighlight">\(l\)</span> and
+<span class="math notranslate nohighlight">\(m\)</span> values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.inverse_lm">
+<code class="sig-name descname">inverse_lm</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.inverse_lm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Array of indices that expands unique
+<span class="math notranslate nohighlight">\((l, m)\)</span> values to the full array of <span class="math notranslate nohighlight">\((l,m,n)\)</span> values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">ls, ms, ns</code></dt>
+<dd><p>Arrays of mode indices <span class="math notranslate nohighlight">\((l,m,n)\)</span>
+after filtering operation. If no filtering, these are equivalent
+to l_arr, m_arr, n_arr.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py method">
 <dt id="few.waveform.SchwarzschildEccentricWaveformBase.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">0.0002</span></em>, <em class="sig-param"><span class="n">show_progress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">mode_selection</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.__call__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Call self as a function.</p>
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em>, <em class="sig-param"><span class="n">show_progress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">mode_selection</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call function for SchwarzschildEccentric models.</p>
+<p>This function will take input parameters and produce Schwarzschild
+eccentric waveforms. It will use all of the modules preloaded to
+compute desired outputs.</p>
+<p>TODO: add limits on p0</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Mass of larger black hole in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – Mass of compact object in solar masses.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (<span class="math notranslate nohighlight">\(6.0\leq p_0\leq18.0\)</span>).</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity (<span class="math notranslate nohighlight">\(0.0\leq e_0\leq0.7\)</span>).</p></li>
+<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle (<span class="math notranslate nohighlight">\(-\pi/2\leq\Theta\leq\pi/2\)</span>).</p></li>
+<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+<li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time between samples in seconds (inverse of
+sampling frequency). Default is 10.0.</p></li>
+<li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Total observation time in years.
+Default is 1.0.</p></li>
+<li><p><strong>eps</strong> (<em>double</em><em>, </em><em>optional</em>) – Controls the fractional accuracy during mode
+filtering. Raising this parameter will remove modes. Lowering
+this parameter will add modes. Default that gives a good overalp
+is 1e-5.</p></li>
+<li><p><strong>show_progress</strong> (<em>bool</em><em>, </em><em>optional</em>) – <p>If True, show progress through
+amplitude/waveform batches using
+<a class="reference external" href="https://tqdm.github.io/">tqdm</a>. Default is False.</p>
+</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – If less than 0, create the waveform
+without batching. If greater than zero, create the waveform
+batching in sizes of batch_size. Default is -1.</p></li>
+<li><p><strong>mode_selection</strong> (<em>str</em><em> or </em><em>list</em><em> or </em><em>None</em>) – Determines the type of mode
+filtering to perform. If None, perform our base mode filtering
+with eps as the fractional accuracy on the total power.
+If ‘all’, it will run all modes without filtering. If a list of
+tuples (or lists) of mode indices
+(e.g. [(<span class="math notranslate nohighlight">\(l_1,m_1,n_1\)</span>), (<span class="math notranslate nohighlight">\(l_2,m_2,n_2\)</span>)]) is
+provided, it will return those modes combined into a
+single waveform.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The output waveform.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>1D complex128 xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_init">
+<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check initial parameters.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the parameters are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_traj">
+<code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on parameters output from thte trajectory module.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>1D np.ndarray</em>) – Array of semi-latus rectum values produced by
+the trajectory module.</p></li>
+<li><p><strong>e</strong> (<em>1D np.ndarray</em>) – Array of eccentricity values produced by
+the trajectory module.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p></li>
+<li><p><strong>warn</strong> – If any points in the trajectory are allowable,
+    but outside calibration region.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_viewing_angles">
+<code class="sig-name descname">sanity_check_viewing_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_viewing_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on viewing angles.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle.</p></li>
+<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(theta, phi). Phi is wrapped.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="py class">
-<dt id="few.waveform.FastSchwarzschildEccentricFlux">
-<em class="property">class </em><code class="sig-prename descclassname">few.waveform.</code><code class="sig-name descname">FastSchwarzschildEccentricFlux</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#few.waveform.SchwarzschildEccentricWaveformBase" title="few.waveform.SchwarzschildEccentricWaveformBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.SchwarzschildEccentricWaveformBase</span></code></a></p>
-</dd></dl>
-
-<dl class="py class">
-<dt id="few.waveform.SlowSchwarzschildEccentricFlux">
-<em class="property">class </em><code class="sig-prename descclassname">few.waveform.</code><code class="sig-name descname">SlowSchwarzschildEccentricFlux</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#few.waveform.SchwarzschildEccentricWaveformBase" title="few.waveform.SchwarzschildEccentricWaveformBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.SchwarzschildEccentricWaveformBase</span></code></a></p>
-</dd></dl>
-
+</div>
 </div>
 </div>
 <div class="section" id="module-few.trajectory">
-<span id="trajectory-package"></span><h2>Trajectory Package<a class="headerlink" href="#module-few.trajectory" title="Permalink to this headline">¶</a></h2>
+<span id="trajectory-package"></span><span id="trajectory-label"></span><h2>Trajectory Package<a class="headerlink" href="#module-few.trajectory" title="Permalink to this headline">¶</a></h2>
 <p>The trajectory package houses modules that turn initial orbital parameters into
 phase-space trajectories (orbital phases and orbital parameters). These are
 determined by numerical integrators that interpolate over the relevant
@@ -706,12 +1756,135 @@ this parameter.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">in_coordinate_time</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">new_t</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">spline_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">DENSE_STEPPING</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">max_init_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">upsample</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">err</span><span class="o">=</span><span class="default_value">1e-10</span></em>, <em class="sig-param"><span class="n">step_eps</span><span class="o">=</span><span class="default_value">1e-11</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call function for trajectory interface.</p>
+<p>This is the function for calling the creation of the
+trajectory. Inputs define the output time spacing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> (<em>list</em>) – Input of variable number of arguments specific to the
+inspiral model (see the trajectory class’ <cite>get_inspiral</cite> method).</p></li>
+<li><p><strong>in_coordinate_time</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the trajectory will be
+outputted in coordinate time. If False, the trajectory will be
+outputted in units of M. Default is True.</p></li>
+<li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time step for output waveform in seconds. Also sets
+initial step for integrator. Default is 10.0.</p></li>
+<li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Total observation time in years. Sets the maximum time
+for the integrator to run. Default is 1.0.</p></li>
+<li><p><strong>new_t</strong> (<em>1D np.ndarray</em><em>, </em><em>optional</em>) – If given, this represents the final
+time array at which the trajectory is analyzed. This is
+performed by using a cubic spline on the integrator output.
+Default is None.</p></li>
+<li><p><strong>spline_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – If using upsampling, spline_kwargs
+provides the kwargs desired for scipy.interpolate.CubicSpline.
+Default is {}.</p></li>
+<li><p><strong>DENSE_STEPPING</strong> (<em>int</em><em>, </em><em>optional</em>) – If 1, the trajectory used in the
+integrator will be densely stepped at steps of <code class="xref py py-obj docutils literal notranslate"><span class="pre">dt</span></code>. If 0,
+the integrator will determine its stepping. Default is 0.</p></li>
+<li><p><strong>max_init_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Sets the allocation of memory for
+trajectory parameters. This should be the maximum length
+expected for a trajectory. Trajectories with default settings
+will be ~100 points. Default is 1000.</p></li>
+<li><p><strong>upsample</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, upsample, with a cubic spline,
+the trajectories from 0 to T in steps of dt. Default is False.</p></li>
+<li><p><strong>err</strong> (<em>double</em><em>, </em><em>optional</em>) – Tolerance for integrator. Default is 1e-10.
+Decreasing this parameter will give more steps over the
+trajectory, but if it is too small, memory issues will occur as
+the trajectory length will blow up. We recommend not adjusting
+this parameter.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – kwargs passed to trajectory module.
+Default is {}.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Tuple of (t, p, e, Phi_phi, Phi_r, flux_norm).</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If input parameters are not allowed in this model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.sanity_check_init">
+<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.sanity_check_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check initial parameters.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the parameters are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.sanity_check_traj">
+<code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on parameters output from thte trajectory module.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>1D np.ndarray</em>) – Array of semi-latus rectum values produced by
+the trajectory module.</p></li>
+<li><p><strong>e</strong> (<em>1D np.ndarray</em>) – Array of eccentricity values produced by
+the trajectory module.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p></li>
+<li><p><strong>warn</strong> – If any points in the trajectory are allowable,
+    but outside calibration region.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.sanity_check_viewing_angles">
+<code class="sig-name descname">sanity_check_viewing_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.sanity_check_viewing_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on viewing angles.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle.</p></li>
+<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(theta, phi). Phi is wrapped.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </div>
 </div>
 <div class="section" id="module-few.amplitude">
-<span id="amplitude-package"></span><h2>Amplitude Package<a class="headerlink" href="#module-few.amplitude" title="Permalink to this headline">¶</a></h2>
+<span id="amplitude-package"></span><span id="amplitude-label"></span><h2>Amplitude Package<a class="headerlink" href="#module-few.amplitude" title="Permalink to this headline">¶</a></h2>
 <p>The amplitude package houses modules for calculating Tuekolsky amplitudes from
 orbital parameter trajectories. The complex amplitudes are determined with
 various methods documented below. Some amplitude modules have gpu capabilities.
@@ -749,6 +1922,74 @@ trajectory module. Default is 1000.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt id="few.amplitude.romannet.ROMANAmplitude.sanity_check_init">
+<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.ROMANAmplitude.sanity_check_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check initial parameters.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the parameters are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.amplitude.romannet.ROMANAmplitude.sanity_check_traj">
+<code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.ROMANAmplitude.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on parameters output from thte trajectory module.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>1D np.ndarray</em>) – Array of semi-latus rectum values produced by
+the trajectory module.</p></li>
+<li><p><strong>e</strong> (<em>1D np.ndarray</em>) – Array of eccentricity values produced by
+the trajectory module.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p></li>
+<li><p><strong>warn</strong> – If any points in the trajectory are allowable,
+    but outside calibration region.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.amplitude.romannet.ROMANAmplitude.sanity_check_viewing_angles">
+<code class="sig-name descname">sanity_check_viewing_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.ROMANAmplitude.sanity_check_viewing_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on viewing angles.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle.</p></li>
+<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(theta, phi). Phi is wrapped.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt id="few.amplitude.romannet.ROMANAmplitude.__call__">
 <code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.ROMANAmplitude.__call__" title="Permalink to this definition">¶</a></dt>
@@ -822,12 +2063,80 @@ amplitude modules. It is not used.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_init">
+<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check initial parameters.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the parameters are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_traj">
+<code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on parameters output from thte trajectory module.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>1D np.ndarray</em>) – Array of semi-latus rectum values produced by
+the trajectory module.</p></li>
+<li><p><strong>e</strong> (<em>1D np.ndarray</em>) – Array of eccentricity values produced by
+the trajectory module.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p></li>
+<li><p><strong>warn</strong> – If any points in the trajectory are allowable,
+    but outside calibration region.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_viewing_angles">
+<code class="sig-name descname">sanity_check_viewing_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_viewing_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on viewing angles.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle.</p></li>
+<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(theta, phi). Phi is wrapped.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </div>
 </div>
 <div class="section" id="module-few.summation">
-<span id="summation-package"></span><h2>Summation Package<a class="headerlink" href="#module-few.summation" title="Permalink to this headline">¶</a></h2>
+<span id="summation-package"></span><span id="summation-label"></span><h2>Summation Package<a class="headerlink" href="#module-few.summation" title="Permalink to this headline">¶</a></h2>
 <p>The summation package houses codes used for combining amplitude and phase
 information over the course of an inspiral. It does contain GPU accelerated
 options. It deals with the overall summation of quantities seen in <a class="reference internal" href="#equation-emri-wave-eq">(1)</a>.</p>
@@ -1037,6 +2346,102 @@ cubic spline.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="few.summation.interpolated_mode_sum.InterpolatedModeSum.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">T</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolated_mode_sum.InterpolatedModeSum.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Common call function for summation modules.</p>
+<p>Provides a common interface for summation modules. It can adjust for
+more dimensions in a model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<em>1D double xp.ndarray</em>) – Array of t values.</p></li>
+<li><p><strong>teuk_modes</strong> (<em>2D double xp.array</em>) – Array of complex amplitudes.
+Shape: (len(t), num_teuk_modes).</p></li>
+<li><p><strong>ylms</strong> (<em>1D complex128 xp.ndarray</em>) – Array of ylm values for each mode,
+including m&lt;0. Shape is (num of m==0,) + (num of m&gt;0,)
++ (num of m&lt;0). Number of m&lt;0 and m&gt;0 is the same, but they are
+ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
+<li><p><strong>dt</strong> (<em>double</em>) – Time spacing between observations in seconds (inverse of sampling
+rate).</p></li>
+<li><p><strong>T</strong> (<em>double</em>) – Maximum observing time in years.</p></li>
+<li><p><strong>*args</strong> (<em>list</em>) – This should be a tuple of phases combined with mode
+index arrays. For equatorial, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_r, m, n)\)</span>.
+For generic, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_\Theta, \Phi_r, m, k, n)\)</span>.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added for future flexibility.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.interpolated_mode_sum.InterpolatedModeSum.sanity_check_init">
+<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolated_mode_sum.InterpolatedModeSum.sanity_check_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check initial parameters.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the parameters are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.interpolated_mode_sum.InterpolatedModeSum.sanity_check_traj">
+<code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolated_mode_sum.InterpolatedModeSum.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on parameters output from thte trajectory module.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>1D np.ndarray</em>) – Array of semi-latus rectum values produced by
+the trajectory module.</p></li>
+<li><p><strong>e</strong> (<em>1D np.ndarray</em>) – Array of eccentricity values produced by
+the trajectory module.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p></li>
+<li><p><strong>warn</strong> – If any points in the trajectory are allowable,
+    but outside calibration region.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.interpolated_mode_sum.InterpolatedModeSum.sanity_check_viewing_angles">
+<code class="sig-name descname">sanity_check_viewing_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolated_mode_sum.InterpolatedModeSum.sanity_check_viewing_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on viewing angles.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle.</p></li>
+<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(theta, phi). Phi is wrapped.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.summation.interpolated_mode_sum.InterpolatedModeSum.sum">
 <code class="sig-name descname">sum</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">Phi_phi</span></em>, <em class="sig-param"><span class="n">Phi_r</span></em>, <em class="sig-param"><span class="n">m_arr</span></em>, <em class="sig-param"><span class="n">n_arr</span></em>, <em class="sig-param"><span class="n">init_len</span></em>, <em class="sig-param"><span class="n">num_pts</span></em>, <em class="sig-param"><span class="n">num_teuk_modes</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolated_mode_sum.InterpolatedModeSum.sum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Interpolated summation function.</p>
@@ -1131,12 +2536,108 @@ ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt id="few.summation.direct_mode_sum.DirectModeSum.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">T</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.direct_mode_sum.DirectModeSum.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Common call function for summation modules.</p>
+<p>Provides a common interface for summation modules. It can adjust for
+more dimensions in a model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<em>1D double xp.ndarray</em>) – Array of t values.</p></li>
+<li><p><strong>teuk_modes</strong> (<em>2D double xp.array</em>) – Array of complex amplitudes.
+Shape: (len(t), num_teuk_modes).</p></li>
+<li><p><strong>ylms</strong> (<em>1D complex128 xp.ndarray</em>) – Array of ylm values for each mode,
+including m&lt;0. Shape is (num of m==0,) + (num of m&gt;0,)
++ (num of m&lt;0). Number of m&lt;0 and m&gt;0 is the same, but they are
+ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
+<li><p><strong>dt</strong> (<em>double</em>) – Time spacing between observations in seconds (inverse of sampling
+rate).</p></li>
+<li><p><strong>T</strong> (<em>double</em>) – Maximum observing time in years.</p></li>
+<li><p><strong>*args</strong> (<em>list</em>) – This should be a tuple of phases combined with mode
+index arrays. For equatorial, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_r, m, n)\)</span>.
+For generic, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_\Theta, \Phi_r, m, k, n)\)</span>.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added for future flexibility.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.direct_mode_sum.DirectModeSum.sanity_check_init">
+<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.direct_mode_sum.DirectModeSum.sanity_check_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check initial parameters.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the parameters are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.direct_mode_sum.DirectModeSum.sanity_check_traj">
+<code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.direct_mode_sum.DirectModeSum.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on parameters output from thte trajectory module.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>1D np.ndarray</em>) – Array of semi-latus rectum values produced by
+the trajectory module.</p></li>
+<li><p><strong>e</strong> (<em>1D np.ndarray</em>) – Array of eccentricity values produced by
+the trajectory module.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p></li>
+<li><p><strong>warn</strong> – If any points in the trajectory are allowable,
+    but outside calibration region.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.direct_mode_sum.DirectModeSum.sanity_check_viewing_angles">
+<code class="sig-name descname">sanity_check_viewing_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.direct_mode_sum.DirectModeSum.sanity_check_viewing_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on viewing angles.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle.</p></li>
+<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(theta, phi). Phi is wrapped.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </div>
 </div>
 <div class="section" id="module-few.utils">
-<span id="utilities"></span><h2>Utilities<a class="headerlink" href="#module-few.utils" title="Permalink to this headline">¶</a></h2>
+<span id="utilities"></span><span id="utilities-label"></span><h2>Utilities<a class="headerlink" href="#module-few.utils" title="Permalink to this headline">¶</a></h2>
 <p>The Utilities package houses scripts that aid in our calculation including
 harmonic angular calculations, overlap calculators, and mode filtering modules.</p>
 <div class="section" id="module-few.utils.mode_filter">
@@ -1281,8 +2782,8 @@ angles.</p>
 <div class="section" id="module-few.utils.overlap">
 <span id="analysis-tools"></span><h3>Analysis Tools<a class="headerlink" href="#module-few.utils.overlap" title="Permalink to this headline">¶</a></h3>
 <dl class="py function">
-<dt id="few.utils.overlap.overlap">
-<code class="sig-prename descclassname">few.utils.overlap.</code><code class="sig-name descname">overlap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_series_1</span></em>, <em class="sig-param"><span class="n">time_series_2</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.overlap.overlap" title="Permalink to this definition">¶</a></dt>
+<dt id="few.utils.overlap.get_overlap">
+<code class="sig-prename descclassname">few.utils.overlap.</code><code class="sig-name descname">get_overlap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_series_1</span></em>, <em class="sig-param"><span class="n">time_series_2</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.overlap.get_overlap" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the overlap.</p>
 <p>Takes two time series and finds which one is shorter in length. It then
 shortens the longer time series if necessary. Then it performs a
@@ -1305,11 +2806,11 @@ is False.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="few.utils.overlap.mismatch">
-<code class="sig-prename descclassname">few.utils.overlap.</code><code class="sig-name descname">mismatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_series_1</span></em>, <em class="sig-param"><span class="n">time_series_2</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.overlap.mismatch" title="Permalink to this definition">¶</a></dt>
+<dt id="few.utils.overlap.get_mismatch">
+<code class="sig-prename descclassname">few.utils.overlap.</code><code class="sig-name descname">get_mismatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_series_1</span></em>, <em class="sig-param"><span class="n">time_series_2</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.overlap.get_mismatch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the mismatch.</p>
 <p>The mismatch is 1 - overlap. Therefore, see documentation for
-<a class="reference internal" href="#few.utils.overlap.overlap" title="few.utils.overlap.overlap"><code class="xref py py-func docutils literal notranslate"><span class="pre">few.utils.overlap.overlap()</span></code></a> for information on the overlap
+<code class="xref py py-func docutils literal notranslate"><span class="pre">few.utils.overlap.overlap()</span></code> for information on the overlap
 calculation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

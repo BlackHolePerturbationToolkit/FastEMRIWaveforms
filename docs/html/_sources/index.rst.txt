@@ -35,27 +35,42 @@ When these modules complete their calculations, the summation (:mod:`few.summati
 Overall Waveform Models
 ------------------------
 
-The Fast EMRI Waveform (few) package provides multiple complete models/waveforms to generate waveforms from start to finish. These are detailed in this section. Please note there are other modules available in each subpackage that may not be listed as a part of complete model here.
+The Fast EMRI Waveform (few) package provides multiple complete models/waveforms to generate waveforms from start to finish. These are detailed in this section. Please note there are other modules available in each subpackage that may not be listed as a part of a complete model here. We will also provide documentation in this section for the base classes that help standardize and build complete waveform models.
 
-Schwarzschild Eccentric
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: few.utils.baseclasses.SchwarzschildEccentric
-    :members:
-    :show-inheritance:
-
-.. autoclass:: few.waveform.SchwarzschildEccentricWaveformBase
-    :members:
-    :show-inheritance:
+Prebuilt Waveform Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: few.waveform.FastSchwarzschildEccentricFlux
     :members:
     :show-inheritance:
+    :inherited-members:
 
 .. autoclass:: few.waveform.SlowSchwarzschildEccentricFlux
     :members:
     :show-inheritance:
+    :inherited-members:
 
+Base Classes
+~~~~~~~~~~~~~
+
+Schwarzschild Eccentric
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: few.utils.baseclasses.SchwarzschildEccentric
+    :members:
+    :show-inheritance:
+    :inherited-members:
+
+.. autoclass:: few.waveform.SchwarzschildEccentricWaveformBase
+    :members:
+    :show-inheritance:
+    :inherited-members:
+
+
+
+
+
+.. _trajectory-label:
 
 Trajectory Package
 ------------------
@@ -65,6 +80,7 @@ Trajectory Package
 .. autoclass:: few.utils.baseclasses.TrajectoryBase
     :members:
     :show-inheritance:
+    :inherited-members:
 
 Flux Inspiral
 ~~~~~~~~~~~~~~
@@ -72,7 +88,12 @@ Flux Inspiral
 .. automodule:: few.trajectory.flux
     :members:
     :show-inheritance:
+    :inherited-members:
 
+
+
+
+.. _amplitude-label:
 
 Amplitude Package
 -----------------
@@ -88,6 +109,7 @@ ROMAN Network
 .. automodule:: few.amplitude.romannet
     :members:
     :show-inheritance:
+    :inherited-members:
 
 2D Cubic Spline Interpolation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -95,6 +117,10 @@ ROMAN Network
 .. automodule:: few.amplitude.interp2dcubicspline
     :members:
     :show-inheritance:
+    :inherited-members:
+
+
+.. _summation-label:
 
 Summation Package
 ------------------
@@ -104,6 +130,7 @@ Summation Package
 .. autoclass:: few.utils.baseclasses.SummationBase
     :members:
     :show-inheritance:
+    :inherited-members:
 
 Interpolated Summation
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -111,6 +138,7 @@ Interpolated Summation
 .. automodule:: few.summation.interpolated_mode_sum
     :members:
     :show-inheritance:
+    :inherited-members:
 
 Direct Summation
 ~~~~~~~~~~~~~~~~~~
@@ -118,6 +146,9 @@ Direct Summation
 .. automodule:: few.summation.direct_mode_sum
     :members:
     :show-inheritance:
+    :inherited-members:
+
+.. _utilities-label:
 
 Utilities
 ----------
@@ -130,6 +161,7 @@ Mode Filtering
 .. automodule:: few.utils.mode_filter
     :show-inheritance:
     :members:
+    :inherited-members:
 
 (-2) Spin-Weighted Spherical Harmonics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,6 +169,7 @@ Mode Filtering
 .. automodule:: few.utils.ylm
     :show-inheritance:
     :members:
+    :inherited-members:
 
 Analysis Tools
 ~~~~~~~~~~~~~~~
@@ -144,6 +177,7 @@ Analysis Tools
 .. automodule:: few.utils.overlap
     :members:
     :show-inheritance:
+    :inherited-members:
 
 
 
