@@ -125,7 +125,7 @@
 <li><a class="reference internal" href="#module-few.utils">Utilities</a><ul>
 <li><a class="reference internal" href="#module-few.utils.mode_filter">Mode Filtering</a></li>
 <li><a class="reference internal" href="#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a></li>
-<li><a class="reference internal" href="#analysis-tools">Analysis Tools</a></li>
+<li><a class="reference internal" href="#module-few.utils.overlap">Analysis Tools</a></li>
 </ul>
 </li>
 </ul>
@@ -451,6 +451,30 @@ in the model.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="few.utils.baseclasses.SchwarzschildEccentric.sanity_check_viewing_angles">
+<code class="sig-name descname">sanity_check_viewing_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.sanity_check_viewing_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on viewing angles.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle.</p></li>
+<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(theta, phi). Phi is wrapped.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.utils.baseclasses.SchwarzschildEccentric.sanity_check_traj">
 <code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sanity check on parameters output from thte trajectory module.</p>
@@ -476,18 +500,16 @@ the trajectory module.</p></li>
 
 <dl class="py method">
 <dt id="few.utils.baseclasses.SchwarzschildEccentric.sanity_check_init">
-<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.sanity_check_init" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.sanity_check_init" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sanity check initial parameters.</p>
 <p>Make sure parameters are within allowable ranges.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
-<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
 <li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
 <li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
-<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle.</p></li>
-<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
@@ -541,7 +563,7 @@ implementations. Specific arguments to each trajectory can be found with
 each associated trajectory module discussed below.</p>
 <dl class="py method">
 <dt id="few.utils.baseclasses.TrajectoryBase.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">in_coordinate_time</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">new_t</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">spline_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">max_init_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">upsample</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">step_eps</span><span class="o">=</span><span class="default_value">1e-11</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase.__call__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">in_coordinate_time</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">new_t</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">spline_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">DENSE_STEPPING</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">max_init_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">upsample</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">err</span><span class="o">=</span><span class="default_value">1e-10</span></em>, <em class="sig-param"><span class="n">step_eps</span><span class="o">=</span><span class="default_value">1e-11</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call function for trajectory interface.</p>
 <p>This is the function for calling the creation of the
 trajectory. Inputs define the output time spacing.</p>
@@ -550,11 +572,6 @@ trajectory. Inputs define the output time spacing.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>*args</strong> (<em>list</em>) – Input of variable number of arguments specific to the
 inspiral model (see the trajectory class’ <cite>get_inspiral</cite> method).</p></li>
-<li><p><strong>err</strong> (<em>double</em><em>, </em><em>optional</em>) – Tolerance for integrator. Default is 1e-10.
-Decreasing this parameter will give more steps over the
-trajectory, but if it is too small, memory issues will occur as
-the trajectory length will blow up. We recommend not adjusting
-this parameter.</p></li>
 <li><p><strong>in_coordinate_time</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the trajectory will be
 outputted in coordinate time. If False, the trajectory will be
 outputted in units of M. Default is True.</p></li>
@@ -578,6 +595,13 @@ expected for a trajectory. Trajectories with default settings
 will be ~100 points. Default is 1000.</p></li>
 <li><p><strong>upsample</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, upsample, with a cubic spline,
 the trajectories from 0 to T in steps of dt. Default is False.</p></li>
+<li><p><strong>err</strong> (<em>double</em><em>, </em><em>optional</em>) – Tolerance for integrator. Default is 1e-10.
+Decreasing this parameter will give more steps over the
+trajectory, but if it is too small, memory issues will occur as
+the trajectory length will blow up. We recommend not adjusting
+this parameter.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – kwargs passed to trajectory module.
+Default is {}.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1135,7 +1159,7 @@ will in order of <span class="math notranslate nohighlight">\(m=0\)</span>, <spa
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>m0mask</strong> (<em>1D bool xp.ndarray</em>) – This mask highlights which modes have
-<span class="math notranslate nohighlight">\(m=0\)</span>. Value is True if <span class="math notranslate nohighlight">\(m=0\)</span>, False if not.</p></li>
+<span class="math notranslate nohighlight">\(m=0\)</span>. Value is False if <span class="math notranslate nohighlight">\(m=0\)</span>, True if not.</p></li>
 <li><p><strong>num_m_zero_up</strong> (<em>int</em>) – Number of modes with <span class="math notranslate nohighlight">\(m\geq0\)</span>.</p></li>
 <li><p><strong>num_m_1_up</strong> (<em>int</em>) – Number of modes with <span class="math notranslate nohighlight">\(m\geq1\)</span>.</p></li>
 <li><p><strong>num_m0</strong> (<em>int</em>) – Number of modes with <span class="math notranslate nohighlight">\(m=0\)</span>.</p></li>
@@ -1254,8 +1278,51 @@ angles.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="analysis-tools">
-<h3>Analysis Tools<a class="headerlink" href="#analysis-tools" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="module-few.utils.overlap">
+<span id="analysis-tools"></span><h3>Analysis Tools<a class="headerlink" href="#module-few.utils.overlap" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="few.utils.overlap.overlap">
+<code class="sig-prename descclassname">few.utils.overlap.</code><code class="sig-name descname">overlap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_series_1</span></em>, <em class="sig-param"><span class="n">time_series_2</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.overlap.overlap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the overlap.</p>
+<p>Takes two time series and finds which one is shorter in length. It then
+shortens the longer time series if necessary. Then it performs a
+normalized correlation calulation on the two time series to give the
+overlap. The overlap of <span class="math notranslate nohighlight">\(a(t)\)</span> and
+<span class="math notranslate nohighlight">\(b(t)\)</span>, <span class="math notranslate nohighlight">\(\gamma_{a,b}\)</span>, is given by,</p>
+<div class="math notranslate nohighlight">
+\[\gamma_{a,b} = &lt;a,b&gt;/(&lt;a,a&gt;&lt;b,b&gt;)^{(1/2)},\]</div>
+<p>where <span class="math notranslate nohighlight">\(&lt;a,b&gt;\)</span> is the inner product of the two time series.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>time_series_1</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 1.</p></li>
+<li><p><strong>time_series_2</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 2.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True use cupy. If False, use numpy. Default
+is False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="few.utils.overlap.mismatch">
+<code class="sig-prename descclassname">few.utils.overlap.</code><code class="sig-name descname">mismatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_series_1</span></em>, <em class="sig-param"><span class="n">time_series_2</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.overlap.mismatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the mismatch.</p>
+<p>The mismatch is 1 - overlap. Therefore, see documentation for
+<a class="reference internal" href="#few.utils.overlap.overlap" title="few.utils.overlap.overlap"><code class="xref py py-func docutils literal notranslate"><span class="pre">few.utils.overlap.overlap()</span></code></a> for information on the overlap
+calculation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>time_series_1</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 1.</p></li>
+<li><p><strong>time_series_2</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 2.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True use cupy. If False, use numpy. Default
+is False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 </div>
 </div>

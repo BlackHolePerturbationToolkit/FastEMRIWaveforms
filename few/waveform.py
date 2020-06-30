@@ -19,6 +19,8 @@ from few.trajectory.flux import RunSchwarzEccFluxInspiral
 
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 
+from few.utils.overlap import mismatch
+
 try:
     from few.amplitude.romannet import ROMANAmplitude
     from few.summation.interpolated_mode_sum import InterpolatedModeSum
@@ -390,7 +392,7 @@ if __name__ == "__main__":
     show_progress = False
     batch_size = 10000
 
-    mismatch = []
+    mismatch_out = []
     num_modes = []
     timing = []
     eps_all = 10.0 ** np.arange(-10, -2)
@@ -428,24 +430,8 @@ if __name__ == "__main__":
 
         et = time.perf_counter()
 
-        # if i == 0:
-        #    np.save("dircheck", wc)
-
-        min_len = np.min([len(wc), len(fullwave)])
-
-        wc_fft = np.fft.fft(wc[:min_len])
-        fullwave_fft = np.fft.fft(fullwave[:min_len])
-        mm = (
-            1.0
-            - (
-                np.dot(wc_fft.conj(), fullwave_fft)
-                / np.sqrt(
-                    np.dot(wc_fft.conj(), wc_fft)
-                    * np.dot(fullwave_fft.conj(), fullwave_fft)
-                )
-            ).real
-        )
-        mismatch.append(mm)
+        mm = mismatch(wc, fullwave)
+        mismatch_out.append(mm)
         num_modes.append(few.num_modes_kept)
         timing.append((et - st) / num)
         print(
@@ -460,7 +446,7 @@ if __name__ == "__main__":
         )
 
     # np.save(
-    #    "info_check_1e6_1e1_14_05", np.asarray([eps_all, mismatch, num_modes, timing]).T
+    #    "info_check_1e6_1e1_14_05", np.asarray([eps_all, mismatch_out, num_modes, timing]).T
     # )
 
     """
