@@ -66,14 +66,11 @@ class ROMANAmplitude(SchwarzschildEccentric):
             transform_factor = fp.attrs["transform_factor"]
             self.break_index = fp.attrs["break_index"]
 
-        self.use_gpu = use_gpu
-        if use_gpu:
-            self.xp = xp
+        if self.use_gpu:
             self.neural_layer = neural_layer_wrap
             self.transform_output = transform_output_wrap
 
         else:
-            self.xp = np
             self.neural_layer = neural_layer_wrap_cpu
             self.transform_output = transform_output_wrap_cpu
 

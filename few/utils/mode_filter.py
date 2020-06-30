@@ -6,8 +6,6 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
-import numpy as np
-
 
 class ModeFilter:
     """Filter teukolsky amplitudes based on power contribution.
@@ -28,7 +26,7 @@ class ModeFilter:
 
     args:
         m0mask (1D bool xp.ndarray): This mask highlights which modes have
-            :math:`m=0`. Value is True if :math:`m=0`, False if not.
+            :math:`m=0`. Value is False if :math:`m=0`, True if not.
         num_m_zero_up (int): Number of modes with :math:`m\geq0`.
         num_m_1_up (int): Number of modes with :math:`m\geq1`.
         num_m0 (int): Number of modes with :math:`m=0`.
@@ -121,6 +119,6 @@ class ModeFilter:
             ylms[ylmkeep],
         )
 
-        out2 = tuple([arg[keep_modes] for arg in args])
+        out2 = tuple([arr[keep_modes] for arr in modeinds])
 
         return out1 + out2

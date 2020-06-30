@@ -45,7 +45,7 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
         self.flux_carrier = pyFluxCarrier()
 
         self.specific_kwarg_keys = [
-            "tmax",
+            "T",
             "dt",
             "err",
             "DENSE_STEPPING",
@@ -81,7 +81,6 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
             tuple: Tuple of (t, p, e, Phi_phi, Phi_r, flux_norm).
 
         """
-        self.sanity_check_init(p0, e0)
 
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
 

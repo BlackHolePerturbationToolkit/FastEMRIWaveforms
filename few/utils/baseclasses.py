@@ -50,6 +50,7 @@ class SchwarzschildEccentric(ABC):
 
     def __init__(self, use_gpu=False, **kwargs):
 
+        self.use_gpu = use_gpu
         if use_gpu is True:
             self.xp = xp
         else:
@@ -65,6 +66,28 @@ class SchwarzschildEccentric(ABC):
 
         self.ndim = 2
 
+    def sanity_check_viewing_angles(self, theta, phi):
+        """Sanity check on viewing angles.
+
+        Make sure parameters are within allowable ranges.
+
+        args:
+            theta (double): Polar viewing angle.
+            phi (double): Azimuthal viewing angle.
+
+        Returns:
+            tuple: (theta, phi). Phi is wrapped.
+
+        Raises:
+            ValueError: If any of the trajectory points are not allowed.
+
+        """
+        if theta < 0.0 or theta > np.pi:
+            raise ValueError("theta must be between 0 and pi.")
+
+        phi = phi % (2 * np.pi)
+        return (theta, phi)
+
     def sanity_check_traj(self, p, e):
         """Sanity check on parameters output from thte trajectory module.
 
@@ -78,33 +101,27 @@ class SchwarzschildEccentric(ABC):
 
         Raises:
             ValueError: If any of the trajectory points are not allowed.
-            UserWarning: If any points in the trajectory are allowable,
+            warn: If any points in the trajectory are allowable,
                 but outside calibration region.
 
         """
-        if e[-1] > 0.5:
-            warnings.UserWarning(
-                "Plunge (or final) eccentricity value above 0.5 is outside of calibration for this model."
-            )
 
-        if self.xp.any(e < 0.0):
+        if np.any(e < 0.0):
             raise ValueError("Members of e array are less than zero.")
 
-        if self.xp.any(p < 0.0):
+        if np.any(p < 0.0):
             raise ValueError("Members of p array are less than zero.")
 
-    def sanity_check_init(self, p0, e0, M, mu, theta, phi):
+    def sanity_check_init(self, M, mu, p0, e0):
         """Sanity check initial parameters.
 
         Make sure parameters are within allowable ranges.
 
         args:
-            p0 (double): Initial semilatus rectum in units of M. TODO: Fix this. :math:`(\leq e0\leq0.7)`
-            e0 (double): Initial eccentricity :math:`(0\leq e0\leq0.7)`
             M (double): Massive black hole mass in solar masses.
             mu (double): compact object mass in solar masses.
-            theta (double): Polar viewing angle.
-            phi (double): Azimuthal viewing angle.
+            p0 (double): Initial semilatus rectum in units of M. TODO: Fix this. :math:`(\leq e0\leq0.7)`
+            e0 (double): Initial eccentricity :math:`(0\leq e0\leq0.7)`
 
         Raises:
             ValueError: If any of the parameters are not allowed.
@@ -123,7 +140,7 @@ class SchwarzschildEccentric(ABC):
             )
 
         if mu / M > 1e-4:
-            warnings.UserWarning(
+            warnings.warn(
                 "Mass ratio is outside of generally accepted range for an extreme mass ratio (1e-4). (q={})".format(
                     mu / M
                 )
@@ -154,9 +171,12 @@ class TrajectoryBase(ABC):
         T=1.0,
         new_t=None,
         spline_kwargs={},
+        DENSE_STEPPING=0,
         max_init_len=1000,
         upsample=False,
+        err=1e-10,
         step_eps=1e-11,
+        **kwargs
     ):
         """Call function for trajectory interface.
 
@@ -166,11 +186,6 @@ class TrajectoryBase(ABC):
         args:
             *args (list): Input of variable number of arguments specific to the
                 inspiral model (see the trajectory class' `get_inspiral` method).
-            err (double, optional): Tolerance for integrator. Default is 1e-10.
-                Decreasing this parameter will give more steps over the
-                trajectory, but if it is too small, memory issues will occur as
-                the trajectory length will blow up. We recommend not adjusting
-                this parameter.
             in_coordinate_time (bool, optional): If True, the trajectory will be
                 outputted in coordinate time. If False, the trajectory will be
                 outputted in units of M. Default is True.
@@ -194,6 +209,13 @@ class TrajectoryBase(ABC):
                 will be ~100 points. Default is 1000.
             upsample (bool, optional): If True, upsample, with a cubic spline,
                 the trajectories from 0 to T in steps of dt. Default is False.
+            err (double, optional): Tolerance for integrator. Default is 1e-10.
+                Decreasing this parameter will give more steps over the
+                trajectory, but if it is too small, memory issues will occur as
+                the trajectory length will blow up. We recommend not adjusting
+                this parameter.
+            **kwargs (dict, optional): kwargs passed to trajectory module.
+                Default is {}.
 
         Returns:
             tuple: Tuple of (t, p, e, Phi_phi, Phi_r, flux_norm).
@@ -204,10 +226,10 @@ class TrajectoryBase(ABC):
         """
 
         kwargs["dt"] = dt
-        kwargs["T"] = (T,)
+        kwargs["T"] = T
         kwargs["max_init_len"] = 1000
         kwargs["err"] = err
-        kwargs["DENSE_STEPPING"] = "DENSE_STEPPING"
+        kwargs["DENSE_STEPPING"] = DENSE_STEPPING
 
         out = self.get_inspiral(*args, **kwargs)
 
@@ -310,11 +332,6 @@ class SummationBase(ABC):
         self.waveform = self.xp.zeros(
             (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
         )
-
-        try:
-            t = t.get()
-        except:
-            pass
 
         args_in = (t, teuk_modes, ylms) + args + (init_len, num_pts, num_teuk_modes, dt)
         self.sum(*args_in)
