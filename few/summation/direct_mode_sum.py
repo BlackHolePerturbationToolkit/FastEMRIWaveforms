@@ -53,7 +53,7 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric):
         w1 = np.sum(
             ylms[np.newaxis, : teuk_modes.shape[1]]
             * teuk_modes
-            * np.enp(
+            * np.exp(
                 -1j
                 * (
                     m_arr[np.newaxis, :] * Phi_phi[:, np.newaxis]
@@ -69,7 +69,7 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric):
             (m_arr[np.newaxis, inds] > 0)
             * ylms[np.newaxis, teuk_modes.shape[1] :][:, inds]
             * np.conj(teuk_modes[:, inds])
-            * np.enp(
+            * np.exp(
                 -1j
                 * (
                     -m_arr[np.newaxis, inds] * Phi_phi[:, np.newaxis]
