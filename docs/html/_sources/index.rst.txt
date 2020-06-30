@@ -31,6 +31,15 @@ where :math:`S_{lmkn}(\theta)` is the general angular function from `Drasco & Hu
 When these modules complete their calculations, the summation (:mod:`few.summation`) module takes all of this information and creates an EMRI waveform.
 
 
+.. figure:: img/EMRI_diagram.jpg
+    :width: 500px
+    :align: center
+    :height: 500px
+    :alt: alternate text
+    :figclass: align-center
+
+    A general schematic diagram for the creation of an EMRI waveform.
+
 
 Overall Waveform Models
 ------------------------
