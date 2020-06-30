@@ -1,13 +1,15 @@
 import numpy as np
 
 try:
-    import cupy as xp
+    import cupy
 
 except (ImportError, ModuleNotFoundError) as e:
-    import numpy as xp
+    import numpy
+
+# TODO: should we take real of overlap
 
 
-def overlap(time_series_1, time_series_2, use_gpu=False):
+def get_overlap(time_series_1, time_series_2, use_gpu=False):
     """Calculate the overlap.
 
     Takes two time series and finds which one is shorter in length. It then
@@ -29,20 +31,24 @@ def overlap(time_series_1, time_series_2, use_gpu=False):
     """
 
     if use_gpu:
-        xp = xp
+        xp = cupy
     else:
-        xp = np
+        xp = numpy
 
+    min_len = int(np.min([len(time_series_1), len(time_series_2)]))
     time_series_1_fft = xp.fft.fft(time_series_1[:min_len])
     time_series_2_fft = xp.fft.fft(time_series_2[:min_len])
     ac = xp.dot(time_series_1_fft.conj(), time_series_2_fft) / xp.sqrt(
         xp.dot(time_series_1_fft.conj(), time_series_1_fft)
         * xp.dot(time_series_2_fft.conj(), time_series_2_fft)
     )
-    return ac
+
+    if use_gpu:
+        return ac.item().real
+    return ac.real
 
 
-def mismatch(time_series_1, time_series_2, use_gpu=False):
+def get_mismatch(time_series_1, time_series_2, use_gpu=False):
     """Calculate the mismatch.
 
     The mismatch is 1 - overlap. Therefore, see documentation for
@@ -56,5 +62,5 @@ def mismatch(time_series_1, time_series_2, use_gpu=False):
             is False.
 
     """
-    overlap = normalized_autocorelation(time_series_1, time_series_2, use_gpu=use_gpu)
+    overlap = get_overlap(time_series_1, time_series_2, use_gpu=use_gpu)
     return 1.0 - overlap
