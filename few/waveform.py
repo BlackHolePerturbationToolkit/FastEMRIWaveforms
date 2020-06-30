@@ -591,6 +591,19 @@ if __name__ == "__main__":
         use_gpu=use_gpu,
     )
 
+    few2 = SlowSchwarzschildEccentricFlux(
+        inspiral_kwargs={
+            "DENSE_STEPPING": 1,
+            "max_init_len": int(1e7),
+            "step_eps": 1e-10,
+        },
+        # amplitude_kwargs={"max_input_len": int(1e3), "use_gpu": use_gpu},
+        amplitude_kwargs=dict(),
+        Ylm_kwargs={"assume_positive_m": False},
+        sum_kwargs={"use_gpu": use_gpu},
+        use_gpu=use_gpu,
+    )
+
     M = 1e6
     mu = 1e1
     p0 = 14.0
@@ -644,6 +657,21 @@ if __name__ == "__main__":
                 batch_size=batch_size,
             )
 
+            wc2 = few2(
+                M,
+                mu,
+                p0,
+                e0,
+                theta,
+                phi,
+                dt=dt,
+                T=T,
+                eps=eps,
+                mode_selection=mode_selection,
+                show_progress=show_progress,
+                batch_size=batch_size,
+            )
+
             # try:
             #    wc = wc.get()
             # except AttributeError:
@@ -651,7 +679,7 @@ if __name__ == "__main__":
 
         et = time.perf_counter()
 
-        mm = get_mismatch(wc, fullwave, use_gpu=use_gpu)
+        mm = get_mismatch(fullwave, wc2, use_gpu=use_gpu)
         mismatch_out.append(mm)
         num_modes.append(few.num_modes_kept)
         timing.append((et - st) / num)
