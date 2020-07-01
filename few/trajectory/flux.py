@@ -91,9 +91,6 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
 
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
 
-        import pdb
-
-        pdb.set_trace()
         # this will return in coordinate time
         t, p, e, Phi_phi, Phi_r, amp_norm = flux_inspiral(
             M, mu, p0, e0, self.flux_carrier, **temp_kwargs
