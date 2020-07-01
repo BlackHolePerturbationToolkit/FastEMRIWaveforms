@@ -2,6 +2,8 @@ import numpy as np
 import os
 import h5py
 
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
 from pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
 from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 
@@ -58,7 +60,7 @@ class ROMANAmplitude(SchwarzschildEccentric):
 
         SchwarzschildEccentric.__init__(self, **kwargs)
 
-        self.folder = "few/files/"
+        self.folder = dir_path + "/../files/"
         self.data_file = "SchwarzschildEccentricInput.hdf5"
 
         with h5py.File(self.folder + self.data_file, "r") as fp:

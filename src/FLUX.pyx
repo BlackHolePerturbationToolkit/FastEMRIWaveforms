@@ -1,13 +1,14 @@
 import numpy as np
 cimport numpy as np
+from libcpp.string cimport string
 
-from utils.pointer_adjust import pointer_adjust
+from few.utils.pointer_adjust import pointer_adjust
 
 assert sizeof(int) == sizeof(np.int32_t)
 
 cdef extern from "../include/FluxInspiral.hh":
     cdef cppclass FluxCarrierWrap "FluxCarrier":
-        FluxCarrierWrap()
+        FluxCarrierWrap(string few_dir)
         void dealloc()
 
     void FLUXWrapper(np.float64_t *t, np.float64_t *p,
@@ -29,8 +30,9 @@ cdef extern from "../include/FluxInspiral.hh":
 cdef class pyFluxCarrier:
     cdef FluxCarrierWrap *g
 
-    def __cinit__(self):
-        self.g = new FluxCarrierWrap()
+    def __cinit__(self, few_dir):
+        cdef string few_dir_in = str.encode(few_dir)
+        self.g = new FluxCarrierWrap(few_dir_in)
 
     def __dealloc__(self):
         self.g.dealloc()

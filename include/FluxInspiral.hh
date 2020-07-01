@@ -77,7 +77,7 @@ public:
     interp_params *interps;
     Interpolant *amp_vec_norm_interp;
 
-    FluxCarrier();
+    FluxCarrier(std::string few_dir);
     void dealloc();
 };
 

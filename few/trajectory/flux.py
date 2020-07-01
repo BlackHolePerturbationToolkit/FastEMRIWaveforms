@@ -12,6 +12,10 @@ from few.utils.baseclasses import TrajectoryBase, SchwarzschildEccentric
 
 MTSUN_SI = 4.925491025543575903411922162094833998e-6
 
+import os
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
 
 class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
     """Flux-based trajectory module.
@@ -40,9 +44,12 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
     """
 
     def __init__(self, *args, **kwargs):
+
         TrajectoryBase.__init__(self, *args, **kwargs)
         SchwarzschildEccentric.__init__(self, *args, **kwargs)
-        self.flux_carrier = pyFluxCarrier()
+        few_dir = dir_path + "/../../"
+
+        self.flux_carrier = pyFluxCarrier(few_dir)
 
         self.specific_kwarg_keys = [
             "T",
@@ -84,6 +91,9 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
 
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
 
+        import pdb
+
+        pdb.set_trace()
         # this will return in coordinate time
         t, p, e, Phi_phi, Phi_r, amp_norm = flux_inspiral(
             M, mu, p0, e0, self.flux_carrier, **temp_kwargs
