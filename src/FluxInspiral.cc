@@ -119,10 +119,12 @@ int func (double t, const double y[], double f[], void *params){
   return GSL_SUCCESS;
 }
 
-void load_and_interpolate_amp_vec_norm_data(Interpolant **amp_vec_norm_interp){
+void load_and_interpolate_amp_vec_norm_data(Interpolant **amp_vec_norm_interp, const std::string& few_dir){
 
 	// Load and interpolate the flux data
-	ifstream Flux_file("few/files/AmplitudeVectorNorm.dat");
+    std::string fp = "few/files/AmplitudeVectorNorm.dat";
+    fp = few_dir + fp;
+	ifstream Flux_file(fp);
 
 	// Load the flux data into arrays
 	string Flux_string;
@@ -150,10 +152,12 @@ void load_and_interpolate_amp_vec_norm_data(Interpolant **amp_vec_norm_interp){
 }
 
 
-void load_and_interpolate_flux_data(struct interp_params *interps){
+void load_and_interpolate_flux_data(struct interp_params *interps, const std::string& few_dir){
 
 	// Load and interpolate the flux data
-	ifstream Flux_file("few/files/FluxNewMinusPNScaled_fixed_y_order.dat");
+    std::string fp = "few/files/FluxNewMinusPNScaled_fixed_y_order.dat";
+    fp = few_dir + fp;
+	ifstream Flux_file(fp);
 
 	// Load the flux data into arrays
 	string Flux_string;
@@ -188,12 +192,13 @@ void load_and_interpolate_flux_data(struct interp_params *interps){
 
 
 
-FluxCarrier::FluxCarrier()
+FluxCarrier::FluxCarrier(std::string few_dir)
 {
     interps = new interp_params;
 
-    load_and_interpolate_flux_data(interps);
-	load_and_interpolate_amp_vec_norm_data(&amp_vec_norm_interp);
+    cout << few_dir << endl;
+    load_and_interpolate_flux_data(interps, few_dir);
+	load_and_interpolate_amp_vec_norm_data(&amp_vec_norm_interp, few_dir);
 
 }
 

@@ -167,7 +167,7 @@ class TrajectoryBase(ABC):
         self,
         *args,
         in_coordinate_time=True,
-        dt=-1,
+        dt=10.0,
         T=1.0,
         new_t=None,
         spline_kwargs={},
@@ -249,13 +249,8 @@ class TrajectoryBase(ABC):
             if isinstance(new_t, np.ndarray) is False:
                 raise ValueError("new_t parameter, if provided, must be numpy array.")
 
-        elif dt != -1:
-            new_t = np.arange(0.0, T + dt, dt)
-
         else:
-            raise ValueError(
-                "If upsampling trajectory, must provide dt or new_t array."
-            )
+            new_t = np.arange(0.0, T + dt, dt)
 
         if new_t[-1] > t[-1]:
             print("Warning: new_t array goes beyond generated t array.")

@@ -2,6 +2,7 @@ import sys
 import os
 
 sys.path.insert(0, os.path.abspath("/home/mlk667/FastEMRIWaveforms/"))
+sys.path.insert(0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveforms/"))
 
 
 import numpy as np
