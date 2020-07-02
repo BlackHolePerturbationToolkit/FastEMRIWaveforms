@@ -6,6 +6,10 @@ from few.utils.baseclasses import SchwarzschildEccentric
 
 from pyInterp2DAmplitude import Interp2DAmplitude_wrap, pyAmplitudeCarrier
 
+import os
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
 
 class Interp2DAmplitude(SchwarzschildEccentric):
     """Calculate Teukolsky amplitudes by 2D Cubic Spline interpolation.
@@ -29,7 +33,8 @@ class Interp2DAmplitude(SchwarzschildEccentric):
 
         SchwarzschildEccentric.__init__(self, **kwargs)
 
-        self.amplitude_carrier = pyAmplitudeCarrier(self.lmax, self.nmax)
+        few_dir = dir_path + "/../../"
+        self.amplitude_carrier = pyAmplitudeCarrier(self.lmax, self.nmax, few_dir)
 
     def __call__(self, p, e, l_arr, m_arr, n_arr, *args, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
@@ -45,7 +50,7 @@ class Interp2DAmplitude(SchwarzschildEccentric):
                 the eccentricity.
             l_arr (1D int numpy.ndarray): :math:`l` values to evaluate.
             m_arr (1D int numpy.ndarray): :math:`m` values to evaluate.
-            n_arr (1D int numpy.ndarray): :math:`ns` values to evaluate. 
+            n_arr (1D int numpy.ndarray): :math:`ns` values to evaluate.
             *args (tuple, placeholder): Added to create flexibility when calling different
                 amplitude modules. It is not used.
             **kwargs (dict, placeholder): Added to create flexibility when calling different

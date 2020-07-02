@@ -50,7 +50,7 @@ public:
     struct waveform_amps *amps;
     int lmax, nmax;
 
-    AmplitudeCarrier(int lmax_, int nmax_);
+    AmplitudeCarrier(int lmax_, int nmax_, std::string few_dir);
     void dealloc();
 };
 

@@ -97,12 +97,14 @@ void create_amplitude_interpolant(hid_t file_id, int l, int m, int n, int Ne, in
 	*im = new Interpolant(ys, es, modeData_im);
 }
 
-void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amps *amps){
+void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amps *amps, const std::string& few_dir){
 
 	hid_t 	file_id;
 	hsize_t	dims[2];
 
-	file_id = H5Fopen ("few/files/Teuk_amps_a0.0_lmax_10_nmax_30_new.h5", H5F_ACC_RDONLY, H5P_DEFAULT);
+    std::string fp = "few/files/Teuk_amps_a0.0_lmax_10_nmax_30_new.h5";
+    fp = few_dir + fp;
+	file_id = H5Fopen (fp.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
 	/* get the dimensions of the dataset */
 	H5LTget_dataset_info(file_id, "/grid", dims, NULL, NULL);
@@ -150,7 +152,7 @@ void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amp
 
 // TODO: make it selectable by mode ?
 // TODO: free memory from inside interpolants
-AmplitudeCarrier::AmplitudeCarrier(int lmax_, int nmax_)
+AmplitudeCarrier::AmplitudeCarrier(int lmax_, int nmax_, std::string few_dir)
 {
     lmax = lmax_;
     nmax = nmax_;
@@ -158,7 +160,7 @@ AmplitudeCarrier::AmplitudeCarrier(int lmax_, int nmax_)
     amps = new struct waveform_amps;
 
     cout << "# Loading and interpolating the amplitude data (this will take a few seconds)" << endl;
-    load_and_interpolate_amplitude_data(lmax, nmax, amps);
+    load_and_interpolate_amplitude_data(lmax, nmax, amps, few_dir);
 
 }
 

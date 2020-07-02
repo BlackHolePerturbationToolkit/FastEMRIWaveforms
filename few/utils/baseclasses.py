@@ -7,8 +7,12 @@ except:
     import numpy as xp
 
 import numpy as np
+from scipy.interpolate import CubicSpline
+from scipy import constants as ct
 
 # TODO: get bounds on p
+
+MTSUN_SI = 4.925491025543575903411922162094833998e-6
 
 
 class SchwarzschildEccentric(ABC):
@@ -231,6 +235,8 @@ class TrajectoryBase(ABC):
         kwargs["err"] = err
         kwargs["DENSE_STEPPING"] = DENSE_STEPPING
 
+        T = T * ct.Julian_year
+
         out = self.get_inspiral(*args, **kwargs)
 
         t = out[0]
@@ -255,7 +261,7 @@ class TrajectoryBase(ABC):
         if new_t[-1] > t[-1]:
             print("Warning: new_t array goes beyond generated t array.")
 
-        out = tuple([spl(new_t) for spl in splines])
+        out = tuple([spl(new_t) * (new_t < t[-1]) for spl in splines])
         return (new_t,) + out
 
 

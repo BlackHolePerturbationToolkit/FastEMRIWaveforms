@@ -4,7 +4,6 @@ import os
 sys.path.insert(0, os.path.abspath("/home/mlk667/FastEMRIWaveforms/"))
 sys.path.insert(0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveforms/"))
 
-
 import numpy as np
 from tqdm import tqdm
 
@@ -52,6 +51,8 @@ from abc import ABC
 # TODO: deal with attributes
 # TODO: ABC for specific classes
 # TODO: Add more safeguards on settings.
+# TODO: throw error if cannot read data
+# TODO: add requirements / versions (e.g. gsl)
 from scipy import constants as ct
 
 
@@ -285,6 +286,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         )
         self.sanity_check_traj(p, e)
 
+        self.plunge_time = t[-1]
         # convert for gpu
         t = self.xp.asarray(t)
         p = self.xp.asarray(p)
@@ -578,7 +580,7 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
 if __name__ == "__main__":
     import time
 
-    use_gpu = False
+    use_gpu = True
     few = FastSchwarzschildEccentricFlux(
         inspiral_kwargs={
             "DENSE_STEPPING": 0,
@@ -601,44 +603,84 @@ if __name__ == "__main__":
         # amplitude_kwargs={"max_input_len": int(1e3), "use_gpu": use_gpu},
         amplitude_kwargs=dict(),
         Ylm_kwargs={"assume_positive_m": False},
-        sum_kwargs={"use_gpu": use_gpu},
-        use_gpu=use_gpu,
+        sum_kwargs={"use_gpu": False},
+        use_gpu=False,
     )
 
     M = 1e6
     mu = 1e1
-    p0 = 14.0
-    e0 = 0.5
+    p0 = 10.0
+    e0 = 0.7
     theta = np.pi / 2
     phi = 0.0
     dt = 10.0
-    T = 1.0 / 100.0  # 1124936.040602 / ct.Julian_year
+    T = 1.0  #  / 100.0  # 1124936.040602 / ct.Julian_year
     eps = 1e-2
     mode_selection = None
     step_eps = 1e-11
-    show_progress = True
+    show_progress = False
     batch_size = 10000
 
     mismatch_out = []
     num_modes = []
     timing = []
+    timing_slow = []
+    pt_arr = []
     eps_all = 10.0 ** np.arange(-10, -2)
 
     eps_all = np.concatenate([np.array([1e-25]), eps_all])
+    eps_all = np.array([1e-5])
 
+    p0_arr, e0_arr = np.array(
+        [
+            [10.0, 0.7],
+            [11.48, 0.7],
+            [12.96, 0.7],
+            [14.44, 0.7],
+            [15.92, 0.7],
+            [17.4, 0.7],
+            [16.2, 0.1],
+            [16.4, 0.2],
+            [16.6, 0.3],
+            [16.8, 0.4],
+            [17.0, 0.5],
+            [17.2, 0.6],
+        ]
+    ).T
+
+    mu_arr = np.array(
+        [
+            14.72882724,
+            36.69142378,
+            72.25349492,
+            125.63166025,
+            201.04964163,
+            304.42722121,
+            169.1329517,
+            179.99285068,
+            192.8791508,
+            208.122157,
+            229.27693129,
+            257.87628876,
+        ]
+    )
+    """
     try:
-        fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_14_05.txt")
+        fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_10_07.txt")
     except OSError:
-        fullwave = np.genfromtxt("slow_1e6_1e1_14_05.txt")
+        fullwave = np.genfromtxt("slow_1e6_1e1_10_07.txt")
 
     if use_gpu:
         fullwave = xp.asarray(fullwave[:, 5] + 1j * fullwave[:, 6])
     else:
         fullwave = np.asarray(fullwave[:, 5] + 1j * fullwave[:, 6])
+    """
 
-    for i, eps in enumerate(eps_all):
+    eps = 1e-5
+    # for i, eps in enumerate(eps_all):
+    for i, (p0, e0, mu) in enumerate(zip(p0_arr, e0_arr, mu_arr)):
         all_modes = False if i > 0 else True
-        num = 1
+        num = 50
         st = time.perf_counter()
         for jjj in range(num):
 
@@ -658,32 +700,40 @@ if __name__ == "__main__":
                 batch_size=batch_size,
             )
 
-            wc2 = few2(
-                M,
-                mu,
-                p0,
-                e0,
-                theta,
-                phi,
-                dt=dt,
-                T=T,
-                eps=eps,
-                mode_selection=mode_selection,
-                show_progress=show_progress,
-                batch_size=batch_size,
-            )
-
-            # try:
-            #    wc = wc.get()
-            # except AttributeError:
-            #    pass
-
+        pt = few.plunge_time
+        pt_arr.append(pt)
         et = time.perf_counter()
+        fast_time = (et - st) / num
+        timing.append(fast_time)
 
-        mm = get_mismatch(fullwave, wc2, use_gpu=use_gpu)
+        st = time.perf_counter()
+        wc2 = few2(
+            M,
+            mu,
+            p0,
+            e0,
+            theta,
+            phi,
+            dt=dt,
+            T=T,
+            eps=eps,
+            mode_selection=mode_selection,
+            show_progress=show_progress,
+            batch_size=batch_size,
+        )
+        et = time.perf_counter()
+        timing_slow.append((et - st))
+        slow_time = et - st
+
+        try:
+            wc = wc.get()
+        except AttributeError:
+            pass
+
+        mm = get_mismatch(wc2, wc, use_gpu=False)
         mismatch_out.append(mm)
         num_modes.append(few.num_modes_kept)
-        timing.append((et - st) / num)
+
         print(
             "eps:",
             eps,
@@ -691,13 +741,29 @@ if __name__ == "__main__":
             mm,
             "Num modes:",
             few.num_modes_kept,
-            "timing:",
-            (et - st) / num,
+            "timing fast:",
+            fast_time,
+            "timing slow:",
+            slow_time,
+            "plunge_time",
+            pt,
         )
 
-    # np.save(
-    #    "info_check_1e6_1e1_14_05", np.asarray([eps_all, mismatch_out, num_modes, timing]).T
-    # )
+    np.save(
+        "plot_test",
+        np.asarray(
+            [
+                p0_arr,
+                e0_arr,
+                mu_arr,
+                mismatch_out,
+                num_modes,
+                timing,
+                timing_slow,
+                pt_arr,
+            ]
+        ).T,
+    )
 
     """
     num = 20
