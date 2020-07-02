@@ -1,5 +1,6 @@
 import numpy as np
 cimport numpy as np
+from libcpp.string cimport string
 
 from utils.pointer_adjust import pointer_adjust
 
@@ -7,7 +8,7 @@ assert sizeof(int) == sizeof(np.int32_t)
 
 cdef extern from "Amplitude.hh":
     cdef cppclass AmplitudeCarrierWrap "AmplitudeCarrier":
-        AmplitudeCarrierWrap(int lmax_, int nmax_)
+        AmplitudeCarrierWrap(int lmax_, int nmax_, string few_dir)
         void dealloc()
 
 
@@ -18,8 +19,9 @@ cdef extern from "Amplitude.hh":
 cdef class pyAmplitudeCarrier:
     cdef AmplitudeCarrierWrap *g
 
-    def __cinit__(self, lmax, nmax):
-        self.g = new AmplitudeCarrierWrap(lmax, nmax)
+    def __cinit__(self, lmax, nmax, few_dir):
+        cdef string few_dir_in = str.encode(few_dir)
+        self.g = new AmplitudeCarrierWrap(lmax, nmax, few_dir_in)
 
     def __dealloc__(self):
         self.g.dealloc()
