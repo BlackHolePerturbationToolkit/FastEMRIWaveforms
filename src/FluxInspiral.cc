@@ -225,6 +225,8 @@ double get_step_flux(double p, double e, Interpolant *amp_vec_norm_interp)
 
 FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double err, double tmax, double dt, FluxCarrier *flux_carrier, int DENSE_STEPPING, double step_eps){
 
+    tmax = tmax*YearInSeconds;
+
     double init_flux = get_step_flux(p0, e0, flux_carrier->amp_vec_norm_interp);
 
     FLUXHolder flux_out(t0, M, mu, p0, e0, init_flux);
@@ -241,13 +243,13 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
     //double samplerate = 0.1;
 
     // Signal length (in seconds)
-    double max_signal_length = 1*YearInSeconds;
+    //double max_signal_length = 1*YearInSeconds;
 
     // Compute the adimensionalized time steps and max time
 
     dt = dt /(M*MTSUN_SI);
 
-    if (!DENSE_STEPPING) tmax = max_signal_length;
+    //if (!DENSE_STEPPING) tmax = max_signal_length;
 
     tmax = tmax/(M*MTSUN_SI);
 
@@ -288,6 +290,7 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
         flux_out.add_point(t*Msec, y[0], y[1], y[2], y[3], step_flux); // adds time in seconds
 
         ind++;
+        printf("%d %e %e %e %e %e\n", ind, p, e, p - 6 -2*e, tmax, t);
         // Stop the inspiral when close to the separatrix
         if(p - 6 -2*e < 0.1){
             //cout << "# Separatrix reached: exiting inspiral" << endl;
