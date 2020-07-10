@@ -290,7 +290,6 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
         flux_out.add_point(t*Msec, y[0], y[1], y[2], y[3], step_flux); // adds time in seconds
 
         ind++;
-        printf("%d %e %e %e %e %e\n", ind, p, e, p - 6 -2*e, tmax, t);
         // Stop the inspiral when close to the separatrix
         if(p - 6 -2*e < 0.1){
             //cout << "# Separatrix reached: exiting inspiral" << endl;
