@@ -152,7 +152,7 @@ Interpolated Summation
 Direct Summation
 ~~~~~~~~~~~~~~~~~~
 
-.. automodule:: few.summation.direct_mode_sum
+.. automodule:: few.summation.directmodesum
     :members:
     :show-inheritance:
     :inherited-members:
@@ -167,7 +167,7 @@ Utilities
 Mode Filtering
 ~~~~~~~~~~~~~~~
 
-.. automodule:: few.utils.mode_filter
+.. automodule:: few.utils.modefilter
     :show-inheritance:
     :members:
     :inherited-members:
