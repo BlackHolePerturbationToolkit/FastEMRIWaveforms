@@ -60,6 +60,7 @@ class Interp2DAmplitude(SchwarzschildEccentric):
         """
 
         input_len = len(p)
+
         teuk_modes = Interp2DAmplitude_wrap(
             p,
             e,
@@ -67,7 +68,7 @@ class Interp2DAmplitude(SchwarzschildEccentric):
             m_arr.astype(np.int32),
             n_arr.astype(np.int32),
             input_len,
-            self.num_modes,
+            len(l_arr),
             self.amplitude_carrier,
         )
         return teuk_modes
