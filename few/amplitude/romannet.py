@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import h5py
+import warnings
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -149,6 +150,23 @@ class ROMANAmplitude(SchwarzschildEccentric):
 
         """
         input_len = len(p)
+
+        if input_len > self.max_input_len:
+            warnings.warn(
+                "Input length {} is larger than initial max_input_len ({}). Reallocating preallocated arrays for this size.".format(
+                    input_len, self.max_input_len
+                )
+            )
+            self.max_input_len = input_len
+
+            self.temp_mats = [
+                self.xp.zeros(
+                    (self.max_num * self.max_input_len,), dtype=self.xp.float64
+                ),
+                self.xp.zeros(
+                    (self.max_num * self.max_input_len,), dtype=self.xp.float64
+                ),
+            ]
 
         y = self._p_to_y(p, e)
         input = self.xp.concatenate([y, e])

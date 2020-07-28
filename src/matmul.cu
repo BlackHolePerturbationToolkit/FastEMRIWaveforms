@@ -5,6 +5,8 @@
 #include <chrono>
 #include "global.h"
 
+using namespace std;
+
 using namespace std::chrono;
 
 #ifdef __CUDACC__
@@ -145,9 +147,10 @@ void neural_layer(double *mat_out, double *mat_in, double *weight, double *bias,
   gpuErrchk(cudaGetLastError());
 
     #else
+
      cblas_dgemm (CblasColMajor,
-                    CblasNoTrans, CblasNoTrans, m, n, k,
-                    1.0, mat_in, m, weight, k, 0.0, mat_out, m);
+               CblasNoTrans, CblasNoTrans, m, n, k,
+                1.0, mat_in, m, weight, k, 0.0, mat_out, m);
 
     if (run_relu){
         add_bias_relu(mat_out, bias, m, n);
@@ -253,6 +256,5 @@ void transform_output(cmplx *teuk_modes, cmplx *transform_matrix, cmplx *nn_outp
    cblas_zgemm (CblasColMajor,
                   CblasNoTrans, CblasNoTrans, m, n, k,
                   (void*)&alpha, (void*)nn_output_mat, m, (void*)transform_matrix, k, (void*)&beta, (void*)teuk_modes, m);
-
    #endif
 }
