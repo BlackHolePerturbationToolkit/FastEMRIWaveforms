@@ -255,5 +255,4 @@ void transform_output(cmplx *teuk_modes, cmplx *transform_matrix, cmplx *nn_outp
                   (void*)&alpha, (void*)nn_output_mat, m, (void*)transform_matrix, k, (void*)&beta, (void*)teuk_modes, m);
 
    #endif
-
 }

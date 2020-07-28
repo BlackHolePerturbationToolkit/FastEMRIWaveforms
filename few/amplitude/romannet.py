@@ -7,6 +7,8 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 from pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
 from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 
+import pymatmul_cpu
+
 from few.utils.baseclasses import SchwarzschildEccentric
 
 try:

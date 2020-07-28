@@ -1,5 +1,6 @@
 # from future.utils import iteritems
 import os
+import sys
 from os.path import join as pjoin
 from setuptools import setup
 from distutils.extension import Extension
@@ -117,13 +118,21 @@ try:
 except AttributeError:
     numpy_include = numpy.get_numpy_include()
 
-if os.path.isdir("/home/mlk667/GPU4GW"):
+if os.path.isdir("/home/mlk667/GPU4GW"):  # TODO: fix this
     lapack_include = ["/software/lapack/3.6.0_gcc/include/"]
     lapack_lib = ["/software/lapack/3.6.0_gcc/lib64/"]
 
 else:
     lapack_include = ["/usr/local/opt/lapack/include"]
     lapack_lib = ["/usr/local/opt/lapack/lib"]
+
+if "--no_omp" in sys.argv:
+    use_omp = False
+    sys.argv.remove("--no_omp")
+
+else:
+    use_omp = True
+
 
 # lib_gsl_dir = "/opt/local/lib"
 # include_gsl_dir = "/opt/local/include"
@@ -132,7 +141,7 @@ else:
 if run_cuda_install:
 
     gpu_extension = dict(
-        libraries=["cudart", "cublas", "cusparse", "gsl", "gslcblas"],
+        libraries=["cudart", "cublas", "cusparse", "gsl", "gslcblas", "gomp"],
         library_dirs=[CUDA["lib64"]],
         runtime_library_dirs=[CUDA["lib64"]],
         language="c++",
@@ -141,7 +150,7 @@ if run_cuda_install:
         # and not with gcc the implementation of this trick is in
         # customize_compiler()
         extra_compile_args={
-            "gcc": ["-std=c++11"],  # '-g'],
+            "gcc": ["-std=c++11", "-fopenmp", "-D__USE_OMP__"],  # '-g'],
             "nvcc": [
                 "-arch=sm_70",
                 # "-gencode=arch=compute_30,code=sm_30",
@@ -160,6 +169,7 @@ if run_cuda_install:
                 "'-fPIC'",
                 "-Xcompiler",
                 "-fopenmp",
+                "-D__USE_OMP__",
                 # "-G",
                 # "-g",
                 # "-O0",
@@ -175,6 +185,12 @@ if run_cuda_install:
         ],
     )
 
+    if use_omp is False:
+        gpu_extension["extra_compile_args"]["nvcc"].remove("-fopenmp")
+        gpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
+        gpu_extension["extra_compile_args"]["nvcc"].remove("-D__USE_OMP__")
+        gpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
+
     matmul_ext = Extension(
         "pymatmul", sources=["src/matmul.cu", "src/pymatmul.pyx"], **gpu_extension
     )
@@ -188,7 +204,9 @@ cpu_extension = dict(
     libraries=["gsl", "gslcblas", "lapack", "gomp", "hdf5", "hdf5_hl"],
     language="c++",
     runtime_library_dirs=[],
-    extra_compile_args={"gcc": ["-std=c++11", "-Xpreprocessor", "-fopenmp"]},  # '-g'
+    extra_compile_args={
+        "gcc": ["-std=c++11", "-fopenmp", "-fPIC", "-D__USE_OMP__"]
+    },  # '-g'
     include_dirs=[
         numpy_include,
         "few/src",
@@ -199,6 +217,10 @@ cpu_extension = dict(
     library_dirs=lapack_lib,
     # library_dirs=["/home/ajchua/lib/"],
 )
+
+if use_omp is False:
+    cpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
+    cpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
 
 FLUX_ext = Extension(
     "pyFLUX",
@@ -261,6 +283,7 @@ if run_cuda_install:
 else:
     # extensions = [FLUX_ext, SlowFlux_ext, spher_harm_ext, Interp2DAmplitude_ext]
     extensions = cpu_extensions
+    # extensions = [interp_cpu_ext]
 
 with open("README.md", "r") as fh:
     long_description = fh.read()

@@ -21,8 +21,9 @@ from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 
 from few.utils.overlap import get_mismatch
 
+from few.amplitude.romannet import ROMANAmplitude
+
 try:
-    from few.amplitude.romannet import ROMANAmplitude
     from few.summation.interpolated_mode_sum import InterpolatedModeSum
 
 except (ModuleNotFoundError, ImportError) as e:
@@ -34,13 +35,13 @@ from few.summation.direct_mode_sum import DirectModeSum
 
 from abc import ABC
 
-
-# work out imports with sphinx
+# TODO: convert c functions that need carriers to c classes
+# TODO: kernels die in jupyter with gsl error
+# TODO: work out imports with sphinx
 # TODO: unit tests
 # TODO: deal with libs and includes
 # TODO: make sure constants are same
 # TODO: Allow for use of gpu in one module but not another (?)
-# TODO: add omp to CPU modules
 # TODO: associated files for install
 # TODO: highest level waveform that uses kwargs to pick waveform.
 # TODO: shared memory based on CUDA_ARCH
@@ -53,6 +54,7 @@ from abc import ABC
 # TODO: Add more safeguards on settings.
 # TODO: throw error if cannot read data
 # TODO: add requirements / versions (e.g. gsl)
+# TODO: zero out modes
 from scipy import constants as ct
 
 
@@ -317,6 +319,9 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         iterator = enumerate(inds_split_all)
         iterator = tqdm(iterator, desc="time batch") if show_progress else iterator
 
+        if show_progress:
+            print("total:", len(inds_split_all))
+
         for i, inds_in in iterator:
 
             t_temp = t[inds_in]
@@ -580,7 +585,7 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
 if __name__ == "__main__":
     import time
 
-    use_gpu = True
+    use_gpu = False
     few = FastSchwarzschildEccentricFlux(
         inspiral_kwargs={
             "DENSE_STEPPING": 0,
@@ -603,7 +608,7 @@ if __name__ == "__main__":
         # amplitude_kwargs={"max_input_len": int(1e3), "use_gpu": use_gpu},
         amplitude_kwargs=dict(),
         Ylm_kwargs={"assume_positive_m": False},
-        sum_kwargs={"use_gpu": False},
+        sum_kwargs={"use_gpu": True},
         use_gpu=False,
     )
 
@@ -678,9 +683,9 @@ if __name__ == "__main__":
 
     eps = 1e-5
     # for i, eps in enumerate(eps_all):
-    for i, (p0, e0, mu) in enumerate(zip(p0_arr, e0_arr, mu_arr)):
+    for i, (p0, e0, mu) in enumerate(zip(p0_arr[5:6], e0_arr[5:6], mu_arr[5:6])):
         all_modes = False if i > 0 else True
-        num = 50
+        num = 5
         st = time.perf_counter()
         for jjj in range(num):
 
@@ -699,10 +704,14 @@ if __name__ == "__main__":
                 show_progress=show_progress,
                 batch_size=batch_size,
             )
+            print(jjj)
 
+        et = time.perf_counter()
         pt = few.plunge_time
         pt_arr.append(pt)
-        et = time.perf_counter()
+        import pdb
+
+        pdb.set_trace()
         fast_time = (et - st) / num
         timing.append(fast_time)
 
@@ -717,7 +726,7 @@ if __name__ == "__main__":
             dt=dt,
             T=T,
             eps=eps,
-            mode_selection=mode_selection,
+            mode_selection="all",
             show_progress=show_progress,
             batch_size=batch_size,
         )
@@ -729,6 +738,18 @@ if __name__ == "__main__":
             wc = wc.get()
         except AttributeError:
             pass
+
+        try:
+            wc2 = wc2.get()
+        except AttributeError:
+            pass
+
+        min_len = np.min([len(wc), len(wc2)])
+
+        np.save(
+            "/projects/b1095/mkatz/emri/wave_out_p_{}_e{}".format(p0, e0),
+            np.array([wc[:min_len], wc2[:min_len]]),
+        )
 
         mm = get_mismatch(wc2, wc, use_gpu=False)
         mismatch_out.append(mm)
@@ -750,7 +771,7 @@ if __name__ == "__main__":
         )
 
     np.save(
-        "plot_test",
+        "plot_test_2",
         np.asarray(
             [
                 p0_arr,

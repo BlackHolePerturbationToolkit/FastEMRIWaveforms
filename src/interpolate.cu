@@ -4,8 +4,10 @@
 #ifdef __CUDACC__
 #include "cusparse.h"
 #else
-#include "omp.h"
 #include "lapacke.h"
+#endif
+#ifdef __USE_OMP__
+#include "omp.h"
 #endif
 
 
@@ -197,7 +199,9 @@ void fit_wrap(int m, int n, double *a, double *b, double *c, double *d_in){
 
   #else
 
- //#pragma omp parallel for
+#ifdef __USE_OMP__
+#pragma omp parallel for
+#endif
 for (int j = 0;
      j < n;
      j += 1){
@@ -405,6 +409,12 @@ void make_waveform(cmplx *waveform,
     diff = 1;
 
     #endif
+    #ifdef __CUDACC__
+    #else
+    #ifdef __USE_OMP__
+    #pragma omp parallel for
+    #endif // __USE_OMP__
+    #endif // __CUDACC__
     for (int i = start;
          i < end;
          i += diff){
@@ -419,6 +429,8 @@ void make_waveform(cmplx *waveform,
 
       Phi_phi_i = pp_y + pp_c1*x + pp_c2*x2  + pp_c3*x3;
       Phi_r_i = pr_y + pr_c1*x + pr_c2*x2  + pr_c3*x3;
+
+
         for (int j=0; j<num_teuk_here; j+=1){
 
             Ylm_plus_m = Ylms[2*j];
@@ -521,7 +533,9 @@ void get_waveform(cmplx *d_waveform, double *y_vals, double *c1, double *c2, dou
     //printf("lm: %d, modes: %d %d\n", num_l_m, num_teuk_modes, num_breaks);
 
     //cudaEventRecord(start);
+    #ifdef __USE_OMP__
     #pragma omp parallel for
+    #endif
     for (int i = 0; i < init_len-1; i++) {
             #ifdef __CUDACC__
           cudaStreamCreate(&streams[i]);
@@ -552,7 +566,9 @@ void get_waveform(cmplx *d_waveform, double *y_vals, double *c1, double *c2, dou
       cudaDeviceSynchronize();
       gpuErrchk(cudaGetLastError());
 
+      #ifdef __USE_OMP__
       #pragma omp parallel for
+      #endif
       for (int i = 0; i < init_len-1; i++) {
             cudaStreamDestroy(streams[i]);
 

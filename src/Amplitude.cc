@@ -23,10 +23,10 @@
 #include <chrono>
 #include <iomanip>      // std::setprecision
 
+#ifdef __USE_OMP__
 #include <omp.h>
+#endif
 #include <stdio.h>
-
-#include "omp.h"
 
 
 using namespace std;
@@ -154,6 +154,7 @@ void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amp
 // TODO: free memory from inside interpolants
 AmplitudeCarrier::AmplitudeCarrier(int lmax_, int nmax_, std::string few_dir)
 {
+    printf("OMP THREADS: %d\n", omp_get_num_threads());
     lmax = lmax_;
     nmax = nmax_;
 
@@ -182,15 +183,16 @@ void Interp2DAmplitude(std::complex<double> *amplitude_out, double *p_arr, doubl
     complex<double> I(0.0, 1.0);
 
     //reduction (+:hwave)
-    #pragma omp parallel for
+    #ifdef __USE_OMP__
+    #pragma omp parallel for collapse(2)
+    #endif
     for (int i=0; i<num; i++){
-
-        double p = p_arr[i];
-        double e = e_arr[i];
-
-        double y = log((p -2.*e - 2.1));
-
     	for(int mode_i = 0; mode_i < num_modes; mode_i++){
+            double p = p_arr[i];
+            double e = e_arr[i];
+
+            double y = log((p -2.*e - 2.1));
+
             int l = l_arr[mode_i]; int m = m_arr[mode_i]; int n = n_arr[mode_i];
 			amplitude_out[i*num_modes + mode_i]= amps->re[l][m][n+nmax]->eval(y,e) + I*amps->im[l][m][n+nmax]->eval(y,e);
 
