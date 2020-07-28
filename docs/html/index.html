@@ -123,11 +123,11 @@
 </li>
 <li><a class="reference internal" href="#module-few.summation">Summation Package</a><ul>
 <li><a class="reference internal" href="#module-few.summation.interpolatedmodesum">Interpolated Summation</a></li>
-<li><a class="reference internal" href="#module-few.summation.direct_mode_sum">Direct Summation</a></li>
+<li><a class="reference internal" href="#module-few.summation.directmodesum">Direct Summation</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-few.utils">Utilities</a><ul>
-<li><a class="reference internal" href="#module-few.utils.mode_filter">Mode Filtering</a></li>
+<li><a class="reference internal" href="#module-few.utils.modefilter">Mode Filtering</a></li>
 <li><a class="reference internal" href="#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a></li>
 <li><a class="reference internal" href="#module-few.utils.overlap">Analysis Tools</a></li>
 </ul>
@@ -381,7 +381,7 @@ flux-based, sparse trajectory. This returns approximately 100 points.</p>
 <a class="reference internal" href="#few.amplitude.romannet.ROMANAmplitude" title="few.amplitude.romannet.ROMANAmplitude"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.amplitude.romannet.ROMANAmplitude</span></code></a> along these sparse
 trajectories. This gives complex amplitudes for all modes in this model at
 each point in the trajectory. These are then filtered with
-<a class="reference internal" href="#few.utils.mode_filter.ModeFilter" title="few.utils.mode_filter.ModeFilter"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.mode_filter.ModeFilter</span></code></a>.</p>
+<a class="reference internal" href="#few.utils.modefilter.ModeFilter" title="few.utils.modefilter.ModeFilter"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.modefilter.ModeFilter</span></code></a>.</p>
 <p>The modes that make it through the filter are then summed by
 <a class="reference internal" href="#few.summation.interpolatedmodesum.InterpolatedModeSum" title="few.summation.interpolatedmodesum.InterpolatedModeSum"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.summation.interpolatedmodesum.InterpolatedModeSum</span></code></a>.</p>
 <p>See <a class="reference internal" href="#few.waveform.SchwarzschildEccentricWaveformBase" title="few.waveform.SchwarzschildEccentricWaveformBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.SchwarzschildEccentricWaveformBase</span></code></a> for information
@@ -745,7 +745,7 @@ along a densely sampled trajectory. This gives complex amplitudes
 for all modes in this model at each point in the trajectory. These, can be
 chosent to be filtered, but for reference waveforms, they should not be.</p>
 <p>The modes that make it through the filter are then summed by
-<a class="reference internal" href="#few.summation.direct_mode_sum.DirectModeSum" title="few.summation.direct_mode_sum.DirectModeSum"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.summation.direct_mode_sum.DirectModeSum</span></code></a>.</p>
+<a class="reference internal" href="#few.summation.directmodesum.DirectModeSum" title="few.summation.directmodesum.DirectModeSum"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.summation.directmodesum.DirectModeSum</span></code></a>.</p>
 <p>See <a class="reference internal" href="#few.waveform.SchwarzschildEccentricWaveformBase" title="few.waveform.SchwarzschildEccentricWaveformBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.SchwarzschildEccentricWaveformBase</span></code></a> for information
 on inputs. See examples as well.</p>
 <dl class="field-list simple">
@@ -2497,11 +2497,11 @@ rate).</p></li>
 </dd></dl>
 
 </div>
-<div class="section" id="module-few.summation.direct_mode_sum">
-<span id="direct-summation"></span><h3>Direct Summation<a class="headerlink" href="#module-few.summation.direct_mode_sum" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="module-few.summation.directmodesum">
+<span id="direct-summation"></span><h3>Direct Summation<a class="headerlink" href="#module-few.summation.directmodesum" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
-<dt id="few.summation.direct_mode_sum.DirectModeSum">
-<em class="property">class </em><code class="sig-prename descclassname">few.summation.direct_mode_sum.</code><code class="sig-name descname">DirectModeSum</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.direct_mode_sum.DirectModeSum" title="Permalink to this definition">¶</a></dt>
+<dt id="few.summation.directmodesum.DirectModeSum">
+<em class="property">class </em><code class="sig-prename descclassname">few.summation.directmodesum.</code><code class="sig-name descname">DirectModeSum</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.SummationBase" title="few.utils.baseclasses.SummationBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SummationBase</span></code></a>, <a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a></p>
 <p>Create waveform by direct summation.</p>
 <p>This class sums the amplitude and phase information as received.</p>
@@ -2514,8 +2514,8 @@ rate).</p></li>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt id="few.summation.direct_mode_sum.DirectModeSum.waveform">
-<code class="sig-name descname">waveform</code><a class="headerlink" href="#few.summation.direct_mode_sum.DirectModeSum.waveform" title="Permalink to this definition">¶</a></dt>
+<dt id="few.summation.directmodesum.DirectModeSum.waveform">
+<code class="sig-name descname">waveform</code><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.waveform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Complex waveform given by
 <span class="math notranslate nohighlight">\(h_+ + i*h_x\)</span>.</p>
 <dl class="field-list simple">
@@ -2526,8 +2526,8 @@ rate).</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.summation.direct_mode_sum.DirectModeSum.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">T</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.direct_mode_sum.DirectModeSum.__call__" title="Permalink to this definition">¶</a></dt>
+<dt id="few.summation.directmodesum.DirectModeSum.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">T</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Common call function for summation modules.</p>
 <p>Provides a common interface for summation modules. It can adjust for
 more dimensions in a model.</p>
@@ -2554,8 +2554,8 @@ For generic, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_\Thet
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.summation.direct_mode_sum.DirectModeSum.sanity_check_init">
-<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.direct_mode_sum.DirectModeSum.sanity_check_init" title="Permalink to this definition">¶</a></dt>
+<dt id="few.summation.directmodesum.DirectModeSum.sanity_check_init">
+<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.sanity_check_init" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sanity check initial parameters.</p>
 <p>Make sure parameters are within allowable ranges.</p>
 <dl class="field-list simple">
@@ -2574,8 +2574,8 @@ For generic, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_\Thet
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.summation.direct_mode_sum.DirectModeSum.sanity_check_traj">
-<code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.direct_mode_sum.DirectModeSum.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
+<dt id="few.summation.directmodesum.DirectModeSum.sanity_check_traj">
+<code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sanity check on parameters output from thte trajectory module.</p>
 <p>Make sure parameters are within allowable ranges.</p>
 <dl class="field-list simple">
@@ -2598,8 +2598,8 @@ the trajectory module.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.summation.direct_mode_sum.DirectModeSum.sanity_check_viewing_angles">
-<code class="sig-name descname">sanity_check_viewing_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.direct_mode_sum.DirectModeSum.sanity_check_viewing_angles" title="Permalink to this definition">¶</a></dt>
+<dt id="few.summation.directmodesum.DirectModeSum.sanity_check_viewing_angles">
+<code class="sig-name descname">sanity_check_viewing_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.sanity_check_viewing_angles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sanity check on viewing angles.</p>
 <p>Make sure parameters are within allowable ranges.</p>
 <dl class="field-list simple">
@@ -2622,8 +2622,8 @@ the trajectory module.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.summation.direct_mode_sum.DirectModeSum.sum">
-<code class="sig-name descname">sum</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">Phi_phi</span></em>, <em class="sig-param"><span class="n">Phi_r</span></em>, <em class="sig-param"><span class="n">m_arr</span></em>, <em class="sig-param"><span class="n">n_arr</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.direct_mode_sum.DirectModeSum.sum" title="Permalink to this definition">¶</a></dt>
+<dt id="few.summation.directmodesum.DirectModeSum.sum">
+<code class="sig-name descname">sum</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">Phi_phi</span></em>, <em class="sig-param"><span class="n">Phi_r</span></em>, <em class="sig-param"><span class="n">m_arr</span></em>, <em class="sig-param"><span class="n">n_arr</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.sum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Direct summation function.</p>
 <p>This function directly sums the amplitude and phase information, as well
 as the spin-weighted spherical harmonic values.</p>
@@ -2658,11 +2658,11 @@ ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
 <span id="utilities"></span><span id="utilities-label"></span><h2>Utilities<a class="headerlink" href="#module-few.utils" title="Permalink to this headline">¶</a></h2>
 <p>The Utilities package houses scripts that aid in our calculation including
 harmonic angular calculations, overlap calculators, and mode filtering modules.</p>
-<div class="section" id="module-few.utils.mode_filter">
-<span id="mode-filtering"></span><h3>Mode Filtering<a class="headerlink" href="#module-few.utils.mode_filter" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="module-few.utils.modefilter">
+<span id="mode-filtering"></span><h3>Mode Filtering<a class="headerlink" href="#module-few.utils.modefilter" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
-<dt id="few.utils.mode_filter.ModeFilter">
-<em class="property">class </em><code class="sig-prename descclassname">few.utils.mode_filter.</code><code class="sig-name descname">ModeFilter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m0mask</span></em>, <em class="sig-param"><span class="n">num_m_zero_up</span></em>, <em class="sig-param"><span class="n">num_m_1_up</span></em>, <em class="sig-param"><span class="n">num_m0</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.mode_filter.ModeFilter" title="Permalink to this definition">¶</a></dt>
+<dt id="few.utils.modefilter.ModeFilter">
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.modefilter.</code><code class="sig-name descname">ModeFilter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m0mask</span></em>, <em class="sig-param"><span class="n">num_m_zero_up</span></em>, <em class="sig-param"><span class="n">num_m_1_up</span></em>, <em class="sig-param"><span class="n">num_m0</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modefilter.ModeFilter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Filter teukolsky amplitudes based on power contribution.</p>
 <p>This module takes teukolsky modes, combines them with their associated ylms,
@@ -2689,8 +2689,8 @@ Default is False.</p></li>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="few.utils.mode_filter.ModeFilter.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">modeinds</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.mode_filter.ModeFilter.__call__" title="Permalink to this definition">¶</a></dt>
+<dt id="few.utils.modefilter.ModeFilter.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">modeinds</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modefilter.ModeFilter.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call to sort and filer teukolsky modes.</p>
 <p>This is the call function that takes the teukolsky modes, ylms,
 mode indices and fractional accuracy of the total power and returns
