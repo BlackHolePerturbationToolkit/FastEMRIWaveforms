@@ -50,8 +50,10 @@ class ROMANAmplitude(SchwarzschildEccentric):
 
     args:
         max_input_len (int, optional): Number of points to initialize for
-            buffers. This should be the same as the value from the user chosen
-            trajectory module. Default is 1000.
+            buffers. This allows the user to limit memory usage. However, if the
+            user requests more length, a warning will be thrown and the
+            max_input_len will be increased accordingly and arrays reallocated.
+            Default is 1000.
 
         **kwargs (dict, optional): Keyword arguments for the base class:
             :class:`few.utils.baseclasses.SchwarzschildEccentric`. Default is
