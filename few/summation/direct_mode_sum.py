@@ -2,6 +2,12 @@ import numpy as np
 
 from few.utils.baseclasses import SummationBase, SchwarzschildEccentric
 
+try:
+    import cupy as xp
+
+except (ImportError, ModuleNotFoundError) as e:
+    import numpy as xp
+
 
 class DirectModeSum(SummationBase, SchwarzschildEccentric):
     """Create waveform by direct summation.
@@ -18,10 +24,15 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric):
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, use_gpu=False, **kwargs):
 
         SchwarzschildEccentric.__init__(self, *args, **kwargs)
         SummationBase.__init__(self, *args, **kwargs)
+
+        if use_gpu:
+            self.xp = xp
+        else:
+            self.xp = np
 
         # TODO: add gpu ?
 
@@ -50,30 +61,37 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric):
 
         """
 
-        w1 = np.sum(
-            ylms[np.newaxis, : teuk_modes.shape[1]]
+        teuk_modes = self.xp.asarray(teuk_modes)
+        ylms = self.xp.asarray(ylms)
+        Phi_phi = self.xp.asarray(Phi_phi)
+        Phi_r = self.xp.asarray(Phi_r)
+        m_arr = self.xp.asarray(m_arr)
+        n_arr = self.xp.asarray(n_arr)
+
+        w1 = self.xp.sum(
+            ylms[self.xp.newaxis, : teuk_modes.shape[1]]
             * teuk_modes
-            * np.exp(
+            * self.xp.exp(
                 -1j
                 * (
-                    m_arr[np.newaxis, :] * Phi_phi[:, np.newaxis]
-                    + n_arr[np.newaxis, :] * Phi_r[:, np.newaxis]
+                    m_arr[self.xp.newaxis, :] * Phi_phi[:, self.xp.newaxis]
+                    + n_arr[self.xp.newaxis, :] * Phi_r[:, self.xp.newaxis]
                 )
             ),
             axis=1,
         )
 
-        inds = np.where(m_arr > 0)[0]
+        inds = self.xp.where(m_arr > 0)[0]
 
-        w2 = np.sum(
-            (m_arr[np.newaxis, inds] > 0)
-            * ylms[np.newaxis, teuk_modes.shape[1] :][:, inds]
-            * np.conj(teuk_modes[:, inds])
-            * np.exp(
+        w2 = self.xp.sum(
+            (m_arr[self.xp.newaxis, inds] > 0)
+            * ylms[self.xp.newaxis, teuk_modes.shape[1] :][:, inds]
+            * self.xp.conj(teuk_modes[:, inds])
+            * self.xp.exp(
                 -1j
                 * (
-                    -m_arr[np.newaxis, inds] * Phi_phi[:, np.newaxis]
-                    - n_arr[np.newaxis, inds] * Phi_r[:, np.newaxis]
+                    -m_arr[self.xp.newaxis, inds] * Phi_phi[:, self.xp.newaxis]
+                    - n_arr[self.xp.newaxis, inds] * Phi_r[:, self.xp.newaxis]
                 )
             ),
             axis=1,
