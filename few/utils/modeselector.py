@@ -7,7 +7,7 @@ except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
 
-class ModeFilter:
+class ModeSelector:
     """Filter teukolsky amplitudes based on power contribution.
 
     This module takes teukolsky modes, combines them with their associated ylms,
@@ -114,10 +114,7 @@ class ModeFilter:
 
         ylmkeep = self.xp.concatenate([keep_modes, temp2])
 
-        out1 = (
-            teuk_modes[:, keep_modes],
-            ylms[ylmkeep],
-        )
+        out1 = (teuk_modes[:, keep_modes], ylms[ylmkeep])
 
         out2 = tuple([arr[keep_modes] for arr in modeinds])
 

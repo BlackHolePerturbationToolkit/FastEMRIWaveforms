@@ -167,7 +167,7 @@ Utilities
 Mode Filtering
 ~~~~~~~~~~~~~~~
 
-.. automodule:: few.utils.modefilter
+.. automodule:: few.utils.modeselector
     :show-inheritance:
     :members:
     :inherited-members:
