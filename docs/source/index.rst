@@ -144,7 +144,7 @@ Summation Package
 Interpolated Summation
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: few.summation.interpolated_mode_sum
+.. automodule:: few.summation.interpolatedmodesum
     :members:
     :show-inheritance:
     :inherited-members:

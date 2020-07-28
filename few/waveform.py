@@ -24,7 +24,7 @@ from few.utils.overlap import get_mismatch
 from few.amplitude.romannet import ROMANAmplitude
 
 try:
-    from few.summation.interpolated_mode_sum import InterpolatedModeSum
+    from few.summation.interpolatedmodesum import InterpolatedModeSum
 
 except (ModuleNotFoundError, ImportError) as e:
     pass
@@ -452,7 +452,7 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
     :class:`few.utils.mode_filter.ModeFilter`.
 
     The modes that make it through the filter are then summed by
-    :class:`few.summation.interpolated_mode_sum.InterpolatedModeSum`.
+    :class:`few.summation.interpolatedmodesum.InterpolatedModeSum`.
 
     See :class:`few.waveform.SchwarzschildEccentricWaveformBase` for information
     on inputs. See examples as well.
