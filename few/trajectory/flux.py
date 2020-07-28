@@ -51,13 +51,7 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
 
         self.flux_carrier = pyFluxCarrier(few_dir)
 
-        self.specific_kwarg_keys = [
-            "T",
-            "dt",
-            "err",
-            "DENSE_STEPPING",
-            "max_init_len",
-        ]
+        self.specific_kwarg_keys = ["T", "dt", "err", "DENSE_STEPPING", "max_init_len"]
 
     def get_inspiral(self, M, mu, p0, e0, *args, **kwargs):
         """Generate the inspiral.
