@@ -127,7 +127,7 @@
 </ul>
 </li>
 <li><a class="reference internal" href="#module-few.utils">Utilities</a><ul>
-<li><a class="reference internal" href="#module-few.utils.modefilter">Mode Filtering</a></li>
+<li><a class="reference internal" href="#module-few.utils.modeselector">Mode Filtering</a></li>
 <li><a class="reference internal" href="#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a></li>
 <li><a class="reference internal" href="#module-few.utils.overlap">Analysis Tools</a></li>
 </ul>
@@ -381,7 +381,7 @@ flux-based, sparse trajectory. This returns approximately 100 points.</p>
 <a class="reference internal" href="#few.amplitude.romannet.ROMANAmplitude" title="few.amplitude.romannet.ROMANAmplitude"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.amplitude.romannet.ROMANAmplitude</span></code></a> along these sparse
 trajectories. This gives complex amplitudes for all modes in this model at
 each point in the trajectory. These are then filtered with
-<a class="reference internal" href="#few.utils.modefilter.ModeFilter" title="few.utils.modefilter.ModeFilter"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.modefilter.ModeFilter</span></code></a>.</p>
+<a class="reference internal" href="#few.utils.modeselector.ModeSelector" title="few.utils.modeselector.ModeSelector"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.modeselector.ModeSelector</span></code></a>.</p>
 <p>The modes that make it through the filter are then summed by
 <a class="reference internal" href="#few.summation.interpolatedmodesum.InterpolatedModeSum" title="few.summation.interpolatedmodesum.InterpolatedModeSum"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.summation.interpolatedmodesum.InterpolatedModeSum</span></code></a>.</p>
 <p>See <a class="reference internal" href="#few.waveform.SchwarzschildEccentricWaveformBase" title="few.waveform.SchwarzschildEccentricWaveformBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.SchwarzschildEccentricWaveformBase</span></code></a> for information
@@ -2658,11 +2658,11 @@ ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
 <span id="utilities"></span><span id="utilities-label"></span><h2>Utilities<a class="headerlink" href="#module-few.utils" title="Permalink to this headline">¶</a></h2>
 <p>The Utilities package houses scripts that aid in our calculation including
 harmonic angular calculations, overlap calculators, and mode filtering modules.</p>
-<div class="section" id="module-few.utils.modefilter">
-<span id="mode-filtering"></span><h3>Mode Filtering<a class="headerlink" href="#module-few.utils.modefilter" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="module-few.utils.modeselector">
+<span id="mode-filtering"></span><h3>Mode Filtering<a class="headerlink" href="#module-few.utils.modeselector" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
-<dt id="few.utils.modefilter.ModeFilter">
-<em class="property">class </em><code class="sig-prename descclassname">few.utils.modefilter.</code><code class="sig-name descname">ModeFilter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m0mask</span></em>, <em class="sig-param"><span class="n">num_m_zero_up</span></em>, <em class="sig-param"><span class="n">num_m_1_up</span></em>, <em class="sig-param"><span class="n">num_m0</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modefilter.ModeFilter" title="Permalink to this definition">¶</a></dt>
+<dt id="few.utils.modeselector.ModeSelector">
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.modeselector.</code><code class="sig-name descname">ModeSelector</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m0mask</span></em>, <em class="sig-param"><span class="n">num_m_zero_up</span></em>, <em class="sig-param"><span class="n">num_m_1_up</span></em>, <em class="sig-param"><span class="n">num_m0</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Filter teukolsky amplitudes based on power contribution.</p>
 <p>This module takes teukolsky modes, combines them with their associated ylms,
@@ -2689,8 +2689,8 @@ Default is False.</p></li>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="few.utils.modefilter.ModeFilter.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">modeinds</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modefilter.ModeFilter.__call__" title="Permalink to this definition">¶</a></dt>
+<dt id="few.utils.modeselector.ModeSelector.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">modeinds</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call to sort and filer teukolsky modes.</p>
 <p>This is the call function that takes the teukolsky modes, ylms,
 mode indices and fractional accuracy of the total power and returns

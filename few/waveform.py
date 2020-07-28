@@ -29,12 +29,13 @@ try:
 except (ModuleNotFoundError, ImportError) as e:
     pass
 
-from few.utils.modefilter import ModeFilter
+from few.utils.modeselector import ModeSelector
 from few.utils.ylm import GetYlms
 from few.summation.directmodesum import DirectModeSum
 
 from abc import ABC
 
+# TODO: verify theta != pi/2
 # TODO: add initial phases
 # TODO: add relevant citations
 # TODO: convert c functions that need carriers to c classes
@@ -212,7 +213,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
         self.ylm_gen = GetYlms(self.num_teuk_modes, use_gpu=use_gpu, **Ylm_kwargs)
 
-        self.mode_filter = ModeFilter(
+        self.mode_filter = ModeSelector(
             self.m0mask,
             self.num_m_zero_up,
             self.num_m_1_up,
@@ -449,7 +450,7 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
     :class:`few.amplitude.romannet.ROMANAmplitude` along these sparse
     trajectories. This gives complex amplitudes for all modes in this model at
     each point in the trajectory. These are then filtered with
-    :class:`few.utils.modefilter.ModeFilter`.
+    :class:`few.utils.modeselector.ModeSelector`.
 
     The modes that make it through the filter are then summed by
     :class:`few.summation.interpolatedmodesum.InterpolatedModeSum`.
