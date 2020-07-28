@@ -35,8 +35,9 @@ from few.summation.direct_mode_sum import DirectModeSum
 
 from abc import ABC
 
+# TODO: add initial phases
+# TODO: add relevant citations
 # TODO: convert c functions that need carriers to c classes
-# TODO: kernels die in jupyter with gsl error
 # TODO: work out imports with sphinx
 # TODO: unit tests
 # TODO: deal with libs and includes
@@ -218,6 +219,17 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
             self.num_m0,
             use_gpu=use_gpu,
         )
+
+    @property
+    def citation(self):
+        this_citation = """
+                Temp citation for this paper
+                """
+
+        out_citation = this_citation + (
+            self.inspiral_generator.citation + "\n" + self.amplitude_generator.citation
+        )
+        return out_citation
 
     def __call__(
         self,

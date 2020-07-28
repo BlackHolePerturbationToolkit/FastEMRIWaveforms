@@ -88,6 +88,24 @@ class ROMANAmplitude(SchwarzschildEccentric):
 
         self._initialize_weights()
 
+    @property
+    def citation(self):
+        return """
+                @article{Chua:2018woh,
+                    author = "Chua, Alvin J.K. and Galley, Chad R. and Vallisneri, Michele",
+                    title = "{Reduced-order modeling with artificial neurons for gravitational-wave inference}",
+                    eprint = "1811.05491",
+                    archivePrefix = "arXiv",
+                    primaryClass = "astro-ph.IM",
+                    doi = "10.1103/PhysRevLett.122.211101",
+                    journal = "Phys. Rev. Lett.",
+                    volume = "122",
+                    number = "21",
+                    pages = "211101",
+                    year = "2019"
+                }
+                """
+
     def _initialize_weights(self):
         self.weights = []
         self.bias = []
