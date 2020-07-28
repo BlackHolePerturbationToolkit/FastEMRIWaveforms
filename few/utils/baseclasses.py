@@ -10,6 +10,7 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 from scipy import constants as ct
 
+
 # TODO: get bounds on p
 
 MTSUN_SI = 4.925491025543575903411922162094833998e-6
@@ -180,6 +181,7 @@ class TrajectoryBase(ABC):
         upsample=False,
         err=1e-10,
         step_eps=1e-11,
+        fix_t=False,
         **kwargs
     ):
         """Call function for trajectory interface.
@@ -190,6 +192,8 @@ class TrajectoryBase(ABC):
         args:
             *args (list): Input of variable number of arguments specific to the
                 inspiral model (see the trajectory class' `get_inspiral` method).
+                **Important Note: M must be the first parameter of any model
+                that uses this base class.
             in_coordinate_time (bool, optional): If True, the trajectory will be
                 outputted in coordinate time. If False, the trajectory will be
                 outputted in units of M. Default is True.
@@ -218,6 +222,10 @@ class TrajectoryBase(ABC):
                 trajectory, but if it is too small, memory issues will occur as
                 the trajectory length will blow up. We recommend not adjusting
                 this parameter.
+            fix_T (bool, optional): If upsampling, this will affect excess
+                points in the t array. If True, it will shave any excess on the
+                trajectories arrays where the time is greater than the overall
+                time of the trajectory requested.
             **kwargs (dict, optional): kwargs passed to trajectory module.
                 Default is {}.
 
@@ -243,6 +251,7 @@ class TrajectoryBase(ABC):
         params = out[1:]
 
         if in_coordinate_time is False:
+            M = args[0]
             Msec = M * MTSUN_SI
             t = t / Msec
 
@@ -259,7 +268,12 @@ class TrajectoryBase(ABC):
             new_t = np.arange(0.0, T + dt, dt)
 
         if new_t[-1] > t[-1]:
-            print("Warning: new_t array goes beyond generated t array.")
+            if fix_t:
+                new_t = new_t[new_t <= t[-1]]
+            else:
+                warnings.warn(
+                    "new_t array goes beyond generated t array. If you want to cut the t array at the end of the trajectory, set fix_t to True."
+                )
 
         out = tuple([spl(new_t) * (new_t < t[-1]) for spl in splines])
         return (new_t,) + out

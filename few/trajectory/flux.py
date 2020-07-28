@@ -53,6 +53,22 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
 
         self.specific_kwarg_keys = ["T", "dt", "err", "DENSE_STEPPING", "max_init_len"]
 
+    @property
+    def citation(self):
+        return """
+                @article{Hughes:2005qb,
+                    author = "Hughes, Scott A. and Drasco, Steve and Flanagan, Eanna E. and Franklin, Joel",
+                    title = "{Gravitational radiation reaction and inspiral waveforms in the adiabatic limit}",
+                    eprint = "gr-qc/0504015",
+                    archivePrefix = "arXiv",
+                    doi = "10.1103/PhysRevLett.94.221101",
+                    journal = "Phys. Rev. Lett.",
+                    volume = "94",
+                    pages = "221101",
+                    year = "2005"
+                }
+            """
+
     def get_inspiral(self, M, mu, p0, e0, *args, **kwargs):
         """Generate the inspiral.
 
