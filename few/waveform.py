@@ -41,7 +41,6 @@ from abc import ABC
 # TODO: unit tests
 # TODO: deal with libs and includes
 # TODO: make sure constants are same
-# TODO: Allow for use of gpu in one module but not another (?)
 # TODO: associated files for install
 # TODO: highest level waveform that uses kwargs to pick waveform.
 # TODO: shared memory based on CUDA_ARCH
