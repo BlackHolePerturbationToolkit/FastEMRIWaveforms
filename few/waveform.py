@@ -141,7 +141,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
         self.ylm_gen = GetYlms(self.num_teuk_modes, use_gpu=use_gpu, **Ylm_kwargs)
 
-        self.mode_filter = ModeSelector(
+        self.mode_selector = ModeSelector(
             self.m0mask,
             self.num_m_zero_up,
             self.num_m_1_up,
@@ -330,9 +330,13 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
             else:
                 modeinds = [self.l_arr, self.m_arr, self.n_arr]
-                (teuk_modes_in, ylms_in, self.ls, self.ms, self.ns) = self.mode_filter(
-                    teuk_modes, ylms, modeinds, eps=eps
-                )
+                (
+                    teuk_modes_in,
+                    ylms_in,
+                    self.ls,
+                    self.ms,
+                    self.ns,
+                ) = self.mode_selector(teuk_modes, ylms, modeinds, eps=eps)
 
             self.num_modes_kept = teuk_modes_in.shape[1]
 
