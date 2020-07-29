@@ -226,6 +226,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         (t, p, e, Phi_phi, Phi_r, amp_norm) = self.inspiral_generator(
             M, mu, p0, e0, T=T, dt=dt, **self.inspiral_kwargs
         )
+
         self.sanity_check_traj(p, e)
 
         self.plunge_time = t[-1]
