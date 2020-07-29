@@ -35,7 +35,10 @@ from few.summation.directmodesum import DirectModeSum
 
 from abc import ABC
 
-# TODO: adjust interpolate class
+# TODO: run trajectory backward
+# TODO: fix T problem
+# TODO: Zenodo versioning
+# TODO: option to not install files for slow
 # TODO: figure out how to treat when itegrator stops vs slow type
 # TODO: verify theta != pi/2
 # TODO: add initial phases
@@ -227,6 +230,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
             M, mu, p0, e0, T=T, dt=dt, **self.inspiral_kwargs
         )
 
+        breakpoint()
         self.sanity_check_traj(p, e)
 
         self.plunge_time = t[-1]
