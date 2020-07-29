@@ -63,13 +63,77 @@ class SchwarzschildEccentric(ABC):
         self.background = "Schwarzschild"
         self.descriptor = "eccentric"
 
-        self.num_teuk_modes = 3843
-        self.num_modes = 3843
-
         self.lmax = 10
         self.nmax = 30
 
         self.ndim = 2
+
+        md = []
+
+        for l in range(2, self.lmax + 1):
+            for m in range(0, l + 1):
+                for n in range(-self.nmax, self.nmax + 1):
+                    md.append([l, m, n])
+
+        self.num_modes = self.num_teuk_modes = len(md)
+
+        m0mask = self.xp.array(
+            [
+                m == 0
+                for l in range(2, 10 + 1)
+                for m in range(0, l + 1)
+                for n in range(-30, 30 + 1)
+            ]
+        )
+
+        self.m0sort = m0sort = self.xp.concatenate(
+            [
+                self.xp.arange(self.num_teuk_modes)[m0mask],
+                self.xp.arange(self.num_teuk_modes)[~m0mask],
+            ]
+        )
+
+        md = self.xp.asarray(md).T[:, m0sort].astype(self.xp.int32)
+
+        self.l_arr, self.m_arr, self.n_arr = md[0], md[1], md[2]
+
+        try:
+            self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T.get())}
+
+        except AttributeError:
+            self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
+
+        self.m0mask = self.m_arr != 0
+        self.num_m_zero_up = len(self.m_arr)
+        self.num_m0 = len(self.xp.arange(self.num_teuk_modes)[m0mask])
+
+        self.num_m_1_up = self.num_m_zero_up - self.num_m0
+        self.l_arr = self.xp.concatenate([self.l_arr, self.l_arr[self.m0mask]])
+        self.m_arr = self.xp.concatenate([self.m_arr, -self.m_arr[self.m0mask]])
+        self.n_arr = self.xp.concatenate([self.n_arr, self.n_arr[self.m0mask]])
+
+        try:
+            temp, self.inverse_lm = np.unique(
+                np.asarray([self.l_arr.get(), self.m_arr.get()]).T,
+                axis=0,
+                return_inverse=True,
+            )
+
+        except AttributeError:
+            temp, self.inverse_lm = np.unique(
+                np.asarray([self.l_arr, self.m_arr]).T, axis=0, return_inverse=True
+            )
+
+        self.unique_l, self.unique_m = self.xp.asarray(temp).T
+        self.num_unique_lm = len(self.unique_l)
+
+        self.index_map = {}
+        self.special_index_map = {}  # maps the minus m values to positive m
+        for i, (l, m, n) in enumerate(zip(self.l_arr, self.m_arr, self.n_arr)):
+            self.index_map[(l, m, n)] = i
+            self.special_index_map[(l, m, n)] = (
+                i if i < self.num_modes else i - self.num_m_1_up
+            )
 
     def sanity_check_viewing_angles(self, theta, phi):
         """Sanity check on viewing angles.

@@ -136,6 +136,8 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
         self.sanity_check_gpu(use_gpu)
 
+        SchwarzschildEccentric.__init__(self, use_gpu)
+
         if use_gpu:
             self.xp = xp
 
@@ -147,69 +149,6 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
         self.amplitude_generator = amplitude_module(**amplitude_kwargs)
         self.create_waveform = sum_module(**sum_kwargs)
-        # self.sum = DirectModeSum(**sum_kwargs)
-
-        m_arr = self.xp.zeros((3843,), dtype=int)
-        n_arr = self.xp.zeros_like(m_arr)
-
-        md = []
-
-        for l in range(2, 10 + 1):
-            for m in range(0, l + 1):
-                for n in range(-30, 30 + 1):
-                    md.append([l, m, n])
-
-        self.num_teuk_modes = len(md)
-
-        m0mask = self.xp.array(
-            [
-                m == 0
-                for l in range(2, 10 + 1)
-                for m in range(0, l + 1)
-                for n in range(-30, 30 + 1)
-            ]
-        )
-
-        self.m0sort = m0sort = self.xp.concatenate(
-            [
-                self.xp.arange(self.num_teuk_modes)[m0mask],
-                self.xp.arange(self.num_teuk_modes)[~m0mask],
-            ]
-        )
-
-        md = self.xp.asarray(md).T[:, m0sort].astype(self.xp.int32)
-
-        self.l_arr, self.m_arr, self.n_arr = md[0], md[1], md[2]
-
-        try:
-            self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T.get())}
-
-        except AttributeError:
-            self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
-
-        self.m0mask = self.m_arr != 0
-        self.num_m_zero_up = len(self.m_arr)
-        self.num_m0 = len(self.xp.arange(self.num_teuk_modes)[m0mask])
-
-        self.num_m_1_up = self.num_m_zero_up - self.num_m0
-        self.l_arr = self.xp.concatenate([self.l_arr, self.l_arr[self.m0mask]])
-        self.m_arr = self.xp.concatenate([self.m_arr, -self.m_arr[self.m0mask]])
-        self.n_arr = self.xp.concatenate([self.n_arr, self.n_arr[self.m0mask]])
-
-        try:
-            temp, self.inverse_lm = np.unique(
-                np.asarray([self.l_arr.get(), self.m_arr.get()]).T,
-                axis=0,
-                return_inverse=True,
-            )
-
-        except AttributeError:
-            temp, self.inverse_lm = np.unique(
-                np.asarray([self.l_arr, self.m_arr]).T, axis=0, return_inverse=True
-            )
-
-        self.unique_l, self.unique_m = self.xp.asarray(temp).T
-        self.num_unique_lm = len(self.unique_l)
 
         self.ylm_gen = GetYlms(self.num_teuk_modes, use_gpu=use_gpu, **Ylm_kwargs)
 
