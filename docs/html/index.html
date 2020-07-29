@@ -3341,7 +3341,7 @@ For generic, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_\Thet
 <span id="interpolated-summation"></span><h3>Interpolated Summation<a class="headerlink" href="#module-few.summation.interpolatedmodesum" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
 <dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant">
-<em class="property">class </em><code class="sig-prename descclassname">few.summation.interpolatedmodesum.</code><code class="sig-name descname">CubicSplineInterpolant</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">few.summation.interpolatedmodesum.</code><code class="sig-name descname">CubicSplineInterpolant</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">y_all</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>GPU-accelerated Multiple Cubic Splines</p>
 <p>This class produces multiple cubic splines on a GPU. It has a CPU option
@@ -3350,8 +3350,13 @@ conditions.</p>
 <p>This class can be run on GPUs and CPUs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, prepare arrays for a GPU. Default is
-False.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<em>1D double xp.ndarray</em>) – t values as input for the spline.</p></li>
+<li><p><strong>y_all</strong> (<em>2D double xp.ndarray</em>) – y values for the spline.
+Shape: (ninterps, length).</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, prepare arrays for a GPU. Default is
+False.</p></li>
+</ul>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -3367,18 +3372,8 @@ False.</p>
 
 <dl class="py method">
 <dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">y_all</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.__call__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Call method for performing the spline interpolation.</p>
-<p>All splines must be the same length.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>t</strong> (<em>1D double xp.ndarray</em>) – t values as input for the spline.</p></li>
-<li><p><strong>y_all</strong> (<em>2D double xp.ndarray</em>) – y values for the spline.
-Shape: (ninterps, length).</p></li>
-</ul>
-</dd>
-</dl>
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tnew</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call self as a function.</p>
 </dd></dl>
 
 </dd></dl>
