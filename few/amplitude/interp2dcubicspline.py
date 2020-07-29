@@ -34,6 +34,15 @@ class Interp2DAmplitude(SchwarzschildEccentric):
         SchwarzschildEccentric.__init__(self, **kwargs)
 
         few_dir = dir_path + "/../../"
+
+        # check if necessary files are in the few_dir
+        file_list = os.listdir(few_dir + "few/files/")
+
+        if "Teuk_amps_a0.0_lmax_10_nmax_30_new.h5" not in file_list:
+            raise FileNotFoundError(
+                "The file Teuk_amps_a0.0_lmax_10_nmax_30_new.h5 did not open sucessfully. Make sure it is located in the proper directory (Path/to/Installation/few/files/)."
+            )
+
         self.amplitude_carrier = pyAmplitudeCarrier(self.lmax, self.nmax, few_dir)
 
     def __call__(self, p, e, *args, specific_modes=None, **kwargs):
