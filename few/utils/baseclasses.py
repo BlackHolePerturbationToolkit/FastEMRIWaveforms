@@ -419,13 +419,13 @@ class SummationBase(ABC):
         """
 
         if T < t[-1].item():
-            num_pts = int(T / dt)
+            num_pts = int((T - t[0]) / dt) + 1
             num_pts_pad = 0
 
         else:
-            num_pts = int(t[-1] / dt)
+            num_pts = int((t[-1] - t[0]) / dt) + 1
             if self.pad_output:
-                num_pts_pad = int(T / dt) - num_pts
+                num_pts_pad = int((T - t[0]) / dt) + 1 - num_pts
             else:
                 num_pts_pad = 0
 
@@ -439,6 +439,7 @@ class SummationBase(ABC):
             (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
         )
 
+        breakpoint()
         args_in = (t, teuk_modes, ylms) + args + (init_len, num_pts, num_teuk_modes, dt)
         self.sum(*args_in)
 

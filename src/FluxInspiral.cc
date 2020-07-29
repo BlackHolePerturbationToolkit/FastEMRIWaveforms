@@ -37,7 +37,7 @@ using namespace std::chrono;
 const int Ne = 33;
 const int Ny = 50;
 
-const double YearInSeconds 		= 60*60*25*365.25;
+const double YearInSeconds 		= 60*60*24*365.25;
 
 //const int DENSE_STEPPING = 0;
 
@@ -227,6 +227,8 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
 
     tmax = tmax*YearInSeconds;
 
+    printf("%e %e \n", tmax, tmax/YearInSeconds);
+
     double init_flux = get_step_flux(p0, e0, flux_carrier->amp_vec_norm_interp);
 
     FLUXHolder flux_out(t0, M, mu, p0, e0, init_flux);
@@ -272,11 +274,15 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
 	double h = dt;
 	double t1 = tmax;
     int ind = 1;
-	if(DENSE_STEPPING) t1 = dt;
+    int status = 0;
+
 	while (t < tmax){
 
-        int status = gsl_odeiv2_evolve_apply (evolve, control, step, &sys, &t, t1, &h, y);
-		if(DENSE_STEPPING) t1 += dt;
+		if(DENSE_STEPPING) status = gsl_odeiv2_evolve_apply_fixed_step (evolve, control, step, &sys, &t, h, y);
+        else int status = gsl_odeiv2_evolve_apply (evolve, control, step, &sys, &t, t1, &h, y);
+
+        if (t > tmax) break;
+
       	if (status != GSL_SUCCESS){
        		printf ("error, return value=%d\n", status);
           	break;
@@ -300,6 +306,7 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
 				//printf ("%.5e %.5e %.5e %.5e %.5e\n", flux_out.t_arr.push_back(t), flux_out.p_arr.push_back(y[0]), flux_out.e_arr.push_back(y[1]), y[2], y[3]);
 
 	}
+
 	flux_out.length = ind;
 	//high_resolution_clock::time_point t2 = high_resolution_clock::now();
 

@@ -486,7 +486,7 @@ void make_waveform(cmplx *waveform,
 void find_start_inds(int start_inds[], int unit_length[], double *t_arr, double delta_t, int *length, int new_length)
 {
 
-    double T = new_length * delta_t;
+    double T = (new_length - 1) * delta_t;
   start_inds[0] = 0;
   int i = 1;
   for (i = 1;
