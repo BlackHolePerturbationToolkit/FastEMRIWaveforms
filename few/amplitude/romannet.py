@@ -150,7 +150,7 @@ class ROMANAmplitude(SchwarzschildEccentric):
 
         return self.xp.log(-(21 / 10) - 2 * e + p)
 
-    def __call__(self, p, e, *args, **kwargs):
+    def __call__(self, p, e, *args, specific_modes=None, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays
@@ -164,8 +164,14 @@ class ROMANAmplitude(SchwarzschildEccentric):
                 the eccentricity.
             *args (tuple, placeholder): Added to create flexibility when calling different
                 amplitude modules. It is not used.
+            specific_modes (list, optional): List of tuples for (l, m, n) values
+                desired modes. Default is None.
             **kwargs (dict, placeholder): Added to create flexibility when calling different
                 amplitude modules. It is not used.
+
+        returns:
+            2D array (double): If specific_modes is None, Teukolsky modes in shape (number of trajectory points, number of modes)
+            dict: Dictionary with requested modes.
 
 
         """
@@ -224,4 +230,17 @@ class ROMANAmplitude(SchwarzschildEccentric):
             self.num_teuk_modes,
         )
 
-        return teuk_modes.reshape(self.num_teuk_modes, input_len).T
+        teuk_modes = teuk_modes.reshape(self.num_teuk_modes, input_len).T
+        if specific_modes is None:
+            return teuk_modes
+
+        else:
+            number_of_modes_for_return = len(specific_modes)
+            temp = {}
+            for lmn in specific_modes:
+                temp[lmn] = teuk_modes[:, self.special_index_map[lmn]]
+                l, m, n = lmn
+                if m < 0:
+                    temp[lmn] = self.xp.conj(temp[lmn])
+
+            return temp
