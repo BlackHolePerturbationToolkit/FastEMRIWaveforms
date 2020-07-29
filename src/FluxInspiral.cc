@@ -126,6 +126,11 @@ void load_and_interpolate_amp_vec_norm_data(Interpolant **amp_vec_norm_interp, c
     fp = few_dir + fp;
 	ifstream Flux_file(fp);
 
+    if (Flux_file.fail())
+    {
+        throw std::runtime_error("The file AmplitudeVectorNorm.dat did not open sucessfully. Make sure it is located in the proper directory (Path/to/Installation/few/files/).");
+    }
+
 	// Load the flux data into arrays
 	string Flux_string;
 	vector<double> ys, es, vec_norms;
@@ -158,6 +163,11 @@ void load_and_interpolate_flux_data(struct interp_params *interps, const std::st
     std::string fp = "few/files/FluxNewMinusPNScaled_fixed_y_order.dat";
     fp = few_dir + fp;
 	ifstream Flux_file(fp);
+
+    if (Flux_file.fail())
+    {
+        throw std::runtime_error("The file FluxNewMinusPNScaled_fixed_y_order.dat did not open sucessfully. Make sure it is located in the proper directory (Path/to/Installation/few/files/).");
+    }
 
 	// Load the flux data into arrays
 	string Flux_string;
