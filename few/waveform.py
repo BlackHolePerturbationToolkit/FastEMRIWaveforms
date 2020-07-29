@@ -230,7 +230,6 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
             M, mu, p0, e0, T=T, dt=dt, **self.inspiral_kwargs
         )
 
-        breakpoint()
         self.sanity_check_traj(p, e)
 
         self.plunge_time = t[-1]

@@ -439,7 +439,6 @@ class SummationBase(ABC):
             (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
         )
 
-        breakpoint()
         args_in = (t, teuk_modes, ylms) + args + (init_len, num_pts, num_teuk_modes, dt)
         self.sum(*args_in)
 
