@@ -35,6 +35,7 @@ from few.summation.directmodesum import DirectModeSum
 
 from abc import ABC
 
+# TODO: adjust interpolate class
 # TODO: figure out how to treat when itegrator stops vs slow type
 # TODO: verify theta != pi/2
 # TODO: add initial phases

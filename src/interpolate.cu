@@ -17,6 +17,8 @@
 #define MAX_MODES_BLOCK 5000
 #endif
 
+#define NUM_TERMS 4
+
 CUDA_CALLABLE_MEMBER
 void fill_coefficients(int i, int length, double *dydx, double dx, double *y, double *coeff1, double *coeff2, double *coeff3){
   double slope, t, dydx_i;
@@ -124,8 +126,7 @@ void fill_B(double *t_arr, double *y_all, double *B, double *upper_diag, double 
 
 
 CUDA_KERNEL
-void set_spline_constants(double *t_arr, double *y_all, double *B,
-                      double *c1, double *c2, double *c3,
+void set_spline_constants(double *t_arr, double *interp_array, double *B,
                       int ninterps, int length){
 
     double dt;
@@ -162,9 +163,11 @@ void set_spline_constants(double *t_arr, double *y_all, double *B,
               dt = t_arr[i + 1] - t_arr[i];
 
               int lead_ind = interp_i*length;
-              int lead_ind2 = interp_i*(length - 1);
-              fill_coefficients(i, length, &B[lead_ind], dt, &y_all[lead_ind], &c1[lead_ind2], &c2[lead_ind2], &c3[lead_ind2]);
-
+              fill_coefficients(i, length, &B[lead_ind], dt,
+                                &interp_array[0 * ninterps * length + lead_ind],
+                                &interp_array[1 * ninterps * length + lead_ind],
+                                &interp_array[2 * ninterps * length + lead_ind],
+                                &interp_array[3 * ninterps * length + lead_ind]);
 
 }
 }
@@ -215,7 +218,7 @@ for (int j = 0;
 
 }
 
-void interpolate_arrays(double *t_arr, double *y_all, double *c1, double *c2, double *c3, int ninterps, int length, double *B, double *upper_diag, double *diag, double *lower_diag)
+void interpolate_arrays(double *t_arr, double *interp_array, int ninterps, int length, double *B, double *upper_diag, double *diag, double *lower_diag)
 {
 
   // TODO: Accelerate (?)
@@ -224,24 +227,24 @@ void interpolate_arrays(double *t_arr, double *y_all, double *c1, double *c2, do
   int NUM_THREADS = 64;
   int num_blocks = std::ceil((length + NUM_THREADS -1)/NUM_THREADS);
   dim3 gridDim(num_blocks); //, num_teuk_modes);
-  fill_B<<<gridDim, NUM_THREADS>>>(t_arr, y_all, B, upper_diag, diag, lower_diag, ninterps, length);
+  fill_B<<<gridDim, NUM_THREADS>>>(t_arr, interp_array, B, upper_diag, diag, lower_diag, ninterps, length);
   cudaDeviceSynchronize();
   gpuErrchk(cudaGetLastError());
 
   fit_wrap(length, ninterps, lower_diag, diag, upper_diag, B);
 
-  set_spline_constants<<<gridDim, NUM_THREADS>>>(t_arr, y_all, B, c1, c2, c3,
+  set_spline_constants<<<gridDim, NUM_THREADS>>>(t_arr, interp_array, B,
                                  ninterps, length);
   cudaDeviceSynchronize();
   gpuErrchk(cudaGetLastError());
 
   #else
 
-  fill_B(t_arr, y_all, B, upper_diag, diag, lower_diag, ninterps, length);
+  fill_B(t_arr, interp_array, B, upper_diag, diag, lower_diag, ninterps, length);
 
   fit_wrap(length, ninterps, lower_diag, diag, upper_diag, B);
 
-  set_spline_constants(t_arr, y_all, B, c1, c2, c3,
+  set_spline_constants(t_arr, interp_array, B,
                                  ninterps, length);
 
   #endif
@@ -298,7 +301,7 @@ __device__ void atomicAddComplex(cmplx* a, cmplx b){
 
 CUDA_KERNEL
 void make_waveform(cmplx *waveform,
-             double *y_all, double *c1, double *c2, double *c3,
+             double *interp_array,
               int *m_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
               double delta_t, double start_t, int old_ind, int start_ind, int end_ind, int init_length){
 
@@ -330,6 +333,7 @@ void make_waveform(cmplx *waveform,
      CUDA_SHARED int m_arr[MAX_MODES_BLOCK];
      CUDA_SHARED int n_arr[MAX_MODES_BLOCK];
 
+     int num_base = init_length * (2 * num_teuk_modes + num_pars);
 
      //cmplx *Ylms = (cmplx*) array;
      CUDA_SYNC_THREADS;
@@ -340,13 +344,14 @@ void make_waveform(cmplx *waveform,
      #else
      if (true){
      #endif
-         int ind_Phi_phi = num_teuk_modes*2 + 0;
-         int ind_Phi_r = num_teuk_modes*2 + 1;
-         pp_y = y_all[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_phi]; pp_c1 = c1[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_phi];
-         pp_c2= c2[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_phi];  pp_c3 = c3[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_phi];
+         int ind_Phi_phi = old_ind*(2*num_teuk_modes+num_pars) + num_teuk_modes*2 + 0;
+         int ind_Phi_r = old_ind*(2*num_teuk_modes+num_pars) + num_teuk_modes*2 + 1;
 
-         pr_y = y_all[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_r]; pr_c1 = c1[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_r];
-         pr_c2= c2[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_r];  pr_c3 = c3[old_ind*(2*num_teuk_modes+num_pars) + ind_Phi_r];
+         pp_y = interp_array[0 * num_base + ind_Phi_phi]; pp_c1 = interp_array[1 * num_base + ind_Phi_phi];
+         pp_c2= interp_array[2 * num_base + ind_Phi_phi];  pp_c3 = interp_array[3 * num_base + ind_Phi_phi];
+
+         pr_y = interp_array[0 * num_base + ind_Phi_r]; pr_c1 = interp_array[1 * num_base + ind_Phi_r];
+         pr_c2= interp_array[2 * num_base + ind_Phi_r];  pr_c3 = interp_array[3 * num_base + ind_Phi_r];
      }
 
      CUDA_SYNC_THREADS;
@@ -378,10 +383,11 @@ void make_waveform(cmplx *waveform,
 
         int ind_re = old_ind*(2*num_teuk_modes+num_pars) + (init_ind + i);
         int ind_im = old_ind*(2*num_teuk_modes+num_pars)  + num_teuk_modes + (init_ind + i);
-        mode_re_y[i] = y_all[ind_re]; mode_re_c1[i] = c1[ind_re];
-        mode_re_c2[i] = c2[ind_re]; mode_re_c3[i] = c3[ind_re];
-        mode_im_y[i] = y_all[ind_im]; mode_im_c1[i] = c1[ind_im];
-        mode_im_c2[i] = c2[ind_im]; mode_im_c3[i] = c3[ind_im];
+        mode_re_y[i] = interp_array[0 * num_base + ind_re]; mode_re_c1[i] = interp_array[1 * num_base + ind_re];
+        mode_re_c2[i] = interp_array[2 * num_base + ind_re]; mode_re_c3[i] = interp_array[3 * num_base + ind_re];
+
+        mode_im_y[i] = interp_array[0 * num_base + ind_im]; mode_im_c1[i] = interp_array[1 * num_base + ind_im];
+        mode_im_c2[i] = interp_array[2 * num_base + ind_im]; mode_im_c3[i] = interp_array[3 * num_base + ind_im];
 
         //printf("%d %d %d %d\n", init_ind, i, m_arr_in[init_ind + i], n_arr_in[init_ind + i]);
         m_arr[i] = m_arr_in[init_ind + i];
@@ -506,7 +512,7 @@ void find_start_inds(int start_inds[], int unit_length[], double *t_arr, double 
 }
 
 
-void get_waveform(cmplx *d_waveform, double *y_vals, double *c1, double *c2, double *c3,
+void get_waveform(cmplx *d_waveform, double *interp_array,
               int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cmplx *d_Ylms,
               double delta_t, double *h_t){
 
@@ -550,12 +556,12 @@ void get_waveform(cmplx *d_waveform, double *y_vals, double *c1, double *c2, dou
 
 
           make_waveform<<<gridDim, NUM_THREADS, 0, streams[i]>>>(d_waveform,
-                        y_vals, c1, c2, c3,
+                        interp_array,
                         d_m, d_n, num_teuk_modes, d_Ylms,
                         delta_t, h_t[i], i, start_inds[i], start_inds[i+1], init_len);
          #else
          make_waveform(d_waveform,
-                       y_vals, c1, c2, c3,
+                       interp_array,
                        d_m, d_n, num_teuk_modes, d_Ylms,
                        delta_t, h_t[i], i, start_inds[i], start_inds[i+1], init_len);
          #endif
