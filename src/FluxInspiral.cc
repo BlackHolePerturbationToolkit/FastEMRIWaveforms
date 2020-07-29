@@ -237,8 +237,6 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
 
     tmax = tmax*YearInSeconds;
 
-    printf("%e %e \n", tmax, tmax/YearInSeconds);
-
     double init_flux = get_step_flux(p0, e0, flux_carrier->amp_vec_norm_interp);
 
     FLUXHolder flux_out(t0, M, mu, p0, e0, init_flux);
