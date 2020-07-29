@@ -213,6 +213,7 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
             **kwargs (dict, placeholder): Added for future flexibility.
 
         """
+
         length = init_len
         ninterps = self.ndim + 2 * num_teuk_modes  # 2 for re and im
         y_all = self.xp.zeros((ninterps, length))

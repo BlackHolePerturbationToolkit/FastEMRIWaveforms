@@ -344,6 +344,7 @@ void make_waveform(cmplx *waveform,
      #else
      if (true){
      #endif
+
          int ind_Phi_phi = old_ind*(2*num_teuk_modes+num_pars) + num_teuk_modes*2 + 0;
          int ind_Phi_r = old_ind*(2*num_teuk_modes+num_pars) + num_teuk_modes*2 + 1;
 
@@ -436,7 +437,6 @@ void make_waveform(cmplx *waveform,
       Phi_phi_i = pp_y + pp_c1*x + pp_c2*x2  + pp_c3*x3;
       Phi_r_i = pr_y + pr_c1*x + pr_c2*x2  + pr_c3*x3;
 
-
         for (int j=0; j<num_teuk_here; j+=1){
 
             Ylm_plus_m = Ylms[2*j];
@@ -522,17 +522,17 @@ void get_waveform(cmplx *d_waveform, double *interp_array,
   float milliseconds = 0;
     cudaEventRecord(start);*/
 
-
     int start_inds[init_len];
     int unit_length[init_len-1];
 
-    find_start_inds(start_inds, unit_length, h_t, delta_t, &init_len, out_len);
+    int number_of_spline_intervals = init_len;
+    find_start_inds(start_inds, unit_length, h_t, delta_t, &number_of_spline_intervals, out_len);
 
     //printf("Num modes: %d\n", num_teuk_modes);
 
     #ifdef __CUDACC__
     int NUM_THREADS = 256;
-    cudaStream_t streams[init_len-1];
+    cudaStream_t streams[number_of_spline_intervals-1];
     int num_breaks = num_teuk_modes/MAX_MODES_BLOCK;
     #endif
 
@@ -542,14 +542,12 @@ void get_waveform(cmplx *d_waveform, double *interp_array,
     #ifdef __USE_OMP__
     #pragma omp parallel for
     #endif
-    for (int i = 0; i < init_len-1; i++) {
+    for (int i = 0; i < number_of_spline_intervals-1; i++) {
             #ifdef __CUDACC__
           cudaStreamCreate(&streams[i]);
           int num_blocks = std::ceil((unit_length[i] + NUM_THREADS -1)/NUM_THREADS);
           //printf("%d %d %d %d, %d %d\n", i, start_inds[i], unit_length[i], num_blocks, init_len, out_len);
           if (num_blocks <= 0) continue;
-
-          //printf("%d %d %d %d\n", i, num_blocks, unit_length[i], init_len);
           dim3 gridDim(num_blocks, 1); //, num_teuk_modes);
           //dim3 threadDim(32, 32);
           // launch one worker kernel per stream
@@ -575,7 +573,7 @@ void get_waveform(cmplx *d_waveform, double *interp_array,
       #ifdef __USE_OMP__
       #pragma omp parallel for
       #endif
-      for (int i = 0; i < init_len-1; i++) {
+      for (int i = 0; i < number_of_spline_intervals-1; i++) {
             cudaStreamDestroy(streams[i]);
 
         }
