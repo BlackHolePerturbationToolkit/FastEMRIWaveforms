@@ -35,6 +35,7 @@ from few.summation.directmodesum import DirectModeSum
 
 from abc import ABC
 
+# TODO: figure out how to treat when itegrator stops vs slow type
 # TODO: verify theta != pi/2
 # TODO: add initial phases
 # TODO: add relevant citations
@@ -97,28 +98,15 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
     def attributes_SchwarzschildEccentricWaveformBase(self):
         """
         attributes:
-            xp (obj): cupy or numpy based on GPU usage.
             inspiral_generator (obj): instantiated trajectory module.
             amplitude_generator (obj): instantiated amplitude module.
             create_waveform (obj): instantiated summation module.
             ylm_gen (obj): instantiated Ylm module.
             num_teuk_modes (int): number of Teukolsky modes in the model.
-            m0sort (1D int xp.ndarray): array of indices to sort accoring to
-                :math:`(m=0)` parts first and then :math:`m>0` parts.
-            l_arr, m_arr, n_arr (1D int xp.ndarray): :math:`(l,m,n)` arrays
-                containing indices for each mode.
-            lmn_indices (dict): Dictionary mapping a tuple of :math:`(l,m,n)` to
-                the respective index in l_arr, m_arr, and n_arr.
-            num_m_zero_up (int): Number of modes with :math:`m\geq0`.
-            num_m0 (int): Number of modes with :math:`m=0`.
-            num_m_1_up (int): Number of modes with :math:`m\geq1`.
-            unique_l, unique_m (1D int xp.ndarray): Arrays of unique :math:`l` and
-                :math:`m` values.
-            inverse_lm (1D int xp.ndarray): Array of indices that expands unique
-                :math:`(l, m)` values to the full array of :math:`(l,m,n)` values.
             ls, ms, ns (1D int xp.ndarray): Arrays of mode indices :math:`(l,m,n)`
                 after filtering operation. If no filtering, these are equivalent
                 to l_arr, m_arr, n_arr.
+
         """
         pass
 
@@ -232,7 +220,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
         self.sanity_check_init(M, mu, p0, e0)
-        T = T * ct.Julian_year
+        Tsec = T * ct.Julian_year
         # get trajectory
         (t, p, e, Phi_phi, Phi_r, amp_norm) = self.inspiral_generator(
             M, mu, p0, e0, T=T, dt=dt, **self.inspiral_kwargs
@@ -351,7 +339,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
                 teuk_modes_in,
                 ylms_in,
                 dt,
-                T,
+                Tsec,
                 Phi_phi_temp,
                 Phi_r_temp,
                 self.ms,

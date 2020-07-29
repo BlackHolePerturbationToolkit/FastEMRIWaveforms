@@ -26,7 +26,6 @@ class CubicSplineInterpolant:
             False.
 
     attributes:
-        xp (obj): cupy or numpy depending on GPU usage.
         interpolate_arrays (func): CPU or GPU function for mode interpolation.
 
     """
@@ -63,7 +62,7 @@ class CubicSplineInterpolant:
         lower_diag = self.xp.zeros_like(B)
 
         self.interpolate_arrays(
-            t, y_all, c1, c2, c3, ninterps, length, B, upper_diag, diag, lower_diag,
+            t, y_all, c1, c2, c3, ninterps, length, B, upper_diag, diag, lower_diag
         )
 
         y_all = y_all.reshape(ninterps, length).T.flatten()
@@ -84,7 +83,6 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
     This class can be run on GPUs and CPUs.
 
     attributes:
-        xp (obj): cupy or numpy depending on GPU usage.
         get_waveform (func): CPU or GPU function for waveform creation.
         ninterps (int): number of interpolants. It is the (number of phases) +
             2*(number of modes).

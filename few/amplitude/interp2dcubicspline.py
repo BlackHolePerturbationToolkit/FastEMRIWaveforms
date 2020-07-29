@@ -36,7 +36,7 @@ class Interp2DAmplitude(SchwarzschildEccentric):
         few_dir = dir_path + "/../../"
         self.amplitude_carrier = pyAmplitudeCarrier(self.lmax, self.nmax, few_dir)
 
-    def __call__(self, p, e, l_arr, m_arr, n_arr, *args, **kwargs):
+    def __call__(self, p, e, *args, specific_modes=None, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays
@@ -53,13 +53,41 @@ class Interp2DAmplitude(SchwarzschildEccentric):
             n_arr (1D int numpy.ndarray): :math:`ns` values to evaluate.
             *args (tuple, placeholder): Added to create flexibility when calling different
                 amplitude modules. It is not used.
+            specific_modes (list, optional): List of tuples for (l, m, n) values
+                desired modes. Default is None.
             **kwargs (dict, placeholder): Added to create flexibility when calling different
                 amplitude modules. It is not used.
+
+        returns:
+            2D array (double): If specific_modes is None, Teukolsky modes in shape (number of trajectory points, number of modes)
+            dict: Dictionary with requested modes.
 
 
         """
 
         input_len = len(p)
+
+        if specific_modes is None:
+            l_arr, m_arr, n_arr = (
+                self.l_arr[self.m_zero_up_mask],
+                self.m_arr[self.m_zero_up_mask],
+                self.n_arr[self.m_zero_up_mask],
+            )
+        else:
+            l_arr = np.zeros(len(specific_modes), dtype=int)
+            m_arr = np.zeros(len(specific_modes), dtype=int)
+            n_arr = np.zeros(len(specific_modes), dtype=int)
+
+            inds_revert = []
+            for i, (l, m, n) in enumerate(specific_modes):
+                l_arr[i] = l
+                m_arr[i] = np.abs(m)
+                n_arr[i] = n
+
+                if m < 0:
+                    inds_revert.append(i)
+
+            inds_revert = np.asarray(inds_revert)
 
         teuk_modes = Interp2DAmplitude_wrap(
             p,
@@ -71,4 +99,15 @@ class Interp2DAmplitude(SchwarzschildEccentric):
             len(l_arr),
             self.amplitude_carrier,
         )
-        return teuk_modes
+
+        if specific_modes is None:
+            return teuk_modes
+        else:
+            temp = {}
+            for i, lmn in enumerate(specific_modes):
+                temp[lmn] = teuk_modes[:, i]
+                l, m, n = lmn
+                if m < 0:
+                    temp[lmn] = np.conj(temp[lmn])
+
+            return temp
