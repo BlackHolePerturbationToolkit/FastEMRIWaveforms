@@ -235,7 +235,6 @@ class ROMANAmplitude(SchwarzschildEccentric):
             return teuk_modes
 
         else:
-            number_of_modes_for_return = len(specific_modes)
             temp = {}
             for lmn in specific_modes:
                 temp[lmn] = teuk_modes[:, self.special_index_map[lmn]]

@@ -42,16 +42,41 @@ class SchwarzschildEccentric(ABC):
         use_gpu (bool, optional): If True, will allocate arrays on the GPU.
             Default is False.
 
-    attributes:
-        xp (module): numpy or cupy based on hardware chosen.
-        background (str): Spacetime background for this model.
-        descriptor (str): Short description for model validity.
-        num_modes, num_teuk_modes (int): Total number of Tuekolsky modes
-            in the model.
-        lmax, nmax (int): Maximum :math:`l`, :math:`n`  values
-        ndim (int): Dimensionality in terms of orbital parameters and phases.
-
     """
+
+    def attributes_SchwarzschildEccentric(self):
+        """
+        attributes:
+            xp (module): numpy or cupy based on hardware chosen.
+            background (str): Spacetime background for this model.
+            descriptor (str): Short description for model validity.
+            num_modes, num_teuk_modes (int): Total number of Tuekolsky modes
+                in the model.
+            lmax, nmax (int): Maximum :math:`l`, :math:`n`  values
+            ndim (int): Dimensionality in terms of orbital parameters and phases.
+            m0sort (1D int xp.ndarray): array of indices to sort accoring to
+                :math:`(m=0)` parts first and then :math:`m>0` parts.
+            m0mask (1D bool xp.ndarray): Masks values with :math:`m==0`.
+            m_zero_up_mask (1D bool xp.ndarray): Masks values with :math:`m<1`.
+            l_arr, m_arr, n_arr (1D int xp.ndarray): :math:`(l,m,n)` arrays
+                containing indices for each mode.
+            lmn_indices (dict): Dictionary mapping a tuple of :math:`(l,m,n)` to
+                the respective index in l_arr, m_arr, and n_arr.
+            num_m_zero_up (int): Number of modes with :math:`m\geq0`.
+            num_m0 (int): Number of modes with :math:`m=0`.
+            num_m_1_up (int): Number of modes with :math:`m\geq1`.
+            unique_l, unique_m (1D int xp.ndarray): Arrays of unique :math:`l` and
+                :math:`m` values.
+            inverse_lm (1D int xp.ndarray): Array of indices that expands unique
+                :math:`(l, m)` values to the full array of :math:`(l,m,n)` values.
+            index_map (dict): Dictionary mapping the location of the `(l,m,n)`
+                indices back to there spot in l_arr, m_arr, n_arr.
+            special_index_map (dict): Dictionary mapping the location of the `(l,m,n)`
+                indices back to there spot in l_arr, m_arr, n_arr. However, this
+                maps locations of -m values to +m values.
+
+        """
+        pass
 
     def __init__(self, use_gpu=False, **kwargs):
 
@@ -111,6 +136,8 @@ class SchwarzschildEccentric(ABC):
         self.l_arr = self.xp.concatenate([self.l_arr, self.l_arr[self.m0mask]])
         self.m_arr = self.xp.concatenate([self.m_arr, -self.m_arr[self.m0mask]])
         self.n_arr = self.xp.concatenate([self.n_arr, self.n_arr[self.m0mask]])
+
+        self.m_zero_up_mask = self.m_arr >= 0
 
         try:
             temp, self.inverse_lm = np.unique(
