@@ -18,9 +18,9 @@ CuSparse error checking
 
 #endif
 
-void interpolate_arrays(double *t_arr, double *y_all, double *c1, double *c2, double *c3, int ninterps, int length, double *B, double *upper_diag, double *diag, double *lower_diag);
+void interpolate_arrays(double *t_arr, double *interp_array, int ninterps, int length, double *B, double *upper_diag, double *diag, double *lower_diag);
 
-void get_waveform(cmplx *d_waveform, double *y_vals, double *c1, double *c2, double *c3,
+void get_waveform(cmplx *d_waveform, double *interp_array,
               int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cmplx *d_Ylms,
               double delta_t, double *h_t);
 

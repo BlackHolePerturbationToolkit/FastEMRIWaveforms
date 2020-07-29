@@ -22,15 +22,19 @@ class CubicSplineInterpolant:
     This class can be run on GPUs and CPUs.
 
     args:
+        t (1D double xp.ndarray): t values as input for the spline.
+        y_all (2D double xp.ndarray): y values for the spline.
+            Shape: (ninterps, length).
         use_gpu (bool, optional): If True, prepare arrays for a GPU. Default is
             False.
 
     attributes:
         interpolate_arrays (func): CPU or GPU function for mode interpolation.
 
+
     """
 
-    def __init__(self, use_gpu=False):
+    def __init__(self, t, y_all, use_gpu=False):
 
         if use_gpu:
             self.xp = xp
@@ -40,21 +44,17 @@ class CubicSplineInterpolant:
             self.xp = np
             self.interpolate_arrays = interpolate_arrays_wrap_cpu
 
-    def __call__(self, t, y_all):
-        """Call method for performing the spline interpolation.
+        self.degree = 3
 
-        All splines must be the same length.
-
-        args:
-            t (1D double xp.ndarray): t values as input for the spline.
-            y_all (2D double xp.ndarray): y values for the spline.
-                Shape: (ninterps, length).
-        """
         ninterps, length = y_all.shape
-        y_all = y_all.flatten()
-        c1 = self.xp.zeros((ninterps, length - 1)).flatten()
-        c2 = self.xp.zeros_like(c1).flatten()
-        c3 = self.xp.zeros_like(c1).flatten()
+
+        self.reshape_shape = (self.degree + 1, ninterps, length)
+
+        interp_array = self.xp.zeros(self.reshape_shape)
+
+        interp_array[0] = y_all
+
+        interp_array = interp_array.flatten()
 
         B = self.xp.zeros((ninterps * length,))
         upper_diag = self.xp.zeros_like(B)
@@ -62,15 +62,70 @@ class CubicSplineInterpolant:
         lower_diag = self.xp.zeros_like(B)
 
         self.interpolate_arrays(
-            t, y_all, c1, c2, c3, ninterps, length, B, upper_diag, diag, lower_diag
+            t, interp_array, ninterps, length, B, upper_diag, diag, lower_diag
         )
 
-        y_all = y_all.reshape(ninterps, length).T.flatten()
-        c1 = c1.reshape(ninterps, length - 1).T.flatten()
-        c2 = c2.reshape(ninterps, length - 1).T.flatten()
-        c3 = c3.reshape(ninterps, length - 1).T.flatten()
+        self.t = t
+        self.interp_array = self.xp.transpose(
+            interp_array.reshape(self.reshape_shape), [0, 2, 1]
+        ).flatten()
+        self.reshape_shape = (self.degree + 1, length, ninterps)
 
-        return (y_all, c1, c2, c3)
+    @property
+    def y(self):
+        return self.interp_array.reshape(self.reshape_shape)[0].T
+
+    @property
+    def c1(self):
+        return self.interp_array.reshape(self.reshape_shape)[1].T
+
+    @property
+    def c2(self):
+        return self.interp_array.reshape(self.reshape_shape)[2].T
+
+    @property
+    def c3(self):
+        return self.interp_array.reshape(self.reshape_shape)[3].T
+
+    def __call__(self, tnew):
+
+        inds = self.xp.searchsorted(self.t, tnew)
+
+        x = tnew - self.t[inds]
+        x2 = x * x
+        x3 = x2 * x
+
+        out = (
+            self.y[:, inds]
+            + self.c1[:, inds] * x
+            + self.c2[:, inds] * x2
+            + self.c3[:, inds] * x3
+        )
+        return out
+
+    def d1(self, tnew):
+        inds = self.xp.searchsorted(self.t, tnew)
+
+        x = tnew - self.t[inds]
+        x2 = x * x
+
+        out = (
+            self.c1[:, inds] + 2.0 * self.c2[:, inds] * x + 3.0 * self.c3[:, inds] * x2
+        )
+        return out
+
+    def d2(self, tnew):
+        inds = self.xp.searchsorted(self.t, tnew)
+
+        x = tnew - self.t[inds]
+
+        out = 2.0 * self.c2[:, inds] * x + 6.0 * self.c3[:, inds] * x
+        return out
+
+    def d3(self, tnew):
+        inds = self.xp.searchsorted(self.t, tnew)
+        out = 6.0 * self.c3[:, inds]
+        return out
 
 
 class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
@@ -103,7 +158,7 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
         SchwarzschildEccentric.__init__(self, *args, **kwargs)
         SummationBase.__init__(self, *args, **kwargs)
 
-        self.interp = CubicSplineInterpolant(**kwargs)
+        self.kwargs = kwargs
 
         if self.use_gpu:
             self.xp = xp
@@ -168,7 +223,7 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
         y_all[-2] = Phi_phi
         y_all[-1] = Phi_r
 
-        y_all, c1, c2, c3 = self.interp(t, y_all)
+        spline = CubicSplineInterpolant(t, y_all, use_gpu=self.use_gpu)
 
         try:
             h_t = t.get()
@@ -177,10 +232,7 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
 
         self.get_waveform(
             self.waveform,
-            y_all,
-            c1,
-            c2,
-            c3,
+            spline.interp_array,
             m_arr,
             n_arr,
             init_len,
