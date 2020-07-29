@@ -49,6 +49,19 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
         SchwarzschildEccentric.__init__(self, *args, **kwargs)
         few_dir = dir_path + "/../../"
 
+        # check if necessary files are in the few_dir
+        file_list = os.listdir(few_dir + "few/files/")
+
+        if "AmplitudeVectorNorm.dat" not in file_list:
+            raise FileNotFoundError(
+                "The file AmplitudeVectorNorm.dat did not open sucessfully. Make sure it is located in the proper directory (Path/to/Installation/few/files/)."
+            )
+
+        if "FluxNewMinusPNScaled_fixed_y_order.dat" not in file_list:
+            raise FileNotFoundError(
+                "The file FluxNewMinusPNScaled_fixed_y_order.dat did not open sucessfully. Make sure it is located in the proper directory (Path/to/Installation/few/files/)."
+            )
+
         self.flux_carrier = pyFluxCarrier(few_dir)
 
         self.specific_kwarg_keys = ["T", "dt", "err", "DENSE_STEPPING", "max_init_len"]
