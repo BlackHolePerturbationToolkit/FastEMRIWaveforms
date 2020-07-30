@@ -106,7 +106,6 @@ class Interp2DAmplitude(SchwarzschildEccentric):
             n_arr.astype(np.int32),
             input_len,
             len(l_arr),
-            self.amplitude_carrier,
         )
 
         if specific_modes is None:
