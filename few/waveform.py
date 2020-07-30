@@ -23,6 +23,8 @@ from few.utils.overlap import get_mismatch
 
 from few.amplitude.romannet import ROMANAmplitude
 
+from few.utils.constants import *
+
 try:
     from few.summation.interpolatedmodesum import InterpolatedModeSum
 
@@ -41,11 +43,7 @@ from abc import ABC
 
 # TODO: Zenodo versioning
 # TODO: automatic get of hdf5
-# TODO: instructions for file versioning install / slow data.
 # TODO: add relevant citations
-# TODO: work out imports with sphinx
-# TODO: unit tests
-# TODO: deal with libs and includes
 # TODO: make sure constants are same
 # TODO: shared memory based on CUDA_ARCH
 # TODO: choice of integrator
@@ -55,7 +53,6 @@ from abc import ABC
 # TODO: ABC for specific classes
 # TODO: Add more safeguards on settings.
 # TODO: add requirements / versions (e.g. gsl)
-from scipy import constants as ct
 
 
 class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
@@ -218,7 +215,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
         self.sanity_check_init(M, mu, p0, e0)
-        Tsec = T * ct.Julian_year
+        Tsec = T * YRSID_SI
         # get trajectory
         (t, p, e, Phi_phi, Phi_r, amp_norm) = self.inspiral_generator(
             M, mu, p0, e0, T=T, dt=dt, **self.inspiral_kwargs
@@ -561,7 +558,7 @@ if __name__ == "__main__":
     theta = np.pi / 2
     phi = 0.0
     dt = 10.0
-    T = 1.0  #  / 100.0  # 1124936.040602 / ct.Julian_year
+    T = 1.0  #  / 100.0  # 1124936.040602 / YRSID_SI
     eps = 1e-2
     mode_selection = None
     step_eps = 1e-11

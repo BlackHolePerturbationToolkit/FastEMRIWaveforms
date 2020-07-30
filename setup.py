@@ -200,8 +200,6 @@ else:
     gsl_include = [args.gsl + "/include"]
     gsl_lib = [args.gsl + "/lib"]
 
-# lapack_include = ["/software/lapack/3.6.0_gcc/include/"]
-# lapack_lib = ["/software/lapack/3.6.0_gcc/lib64/"]
 
 if "--no_omp" in sys.argv:
     use_omp = False
@@ -210,9 +208,24 @@ if "--no_omp" in sys.argv:
 else:
     use_omp = True
 
+fp_out_name = "few/utils/constants.py"
+fp_in_name = "include/global.h"
 
-# lib_gsl_dir = "/opt/local/lib"
-# include_gsl_dir = "/opt/local/include"
+# develop few.utils.constants.py
+with open(fp_out_name, "w") as fp_out:
+    with open(fp_in_name, "r") as fp_in:
+        lines = fp_in.readlines()
+        for line in lines:
+            if len(line.split()) == 3:
+                if line.split()[0] == "#define":
+                    try:
+                        _ = float(line.split()[2])
+                        string_out = line.split()[1] + " = " + line.split()[2] + "\n"
+                        fp_out.write(string_out)
+
+                    except (ValueError) as e:
+                        continue
+
 
 # if installing for CUDA, build Cython extensions for gpu modules
 if run_cuda_install:
@@ -381,6 +394,7 @@ setup(
         "few.summation.directmodesum",
         "few.utils.ylm",
         "few.summation.interpolatedmodesum",
+        "few.utils.constants",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

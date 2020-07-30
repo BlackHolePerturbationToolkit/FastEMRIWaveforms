@@ -10,10 +10,9 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 from scipy import constants as ct
 
+from few.utils.constants import *
 
 # TODO: get bounds on p
-
-MTSUN_SI = 4.925491025543575903411922162094833998e-6
 
 
 class SchwarzschildEccentric(ABC):

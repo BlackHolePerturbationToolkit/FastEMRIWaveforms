@@ -8,7 +8,6 @@
 // Definitions needed for Mathematicas CForm output
 #define Power(x, y)     (pow((double)(x), (double)(y)))
 #define Sqrt(x)         (sqrt((double)(x)))
-#define Pi              M_PI
 
 #define PI        3.141592653589793238462643383279502884
 #define TWOPI     6.283185307179586476925286766559005768
