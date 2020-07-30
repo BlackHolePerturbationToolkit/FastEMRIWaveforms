@@ -33,12 +33,6 @@
 using namespace std;
 using namespace std::chrono;
 
-// Definitions needed for Mathematicas CForm output
-#define Power(x, y)     (pow((double)(x), (double)(y)))
-#define Sqrt(x)         (sqrt((double)(x)))
-#define Pi              M_PI
-#define MTSUN_SI 4.925491025543575903411922162094833998e-6
-
 // The 11 below means the lmax = 10
 struct waveform_amps{
 	Interpolant ***re[11];
