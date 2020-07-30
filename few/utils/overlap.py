@@ -2,10 +2,10 @@ import numpy as np
 import numpy
 
 try:
-    import cupy
+    import cupy as cp
 
 except (ImportError, ModuleNotFoundError) as e:
-    import numpy
+    import numpy as np
 
 # TODO: should we take real of overlap
 
@@ -31,9 +31,29 @@ def get_overlap(time_series_1, time_series_2, use_gpu=False):
 
     """
     if use_gpu:
-        xp = cupy
+        xp = cp
+
+        if isinstance(time_series_1, np.ndarray):
+            time_series_1 = xp.asarray(time_series_1)
+        if isinstance(time_series_2, np.ndarray):
+            time_series_2 = xp.asarray(time_series_2)
+
     else:
-        xp = numpy
+        xp = np
+
+        try:
+            if isinstance(time_series_1, cp.ndarray):
+                time_series_1 = xp.asarray(time_series_1)
+
+        except NameError:
+            pass
+
+        try:
+            if isinstance(time_series_2, cp.ndarray):
+                time_series_2 = xp.asarray(time_series_2)
+
+        except NameError:
+            pass
 
     min_len = int(np.min([len(time_series_1), len(time_series_2)]))
     time_series_1_fft = xp.fft.fft(time_series_1[:min_len])
