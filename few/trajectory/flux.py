@@ -13,6 +13,8 @@ from few.utils.baseclasses import TrajectoryBase, SchwarzschildEccentric
 MTSUN_SI = 4.925491025543575903411922162094833998e-6
 
 import os
+import subprocess
+import warnings
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -49,17 +51,48 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
         SchwarzschildEccentric.__init__(self, *args, **kwargs)
         few_dir = dir_path + "/../../"
 
+        try:
+            os.listdir(few_dir + "few/files/")
+
+        except OSError:
+            os.mkdir(few_dir + "few/files/")
+
         # check if necessary files are in the few_dir
         file_list = os.listdir(few_dir + "few/files/")
 
         if "AmplitudeVectorNorm.dat" not in file_list:
-            raise FileNotFoundError(
-                "The file AmplitudeVectorNorm.dat did not open sucessfully. Make sure it is located in the proper directory (Path/to/Installation/few/files/)."
+            warnings.warn(
+                "The file AmplitudeVectorNorm.dat did not open sucessfully. It will now be downloaded to the proper location."
+            )
+
+            # download to proper location
+            subprocess.run(
+                [
+                    "wget",
+                    "https://raw.githubusercontent.com/mikekatz04/FastEMRIWaveforms/master/few/files/AmplitudeVectorNorm.dat",
+                ]
+            )
+
+            os.rename(
+                "AmplitudeVectorNorm.dat", few_dir + "few/files/AmplitudeVectorNorm.dat"
             )
 
         if "FluxNewMinusPNScaled_fixed_y_order.dat" not in file_list:
-            raise FileNotFoundError(
-                "The file FluxNewMinusPNScaled_fixed_y_order.dat did not open sucessfully. Make sure it is located in the proper directory (Path/to/Installation/few/files/)."
+            warnings.warn(
+                "The file FluxNewMinusPNScaled_fixed_y_order.dat did not open sucessfully. It will now be downloaded to the proper location."
+            )
+
+            # download to proper location
+            subprocess.run(
+                [
+                    "wget",
+                    "https://raw.githubusercontent.com/mikekatz04/FastEMRIWaveforms/master/few/files/FluxNewMinusPNScaled_fixed_y_order.dat",
+                ]
+            )
+
+            os.rename(
+                "FluxNewMinusPNScaled_fixed_y_order.dat",
+                few_dir + "few/files/FluxNewMinusPNScaled_fixed_y_order.dat",
             )
 
         self.flux_carrier = pyFluxCarrier(few_dir)

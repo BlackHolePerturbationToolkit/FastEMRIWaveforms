@@ -2,6 +2,7 @@ import numpy as np
 import os
 import h5py
 import warnings
+import subprocess
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -65,10 +66,34 @@ class ROMANAmplitude(SchwarzschildEccentric):
 
         SchwarzschildEccentric.__init__(self, **kwargs)
 
-        self.folder = dir_path + "/../files/"
+        self.few_dir = dir_path + "/../../"
+
+        try:
+            os.listdir(self.few_dir + "few/files/")
+        except OSError:
+            os.mkdir(self.few_dir + "few/files/")
+
         self.data_file = "SchwarzschildEccentricInput.hdf5"
 
-        with h5py.File(self.folder + self.data_file, "r") as fp:
+        if self.data_file not in os.listdir(self.few_dir + "few/files/"):
+            warnings.warn(
+                "The file SchwarzschildEccentricInput.hdf5 did not open sucessfully. It will now be downloaded to the proper location."
+            )
+
+            # download to proper location
+            subprocess.run(
+                [
+                    "wget",
+                    "https://raw.githubusercontent.com/mikekatz04/FastEMRIWaveforms/master/few/files/SchwarzschildEccentricInput.hdf5",
+                ]
+            )
+
+            os.rename(
+                "SchwarzschildEccentricInput.hdf5",
+                self.few_dir + "few/files/SchwarzschildEccentricInput.hdf5",
+            )
+
+        with h5py.File(self.few_dir + "few/files/" + self.data_file, "r") as fp:
             num_teuk_modes = fp.attrs["num_teuk_modes"]
             transform_factor = fp.attrs["transform_factor"]
             self.break_index = fp.attrs["break_index"]
@@ -114,7 +139,7 @@ class ROMANAmplitude(SchwarzschildEccentric):
 
         # get highest layer number
         self.num_layers = 0
-        with h5py.File(self.folder + self.data_file, "r") as fp:
+        with h5py.File(self.few_dir + "few/files/" + self.data_file, "r") as fp:
             for key, value in fp.items():
                 if key == "reduced_basis":
                     continue
