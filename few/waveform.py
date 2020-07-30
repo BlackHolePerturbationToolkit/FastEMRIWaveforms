@@ -40,6 +40,7 @@ from abc import ABC
 # TODO: zero out modes
 
 # TODO: Zenodo versioning
+# TODO: automatic get of hdf5
 # TODO: instructions for file versioning install / slow data.
 # TODO: add relevant citations
 # TODO: work out imports with sphinx

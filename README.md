@@ -1,17 +1,19 @@
 # few: Fast EMRI Waveforms
 
-This package contains the highly modular framework for fast and accurate extreme mass ratio inspiral (EMRI) waveforms from (TODO: add arXiv). The waveforms in this package combine a variety of separately accessible modules to form EMRI waveforms on both CPUs and GPUs. Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the documentation (TODO: add documentation site) for further information on these modules.
+This package contains the highly modular framework for fast and accurate extreme mass ratio inspiral (EMRI) waveforms from (TODO: add arXiv). The waveforms in this package combine a variety of separately accessible modules to form EMRI waveforms on both CPUs and GPUs. Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the [documentation](https://mikekatz04.github.io/FastEMRIWaveforms/) for further information on these modules.
 
 If you use all or any parts of this code, please cite (TODO: add papers to cite. Do we want this to be per module or general use.).
 
 ## Getting Started
+
+Below is a quick set of instructions to get you started with `few`.
 
 0) [Install Anaconda](https://docs.anaconda.com/anaconda/install/) if you do not have it.
 
 1) Create a virtual environment.
 
 ```
-conda create -n few_env numpy Cython scipy tqdm python=3.8
+conda create -n few_env numpy Cython scipy tqdm jupyter ipython python=3.8
 conda activate few_env
 ```
 
@@ -33,10 +35,12 @@ git clone https://github.com/mikekatz04/FastEMRIWaveforms.git
 python setup.py install
 ```
 
-5) To import few:
+5) Get data extra data if desired. If you want to run the slow waveforms ([few.waveform.SlowSchwarzschildEccentricFlux](https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html?highlight=slow#few.waveform.SlowSchwarzschildEccentricFlux)) or bicubic amplitude determination ([few.amplitudes.interp2dcubicspline.Interp2DAmplitude](https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html?highlight=interp2d#few.amplitude.interp2dcubicspline.Interp2DAmplitude)), you will need to attain an hdf5 file (Teuk_amps_a0.0_lmax_10_nmax_30_new.h5) and put it in the `/Path/to/Installation/few/files/` directory. This is available at Zenodo (TODO: fill in).
+
+6) To import few:
 
 ```
-TODO: import of high level waveform
+from few.waveforms import FastSchwarzschildEccentricFlux
 ```
 
 6) Perform test:
@@ -76,6 +80,8 @@ git clone https://github.com/mikekatz04/FastEMRIWaveforms.git
 ```
 python setup.py install
 ```
+
+
 
 ## Running the Tests
 
