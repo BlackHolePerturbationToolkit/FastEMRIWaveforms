@@ -102,3 +102,88 @@ class WaveformTest(unittest.TestCase):
         mm = get_mismatch(slow_wave, fast_wave, use_gpu=gpu_avialable)
 
         self.assertLess(mm, 1e-4)
+
+
+def amplitude_test(amp_class):
+    # initialize ROMAN class
+    amp = ROMANAmplitude(max_input_len=5000)  # max_input_len creates memory buffers
+
+    p = np.linspace(10.0, 14.0, 10)
+    e = np.linspace(0.1, 0.7, 10)
+
+    p_all, e_all = np.asarray([temp.ravel() for temp in np.meshgrid(p, e)])
+
+    teuk_modes = amp_class(p_all, e_all)
+
+    # (2, 2, 0) and (7, -3, 1) modes
+    specific_modes = [(2, 2, 0), (7, -3, 1)]
+
+    # notice this returns a dictionary with keys as the mode tuple and values as the mode values at all trajectory points
+    specific_teuk_modes = amp_class(p_all, e_all, specific_modes=specific_modes)
+
+    # we can find the index to these modes to check
+    inds = np.array([amp.special_index_map[lmn] for lmn in specific_modes])
+
+    first_check = np.allclose(specific_teuk_modes[(2, 2, 0)], teuk_modes[:, inds[0]])
+    second_check = np.allclose(
+        specific_teuk_modes[(7, -3, 1)], np.conj(teuk_modes[:, inds[1]])
+    )
+    return first_check, second_check
+
+
+class ModuleTest(unittest.TestCase):
+    def test_trajectory(self):
+
+        # initialize trajectory class
+        traj = RunSchwarzEccFluxInspiral()
+
+        # set initial parameters
+        M = 1e5
+        mu = 1e1
+        p0 = 10.0
+        e0 = 0.7
+
+        # run trajectory
+        t, p, e, Phi_phi, Phi_r, flux = traj(M, mu, p0, e0)
+
+        traj.sanity_check_traj(p, e)
+
+    def test_amplitudes(self):
+
+        amp = ROMANAmplitude()
+
+        first_check, second_check = amplitude_test(amp)
+
+        # make sure they are the same
+        self.assertTrue(first_check)
+
+        # to check -m modes we need to take the conjugate
+        self.assertTrue(second_check)
+
+    def test_amplitudes_bicubic(self):
+        # initialize class
+        amp2 = Interp2DAmplitude()
+
+        first_check, second_check = amplitude_test(amp2)
+
+        # make sure they are the same
+        self.assertTrue(first_check)
+
+        # to check -m modes we need to take the conjugate
+        self.assertTrue(second_check)
+
+    def test_mismatch(self):
+
+        dt = 1.0
+        t = np.arange(10000) * dt
+        x0 = np.sin(t) + 1j * np.sin(t)
+
+        # check 1
+        x1 = np.sin(t) + 1j * np.sin(t)
+        self.assertAlmostEqual(get_overlap(x0, x1), 1.0)
+        self.assertAlmostEqual(1.0 - get_overlap(x0, x1), get_mismatch(x0, x1))
+
+        # check 1
+        x2 = np.sin(t) + 1j * np.cos(t)
+        self.assertAlmostEqual(get_overlap(x0, x2), 0.499981442642142)
+        self.assertAlmostEqual(1.0 - get_overlap(x0, x1), get_mismatch(x0, x1))
