@@ -209,18 +209,65 @@ extreme mass ratio inspiral (EMRI) waveforms from (TODO: add arXiv). The
 waveforms in this package combine a variety of separately accessible
 modules to form EMRI waveforms on both CPUs and GPUs. Generally, the
 modules fall into four categories: trajectory, amplitudes, summation,
-and utilities. Please see the documentation (TODO: add documentation
-site) for further information on these modules.</p>
+and utilities. Please see the
+<a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/">documentation</a> for
+further information on these modules.</p>
 <p>If you use all or any parts of this code, please cite (TODO: add papers
 to cite. Do we want this to be per module or general use.).</p>
 <div class="section" id="getting-started">
 <h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>Below is a quick set of instructions to get you started with <code class="docutils literal notranslate"><span class="pre">few</span></code>.</p>
 <ol class="arabic simple" start="0">
 <li><p><a class="reference external" href="https://docs.anaconda.com/anaconda/install/">Install Anaconda</a> if
 you do not have it.</p></li>
 <li><p>Create a virtual environment.</p></li>
 </ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.8</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.8</span>
+<span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Clone the repository.</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">mikekatz04</span><span class="o">/</span><span class="n">FastEMRIWaveforms</span><span class="o">.</span><span class="n">git</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Run install. Make sure CUDA is on your PATH.</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>To import few:</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">few.waveforms</span> <span class="kn">import</span> <span class="n">FastSchwarzschildEccentricFlux</span>
+</pre></div>
+</div>
+<p>See <a class="reference external" href="examples/SchwarzschildEccentricWaveform_intro.ipynb">examples
+notebook</a>.</p>
+<div class="section" id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
+<p>To install this software for CPU usage, you need [gsl &gt;2.0]
+(<a class="reference external" href="https://www.gnu.org/software/gsl/">https://www.gnu.org/software/gsl/</a>) ,
+<a class="reference external" href="https://www.netlib.org/lapack/lug/node14.html">lapack</a>, Python &gt;3.4,
+and NumPy. To run the examples, you will also need jupyter and
+matplotlib.</p>
+<p>To install this software for use with NVIDIA GPUs (compute capability
+&gt;2.0), you need the <a class="reference external" href="https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html">CUDA
+toolkit</a>
+and <a class="reference external" href="https://cupy.chainer.org/">CuPy</a>. The CUDA toolkit must have
+cuda version &gt;8.0. Be sure to properly install cupy within the correct
+CUDA toolkit version.</p>
+</div>
+<div class="section" id="installing">
+<h3>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic simple" start="0">
+<li><p><a class="reference external" href="https://docs.anaconda.com/anaconda/install/">Install Anaconda</a> if
+you do not have it.</p></li>
+<li><p>Create a virtual environment.</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.8</span>
 <span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
 </pre></div>
 </div>
@@ -245,61 +292,29 @@ you have cuda version 9.2, for example:</p></li>
 </pre></div>
 </div>
 <ol class="arabic simple" start="5">
-<li><p>To import few:</p></li>
+<li><p>Get data extra data if desired. If you want to run the slow waveforms
+(<a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html?highlight=slow#few.waveform.SlowSchwarzschildEccentricFlux">few.waveform.SlowSchwarzschildEccentricFlux</a>)
+or bicubic amplitude determination
+(<a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html?highlight=interp2d#few.amplitude.interp2dcubicspline.Interp2DAmplitude">few.amplitudes.interp2dcubicspline.Interp2DAmplitude</a>),
+you will need to attain an hdf5 file
+(Teuk_amps_a0.0_lmax_10_nmax_30_new.h5) and put it in the
+<code class="docutils literal notranslate"><span class="pre">/Path/to/Installation/few/files/</span></code> directory. This is available at
+Zenodo (TODO: fill in).</p></li>
 </ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">TODO</span><span class="p">:</span> <span class="kn">import</span> <span class="nn">of</span> <span class="n">high</span> <span class="n">level</span> <span class="n">waveform</span>
-</pre></div>
-</div>
-<ol class="arabic simple" start="6">
-<li><p>Perform test:</p></li>
-</ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">tests</span><span class="o">/</span><span class="n">test</span><span class="o">.</span><span class="n">py</span>
-</pre></div>
-</div>
-<div class="section" id="prerequisites">
-<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
-<p>To install this software, you need the <a class="reference external" href="https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html">CUDA
-toolkit</a>,
-[gsl] (<a class="reference external" href="https://www.gnu.org/software/gsl/">https://www.gnu.org/software/gsl/</a>),
-<a class="reference external" href="https://www.netlib.org/lapack/lug/node14.html">lapack</a> Python &gt;3.4,
-numpy, and <a class="reference external" href="https://cupy.chainer.org/">cupy</a>. The CUDA toolkit must
-have cuda version &gt;8.0. To run this software you need an NVIDIA GPU of
-compute capability &gt;2.0.</p>
-</div>
-<div class="section" id="installing">
-<h3>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h3>
-<ol class="arabic simple">
-<li><p>Create a virtual environment.</p></li>
-</ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.8</span>
-<span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
-</pre></div>
-</div>
-<ol class="arabic simple" start="2">
-<li><p>If using GPUs, use pip to <a class="reference external" href="https://docs-cupy.chainer.org/en/stable/install.html">install
-cupy</a>. If
-you have cuda version 9.2, for example:</p></li>
-</ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">cupy</span><span class="o">-</span><span class="n">cuda92</span>
-</pre></div>
-</div>
-<ol class="arabic simple" start="3">
-<li><p>Clone the repository.</p></li>
-</ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">mikekatz04</span><span class="o">/</span><span class="n">FastEMRIWaveforms</span><span class="o">.</span><span class="n">git</span>
-</pre></div>
-</div>
-<ol class="arabic simple" start="4">
-<li><p>Run install. Make sure CUDA is on your PATH.</p></li>
-</ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
-</pre></div>
-</div>
 </div>
 </div>
 <div class="section" id="running-the-tests">
 <h2>Running the Tests<a class="headerlink" href="#running-the-tests" title="Permalink to this headline">¶</a></h2>
-<p>TODO: fill in</p>
+<p>When performing tests, you must have the hdf5 file
+(Teuk_amps_a0.0_lmax_10_nmax_30_new.h5) for
+(<a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html?highlight=slow#few.waveform.SlowSchwarzschildEccentricFlux">few.waveform.SlowSchwarzschildEccentricFlux</a>)
+and bicubic amplitude determination
+(<a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html?highlight=interp2d#few.amplitude.interp2dcubicspline.Interp2DAmplitude">few.amplitudes.interp2dcubicspline.Interp2DAmplitude</a>).
+See above in <strong>Installing</strong>.</p>
+<p>In the main directory of the package run in the terminal:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">unittest</span> <span class="n">discover</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="contributing">
 <h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h2>
@@ -3366,6 +3381,19 @@ False.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>func</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant.interp_array">
+<code class="sig-name descname">interp_array</code><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.interp_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Array containing all spline
+coefficients. It is flattened after fitting from shape
+(4, ninterps, length). The 4 is the 4 spline coefficients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D double xp.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
