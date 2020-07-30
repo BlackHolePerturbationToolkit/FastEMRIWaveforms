@@ -2,6 +2,7 @@
 #include <complex>
 #include <assert.h>
 #include "SWSH.hh"
+#include "global.h"
 
 //template<typename double>
 std::complex<double> SpinWeightedSphericalHarmonic (int l, int m, double theta, double phi)
@@ -9,7 +10,6 @@ std::complex<double> SpinWeightedSphericalHarmonic (int l, int m, double theta, 
 
     std::complex<double> temp;
 
-	double PI = M_PI;
     std::complex<double> I(0.0, 1.0);
 
     double costheta = cos(theta / 2.0);

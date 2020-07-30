@@ -15,6 +15,7 @@
 
 #include "Interpolant.h"
 #include "FluxInspiral.hh"
+#include "global.h"
 
 #include <iostream>
 #include <fstream>
@@ -24,20 +25,14 @@
 #include <iomanip>      // std::setprecision
 #include <cstring>
 
+
 using namespace std;
 using namespace std::chrono;
-
-// Definitions needed for Mathematicas CForm output
-#define Power(x, y)     (pow((double)(x), (double)(y)))
-#define Sqrt(x)         (sqrt((double)(x)))
-#define Pi              M_PI
 
 
 // This code assumes the data is formated in the following way
 const int Ne = 33;
 const int Ny = 50;
-
-const double YearInSeconds 		= 60*60*24*365.25;
 
 //const int DENSE_STEPPING = 0;
 
@@ -235,7 +230,7 @@ double get_step_flux(double p, double e, Interpolant *amp_vec_norm_interp)
 
 FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, double e0, double err, double tmax, double dt, int DENSE_STEPPING, double step_eps){
 
-    tmax = tmax*YearInSeconds;
+    tmax = tmax*YRSID_SI;
 
     double init_flux = get_step_flux(p0, e0, amp_vec_norm_interp);
 
@@ -252,7 +247,7 @@ FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, doub
     //double samplerate = 0.1;
 
     // Signal length (in seconds)
-    //double max_signal_length = 1*YearInSeconds;
+    //double max_signal_length = 1*YRSID_SI;
 
     // Compute the adimensionalized time steps and max time
 
