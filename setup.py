@@ -7,6 +7,7 @@ from distutils.extension import Extension
 from Cython.Distutils import build_ext
 import numpy
 import shutil
+import argparse
 
 
 def find_in_path(name, path):
@@ -112,19 +113,95 @@ try:
 except OSError:
     run_cuda_install = False
 
+parser = argparse.ArgumentParser()
+
+parser.add_argument(
+    "--no_omp",
+    help="If provided, install without OpenMP.",
+    action="store_true",
+    default=False,
+)
+
+parser.add_argument(
+    "--lapack_lib",
+    help="Directory of the lapack lib.",
+    default="/usr/local/opt/lapack/lib",
+)
+
+parser.add_argument(
+    "--lapack_include",
+    help="Directory of the lapack include.",
+    default="/usr/local/opt/lapack/include",
+)
+
+parser.add_argument(
+    "--lapack",
+    help="Directory of both lapack lib and include. '/include' and '/lib' will be added to the end of this string.",
+)
+
+parser.add_argument(
+    "--gsl_lib", help="Directory of the gsl lib.", default="/usr/local/opt/gsl/lib"
+)
+
+parser.add_argument(
+    "--gsl_include",
+    help="Directory of the gsl include.",
+    default="/usr/local/opt/gsl/include",
+)
+
+parser.add_argument(
+    "--gsl",
+    help="Directory of both gsl lib and include. '/include' and '/lib' will be added to the end of this string.",
+)
+
+args, unknown = parser.parse_known_args()
+
+for key in [
+    args.gsl_include,
+    args.gsl_lib,
+    args.gsl,
+    "--gsl",
+    "--gsl_include",
+    "--gsl_lib",
+    args.lapack_include,
+    args.lapack_lib,
+    args.lapack,
+    "--lapack",
+    "--lapack_lib",
+    "--lapack_include",
+]:
+    try:
+        sys.argv.remove(key)
+    except ValueError:
+        pass
+
+use_omp = not args.no_omp
+
+
 # Obtain the numpy include directory. This logic works across numpy versions.
 try:
     numpy_include = numpy.get_include()
 except AttributeError:
     numpy_include = numpy.get_numpy_include()
 
-if os.path.isdir("/home/mlk667/GPU4GW"):  # TODO: fix this
-    lapack_include = ["/software/lapack/3.6.0_gcc/include/"]
-    lapack_lib = ["/software/lapack/3.6.0_gcc/lib64/"]
+if args.lapack is None:
+    lapack_include = [args.lapack_include]
+    lapack_lib = [args.lapack_lib]
 
 else:
-    lapack_include = ["/usr/local/opt/lapack/include"]
-    lapack_lib = ["/usr/local/opt/lapack/lib"]
+    lapack_include = [args.lapack + "/include"]
+    lapack_lib = [args.lapack + "/lib"]
+
+if args.gsl is None:
+    gsl_include = [args.gsl_include]
+    gsl_lib = [args.gsl_lib]
+
+else:
+    gsl_include = [args.gsl + "/include"]
+    gsl_lib = [args.gsl + "/lib"]
+
+# lapack_include = ["/software/lapack/3.6.0_gcc/include/"]
+# lapack_lib = ["/software/lapack/3.6.0_gcc/lib64/"]
 
 if "--no_omp" in sys.argv:
     use_omp = False
@@ -142,7 +219,7 @@ if run_cuda_install:
 
     gpu_extension = dict(
         libraries=["cudart", "cublas", "cusparse", "gsl", "gslcblas", "gomp"],
-        library_dirs=[CUDA["lib64"]],
+        library_dirs=[CUDA["lib64"]] + gsl_lib,
         runtime_library_dirs=[CUDA["lib64"]],
         language="c++",
         # This syntax is specific to this build system
@@ -176,13 +253,8 @@ if run_cuda_install:
                 # "-lineinfo",
             ],  # for debugging
         },
-        include_dirs=[
-            numpy_include,
-            CUDA["include"],
-            "few/src",
-            "include",
-            "/home/mlk667/.conda/envs/few_env/include/",
-        ],
+        include_dirs=[numpy_include, CUDA["include"], "few/src", "include"]
+        + gsl_include,
     )
 
     if use_omp is False:
@@ -213,8 +285,9 @@ cpu_extension = dict(
         "include",
         "/home/mlk667/.conda/envs/few_env/include/",
     ]
-    + lapack_include,
-    library_dirs=lapack_lib,
+    + lapack_include
+    + gsl_include,
+    library_dirs=lapack_lib + gsl_include,
     # library_dirs=["/home/ajchua/lib/"],
 )
 
