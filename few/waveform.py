@@ -40,12 +40,11 @@ from abc import ABC
 # TODO: run trajectory backward
 # TODO: add initial phases
 # TODO: zero out modes
+# TODO: shared memory based on CUDA_ARCH
 
 # TODO: Zenodo versioning
 # TODO: automatic get of hdf5
 # TODO: add relevant citations
-# TODO: make sure constants are same
-# TODO: shared memory based on CUDA_ARCH
 # TODO: choice of integrator
 # TODO: remove step_eps in flux.py
 # TODO: free memory in trajectory
@@ -526,11 +525,7 @@ if __name__ == "__main__":
 
     use_gpu = False
     few = FastSchwarzschildEccentricFlux(
-        inspiral_kwargs={
-            "DENSE_STEPPING": 0,
-            "max_init_len": int(1e3),
-            "step_eps": 1e-10,
-        },
+        inspiral_kwargs={"DENSE_STEPPING": 0, "max_init_len": int(1e3)},
         amplitude_kwargs={"max_input_len": int(1e3), "use_gpu": use_gpu},
         # amplitude_kwargs=dict(),
         Ylm_kwargs={"assume_positive_m": False},
@@ -539,11 +534,7 @@ if __name__ == "__main__":
     )
 
     few2 = SlowSchwarzschildEccentricFlux(
-        inspiral_kwargs={
-            "DENSE_STEPPING": 1,
-            "max_init_len": int(1e7),
-            "step_eps": 1e-10,
-        },
+        inspiral_kwargs={"DENSE_STEPPING": 1, "max_init_len": int(1e7)},
         # amplitude_kwargs={"max_input_len": int(1e3), "use_gpu": use_gpu},
         amplitude_kwargs=dict(),
         Ylm_kwargs={"assume_positive_m": False},
@@ -561,7 +552,6 @@ if __name__ == "__main__":
     T = 1.0  #  / 100.0  # 1124936.040602 / YRSID_SI
     eps = 1e-2
     mode_selection = None
-    step_eps = 1e-11
     show_progress = False
     batch_size = 10000
 

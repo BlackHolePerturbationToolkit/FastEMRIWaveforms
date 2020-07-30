@@ -97,7 +97,14 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
 
         self.flux_generator = pyFluxGenerator(few_dir)
 
-        self.specific_kwarg_keys = ["T", "dt", "err", "DENSE_STEPPING", "max_init_len"]
+        self.specific_kwarg_keys = [
+            "T",
+            "dt",
+            "err",
+            "DENSE_STEPPING",
+            "max_init_len",
+            "use_rk4",
+        ]
 
     @property
     def citation(self):
