@@ -157,6 +157,15 @@ class SchwarzschildEccentric(ABC):
         self.index_map = {}
         self.special_index_map = {}  # maps the minus m values to positive m
         for i, (l, m, n) in enumerate(zip(self.l_arr, self.m_arr, self.n_arr)):
+
+            try:
+                l = l.item()
+                m = m.item()
+                n = n.item()
+
+            except AttributeError:
+                pass
+
             self.index_map[(l, m, n)] = i
             self.special_index_map[(l, m, n)] = (
                 i if i < self.num_modes else i - self.num_m_1_up
