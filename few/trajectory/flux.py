@@ -10,7 +10,7 @@ from pyFLUX import pyFluxGenerator
 
 from few.utils.baseclasses import TrajectoryBase, SchwarzschildEccentric
 
-MTSUN_SI = 4.925491025543575903411922162094833998e-6
+from few.utils.constants import *
 
 import os
 import subprocess
