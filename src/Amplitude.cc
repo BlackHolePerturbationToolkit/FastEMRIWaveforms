@@ -31,20 +31,11 @@
 
 using namespace std;
 using namespace std::chrono;
-// using namespace std::complex_literals;
-
-// Definitions needed for Mathematicas CForm output
-#define Power(x, y)     (pow((double)(x), (double)(y)))
-#define Sqrt(x)         (sqrt((double)(x)))
-#define Pi              M_PI
-
 
 // This code assumes the data is formated in the following way
 const int Ne = 33;
 const int Ny = 50;
 
-const double SolarMassInSeconds = 4.925491025543575903411922162094833998e-6;
-const double YearInSeconds 		= 60*60*25*365.25;
 
 // Define elliptic integrals that use Mathematica's conventions
 double EllipticK(double k){
