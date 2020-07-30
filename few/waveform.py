@@ -42,7 +42,6 @@ from abc import ABC
 # TODO: Zenodo versioning
 # TODO: instructions for file versioning install / slow data.
 # TODO: add relevant citations
-# TODO: convert c functions that need carriers to c classes
 # TODO: work out imports with sphinx
 # TODO: unit tests
 # TODO: deal with libs and includes

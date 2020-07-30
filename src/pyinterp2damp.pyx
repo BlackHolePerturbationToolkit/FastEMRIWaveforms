@@ -2,7 +2,7 @@ import numpy as np
 cimport numpy as np
 from libcpp.string cimport string
 
-from few.utils.pointer_adjust import pointer_adjust
+from few.utils.pointer_adjust import func_wrapper
 
 assert sizeof(int) == sizeof(np.int32_t)
 
@@ -27,13 +27,13 @@ cdef class pyAmplitudeGenerator:
         if self.g:
             del self.g
 
-    @pointer_adjust
-    def __call__(self, p, e, l_arr, m_arr, n_arr, input_len, num_modes, amps_carrier):
+    def __call__(self, p, e, l_arr, m_arr, n_arr, input_len, num_modes):
+
+        (p, e, l_arr, m_arr, n_arr, input_len, num_modes), _ = func_wrapper(p, e, l_arr, m_arr, n_arr, input_len, num_modes)
 
         cdef np.ndarray[ndim=1, dtype=np.complex128_t] amplitude_out = np.zeros((input_len*num_modes), dtype=np.complex128)
         cdef size_t p_in = p
         cdef size_t e_in = e
-        cdef size_t amps_carrier_in = amps_carrier
         cdef size_t l_arr_in = l_arr
         cdef size_t m_arr_in = m_arr
         cdef size_t n_arr_in = n_arr
