@@ -40,7 +40,7 @@ See [examples notebook](examples/SchwarzschildEccentricWaveform_intro.ipynb).
 
 ### Prerequisites
 
-To install this software for CPU usage, you need [gsl >2.0] (https://www.gnu.org/software/gsl/) , [lapack](https://www.netlib.org/lapack/lug/node14.html), Python >3.4, and NumPy. To run the examples, you will also need jupyter and matplotlib.
+To install this software for CPU usage, you need [gsl >2.0](https://www.gnu.org/software/gsl/) , [lapack](https://www.netlib.org/lapack/lug/node14.html), Python >3.4, and NumPy. To run the examples, you will also need jupyter and matplotlib.
 
 To install this software for use with NVIDIA GPUs (compute capability >2.0), you need the [CUDA toolkit](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and [CuPy](https://cupy.chainer.org/). The CUDA toolkit must have cuda version >8.0. Be sure to properly install cupy within the correct CUDA toolkit version.
 
