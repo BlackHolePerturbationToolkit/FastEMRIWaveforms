@@ -233,17 +233,16 @@ double get_step_flux(double p, double e, Interpolant *amp_vec_norm_interp)
 }
 
 
-FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double err, double tmax, double dt, FluxCarrier *flux_carrier, int DENSE_STEPPING, double step_eps){
+FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, double e0, double err, double tmax, double dt, int DENSE_STEPPING, double step_eps){
 
     tmax = tmax*YearInSeconds;
 
-    double init_flux = get_step_flux(p0, e0, flux_carrier->amp_vec_norm_interp);
+    double init_flux = get_step_flux(p0, e0, amp_vec_norm_interp);
 
     FLUXHolder flux_out(t0, M, mu, p0, e0, init_flux);
 
-    interp_params interps = *(flux_carrier->interps);
 	//Set the mass ratio
-	interps.epsilon = mu/M;
+	interps->epsilon = mu/M;
 
     double Msec = MTSUN_SI*M;
 
@@ -270,7 +269,7 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
 	double y[4] = { p0, e0, 0.0, 0.0 };
 
     // Initialize the ODE solver
-    gsl_odeiv2_system sys = {func, NULL, 4, &interps};
+    gsl_odeiv2_system sys = {func, NULL, 4, interps};
     const gsl_odeiv2_step_type *T = gsl_odeiv2_step_rk8pd;
 
     gsl_odeiv2_step *step 			= gsl_odeiv2_step_alloc (T, 4);
@@ -299,7 +298,7 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
         double p 		= y[0];
         double e 		= y[1];
 
-        double step_flux = get_step_flux(p, e, flux_carrier->amp_vec_norm_interp);
+        double step_flux = get_step_flux(p, e, amp_vec_norm_interp);
 
         flux_out.add_point(t*Msec, y[0], y[1], y[2], y[3], step_flux); // adds time in seconds
 
@@ -328,10 +327,10 @@ FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double
 
 }
 
-void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, int *length, double tmax, double dt, FluxCarrier *flux_carrier, double err, int DENSE_STEPPING, double step_eps, int init_len){
+void FluxCarrier::FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, double step_eps, int init_len){
 
 	double t0 = 0.0;
-		FLUXHolder flux_vals = run_FLUX(t0, M, mu, p0, e0, err, tmax, dt, flux_carrier, DENSE_STEPPING, step_eps);
+		FLUXHolder flux_vals = run_FLUX(t0, M, mu, p0, e0, err, tmax, dt, DENSE_STEPPING, step_eps);
 
         if (flux_vals.length > init_len){
             printf("\nError: Initial length is too short (length: %d, max_init_len: %d). Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n", flux_vals.length, init_len);

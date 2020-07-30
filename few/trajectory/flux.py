@@ -6,7 +6,7 @@ TODO: more info (?), Specific papers to cite
 import numpy as np
 from scipy.interpolate import CubicSpline
 
-from pyFLUX import flux_inspiral, pyFluxCarrier
+from pyFLUX import pyFluxGenerator
 
 from few.utils.baseclasses import TrajectoryBase, SchwarzschildEccentric
 
@@ -95,7 +95,7 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
                 few_dir + "few/files/FluxNewMinusPNScaled_fixed_y_order.dat",
             )
 
-        self.flux_carrier = pyFluxCarrier(few_dir)
+        self.flux_generator = pyFluxGenerator(few_dir)
 
         self.specific_kwarg_keys = ["T", "dt", "err", "DENSE_STEPPING", "max_init_len"]
 
@@ -148,8 +148,8 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
 
         # this will return in coordinate time
-        t, p, e, Phi_phi, Phi_r, amp_norm = flux_inspiral(
-            M, mu, p0, e0, self.flux_carrier, **temp_kwargs
+        t, p, e, Phi_phi, Phi_r, amp_norm = self.flux_generator(
+            M, mu, p0, e0, **temp_kwargs
         )
         return (t, p, e, Phi_phi, Phi_r, amp_norm)
 
