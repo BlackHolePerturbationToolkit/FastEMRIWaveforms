@@ -36,31 +36,25 @@ from few.summation.directmodesum import DirectModeSum
 from abc import ABC
 
 # TODO: run trajectory backward
-# TODO: fix T problem
-# TODO: Zenodo versioning
-# TODO: option to not install files for slow
-# TODO: figure out how to treat when itegrator stops vs slow type
-# TODO: verify theta != pi/2
 # TODO: add initial phases
+# TODO: zero out modes
+
+# TODO: Zenodo versioning
+# TODO: instructions for file versioning install / slow data.
 # TODO: add relevant citations
 # TODO: convert c functions that need carriers to c classes
 # TODO: work out imports with sphinx
 # TODO: unit tests
 # TODO: deal with libs and includes
 # TODO: make sure constants are same
-# TODO: associated files for install
-# TODO: highest level waveform that uses kwargs to pick waveform.
 # TODO: shared memory based on CUDA_ARCH
-# TODO: adjust into packages
 # TODO: choice of integrator
 # TODO: remove step_eps in flux.py
 # TODO: free memory in trajectory
 # TODO: deal with attributes
 # TODO: ABC for specific classes
 # TODO: Add more safeguards on settings.
-# TODO: throw error if cannot read data
 # TODO: add requirements / versions (e.g. gsl)
-# TODO: zero out modes
 from scipy import constants as ct
 
 
