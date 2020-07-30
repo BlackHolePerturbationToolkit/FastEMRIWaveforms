@@ -248,17 +248,47 @@ you do not have it.</p></li>
 notebook</a>.</p>
 <div class="section" id="prerequisites">
 <h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
-<p>To install this software for CPU usage, you need [gsl &gt;2.0]
-(<a class="reference external" href="https://www.gnu.org/software/gsl/">https://www.gnu.org/software/gsl/</a>) ,
+<p>To install this software for CPU usage, you need <a class="reference external" href="https://www.gnu.org/software/gsl/">gsl
+&gt;2.0</a> ,
 <a class="reference external" href="https://www.netlib.org/lapack/lug/node14.html">lapack</a>, Python &gt;3.4,
 and NumPy. To run the examples, you will also need jupyter and
-matplotlib.</p>
+matplotlib. For Python packages, we generally recommend installing
+within a conda environment. For gsl and lapack, it may be better to use
+brew or apt-get. If you want to run with OpenMP, make sure that is
+installed.</p>
+<p>When installing lapack and gsl, the setup file will default to assuming
+lib and include for both are in <code class="docutils literal notranslate"><span class="pre">/usr/local/opt/lapack/</span></code> and
+<code class="docutils literal notranslate"><span class="pre">/usr/local/opt/gsl/</span></code>. To provide other lib and include directories
+you can provide command line options when installing. You can also
+remove usage of OpenMP.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">help</span>
+<span class="n">usage</span><span class="p">:</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">no_omp</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lapack_lib</span> <span class="n">LAPACK_LIB</span><span class="p">]</span>
+                <span class="p">[</span><span class="o">--</span><span class="n">lapack_include</span> <span class="n">LAPACK_INCLUDE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lapack</span> <span class="n">LAPACK</span><span class="p">]</span>
+                <span class="p">[</span><span class="o">--</span><span class="n">gsl_lib</span> <span class="n">GSL_LIB</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">gsl_include</span> <span class="n">GSL_INCLUDE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">gsl</span> <span class="n">GSL</span><span class="p">]</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">--</span><span class="n">no_omp</span>              <span class="n">If</span> <span class="n">provided</span><span class="p">,</span> <span class="n">install</span> <span class="n">without</span> <span class="n">OpenMP</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">lapack_lib</span> <span class="n">LAPACK_LIB</span>
+                        <span class="n">Directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">lapack</span> <span class="n">lib</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">lapack_include</span> <span class="n">LAPACK_INCLUDE</span>
+                        <span class="n">Directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">lapack</span> <span class="n">include</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">lapack</span> <span class="n">LAPACK</span>       <span class="n">Directory</span> <span class="n">of</span> <span class="n">both</span> <span class="n">lapack</span> <span class="n">lib</span> <span class="ow">and</span> <span class="n">include</span><span class="o">.</span> <span class="s1">&#39;/include&#39;</span>
+                        <span class="ow">and</span> <span class="s1">&#39;/lib&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">added</span> <span class="n">to</span> <span class="n">the</span> <span class="n">end</span> <span class="n">of</span> <span class="n">this</span> <span class="n">string</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">gsl_lib</span> <span class="n">GSL_LIB</span>     <span class="n">Directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">gsl</span> <span class="n">lib</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">gsl_include</span> <span class="n">GSL_INCLUDE</span>
+                        <span class="n">Directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">gsl</span> <span class="n">include</span><span class="o">.</span>
+  <span class="o">--</span><span class="n">gsl</span> <span class="n">GSL</span>             <span class="n">Directory</span> <span class="n">of</span> <span class="n">both</span> <span class="n">gsl</span> <span class="n">lib</span> <span class="ow">and</span> <span class="n">include</span><span class="o">.</span> <span class="s1">&#39;/include&#39;</span> <span class="ow">and</span>
+                        <span class="s1">&#39;/lib&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">added</span> <span class="n">to</span> <span class="n">the</span> <span class="n">end</span> <span class="n">of</span> <span class="n">this</span> <span class="n">string</span><span class="o">.</span>
+</pre></div>
+</div>
 <p>To install this software for use with NVIDIA GPUs (compute capability
 &gt;2.0), you need the <a class="reference external" href="https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html">CUDA
 toolkit</a>
 and <a class="reference external" href="https://cupy.chainer.org/">CuPy</a>. The CUDA toolkit must have
 cuda version &gt;8.0. Be sure to properly install cupy within the correct
-CUDA toolkit version.</p>
+CUDA toolkit version. Make sure the nvcc binary is on <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> or set
+it as the <code class="docutils literal notranslate"><span class="pre">CUDAHOME</span></code> environment variable.</p>
 </div>
 <div class="section" id="installing">
 <h3>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h3>
