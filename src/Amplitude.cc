@@ -173,12 +173,8 @@ void AmplitudeCarrier::dealloc()
 }
 
 
-void Interp2DAmplitude(std::complex<double> *amplitude_out, double *p_arr, double *e_arr, int *l_arr, int *m_arr, int *n_arr, int num, int num_modes, AmplitudeCarrier *amps_carrier)
+void AmplitudeCarrier::Interp2DAmplitude(std::complex<double> *amplitude_out, double *p_arr, double *e_arr, int *l_arr, int *m_arr, int *n_arr, int num, int num_modes)
 {
-
-    struct waveform_amps *amps = amps_carrier->amps;
-    int lmax = amps_carrier->lmax;
-    int nmax = amps_carrier->nmax;
 
     complex<double> I(0.0, 1.0);
 

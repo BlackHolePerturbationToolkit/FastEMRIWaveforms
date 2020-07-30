@@ -4,7 +4,7 @@ import h5py
 
 from few.utils.baseclasses import SchwarzschildEccentric
 
-from pyInterp2DAmplitude import Interp2DAmplitude_wrap, pyAmplitudeCarrier
+from pyInterp2DAmplitude import pyAmplitudeGenerator
 
 import os
 
@@ -43,7 +43,7 @@ class Interp2DAmplitude(SchwarzschildEccentric):
                 "The file Teuk_amps_a0.0_lmax_10_nmax_30_new.h5 did not open sucessfully. Make sure it is located in the proper directory (Path/to/Installation/few/files/)."
             )
 
-        self.amplitude_carrier = pyAmplitudeCarrier(self.lmax, self.nmax, few_dir)
+        self.amplitude_generator = pyAmplitudeGenerator(self.lmax, self.nmax, few_dir)
 
     def __call__(self, p, e, *args, specific_modes=None, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
@@ -98,7 +98,7 @@ class Interp2DAmplitude(SchwarzschildEccentric):
 
             inds_revert = np.asarray(inds_revert)
 
-        teuk_modes = Interp2DAmplitude_wrap(
+        teuk_modes = self.amplitude_generator(
             p,
             e,
             l_arr.astype(np.int32),
