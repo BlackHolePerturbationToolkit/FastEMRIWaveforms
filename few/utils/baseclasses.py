@@ -289,6 +289,18 @@ class TrajectoryBase(ABC):
 
     @classmethod
     def get_inspiral(self, *args, **kwargs):
+        """Inspiral Generator
+
+        @classmethod that requires a child class to have a get_inspiral method.
+
+        returns:
+            2D double np.ndarray: t, p, e, Phi_phi, Phi_r, flux with shape:
+                (params, traj length).
+                
+        raises:
+            NotImplementedError: The child class does not have this method.
+
+        """
         raise NotImplementedError
 
     def __call__(
@@ -431,6 +443,14 @@ class SummationBase(ABC):
 
     @classmethod
     def sum(self, *args, **kwargs):
+        """Sum Generator
+
+        @classmethod that requires a child class to have a sum method.
+
+        raises:
+            NotImplementedError: The child class does not have this method.
+
+        """
         raise NotImplementedError
 
     def __call__(self, t, teuk_modes, ylms, dt, T, *args, **kwargs):

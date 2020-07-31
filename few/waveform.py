@@ -85,6 +85,9 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         Ylm_kwargs (dict, optional): Optional kwargs to pass to the
             Ylm generator during instantiation. Default is {}.
         use_gpu (bool, optional): If True, use GPU resources. Default is False.
+        normalize_amps (bool, optional): If True, it will normalize amplitudes
+            to flux information output from the trajectory modules. Default
+            is True.
 
     """
 
@@ -113,6 +116,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         sum_kwargs={},
         Ylm_kwargs={},
         use_gpu=False,
+        normalize_amps=True,
     ):
 
         self.sanity_check_gpu(use_gpu)
@@ -125,6 +129,8 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         else:
             self.xp = np
 
+        self.normalize_amps = normalize_amps
+
         self.inspiral_kwargs = inspiral_kwargs
         self.inspiral_generator = inspiral_module()
 
@@ -134,6 +140,16 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         self.ylm_gen = GetYlms(use_gpu=use_gpu, **Ylm_kwargs)
 
         self.mode_selector = ModeSelector(self.m0mask, use_gpu=use_gpu)
+
+    @classmethod
+    @property
+    def gpu_capability(self):
+        raise NotImplementedError
+
+    @classmethod
+    @property
+    def allow_batching(self):
+        return NotImplementedError
 
     @property
     def citation(self):
@@ -198,7 +214,6 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
                 provided, it will return those modes combined into a
                 single waveform.
 
-
         Returns:
             1D complex128 xp.ndarray: The output waveform.
 
@@ -207,6 +222,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
         self.sanity_check_init(M, mu, p0, e0)
         Tsec = T * YRSID_SI
+
         # get trajectory
         (t, p, e, Phi_phi, Phi_r, amp_norm) = self.inspiral_generator(
             M, mu, p0, e0, T=T, dt=dt, **self.inspiral_kwargs
@@ -262,18 +278,20 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
                 p_temp, e_temp, self.l_arr, self.m_arr, self.n_arr
             )
 
-            amp_for_norm = self.xp.sum(
-                self.xp.abs(
-                    self.xp.concatenate(
-                        [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])], axis=1
+            if self.normalize_amps:
+                amp_for_norm = self.xp.sum(
+                    self.xp.abs(
+                        self.xp.concatenate(
+                            [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
+                            axis=1,
+                        )
                     )
-                )
-                ** 2,
-                axis=1,
-            ) ** (1 / 2)
+                    ** 2,
+                    axis=1,
+                ) ** (1 / 2)
 
-            factor = amp_norm_temp / amp_for_norm
-            teuk_modes = teuk_modes * factor[:, np.newaxis]
+                factor = amp_norm_temp / amp_for_norm
+                teuk_modes = teuk_modes * factor[:, np.newaxis]
 
             if isinstance(mode_selection, str):
                 if mode_selection == "all":
@@ -404,9 +422,6 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         **kwargs
     ):
 
-        self.gpu_capability = True
-        self.allow_batching = False
-
         SchwarzschildEccentricWaveformBase.__init__(
             self,
             RunSchwarzEccFluxInspiral,
@@ -423,13 +438,22 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
 
     def attributes_FastSchwarzschildEccentricFlux(self):
         """
-        attributes:
+        Attributes:
             gpu_capability (bool): If True, this wavefrom can leverage gpu
                 resources. For this class it is True.
             allow_batching (bool): If True, this waveform can use the batch_size
                 kwarg. For this class it is False.
 
         """
+        pass
+
+    @property
+    def gpu_capability(self):
+        return True
+
+    @property
+    def allow_batching(self):
+        return False
 
 
 class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
@@ -474,6 +498,14 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
 
     """
 
+    @property
+    def gpu_capability(self):
+        return False
+
+    @property
+    def allow_batching(self):
+        return True
+
     def attributes_SlowSchwarzschildEccentricFlux(self):
         """
         attributes:
@@ -497,9 +529,6 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
 
         # declare specific properties
         inspiral_kwargs["DENSE_STEPPING"] = 1
-
-        self.gpu_capability = False
-        self.allow_batching = True
 
         SchwarzschildEccentricWaveformBase.__init__(
             self,
