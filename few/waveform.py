@@ -54,6 +54,11 @@ from abc import ABC
 # TODO: example on how to build a trajectory and new waveform with it (in docs too)
 
 
+few_citation = """
+Temp citation for this paper
+"""
+
+
 class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
     """Base class for the actual Schwarzschild eccentric waveforms.
 
@@ -154,11 +159,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
     @property
     def citation(self):
-        this_citation = """
-                Temp citation for this paper
-                """
-
-        out_citation = this_citation + (
+        out_citation = few_citation + (
             self.inspiral_generator.citation + "\n" + self.amplitude_generator.citation
         )
         return out_citation
