@@ -33,10 +33,6 @@ class ModeSelector:
         use_gpu (bool, optional): If True, allocate arrays for usage on a GPU.
             Default is False.
 
-        Attributes:
-            xp: cupy or numpy depending on GPU usage.
-
-
     """
 
     def __init__(self, m0mask, num_m_zero_up, num_m_1_up, num_m0, use_gpu=False):
@@ -50,6 +46,14 @@ class ModeSelector:
         self.m0mask = m0mask
         self.num_m_zero_up, self.num_m_1_up = num_m_zero_up, num_m_1_up
         self.num_m0 = num_m0
+
+    def attributes_ModeSelector(self):
+        """
+        attributes:
+            xp: cupy or numpy depending on GPU usage.
+
+        """
+        pass
 
     def __call__(self, teuk_modes, ylms, modeinds, eps=1e-5):
         """Call to sort and filer teukolsky modes.

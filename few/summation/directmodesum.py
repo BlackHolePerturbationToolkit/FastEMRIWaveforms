@@ -18,10 +18,6 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric):
         *args (list, placeholder): Added for flexibility.
         **kwargs (dict, placeholder):  Added for flexibility.
 
-    attributes:
-        waveform (1D complex128 np.ndarray): Complex waveform given by
-            :math:`h_+ + i*h_x`.
-
     """
 
     def __init__(self, *args, use_gpu=False, **kwargs):
@@ -33,8 +29,6 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric):
             self.xp = xp
         else:
             self.xp = np
-
-        # TODO: add gpu ?
 
     def sum(self, t, teuk_modes, ylms, Phi_phi, Phi_r, m_arr, n_arr, *args, **kwargs):
         """Direct summation function.

@@ -401,9 +401,9 @@ computing facility at Northwestern University.</p></li>
 \[V_{lmkn}(\theta, \phi) = (s=-2)S_{lmkn}(\theta)e^{im\phi},\]</div>
 <p>where <span class="math notranslate nohighlight">\(S_{lmkn}(\theta)\)</span> is the general angular function from <a class="reference external" href="https://arxiv.org/abs/gr-qc/0509101">Drasco &amp; Hughes 2006</a>.</p>
 <p>When these modules complete their calculations, the summation (<a class="reference internal" href="#module-few.summation" title="few.summation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.summation</span></code></a>) module takes all of this information and creates an EMRI waveform.</p>
-<div class="align-center figure" id="id8">
+<div class="align-center figure" id="id4">
 <a class="reference internal image-reference" href="_images/EMRI_diagram.jpg"><img alt="alternate text" src="_images/EMRI_diagram.jpg" style="width: 500px; height: 500px;" /></a>
-<p class="caption"><span class="caption-text">A general schematic diagram for the creation of an EMRI waveform.</span><a class="headerlink" href="#id8" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text">A general schematic diagram for the creation of an EMRI waveform.</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
 </div>
 <div class="section" id="overall-waveform-models">
 <h2>Overall Waveform Models<a class="headerlink" href="#overall-waveform-models" title="Permalink to this headline">¶</a></h2>
@@ -450,7 +450,10 @@ Ylm generator during instantiation. Default is {}.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
+<dl class="py method">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.attributes_FastSchwarzschildEccentricFlux">
+<code class="sig-name descname">attributes_FastSchwarzschildEccentricFlux</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.attributes_FastSchwarzschildEccentricFlux" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
 <dt id="few.waveform.FastSchwarzschildEccentricFlux.gpu_capability">
 <code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.gpu_capability" title="Permalink to this definition">¶</a></dt>
 <dd><p>If True, this wavefrom can leverage gpu
@@ -472,6 +475,8 @@ kwarg. For this class it is False.</p>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py method">
@@ -2140,7 +2145,7 @@ trajectory. Inputs define the output time spacing.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>*args</strong> (<em>list</em>) – Input of variable number of arguments specific to the
 inspiral model (see the trajectory class’ <cite>get_inspiral</cite> method).
-<a href="#id4"><span class="problematic" id="id5">**</span></a>Important Note: M must be the first parameter of any model
+<strong>Important Note</strong>: M must be the first parameter of any model
 that uses this base class.</p></li>
 <li><p><strong>in_coordinate_time</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the trajectory will be
 outputted in coordinate time. If False, the trajectory will be
@@ -2220,7 +2225,10 @@ class <a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEc
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
+<dl class="py method">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.attributes_RunSchwarzEccFluxInspiral">
+<code class="sig-name descname">attributes_RunSchwarzEccFluxInspiral</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.attributes_RunSchwarzEccFluxInspiral" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
 <dt>
 <code class="sig-name descname">flux carrier</code></dt>
 <dd><p>Unaccessible from python. It carries c++ classes
@@ -2243,6 +2251,8 @@ inspiral generator.</p>
 <dd class="field-odd"><p>list</p>
 </dd>
 </dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py method">
@@ -2293,7 +2303,7 @@ trajectory. Inputs define the output time spacing.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>*args</strong> (<em>list</em>) – Input of variable number of arguments specific to the
 inspiral model (see the trajectory class’ <cite>get_inspiral</cite> method).
-<a href="#id6"><span class="problematic" id="id7">**</span></a>Important Note: M must be the first parameter of any model
+<strong>Important Note</strong>: M must be the first parameter of any model
 that uses this base class.</p></li>
 <li><p><strong>in_coordinate_time</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the trajectory will be
 outputted in coordinate time. If False, the trajectory will be
@@ -3344,7 +3354,10 @@ with each associated module discussed below.</p>
 between plunge and observation time. Default is False.</p>
 </dd>
 </dl>
-<dl class="py attribute">
+<dl class="py method">
+<dt id="few.utils.baseclasses.SummationBase.attributes_SummationBase">
+<code class="sig-name descname">attributes_SummationBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SummationBase.attributes_SummationBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
 <dt id="few.utils.baseclasses.SummationBase.waveform">
 <code class="sig-name descname">waveform</code><a class="headerlink" href="#few.utils.baseclasses.SummationBase.waveform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Complex waveform given by
@@ -3354,6 +3367,8 @@ between plunge and observation time. Default is False.</p>
 <dd class="field-odd"><p>1D complex128 np.ndarray</p>
 </dd>
 </dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py method">
@@ -3408,7 +3423,10 @@ False.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
+<dl class="py method">
+<dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant.attributes_CubicSplineInterpolate">
+<code class="sig-name descname">attributes_CubicSplineInterpolate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.attributes_CubicSplineInterpolate" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
 <dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant.interpolate_arrays">
 <code class="sig-name descname">interpolate_arrays</code><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.interpolate_arrays" title="Permalink to this definition">¶</a></dt>
 <dd><p>CPU or GPU function for mode interpolation.</p>
@@ -3432,6 +3450,8 @@ coefficients. It is flattened after fitting from shape
 </dl>
 </dd></dl>
 
+</dd></dl>
+
 <dl class="py method">
 <dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant.__call__">
 <code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tnew</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.__call__" title="Permalink to this definition">¶</a></dt>
@@ -3449,78 +3469,6 @@ coefficients. It is flattened after fitting from shape
 trajectories. Within the summation phase, the values are calculated using
 the interpolants and summed.</p>
 <p>This class can be run on GPUs and CPUs.</p>
-<dl class="py attribute">
-<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.get_waveform">
-<code class="sig-name descname">get_waveform</code><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.get_waveform" title="Permalink to this definition">¶</a></dt>
-<dd><p>CPU or GPU function for waveform creation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>func</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.ninterps">
-<code class="sig-name descname">ninterps</code><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.ninterps" title="Permalink to this definition">¶</a></dt>
-<dd><p>number of interpolants. It is the (number of phases) +
-2*(number of modes).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>int</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.y_all">
-<code class="sig-name descname">y_all</code><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.y_all" title="Permalink to this definition">¶</a></dt>
-<dd><p>All of the y values for the
-interpolants. Real and imaginary values from the complex amplitudes
-are separated giving all real numbers.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>2D double xp.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt>
-<code class="sig-name descname">c1, c2, c3</code></dt>
-<dd><p>(1st, 2nd, 3rd) constants for each
-cubic spline.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>2D double xp.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.waveform">
-<code class="sig-name descname">waveform</code><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.waveform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Complex waveform given by
-<span class="math notranslate nohighlight">\(h_+ + i*h_x\)</span>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>1D complex128 np.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.interp">
-<code class="sig-name descname">interp</code><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.interp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Interpolant. See
-<code class="xref py py-class docutils literal notranslate"><span class="pre">few.summation.interpolated_mode_sum.CubicSplineInterpolant</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>obj</p>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="py method">
 <dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.__call__">
 <code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">T</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.__call__" title="Permalink to this definition">¶</a></dt>
@@ -3762,6 +3710,23 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_SummationBase">
+<code class="sig-name descname">attributes_SummationBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_SummationBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.waveform">
+<code class="sig-name descname">waveform</code><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.waveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Complex waveform given by
+<span class="math notranslate nohighlight">\(h_+ + i*h_x\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D complex128 np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_init">
 <code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_init" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sanity check initial parameters.</p>
@@ -3830,6 +3795,22 @@ the trajectory module.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_InterpolatedModeSum">
+<code class="sig-name descname">attributes_InterpolatedModeSum</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_InterpolatedModeSum" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.get_waveform">
+<code class="sig-name descname">get_waveform</code><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.get_waveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>CPU or GPU function for waveform creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>func</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.sum">
 <code class="sig-name descname">sum</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">Phi_phi</span></em>, <em class="sig-param"><span class="n">Phi_r</span></em>, <em class="sig-param"><span class="n">m_arr</span></em>, <em class="sig-param"><span class="n">n_arr</span></em>, <em class="sig-param"><span class="n">init_len</span></em>, <em class="sig-param"><span class="n">num_pts</span></em>, <em class="sig-param"><span class="n">num_teuk_modes</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.sum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Interpolated summation function.</p>
@@ -3883,18 +3864,6 @@ rate).</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt id="few.summation.directmodesum.DirectModeSum.waveform">
-<code class="sig-name descname">waveform</code><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.waveform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Complex waveform given by
-<span class="math notranslate nohighlight">\(h_+ + i*h_x\)</span>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>1D complex128 np.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="py method">
 <dt id="few.summation.directmodesum.DirectModeSum.__call__">
 <code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">T</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.__call__" title="Permalink to this definition">¶</a></dt>
@@ -4136,6 +4105,23 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="few.summation.directmodesum.DirectModeSum.attributes_SummationBase">
+<code class="sig-name descname">attributes_SummationBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.attributes_SummationBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.summation.directmodesum.DirectModeSum.waveform">
+<code class="sig-name descname">waveform</code><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.waveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Complex waveform given by
+<span class="math notranslate nohighlight">\(h_+ + i*h_x\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D complex128 np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.summation.directmodesum.DirectModeSum.sanity_check_init">
 <code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.sanity_check_init" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sanity check initial parameters.</p>
@@ -4266,10 +4252,20 @@ will in order of <span class="math notranslate nohighlight">\(m=0\)</span>, <spa
 <li><p><strong>num_m0</strong> (<em>int</em>) – Number of modes with <span class="math notranslate nohighlight">\(m=0\)</span>.</p></li>
 <li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, allocate arrays for usage on a GPU.
 Default is False.</p></li>
-<li><p><strong>Attributes</strong> – xp: cupy or numpy depending on GPU usage.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt id="few.utils.modeselector.ModeSelector.attributes_ModeSelector">
+<code class="sig-name descname">attributes_ModeSelector</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.attributes_ModeSelector" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.utils.modeselector.ModeSelector.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.utils.modeselector.ModeSelector.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>cupy or numpy depending on GPU usage.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py method">
 <dt id="few.utils.modeselector.ModeSelector.__call__">
 <code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">modeinds</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.__call__" title="Permalink to this definition">¶</a></dt>
@@ -4310,17 +4306,15 @@ acceptable loss). Default that gives good mismatch qualities is
 <span id="spin-weighted-spherical-harmonics"></span><h3>(-2) Spin-Weighted Spherical Harmonics<a class="headerlink" href="#module-few.utils.ylm" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
 <dt id="few.utils.ylm.GetYlms">
-<em class="property">class </em><code class="sig-prename descclassname">few.utils.ylm.</code><code class="sig-name descname">GetYlms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_teuk_modes</span></em>, <em class="sig-param"><span class="n">assume_positive_m</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.ylm.</code><code class="sig-name descname">GetYlms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">assume_positive_m</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>(-2) Spin-weighted Spherical Harmonics</p>
 <p>The class generates (-2) spin-weighted spherical hackarmonics,
 <span class="math notranslate nohighlight">\(Y_{lm}(\Theta,\phi)\)</span>. <strong>Important Note</strong>: this class also applies
 the parity operator (<span class="math notranslate nohighlight">\(-1^l\)</span>) to modes with <span class="math notranslate nohighlight">\(m&lt;0\)</span>.</p>
-<p>This currently works by assigning a buffer upfront.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_teuk_modes</strong> (<em>int</em>) – Number of teukolsky modes for buffer.</p></li>
 <li><p><strong>assume_positive_m</strong> (<em>bool</em><em>, </em><em>optional</em>) – Set true if only providing <span class="math notranslate nohighlight">\(m\geq0\)</span>,
 it will return twice the number of requested modes with the seconds
 half as modes with <span class="math notranslate nohighlight">\(m&lt;0\)</span>. <strong>Warning</strong>: It will also duplicate
@@ -4330,7 +4324,10 @@ Default is False.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
+<dl class="py method">
+<dt id="few.utils.ylm.GetYlms.attributes_GetYlms">
+<code class="sig-name descname">attributes_GetYlms</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.attributes_GetYlms" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
 <dt id="few.utils.ylm.GetYlms.xp">
 <code class="sig-name descname">xp</code><a class="headerlink" href="#few.utils.ylm.GetYlms.xp" title="Permalink to this definition">¶</a></dt>
 <dd><p>cupy or numpy based on GPU usage.</p>
@@ -4341,15 +4338,6 @@ Default is False.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="py attribute">
-<dt id="few.utils.ylm.GetYlms.buffer">
-<code class="sig-name descname">buffer</code><a class="headerlink" href="#few.utils.ylm.GetYlms.buffer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Buffer for outputing Ylm values.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>1D complex128 xp.ndarray</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">

@@ -291,7 +291,7 @@ class TrajectoryBase(ABC):
         args:
             *args (list): Input of variable number of arguments specific to the
                 inspiral model (see the trajectory class' `get_inspiral` method).
-                **Important Note: M must be the first parameter of any model
+                **Important Note**: M must be the first parameter of any model
                 that uses this base class.
             in_coordinate_time (bool, optional): If True, the trajectory will be
                 outputted in coordinate time. If False, the trajectory will be
@@ -392,14 +392,18 @@ class SummationBase(ABC):
         pad_output (bool, optional): Add zero padding to the waveform for time
             between plunge and observation time. Default is False.
 
-    attributes:
-        waveform (1D complex128 np.ndarray): Complex waveform given by
-            :math:`h_+ + i*h_x`.
-
     """
 
     def __init__(self, *args, pad_output=False, **kwargs):
         self.pad_output = pad_output
+
+    def attributes_SummationBase(self):
+        """
+        attributes:
+            waveform (1D complex128 np.ndarray): Complex waveform given by
+                :math:`h_+ + i*h_x`.
+        """
+        pass
 
     @classmethod
     def sum(self, *args, **kwargs):
