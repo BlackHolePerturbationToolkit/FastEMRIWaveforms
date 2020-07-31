@@ -395,6 +395,7 @@ setup(
         "few.utils.ylm",
         "few.summation.interpolatedmodesum",
         "few.utils.constants",
+        "few.utils.getfiles",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

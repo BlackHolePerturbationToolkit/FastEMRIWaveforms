@@ -12,6 +12,7 @@ from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 import pymatmul_cpu
 
 from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase
+from few.utils.getfiles import check_for_file_download
 
 try:
     import cupy as xp
@@ -85,30 +86,8 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
 
         self.few_dir = dir_path + "/../../"
 
-        try:
-            os.listdir(self.few_dir + "few/files/")
-        except OSError:
-            os.mkdir(self.few_dir + "few/files/")
-
-        self.data_file = "SchwarzschildEccentricInput.hdf5"
-
-        if self.data_file not in os.listdir(self.few_dir + "few/files/"):
-            warnings.warn(
-                "The file SchwarzschildEccentricInput.hdf5 did not open sucessfully. It will now be downloaded to the proper location."
-            )
-
-            # download to proper location
-            subprocess.run(
-                [
-                    "wget",
-                    "https://raw.githubusercontent.com/mikekatz04/FastEMRIWaveforms/master/few/files/SchwarzschildEccentricInput.hdf5",
-                ]
-            )
-
-            os.rename(
-                "SchwarzschildEccentricInput.hdf5",
-                self.few_dir + "few/files/SchwarzschildEccentricInput.hdf5",
-            )
+        self.data_file = fp = "SchwarzschildEccentricInput.hdf5"
+        check_for_file_download(fp, self.few_dir)
 
         with h5py.File(self.few_dir + "few/files/" + self.data_file, "r") as fp:
             num_teuk_modes = fp.attrs["num_teuk_modes"]

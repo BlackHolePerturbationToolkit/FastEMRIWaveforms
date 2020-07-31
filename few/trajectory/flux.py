@@ -8,6 +8,7 @@ from scipy.interpolate import CubicSpline
 from pyFLUX import pyFluxGenerator
 
 from few.utils.baseclasses import TrajectoryBase, SchwarzschildEccentric
+from few.utils.getfiles import check_for_file_download
 
 from few.utils.constants import *
 
@@ -57,49 +58,10 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
         SchwarzschildEccentric.__init__(self, *args, **kwargs)
         few_dir = dir_path + "/../../"
 
-        try:
-            os.listdir(few_dir + "few/files/")
-
-        except OSError:
-            os.mkdir(few_dir + "few/files/")
-
-        # check if necessary files are in the few_dir
-        file_list = os.listdir(few_dir + "few/files/")
-
-        if "AmplitudeVectorNorm.dat" not in file_list:
-            warnings.warn(
-                "The file AmplitudeVectorNorm.dat did not open sucessfully. It will now be downloaded to the proper location."
-            )
-
-            # download to proper location
-            subprocess.run(
-                [
-                    "wget",
-                    "https://raw.githubusercontent.com/mikekatz04/FastEMRIWaveforms/master/few/files/AmplitudeVectorNorm.dat",
-                ]
-            )
-
-            os.rename(
-                "AmplitudeVectorNorm.dat", few_dir + "few/files/AmplitudeVectorNorm.dat"
-            )
-
-        if "FluxNewMinusPNScaled_fixed_y_order.dat" not in file_list:
-            warnings.warn(
-                "The file FluxNewMinusPNScaled_fixed_y_order.dat did not open sucessfully. It will now be downloaded to the proper location."
-            )
-
-            # download to proper location
-            subprocess.run(
-                [
-                    "wget",
-                    "https://raw.githubusercontent.com/mikekatz04/FastEMRIWaveforms/master/few/files/FluxNewMinusPNScaled_fixed_y_order.dat",
-                ]
-            )
-
-            os.rename(
-                "FluxNewMinusPNScaled_fixed_y_order.dat",
-                few_dir + "few/files/FluxNewMinusPNScaled_fixed_y_order.dat",
-            )
+        fp = "AmplitudeVectorNorm.dat"
+        check_for_file_download(fp, few_dir)
+        fp = "FluxNewMinusPNScaled_fixed_y_order.dat"
+        check_for_file_download(fp, few_dir)
 
         self.flux_generator = pyFluxGenerator(few_dir)
 
