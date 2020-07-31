@@ -44,13 +44,14 @@ from abc import ABC
 # TODO: shared memory based on CUDA_ARCH
 # TODO: deal with file locations and removing files from git history
 # TODO: add tutorials to documentation
+# TODO: Amplitude and general waveform base class
 
 # Shorter Term
 # TODO: Zenodo versioning
 # TODO: automatic get of hdf5
 # TODO: add relevant citations
 # TODO: document in line / check / cleanup
-# TODO: example on how to build a trajectory and new waveform with it
+# TODO: example on how to build a trajectory and new waveform with it (in docs too)
 
 
 class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
