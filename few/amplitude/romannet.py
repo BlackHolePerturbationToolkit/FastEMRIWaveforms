@@ -28,7 +28,7 @@ RUN_RELU = 1
 NO_RELU = 0
 
 
-class ROMANAmplitude(SchwarzschildEccentric):
+class RomanAmplitude(SchwarzschildEccentric):
     """Calculate Teukolsky amplitudes with a ROMAN.
 
     ROMAN stands for reduced-order models with artificial neurons. Please see

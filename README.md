@@ -32,7 +32,7 @@ python setup.py install
 4) To import few:
 
 ```
-from few.waveforms import FastSchwarzschildEccentricFlux
+from few.waveform import FastSchwarzschildEccentricFlux
 ```
 
 See [examples notebook](examples/SchwarzschildEccentricWaveform_intro.ipynb).

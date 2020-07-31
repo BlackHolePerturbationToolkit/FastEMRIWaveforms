@@ -44,7 +44,7 @@ Below is a quick set of instructions to get you started with ``few``.
 
 ::
 
-   from few.waveforms import FastSchwarzschildEccentricFlux
+   from few.waveform import FastSchwarzschildEccentricFlux
 
 See `examples
 notebook <examples/SchwarzschildEccentricWaveform_intro.ipynb>`__.

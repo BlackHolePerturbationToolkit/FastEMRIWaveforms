@@ -21,7 +21,7 @@ from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 
 from few.utils.overlap import get_mismatch
 
-from few.amplitude.romannet import ROMANAmplitude
+from few.amplitude.romannet import RomanAmplitude
 
 from few.utils.constants import *
 
@@ -46,6 +46,7 @@ from abc import ABC
 # TODO: automatic get of hdf5
 # TODO: add relevant citations\
 # TODO: Add more safeguards on settings.
+# TODO: document / check / cleanup
 
 
 class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
@@ -360,7 +361,7 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
     flux-based, sparse trajectory. This returns approximately 100 points.
 
     The amplitudes are then determined with
-    :class:`few.amplitude.romannet.ROMANAmplitude` along these sparse
+    :class:`few.amplitude.romannet.RomanAmplitude` along these sparse
     trajectories. This gives complex amplitudes for all modes in this model at
     each point in the trajectory. These are then filtered with
     :class:`few.utils.modeselector.ModeSelector`.
@@ -405,7 +406,7 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         SchwarzschildEccentricWaveformBase.__init__(
             self,
             RunSchwarzEccFluxInspiral,
-            ROMANAmplitude,
+            RomanAmplitude,
             InterpolatedModeSum,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
