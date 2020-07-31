@@ -37,16 +37,17 @@ from few.summation.directmodesum import DirectModeSum
 
 from abc import ABC
 
+# Longer Term
 # TODO: run trajectory backward
 # TODO: add initial phases
 # TODO: zero out modes
 # TODO: shared memory based on CUDA_ARCH
 
+# Shorter Term
 # TODO: Zenodo versioning
 # TODO: automatic get of hdf5
-# TODO: add relevant citations\
-# TODO: Add more safeguards on settings.
-# TODO: document / check / cleanup
+# TODO: add relevant citations
+# TODO: document in line / check / cleanup
 
 
 class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
