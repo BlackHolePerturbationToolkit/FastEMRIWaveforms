@@ -300,7 +300,19 @@ coefficients. It is flattened after fitting from shape
 <dl class="py method">
 <dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant.__call__">
 <code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tnew</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.__call__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Call self as a function.</p>
+<dd><p>Evaluation function for the spline</p>
+<p>Put in an array of new t values at which all interpolants will be
+evaluated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>tnew</strong> (<em>1D double xp.ndarray</em>) – Array of new t values. All of these new
+t values must be within the bounds of the input t values,
+including the beginning t and <strong>excluding</strong> the ending t.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – a new t value is not in the bounds of the input t array.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
