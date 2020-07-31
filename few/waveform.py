@@ -162,12 +162,11 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         eccentric waveforms. It will use all of the modules preloaded to
         compute desired outputs.
 
-        TODO: add limits on p0
-
         args:
             M (double): Mass of larger black hole in solar masses.
             mu (double): Mass of compact object in solar masses.
-            p0 (double): Initial semilatus rectum (:math:`6.0\leq p_0\leq18.0`).
+            p0 (double): Initial semilatus rectum (:math:`10\leq p_0\leq16 + e_0`).
+                See documentation for more information on :math:`p_0<10`.
             e0 (double): Initial eccentricity (:math:`0.0\leq e_0\leq0.7`).
             theta (double): Polar viewing angle (:math:`-\pi/2\leq\Theta\leq\pi/2`).
             phi (double): Azimuthal viewing angle.
