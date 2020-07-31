@@ -40,8 +40,8 @@ class ModeSelector:
 
         self.m0mask = m0mask
         self.num_m_zero_up = len(m0mask)
-        self.num_m_1_up = len(np.arange(len(m0mask))[m0mask])
-        self.num_m0 = len(np.arange(len(m0mask))[~m0mask])
+        self.num_m_1_up = len(self.xp.arange(len(m0mask))[m0mask])
+        self.num_m0 = len(self.xp.arange(len(m0mask))[~m0mask])
 
     def attributes_ModeSelector(self):
         """
