@@ -44,8 +44,7 @@ from abc import ABC
 
 # TODO: Zenodo versioning
 # TODO: automatic get of hdf5
-# TODO: add relevant citations
-# TODO: deal with attributes
+# TODO: add relevant citations\
 # TODO: Add more safeguards on settings.
 
 

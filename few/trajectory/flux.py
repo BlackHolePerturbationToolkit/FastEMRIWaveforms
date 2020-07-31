@@ -1,6 +1,5 @@
 """
 This module contains flux-based or adiabatic trajectory modules.
-TODO: more info (?), Specific papers to cite
 """
 
 import numpy as np

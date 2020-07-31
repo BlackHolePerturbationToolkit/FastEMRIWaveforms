@@ -12,8 +12,6 @@ from scipy import constants as ct
 
 from few.utils.constants import *
 
-# TODO: get bounds on p
-
 
 class SchwarzschildEccentric(ABC):
     """Base class for Schwarzschild eccentric waveforms.
@@ -35,7 +33,13 @@ class SchwarzschildEccentric(ABC):
 
     :math:`l` ranges from 2 to 10; :math:`m` from :math:`-l` to :math:`l`;
     and :math:`n` from -30 to 30. This is for Schwarzschild eccentric.
-    The model validity ranges from (TODO: add limits).
+    The model validity ranges from :math:`0.1 \leq e_0 \leq 0.7` and
+    :math:`10 \leq p_0 \leq 16 + 2*e_0`. The user can start at any :math:`p` and
+    :math:`e` combination that exists under the :math:`p_0=10, e_0=0.7`
+    trajectory within those bounds (and is outside of the separatrix). **Important Note**: if the trajectory is
+    within the bounds listed, but it is above :math:`p_0=10, e_0=0.7` trajectory.,
+    the user may not receive an error. See the documentation introduction for
+    more information on this.
 
     args:
         use_gpu (bool, optional): If True, will allocate arrays on the GPU.
@@ -224,15 +228,21 @@ class SchwarzschildEccentric(ABC):
         args:
             M (double): Massive black hole mass in solar masses.
             mu (double): compact object mass in solar masses.
-            p0 (double): Initial semilatus rectum in units of M. TODO: Fix this. :math:`(\leq e0\leq0.7)`
-            e0 (double): Initial eccentricity :math:`(0\leq e0\leq0.7)`
+            p0 (double): Initial semilatus rectum (dimensionless)
+                :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
+                more information on :math:`p_0 \leq 10.0`.
+            e0 (double): Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
 
         Raises:
             ValueError: If any of the parameters are not allowed.
 
         """
 
-        # TODO: add stuff
+        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"]]:
+            test = val < 0.0
+            if test:
+                raise ValueError("{} is negative. It must be positive.".format(key))
+
         if e0 > 0.7:
             raise ValueError(
                 "Initial eccentricity above 0.7 not allowed. (e0={})".format(e0)
@@ -247,6 +257,20 @@ class SchwarzschildEccentric(ABC):
             warnings.warn(
                 "Mass ratio is outside of generally accepted range for an extreme mass ratio (1e-4). (q={})".format(
                     mu / M
+                )
+            )
+
+        if p0 < 10.0:
+            warnings.warn(
+                "With p0 = {} < 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.".format(
+                    p0
+                )
+            )
+
+        if p0 > 16.0 + 2 * e0:
+            raise ValueError(
+                "Initial p0 is too large (p0={}). Must be 10 <= p0 <= 16 + 2 * e.".format(
+                    p0
                 )
             )
 
@@ -444,7 +468,6 @@ class SummationBase(ABC):
             else:
                 num_pts_pad = 0
 
-        # TODO: make sure num points adjusts for zero padding
         self.num_pts, self.num_pts_pad = num_pts, num_pts_pad
         self.dt = dt
         init_len = len(t)
