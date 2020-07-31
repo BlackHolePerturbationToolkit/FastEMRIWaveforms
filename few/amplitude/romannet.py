@@ -27,6 +27,22 @@ except (ImportError, ModuleNotFoundError) as e:
 RUN_RELU = 1
 NO_RELU = 0
 
+romannet_citation = """
+@article{Chua:2018woh,
+    author = "Chua, Alvin J.K. and Galley, Chad R. and Vallisneri, Michele",
+    title = "{Reduced-order modeling with artificial neurons for gravitational-wave inference}",
+    eprint = "1811.05491",
+    archivePrefix = "arXiv",
+    primaryClass = "astro-ph.IM",
+    doi = "10.1103/PhysRevLett.122.211101",
+    journal = "Phys. Rev. Lett.",
+    volume = "122",
+    number = "21",
+    pages = "211101",
+    year = "2019"
+}
+"""
+
 
 class RomanAmplitude(SchwarzschildEccentric):
     """Calculate Teukolsky amplitudes with a ROMAN.
@@ -115,21 +131,7 @@ class RomanAmplitude(SchwarzschildEccentric):
 
     @property
     def citation(self):
-        return """
-                @article{Chua:2018woh,
-                    author = "Chua, Alvin J.K. and Galley, Chad R. and Vallisneri, Michele",
-                    title = "{Reduced-order modeling with artificial neurons for gravitational-wave inference}",
-                    eprint = "1811.05491",
-                    archivePrefix = "arXiv",
-                    primaryClass = "astro-ph.IM",
-                    doi = "10.1103/PhysRevLett.122.211101",
-                    journal = "Phys. Rev. Lett.",
-                    volume = "122",
-                    number = "21",
-                    pages = "211101",
-                    year = "2019"
-                }
-                """
+        return romannet_citation
 
     def _initialize_weights(self):
         self.weights = []

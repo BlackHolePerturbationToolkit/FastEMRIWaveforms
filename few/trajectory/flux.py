@@ -17,6 +17,20 @@ import warnings
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+flux_citation = """
+@article{Hughes:2005qb,
+    author = "Hughes, Scott A. and Drasco, Steve and Flanagan, Eanna E. and Franklin, Joel",
+    title = "{Gravitational radiation reaction and inspiral waveforms in the adiabatic limit}",
+    eprint = "gr-qc/0504015",
+    archivePrefix = "arXiv",
+    doi = "10.1103/PhysRevLett.94.221101",
+    journal = "Phys. Rev. Lett.",
+    volume = "94",
+    pages = "221101",
+    year = "2005"
+}
+"""
+
 
 class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
     """Flux-based trajectory module.
@@ -110,19 +124,7 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
 
     @property
     def citation(self):
-        return """
-                @article{Hughes:2005qb,
-                    author = "Hughes, Scott A. and Drasco, Steve and Flanagan, Eanna E. and Franklin, Joel",
-                    title = "{Gravitational radiation reaction and inspiral waveforms in the adiabatic limit}",
-                    eprint = "gr-qc/0504015",
-                    archivePrefix = "arXiv",
-                    doi = "10.1103/PhysRevLett.94.221101",
-                    journal = "Phys. Rev. Lett.",
-                    volume = "94",
-                    pages = "221101",
-                    year = "2005"
-                }
-            """
+        return flux_citation
 
     def get_inspiral(self, M, mu, p0, e0, *args, **kwargs):
         """Generate the inspiral.

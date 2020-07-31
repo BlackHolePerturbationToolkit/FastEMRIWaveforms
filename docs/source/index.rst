@@ -75,3 +75,9 @@ Below are figures from our paper related to this package.
    user/amp
    user/sum
    user/util
+
+.. toctree::
+   :maxdepth: 4
+   :caption: Tutorial:
+
+   tutorial/SchwarzschildEccentricWaveform_intro

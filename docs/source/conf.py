@@ -43,6 +43,13 @@ sys.path.insert(
     0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveforms/few/trajectory/")
 )
 
+import shutil
+
+shutil.copy(
+    "/Users/michaelkatz/Research/FastEMRIWaveforms/examples/SchwarzschildEccentricWaveform_intro.ipynb",
+    "/Users/michaelkatz/Research/FastEMRIWaveforms/docs/source/tutorial/SchwarzschildEccentricWaveform_intro.ipynb",
+)
+
 
 # -- General configuration ---------------------------------------------------
 
@@ -56,6 +63,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx_rtd_theme",
     "sphinx.ext.mathjax",
+    "nbsphinx",
 ]
 
 source_suffix = [".rst"]
