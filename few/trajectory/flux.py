@@ -36,13 +36,6 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
             class :class:`few.utils.baseclasses.TrajectoryBase` or
             class :class:`few.utils.baseclasses.SchwarzschildEccentric`.
 
-    attributes:
-        flux carrier (obj): Unaccessible from python. It carries c++ classes
-            for the integration.
-        specific_kwarg_keys (list): specific kwargs from
-            :class:`few.utils.baseclasses.TrajectoryBase` that apply this
-            inspiral generator.
-
     """
 
     def __init__(self, *args, **kwargs):
@@ -105,6 +98,16 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
             "max_init_len",
             "use_rk4",
         ]
+
+    def attributes_RunSchwarzEccFluxInspiral(self):
+        """
+        attributes:
+            flux carrier (obj): Unaccessible from python. It carries c++ classes
+                for the integration.
+            specific_kwarg_keys (list): specific kwargs from
+                :class:`few.utils.baseclasses.TrajectoryBase` that apply this
+                inspiral generator.
+        """
 
     @property
     def citation(self):

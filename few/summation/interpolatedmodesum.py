@@ -28,13 +28,6 @@ class CubicSplineInterpolant:
         use_gpu (bool, optional): If True, prepare arrays for a GPU. Default is
             False.
 
-    attributes:
-        interpolate_arrays (func): CPU or GPU function for mode interpolation.
-        interp_array (1D double xp.ndarray): Array containing all spline
-            coefficients. It is flattened after fitting from shape
-            (4, ninterps, length). The 4 is the 4 spline coefficients.
-
-
     """
 
     def __init__(self, t, y_all, use_gpu=False):
@@ -73,6 +66,16 @@ class CubicSplineInterpolant:
             interp_array.reshape(self.reshape_shape), [0, 2, 1]
         ).flatten()
         self.reshape_shape = (self.degree + 1, length, ninterps)
+
+    def attributes_CubicSplineInterpolate(self):
+        """
+        attributes:
+            interpolate_arrays (func): CPU or GPU function for mode interpolation.
+            interp_array (1D double xp.ndarray): Array containing all spline
+                coefficients. It is flattened after fitting from shape
+                (4, ninterps, length). The 4 is the 4 spline coefficients.
+
+        """
 
     @property
     def y(self):
@@ -140,20 +143,6 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
 
     This class can be run on GPUs and CPUs.
 
-    attributes:
-        get_waveform (func): CPU or GPU function for waveform creation.
-        ninterps (int): number of interpolants. It is the (number of phases) +
-            2*(number of modes).
-        y_all (2D double xp.ndarray): All of the y values for the
-            interpolants. Real and imaginary values from the complex amplitudes
-            are separated giving all real numbers.
-        c1, c2, c3 (2D double xp.ndarray): (1st, 2nd, 3rd) constants for each
-            cubic spline.
-        waveform (1D complex128 np.ndarray): Complex waveform given by
-            :math:`h_+ + i*h_x`.
-        interp (obj): Interpolant. See
-            :class:`few.summation.interpolated_mode_sum.CubicSplineInterpolant`.
-
     """
 
     def __init__(self, *args, **kwargs):
@@ -170,6 +159,13 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
         else:
             self.xp = np
             self.get_waveform = get_waveform_wrap_cpu
+
+    def attributes_InterpolatedModeSum(self):
+        """
+        attributes:
+            get_waveform (func): CPU or GPU function for waveform creation.
+
+        """
 
     def sum(
         self,

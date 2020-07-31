@@ -45,13 +45,8 @@ from abc import ABC
 # TODO: Zenodo versioning
 # TODO: automatic get of hdf5
 # TODO: add relevant citations
-# TODO: choice of integrator
-# TODO: remove step_eps in flux.py
-# TODO: free memory in trajectory
 # TODO: deal with attributes
-# TODO: ABC for specific classes
 # TODO: Add more safeguards on settings.
-# TODO: add requirements / versions (e.g. gsl)
 
 
 class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
@@ -132,7 +127,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         self.amplitude_generator = amplitude_module(**amplitude_kwargs)
         self.create_waveform = sum_module(**sum_kwargs)
 
-        self.ylm_gen = GetYlms(self.num_teuk_modes, use_gpu=use_gpu, **Ylm_kwargs)
+        self.ylm_gen = GetYlms(use_gpu=use_gpu, **Ylm_kwargs)
 
         self.mode_selector = ModeSelector(
             self.m0mask,
@@ -399,12 +394,6 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         *args (list, placeholder): args for waveform model.
         **kwargs (dict, placeholder): kwargs for waveform model.
 
-    attributes:
-        gpu_capability (bool): If True, this wavefrom can leverage gpu
-            resources. For this class it is True.
-        allow_batching (bool): If True, this waveform can use the batch_size
-            kwarg. For this class it is False.
-
     """
 
     def __init__(
@@ -434,6 +423,16 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
             *args,
             **kwargs
         )
+
+    def attributes_FastSchwarzschildEccentricFlux(self):
+        """
+        attributes:
+            gpu_capability (bool): If True, this wavefrom can leverage gpu
+                resources. For this class it is True.
+            allow_batching (bool): If True, this waveform can use the batch_size
+                kwarg. For this class it is False.
+
+        """
 
 
 class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):

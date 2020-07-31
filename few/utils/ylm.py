@@ -15,10 +15,7 @@ class GetYlms:
     :math:`Y_{lm}(\Theta,\phi)`. **Important Note**: this class also applies
     the parity operator (:math:`-1^l`) to modes with :math:`m<0`.
 
-    This currently works by assigning a buffer upfront.
-
     args:
-        num_teuk_modes (int): Number of teukolsky modes for buffer.
         assume_positive_m (bool, optional): Set true if only providing :math:`m\geq0`,
             it will return twice the number of requested modes with the seconds
             half as modes with :math:`m<0`. **Warning**: It will also duplicate
@@ -26,14 +23,9 @@ class GetYlms:
         use_gpu (bool, optional): If True, allocate arrays for GPU.
             Default is False.
 
-    attributes:
-        xp (obj): cupy or numpy based on GPU usage.
-        buffer (1D complex128 xp.ndarray): Buffer for outputing Ylm values.
-
     """
 
-    def __init__(self, num_teuk_modes, assume_positive_m=False, use_gpu=False):
-        self.num_teuk_modes = num_teuk_modes
+    def __init__(self, assume_positive_m=False, use_gpu=False):
         self.assume_positive_m = assume_positive_m
 
         if use_gpu:
@@ -42,9 +34,12 @@ class GetYlms:
         else:
             self.xp = np
 
-        self.buffer = self.xp.zeros(
-            (2 * self.num_teuk_modes,), dtype=self.xp.complex128
-        )
+    def attributes_GetYlms(self):
+        """
+        attributes:
+            xp (obj): cupy or numpy based on GPU usage.
+        """
+        pass
 
     # These are the spin-weighted spherical harmonics with s=2
     def __call__(self, l_in, m_in, theta, phi):
