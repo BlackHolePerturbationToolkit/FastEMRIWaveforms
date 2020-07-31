@@ -1,0 +1,446 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Utilities &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Summation Package" href="sum.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: coral" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> few: Fast EMRI Waveforms
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">User Guide:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="main.html">Overall Waveform Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="traj.html">Trajectory Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="amp.html">Amplitude Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sum.html">Summation Package</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.modeselector">Mode Filtering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.overlap">Analysis Tools</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">few: Fast EMRI Waveforms</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Utilities</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/user/util.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <div class="rst-breadcrumbs-buttons" role="navigation" aria-label="breadcrumb navigation">
+      
+      
+        <a href="sum.html" class="btn btn-neutral float-left" title="Summation Package" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+  </div>
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-few.utils">
+<span id="utilities"></span><span id="utilities-label"></span><h1>Utilities<a class="headerlink" href="#module-few.utils" title="Permalink to this headline">¶</a></h1>
+<p>The Utilities package houses scripts that aid in our calculation including
+harmonic angular calculations, overlap calculators, and mode filtering modules.</p>
+<div class="section" id="module-few.utils.modeselector">
+<span id="mode-filtering"></span><h2>Mode Filtering<a class="headerlink" href="#module-few.utils.modeselector" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="few.utils.modeselector.ModeSelector">
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.modeselector.</code><code class="sig-name descname">ModeSelector</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m0mask</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Filter teukolsky amplitudes based on power contribution.</p>
+<p>This module takes teukolsky modes, combines them with their associated ylms,
+and determines the power contribution from each mode. It then filters the
+modes bases on the fractional accuracy on the total power (eps) parameter.</p>
+<p>The mode filtering is a major contributing factor to the speed of these
+waveforms as it removes large numbers of useles modes from the final
+summation calculation.</p>
+<p>Be careful as this is built based on the construction that input mode arrays
+will in order of <span class="math notranslate nohighlight">\(m=0\)</span>, <span class="math notranslate nohighlight">\(m&gt;0\)</span>, and then <span class="math notranslate nohighlight">\(m&lt;0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m0mask</strong> (<em>1D bool xp.ndarray</em>) – This mask highlights which modes have
+<span class="math notranslate nohighlight">\(m=0\)</span>. Value is False if <span class="math notranslate nohighlight">\(m=0\)</span>, True if not.
+This only includes <span class="math notranslate nohighlight">\(m\geq0\)</span>.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, allocate arrays for usage on a GPU.
+Default is False.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="few.utils.modeselector.ModeSelector.attributes_ModeSelector">
+<code class="sig-name descname">attributes_ModeSelector</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.attributes_ModeSelector" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.utils.modeselector.ModeSelector.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.utils.modeselector.ModeSelector.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>cupy or numpy depending on GPU usage.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.modeselector.ModeSelector.num_m_zero_up">
+<code class="sig-name descname">num_m_zero_up</code><a class="headerlink" href="#few.utils.modeselector.ModeSelector.num_m_zero_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.modeselector.ModeSelector.num_m_1_up">
+<code class="sig-name descname">num_m_1_up</code><a class="headerlink" href="#few.utils.modeselector.ModeSelector.num_m_1_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq1\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.modeselector.ModeSelector.num_m0">
+<code class="sig-name descname">num_m0</code><a class="headerlink" href="#few.utils.modeselector.ModeSelector.num_m0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes with <span class="math notranslate nohighlight">\(m=0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.modeselector.ModeSelector.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">modeinds</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call to sort and filer teukolsky modes.</p>
+<p>This is the call function that takes the teukolsky modes, ylms,
+mode indices and fractional accuracy of the total power and returns
+filtered teukolsky modes and ylms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>teuk_modes</strong> (<em>2D complex128 xp.ndarray</em>) – Complex teukolsky amplitudes
+from the amplitude modules.
+Shape: (number of trajectory points, number of modes).</p></li>
+<li><p><strong>ylms</strong> (<em>1D complex128 xp.ndarray</em>) – Array of ylm values for each mode,
+including m&lt;0. Shape is (num of m==0,) + (num of m&gt;0,)
++ (num of m&lt;0). Number of m&lt;0 and m&gt;0 is the same, but they are
+ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
+<li><p><strong>modeinds</strong> (<em>list of int xp.ndarrays</em>) – List containing the mode index arrays. If in an
+equatorial model, need <span class="math notranslate nohighlight">\((l,m,n)\)</span> arrays. If generic,
+<span class="math notranslate nohighlight">\((l,m,k,n)\)</span> arrays. e.g. [l_arr, m_arr, n_arr].</p></li>
+<li><p><strong>eps</strong> (<em>double</em><em>, </em><em>optional</em>) – Fractional accuracy of the total power used
+to determine the contributing modes. Lowering this value will
+calculate more modes slower the waveform down, but generally
+improving accuracy. Increasing this value removes modes from
+consideration and can have a considerable affect on the speed of
+the waveform, albeit at the cost of some accuracy (usually an
+acceptable loss). Default that gives good mismatch qualities is
+1e-5.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-few.utils.ylm">
+<span id="spin-weighted-spherical-harmonics"></span><h2>(-2) Spin-Weighted Spherical Harmonics<a class="headerlink" href="#module-few.utils.ylm" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="few.utils.ylm.GetYlms">
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.ylm.</code><code class="sig-name descname">GetYlms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">assume_positive_m</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>(-2) Spin-weighted Spherical Harmonics</p>
+<p>The class generates (-2) spin-weighted spherical hackarmonics,
+<span class="math notranslate nohighlight">\(Y_{lm}(\Theta,\phi)\)</span>. <strong>Important Note</strong>: this class also applies
+the parity operator (<span class="math notranslate nohighlight">\(-1^l\)</span>) to modes with <span class="math notranslate nohighlight">\(m&lt;0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>assume_positive_m</strong> (<em>bool</em><em>, </em><em>optional</em>) – Set true if only providing <span class="math notranslate nohighlight">\(m\geq0\)</span>,
+it will return twice the number of requested modes with the seconds
+half as modes with <span class="math notranslate nohighlight">\(m&lt;0\)</span>. <strong>Warning</strong>: It will also duplicate
+the <span class="math notranslate nohighlight">\(m=0\)</span> modes. Default is False.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, allocate arrays for GPU.
+Default is False.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="few.utils.ylm.GetYlms.attributes_GetYlms">
+<code class="sig-name descname">attributes_GetYlms</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.attributes_GetYlms" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.utils.ylm.GetYlms.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.utils.ylm.GetYlms.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>cupy or numpy based on GPU usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.ylm.GetYlms.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">l_in</span></em>, <em class="sig-param"><span class="n">m_in</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call method for Ylms.</p>
+<p>This returns ylms based on requested <span class="math notranslate nohighlight">\((l,m)\)</span> values and viewing
+angles.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l_in</strong> (<em>1D int xp.ndarray</em>) – <span class="math notranslate nohighlight">\(l\)</span> values requested.</p></li>
+<li><p><strong>m_in</strong> (<em>1D int xp.ndarray</em>) – <span class="math notranslate nohighlight">\(m\)</span> values requested.</p></li>
+<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle.</p></li>
+<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Ylm values.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>1D complex128 xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-few.utils.overlap">
+<span id="analysis-tools"></span><h2>Analysis Tools<a class="headerlink" href="#module-few.utils.overlap" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="few.utils.overlap.get_overlap">
+<code class="sig-prename descclassname">few.utils.overlap.</code><code class="sig-name descname">get_overlap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_series_1</span></em>, <em class="sig-param"><span class="n">time_series_2</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.overlap.get_overlap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the overlap.</p>
+<p>Takes two time series and finds which one is shorter in length. It then
+shortens the longer time series if necessary. Then it performs a
+normalized correlation calulation on the two time series to give the
+overlap. The overlap of <span class="math notranslate nohighlight">\(a(t)\)</span> and
+<span class="math notranslate nohighlight">\(b(t)\)</span>, <span class="math notranslate nohighlight">\(\gamma_{a,b}\)</span>, is given by,</p>
+<div class="math notranslate nohighlight">
+\[\gamma_{a,b} = &lt;a,b&gt;/(&lt;a,a&gt;&lt;b,b&gt;)^{(1/2)},\]</div>
+<p>where <span class="math notranslate nohighlight">\(&lt;a,b&gt;\)</span> is the inner product of the two time series.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>time_series_1</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 1.</p></li>
+<li><p><strong>time_series_2</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 2.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True use cupy. If False, use numpy. Default
+is False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="few.utils.overlap.get_mismatch">
+<code class="sig-prename descclassname">few.utils.overlap.</code><code class="sig-name descname">get_mismatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_series_1</span></em>, <em class="sig-param"><span class="n">time_series_2</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.overlap.get_mismatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the mismatch.</p>
+<p>The mismatch is 1 - overlap. Therefore, see documentation for
+<code class="xref py py-func docutils literal notranslate"><span class="pre">few.utils.overlap.overlap()</span></code> for information on the overlap
+calculation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>time_series_1</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 1.</p></li>
+<li><p><strong>time_series_2</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 2.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True use cupy. If False, use numpy. Default
+is False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="sum.html" class="btn btn-neutral float-left" title="Summation Package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Michael Katz, Alvin Chua, Niels Warburton
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
