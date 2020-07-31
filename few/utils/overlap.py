@@ -7,8 +7,6 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
 
-# TODO: should we take real of overlap
-
 
 def get_overlap(time_series_1, time_series_2, use_gpu=False):
     """Calculate the overlap.

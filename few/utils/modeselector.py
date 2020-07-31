@@ -21,21 +21,16 @@ class ModeSelector:
     Be careful as this is built based on the construction that input mode arrays
     will in order of :math:`m=0`, :math:`m>0`, and then :math:`m<0`.
 
-    TODO: adjust inputs
-
-
     args:
         m0mask (1D bool xp.ndarray): This mask highlights which modes have
             :math:`m=0`. Value is False if :math:`m=0`, True if not.
-        num_m_zero_up (int): Number of modes with :math:`m\geq0`.
-        num_m_1_up (int): Number of modes with :math:`m\geq1`.
-        num_m0 (int): Number of modes with :math:`m=0`.
+            This only includes :math:`m\geq0`.
         use_gpu (bool, optional): If True, allocate arrays for usage on a GPU.
             Default is False.
 
     """
 
-    def __init__(self, m0mask, num_m_zero_up, num_m_1_up, num_m0, use_gpu=False):
+    def __init__(self, m0mask, use_gpu=False):
 
         if use_gpu:
             self.xp = xp
@@ -44,13 +39,17 @@ class ModeSelector:
             self.xp = np
 
         self.m0mask = m0mask
-        self.num_m_zero_up, self.num_m_1_up = num_m_zero_up, num_m_1_up
-        self.num_m0 = num_m0
+        self.num_m_zero_up = len(m0mask)
+        self.num_m_1_up = len(np.arange(len(m0mask))[m0mask])
+        self.num_m0 = len(np.arange(len(m0mask))[~m0mask])
 
     def attributes_ModeSelector(self):
         """
         attributes:
             xp: cupy or numpy depending on GPU usage.
+            num_m_zero_up (int): Number of modes with :math:`m\geq0`.
+            num_m_1_up (int): Number of modes with :math:`m\geq1`.
+            num_m0 (int): Number of modes with :math:`m=0`.
 
         """
         pass
