@@ -42,6 +42,8 @@ from abc import ABC
 # TODO: add initial phases
 # TODO: zero out modes
 # TODO: shared memory based on CUDA_ARCH
+# TODO: deal with file locations and removing files from git history
+# TODO: fix table of contents in documentation
 
 # Shorter Term
 # TODO: Zenodo versioning
