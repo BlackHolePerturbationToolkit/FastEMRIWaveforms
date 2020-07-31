@@ -223,7 +223,7 @@ It deals with <span class="math notranslate nohighlight">\(A_{lmkn}\)</span> in 
 <dl class="py class">
 <dt id="few.amplitude.romannet.RomanAmplitude">
 <em class="property">class </em><code class="sig-prename descclassname">few.amplitude.romannet.</code><code class="sig-name descname">RomanAmplitude</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">max_input_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.AmplitudeBase</span></code></p>
 <p>Calculate Teukolsky amplitudes with a ROMAN.</p>
 <p>ROMAN stands for reduced-order models with artificial neurons. Please see
 the documentations for
@@ -251,6 +251,38 @@ Default is 1000.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt id="few.amplitude.romannet.RomanAmplitude.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">specific_modes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Common call for Teukolsky amplitudes</p>
+<p>This function takes the inputs the trajectory in <span class="math notranslate nohighlight">\((p,e)\)</span> as arrays
+and returns the complex amplitude of all modes to adiabatic order at
+each step of the trajectory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
+the semi-latus rectum.</p></li>
+<li><p><strong>e</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
+the eccentricity.</p></li>
+<li><p><strong>*args</strong> (<em>tuple</em><em>, </em><em>placeholder</em>) – Added to create future flexibility when calling different
+amplitude modules.</p></li>
+<li><p><strong>specific_modes</strong> (<em>list</em><em>, </em><em>optional</em>) – List of tuples for (l, m, n) values
+desired modes. Default is None.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added to create flexibility when calling different
+amplitude modules. It is not used.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>If specific_modes is None, Teukolsky modes in shape (number of trajectory points, number of modes)
+dict: Dictionary with requested modes.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>2D array (double)</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt id="few.amplitude.romannet.RomanAmplitude.attributes_SchwarzschildEccentric">
 <code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
@@ -534,8 +566,8 @@ the trajectory module.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.amplitude.romannet.RomanAmplitude.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">specific_modes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.__call__" title="Permalink to this definition">¶</a></dt>
+<dt id="few.amplitude.romannet.RomanAmplitude.get_amplitudes">
+<code class="sig-name descname">get_amplitudes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">specific_modes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.get_amplitudes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate Teukolsky amplitudes for Schwarzschild eccentric.</p>
 <p>This function takes the inputs the trajectory in <span class="math notranslate nohighlight">\((p,e)\)</span> as arrays
 and returns the complex amplitude of all modes to adiabatic order at
@@ -573,7 +605,7 @@ dict: Dictionary with requested modes.</p>
 <dl class="py class">
 <dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude">
 <em class="property">class </em><code class="sig-prename descclassname">few.amplitude.interp2dcubicspline.</code><code class="sig-name descname">Interp2DAmplitude</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.AmplitudeBase</span></code></p>
 <p>Calculate Teukolsky amplitudes by 2D Cubic Spline interpolation.</p>
 <p>Please see the documentations for
 <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>
@@ -591,7 +623,7 @@ amplitudes for each mode in the model.</p>
 <dl class="py method">
 <dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.__call__">
 <code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">specific_modes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.__call__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate Teukolsky amplitudes for Schwarzschild eccentric.</p>
+<dd><p>Common call for Teukolsky amplitudes</p>
 <p>This function takes the inputs the trajectory in <span class="math notranslate nohighlight">\((p,e)\)</span> as arrays
 and returns the complex amplitude of all modes to adiabatic order at
 each step of the trajectory.</p>
@@ -602,11 +634,8 @@ each step of the trajectory.</p>
 the semi-latus rectum.</p></li>
 <li><p><strong>e</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
 the eccentricity.</p></li>
-<li><p><strong>l_arr</strong> (<em>1D int numpy.ndarray</em>) – <span class="math notranslate nohighlight">\(l\)</span> values to evaluate.</p></li>
-<li><p><strong>m_arr</strong> (<em>1D int numpy.ndarray</em>) – <span class="math notranslate nohighlight">\(m\)</span> values to evaluate.</p></li>
-<li><p><strong>n_arr</strong> (<em>1D int numpy.ndarray</em>) – <span class="math notranslate nohighlight">\(ns\)</span> values to evaluate.</p></li>
-<li><p><strong>*args</strong> (<em>tuple</em><em>, </em><em>placeholder</em>) – Added to create flexibility when calling different
-amplitude modules. It is not used.</p></li>
+<li><p><strong>*args</strong> (<em>tuple</em><em>, </em><em>placeholder</em>) – Added to create future flexibility when calling different
+amplitude modules.</p></li>
 <li><p><strong>specific_modes</strong> (<em>list</em><em>, </em><em>optional</em>) – List of tuples for (l, m, n) values
 desired modes. Default is None.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added to create flexibility when calling different
@@ -833,6 +862,41 @@ maps locations of -m values to +m values.</p>
 </dl>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.get_amplitudes">
+<code class="sig-name descname">get_amplitudes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">specific_modes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.get_amplitudes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate Teukolsky amplitudes for Schwarzschild eccentric.</p>
+<p>This function takes the inputs the trajectory in <span class="math notranslate nohighlight">\((p,e)\)</span> as arrays
+and returns the complex amplitude of all modes to adiabatic order at
+each step of the trajectory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
+the semi-latus rectum.</p></li>
+<li><p><strong>e</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
+the eccentricity.</p></li>
+<li><p><strong>l_arr</strong> (<em>1D int numpy.ndarray</em>) – <span class="math notranslate nohighlight">\(l\)</span> values to evaluate.</p></li>
+<li><p><strong>m_arr</strong> (<em>1D int numpy.ndarray</em>) – <span class="math notranslate nohighlight">\(m\)</span> values to evaluate.</p></li>
+<li><p><strong>n_arr</strong> (<em>1D int numpy.ndarray</em>) – <span class="math notranslate nohighlight">\(ns\)</span> values to evaluate.</p></li>
+<li><p><strong>*args</strong> (<em>tuple</em><em>, </em><em>placeholder</em>) – Added to create flexibility when calling different
+amplitude modules. It is not used.</p></li>
+<li><p><strong>specific_modes</strong> (<em>list</em><em>, </em><em>optional</em>) – List of tuples for (l, m, n) values
+desired modes. Default is None.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added to create flexibility when calling different
+amplitude modules. It is not used.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>If specific_modes is None, Teukolsky modes in shape (number of trajectory points, number of modes)
+dict: Dictionary with requested modes.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>2D array (double)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">

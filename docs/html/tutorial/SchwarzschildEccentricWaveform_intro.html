@@ -472,8 +472,6 @@ div.rendered_html tbody tr:hover {
 <span class="o">%</span><span class="k">matplotlib</span> inline
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;../&#39;</span><span class="p">)</span>
-
 <span class="kn">from</span> <span class="nn">few.trajectory.flux</span> <span class="kn">import</span> <span class="n">RunSchwarzEccFluxInspiral</span>
 <span class="kn">from</span> <span class="nn">few.amplitude.romannet</span> <span class="kn">import</span> <span class="n">RomanAmplitude</span>
 <span class="kn">from</span> <span class="nn">few.amplitude.interp2dcubicspline</span> <span class="kn">import</span> <span class="n">Interp2DAmplitude</span>
@@ -582,7 +580,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0x106862b10&gt;]
+[&lt;matplotlib.lines.Line2D at 0x105734710&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -608,7 +606,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0xb1a427350&gt;]
+[&lt;matplotlib.lines.Line2D at 0xb19997ed0&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -651,7 +649,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-../few/utils/baseclasses.py:266: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-0.1.0-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:266: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
   p0
 </pre></div></div>
 </div>
@@ -704,7 +702,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-../few/utils/baseclasses.py:266: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-0.1.0-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:266: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
   p0
 </pre></div></div>
 </div>
@@ -791,7 +789,7 @@ wave used 457 modes. wave2 used 26 modes. The mismatch was 0.0011803979666252795
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-../few/utils/baseclasses.py:266: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-0.1.0-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:266: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
   p0
 </pre></div></div>
 </div>
@@ -929,7 +927,7 @@ gravitational wave flux for normalization information.</p>
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-../few/utils/baseclasses.py:413: UserWarning: new_t array goes beyond generated t array. If you want to cut the t array at the end of the trajectory, set fix_t to True.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-0.1.0-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:413: UserWarning: new_t array goes beyond generated t array. If you want to cut the t array at the end of the trajectory, set fix_t to True.
   &#34;new_t array goes beyond generated t array. If you want to cut the t array at the end of the trajectory, set fix_t to True.&#34;
 </pre></div></div>
 </div>
@@ -952,7 +950,7 @@ t1 max: 999999.0 t2 max: 464369.0
 <div class="section" id="Defining-dt-and-T">
 <h2>Defining dt and T<a class="headerlink" href="#Defining-dt-and-T" title="Permalink to this headline">¶</a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[39]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -974,12 +972,12 @@ t1 max: 999999.0 t2 max: 464369.0
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[39]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0xb19a86fd0&gt;
+&lt;matplotlib.legend.Legend at 0xb199f9c50&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1004,7 +1002,7 @@ t1 max: 999999.0 t2 max: 464369.0
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-157800.0
+157785.0
 </pre></div></div>
 </div>
 </div>
@@ -1523,7 +1521,7 @@ We reduced the mode content from 3843 modes to 584 modes.
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0xb202a6250&gt;
+&lt;matplotlib.legend.Legend at 0xb1f826190&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1620,7 +1618,7 @@ array([-3.54810537e-05, -4.01422809e-05, -4.48887306e-05, ...,
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0xb1ab8f910&gt;]
+[&lt;matplotlib.lines.Line2D at 0xb3146f3d0&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1951,7 +1949,7 @@ they interface with there constituent modules). A requirement when creating a mo
 
 <span class="n">wave1</span> <span class="o">=</span> <span class="n">test</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">)</span>
 
-<span class="n">wave2</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">)</span>
+<span class="n">wave2</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wave1</span><span class="o">.</span><span class="n">real</span><span class="p">[:</span><span class="mi">200</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;pn&#39;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wave2</span><span class="o">.</span><span class="n">real</span><span class="p">[:</span><span class="mi">200</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;flux&#39;</span><span class="p">)</span>

@@ -42,31 +42,10 @@ See [examples notebook](examples/SchwarzschildEccentricWaveform_intro.ipynb).
 
 To install this software for CPU usage, you need [gsl >2.0](https://www.gnu.org/software/gsl/) , [lapack](https://www.netlib.org/lapack/lug/node14.html), Python >3.4, and NumPy. To run the examples, you will also need jupyter and matplotlib. For Python packages, we generally recommend installing within a conda environment. For gsl and lapack, it may be better to use brew or apt-get. If you want to run with OpenMP, make sure that is installed.
 
-When installing lapack and gsl, the setup file will default to assuming lib and include for both are in `/usr/local/opt/lapack/` and `/usr/local/opt/gsl/`. To provide other lib and include directories you can provide command line options when installing. You can also remove usage of OpenMP.
-
-```
-python setup.py --help
-usage: setup.py [-h] [--no_omp] [--lapack_lib LAPACK_LIB]
-                [--lapack_include LAPACK_INCLUDE] [--lapack LAPACK]
-                [--gsl_lib GSL_LIB] [--gsl_include GSL_INCLUDE] [--gsl GSL]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --no_omp              If provided, install without OpenMP.
-  --lapack_lib LAPACK_LIB
-                        Directory of the lapack lib.
-  --lapack_include LAPACK_INCLUDE
-                        Directory of the lapack include.
-  --lapack LAPACK       Directory of both lapack lib and include. '/include'
-                        and '/lib' will be added to the end of this string.
-  --gsl_lib GSL_LIB     Directory of the gsl lib.
-  --gsl_include GSL_INCLUDE
-                        Directory of the gsl include.
-  --gsl GSL             Directory of both gsl lib and include. '/include' and
-                        '/lib' will be added to the end of this string.
-```
 
 To install this software for use with NVIDIA GPUs (compute capability >2.0), you need the [CUDA toolkit](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and [CuPy](https://cupy.chainer.org/). The CUDA toolkit must have cuda version >8.0. Be sure to properly install cupy within the correct CUDA toolkit version. Make sure the nvcc binary is on `$PATH` or set it as the `CUDAHOME` environment variable.
+
+There are a set of files required for total use of this package. They will download automatically when they are needed. Files are generally under 10MB. However, there is a 100MB file needed for the slow waveform and the bicubic amplitude interpolation. This larger file will only download if you run either of those two modules. The files are hosted on [Zenodo](https://sandbox.zenodo.org/record/653693#.XySP_vhKjlw).
 
 ### Installing
 
@@ -98,12 +77,34 @@ git clone https://github.com/mikekatz04/FastEMRIWaveforms.git
 python setup.py install
 ```
 
-5) Get data extra data if desired. If you want to run the slow waveforms ([few.waveform.SlowSchwarzschildEccentricFlux](https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html?highlight=slow#few.waveform.SlowSchwarzschildEccentricFlux)) or bicubic amplitude determination ([few.amplitudes.interp2dcubicspline.Interp2DAmplitude](https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html?highlight=interp2d#few.amplitude.interp2dcubicspline.Interp2DAmplitude)), you will need to attain an hdf5 file (Teuk_amps_a0.0_lmax_10_nmax_30_new.h5) and put it in the `/Path/to/Installation/few/files/` directory. This is available at Zenodo (TODO: fill in).
+
+When installing lapack and gsl, the setup file will default to assuming lib and include for both are in `/usr/local/opt/lapack/` and `/usr/local/opt/gsl/`. To provide other lib and include directories you can provide command line options when installing. You can also remove usage of OpenMP.
+
+```
+python setup.py --help
+usage: setup.py [-h] [--no_omp] [--lapack_lib LAPACK_LIB]
+                [--lapack_include LAPACK_INCLUDE] [--lapack LAPACK]
+                [--gsl_lib GSL_LIB] [--gsl_include GSL_INCLUDE] [--gsl GSL]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --no_omp              If provided, install without OpenMP.
+  --lapack_lib LAPACK_LIB
+                        Directory of the lapack lib.
+  --lapack_include LAPACK_INCLUDE
+                        Directory of the lapack include.
+  --lapack LAPACK       Directory of both lapack lib and include. '/include'
+                        and '/lib' will be added to the end of this string.
+  --gsl_lib GSL_LIB     Directory of the gsl lib.
+  --gsl_include GSL_INCLUDE
+                        Directory of the gsl include.
+  --gsl GSL             Directory of both gsl lib and include. '/include' and
+                        '/lib' will be added to the end of this string.
+```
+
 
 
 ## Running the Tests
-
-When performing tests, you must have the hdf5 file (Teuk_amps_a0.0_lmax_10_nmax_30_new.h5) for ([few.waveform.SlowSchwarzschildEccentricFlux](https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html?highlight=slow#few.waveform.SlowSchwarzschildEccentricFlux)) and bicubic amplitude determination ([few.amplitudes.interp2dcubicspline.Interp2DAmplitude](https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html?highlight=interp2d#few.amplitude.interp2dcubicspline.Interp2DAmplitude)). See above in **Installing**.
 
 In the main directory of the package run in the terminal:
 ```
