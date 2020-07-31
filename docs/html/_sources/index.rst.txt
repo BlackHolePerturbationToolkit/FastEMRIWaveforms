@@ -30,6 +30,9 @@ where :math:`S_{lmkn}(\theta)` is the general angular function from `Drasco & Hu
 
 When these modules complete their calculations, the summation (:mod:`few.summation`) module takes all of this information and creates an EMRI waveform.
 
+Our model is valid at any :math:`(p_0,e_0)` that falls outside the separatrix, below the :math:`(p_0=10,e_0=0.7)` trajectory (see below trjectory figure), and within the outer limits (:math:`p_0 < 16 + 2e_0` and :math:`e_0 < 0.7`).
+
+Below are figures from our paper related to this package.
 
 .. figure:: img/EMRI_diagram.jpg
     :width: 500px
@@ -39,6 +42,39 @@ When these modules complete their calculations, the summation (:mod:`few.summati
     :figclass: align-center
 
     A general schematic diagram for the creation of an EMRI waveform.
+
+
+.. figure:: img/traj.jpg
+    :width: 500px
+    :align: center
+    :height: 400px
+    :alt: alternate text
+    :figclass: align-center
+
+    Mismatch over time for trajectories spanning our domain of validity. The mass ratio is adjusted so that all trajectories plunge at 1 year. Users can input any :math:`(p_0,e_0)` that falls within this domain. That means outside the separatrix, below the :math:`(p_0=10,e_0=0.7)` trajectory, and within the outer limits (:math:`p_0 < 16 + 2e_0` and :math:`e_0 < 0.7`).
+
+
+.. figure:: img/timing_plot_3.jpg
+    :width: 400px
+    :align: center
+    :height: 400px
+    :alt: alternate text
+    :figclass: align-center
+
+    Timing for our waveforms for an EMRI with :math:`\{M,\mu,p_0,e_0,\theta,\phi\} = \{10^6, 10^1, 10.0, 0.7, \pi/2, 0.0\}`.
+
+
+.. figure:: img/waveform_example.jpg
+    :width: 500px
+    :align: center
+    :height: 350px
+    :alt: alternate text
+    :figclass: align-center
+
+    Example waveform for the worst case at the start and finish of the trajectory.
+
+
+
 
 
 Overall Waveform Models

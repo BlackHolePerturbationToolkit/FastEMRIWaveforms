@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 
 from few.trajectory.flux import RunSchwarzEccFluxInspiral
-from few.amplitude.romannet import ROMANAmplitude
+from few.amplitude.romannet import RomanAmplitude
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 from few.waveform import FastSchwarzschildEccentricFlux, SlowSchwarzschildEccentricFlux
 from few.utils.overlap import get_overlap, get_mismatch
@@ -32,7 +32,7 @@ class WaveformTest(unittest.TestCase):
             ),  # all of the trajectories will be well under len = 1000
         }
 
-        # keyword arguments for inspiral generator (ROMANAmplitude)
+        # keyword arguments for inspiral generator (RomanAmplitude)
         amplitude_kwargs = {
             "max_input_len": int(
                 1e3
@@ -66,7 +66,7 @@ class WaveformTest(unittest.TestCase):
             "max_init_len": int(1e7),  # dense stepping trajectories
         }
 
-        # keyword arguments for inspiral generator (ROMANAmplitude)
+        # keyword arguments for inspiral generator (RomanAmplitude)
         amplitude_kwargs = {"max_input_len": int(1e4)}  # this must be >= batch_size
 
         # keyword arguments for Ylm generator (GetYlms)
@@ -111,7 +111,7 @@ class WaveformTest(unittest.TestCase):
 
 def amplitude_test(amp_class):
     # initialize ROMAN class
-    amp = ROMANAmplitude(max_input_len=5000)  # max_input_len creates memory buffers
+    amp = RomanAmplitude(max_input_len=5000)  # max_input_len creates memory buffers
 
     p = np.linspace(10.0, 14.0, 10)
     e = np.linspace(0.1, 0.7, 10)
@@ -155,7 +155,7 @@ class ModuleTest(unittest.TestCase):
 
     def test_amplitudes(self):
 
-        amp = ROMANAmplitude()
+        amp = RomanAmplitude()
 
         first_check, second_check = amplitude_test(amp)
 
