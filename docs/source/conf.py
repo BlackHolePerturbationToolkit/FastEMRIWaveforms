@@ -97,8 +97,8 @@ html_static_path = ["_static"]
 
 html_theme_options = {
     "display_version": True,
-    "prev_next_buttons_location": "bottom",
-    "style_nav_header_background": "blue",
+    "prev_next_buttons_location": "both",
+    "style_nav_header_background": "coral",
     # Toc options
     "collapse_navigation": True,
     "sticky_navigation": True,
