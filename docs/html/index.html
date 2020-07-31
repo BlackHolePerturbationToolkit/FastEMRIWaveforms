@@ -824,8 +824,10 @@ to l_arr, m_arr, n_arr.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
 <li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
-<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
-<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (dimensionless)
+<span class="math notranslate nohighlight">\((10\leq p_0\leq 16 + 2e_0)\)</span>. See the documentation for
+more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e_0\leq0.7)\)</span>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
@@ -1300,8 +1302,10 @@ to l_arr, m_arr, n_arr.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
 <li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
-<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
-<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (dimensionless)
+<span class="math notranslate nohighlight">\((10\leq p_0\leq 16 + 2e_0)\)</span>. See the documentation for
+more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e_0\leq0.7)\)</span>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
@@ -1384,7 +1388,13 @@ This also allows us to use -2 spin-weighted spherical harmonics
 Eq. <a class="reference internal" href="#equation-emri-wave-eq">(1)</a>.</p>
 <p><span class="math notranslate nohighlight">\(l\)</span> ranges from 2 to 10; <span class="math notranslate nohighlight">\(m\)</span> from <span class="math notranslate nohighlight">\(-l\)</span> to <span class="math notranslate nohighlight">\(l\)</span>;
 and <span class="math notranslate nohighlight">\(n\)</span> from -30 to 30. This is for Schwarzschild eccentric.
-The model validity ranges from (TODO: add limits).</p>
+The model validity ranges from <span class="math notranslate nohighlight">\(0.1 \leq e_0 \leq 0.7\)</span> and
+<span class="math notranslate nohighlight">\(10 \leq p_0 \leq 16 + 2*e_0\)</span>. The user can start at any <span class="math notranslate nohighlight">\(p\)</span> and
+<span class="math notranslate nohighlight">\(e\)</span> combination that exists under the <span class="math notranslate nohighlight">\(p_0=10, e_0=0.7\)</span>
+trajectory within those bounds (and is outside of the separatrix). <strong>Important Note</strong>: if the trajectory is
+within the bounds listed, but it is above <span class="math notranslate nohighlight">\(p_0=10, e_0=0.7\)</span> trajectory.,
+the user may not receive an error. See the documentation introduction for
+more information on this.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, will allocate arrays on the GPU.
@@ -1661,8 +1671,10 @@ the trajectory module.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
 <li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
-<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
-<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (dimensionless)
+<span class="math notranslate nohighlight">\((10\leq p_0\leq 16 + 2e_0)\)</span>. See the documentation for
+more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e_0\leq0.7)\)</span>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
@@ -2057,8 +2069,10 @@ maps locations of -m values to +m values.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
 <li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
-<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
-<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (dimensionless)
+<span class="math notranslate nohighlight">\((10\leq p_0\leq 16 + 2e_0)\)</span>. See the documentation for
+more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e_0\leq0.7)\)</span>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
@@ -2201,8 +2215,7 @@ Default is {}.</p></li>
 
 <div class="section" id="module-few.trajectory.flux">
 <span id="flux-inspiral"></span><h3>Flux Inspiral<a class="headerlink" href="#module-few.trajectory.flux" title="Permalink to this headline">¶</a></h3>
-<p>This module contains flux-based or adiabatic trajectory modules.
-TODO: more info (?), Specific papers to cite</p>
+<p>This module contains flux-based or adiabatic trajectory modules.</p>
 <dl class="py class">
 <dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral">
 <em class="property">class </em><code class="sig-prename descclassname">few.trajectory.flux.</code><code class="sig-name descname">RunSchwarzEccFluxInspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral" title="Permalink to this definition">¶</a></dt>
@@ -2577,8 +2590,10 @@ maps locations of -m values to +m values.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
 <li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
-<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
-<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (dimensionless)
+<span class="math notranslate nohighlight">\((10\leq p_0\leq 16 + 2e_0)\)</span>. See the documentation for
+more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e_0\leq0.7)\)</span>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
@@ -2902,8 +2917,10 @@ maps locations of -m values to +m values.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
 <li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
-<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
-<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (dimensionless)
+<span class="math notranslate nohighlight">\((10\leq p_0\leq 16 + 2e_0)\)</span>. See the documentation for
+more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e_0\leq0.7)\)</span>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
@@ -3273,8 +3290,10 @@ maps locations of -m values to +m values.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
 <li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
-<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
-<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (dimensionless)
+<span class="math notranslate nohighlight">\((10\leq p_0\leq 16 + 2e_0)\)</span>. See the documentation for
+more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e_0\leq0.7)\)</span>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
@@ -3736,8 +3755,10 @@ maps locations of -m values to +m values.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
 <li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
-<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
-<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (dimensionless)
+<span class="math notranslate nohighlight">\((10\leq p_0\leq 16 + 2e_0)\)</span>. See the documentation for
+more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e_0\leq0.7)\)</span>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
@@ -4131,8 +4152,10 @@ maps locations of -m values to +m values.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
 <li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
-<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum in units of M. TODO: Fix this. <span class="math notranslate nohighlight">\((\leq e0\leq0.7)\)</span></p></li>
-<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e0\leq0.7)\)</span></p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (dimensionless)
+<span class="math notranslate nohighlight">\((10\leq p_0\leq 16 + 2e_0)\)</span>. See the documentation for
+more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e_0\leq0.7)\)</span>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
@@ -4230,7 +4253,7 @@ harmonic angular calculations, overlap calculators, and mode filtering modules.<
 <span id="mode-filtering"></span><h3>Mode Filtering<a class="headerlink" href="#module-few.utils.modeselector" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
 <dt id="few.utils.modeselector.ModeSelector">
-<em class="property">class </em><code class="sig-prename descclassname">few.utils.modeselector.</code><code class="sig-name descname">ModeSelector</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m0mask</span></em>, <em class="sig-param"><span class="n">num_m_zero_up</span></em>, <em class="sig-param"><span class="n">num_m_1_up</span></em>, <em class="sig-param"><span class="n">num_m0</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.modeselector.</code><code class="sig-name descname">ModeSelector</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m0mask</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Filter teukolsky amplitudes based on power contribution.</p>
 <p>This module takes teukolsky modes, combines them with their associated ylms,
@@ -4241,15 +4264,12 @@ waveforms as it removes large numbers of useles modes from the final
 summation calculation.</p>
 <p>Be careful as this is built based on the construction that input mode arrays
 will in order of <span class="math notranslate nohighlight">\(m=0\)</span>, <span class="math notranslate nohighlight">\(m&gt;0\)</span>, and then <span class="math notranslate nohighlight">\(m&lt;0\)</span>.</p>
-<p>TODO: adjust inputs</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>m0mask</strong> (<em>1D bool xp.ndarray</em>) – This mask highlights which modes have
-<span class="math notranslate nohighlight">\(m=0\)</span>. Value is False if <span class="math notranslate nohighlight">\(m=0\)</span>, True if not.</p></li>
-<li><p><strong>num_m_zero_up</strong> (<em>int</em>) – Number of modes with <span class="math notranslate nohighlight">\(m\geq0\)</span>.</p></li>
-<li><p><strong>num_m_1_up</strong> (<em>int</em>) – Number of modes with <span class="math notranslate nohighlight">\(m\geq1\)</span>.</p></li>
-<li><p><strong>num_m0</strong> (<em>int</em>) – Number of modes with <span class="math notranslate nohighlight">\(m=0\)</span>.</p></li>
+<span class="math notranslate nohighlight">\(m=0\)</span>. Value is False if <span class="math notranslate nohighlight">\(m=0\)</span>, True if not.
+This only includes <span class="math notranslate nohighlight">\(m\geq0\)</span>.</p></li>
 <li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, allocate arrays for usage on a GPU.
 Default is False.</p></li>
 </ul>
@@ -4262,6 +4282,39 @@ Default is False.</p></li>
 <dt id="few.utils.modeselector.ModeSelector.xp">
 <code class="sig-name descname">xp</code><a class="headerlink" href="#few.utils.modeselector.ModeSelector.xp" title="Permalink to this definition">¶</a></dt>
 <dd><p>cupy or numpy depending on GPU usage.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.modeselector.ModeSelector.num_m_zero_up">
+<code class="sig-name descname">num_m_zero_up</code><a class="headerlink" href="#few.utils.modeselector.ModeSelector.num_m_zero_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.modeselector.ModeSelector.num_m_1_up">
+<code class="sig-name descname">num_m_1_up</code><a class="headerlink" href="#few.utils.modeselector.ModeSelector.num_m_1_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq1\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.modeselector.ModeSelector.num_m0">
+<code class="sig-name descname">num_m0</code><a class="headerlink" href="#few.utils.modeselector.ModeSelector.num_m0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes with <span class="math notranslate nohighlight">\(m=0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>

@@ -128,13 +128,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
         self.ylm_gen = GetYlms(use_gpu=use_gpu, **Ylm_kwargs)
 
-        self.mode_selector = ModeSelector(
-            self.m0mask,
-            self.num_m_zero_up,
-            self.num_m_1_up,
-            self.num_m0,
-            use_gpu=use_gpu,
-        )
+        self.mode_selector = ModeSelector(self.m0mask, use_gpu=use_gpu)
 
     @property
     def citation(self):
