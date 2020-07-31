@@ -44,7 +44,7 @@ from abc import ABC
 # TODO: shared memory based on CUDA_ARCH
 # TODO: deal with file locations and removing files from git history
 # TODO: add tutorials to documentation
-# TODO: Amplitude and general waveform base class
+# TODO: general waveform base class
 
 # Shorter Term
 # TODO: Zenodo versioning

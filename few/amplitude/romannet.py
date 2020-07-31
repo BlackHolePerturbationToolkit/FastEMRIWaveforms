@@ -11,7 +11,7 @@ from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 
 import pymatmul_cpu
 
-from few.utils.baseclasses import SchwarzschildEccentric
+from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase
 
 try:
     import cupy as xp
@@ -44,7 +44,7 @@ romannet_citation = """
 """
 
 
-class RomanAmplitude(SchwarzschildEccentric):
+class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
     """Calculate Teukolsky amplitudes with a ROMAN.
 
     ROMAN stands for reduced-order models with artificial neurons. Please see
@@ -81,6 +81,7 @@ class RomanAmplitude(SchwarzschildEccentric):
     def __init__(self, max_input_len=1000, **kwargs):
 
         SchwarzschildEccentric.__init__(self, **kwargs)
+        AmplitudeBase.__init__(self, **kwargs)
 
         self.few_dir = dir_path + "/../../"
 
@@ -177,7 +178,7 @@ class RomanAmplitude(SchwarzschildEccentric):
 
         return self.xp.log(-(21 / 10) - 2 * e + p)
 
-    def __call__(self, p, e, *args, specific_modes=None, **kwargs):
+    def get_amplitudes(self, p, e, *args, specific_modes=None, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays

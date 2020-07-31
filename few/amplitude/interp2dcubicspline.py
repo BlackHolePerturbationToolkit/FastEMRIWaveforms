@@ -2,7 +2,7 @@ import numpy as np
 import os
 import h5py
 
-from few.utils.baseclasses import SchwarzschildEccentric
+from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase
 
 from pyInterp2DAmplitude import pyAmplitudeGenerator
 
@@ -11,7 +11,7 @@ import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class Interp2DAmplitude(SchwarzschildEccentric):
+class Interp2DAmplitude(SchwarzschildEccentric, AmplitudeBase):
     """Calculate Teukolsky amplitudes by 2D Cubic Spline interpolation.
 
     Please see the documentations for
@@ -32,6 +32,7 @@ class Interp2DAmplitude(SchwarzschildEccentric):
     def __init__(self, **kwargs):
 
         SchwarzschildEccentric.__init__(self, **kwargs)
+        AmplitudeBase.__init__(self, **kwargs)
 
         few_dir = dir_path + "/../../"
 
@@ -45,7 +46,7 @@ class Interp2DAmplitude(SchwarzschildEccentric):
 
         self.amplitude_generator = pyAmplitudeGenerator(self.lmax, self.nmax, few_dir)
 
-    def __call__(self, p, e, *args, specific_modes=None, **kwargs):
+    def get_amplitudes(self, p, e, *args, specific_modes=None, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays
