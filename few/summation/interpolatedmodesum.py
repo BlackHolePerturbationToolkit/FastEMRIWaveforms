@@ -94,8 +94,27 @@ class CubicSplineInterpolant:
         return self.interp_array.reshape(self.reshape_shape)[3].T
 
     def __call__(self, tnew):
+        """Evaluation function for the spline
 
-        inds = self.xp.searchsorted(self.t, tnew)
+        Put in an array of new t values at which all interpolants will be
+        evaluated.
+
+        args:
+            tnew (1D double xp.ndarray): Array of new t values. All of these new
+                t values must be within the bounds of the input t values,
+                including the beginning t and **excluding** the ending t.
+
+        raises:
+            ValueError: a new t value is not in the bounds of the input t array.
+
+        """
+
+        inds = self.xp.searchsorted(self.t, tnew, side="right") - 1
+
+        if np.any(inds < 0) or np.any(inds >= len(self.t)):
+            raise ValueError(
+                "New t array outside bounds of input t array. This is not allowed."
+            )
 
         x = tnew - self.t[inds]
         x2 = x * x
