@@ -300,7 +300,7 @@ cpu_extension = dict(
     ]
     + lapack_include
     + gsl_include,
-    library_dirs=lapack_lib + gsl_include,
+    library_dirs=lapack_lib + gsl_lib,
     # library_dirs=["/home/ajchua/lib/"],
 )
 
