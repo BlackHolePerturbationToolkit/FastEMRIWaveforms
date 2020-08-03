@@ -13,7 +13,7 @@ Below is a quick set of instructions to get you started with `few`.
 1) Create a virtual environment.
 
 ```
-conda create -n few_env numpy Cython scipy tqdm jupyter ipython python=3.8
+conda create -n few_env numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.8
 conda activate few_env
 ```
 
@@ -55,7 +55,7 @@ There are a set of files required for total use of this package. They will downl
 1) Create a virtual environment.
 
 ```
-conda create -n few_env numpy Cython scipy tqdm jupyter ipython python=3.8
+conda create -n few_env numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.8
 conda activate few_env
 ```
 
