@@ -49,7 +49,10 @@ from abc import ABC
 
 # Shorter Term
 # TODO: add relevant citations
+# TODO: add requests and h5py to env
+# TODO: add omp stuff
 # TODO: document in line / check / cleanup
+# TODO: clarify mode_selection on waveform versus amplitudes
 
 few_citation = """
 Temp citation for this paper

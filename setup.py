@@ -266,8 +266,7 @@ if run_cuda_install:
                 # "-lineinfo",
             ],  # for debugging
         },
-        include_dirs=[numpy_include, CUDA["include"], "few/src", "include"]
-        + gsl_include,
+        include_dirs=[numpy_include, CUDA["include"], "include"] + gsl_include,
     )
 
     if use_omp is False:
@@ -292,14 +291,7 @@ cpu_extension = dict(
     extra_compile_args={
         "gcc": ["-std=c++11", "-fopenmp", "-fPIC", "-D__USE_OMP__"]
     },  # '-g'
-    include_dirs=[
-        numpy_include,
-        "few/src",
-        "include",
-        "/home/mlk667/.conda/envs/few_env/include/",
-    ]
-    + lapack_include
-    + gsl_include,
+    include_dirs=[numpy_include, "include"] + lapack_include + gsl_include,
     library_dirs=lapack_lib + gsl_lib,
     # library_dirs=["/home/ajchua/lib/"],
 )
