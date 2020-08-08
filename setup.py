@@ -388,6 +388,7 @@ setup(
         "few.summation.interpolatedmodesum",
         "few.utils.constants",
         "few.utils.getfiles",
+        "few.utils.citations",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

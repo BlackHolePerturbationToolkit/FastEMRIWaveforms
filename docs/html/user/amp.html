@@ -222,7 +222,7 @@ It deals with <span class="math notranslate nohighlight">\(A_{lmkn}\)</span> in 
 <span id="roman-network"></span><h3>ROMAN Network<a class="headerlink" href="#module-few.amplitude.romannet" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
 <dt id="few.amplitude.romannet.RomanAmplitude">
-<em class="property">class </em><code class="sig-prename descclassname">few.amplitude.romannet.</code><code class="sig-name descname">RomanAmplitude</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">max_input_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">few.amplitude.romannet.</code><code class="sig-name descname">RomanAmplitude</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">max_init_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.AmplitudeBase</span></code></p>
 <p>Calculate Teukolsky amplitudes with a ROMAN.</p>
 <p>ROMAN stands for reduced-order models with artificial neurons. Please see
@@ -240,10 +240,10 @@ amplitude space.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>max_input_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of points to initialize for
+<li><p><strong>max_init_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of points to initialize for
 buffers. This allows the user to limit memory usage. However, if the
 user requests more length, a warning will be thrown and the
-max_input_len will be increased accordingly and arrays reallocated.
+max_init_len will be increased accordingly and arrays reallocated.
 Default is 1000.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments for the base class:
 <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>. Default is

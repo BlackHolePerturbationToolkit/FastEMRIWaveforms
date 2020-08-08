@@ -24,6 +24,7 @@ from few.utils.overlap import get_mismatch
 from few.amplitude.romannet import RomanAmplitude
 
 from few.utils.constants import *
+from few.utils.citations import *
 
 try:
     from few.summation.interpolatedmodesum import InterpolatedModeSum
@@ -48,15 +49,9 @@ from abc import ABC
 # TODO: more automatic/generic download from zenodo based on versioning
 
 # Shorter Term
-# TODO: add relevant citations
-# TODO: add requests and h5py to env
 # TODO: add omp stuff
 # TODO: document in line / check / cleanup
 # TODO: clarify mode_selection on waveform versus amplitudes
-
-few_citation = """
-Temp citation for this paper
-"""
 
 
 class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
@@ -159,10 +154,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
     @property
     def citation(self):
-        out_citation = few_citation + (
-            self.inspiral_generator.citation + "\n" + self.amplitude_generator.citation
-        )
-        return out_citation
+        return few_citation + romannet_citation
 
     def __call__(
         self,
@@ -553,7 +545,7 @@ if __name__ == "__main__":
     use_gpu = False
     few = FastSchwarzschildEccentricFlux(
         inspiral_kwargs={"DENSE_STEPPING": 0, "max_init_len": int(1e3)},
-        amplitude_kwargs={"max_input_len": int(1e3), "use_gpu": use_gpu},
+        amplitude_kwargs={"max_init_len": int(1e3), "use_gpu": use_gpu},
         # amplitude_kwargs=dict(),
         Ylm_kwargs={"assume_positive_m": False},
         sum_kwargs={"use_gpu": use_gpu},
@@ -562,7 +554,7 @@ if __name__ == "__main__":
 
     few2 = SlowSchwarzschildEccentricFlux(
         inspiral_kwargs={"DENSE_STEPPING": 1, "max_init_len": int(1e7)},
-        # amplitude_kwargs={"max_input_len": int(1e3), "use_gpu": use_gpu},
+        # amplitude_kwargs={"max_init_len": int(1e3), "use_gpu": use_gpu},
         amplitude_kwargs=dict(),
         Ylm_kwargs={"assume_positive_m": False},
         sum_kwargs={"use_gpu": True},

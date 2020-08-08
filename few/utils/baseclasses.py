@@ -11,6 +11,7 @@ from scipy.interpolate import CubicSpline
 from scipy import constants as ct
 
 from few.utils.constants import *
+from few.utils.citations import *
 
 
 class SchwarzschildEccentric(ABC):
@@ -174,6 +175,10 @@ class SchwarzschildEccentric(ABC):
                 i if i < self.num_modes else i - self.num_m_1_up
             )
 
+    @property
+    def citation(self):
+        return few_citation
+
     def sanity_check_viewing_angles(self, theta, phi):
         """Sanity check on viewing angles.
 
@@ -286,6 +291,10 @@ class TrajectoryBase(ABC):
 
     def __init__(self, *args, **kwargs):
         pass
+
+    @property
+    def citation(self):
+        return few_citation
 
     @classmethod
     def get_inspiral(self, *args, **kwargs):
@@ -441,6 +450,10 @@ class SummationBase(ABC):
         """
         pass
 
+    @property
+    def citation(self):
+        return few_citation
+
     @classmethod
     def sum(self, *args, **kwargs):
         """Sum Generator
@@ -530,6 +543,10 @@ class AmplitudeBase(ABC):
 
         """
         raise NotImplementedError
+
+    @property
+    def citation(self):
+        return few_citation
 
     def __call__(self, p, e, *args, specific_modes=None, **kwargs):
         """Common call for Teukolsky amplitudes

@@ -145,13 +145,12 @@ void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amp
 // TODO: free memory from inside interpolants
 AmplitudeCarrier::AmplitudeCarrier(int lmax_, int nmax_, std::string few_dir)
 {
-    printf("OMP THREADS: %d\n", omp_get_num_threads());
     lmax = lmax_;
     nmax = nmax_;
 
     amps = new struct waveform_amps;
 
-    cout << "# Loading and interpolating the amplitude data (this will take a few seconds)" << endl;
+    // cout << "# Loading and interpolating the amplitude data (this will take a few seconds)" << endl;
     load_and_interpolate_amplitude_data(lmax, nmax, amps, few_dir);
 
 }

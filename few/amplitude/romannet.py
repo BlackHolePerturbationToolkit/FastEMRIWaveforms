@@ -13,6 +13,7 @@ import pymatmul_cpu
 
 from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase
 from few.utils.getfiles import check_for_file_download
+from few.utils.citations import *
 
 try:
     import cupy as xp
@@ -27,22 +28,6 @@ except (ImportError, ModuleNotFoundError) as e:
 
 RUN_RELU = 1
 NO_RELU = 0
-
-romannet_citation = """
-@article{Chua:2018woh,
-    author = "Chua, Alvin J.K. and Galley, Chad R. and Vallisneri, Michele",
-    title = "{Reduced-order modeling with artificial neurons for gravitational-wave inference}",
-    eprint = "1811.05491",
-    archivePrefix = "arXiv",
-    primaryClass = "astro-ph.IM",
-    doi = "10.1103/PhysRevLett.122.211101",
-    journal = "Phys. Rev. Lett.",
-    volume = "122",
-    number = "21",
-    pages = "211101",
-    year = "2019"
-}
-"""
 
 
 class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
@@ -67,10 +52,10 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
 
 
     args:
-        max_input_len (int, optional): Number of points to initialize for
+        max_init_len (int, optional): Number of points to initialize for
             buffers. This allows the user to limit memory usage. However, if the
             user requests more length, a warning will be thrown and the
-            max_input_len will be increased accordingly and arrays reallocated.
+            max_init_len will be increased accordingly and arrays reallocated.
             Default is 1000.
 
         **kwargs (dict, optional): Keyword arguments for the base class:
@@ -79,7 +64,7 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
 
     """
 
-    def __init__(self, max_input_len=1000, **kwargs):
+    def __init__(self, max_init_len=1000, **kwargs):
 
         SchwarzschildEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
@@ -105,13 +90,13 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
         self.num_teuk_modes = num_teuk_modes
         self.transform_factor_inv = 1 / transform_factor
 
-        self.max_input_len = max_input_len
+        self.max_init_len = max_init_len
 
         self._initialize_weights()
 
     @property
     def citation(self):
-        return romannet_citation
+        return romannet_citation + few_citation
 
     def _initialize_weights(self):
         self.weights = []
@@ -147,8 +132,8 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
         self.max_num = np.max([self.dim1, self.dim2])
 
         self.temp_mats = [
-            self.xp.zeros((self.max_num * self.max_input_len,), dtype=self.xp.float64),
-            self.xp.zeros((self.max_num * self.max_input_len,), dtype=self.xp.float64),
+            self.xp.zeros((self.max_num * self.max_init_len,), dtype=self.xp.float64),
+            self.xp.zeros((self.max_num * self.max_init_len,), dtype=self.xp.float64),
         ]
         self.run_relu_arr = np.ones(self.num_layers, dtype=int)
         self.run_relu_arr[-1] = 0
@@ -184,20 +169,20 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
         """
         input_len = len(p)
 
-        if input_len > self.max_input_len:
+        if input_len > self.max_init_len:
             warnings.warn(
-                "Input length {} is larger than initial max_input_len ({}). Reallocating preallocated arrays for this size.".format(
-                    input_len, self.max_input_len
+                "Input length {} is larger than initial max_init_len ({}). Reallocating preallocated arrays for this size.".format(
+                    input_len, self.max_init_len
                 )
             )
-            self.max_input_len = input_len
+            self.max_init_len = input_len
 
             self.temp_mats = [
                 self.xp.zeros(
-                    (self.max_num * self.max_input_len,), dtype=self.xp.float64
+                    (self.max_num * self.max_init_len,), dtype=self.xp.float64
                 ),
                 self.xp.zeros(
-                    (self.max_num * self.max_input_len,), dtype=self.xp.float64
+                    (self.max_num * self.max_init_len,), dtype=self.xp.float64
                 ),
             ]
 

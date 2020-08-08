@@ -34,7 +34,7 @@ class WaveformTest(unittest.TestCase):
 
         # keyword arguments for inspiral generator (RomanAmplitude)
         amplitude_kwargs = {
-            "max_input_len": int(
+            "max_init_len": int(
                 1e3
             ),  # all of the trajectories will be well under len = 1000
             "use_gpu": gpu_avialable,  # GPU is available in this class
@@ -67,7 +67,7 @@ class WaveformTest(unittest.TestCase):
         }
 
         # keyword arguments for inspiral generator (RomanAmplitude)
-        amplitude_kwargs = {"max_input_len": int(1e4)}  # this must be >= batch_size
+        amplitude_kwargs = {"max_init_len": int(1e4)}  # this must be >= batch_size
 
         # keyword arguments for Ylm generator (GetYlms)
         Ylm_kwargs = {
@@ -111,7 +111,7 @@ class WaveformTest(unittest.TestCase):
 
 def amplitude_test(amp_class):
     # initialize ROMAN class
-    amp = RomanAmplitude(max_input_len=5000)  # max_input_len creates memory buffers
+    amp = RomanAmplitude(max_init_len=5000)  # max_init_len creates memory buffers
 
     p = np.linspace(10.0, 14.0, 10)
     e = np.linspace(0.1, 0.7, 10)

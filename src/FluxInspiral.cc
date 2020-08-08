@@ -201,7 +201,6 @@ FluxCarrier::FluxCarrier(std::string few_dir)
 {
     interps = new interp_params;
 
-    cout << few_dir << endl;
     load_and_interpolate_flux_data(interps, few_dir);
 	load_and_interpolate_amp_vec_norm_data(&amp_vec_norm_interp, few_dir);
 

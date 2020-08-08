@@ -2,6 +2,7 @@ from pyinterp_cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
 from pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
 
 from few.utils.baseclasses import SummationBase, SchwarzschildEccentric
+from few.utils.citations import *
 
 try:
     import cupy as xp
@@ -76,6 +77,10 @@ class CubicSplineInterpolant:
                 (4, ninterps, length). The 4 is the 4 spline coefficients.
 
         """
+
+    @property
+    def citation(self):
+        return few_citation
 
     @property
     def y(self):
@@ -185,6 +190,10 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
             get_waveform (func): CPU or GPU function for waveform creation.
 
         """
+
+    @property
+    def citation(self):
+        return few_citation
 
     def sum(
         self,

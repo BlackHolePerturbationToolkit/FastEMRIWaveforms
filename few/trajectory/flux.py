@@ -11,26 +11,13 @@ from few.utils.baseclasses import TrajectoryBase, SchwarzschildEccentric
 from few.utils.getfiles import check_for_file_download
 
 from few.utils.constants import *
+from few.utils.citations import *
 
 import os
 import subprocess
 import warnings
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-
-flux_citation = """
-@article{Hughes:2005qb,
-    author = "Hughes, Scott A. and Drasco, Steve and Flanagan, Eanna E. and Franklin, Joel",
-    title = "{Gravitational radiation reaction and inspiral waveforms in the adiabatic limit}",
-    eprint = "gr-qc/0504015",
-    archivePrefix = "arXiv",
-    doi = "10.1103/PhysRevLett.94.221101",
-    journal = "Phys. Rev. Lett.",
-    volume = "94",
-    pages = "221101",
-    year = "2005"
-}
-"""
 
 
 class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
@@ -86,7 +73,7 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
 
     @property
     def citation(self):
-        return flux_citation
+        return few_citation
 
     def get_inspiral(self, M, mu, p0, e0, *args, **kwargs):
         """Generate the inspiral.

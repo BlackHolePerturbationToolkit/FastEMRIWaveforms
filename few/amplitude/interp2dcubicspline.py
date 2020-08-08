@@ -4,6 +4,7 @@ import h5py
 
 from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase
 from few.utils.getfiles import check_for_file_download
+from few.utils.citations import *
 
 from pyInterp2DAmplitude import pyAmplitudeGenerator
 
@@ -41,6 +42,10 @@ class Interp2DAmplitude(SchwarzschildEccentric, AmplitudeBase):
         check_for_file_download(fp, few_dir)
 
         self.amplitude_generator = pyAmplitudeGenerator(self.lmax, self.nmax, few_dir)
+
+    @property
+    def citation(self):
+        return few_citation
 
     def get_amplitudes(self, p, e, *args, specific_modes=None, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.

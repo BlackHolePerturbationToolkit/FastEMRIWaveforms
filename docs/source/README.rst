@@ -25,7 +25,7 @@ Below is a quick set of instructions to get you started with ``few``.
 
 ::
 
-   conda create -n few_env numpy Cython scipy tqdm jupyter ipython python=3.8
+   conda create -n few_env numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.8
    conda activate few_env
 
 2) Clone the repository.
@@ -86,7 +86,7 @@ Installing
 
 ::
 
-   conda create -n few_env numpy Cython scipy tqdm jupyter ipython python=3.8
+   conda create -n few_env numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.8
    conda activate few_env
 
 2) If using GPUs, use pip to `install

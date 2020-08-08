@@ -1,6 +1,7 @@
 import numpy as np
 
 from few.utils.baseclasses import SummationBase, SchwarzschildEccentric
+from few.utils.citations import *
 
 try:
     import cupy as xp
@@ -29,6 +30,10 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric):
             self.xp = xp
         else:
             self.xp = np
+
+    @property
+    def citation(self):
+        return few_citation
 
     def sum(self, t, teuk_modes, ylms, Phi_phi, Phi_r, m_arr, n_arr, *args, **kwargs):
         """Direct summation function.

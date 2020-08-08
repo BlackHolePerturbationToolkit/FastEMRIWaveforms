@@ -518,7 +518,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 
 <span class="c1"># keyword arguments for inspiral generator (RomanAmplitude)</span>
 <span class="n">amplitude_kwargs</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;max_input_len&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e3</span><span class="p">),</span>  <span class="c1"># all of the trajectories will be well under len = 1000</span>
+    <span class="s2">&quot;max_init_len&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e3</span><span class="p">),</span>  <span class="c1"># all of the trajectories will be well under len = 1000</span>
     <span class="s2">&quot;use_gpu&quot;</span><span class="p">:</span> <span class="n">use_gpu</span>  <span class="c1"># GPU is available in this class</span>
 <span class="p">}</span>
 
@@ -580,7 +580,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0x105734710&gt;]
+[&lt;matplotlib.lines.Line2D at 0x1074c8ad0&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -606,7 +606,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0xb19997ed0&gt;]
+[&lt;matplotlib.lines.Line2D at 0xb1c028310&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -748,7 +748,7 @@ wave used 457 modes. wave2 used 26 modes. The mismatch was 0.0011803979666252795
 
 <span class="c1"># keyword arguments for inspiral generator (RomanAmplitude)</span>
 <span class="n">amplitude_kwargs</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;max_input_len&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>  <span class="c1"># this must be &gt;= batch_size</span>
+    <span class="s2">&quot;max_init_len&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>  <span class="c1"># this must be &gt;= batch_size</span>
 <span class="p">}</span>
 
 <span class="c1"># keyword arguments for Ylm generator (GetYlms)</span>
@@ -789,6 +789,8 @@ wave used 457 modes. wave2 used 26 modes. The mismatch was 0.0011803979666252795
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-0.1.0-py3.7-macosx-10.9-x86_64.egg/few/utils/getfiles.py:18: UserWarning: The file Teuk_amps_a0.0_lmax_10_nmax_30_new.h5 did not open sucessfully. It will now be downloaded to the proper location.
+  fp
 /Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-0.1.0-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:266: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
   p0
 </pre></div></div>
@@ -977,7 +979,7 @@ t1 max: 999999.0 t2 max: 464369.0
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0xb199f9c50&gt;
+&lt;matplotlib.legend.Legend at 0xb1b847c90&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1052,7 +1054,7 @@ Dimensionless time step: 20.30254435170025
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># initialize trajectory class</span>
-<span class="n">dense_traj</span> <span class="o">=</span> <span class="n">RunSchwarzEccFluxInspiral</span><span class="p">(</span><span class="n">DENSE_STEPPING</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_input_len</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e7</span><span class="p">))</span>
+<span class="n">dense_traj</span> <span class="o">=</span> <span class="n">RunSchwarzEccFluxInspiral</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -1070,7 +1072,8 @@ Dimensionless time step: 20.30254435170025
 <span class="n">p0</span> <span class="o">=</span> <span class="mf">10.0</span>
 <span class="n">e0</span> <span class="o">=</span> <span class="mf">0.7</span>
 
-<span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">Phi_phi</span><span class="p">,</span> <span class="n">Phi_r</span><span class="p">,</span> <span class="n">flux</span> <span class="o">=</span> <span class="n">dense_traj</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">)</span>
+<span class="c1"># make sure to increase the memory allocated for the trajectory with max_init_len</span>
+<span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">Phi_phi</span><span class="p">,</span> <span class="n">Phi_r</span><span class="p">,</span> <span class="n">flux</span> <span class="o">=</span> <span class="n">dense_traj</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">DENSE_STEPPING</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_init_len</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e7</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -1089,7 +1092,7 @@ Dimensionless time step: 20.30254435170025
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-(11,)
+(10520,)
 </pre></div></div>
 </div>
 </div>
@@ -1106,7 +1109,7 @@ Dimensionless time step: 20.30254435170025
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="c1"># initialize ROMAN class</span>
-<span class="n">amp</span> <span class="o">=</span> <span class="n">RomanAmplitude</span><span class="p">(</span><span class="n">max_input_len</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>  <span class="c1"># max_input_len creates memory buffers</span>
+<span class="n">amp</span> <span class="o">=</span> <span class="n">RomanAmplitude</span><span class="p">(</span><span class="n">max_init_len</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>  <span class="c1"># max_init_len creates memory buffers</span>
 </pre></div>
 </div>
 </div>
@@ -1521,7 +1524,7 @@ We reduced the mode content from 3843 modes to 584 modes.
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0xb1f826190&gt;
+&lt;matplotlib.legend.Legend at 0xb2161c2d0&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1618,7 +1621,7 @@ array([-3.54810537e-05, -4.01422809e-05, -4.48887306e-05, ...,
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0xb3146f3d0&gt;]
+[&lt;matplotlib.lines.Line2D at 0xb1be97290&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1978,7 +1981,7 @@ mismatch: 1.001340224043205
 </div>
 <div class="section" id="Citing-waveforms-and-modules">
 <h1>Citing waveforms and modules<a class="headerlink" href="#Citing-waveforms-and-modules" title="Permalink to this headline">¶</a></h1>
-<p>If you use any work from package please cite our paper (TODO: add arxiv). Additionally please cite any additional work for each module used by calling the <code class="docutils literal notranslate"><span class="pre">citation</span></code> attribute on the module class:</p>
+<p>If you use any work from this package please cite our paper (TODO: add arxiv). Additionally please cite any additional work for each module used by calling the <code class="docutils literal notranslate"><span class="pre">citation</span></code> attribute on the module class:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
 </pre></div>
@@ -1995,20 +1998,20 @@ mismatch: 1.001340224043205
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 
-Temp citation for this paper
 
-@article{Hughes:2005qb,
-    author = &#34;Hughes, Scott A. and Drasco, Steve and Flanagan, Eanna E. and Franklin, Joel&#34;,
-    title = &#34;{Gravitational radiation reaction and inspiral waveforms in the adiabatic limit}&#34;,
-    eprint = &#34;gr-qc/0504015&#34;,
+@article{Chua:TEMP,
+    author = &#34;Chua, Alvin J.K. and Katz, Michael L. and Warburton, Niels and Hughes, Scott A.&#34;,
+    title = &#34;{Rapid generation of fully relativistic extreme-mass-ratio-inspiral\waveform templates for LISA data analysis}&#34;,
+    eprint = &#34;TEMP&#34;,
     archivePrefix = &#34;arXiv&#34;,
-    doi = &#34;10.1103/PhysRevLett.94.221101&#34;,
+    primaryClass = &#34;TEMP&#34;,
+    doi = &#34;TEMP&#34;,
     journal = &#34;Phys. Rev. Lett.&#34;,
-    volume = &#34;94&#34;,
-    pages = &#34;221101&#34;,
-    year = &#34;2005&#34;
+    volume = &#34;TEMP&#34;,
+    number = &#34;TEMP&#34;,
+    pages = &#34;TEMP&#34;,
+    year = &#34;TEMP&#34;
 }
-
 
 @article{Chua:2018woh,
     author = &#34;Chua, Alvin J.K. and Galley, Chad R. and Vallisneri, Michele&#34;,

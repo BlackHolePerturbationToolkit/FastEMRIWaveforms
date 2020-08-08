@@ -1,5 +1,7 @@
 import numpy as np
 
+from few.utils.citations import *
+
 try:
     import cupy as xp
 
@@ -53,6 +55,10 @@ class ModeSelector:
 
         """
         pass
+
+    @property
+    def citation(self):
+        return few_citation
 
     def __call__(self, teuk_modes, ylms, modeinds, eps=1e-5):
         """Call to sort and filer teukolsky modes.
