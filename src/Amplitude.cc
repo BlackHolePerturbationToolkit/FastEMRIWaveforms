@@ -1,5 +1,20 @@
-// Code to compute an eccentric flux driven insipral
-// into a Schwarzschild black hole
+// Code to compute eccentric flux amplitudes with bicubic splines
+
+// Copyright (C) 2020 Niels Warburton, Michael L. Katz, Alvin J.K. Chua, Scott A. Hughes
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #include <math.h>
 #include <stdio.h>
 #include <gsl/gsl_errno.h>
@@ -23,9 +38,11 @@
 #include <chrono>
 #include <iomanip>      // std::setprecision
 
+// if not using omp remove it
 #ifdef __USE_OMP__
 #include <omp.h>
 #endif
+
 #include <stdio.h>
 
 
@@ -62,6 +79,7 @@ double EllipticPiIncomp(double n, double phi, double k){
         return gsl_sf_ellint_P(phi, sqrt(k), -n, GSL_PREC_DOUBLE);
 }
 
+// initialize amplitude interpolants for each mode
 void create_amplitude_interpolant(hid_t file_id, int l, int m, int n, int Ne, int Ny, vector<double>& ys, vector<double>& es, Interpolant **re, Interpolant **im){
 
 	// amplitude data has a real and imaginary part
@@ -77,17 +95,21 @@ void create_amplitude_interpolant(hid_t file_id, int l, int m, int n, int Ne, in
 	vector<double> modeData_re(Ne*Ny);
 	vector<double> modeData_im(Ne*Ny);
 
-	for(int i = 0; i < Ne; i++){
-		for(int j = 0; j < Ny; j++){
+	for(int i = 0; i < Ne; i++)
+    {
+		for(int j = 0; j < Ny; j++)
+        {
 			modeData_re[j + Ny*i] = modeData[2*(Ny - 1 -j + Ny*i)];
 			modeData_im[j + Ny*i] = modeData[2*(Ny - 1 -j + Ny*i) + 1];
 		}
 	}
 
+    // initialize interpolants
 	*re = new Interpolant(ys, es, modeData_re);
 	*im = new Interpolant(ys, es, modeData_im);
 }
 
+// collect data and initialize amplitude interpolants
 void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amps *amps, const std::string& few_dir){
 
 	hid_t 	file_id;
@@ -109,21 +131,26 @@ void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amp
 	vector<double> es(Ne);
 	vector<double> ys(Ny);
 
-	for(int i = 0; i < Ny; i++){
+    // convert p -> y
+	for(int i = 0; i < Ny; i++)
+    {
 		double p = gridRaw[1 + 4*i];
 		double e = 0;
 
 		ys[Ny - 1 - i] = log(0.1 * (10.*p -20*e -21.) );
 	}
 
-	for(int i = 0; i < Ne; i++){
+	for(int i = 0; i < Ne; i++)
+    {
 		es[i] = gridRaw[2 + 4*Ny*i];
 	}
 
-	for(int l = 2; l <= lmax; l++){
+	for(int l = 2; l <= lmax; l++)
+    {
 			amps->re[l] = new Interpolant**[l+1];
 			amps->im[l] = new Interpolant**[l+1];
-			for(int m = 0; m <= l; m++){
+			for(int m = 0; m <= l; m++)
+            {
 				amps->re[l][m] = new Interpolant*[2*nmax +1];
 				amps->im[l][m] = new Interpolant*[2*nmax +1];
 			}
@@ -131,9 +158,12 @@ void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amp
 
 
 	// Load the amplitude data
-	for(int l = 2; l <= lmax; l++){
-		for(int m = 0; m <= l; m++){
-			for(int n = -nmax; n <= nmax; n++){
+	for(int l = 2; l <= lmax; l++)
+    {
+		for(int m = 0; m <= l; m++)
+        {
+			for(int n = -nmax; n <= nmax; n++)
+            {
                 create_amplitude_interpolant(file_id, l, m, n, Ne, Ny, ys, es, &amps->re[l][m][n+nmax], &amps->im[l][m][n+nmax]);
 			}
 		}
@@ -141,8 +171,8 @@ void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amp
 
 }
 
-// TODO: make it selectable by mode ?
 // TODO: free memory from inside interpolants
+// Amplitude Carrier is class for interaction with python carrying gsl interpolant information
 AmplitudeCarrier::AmplitudeCarrier(int lmax_, int nmax_, std::string few_dir)
 {
     lmax = lmax_;
@@ -150,39 +180,39 @@ AmplitudeCarrier::AmplitudeCarrier(int lmax_, int nmax_, std::string few_dir)
 
     amps = new struct waveform_amps;
 
-    // cout << "# Loading and interpolating the amplitude data (this will take a few seconds)" << endl;
     load_and_interpolate_amplitude_data(lmax, nmax, amps, few_dir);
 
 }
 
+// need to have dealloc method for cython interface
 void AmplitudeCarrier::dealloc()
 {
-
     delete amps;
-
 }
 
 
+// main function for computing amplitudes
 void AmplitudeCarrier::Interp2DAmplitude(std::complex<double> *amplitude_out, double *p_arr, double *e_arr, int *l_arr, int *m_arr, int *n_arr, int num, int num_modes)
 {
 
     complex<double> I(0.0, 1.0);
 
-    //reduction (+:hwave)
     #ifdef __USE_OMP__
     #pragma omp parallel for collapse(2)
     #endif
-    for (int i=0; i<num; i++){
-    	for(int mode_i = 0; mode_i < num_modes; mode_i++){
+    for (int i=0; i<num; i++)
+    {
+    	for(int mode_i = 0; mode_i < num_modes; mode_i++)
+        {
             double p = p_arr[i];
             double e = e_arr[i];
 
             double y = log((p -2.*e - 2.1));
 
+            // calculate amplitudes for this mode
             int l = l_arr[mode_i]; int m = m_arr[mode_i]; int n = n_arr[mode_i];
 			amplitude_out[i*num_modes + mode_i]= amps->re[l][m][n+nmax]->eval(y,e) + I*amps->im[l][m][n+nmax]->eval(y,e);
 
-            //if ((l == 2) && (m ==0)) printf("%d %d %d %e %e\n", l, m, n, amps->re[l][m][n+nmax]->eval(y,e), amps->im[l][m][n+nmax]->eval(y,e));
         }
     }
 }

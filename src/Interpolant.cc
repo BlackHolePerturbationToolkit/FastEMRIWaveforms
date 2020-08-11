@@ -1,5 +1,7 @@
-// NIT_inspiral - code to rapidly compute extreme mass-ratio inspirals using self-force results
-// Copyright (C) 2017  Niels Warburton
+// Code to compute an eccentric flux driven insipral
+// into a Schwarzschild black hole
+
+// Copyright (C) 2020 Niels Warburton, Michael L. Katz, Alvin J.K. Chua, Scott A. Hughes
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

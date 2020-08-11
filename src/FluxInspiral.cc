@@ -1,5 +1,21 @@
 // Code to compute an eccentric flux driven insipral
 // into a Schwarzschild black hole
+
+// Copyright (C) 2020 Niels Warburton, Michael L. Katz, Alvin J.K. Chua, Scott A. Hughes
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #include <math.h>
 #include <stdio.h>
 #include <gsl/gsl_errno.h>
@@ -33,8 +49,6 @@ using namespace std::chrono;
 // This code assumes the data is formated in the following way
 const int Ne = 33;
 const int Ny = 50;
-
-//const int DENSE_STEPPING = 0;
 
 // Define elliptic integrals that use Mathematica's conventions
 double EllipticK(double k){
@@ -78,6 +92,7 @@ int func (double t, const double y[], double f[], void *params){
 	double EllipPi1 = EllipticPi(16*e/(12.0 + 8*e - 4*e*e - 8*p + p*p), 4*e/(p-6.0+2*e));
 	double EllipPi2 = EllipticPi(2*e*(p-4)/((1.0+e)*(p-6.0+2*e)), 4*e/(p-6.0+2*e));
 
+    // evaluate ODEs, starting with PN contribution, then interpolating over remaining flux contribution
 	double Omega_phi = (2*Power(p,1.5))/(Sqrt(-4*Power(e,2) + Power(-2 + p,2))*(8 + ((-2*EllipPi2*(6 + 2*e - p)*(3 + Power(e,2) - p)*Power(p,2))/((-1 + e)*Power(1 + e,2)) - (EllipE*(-4 + p)*Power(p,2)*(-6 + 2*e + p))/(-1 + Power(e,2)) +
           (EllipK*Power(p,2)*(28 + 4*Power(e,2) - 12*p + Power(p,2)))/(-1 + Power(e,2)) + (4*(-4 + p)*p*(2*(1 + e)*EllipK + EllipPi2*(-6 - 2*e + p)))/(1 + e) + 2*Power(-4 + p,2)*(EllipK*(-4 + p) + (EllipPi1*p*(-6 - 2*e + p))/(2 + 2*e - p)))/
         (EllipK*Power(-4 + p,2))));
@@ -97,8 +112,6 @@ int func (double t, const double y[], double f[], void *params){
 	 (-1 + Power(e,2))*Ldot*Sqrt(-3 - Power(e,2) + p)*(12 + 4*Power(e,2) - 8*p + Power(p,2)))/
 	(e*(4*Power(e,2) - Power(-6 + p,2))*p));
 
-
-
 	double Phi_phi_dot 	= Omega_phi;
 
 	double Phi_r_dot 	= (p*Sqrt((-6 + 2*e + p)/(-4*Power(e,2) + Power(-2 + p,2)))*Pi)/
@@ -114,6 +127,7 @@ int func (double t, const double y[], double f[], void *params){
   return GSL_SUCCESS;
 }
 
+// initialize amplitude vector norm calculation
 void load_and_interpolate_amp_vec_norm_data(Interpolant **amp_vec_norm_interp, const std::string& few_dir){
 
 	// Load and interpolate the flux data
@@ -151,7 +165,7 @@ void load_and_interpolate_amp_vec_norm_data(Interpolant **amp_vec_norm_interp, c
 	*amp_vec_norm_interp = new Interpolant(ys, es, vec_norms);
 }
 
-
+// Initialize flux data for inspiral calculations
 void load_and_interpolate_flux_data(struct interp_params *interps, const std::string& few_dir){
 
 	// Load and interpolate the flux data
@@ -195,17 +209,22 @@ void load_and_interpolate_flux_data(struct interp_params *interps, const std::st
 
 }
 
-
-
+// Class to carry gsl interpolants for the inspiral data
+// also executes inspiral calculations
 FluxCarrier::FluxCarrier(std::string few_dir)
 {
     interps = new interp_params;
 
+    // prepare the data
+    // python will download the data if
+    // the user does not have it in the correct place
     load_and_interpolate_flux_data(interps, few_dir);
 	load_and_interpolate_amp_vec_norm_data(&amp_vec_norm_interp, few_dir);
 
 }
 
+// When interfacing with cython, it helps to have  dealloc function to explicitly call
+// rather than the deconstructor
 void FluxCarrier::dealloc()
 {
 
@@ -217,6 +236,7 @@ void FluxCarrier::dealloc()
 
 }
 
+// get the amplitude vector norm at p and e with bicubic spline
 double get_step_flux(double p, double e, Interpolant *amp_vec_norm_interp)
 {
 
@@ -226,13 +246,19 @@ double get_step_flux(double p, double e, Interpolant *amp_vec_norm_interp)
 
 }
 
-
+// main function in the FluxCarrier class
+// It takes initial parameters and evolves a trajectory
+// tmax and dt affect integration length and time steps (mostly if DENSE_STEPPING == 1)
+// use_rk4 allows the use of the rk4 integrator
 FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, double e0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4){
 
+    // years to seconds
     tmax = tmax*YRSID_SI;
 
+    // get flux at initial values
     double init_flux = get_step_flux(p0, e0, amp_vec_norm_interp);
 
+    // prepare containers for flux information
     FLUXHolder flux_out(t0, M, mu, p0, e0, init_flux);
 
 	//Set the mass ratio
@@ -242,24 +268,11 @@ FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, doub
 
     //high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-    // Set the samplerate in Hertz
-    //double samplerate = 0.1;
-
-    // Signal length (in seconds)
-    //double max_signal_length = 1*YRSID_SI;
-
     // Compute the adimensionalized time steps and max time
-
     dt = dt /(M*MTSUN_SI);
-
-    //if (!DENSE_STEPPING) tmax = max_signal_length;
-
     tmax = tmax/(M*MTSUN_SI);
 
-    // Initial values
-	// TODO do we want to set initial phases here?
-
-
+    // initial point
 	double y[4] = { p0, e0, 0.0, 0.0 };
 
     // Initialize the ODE solver
@@ -282,9 +295,13 @@ FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, doub
 
 	while (t < tmax){
 
+        // apply fixed step if dense stepping
+        // or do interpolated step
 		if(DENSE_STEPPING) status = gsl_odeiv2_evolve_apply_fixed_step (evolve, control, step, &sys, &t, h, y);
         else int status = gsl_odeiv2_evolve_apply (evolve, control, step, &sys, &t, t1, &h, y);
 
+        // should not be needed but is safeguard against stepping past maximum allowable time
+        // the last point in the trajectory will be at t = tmax
         if (t > tmax) break;
 
       	if (status != GSL_SUCCESS){
@@ -299,16 +316,14 @@ FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, doub
 
         flux_out.add_point(t*Msec, y[0], y[1], y[2], y[3], step_flux); // adds time in seconds
 
+        // count the number of points
         ind++;
+
         // Stop the inspiral when close to the separatrix
         if(p - 6 -2*e < 0.1){
             //cout << "# Separatrix reached: exiting inspiral" << endl;
             break;
         }
-
-		// Output format: t, p, e, Phi_phi, Phi_r
-				//printf ("%.5e %.5e %.5e %.5e %.5e\n", flux_out.t_arr.push_back(t), flux_out.p_arr.push_back(y[0]), flux_out.e_arr.push_back(y[1]), y[2], y[3]);
-
 	}
 
 	flux_out.length = ind;
@@ -324,14 +339,18 @@ FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, doub
 
 }
 
+// wrapper for calling the flux inspiral from cython/python
 void FluxCarrier::FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len){
 
 	double t0 = 0.0;
 		FLUXHolder flux_vals = run_FLUX(t0, M, mu, p0, e0, err, tmax, dt, DENSE_STEPPING, use_rk4);
 
+        // make sure we have allocated enough memory through cython
         if (flux_vals.length > init_len){
             throw std::runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
         }
+
+        // copy data
 		memcpy(t, &flux_vals.t_arr[0], flux_vals.length*sizeof(double));
 		memcpy(p, &flux_vals.p_arr[0], flux_vals.length*sizeof(double));
 		memcpy(e, &flux_vals.e_arr[0], flux_vals.length*sizeof(double));
@@ -339,25 +358,7 @@ void FluxCarrier::FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, 
 		memcpy(Phi_r, &flux_vals.Phi_r_arr[0], flux_vals.length*sizeof(double));
         memcpy(amp_norm, &flux_vals.amp_norm_out_arr[0], flux_vals.length*sizeof(double));
 
+        // indicate how long is the trajectory
 		*length = flux_vals.length;
 
 }
-
-/*
-int main (void) {
-
-	// Set the initial values
-	double p0 = 12.5;
-	double e0 = 0.5;
-	double t0 = 0;
-
-	FLUXHolder check = run_FLUX(t0, p0, e0);
-
-	for (int i=0; i<check.length; i++){
-			printf("%e %e %e\n", check.t_arr[i], check.p_arr[i], check.e_arr[i]);
-	}
-	printf("length is %d\n", check.length);
-
-
-}
-*/

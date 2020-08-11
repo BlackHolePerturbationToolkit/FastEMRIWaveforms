@@ -51,7 +51,7 @@ from abc import ABC
 # Shorter Term
 # TODO: add omp stuff
 # TODO: document in line / check / cleanup
-# TODO: clarify mode_selection on waveform versus amplitudes
+# TODO: free memory in amplitudes
 
 
 class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
@@ -569,9 +569,8 @@ if __name__ == "__main__":
     phi = 0.0
     dt = 10.0
     T = 1.0  #  / 100.0  # 1124936.040602 / YRSID_SI
-    eps = 1e-2
     mode_selection = None
-    show_progress = False
+    show_progress = True
     batch_size = 10000
 
     mismatch_out = []
@@ -631,9 +630,9 @@ if __name__ == "__main__":
 
     eps = 1e-5
     # for i, eps in enumerate(eps_all):
-    for i, (p0, e0, mu) in enumerate(zip(p0_arr[5:6], e0_arr[5:6], mu_arr[5:6])):
+    for i, (p0, e0, mu) in enumerate(zip(p0_arr, e0_arr, mu_arr)):
         all_modes = False if i > 0 else True
-        num = 5
+        num = 1
         st = time.perf_counter()
         for jjj in range(num):
 
@@ -657,9 +656,7 @@ if __name__ == "__main__":
         et = time.perf_counter()
         pt = few.plunge_time
         pt_arr.append(pt)
-        import pdb
 
-        pdb.set_trace()
         fast_time = (et - st) / num
         timing.append(fast_time)
 
@@ -695,9 +692,10 @@ if __name__ == "__main__":
         min_len = np.min([len(wc), len(wc2)])
 
         np.save(
-            "/projects/b1095/mkatz/emri/wave_out_p_{}_e{}".format(p0, e0),
-            np.array([wc[:min_len], wc2[:min_len]]),
+            "wave_out_p_{}_e{}".format(p0, e0), np.array([wc[:min_len], wc2[:min_len]])
         )
+
+        exit()
 
         mm = get_mismatch(wc2, wc, use_gpu=False)
         mismatch_out.append(mm)
