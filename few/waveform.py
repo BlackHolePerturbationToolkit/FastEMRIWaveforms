@@ -40,12 +40,7 @@ from few.utils.ylm import GetYlms
 from few.summation.directmodesum import DirectModeSum
 from few.utils.constants import *
 from few.utils.citations import *
-
-try:
-    from few.summation.interpolatedmodesum import InterpolatedModeSum
-
-except (ModuleNotFoundError, ImportError) as e:
-    pass
+from few.summation.interpolatedmodesum import InterpolatedModeSum
 
 # Longer Term
 # TODO: run trajectory backward
