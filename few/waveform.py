@@ -1,9 +1,6 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath("/home/mlk667/FastEMRIWaveforms/"))
-sys.path.insert(0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveforms/"))
-
 import numpy as np
 from tqdm import tqdm
 
@@ -50,7 +47,6 @@ from abc import ABC
 # TODO: add benchmark test
 
 # Shorter Term
-# TODO: adjust instructions for installing compilers
 # TODO: document in line / check / cleanup
 # TODO: free memory in amplitudes
 
