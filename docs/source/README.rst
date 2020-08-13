@@ -17,7 +17,7 @@ view the data, it can be found on
 
 If you use all or any parts of this code, please cite (TODO: add papers
 to cite. Do we want this to be per module or general use.). See the
-`documentation <https://mikekatz04.github.io/FastEMRIWaveforms/>`__ to
+`documentation <https://bhptoolkit.org/FastEMRIWaveforms/>`__ to
 properly cite specific modules.
 
 Getting Started

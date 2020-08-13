@@ -2,7 +2,7 @@
 
 This package contains the highly modular framework for fast and accurate extreme mass ratio inspiral (EMRI) waveforms from (TODO: add arXiv). The waveforms in this package combine a variety of separately accessible modules to form EMRI waveforms on both CPUs and GPUs. Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the [documentation](https://bhptoolkit.org/FastEMRIWaveforms/) for further information on these modules. The code can be found on Github [here](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms). The data necessary for various modules in this package will automatically download the first time it is needed. If you would like to view the data, it can be found on [zenodo](https://zenodo.org/record/3981654#.XzS_KRNKjlw).
 
-If you use all or any parts of this code, please cite (TODO: add papers to cite. Do we want this to be per module or general use.). See the [documentation](https://mikekatz04.github.io/FastEMRIWaveforms/) to properly cite specific modules.
+If you use all or any parts of this code, please cite (TODO: add papers to cite. Do we want this to be per module or general use.). See the [documentation](https://bhptoolkit.org/FastEMRIWaveforms/) to properly cite specific modules.
 
 ## Getting Started
 
