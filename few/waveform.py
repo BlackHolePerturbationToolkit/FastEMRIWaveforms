@@ -1,25 +1,43 @@
+# Main waveform class location
+
+# Copyright (C) 2020 Michael L. Katz, Alvin J.K. Chua, Niels Warburton, Scott A. Hughes
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import sys
 import os
+from abc import ABC
 
 import numpy as np
 from tqdm import tqdm
 
+# check if cupy is available / GPU is available
 try:
     import cupy as xp
 
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
+
 from few.utils.baseclasses import SchwarzschildEccentric
-
 from few.trajectory.flux import RunSchwarzEccFluxInspiral
-
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
-
 from few.utils.overlap import get_mismatch
-
 from few.amplitude.romannet import RomanAmplitude
-
+from few.utils.modeselector import ModeSelector
+from few.utils.ylm import GetYlms
+from few.summation.directmodesum import DirectModeSum
 from few.utils.constants import *
 from few.utils.citations import *
 
@@ -28,12 +46,6 @@ try:
 
 except (ModuleNotFoundError, ImportError) as e:
     pass
-
-from few.utils.modeselector import ModeSelector
-from few.utils.ylm import GetYlms
-from few.summation.directmodesum import DirectModeSum
-
-from abc import ABC
 
 # Longer Term
 # TODO: run trajectory backward

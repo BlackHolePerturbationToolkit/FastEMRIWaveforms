@@ -38,13 +38,12 @@
 #include <chrono>
 #include <iomanip>      // std::setprecision
 
+#include <stdio.h>
+
 // if not using omp remove it
 #ifdef __USE_OMP__
 #include <omp.h>
 #endif
-
-#include <stdio.h>
-
 
 using namespace std;
 using namespace std::chrono;
@@ -218,6 +217,7 @@ void AmplitudeCarrier::Interp2DAmplitude(std::complex<double> *amplitude_out, do
     complex<double> I(0.0, 1.0);
 
     #ifdef __USE_OMP__
+    printf("OMP NUM THREADS: %d\n", omp_get_num_threads());
     #pragma omp parallel for collapse(2)
     #endif
     for (int i=0; i<num; i++)

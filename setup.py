@@ -333,6 +333,12 @@ if use_omp is False:
     cpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
     cpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
 
+Interp2DAmplitude_ext = Extension(
+    "pyInterp2DAmplitude",
+    sources=["src/Interpolant.cc", "src/Amplitude.cc", "src/pyinterp2damp.pyx"],
+    **cpu_extension,
+)
+
 FLUX_ext = Extension(
     "pyFLUX",
     sources=["src/Interpolant.cc", "src/FluxInspiral.cc", "src/FLUX.pyx"],
@@ -371,12 +377,6 @@ interp_cpu_ext = Extension(
 spher_harm_ext = Extension(
     "pySpinWeightedSpherHarm",
     sources=["src/SWSH.cc", "src/pySWSH.pyx"],
-    **cpu_extension,
-)
-
-Interp2DAmplitude_ext = Extension(
-    "pyInterp2DAmplitude",
-    sources=["src/Interpolant.cc", "src/Amplitude.cc", "src/pyinterp2damp.pyx"],
     **cpu_extension,
 )
 
