@@ -17,7 +17,6 @@
 #include <cmath>
 
 #include "Interpolant.h"
-#include "Amplitude.hh"
 
 #include <iostream>
 #include <fstream>

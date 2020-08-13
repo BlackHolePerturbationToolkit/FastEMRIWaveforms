@@ -214,7 +214,7 @@ further information on these modules. The code can be found on Github
 The data necessary for various modules in this package will
 automatically download the first time it is needed. If you would like to
 view the data, it can be found on
-<a class="reference external" href="https://zenodo.org/record/3981654#.XzS_KRNKjlw">zenodo</a>.</p>
+<a class="reference external" href="https://zenodo.org/record/3981654#.XzS_KRNKjlw">Zenodo</a>.</p>
 <p>If you use all or any parts of this code, please cite (TODO: add papers
 to cite. Do we want this to be per module or general use.). See the
 <a class="reference external" href="https://bhptoolkit.org/FastEMRIWaveforms/">documentation</a> to
@@ -227,14 +227,19 @@ properly cite specific modules.</p>
 you do not have it.</p></li>
 <li><p>Create a virtual environment.</p></li>
 </ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">matplotlib</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.8</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">gcc_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gxx_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gsl</span> <span class="n">lapack</span> <span class="n">hdf5</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">matplotlib</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
 <span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
+If on Windows, substitute `gcc_linux-64` and `gxx_linus-64` with (TODO: Fill in) and (TODO: Fill in).
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
 <li><p>Clone the repository.</p></li>
 </ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">mikekatz04</span><span class="o">/</span><span class="n">FastEMRIWaveforms</span><span class="o">.</span><span class="n">git</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">BlackHolePerturbationToolkit</span><span class="o">/</span><span class="n">FastEMRIWaveforms</span><span class="o">.</span><span class="n">git</span>
+<span class="n">cd</span> <span class="n">FastEMRIWaveforms</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
@@ -257,23 +262,25 @@ notebook</a>.</p>
 &gt;2.0</a> ,
 <a class="reference external" href="https://www.netlib.org/lapack/lug/node14.html">lapack</a>, Python &gt;3.4,
 and NumPy. To run the examples, you will also need jupyter and
-matplotlib. For Python packages, we generally recommend installing
-within a conda environment. For gsl and lapack, it may be better to use
-brew or apt-get. If you want to run with OpenMP, make sure that is
-installed.</p>
+matplotlib. We generally recommend installing everything, including gcc
+and g++ compilers, in the conda environment as is shown in the examples
+here. This generally helps avoid compilation and linking issues. If you
+use your own chosen compiler, you will need to make sure all necessary
+information is passed to the setup command (see below). You also may
+need to add information to the <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> file.</p>
 <p>To install this software for use with NVIDIA GPUs (compute capability
 &gt;2.0), you need the <a class="reference external" href="https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html">CUDA
 toolkit</a>
 and <a class="reference external" href="https://cupy.chainer.org/">CuPy</a>. The CUDA toolkit must have
-cuda version &gt;8.0. Be sure to properly install cupy within the correct
+cuda version &gt;8.0. Be sure to properly install CuPy within the correct
 CUDA toolkit version. Make sure the nvcc binary is on <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> or set
 it as the <code class="docutils literal notranslate"><span class="pre">CUDAHOME</span></code> environment variable.</p>
 <p>There are a set of files required for total use of this package. They
-will download automatically when they are needed. Files are generally
-under 10MB. However, there is a 100MB file needed for the slow waveform
-and the bicubic amplitude interpolation. This larger file will only
-download if you run either of those two modules. The files are hosted on
-<a class="reference external" href="https://sandbox.zenodo.org/record/653693#.XySP_vhKjlw">Zenodo</a>.</p>
+will download automatically when the first time they are needed. Files
+are generally under 10MB. However, there is a 100MB file needed for the
+slow waveform and the bicubic amplitude interpolation. This larger file
+will only download if you run either of those two modules. The files are
+hosted on <a class="reference external" href="https://zenodo.org/record/3981654#.XzS_KRNKjlw">Zenodo</a>.</p>
 </div>
 <div class="section" id="installing">
 <h3>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h3>
@@ -282,8 +289,21 @@ download if you run either of those two modules. The files are hosted on
 you do not have it.</p></li>
 <li><p>Create a virtual environment.</p></li>
 </ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">matplotlib</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.8</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">gcc_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gxx_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gsl</span> <span class="n">lapack</span> <span class="n">hdf5</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">matplotlib</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
 <span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
+If on Windows, substitute `gcc_linux-64` and `gxx_linus-64` with (TODO: Fill in) and (TODO: Fill in).
+
+If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, matplotlib) with pip
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Clone the repository.</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">BlackHolePerturbationToolkit</span><span class="o">/</span><span class="n">FastEMRIWaveforms</span><span class="o">.</span><span class="n">git</span>
+<span class="n">cd</span> <span class="n">FastEMRIWaveforms</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
@@ -351,7 +371,7 @@ code of conduct, and the process for submitting pull requests to us.</p>
 <p>We use <a class="reference external" href="http://semver.org/">SemVer</a> for versioning. For the versions
 available, see the <a class="reference external" href="https://github.com/mikekatz04/gce/tags">tags on this
 repository</a>.</p>
-<p>Current Version: 0.1.0</p>
+<p>Current Version: 1.0.0</p>
 </div>
 <div class="section" id="authors">
 <h2>Authors<a class="headerlink" href="#authors" title="Permalink to this headline">¶</a></h2>
@@ -430,25 +450,25 @@ computing facility at Northwestern University.</p></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="user/traj.html">Trajectory Package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="user/traj.html#module-few.trajectory.flux">Flux Inspiral</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/traj.html#flux-inspiral">Flux Inspiral</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="user/amp.html">Amplitude Package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="user/amp.html#schwarzschild-eccentric-amplitudes">Schwarzschild Eccentric Amplitudes</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="user/amp.html#module-few.amplitude.romannet">ROMAN Network</a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/amp.html#module-few.amplitude.interp2dcubicspline">2D Cubic Spline Interpolation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user/amp.html#roman-network">ROMAN Network</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user/amp.html#d-cubic-spline-interpolation">2D Cubic Spline Interpolation</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="user/sum.html">Summation Package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="user/sum.html#module-few.summation.interpolatedmodesum">Interpolated Summation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/sum.html#interpolated-summation">Interpolated Summation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user/sum.html#module-few.summation.directmodesum">Direct Summation</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="user/util.html">Utilities</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="user/util.html#module-few.utils.modeselector">Mode Filtering</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user/util.html#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/util.html#spin-weighted-spherical-harmonics">(-2) Spin-Weighted Spherical Harmonics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user/util.html#module-few.utils.overlap">Analysis Tools</a></li>
 </ul>
 </li>

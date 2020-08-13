@@ -93,7 +93,7 @@
 <li class="toctree-l1"><a class="reference internal" href="sum.html">Summation Package</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Utilities</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-few.utils.modeselector">Mode Filtering</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#spin-weighted-spherical-harmonics">(-2) Spin-Weighted Spherical Harmonics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-few.utils.overlap">Analysis Tools</a></li>
 </ul>
 </li>
@@ -318,70 +318,8 @@ acceptable loss). Default that gives good mismatch qualities is
 </dd></dl>
 
 </div>
-<div class="section" id="module-few.utils.ylm">
-<span id="spin-weighted-spherical-harmonics"></span><h2>(-2) Spin-Weighted Spherical Harmonics<a class="headerlink" href="#module-few.utils.ylm" title="Permalink to this headline">¶</a></h2>
-<dl class="py class">
-<dt id="few.utils.ylm.GetYlms">
-<em class="property">class </em><code class="sig-prename descclassname">few.utils.ylm.</code><code class="sig-name descname">GetYlms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">assume_positive_m</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>(-2) Spin-weighted Spherical Harmonics</p>
-<p>The class generates (-2) spin-weighted spherical hackarmonics,
-<span class="math notranslate nohighlight">\(Y_{lm}(\Theta,\phi)\)</span>. <strong>Important Note</strong>: this class also applies
-the parity operator (<span class="math notranslate nohighlight">\(-1^l\)</span>) to modes with <span class="math notranslate nohighlight">\(m&lt;0\)</span>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>assume_positive_m</strong> (<em>bool</em><em>, </em><em>optional</em>) – Set true if only providing <span class="math notranslate nohighlight">\(m\geq0\)</span>,
-it will return twice the number of requested modes with the seconds
-half as modes with <span class="math notranslate nohighlight">\(m&lt;0\)</span>. <strong>Warning</strong>: It will also duplicate
-the <span class="math notranslate nohighlight">\(m=0\)</span> modes. Default is False.</p></li>
-<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, allocate arrays for GPU.
-Default is False.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt id="few.utils.ylm.GetYlms.attributes_GetYlms">
-<code class="sig-name descname">attributes_GetYlms</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.attributes_GetYlms" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py attribute">
-<dt id="few.utils.ylm.GetYlms.xp">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#few.utils.ylm.GetYlms.xp" title="Permalink to this definition">¶</a></dt>
-<dd><p>cupy or numpy based on GPU usage.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>obj</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py method">
-<dt id="few.utils.ylm.GetYlms.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">l_in</span></em>, <em class="sig-param"><span class="n">m_in</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.__call__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Call method for Ylms.</p>
-<p>This returns ylms based on requested <span class="math notranslate nohighlight">\((l,m)\)</span> values and viewing
-angles.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>l_in</strong> (<em>1D int xp.ndarray</em>) – <span class="math notranslate nohighlight">\(l\)</span> values requested.</p></li>
-<li><p><strong>m_in</strong> (<em>1D int xp.ndarray</em>) – <span class="math notranslate nohighlight">\(m\)</span> values requested.</p></li>
-<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle.</p></li>
-<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Ylm values.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>1D complex128 xp.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
+<div class="section" id="spin-weighted-spherical-harmonics">
+<h2>(-2) Spin-Weighted Spherical Harmonics<a class="headerlink" href="#spin-weighted-spherical-harmonics" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-few.utils.overlap">
 <span id="analysis-tools"></span><h2>Analysis Tools<a class="headerlink" href="#module-few.utils.overlap" title="Permalink to this headline">¶</a></h2>

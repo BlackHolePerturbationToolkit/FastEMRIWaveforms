@@ -13,7 +13,7 @@ further information on these modules. The code can be found on Github
 The data necessary for various modules in this package will
 automatically download the first time it is needed. If you would like to
 view the data, it can be found on
-`zenodo <https://zenodo.org/record/3981654#.XzS_KRNKjlw>`__.
+`Zenodo <https://zenodo.org/record/3981654#.XzS_KRNKjlw>`__.
 
 If you use all or any parts of this code, please cite (TODO: add papers
 to cite. Do we want this to be per module or general use.). See the
@@ -32,14 +32,20 @@ Below is a quick set of instructions to get you started with ``few``.
 
 ::
 
-   conda create -n few_env numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.8
+   conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 gsl lapack hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
    conda activate few_env
+
+::
+
+   If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
+   If on Windows, substitute `gcc_linux-64` and `gxx_linus-64` with (TODO: Fill in) and (TODO: Fill in).
 
 2) Clone the repository.
 
 ::
 
-   git clone https://github.com/mikekatz04/FastEMRIWaveforms.git
+   git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
+   cd FastEMRIWaveforms
 
 3) Run install. Make sure CUDA is on your PATH.
 
@@ -63,25 +69,27 @@ To install this software for CPU usage, you need `gsl
 >2.0 <https://www.gnu.org/software/gsl/>`__ ,
 `lapack <https://www.netlib.org/lapack/lug/node14.html>`__, Python >3.4,
 and NumPy. To run the examples, you will also need jupyter and
-matplotlib. For Python packages, we generally recommend installing
-within a conda environment. For gsl and lapack, it may be better to use
-brew or apt-get. If you want to run with OpenMP, make sure that is
-installed.
+matplotlib. We generally recommend installing everything, including gcc
+and g++ compilers, in the conda environment as is shown in the examples
+here. This generally helps avoid compilation and linking issues. If you
+use your own chosen compiler, you will need to make sure all necessary
+information is passed to the setup command (see below). You also may
+need to add information to the ``setup.py`` file.
 
 To install this software for use with NVIDIA GPUs (compute capability
 >2.0), you need the `CUDA
 toolkit <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>`__
 and `CuPy <https://cupy.chainer.org/>`__. The CUDA toolkit must have
-cuda version >8.0. Be sure to properly install cupy within the correct
+cuda version >8.0. Be sure to properly install CuPy within the correct
 CUDA toolkit version. Make sure the nvcc binary is on ``$PATH`` or set
 it as the ``CUDAHOME`` environment variable.
 
 There are a set of files required for total use of this package. They
-will download automatically when they are needed. Files are generally
-under 10MB. However, there is a 100MB file needed for the slow waveform
-and the bicubic amplitude interpolation. This larger file will only
-download if you run either of those two modules. The files are hosted on
-`Zenodo <https://sandbox.zenodo.org/record/653693#.XySP_vhKjlw>`__.
+will download automatically when the first time they are needed. Files
+are generally under 10MB. However, there is a 100MB file needed for the
+slow waveform and the bicubic amplitude interpolation. This larger file
+will only download if you run either of those two modules. The files are
+hosted on `Zenodo <https://zenodo.org/record/3981654#.XzS_KRNKjlw>`__.
 
 Installing
 ~~~~~~~~~~
@@ -93,8 +101,22 @@ Installing
 
 ::
 
-   conda create -n few_env numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.8
+   conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 gsl lapack hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
    conda activate few_env
+
+::
+
+   If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
+   If on Windows, substitute `gcc_linux-64` and `gxx_linus-64` with (TODO: Fill in) and (TODO: Fill in).
+
+   If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, matplotlib) with pip
+
+2) Clone the repository.
+
+::
+
+   git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
+   cd FastEMRIWaveforms
 
 2) If using GPUs, use pip to `install
    cupy <https://docs-cupy.chainer.org/en/stable/install.html>`__. If
@@ -166,7 +188,7 @@ We use `SemVer <http://semver.org/>`__ for versioning. For the versions
 available, see the `tags on this
 repository <https://github.com/mikekatz04/gce/tags>`__.
 
-Current Version: 0.1.0
+Current Version: 1.0.0
 
 Authors
 -------

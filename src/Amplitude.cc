@@ -107,6 +107,8 @@ void create_amplitude_interpolant(hid_t file_id, int l, int m, int n, int Ne, in
     // initialize interpolants
 	*re = new Interpolant(ys, es, modeData_re);
 	*im = new Interpolant(ys, es, modeData_im);
+
+    delete[] modeData;
 }
 
 // collect data and initialize amplitude interpolants
@@ -169,6 +171,7 @@ void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amp
 		}
 	}
 
+    delete[] gridRaw;
 }
 
 // TODO: free memory from inside interpolants
@@ -187,6 +190,23 @@ AmplitudeCarrier::AmplitudeCarrier(int lmax_, int nmax_, std::string few_dir)
 // need to have dealloc method for cython interface
 void AmplitudeCarrier::dealloc()
 {
+
+    // clear memory
+    for(int l = 2; l <= lmax; l++)
+    {
+        for(int m = 0; m <= l; m++)
+        {
+            for(int n = -nmax; n <= nmax; n++)
+            {
+                delete amps->re[l][m][n+nmax];
+                delete amps->im[l][m][n+nmax];
+            }
+            delete amps->re[l][m];
+            delete amps->im[l][m];
+        }
+        delete amps->re[l];
+        delete amps->im[l];
+    }
     delete amps;
 }
 

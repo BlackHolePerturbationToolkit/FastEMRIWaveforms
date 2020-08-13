@@ -128,14 +128,12 @@ parser.add_argument(
 
 parser.add_argument(
     "--lapack_lib",
-    help="Directory of the lapack lib.",
-    default="/usr/local/opt/lapack/lib",
+    help="Directory of the lapack lib. If you add lapack lib, must also add lapack include.",
 )
 
 parser.add_argument(
     "--lapack_include",
-    help="Directory of the lapack include.",
-    default="/usr/local/opt/lapack/include",
+    help="Directory of the lapack include. If you add lapack includ, must also add lapack lib.",
 )
 
 parser.add_argument(
@@ -144,13 +142,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--gsl_lib", help="Directory of the gsl lib.", default="/usr/local/opt/gsl/lib"
+    "--gsl_lib",
+    help="Directory of the gsl lib. If you add gsl lib, must also add gsl include.",
 )
 
 parser.add_argument(
     "--gsl_include",
-    help="Directory of the gsl include.",
-    default="/usr/local/opt/gsl/include",
+    help="Directory of the gsl include. If you add gsl include, must also add gsl lib.",
 )
 
 parser.add_argument(
@@ -188,22 +186,37 @@ try:
 except AttributeError:
     numpy_include = numpy.get_numpy_include()
 
-if args.lapack is None:
+if args.lapack is not None:
+    add_lapack = True
+    lapack_include = [args.lapack + "/include"]
+    lapack_lib = [args.lapack + "/lib"]
+
+elif args.lapack_lib is not None or args.lapack_include is not None:
+    if None in [args.lapack_lib, args.lapack_include]:
+        raise ValueError("If you add the lapack lib or include, you must add both.")
+
+    add_lapack = True
     lapack_include = [args.lapack_include]
     lapack_lib = [args.lapack_lib]
 
 else:
-    lapack_include = [args.lapack + "/include"]
-    lapack_lib = [args.lapack + "/lib"]
+    add_lapack = False
 
-if args.gsl is None:
+if args.gsl is not None:
+    add_gsl = True
+    gsl_include = [args.gsl + "/include"]
+    gsl_lib = [args.gsl + "/lib"]
+
+elif args.gsl_lib is not None or args.gsl_include is not None:
+    if None in [args.gsl_lib, args.gsl_include]:
+        raise ValueError("If you add the gsl lib or include, you must add both.")
+
+    add_gsl = True
     gsl_include = [args.gsl_include]
     gsl_lib = [args.gsl_lib]
 
 else:
-    gsl_include = [args.gsl + "/include"]
-    gsl_lib = [args.gsl + "/lib"]
-
+    add_gsl = False
 
 if "--no_omp" in sys.argv:
     use_omp = False
@@ -235,7 +248,7 @@ with open(fp_out_name, "w") as fp_out:
 if run_cuda_install:
 
     gpu_extension = dict(
-        libraries=["cudart", "cublas", "cusparse", "gsl", "gslcblas", "gomp"],
+        libraries=["cudart", "cublas", "cusparse", "gomp"],
         library_dirs=[CUDA["lib64"]] + gsl_lib,
         runtime_library_dirs=[CUDA["lib64"]],
         language="c++",
@@ -270,7 +283,7 @@ if run_cuda_install:
                 # "-lineinfo",
             ],  # for debugging
         },
-        include_dirs=[numpy_include, CUDA["include"], "include"] + gsl_include,
+        include_dirs=[numpy_include, CUDA["include"], "include"],
     )
 
     if use_omp is False:
@@ -295,10 +308,26 @@ cpu_extension = dict(
     extra_compile_args={
         "gcc": ["-std=c++11", "-fopenmp", "-fPIC", "-D__USE_OMP__"]
     },  # '-g'
-    include_dirs=[numpy_include, "include"] + lapack_include + gsl_include,
-    library_dirs=lapack_lib + gsl_lib,
+    include_dirs=[numpy_include, "include"],
+    library_dirs=None,
     # library_dirs=["/home/ajchua/lib/"],
 )
+
+if add_lapack:
+    cpu_extension["library_dirs"] = (
+        lapack_lib
+        if cpu_extension["library_dirs"] is None
+        else cpu_extension["library_dirs"] + lapack_lib
+    )
+    cpu_extension["include_dirs"] += lapack_include
+
+if add_gsl:
+    cpu_extension["library_dirs"] = (
+        gsl_lib
+        if cpu_extension["library_dirs"] is None
+        else cpu_extension["library_dirs"] + gsl_lib
+    )
+    cpu_extension["include_dirs"] += gsl_include
 
 if use_omp is False:
     cpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
