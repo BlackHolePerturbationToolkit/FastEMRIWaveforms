@@ -3,7 +3,7 @@ import os
 import subprocess
 import warnings
 
-record = 653693
+record = 3981654
 
 
 def check_for_file_download(fp, few_dir):
@@ -19,7 +19,7 @@ def check_for_file_download(fp, few_dir):
             )
         )
 
-        url = "https://sandbox.zenodo.org/record/" + str(record) + "/files/" + fp
+        url = "https://zenodo.org/record/" + str(record) + "/files/" + fp
 
         # download to proper location
         subprocess.run(["wget", url])

@@ -7,18 +7,25 @@ waveforms in this package combine a variety of separately accessible
 modules to form EMRI waveforms on both CPUs and GPUs. Generally, the
 modules fall into four categories: trajectory, amplitudes, summation,
 and utilities. Please see the
-`documentation <https://mikekatz04.github.io/FastEMRIWaveforms/>`__ for
-further information on these modules.
+`documentation <https://bhptoolkit.org/FastEMRIWaveforms/>`__ for
+further information on these modules. The code can be found on Github
+`here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms>`__.
+The data necessary for various modules in this package will
+automatically download the first time it is needed. If you would like to
+view the data, it can be found on
+`zenodo <https://zenodo.org/record/3981654#.XzS_KRNKjlw>`__.
 
 If you use all or any parts of this code, please cite (TODO: add papers
-to cite. Do we want this to be per module or general use.).
+to cite. Do we want this to be per module or general use.). See the
+`documentation <https://mikekatz04.github.io/FastEMRIWaveforms/>`__ to
+properly cite specific modules.
 
 Getting Started
 ---------------
 
 Below is a quick set of instructions to get you started with ``few``.
 
-0) `Install Anaconda <https://docs.anaconda.com/anaconda/install/>`__ if
+0) `Install Anaconda <https://bhptoolkit.org/FastEMRIWaveforms/>`__ if
    you do not have it.
 
 1) Create a virtual environment.

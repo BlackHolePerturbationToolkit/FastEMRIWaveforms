@@ -49,7 +49,7 @@ from abc import ABC
 # TODO: more automatic/generic download from zenodo based on versioning
 
 # Shorter Term
-# TODO: add omp stuff
+# TODO: adjust instructions for installing compilers
 # TODO: document in line / check / cleanup
 # TODO: free memory in amplitudes
 

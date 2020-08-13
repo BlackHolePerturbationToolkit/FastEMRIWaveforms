@@ -16,7 +16,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "stdio.h"
-#include <gsl/gsl_cblas.h>
 #include "matmul.hh"
 #include "cuda_complex.hpp"
 #include <chrono>
@@ -29,6 +28,8 @@ using namespace std::chrono;
 // adjust imports for CUDA
 #ifdef __CUDACC__
 #include "cublas_v2.h"
+#else
+#include <gsl/gsl_cblas.h>
 #endif
 
 #define NUM_THREADS 256
