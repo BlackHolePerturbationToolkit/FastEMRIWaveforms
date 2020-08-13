@@ -47,6 +47,7 @@ from abc import ABC
 # TODO: add tutorials to documentation
 # TODO: general waveform base class
 # TODO: more automatic/generic download from zenodo based on versioning
+# TODO: add benchmark test
 
 # Shorter Term
 # TODO: adjust instructions for installing compilers

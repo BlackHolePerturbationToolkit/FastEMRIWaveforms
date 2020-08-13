@@ -370,6 +370,17 @@ else:
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+# setup version file
+with open("README.md", "r") as fh:
+    lines = fh.readlines()
+
+for line in lines:
+    if line.startswith("Current Version"):
+        version_string = line.split("Current Version: ")[1].split("\n")[0]
+
+with open("few/_version.py", "w") as f:
+    f.write("__version__ = '{}'".format(version_string))
+
 setup(
     name="few",
     author="Michael Katz",
@@ -377,7 +388,7 @@ setup(
     description="Fast and accurate EMRI Waveforms.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version="0.1.0",
+    version=version_string,
     url="https://github.com/mikekatz04/FastEMRIWaveforms",
     ext_modules=extensions,
     packages=["few", "few.utils", "few.trajectory", "few.amplitude", "few.summation"],

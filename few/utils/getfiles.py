@@ -2,8 +2,9 @@ import requests
 import os
 import subprocess
 import warnings
+import few
 
-record = 3981654
+record_by_version = {"1.0.0": 3981654}
 
 
 def check_for_file_download(fp, few_dir):
@@ -19,6 +20,7 @@ def check_for_file_download(fp, few_dir):
             )
         )
 
+        record = record_by_version.get(few.__version__)
         url = "https://zenodo.org/record/" + str(record) + "/files/" + fp
 
         # download to proper location
