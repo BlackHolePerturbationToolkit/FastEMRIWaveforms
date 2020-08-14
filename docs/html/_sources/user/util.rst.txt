@@ -25,7 +25,7 @@ Mode Filtering
 Analysis and Other Tools
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: few.utils.utilities
+.. automodule:: few.utils.utility
     :members:
     :show-inheritance:
     :inherited-members:

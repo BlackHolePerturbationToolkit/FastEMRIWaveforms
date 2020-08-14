@@ -1,3 +1,26 @@
+# Utilities to aid in FastEMRIWaveforms Packages
+
+# Copyright (C) 2020 Michael L. Katz, Alvin J.K. Chua, Niels Warburton, Scott A. Hughes
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+import requests
+import os
+import subprocess
+import warnings
+
 import numpy as np
 
 # check to see if cupy is available for gpus
@@ -6,6 +29,8 @@ try:
 
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
+
+import few
 
 
 def get_overlap(time_series_1, time_series_2, use_gpu=False):
@@ -102,3 +127,69 @@ def p_to_y(p, e, use_gpu=False):
 
     else:
         return np.log(-(21 / 10) - 2 * e + p)
+
+
+# data history is saved here nased on version nunber
+record_by_version = {"1.0.0": 3981654}
+
+
+def check_for_file_download(fp, few_dir, version_string=None):
+    """Download files direct from zenodo.
+
+    This function downloads the files from zenodo as they are needed. They are
+    downloaded based on the associated record for each version (`record_by_version`).
+
+    The version is determined from the `__version__` attribute of `few` unless
+    a version string is provided.
+
+    arguments:
+        fp (string): File name.
+        few_dir (string): absolute path to FastEMRIWaveforms directory.
+        version_string (string, optional): Provide a specific version string to
+            get a specific dataset. Default is None.
+
+    raises:
+        ValueError: Version string does not exist.
+
+    """
+
+    # make sure version_string is available
+    if version_string is not None:
+        if version_string not in record_by_version:
+            raise ValueError(
+                "The version_string provided ({}) does not exist.".format(
+                    version_string
+                )
+            )
+    else:
+        version_string = few.__version__
+
+    # check if the files directory exists
+    try:
+        os.listdir(few_dir + "few/files/")
+
+    # if not, create it
+    except OSError:
+        os.mkdir(few_dir + "few/files/")
+
+    # check if the file is in the files filder
+    # if not, download it from zenodo
+    if fp not in os.listdir(few_dir + "few/files/"):
+        warnings.warn(
+            "The file {} did not open sucessfully. It will now be downloaded to the proper location.".format(
+                fp
+            )
+        )
+
+        # get record number based on version
+        record = record_by_version.get(version_string)
+
+        # url to zenodo API
+        url = "https://zenodo.org/record/" + str(record) + "/files/" + fp
+
+        # run wget from terminal to get the folder
+        # download to proper location
+        subprocess.run(["wget", url])
+
+        # move it into the files folder
+        os.rename(fp, few_dir + "few/files/" + fp)

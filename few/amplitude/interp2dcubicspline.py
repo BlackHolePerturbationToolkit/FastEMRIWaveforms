@@ -27,7 +27,7 @@ from pyInterp2DAmplitude import pyAmplitudeGenerator
 
 # Python imports
 from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase
-from few.utils.getfiles import check_for_file_download
+from few.utils.utility import check_for_file_download
 from few.utils.citations import *
 
 # get path to file

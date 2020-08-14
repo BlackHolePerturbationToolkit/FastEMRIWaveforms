@@ -94,7 +94,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Utilities</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-few.utils.modeselector">Mode Filtering</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#analysis-and-other-tools">Analysis and Other Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.utility">Analysis and Other Tools</a></li>
 </ul>
 </li>
 </ul>
@@ -388,8 +388,92 @@ angles.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="analysis-and-other-tools">
-<h2>Analysis and Other Tools<a class="headerlink" href="#analysis-and-other-tools" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-few.utils.utility">
+<span id="analysis-and-other-tools"></span><h2>Analysis and Other Tools<a class="headerlink" href="#module-few.utils.utility" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="few.utils.utility.get_overlap">
+<code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">get_overlap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_series_1</span></em>, <em class="sig-param"><span class="n">time_series_2</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.get_overlap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the overlap.</p>
+<p>Takes two time series and finds which one is shorter in length. It then
+shortens the longer time series if necessary. Then it performs a
+normalized correlation calulation on the two time series to give the
+overlap. The overlap of <span class="math notranslate nohighlight">\(a(t)\)</span> and
+<span class="math notranslate nohighlight">\(b(t)\)</span>, <span class="math notranslate nohighlight">\(\gamma_{a,b}\)</span>, is given by,</p>
+<div class="math notranslate nohighlight">
+\[\gamma_{a,b} = &lt;a,b&gt;/(&lt;a,a&gt;&lt;b,b&gt;)^{(1/2)},\]</div>
+<p>where <span class="math notranslate nohighlight">\(&lt;a,b&gt;\)</span> is the inner product of the two time series.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>time_series_1</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 1.</p></li>
+<li><p><strong>time_series_2</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 2.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True use cupy. If False, use numpy. Default
+is False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="few.utils.utility.get_mismatch">
+<code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">get_mismatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_series_1</span></em>, <em class="sig-param"><span class="n">time_series_2</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.get_mismatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the mismatch.</p>
+<p>The mismatch is 1 - overlap. Therefore, see documentation for
+<code class="xref py py-func docutils literal notranslate"><span class="pre">few.utils.utility.overlap()</span></code> for information on the overlap
+calculation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>time_series_1</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 1.</p></li>
+<li><p><strong>time_series_2</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 2.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True use cupy. If False, use numpy. Default
+is False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="few.utils.utility.p_to_y">
+<code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">p_to_y</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.p_to_y" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert from separation <span class="math notranslate nohighlight">\(p\)</span> to <span class="math notranslate nohighlight">\(y\)</span> coordinate</p>
+<p>Conversion from the semilatus rectum or separation <span class="math notranslate nohighlight">\(p\)</span> to <span class="math notranslate nohighlight">\(y\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D double xp.ndarray</em>) – Values of separation,
+<span class="math notranslate nohighlight">\(p\)</span>, to convert.</p></li>
+<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D double xp.ndarray</em>) – Associated eccentricity values
+of <span class="math notranslate nohighlight">\(p\)</span> necessary for conversion.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, use Cupy/GPUs. Default is False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="few.utils.utility.check_for_file_download">
+<code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">check_for_file_download</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fp</span></em>, <em class="sig-param"><span class="n">few_dir</span></em>, <em class="sig-param"><span class="n">version_string</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.check_for_file_download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download files direct from zenodo.</p>
+<p>This function downloads the files from zenodo as they are needed. They are
+downloaded based on the associated record for each version (<cite>record_by_version</cite>).</p>
+<p>The version is determined from the <cite>__version__</cite> attribute of <cite>few</cite> unless
+a version string is provided.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fp</strong> (<em>string</em>) – File name.</p></li>
+<li><p><strong>few_dir</strong> (<em>string</em>) – absolute path to FastEMRIWaveforms directory.</p></li>
+<li><p><strong>version_string</strong> (<em>string</em><em>, </em><em>optional</em>) – Provide a specific version string to
+get a specific dataset. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – Version string does not exist.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 </div>
 

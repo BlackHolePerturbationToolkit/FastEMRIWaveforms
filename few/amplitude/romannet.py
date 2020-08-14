@@ -28,7 +28,7 @@ from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 
 # Python imports
 from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase
-from few.utils.getfiles import check_for_file_download
+from few.utils.utility import check_for_file_download
 from few.utils.citations import *
 from few.utils.utility import p_to_y
 

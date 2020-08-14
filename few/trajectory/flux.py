@@ -26,7 +26,7 @@ from pyFLUX import pyFluxGenerator
 
 # Python imports
 from few.utils.baseclasses import TrajectoryBase, SchwarzschildEccentric
-from few.utils.getfiles import check_for_file_download
+from few.utils.utility import check_for_file_download
 from few.utils.constants import *
 from few.utils.citations import *
 
