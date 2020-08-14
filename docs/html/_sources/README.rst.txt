@@ -15,6 +15,9 @@ automatically download the first time it is needed. If you would like to
 view the data, it can be found on
 `Zenodo <https://zenodo.org/record/3981654#.XzS_KRNKjlw>`__.
 
+This package is a part of the `Black Hole Perturbation
+Toolkit <https://bhptoolkit.org/>`__.
+
 If you use all or any parts of this code, please cite (TODO: add papers
 to cite. Do we want this to be per module or general use.). See the
 `documentation <https://bhptoolkit.org/FastEMRIWaveforms/>`__ to
