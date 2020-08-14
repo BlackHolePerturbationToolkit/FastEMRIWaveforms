@@ -17,13 +17,14 @@
 
 
 import os
-import subprocess
-import warnings
 
 import numpy as np
 from scipy.interpolate import CubicSpline
 
+# Cython/C++ imports
 from pyFLUX import pyFluxGenerator
+
+# Python imports
 from few.utils.baseclasses import TrajectoryBase, SchwarzschildEccentric
 from few.utils.getfiles import check_for_file_download
 from few.utils.constants import *

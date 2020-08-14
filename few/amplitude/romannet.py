@@ -1,33 +1,50 @@
-import numpy as np
+# Flux-based Schwarzschild Eccentric amplitude module for Fast EMRI Waveforms
+# performs calculation with a Roman network
+
+# Copyright (C) 2020 Michael L. Katz, Alvin J.K. Chua, Niels Warburton, Scott A. Hughes
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
-import h5py
 import warnings
-import subprocess
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
+import numpy as np
+import h5py
 
+# Cython/C++ imports
 from pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
 from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 
-import pymatmul_cpu
-
+# Python imports
 from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase
 from few.utils.getfiles import check_for_file_download
 from few.utils.citations import *
 
+# check for cupy and GPU version of pymatmul
 try:
-    import cupy as xp
+    # Cython/C++ imports
     from pymatmul import neural_layer_wrap, transform_output_wrap
 
-    run_gpu = True
+    # Python imports
+    import cupy as xp
 
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
-    run_gpu = False
 
-RUN_RELU = 1
-NO_RELU = 0
+# get path to this file
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
@@ -64,6 +81,44 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
 
     """
 
+    def attributes_RomanAmplitude(self):
+        """
+        attributes:
+            few_dir (str): absolute path to the FastEMRIWaveforms directory
+            break_index (int): length of output vector from network divded by 2.
+                It is really the number of pairs of real and imaginary numbers.
+            use_gpu (bool): If True, use the GPU.
+            neural_layer (obj): C++ class for computing neural network operations
+            transform_output(obj): C++ class for transforming output from
+                neural network in the reduced basis to the full amplitude basis.
+            num_teuk_modes (int): number of teukolsky modes in the data file.
+            transform_factor_inv (double): Inverse of the scalar transform factor.
+                For this model, that is 1000.0.
+            max_init_len (int): This class uses buffers. This is the maximum length
+                the user expects for the input arrays.
+            weights (list of xp.ndarrays): List of the weight matrices for each
+                layer of the neural network. They are flattened for entry into
+                C++ in column-major order. They have shape (dim1, dim2).
+            bias (list of xp.ndarrays): List of the bias arrays for each layer
+                of the neural network. They have shape (dim2,).
+            dim1 (list of int): List of 1st dimension length in each layer.
+            dim2 (list of int): List of 2nd dimension length in each layer.
+            num_layers (int): Number of layers in the neural network.
+            transform_matrix (2D complex128 xp.ndarray): Matrix for tranforming
+                output of neural network onto original amplitude basis.
+            max_num (int): Figures out the maximum dimension of all weight matrices
+                for buffers.
+            temp_mats (len-2 list of double xp.ndarrays): List that holds
+                temporary matrices for neural network evaluation. Each layer switches
+                between which is the input and output to properly interface with
+                cBLAS/cuBLAS.
+            run_relu_arr  (1D int xp.ndarray): Array holding information about
+                whether each layer will run the relu activation. All layers have
+                value 1, except for the last layer with value 0.
+
+        """
+        pass
+
     def __init__(self, max_init_len=1000, **kwargs):
 
         SchwarzschildEccentric.__init__(self, **kwargs)
@@ -71,14 +126,18 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
 
         self.few_dir = dir_path + "/../../"
 
+        # check if user has the necessary data
+        # if not, the data will automatically download
         self.data_file = fp = "SchwarzschildEccentricInput.hdf5"
         check_for_file_download(fp, self.few_dir)
 
+        # get information about this specific model from the file
         with h5py.File(self.few_dir + "few/files/" + self.data_file, "r") as fp:
             num_teuk_modes = fp.attrs["num_teuk_modes"]
             transform_factor = fp.attrs["transform_factor"]
             self.break_index = fp.attrs["break_index"]
 
+        # adjust c++ classes based on gpu usage
         if self.use_gpu:
             self.neural_layer = neural_layer_wrap
             self.transform_output = transform_output_wrap
@@ -96,9 +155,12 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
 
     @property
     def citation(self):
+        """Return citations for this module"""
         return romannet_citation + few_citation
 
     def _initialize_weights(self):
+        # initalize weights/bias/dimensions for the neural network
+
         self.weights = []
         self.bias = []
         self.dim1 = []
@@ -106,6 +168,8 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
 
         # get highest layer number
         self.num_layers = 0
+
+        # extract all necessary information from the file
         with h5py.File(self.few_dir + "few/files/" + self.data_file, "r") as fp:
             for key, value in fp.items():
                 if key == "reduced_basis":
@@ -127,19 +191,26 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
                 self.dim1.append(temp["w"].shape[0])
                 self.dim2.append(temp["w"].shape[1])
 
+            # get the post network transform matrix
             self.transform_matrix = self.xp.asarray(fp["reduced_basis"])
 
+        # longest length in any dimension for buffers
         self.max_num = np.max([self.dim1, self.dim2])
 
+        # declare buffers
+        # each layer will alternate between these arrays as the input and output
+        # of the layer. The input is multiplied by the layer weight.
         self.temp_mats = [
             self.xp.zeros((self.max_num * self.max_init_len,), dtype=self.xp.float64),
             self.xp.zeros((self.max_num * self.max_init_len,), dtype=self.xp.float64),
         ]
+
+        # array for letting C++ know if the layer is activated
         self.run_relu_arr = np.ones(self.num_layers, dtype=int)
         self.run_relu_arr[-1] = 0
 
     def _p_to_y(self, p, e):
-
+        # convert p to y
         return self.xp.log(-(21 / 10) - 2 * e + p)
 
     def get_amplitudes(self, p, e, *args, specific_modes=None, **kwargs):
@@ -169,6 +240,8 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
         """
         input_len = len(p)
 
+        # check ifn input_len is greater than the max_init_len attribute
+        # if so reset the buffers and update the attribute
         if input_len > self.max_init_len:
             warnings.warn(
                 "Input length {} is larger than initial max_init_len ({}). Reallocating preallocated arrays for this size.".format(
@@ -186,31 +259,45 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
                 ),
             ]
 
+        # the input is (y, e)
         y = self._p_to_y(p, e)
+
+        # column-major single dimensional array input
         input = self.xp.concatenate([y, e])
+
+        # fill first temporary matrix
         self.temp_mats[0][: 2 * input_len] = input
 
+        # setup arrays
+        # teukolsky mode (final output)
         teuk_modes = self.xp.zeros(
             (input_len * self.num_teuk_modes,), dtype=self.xp.complex128
         )
+
+        # neural network output
         nn_out_mat = self.xp.zeros(
             (input_len * self.break_index,), dtype=self.xp.complex128
         )
 
+        # run the neural network
         for i, (weight, bias, run_relu) in enumerate(
             zip(self.weights, self.bias, self.run_relu_arr)
         ):
 
+            # set temporary input and output matrix
             mat_in = self.temp_mats[i % 2]
             mat_out = self.temp_mats[(i + 1) % 2]
 
+            # get shape information
             m = len(p)
             k, n = weight.shape
 
+            # run the C++ neural net layer
             self.neural_layer(
                 mat_out, mat_in, weight.T.flatten(), bias, m, k, n, run_relu
             )
 
+        # transform the neural net ouput back to the amplitude space
         self.transform_output(
             teuk_modes,
             self.transform_matrix.T.flatten(),
@@ -222,10 +309,14 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
             self.num_teuk_modes,
         )
 
+        # reshape the teukolsky modes
         teuk_modes = teuk_modes.reshape(self.num_teuk_modes, input_len).T
+
+        # return array of all modes
         if specific_modes is None:
             return teuk_modes
 
+        # return dictionary of requested modes
         else:
             temp = {}
             for lmn in specific_modes:

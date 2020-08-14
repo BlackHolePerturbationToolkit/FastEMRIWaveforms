@@ -257,6 +257,218 @@ Default is 1000.</p></li>
 </dd>
 </dl>
 <dl class="py method">
+<dt id="few.amplitude.romannet.RomanAmplitude.attributes_RomanAmplitude">
+<code class="sig-name descname">attributes_RomanAmplitude</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.attributes_RomanAmplitude" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.few_dir">
+<code class="sig-name descname">few_dir</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.few_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>absolute path to the FastEMRIWaveforms directory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.break_index">
+<code class="sig-name descname">break_index</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.break_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>length of output vector from network divded by 2.
+It is really the number of pairs of real and imaginary numbers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use the GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.neural_layer">
+<code class="sig-name descname">neural_layer</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.neural_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>C++ class for computing neural network operations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.transform_output">
+<code class="sig-name descname">transform_output</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.transform_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>C++ class for transforming output from
+neural network in the reduced basis to the full amplitude basis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.num_teuk_modes">
+<code class="sig-name descname">num_teuk_modes</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.num_teuk_modes" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of teukolsky modes in the data file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.transform_factor_inv">
+<code class="sig-name descname">transform_factor_inv</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.transform_factor_inv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inverse of the scalar transform factor.
+For this model, that is 1000.0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>double</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.max_init_len">
+<code class="sig-name descname">max_init_len</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.max_init_len" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class uses buffers. This is the maximum length
+the user expects for the input arrays.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.weights">
+<code class="sig-name descname">weights</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of the weight matrices for each
+layer of the neural network. They are flattened for entry into
+C++ in column-major order. They have shape (dim1, dim2).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of xp.ndarrays</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.bias">
+<code class="sig-name descname">bias</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.bias" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of the bias arrays for each layer
+of the neural network. They have shape (dim2,).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of xp.ndarrays</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.dim1">
+<code class="sig-name descname">dim1</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.dim1" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of 1st dimension length in each layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.dim2">
+<code class="sig-name descname">dim2</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.dim2" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of 2nd dimension length in each layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list of int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.num_layers">
+<code class="sig-name descname">num_layers</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.num_layers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of layers in the neural network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.transform_matrix">
+<code class="sig-name descname">transform_matrix</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.transform_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Matrix for tranforming
+output of neural network onto original amplitude basis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>2D complex128 xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.max_num">
+<code class="sig-name descname">max_num</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.max_num" title="Permalink to this definition">¶</a></dt>
+<dd><p>Figures out the maximum dimension of all weight matrices
+for buffers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.temp_mats">
+<code class="sig-name descname">temp_mats</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.temp_mats" title="Permalink to this definition">¶</a></dt>
+<dd><p>List that holds
+temporary matrices for neural network evaluation. Each layer switches
+between which is the input and output to properly interface with
+cBLAS/cuBLAS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>len-2 list of double xp.ndarrays</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.run_relu_arr">
+<code class="sig-name descname">run_relu_arr</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.run_relu_arr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Array holding information about
+whether each layer will run the relu activation. All layers have
+value 1, except for the last layer with value 0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D int xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.amplitude.romannet.RomanAmplitude.citation">
+<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.citation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return citations for this module</p>
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.amplitude.romannet.RomanAmplitude.__call__">
 <code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">specific_modes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Common call for Teukolsky amplitudes</p>
@@ -626,8 +838,8 @@ amplitudes for each mode in the model.</p>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_SchwarzschildEccentricWaveformBase">
-<code class="sig-name descname">attributes_SchwarzschildEccentricWaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_SchwarzschildEccentricWaveformBase" title="Permalink to this definition">¶</a></dt>
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_Interp2DAmplitude">
+<code class="sig-name descname">attributes_Interp2DAmplitude</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_Interp2DAmplitude" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
 <dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.amplitude_generator">
 <code class="sig-name descname">amplitude_generator</code><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.amplitude_generator" title="Permalink to this definition">¶</a></dt>

@@ -22,7 +22,10 @@ import os
 import h5py
 import numpy as np
 
+# Cython/C++ imports
 from pyInterp2DAmplitude import pyAmplitudeGenerator
+
+# Python imports
 from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase
 from few.utils.getfiles import check_for_file_download
 from few.utils.citations import *
@@ -63,7 +66,7 @@ class Interp2DAmplitude(SchwarzschildEccentric, AmplitudeBase):
 
         self.amplitude_generator = pyAmplitudeGenerator(self.lmax, self.nmax, few_dir)
 
-    def attributes_SchwarzschildEccentricWaveformBase(self):
+    def attributes_Interp2DAmplitude(self):
         """
         attributes:
             amplitude_generator (obj): C++ class that performs the bicubic
