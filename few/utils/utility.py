@@ -53,6 +53,8 @@ def get_overlap(time_series_1, time_series_2, use_gpu=False):
             is False.
 
     """
+
+    # adjust arrays based on GPU usage
     if use_gpu:
         xp = cp
 
@@ -78,14 +80,28 @@ def get_overlap(time_series_1, time_series_2, use_gpu=False):
         except NameError:
             pass
 
+    # get the lesser of the two lengths
     min_len = int(np.min([len(time_series_1), len(time_series_2)]))
+
+    if len(time_series_1) != len(time_series_2):
+        warnings.warn(
+            "The two time series are not the same length ({} vs {}). The calculation will run with length {} starting at index 0 for both arrays.".format(
+                len(time_series_1), len(time_series_2), min_len
+            )
+        )
+
+    # chop off excess length on a longer array
+    # take fft
     time_series_1_fft = xp.fft.fft(time_series_1[:min_len])
     time_series_2_fft = xp.fft.fft(time_series_2[:min_len])
+
+    # autocorrelation
     ac = xp.dot(time_series_1_fft.conj(), time_series_2_fft) / xp.sqrt(
         xp.dot(time_series_1_fft.conj(), time_series_1_fft)
         * xp.dot(time_series_2_fft.conj(), time_series_2_fft)
     )
 
+    # if using cupy, it will return a dimensionless array
     if use_gpu:
         return ac.item().real
     return ac.real
