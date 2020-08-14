@@ -42,21 +42,6 @@ from few.utils.constants import *
 from few.utils.citations import *
 from few.summation.interpolatedmodesum import InterpolatedModeSum
 
-# Longer Term
-# TODO: run trajectory backward
-# TODO: add initial phases
-# TODO: zero out modes
-# TODO: shared memory based on CUDA_ARCH / upping shared allocation
-# TODO: deal with file locations and removing files from git history
-# TODO: add tutorials to documentation
-# TODO: general waveform base class
-# TODO: more automatic/generic download from zenodo based on versioning
-# TODO: add benchmark test
-
-# Shorter Term
-# TODO: document in line / check / cleanup
-# TODO: free memory in amplitudes
-
 
 class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
     """Base class for the actual Schwarzschild eccentric waveforms.
@@ -82,7 +67,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         inspiral_kwargs (dict, optional): Optional kwargs to pass to the
             inspiral generator. **Important Note**: These kwargs are passed
             online, not during instantiation like other kwargs here. Default is
-            {}.
+            {}. This is stored as an attribute.
         amplitude_kwargs (dict, optional): Optional kwargs to pass to the
             amplitude generator during instantiation. Default is {}.
         sum_kwargs (dict, optional): Optional kwargs to pass to the
@@ -92,7 +77,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         use_gpu (bool, optional): If True, use GPU resources. Default is False.
         normalize_amps (bool, optional): If True, it will normalize amplitudes
             to flux information output from the trajectory modules. Default
-            is True.
+            is True. This is stored as an attribute.
 
     """
 
@@ -101,12 +86,17 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         attributes:
             inspiral_generator (obj): instantiated trajectory module.
             amplitude_generator (obj): instantiated amplitude module.
+            ylm_gen (obj): instantiated ylm module.
             create_waveform (obj): instantiated summation module.
             ylm_gen (obj): instantiated Ylm module.
+            mode_selector (obj): instantiated mode selection module.
             num_teuk_modes (int): number of Teukolsky modes in the model.
             ls, ms, ns (1D int xp.ndarray): Arrays of mode indices :math:`(l,m,n)`
                 after filtering operation. If no filtering, these are equivalent
                 to l_arr, m_arr, n_arr.
+            xp (obj): numpy or cupy based on gpu usage.
+            num_modes_kept (int): Number of modes for final waveform after mode
+                selection.
 
         """
         pass
@@ -124,40 +114,54 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         normalize_amps=True,
     ):
 
+        # checks if gpu capability is available if requested
         self.sanity_check_gpu(use_gpu)
 
         SchwarzschildEccentric.__init__(self, use_gpu)
 
+        # set numpy or cupy
         if use_gpu:
             self.xp = xp
 
         else:
             self.xp = np
 
+        # normalize amplitudes to flux at each step from trajectory
         self.normalize_amps = normalize_amps
 
+        # kwargs that are passed to the inspiral call function
         self.inspiral_kwargs = inspiral_kwargs
+
+        # function for generating the inpsiral
         self.inspiral_generator = inspiral_module()
 
+        # function for generating the amplitude
         self.amplitude_generator = amplitude_module(**amplitude_kwargs)
+
+        # summation generator
         self.create_waveform = sum_module(**sum_kwargs)
 
+        # angular harmonics generation
         self.ylm_gen = GetYlms(use_gpu=use_gpu, **Ylm_kwargs)
 
+        # selecting modes that contribute at threshold to the waveform
         self.mode_selector = ModeSelector(self.m0mask, use_gpu=use_gpu)
 
     @classmethod
     @property
     def gpu_capability(self):
+        """Indicator if the module has gpu capability"""
         raise NotImplementedError
 
     @classmethod
     @property
     def allow_batching(self):
+        """Indicator if module allows batching"""
         return NotImplementedError
 
     @property
     def citation(self):
+        """Return citations related to this module"""
         return few_citation + romannet_citation
 
     def __call__(
@@ -215,8 +219,12 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         Returns:
             1D complex128 xp.ndarray: The output waveform.
 
+        Raises:
+            ValueError: user selections are not allowed.
+
         """
 
+        # makes sure viewing angles are allowable
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
         self.sanity_check_init(M, mu, p0, e0)
         Tsec = T * YRSID_SI
@@ -226,9 +234,10 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
             M, mu, p0, e0, T=T, dt=dt, **self.inspiral_kwargs
         )
 
+        # makes sure p and e are generally within the model
         self.sanity_check_traj(p, e)
 
-        self.plunge_time = t[-1]
+        self.end_time = t[-1]
         # convert for gpu
         t = self.xp.asarray(t)
         p = self.xp.asarray(p)
@@ -237,6 +246,8 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         Phi_r = self.xp.asarray(Phi_r)
         amp_norm = self.xp.asarray(amp_norm)
 
+        # get ylms only for unique (l,m) pairs
+        # then expand to all (lmn with self.inverse_lm)
         ylms = self.ylm_gen(self.unique_l, self.unique_m, theta, phi).copy()[
             self.inverse_lm
         ]
@@ -256,6 +267,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
             inds_split_all = self.xp.split(self.xp.arange(len(t)), split_inds)
 
+        # select tqdm if user wants to see progress
         iterator = enumerate(inds_split_all)
         iterator = tqdm(iterator, desc="time batch") if show_progress else iterator
 
@@ -264,6 +276,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
         for i, inds_in in iterator:
 
+            # get subsections of the arrays for each batch
             t_temp = t[inds_in]
             p_temp = p[inds_in]
             e_temp = e[inds_in]
@@ -272,10 +285,9 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
             amp_norm_temp = amp_norm[inds_in]
 
             # amplitudes
-            teuk_modes = self.amplitude_generator(
-                p_temp, e_temp, self.l_arr, self.m_arr, self.n_arr
-            )
+            teuk_modes = self.amplitude_generator(p_temp, e_temp)
 
+            # normalize by flux produced in trajectory
             if self.normalize_amps:
                 amp_for_norm = self.xp.sum(
                     self.xp.abs(
@@ -288,10 +300,15 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
                     axis=1,
                 ) ** (1 / 2)
 
+                # normalize
                 factor = amp_norm_temp / amp_for_norm
                 teuk_modes = teuk_modes * factor[:, np.newaxis]
 
+            # different types of mode selection
+            # sets up ylm and teuk_modes properly for summation
             if isinstance(mode_selection, str):
+
+                # use all modes
                 if mode_selection == "all":
                     self.ls = self.l_arr[: teuk_modes.shape[1]]
                     self.ms = self.m_arr[: teuk_modes.shape[1]]
@@ -309,6 +326,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
                 else:
                     raise ValueError("If mode selection is a string, must be `all`.")
 
+            # get a specific subset of modes
             elif isinstance(mode_selection, list):
                 if mode_selection == []:
                     raise ValueError("If mode selection is a list, cannot be empty.")
@@ -329,6 +347,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
                 ylms_in = ylms[ylmkeep]
                 teuk_modes_in = teuk_modes[:, keep_modes]
 
+            # mode selection based on input module
             else:
                 modeinds = [self.l_arr, self.m_arr, self.n_arr]
                 (
@@ -339,8 +358,10 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
                     self.ns,
                 ) = self.mode_selector(teuk_modes, ylms, modeinds, eps=eps)
 
+            # store number of modes for external information
             self.num_modes_kept = teuk_modes_in.shape[1]
 
+            # create waveform
             waveform_temp = self.create_waveform(
                 t_temp,
                 teuk_modes_in,
@@ -353,17 +374,32 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
                 self.ns,
             )
 
+            # if batching, need to add the waveform
             if i > 0:
                 waveform = self.xp.concatenate([waveform, waveform_temp])
 
+            # return entire waveform
             else:
                 waveform = waveform_temp
 
         return waveform
 
     def sanity_check_gpu(self, use_gpu):
+        """Check if this class has GPU capability
+
+        If the user is requesting GPU usage, this will confirm the class has
+        GPU capabilites.
+
+        Args:
+            use_gpu (bool): If True, the user is requesting GPU usage.
+
+        Raises:
+            ValueError: The user is requesting GPU usage, but this class does
+                not have that capability.
+
+        """
         if self.gpu_capability is False and use_gpu is True:
-            raise Exception(
+            raise ValueError(
                 "The use_gpu kwarg is True, but this class does not have GPU capabilites."
             )
 
@@ -541,211 +577,3 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
             *args,
             **kwargs
         )
-
-
-if __name__ == "__main__":
-    import time
-
-    use_gpu = False
-    few = FastSchwarzschildEccentricFlux(
-        inspiral_kwargs={"DENSE_STEPPING": 0, "max_init_len": int(1e3)},
-        amplitude_kwargs={"max_init_len": int(1e3), "use_gpu": use_gpu},
-        # amplitude_kwargs=dict(),
-        Ylm_kwargs={"assume_positive_m": False},
-        sum_kwargs={"use_gpu": use_gpu},
-        use_gpu=use_gpu,
-    )
-
-    few2 = SlowSchwarzschildEccentricFlux(
-        inspiral_kwargs={"DENSE_STEPPING": 1, "max_init_len": int(1e7)},
-        # amplitude_kwargs={"max_init_len": int(1e3), "use_gpu": use_gpu},
-        amplitude_kwargs=dict(),
-        Ylm_kwargs={"assume_positive_m": False},
-        sum_kwargs={"use_gpu": True},
-        use_gpu=False,
-    )
-
-    M = 1e6
-    mu = 1e1
-    p0 = 10.0
-    e0 = 0.7
-    theta = np.pi / 2
-    phi = 0.0
-    dt = 10.0
-    T = 1.0  #  / 100.0  # 1124936.040602 / YRSID_SI
-    mode_selection = None
-    show_progress = True
-    batch_size = 10000
-
-    mismatch_out = []
-    num_modes = []
-    timing = []
-    timing_slow = []
-    pt_arr = []
-    eps_all = 10.0 ** np.arange(-10, -2)
-
-    eps_all = np.concatenate([np.array([1e-25]), eps_all])
-    eps_all = np.array([1e-5])
-
-    p0_arr, e0_arr = np.array(
-        [
-            [10.0, 0.7],
-            [11.48, 0.7],
-            [12.96, 0.7],
-            [14.44, 0.7],
-            [15.92, 0.7],
-            [17.4, 0.7],
-            [16.2, 0.1],
-            [16.4, 0.2],
-            [16.6, 0.3],
-            [16.8, 0.4],
-            [17.0, 0.5],
-            [17.2, 0.6],
-        ]
-    ).T
-
-    mu_arr = np.array(
-        [
-            14.72882724,
-            36.69142378,
-            72.25349492,
-            125.63166025,
-            201.04964163,
-            304.42722121,
-            169.1329517,
-            179.99285068,
-            192.8791508,
-            208.122157,
-            229.27693129,
-            257.87628876,
-        ]
-    )
-    """
-    try:
-        fullwave = np.genfromtxt("/projects/b1095/mkatz/emri/slow_1e6_1e1_10_07.txt")
-    except OSError:
-        fullwave = np.genfromtxt("slow_1e6_1e1_10_07.txt")
-
-    if use_gpu:
-        fullwave = xp.asarray(fullwave[:, 5] + 1j * fullwave[:, 6])
-    else:
-        fullwave = np.asarray(fullwave[:, 5] + 1j * fullwave[:, 6])
-    """
-
-    eps = 1e-5
-    # for i, eps in enumerate(eps_all):
-    for i, (p0, e0, mu) in enumerate(zip(p0_arr, e0_arr, mu_arr)):
-        all_modes = False if i > 0 else True
-        num = 1
-        st = time.perf_counter()
-        for jjj in range(num):
-
-            # print(jjj, "\n")
-            wc = few(
-                M,
-                mu,
-                p0,
-                e0,
-                theta,
-                phi,
-                dt=dt,
-                T=T,
-                eps=eps,
-                mode_selection=mode_selection,
-                show_progress=show_progress,
-                batch_size=batch_size,
-            )
-            print(jjj)
-
-        et = time.perf_counter()
-        pt = few.plunge_time
-        pt_arr.append(pt)
-
-        fast_time = (et - st) / num
-        timing.append(fast_time)
-
-        st = time.perf_counter()
-        wc2 = few2(
-            M,
-            mu,
-            p0,
-            e0,
-            theta,
-            phi,
-            dt=dt,
-            T=T,
-            eps=eps,
-            mode_selection="all",
-            show_progress=show_progress,
-            batch_size=batch_size,
-        )
-        et = time.perf_counter()
-        timing_slow.append((et - st))
-        slow_time = et - st
-
-        try:
-            wc = wc.get()
-        except AttributeError:
-            pass
-
-        try:
-            wc2 = wc2.get()
-        except AttributeError:
-            pass
-
-        min_len = np.min([len(wc), len(wc2)])
-
-        np.save(
-            "wave_out_p_{}_e{}".format(p0, e0), np.array([wc[:min_len], wc2[:min_len]])
-        )
-
-        exit()
-
-        mm = get_mismatch(wc2, wc, use_gpu=False)
-        mismatch_out.append(mm)
-        num_modes.append(few.num_modes_kept)
-
-        print(
-            "eps:",
-            eps,
-            "Mismatch:",
-            mm,
-            "Num modes:",
-            few.num_modes_kept,
-            "timing fast:",
-            fast_time,
-            "timing slow:",
-            slow_time,
-            "plunge_time",
-            pt,
-        )
-
-    np.save(
-        "plot_test_2",
-        np.asarray(
-            [
-                p0_arr,
-                e0_arr,
-                mu_arr,
-                mismatch_out,
-                num_modes,
-                timing,
-                timing_slow,
-                pt_arr,
-            ]
-        ).T,
-    )
-
-    """
-    num = 20
-    st = time.perf_counter()
-    for _ in range(num):
-        check = few(M, mu, p0, e0, theta, phi, dt=dt, T=T, eps=eps, all_modes=all_modes)
-    et = time.perf_counter()
-
-    import pdb
-
-    pdb.set_trace()
-    """
-    # print(check.shape)
-    print((et - st) / num)

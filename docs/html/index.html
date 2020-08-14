@@ -84,7 +84,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">User Guide:</span></p>
+              <p class="caption"><span class="caption-text">Documentation:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="user/main.html">Overall Waveform Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user/traj.html">Trajectory Package</a></li>
@@ -104,6 +104,11 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Mode-Summation">Mode Summation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Creating-modules">Creating modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
+</ul>
+<p class="caption"><span class="caption-text">General Information:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="docs_main.html">FastEMRIWaveforms Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docs_main.html#package-todos">Package TODOs</a></li>
 </ul>
 
             
@@ -401,41 +406,8 @@ France in the United States.</p></li>
 staff contributions provided for the Quest/Grail high performance
 computing facility at Northwestern University.</p></li>
 </ul>
-</div>
-</div>
-<div class="section" id="documentation">
-<h1>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h1>
-<p>Fast EMRI Waveform models are built for fast evaluation of the EMRI waveform summation equation, given by (<a class="reference external" href="https://arxiv.org/abs/gr-qc/0509101">Drasco &amp; Hughes 2006</a>),</p>
-<div class="math notranslate nohighlight" id="equation-emri-wave-eq">
-<span class="eqno">(1)<a class="headerlink" href="#equation-emri-wave-eq" title="Permalink to this equation">¶</a></span>\[h_+ + ih_x=r^{-1}\sum_{lmkn}A_{lmkn}(t)e^{-i\Phi_{mkn}(t)}V_{lmkn}(\theta,\phi),\]</div>
-<p>where <span class="math notranslate nohighlight">\(h_+ + ih_x\)</span> is the two polarizations of the gravitational wave; <span class="math notranslate nohighlight">\(r\)</span> is the distance; <span class="math notranslate nohighlight">\(l,m,k,n\)</span> are orbital angular momentum, azimuthal, polar, and radial harmonic indices, respectively; <span class="math notranslate nohighlight">\(A_{lmkn}(t)\)</span> is a complex amplitude function at time <span class="math notranslate nohighlight">\(t\)</span>; <span class="math notranslate nohighlight">\(A(t)\)</span> is a complex amplitude function at time <span class="math notranslate nohighlight">\(t\)</span>; <span class="math notranslate nohighlight">\(\Phi_{mkn}(t)=m\omega_\phi + k\omega_\theta + n\omega_r\)</span> where <span class="math notranslate nohighlight">\(\omega\)</span> is the fundamental frequency for a given direction; and <span class="math notranslate nohighlight">\(V_{lmkn}(\theta,\phi\)</span>) is the harmonic projection functions based on viewing angles <span class="math notranslate nohighlight">\(\theta,phi\)</span>. The various modules in this package deal with separate pieces of this equation. The amplitude (<a class="reference internal" href="user/amp.html#module-few.amplitude" title="few.amplitude"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.amplitude</span></code></a>) module deals with <span class="math notranslate nohighlight">\(A_{lmkn}(t)\)</span>. The trajectory (<a class="reference internal" href="user/traj.html#module-few.trajectory" title="few.trajectory"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.trajectory</span></code></a>) module finds the orbital trajectories (<span class="math notranslate nohighlight">\(p(t), e(t), \iota(t)\)</span>) which are fed into the amplitude module and phase trajectories (<span class="math notranslate nohighlight">\(\Phi_\phi, \Phi_\theta, \Phi_r\)</span>) that are fed into the final summation. Utility modules aid this process from the utilities package (<a class="reference internal" href="user/util.html#module-few.utils" title="few.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.utils</span></code></a>). Once such utility module is the calculation of <span class="math notranslate nohighlight">\(V_{lmkn}(\theta,\phi\)</span>) (this is currently limited to the spin-weighted spherical harmonics for Schwarzschild eccentric). For completeness, <span class="math notranslate nohighlight">\(A_{lmkn}\)</span> is given by,</p>
-<div class="math notranslate nohighlight">
-\[A_{lmkn} = -2Z_{lmkn}(a, p, e, \iota)/\omega_{mkn}^2,\]</div>
-<p>where <span class="math notranslate nohighlight">\(Z_{lmkn}(a, p, e, \iota)\)</span> is the teukolsky amplitudes associated with a geodesic with spin, <span class="math notranslate nohighlight">\(a\)</span>; semilatus rectum, <span class="math notranslate nohighlight">\(p\)</span>; and inclination, <span class="math notranslate nohighlight">\(\iota\)</span>. <span class="math notranslate nohighlight">\(\omega_{mkn}\)</span> is the summation of fundamental frequencies of the geodesic with integer weights equivalent to the mode indices. The angular function, <span class="math notranslate nohighlight">\(V_{lmkn}\)</span> is given by,</p>
-<div class="math notranslate nohighlight">
-\[V_{lmkn}(\theta, \phi) = (s=-2)S_{lmkn}(\theta)e^{im\phi},\]</div>
-<p>where <span class="math notranslate nohighlight">\(S_{lmkn}(\theta)\)</span> is the general angular function from <a class="reference external" href="https://arxiv.org/abs/gr-qc/0509101">Drasco &amp; Hughes 2006</a>.</p>
-<p>When these modules complete their calculations, the summation (<a class="reference internal" href="user/sum.html#module-few.summation" title="few.summation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.summation</span></code></a>) module takes all of this information and creates an EMRI waveform.</p>
-<p>Our model is valid at any <span class="math notranslate nohighlight">\((p_0,e_0)\)</span> that falls outside the separatrix, below the <span class="math notranslate nohighlight">\((p_0=10,e_0=0.7)\)</span> trajectory (see below trjectory figure), and within the outer limits (<span class="math notranslate nohighlight">\(p_0 &lt; 16 + 2e_0\)</span> and <span class="math notranslate nohighlight">\(e_0 &lt; 0.7\)</span>).</p>
-<p>Below are figures from our paper related to this package.</p>
-<div class="align-center figure" id="id2">
-<a class="reference internal image-reference" href="_images/EMRI_diagram.jpg"><img alt="alternate text" src="_images/EMRI_diagram.jpg" style="width: 500px; height: 500px;" /></a>
-<p class="caption"><span class="caption-text">A general schematic diagram for the creation of an EMRI waveform.</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
-</div>
-<div class="align-center figure" id="id3">
-<a class="reference internal image-reference" href="_images/traj.jpg"><img alt="alternate text" src="_images/traj.jpg" style="width: 500px; height: 400px;" /></a>
-<p class="caption"><span class="caption-text">Mismatch over time for trajectories spanning our domain of validity. The mass ratio is adjusted so that all trajectories plunge at 1 year. Users can input any <span class="math notranslate nohighlight">\((p_0,e_0)\)</span> that falls within this domain. That means outside the separatrix, below the <span class="math notranslate nohighlight">\((p_0=10,e_0=0.7)\)</span> trajectory, and within the outer limits (<span class="math notranslate nohighlight">\(p_0 &lt; 16 + 2e_0\)</span> and <span class="math notranslate nohighlight">\(e_0 &lt; 0.7\)</span>).</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
-</div>
-<div class="align-center figure" id="id4">
-<a class="reference internal image-reference" href="_images/timing_plot_3.jpg"><img alt="alternate text" src="_images/timing_plot_3.jpg" style="width: 400px; height: 400px;" /></a>
-<p class="caption"><span class="caption-text">Timing for our waveforms for an EMRI with <span class="math notranslate nohighlight">\(\{M,\mu,p_0,e_0,\theta,\phi\} = \{10^6, 10^1, 10.0, 0.7, \pi/2, 0.0\}\)</span>.</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
-</div>
-<div class="align-center figure" id="id5">
-<a class="reference internal image-reference" href="_images/waveform_example.jpg"><img alt="alternate text" src="_images/waveform_example.jpg" style="width: 500px; height: 350px;" /></a>
-<p class="caption"><span class="caption-text">Example waveform for the worst case at the start and finish of the trajectory.</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
-</div>
 <div class="toctree-wrapper compound">
-<p class="caption"><span class="caption-text">User Guide:</span></p>
+<p class="caption"><span class="caption-text">Documentation:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="user/main.html">Overall Waveform Models</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="user/main.html#prebuilt-waveform-models">Prebuilt Waveform Models</a><ul>
@@ -513,6 +485,14 @@ computing facility at Northwestern University.</p></li>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
 </ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">General Information:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="docs_main.html">FastEMRIWaveforms Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docs_main.html#package-todos">Package TODOs</a></li>
+</ul>
+</div>
 </div>
 </div>
 

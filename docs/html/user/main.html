@@ -291,6 +291,18 @@ kwarg. For this class it is False.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="id0">
+<em class="property">property </em><code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicator if the module has gpu capability</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="id1">
+<em class="property">property </em><code class="sig-name descname">allow_batching</code><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicator if module allows batching</p>
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.waveform.FastSchwarzschildEccentricFlux.__call__">
 <code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em>, <em class="sig-param"><span class="n">show_progress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">mode_selection</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call function for SchwarzschildEccentric models.</p>
@@ -336,6 +348,9 @@ single waveform.</p></li>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>1D complex128 xp.ndarray</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – user selections are not allowed.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -578,6 +593,17 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.ylm_gen">
+<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.ylm_gen" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated ylm module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
 <dt id="few.waveform.FastSchwarzschildEccentricFlux.create_waveform">
 <code class="sig-name descname">create_waveform</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.create_waveform" title="Permalink to this definition">¶</a></dt>
 <dd><p>instantiated summation module.</p>
@@ -589,9 +615,20 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="few.waveform.FastSchwarzschildEccentricFlux.ylm_gen">
-<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.ylm_gen" title="Permalink to this definition">¶</a></dt>
+<dt id="id2">
+<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#id2" title="Permalink to this definition">¶</a></dt>
 <dd><p>instantiated Ylm module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.mode_selector">
+<code class="sig-name descname">mode_selector</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.mode_selector" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated mode selection module.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>obj</p>
@@ -623,6 +660,52 @@ to l_arr, m_arr, n_arr.</p>
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt id="id3">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id3" title="Permalink to this definition">¶</a></dt>
+<dd><p>numpy or cupy based on gpu usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.num_modes_kept">
+<code class="sig-name descname">num_modes_kept</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.num_modes_kept" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes for final waveform after mode
+selection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.citation">
+<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.citation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return citations related to this module</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -742,32 +825,15 @@ Ylm generator during instantiation. Default is {}.</p></li>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="few.waveform.SlowSchwarzschildEccentricFlux.attributes_SlowSchwarzschildEccentricFlux">
-<code class="sig-name descname">attributes_SlowSchwarzschildEccentricFlux</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.attributes_SlowSchwarzschildEccentricFlux" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py attribute">
 <dt id="few.waveform.SlowSchwarzschildEccentricFlux.gpu_capability">
-<code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.gpu_capability" title="Permalink to this definition">¶</a></dt>
-<dd><p>If True, this wavefrom can leverage gpu
-resources. For this class it is False.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
+<em class="property">property </em><code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicator if the module has gpu capability</p>
 </dd></dl>
 
-<dl class="py attribute">
+<dl class="py method">
 <dt id="few.waveform.SlowSchwarzschildEccentricFlux.allow_batching">
-<code class="sig-name descname">allow_batching</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.allow_batching" title="Permalink to this definition">¶</a></dt>
-<dd><p>If True, this waveform can use the batch_size
-kwarg. For this class it is True.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
+<em class="property">property </em><code class="sig-name descname">allow_batching</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicator if module allows batching</p>
 </dd></dl>
 
 <dl class="py method">
@@ -817,6 +883,9 @@ single waveform.</p></li>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>1D complex128 xp.ndarray</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – user selections are not allowed.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1059,6 +1128,17 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.ylm_gen">
+<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.ylm_gen" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated ylm module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
 <dt id="few.waveform.SlowSchwarzschildEccentricFlux.create_waveform">
 <code class="sig-name descname">create_waveform</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.create_waveform" title="Permalink to this definition">¶</a></dt>
 <dd><p>instantiated summation module.</p>
@@ -1070,9 +1150,20 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="few.waveform.SlowSchwarzschildEccentricFlux.ylm_gen">
-<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.ylm_gen" title="Permalink to this definition">¶</a></dt>
+<dt id="id5">
+<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#id5" title="Permalink to this definition">¶</a></dt>
 <dd><p>instantiated Ylm module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.mode_selector">
+<code class="sig-name descname">mode_selector</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.mode_selector" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated mode selection module.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>obj</p>
@@ -1104,6 +1195,81 @@ to l_arr, m_arr, n_arr.</p>
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt id="id6">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id6" title="Permalink to this definition">¶</a></dt>
+<dd><p>numpy or cupy based on gpu usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.num_modes_kept">
+<code class="sig-name descname">num_modes_kept</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.num_modes_kept" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes for final waveform after mode
+selection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.attributes_SlowSchwarzschildEccentricFlux">
+<code class="sig-name descname">attributes_SlowSchwarzschildEccentricFlux</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.attributes_SlowSchwarzschildEccentricFlux" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="id7">
+<code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#id7" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, this wavefrom can leverage gpu
+resources. For this class it is False.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="id8">
+<code class="sig-name descname">allow_batching</code><a class="headerlink" href="#id8" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, this waveform can use the batch_size
+kwarg. For this class it is True.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.citation">
+<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.citation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return citations related to this module</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -1527,7 +1693,7 @@ final waveform from the amplitude and phase information. See
 <li><p><strong>inspiral_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
 inspiral generator. <strong>Important Note</strong>: These kwargs are passed
 online, not during instantiation like other kwargs here. Default is
-{}.</p></li>
+{}. This is stored as an attribute.</p></li>
 <li><p><strong>amplitude_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
 amplitude generator during instantiation. Default is {}.</p></li>
 <li><p><strong>sum_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
@@ -1537,7 +1703,7 @@ Ylm generator during instantiation. Default is {}.</p></li>
 <li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, use GPU resources. Default is False.</p></li>
 <li><p><strong>normalize_amps</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, it will normalize amplitudes
 to flux information output from the trajectory modules. Default
-is True.</p></li>
+is True. This is stored as an attribute.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1567,6 +1733,17 @@ is True.</p></li>
 </dd></dl>
 
 <dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.ylm_gen">
+<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.ylm_gen" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated ylm module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
 <dt id="few.waveform.SchwarzschildEccentricWaveformBase.create_waveform">
 <code class="sig-name descname">create_waveform</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.create_waveform" title="Permalink to this definition">¶</a></dt>
 <dd><p>instantiated summation module.</p>
@@ -1578,9 +1755,20 @@ is True.</p></li>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="few.waveform.SchwarzschildEccentricWaveformBase.ylm_gen">
-<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.ylm_gen" title="Permalink to this definition">¶</a></dt>
+<dt id="id9">
+<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#id9" title="Permalink to this definition">¶</a></dt>
 <dd><p>instantiated Ylm module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.mode_selector">
+<code class="sig-name descname">mode_selector</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.mode_selector" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated mode selection module.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>obj</p>
@@ -1612,6 +1800,45 @@ to l_arr, m_arr, n_arr.</p>
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>numpy or cupy based on gpu usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.num_modes_kept">
+<code class="sig-name descname">num_modes_kept</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.num_modes_kept" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of modes for final waveform after mode
+selection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.gpu_capability">
+<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.waveform.SchwarzschildEccentricWaveformBase'&gt;&gt;</em><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.allow_batching">
+<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.waveform.SchwarzschildEccentricWaveformBase'&gt;&gt;</em><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.citation">
+<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.citation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return citations related to this module</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1662,6 +1889,26 @@ single waveform.</p></li>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>1D complex128 xp.ndarray</p>
 </dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – user selections are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -1669,8 +1916,8 @@ single waveform.</p></li>
 <dt id="few.waveform.SchwarzschildEccentricWaveformBase.attributes_SchwarzschildEccentric">
 <code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
-<dt id="few.waveform.SchwarzschildEccentricWaveformBase.xp">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.xp" title="Permalink to this definition">¶</a></dt>
+<dt id="id11">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id11" title="Permalink to this definition">¶</a></dt>
 <dd><p>numpy or cupy based on hardware chosen.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
