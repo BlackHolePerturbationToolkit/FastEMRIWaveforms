@@ -1,6 +1,6 @@
 import numpy as np
-import numpy
 
+# check to see if cupy is available for gpus
 try:
     import cupy as cp
 
@@ -70,7 +70,7 @@ def get_mismatch(time_series_1, time_series_2, use_gpu=False):
     """Calculate the mismatch.
 
     The mismatch is 1 - overlap. Therefore, see documentation for
-    :func:`few.utils.overlap.overlap` for information on the overlap
+    :func:`few.utils.utility.overlap` for information on the overlap
     calculation.
 
     args:
@@ -82,3 +82,23 @@ def get_mismatch(time_series_1, time_series_2, use_gpu=False):
     """
     overlap = get_overlap(time_series_1, time_series_2, use_gpu=use_gpu)
     return 1.0 - overlap
+
+
+def p_to_y(p, e, use_gpu=False):
+    """Convert from separation :math:`p` to :math:`y` coordinate
+
+    Conversion from the semilatus rectum or separation :math:`p` to :math:`y`.
+
+    arguments:
+        p (double scalar or 1D double xp.ndarray): Values of separation,
+            :math:`p`, to convert.
+        e (double scalar or 1D double xp.ndarray): Associated eccentricity values
+            of :math:`p` necessary for conversion.
+        use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
+
+    """
+    if use_gpu:
+        return xp.log(-(21 / 10) - 2 * e + p)
+
+    else:
+        return np.log(-(21 / 10) - 2 * e + p)

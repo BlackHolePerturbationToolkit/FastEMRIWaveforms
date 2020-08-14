@@ -22,10 +22,10 @@ Mode Filtering
     :members:
     :inherited-members:
 
-Analysis Tools
-~~~~~~~~~~~~~~~
+Analysis and Other Tools
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: few.utils.overlap
+.. automodule:: few.utils.utilities
     :members:
     :show-inheritance:
     :inherited-members:

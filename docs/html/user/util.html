@@ -85,7 +85,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">User Guide:</span></p>
+              <p class="caption"><span class="caption-text">Documentation:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="main.html">Overall Waveform Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="traj.html">Trajectory Package</a></li>
@@ -94,7 +94,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Utilities</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-few.utils.modeselector">Mode Filtering</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.overlap">Analysis Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#analysis-and-other-tools">Analysis and Other Tools</a></li>
 </ul>
 </li>
 </ul>
@@ -110,6 +110,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Mode-Summation">Mode Summation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Creating-modules">Creating modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
+</ul>
+<p class="caption"><span class="caption-text">General Information:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../docs_main.html">FastEMRIWaveforms Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../docs_main.html#package-todos">Package TODOs</a></li>
 </ul>
 
             
@@ -383,51 +388,8 @@ angles.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-few.utils.overlap">
-<span id="analysis-tools"></span><h2>Analysis Tools<a class="headerlink" href="#module-few.utils.overlap" title="Permalink to this headline">¶</a></h2>
-<dl class="py function">
-<dt id="few.utils.overlap.get_overlap">
-<code class="sig-prename descclassname">few.utils.overlap.</code><code class="sig-name descname">get_overlap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_series_1</span></em>, <em class="sig-param"><span class="n">time_series_2</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.overlap.get_overlap" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate the overlap.</p>
-<p>Takes two time series and finds which one is shorter in length. It then
-shortens the longer time series if necessary. Then it performs a
-normalized correlation calulation on the two time series to give the
-overlap. The overlap of <span class="math notranslate nohighlight">\(a(t)\)</span> and
-<span class="math notranslate nohighlight">\(b(t)\)</span>, <span class="math notranslate nohighlight">\(\gamma_{a,b}\)</span>, is given by,</p>
-<div class="math notranslate nohighlight">
-\[\gamma_{a,b} = &lt;a,b&gt;/(&lt;a,a&gt;&lt;b,b&gt;)^{(1/2)},\]</div>
-<p>where <span class="math notranslate nohighlight">\(&lt;a,b&gt;\)</span> is the inner product of the two time series.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>time_series_1</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 1.</p></li>
-<li><p><strong>time_series_2</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 2.</p></li>
-<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True use cupy. If False, use numpy. Default
-is False.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="few.utils.overlap.get_mismatch">
-<code class="sig-prename descclassname">few.utils.overlap.</code><code class="sig-name descname">get_mismatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time_series_1</span></em>, <em class="sig-param"><span class="n">time_series_2</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.overlap.get_mismatch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate the mismatch.</p>
-<p>The mismatch is 1 - overlap. Therefore, see documentation for
-<code class="xref py py-func docutils literal notranslate"><span class="pre">few.utils.overlap.overlap()</span></code> for information on the overlap
-calculation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>time_series_1</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 1.</p></li>
-<li><p><strong>time_series_2</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 2.</p></li>
-<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True use cupy. If False, use numpy. Default
-is False.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
+<div class="section" id="analysis-and-other-tools">
+<h2>Analysis and Other Tools<a class="headerlink" href="#analysis-and-other-tools" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 

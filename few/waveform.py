@@ -33,7 +33,7 @@ except (ImportError, ModuleNotFoundError) as e:
 from few.utils.baseclasses import SchwarzschildEccentric
 from few.trajectory.flux import RunSchwarzEccFluxInspiral
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
-from few.utils.overlap import get_mismatch
+from few.utils.utility import get_mismatch
 from few.amplitude.romannet import RomanAmplitude
 from few.utils.modeselector import ModeSelector
 from few.utils.ylm import GetYlms

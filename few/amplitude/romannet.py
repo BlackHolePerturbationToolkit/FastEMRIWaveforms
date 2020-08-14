@@ -30,6 +30,7 @@ from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase
 from few.utils.getfiles import check_for_file_download
 from few.utils.citations import *
+from few.utils.utility import p_to_y
 
 # check for cupy and GPU version of pymatmul
 try:
@@ -209,10 +210,6 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
         self.run_relu_arr = np.ones(self.num_layers, dtype=int)
         self.run_relu_arr[-1] = 0
 
-    def _p_to_y(self, p, e):
-        # convert p to y
-        return self.xp.log(-(21 / 10) - 2 * e + p)
-
     def get_amplitudes(self, p, e, *args, specific_modes=None, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
 
@@ -260,7 +257,7 @@ class RomanAmplitude(SchwarzschildEccentric, AmplitudeBase):
             ]
 
         # the input is (y, e)
-        y = self._p_to_y(p, e)
+        y = p_to_y(p, e, use_gpu=self.use_gpu)
 
         # column-major single dimensional array input
         input = self.xp.concatenate([y, e])

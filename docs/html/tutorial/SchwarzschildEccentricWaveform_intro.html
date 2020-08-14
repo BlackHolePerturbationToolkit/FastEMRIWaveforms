@@ -484,7 +484,7 @@ div.rendered_html tbody tr:hover {
 <span class="kn">from</span> <span class="nn">few.amplitude.romannet</span> <span class="kn">import</span> <span class="n">RomanAmplitude</span>
 <span class="kn">from</span> <span class="nn">few.amplitude.interp2dcubicspline</span> <span class="kn">import</span> <span class="n">Interp2DAmplitude</span>
 <span class="kn">from</span> <span class="nn">few.waveform</span> <span class="kn">import</span> <span class="n">FastSchwarzschildEccentricFlux</span><span class="p">,</span> <span class="n">SlowSchwarzschildEccentricFlux</span>
-<span class="kn">from</span> <span class="nn">few.utils.overlap</span> <span class="kn">import</span> <span class="n">get_overlap</span><span class="p">,</span> <span class="n">get_mismatch</span>
+<span class="kn">from</span> <span class="nn">few.utils.utility</span> <span class="kn">import</span> <span class="n">get_overlap</span><span class="p">,</span> <span class="n">get_mismatch</span>
 <span class="kn">from</span> <span class="nn">few.utils.ylm</span> <span class="kn">import</span> <span class="n">GetYlms</span>
 <span class="kn">from</span> <span class="nn">few.utils.modeselector</span> <span class="kn">import</span> <span class="n">ModeSelector</span>
 <span class="kn">from</span> <span class="nn">few.summation.interpolatedmodesum</span> <span class="kn">import</span> <span class="n">CubicSplineInterpolant</span>
@@ -511,7 +511,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 <li><p>Mode Selection: <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.utils.modeselector.ModeSelector">ModeSelector</a></p></li>
 <li><p>Angular Harmonics: <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.utils.ylm.GetYlms">GetYlms</a></p></li>
 </ul>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
@@ -551,6 +551,19 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </pre></div>
 </div>
 </div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/getfiles.py:19: UserWarning: The file AmplitudeVectorNorm.dat did not open sucessfully. It will now be downloaded to the proper location.
+  fp
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/getfiles.py:19: UserWarning: The file FluxNewMinusPNScaled_fixed_y_order.dat did not open sucessfully. It will now be downloaded to the proper location.
+  fp
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/getfiles.py:19: UserWarning: The file SchwarzschildEccentricInput.hdf5 did not open sucessfully. It will now be downloaded to the proper location.
+  fp
+</pre></div></div>
+</div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
@@ -588,7 +601,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0x1074c8ad0&gt;]
+[&lt;matplotlib.lines.Line2D at 0x1602a12d0&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -614,7 +627,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0xb1c028310&gt;]
+[&lt;matplotlib.lines.Line2D at 0x1603698d0&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -657,7 +670,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-0.1.0-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:266: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:271: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
   p0
 </pre></div></div>
 </div>
@@ -710,7 +723,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-0.1.0-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:266: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:271: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
   p0
 </pre></div></div>
 </div>
@@ -719,7 +732,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-wave used 457 modes. wave2 used 26 modes. The mismatch was 0.0011803979666252795
+wave used 457 modes. wave2 used 26 modes. The mismatch was 0.0011803979666253905
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -797,9 +810,9 @@ wave used 457 modes. wave2 used 26 modes. The mismatch was 0.0011803979666252795
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-0.1.0-py3.7-macosx-10.9-x86_64.egg/few/utils/getfiles.py:18: UserWarning: The file Teuk_amps_a0.0_lmax_10_nmax_30_new.h5 did not open sucessfully. It will now be downloaded to the proper location.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/getfiles.py:19: UserWarning: The file Teuk_amps_a0.0_lmax_10_nmax_30_new.h5 did not open sucessfully. It will now be downloaded to the proper location.
   fp
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-0.1.0-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:266: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:271: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
   p0
 </pre></div></div>
 </div>
@@ -823,7 +836,7 @@ wave used 457 modes. wave2 used 26 modes. The mismatch was 0.0011803979666252795
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 Length check: 10520 10520
-Mismatch: 2.309036390568675e-05
+Mismatch: 2.3090363905464706e-05
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -937,7 +950,7 @@ gravitational wave flux for normalization information.</p>
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-0.1.0-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:413: UserWarning: new_t array goes beyond generated t array. If you want to cut the t array at the end of the trajectory, set fix_t to True.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:422: UserWarning: new_t array goes beyond generated t array. If you want to cut the t array at the end of the trajectory, set fix_t to True.
   &#34;new_t array goes beyond generated t array. If you want to cut the t array at the end of the trajectory, set fix_t to True.&#34;
 </pre></div></div>
 </div>
@@ -987,7 +1000,7 @@ t1 max: 999999.0 t2 max: 464369.0
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0xb1b847c90&gt;
+&lt;matplotlib.legend.Legend at 0x15faafa90&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1354,7 +1367,7 @@ Text(0, 0.5, &#39;e&#39;)
 (2,-2): (2.4140204429035754e-18-0.039423945656564985j)
 (3,-2): (-9.997076276775717e-18+0.16326464550817543j)
 (4,-3): (-0.12119256904280647-0.12119256904280648j)
-(5,-3): (0.2357279936951819+0.23572799369518196j)
+(5,-3): (0.2357279936951819+0.23572799369518194j)
 (2,-0): (0.2897056515173922+0j)
 </pre></div></div>
 </div>
@@ -1532,7 +1545,7 @@ We reduced the mode content from 3843 modes to 584 modes.
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0xb2161c2d0&gt;
+&lt;matplotlib.legend.Legend at 0x15fac6650&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1629,7 +1642,7 @@ array([-3.54810537e-05, -4.01422809e-05, -4.48887306e-05, ...,
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0xb1be97290&gt;]
+[&lt;matplotlib.lines.Line2D at 0x160c31490&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1718,7 +1731,7 @@ Mismatch: 2.220446049250313e-16
 interfaces, but ensures the strict interface will be the same for all trajectory modules. Trajectory modules must implement the method <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/traj.html?highlight=trajectorybase#few.utils.baseclasses.TrajectoryBase.get_inspiral">get_inspial</a>. The common interface uses this to generate the specific trajectory.</p>
 <p>This is a common theme amongst module and waveform creation. The user will take one parent abstract base class related to the waveform limits, domain of validity, and its waveform properties, and one parent abstract based class for the module type (like trajectory or summation).</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[34]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1853,7 +1866,7 @@ interfaces, but ensures the strict interface will be the same for all trajectory
 <div class="section" id="Test-your-trajectory">
 <h2>Test your trajectory<a class="headerlink" href="#Test-your-trajectory" title="Permalink to this headline">¶</a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[36]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1897,7 +1910,7 @@ interfaces, but ensures the strict interface will be the same for all trajectory
 <p>Now we will create a waveform with our new trajectory model. To do this, we will start with <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/main.html#few.waveform.SchwarzschildEccentricWaveformBase">SchwarzschildEccentricWaveformBase</a>. This base class has already inherited from <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/main.html#few.utils.baseclasses.SchwarzschildEccentric">SchwarzschildEccentric</a>. It creates the common interface for all waveform modules (and how
 they interface with there constituent modules). A requirement when creating a module is to have properties describing the GPU capability of the waveform, as well as whether or not it allows for batching the waveform creation (after trajectory).</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[36]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1942,7 +1955,7 @@ they interface with there constituent modules). A requirement when creating a mo
 <h2>Test your waveform<a class="headerlink" href="#Test-your-waveform" title="Permalink to this headline">¶</a></h2>
 <p>It will have the same interface as the other waveforms.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1975,7 +1988,7 @@ they interface with there constituent modules). A requirement when creating a mo
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-mismatch: 1.001340224043205
+mismatch: 1.0013402240432097
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1991,7 +2004,7 @@ mismatch: 1.001340224043205
 <h1>Citing waveforms and modules<a class="headerlink" href="#Citing-waveforms-and-modules" title="Permalink to this headline">¶</a></h1>
 <p>If you use any work from this package please cite our paper (TODO: add arxiv). Additionally please cite any additional work for each module used by calling the <code class="docutils literal notranslate"><span class="pre">citation</span></code> attribute on the module class:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[39]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
