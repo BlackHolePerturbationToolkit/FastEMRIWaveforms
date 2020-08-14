@@ -1,22 +1,36 @@
-"""
-This module contains flux-based or adiabatic trajectory modules.
-"""
+# Trajectory modules for Fast EMRI Waveforms
 
-import numpy as np
-from scipy.interpolate import CubicSpline
+# Copyright (C) 2020 Michael L. Katz, Alvin J.K. Chua, Niels Warburton, Scott A. Hughes
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pyFLUX import pyFluxGenerator
-
-from few.utils.baseclasses import TrajectoryBase, SchwarzschildEccentric
-from few.utils.getfiles import check_for_file_download
-
-from few.utils.constants import *
-from few.utils.citations import *
 
 import os
 import subprocess
 import warnings
 
+import numpy as np
+from scipy.interpolate import CubicSpline
+
+from pyFLUX import pyFluxGenerator
+from few.utils.baseclasses import TrajectoryBase, SchwarzschildEccentric
+from few.utils.getfiles import check_for_file_download
+from few.utils.constants import *
+from few.utils.citations import *
+
+
+# get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -64,15 +78,15 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
     def attributes_RunSchwarzEccFluxInspiral(self):
         """
         attributes:
-            flux carrier (obj): Unaccessible from python. It carries c++ classes
-                for the integration.
+            flux_generator (obj): C++ class for flux trajectory generation.
             specific_kwarg_keys (list): specific kwargs from
-                :class:`few.utils.baseclasses.TrajectoryBase` that apply this
+                :class:`few.utils.baseclasses.TrajectoryBase` that apply to this
                 inspiral generator.
         """
 
     @property
     def citation(self):
+        """Return citation for this class"""
         return few_citation
 
     def get_inspiral(self, M, mu, p0, e0, *args, **kwargs):
@@ -105,35 +119,12 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
 
         """
 
+        # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
 
         # this will return in coordinate time
+        # must include flux normalization in case normalization is desired
         t, p, e, Phi_phi, Phi_r, amp_norm = self.flux_generator(
             M, mu, p0, e0, **temp_kwargs
         )
         return (t, p, e, Phi_phi, Phi_r, amp_norm)
-
-
-if __name__ == "__main__":
-    flux = RunFluxInspiral()
-
-    M = 1e6
-    mu = 1e1
-    p0 = 8.0
-    e0 = 0.6
-    DENSE_STEPPING = 1
-    max_init_len = int(1e7)
-    step_eps = 1e-11
-
-    check = flux(
-        M,
-        mu,
-        p0,
-        e0,
-        DENSE_STEPPING=DENSE_STEPPING,
-        max_init_len=max_init_len,
-        step_eps=step_eps,
-    )
-    import pdb
-
-    pdb.set_trace()
