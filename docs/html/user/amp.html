@@ -85,7 +85,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">User Guide:</span></p>
+              <p class="caption"><span class="caption-text">Documentation:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="main.html">Overall Waveform Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="traj.html">Trajectory Package</a></li>
@@ -112,6 +112,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Mode-Summation">Mode Summation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Creating-modules">Creating modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
+</ul>
+<p class="caption"><span class="caption-text">General Information:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../docs_main.html">FastEMRIWaveforms Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../docs_main.html#package-todos">Package TODOs</a></li>
 </ul>
 
             
@@ -215,7 +220,7 @@
 <p>The amplitude package houses modules for calculating Tuekolsky amplitudes from
 orbital parameter trajectories. The complex amplitudes are determined with
 various methods documented below. Some amplitude modules have gpu capabilities.
-It deals with <span class="math notranslate nohighlight">\(A_{lmkn}\)</span> in <a class="reference internal" href="../index.html#equation-emri-wave-eq">(1)</a>.</p>
+It deals with <span class="math notranslate nohighlight">\(A_{lmkn}\)</span> in <a class="reference internal" href="../docs_main.html#equation-emri-wave-eq">(1)</a>.</p>
 <div class="section" id="schwarzschild-eccentric-amplitudes">
 <h2>Schwarzschild Eccentric Amplitudes<a class="headerlink" href="#schwarzschild-eccentric-amplitudes" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="module-few.amplitude.romannet">
@@ -621,6 +626,65 @@ amplitudes for each mode in the model.</p>
 </dd>
 </dl>
 <dl class="py method">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_SchwarzschildEccentricWaveformBase">
+<code class="sig-name descname">attributes_SchwarzschildEccentricWaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_SchwarzschildEccentricWaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.amplitude_generator">
+<code class="sig-name descname">amplitude_generator</code><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.amplitude_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>C++ class that performs the bicubic
+interpolation. It stores all of the splines during initialization
+steps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.citation">
+<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.citation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return citations for this class</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.get_amplitudes">
+<code class="sig-name descname">get_amplitudes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">specific_modes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.get_amplitudes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate Teukolsky amplitudes for Schwarzschild eccentric.</p>
+<p>This function takes the inputs the trajectory in <span class="math notranslate nohighlight">\((p,e)\)</span> as arrays
+and returns the complex amplitude of all modes to adiabatic order at
+each step of the trajectory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
+the semi-latus rectum.</p></li>
+<li><p><strong>e</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
+the eccentricity.</p></li>
+<li><p><strong>l_arr</strong> (<em>1D int numpy.ndarray</em>) – <span class="math notranslate nohighlight">\(l\)</span> values to evaluate.</p></li>
+<li><p><strong>m_arr</strong> (<em>1D int numpy.ndarray</em>) – <span class="math notranslate nohighlight">\(m\)</span> values to evaluate.</p></li>
+<li><p><strong>n_arr</strong> (<em>1D int numpy.ndarray</em>) – <span class="math notranslate nohighlight">\(ns\)</span> values to evaluate.</p></li>
+<li><p><strong>*args</strong> (<em>tuple</em><em>, </em><em>placeholder</em>) – Added to create flexibility when calling different
+amplitude modules. It is not used.</p></li>
+<li><p><strong>specific_modes</strong> (<em>list</em><em>, </em><em>optional</em>) – List of tuples for (l, m, n) values
+desired modes. Default is None.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added to create flexibility when calling different
+amplitude modules. It is not used.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>If specific_modes is None, Teukolsky modes in shape (number of trajectory points, number of modes)
+dict: Dictionary with requested modes.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>2D array (double)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.__call__">
 <code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">specific_modes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Common call for Teukolsky amplitudes</p>
@@ -862,41 +926,6 @@ maps locations of -m values to +m values.</p>
 </dl>
 </dd></dl>
 
-</dd></dl>
-
-<dl class="py method">
-<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.get_amplitudes">
-<code class="sig-name descname">get_amplitudes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">specific_modes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.get_amplitudes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate Teukolsky amplitudes for Schwarzschild eccentric.</p>
-<p>This function takes the inputs the trajectory in <span class="math notranslate nohighlight">\((p,e)\)</span> as arrays
-and returns the complex amplitude of all modes to adiabatic order at
-each step of the trajectory.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>p</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
-the semi-latus rectum.</p></li>
-<li><p><strong>e</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
-the eccentricity.</p></li>
-<li><p><strong>l_arr</strong> (<em>1D int numpy.ndarray</em>) – <span class="math notranslate nohighlight">\(l\)</span> values to evaluate.</p></li>
-<li><p><strong>m_arr</strong> (<em>1D int numpy.ndarray</em>) – <span class="math notranslate nohighlight">\(m\)</span> values to evaluate.</p></li>
-<li><p><strong>n_arr</strong> (<em>1D int numpy.ndarray</em>) – <span class="math notranslate nohighlight">\(ns\)</span> values to evaluate.</p></li>
-<li><p><strong>*args</strong> (<em>tuple</em><em>, </em><em>placeholder</em>) – Added to create flexibility when calling different
-amplitude modules. It is not used.</p></li>
-<li><p><strong>specific_modes</strong> (<em>list</em><em>, </em><em>optional</em>) – List of tuples for (l, m, n) values
-desired modes. Default is None.</p></li>
-<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added to create flexibility when calling different
-amplitude modules. It is not used.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>If specific_modes is None, Teukolsky modes in shape (number of trajectory points, number of modes)
-dict: Dictionary with requested modes.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>2D array (double)</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">

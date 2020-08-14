@@ -1,4 +1,4 @@
-# Trajectory modules for Fast EMRI Waveforms
+# Flux-based Schwarzschild Eccentric trajectory module for Fast EMRI Waveforms
 
 # Copyright (C) 2020 Michael L. Katz, Alvin J.K. Chua, Niels Warburton, Scott A. Hughes
 #

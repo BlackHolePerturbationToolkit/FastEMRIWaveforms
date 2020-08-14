@@ -1,15 +1,33 @@
-import numpy as np
-import os
-import h5py
+# Schwarzschild Eccentric amplitude module for Fast EMRI Waveforms
+# performed with bicubic splines
 
+# Copyright (C) 2020 Michael L. Katz, Alvin J.K. Chua, Niels Warburton, Scott A. Hughes
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+import os
+
+import h5py
+import numpy as np
+
+from pyInterp2DAmplitude import pyAmplitudeGenerator
 from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase
 from few.utils.getfiles import check_for_file_download
 from few.utils.citations import *
 
-from pyInterp2DAmplitude import pyAmplitudeGenerator
-
-import os
-
+# get path to file
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -36,6 +54,8 @@ class Interp2DAmplitude(SchwarzschildEccentric, AmplitudeBase):
         SchwarzschildEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
+        # check if you have the necessary file
+        # it will download from Zenodo if the user does not have it.
         few_dir = dir_path + "/../../"
 
         fp = "Teuk_amps_a0.0_lmax_10_nmax_30_new.h5"
@@ -43,8 +63,19 @@ class Interp2DAmplitude(SchwarzschildEccentric, AmplitudeBase):
 
         self.amplitude_generator = pyAmplitudeGenerator(self.lmax, self.nmax, few_dir)
 
+    def attributes_SchwarzschildEccentricWaveformBase(self):
+        """
+        attributes:
+            amplitude_generator (obj): C++ class that performs the bicubic
+                interpolation. It stores all of the splines during initialization
+                steps.
+
+        """
+        pass
+
     @property
     def citation(self):
+        """Return citations for this class"""
         return few_citation
 
     def get_amplitudes(self, p, e, *args, specific_modes=None, **kwargs):
@@ -78,17 +109,22 @@ class Interp2DAmplitude(SchwarzschildEccentric, AmplitudeBase):
 
         input_len = len(p)
 
+        # set the l,m,n arrays
+        # if all modes, return modes from the model
         if specific_modes is None:
             l_arr, m_arr, n_arr = (
                 self.l_arr[self.m_zero_up_mask],
                 self.m_arr[self.m_zero_up_mask],
                 self.n_arr[self.m_zero_up_mask],
             )
+
+        # prepare arrays if specific modes are requested
         else:
             l_arr = np.zeros(len(specific_modes), dtype=int)
             m_arr = np.zeros(len(specific_modes), dtype=int)
             n_arr = np.zeros(len(specific_modes), dtype=int)
 
+            # to deal with weird m structure
             inds_revert = []
             for i, (l, m, n) in enumerate(specific_modes):
                 l_arr[i] = l
@@ -100,6 +136,7 @@ class Interp2DAmplitude(SchwarzschildEccentric, AmplitudeBase):
 
             inds_revert = np.asarray(inds_revert)
 
+        # interface to C++
         teuk_modes = self.amplitude_generator(
             p,
             e,
@@ -110,13 +147,20 @@ class Interp2DAmplitude(SchwarzschildEccentric, AmplitudeBase):
             len(l_arr),
         )
 
+        # determine return quantities
+
+        # return array of all modes
         if specific_modes is None:
             return teuk_modes
+
+        # dict containing requested modes
         else:
             temp = {}
             for i, lmn in enumerate(specific_modes):
                 temp[lmn] = teuk_modes[:, i]
                 l, m, n = lmn
+
+                # apply +/- m symmetry
                 if m < 0:
                     temp[lmn] = np.conj(temp[lmn])
 
