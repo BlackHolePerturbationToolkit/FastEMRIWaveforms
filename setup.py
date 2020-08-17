@@ -249,7 +249,7 @@ if run_cuda_install:
 
     gpu_extension = dict(
         libraries=["cudart", "cublas", "cusparse", "gomp"],
-        library_dirs=[CUDA["lib64"]] + gsl_lib,
+        library_dirs=[CUDA["lib64"]],
         runtime_library_dirs=[CUDA["lib64"]],
         language="c++",
         # This syntax is specific to this build system

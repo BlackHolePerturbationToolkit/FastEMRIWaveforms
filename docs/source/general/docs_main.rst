@@ -2,6 +2,8 @@
 FastEMRIWaveforms Publication
 ==============================
 
+The Fast EMRI Waveforms paper can be found at `arxiv.org/2008.06071 <https://arxiv.org/abs/2008.06071>`_. Below is a brief description of the paper, including plots. Please refer to the paper for more detailed information. 
+
 Fast EMRI Waveform models are built for fast evaluation of the EMRI waveform summation equation, given by (`Drasco & Hughes 2006 <https://arxiv.org/abs/gr-qc/0509101>`_),
 
 .. math:: h_+ + ih_x=r^{-1}\sum_{lmkn}A_{lmkn}(t)e^{-i\Phi_{mkn}(t)}V_{lmkn}(\theta,\phi),
@@ -23,7 +25,7 @@ Our model is valid at any :math:`(p_0,e_0)` that falls outside the separatrix, b
 
 Below are figures from our paper related to this package.
 
-.. figure:: img/EMRI_diagram.jpg
+.. figure:: ../img/EMRI_diagram.jpg
     :width: 500px
     :align: center
     :height: 500px
@@ -33,7 +35,7 @@ Below are figures from our paper related to this package.
     A general schematic diagram for the creation of an EMRI waveform.
 
 
-.. figure:: img/traj.jpg
+.. figure:: ../img/traj.jpg
     :width: 500px
     :align: center
     :height: 400px
@@ -44,7 +46,7 @@ Below are figures from our paper related to this package.
     Evolution of mismatch between fast and fiducial waveforms from :math:`(p_0,e_0)` to :math:`(p,e)`, for 12 EMRIs with :math:`M=10^6M_\odot`, :math:`\mu\in[15,304]M_\odot`, and :math:`(p_0,e_0)` along the model domain boundary. Each small mass is chosen such that the EMRI plunges after a year. These results are for :math:`(\theta,\varphi)=(\pi/2,0)`, but do not depend strongly on the viewing angle. In the worst case (top-left curve), the final 0.01% of the waveform causes the mismatch to increase from under :math:`4\times10^{-4}` to :math:`5\times10^{-4}`.
 
 
-.. figure:: img/waveform_example.jpg
+.. figure:: ../img/waveform_example.jpg
     :width: 500px
     :align: center
     :height: 350px
@@ -54,7 +56,7 @@ Below are figures from our paper related to this package.
     Six-hour snapshots of fast (orange) and fiducial (blue) waveforms, one year before plunge (top) and just before plunge (bottom). Waveforms are for the worst-case EMRI :math:`(M,\mu,p_0,e_0)=(10^{6}M_\odot, 15 M_\odot, 10, 0.7)`, with a one-year mismatch of :math:`5\times 10^{-4}`. Small amplitude deviations are visible just before plunge at :math:`(p,e)\approx(7,0.5)`, where the mode-distribution error approaches its maximum across the domain of validity.
 
 
-.. figure:: img/timing_plot_3.jpg
+.. figure:: ../img/timing_plot_3.jpg
     :width: 400px
     :align: center
     :height: 400px

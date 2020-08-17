@@ -91,6 +91,7 @@
 <li class="toctree-l1"><a class="reference internal" href="user/amp.html">Amplitude Package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user/sum.html">Summation Package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user/util.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/cite.html">Citations</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Tutorial:</span></p>
 <ul>
@@ -107,8 +108,8 @@
 </ul>
 <p class="caption"><span class="caption-text">General Information:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="docs_main.html">FastEMRIWaveforms Publication</a></li>
-<li class="toctree-l1"><a class="reference internal" href="docs_main.html#package-todos">Package TODOs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="general/docs_main.html">FastEMRIWaveforms Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="general/docs_main.html#package-todos">Package TODOs</a></li>
 </ul>
 
             
@@ -208,7 +209,8 @@
 <div class="section" id="few-fast-emri-waveforms">
 <h1>few: Fast EMRI Waveforms<a class="headerlink" href="#few-fast-emri-waveforms" title="Permalink to this headline">¶</a></h1>
 <p>This package contains the highly modular framework for fast and accurate
-extreme mass ratio inspiral (EMRI) waveforms from (TODO: add arXiv). The
+extreme mass ratio inspiral (EMRI) waveforms from
+<a class="reference external" href="https://arxiv.org/abs/2008.06071">arxiv.org/2008.06071</a>. The
 waveforms in this package combine a variety of separately accessible
 modules to form EMRI waveforms on both CPUs and GPUs. Generally, the
 modules fall into four categories: trajectory, amplitudes, summation,
@@ -222,8 +224,8 @@ view the data, it can be found on
 <a class="reference external" href="https://zenodo.org/record/3981654#.XzS_KRNKjlw">Zenodo</a>.</p>
 <p>This package is a part of the <a class="reference external" href="https://bhptoolkit.org/">Black Hole Perturbation
 Toolkit</a>.</p>
-<p>If you use all or any parts of this code, please cite (TODO: add papers
-to cite. Do we want this to be per module or general use.). See the
+<p>If you use all or any parts of this code, please cite
+<a class="reference external" href="https://arxiv.org/abs/2008.06071">arxiv.org/2008.06071</a>. See the
 <a class="reference external" href="https://bhptoolkit.org/FastEMRIWaveforms/">documentation</a> to
 properly cite specific modules.</p>
 <div class="section" id="getting-started">
@@ -232,14 +234,16 @@ properly cite specific modules.</p>
 <ol class="arabic simple" start="0">
 <li><p><a class="reference external" href="https://bhptoolkit.org/FastEMRIWaveforms/">Install Anaconda</a> if
 you do not have it.</p></li>
-<li><p>Create a virtual environment.</p></li>
+<li><p>Create a virtual environment. <strong>Note</strong>: There is no available
+<code class="docutils literal notranslate"><span class="pre">conda</span></code> compiler for Windows. If you want to install for Windows,
+you will probably need to add library and include paths to the
+<code class="docutils literal notranslate"><span class="pre">setup.py</span></code> file.</p></li>
 </ol>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">gcc_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gxx_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gsl</span> <span class="n">lapack</span> <span class="n">hdf5</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">matplotlib</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
 <span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
-If on Windows, substitute `gcc_linux-64` and `gxx_linus-64` with (TODO: Fill in) and (TODO: Fill in).
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
@@ -301,9 +305,8 @@ you do not have it.</p></li>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
-If on Windows, substitute `gcc_linux-64` and `gxx_linus-64` with (TODO: Fill in) and (TODO: Fill in).
 
-If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, matplotlib) with pip
+If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, matplotlib) with pip.
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
@@ -389,7 +392,7 @@ repository</a>.</p>
 </ul>
 <div class="section" id="contibutors">
 <h3>Contibutors<a class="headerlink" href="#contibutors" title="Permalink to this headline">¶</a></h3>
-<p>TODO: add people</p>
+<p>Maybe you!</p>
 </div>
 </div>
 <div class="section" id="license">
@@ -446,6 +449,7 @@ computing facility at Northwestern University.</p></li>
 <li class="toctree-l2"><a class="reference internal" href="user/util.html#module-few.utils.utility">Analysis and Other Tools</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="user/cite.html">Citations</a></li>
 </ul>
 </div>
 <div class="toctree-wrapper compound">
@@ -491,8 +495,8 @@ computing facility at Northwestern University.</p></li>
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">General Information:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="docs_main.html">FastEMRIWaveforms Publication</a></li>
-<li class="toctree-l1"><a class="reference internal" href="docs_main.html#package-todos">Package TODOs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="general/docs_main.html">FastEMRIWaveforms Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="general/docs_main.html#package-todos">Package TODOs</a></li>
 </ul>
 </div>
 </div>

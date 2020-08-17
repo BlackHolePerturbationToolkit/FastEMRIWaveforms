@@ -112,8 +112,8 @@
 </ul>
 <p class="caption"><span class="caption-text">General Information:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../docs_main.html">FastEMRIWaveforms Publication</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../docs_main.html#package-todos">Package TODOs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html">FastEMRIWaveforms Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html#package-todos">Package TODOs</a></li>
 </ul>
 
             
@@ -216,7 +216,7 @@
 <span id="summation-package"></span><span id="summation-label"></span><h1>Summation Package<a class="headerlink" href="#module-few.summation" title="Permalink to this headline">¶</a></h1>
 <p>The summation package houses codes used for combining amplitude and phase
 information over the course of an inspiral. It does contain GPU accelerated
-options. It deals with the overall summation of quantities seen in <a class="reference internal" href="../docs_main.html#equation-emri-wave-eq">(1)</a>.</p>
+options. It deals with the overall summation of quantities seen in <a class="reference internal" href="../general/docs_main.html#equation-emri-wave-eq">(1)</a>.</p>
 <dl class="py class">
 <dt id="few.utils.baseclasses.SummationBase">
 <em class="property">class </em><code class="sig-prename descclassname">few.utils.baseclasses.</code><code class="sig-name descname">SummationBase</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">pad_output</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SummationBase" title="Permalink to this definition">¶</a></dt>
@@ -300,6 +300,12 @@ For generic, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_\Thet
 <p>This class produces multiple cubic splines on a GPU. It has a CPU option
 as well. The cubic splines are produced with “not-a-knot” boundary
 conditions.</p>
+<p>This class can be run out of Python similar to
+<a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html#scipy-interpolate-cubicspline">scipy.interpolate.CubicSpline</a>.
+However, the most efficient way to use this method is in a customized
+cuda kernel. See the
+<a href="#id1"><span class="problematic" id="id2">`source code for the interpolated summation&lt;https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/src/interpolate.cu&gt;`_</span></a>
+in cuda for an example of this.</p>
 <p>This class can be run on GPUs and CPUs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -339,6 +345,36 @@ coefficients. It is flattened after fitting from shape
 </dl>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant.citation">
+<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.citation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the citation for this class</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant.y">
+<em class="property">property </em><code class="sig-name descname">y</code><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.y" title="Permalink to this definition">¶</a></dt>
+<dd><p>y values associated with the spline</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant.c1">
+<em class="property">property </em><code class="sig-name descname">c1</code><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.c1" title="Permalink to this definition">¶</a></dt>
+<dd><p>constants for the linear term</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant.c2">
+<em class="property">property </em><code class="sig-name descname">c2</code><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.c2" title="Permalink to this definition">¶</a></dt>
+<dd><p>constants for the quadratic term</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant.c3">
+<em class="property">property </em><code class="sig-name descname">c3</code><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.c3" title="Permalink to this definition">¶</a></dt>
+<dd><p>constants for the cubic term</p>
 </dd></dl>
 
 <dl class="py method">
@@ -767,6 +803,12 @@ rate).</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt id="few.summation.directmodesum.DirectModeSum.citation">
+<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.citation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return citations for this class</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="few.summation.directmodesum.DirectModeSum.__call__">
 <code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">T</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.__call__" title="Permalink to this definition">¶</a></dt>

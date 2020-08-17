@@ -1,13 +1,32 @@
+# Direct summation of modes in python for the FastEMRIWaveforms Package
+
+# Copyright (C) 2020 Michael L. Katz, Alvin J.K. Chua, Niels Warburton, Scott A. Hughes
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import numpy as np
 
-from few.utils.baseclasses import SummationBase, SchwarzschildEccentric
-from few.utils.citations import *
-
+# check for cupy
 try:
     import cupy as xp
 
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
+
+# Necessary base classes
+from few.utils.baseclasses import SummationBase, SchwarzschildEccentric
+from few.utils.citations import *
 
 
 class DirectModeSum(SummationBase, SchwarzschildEccentric):
@@ -33,6 +52,7 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric):
 
     @property
     def citation(self):
+        """Return citations for this class"""
         return few_citation
 
     def sum(self, t, teuk_modes, ylms, Phi_phi, Phi_r, m_arr, n_arr, *args, **kwargs):
@@ -60,6 +80,8 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric):
 
         """
 
+        # numpy -> cupy if requested
+        # it will never go the other way
         teuk_modes = self.xp.asarray(teuk_modes)
         ylms = self.xp.asarray(ylms)
         Phi_phi = self.xp.asarray(Phi_phi)
@@ -67,6 +89,7 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric):
         m_arr = self.xp.asarray(m_arr)
         n_arr = self.xp.asarray(n_arr)
 
+        # waveform with M >= 0
         w1 = self.xp.sum(
             ylms[self.xp.newaxis, : teuk_modes.shape[1]]
             * teuk_modes
@@ -82,6 +105,7 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric):
 
         inds = self.xp.where(m_arr > 0)[0]
 
+        # waveform sum where m < 0
         w2 = self.xp.sum(
             (m_arr[self.xp.newaxis, inds] > 0)
             * ylms[self.xp.newaxis, teuk_modes.shape[1] :][:, inds]
@@ -96,4 +120,6 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric):
             axis=1,
         )
 
+        # they can be directly summed
+        # the base class function __call__ will return the waveform
         self.waveform = w1 + w2

@@ -1,15 +1,41 @@
+# Collection of base classes for FastEMRIWaveforms Packages
+
+# Copyright (C) 2020 Michael L. Katz, Alvin J.K. Chua, Niels Warburton, Scott A. Hughes
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+"""
+The :code:`few.utils.baseclasses` module contains abstract base classes for the
+various modules. When creating new modules, these classes should be used to maintain
+a common interface and pass information related to each model.
+"""
+
+
 from abc import ABC
 import warnings
-
-try:
-    import cupy as xp
-except:
-    import numpy as xp
 
 import numpy as np
 from scipy.interpolate import CubicSpline
 from scipy import constants as ct
 
+# try to import cupy
+try:
+    import cupy as xp
+except:
+    import numpy as xp
+
+# Python imports
 from few.utils.constants import *
 from few.utils.citations import *
 
@@ -390,7 +416,7 @@ class TrajectoryBase(ABC):
         kwargs["DENSE_STEPPING"] = DENSE_STEPPING
         kwargs["use_rk4"] = use_rk4
 
-        T = T * ct.Julian_year
+        T = T * YRSID_SI
 
         out = self.get_inspiral(*args, **kwargs)
 

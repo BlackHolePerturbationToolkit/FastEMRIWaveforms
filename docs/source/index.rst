@@ -10,6 +10,7 @@
    user/amp
    user/sum
    user/util
+   user/cite
 
 .. toctree::
    :maxdepth: 4
@@ -21,4 +22,4 @@
    :maxdepth: 4
    :caption: General Information:
 
-   docs_main
+   general/docs_main

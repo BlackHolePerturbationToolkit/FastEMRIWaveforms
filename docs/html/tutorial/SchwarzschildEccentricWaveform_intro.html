@@ -39,8 +39,8 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="FastEMRIWaveforms Publication" href="../docs_main.html" />
-    <link rel="prev" title="Utilities" href="../user/util.html" /> 
+    <link rel="next" title="FastEMRIWaveforms Publication" href="../general/docs_main.html" />
+    <link rel="prev" title="Citations" href="../user/cite.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -92,6 +92,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../user/amp.html">Amplitude Package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user/sum.html">Summation Package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user/util.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/cite.html">Citations</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Tutorial:</span></p>
 <ul class="current">
@@ -133,8 +134,8 @@
 </ul>
 <p class="caption"><span class="caption-text">General Information:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../docs_main.html">FastEMRIWaveforms Publication</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../docs_main.html#package-todos">Package TODOs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html">FastEMRIWaveforms Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html#package-todos">Package TODOs</a></li>
 </ul>
 
             
@@ -197,10 +198,10 @@
   
   <div class="rst-breadcrumbs-buttons" role="navigation" aria-label="breadcrumb navigation">
       
-        <a href="../docs_main.html" class="btn btn-neutral float-right" title="FastEMRIWaveforms Publication" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="../general/docs_main.html" class="btn btn-neutral float-right" title="FastEMRIWaveforms Publication" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../user/util.html" class="btn btn-neutral float-left" title="Utilities" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../user/cite.html" class="btn btn-neutral float-left" title="Citations" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
   </div>
   
@@ -466,7 +467,7 @@ div.rendered_html tbody tr:hover {
 </style>
 <div class="section" id="Fast-and-Accurate-EMRI-Waveforms-Tutorial">
 <h1>Fast and Accurate EMRI Waveforms Tutorial<a class="headerlink" href="#Fast-and-Accurate-EMRI-Waveforms-Tutorial" title="Permalink to this headline">¶</a></h1>
-<p>Here we provide a set of examples for creating EMRI waveforms as a whole; looking at separate creation pieces (trajectory, amplitude, summation, etc.); and creating your own module to build directly into this framework. For details on the specifics of our waveforms like constructions used and generally methodology, we refer you to our paper (TODO: add arxiv) and the <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/">package documentation</a>.</p>
+<p>Here we provide a set of examples for creating EMRI waveforms as a whole; looking at separate creation pieces (trajectory, amplitude, summation, etc.); and creating your own module to build directly into this framework. For details on the specifics of our waveforms like constructions used and generally methodology, we refer you to our paper <a class="reference external" href="https://arxiv.org/abs/2008.06071">arxiv.org/2008.06071</a> and the <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/">package documentation</a>.</p>
 <p>Import packages:</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -556,11 +557,11 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/getfiles.py:19: UserWarning: The file AmplitudeVectorNorm.dat did not open sucessfully. It will now be downloaded to the proper location.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/utility.py:196: UserWarning: The file AmplitudeVectorNorm.dat did not open sucessfully. It will now be downloaded to the proper location.
   fp
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/getfiles.py:19: UserWarning: The file FluxNewMinusPNScaled_fixed_y_order.dat did not open sucessfully. It will now be downloaded to the proper location.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/utility.py:196: UserWarning: The file FluxNewMinusPNScaled_fixed_y_order.dat did not open sucessfully. It will now be downloaded to the proper location.
   fp
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/getfiles.py:19: UserWarning: The file SchwarzschildEccentricInput.hdf5 did not open sucessfully. It will now be downloaded to the proper location.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/utility.py:196: UserWarning: The file SchwarzschildEccentricInput.hdf5 did not open sucessfully. It will now be downloaded to the proper location.
   fp
 </pre></div></div>
 </div>
@@ -601,7 +602,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0x1602a12d0&gt;]
+[&lt;matplotlib.lines.Line2D at 0x159ec68d0&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -627,7 +628,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0x1603698d0&gt;]
+[&lt;matplotlib.lines.Line2D at 0x159f94d50&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -810,7 +811,7 @@ wave used 457 modes. wave2 used 26 modes. The mismatch was 0.0011803979666253905
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/getfiles.py:19: UserWarning: The file Teuk_amps_a0.0_lmax_10_nmax_30_new.h5 did not open sucessfully. It will now be downloaded to the proper location.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/utility.py:196: UserWarning: The file Teuk_amps_a0.0_lmax_10_nmax_30_new.h5 did not open sucessfully. It will now be downloaded to the proper location.
   fp
 /Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:271: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
   p0
@@ -1000,7 +1001,7 @@ t1 max: 999999.0 t2 max: 464369.0
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0x15faafa90&gt;
+&lt;matplotlib.legend.Legend at 0x15a172d10&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1545,7 +1546,7 @@ We reduced the mode content from 3843 modes to 584 modes.
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0x15fac6650&gt;
+&lt;matplotlib.legend.Legend at 0x15a380a90&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1642,7 +1643,7 @@ array([-3.54810537e-05, -4.01422809e-05, -4.48887306e-05, ...,
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0x160c31490&gt;]
+[&lt;matplotlib.lines.Line2D at 0x15a7d0d90&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1731,7 +1732,7 @@ Mismatch: 2.220446049250313e-16
 interfaces, but ensures the strict interface will be the same for all trajectory modules. Trajectory modules must implement the method <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/traj.html?highlight=trajectorybase#few.utils.baseclasses.TrajectoryBase.get_inspiral">get_inspial</a>. The common interface uses this to generate the specific trajectory.</p>
 <p>This is a common theme amongst module and waveform creation. The user will take one parent abstract base class related to the waveform limits, domain of validity, and its waveform properties, and one parent abstract based class for the module type (like trajectory or summation).</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[34]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1866,7 +1867,7 @@ interfaces, but ensures the strict interface will be the same for all trajectory
 <div class="section" id="Test-your-trajectory">
 <h2>Test your trajectory<a class="headerlink" href="#Test-your-trajectory" title="Permalink to this headline">¶</a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[36]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1910,7 +1911,7 @@ interfaces, but ensures the strict interface will be the same for all trajectory
 <p>Now we will create a waveform with our new trajectory model. To do this, we will start with <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/main.html#few.waveform.SchwarzschildEccentricWaveformBase">SchwarzschildEccentricWaveformBase</a>. This base class has already inherited from <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/main.html#few.utils.baseclasses.SchwarzschildEccentric">SchwarzschildEccentric</a>. It creates the common interface for all waveform modules (and how
 they interface with there constituent modules). A requirement when creating a module is to have properties describing the GPU capability of the waveform, as well as whether or not it allows for batching the waveform creation (after trajectory).</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[36]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1955,7 +1956,7 @@ they interface with there constituent modules). A requirement when creating a mo
 <h2>Test your waveform<a class="headerlink" href="#Test-your-waveform" title="Permalink to this headline">¶</a></h2>
 <p>It will have the same interface as the other waveforms.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -1986,6 +1987,15 @@ they interface with there constituent modules). A requirement when creating a mo
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.0.0-py3.7-macosx-10.9-x86_64.egg/few/utils/utility.py:89: UserWarning: The two time series are not the same length (85429 vs 420776). The calculation will run with length 85429 starting at index 0 for both arrays.
+  len(time_series_1), len(time_series_2), min_len
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 mismatch: 1.0013402240432097
@@ -1995,16 +2005,16 @@ mismatch: 1.0013402240432097
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorial_SchwarzschildEccentricWaveform_intro_81_1.png" src="../_images/tutorial_SchwarzschildEccentricWaveform_intro_81_1.png" />
+<img alt="../_images/tutorial_SchwarzschildEccentricWaveform_intro_81_2.png" src="../_images/tutorial_SchwarzschildEccentricWaveform_intro_81_2.png" />
 </div>
 </div>
 </div>
 </div>
 <div class="section" id="Citing-waveforms-and-modules">
 <h1>Citing waveforms and modules<a class="headerlink" href="#Citing-waveforms-and-modules" title="Permalink to this headline">¶</a></h1>
-<p>If you use any work from this package please cite our paper (TODO: add arxiv). Additionally please cite any additional work for each module used by calling the <code class="docutils literal notranslate"><span class="pre">citation</span></code> attribute on the module class:</p>
+<p>If you use any work from this package please cite our paper <a class="reference external" href="https://arxiv.org/abs/2008.06071">arxiv.org/2008.06071</a>. Additionally please cite any additional work for each module used by calling the <code class="docutils literal notranslate"><span class="pre">citation</span></code> attribute on the module class:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[39]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2019,19 +2029,14 @@ mismatch: 1.0013402240432097
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 
-
-@article{Chua:TEMP,
+@article{Chua:2020stf,
     author = &#34;Chua, Alvin J.K. and Katz, Michael L. and Warburton, Niels and Hughes, Scott A.&#34;,
-    title = &#34;{Rapid generation of fully relativistic extreme-mass-ratio-inspiral\waveform templates for LISA data analysis}&#34;,
-    eprint = &#34;TEMP&#34;,
+    title = &#34;{Rapid generation of fully relativistic extreme-mass-ratio-inspiral waveform templates for LISA data analysis}&#34;,
+    eprint = &#34;2008.06071&#34;,
     archivePrefix = &#34;arXiv&#34;,
-    primaryClass = &#34;TEMP&#34;,
-    doi = &#34;TEMP&#34;,
-    journal = &#34;Phys. Rev. Lett.&#34;,
-    volume = &#34;TEMP&#34;,
-    number = &#34;TEMP&#34;,
-    pages = &#34;TEMP&#34;,
-    year = &#34;TEMP&#34;
+    primaryClass = &#34;gr-qc&#34;,
+    month = &#34;8&#34;,
+    year = &#34;2020&#34;
 }
 
 @article{Chua:2018woh,
@@ -2060,10 +2065,10 @@ mismatch: 1.0013402240432097
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../docs_main.html" class="btn btn-neutral float-right" title="FastEMRIWaveforms Publication" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="../general/docs_main.html" class="btn btn-neutral float-right" title="FastEMRIWaveforms Publication" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../user/util.html" class="btn btn-neutral float-left" title="Utilities" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../user/cite.html" class="btn btn-neutral float-left" title="Citations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

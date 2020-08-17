@@ -1,16 +1,43 @@
-from pyinterp_cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
-from pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
+# Interpolated summation of modes in python for the FastEMRIWaveforms Package
 
-from few.utils.baseclasses import SummationBase, SchwarzschildEccentric
-from few.utils.citations import *
+# Copyright (C) 2020 Michael L. Katz, Alvin J.K. Chua, Niels Warburton, Scott A. Hughes
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import numpy as np
+
+# try to import cupy
 try:
     import cupy as xp
-    from pyinterp import interpolate_arrays_wrap, get_waveform_wrap
 
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
-import numpy as np
+
+# Cython imports
+from pyinterp_cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
+from pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
+
+# Python imports
+from few.utils.baseclasses import SummationBase, SchwarzschildEccentric
+from few.utils.citations import *
+
+# Attempt Cython imports of GPU functions
+try:
+    from pyinterp import interpolate_arrays_wrap, get_waveform_wrap
+
+except (ImportError, ModuleNotFoundError) as e:
+    pass
 
 
 class CubicSplineInterpolant:
@@ -19,6 +46,13 @@ class CubicSplineInterpolant:
     This class produces multiple cubic splines on a GPU. It has a CPU option
     as well. The cubic splines are produced with "not-a-knot" boundary
     conditions.
+
+    This class can be run out of Python similar to
+    `scipy.interpolate.CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html#scipy-interpolate-cubicspline>`_.
+    However, the most efficient way to use this method is in a customized
+    cuda kernel. See the
+    `source code for the interpolated summation<https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/src/interpolate.cu>`_
+    in cuda for an example of this.
 
     This class can be run on GPUs and CPUs.
 
@@ -33,6 +67,7 @@ class CubicSplineInterpolant:
 
     def __init__(self, t, y_all, use_gpu=False):
 
+        # set gpu usage and interpolation function based on gpu usage
         if use_gpu:
             self.xp = xp
             self.interpolate_arrays = interpolate_arrays_wrap
@@ -41,31 +76,41 @@ class CubicSplineInterpolant:
             self.xp = np
             self.interpolate_arrays = interpolate_arrays_wrap_cpu
 
+        # hardcoded,only cubic spline is available
         self.degree = 3
 
+        # get quantities related to how many interpolations
         ninterps, length = y_all.shape
 
+        # store this for reshaping flattened arrays
         self.reshape_shape = (self.degree + 1, ninterps, length)
 
+        # interp array is (y, c1, c2, c3)
         interp_array = self.xp.zeros(self.reshape_shape)
 
+        # fill y
         interp_array[0] = y_all
 
         interp_array = interp_array.flatten()
 
+        # arrays to store banded matrix and solution
         B = self.xp.zeros((ninterps * length,))
         upper_diag = self.xp.zeros_like(B)
         diag = self.xp.zeros_like(B)
         lower_diag = self.xp.zeros_like(B)
 
+        # perform interpolation
         self.interpolate_arrays(
             t, interp_array, ninterps, length, B, upper_diag, diag, lower_diag
         )
 
+        # set up storage of necessary arrays
         self.t = t
         self.interp_array = self.xp.transpose(
             interp_array.reshape(self.reshape_shape), [0, 2, 1]
         ).flatten()
+
+        # update reshape_shape
         self.reshape_shape = (self.degree + 1, length, ninterps)
 
     def attributes_CubicSplineInterpolate(self):
@@ -80,22 +125,27 @@ class CubicSplineInterpolant:
 
     @property
     def citation(self):
+        """Return the citation for this class"""
         return few_citation
 
     @property
     def y(self):
+        """y values associated with the spline"""
         return self.interp_array.reshape(self.reshape_shape)[0].T
 
     @property
     def c1(self):
+        """constants for the linear term"""
         return self.interp_array.reshape(self.reshape_shape)[1].T
 
     @property
     def c2(self):
+        """constants for the quadratic term"""
         return self.interp_array.reshape(self.reshape_shape)[2].T
 
     @property
     def c3(self):
+        """constants for the cubic term"""
         return self.interp_array.reshape(self.reshape_shape)[3].T
 
     def __call__(self, tnew):
@@ -114,6 +164,7 @@ class CubicSplineInterpolant:
 
         """
 
+        # find were in the old t array the new t values split
         inds = self.xp.searchsorted(self.t, tnew, side="right") - 1
 
         if np.any(inds < 0) or np.any(inds >= len(self.t)):
@@ -258,6 +309,7 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
         except:
             h_t = t
 
+        # the base class function __call__ will return the waveform
         self.get_waveform(
             self.waveform,
             spline.interp_array,

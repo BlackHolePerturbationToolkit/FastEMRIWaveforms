@@ -1,7 +1,7 @@
 import numpy as np
 cimport numpy as np
 
-from few.utils.pointer_adjust import pointer_adjust
+from few.utils.pointeradjust import pointer_adjust
 
 assert sizeof(int) == sizeof(np.int32_t)
 

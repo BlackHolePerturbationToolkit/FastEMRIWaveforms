@@ -1,17 +1,37 @@
-few_citation = """
+# Collection of citations for modules in FastEMRIWaveforms package
 
-@article{Chua:TEMP,
+# Copyright (C) 2020 Michael L. Katz, Alvin J.K. Chua, Niels Warburton, Scott A. Hughes
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+"""
+:code:`few.utils.citations`:
+
+This module is used to collect citations for all modules in the package. This
+module is then imported to add citations to module classes using their :code:`citation`
+attribute.
+"""
+
+few_citation = """
+@article{Chua:2020stf,
     author = "Chua, Alvin J.K. and Katz, Michael L. and Warburton, Niels and Hughes, Scott A.",
-    title = "{Rapid generation of fully relativistic extreme-mass-ratio-inspiral\\waveform templates for LISA data analysis}",
-    eprint = "TEMP",
+    title = "{Rapid generation of fully relativistic extreme-mass-ratio-inspiral waveform templates for LISA data analysis}",
+    eprint = "2008.06071",
     archivePrefix = "arXiv",
-    primaryClass = "TEMP",
-    doi = "TEMP",
-    journal = "Phys. Rev. Lett.",
-    volume = "TEMP",
-    number = "TEMP",
-    pages = "TEMP",
-    year = "TEMP"
+    primaryClass = "gr-qc",
+    month = "8",
+    year = "2020"
 }
 """
 

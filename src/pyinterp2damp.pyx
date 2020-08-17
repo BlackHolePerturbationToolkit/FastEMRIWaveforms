@@ -2,7 +2,7 @@ import numpy as np
 cimport numpy as np
 from libcpp.string cimport string
 
-from few.utils.pointer_adjust import func_wrapper
+from few.utils.pointeradjust import wrapper
 
 assert sizeof(int) == sizeof(np.int32_t)
 
@@ -12,7 +12,6 @@ cdef extern from "Amplitude.hh":
         void dealloc()
 
         void Interp2DAmplitude(np.complex128_t *amplitude_out, double *p_arr, double *e_arr, int *l_arr, int *m_arr, int *n_arr, int num, int num_modes);
-
 
 
 cdef class pyAmplitudeGenerator:
@@ -29,7 +28,7 @@ cdef class pyAmplitudeGenerator:
 
     def __call__(self, p, e, l_arr, m_arr, n_arr, input_len, num_modes):
 
-        (p, e, l_arr, m_arr, n_arr, input_len, num_modes), _ = func_wrapper(p, e, l_arr, m_arr, n_arr, input_len, num_modes)
+        (p, e, l_arr, m_arr, n_arr, input_len, num_modes), _ = wrapper(p, e, l_arr, m_arr, n_arr, input_len, num_modes)
 
         cdef np.ndarray[ndim=1, dtype=np.complex128_t] amplitude_out = np.zeros((input_len*num_modes), dtype=np.complex128)
         cdef size_t p_in = p
