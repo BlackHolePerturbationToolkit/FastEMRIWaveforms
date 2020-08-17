@@ -489,6 +489,11 @@ get a specific dataset. Default is None.</p></li>
 it will determine its pointer by calling the proper attributes. If you design
 a Cython class to be passed through python, it must have a <code class="code docutils literal notranslate"><span class="pre">ptr</span></code>
 attribute.</p>
+<p>If you use this function, you must convert input arrays to size_t data type in Cython and
+then properly cast the pointer as it enters the c++ function. See the
+Cython codes
+<a class="reference external" href="https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/src">here</a>
+for examples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -513,8 +518,13 @@ attribute.</p>
 <dt id="few.utils.utility.pointer_adjust">
 <code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">pointer_adjust</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.pointer_adjust" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decorator function for cupy/numpy agnostic cython</p>
-<p>This decorator applies <code class="xref py py-func docutils literal notranslate"><span class="pre">few.utils.pointeradjust.wrapper()</span></code> to functions
+<p>This decorator applies <a class="reference internal" href="#few.utils.utility.wrapper" title="few.utils.utility.wrapper"><code class="xref py py-func docutils literal notranslate"><span class="pre">few.utils.utility.wrapper()</span></code></a> to functions
 via the decorator construction.</p>
+<p>If you use this decorator, you must convert input arrays to size_t data type in Cython and
+then properly cast the pointer as it enters the c++ function. See the
+Cython codes
+<a class="reference external" href="https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/src">here</a>
+for examples.</p>
 </dd></dl>
 
 </div>

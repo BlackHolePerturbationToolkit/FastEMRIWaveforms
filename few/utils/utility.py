@@ -223,6 +223,12 @@ def wrapper(*args, **kwargs):
     a Cython class to be passed through python, it must have a :code:`ptr`
     attribute.
 
+    If you use this function, you must convert input arrays to size_t data type in Cython and
+    then properly cast the pointer as it enters the c++ function. See the
+    Cython codes
+    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/src>`_
+    for examples.
+
     args:
         *args (list): list of the arguments for a function.
         **kwargs (dict): dictionary of keyword arguments to be converted.
@@ -286,6 +292,12 @@ def pointer_adjust(func):
 
     This decorator applies :func:`few.utils.utility.wrapper` to functions
     via the decorator construction.
+
+    If you use this decorator, you must convert input arrays to size_t data type in Cython and
+    then properly cast the pointer as it enters the c++ function. See the
+    Cython codes
+    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/src>`_
+    for examples.
 
     """
 
