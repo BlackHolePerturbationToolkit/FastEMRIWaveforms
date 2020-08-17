@@ -110,19 +110,24 @@ class SchwarzschildEccentric(ABC):
 
     def __init__(self, use_gpu=False, **kwargs):
 
+        # set gpu usage
         self.use_gpu = use_gpu
         if use_gpu is True:
             self.xp = xp
         else:
             self.xp = np
+
+        # some descriptive information
         self.background = "Schwarzschild"
         self.descriptor = "eccentric"
 
+        # set mode index settings
         self.lmax = 10
         self.nmax = 30
 
         self.ndim = 2
 
+        # fill all lmn mode values
         md = []
 
         for l in range(2, self.lmax + 1):
@@ -130,8 +135,10 @@ class SchwarzschildEccentric(ABC):
                 for n in range(-self.nmax, self.nmax + 1):
                     md.append([l, m, n])
 
+        # total number of modes in the model
         self.num_modes = self.num_teuk_modes = len(md)
 
+        # mask for m == 0
         m0mask = self.xp.array(
             [
                 m == 0
@@ -141,6 +148,7 @@ class SchwarzschildEccentric(ABC):
             ]
         )
 
+        # sorts so that order is m=0, m<0, m>0
         self.m0sort = m0sort = self.xp.concatenate(
             [
                 self.xp.arange(self.num_teuk_modes)[m0mask],
@@ -148,27 +156,42 @@ class SchwarzschildEccentric(ABC):
             ]
         )
 
+        # sorts the mode indexes
         md = self.xp.asarray(md).T[:, m0sort].astype(self.xp.int32)
 
+        # store l m and n values
         self.l_arr, self.m_arr, self.n_arr = md[0], md[1], md[2]
 
+        # adjust with .get method for cupy
         try:
             self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T.get())}
 
         except AttributeError:
             self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
 
+        # store the mask as m != 0 is True
         self.m0mask = self.m_arr != 0
+
+        # number of m >= 0
         self.num_m_zero_up = len(self.m_arr)
+
+        # number of m == 0
         self.num_m0 = len(self.xp.arange(self.num_teuk_modes)[m0mask])
 
+        # number of m > 0
         self.num_m_1_up = self.num_m_zero_up - self.num_m0
+
+        # create final arrays to include -m modes
         self.l_arr = self.xp.concatenate([self.l_arr, self.l_arr[self.m0mask]])
         self.m_arr = self.xp.concatenate([self.m_arr, -self.m_arr[self.m0mask]])
         self.n_arr = self.xp.concatenate([self.n_arr, self.n_arr[self.m0mask]])
 
+        # mask for m >= 0
         self.m_zero_up_mask = self.m_arr >= 0
 
+        # find unique sets of (l,m)
+        # create inverse array to build full (l,m,n) from unique l and m
+        # also adjust for cupy
         try:
             temp, self.inverse_lm = np.unique(
                 np.asarray([self.l_arr.get(), self.m_arr.get()]).T,
@@ -181,9 +204,13 @@ class SchwarzschildEccentric(ABC):
                 np.asarray([self.l_arr, self.m_arr]).T, axis=0, return_inverse=True
             )
 
+        # unique values of l and m
         self.unique_l, self.unique_m = self.xp.asarray(temp).T
+
+        # number of unique values
         self.num_unique_lm = len(self.unique_l)
 
+        # creates special maps to the modes
         self.index_map = {}
         self.special_index_map = {}  # maps the minus m values to positive m
         for i, (l, m, n) in enumerate(zip(self.l_arr, self.m_arr, self.n_arr)):
@@ -196,13 +223,17 @@ class SchwarzschildEccentric(ABC):
             except AttributeError:
                 pass
 
+            # regular index to mode tuple
             self.index_map[(l, m, n)] = i
+
+            # special map that gives m < 0 indices as m > 0 indices
             self.special_index_map[(l, m, n)] = (
                 i if i < self.num_modes else i - self.num_m_1_up
             )
 
     @property
     def citation(self):
+        """Return citations of this class"""
         return few_citation
 
     def sanity_check_viewing_angles(self, theta, phi):
@@ -320,6 +351,7 @@ class TrajectoryBase(ABC):
 
     @property
     def citation(self):
+        """Return citation for this class"""
         return few_citation
 
     @classmethod
@@ -409,6 +441,7 @@ class TrajectoryBase(ABC):
 
         """
 
+        # add call kwargs to kwargs dictionary
         kwargs["dt"] = dt
         kwargs["T"] = T
         kwargs["max_init_len"] = max_init_len
@@ -416,14 +449,20 @@ class TrajectoryBase(ABC):
         kwargs["DENSE_STEPPING"] = DENSE_STEPPING
         kwargs["use_rk4"] = use_rk4
 
+        # convert from years to seconds
         T = T * YRSID_SI
 
+        # inspiral generator that must be added to each trajectory class
         out = self.get_inspiral(*args, **kwargs)
 
+        # get time separate from the rest of the params
         t = out[0]
         params = out[1:]
 
+        # convert to dimensionless time
         if in_coordinate_time is False:
+
+            # M must be the first argument
             M = args[0]
             Msec = M * MTSUN_SI
             t = t / Msec
@@ -431,6 +470,7 @@ class TrajectoryBase(ABC):
         if not upsample:
             return (t,) + params
 
+        # create splines for upsampling
         splines = [CubicSpline(t, temp, **spline_kwargs) for temp in list(params)]
 
         if new_t is not None:
@@ -438,8 +478,10 @@ class TrajectoryBase(ABC):
                 raise ValueError("new_t parameter, if provided, must be numpy array.")
 
         else:
+            # new time array for upsampling
             new_t = np.arange(0.0, T + dt, dt)
 
+        # check if new time ends before or after output array from the trajectory
         if new_t[-1] > t[-1]:
             if fix_t:
                 new_t = new_t[new_t <= t[-1]]
@@ -448,6 +490,7 @@ class TrajectoryBase(ABC):
                     "new_t array goes beyond generated t array. If you want to cut the t array at the end of the trajectory, set fix_t to True."
                 )
 
+        # upsample everything
         out = tuple([spl(new_t) * (new_t < t[-1]) for spl in splines])
         return (new_t,) + out
 
@@ -478,6 +521,7 @@ class SummationBase(ABC):
 
     @property
     def citation(self):
+        """Return citation for this class"""
         return few_citation
 
     @classmethod
@@ -516,6 +560,10 @@ class SummationBase(ABC):
 
         """
 
+        # determine the output array setup
+
+        # adjust based on if observations time is less than or more than trajectory time array
+        # if the user wants zero-padding, add number of zero pad points
         if T < t[-1].item():
             num_pts = int((T - t[0]) / dt) + 1
             num_pts_pad = 0
@@ -532,10 +580,12 @@ class SummationBase(ABC):
         init_len = len(t)
         num_teuk_modes = teuk_modes.shape[1]
 
+        # setup waveform holder
         self.waveform = self.xp.zeros(
             (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
         )
 
+        # get the waveform summed in place
         args_in = (t, teuk_modes, ylms) + args + (init_len, num_pts, num_teuk_modes, dt)
         self.sum(*args_in)
 
@@ -572,6 +622,7 @@ class AmplitudeBase(ABC):
 
     @property
     def citation(self):
+        """Return citation for this class"""
         return few_citation
 
     def __call__(self, p, e, *args, specific_modes=None, **kwargs):

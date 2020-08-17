@@ -39,7 +39,7 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Fast and Accurate EMRI Waveforms Tutorial" href="../tutorial/SchwarzschildEccentricWaveform_intro.html" />
+    <link rel="next" title="Citations" href="cite.html" />
     <link rel="prev" title="Summation Package" href="sum.html" /> 
 </head>
 
@@ -97,6 +97,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#module-few.utils.utility">Analysis and Other Tools</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="cite.html">Citations</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Tutorial:</span></p>
 <ul>
@@ -113,8 +114,8 @@
 </ul>
 <p class="caption"><span class="caption-text">General Information:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../docs_main.html">FastEMRIWaveforms Publication</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../docs_main.html#package-todos">Package TODOs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html">FastEMRIWaveforms Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html#package-todos">Package TODOs</a></li>
 </ul>
 
             
@@ -177,7 +178,7 @@
   
   <div class="rst-breadcrumbs-buttons" role="navigation" aria-label="breadcrumb navigation">
       
-        <a href="../tutorial/SchwarzschildEccentricWaveform_intro.html" class="btn btn-neutral float-right" title="Fast and Accurate EMRI Waveforms Tutorial" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="cite.html" class="btn btn-neutral float-right" title="Citations" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="sum.html" class="btn btn-neutral float-left" title="Summation Package" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
@@ -285,6 +286,12 @@ Default is False.</p></li>
 </dl>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.modeselector.ModeSelector.citation">
+<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.utils.modeselector.ModeSelector.citation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return citations related to this class.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -474,6 +481,42 @@ get a specific dataset. Default is None.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt id="few.utils.utility.wrapper">
+<code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">wrapper</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.wrapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to convert array and C/C++ class arguments to ptrs</p>
+<p>This function checks the object type. If it is a cupy or numpy array,
+it will determine its pointer by calling the proper attributes. If you design
+a Cython class to be passed through python, it must have a <code class="code docutils literal notranslate"><span class="pre">ptr</span></code>
+attribute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> (<em>list</em>) – list of the arguments for a function.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – dictionary of keyword arguments to be converted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>(targs, tkwargs) where t indicates target (with pointer values</dt><dd><p>rather than python objects).</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="few.utils.utility.pointer_adjust">
+<code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">pointer_adjust</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.pointer_adjust" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator function for cupy/numpy agnostic cython</p>
+<p>This decorator applies <code class="xref py py-func docutils literal notranslate"><span class="pre">few.utils.pointeradjust.wrapper()</span></code> to functions
+via the decorator construction.</p>
+</dd></dl>
+
 </div>
 </div>
 
@@ -485,7 +528,7 @@ get a specific dataset. Default is None.</p></li>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../tutorial/SchwarzschildEccentricWaveform_intro.html" class="btn btn-neutral float-right" title="Fast and Accurate EMRI Waveforms Tutorial" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="cite.html" class="btn btn-neutral float-right" title="Citations" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="sum.html" class="btn btn-neutral float-left" title="Summation Package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
