@@ -1,5 +1,6 @@
 import unittest
 import numpy as np
+import warnings
 
 from few.trajectory.flux import RunSchwarzEccFluxInspiral
 from few.amplitude.romannet import RomanAmplitude
@@ -13,12 +14,15 @@ from few.summation.interpolatedmodesum import CubicSplineInterpolant
 try:
     import cupy as xp
 
-    gpu_avialable = True
+    gpu_available = True
 
 except (ModuleNotFoundError, ImportError) as e:
     import numpy as xp
 
-    gpu_avialable = False
+    warnings.warn(
+        "CuPy is not installed or a gpu is not available. If trying to run on a gpu, please install CuPy."
+    )
+    gpu_available = False
 
 
 class WaveformTest(unittest.TestCase):
@@ -52,7 +56,7 @@ class WaveformTest(unittest.TestCase):
             amplitude_kwargs=amplitude_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             sum_kwargs=sum_kwargs,
-            use_gpu=gpu_avialable,
+            use_gpu=gpu_available,
         )
 
         # setup slow
@@ -97,7 +101,7 @@ class WaveformTest(unittest.TestCase):
 
         fast_wave = fast(M, mu, p0, e0, theta, phi, T=T, dt=dt)
 
-        mm = get_mismatch(slow_wave, fast_wave, use_gpu=gpu_avialable)
+        mm = get_mismatch(slow_wave, fast_wave, use_gpu=gpu_available)
 
         self.assertLess(mm, 1e-4)
 
