@@ -14,7 +14,9 @@ further information on these modules. The code can be found on Github
 The data necessary for various modules in this package will
 automatically download the first time it is needed. If you would like to
 view the data, it can be found on
-`Zenodo <https://zenodo.org/record/3981654#.XzS_KRNKjlw>`__.
+`Zenodo <https://zenodo.org/record/3981654#.XzS_KRNKjlw>`__. The current
+and all past code release zip files can also be found on Zenodo
+`here <https://zenodo.org/record/4005001>`__.
 
 This package is a part of the `Black Hole Perturbation
 Toolkit <https://bhptoolkit.org/>`__.
