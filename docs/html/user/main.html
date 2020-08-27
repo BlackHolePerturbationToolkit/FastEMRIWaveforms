@@ -362,6 +362,23 @@ single waveform.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs_list</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+<code class="code docutils literal notranslate"><span class="pre">kwargs_list</span></code> so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs_list</strong> (<em>list of dicts</em>) – List of kwargs dictionaries for each
+constituent class in the waveform generator.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.waveform.FastSchwarzschildEccentricFlux.attributes_SchwarzschildEccentric">
 <code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
@@ -892,6 +909,23 @@ single waveform.</p></li>
 </dd>
 <dt class="field-even">Raises</dt>
 <dd class="field-even"><p><strong>ValueError</strong> – user selections are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs_list</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+<code class="code docutils literal notranslate"><span class="pre">kwargs_list</span></code> so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs_list</strong> (<em>list of dicts</em>) – List of kwargs dictionaries for each
+constituent class in the waveform generator.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -1920,6 +1954,23 @@ GPU capabilites.</p>
 <dt class="field-even">Raises</dt>
 <dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
     not have that capability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs_list</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+<code class="code docutils literal notranslate"><span class="pre">kwargs_list</span></code> so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs_list</strong> (<em>list of dicts</em>) – List of kwargs dictionaries for each
+constituent class in the waveform generator.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
