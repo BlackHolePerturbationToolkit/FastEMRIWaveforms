@@ -1,0 +1,310 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>FastEMRIWaveforms Publication &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Fast and Accurate EMRI Waveforms Tutorial" href="tutorial/SchwarzschildEccentricWaveform_intro.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: coral" >
+          
+
+          
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> few: Fast EMRI Waveforms
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="user/main.html">Overall Waveform Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/traj.html">Trajectory Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/amp.html">Amplitude Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/sum.html">Summation Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/util.html">Utilities</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorial:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html">Fast and Accurate EMRI Waveforms Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Full-EMRI-Waveforms">Full EMRI Waveforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Trajectory-Module">Trajectory Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Amplitude-Module">Amplitude Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Spin-weighted-spherical-harmonics">Spin-weighted spherical harmonics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Mode-Selection">Mode Selection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Parallelized-Cubic-Spline-Interpolation">Parallelized Cubic Spline Interpolation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Mode-Summation">Mode Summation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Creating-modules">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
+</ul>
+<p class="caption"><span class="caption-text">General Information:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">FastEMRIWaveforms Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#package-todos">Package TODOs</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">few: Fast EMRI Waveforms</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>FastEMRIWaveforms Publication</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/docs_main.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <div class="rst-breadcrumbs-buttons" role="navigation" aria-label="breadcrumb navigation">
+      
+      
+        <a href="tutorial/SchwarzschildEccentricWaveform_intro.html" class="btn btn-neutral float-left" title="Fast and Accurate EMRI Waveforms Tutorial" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+  </div>
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="fastemriwaveforms-publication">
+<h1>FastEMRIWaveforms Publication<a class="headerlink" href="#fastemriwaveforms-publication" title="Permalink to this headline">¶</a></h1>
+<p>Fast EMRI Waveform models are built for fast evaluation of the EMRI waveform summation equation, given by (<a class="reference external" href="https://arxiv.org/abs/gr-qc/0509101">Drasco &amp; Hughes 2006</a>),</p>
+<div class="math notranslate nohighlight" id="equation-emri-wave-eq">
+<span class="eqno">(1)<a class="headerlink" href="#equation-emri-wave-eq" title="Permalink to this equation">¶</a></span>\[h_+ + ih_x=r^{-1}\sum_{lmkn}A_{lmkn}(t)e^{-i\Phi_{mkn}(t)}V_{lmkn}(\theta,\phi),\]</div>
+<p>where <span class="math notranslate nohighlight">\(h_+ + ih_x\)</span> is the two polarizations of the gravitational wave; <span class="math notranslate nohighlight">\(r\)</span> is the distance; <span class="math notranslate nohighlight">\(l,m,k,n\)</span> are orbital angular momentum, azimuthal, polar, and radial harmonic indices, respectively; <span class="math notranslate nohighlight">\(A_{lmkn}(t)\)</span> is a complex amplitude function at time <span class="math notranslate nohighlight">\(t\)</span>; <span class="math notranslate nohighlight">\(A(t)\)</span> is a complex amplitude function at time <span class="math notranslate nohighlight">\(t\)</span>; <span class="math notranslate nohighlight">\(\Phi_{mkn}(t)=m\omega_\phi + k\omega_\theta + n\omega_r\)</span> where <span class="math notranslate nohighlight">\(\omega\)</span> is the fundamental frequency for a given direction; and <span class="math notranslate nohighlight">\(V_{lmkn}(\theta,\phi\)</span>) is the harmonic projection functions based on viewing angles <span class="math notranslate nohighlight">\(\theta,phi\)</span>. The various modules in this package deal with separate pieces of this equation. The amplitude (<a class="reference internal" href="user/amp.html#module-few.amplitude" title="few.amplitude"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.amplitude</span></code></a>) module deals with <span class="math notranslate nohighlight">\(A_{lmkn}(t)\)</span>. The trajectory (<a class="reference internal" href="user/traj.html#module-few.trajectory" title="few.trajectory"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.trajectory</span></code></a>) module finds the orbital trajectories (<span class="math notranslate nohighlight">\(p(t), e(t), \iota(t)\)</span>) which are fed into the amplitude module and phase trajectories (<span class="math notranslate nohighlight">\(\Phi_\phi, \Phi_\theta, \Phi_r\)</span>) that are fed into the final summation. Utility modules aid this process from the utilities package (<a class="reference internal" href="user/util.html#module-few.utils" title="few.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.utils</span></code></a>). Once such utility module is the calculation of <span class="math notranslate nohighlight">\(V_{lmkn}(\theta,\phi\)</span>) (this is currently limited to the spin-weighted spherical harmonics for Schwarzschild eccentric). For completeness, <span class="math notranslate nohighlight">\(A_{lmkn}\)</span> is given by,</p>
+<div class="math notranslate nohighlight">
+\[A_{lmkn} = -2Z_{lmkn}(a, p, e, \iota)/\omega_{mkn}^2,\]</div>
+<p>where <span class="math notranslate nohighlight">\(Z_{lmkn}(a, p, e, \iota)\)</span> is the teukolsky amplitudes associated with a geodesic with spin, <span class="math notranslate nohighlight">\(a\)</span>; semilatus rectum, <span class="math notranslate nohighlight">\(p\)</span>; and inclination, <span class="math notranslate nohighlight">\(\iota\)</span>. <span class="math notranslate nohighlight">\(\omega_{mkn}\)</span> is the summation of fundamental frequencies of the geodesic with integer weights equivalent to the mode indices. The angular function, <span class="math notranslate nohighlight">\(V_{lmkn}\)</span> is given by,</p>
+<div class="math notranslate nohighlight">
+\[V_{lmkn}(\theta, \phi) = (s=-2)S_{lmkn}(\theta)e^{im\phi},\]</div>
+<p>where <span class="math notranslate nohighlight">\(S_{lmkn}(\theta)\)</span> is the general angular function from <a class="reference external" href="https://arxiv.org/abs/gr-qc/0509101">Drasco &amp; Hughes 2006</a>.</p>
+<p>When these modules complete their calculations, the summation (<a class="reference internal" href="user/sum.html#module-few.summation" title="few.summation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.summation</span></code></a>) module takes all of this information and creates an EMRI waveform.</p>
+<p>Our model is valid at any <span class="math notranslate nohighlight">\((p_0,e_0)\)</span> that falls outside the separatrix, below the <span class="math notranslate nohighlight">\((p_0=10,e_0=0.7)\)</span> trajectory (see below trjectory figure), and within the outer limits (<span class="math notranslate nohighlight">\(p_0 &lt; 16 + 2e_0\)</span> and <span class="math notranslate nohighlight">\(e_0 &lt; 0.7\)</span>).</p>
+<p>Below are figures from our paper related to this package.</p>
+<div class="align-center figure" id="id2">
+<a class="reference internal image-reference" href="_images/EMRI_diagram.jpg"><img alt="alternate text" src="_images/EMRI_diagram.jpg" style="width: 500px; height: 500px;" /></a>
+<p class="caption"><span class="caption-text">A general schematic diagram for the creation of an EMRI waveform.</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+</div>
+<div class="align-center figure" id="id3">
+<a class="reference internal image-reference" href="_images/traj.jpg"><img alt="alternate text" src="_images/traj.jpg" style="width: 500px; height: 400px;" /></a>
+<p class="caption"><span class="caption-text">Evolution of mismatch between fast and fiducial waveforms from <span class="math notranslate nohighlight">\((p_0,e_0)\)</span> to <span class="math notranslate nohighlight">\((p,e)\)</span>, for 12 EMRIs with <span class="math notranslate nohighlight">\(M=10^6M_\odot\)</span>, <span class="math notranslate nohighlight">\(\mu\in[15,304]M_\odot\)</span>, and <span class="math notranslate nohighlight">\((p_0,e_0)\)</span> along the model domain boundary. Each small mass is chosen such that the EMRI plunges after a year. These results are for <span class="math notranslate nohighlight">\((\theta,\varphi)=(\pi/2,0)\)</span>, but do not depend strongly on the viewing angle. In the worst case (top-left curve), the final 0.01% of the waveform causes the mismatch to increase from under <span class="math notranslate nohighlight">\(4\times10^{-4}\)</span> to <span class="math notranslate nohighlight">\(5\times10^{-4}\)</span>.</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
+</div>
+<div class="align-center figure" id="id4">
+<a class="reference internal image-reference" href="_images/waveform_example.jpg"><img alt="alternate text" src="_images/waveform_example.jpg" style="width: 500px; height: 350px;" /></a>
+<p class="caption"><span class="caption-text">Six-hour snapshots of fast (orange) and fiducial (blue) waveforms, one year before plunge (top) and just before plunge (bottom). Waveforms are for the worst-case EMRI <span class="math notranslate nohighlight">\((M,\mu,p_0,e_0)=(10^{6}M_\odot, 15 M_\odot, 10, 0.7)\)</span>, with a one-year mismatch of <span class="math notranslate nohighlight">\(5\times 10^{-4}\)</span>. Small amplitude deviations are visible just before plunge at <span class="math notranslate nohighlight">\((p,e)\approx(7,0.5)\)</span>, where the mode-distribution error approaches its maximum across the domain of validity.</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+</div>
+<div class="align-center figure" id="id5">
+<a class="reference internal image-reference" href="_images/timing_plot_3.jpg"><img alt="alternate text" src="_images/timing_plot_3.jpg" style="width: 400px; height: 400px;" /></a>
+<p class="caption"><span class="caption-text">Computational wall time for fast and fiducial waveforms, broken down into individual modules. All times are averaged over <span class="math notranslate nohighlight">\(\geq5\)</span> evaluations of the worst-case waveform on a single CPU core (and GPU), where the CPU is an Intel Xeon Gold 6132 and the GPU is an NVIDIA Tesla V100.</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+</div>
+</div>
+<div class="section" id="package-todos">
+<h1>Package TODOs<a class="headerlink" href="#package-todos" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p>run trajectory backward</p></li>
+<li><p>add initial phases</p></li>
+<li><p>zero out modes</p></li>
+<li><p>shared memory based on CUDA_ARCH / upping shared allocation</p></li>
+<li><p>deal with file locations and removing files from git history</p></li>
+<li><p>add tutorials to documentation</p></li>
+<li><p>general waveform base class</p></li>
+<li><p>more automatic/generic download from zenodo based on versioning</p></li>
+<li><p>add benchmarking function</p></li>
+<li><p>add function to determine parameter that will give waveform for <span class="math notranslate nohighlight">\(t\)</span> years</p></li>
+</ul>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="tutorial/SchwarzschildEccentricWaveform_intro.html" class="btn btn-neutral float-left" title="Fast and Accurate EMRI Waveforms Tutorial" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Michael Katz, Alvin Chua, Niels Warburton
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
