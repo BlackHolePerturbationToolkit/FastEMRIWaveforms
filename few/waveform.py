@@ -26,9 +26,12 @@ from tqdm import tqdm
 try:
     import cupy as xp
 
+    gpu_available = True
+
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
+    gpu_available = False
 
 from few.utils.baseclasses import SchwarzschildEccentric
 from few.trajectory.flux import RunSchwarzEccFluxInspiral
@@ -402,10 +405,13 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
                 not have that capability.
 
         """
-        if self.gpu_capability is False and use_gpu is True:
-            raise ValueError(
-                "The use_gpu kwarg is True, but this class does not have GPU capabilites."
-            )
+        if (self.gpu_capability is False or gpu_available is False) and use_gpu is True:
+            if self.gpu_capability is False:
+                raise ValueError(
+                    "The use_gpu kwarg is True, but this class does not have GPU capabilites."
+                )
+            else:
+                raise ValueError("Either a GPU and/or CuPy is not available.")
 
     def adjust_gpu_usage(self, use_gpu, kwargs_list):
         """Adjust all inputs for gpu usage
