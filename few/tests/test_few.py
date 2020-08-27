@@ -36,8 +36,7 @@ class WaveformTest(unittest.TestCase):
         amplitude_kwargs = {
             "max_init_len": int(
                 1e3
-            ),  # all of the trajectories will be well under len = 1000
-            "use_gpu": gpu_avialable,  # GPU is available in this class
+            )  # all of the trajectories will be well under len = 1000
         }
 
         # keyword arguments for Ylm generator (GetYlms)
@@ -46,9 +45,7 @@ class WaveformTest(unittest.TestCase):
         }
 
         # keyword arguments for summation generator (InterpolatedModeSum)
-        sum_kwargs = {
-            "use_gpu": gpu_avialable
-        }  # GPU is availabel for this type of summation
+        sum_kwargs = {}
 
         fast = FastSchwarzschildEccentricFlux(
             inspiral_kwargs=inspiral_kwargs,

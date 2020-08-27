@@ -143,7 +143,7 @@ def p_to_y(p, e, use_gpu=False):
 
     """
     if use_gpu:
-        return xp.log(-(21 / 10) - 2 * e + p)
+        return cp.log(-(21 / 10) - 2 * e + p)
 
     else:
         return np.log(-(21 / 10) - 2 * e + p)

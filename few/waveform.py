@@ -117,6 +117,10 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         # checks if gpu capability is available if requested
         self.sanity_check_gpu(use_gpu)
 
+        amplitude_kwargs, sum_kwargs = self.adjust_gpu_usage(
+            use_gpu, [amplitude_kwargs, sum_kwargs]
+        )
+
         SchwarzschildEccentric.__init__(self, use_gpu)
 
         # set numpy or cupy
@@ -402,6 +406,25 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
             raise ValueError(
                 "The use_gpu kwarg is True, but this class does not have GPU capabilites."
             )
+
+    def adjust_gpu_usage(self, use_gpu, kwargs_list):
+        """Adjust all inputs for gpu usage
+
+        If user wants to use gpu, it will change all :code:`kwargs` in
+        :code:`kwargs_list` so that :code:`use_gpu=True`.
+
+        args:
+            use_gpu (bool): If True, use gpu resources.
+            kwargs_list (list of dicts): List of kwargs dictionaries for each
+                constituent class in the waveform generator.
+
+        """
+
+        if use_gpu:
+            for i, kwargs in enumerate(kwargs_list):
+                kwargs_list[i]["use_gpu"] = use_gpu
+
+        return kwargs_list
 
 
 class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
