@@ -347,7 +347,24 @@ FLUX_ext = Extension(
 
 Pn5_ext = Extension(
     "pyPn5",
-    sources=["src/dIdt8H_5PNe10.cc", "src/Inspiral5PN.cc", "src/Pn5.pyx"],
+    sources=[
+        "src/FundamentalFrequencies.cc",
+        "src/dIdt8H_5PNe10.cc",
+        "src/Inspiral5PN.cc",
+        "src/Pn5.pyx",
+    ],
+    **cpu_extension,
+)
+
+par_map_ext = Extension(
+    "pyParameterMap",
+    sources=["src/ParameterMapAAK.cc", "src/ParMap.pyx"],
+    **cpu_extension,
+)
+
+fund_freqs_ext = Extension(
+    "pyFundamentalFrequencies",
+    sources=["src/FundamentalFrequencies.cc", "src/FundFreqs.pyx"],
     **cpu_extension,
 )
 
@@ -390,9 +407,11 @@ cpu_extensions = [
     matmul_cpu_ext,
     FLUX_ext,
     Pn5_ext,
+    par_map_ext,
     interp_cpu_ext,
     spher_harm_ext,
     Interp2DAmplitude_ext,
+    fund_freqs_ext,
 ]
 
 if run_cuda_install:
@@ -433,6 +452,7 @@ setup(
         "few.trajectory.pn5",
         "few.waveform",
         "few.amplitude.romannet",
+        "few.amplitude.aakamp",
         "few.amplitude.interp2dcubicspline",
         "few.utils.modeselector",
         "few.summation.directmodesum",

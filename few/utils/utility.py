@@ -23,6 +23,8 @@ import warnings
 
 import numpy as np
 
+from pyFundamentalFrequencies import pyKerrGeoCoordinateFrequencies
+
 # check to see if cupy is available for gpus
 try:
     import cupy as cp
@@ -147,6 +149,34 @@ def p_to_y(p, e, use_gpu=False):
 
     else:
         return np.log(-(21 / 10) - 2 * e + p)
+
+
+def get_fundamental_frequencies(a, p, e, x, coordinate_time=True):
+    """
+    TODO: Fill in this
+    """
+    if isinstance(p, float):
+        scalar = True
+
+    else:
+        scalar = False
+
+    p_in = np.atleast_1d(p)
+    e_in = np.atleast_1d(e)
+    x_in = np.atleast_1d(x)
+
+    if isinstance(a, float):
+        a_in = np.full_like(p_in, a)
+
+    OmegaPhi, OmegaTheta, OmegaR = pyKerrGeoCoordinateFrequencies(
+        a_in, p_in, e_in, x_in
+    )
+
+    if scalar:
+        return (OmegaPhi[0], OmegaTheta[0], OmegaR[0])
+
+    else:
+        return (OmegaPhi, OmegaTheta, OmegaR)
 
 
 # data history is saved here nased on version nunber

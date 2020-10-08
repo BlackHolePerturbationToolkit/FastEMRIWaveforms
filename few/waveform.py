@@ -33,7 +33,8 @@ except (ImportError, ModuleNotFoundError) as e:
 
     gpu_available = False
 
-from few.utils.baseclasses import SchwarzschildEccentric
+from few.utils.baseclasses import SchwarzschildEccentric, Pn5AAK
+from few.trajectory.pn5 import RunKerrGenericPn5Inspiral
 from few.trajectory.flux import RunSchwarzEccFluxInspiral
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 from few.utils.utility import get_mismatch
