@@ -80,7 +80,7 @@ class SchwarzschildEccentric(ABC):
             xp (module): numpy or cupy based on hardware chosen.
             background (str): Spacetime background for this model.
             descriptor (str): Short description for model validity.
-            num_modes, num_teuk_modes (int): Total number of Tuekolsky modes
+            num_modes, num_teuk_modes (int): Total number of Teukolsky modes
                 in the model.
             lmax, nmax (int): Maximum :math:`l`, :math:`n`  values
             ndim (int): Dimensionality in terms of orbital parameters and phases.
@@ -334,6 +334,296 @@ class SchwarzschildEccentric(ABC):
                 "Initial p0 is too large (p0={}). Must be 10 <= p0 <= 16 + 2 * e.".format(
                     p0
                 )
+            )
+
+
+class Pn5AAK(ABC):
+    """Base class for Pn5AAK waveforms.
+
+    TODO: Need to adjust docs.
+
+    This class creates shared traits between different implementations of the
+    same model. Particularly, this class includes descriptive traits as well as
+    the sanity check class method that should be used in all implementations of
+    this model. This method can be overwritten if necessary. Here we describe
+    the overall qualities of this base class.
+
+
+    In this limit, Eq. :eq:`emri_wave_eq` is reduced to the equatortial plane
+    with no spin. Therefore, we only concerned with :math:`(l,m,n)` indices and
+    the parameters :math:`(p,e)` because :math:`k=a=\iota=0`. Therefore, in this
+    model we calculate :math:`A_{lmn}` and :math:`\Phi_{mn}=m\Phi_\phi+n\Phi_r`.
+    This also allows us to use -2 spin-weighted spherical harmonics
+    (:math:`(s=-2)Y_{l,m}`) in place of the more generic angular function from
+    Eq. :eq:`emri_wave_eq`.
+
+    :math:`l` ranges from 2 to 10; :math:`m` from :math:`-l` to :math:`l`;
+    and :math:`n` from -30 to 30. This is for Schwarzschild eccentric.
+    The model validity ranges from :math:`0.1 \leq e_0 \leq 0.7` and
+    :math:`10 \leq p_0 \leq 16 + 2*e_0`. The user can start at any :math:`p` and
+    :math:`e` combination that exists under the :math:`p_0=10, e_0=0.7`
+    trajectory within those bounds (and is outside of the separatrix). **Important Note**: if the trajectory is
+    within the bounds listed, but it is above :math:`p_0=10, e_0=0.7` trajectory.,
+    the user may not receive an error. See the documentation introduction for
+    more information on this.
+
+    args:
+        use_gpu (bool, optional): If True, will allocate arrays on the GPU.
+            Default is False.
+
+    """
+
+    def attributes_Pn5AAK(self):
+        """
+        attributes:
+            xp (module): numpy or cupy based on hardware chosen.
+            background (str): Spacetime background for this model.
+            descriptor (str): Short description for model validity.
+            num_modes, num_teuk_modes (int): Total number of Teukolsky modes
+                in the model.
+            lmax, nmax (int): Maximum :math:`l`, :math:`n`  values
+            ndim (int): Dimensionality in terms of orbital parameters and phases.
+            m0sort (1D int xp.ndarray): array of indices to sort accoring to
+                :math:`(m=0)` parts first and then :math:`m>0` parts.
+            m0mask (1D bool xp.ndarray): Masks values with :math:`m==0`.
+            m_zero_up_mask (1D bool xp.ndarray): Masks values with :math:`m<1`.
+            l_arr, m_arr, n_arr (1D int xp.ndarray): :math:`(l,m,n)` arrays
+                containing indices for each mode.
+            lmn_indices (dict): Dictionary mapping a tuple of :math:`(l,m,n)` to
+                the respective index in l_arr, m_arr, and n_arr.
+            num_m_zero_up (int): Number of modes with :math:`m\geq0`.
+            num_m0 (int): Number of modes with :math:`m=0`.
+            num_m_1_up (int): Number of modes with :math:`m\geq1`.
+            unique_l, unique_m (1D int xp.ndarray): Arrays of unique :math:`l` and
+                :math:`m` values.
+            inverse_lm (1D int xp.ndarray): Array of indices that expands unique
+                :math:`(l, m)` values to the full array of :math:`(l,m,n)` values.
+            index_map (dict): Dictionary mapping the location of the `(l,m,n)`
+                indices back to there spot in l_arr, m_arr, n_arr.
+            special_index_map (dict): Dictionary mapping the location of the `(l,m,n)`
+                indices back to there spot in l_arr, m_arr, n_arr. However, this
+                maps locations of -m values to +m values.
+
+        """
+        pass
+
+    def __init__(self, use_gpu=False, **kwargs):
+
+        # set gpu usage
+        self.use_gpu = use_gpu
+        if use_gpu is True:
+            self.xp = xp
+        else:
+            self.xp = np
+
+        # some descriptive information
+        self.background = "Kerr"
+        self.descriptor = "Generic Orbits"
+
+        # set mode index settings
+        self.lmax = 100
+        self.nmax = -5
+
+        self.ndim = 3
+        """
+
+        # fill all lmn mode values
+        md = []
+
+        for l in range(2, self.lmax + 1):
+            for m in range(0, l + 1):
+                for n in range(-self.nmax, self.nmax + 1):
+                    md.append([l, m, n])
+
+        # total number of modes in the model
+        self.num_modes = self.num_teuk_modes = len(md)
+
+        # mask for m == 0
+        m0mask = self.xp.array(
+            [
+                m == 0
+                for l in range(2, 10 + 1)
+                for m in range(0, l + 1)
+                for n in range(-30, 30 + 1)
+            ]
+        )
+
+        # sorts so that order is m=0, m<0, m>0
+        self.m0sort = m0sort = self.xp.concatenate(
+            [
+                self.xp.arange(self.num_teuk_modes)[m0mask],
+                self.xp.arange(self.num_teuk_modes)[~m0mask],
+            ]
+        )
+
+        # sorts the mode indexes
+        md = self.xp.asarray(md).T[:, m0sort].astype(self.xp.int32)
+
+        # store l m and n values
+        self.l_arr, self.m_arr, self.n_arr = md[0], md[1], md[2]
+
+        # adjust with .get method for cupy
+        try:
+            self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T.get())}
+
+        except AttributeError:
+            self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
+
+        # store the mask as m != 0 is True
+        self.m0mask = self.m_arr != 0
+
+        # number of m >= 0
+        self.num_m_zero_up = len(self.m_arr)
+
+        # number of m == 0
+        self.num_m0 = len(self.xp.arange(self.num_teuk_modes)[m0mask])
+
+        # number of m > 0
+        self.num_m_1_up = self.num_m_zero_up - self.num_m0
+
+        # create final arrays to include -m modes
+        self.l_arr = self.xp.concatenate([self.l_arr, self.l_arr[self.m0mask]])
+        self.m_arr = self.xp.concatenate([self.m_arr, -self.m_arr[self.m0mask]])
+        self.n_arr = self.xp.concatenate([self.n_arr, self.n_arr[self.m0mask]])
+
+        # mask for m >= 0
+        self.m_zero_up_mask = self.m_arr >= 0
+
+        # find unique sets of (l,m)
+        # create inverse array to build full (l,m,n) from unique l and m
+        # also adjust for cupy
+        try:
+            temp, self.inverse_lm = np.unique(
+                np.asarray([self.l_arr.get(), self.m_arr.get()]).T,
+                axis=0,
+                return_inverse=True,
+            )
+
+        except AttributeError:
+            temp, self.inverse_lm = np.unique(
+                np.asarray([self.l_arr, self.m_arr]).T, axis=0, return_inverse=True
+            )
+
+        # unique values of l and m
+        self.unique_l, self.unique_m = self.xp.asarray(temp).T
+
+        # number of unique values
+        self.num_unique_lm = len(self.unique_l)
+
+        # creates special maps to the modes
+        self.index_map = {}
+        self.special_index_map = {}  # maps the minus m values to positive m
+        for i, (l, m, n) in enumerate(zip(self.l_arr, self.m_arr, self.n_arr)):
+
+            try:
+                l = l.item()
+                m = m.item()
+                n = n.item()
+
+            except AttributeError:
+                pass
+
+            # regular index to mode tuple
+            self.index_map[(l, m, n)] = i
+
+            # special map that gives m < 0 indices as m > 0 indices
+            self.special_index_map[(l, m, n)] = (
+                i if i < self.num_modes else i - self.num_m_1_up
+            )
+        """
+
+    @property
+    def citation(self):
+        """Return citations of this class"""
+        return few_citation + Pn5_citation
+
+    def sanity_check_viewing_angles(self, theta, phi):
+        """Sanity check on viewing angles.
+
+        Make sure parameters are within allowable ranges.
+
+        args:
+            theta (double): Polar viewing angle.
+            phi (double): Azimuthal viewing angle.
+
+        Returns:
+            tuple: (theta, phi). Phi is wrapped.
+
+        Raises:
+            ValueError: If any of the trajectory points are not allowed.
+
+        """
+        if theta < 0.0 or theta > np.pi:
+            raise ValueError("theta must be between 0 and pi.")
+
+        phi = phi % (2 * np.pi)
+        return (theta, phi)
+
+    def sanity_check_traj(self, p, e, Y):
+        """Sanity check on parameters output from thte trajectory module.
+
+        Make sure parameters are within allowable ranges.
+
+        args:
+            p (1D np.ndarray): Array of semi-latus rectum values produced by
+                the trajectory module.
+            e (1D np.ndarray): Array of eccentricity values produced by
+                the trajectory module.
+            Y (1D np.ndarray): Array of cos:math:`\iota` values produced by
+                the trajectory module.
+
+        Raises:
+            ValueError: If any of the trajectory points are not allowed.
+            warn: If any points in the trajectory are allowable,
+                but outside calibration region.
+
+        """
+
+        if np.any(e < 0.0):
+            raise ValueError("Members of e array are less than zero.")
+
+        if np.any(p < 0.0):
+            raise ValueError("Members of p array are less than zero.")
+
+        if np.any(Y < -1.0) or np.any(Y > 1.0):
+            raise ValueError(
+                "Members of Y array are greater than 1.0 or less than -1.0."
+            )
+
+    def sanity_check_init(self, M, mu, a, p0, e0, Y0):
+        """Sanity check initial parameters.
+
+        Make sure parameters are within allowable ranges.
+
+        args:
+            M (double): Massive black hole mass in solar masses.
+            mu (double): compact object mass in solar masses.
+            p0 (double): Initial semilatus rectum (dimensionless)
+                :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
+                more information on :math:`p_0 \leq 10.0`.
+            e0 (double): Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
+            Y0 (double): Initial cos:math:`\iota` :math:`(-1.0\leq Y_0\leq1.0)`.
+
+        Raises:
+            ValueError: If any of the parameters are not allowed.
+
+        """
+
+        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"]]:
+            test = val < 0.0
+            if test:
+                raise ValueError("{} is negative. It must be positive.".format(key))
+
+        if mu / M > 1e-4:
+            warnings.warn(
+                "Mass ratio is outside of generally accepted range for an extreme mass ratio (1e-4). (q={})".format(
+                    mu / M
+                )
+            )
+
+        if Y0 > 1.0 or Y0 < 1.0:
+            raise ValueError(
+                "Y0 is greater than 1 or less than -1. Must be between -1 and 1."
             )
 
 
