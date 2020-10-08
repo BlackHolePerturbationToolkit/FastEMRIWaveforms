@@ -50,3 +50,19 @@ romannet_citation = """
     year = "2019"
 }
 """
+
+Pn5_citation = """
+@article{Sago:2015rpa,
+    author = "Sago, Norichika and Fujita, Ryuichi",
+    title = "{Calculation of radiation reaction effect on orbital parameters in Kerr spacetime}",
+    eprint = "1505.01600",
+    archivePrefix = "arXiv",
+    primaryClass = "gr-qc",
+    doi = "10.1093/ptep/ptv092",
+    journal = "PTEP",
+    volume = "2015",
+    number = "7",
+    pages = "073E03",
+    year = "2015"
+}
+"""
