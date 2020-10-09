@@ -272,7 +272,8 @@ void d_RotCoeff(double* rot, double* n, double* L, double* S, double* nxL, doubl
 void waveform(double* hI, double* hII,
               double* tvec, double* evec, double* vvec,
               double* gimvec, double* Phivec, double* alpvec, double* nuvec, double* gimdotvec, double* OmegaPhi_spin_mapped_vec,
-              double M_phys, double mu, double lam, double qS, double phiS, double qK, double phiK, double dist, int length, int nmodes)
+              double M_phys, double mu, double lam, double qS, double phiS, double qK, double phiK, double dist,
+              int length, int nmodes, bool mich)
 {
 
       #ifdef __CUDACC__
@@ -376,6 +377,27 @@ void waveform(double* hI, double* hII,
           double cos2gam=cos(gam);
           double sin2gam=sin(gam);
 
+          double orbphs,cosorbphs,sinorbphs,FplusI,FcrosI,FplusII,FcrosII;
+        if(mich){
+          orbphs=2.*M_PI*t/YRSID_SI;
+          cosorbphs=cos(orbphs-phiS);
+          sinorbphs=sin(orbphs-phiS);
+          double cosq=.5*cosqS-halfsqrt3*sinqS*cosorbphs;
+          double phiw=orbphs+atan2(halfsqrt3*cosqS+.5*sinqS*cosorbphs,sinqS*sinorbphs);
+          double psiup=.5*cosqK-halfsqrt3*sinqK*cos(orbphs-phiK)-cosq*(cosqK*cosqS+sinqK*sinqS*cos(phiK-phiS));
+          double psidown=.5*sinqK*sinqS*sin(phiK-phiS)-halfsqrt3*cos(orbphs)*(cosqK*sinqS*sin(phiS)-cosqS*sinqK*sin(phiK))-halfsqrt3*sin(orbphs)*(cosqS*sinqK*cos(phiK)-cosqK*sinqS*cos(phiS));
+          double psi=atan2(psiup,psidown);
+          double cosq1=.5*(1.+cosq*cosq);
+          double cos2phi=cos(2.*phiw);
+          double sin2phi=sin(2.*phiw);
+          double cos2psi=cos(2.*psi);
+          double sin2psi=sin(2.*psi);
+          FplusI=cosq1*cos2phi*cos2psi-cosq*sin2phi*sin2psi;
+          FcrosI=cosq1*cos2phi*sin2psi+cosq*sin2phi*cos2psi;
+          FplusII=cosq1*sin2phi*cos2psi+cosq*cos2phi*sin2psi;
+          FcrosII=cosq1*sin2phi*sin2psi-cosq*cos2phi*cos2psi;
+        }
+
           double Amp=pow(OmegaPhi_spin_mapped*M_phys*MTSUN_SI,2./3.)*zeta;
 
           d_RotCoeff(rot, n_rot, L_rot, S_rot, nxL_rot, nxS_rot,
@@ -385,7 +407,13 @@ void waveform(double* hI, double* hII,
           for(int n=1;n<=nmodes;n++)
           {
 
-               double nPhi=n*Phi;
+              double fn,Doppler,nPhi;
+              if(mich){
+                fn=n*nu+gimdot/M_PI;
+                Doppler=2.*M_PI*fn*AUsec*sinqS*cosorbphs;
+                nPhi=n*Phi+Doppler;
+              }
+              else nPhi=n*Phi;
 
                double ne=n*e;
                double J0, J1, J2, J3, J4;
@@ -426,8 +454,15 @@ void waveform(double* hI, double* hII,
       Acros=Aplusold*rot[2]+Acrosold*rot[3];
       // ----------
 
-      double hnI=FplusI*Aplus+FcrosI*Acros;
-      double hnII=FplusII*Aplus+FcrosII*Acros;
+      double hnI, hnII;
+      if(mich){
+      	hnI=halfsqrt3*(FplusI*Aplus+FcrosI*Acros);
+        hnII=halfsqrt3*(FplusII*Aplus+FcrosII*Acros);
+      }
+      else{
+      	hnI=FplusI*Aplus+FcrosI*Acros;
+        hnII=FplusII*Aplus+FcrosII*Acros;
+      }
 
       hI[i]+=hnI;
       hII[i]+=hnII;

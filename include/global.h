@@ -40,6 +40,7 @@
 #define L_SI 2.5e9
 #define eorbit 0.004824185218078991
 #define C_SI 299792458.0
+#define AUsec 499.004783836156412
 
 typedef double fod;
 typedef gcmplx::complex<double> cmplx;

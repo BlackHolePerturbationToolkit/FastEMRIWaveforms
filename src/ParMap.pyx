@@ -13,12 +13,13 @@ cdef extern from "../include/ParameterMapAAK.hh":
     void waveform(double* hI, double* hII,
                 double* tvec, double* evec, double* vvec,
                 double* gimvec, double* Phivec, double* alpvec, double* nuvec, double* gimdotvec, double* OmegaPhi_spin_mapped,
-                double M_phys, double mu, double lam, double qS, double phiS, double qK, double phiK, double dist, int length, int nmodes);
+                double M_phys, double mu, double lam, double qS, double phiS, double qK, double phiK, double dist,
+                int length, int nmodes, bool mich);
 
 
 @pointer_adjust
 def pyWaveform(hI, hII, tvec, evec, vvec, gimvec, Phivec, alpvec, nuvec, gimdotvec, OmegaPhi_spin_mapped,
-               M_phys, mu, lam, qS, phiS, qK, phiK, dist, length, nmodes):
+               M_phys, mu, lam, qS, phiS, qK, phiK, dist, length, nmodes, mich):
 
     cdef size_t hI_in = hI
     cdef size_t hII_in = hII
@@ -35,7 +36,7 @@ def pyWaveform(hI, hII, tvec, evec, vvec, gimvec, Phivec, alpvec, nuvec, gimdotv
     waveform(<double*>hI_in, <double*>hII_in,
                 <double*>tvec_in, <double*>evec_in, <double*>vvec_in,
                 <double*>gimvec_in, <double*>Phivec_in, <double*>alpvec_in, <double*>nuvec_in, <double*>gimdotvec_in, <double*> OmegaPhi_spin_mapped_in,
-                M_phys, mu, lam, qS, phiS, qK, phiK, dist, length, nmodes)
+                M_phys, mu, lam, qS, phiS, qK, phiK, dist, length, nmodes, mich)
 
 
 
