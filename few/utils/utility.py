@@ -167,6 +167,10 @@ def get_fundamental_frequencies(a, p, e, x, coordinate_time=True):
 
     if isinstance(a, float):
         a_in = np.full_like(p_in, a)
+    else:
+        a_in = a
+
+    assert len(a_in) == len(p_in)
 
     OmegaPhi, OmegaTheta, OmegaR = pyKerrGeoCoordinateFrequencies(
         a_in, p_in, e_in, x_in

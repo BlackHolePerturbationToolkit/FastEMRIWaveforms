@@ -179,6 +179,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
         ind++;
 
         // Stop the inspiral when close to the separatrix
+        // TODO: Get from Leo / Niels
         if(p - 6 -2*e < 0.1){
             //cout << "# Separatrix reached: exiting inspiral" << endl;
             break;

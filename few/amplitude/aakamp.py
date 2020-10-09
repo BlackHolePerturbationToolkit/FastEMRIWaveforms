@@ -118,14 +118,20 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
             OmegaR / Msec,
         )
         # convert to rotations per sec as in AAK parameter mapping
-        OmegaPhi_rotations, OmegaTheta_rotations, OmegaR_rotations = (
+        OmegaPhi_mapping, OmegaTheta_mapping, OmegaR_mapping = (
             2 * np.pi * OmegaPhi,
             2 * np.pi * OmegaTheta,
             2 * np.pi * OmegaR,
         )
 
         v_map, M_map, S_map = pyParMap(
-            OmegaPhi_rotations, OmegaTheta_rotations, OmegaR_rotations, p, e, iota, M, a
+            OmegaPhi_mapping, OmegaTheta_mapping, OmegaR_mapping, p, e, iota, M, a
+        )
+
+        # get OmegaPhi with the mapped spin values rather than constant
+        # TODO: check if this should be done dimensionalized with mapped masses as well
+        OmegaPhi_spin_mapped = get_fundamental_frequencies(S_map, p, e, Y)[0] / (
+            M_map * MTSUN_SI
         )
 
         (tvec, Phi_phi, Phi_theta, Phi_r, mu, qS, phiS, qK, phiK, dist, nmodes) = args
@@ -136,6 +142,7 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
 
         # TODO: check if this should be in radians or revs
         # TODO: check nuvec relation
+        # TODO: check if these should be related to evolving/mapped spin values
         nuvec = OmegaR / (2 * PI)
         gimdotvec = OmegaTheta - OmegaR
 
@@ -143,8 +150,6 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
 
         hI = self.xp.zeros(len(tvec))
         hII = self.xp.zeros(len(tvec))
-
-        Mvec, Svec = self.xp.asarray(M_map), self.xp.asarray(S_map)
 
         # lam is iota0
         lam = iota[0]
@@ -157,6 +162,7 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
         gimdotvec = self.xp.asarray(gimdotvec)
         tvec = self.xp.asarray(tvec)
         length = len(tvec)
+        OmegaPhi_spin_mapped = self.xp.asarray(OmegaPhi_spin_mapped)
 
         pyWaveform(
             hI,
@@ -164,13 +170,12 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
             tvec,
             evec,
             pvec,  # vvec
-            Mvec,
-            Svec,
             gimvec,
             Phivec,
             alpvec,
             nuvec,
             gimdotvec,
+            OmegaPhi_spin_mapped,
             M,
             mu,
             lam,
