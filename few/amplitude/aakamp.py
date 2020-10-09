@@ -76,7 +76,7 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
         """Return citations for this class"""
         return few_citation + Pn5_citation
 
-    def get_amplitudes(self, M, a, p, e, Y, *args, specific_modes=None, **kwargs):
+    def get_amplitudes(self, M, a, p, e, Y, *args, mich=False, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays
@@ -186,6 +186,7 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
             dist,
             length,
             nmodes,
+            mich,
         )
 
         return (hI, hII)
