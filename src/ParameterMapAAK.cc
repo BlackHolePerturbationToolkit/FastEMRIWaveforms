@@ -270,8 +270,8 @@ void d_RotCoeff(double* rot, double* n, double* L, double* S, double* nxL, doubl
 }
 
 void waveform(double* hI, double* hII,
-              double* tvec, double* evec, double* vvec, double* Mvec, double* Svec,
-              double* gimvec, double* Phivec, double* alpvec, double* nuvec, double* gimdotvec,
+              double* tvec, double* evec, double* vvec,
+              double* gimvec, double* Phivec, double* alpvec, double* nuvec, double* gimdotvec, double* OmegaPhi_spin_mapped_vec,
               double M_phys, double mu, double lam, double qS, double phiS, double qK, double phiK, double dist, int length, int nmodes)
 {
 
@@ -352,13 +352,12 @@ void waveform(double* hI, double* hII,
           double t=tvec[i];
           double e=evec[i];
           double v=vvec[i];
-          double M=Mvec[i];
-          double S=Svec[i];
           double gim=gimvec[i];
           double Phi=Phivec[i];
           double alp=alpvec[i];
           double nu=nuvec[i];
           double gimdot=gimdotvec[i];
+          double OmegaPhi_spin_mapped = OmegaPhi_spin_mapped_vec[i];
 
           double cosalp=cos(alp);
           double sinalp=sin(alp);
@@ -377,7 +376,7 @@ void waveform(double* hI, double* hII,
           double cos2gam=cos(gam);
           double sin2gam=sin(gam);
 
-          double Amp=pow(OmegaPhi(v,e,coslam,S,M)*M_phys*MTSUN_SI,2./3.)*zeta;
+          double Amp=pow(OmegaPhi_spin_mapped*M_phys*MTSUN_SI,2./3.)*zeta;
 
           d_RotCoeff(rot, n_rot, L_rot, S_rot, nxL_rot, nxS_rot,
                    lam,qS,phiS,qK,phiK,alp);

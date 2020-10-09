@@ -11,13 +11,13 @@ cdef extern from "../include/ParameterMapAAK.hh":
                   double* p, double* e, double* iota, double M, double s, int length);
 
     void waveform(double* hI, double* hII,
-                double* tvec, double* evec, double* vvec, double* Mvec, double* Svec,
-                double* gimvec, double* Phivec, double* alpvec, double* nuvec, double* gimdotvec,
+                double* tvec, double* evec, double* vvec,
+                double* gimvec, double* Phivec, double* alpvec, double* nuvec, double* gimdotvec, double* OmegaPhi_spin_mapped,
                 double M_phys, double mu, double lam, double qS, double phiS, double qK, double phiK, double dist, int length, int nmodes);
 
 
 @pointer_adjust
-def pyWaveform(hI, hII, tvec, evec, vvec, Mvec, Svec, gimvec, Phivec, alpvec, nuvec, gimdotvec,
+def pyWaveform(hI, hII, tvec, evec, vvec, gimvec, Phivec, alpvec, nuvec, gimdotvec, OmegaPhi_spin_mapped,
                M_phys, mu, lam, qS, phiS, qK, phiK, dist, length, nmodes):
 
     cdef size_t hI_in = hI
@@ -25,17 +25,16 @@ def pyWaveform(hI, hII, tvec, evec, vvec, Mvec, Svec, gimvec, Phivec, alpvec, nu
     cdef size_t tvec_in = tvec
     cdef size_t evec_in = evec
     cdef size_t vvec_in = vvec
-    cdef size_t Mvec_in = Mvec
-    cdef size_t Svec_in = Svec
     cdef size_t gimvec_in = gimvec
     cdef size_t Phivec_in = Phivec
     cdef size_t alpvec_in = alpvec
     cdef size_t nuvec_in = nuvec
     cdef size_t gimdotvec_in = gimdotvec
+    cdef size_t OmegaPhi_spin_mapped_in = OmegaPhi_spin_mapped
 
     waveform(<double*>hI_in, <double*>hII_in,
-                <double*>tvec_in, <double*>evec_in, <double*>vvec_in, <double*>Mvec_in, <double*>Svec_in,
-                <double*>gimvec_in, <double*>Phivec_in, <double*>alpvec_in, <double*>nuvec_in, <double*>gimdotvec_in,
+                <double*>tvec_in, <double*>evec_in, <double*>vvec_in,
+                <double*>gimvec_in, <double*>Phivec_in, <double*>alpvec_in, <double*>nuvec_in, <double*>gimdotvec_in, <double*> OmegaPhi_spin_mapped_in,
                 M_phys, mu, lam, qS, phiS, qK, phiK, dist, length, nmodes)
 
 
