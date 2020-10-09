@@ -55,7 +55,9 @@ int func (double t, const double y[], double f[], void *params){
 
     ParamsHolder* params_in = (ParamsHolder*) params;
 	//double epsilon = params_in->epsilon;
+    //double q = params_in->q;
     double a = params_in->a;
+    double epilson = params_in->epsilon;
 	double p = y[0];
 	double e = y[1];
     double Y = y[2];
@@ -66,16 +68,16 @@ int func (double t, const double y[], double f[], void *params){
 
 	int Nv = 10;
     int ne = 10;
-    double pdot = dpdt8H_5PNe10 (a, p, e, Y, Nv, ne);
+    double pdot = epilson * dpdt8H_5PNe10 (a, p, e, Y, Nv, ne);
 
     // needs adjustment for validity
     Nv = 10;
     ne = 8;
-	double edot = dedt8H_5PNe10 (a, p, e, Y, Nv, ne);
+	double edot = epilson * dedt8H_5PNe10 (a, p, e, Y, Nv, ne);
 
     Nv = 7;
     ne = 10;
-    double Ydot = dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);
+    double Ydot = epilson * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);
 
 	double Phi_phi_dot, Phi_theta_dot, Phi_r_dot;
 
@@ -123,6 +125,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 	//Set the mass ratio
 	params_holder->epsilon = mu/M;
     params_holder->a = a;
+    params_holder->q = a/M;
 
     double Msec = MTSUN_SI*M;
 
