@@ -23,6 +23,7 @@ using namespace std::chrono;
 typedef struct tag_ParamsHolder{
 	double epsilon;
 	double a;
+    double q;
 } ParamsHolder;
 
 class Pn5Holder{
