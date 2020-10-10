@@ -23,7 +23,7 @@ import warnings
 
 import numpy as np
 
-from pyFundamentalFrequencies import pyKerrGeoCoordinateFrequencies
+from pyFundamentalFrequencies import pyKerrGeoCoordinateFrequencies, pyGetSeparatrix
 
 # check to see if cupy is available for gpus
 try:
@@ -168,7 +168,7 @@ def get_fundamental_frequencies(a, p, e, x, coordinate_time=True):
     if isinstance(a, float):
         a_in = np.full_like(p_in, a)
     else:
-        a_in = a
+        a_in = np.atleast_1d(a)
 
     assert len(a_in) == len(p_in)
 
@@ -181,6 +181,35 @@ def get_fundamental_frequencies(a, p, e, x, coordinate_time=True):
 
     else:
         return (OmegaPhi, OmegaTheta, OmegaR)
+
+
+def get_separatrix(a, e, x):
+    """
+    TODO: Fill in this
+    """
+    if isinstance(e, float):
+        scalar = True
+
+    else:
+        scalar = False
+
+    e_in = np.atleast_1d(e)
+    x_in = np.atleast_1d(x)
+
+    if isinstance(a, float):
+        a_in = np.full_like(e_in, a)
+    else:
+        a_in = np.atleast_1d(a)
+
+    assert len(a_in) == len(e_in)
+
+    separatrix = pyGetSeparatrix(a_in, e_in, x_in)
+
+    if scalar:
+        return separatrix[0]
+
+    else:
+        return separatrix
 
 
 # data history is saved here nased on version nunber

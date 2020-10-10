@@ -66,3 +66,19 @@ Pn5_citation = """
     year = "2015"
 }
 """
+
+kerr_separatrix_citation = """
+@article{Stein:2019buj,
+    author = "Stein, Leo C. and Warburton, Niels",
+    title = "{Location of the last stable orbit in Kerr spacetime}",
+    eprint = "1912.07609",
+    archivePrefix = "arXiv",
+    primaryClass = "gr-qc",
+    doi = "10.1103/PhysRevD.101.064007",
+    journal = "Phys. Rev. D",
+    volume = "101",
+    number = "6",
+    pages = "064007",
+    year = "2020"
+}
+"""
