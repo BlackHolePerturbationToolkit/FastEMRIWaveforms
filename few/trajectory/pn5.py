@@ -82,7 +82,7 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
     @property
     def citation(self):
         """Return citation for this class"""
-        return few_citation + Pn5_citation
+        return few_citation + Pn5_citation + kerr_separatrix_citation
 
     def get_inspiral(self, M, mu, a, p0, e0, Y0, *args, **kwargs):
         """Generate the inspiral.

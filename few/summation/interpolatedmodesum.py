@@ -119,7 +119,7 @@ class CubicSplineInterpolant:
             interpolate_arrays (func): CPU or GPU function for mode interpolation.
             interp_array (1D double xp.ndarray): Array containing all spline
                 coefficients. It is flattened after fitting from shape
-                (4, ninterps, length). The 4 is the 4 spline coefficients.
+                (4, length, ninterps). The 4 is the 4 spline coefficients.
 
         """
 

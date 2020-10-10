@@ -300,6 +300,10 @@ if run_cuda_install:
         "pyinterp", sources=["src/interpolate.cu", "src/pyinterp.pyx"], **gpu_extension
     )
 
+    gpuAAK_ext = Extension(
+        "pygpuAAK", sources=["src/gpuAAK.cu", "src/gpuAAKWrap.pyx"], **gpu_extension
+    )
+
 # build all cpu modules
 cpu_extension = dict(
     libraries=["gsl", "gslcblas", "lapack", "gomp", "hdf5", "hdf5_hl"],
@@ -374,8 +378,8 @@ fund_freqs_ext = Extension(
 # also copy pyx files to cpu version
 src = "src/"
 
-cp_cu_files = ["matmul", "interpolate"]
-cp_pyx_files = ["pymatmul", "pyinterp"]
+cp_cu_files = ["matmul", "interpolate", "gpuAAK"]
+cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap"]
 
 for fp in cp_cu_files:
     shutil.copy(src + fp + ".cu", src + fp + ".cpp")
@@ -387,13 +391,14 @@ matmul_cpu_ext = Extension(
     "pymatmul_cpu", sources=["src/matmul.cpp", "src/pymatmul_cpu.pyx"], **cpu_extension
 )
 
-shutil.copy("src/interpolate.cu", "src/interpolate.cpp")
-shutil.copy("src/pyinterp.pyx", "src/pyinterp_cpu.pyx")
-
 interp_cpu_ext = Extension(
     "pyinterp_cpu",
     sources=["src/interpolate.cpp", "src/pyinterp_cpu.pyx"],
     **cpu_extension,
+)
+
+AAK_cpu_ext = Extension(
+    "pycpuAAK", sources=["src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"], **cpu_extension
 )
 
 
@@ -412,6 +417,7 @@ cpu_extensions = [
     spher_harm_ext,
     Interp2DAmplitude_ext,
     fund_freqs_ext,
+    AAK_cpu_ext,
 ]
 
 if run_cuda_install:

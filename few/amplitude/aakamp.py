@@ -22,15 +22,30 @@ import os
 import h5py
 import numpy as np
 
-# Cython/C++ imports
+# try to import cupy
+try:
+    import cupy as xp
 
+except (ImportError, ModuleNotFoundError) as e:
+    import numpy as xp
+
+# Cython/C++ imports
+from pycpuAAK import pyWaveform as pyWaveform_cpu
+
+# Attempt Cython imports of GPU functions
+try:
+    from pygpuAAK import pyWaveform as pyWaveform_gpu
+
+except (ImportError, ModuleNotFoundError) as e:
+    pass
 
 # Python imports
 from few.utils.baseclasses import Pn5AAK, AmplitudeBase
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *
-from pyParameterMap import pyParMap, pyWaveform
+from pyParameterMap import pyParMap
+from few.summation.interpolatedmodesum import CubicSplineInterpolant
 
 # get path to file
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -59,7 +74,11 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
         Pn5AAK.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
-        # self.amplitude_generator = pyAmplitudeGenerator(self.lmax, self.nmax, few_dir)
+        if self.use_gpu:
+            self.waveform_generator = pyWaveform_gpu
+
+        else:
+            self.waveform_generator = pyWaveform_cpu
 
     def attributes_AmplitudeAAK(self):
         """
@@ -74,7 +93,7 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
     @property
     def citation(self):
         """Return citations for this class"""
-        return few_citation + Pn5_citation
+        return few_citation
 
     def get_amplitudes(self, M, a, p, e, Y, *args, mich=False, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
@@ -134,7 +153,21 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
             M_map * MTSUN_SI
         )
 
-        (tvec, Phi_phi, Phi_theta, Phi_r, mu, qS, phiS, qK, phiK, dist, nmodes) = args
+        (
+            tvec,
+            Phi_phi,
+            Phi_theta,
+            Phi_r,
+            mu,
+            qS,
+            phiS,
+            qK,
+            phiK,
+            dist,
+            nmodes,
+            out_len,
+            delta_t,
+        ) = args
 
         Phivec = Phi_r
         gimvec = Phi_theta - Phi_r
@@ -148,34 +181,36 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
 
         # TODO: no evolution on iota in AAK, therefore lam constant
 
-        hI = self.xp.zeros(len(tvec))
-        hII = self.xp.zeros(len(tvec))
+        hI = self.xp.zeros(out_len)
+        hII = self.xp.zeros(out_len)
 
         # lam is iota0
         lam = iota[0]
 
-        pvec, evec = (self.xp.asarray(p), self.xp.asarray(e))
-        Phivec = self.xp.asarray(Phivec)
-        gimvec = self.xp.asarray(gimvec)
-        alpvec = self.xp.asarray(alpvec)
-        nuvec = self.xp.asarray(nuvec)
-        gimdotvec = self.xp.asarray(gimdotvec)
-        tvec = self.xp.asarray(tvec)
-        length = len(tvec)
-        OmegaPhi_spin_mapped = self.xp.asarray(OmegaPhi_spin_mapped)
+        tvec_temp = self.xp.asarray(tvec)
+        init_len = len(tvec)
 
-        pyWaveform(
+        length = init_len
+        ninterps = 7
+        y_all = self.xp.zeros((ninterps, length))
+
+        # do not need p anymore since we are inputing OmegaPhiMapped
+        # y_all[0] = self.xp.asarray(p)
+
+        y_all[0] = self.xp.asarray(e)
+        y_all[1] = self.xp.asarray(Phivec)
+        y_all[2] = self.xp.asarray(gimvec)
+        y_all[3] = self.xp.asarray(alpvec)
+        y_all[4] = self.xp.asarray(nuvec)
+        y_all[5] = self.xp.asarray(gimdotvec)
+        y_all[6] = self.xp.asarray(OmegaPhi_spin_mapped)
+
+        self.spline = CubicSplineInterpolant(tvec_temp, y_all, use_gpu=self.use_gpu)
+
+        self.waveform_generator(
             hI,
             hII,
-            tvec,
-            evec,
-            pvec,  # vvec
-            gimvec,
-            Phivec,
-            alpvec,
-            nuvec,
-            gimdotvec,
-            OmegaPhi_spin_mapped,
+            self.spline.interp_array,
             M,
             mu,
             lam,
@@ -184,9 +219,12 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
             qK,
             phiK,
             dist,
-            length,
             nmodes,
             mich,
+            init_len,
+            out_len,
+            delta_t,
+            tvec,
         )
 
         return (hI, hII)

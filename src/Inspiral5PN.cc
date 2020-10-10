@@ -23,6 +23,10 @@
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv2.h>
 #include <gsl/gsl_sf_ellint.h>
+
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_roots.h>
+
 #include <algorithm>
 
 #include <hdf5.h>
@@ -108,6 +112,7 @@ void Pn5Carrier::dealloc()
     delete params_holder;
 }
 
+
 // main function in the Pn5Carrier class
 // It takes initial parameters and evolves a trajectory
 // tmax and dt affect integration length and time steps (mostly if DENSE_STEPPING == 1)
@@ -125,7 +130,6 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 	//Set the mass ratio
 	params_holder->epsilon = mu/M;
     params_holder->a = a;
-    params_holder->q = a/M;
 
     double Msec = MTSUN_SI*M;
 
@@ -182,10 +186,15 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
         ind++;
 
         // Stop the inspiral when close to the separatrix
-        // TODO: Get from Leo / Niels
-        if(p - 6 -2*e < 0.1){
-            //cout << "# Separatrix reached: exiting inspiral" << endl;
-            break;
+
+        if (p < 12.0)
+        {
+            double p_sep = get_separatrix(a, e, Y);
+            if(p - p_sep < 0.2)
+            {
+                //cout << "# Separatrix reached: exiting inspiral" << endl;
+                break;
+            }
         }
 	}
 
