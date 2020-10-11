@@ -117,8 +117,6 @@ void make_waveform(double* hI, double* hII,
 
           spline_coeffs[par_num * 4 + coeff_num] = interp_array[index];
 
-          if (start_ind == 0) printf("spline: %d %d %e\n", coeff_num, par_num, spline_coeffs[par_num * 4 + coeff_num]);
-
       }
 
       CUDA_SYNC_THREADS;
@@ -238,9 +236,6 @@ void make_waveform(double* hI, double* hII,
           double nu = nu_y + nu_c1 * x + nu_c2 * x2 + nu_c3 * x3;
           double gimdot = gimdot_y + gimdot_c1 * x + gimdot_c2 * x2 + gimdot_c3 * x3;
           double OmegaPhi_spin_mapped = OmegaPhiMapped_y + OmegaPhiMapped_c1 * x + OmegaPhiMapped_c2 * x2 + OmegaPhiMapped_c3 * x3;
-
-          if (i == 1) printf("%d %d %d %e %e %e %e %e %e %e \n", i, start_ind, end_ind, e, Phi, gim, alp, nu, gimdot, OmegaPhi_spin_mapped);
-
 
           double cosalp=cos(alp);
           double sinalp=sin(alp);
