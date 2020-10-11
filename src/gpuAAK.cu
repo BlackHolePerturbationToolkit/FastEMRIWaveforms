@@ -80,14 +80,12 @@ void make_waveform(double* hI, double* hII,
       __shared__ double nxL_all[3 * NUM_THREADS];
       __shared__ double nxS_all[3 * NUM_THREADS];
 
-      double* rot = rot_all[threadIdx.x * 4];
-      double* n_rot = n_all[threadIdx.x * 3];
-      double* L_rot = L_all[threadIdx.x * 3];
-      double* S_rot = S_all[threadIdx.x * 3];
-      double* nxL_rot = nxL_all[threadIdx.x * 3];
-      double* nxS_rot = nxS_all[threadIdx.x * 3];
-
-      if (start_ind + threadIdx.x + blockIdx.x * blockDim.x >= end_ind) return;
+      double* rot = &rot_all[threadIdx.x * 4];
+      double* n_rot = &n_all[threadIdx.x * 3];
+      double* L_rot = &L_all[threadIdx.x * 3];
+      double* S_rot = &S_all[threadIdx.x * 3];
+      double* nxL_rot = &nxL_all[threadIdx.x * 3];
+      double* nxS_rot = &nxS_all[threadIdx.x * 3];
 
       #endif
 
@@ -96,7 +94,7 @@ void make_waveform(double* hI, double* hII,
       int start, end, increment;
       #ifdef __CUDACC__
       start = threadIdx.x;
-      end = 32;
+      end = 4 * NUM_PARS;
       increment = blockDim.x;
       #else
       start = 0;
@@ -118,6 +116,8 @@ void make_waveform(double* hI, double* hII,
           int index = (coeff_num * init_length + old_ind) * NUM_PARS + par_num;
 
           spline_coeffs[par_num * 4 + coeff_num] = interp_array[index];
+
+          if (start_ind == 0) printf("spline: %d %d %e\n", coeff_num, par_num, spline_coeffs[par_num * 4 + coeff_num]);
 
       }
 
@@ -239,6 +239,9 @@ void make_waveform(double* hI, double* hII,
           double gimdot = gimdot_y + gimdot_c1 * x + gimdot_c2 * x2 + gimdot_c3 * x3;
           double OmegaPhi_spin_mapped = OmegaPhiMapped_y + OmegaPhiMapped_c1 * x + OmegaPhiMapped_c2 * x2 + OmegaPhiMapped_c3 * x3;
 
+          if (i == 1) printf("%d %d %d %e %e %e %e %e %e %e \n", i, start_ind, end_ind, e, Phi, gim, alp, nu, gimdot, OmegaPhi_spin_mapped);
+
+
           double cosalp=cos(alp);
           double sinalp=sin(alp);
           double cosqL=cosqK*coslam+sinqK*sinlam*cosalp;
@@ -302,6 +305,8 @@ void make_waveform(double* hI, double* hII,
                    lam,qS,phiS,qK,phiK,alp);
 
           // TODO: CHECK this in terms of further parallelization
+          double hItemp = 0.0;
+          double hIItemp = 0.0;
           for(int n=1;n<=nmodes;n++)
           {
 
@@ -362,9 +367,12 @@ void make_waveform(double* hI, double* hII,
         hnII=FplusII*Aplus+FcrosII*Acros;
       }
 
-      hI[i]+=hnI;
-      hII[i]+=hnII;
+      hItemp+=hnI;
+      hIItemp+=hnII;
   }
+
+    hI[i] = hItemp;
+    hII[i] = hIItemp;
     }
 }
 
@@ -418,7 +426,6 @@ void get_waveform(double *hI, double *hII, double* interp_array,
     #ifdef __CUDACC__
 
     // prepare streams for CUDA
-    int NUM_THREADS = 256;
     cudaStream_t streams[number_of_old_spline_points-1];
 
     #endif
