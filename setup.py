@@ -421,7 +421,7 @@ cpu_extensions = [
 ]
 
 if run_cuda_install:
-    gpu_extensions = [matmul_ext, interp_ext]
+    gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext]
     extensions = gpu_extensions + cpu_extensions
 else:
     # extensions = [FLUX_ext, SlowFlux_ext, spher_harm_ext, Interp2DAmplitude_ext]
