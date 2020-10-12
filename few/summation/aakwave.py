@@ -51,7 +51,7 @@ from few.summation.interpolatedmodesum import CubicSplineInterpolant
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class AAKSumation(SummationBase, Pn5AAK):
+class AAKSummation(SummationBase, Pn5AAK):
     """Calculate Teukolsky amplitudes by 2D Cubic Spline interpolation.
 
     Please see the documentations for
