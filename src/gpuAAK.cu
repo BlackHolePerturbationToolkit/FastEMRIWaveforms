@@ -64,12 +64,14 @@ void d_RotCoeff(double* rot, double* n, double* L, double* S, double* nxL, doubl
 
 #define  NUM_PARS 7
 CUDA_KERNEL
-void make_waveform(double* hI, double* hII,
+void make_waveform(cmplx *waveform,
               double* interp_array,
               double M_phys, double mu, double lam, double qS, double phiS, double qK, double phiK, double dist,
               int nmodes, bool mich,
               double delta_t, double start_t, int old_ind, int start_ind, int end_ind, int init_length)
 {
+
+      cmplx I(0.0, 1.0);
 
       #ifdef __CUDACC__
 
@@ -219,8 +221,7 @@ void make_waveform(double* hI, double* hII,
 
           #endif
 
-          hI[i]=0.;
-          hII[i]=0.;
+          waveform[i] = cmplx(0.0, 0.0);
 
           double t=delta_t * i;
 
@@ -366,8 +367,7 @@ void make_waveform(double* hI, double* hII,
       hIItemp+=hnII;
   }
 
-    hI[i] = hItemp;
-    hII[i] = hIItemp;
+    waveform[i] = cmplx(hItemp, hIItemp);
     }
 }
 
@@ -403,7 +403,7 @@ void find_start_inds(int start_inds[], int unit_length[], double *t_arr, double 
 }
 
 // function for building interpolated EMRI waveform from python
-void get_waveform(double *hI, double *hII, double* interp_array,
+void get_waveform(cmplx *waveform, double* interp_array,
               double M_phys, double mu, double lam, double qS, double phiS, double qK, double phiK, double dist,
               int nmodes, bool mich,
               int init_len, int out_len,
@@ -441,7 +441,7 @@ void get_waveform(double *hI, double *hII, double* interp_array,
           dim3 gridDim(num_blocks, 1);
 
           // launch one worker kernel per stream
-          make_waveform<<<gridDim, NUM_THREADS, 0, streams[i]>>>(hI, hII,
+          make_waveform<<<gridDim, NUM_THREADS, 0, streams[i]>>>(waveform,
                         interp_array,
                         M_phys, mu, lam, qS, phiS, qK, phiK, dist,
                         nmodes, mich,
@@ -449,7 +449,7 @@ void get_waveform(double *hI, double *hII, double* interp_array,
          #else
 
          // CPU waveform generation
-         make_waveform(hI, hII,
+         make_waveform(waveform,
                        interp_array,
                        M_phys, mu, lam, qS, phiS, qK, phiK, dist,
                        nmodes, mich,

@@ -40,7 +40,7 @@ except (ImportError, ModuleNotFoundError) as e:
     pass
 
 # Python imports
-from few.utils.baseclasses import Pn5AAK, AmplitudeBase
+from few.utils.baseclasses import Pn5AAK, SummationBase
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *
@@ -51,7 +51,7 @@ from few.summation.interpolatedmodesum import CubicSplineInterpolant
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class AmplitudeAAK(Pn5AAK, AmplitudeBase):
+class AAKSumation(SummationBase, Pn5AAK):
     """Calculate Teukolsky amplitudes by 2D Cubic Spline interpolation.
 
     Please see the documentations for
@@ -72,7 +72,7 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
     def __init__(self, **kwargs):
 
         Pn5AAK.__init__(self, **kwargs)
-        AmplitudeBase.__init__(self, **kwargs)
+        SummationBase.__init__(self, **kwargs)
 
         if self.use_gpu:
             self.waveform_generator = pyWaveform_gpu
@@ -93,9 +93,33 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
     @property
     def citation(self):
         """Return citations for this class"""
-        return few_citation
+        return (
+            few_citation + AAK_citation_1 + AAK_citation_2 + AK_citation + NK_citation
+        )
 
-    def get_amplitudes(self, M, a, p, e, Y, *args, mich=False, **kwargs):
+    def sum(
+        self,
+        tvec,
+        M,
+        a,
+        p,
+        e,
+        Y,
+        Phi_phi,
+        Phi_theta,
+        Phi_r,
+        mu,
+        qS,
+        phiS,
+        qK,
+        phiK,
+        dist,
+        nmodes,
+        *args,
+        mich=False,
+        dt=10.0,
+        **kwargs
+    ):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays
@@ -153,22 +177,6 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
             M_map * MTSUN_SI
         )
 
-        (
-            tvec,
-            Phi_phi,
-            Phi_theta,
-            Phi_r,
-            mu,
-            qS,
-            phiS,
-            qK,
-            phiK,
-            dist,
-            nmodes,
-            out_len,
-            delta_t,
-        ) = args
-
         Phivec = Phi_r
         gimvec = Phi_theta - Phi_r
         alpvec = Phi_phi - Phi_theta
@@ -181,18 +189,14 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
 
         # TODO: no evolution on iota in AAK, therefore lam constant
 
-        hI = self.xp.zeros(out_len)
-        hII = self.xp.zeros(out_len)
-
         # lam is iota0
         lam = iota[0]
 
         tvec_temp = self.xp.asarray(tvec)
         init_len = len(tvec)
 
-        length = init_len
         ninterps = 7
-        y_all = self.xp.zeros((ninterps, length))
+        y_all = self.xp.zeros((ninterps, init_len))
 
         # do not need p anymore since we are inputing OmegaPhiMapped
         # y_all[0] = self.xp.asarray(p)
@@ -208,8 +212,7 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
         self.spline = CubicSplineInterpolant(tvec_temp, y_all, use_gpu=self.use_gpu)
 
         self.waveform_generator(
-            hI,
-            hII,
+            self.waveform,
             self.spline.interp_array,
             M,
             mu,
@@ -222,70 +225,9 @@ class AmplitudeAAK(Pn5AAK, AmplitudeBase):
             nmodes,
             mich,
             init_len,
-            out_len,
-            delta_t,
+            self.num_pts,
+            dt,
             tvec,
         )
 
-        return (hI, hII)
-
-        """
-        input_len = len(p)
-
-        # set the l,m,n arrays
-        # if all modes, return modes from the model
-        if specific_modes is None:
-            l_arr, m_arr, n_arr = (
-                self.l_arr[self.m_zero_up_mask],
-                self.m_arr[self.m_zero_up_mask],
-                self.n_arr[self.m_zero_up_mask],
-            )
-
-        # prepare arrays if specific modes are requested
-        else:
-            l_arr = np.zeros(len(specific_modes), dtype=int)
-            m_arr = np.zeros(len(specific_modes), dtype=int)
-            n_arr = np.zeros(len(specific_modes), dtype=int)
-
-            # to deal with weird m structure
-            inds_revert = []
-            for i, (l, m, n) in enumerate(specific_modes):
-                l_arr[i] = l
-                m_arr[i] = np.abs(m)
-                n_arr[i] = n
-
-                if m < 0:
-                    inds_revert.append(i)
-
-            inds_revert = np.asarray(inds_revert)
-
-        # interface to C++
-        teuk_modes = self.amplitude_generator(
-            p,
-            e,
-            l_arr.astype(np.int32),
-            m_arr.astype(np.int32),
-            n_arr.astype(np.int32),
-            input_len,
-            len(l_arr),
-        )
-
-        # determine return quantities
-
-        # return array of all modes
-        if specific_modes is None:
-            return teuk_modes
-
-        # dict containing requested modes
-        else:
-            temp = {}
-            for i, lmn in enumerate(specific_modes):
-                temp[lmn] = teuk_modes[:, i]
-                l, m, n = lmn
-
-                # apply +/- m symmetry
-                if m < 0:
-                    temp[lmn] = np.conj(temp[lmn])
-
-            return temp
-        """
+        return

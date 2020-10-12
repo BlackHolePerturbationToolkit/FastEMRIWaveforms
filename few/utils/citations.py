@@ -82,3 +82,65 @@ kerr_separatrix_citation = """
     year = "2020"
 }
 """
+
+AAK_citation_1 = """
+
+@article{Chua:2015mua,
+    author = "Chua, Alvin J.K. and Gair, Jonathan R.",
+    title = "{Improved analytic extreme-mass-ratio inspiral model for scoping out eLISA data analysis}",
+    eprint = "1510.06245",
+    archivePrefix = "arXiv",
+    primaryClass = "gr-qc",
+    doi = "10.1088/0264-9381/32/23/232002",
+    journal = "Class. Quant. Grav.",
+    volume = "32",
+    pages = "232002",
+    year = "2015"
+}
+
+"""
+
+AAK_citation_2 = """
+@article{Chua:2017ujo,
+    author = "Chua, Alvin J.K. and Moore, Christopher J. and Gair, Jonathan R.",
+    title = "{Augmented kludge waveforms for detecting extreme-mass-ratio inspirals}",
+    eprint = "1705.04259",
+    archivePrefix = "arXiv",
+    primaryClass = "gr-qc",
+    doi = "10.1103/PhysRevD.96.044005",
+    journal = "Phys. Rev. D",
+    volume = "96",
+    number = "4",
+    pages = "044005",
+    year = "2017"
+}
+"""
+
+AK_citation = """
+@article{Barack:2003fp,
+    author = "Barack, Leor and Cutler, Curt",
+    title = "{LISA capture sources: Approximate waveforms, signal-to-noise ratios, and parameter estimation accuracy}",
+    eprint = "gr-qc/0310125",
+    archivePrefix = "arXiv",
+    doi = "10.1103/PhysRevD.69.082005",
+    journal = "Phys. Rev. D",
+    volume = "69",
+    pages = "082005",
+    year = "2004"
+}
+"""
+
+NK_citation = """
+@article{Babak:2006uv,
+    author = "Babak, Stanislav and Fang, Hua and Gair, Jonathan R. and Glampedakis, Kostas and Hughes, Scott A.",
+    title = "{'Kludge' gravitational waveforms for a test-body orbiting a Kerr black hole}",
+    eprint = "gr-qc/0607007",
+    archivePrefix = "arXiv",
+    doi = "10.1103/PhysRevD.75.024005",
+    journal = "Phys. Rev. D",
+    volume = "75",
+    pages = "024005",
+    year = "2007",
+    note = "[Erratum: Phys.Rev.D 77, 04990 (2008)]"
+}
+"""

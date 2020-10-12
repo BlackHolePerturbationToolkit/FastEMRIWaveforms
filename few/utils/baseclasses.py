@@ -32,15 +32,119 @@ from scipy import constants as ct
 # try to import cupy
 try:
     import cupy as xp
+
+    gpu_available = True
+
 except:
     import numpy as xp
+
+    gpu_available = False
 
 # Python imports
 from few.utils.constants import *
 from few.utils.citations import *
 
 
-class SchwarzschildEccentric(ABC):
+class WaveformBase(ABC):
+    """Base class for waveforms.
+
+    This class mainly handles setting GPU usage.
+
+    args:
+        use_gpu (bool, optional): If True, use GPU resources. Default is False.
+
+    """
+
+    def attributes_WaveformBase(self):
+        """
+        attributes:
+            use_gpu (bool): If True, use GPU.
+            xp (obj): Either numpy or CuPy based on gpu preference.
+
+        """
+        pass
+
+    def __init__(self, use_gpu=False, **kwargs):
+
+        self.use_gpu = use_gpu
+
+        if use_gpu is True:
+            self.xp = xp
+        else:
+            self.xp = np
+
+        # checks if gpu capability is available if requested
+        self.sanity_check_gpu(use_gpu)
+
+    @classmethod
+    @property
+    def gpu_capability(self):
+        """Indicator if the module has gpu capability"""
+        raise NotImplementedError
+
+    @classmethod
+    @property
+    def allow_batching(self):
+        """Indicator if module allows batching"""
+        raise NotImplementedError
+
+    @property
+    def citation(self):
+        """Return citations related to this module"""
+        return few_citation
+
+    @classmethod
+    def __call__(*args, **kwargs):
+        """Method to call waveform model"""
+        raise NotImplementedError
+
+    def sanity_check_gpu(self, use_gpu):
+        """Check if this class has GPU capability
+
+        If the user is requesting GPU usage, this will confirm the class has
+        GPU capabilites.
+
+        Args:
+            use_gpu (bool): If True, the user is requesting GPU usage.
+
+        Raises:
+            ValueError: The user is requesting GPU usage, but this class does
+                not have that capability.
+
+        """
+        if (self.gpu_capability is False or gpu_available is False) and use_gpu is True:
+            if self.gpu_capability is False:
+                raise ValueError(
+                    "The use_gpu kwarg is True, but this class does not have GPU capabilites."
+                )
+            else:
+                raise ValueError("Either a GPU and/or CuPy is not available.")
+
+    def adjust_gpu_usage(self, use_gpu, kwargs):
+        """Adjust all inputs for gpu usage
+
+        If user wants to use gpu, it will change all :code:`kwargs` in
+        so that :code:`use_gpu=True`.
+
+        args:
+            use_gpu (bool): If True, use gpu resources.
+            kwargs (list of dicts or dict): List of kwargs dictionaries or
+                single dictionary for each constituent class in the
+                waveform generator.
+
+        """
+
+        if use_gpu:
+            if isinstance(kwargs, list):
+                for i, kwargs in enumerate(kwargs_list):
+                    kwargs_list[i]["use_gpu"] = use_gpu
+            else:
+                kwargs["use_gpu"] = use_gpu
+
+        return kwargs
+
+
+class SchwarzschildEccentric(WaveformBase, ABC):
     """Base class for Schwarzschild eccentric waveforms.
 
     This class creates shared traits between different implementations of the
@@ -77,7 +181,6 @@ class SchwarzschildEccentric(ABC):
     def attributes_SchwarzschildEccentric(self):
         """
         attributes:
-            xp (module): numpy or cupy based on hardware chosen.
             background (str): Spacetime background for this model.
             descriptor (str): Short description for model validity.
             num_modes, num_teuk_modes (int): Total number of Teukolsky modes
@@ -110,12 +213,7 @@ class SchwarzschildEccentric(ABC):
 
     def __init__(self, use_gpu=False, **kwargs):
 
-        # set gpu usage
-        self.use_gpu = use_gpu
-        if use_gpu is True:
-            self.xp = xp
-        else:
-            self.xp = np
+        WaveformBase.__init__(self, use_gpu=use_gpu, **kwargs)
 
         # some descriptive information
         self.background = "Schwarzschild"
@@ -337,7 +435,7 @@ class SchwarzschildEccentric(ABC):
             )
 
 
-class Pn5AAK(ABC):
+class Pn5AAK(WaveformBase, ABC):
     """Base class for Pn5AAK waveforms.
 
     TODO: Need to adjust docs.
@@ -409,135 +507,18 @@ class Pn5AAK(ABC):
 
     def __init__(self, use_gpu=False, **kwargs):
 
-        # set gpu usage
-        self.use_gpu = use_gpu
-        if use_gpu is True:
-            self.xp = xp
-        else:
-            self.xp = np
+        WaveformBase.__init__(self, use_gpu=use_gpu, **kwargs)
 
         # some descriptive information
         self.background = "Kerr"
         self.descriptor = "Generic Orbits"
-
-        # set mode index settings
-        self.lmax = 100
-        self.nmax = -5
-
-        self.ndim = 3
-        """
-
-        # fill all lmn mode values
-        md = []
-
-        for l in range(2, self.lmax + 1):
-            for m in range(0, l + 1):
-                for n in range(-self.nmax, self.nmax + 1):
-                    md.append([l, m, n])
-
-        # total number of modes in the model
-        self.num_modes = self.num_teuk_modes = len(md)
-
-        # mask for m == 0
-        m0mask = self.xp.array(
-            [
-                m == 0
-                for l in range(2, 10 + 1)
-                for m in range(0, l + 1)
-                for n in range(-30, 30 + 1)
-            ]
-        )
-
-        # sorts so that order is m=0, m<0, m>0
-        self.m0sort = m0sort = self.xp.concatenate(
-            [
-                self.xp.arange(self.num_teuk_modes)[m0mask],
-                self.xp.arange(self.num_teuk_modes)[~m0mask],
-            ]
-        )
-
-        # sorts the mode indexes
-        md = self.xp.asarray(md).T[:, m0sort].astype(self.xp.int32)
-
-        # store l m and n values
-        self.l_arr, self.m_arr, self.n_arr = md[0], md[1], md[2]
-
-        # adjust with .get method for cupy
-        try:
-            self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T.get())}
-
-        except AttributeError:
-            self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
-
-        # store the mask as m != 0 is True
-        self.m0mask = self.m_arr != 0
-
-        # number of m >= 0
-        self.num_m_zero_up = len(self.m_arr)
-
-        # number of m == 0
-        self.num_m0 = len(self.xp.arange(self.num_teuk_modes)[m0mask])
-
-        # number of m > 0
-        self.num_m_1_up = self.num_m_zero_up - self.num_m0
-
-        # create final arrays to include -m modes
-        self.l_arr = self.xp.concatenate([self.l_arr, self.l_arr[self.m0mask]])
-        self.m_arr = self.xp.concatenate([self.m_arr, -self.m_arr[self.m0mask]])
-        self.n_arr = self.xp.concatenate([self.n_arr, self.n_arr[self.m0mask]])
-
-        # mask for m >= 0
-        self.m_zero_up_mask = self.m_arr >= 0
-
-        # find unique sets of (l,m)
-        # create inverse array to build full (l,m,n) from unique l and m
-        # also adjust for cupy
-        try:
-            temp, self.inverse_lm = np.unique(
-                np.asarray([self.l_arr.get(), self.m_arr.get()]).T,
-                axis=0,
-                return_inverse=True,
-            )
-
-        except AttributeError:
-            temp, self.inverse_lm = np.unique(
-                np.asarray([self.l_arr, self.m_arr]).T, axis=0, return_inverse=True
-            )
-
-        # unique values of l and m
-        self.unique_l, self.unique_m = self.xp.asarray(temp).T
-
-        # number of unique values
-        self.num_unique_lm = len(self.unique_l)
-
-        # creates special maps to the modes
-        self.index_map = {}
-        self.special_index_map = {}  # maps the minus m values to positive m
-        for i, (l, m, n) in enumerate(zip(self.l_arr, self.m_arr, self.n_arr)):
-
-            try:
-                l = l.item()
-                m = m.item()
-                n = n.item()
-
-            except AttributeError:
-                pass
-
-            # regular index to mode tuple
-            self.index_map[(l, m, n)] = i
-
-            # special map that gives m < 0 indices as m > 0 indices
-            self.special_index_map[(l, m, n)] = (
-                i if i < self.num_modes else i - self.num_m_1_up
-            )
-        """
 
     @property
     def citation(self):
         """Return citations of this class"""
         return few_citation + Pn5_citation
 
-    def sanity_check_viewing_angles(self, theta, phi):
+    def sanity_check_angles(self, qS, phiS, qK, phiK):
         """Sanity check on viewing angles.
 
         Make sure parameters are within allowable ranges.
@@ -553,11 +534,15 @@ class Pn5AAK(ABC):
             ValueError: If any of the trajectory points are not allowed.
 
         """
-        if theta < 0.0 or theta > np.pi:
+        if qS < 0.0 or qS > np.pi:
             raise ValueError("theta must be between 0 and pi.")
 
-        phi = phi % (2 * np.pi)
-        return (theta, phi)
+        if qK < 0.0 or qK > np.pi:
+            raise ValueError("theta must be between 0 and pi.")
+
+        phiS = phiS % (2 * np.pi)
+        phiK = phiK % (2 * np.pi)
+        return (qS, phiS, qK, phiK)
 
     def sanity_check_traj(self, p, e, Y):
         """Sanity check on parameters output from thte trajectory module.
@@ -598,6 +583,7 @@ class Pn5AAK(ABC):
         args:
             M (double): Massive black hole mass in solar masses.
             mu (double): compact object mass in solar masses.
+            a (double): Dimensionless spin of massive black hole.
             p0 (double): Initial semilatus rectum (dimensionless)
                 :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
                 more information on :math:`p_0 \leq 10.0`.
@@ -609,7 +595,7 @@ class Pn5AAK(ABC):
 
         """
 
-        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"]]:
+        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"], [a, "a"]]:
             test = val < 0.0
             if test:
                 raise ValueError("{} is negative. It must be positive.".format(key))
@@ -621,7 +607,7 @@ class Pn5AAK(ABC):
                 )
             )
 
-        if Y0 > 1.0 or Y0 < 1.0:
+        if Y0 > 1.0 or Y0 < -1.0:
             raise ValueError(
                 "Y0 is greater than 1 or less than -1. Must be between -1 and 1."
             )
@@ -674,7 +660,7 @@ class TrajectoryBase(ABC):
         err=1e-10,
         use_rk4=False,
         fix_t=False,
-        **kwargs
+        **kwargs,
     ):
         """Call function for trajectory interface.
 
@@ -826,7 +812,7 @@ class SummationBase(ABC):
         """
         raise NotImplementedError
 
-    def __call__(self, t, teuk_modes, ylms, dt, T, *args, **kwargs):
+    def __call__(self, t, *args, T=1.0, dt=10.0, **kwargs):
         """Common call function for summation modules.
 
         Provides a common interface for summation modules. It can adjust for
@@ -834,22 +820,16 @@ class SummationBase(ABC):
 
         args:
             t (1D double xp.ndarray): Array of t values.
-            teuk_modes (2D double xp.array): Array of complex amplitudes.
-                Shape: (len(t), num_teuk_modes).
-            ylms (1D complex128 xp.ndarray): Array of ylm values for each mode,
-                including m<0. Shape is (num of m==0,) + (num of m>0,)
-                + (num of m<0). Number of m<0 and m>0 is the same, but they are
-                ordered as (m==0 first then) m>0 then m<0.
-            dt (double): Time spacing between observations in seconds (inverse of sampling
-                rate).
-            T (double): Maximum observing time in years.
-            *args (list): This should be a tuple of phases combined with mode
-                index arrays. For equatorial, :math:`(\Phi_\phi, \Phi_r, m, n)`.
-                For generic, :math:`(\Phi_\phi, \Phi_\Theta, \Phi_r, m, k, n)`.
+            *args (list): Added for flexibility with summation modules. `args`
+                tranfers directly into sum function.
+            dt (double, optional): Time spacing between observations in seconds (inverse of sampling
+                rate). Default is 10.0.
+            T (double, optional): Maximum observing time in years. Default is 1.0.
             **kwargs (dict, placeholder): Added for future flexibility.
 
         """
 
+        T = T * YRSID_SI
         # determine the output array setup
 
         # adjust based on if observations time is less than or more than trajectory time array
@@ -867,8 +847,6 @@ class SummationBase(ABC):
 
         self.num_pts, self.num_pts_pad = num_pts, num_pts_pad
         self.dt = dt
-        init_len = len(t)
-        num_teuk_modes = teuk_modes.shape[1]
 
         # setup waveform holder
         self.waveform = self.xp.zeros(
@@ -876,8 +854,7 @@ class SummationBase(ABC):
         )
 
         # get the waveform summed in place
-        args_in = (t, teuk_modes, ylms) + args + (init_len, num_pts, num_teuk_modes, dt)
-        self.sum(*args_in)
+        self.sum(t, *args, dt=dt, **kwargs)
 
         return self.waveform
 
@@ -915,7 +892,7 @@ class AmplitudeBase(ABC):
         """Return citation for this class"""
         return few_citation
 
-    def __call__(self, p, e, *args, specific_modes=None, **kwargs):
+    def __call__(self, *args, specific_modes=None, **kwargs):
         """Common call for Teukolsky amplitudes
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays
@@ -923,14 +900,10 @@ class AmplitudeBase(ABC):
         each step of the trajectory.
 
         args:
-            p (1D double numpy.ndarray): Array containing the trajectory for values of
-                the semi-latus rectum.
-            e (1D double numpy.ndarray): Array containing the trajectory for values of
-                the eccentricity.
             *args (tuple, placeholder): Added to create future flexibility when calling different
-                amplitude modules.
+                amplitude modules. Transfers directly into get_amplitudes function.
             specific_modes (list, optional): List of tuples for (l, m, n) values
-                desired modes. Default is None.
+                desired modes. Default is None. This is not available for all waveforms.
             **kwargs (dict, placeholder): Added to create flexibility when calling different
                 amplitude modules. It is not used.
 
@@ -941,4 +914,4 @@ class AmplitudeBase(ABC):
 
         """
 
-        return self.get_amplitudes(p, e, *args, specific_modes=specific_modes, **kwargs)
+        return self.get_amplitudes(*args, specific_modes=specific_modes, **kwargs)
