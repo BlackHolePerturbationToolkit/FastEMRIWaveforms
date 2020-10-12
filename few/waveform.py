@@ -38,7 +38,7 @@ from few.amplitude.romannet import RomanAmplitude
 from few.utils.modeselector import ModeSelector
 from few.utils.ylm import GetYlms
 from few.summation.directmodesum import DirectModeSum
-from few.summation.aakwave import AAKSumation
+from few.summation.aakwave import AAKSummation
 from few.utils.constants import *
 from few.utils.citations import *
 from few.summation.interpolatedmodesum import InterpolatedModeSum
@@ -615,7 +615,7 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
         self.inspiral_generator = RunKerrGenericPn5Inspiral(**inspiral_kwargs)
 
         # summation generator
-        self.create_waveform = AAKSumation(**sum_kwargs)
+        self.create_waveform = AAKSummation(**sum_kwargs)
 
     @property
     def citation(self):
