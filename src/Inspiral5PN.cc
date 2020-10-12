@@ -66,8 +66,6 @@ int func (double t, const double y[], double f[], void *params){
 	double e = y[1];
     double Y = y[2];
 
-    // TODO: fix omegas with Mathematica
-
     // evaluate ODEs
 
 	int Nv = 10;
@@ -123,7 +121,6 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
     tmax = tmax*YRSID_SI;
 
     // get flux at initial values
-    // TODO: normalize Pn5 values
     // prepare containers for flux information
     Pn5Holder pn5_out(t0, M, mu, a, p0, e0, Y0);
 
