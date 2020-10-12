@@ -136,8 +136,8 @@ class WaveformBase(ABC):
 
         if use_gpu:
             if isinstance(kwargs, list):
-                for i, kwargs in enumerate(kwargs_list):
-                    kwargs_list[i]["use_gpu"] = use_gpu
+                for i, kwargs_i in enumerate(kwargs):
+                    kwargs[i]["use_gpu"] = use_gpu
             else:
                 kwargs["use_gpu"] = use_gpu
 
