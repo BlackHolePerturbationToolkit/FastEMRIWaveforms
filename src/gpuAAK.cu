@@ -47,6 +47,9 @@ void d_RotCoeff(double* rot, double* n, double* L, double* S, double* nxL, doubl
   double dot,cosrot,sinrot;
   //gsl_blas_ddot(nxL,nxS,&dot);
   dot = d_dot_product(nxL,nxS);
+
+  if (norm == 0.0) norm = 1e-6;
+  
   cosrot=dot/norm;
   //gsl_blas_ddot(L,nxS,&dot);
   dot = d_dot_product(L,nxS);
