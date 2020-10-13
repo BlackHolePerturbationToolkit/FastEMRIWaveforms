@@ -1,7 +1,9 @@
-# Pn5-based Schwarzschild Eccentric trajectory module for Fast EMRI Waveforms
+# Pn5-based Generic Kerr trajectory module for Fast EMRI Waveforms
 
 # Copyright (C) 2020 Michael L. Katz, Alvin J.K. Chua, Niels Warburton, Scott A. Hughes
-# TODO: edit this
+# Based on implementation from Sago and Fujita 2020.
+# See specific code documentation for proper citation.
+
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -101,11 +103,6 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
             p0 (double): Initial semi-latus rectum in terms units of M (p/M).
             e0 (double): Initial eccentricity (dimensionless).
             Y0 (double): Initial cosine of the inclination.
-            err (double, optional): Tolerance for integrator. Default is 1e-10.
-                Decreasing this parameter will give more steps over the
-                trajectory, but if it is too small, memory issues will occur as
-                the trajectory length will blow up. We recommend not adjusting
-                this parameter.
             *args (list, placeholder): Added for flexibility.
             **kwargs (dict, optional): kwargs passed from parent.
         Returns:

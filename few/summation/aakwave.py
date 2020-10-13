@@ -1,6 +1,5 @@
-# Schwarzschild Eccentric amplitude module for Fast EMRI Waveforms
-# performed with bicubic splines
-# TODO: fix this
+# AAK summation module for Fast EMRI Waveforms
+#
 # Copyright (C) 2020 Michael L. Katz, Alvin J.K. Chua, Niels Warburton, Scott A. Hughes
 #
 # This program is free software: you can redistribute it and/or modify
@@ -52,15 +51,16 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 class AAKSummation(SummationBase, Pn5AAK):
-    """Calculate Teukolsky amplitudes by 2D Cubic Spline interpolation.
+    """Calculate an AAK waveform from an input trajectory.
 
     Please see the documentations for
-    :class:`few.utils.baseclasses.SchwarzschildEccentric`
-    for overall aspects of these models.
+    :class:`few.waveform.Pn5AAKWaveform`
+    for overall aspects of this model.
 
-    Each mode is setup with a 2D cubic spline interpolant. When the user
-    inputs :math:`(p,e)`, the interpolatant determines the corresponding
-    amplitudes for each mode in the model.
+    Given an input trajectory and other parameters, this module maps that
+    trajectory to the Analytic Kludge basis as performed for the Augmented
+    Analytic Kludge model. Please see
+    `the AAK paper <https://arxiv.org/abs/1510.06245`_ for more information.
 
     args:
         **kwargs (dict, optional): Keyword arguments for the base class:
@@ -83,9 +83,10 @@ class AAKSummation(SummationBase, Pn5AAK):
     def attributes_AmplitudeAAK(self):
         """
         attributes:
-            amplitude_generator (obj): C++ class that performs the bicubic
-                interpolation. It stores all of the splines during initialization
-                steps.
+            waveform_generator (obj): C++ class that performs the AAK calculation
+                to create the waveform.
+            spline (obj): Cubic spline class that holds the coefficients for
+                all splines of the arrays necessary for the AAK calculation.
 
         """
         pass
@@ -127,39 +128,63 @@ class AAKSummation(SummationBase, Pn5AAK):
         each step of the trajectory.
 
         args:
+            tvec (1D double numpy.ndarray): Array containing the time values
+                associated with the sparse trajectory.
+            M (double): Mass of massive black hole in solar masses.
+            a (double): Dimensionless spin of massive black hole.
             p (1D double numpy.ndarray): Array containing the trajectory for values of
                 the semi-latus rectum.
             e (1D double numpy.ndarray): Array containing the trajectory for values of
                 the eccentricity.
-            l_arr (1D int numpy.ndarray): :math:`l` values to evaluate.
-            m_arr (1D int numpy.ndarray): :math:`m` values to evaluate.
-            n_arr (1D int numpy.ndarray): :math:`ns` values to evaluate.
+            Y (1D double numpy.ndarray): Array containing the trajectory for values of
+                the cosine of the inclination.
+            Phi_phi (1D double numpy.ndarray): Array containing the trajectory for
+                :math:`\Phi_\phi`.
+            Phi_theta (1D double numpy.ndarray): Array containing the trajectory for
+                :math:`\Phi_\theta`.
+            Phi_r (1D double numpy.ndarray): Array containing the trajectory for
+                :math:`\Phi_r`.
+            mu (double): Mass of compact object in solar masses.
+            qS (double): Sky location polar angle in ecliptic
+                coordinates.
+            phiS (double): Sky location azimuthal angle in
+                ecliptic coordinates.
+            qK (double): Initial BH spin polar angle in ecliptic
+                coordinates.
+            phiK (double): Initial BH spin azimuthal angle in
+                ecliptic coordinates.
+            dist (double): Luminosity distance in Gpc.
+            nmodes (int): Number of modes to analyze. This is determined by
+                the eccentricity.
             *args (tuple, placeholder): Added to create flexibility when calling different
                 amplitude modules. It is not used.
-            specific_modes (list, optional): List of tuples for (l, m, n) values
-                desired modes. Default is None.
+            mich (bool, optional): If True, produce waveform with
+                long-wavelength response approximation (hI, hII). Please
+                note this is not TDI. If False, return hplus and hcross.
+                Default is False.
+            dt (double, optional): Time between samples in seconds
+                (inverse of sampling frequency). Default is 10.0.
             **kwargs (dict, placeholder): Added to create flexibility when calling different
                 amplitude modules. It is not used.
 
-        returns:
-            2D array (double): If specific_modes is None, Teukolsky modes in shape (number of trajectory points, number of modes)
-            dict: Dictionary with requested modes.
-
-
         """
 
+        # mass in seconds
         Msec = M * MTSUN_SI
 
+        # get inclination for mapping
         iota = np.arccos(Y)
 
         # these are dimensionless and in radians
         OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p, e, Y)
 
+        # dimensionalize the frequencies
         OmegaPhi, OmegaTheta, OmegaR = (
             OmegaPhi / Msec,
             OmegaTheta / Msec,
             OmegaR / Msec,
         )
+
         # convert to rotations per sec as in AAK parameter mapping
         OmegaPhi_mapping, OmegaTheta_mapping, OmegaR_mapping = (
             2 * np.pi * OmegaPhi,
@@ -167,40 +192,46 @@ class AAKSummation(SummationBase, Pn5AAK):
             2 * np.pi * OmegaR,
         )
 
+        # get parameter map to AK basis
+        # this takes the form of time evolving large mass and spin
+        # (velocity does not come in)
         v_map, M_map, S_map = pyParMap(
             OmegaPhi_mapping, OmegaTheta_mapping, OmegaR_mapping, p, e, iota, M, a
         )
 
-        # get OmegaPhi with the mapped spin values rather than constant
+        # get OmegaPhi with the mapped mass and spin values
+        # rather than constant spin and mass
         # TODO: check if this should be done dimensionalized with mapped masses as well
         OmegaPhi_spin_mapped = get_fundamental_frequencies(S_map, p, e, Y)[0] / (
             M_map * MTSUN_SI
         )
 
+        # convert phases to AK basis
         Phivec = Phi_r
         gimvec = Phi_theta - Phi_r
         alpvec = Phi_phi - Phi_theta
 
         # TODO: check if this should be in radians or revs
         # TODO: check nuvec relation
-        # TODO: check if these should be related to evolving/mapped spin values
+        # TODO: check if these should be related to evolving/mapped mass/spin values
         nuvec = OmegaR / (2 * PI)
         gimdotvec = OmegaTheta - OmegaR
 
         # TODO: no evolution on iota in AAK, therefore lam constant
-
         # lam is iota0
         lam = iota[0]
 
+        # convert to gpu if desired
         tvec_temp = self.xp.asarray(tvec)
         init_len = len(tvec)
 
+        # setup interpolation
         ninterps = 7
         y_all = self.xp.zeros((ninterps, init_len))
 
         # do not need p anymore since we are inputing OmegaPhiMapped
-        # y_all[0] = self.xp.asarray(p)
 
+        # fill y_all with all arrays that need interpolation
         y_all[0] = self.xp.asarray(e)
         y_all[1] = self.xp.asarray(Phivec)
         y_all[2] = self.xp.asarray(gimvec)
@@ -209,8 +240,10 @@ class AAKSummation(SummationBase, Pn5AAK):
         y_all[5] = self.xp.asarray(gimdotvec)
         y_all[6] = self.xp.asarray(OmegaPhi_spin_mapped)
 
+        # get all cubic splines
         self.spline = CubicSplineInterpolant(tvec_temp, y_all, use_gpu=self.use_gpu)
 
+        # generator the waveform
         self.waveform_generator(
             self.waveform,
             self.spline.interp_array,
