@@ -347,7 +347,7 @@ class SchwarzschildEccentric(WaveformBase, ABC):
             tuple: (theta, phi). Phi is wrapped.
 
         Raises:
-            ValueError: If any of the trajectory points are not allowed.
+            ValueError: If any of the angular values are not allowed.
 
         """
         if theta < 0.0 or theta > np.pi:
@@ -438,32 +438,9 @@ class SchwarzschildEccentric(WaveformBase, ABC):
 class Pn5AAK(WaveformBase, ABC):
     """Base class for Pn5AAK waveforms.
 
-    TODO: Need to adjust docs.
-
-    This class creates shared traits between different implementations of the
-    same model. Particularly, this class includes descriptive traits as well as
-    the sanity check class method that should be used in all implementations of
-    this model. This method can be overwritten if necessary. Here we describe
-    the overall qualities of this base class.
-
-
-    In this limit, Eq. :eq:`emri_wave_eq` is reduced to the equatortial plane
-    with no spin. Therefore, we only concerned with :math:`(l,m,n)` indices and
-    the parameters :math:`(p,e)` because :math:`k=a=\iota=0`. Therefore, in this
-    model we calculate :math:`A_{lmn}` and :math:`\Phi_{mn}=m\Phi_\phi+n\Phi_r`.
-    This also allows us to use -2 spin-weighted spherical harmonics
-    (:math:`(s=-2)Y_{l,m}`) in place of the more generic angular function from
-    Eq. :eq:`emri_wave_eq`.
-
-    :math:`l` ranges from 2 to 10; :math:`m` from :math:`-l` to :math:`l`;
-    and :math:`n` from -30 to 30. This is for Schwarzschild eccentric.
-    The model validity ranges from :math:`0.1 \leq e_0 \leq 0.7` and
-    :math:`10 \leq p_0 \leq 16 + 2*e_0`. The user can start at any :math:`p` and
-    :math:`e` combination that exists under the :math:`p_0=10, e_0=0.7`
-    trajectory within those bounds (and is outside of the separatrix). **Important Note**: if the trajectory is
-    within the bounds listed, but it is above :math:`p_0=10, e_0=0.7` trajectory.,
-    the user may not receive an error. See the documentation introduction for
-    more information on this.
+    This class contains some basic checks and information for AAK waveforms
+    with a 5PN trajectory model. Please see :class:`few.waveform.Pn5AAKWaveform`
+    for more details.
 
     args:
         use_gpu (bool, optional): If True, will allocate arrays on the GPU.
@@ -477,30 +454,6 @@ class Pn5AAK(WaveformBase, ABC):
             xp (module): numpy or cupy based on hardware chosen.
             background (str): Spacetime background for this model.
             descriptor (str): Short description for model validity.
-            num_modes, num_teuk_modes (int): Total number of Teukolsky modes
-                in the model.
-            lmax, nmax (int): Maximum :math:`l`, :math:`n`  values
-            ndim (int): Dimensionality in terms of orbital parameters and phases.
-            m0sort (1D int xp.ndarray): array of indices to sort accoring to
-                :math:`(m=0)` parts first and then :math:`m>0` parts.
-            m0mask (1D bool xp.ndarray): Masks values with :math:`m==0`.
-            m_zero_up_mask (1D bool xp.ndarray): Masks values with :math:`m<1`.
-            l_arr, m_arr, n_arr (1D int xp.ndarray): :math:`(l,m,n)` arrays
-                containing indices for each mode.
-            lmn_indices (dict): Dictionary mapping a tuple of :math:`(l,m,n)` to
-                the respective index in l_arr, m_arr, and n_arr.
-            num_m_zero_up (int): Number of modes with :math:`m\geq0`.
-            num_m0 (int): Number of modes with :math:`m=0`.
-            num_m_1_up (int): Number of modes with :math:`m\geq1`.
-            unique_l, unique_m (1D int xp.ndarray): Arrays of unique :math:`l` and
-                :math:`m` values.
-            inverse_lm (1D int xp.ndarray): Array of indices that expands unique
-                :math:`(l, m)` values to the full array of :math:`(l,m,n)` values.
-            index_map (dict): Dictionary mapping the location of the `(l,m,n)`
-                indices back to there spot in l_arr, m_arr, n_arr.
-            special_index_map (dict): Dictionary mapping the location of the `(l,m,n)`
-                indices back to there spot in l_arr, m_arr, n_arr. However, this
-                maps locations of -m values to +m values.
 
         """
         pass
@@ -524,21 +477,27 @@ class Pn5AAK(WaveformBase, ABC):
         Make sure parameters are within allowable ranges.
 
         args:
-            theta (double): Polar viewing angle.
-            phi (double): Azimuthal viewing angle.
+            qS (double): Sky location polar angle in ecliptic
+                coordinates.
+            phiS (double): Sky location azimuthal angle in
+                ecliptic coordinates.
+            qK (double): Initial BH spin polar angle in ecliptic
+                coordinates.
+            phiK (double): Initial BH spin azimuthal angle in
+                ecliptic coordinates.
 
         Returns:
-            tuple: (theta, phi). Phi is wrapped.
+            tuple: (qS, phiS, qK, phiK). phiS and phiK are wrapped.
 
         Raises:
-            ValueError: If any of the trajectory points are not allowed.
+            ValueError: If any of the angular values are not allowed.
 
         """
         if qS < 0.0 or qS > np.pi:
-            raise ValueError("theta must be between 0 and pi.")
+            raise ValueError("qS must be between 0 and pi.")
 
         if qK < 0.0 or qK > np.pi:
-            raise ValueError("theta must be between 0 and pi.")
+            raise ValueError("qK must be between 0 and pi.")
 
         phiS = phiS % (2 * np.pi)
         phiK = phiK % (2 * np.pi)
