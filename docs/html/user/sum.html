@@ -93,6 +93,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Summation Package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-few.summation.interpolatedmodesum">Interpolated Summation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-few.summation.directmodesum">Direct Summation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.summation.aakwave">AAK Summation / Waveform Generator</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
@@ -101,14 +102,16 @@
 <p class="caption"><span class="caption-text">Tutorial:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html">Fast and Accurate EMRI Waveforms Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Full-EMRI-Waveforms">Full EMRI Waveforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric">Full EMRI Waveforms in Schwarzschild Eccentric</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Trajectory-Module">Trajectory Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Amplitude-Module">Amplitude Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Spin-weighted-spherical-harmonics">Spin-weighted spherical harmonics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Mode-Selection">Mode Selection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Parallelized-Cubic-Spline-Interpolation">Parallelized Cubic Spline Interpolation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Mode-Summation">Mode Summation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Utility-functions">Utility functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Creating-modules">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Augmented-Analytic-Kludge-with-5PN-trajectory">Augmented Analytic Kludge with 5PN trajectory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
 </ul>
 <p class="caption"><span class="caption-text">General Information:</span></p>
@@ -269,7 +272,7 @@ between plunge and observation time. Default is False.</p>
 
 <dl class="py method">
 <dt id="few.utils.baseclasses.SummationBase.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">T</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SummationBase.__call__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SummationBase.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Common call function for summation modules.</p>
 <p>Provides a common interface for summation modules. It can adjust for
 more dimensions in a model.</p>
@@ -277,18 +280,11 @@ more dimensions in a model.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>t</strong> (<em>1D double xp.ndarray</em>) – Array of t values.</p></li>
-<li><p><strong>teuk_modes</strong> (<em>2D double xp.array</em>) – Array of complex amplitudes.
-Shape: (len(t), num_teuk_modes).</p></li>
-<li><p><strong>ylms</strong> (<em>1D complex128 xp.ndarray</em>) – Array of ylm values for each mode,
-including m&lt;0. Shape is (num of m==0,) + (num of m&gt;0,)
-+ (num of m&lt;0). Number of m&lt;0 and m&gt;0 is the same, but they are
-ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
-<li><p><strong>dt</strong> (<em>double</em>) – Time spacing between observations in seconds (inverse of sampling
-rate).</p></li>
-<li><p><strong>T</strong> (<em>double</em>) – Maximum observing time in years.</p></li>
-<li><p><strong>*args</strong> (<em>list</em>) – This should be a tuple of phases combined with mode
-index arrays. For equatorial, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_r, m, n)\)</span>.
-For generic, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_\Theta, \Phi_r, m, k, n)\)</span>.</p></li>
+<li><p><strong>*args</strong> (<em>list</em>) – Added for flexibility with summation modules. <cite>args</cite>
+tranfers directly into sum function.</p></li>
+<li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time spacing between observations in seconds (inverse of sampling
+rate). Default is 10.0.</p></li>
+<li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Maximum observing time in years. Default is 1.0.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added for future flexibility.</p></li>
 </ul>
 </dd>
@@ -344,7 +340,7 @@ False.</p></li>
 <code class="sig-name descname">interp_array</code><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.interp_array" title="Permalink to this definition">¶</a></dt>
 <dd><p>Array containing all spline
 coefficients. It is flattened after fitting from shape
-(4, ninterps, length). The 4 is the 4 spline coefficients.</p>
+(4, length, ninterps). The 4 is the 4 spline coefficients.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>1D double xp.ndarray</p>
@@ -415,7 +411,7 @@ the interpolants and summed.</p>
 <p>This class can be run on GPUs and CPUs.</p>
 <dl class="py method">
 <dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">T</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.__call__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Common call function for summation modules.</p>
 <p>Provides a common interface for summation modules. It can adjust for
 more dimensions in a model.</p>
@@ -423,18 +419,11 @@ more dimensions in a model.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>t</strong> (<em>1D double xp.ndarray</em>) – Array of t values.</p></li>
-<li><p><strong>teuk_modes</strong> (<em>2D double xp.array</em>) – Array of complex amplitudes.
-Shape: (len(t), num_teuk_modes).</p></li>
-<li><p><strong>ylms</strong> (<em>1D complex128 xp.ndarray</em>) – Array of ylm values for each mode,
-including m&lt;0. Shape is (num of m==0,) + (num of m&gt;0,)
-+ (num of m&lt;0). Number of m&lt;0 and m&gt;0 is the same, but they are
-ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
-<li><p><strong>dt</strong> (<em>double</em>) – Time spacing between observations in seconds (inverse of sampling
-rate).</p></li>
-<li><p><strong>T</strong> (<em>double</em>) – Maximum observing time in years.</p></li>
-<li><p><strong>*args</strong> (<em>list</em>) – This should be a tuple of phases combined with mode
-index arrays. For equatorial, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_r, m, n)\)</span>.
-For generic, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_\Theta, \Phi_r, m, k, n)\)</span>.</p></li>
+<li><p><strong>*args</strong> (<em>list</em>) – Added for flexibility with summation modules. <cite>args</cite>
+tranfers directly into sum function.</p></li>
+<li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time spacing between observations in seconds (inverse of sampling
+rate). Default is 10.0.</p></li>
+<li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Maximum observing time in years. Default is 1.0.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added for future flexibility.</p></li>
 </ul>
 </dd>
@@ -442,20 +431,32 @@ For generic, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_\Thet
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_SchwarzschildEccentric">
-<code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py attribute">
-<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.xp">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.xp" title="Permalink to this definition">¶</a></dt>
-<dd><p>numpy or cupy based on hardware chosen.</p>
+<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>module</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
+<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.allow_batching">
+<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.summation.interpolatedmodesum.InterpolatedModeSum'&gt;&gt;</em><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_SchwarzschildEccentric">
+<code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
 <dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.background">
 <code class="sig-name descname">background</code><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.background" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spacetime background for this model.</p>
@@ -480,7 +481,7 @@ For generic, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_\Thet
 <dl class="py attribute">
 <dt>
 <code class="sig-name descname">num_modes, num_teuk_modes</code></dt>
-<dd><p>Total number of Tuekolsky modes
+<dd><p>Total number of Teukolsky modes
 in the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -671,6 +672,55 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_WaveformBase">
+<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.gpu_capability">
+<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.summation.interpolatedmodesum.InterpolatedModeSum'&gt;&gt;</em><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_init">
 <code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_init" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sanity check initial parameters.</p>
@@ -735,7 +785,7 @@ the trajectory module.</p></li>
 <dd class="field-odd"><p>tuple</p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the angular values are not allowed.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -764,7 +814,7 @@ the trajectory module.</p></li>
 
 <dl class="py method">
 <dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.sum">
-<code class="sig-name descname">sum</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">Phi_phi</span></em>, <em class="sig-param"><span class="n">Phi_r</span></em>, <em class="sig-param"><span class="n">m_arr</span></em>, <em class="sig-param"><span class="n">n_arr</span></em>, <em class="sig-param"><span class="n">init_len</span></em>, <em class="sig-param"><span class="n">num_pts</span></em>, <em class="sig-param"><span class="n">num_teuk_modes</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.sum" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">sum</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">Phi_phi</span></em>, <em class="sig-param"><span class="n">Phi_r</span></em>, <em class="sig-param"><span class="n">m_arr</span></em>, <em class="sig-param"><span class="n">n_arr</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.sum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Interpolated summation function.</p>
 <p>This function interpolates the amplitude and phase information, and
 creates the final waveform with the combination of ylm values for each
@@ -785,12 +835,9 @@ ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
 (<span class="math notranslate nohighlight">\(\Phi_r\)</span>).</p></li>
 <li><p><strong>m_arr</strong> (<em>1D int xp.ndarray</em>) – <span class="math notranslate nohighlight">\(m\)</span> values associated with each mode.</p></li>
 <li><p><strong>n_arr</strong> (<em>1D int xp.ndarray</em>) – <span class="math notranslate nohighlight">\(n\)</span> values associated with each mode.</p></li>
-<li><p><strong>init_len</strong> (<em>int</em>) – len(t).</p></li>
-<li><p><strong>num_pts</strong> (<em>int</em>) – len(self.waveform).</p></li>
-<li><p><strong>num_teuk_modes</strong> (<em>int</em>) – Number of amplitude modes included.</p></li>
-<li><p><strong>dt</strong> (<em>double</em>) – Time spacing between observations (inverse of sampling
-rate).</p></li>
 <li><p><strong>*args</strong> (<em>list</em><em>, </em><em>placeholder</em>) – Added for future flexibility.</p></li>
+<li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time spacing between observations (inverse of sampling
+rate). Default is 10.0.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added for future flexibility.</p></li>
 </ul>
 </dd>
@@ -824,7 +871,7 @@ rate).</p></li>
 
 <dl class="py method">
 <dt id="few.summation.directmodesum.DirectModeSum.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">T</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.__call__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Common call function for summation modules.</p>
 <p>Provides a common interface for summation modules. It can adjust for
 more dimensions in a model.</p>
@@ -832,18 +879,11 @@ more dimensions in a model.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>t</strong> (<em>1D double xp.ndarray</em>) – Array of t values.</p></li>
-<li><p><strong>teuk_modes</strong> (<em>2D double xp.array</em>) – Array of complex amplitudes.
-Shape: (len(t), num_teuk_modes).</p></li>
-<li><p><strong>ylms</strong> (<em>1D complex128 xp.ndarray</em>) – Array of ylm values for each mode,
-including m&lt;0. Shape is (num of m==0,) + (num of m&gt;0,)
-+ (num of m&lt;0). Number of m&lt;0 and m&gt;0 is the same, but they are
-ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
-<li><p><strong>dt</strong> (<em>double</em>) – Time spacing between observations in seconds (inverse of sampling
-rate).</p></li>
-<li><p><strong>T</strong> (<em>double</em>) – Maximum observing time in years.</p></li>
-<li><p><strong>*args</strong> (<em>list</em>) – This should be a tuple of phases combined with mode
-index arrays. For equatorial, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_r, m, n)\)</span>.
-For generic, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_\Theta, \Phi_r, m, k, n)\)</span>.</p></li>
+<li><p><strong>*args</strong> (<em>list</em>) – Added for flexibility with summation modules. <cite>args</cite>
+tranfers directly into sum function.</p></li>
+<li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time spacing between observations in seconds (inverse of sampling
+rate). Default is 10.0.</p></li>
+<li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Maximum observing time in years. Default is 1.0.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added for future flexibility.</p></li>
 </ul>
 </dd>
@@ -851,20 +891,32 @@ For generic, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_\Thet
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.summation.directmodesum.DirectModeSum.attributes_SchwarzschildEccentric">
-<code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py attribute">
-<dt id="few.summation.directmodesum.DirectModeSum.xp">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.xp" title="Permalink to this definition">¶</a></dt>
-<dd><p>numpy or cupy based on hardware chosen.</p>
+<dt id="few.summation.directmodesum.DirectModeSum.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>module</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
+<dt id="few.summation.directmodesum.DirectModeSum.allow_batching">
+<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.summation.directmodesum.DirectModeSum'&gt;&gt;</em><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.directmodesum.DirectModeSum.attributes_SchwarzschildEccentric">
+<code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
 <dt id="few.summation.directmodesum.DirectModeSum.background">
 <code class="sig-name descname">background</code><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.background" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spacetime background for this model.</p>
@@ -889,7 +941,7 @@ For generic, <span class="math notranslate nohighlight">\((\Phi_\phi, \Phi_\Thet
 <dl class="py attribute">
 <dt>
 <code class="sig-name descname">num_modes, num_teuk_modes</code></dt>
-<dd><p>Total number of Tuekolsky modes
+<dd><p>Total number of Teukolsky modes
 in the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1080,6 +1132,55 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="few.summation.directmodesum.DirectModeSum.attributes_WaveformBase">
+<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.summation.directmodesum.DirectModeSum.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.directmodesum.DirectModeSum.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.directmodesum.DirectModeSum.gpu_capability">
+<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.summation.directmodesum.DirectModeSum'&gt;&gt;</em><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.directmodesum.DirectModeSum.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.summation.directmodesum.DirectModeSum.sanity_check_init">
 <code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.sanity_check_init" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sanity check initial parameters.</p>
@@ -1144,7 +1245,7 @@ the trajectory module.</p></li>
 <dd class="field-odd"><p>tuple</p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the angular values are not allowed.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1173,6 +1274,346 @@ ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
 <li><p><strong>n_arr</strong> (<em>1D int np.ndarray</em>) – <span class="math notranslate nohighlight">\(n\)</span> values associated with each mode.</p></li>
 <li><p><strong>*args</strong> (<em>list</em><em>, </em><em>placeholder</em>) – Added for future flexibility.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added for future flexibility.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-few.summation.aakwave">
+<span id="aak-summation-waveform-generator"></span><h2>AAK Summation / Waveform Generator<a class="headerlink" href="#module-few.summation.aakwave" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="few.summation.aakwave.AAKSummation">
+<em class="property">class </em><code class="sig-prename descclassname">few.summation.aakwave.</code><code class="sig-name descname">AAKSummation</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.aakwave.AAKSummation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.SummationBase" title="few.utils.baseclasses.SummationBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SummationBase</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK" title="few.utils.baseclasses.Pn5AAK"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.Pn5AAK</span></code></a></p>
+<p>Calculate an AAK waveform from an input trajectory.</p>
+<p>Please see the documentations for
+<a class="reference internal" href="main.html#few.waveform.Pn5AAKWaveform" title="few.waveform.Pn5AAKWaveform"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.Pn5AAKWaveform</span></code></a>
+for overall aspects of this model.</p>
+<p>Given an input trajectory and other parameters, this module maps that
+trajectory to the Analytic Kludge basis as performed for the Augmented
+Analytic Kludge model. Please see
+<a href="#id3"><span class="problematic" id="id4">`the AAK paper &lt;https://arxiv.org/abs/1510.06245`_</span></a> for more information.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments for the base class:
+<a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>. Default is
+{}.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="few.summation.aakwave.AAKSummation.attributes_AmplitudeAAK">
+<code class="sig-name descname">attributes_AmplitudeAAK</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.aakwave.AAKSummation.attributes_AmplitudeAAK" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.summation.aakwave.AAKSummation.waveform_generator">
+<code class="sig-name descname">waveform_generator</code><a class="headerlink" href="#few.summation.aakwave.AAKSummation.waveform_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>C++ class that performs the AAK calculation
+to create the waveform.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.aakwave.AAKSummation.spline">
+<code class="sig-name descname">spline</code><a class="headerlink" href="#few.summation.aakwave.AAKSummation.spline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cubic spline class that holds the coefficients for
+all splines of the arrays necessary for the AAK calculation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.aakwave.AAKSummation.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.aakwave.AAKSummation.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Common call function for summation modules.</p>
+<p>Provides a common interface for summation modules. It can adjust for
+more dimensions in a model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<em>1D double xp.ndarray</em>) – Array of t values.</p></li>
+<li><p><strong>*args</strong> (<em>list</em>) – Added for flexibility with summation modules. <cite>args</cite>
+tranfers directly into sum function.</p></li>
+<li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time spacing between observations in seconds (inverse of sampling
+rate). Default is 10.0.</p></li>
+<li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Maximum observing time in years. Default is 1.0.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added for future flexibility.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.aakwave.AAKSummation.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.aakwave.AAKSummation.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.aakwave.AAKSummation.allow_batching">
+<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.summation.aakwave.AAKSummation'&gt;&gt;</em><a class="headerlink" href="#few.summation.aakwave.AAKSummation.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.aakwave.AAKSummation.attributes_Pn5AAK">
+<code class="sig-name descname">attributes_Pn5AAK</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.aakwave.AAKSummation.attributes_Pn5AAK" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.summation.aakwave.AAKSummation.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.summation.aakwave.AAKSummation.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>numpy or cupy based on hardware chosen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>module</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.aakwave.AAKSummation.background">
+<code class="sig-name descname">background</code><a class="headerlink" href="#few.summation.aakwave.AAKSummation.background" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spacetime background for this model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.aakwave.AAKSummation.descriptor">
+<code class="sig-name descname">descriptor</code><a class="headerlink" href="#few.summation.aakwave.AAKSummation.descriptor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Short description for model validity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.aakwave.AAKSummation.attributes_SummationBase">
+<code class="sig-name descname">attributes_SummationBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.aakwave.AAKSummation.attributes_SummationBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.summation.aakwave.AAKSummation.waveform">
+<code class="sig-name descname">waveform</code><a class="headerlink" href="#few.summation.aakwave.AAKSummation.waveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Complex waveform given by
+<span class="math notranslate nohighlight">\(h_+ + i*h_x\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>1D complex128 np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.aakwave.AAKSummation.attributes_WaveformBase">
+<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.aakwave.AAKSummation.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.summation.aakwave.AAKSummation.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.summation.aakwave.AAKSummation.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="id0">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.aakwave.AAKSummation.citation">
+<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.summation.aakwave.AAKSummation.citation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return citations for this class</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.summation.aakwave.AAKSummation.gpu_capability">
+<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.summation.aakwave.AAKSummation'&gt;&gt;</em><a class="headerlink" href="#few.summation.aakwave.AAKSummation.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.aakwave.AAKSummation.sanity_check_angles">
+<code class="sig-name descname">sanity_check_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qS</span></em>, <em class="sig-param"><span class="n">phiS</span></em>, <em class="sig-param"><span class="n">qK</span></em>, <em class="sig-param"><span class="n">phiK</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.aakwave.AAKSummation.sanity_check_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on viewing angles.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qS</strong> (<em>double</em>) – Sky location polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiS</strong> (<em>double</em>) – Sky location azimuthal angle in
+ecliptic coordinates.</p></li>
+<li><p><strong>qK</strong> (<em>double</em>) – Initial BH spin polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiK</strong> (<em>double</em>) – Initial BH spin azimuthal angle in
+ecliptic coordinates.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(qS, phiS, qK, phiK). phiS and phiK are wrapped.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the angular values are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.aakwave.AAKSummation.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.aakwave.AAKSummation.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.aakwave.AAKSummation.sanity_check_init">
+<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">Y0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.aakwave.AAKSummation.sanity_check_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check initial parameters.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
+<li><p><strong>a</strong> (<em>double</em>) – Dimensionless spin of massive black hole.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (dimensionless)
+<span class="math notranslate nohighlight">\((10\leq p_0\leq 16 + 2e_0)\)</span>. See the documentation for
+more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e_0\leq0.7)\)</span>.</p></li>
+<li><p><strong>Y0</strong> (<em>double</em>) – Initial cos:math:<cite>iota</cite> <span class="math notranslate nohighlight">\((-1.0\leq Y_0\leq1.0)\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the parameters are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.aakwave.AAKSummation.sanity_check_traj">
+<code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="n">Y</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.aakwave.AAKSummation.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on parameters output from thte trajectory module.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>1D np.ndarray</em>) – Array of semi-latus rectum values produced by
+the trajectory module.</p></li>
+<li><p><strong>e</strong> (<em>1D np.ndarray</em>) – Array of eccentricity values produced by
+the trajectory module.</p></li>
+<li><p><strong>Y</strong> (<em>1D np.ndarray</em>) – Array of cos:math:<cite>iota</cite> values produced by
+the trajectory module.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p></li>
+<li><p><strong>warn</strong> – If any points in the trajectory are allowable,
+    but outside calibration region.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.aakwave.AAKSummation.sum">
+<code class="sig-name descname">sum</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tvec</span></em>, <em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="n">Y</span></em>, <em class="sig-param"><span class="n">Phi_phi</span></em>, <em class="sig-param"><span class="n">Phi_theta</span></em>, <em class="sig-param"><span class="n">Phi_r</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">qS</span></em>, <em class="sig-param"><span class="n">phiS</span></em>, <em class="sig-param"><span class="n">qK</span></em>, <em class="sig-param"><span class="n">phiK</span></em>, <em class="sig-param"><span class="n">dist</span></em>, <em class="sig-param"><span class="n">nmodes</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">mich</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.aakwave.AAKSummation.sum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate Teukolsky amplitudes for Schwarzschild eccentric.</p>
+<p>This function takes the inputs the trajectory in <span class="math notranslate nohighlight">\((p,e)\)</span> as arrays
+and returns the complex amplitude of all modes to adiabatic order at
+each step of the trajectory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tvec</strong> (<em>1D double numpy.ndarray</em>) – Array containing the time values
+associated with the sparse trajectory.</p></li>
+<li><p><strong>M</strong> (<em>double</em>) – Mass of massive black hole in solar masses.</p></li>
+<li><p><strong>a</strong> (<em>double</em>) – Dimensionless spin of massive black hole.</p></li>
+<li><p><strong>p</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
+the semi-latus rectum.</p></li>
+<li><p><strong>e</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
+the eccentricity.</p></li>
+<li><p><strong>Y</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
+the cosine of the inclination.</p></li>
+<li><p><strong>Phi_phi</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for
+<span class="math notranslate nohighlight">\(\Phi_\phi\)</span>.</p></li>
+<li><p><strong>Phi_theta</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for
+<span class="math notranslate nohighlight">\(\Phi_    heta\)</span>.</p></li>
+<li><p><strong>Phi_r</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for
+<span class="math notranslate nohighlight">\(\Phi_r\)</span>.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – Mass of compact object in solar masses.</p></li>
+<li><p><strong>qS</strong> (<em>double</em>) – Sky location polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiS</strong> (<em>double</em>) – Sky location azimuthal angle in
+ecliptic coordinates.</p></li>
+<li><p><strong>qK</strong> (<em>double</em>) – Initial BH spin polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiK</strong> (<em>double</em>) – Initial BH spin azimuthal angle in
+ecliptic coordinates.</p></li>
+<li><p><strong>dist</strong> (<em>double</em>) – Luminosity distance in Gpc.</p></li>
+<li><p><strong>nmodes</strong> (<em>int</em>) – Number of modes to analyze. This is determined by
+the eccentricity.</p></li>
+<li><p><strong>*args</strong> (<em>tuple</em><em>, </em><em>placeholder</em>) – Added to create flexibility when calling different
+amplitude modules. It is not used.</p></li>
+<li><p><strong>mich</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, produce waveform with
+long-wavelength response approximation (hI, hII). Please
+note this is not TDI. If False, return hplus and hcross.
+Default is False.</p></li>
+<li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time between samples in seconds
+(inverse of sampling frequency). Default is 10.0.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added to create flexibility when calling different
+amplitude modules. It is not used.</p></li>
 </ul>
 </dd>
 </dl>

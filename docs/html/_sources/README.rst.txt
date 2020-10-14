@@ -36,7 +36,7 @@ Below is a quick set of instructions to get you started with ``few``.
 
 1) Create a virtual environment. **Note**: There is no available
    ``conda`` compiler for Windows. If you want to install for Windows,
-   you will probably need to add library and include paths to the
+   you will probably need to add libraries and include paths to the
    ``setup.py`` file.
 
 ::
