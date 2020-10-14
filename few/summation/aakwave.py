@@ -30,6 +30,7 @@ except (ImportError, ModuleNotFoundError) as e:
 
 # Cython/C++ imports
 from pycpuAAK import pyWaveform as pyWaveform_cpu
+from pyParameterMap import pyParMap
 
 # Attempt Cython imports of GPU functions
 try:
@@ -43,7 +44,6 @@ from few.utils.baseclasses import Pn5AAK, SummationBase
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *
-from pyParameterMap import pyParMap
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
 
 # get path to file

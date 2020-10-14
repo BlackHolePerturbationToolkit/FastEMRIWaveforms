@@ -12,10 +12,18 @@ Trajectory Package
     :show-inheritance:
     :inherited-members:
 
-Flux Inspiral
-~~~~~~~~~~~~~~
+Adiabatic Inspiral in Schwarzschild Eccentric
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: few.trajectory.flux
+    :members:
+    :show-inheritance:
+    :inherited-members:
+
+5PN Generic Kerr Inspiral
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: few.trajectory.pn5
     :members:
     :show-inheritance:
     :inherited-members:

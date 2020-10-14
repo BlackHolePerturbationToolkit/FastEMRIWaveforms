@@ -96,14 +96,16 @@
 <p class="caption"><span class="caption-text">Tutorial:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html">Fast and Accurate EMRI Waveforms Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Full-EMRI-Waveforms">Full EMRI Waveforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric">Full EMRI Waveforms in Schwarzschild Eccentric</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Trajectory-Module">Trajectory Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Amplitude-Module">Amplitude Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Spin-weighted-spherical-harmonics">Spin-weighted spherical harmonics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Mode-Selection">Mode Selection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Parallelized-Cubic-Spline-Interpolation">Parallelized Cubic Spline Interpolation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Mode-Summation">Mode Summation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Utility-functions">Utility functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Creating-modules">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Augmented-Analytic-Kludge-with-5PN-trajectory">Augmented Analytic Kludge with 5PN trajectory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
 </ul>
 <p class="caption"><span class="caption-text">General Information:</span></p>
@@ -238,7 +240,7 @@ properly cite specific modules.</p>
 you do not have it.</p></li>
 <li><p>Create a virtual environment. <strong>Note</strong>: There is no available
 <code class="docutils literal notranslate"><span class="pre">conda</span></code> compiler for Windows. If you want to install for Windows,
-you will probably need to add library and include paths to the
+you will probably need to add libraries and include paths to the
 <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> file.</p></li>
 </ol>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">gcc_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gxx_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gsl</span> <span class="n">lapack</span> <span class="n">hdf5</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">matplotlib</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
@@ -420,16 +422,20 @@ computing facility at Northwestern University.</p></li>
 <li class="toctree-l2"><a class="reference internal" href="user/main.html#prebuilt-waveform-models">Prebuilt Waveform Models</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="user/main.html#fast-schwarzschild-eccentric-flux-based-waveform">Fast Schwarzschild Eccentric Flux-based Waveform</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user/main.html#slow-schwarzschild-eccentric-flux-based-waveform">Slow Schwarzschild Eccentric Flux-based Waveform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user/main.html#generic-kerr-aak-with-5pn-trajectory">Generic Kerr AAK with 5PN Trajectory</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="user/main.html#base-classes">Base Classes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user/main.html#general-waveform-base">General Waveform Base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user/main.html#schwarzschild-eccentric">Schwarzschild Eccentric</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user/main.html#pn-aak-waveform-for-generic-kerr">5PN + AAK Waveform for Generic Kerr</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="user/traj.html">Trajectory Package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="user/traj.html#module-few.trajectory.flux">Flux Inspiral</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/traj.html#module-few.trajectory.flux">Adiabatic Inspiral in Schwarzschild Eccentric</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/traj.html#module-few.trajectory.pn5">5PN Generic Kerr Inspiral</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="user/amp.html">Amplitude Package</a><ul>
@@ -443,6 +449,7 @@ computing facility at Northwestern University.</p></li>
 <li class="toctree-l1"><a class="reference internal" href="user/sum.html">Summation Package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="user/sum.html#module-few.summation.interpolatedmodesum">Interpolated Summation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user/sum.html#module-few.summation.directmodesum">Direct Summation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/sum.html#module-few.summation.aakwave">AAK Summation / Waveform Generator</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="user/util.html">Utilities</a><ul>
@@ -458,7 +465,7 @@ computing facility at Northwestern University.</p></li>
 <p class="caption"><span class="caption-text">Tutorial:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html">Fast and Accurate EMRI Waveforms Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Full-EMRI-Waveforms">Full EMRI Waveforms</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric">Full EMRI Waveforms in Schwarzschild Eccentric</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#FastSchwarzschildEccentricFlux">FastSchwarzschildEccentricFlux</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#SlowSchwarzschildEccentricFlux">SlowSchwarzschildEccentricFlux</a></li>
 </ul>
@@ -484,6 +491,11 @@ computing facility at Northwestern University.</p></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Direct-summation">Direct summation</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Utility-functions">Utility functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Fundamental-Frequencies">Fundamental Frequencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Separatrix-in-Generic-Kerr">Separatrix in Generic Kerr</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Creating-modules">Creating modules</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Post-Newtonian-trajectory">Post-Newtonian trajectory</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Test-your-trajectory">Test your trajectory</a></li>
@@ -491,7 +503,16 @@ computing facility at Northwestern University.</p></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Test-your-waveform">Test your waveform</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Augmented-Analytic-Kludge-with-5PN-trajectory">Augmented Analytic Kludge with 5PN trajectory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#5PN-Trajectory">5PN Trajectory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Building-an-AAK-waveform-from-a-given-trajectory-(in-this-case-the-5PN-trajectory)">Building an AAK waveform from a given trajectory (in this case the 5PN trajectory)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Citing-waveforms-and-modules">Citing waveforms and modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#Fast-Schwarzschild-Eccentric-Waveforms">Fast Schwarzschild Eccentric Waveforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/SchwarzschildEccentricWaveform_intro.html#New-and-Improved-AAK-with-5PN-Trajectory">New and Improved AAK with 5PN Trajectory</a></li>
+</ul>
+</li>
 </ul>
 </div>
 <div class="toctree-wrapper compound">

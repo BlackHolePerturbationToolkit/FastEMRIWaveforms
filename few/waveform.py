@@ -553,24 +553,23 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
     `Sago and Fujita (2019) <https://arxiv.org/abs/1505.01600>`_.
 
     The 5PN trajectory produces orbital and phase trajectories.
-    The trajectory is calculated until reaching the orbit reaches
+    The trajectory is calculated until the orbit reaches
     within 0.2 of the separatrix, determined from
     `arXiv:1912.07609 <https://arxiv.org/abs/1912.07609/>`_. The
     fundamental frequencies along the trajectory at each point are then
-    calculated from the orbital parameters and the spin value given.
-    TODO: add reference to schmidt.
+    calculated from the orbital parameters and the spin value given by (`Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_).
 
     These frequencies along the trajectory are then used to map to the
-    frequency basis of the Analytic Kludge (TODO: add url). This mapping
+    frequency basis of the `Analytic Kludge <https://arxiv.org/abs/gr-qc/0310125>`_. This mapping
     takes the form of time evolving large mass and spin parameters, as
     well as the use of phases and frequencies in
-    :math:`(\alpha, \Phi, \gamma)`:
+    :math:`(alpha, \Phi, \gamma)`:
 
     .. math:: \Phi = \Phi_\phi,
 
-    .. math:: \gamma = \Phi_\phi + \Phi_\theta,
+    .. math:: \gamma = \Phi_\phi + \Phi_\Theta,
 
-    .. math:: \alpha = \Phi_\phi + \Phi_\theta + \Phi_r.
+    .. math:: alpha = \Phi_\phi + \Phi_\Theta + \Phi_r.
 
     The frequencies in that basis are found by taking the time derivatives
     of each equation above.
@@ -636,6 +635,7 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
             + AK_citation
             + NK_citation
             + Pn5_citation
+            + kerr_separatrix_citation
         )
 
     @property
@@ -723,7 +723,7 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
             phiK,
             dist,
             self.nmodes,
-            mich=False,
+            mich=mich,
             dt=dt,
             T=T,
         )

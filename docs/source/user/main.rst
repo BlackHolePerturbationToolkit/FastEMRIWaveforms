@@ -22,8 +22,24 @@ Slow Schwarzschild Eccentric Flux-based Waveform
     :show-inheritance:
     :inherited-members:
 
+Generic Kerr AAK with 5PN Trajectory
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: few.waveform.Pn5AAKWaveform
+    :members:
+    :show-inheritance:
+    :inherited-members:
+
 Base Classes
 ~~~~~~~~~~~~~
+
+General Waveform Base
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: few.utils.baseclasses.WaveformBase
+    :members:
+    :show-inheritance:
+    :inherited-members:
 
 Schwarzschild Eccentric
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -34,6 +50,14 @@ Schwarzschild Eccentric
     :inherited-members:
 
 .. autoclass:: few.waveform.SchwarzschildEccentricWaveformBase
+    :members:
+    :show-inheritance:
+    :inherited-members:
+
+5PN + AAK Waveform for Generic Kerr
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: few.utils.baseclasses.Pn5AAK
     :members:
     :show-inheritance:
     :inherited-members:

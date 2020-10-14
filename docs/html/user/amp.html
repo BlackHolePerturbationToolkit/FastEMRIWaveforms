@@ -104,14 +104,16 @@
 <p class="caption"><span class="caption-text">Tutorial:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html">Fast and Accurate EMRI Waveforms Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Full-EMRI-Waveforms">Full EMRI Waveforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric">Full EMRI Waveforms in Schwarzschild Eccentric</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Trajectory-Module">Trajectory Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Amplitude-Module">Amplitude Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Spin-weighted-spherical-harmonics">Spin-weighted spherical harmonics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Mode-Selection">Mode Selection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Parallelized-Cubic-Spline-Interpolation">Parallelized Cubic Spline Interpolation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Mode-Summation">Mode Summation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Utility-functions">Utility functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Creating-modules">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Augmented-Analytic-Kludge-with-5PN-trajectory">Augmented Analytic Kludge with 5PN trajectory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
 </ul>
 <p class="caption"><span class="caption-text">General Information:</span></p>
@@ -229,7 +231,7 @@ It deals with <span class="math notranslate nohighlight">\(A_{lmkn}\)</span> in 
 <dl class="py class">
 <dt id="few.amplitude.romannet.RomanAmplitude">
 <em class="property">class </em><code class="sig-prename descclassname">few.amplitude.romannet.</code><code class="sig-name descname">RomanAmplitude</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">max_init_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.AmplitudeBase</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.AmplitudeBase</span></code>, <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a></p>
 <p>Calculate Teukolsky amplitudes with a ROMAN.</p>
 <p>ROMAN stands for reduced-order models with artificial neurons. Please see
 the documentations for
@@ -471,7 +473,7 @@ value 1, except for the last layer with value 0.</p>
 
 <dl class="py method">
 <dt id="few.amplitude.romannet.RomanAmplitude.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">specific_modes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.__call__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">specific_modes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Common call for Teukolsky amplitudes</p>
 <p>This function takes the inputs the trajectory in <span class="math notranslate nohighlight">\((p,e)\)</span> as arrays
 and returns the complex amplitude of all modes to adiabatic order at
@@ -479,14 +481,10 @@ each step of the trajectory.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>p</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
-the semi-latus rectum.</p></li>
-<li><p><strong>e</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
-the eccentricity.</p></li>
 <li><p><strong>*args</strong> (<em>tuple</em><em>, </em><em>placeholder</em>) – Added to create future flexibility when calling different
-amplitude modules.</p></li>
+amplitude modules. Transfers directly into get_amplitudes function.</p></li>
 <li><p><strong>specific_modes</strong> (<em>list</em><em>, </em><em>optional</em>) – List of tuples for (l, m, n) values
-desired modes. Default is None.</p></li>
+desired modes. Default is None. This is not available for all waveforms.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added to create flexibility when calling different
 amplitude modules. It is not used.</p></li>
 </ul>
@@ -502,20 +500,32 @@ dict: Dictionary with requested modes.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.amplitude.romannet.RomanAmplitude.attributes_SchwarzschildEccentric">
-<code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py attribute">
-<dt id="few.amplitude.romannet.RomanAmplitude.xp">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.xp" title="Permalink to this definition">¶</a></dt>
-<dd><p>numpy or cupy based on hardware chosen.</p>
+<dt id="few.amplitude.romannet.RomanAmplitude.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>module</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.allow_batching">
+<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.amplitude.romannet.RomanAmplitude'&gt;&gt;</em><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.amplitude.romannet.RomanAmplitude.attributes_SchwarzschildEccentric">
+<code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
 <dt id="few.amplitude.romannet.RomanAmplitude.background">
 <code class="sig-name descname">background</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.background" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spacetime background for this model.</p>
@@ -540,7 +550,7 @@ dict: Dictionary with requested modes.</p>
 <dl class="py attribute">
 <dt>
 <code class="sig-name descname">num_modes, num_teuk_modes</code></dt>
-<dd><p>Total number of Tuekolsky modes
+<dd><p>Total number of Teukolsky modes
 in the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -714,6 +724,55 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="few.amplitude.romannet.RomanAmplitude.attributes_WaveformBase">
+<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="id0">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.romannet.RomanAmplitude.gpu_capability">
+<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.amplitude.romannet.RomanAmplitude'&gt;&gt;</em><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.amplitude.romannet.RomanAmplitude.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.amplitude.romannet.RomanAmplitude.sanity_check_init">
 <code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.sanity_check_init" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sanity check initial parameters.</p>
@@ -778,7 +837,7 @@ the trajectory module.</p></li>
 <dd class="field-odd"><p>tuple</p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the angular values are not allowed.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -823,7 +882,7 @@ dict: Dictionary with requested modes.</p>
 <dl class="py class">
 <dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude">
 <em class="property">class </em><code class="sig-prename descclassname">few.amplitude.interp2dcubicspline.</code><code class="sig-name descname">Interp2DAmplitude</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.AmplitudeBase</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.AmplitudeBase</span></code>, <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a></p>
 <p>Calculate Teukolsky amplitudes by 2D Cubic Spline interpolation.</p>
 <p>Please see the documentations for
 <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>
@@ -899,7 +958,7 @@ dict: Dictionary with requested modes.</p>
 
 <dl class="py method">
 <dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">specific_modes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.__call__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">specific_modes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Common call for Teukolsky amplitudes</p>
 <p>This function takes the inputs the trajectory in <span class="math notranslate nohighlight">\((p,e)\)</span> as arrays
 and returns the complex amplitude of all modes to adiabatic order at
@@ -907,14 +966,10 @@ each step of the trajectory.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>p</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
-the semi-latus rectum.</p></li>
-<li><p><strong>e</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
-the eccentricity.</p></li>
 <li><p><strong>*args</strong> (<em>tuple</em><em>, </em><em>placeholder</em>) – Added to create future flexibility when calling different
-amplitude modules.</p></li>
+amplitude modules. Transfers directly into get_amplitudes function.</p></li>
 <li><p><strong>specific_modes</strong> (<em>list</em><em>, </em><em>optional</em>) – List of tuples for (l, m, n) values
-desired modes. Default is None.</p></li>
+desired modes. Default is None. This is not available for all waveforms.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>placeholder</em>) – Added to create flexibility when calling different
 amplitude modules. It is not used.</p></li>
 </ul>
@@ -930,20 +985,32 @@ dict: Dictionary with requested modes.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_SchwarzschildEccentric">
-<code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py attribute">
-<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.xp">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.xp" title="Permalink to this definition">¶</a></dt>
-<dd><p>numpy or cupy based on hardware chosen.</p>
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>module</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.allow_batching">
+<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.amplitude.interp2dcubicspline.Interp2DAmplitude'&gt;&gt;</em><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_SchwarzschildEccentric">
+<code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
 <dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.background">
 <code class="sig-name descname">background</code><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.background" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spacetime background for this model.</p>
@@ -968,7 +1035,7 @@ dict: Dictionary with requested modes.</p>
 <dl class="py attribute">
 <dt>
 <code class="sig-name descname">num_modes, num_teuk_modes</code></dt>
-<dd><p>Total number of Tuekolsky modes
+<dd><p>Total number of Teukolsky modes
 in the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1142,6 +1209,55 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_WaveformBase">
+<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.gpu_capability">
+<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.amplitude.interp2dcubicspline.Interp2DAmplitude'&gt;&gt;</em><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_init">
 <code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_init" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sanity check initial parameters.</p>
@@ -1206,7 +1322,7 @@ the trajectory module.</p></li>
 <dd class="field-odd"><p>tuple</p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the angular values are not allowed.</p>
 </dd>
 </dl>
 </dd></dl>
