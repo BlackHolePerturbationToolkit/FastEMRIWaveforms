@@ -137,7 +137,7 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
 
         # this will return in coordinate time
         # must include Pn5 normalization in case normalization is desired
-        t, p, e, Y, Phi_phi, Phi_r, Phi_theta = self.Pn5_generator(
+        t, p, e, Y, Phi_phi, Phi_theta, Phi_r = self.Pn5_generator(
             M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, **temp_kwargs
         )
-        return (t, p, e, Y, Phi_phi, Phi_r, Phi_theta)
+        return (t, p, e, Y, Phi_phi, Phi_theta, Phi_r)
