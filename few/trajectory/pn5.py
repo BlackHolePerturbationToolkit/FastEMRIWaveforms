@@ -1,7 +1,7 @@
 # Pn5-based Generic Kerr trajectory module for Fast EMRI Waveforms
 
 # Copyright (C) 2020 Michael L. Katz, Alvin J.K. Chua, Niels Warburton, Scott A. Hughes
-# Based on implementation from Sago and Fujita 2020.
+# Based on implementation from Fujita & Shibata 2020
 # See specific code documentation for proper citation.
 
 # This program is free software: you can redistribute it and/or modify
@@ -46,6 +46,9 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
     a dense trajectory, which integrates the trajectory at the user-defined
     timestep.
 
+    The trajectory calculations are based on
+    `Fujita & Shibata 2020<https://arxiv.org/abs/2008.13554>`_.
+
     args:
         *args (list): Any arguments for parent
             class :class:`few.utils.baseclasses.TrajectoryBase` or
@@ -86,7 +89,20 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
         """Return citation for this class"""
         return few_citation + Pn5_citation + kerr_separatrix_citation
 
-    def get_inspiral(self, M, mu, a, p0, e0, Y0, *args, **kwargs):
+    def get_inspiral(
+        self,
+        M,
+        mu,
+        a,
+        p0,
+        e0,
+        Y0,
+        *args,
+        Phi_phi0=0.0,
+        Phi_theta0=0.0,
+        Phi_r0=0.0,
+        **kwargs
+    ):
         """Generate the inspiral.
 
         This is the function for calling the creation of the Pn5-based
@@ -104,6 +120,12 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
             e0 (double): Initial eccentricity (dimensionless).
             Y0 (double): Initial cosine of the inclination.
             *args (list, placeholder): Added for flexibility.
+            Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
+                Default is 0.0.
+            Phi_theta0 (double, optional): Initial phase for :math:`\Phi_\Theta`.
+                Default is 0.0.
+            Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
+                Default is 0.0.
             **kwargs (dict, optional): kwargs passed from parent.
         Returns:
             tuple: Tuple of (t, p, e, Y, Phi_phi, Phi_r, Phi_theta).
@@ -116,6 +138,6 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
         # this will return in coordinate time
         # must include Pn5 normalization in case normalization is desired
         t, p, e, Y, Phi_phi, Phi_r, Phi_theta = self.Pn5_generator(
-            M, mu, a, p0, e0, Y0, **temp_kwargs
+            M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, **temp_kwargs
         )
         return (t, p, e, Y, Phi_phi, Phi_r, Phi_theta)

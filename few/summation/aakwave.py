@@ -94,9 +94,7 @@ class AAKSummation(SummationBase, Pn5AAK):
     @property
     def citation(self):
         """Return citations for this class"""
-        return (
-            few_citation + AAK_citation_1 + AAK_citation_2 + AK_citation + NK_citation
-        )
+        return few_citation + AAK_citation_1 + AAK_citation_2 + AK_citation
 
     def sum(
         self,
@@ -185,51 +183,26 @@ class AAKSummation(SummationBase, Pn5AAK):
             OmegaR / Msec,
         )
 
-        # convert to rotations per sec as in AAK parameter mapping
-        OmegaPhi_mapping, OmegaTheta_mapping, OmegaR_mapping = (
-            2 * np.pi * OmegaPhi,
-            2 * np.pi * OmegaTheta,
-            2 * np.pi * OmegaR,
-        )
-
-        # get parameter map to AK basis
-        # this takes the form of time evolving large mass and spin
-        # (velocity does not come in)
-        v_map, M_map, S_map = pyParMap(
-            OmegaPhi_mapping, OmegaTheta_mapping, OmegaR_mapping, p, e, iota, M, a
-        )
-
-        # get OmegaPhi with the mapped mass and spin values
-        # rather than constant spin and mass
-        # TODO: check if this should be done dimensionalized with mapped masses as well
-        OmegaPhi_spin_mapped = get_fundamental_frequencies(S_map, p, e, Y)[0] / (
-            M_map * MTSUN_SI
-        )
-
         # convert phases to AK basis
         Phivec = Phi_r
         gimvec = Phi_theta - Phi_r
         alpvec = Phi_phi - Phi_theta
 
-        # TODO: check if this should be in radians or revs
-        # TODO: check nuvec relation
-        # TODO: check if these should be related to evolving/mapped mass/spin values
         nuvec = OmegaR / (2 * PI)
         gimdotvec = OmegaTheta - OmegaR
 
-        # TODO: no evolution on iota in AAK, therefore lam constant
-        # lam is iota0
-        lam = iota[0]
+        # lam in the code is iota
+        lam = iota
 
         # convert to gpu if desired
         tvec_temp = self.xp.asarray(tvec)
         init_len = len(tvec)
 
         # setup interpolation
-        ninterps = 7
+        ninterps = 8
         y_all = self.xp.zeros((ninterps, init_len))
 
-        # do not need p anymore since we are inputing OmegaPhiMapped
+        # do not need p anymore since we are inputing OmegaPhi
 
         # fill y_all with all arrays that need interpolation
         y_all[0] = self.xp.asarray(e)
@@ -238,7 +211,8 @@ class AAKSummation(SummationBase, Pn5AAK):
         y_all[3] = self.xp.asarray(alpvec)
         y_all[4] = self.xp.asarray(nuvec)
         y_all[5] = self.xp.asarray(gimdotvec)
-        y_all[6] = self.xp.asarray(OmegaPhi_spin_mapped)
+        y_all[6] = self.xp.asarray(OmegaPhi)
+        y_all[7] = self.xp.asarray(lam)
 
         # get all cubic splines
         self.spline = CubicSplineInterpolant(tvec_temp, y_all, use_gpu=self.use_gpu)
@@ -249,7 +223,6 @@ class AAKSummation(SummationBase, Pn5AAK):
             self.spline.interp_array,
             M,
             mu,
-            lam,
             qS,
             phiS,
             qK,

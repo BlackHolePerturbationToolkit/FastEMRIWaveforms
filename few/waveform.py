@@ -550,7 +550,7 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
     `EMRI Kludge Suite <https://github.com/alvincjk/EMRI_Kludge_Suite/>`_.
     However, here the trajectory is vastly improved by employing the 5PN
     fluxes for generic Kerr orbits from
-    `Sago and Fujita (2019) <https://arxiv.org/abs/1505.01600>`_.
+    `Fujita & Shibata 2020<https://arxiv.org/abs/2008.13554>`_.
 
     The 5PN trajectory produces orbital and phase trajectories.
     The trajectory is calculated until the orbit reaches
@@ -633,7 +633,6 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
             + AAK_citation_1
             + AAK_citation_2
             + AK_citation
-            + NK_citation
             + Pn5_citation
             + kerr_separatrix_citation
         )
