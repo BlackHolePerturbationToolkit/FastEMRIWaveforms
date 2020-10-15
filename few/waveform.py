@@ -646,7 +646,24 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
         return False
 
     def __call__(
-        self, M, mu, a, p0, e0, Y0, qS, phiS, qK, phiK, dist, mich=False, dt=10.0, T=1.0
+        self,
+        M,
+        mu,
+        a,
+        p0,
+        e0,
+        Y0,
+        qS,
+        phiS,
+        qK,
+        phiK,
+        dist,
+        Phi_phi0=0.0,
+        Phi_theta0=0.0,
+        Phi_r0=0.0,
+        mich=False,
+        dt=10.0,
+        T=1.0,
     ):
         """Call function for AAK + 5PN model.
 
@@ -670,6 +687,12 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
             phiK (double): Initial BH spin azimuthal angle in
                 ecliptic coordinates.
             dist (double): Luminosity distance in Gpc.
+            Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
+                Default is 0.0.
+            Phi_theta0 (double, optional): Initial phase for :math:`\Phi_\Theta`.
+                Default is 0.0.
+            Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
+                Default is 0.0.
             mich (bool, optional): If True, produce waveform with
                 long-wavelength response approximation (hI, hII). Please
                 note this is not TDI. If False, return hplus and hcross.
@@ -692,9 +715,19 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
         self.sanity_check_init(M, mu, a, p0, e0, Y0)
 
         # get trajectory
-        # TODO: initial phases ?
-        t, p, e, Y, Phi_phi, Phi_r, Phi_theta = self.inspiral_generator(
-            M, mu, a, p0, e0, Y0, T=T, dt=dt, **self.inspiral_kwargs
+        t, p, e, Y, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(
+            M,
+            mu,
+            a,
+            p0,
+            e0,
+            Y0,
+            Phi_phi0=Phi_phi0,
+            Phi_theta0=Phi_theta0,
+            Phi_r0=Phi_r0,
+            T=T,
+            dt=dt,
+            **self.inspiral_kwargs
         )
 
         # makes sure p, Y, and e are generally within the model

@@ -62,14 +62,14 @@ public:
                 //amp_norm_out_arr.push_back(init_flux);
 		};
 
-		void add_point(double t, double p, double e, double Y, double Phi_phi, double Phi_r, double Phi_theta){
+		void add_point(double t, double p, double e, double Y, double Phi_phi, double Phi_theta, double Phi_r){
 			t_arr.push_back(t);
 			p_arr.push_back(p);
 			e_arr.push_back(e);
             Y_arr.push_back(Y);
 			Phi_phi_arr.push_back(Phi_phi);
-			Phi_r_arr.push_back(Phi_r);
 			Phi_theta_arr.push_back(Phi_theta);
+			Phi_r_arr.push_back(Phi_r);
 		}
 
 	//	~Pn5Holder();
@@ -86,7 +86,7 @@ public:
     Pn5Holder run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0,
         double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4);
 
-    void Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_r, double *Phi_theta, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len);
+    void Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len);
 
     void dealloc();
 };

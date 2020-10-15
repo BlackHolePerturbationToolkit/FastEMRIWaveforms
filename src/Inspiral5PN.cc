@@ -89,8 +89,8 @@ int func (double t, const double y[], double f[], void *params){
 	f[1] = edot;
     f[2] = Ydot;
 	f[3] = Phi_phi_dot;
-	f[4] = Phi_r_dot;
-    f[5] = Phi_theta_dot;
+    f[4] = Phi_theta_dot;
+	f[5] = Phi_r_dot;
 
   return GSL_SUCCESS;
 }
@@ -225,8 +225,8 @@ void Pn5Carrier::Pn5Wrapper(double *t, double *p, double *e, double *Y, double *
 		memcpy(e, &Pn5_vals.e_arr[0], Pn5_vals.length*sizeof(double));
         memcpy(Y, &Pn5_vals.Y_arr[0], Pn5_vals.length*sizeof(double));
 		memcpy(Phi_phi, &Pn5_vals.Phi_phi_arr[0], Pn5_vals.length*sizeof(double));
-		memcpy(Phi_r, &Pn5_vals.Phi_r_arr[0], Pn5_vals.length*sizeof(double));
 		memcpy(Phi_theta, &Pn5_vals.Phi_theta_arr[0], Pn5_vals.length*sizeof(double));
+        memcpy(Phi_r, &Pn5_vals.Phi_r_arr[0], Pn5_vals.length*sizeof(double));
 
         // indicate how long is the trajectory
 		*length = Pn5_vals.length;
