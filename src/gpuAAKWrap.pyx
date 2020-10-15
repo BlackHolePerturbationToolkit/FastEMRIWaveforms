@@ -9,7 +9,7 @@ assert sizeof(int) == sizeof(np.int32_t)
 cdef extern from "../include/gpuAAK.hh":
     ctypedef void* cmplx 'cmplx'
     void get_waveform(cmplx* waveform, double* interp_array,
-                  double M_phys, double mu, double lam, double qS, double phiS, double qK, double phiK, double dist,
+                  double M_phys, double mu, double qS, double phiS, double qK, double phiK, double dist,
                   int nmodes, bool mich,
                   int init_len, int out_len,
                   double delta_t, double *h_t)
@@ -17,7 +17,7 @@ cdef extern from "../include/gpuAAK.hh":
 
 @pointer_adjust
 def pyWaveform(waveform, interp_array,
-              M_phys, mu, lam, qS, phiS, qK, phiK, dist,
+              M_phys, mu, qS, phiS, qK, phiK, dist,
               nmodes, mich,
               init_len, out_len,
               delta_t, h_t):
@@ -27,7 +27,7 @@ def pyWaveform(waveform, interp_array,
     cdef size_t h_t_in = h_t
 
     get_waveform(<cmplx*> waveform_in, <double*> interp_array_in,
-                  M_phys, mu, lam, qS, phiS, qK, phiK, dist,
+                  M_phys, mu, qS, phiS, qK, phiK, dist,
                   nmodes, mich,
                   init_len, out_len,
                   delta_t, <double *>h_t_in)

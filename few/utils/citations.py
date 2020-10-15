@@ -52,18 +52,18 @@ romannet_citation = """
 """
 
 Pn5_citation = """
-@article{Sago:2015rpa,
-    author = "Sago, Norichika and Fujita, Ryuichi",
-    title = "{Calculation of radiation reaction effect on orbital parameters in Kerr spacetime}",
-    eprint = "1505.01600",
+@article{Fujita:2020zxe,
+    author = "Fujita, Ryuichi and Shibata, Masaru",
+    title = "{Extreme mass ratio inspirals on the equatorial plane in the adiabatic order}",
+    eprint = "2008.13554",
     archivePrefix = "arXiv",
     primaryClass = "gr-qc",
-    doi = "10.1093/ptep/ptv092",
-    journal = "PTEP",
-    volume = "2015",
-    number = "7",
-    pages = "073E03",
-    year = "2015"
+    doi = "10.1103/PhysRevD.102.064005",
+    journal = "Phys. Rev. D",
+    volume = "102",
+    number = "6",
+    pages = "064005",
+    year = "2020"
 }
 """
 
@@ -127,20 +127,5 @@ AK_citation = """
     volume = "69",
     pages = "082005",
     year = "2004"
-}
-"""
-
-NK_citation = """
-@article{Babak:2006uv,
-    author = "Babak, Stanislav and Fang, Hua and Gair, Jonathan R. and Glampedakis, Kostas and Hughes, Scott A.",
-    title = "{'Kludge' gravitational waveforms for a test-body orbiting a Kerr black hole}",
-    eprint = "gr-qc/0607007",
-    archivePrefix = "arXiv",
-    doi = "10.1103/PhysRevD.75.024005",
-    journal = "Phys. Rev. D",
-    volume = "75",
-    pages = "024005",
-    year = "2007",
-    note = "[Erratum: Phys.Rev.D 77, 04990 (2008)]"
 }
 """

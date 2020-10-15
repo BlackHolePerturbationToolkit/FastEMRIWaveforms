@@ -38,9 +38,9 @@ public:
         std::vector<double> Phi_theta_arr;
         //std::vector<double> amp_norm_out_arr;
 
-		double t0, M, mu, a, p0, e0, Y0; // , init_flux;
+		double t0, M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0; // , init_flux;
 
-		Pn5Holder(double t0_, double M_, double mu_, double a_, double p0_, double e0_, double Y0_){
+		Pn5Holder(double t0_, double M_, double mu_, double a_, double p0_, double e0_, double Y0_, double Phi_phi0_, double Phi_theta0_, double Phi_r0_){
 				t0 = t0_;
                 M = M_;
                 mu = mu_;
@@ -48,14 +48,17 @@ public:
 				p0 = p0_;
 				e0 = e0_;
                 Y0 = Y0_;
+                Phi_phi0 = Phi_phi0_;
+                Phi_theta0 = Phi_theta0_;
+                Phi_r0 = Phi_r0_;
 
 				t_arr.push_back(t0);
 				p_arr.push_back(p0);
 				e_arr.push_back(e0);
                 Y_arr.push_back(Y0);
-				Phi_phi_arr.push_back(0.0);
-				Phi_r_arr.push_back(0.0);
-                Phi_theta_arr.push_back(0.0);
+				Phi_phi_arr.push_back(Phi_phi0);
+                Phi_theta_arr.push_back(Phi_theta0);
+                Phi_r_arr.push_back(Phi_r0);
                 //amp_norm_out_arr.push_back(init_flux);
 		};
 
@@ -80,9 +83,10 @@ public:
 
     Pn5Carrier();
 
-    Pn5Holder run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double Y0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4);
+    Pn5Holder run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0,
+        double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4);
 
-    void Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_r, double *Phi_theta, double M, double mu, double a, double p0, double e0, double Y0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len);
+    void Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_r, double *Phi_theta, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len);
 
     void dealloc();
 };
