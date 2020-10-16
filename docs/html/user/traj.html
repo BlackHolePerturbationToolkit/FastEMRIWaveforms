@@ -839,6 +839,8 @@ RK8 integrator. It can also adjust the output time-spacing using
 cubic spline interpolation. Additionally, it gives the option for
 a dense trajectory, which integrates the trajectory at the user-defined
 timestep.</p>
+<p>The trajectory calculations are based on
+<a href="#id1"><span class="problematic" id="id2">`Fujita &amp; Shibata 2020&lt;https://arxiv.org/abs/2008.13554&gt;`_</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1039,7 +1041,7 @@ waveform generator.</p></li>
 
 <dl class="py method">
 <dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.get_inspiral">
-<code class="sig-name descname">get_inspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">Y0</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.get_inspiral" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_inspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">Y0</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">Phi_phi0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_theta0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_r0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.get_inspiral" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate the inspiral.</p>
 <p>This is the function for calling the creation of the Pn5-based
 trajectory. Inputs define the output time spacing. This class can be
@@ -1057,6 +1059,12 @@ for information on a more flexible interface to the trajectory modules.</p>
 <li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity (dimensionless).</p></li>
 <li><p><strong>Y0</strong> (<em>double</em>) – Initial cosine of the inclination.</p></li>
 <li><p><strong>*args</strong> (<em>list</em><em>, </em><em>placeholder</em>) – Added for flexibility.</p></li>
+<li><p><strong>Phi_phi0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\phi\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>Phi_theta0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\Theta\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>Phi_r0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_r\)</span>.
+Default is 0.0.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – kwargs passed from parent.</p></li>
 </ul>
 </dd>
