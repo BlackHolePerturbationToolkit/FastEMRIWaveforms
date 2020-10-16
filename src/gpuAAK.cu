@@ -167,7 +167,7 @@ void make_waveform(cmplx *waveform,
       double sinphiK=sin(phiK);
       double halfsqrt3=sqrt(3.)/2.;
       double mu_sec = mu * MTSUN_SI;
-      double zeta=mu_sec/dist/Gpc; // M/D
+      double zeta=mu_sec/dist/GPCINSEC; // M/D
 
       double up_ldc = (cosqS*sinqK*cos(phiS-phiK) - cosqK*sinqS);
         double dw_ldc = (sinqK*sin(phiS-phiK));
