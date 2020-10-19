@@ -306,7 +306,6 @@ void make_waveform(cmplx *waveform,
           d_RotCoeff(rot, n_rot, L_rot, S_rot, nxL_rot, nxS_rot,
                    lam,qS,phiS,qK,phiK,alp);
 
-          // TODO: CHECK this in terms of further parallelization
           double hItemp = 0.0;
           double hIItemp = 0.0;
           for(int n=1;n<=nmodes;n++)
