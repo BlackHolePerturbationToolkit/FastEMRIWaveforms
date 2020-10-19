@@ -3,7 +3,8 @@
 
 // Copyright (C) 2020 Niels Warburton, Michael L. Katz, Alvin J.K. Chua, Scott A. Hughes
 //
-// TODO: need to update docs to reflect correct attribution
+// Based on implementation from Fujita & Shibata 2020
+// See specific code documentation for proper citation.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
