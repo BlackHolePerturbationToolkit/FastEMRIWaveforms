@@ -34,7 +34,7 @@ from few.utils.citations import *
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class Interp2DAmplitude(SchwarzschildEccentric, AmplitudeBase):
+class Interp2DAmplitude(AmplitudeBase, SchwarzschildEccentric):
     """Calculate Teukolsky amplitudes by 2D Cubic Spline interpolation.
 
     Please see the documentations for

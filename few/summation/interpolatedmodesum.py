@@ -119,7 +119,7 @@ class CubicSplineInterpolant:
             interpolate_arrays (func): CPU or GPU function for mode interpolation.
             interp_array (1D double xp.ndarray): Array containing all spline
                 coefficients. It is flattened after fitting from shape
-                (4, ninterps, length). The 4 is the 4 spline coefficients.
+                (4, length, ninterps). The 4 is the 4 spline coefficients.
 
         """
 
@@ -255,11 +255,8 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
         Phi_r,
         m_arr,
         n_arr,
-        init_len,
-        num_pts,
-        num_teuk_modes,
-        dt,
         *args,
+        dt=10.0,
         **kwargs
     ):
         """Interpolated summation function.
@@ -282,15 +279,16 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
                  (:math:`\Phi_r`).
             m_arr (1D int xp.ndarray): :math:`m` values associated with each mode.
             n_arr (1D int xp.ndarray): :math:`n` values associated with each mode.
-            init_len (int): len(t).
-            num_pts (int): len(self.waveform).
-            num_teuk_modes (int): Number of amplitude modes included.
-            dt (double): Time spacing between observations (inverse of sampling
-                rate).
             *args (list, placeholder): Added for future flexibility.
+            dt (double, optional): Time spacing between observations (inverse of sampling
+                rate). Default is 10.0.
             **kwargs (dict, placeholder): Added for future flexibility.
 
         """
+
+        init_len = len(t)
+        num_teuk_modes = teuk_modes.shape[1]
+        num_pts = self.num_pts
 
         length = init_len
         ninterps = self.ndim + 2 * num_teuk_modes  # 2 for re and im

@@ -32,15 +32,119 @@ from scipy import constants as ct
 # try to import cupy
 try:
     import cupy as xp
+
+    gpu_available = True
+
 except:
     import numpy as xp
+
+    gpu_available = False
 
 # Python imports
 from few.utils.constants import *
 from few.utils.citations import *
 
 
-class SchwarzschildEccentric(ABC):
+class WaveformBase(ABC):
+    """Base class for waveforms.
+
+    This class mainly handles setting GPU usage.
+
+    args:
+        use_gpu (bool, optional): If True, use GPU resources. Default is False.
+
+    """
+
+    def attributes_WaveformBase(self):
+        """
+        attributes:
+            use_gpu (bool): If True, use GPU.
+            xp (obj): Either numpy or CuPy based on gpu preference.
+
+        """
+        pass
+
+    def __init__(self, use_gpu=False, **kwargs):
+
+        self.use_gpu = use_gpu
+
+        if use_gpu is True:
+            self.xp = xp
+        else:
+            self.xp = np
+
+        # checks if gpu capability is available if requested
+        self.sanity_check_gpu(use_gpu)
+
+    @classmethod
+    @property
+    def gpu_capability(self):
+        """Indicator if the module has gpu capability"""
+        raise NotImplementedError
+
+    @classmethod
+    @property
+    def allow_batching(self):
+        """Indicator if module allows batching"""
+        raise NotImplementedError
+
+    @property
+    def citation(self):
+        """Return citations related to this module"""
+        return few_citation
+
+    @classmethod
+    def __call__(*args, **kwargs):
+        """Method to call waveform model"""
+        raise NotImplementedError
+
+    def sanity_check_gpu(self, use_gpu):
+        """Check if this class has GPU capability
+
+        If the user is requesting GPU usage, this will confirm the class has
+        GPU capabilites.
+
+        Args:
+            use_gpu (bool): If True, the user is requesting GPU usage.
+
+        Raises:
+            ValueError: The user is requesting GPU usage, but this class does
+                not have that capability.
+
+        """
+        if (self.gpu_capability is False or gpu_available is False) and use_gpu is True:
+            if self.gpu_capability is False:
+                raise ValueError(
+                    "The use_gpu kwarg is True, but this class does not have GPU capabilites."
+                )
+            else:
+                raise ValueError("Either a GPU and/or CuPy is not available.")
+
+    def adjust_gpu_usage(self, use_gpu, kwargs):
+        """Adjust all inputs for gpu usage
+
+        If user wants to use gpu, it will change all :code:`kwargs` in
+        so that :code:`use_gpu=True`.
+
+        args:
+            use_gpu (bool): If True, use gpu resources.
+            kwargs (list of dicts or dict): List of kwargs dictionaries or
+                single dictionary for each constituent class in the
+                waveform generator.
+
+        """
+
+        if use_gpu:
+            if isinstance(kwargs, list):
+                for i, kwargs_i in enumerate(kwargs):
+                    kwargs[i]["use_gpu"] = use_gpu
+            else:
+                kwargs["use_gpu"] = use_gpu
+
+        return kwargs
+
+
+class SchwarzschildEccentric(WaveformBase, ABC):
     """Base class for Schwarzschild eccentric waveforms.
 
     This class creates shared traits between different implementations of the
@@ -77,10 +181,9 @@ class SchwarzschildEccentric(ABC):
     def attributes_SchwarzschildEccentric(self):
         """
         attributes:
-            xp (module): numpy or cupy based on hardware chosen.
             background (str): Spacetime background for this model.
             descriptor (str): Short description for model validity.
-            num_modes, num_teuk_modes (int): Total number of Tuekolsky modes
+            num_modes, num_teuk_modes (int): Total number of Teukolsky modes
                 in the model.
             lmax, nmax (int): Maximum :math:`l`, :math:`n`  values
             ndim (int): Dimensionality in terms of orbital parameters and phases.
@@ -110,12 +213,7 @@ class SchwarzschildEccentric(ABC):
 
     def __init__(self, use_gpu=False, **kwargs):
 
-        # set gpu usage
-        self.use_gpu = use_gpu
-        if use_gpu is True:
-            self.xp = xp
-        else:
-            self.xp = np
+        WaveformBase.__init__(self, use_gpu=use_gpu, **kwargs)
 
         # some descriptive information
         self.background = "Schwarzschild"
@@ -249,7 +347,7 @@ class SchwarzschildEccentric(ABC):
             tuple: (theta, phi). Phi is wrapped.
 
         Raises:
-            ValueError: If any of the trajectory points are not allowed.
+            ValueError: If any of the angular values are not allowed.
 
         """
         if theta < 0.0 or theta > np.pi:
@@ -337,6 +435,143 @@ class SchwarzschildEccentric(ABC):
             )
 
 
+class Pn5AAK(WaveformBase, ABC):
+    """Base class for Pn5AAK waveforms.
+
+    This class contains some basic checks and information for AAK waveforms
+    with a 5PN trajectory model. Please see :class:`few.waveform.Pn5AAKWaveform`
+    for more details.
+
+    args:
+        use_gpu (bool, optional): If True, will allocate arrays on the GPU.
+            Default is False.
+
+    """
+
+    def attributes_Pn5AAK(self):
+        """
+        attributes:
+            xp (module): numpy or cupy based on hardware chosen.
+            background (str): Spacetime background for this model.
+            descriptor (str): Short description for model validity.
+
+        """
+        pass
+
+    def __init__(self, use_gpu=False, **kwargs):
+
+        WaveformBase.__init__(self, use_gpu=use_gpu, **kwargs)
+
+        # some descriptive information
+        self.background = "Kerr"
+        self.descriptor = "Generic Orbits"
+
+    @property
+    def citation(self):
+        """Return citations of this class"""
+        return few_citation + Pn5_citation
+
+    def sanity_check_angles(self, qS, phiS, qK, phiK):
+        """Sanity check on viewing angles.
+
+        Make sure parameters are within allowable ranges.
+
+        args:
+            qS (double): Sky location polar angle in ecliptic
+                coordinates.
+            phiS (double): Sky location azimuthal angle in
+                ecliptic coordinates.
+            qK (double): Initial BH spin polar angle in ecliptic
+                coordinates.
+            phiK (double): Initial BH spin azimuthal angle in
+                ecliptic coordinates.
+
+        Returns:
+            tuple: (qS, phiS, qK, phiK). phiS and phiK are wrapped.
+
+        Raises:
+            ValueError: If any of the angular values are not allowed.
+
+        """
+        if qS < 0.0 or qS > np.pi:
+            raise ValueError("qS must be between 0 and pi.")
+
+        if qK < 0.0 or qK > np.pi:
+            raise ValueError("qK must be between 0 and pi.")
+
+        phiS = phiS % (2 * np.pi)
+        phiK = phiK % (2 * np.pi)
+        return (qS, phiS, qK, phiK)
+
+    def sanity_check_traj(self, p, e, Y):
+        """Sanity check on parameters output from thte trajectory module.
+
+        Make sure parameters are within allowable ranges.
+
+        args:
+            p (1D np.ndarray): Array of semi-latus rectum values produced by
+                the trajectory module.
+            e (1D np.ndarray): Array of eccentricity values produced by
+                the trajectory module.
+            Y (1D np.ndarray): Array of cos:math:`\iota` values produced by
+                the trajectory module.
+
+        Raises:
+            ValueError: If any of the trajectory points are not allowed.
+            warn: If any points in the trajectory are allowable,
+                but outside calibration region.
+
+        """
+
+        if np.any(e < 0.0):
+            raise ValueError("Members of e array are less than zero.")
+
+        if np.any(p < 0.0):
+            raise ValueError("Members of p array are less than zero.")
+
+        if np.any(Y < -1.0) or np.any(Y > 1.0):
+            raise ValueError(
+                "Members of Y array are greater than 1.0 or less than -1.0."
+            )
+
+    def sanity_check_init(self, M, mu, a, p0, e0, Y0):
+        """Sanity check initial parameters.
+
+        Make sure parameters are within allowable ranges.
+
+        args:
+            M (double): Massive black hole mass in solar masses.
+            mu (double): compact object mass in solar masses.
+            a (double): Dimensionless spin of massive black hole.
+            p0 (double): Initial semilatus rectum (dimensionless)
+                :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
+                more information on :math:`p_0 \leq 10.0`.
+            e0 (double): Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
+            Y0 (double): Initial cos:math:`\iota` :math:`(-1.0\leq Y_0\leq1.0)`.
+
+        Raises:
+            ValueError: If any of the parameters are not allowed.
+
+        """
+
+        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"], [a, "a"]]:
+            test = val < 0.0
+            if test:
+                raise ValueError("{} is negative. It must be positive.".format(key))
+
+        if mu / M > 1e-4:
+            warnings.warn(
+                "Mass ratio is outside of generally accepted range for an extreme mass ratio (1e-4). (q={})".format(
+                    mu / M
+                )
+            )
+
+        if Y0 > 1.0 or Y0 < -1.0:
+            raise ValueError(
+                "Y0 is greater than 1 or less than -1. Must be between -1 and 1."
+            )
+
+
 class TrajectoryBase(ABC):
     """Base class used for trajectory modules.
 
@@ -384,7 +619,7 @@ class TrajectoryBase(ABC):
         err=1e-10,
         use_rk4=False,
         fix_t=False,
-        **kwargs
+        **kwargs,
     ):
         """Call function for trajectory interface.
 
@@ -536,7 +771,7 @@ class SummationBase(ABC):
         """
         raise NotImplementedError
 
-    def __call__(self, t, teuk_modes, ylms, dt, T, *args, **kwargs):
+    def __call__(self, t, *args, T=1.0, dt=10.0, **kwargs):
         """Common call function for summation modules.
 
         Provides a common interface for summation modules. It can adjust for
@@ -544,22 +779,16 @@ class SummationBase(ABC):
 
         args:
             t (1D double xp.ndarray): Array of t values.
-            teuk_modes (2D double xp.array): Array of complex amplitudes.
-                Shape: (len(t), num_teuk_modes).
-            ylms (1D complex128 xp.ndarray): Array of ylm values for each mode,
-                including m<0. Shape is (num of m==0,) + (num of m>0,)
-                + (num of m<0). Number of m<0 and m>0 is the same, but they are
-                ordered as (m==0 first then) m>0 then m<0.
-            dt (double): Time spacing between observations in seconds (inverse of sampling
-                rate).
-            T (double): Maximum observing time in years.
-            *args (list): This should be a tuple of phases combined with mode
-                index arrays. For equatorial, :math:`(\Phi_\phi, \Phi_r, m, n)`.
-                For generic, :math:`(\Phi_\phi, \Phi_\Theta, \Phi_r, m, k, n)`.
+            *args (list): Added for flexibility with summation modules. `args`
+                tranfers directly into sum function.
+            dt (double, optional): Time spacing between observations in seconds (inverse of sampling
+                rate). Default is 10.0.
+            T (double, optional): Maximum observing time in years. Default is 1.0.
             **kwargs (dict, placeholder): Added for future flexibility.
 
         """
 
+        T = T * YRSID_SI
         # determine the output array setup
 
         # adjust based on if observations time is less than or more than trajectory time array
@@ -577,8 +806,6 @@ class SummationBase(ABC):
 
         self.num_pts, self.num_pts_pad = num_pts, num_pts_pad
         self.dt = dt
-        init_len = len(t)
-        num_teuk_modes = teuk_modes.shape[1]
 
         # setup waveform holder
         self.waveform = self.xp.zeros(
@@ -586,8 +813,7 @@ class SummationBase(ABC):
         )
 
         # get the waveform summed in place
-        args_in = (t, teuk_modes, ylms) + args + (init_len, num_pts, num_teuk_modes, dt)
-        self.sum(*args_in)
+        self.sum(t, *args, dt=dt, **kwargs)
 
         return self.waveform
 
@@ -625,7 +851,7 @@ class AmplitudeBase(ABC):
         """Return citation for this class"""
         return few_citation
 
-    def __call__(self, p, e, *args, specific_modes=None, **kwargs):
+    def __call__(self, *args, specific_modes=None, **kwargs):
         """Common call for Teukolsky amplitudes
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays
@@ -633,14 +859,10 @@ class AmplitudeBase(ABC):
         each step of the trajectory.
 
         args:
-            p (1D double numpy.ndarray): Array containing the trajectory for values of
-                the semi-latus rectum.
-            e (1D double numpy.ndarray): Array containing the trajectory for values of
-                the eccentricity.
             *args (tuple, placeholder): Added to create future flexibility when calling different
-                amplitude modules.
+                amplitude modules. Transfers directly into get_amplitudes function.
             specific_modes (list, optional): List of tuples for (l, m, n) values
-                desired modes. Default is None.
+                desired modes. Default is None. This is not available for all waveforms.
             **kwargs (dict, placeholder): Added to create flexibility when calling different
                 amplitude modules. It is not used.
 
@@ -651,4 +873,4 @@ class AmplitudeBase(ABC):
 
         """
 
-        return self.get_amplitudes(p, e, *args, specific_modes=specific_modes, **kwargs)
+        return self.get_amplitudes(*args, specific_modes=specific_modes, **kwargs)

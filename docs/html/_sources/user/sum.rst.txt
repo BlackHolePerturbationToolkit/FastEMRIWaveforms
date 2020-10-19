@@ -26,3 +26,11 @@ Direct Summation
     :members:
     :show-inheritance:
     :inherited-members:
+
+AAK Summation / Waveform Generator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: few.summation.aakwave
+    :members:
+    :show-inheritance:
+    :inherited-members:

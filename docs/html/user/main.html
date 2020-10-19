@@ -91,10 +91,13 @@
 <li class="toctree-l2"><a class="reference internal" href="#prebuilt-waveform-models">Prebuilt Waveform Models</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#fast-schwarzschild-eccentric-flux-based-waveform">Fast Schwarzschild Eccentric Flux-based Waveform</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#slow-schwarzschild-eccentric-flux-based-waveform">Slow Schwarzschild Eccentric Flux-based Waveform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generic-kerr-aak-with-5pn-trajectory">Generic Kerr AAK with 5PN Trajectory</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#base-classes">Base Classes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#general-waveform-base">General Waveform Base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#schwarzschild-eccentric">Schwarzschild Eccentric</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pn-aak-waveform-for-generic-kerr">5PN + AAK Waveform for Generic Kerr</a></li>
 </ul>
 </li>
 </ul>
@@ -108,14 +111,16 @@
 <p class="caption"><span class="caption-text">Tutorial:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html">Fast and Accurate EMRI Waveforms Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Full-EMRI-Waveforms">Full EMRI Waveforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric">Full EMRI Waveforms in Schwarzschild Eccentric</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Trajectory-Module">Trajectory Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Amplitude-Module">Amplitude Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Spin-weighted-spherical-harmonics">Spin-weighted spherical harmonics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Mode-Selection">Mode Selection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Parallelized-Cubic-Spline-Interpolation">Parallelized Cubic Spline Interpolation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Mode-Summation">Mode Summation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Utility-functions">Utility functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Creating-modules">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Augmented-Analytic-Kludge-with-5PN-trajectory">Augmented Analytic Kludge with 5PN trajectory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
 </ul>
 <p class="caption"><span class="caption-text">General Information:</span></p>
@@ -363,16 +368,17 @@ single waveform.</p></li>
 
 <dl class="py method">
 <dt id="few.waveform.FastSchwarzschildEccentricFlux.adjust_gpu_usage">
-<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs_list</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adjust all inputs for gpu usage</p>
 <p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
-<code class="code docutils literal notranslate"><span class="pre">kwargs_list</span></code> so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
-<li><p><strong>kwargs_list</strong> (<em>list of dicts</em>) – List of kwargs dictionaries for each
-constituent class in the waveform generator.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
 </ul>
 </dd>
 </dl>
@@ -382,17 +388,6 @@ constituent class in the waveform generator.</p></li>
 <dt id="few.waveform.FastSchwarzschildEccentricFlux.attributes_SchwarzschildEccentric">
 <code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
-<dt id="few.waveform.FastSchwarzschildEccentricFlux.xp">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.xp" title="Permalink to this definition">¶</a></dt>
-<dd><p>numpy or cupy based on hardware chosen.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>module</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
 <dt id="few.waveform.FastSchwarzschildEccentricFlux.background">
 <code class="sig-name descname">background</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.background" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spacetime background for this model.</p>
@@ -417,7 +412,7 @@ constituent class in the waveform generator.</p></li>
 <dl class="py attribute">
 <dt>
 <code class="sig-name descname">num_modes, num_teuk_modes</code></dt>
-<dd><p>Total number of Tuekolsky modes
+<dd><p>Total number of Teukolsky modes
 in the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -684,8 +679,8 @@ to l_arr, m_arr, n_arr.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="id3">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#id3" title="Permalink to this definition">¶</a></dt>
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.xp" title="Permalink to this definition">¶</a></dt>
 <dd><p>numpy or cupy based on gpu usage.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -702,6 +697,33 @@ selection.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.attributes_WaveformBase">
+<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.waveform.FastSchwarzschildEccentricFlux.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="id3">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
 </dd>
 </dl>
 </dd></dl>
@@ -796,7 +818,7 @@ the trajectory module.</p></li>
 <dd class="field-odd"><p>tuple</p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the angular values are not allowed.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -860,6 +882,35 @@ Ylm generator during instantiation. Default is {}.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.attributes_SlowSchwarzschildEccentricFlux">
+<code class="sig-name descname">attributes_SlowSchwarzschildEccentricFlux</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.attributes_SlowSchwarzschildEccentricFlux" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="id4">
+<code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#id4" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, this wavefrom can leverage gpu
+resources. For this class it is False.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="id5">
+<code class="sig-name descname">allow_batching</code><a class="headerlink" href="#id5" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, this waveform can use the batch_size
+kwarg. For this class it is True.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.waveform.SlowSchwarzschildEccentricFlux.__call__">
 <code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em>, <em class="sig-param"><span class="n">show_progress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">mode_selection</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call function for SchwarzschildEccentric models.</p>
@@ -915,16 +966,17 @@ single waveform.</p></li>
 
 <dl class="py method">
 <dt id="few.waveform.SlowSchwarzschildEccentricFlux.adjust_gpu_usage">
-<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs_list</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adjust all inputs for gpu usage</p>
 <p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
-<code class="code docutils literal notranslate"><span class="pre">kwargs_list</span></code> so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
-<li><p><strong>kwargs_list</strong> (<em>list of dicts</em>) – List of kwargs dictionaries for each
-constituent class in the waveform generator.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
 </ul>
 </dd>
 </dl>
@@ -934,17 +986,6 @@ constituent class in the waveform generator.</p></li>
 <dt id="few.waveform.SlowSchwarzschildEccentricFlux.attributes_SchwarzschildEccentric">
 <code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
-<dt id="few.waveform.SlowSchwarzschildEccentricFlux.xp">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.xp" title="Permalink to this definition">¶</a></dt>
-<dd><p>numpy or cupy based on hardware chosen.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>module</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
 <dt id="few.waveform.SlowSchwarzschildEccentricFlux.background">
 <code class="sig-name descname">background</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.background" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spacetime background for this model.</p>
@@ -969,7 +1010,7 @@ constituent class in the waveform generator.</p></li>
 <dl class="py attribute">
 <dt>
 <code class="sig-name descname">num_modes, num_teuk_modes</code></dt>
-<dd><p>Total number of Tuekolsky modes
+<dd><p>Total number of Teukolsky modes
 in the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1190,8 +1231,8 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="id5">
-<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#id5" title="Permalink to this definition">¶</a></dt>
+<dt id="id7">
+<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#id7" title="Permalink to this definition">¶</a></dt>
 <dd><p>instantiated Ylm module.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1236,8 +1277,8 @@ to l_arr, m_arr, n_arr.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="id6">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#id6" title="Permalink to this definition">¶</a></dt>
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.xp" title="Permalink to this definition">¶</a></dt>
 <dd><p>numpy or cupy based on gpu usage.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1261,13 +1302,12 @@ selection.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.waveform.SlowSchwarzschildEccentricFlux.attributes_SlowSchwarzschildEccentricFlux">
-<code class="sig-name descname">attributes_SlowSchwarzschildEccentricFlux</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.attributes_SlowSchwarzschildEccentricFlux" title="Permalink to this definition">¶</a></dt>
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.attributes_WaveformBase">
+<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
-<dt id="id7">
-<code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#id7" title="Permalink to this definition">¶</a></dt>
-<dd><p>If True, this wavefrom can leverage gpu
-resources. For this class it is False.</p>
+<dt id="few.waveform.SlowSchwarzschildEccentricFlux.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>bool</p>
@@ -1277,12 +1317,11 @@ resources. For this class it is False.</p>
 
 <dl class="py attribute">
 <dt id="id8">
-<code class="sig-name descname">allow_batching</code><a class="headerlink" href="#id8" title="Permalink to this definition">¶</a></dt>
-<dd><p>If True, this waveform can use the batch_size
-kwarg. For this class it is True.</p>
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id8" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
+<dd class="field-odd"><p>obj</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1377,7 +1416,376 @@ the trajectory module.</p></li>
 <dd class="field-odd"><p>tuple</p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the angular values are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="generic-kerr-aak-with-5pn-trajectory">
+<h3>Generic Kerr AAK with 5PN Trajectory<a class="headerlink" href="#generic-kerr-aak-with-5pn-trajectory" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="few.waveform.Pn5AAKWaveform">
+<em class="property">class </em><code class="sig-prename descclassname">few.waveform.</code><code class="sig-name descname">Pn5AAKWaveform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inspiral_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">sum_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.Pn5AAKWaveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.Pn5AAK" title="few.utils.baseclasses.Pn5AAK"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.Pn5AAK</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Waveform generation class for AAK with 5PN trajectory.</p>
+<p>This class generates waveforms based on the Augmented Analytic Kludge
+given in the
+<a class="reference external" href="https://github.com/alvincjk/EMRI_Kludge_Suite/">EMRI Kludge Suite</a>.
+However, here the trajectory is vastly improved by employing the 5PN
+fluxes for generic Kerr orbits from
+<a href="#id15"><span class="problematic" id="id16">`Fujita &amp; Shibata 2020&lt;https://arxiv.org/abs/2008.13554&gt;`_</span></a>.</p>
+<p>The 5PN trajectory produces orbital and phase trajectories.
+The trajectory is calculated until the orbit reaches
+within 0.2 of the separatrix, determined from
+<a class="reference external" href="https://arxiv.org/abs/1912.07609/">arXiv:1912.07609</a>. The
+fundamental frequencies along the trajectory at each point are then
+calculated from the orbital parameters and the spin value given by (<a class="reference external" href="https://arxiv.org/abs/gr-qc/0202090">Schmidt 2002</a>).</p>
+<p>These frequencies along the trajectory are then used to map to the
+frequency basis of the <a class="reference external" href="https://arxiv.org/abs/gr-qc/0310125">Analytic Kludge</a>. This mapping
+takes the form of time evolving large mass and spin parameters, as
+well as the use of phases and frequencies in
+<span class="math notranslate nohighlight">\((alpha, \Phi, \gamma)\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\Phi = \Phi_\phi,\]</div>
+<div class="math notranslate nohighlight">
+\[\gamma = \Phi_\phi + \Phi_\Theta,\]</div>
+<div class="math notranslate nohighlight">
+\[alpha = \Phi_\phi + \Phi_\Theta + \Phi_r.\]</div>
+<p>The frequencies in that basis are found by taking the time derivatives
+of each equation above.</p>
+<p>This class has GPU capabilities and works from the sparse trajectory
+methodoligy with cubic spine interpolation of the smoothly varying
+waveform quantities. This waveform does not have the freedom in terms
+of user-chosen quantitites that
+<a class="reference internal" href="#few.waveform.SchwarzschildEccentricWaveformBase" title="few.waveform.SchwarzschildEccentricWaveformBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.SchwarzschildEccentricWaveformBase</span></code></a> contains.
+This is mainly due to the specific waveform constructions particular
+to the AAK/AK.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inspiral_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
+inspiral generator. <strong>Important Note</strong>: These kwargs are passed
+online, not during instantiation like other kwargs here. Default is
+{}. This is stored as an attribute.</p></li>
+<li><p><strong>sum_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
+sum module during instantiation. Default is {}.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, use GPU resources. Default is False.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="few.waveform.Pn5AAKWaveform.attributes_Pn5AAKWaveform">
+<code class="sig-name descname">attributes_Pn5AAKWaveform</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.attributes_Pn5AAKWaveform" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.waveform.Pn5AAKWaveform.inspiral_generator">
+<code class="sig-name descname">inspiral_generator</code><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.inspiral_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated trajectory module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.Pn5AAKWaveform.create_waveform">
+<code class="sig-name descname">create_waveform</code><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.create_waveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>instantiated summation module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.Pn5AAKWaveform.inspiral_kwargs">
+<code class="sig-name descname">inspiral_kwargs</code><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.inspiral_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kwargs related to the inspiral class:
+<a class="reference internal" href="traj.html#few.trajectory.pn5.RunKerrGenericPn5Inspiral" title="few.trajectory.pn5.RunKerrGenericPn5Inspiral"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.trajectory.pn5.RunKerrGenericPn5Inspiral</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.Pn5AAKWaveform.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>numpy or cupy based on gpu usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt>
+<code class="sig-name descname">num_modes_kept/nmodes</code></dt>
+<dd><p>Number of modes for final waveform.
+For this model, it is solely determined from the
+eccentricity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.Pn5AAKWaveform.citation">
+<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.citation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return citations related to this module</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.Pn5AAKWaveform.gpu_capability">
+<em class="property">property </em><code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicator if the module has gpu capability</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.Pn5AAKWaveform.allow_batching">
+<em class="property">property </em><code class="sig-name descname">allow_batching</code><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicator if module allows batching</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.Pn5AAKWaveform.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">Y0</span></em>, <em class="sig-param"><span class="n">qS</span></em>, <em class="sig-param"><span class="n">phiS</span></em>, <em class="sig-param"><span class="n">qK</span></em>, <em class="sig-param"><span class="n">phiK</span></em>, <em class="sig-param"><span class="n">dist</span></em>, <em class="sig-param"><span class="n">Phi_phi0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_theta0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_r0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">mich</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call function for AAK + 5PN model.</p>
+<p>This function will take input parameters and produce AAK waveforms with 5PN trajectories in generic Kerr.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Mass of larger black hole in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – Mass of compact object in solar masses.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (Must be greater than
+the separatrix at the the given e0 and Y0).
+See documentation for more information on <span class="math notranslate nohighlight">\(p_0&lt;10\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity.</p></li>
+<li><p><strong>Y0</strong> (<em>double</em>) – Initial cosine of the inclination angle
+(<span class="math notranslate nohighlight">\(\cos{\iota}\)</span>).</p></li>
+<li><p><strong>qS</strong> (<em>double</em>) – Sky location polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiS</strong> (<em>double</em>) – Sky location azimuthal angle in
+ecliptic coordinates.</p></li>
+<li><p><strong>qK</strong> (<em>double</em>) – Initial BH spin polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiK</strong> (<em>double</em>) – Initial BH spin azimuthal angle in
+ecliptic coordinates.</p></li>
+<li><p><strong>dist</strong> (<em>double</em>) – Luminosity distance in Gpc.</p></li>
+<li><p><strong>Phi_phi0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\phi\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>Phi_theta0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\Theta\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>Phi_r0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_r\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>mich</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, produce waveform with
+long-wavelength response approximation (hI, hII). Please
+note this is not TDI. If False, return hplus and hcross.
+Default is False.</p></li>
+<li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time between samples in seconds
+(inverse of sampling frequency). Default is 10.0.</p></li>
+<li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Total observation time in years.
+Default is 1.0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The output waveform.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>1D complex128 xp.ndarray</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – user selections are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.Pn5AAKWaveform.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.Pn5AAKWaveform.attributes_Pn5AAK">
+<code class="sig-name descname">attributes_Pn5AAK</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.attributes_Pn5AAK" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="id9">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id9" title="Permalink to this definition">¶</a></dt>
+<dd><p>numpy or cupy based on hardware chosen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>module</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.Pn5AAKWaveform.background">
+<code class="sig-name descname">background</code><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.background" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spacetime background for this model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.Pn5AAKWaveform.descriptor">
+<code class="sig-name descname">descriptor</code><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.descriptor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Short description for model validity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.Pn5AAKWaveform.attributes_WaveformBase">
+<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.waveform.Pn5AAKWaveform.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="id10">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id10" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.Pn5AAKWaveform.sanity_check_angles">
+<code class="sig-name descname">sanity_check_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qS</span></em>, <em class="sig-param"><span class="n">phiS</span></em>, <em class="sig-param"><span class="n">qK</span></em>, <em class="sig-param"><span class="n">phiK</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.sanity_check_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on viewing angles.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qS</strong> (<em>double</em>) – Sky location polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiS</strong> (<em>double</em>) – Sky location azimuthal angle in
+ecliptic coordinates.</p></li>
+<li><p><strong>qK</strong> (<em>double</em>) – Initial BH spin polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiK</strong> (<em>double</em>) – Initial BH spin azimuthal angle in
+ecliptic coordinates.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(qS, phiS, qK, phiK). phiS and phiK are wrapped.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the angular values are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.Pn5AAKWaveform.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.Pn5AAKWaveform.sanity_check_init">
+<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">Y0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.sanity_check_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check initial parameters.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
+<li><p><strong>a</strong> (<em>double</em>) – Dimensionless spin of massive black hole.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (dimensionless)
+<span class="math notranslate nohighlight">\((10\leq p_0\leq 16 + 2e_0)\)</span>. See the documentation for
+more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e_0\leq0.7)\)</span>.</p></li>
+<li><p><strong>Y0</strong> (<em>double</em>) – Initial cos:math:<cite>iota</cite> <span class="math notranslate nohighlight">\((-1.0\leq Y_0\leq1.0)\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the parameters are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.Pn5AAKWaveform.sanity_check_traj">
+<code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="n">Y</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on parameters output from thte trajectory module.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>1D np.ndarray</em>) – Array of semi-latus rectum values produced by
+the trajectory module.</p></li>
+<li><p><strong>e</strong> (<em>1D np.ndarray</em>) – Array of eccentricity values produced by
+the trajectory module.</p></li>
+<li><p><strong>Y</strong> (<em>1D np.ndarray</em>) – Array of cos:math:<cite>iota</cite> values produced by
+the trajectory module.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p></li>
+<li><p><strong>warn</strong> – If any points in the trajectory are allowable,
+    but outside calibration region.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -1388,12 +1796,112 @@ the trajectory module.</p></li>
 </div>
 <div class="section" id="base-classes">
 <h2>Base Classes<a class="headerlink" href="#base-classes" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="general-waveform-base">
+<h3>General Waveform Base<a class="headerlink" href="#general-waveform-base" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="few.utils.baseclasses.WaveformBase">
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.baseclasses.</code><code class="sig-name descname">WaveformBase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.WaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Base class for waveforms.</p>
+<p>This class mainly handles setting GPU usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, use GPU resources. Default is False.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="few.utils.baseclasses.WaveformBase.attributes_WaveformBase">
+<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.WaveformBase.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.utils.baseclasses.WaveformBase.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.utils.baseclasses.WaveformBase.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.baseclasses.WaveformBase.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.utils.baseclasses.WaveformBase.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.baseclasses.WaveformBase.gpu_capability">
+<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.utils.baseclasses.WaveformBase'&gt;&gt;</em><a class="headerlink" href="#few.utils.baseclasses.WaveformBase.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.baseclasses.WaveformBase.allow_batching">
+<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.utils.baseclasses.WaveformBase'&gt;&gt;</em><a class="headerlink" href="#few.utils.baseclasses.WaveformBase.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.WaveformBase.citation">
+<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.utils.baseclasses.WaveformBase.citation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return citations related to this module</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.WaveformBase.__call__">
+<em class="property">classmethod </em><code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.WaveformBase.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to call waveform model</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.WaveformBase.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.WaveformBase.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.WaveformBase.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.WaveformBase.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 <div class="section" id="schwarzschild-eccentric">
 <h3>Schwarzschild Eccentric<a class="headerlink" href="#schwarzschild-eccentric" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
 <dt id="few.utils.baseclasses.SchwarzschildEccentric">
 <em class="property">class </em><code class="sig-prename descclassname">few.utils.baseclasses.</code><code class="sig-name descname">SchwarzschildEccentric</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.WaveformBase" title="few.utils.baseclasses.WaveformBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.WaveformBase</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Base class for Schwarzschild eccentric waveforms.</p>
 <p>This class creates shared traits between different implementations of the
 same model. Particularly, this class includes descriptive traits as well as
@@ -1426,17 +1934,6 @@ Default is False.</p>
 <dt id="few.utils.baseclasses.SchwarzschildEccentric.attributes_SchwarzschildEccentric">
 <code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
-<dt id="few.utils.baseclasses.SchwarzschildEccentric.xp">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.xp" title="Permalink to this definition">¶</a></dt>
-<dd><p>numpy or cupy based on hardware chosen.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>module</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
 <dt id="few.utils.baseclasses.SchwarzschildEccentric.background">
 <code class="sig-name descname">background</code><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.background" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spacetime background for this model.</p>
@@ -1461,7 +1958,7 @@ Default is False.</p>
 <dl class="py attribute">
 <dt>
 <code class="sig-name descname">num_modes, num_teuk_modes</code></dt>
-<dd><p>Total number of Tuekolsky modes
+<dd><p>Total number of Teukolsky modes
 in the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1659,7 +2156,7 @@ maps locations of -m values to +m values.</p>
 <dd class="field-odd"><p>tuple</p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the angular values are not allowed.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1706,6 +2203,84 @@ more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)
 </dd>
 <dt class="field-even">Raises</dt>
 <dd class="field-even"><p><strong>ValueError</strong> – If any of the parameters are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.SchwarzschildEccentric.__call__">
+<em class="property">classmethod </em><code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to call waveform model</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.SchwarzschildEccentric.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.baseclasses.SchwarzschildEccentric.allow_batching">
+<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.utils.baseclasses.SchwarzschildEccentric'&gt;&gt;</em><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.SchwarzschildEccentric.attributes_WaveformBase">
+<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.utils.baseclasses.SchwarzschildEccentric.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.baseclasses.SchwarzschildEccentric.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.baseclasses.SchwarzschildEccentric.gpu_capability">
+<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.utils.baseclasses.SchwarzschildEccentric'&gt;&gt;</em><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.SchwarzschildEccentric.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SchwarzschildEccentric.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1801,8 +2376,8 @@ is True. This is stored as an attribute.</p></li>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="id9">
-<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#id9" title="Permalink to this definition">¶</a></dt>
+<dt id="id11">
+<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#id11" title="Permalink to this definition">¶</a></dt>
 <dd><p>instantiated Ylm module.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1871,16 +2446,6 @@ selection.</p>
 
 </dd></dl>
 
-<dl class="py attribute">
-<dt id="few.waveform.SchwarzschildEccentricWaveformBase.gpu_capability">
-<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.waveform.SchwarzschildEccentricWaveformBase'&gt;&gt;</em><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.gpu_capability" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt id="few.waveform.SchwarzschildEccentricWaveformBase.allow_batching">
-<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.waveform.SchwarzschildEccentricWaveformBase'&gt;&gt;</em><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.allow_batching" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt id="few.waveform.SchwarzschildEccentricWaveformBase.citation">
 <em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.citation" title="Permalink to this definition">¶</a></dt>
@@ -1942,54 +2507,32 @@ single waveform.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_gpu">
-<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if this class has GPU capability</p>
-<p>If the user is requesting GPU usage, this will confirm the class has
-GPU capabilites.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
-    not have that capability.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt id="few.waveform.SchwarzschildEccentricWaveformBase.adjust_gpu_usage">
-<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs_list</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adjust all inputs for gpu usage</p>
 <p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
-<code class="code docutils literal notranslate"><span class="pre">kwargs_list</span></code> so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
-<li><p><strong>kwargs_list</strong> (<em>list of dicts</em>) – List of kwargs dictionaries for each
-constituent class in the waveform generator.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.allow_batching">
+<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.waveform.SchwarzschildEccentricWaveformBase'&gt;&gt;</em><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt id="few.waveform.SchwarzschildEccentricWaveformBase.attributes_SchwarzschildEccentric">
 <code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
-<dt id="id11">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#id11" title="Permalink to this definition">¶</a></dt>
-<dd><p>numpy or cupy based on hardware chosen.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>module</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
 <dt id="few.waveform.SchwarzschildEccentricWaveformBase.background">
 <code class="sig-name descname">background</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.background" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spacetime background for this model.</p>
@@ -2014,7 +2557,7 @@ constituent class in the waveform generator.</p></li>
 <dl class="py attribute">
 <dt>
 <code class="sig-name descname">num_modes, num_teuk_modes</code></dt>
-<dd><p>Total number of Tuekolsky modes
+<dd><p>Total number of Teukolsky modes
 in the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -2188,6 +2731,55 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.attributes_WaveformBase">
+<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="id13">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id13" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.gpu_capability">
+<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.waveform.SchwarzschildEccentricWaveformBase'&gt;&gt;</em><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_init">
 <code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_init" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sanity check initial parameters.</p>
@@ -2252,7 +2844,228 @@ the trajectory module.</p></li>
 <dd class="field-odd"><p>tuple</p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the angular values are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="pn-aak-waveform-for-generic-kerr">
+<h3>5PN + AAK Waveform for Generic Kerr<a class="headerlink" href="#pn-aak-waveform-for-generic-kerr" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="few.utils.baseclasses.Pn5AAK">
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.baseclasses.</code><code class="sig-name descname">Pn5AAK</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.WaveformBase" title="few.utils.baseclasses.WaveformBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.WaveformBase</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Base class for Pn5AAK waveforms.</p>
+<p>This class contains some basic checks and information for AAK waveforms
+with a 5PN trajectory model. Please see <a class="reference internal" href="#few.waveform.Pn5AAKWaveform" title="few.waveform.Pn5AAKWaveform"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.Pn5AAKWaveform</span></code></a>
+for more details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, will allocate arrays on the GPU.
+Default is False.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="few.utils.baseclasses.Pn5AAK.attributes_Pn5AAK">
+<code class="sig-name descname">attributes_Pn5AAK</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK.attributes_Pn5AAK" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.utils.baseclasses.Pn5AAK.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>numpy or cupy based on hardware chosen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>module</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.baseclasses.Pn5AAK.background">
+<code class="sig-name descname">background</code><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK.background" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spacetime background for this model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.baseclasses.Pn5AAK.descriptor">
+<code class="sig-name descname">descriptor</code><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK.descriptor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Short description for model validity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.Pn5AAK.citation">
+<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK.citation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return citations of this class</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.Pn5AAK.sanity_check_angles">
+<code class="sig-name descname">sanity_check_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qS</span></em>, <em class="sig-param"><span class="n">phiS</span></em>, <em class="sig-param"><span class="n">qK</span></em>, <em class="sig-param"><span class="n">phiK</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK.sanity_check_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on viewing angles.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qS</strong> (<em>double</em>) – Sky location polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiS</strong> (<em>double</em>) – Sky location azimuthal angle in
+ecliptic coordinates.</p></li>
+<li><p><strong>qK</strong> (<em>double</em>) – Initial BH spin polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiK</strong> (<em>double</em>) – Initial BH spin azimuthal angle in
+ecliptic coordinates.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(qS, phiS, qK, phiK). phiS and phiK are wrapped.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the angular values are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.Pn5AAK.sanity_check_traj">
+<code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="n">Y</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on parameters output from thte trajectory module.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>1D np.ndarray</em>) – Array of semi-latus rectum values produced by
+the trajectory module.</p></li>
+<li><p><strong>e</strong> (<em>1D np.ndarray</em>) – Array of eccentricity values produced by
+the trajectory module.</p></li>
+<li><p><strong>Y</strong> (<em>1D np.ndarray</em>) – Array of cos:math:<cite>iota</cite> values produced by
+the trajectory module.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p></li>
+<li><p><strong>warn</strong> – If any points in the trajectory are allowable,
+    but outside calibration region.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.Pn5AAK.sanity_check_init">
+<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">Y0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK.sanity_check_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check initial parameters.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
+<li><p><strong>a</strong> (<em>double</em>) – Dimensionless spin of massive black hole.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (dimensionless)
+<span class="math notranslate nohighlight">\((10\leq p_0\leq 16 + 2e_0)\)</span>. See the documentation for
+more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e_0\leq0.7)\)</span>.</p></li>
+<li><p><strong>Y0</strong> (<em>double</em>) – Initial cos:math:<cite>iota</cite> <span class="math notranslate nohighlight">\((-1.0\leq Y_0\leq1.0)\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the parameters are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.Pn5AAK.__call__">
+<em class="property">classmethod </em><code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to call waveform model</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.Pn5AAK.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.baseclasses.Pn5AAK.allow_batching">
+<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.utils.baseclasses.Pn5AAK'&gt;&gt;</em><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.Pn5AAK.attributes_WaveformBase">
+<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.utils.baseclasses.Pn5AAK.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="id14">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id14" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.utils.baseclasses.Pn5AAK.gpu_capability">
+<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.utils.baseclasses.Pn5AAK'&gt;&gt;</em><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.baseclasses.Pn5AAK.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.Pn5AAK.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
 </dd>
 </dl>
 </dd></dl>

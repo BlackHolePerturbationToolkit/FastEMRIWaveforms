@@ -62,8 +62,8 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "sphinx_rtd_theme",
-    "sphinx.ext.mathjax",
     "nbsphinx",
+    "sphinx.ext.mathjax",
 ]
 
 source_suffix = [".rst"]
