@@ -85,7 +85,7 @@ int func (double t, const double y[], double f[], void *params){
 
     KerrGeoCoordinateFrequencies(&Phi_phi_dot, &Phi_theta_dot, &Phi_r_dot, a, p, e, Y);
 
-	f[0] = pdot;
+    f[0] = pdot;
 	f[1] = edot;
     f[2] = Ydot;
 	f[3] = Phi_phi_dot;
@@ -209,7 +209,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 }
 
 // wrapper for calling the Pn5 inspiral from cython/python
-void Pn5Carrier::Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_r, double *Phi_theta, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len){
+void Pn5Carrier::Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len){
 
 	double t0 = 0.0;
 		Pn5Holder Pn5_vals = run_Pn5(t0, M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, err, tmax, dt, DENSE_STEPPING, use_rk4);
