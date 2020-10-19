@@ -173,7 +173,6 @@ void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amp
     delete[] gridRaw;
 }
 
-// TODO: free memory from inside interpolants
 // Amplitude Carrier is class for interaction with python carrying gsl interpolant information
 AmplitudeCarrier::AmplitudeCarrier(int lmax_, int nmax_, std::string few_dir)
 {

@@ -26,14 +26,11 @@ from tqdm import tqdm
 try:
     import cupy as xp
 
-    gpu_available = True
-
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
-    gpu_available = False
-
-from few.utils.baseclasses import SchwarzschildEccentric
+from few.utils.baseclasses import SchwarzschildEccentric, Pn5AAK
+from few.trajectory.pn5 import RunKerrGenericPn5Inspiral
 from few.trajectory.flux import RunSchwarzEccFluxInspiral
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 from few.utils.utility import get_mismatch
@@ -41,6 +38,7 @@ from few.amplitude.romannet import RomanAmplitude
 from few.utils.modeselector import ModeSelector
 from few.utils.ylm import GetYlms
 from few.summation.directmodesum import DirectModeSum
+from few.summation.aakwave import AAKSummation
 from few.utils.constants import *
 from few.utils.citations import *
 from few.summation.interpolatedmodesum import InterpolatedModeSum
@@ -117,21 +115,11 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         normalize_amps=True,
     ):
 
-        # checks if gpu capability is available if requested
-        self.sanity_check_gpu(use_gpu)
+        SchwarzschildEccentric.__init__(self, use_gpu)
 
         amplitude_kwargs, sum_kwargs = self.adjust_gpu_usage(
             use_gpu, [amplitude_kwargs, sum_kwargs]
         )
-
-        SchwarzschildEccentric.__init__(self, use_gpu)
-
-        # set numpy or cupy
-        if use_gpu:
-            self.xp = xp
-
-        else:
-            self.xp = np
 
         # normalize amplitudes to flux at each step from trajectory
         self.normalize_amps = normalize_amps
@@ -153,18 +141,6 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
         # selecting modes that contribute at threshold to the waveform
         self.mode_selector = ModeSelector(self.m0mask, use_gpu=use_gpu)
-
-    @classmethod
-    @property
-    def gpu_capability(self):
-        """Indicator if the module has gpu capability"""
-        raise NotImplementedError
-
-    @classmethod
-    @property
-    def allow_batching(self):
-        """Indicator if module allows batching"""
-        return NotImplementedError
 
     @property
     def citation(self):
@@ -234,7 +210,6 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         # makes sure viewing angles are allowable
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
         self.sanity_check_init(M, mu, p0, e0)
-        Tsec = T * YRSID_SI
 
         # get trajectory
         (t, p, e, Phi_phi, Phi_r, amp_norm) = self.inspiral_generator(
@@ -373,12 +348,12 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
                 t_temp,
                 teuk_modes_in,
                 ylms_in,
-                dt,
-                Tsec,
                 Phi_phi_temp,
                 Phi_r_temp,
                 self.ms,
                 self.ns,
+                dt=dt,
+                T=T,
             )
 
             # if batching, need to add the waveform
@@ -390,47 +365,6 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
                 waveform = waveform_temp
 
         return waveform
-
-    def sanity_check_gpu(self, use_gpu):
-        """Check if this class has GPU capability
-
-        If the user is requesting GPU usage, this will confirm the class has
-        GPU capabilites.
-
-        Args:
-            use_gpu (bool): If True, the user is requesting GPU usage.
-
-        Raises:
-            ValueError: The user is requesting GPU usage, but this class does
-                not have that capability.
-
-        """
-        if (self.gpu_capability is False or gpu_available is False) and use_gpu is True:
-            if self.gpu_capability is False:
-                raise ValueError(
-                    "The use_gpu kwarg is True, but this class does not have GPU capabilites."
-                )
-            else:
-                raise ValueError("Either a GPU and/or CuPy is not available.")
-
-    def adjust_gpu_usage(self, use_gpu, kwargs_list):
-        """Adjust all inputs for gpu usage
-
-        If user wants to use gpu, it will change all :code:`kwargs` in
-        :code:`kwargs_list` so that :code:`use_gpu=True`.
-
-        args:
-            use_gpu (bool): If True, use gpu resources.
-            kwargs_list (list of dicts): List of kwargs dictionaries for each
-                constituent class in the waveform generator.
-
-        """
-
-        if use_gpu:
-            for i, kwargs in enumerate(kwargs_list):
-                kwargs_list[i]["use_gpu"] = use_gpu
-
-        return kwargs_list
 
 
 class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
@@ -606,3 +540,224 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
             *args,
             **kwargs
         )
+
+
+class Pn5AAKWaveform(Pn5AAK, ABC):
+    """Waveform generation class for AAK with 5PN trajectory.
+
+    This class generates waveforms based on the Augmented Analytic Kludge
+    given in the
+    `EMRI Kludge Suite <https://github.com/alvincjk/EMRI_Kludge_Suite/>`_.
+    However, here the trajectory is vastly improved by employing the 5PN
+    fluxes for generic Kerr orbits from
+    `Fujita & Shibata 2020<https://arxiv.org/abs/2008.13554>`_.
+
+    The 5PN trajectory produces orbital and phase trajectories.
+    The trajectory is calculated until the orbit reaches
+    within 0.2 of the separatrix, determined from
+    `arXiv:1912.07609 <https://arxiv.org/abs/1912.07609/>`_. The
+    fundamental frequencies along the trajectory at each point are then
+    calculated from the orbital parameters and the spin value given by (`Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_).
+
+    These frequencies along the trajectory are then used to map to the
+    frequency basis of the `Analytic Kludge <https://arxiv.org/abs/gr-qc/0310125>`_. This mapping
+    takes the form of time evolving large mass and spin parameters, as
+    well as the use of phases and frequencies in
+    :math:`(alpha, \Phi, \gamma)`:
+
+    .. math:: \Phi = \Phi_\phi,
+
+    .. math:: \gamma = \Phi_\phi + \Phi_\Theta,
+
+    .. math:: alpha = \Phi_\phi + \Phi_\Theta + \Phi_r.
+
+    The frequencies in that basis are found by taking the time derivatives
+    of each equation above.
+
+    This class has GPU capabilities and works from the sparse trajectory
+    methodoligy with cubic spine interpolation of the smoothly varying
+    waveform quantities. This waveform does not have the freedom in terms
+    of user-chosen quantitites that
+    :class:`few.waveform.SchwarzschildEccentricWaveformBase` contains.
+    This is mainly due to the specific waveform constructions particular
+    to the AAK/AK.
+
+
+    args:
+        inspiral_kwargs (dict, optional): Optional kwargs to pass to the
+            inspiral generator. **Important Note**: These kwargs are passed
+            online, not during instantiation like other kwargs here. Default is
+            {}. This is stored as an attribute.
+        sum_kwargs (dict, optional): Optional kwargs to pass to the
+            sum module during instantiation. Default is {}.
+        use_gpu (bool, optional): If True, use GPU resources. Default is False.
+
+    """
+
+    def attributes_Pn5AAKWaveform(self):
+        """
+        attributes:
+            inspiral_generator (obj): instantiated trajectory module.
+            create_waveform (obj): instantiated summation module.
+            inspiral_kwargs (dict): Kwargs related to the inspiral class:
+                :class:`few.trajectory.pn5.RunKerrGenericPn5Inspiral`.
+            xp (obj): numpy or cupy based on gpu usage.
+            num_modes_kept/nmodes (int): Number of modes for final waveform.
+                For this model, it is solely determined from the
+                eccentricity.
+
+
+        """
+        pass
+
+    def __init__(self, inspiral_kwargs={}, sum_kwargs={}, use_gpu=False):
+
+        Pn5AAK.__init__(self, use_gpu)
+
+        sum_kwargs = self.adjust_gpu_usage(use_gpu, sum_kwargs)
+
+        # kwargs that are passed to the inspiral call function
+        self.inspiral_kwargs = inspiral_kwargs
+
+        # function for generating the inpsiral
+        self.inspiral_generator = RunKerrGenericPn5Inspiral(**inspiral_kwargs)
+
+        # summation generator
+        self.create_waveform = AAKSummation(**sum_kwargs)
+
+    @property
+    def citation(self):
+        """Return citations related to this module"""
+        return (
+            few_citation
+            + AAK_citation_1
+            + AAK_citation_2
+            + AK_citation
+            + Pn5_citation
+            + kerr_separatrix_citation
+        )
+
+    @property
+    def gpu_capability(self):
+        return True
+
+    @property
+    def allow_batching(self):
+        return False
+
+    def __call__(
+        self,
+        M,
+        mu,
+        a,
+        p0,
+        e0,
+        Y0,
+        qS,
+        phiS,
+        qK,
+        phiK,
+        dist,
+        Phi_phi0=0.0,
+        Phi_theta0=0.0,
+        Phi_r0=0.0,
+        mich=False,
+        dt=10.0,
+        T=1.0,
+    ):
+        """Call function for AAK + 5PN model.
+
+        This function will take input parameters and produce AAK waveforms with 5PN trajectories in generic Kerr.
+
+        args:
+            M (double): Mass of larger black hole in solar masses.
+            mu (double): Mass of compact object in solar masses.
+            p0 (double): Initial semilatus rectum (Must be greater than
+                the separatrix at the the given e0 and Y0).
+                See documentation for more information on :math:`p_0<10`.
+            e0 (double): Initial eccentricity.
+            Y0 (double): Initial cosine of the inclination angle
+                (:math:`\cos{\iota}`).
+            qS (double): Sky location polar angle in ecliptic
+                coordinates.
+            phiS (double): Sky location azimuthal angle in
+                ecliptic coordinates.
+            qK (double): Initial BH spin polar angle in ecliptic
+                coordinates.
+            phiK (double): Initial BH spin azimuthal angle in
+                ecliptic coordinates.
+            dist (double): Luminosity distance in Gpc.
+            Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
+                Default is 0.0.
+            Phi_theta0 (double, optional): Initial phase for :math:`\Phi_\Theta`.
+                Default is 0.0.
+            Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
+                Default is 0.0.
+            mich (bool, optional): If True, produce waveform with
+                long-wavelength response approximation (hI, hII). Please
+                note this is not TDI. If False, return hplus and hcross.
+                Default is False.
+            dt (double, optional): Time between samples in seconds
+                (inverse of sampling frequency). Default is 10.0.
+            T (double, optional): Total observation time in years.
+                Default is 1.0.
+
+        Returns:
+            1D complex128 xp.ndarray: The output waveform.
+
+        Raises:
+            ValueError: user selections are not allowed.
+
+        """
+
+        # makes sure angular extrinsic parameters are allowable
+        qS, phiS, qK, phiK = self.sanity_check_angles(qS, phiS, qK, phiK)
+        self.sanity_check_init(M, mu, a, p0, e0, Y0)
+
+        # get trajectory
+        t, p, e, Y, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(
+            M,
+            mu,
+            a,
+            p0,
+            e0,
+            Y0,
+            Phi_phi0=Phi_phi0,
+            Phi_theta0=Phi_theta0,
+            Phi_r0=Phi_r0,
+            T=T,
+            dt=dt,
+            **self.inspiral_kwargs
+        )
+
+        # makes sure p, Y, and e are generally within the model
+        self.sanity_check_traj(p, e, Y)
+
+        self.end_time = t[-1]
+
+        # number of modes to use (from original AAK model)
+        self.num_modes_kept = self.nmodes = int(30 * e0)
+
+        waveform = self.create_waveform(
+            t,
+            M,
+            a,
+            p,
+            e,
+            Y,
+            Phi_phi,
+            Phi_theta,
+            Phi_r,
+            mu,
+            qS,
+            phiS,
+            qK,
+            phiK,
+            dist,
+            self.nmodes,
+            mich=mich,
+            dt=dt,
+            T=T,
+        )
+
+        return waveform

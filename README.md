@@ -12,7 +12,7 @@ Below is a quick set of instructions to get you started with `few`.
 
 0) [Install Anaconda](https://bhptoolkit.org/FastEMRIWaveforms/) if you do not have it.
 
-1) Create a virtual environment. **Note**: There is no available `conda` compiler for Windows. If you want to install for Windows, you will probably need to add library and include paths to the `setup.py` file.
+1) Create a virtual environment. **Note**: There is no available `conda` compiler for Windows. If you want to install for Windows, you will probably need to add libraries and include paths to the `setup.py` file.
 
 ```
 conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 gsl lapack hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
@@ -135,7 +135,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags).
 
-Current Version: 1.0.0
+Current Version: 1.1.0
 
 ## Authors
 

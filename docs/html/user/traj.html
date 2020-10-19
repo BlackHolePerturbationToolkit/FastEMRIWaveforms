@@ -89,7 +89,8 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="main.html">Overall Waveform Models</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Trajectory Package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-few.trajectory.flux">Flux Inspiral</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.trajectory.flux">Adiabatic Inspiral in Schwarzschild Eccentric</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.trajectory.pn5">5PN Generic Kerr Inspiral</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="amp.html">Amplitude Package</a></li>
@@ -100,14 +101,16 @@
 <p class="caption"><span class="caption-text">Tutorial:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html">Fast and Accurate EMRI Waveforms Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Full-EMRI-Waveforms">Full EMRI Waveforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric">Full EMRI Waveforms in Schwarzschild Eccentric</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Trajectory-Module">Trajectory Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Amplitude-Module">Amplitude Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Spin-weighted-spherical-harmonics">Spin-weighted spherical harmonics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Mode-Selection">Mode Selection</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Parallelized-Cubic-Spline-Interpolation">Parallelized Cubic Spline Interpolation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Mode-Summation">Mode Summation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Utility-functions">Utility functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Creating-modules">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Augmented-Analytic-Kludge-with-5PN-trajectory">Augmented Analytic Kludge with 5PN trajectory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/SchwarzschildEccentricWaveform_intro.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
 </ul>
 <p class="caption"><span class="caption-text">General Information:</span></p>
@@ -320,7 +323,7 @@ Default is {}.</p></li>
 </dd></dl>
 
 <div class="section" id="module-few.trajectory.flux">
-<span id="flux-inspiral"></span><h2>Flux Inspiral<a class="headerlink" href="#module-few.trajectory.flux" title="Permalink to this headline">¶</a></h2>
+<span id="adiabatic-inspiral-in-schwarzschild-eccentric"></span><h2>Adiabatic Inspiral in Schwarzschild Eccentric<a class="headerlink" href="#module-few.trajectory.flux" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral">
 <em class="property">class </em><code class="sig-prename descclassname">few.trajectory.flux.</code><code class="sig-name descname">RunSchwarzEccFluxInspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral" title="Permalink to this definition">¶</a></dt>
@@ -442,20 +445,32 @@ Default is {}.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.attributes_SchwarzschildEccentric">
-<code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py attribute">
-<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.xp">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.xp" title="Permalink to this definition">¶</a></dt>
-<dd><p>numpy or cupy based on hardware chosen.</p>
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>module</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.allow_batching">
+<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.trajectory.flux.RunSchwarzEccFluxInspiral'&gt;&gt;</em><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.attributes_SchwarzschildEccentric">
+<code class="sig-name descname">attributes_SchwarzschildEccentric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.attributes_SchwarzschildEccentric" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
 <dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.background">
 <code class="sig-name descname">background</code><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.background" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spacetime background for this model.</p>
@@ -480,7 +495,7 @@ Default is {}.</p></li>
 <dl class="py attribute">
 <dt>
 <code class="sig-name descname">num_modes, num_teuk_modes</code></dt>
-<dd><p>Total number of Tuekolsky modes
+<dd><p>Total number of Teukolsky modes
 in the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -654,6 +669,33 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.attributes_WaveformBase">
+<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.get_inspiral">
 <code class="sig-name descname">get_inspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.get_inspiral" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate the inspiral.</p>
@@ -686,6 +728,28 @@ this parameter.</p></li>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.gpu_capability">
+<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.trajectory.flux.RunSchwarzEccFluxInspiral'&gt;&gt;</em><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -755,7 +819,362 @@ the trajectory module.</p></li>
 <dd class="field-odd"><p>tuple</p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the angular values are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-few.trajectory.pn5">
+<span id="pn-generic-kerr-inspiral"></span><h2>5PN Generic Kerr Inspiral<a class="headerlink" href="#module-few.trajectory.pn5" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral">
+<em class="property">class </em><code class="sig-prename descclassname">few.trajectory.pn5.</code><code class="sig-name descname">RunKerrGenericPn5Inspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK" title="few.utils.baseclasses.Pn5AAK"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.Pn5AAK</span></code></a></p>
+<p>Pn5-based trajectory module.</p>
+<p>This module implements a Pn5-based trajectory by integrating with an
+RK8 integrator. It can also adjust the output time-spacing using
+cubic spline interpolation. Additionally, it gives the option for
+a dense trajectory, which integrates the trajectory at the user-defined
+timestep.</p>
+<p>The trajectory calculations are based on
+<a href="#id1"><span class="problematic" id="id2">`Fujita &amp; Shibata 2020&lt;https://arxiv.org/abs/2008.13554&gt;`_</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> (<em>list</em>) – Any arguments for parent
+class <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a> or
+class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK" title="few.utils.baseclasses.Pn5AAK"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.Pn5AAK</span></code></a>.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – Any keyword arguments for parent
+class <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a> or
+class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK" title="few.utils.baseclasses.Pn5AAK"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.Pn5AAK</span></code></a>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.attributes_RunKerrGenericPn5Inspiral">
+<code class="sig-name descname">attributes_RunKerrGenericPn5Inspiral</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.attributes_RunKerrGenericPn5Inspiral" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.Pn5_generator">
+<code class="sig-name descname">Pn5_generator</code><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.Pn5_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>C++ class for Pn5 trajectory generation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.specific_kwarg_keys">
+<code class="sig-name descname">specific_kwarg_keys</code><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.specific_kwarg_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>specific kwargs from
+<a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a> that apply to this
+inspiral generator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.citation">
+<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.citation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return citation for this class</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">in_coordinate_time</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">new_t</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">spline_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">DENSE_STEPPING</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">max_init_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">upsample</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">err</span><span class="o">=</span><span class="default_value">1e-10</span></em>, <em class="sig-param"><span class="n">use_rk4</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">fix_t</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call function for trajectory interface.</p>
+<p>This is the function for calling the creation of the
+trajectory. Inputs define the output time spacing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> (<em>list</em>) – Input of variable number of arguments specific to the
+inspiral model (see the trajectory class’ <cite>get_inspiral</cite> method).
+<strong>Important Note</strong>: M must be the first parameter of any model
+that uses this base class.</p></li>
+<li><p><strong>in_coordinate_time</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the trajectory will be
+outputted in coordinate time. If False, the trajectory will be
+outputted in units of M. Default is True.</p></li>
+<li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time step for output waveform in seconds. Also sets
+initial step for integrator. Default is 10.0.</p></li>
+<li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Total observation time in years. Sets the maximum time
+for the integrator to run. Default is 1.0.</p></li>
+<li><p><strong>new_t</strong> (<em>1D np.ndarray</em><em>, </em><em>optional</em>) – If given, this represents the final
+time array at which the trajectory is analyzed. This is
+performed by using a cubic spline on the integrator output.
+Default is None.</p></li>
+<li><p><strong>spline_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – If using upsampling, spline_kwargs
+provides the kwargs desired for scipy.interpolate.CubicSpline.
+Default is {}.</p></li>
+<li><p><strong>DENSE_STEPPING</strong> (<em>int</em><em>, </em><em>optional</em>) – If 1, the trajectory used in the
+integrator will be densely stepped at steps of <code class="xref py py-obj docutils literal notranslate"><span class="pre">dt</span></code>. If 0,
+the integrator will determine its stepping. Default is 0.</p></li>
+<li><p><strong>max_init_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Sets the allocation of memory for
+trajectory parameters. This should be the maximum length
+expected for a trajectory. Trajectories with default settings
+will be ~100 points. Default is 1000.</p></li>
+<li><p><strong>upsample</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, upsample, with a cubic spline,
+the trajectories from 0 to T in steps of dt. Default is False.</p></li>
+<li><p><strong>err</strong> (<em>double</em><em>, </em><em>optional</em>) – Tolerance for integrator. Default is 1e-10.
+Decreasing this parameter will give more steps over the
+trajectory, but if it is too small, memory issues will occur as
+the trajectory length will blow up. We recommend not adjusting
+this parameter.</p></li>
+<li><p><strong>fix_T</strong> (<em>bool</em><em>, </em><em>optional</em>) – If upsampling, this will affect excess
+points in the t array. If True, it will shave any excess on the
+trajectories arrays where the time is greater than the overall
+time of the trajectory requested.</p></li>
+<li><p><strong>use_rk4</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, use rk4 integrator from gsl.
+If False, use rk8. Default is False (rk8).</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – kwargs passed to trajectory module.
+Default is {}.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Tuple of (t, p, e, Phi_phi, Phi_r, flux_norm).</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If input parameters are not allowed in this model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.allow_batching">
+<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.trajectory.pn5.RunKerrGenericPn5Inspiral'&gt;&gt;</em><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.attributes_Pn5AAK">
+<code class="sig-name descname">attributes_Pn5AAK</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.attributes_Pn5AAK" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>numpy or cupy based on hardware chosen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>module</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.background">
+<code class="sig-name descname">background</code><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.background" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spacetime background for this model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.descriptor">
+<code class="sig-name descname">descriptor</code><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.descriptor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Short description for model validity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.attributes_WaveformBase">
+<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="id0">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.get_inspiral">
+<code class="sig-name descname">get_inspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">Y0</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">Phi_phi0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_theta0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_r0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.get_inspiral" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate the inspiral.</p>
+<p>This is the function for calling the creation of the Pn5-based
+trajectory. Inputs define the output time spacing. This class can be
+used on its own. However, it is generally accessed through the __call__
+method associated with its base class:
+(<a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a>). See its documentation
+for information on a more flexible interface to the trajectory modules.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Mass of massive black hole in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – Mass of compact object in solar masses.</p></li>
+<li><p><strong>a</strong> (<em>double</em>) – Dimensionless spin of massive black hole.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semi-latus rectum in terms units of M (p/M).</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity (dimensionless).</p></li>
+<li><p><strong>Y0</strong> (<em>double</em>) – Initial cosine of the inclination.</p></li>
+<li><p><strong>*args</strong> (<em>list</em><em>, </em><em>placeholder</em>) – Added for flexibility.</p></li>
+<li><p><strong>Phi_phi0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\phi\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>Phi_theta0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\Theta\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>Phi_r0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_r\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – kwargs passed from parent.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Tuple of (t, p, e, Y, Phi_phi, Phi_r, Phi_theta).</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.gpu_capability">
+<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.trajectory.pn5.RunKerrGenericPn5Inspiral'&gt;&gt;</em><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.sanity_check_angles">
+<code class="sig-name descname">sanity_check_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qS</span></em>, <em class="sig-param"><span class="n">phiS</span></em>, <em class="sig-param"><span class="n">qK</span></em>, <em class="sig-param"><span class="n">phiK</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.sanity_check_angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on viewing angles.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qS</strong> (<em>double</em>) – Sky location polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiS</strong> (<em>double</em>) – Sky location azimuthal angle in
+ecliptic coordinates.</p></li>
+<li><p><strong>qK</strong> (<em>double</em>) – Initial BH spin polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiK</strong> (<em>double</em>) – Initial BH spin azimuthal angle in
+ecliptic coordinates.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(qS, phiS, qK, phiK). phiS and phiK are wrapped.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the angular values are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.sanity_check_init">
+<code class="sig-name descname">sanity_check_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">Y0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.sanity_check_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check initial parameters.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Massive black hole mass in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – compact object mass in solar masses.</p></li>
+<li><p><strong>a</strong> (<em>double</em>) – Dimensionless spin of massive black hole.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (dimensionless)
+<span class="math notranslate nohighlight">\((10\leq p_0\leq 16 + 2e_0)\)</span>. See the documentation for
+more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity <span class="math notranslate nohighlight">\((0\leq e_0\leq0.7)\)</span>.</p></li>
+<li><p><strong>Y0</strong> (<em>double</em>) – Initial cos:math:<cite>iota</cite> <span class="math notranslate nohighlight">\((-1.0\leq Y_0\leq1.0)\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If any of the parameters are not allowed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.sanity_check_traj">
+<code class="sig-name descname">sanity_check_traj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="n">Y</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.sanity_check_traj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanity check on parameters output from thte trajectory module.</p>
+<p>Make sure parameters are within allowable ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>1D np.ndarray</em>) – Array of semi-latus rectum values produced by
+the trajectory module.</p></li>
+<li><p><strong>e</strong> (<em>1D np.ndarray</em>) – Array of eccentricity values produced by
+the trajectory module.</p></li>
+<li><p><strong>Y</strong> (<em>1D np.ndarray</em>) – Array of cos:math:<cite>iota</cite> values produced by
+the trajectory module.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If any of the trajectory points are not allowed.</p></li>
+<li><p><strong>warn</strong> – If any points in the trajectory are allowable,
+    but outside calibration region.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>

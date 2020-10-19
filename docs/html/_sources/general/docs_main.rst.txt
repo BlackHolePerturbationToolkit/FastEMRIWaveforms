@@ -2,7 +2,7 @@
 FastEMRIWaveforms Publication
 ==============================
 
-The Fast EMRI Waveforms paper can be found at `arxiv.org/2008.06071 <https://arxiv.org/abs/2008.06071>`_. Below is a brief description of the paper, including plots. Please refer to the paper for more detailed information. 
+The Fast EMRI Waveforms paper can be found at `arxiv.org/2008.06071 <https://arxiv.org/abs/2008.06071>`_. Below is a brief description of the paper, including plots. Please refer to the paper for more detailed information.
 
 Fast EMRI Waveform models are built for fast evaluation of the EMRI waveform summation equation, given by (`Drasco & Hughes 2006 <https://arxiv.org/abs/gr-qc/0509101>`_),
 
@@ -69,12 +69,8 @@ Package TODOs
 ===============
 
 - run trajectory backward
-- add initial phases
+- add initial phases (special treatment needed)
 - zero out modes
 - shared memory based on CUDA_ARCH / upping shared allocation
 - deal with file locations and removing files from git history
-- add tutorials to documentation
-- general waveform base class
-- more automatic/generic download from zenodo based on versioning
 - add benchmarking function
-- add function to determine parameter that will give waveform for :math:`t` years

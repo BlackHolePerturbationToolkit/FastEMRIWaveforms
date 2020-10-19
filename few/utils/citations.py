@@ -50,3 +50,82 @@ romannet_citation = """
     year = "2019"
 }
 """
+
+Pn5_citation = """
+@article{Fujita:2020zxe,
+    author = "Fujita, Ryuichi and Shibata, Masaru",
+    title = "{Extreme mass ratio inspirals on the equatorial plane in the adiabatic order}",
+    eprint = "2008.13554",
+    archivePrefix = "arXiv",
+    primaryClass = "gr-qc",
+    doi = "10.1103/PhysRevD.102.064005",
+    journal = "Phys. Rev. D",
+    volume = "102",
+    number = "6",
+    pages = "064005",
+    year = "2020"
+}
+"""
+
+kerr_separatrix_citation = """
+@article{Stein:2019buj,
+    author = "Stein, Leo C. and Warburton, Niels",
+    title = "{Location of the last stable orbit in Kerr spacetime}",
+    eprint = "1912.07609",
+    archivePrefix = "arXiv",
+    primaryClass = "gr-qc",
+    doi = "10.1103/PhysRevD.101.064007",
+    journal = "Phys. Rev. D",
+    volume = "101",
+    number = "6",
+    pages = "064007",
+    year = "2020"
+}
+"""
+
+AAK_citation_1 = """
+
+@article{Chua:2015mua,
+    author = "Chua, Alvin J.K. and Gair, Jonathan R.",
+    title = "{Improved analytic extreme-mass-ratio inspiral model for scoping out eLISA data analysis}",
+    eprint = "1510.06245",
+    archivePrefix = "arXiv",
+    primaryClass = "gr-qc",
+    doi = "10.1088/0264-9381/32/23/232002",
+    journal = "Class. Quant. Grav.",
+    volume = "32",
+    pages = "232002",
+    year = "2015"
+}
+
+"""
+
+AAK_citation_2 = """
+@article{Chua:2017ujo,
+    author = "Chua, Alvin J.K. and Moore, Christopher J. and Gair, Jonathan R.",
+    title = "{Augmented kludge waveforms for detecting extreme-mass-ratio inspirals}",
+    eprint = "1705.04259",
+    archivePrefix = "arXiv",
+    primaryClass = "gr-qc",
+    doi = "10.1103/PhysRevD.96.044005",
+    journal = "Phys. Rev. D",
+    volume = "96",
+    number = "4",
+    pages = "044005",
+    year = "2017"
+}
+"""
+
+AK_citation = """
+@article{Barack:2003fp,
+    author = "Barack, Leor and Cutler, Curt",
+    title = "{LISA capture sources: Approximate waveforms, signal-to-noise ratios, and parameter estimation accuracy}",
+    eprint = "gr-qc/0310125",
+    archivePrefix = "arXiv",
+    doi = "10.1103/PhysRevD.69.082005",
+    journal = "Phys. Rev. D",
+    volume = "69",
+    pages = "082005",
+    year = "2004"
+}
+"""

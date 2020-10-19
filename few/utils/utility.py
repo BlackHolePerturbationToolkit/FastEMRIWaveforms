@@ -22,6 +22,9 @@ import subprocess
 import warnings
 
 import numpy as np
+from scipy.interpolate import CubicSpline
+
+from pyFundamentalFrequencies import pyKerrGeoCoordinateFrequencies, pyGetSeparatrix
 
 # check to see if cupy is available for gpus
 try:
@@ -35,6 +38,7 @@ except (ImportError, ModuleNotFoundError) as e:
     gpu = False
 
 import few
+from few.utils.constants import *
 
 
 def get_overlap(time_series_1, time_series_2, use_gpu=False):
@@ -147,6 +151,200 @@ def p_to_y(p, e, use_gpu=False):
 
     else:
         return np.log(-(21 / 10) - 2 * e + p)
+
+
+def get_fundamental_frequencies(a, p, e, x):
+    """Get dimensionless fundamental frequencies.
+
+    Determines fundamental frequencies in generic Kerr from
+    `Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_.
+
+    arguments:
+        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+            black hole. If other parameters are arrays and the spin is scalar,
+            it will be cast to a 1D array.
+        p (double scalar or 1D double np.ndarray): Values of separation,
+            :math:`p`.
+        e (double scalar or 1D double np.ndarray): Values of eccentricity,
+            :math:`e`.
+        x (double scalar or 1D double np.ndarray): Values of cosine of the
+            inclination, :math:`\cos{\iota}`.
+
+    returns:
+        tuple: Tuple of (OmegaPhi, OmegaTheta, OmegaR).
+            These are 1D arrays or scalar values depending on inputs.
+
+    """
+
+    # check if inputs are scalar or array
+    if isinstance(p, float):
+        scalar = True
+
+    else:
+        scalar = False
+
+    p_in = np.atleast_1d(p)
+    e_in = np.atleast_1d(e)
+    x_in = np.atleast_1d(x)
+
+    # cast the spin to the same size array as p
+    if isinstance(a, float):
+        a_in = np.full_like(p_in, a)
+    else:
+        a_in = np.atleast_1d(a)
+
+    assert len(a_in) == len(p_in)
+
+    # get frequencies
+    OmegaPhi, OmegaTheta, OmegaR = pyKerrGeoCoordinateFrequencies(
+        a_in, p_in, e_in, x_in
+    )
+
+    # set output to shape of input
+    if scalar:
+        return (OmegaPhi[0], OmegaTheta[0], OmegaR[0])
+
+    else:
+        return (OmegaPhi, OmegaTheta, OmegaR)
+
+
+def get_separatrix(a, e, x):
+    """Get separatrix in generic Kerr.
+
+    Determines separatrix in generic Kerr from
+    `Stein & Warburton 2020 <https://arxiv.org/abs/1912.07609>`_.
+
+    arguments:
+        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+            black hole. If other parameters are arrays and the spin is scalar,
+            it will be cast to a 1D array.
+        e (double scalar or 1D double np.ndarray): Values of eccentricity,
+            :math:`e`.
+        x (double scalar or 1D double np.ndarray): Values of cosine of the
+            inclination, :math:`\cos{\iota}`.
+
+    returns:
+        1D array or scalar: Separatrix value with shape based on input shapes.
+
+    """
+    # determines shape of input
+    if isinstance(e, float):
+        scalar = True
+
+    else:
+        scalar = False
+
+    e_in = np.atleast_1d(e)
+    x_in = np.atleast_1d(x)
+
+    # cast spin values if necessary
+    if isinstance(a, float):
+        a_in = np.full_like(e_in, a)
+    else:
+        a_in = np.atleast_1d(a)
+
+    assert len(a_in) == len(e_in)
+
+    separatrix = pyGetSeparatrix(a_in, e_in, x_in)
+
+    # output in same shape as input
+    if scalar:
+        return separatrix[0]
+
+    else:
+        return separatrix
+
+
+def get_mu_at_t(
+    traj_module,
+    t_out,
+    traj_args,
+    index_of_mu=1,
+    traj_kwargs={},
+    min_mu=1.0,
+    max_mu=1e3,
+    num_mu=100,
+    logspace=True,
+):
+    """Find the value of mu that will give a specific length inspiral.
+
+    If you want to generate an inspiral that is a specific length, you
+    can adjust mu accordingly. This function tells you what that value of mu
+    is based on the trajectory module and other input parameters at a
+    desired time of observation.
+
+    The function grids mu values and finds their associated end times. These
+    end times then become the x values in a spline with the gridded mu
+    values as the y values. The spline is then evaluated at the desired end time
+    in order to get the desired mu value.
+
+    arguments:
+        traj_module (obj): Instantiated trajectory module. It must output
+            the time array of the trajectory sparse trajectory as the first
+            output value in the tuple.
+        t_out (double): The desired length of time for the waveform.
+        traj_args (list): List of arguments for the trajectory function.
+            mu is removed. **Note**: It must be a list, not a tuple because the
+            new mu values are inserted into the argument list.
+        index_of_mu (int, optional): Index where to insert the new mu values in
+            the :code:`traj_args` list. Default is 1 because mu usually comes
+            after M.
+        traj_kwargs (dict, optional): Keyword arguments for :code:`traj_module`.
+            Default is an empty dict.
+        min_mu (double, optional): The minumum value of mu for search array.
+            Default is :math:`1 M_\odot`.
+        max_mu (double, optional): The maximum value of mu for search array.
+            Default is :math:`10^3M_\odot`.
+        num_mu (int, optional): Number of mu values to search over. Default is
+            100.
+        logspace (bool, optional): If True, logspace the search array.
+            If False, linspace search array. Default is True.
+
+    returns:
+        double: Value of mu that creates the proper length trajectory.
+
+    """
+
+    # setup search array
+    array_creator = np.logspace if logspace else np.linspace
+    start_mu = np.log10(min_mu) if logspace else min_mu
+    end_mu = np.log10(max_mu) if logspace else max_mu
+    mu_new = array_creator(start_mu, end_mu, num_mu)
+
+    # set maximum time value of trajectory to be just beyond desired time
+    traj_kwargs["T"] = t_out * 1.1
+
+    # array for end time values for trajectories
+    t_end = np.zeros_like(mu_new)
+
+    for i, mu in enumerate(mu_new):
+
+        # insert mu into args list
+        args_new = traj_args.copy()
+        args_new.insert(index_of_mu, mu)
+
+        # run the trajectory
+        out = traj_module(*args_new, **traj_kwargs)
+
+        # get the last time in the trajectory
+        t = out[0]
+        t_end[i] = t[-1]
+
+    # put them in increasing order
+    sort = np.argsort(t_end)
+    t_end = t_end[sort]
+    mu_new = mu_new[sort]
+
+    # get rid of extra values beyond the maximum allowable time
+    ind_stop = np.where(np.diff(t_end) > 0.0)[0][-1] + 1
+    mu_new = mu_new[:ind_stop]
+    t_end = t_end[:ind_stop]
+
+    # setup spline
+    spline = CubicSpline(t_end, mu_new)
+
+    # return proper mu value
+    return spline(t_out * YRSID_SI).item()
 
 
 # data history is saved here nased on version nunber

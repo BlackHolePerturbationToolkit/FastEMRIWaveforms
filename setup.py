@@ -300,6 +300,10 @@ if run_cuda_install:
         "pyinterp", sources=["src/interpolate.cu", "src/pyinterp.pyx"], **gpu_extension
     )
 
+    gpuAAK_ext = Extension(
+        "pygpuAAK", sources=["src/gpuAAK.cu", "src/gpuAAKWrap.pyx"], **gpu_extension
+    )
+
 # build all cpu modules
 cpu_extension = dict(
     libraries=["gsl", "gslcblas", "lapack", "gomp", "hdf5", "hdf5_hl"],
@@ -345,14 +349,37 @@ FLUX_ext = Extension(
     **cpu_extension,
 )
 
+Pn5_ext = Extension(
+    "pyPn5",
+    sources=[
+        "src/FundamentalFrequencies.cc",
+        "src/dIdt8H_5PNe10.cc",
+        "src/Inspiral5PN.cc",
+        "src/Pn5.pyx",
+    ],
+    **cpu_extension,
+)
+
+par_map_ext = Extension(
+    "pyParameterMap",
+    sources=["src/ParameterMapAAK.cc", "src/ParMap.pyx"],
+    **cpu_extension,
+)
+
+fund_freqs_ext = Extension(
+    "pyFundamentalFrequencies",
+    sources=["src/FundamentalFrequencies.cc", "src/FundFreqs.pyx"],
+    **cpu_extension,
+)
+
 # Install cpu versions of gpu modules
 
 # need to copy cuda files to cpp for this special compiler we are using
 # also copy pyx files to cpu version
 src = "src/"
 
-cp_cu_files = ["matmul", "interpolate"]
-cp_pyx_files = ["pymatmul", "pyinterp"]
+cp_cu_files = ["matmul", "interpolate", "gpuAAK"]
+cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap"]
 
 for fp in cp_cu_files:
     shutil.copy(src + fp + ".cu", src + fp + ".cpp")
@@ -364,13 +391,14 @@ matmul_cpu_ext = Extension(
     "pymatmul_cpu", sources=["src/matmul.cpp", "src/pymatmul_cpu.pyx"], **cpu_extension
 )
 
-shutil.copy("src/interpolate.cu", "src/interpolate.cpp")
-shutil.copy("src/pyinterp.pyx", "src/pyinterp_cpu.pyx")
-
 interp_cpu_ext = Extension(
     "pyinterp_cpu",
     sources=["src/interpolate.cpp", "src/pyinterp_cpu.pyx"],
     **cpu_extension,
+)
+
+AAK_cpu_ext = Extension(
+    "pycpuAAK", sources=["src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"], **cpu_extension
 )
 
 
@@ -383,13 +411,17 @@ spher_harm_ext = Extension(
 cpu_extensions = [
     matmul_cpu_ext,
     FLUX_ext,
+    Pn5_ext,
+    par_map_ext,
     interp_cpu_ext,
     spher_harm_ext,
     Interp2DAmplitude_ext,
+    fund_freqs_ext,
+    AAK_cpu_ext,
 ]
 
 if run_cuda_install:
-    gpu_extensions = [matmul_ext, interp_ext]
+    gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext]
     extensions = gpu_extensions + cpu_extensions
 else:
     # extensions = [FLUX_ext, SlowFlux_ext, spher_harm_ext, Interp2DAmplitude_ext]
@@ -423,13 +455,15 @@ setup(
     packages=["few", "few.utils", "few.trajectory", "few.amplitude", "few.summation"],
     py_modules=[
         "few.trajectory.flux",
+        "few.trajectory.pn5",
         "few.waveform",
         "few.amplitude.romannet",
         "few.amplitude.interp2dcubicspline",
         "few.utils.modeselector",
         "few.summation.directmodesum",
-        "few.utils.ylm",
         "few.summation.interpolatedmodesum",
+        "few.summation.aakwave",
+        "few.utils.ylm",
         "few.utils.constants",
         "few.utils.getfiles",
         "few.utils.citations",
