@@ -46,8 +46,8 @@ sys.path.insert(
 import shutil
 
 shutil.copy(
-    "/Users/michaelkatz/Research/FastEMRIWaveforms/examples/SchwarzschildEccentricWaveform_intro.ipynb",
-    "/Users/michaelkatz/Research/FastEMRIWaveforms/docs/source/tutorial/SchwarzschildEccentricWaveform_intro.ipynb",
+    "/Users/michaelkatz/Research/FastEMRIWaveforms/examples/FastEMRIWaveforms_tutorial.ipynb",
+    "/Users/michaelkatz/Research/FastEMRIWaveforms/docs/source/tutorial/FastEMRIWaveforms_tutorial.ipynb",
 )
 
 
