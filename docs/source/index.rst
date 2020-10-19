@@ -16,7 +16,7 @@
    :maxdepth: 4
    :caption: Tutorial:
 
-   tutorial/SchwarzschildEccentricWaveform_intro
+   tutorial/FastEMRIWaveforms_tutorial
 
 .. toctree::
    :maxdepth: 4
