@@ -41,7 +41,7 @@ Below is a quick set of instructions to get you started with ``few``.
 
 ::
 
-   conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 gsl lapack hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
+   conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
    conda activate few_env
 
 ::
@@ -76,7 +76,7 @@ Prerequisites
 To install this software for CPU usage, you need `gsl
 >2.0 <https://www.gnu.org/software/gsl/>`__ ,
 `lapack <https://www.netlib.org/lapack/lug/node14.html>`__, Python >3.4,
-and NumPy. To run the examples, you will also need jupyter and
+wget, and NumPy. To run the examples, you will also need jupyter and
 matplotlib. We generally recommend installing everything, including gcc
 and g++ compilers, in the conda environment as is shown in the examples
 here. This generally helps avoid compilation and linking issues. If you
@@ -109,7 +109,7 @@ Installing
 
 ::
 
-   conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 gsl lapack hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
+   conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
    conda activate few_env
 
 ::
@@ -146,10 +146,9 @@ Installing
    python setup.py install
 
 When installing lapack and gsl, the setup file will default to assuming
-lib and include for both are in ``/usr/local/opt/lapack/`` and
-``/usr/local/opt/gsl/``. To provide other lib and include directories
-you can provide command line options when installing. You can also
-remove usage of OpenMP.
+lib and include for both are in installed within the conda environment.
+To provide other lib and include directories you can provide command
+line options when installing. You can also remove usage of OpenMP.
 
 ::
 
