@@ -41,7 +41,7 @@ Below is a quick set of instructions to get you started with ``few``.
 
 ::
 
-   conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
+   conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
    conda activate few_env
 
 ::
@@ -74,15 +74,17 @@ Prerequisites
 ~~~~~~~~~~~~~
 
 To install this software for CPU usage, you need `gsl
->2.0 <https://www.gnu.org/software/gsl/>`__ ,
-`lapack <https://www.netlib.org/lapack/lug/node14.html>`__, Python >3.4,
-wget, and NumPy. To run the examples, you will also need jupyter and
-matplotlib. We generally recommend installing everything, including gcc
-and g++ compilers, in the conda environment as is shown in the examples
-here. This generally helps avoid compilation and linking issues. If you
-use your own chosen compiler, you will need to make sure all necessary
-information is passed to the setup command (see below). You also may
-need to add information to the ``setup.py`` file.
+>2.0 <https://www.gnu.org/software/gsl/>`__ , `lapack
+(3.6.1) <https://www.netlib.org/lapack/lug/node14.html>`__, Python >3.4,
+wget, and NumPy. If you install lapack with conda, the new version (3.9)
+seems to not install the correct header files. Therefore, the lapack
+version must be 3.6.1. To run the examples, you will also need jupyter
+and matplotlib. We generally recommend installing everything, including
+gcc and g++ compilers, in the conda environment as is shown in the
+examples here. This generally helps avoid compilation and linking
+issues. If you use your own chosen compiler, you will need to make sure
+all necessary information is passed to the setup command (see below).
+You also may need to add information to the ``setup.py`` file.
 
 To install this software for use with NVIDIA GPUs (compute capability
 >2.0), you need the `CUDA
@@ -109,7 +111,7 @@ Installing
 
 ::
 
-   conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
+   conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
    conda activate few_env
 
 ::
