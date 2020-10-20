@@ -243,7 +243,7 @@ you do not have it.</p></li>
 you will probably need to add libraries and include paths to the
 <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> file.</p></li>
 </ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">gcc_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gxx_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gsl</span> <span class="n">lapack</span> <span class="n">hdf5</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">matplotlib</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">gcc_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gxx_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">wget</span> <span class="n">gsl</span> <span class="n">lapack</span> <span class="n">hdf5</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">matplotlib</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
 <span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
 </pre></div>
 </div>
@@ -276,7 +276,7 @@ notebook</a>.</p>
 <p>To install this software for CPU usage, you need <a class="reference external" href="https://www.gnu.org/software/gsl/">gsl
 &gt;2.0</a> ,
 <a class="reference external" href="https://www.netlib.org/lapack/lug/node14.html">lapack</a>, Python &gt;3.4,
-and NumPy. To run the examples, you will also need jupyter and
+wget, and NumPy. To run the examples, you will also need jupyter and
 matplotlib. We generally recommend installing everything, including gcc
 and g++ compilers, in the conda environment as is shown in the examples
 here. This generally helps avoid compilation and linking issues. If you
@@ -304,7 +304,7 @@ hosted on <a class="reference external" href="https://zenodo.org/record/3981654#
 you do not have it.</p></li>
 <li><p>Create a virtual environment.</p></li>
 </ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">gcc_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gxx_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gsl</span> <span class="n">lapack</span> <span class="n">hdf5</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">matplotlib</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">gcc_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gxx_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">wget</span> <span class="n">gsl</span> <span class="n">lapack</span> <span class="n">hdf5</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">matplotlib</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
 <span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
 </pre></div>
 </div>
@@ -341,10 +341,9 @@ you have cuda version 9.2, for example:</p></li>
 </pre></div>
 </div>
 <p>When installing lapack and gsl, the setup file will default to assuming
-lib and include for both are in <code class="docutils literal notranslate"><span class="pre">/usr/local/opt/lapack/</span></code> and
-<code class="docutils literal notranslate"><span class="pre">/usr/local/opt/gsl/</span></code>. To provide other lib and include directories
-you can provide command line options when installing. You can also
-remove usage of OpenMP.</p>
+lib and include for both are in installed within the conda environment.
+To provide other lib and include directories you can provide command
+line options when installing. You can also remove usage of OpenMP.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">help</span>
 <span class="n">usage</span><span class="p">:</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">no_omp</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lapack_lib</span> <span class="n">LAPACK_LIB</span><span class="p">]</span>
                 <span class="p">[</span><span class="o">--</span><span class="n">lapack_include</span> <span class="n">LAPACK_INCLUDE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lapack</span> <span class="n">LAPACK</span><span class="p">]</span>
