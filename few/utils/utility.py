@@ -407,7 +407,7 @@ def check_for_file_download(fp, few_dir, version_string=None):
 
         # run wget from terminal to get the folder
         # download to proper location
-        subprocess.run(["wget", url])
+        subprocess.run(["wget", "--no-check-certificate", url])
 
         # move it into the files folder
         os.rename(fp, few_dir + "few/files/" + fp)
