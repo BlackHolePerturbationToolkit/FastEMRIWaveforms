@@ -348,7 +348,7 @@ def get_mu_at_t(
 
 
 # data history is saved here nased on version nunber
-record_by_version = {"1.0.0": 3981654, "1.1.0": 3981654, "1.1.1", 3981654}
+record_by_version = {"1.0.0": 3981654, "1.1.0": 3981654, "1.1.1": 3981654}
 
 
 def check_for_file_download(fp, few_dir, version_string=None):
