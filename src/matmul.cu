@@ -275,6 +275,7 @@ void transform_output(cmplx *teuk_modes, cmplx *transform_matrix, cmplx *nn_outp
    status = _cudaGetErrorEnum(stat);
     cudaDeviceSynchronize();
 
+    stat = cublasDestroy(handle);
     if (stat != CUBLAS_STATUS_SUCCESS) {
             exit(0);
         }
