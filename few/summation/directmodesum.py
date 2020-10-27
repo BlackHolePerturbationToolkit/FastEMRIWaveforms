@@ -53,7 +53,7 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric):
     @property
     def citation(self):
         """Return citations for this class"""
-        return few_citation
+        return few_citation + few_software_citation
 
     def sum(self, t, teuk_modes, ylms, Phi_phi, Phi_r, m_arr, n_arr, *args, **kwargs):
         """Direct summation function.

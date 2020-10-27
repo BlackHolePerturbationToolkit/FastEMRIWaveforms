@@ -35,6 +35,23 @@ few_citation = """
 }
 """
 
+few_software_citation = """
+@software{michael_l_katz_2020_4005001,
+  author       = {Michael L. Katz and
+                  Alvin J. K. Chua and
+                  Niels Warburton and
+                  Scott A. Hughes.},
+  title        = {{BlackHolePerturbationToolkit/FastEMRIWaveforms:
+                   Official Release}},
+  month        = aug,
+  year         = 2020,
+  publisher    = {Zenodo},
+  version      = {v1.0.0},
+  doi          = {10.5281/zenodo.4005001},
+  url          = {https://doi.org/10.5281/zenodo.4005001}
+}
+"""
+
 romannet_citation = """
 @article{Chua:2018woh,
     author = "Chua, Alvin J.K. and Galley, Chad R. and Vallisneri, Michele",
