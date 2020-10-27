@@ -126,7 +126,7 @@ class CubicSplineInterpolant:
     @property
     def citation(self):
         """Return the citation for this class"""
-        return few_citation
+        return few_citation + few_software_citation
 
     @property
     def y(self):
@@ -244,7 +244,7 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
 
     @property
     def citation(self):
-        return few_citation
+        return few_citation + few_software_citation
 
     def sum(
         self,

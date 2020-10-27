@@ -94,7 +94,7 @@ class AAKSummation(SummationBase, Pn5AAK):
     @property
     def citation(self):
         """Return citations for this class"""
-        return few_citation + AAK_citation_1 + AAK_citation_2 + AK_citation
+        return few_citation + few_software_citation + AAK_citation_1 + AAK_citation_2 + AK_citation
 
     def sum(
         self,

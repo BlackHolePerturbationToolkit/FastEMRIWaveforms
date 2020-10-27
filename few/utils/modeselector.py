@@ -80,7 +80,7 @@ class ModeSelector:
     @property
     def citation(self):
         """Return citations related to this class."""
-        return few_citation
+        return few_citation + few_software_citation
 
     def __call__(self, teuk_modes, ylms, modeinds, eps=1e-5):
         """Call to sort and filer teukolsky modes.

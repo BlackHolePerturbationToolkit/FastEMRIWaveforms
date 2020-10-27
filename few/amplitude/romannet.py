@@ -157,7 +157,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
     @property
     def citation(self):
         """Return citations for this module"""
-        return romannet_citation + few_citation
+        return romannet_citation + few_citation + few_software_citation
 
     def _initialize_weights(self):
         # initalize weights/bias/dimensions for the neural network
