@@ -74,3 +74,11 @@ Package TODOs
 - shared memory based on CUDA_ARCH / upping shared allocation
 - deal with file locations and removing files from git history
 - add benchmarking function
+
+Change Log
+===========
+
+- 1.1.3: Schwarzschild eccentric fundamental frequencies added. Flux inspiral structure adjusted to this change. Change log added. 
+- 1.1.2: Memory leak on GPU corrected.
+- 1.1.1: wget and lapack issues fixed.
+- 1.1.0: New AAK was added.

@@ -32,6 +32,7 @@
 #include "Interpolant.h"
 #include "FluxInspiral.hh"
 #include "global.h"
+#include "FundamentalFrequencies.hh"
 
 #include <iostream>
 #include <fstream>
@@ -50,30 +51,6 @@ using namespace std::chrono;
 const int Ne = 33;
 const int Ny = 50;
 
-// Define elliptic integrals that use Mathematica's conventions
-double EllipticK(double k){
-        return gsl_sf_ellint_Kcomp(sqrt(k), GSL_PREC_DOUBLE);
-}
-
-double EllipticF(double phi, double k){
-        return gsl_sf_ellint_F(phi, sqrt(k), GSL_PREC_DOUBLE) ;
-}
-
-double EllipticE(double k){
-        return gsl_sf_ellint_Ecomp(sqrt(k), GSL_PREC_DOUBLE);
-}
-
-double EllipticEIncomp(double phi, double k){
-        return gsl_sf_ellint_E(phi, sqrt(k), GSL_PREC_DOUBLE) ;
-}
-
-double EllipticPi(double n, double k){
-        return gsl_sf_ellint_Pcomp(sqrt(k), -n, GSL_PREC_DOUBLE);
-}
-
-double EllipticPiIncomp(double n, double phi, double k){
-        return gsl_sf_ellint_P(phi, sqrt(k), -n, GSL_PREC_DOUBLE);
-}
 
 // The RHS of the ODEs
 int func (double t, const double y[], double f[], void *params){
@@ -86,16 +63,11 @@ int func (double t, const double y[], double f[], void *params){
 
 	double y1 = log((p -2.*e - 2.1));
 
-	// Need to evaluate 4 different elliptic integrals here. Cache them first to avoid repeated calls.
-	double EllipE 	= EllipticE(4*e/(p-6.0+2*e));
-	double EllipK 	= EllipticK(4*e/(p-6.0+2*e));;
-	double EllipPi1 = EllipticPi(16*e/(12.0 + 8*e - 4*e*e - 8*p + p*p), 4*e/(p-6.0+2*e));
-	double EllipPi2 = EllipticPi(2*e*(p-4)/((1.0+e)*(p-6.0+2*e)), 4*e/(p-6.0+2*e));
-
     // evaluate ODEs, starting with PN contribution, then interpolating over remaining flux contribution
-	double Omega_phi = (2*Power(p,1.5))/(Sqrt(-4*Power(e,2) + Power(-2 + p,2))*(8 + ((-2*EllipPi2*(6 + 2*e - p)*(3 + Power(e,2) - p)*Power(p,2))/((-1 + e)*Power(1 + e,2)) - (EllipE*(-4 + p)*Power(p,2)*(-6 + 2*e + p))/(-1 + Power(e,2)) +
-          (EllipK*Power(p,2)*(28 + 4*Power(e,2) - 12*p + Power(p,2)))/(-1 + Power(e,2)) + (4*(-4 + p)*p*(2*(1 + e)*EllipK + EllipPi2*(-6 - 2*e + p)))/(1 + e) + 2*Power(-4 + p,2)*(EllipK*(-4 + p) + (EllipPi1*p*(-6 - 2*e + p))/(2 + 2*e - p)))/
-        (EllipK*Power(-4 + p,2))));
+	double Omega_phi = 0.0;
+    double Omega_r = 0.0;
+
+    SchwarzschildGeoCoordinateFrequencies(&Omega_phi, &Omega_r, p, e);
 
 	double yPN = pow(Omega_phi,2./3.);
 
@@ -112,12 +84,8 @@ int func (double t, const double y[], double f[], void *params){
 	 (-1 + Power(e,2))*Ldot*Sqrt(-3 - Power(e,2) + p)*(12 + 4*Power(e,2) - 8*p + Power(p,2)))/
 	(e*(4*Power(e,2) - Power(-6 + p,2))*p));
 
-	double Phi_phi_dot 	= Omega_phi;
-
-	double Phi_r_dot 	= (p*Sqrt((-6 + 2*e + p)/(-4*Power(e,2) + Power(-2 + p,2)))*Pi)/
-   (8*EllipK + ((-2*EllipPi2*(6 + 2*e - p)*(3 + Power(e,2) - p)*Power(p,2))/((-1 + e)*Power(1 + e,2)) - (EllipE*(-4 + p)*Power(p,2)*(-6 + 2*e + p))/(-1 + Power(e,2)) +
-        (EllipK*Power(p,2)*(28 + 4*Power(e,2) - 12*p + Power(p,2)))/(-1 + Power(e,2)) + (4*(-4 + p)*p*(2*(1 + e)*EllipK + EllipPi2*(-6 - 2*e + p)))/(1 + e) + 2*Power(-4 + p,2)*(EllipK*(-4 + p) + (EllipPi1*p*(-6 - 2*e + p))/(2 + 2*e - p)))/
-      Power(-4 + p,2));
+	double Phi_phi_dot = Omega_phi;
+    double Phi_r_dot = Omega_r;
 
 	f[0] = pdot;
 	f[1] = edot;
