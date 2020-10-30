@@ -546,7 +546,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 <li><p>Mode Selection: <a class="reference external" href="https://bhptoolkit.org/FastEMRIWaveforms/html/user/util.html#few.utils.modeselector.ModeSelector">ModeSelector</a></p></li>
 <li><p>Angular Harmonics: <a class="reference external" href="https://bhptoolkit.org/FastEMRIWaveforms/html/user/util.html#few.utils.ylm.GetYlms">GetYlms</a></p></li>
 </ul>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
@@ -586,19 +586,6 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.1.2-py3.7-macosx-10.9-x86_64.egg/few/utils/utility.py:398: UserWarning: The file AmplitudeVectorNorm.dat did not open sucessfully. It will now be downloaded to the proper location.
-  fp
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.1.2-py3.7-macosx-10.9-x86_64.egg/few/utils/utility.py:398: UserWarning: The file FluxNewMinusPNScaled_fixed_y_order.dat did not open sucessfully. It will now be downloaded to the proper location.
-  fp
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.1.2-py3.7-macosx-10.9-x86_64.egg/few/utils/utility.py:398: UserWarning: The file SchwarzschildEccentricInput.hdf5 did not open sucessfully. It will now be downloaded to the proper location.
-  fp
-</pre></div></div>
-</div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
@@ -611,9 +598,10 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 <span class="n">e0</span> <span class="o">=</span> <span class="mf">0.4</span>
 <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>  <span class="c1"># polar viewing angle</span>
 <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span>  <span class="c1"># azimuthal viewing angle</span>
+<span class="n">dist</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="c1"># distance in Gpc</span>
 <span class="n">dt</span> <span class="o">=</span> <span class="mf">10.0</span>
 
-<span class="n">wave</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>  <span class="c1">#  assumes dt = 10.0 for max T = 1.0 year</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>  <span class="c1">#  assumes dt = 10.0 for max T = 1.0 year</span>
 </pre></div>
 </div>
 </div>
@@ -636,7 +624,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0x7ffe04414b90&gt;]
+[&lt;matplotlib.lines.Line2D at 0x7fa53df6bc10&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -662,7 +650,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0x7ffe0450d8d0&gt;]
+[&lt;matplotlib.lines.Line2D at 0x7fa529d0a490&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -685,10 +673,11 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 <span class="n">e0</span> <span class="o">=</span> <span class="mf">0.1</span>
 <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>  <span class="c1"># polar viewing angle</span>
 <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span>  <span class="c1"># azimuthal viewing angle</span>
+<span class="n">dist</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># distance in Gpc</span>
 
 <span class="n">dt</span> <span class="o">=</span> <span class="mf">10.0</span> <span class="c1"># seconds</span>
 <span class="n">T</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># years</span>
-<span class="n">wave</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
 
 <span class="c1"># we can check how many harmonic modes are kept</span>
 
@@ -705,7 +694,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.1.2-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:426: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.1.4-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:426: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
   p0
 </pre></div></div>
 </div>
@@ -733,12 +722,12 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="n">dt</span> <span class="o">=</span> <span class="mf">15.0</span> <span class="c1"># seconds</span>
 <span class="n">T</span> <span class="o">=</span> <span class="mf">0.005</span>  <span class="c1"># years</span>
-<span class="n">wave1</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>  <span class="c1"># default</span>
+<span class="n">wave1</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>  <span class="c1"># default</span>
 
 <span class="c1"># we can check how many harmonic modes are kept</span>
 <span class="n">modes1</span> <span class="o">=</span> <span class="n">few</span><span class="o">.</span><span class="n">num_modes_kept</span>
 
-<span class="n">wave2</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
+<span class="n">wave2</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">)</span>
 
 <span class="n">modes2</span> <span class="o">=</span> <span class="n">few</span><span class="o">.</span><span class="n">num_modes_kept</span>
 
@@ -749,7 +738,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 <span class="n">mm</span> <span class="o">=</span> <span class="n">get_mismatch</span><span class="p">(</span><span class="n">wave1</span><span class="p">,</span> <span class="n">wave2</span><span class="p">)</span>
 
 <span class="c1"># we can check how many modes were kept</span>
-<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;wave used </span><span class="si">{}</span><span class="s1"> modes. wave2 used </span><span class="si">{}</span><span class="s1"> modes. The mismatch was </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">modes1</span><span class="p">,</span> <span class="n">modes2</span><span class="p">,</span> <span class="n">mm</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;wave1 used </span><span class="si">{}</span><span class="s1"> modes. wave2 used </span><span class="si">{}</span><span class="s1"> modes. The mismatch was </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">modes1</span><span class="p">,</span> <span class="n">modes2</span><span class="p">,</span> <span class="n">mm</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -758,7 +747,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.1.2-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:426: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.1.4-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:426: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
   p0
 </pre></div></div>
 </div>
@@ -767,7 +756,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-wave used 457 modes. wave2 used 26 modes. The mismatch was 0.0011803979666253905
+wave1 used 457 modes. wave2 used 26 modes. The mismatch was 0.0011803979666251685
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -834,9 +823,10 @@ wave used 457 modes. wave2 used 26 modes. The mismatch was 0.0011803979666253905
 <span class="n">e0</span> <span class="o">=</span> <span class="mf">0.2</span>
 <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>  <span class="c1"># polar viewing angle</span>
 <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span>  <span class="c1"># azimuthal viewing angle</span>
+<span class="n">dist</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># distance in Gpc</span>
 <span class="n">batch_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">)</span>
 
-<span class="n">slow_wave</span> <span class="o">=</span> <span class="n">slow</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">mode_selection</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
+<span class="n">slow_wave</span> <span class="o">=</span> <span class="n">slow</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">mode_selection</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -845,9 +835,7 @@ wave used 457 modes. wave2 used 26 modes. The mismatch was 0.0011803979666253905
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.1.2-py3.7-macosx-10.9-x86_64.egg/few/utils/utility.py:398: UserWarning: The file Teuk_amps_a0.0_lmax_10_nmax_30_new.h5 did not open sucessfully. It will now be downloaded to the proper location.
-  fp
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.1.2-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:426: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.1.4-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:426: UserWarning: With p0 = 8.0 &lt; 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.
   p0
 </pre></div></div>
 </div>
@@ -856,7 +844,7 @@ wave used 457 modes. wave2 used 26 modes. The mismatch was 0.0011803979666253905
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fast_wave</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
+<span></span><span class="n">fast_wave</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">slow_wave</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fast_wave</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
@@ -871,7 +859,7 @@ wave used 457 modes. wave2 used 26 modes. The mismatch was 0.0011803979666253905
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 Length check: 10520 10520
-Mismatch: 2.3090363905464706e-05
+Mismatch: 2.309036390524266e-05
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -983,7 +971,7 @@ gravitational wave flux for normalization information.</p>
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.1.2-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:725: UserWarning: new_t array goes beyond generated t array. If you want to cut the t array at the end of the trajectory, set fix_t to True.
+/Users/michaelkatz/anaconda3/envs/few_env/lib/python3.7/site-packages/few-1.1.4-py3.7-macosx-10.9-x86_64.egg/few/utils/baseclasses.py:725: UserWarning: new_t array goes beyond generated t array. If you want to cut the t array at the end of the trajectory, set fix_t to True.
   &#34;new_t array goes beyond generated t array. If you want to cut the t array at the end of the trajectory, set fix_t to True.&#34;
 </pre></div></div>
 </div>
@@ -1033,7 +1021,7 @@ t1 max: 999999.0 t2 max: 464369.0
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0x7ffd0f6e3550&gt;
+&lt;matplotlib.legend.Legend at 0x7fa4245b8e10&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1578,7 +1566,7 @@ We reduced the mode content from 3843 modes to 584 modes.
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0x7ffd03aa8ad0&gt;
+&lt;matplotlib.legend.Legend at 0x7fa423f71810&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1675,7 +1663,7 @@ array([-3.54810537e-05, -4.01422809e-05, -4.48887306e-05, ...,
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0x7ffd0ab42c50&gt;]
+[&lt;matplotlib.lines.Line2D at 0x7fa42c755f50&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1886,7 +1874,7 @@ mu = 71.42326579011929 will create a waveform that is 1.5 years long, given the 
 interfaces, but ensures the strict interface will be the same for all trajectory modules. Trajectory modules must implement the method <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/traj.html?highlight=trajectorybase#few.utils.baseclasses.TrajectoryBase.get_inspiral">get_inspial</a>. The common interface uses this to generate the specific trajectory.</p>
 <p>This is a common theme amongst module and waveform creation. The user will take one parent abstract base class related to the waveform limits, domain of validity, and its waveform properties, and one parent abstract based class for the module type (like trajectory or summation).</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2028,7 +2016,7 @@ interfaces, but ensures the strict interface will be the same for all trajectory
 <div class="section" id="Test-your-trajectory">
 <h2>Test your trajectory<a class="headerlink" href="#Test-your-trajectory" title="Permalink to this headline">¶</a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[39]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2068,7 +2056,7 @@ interfaces, but ensures the strict interface will be the same for all trajectory
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[40]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[39]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2080,7 +2068,7 @@ interfaces, but ensures the strict interface will be the same for all trajectory
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[40]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[39]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -2096,7 +2084,7 @@ Text(0, 0.5, &#39;p&#39;)
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[41]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[40]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2108,7 +2096,7 @@ Text(0, 0.5, &#39;p&#39;)
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[41]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[40]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -2129,7 +2117,7 @@ Text(0, 0.5, &#39;e&#39;)
 <p>Now we will create a waveform with our new trajectory model. To do this, we will start with <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/main.html#few.waveform.SchwarzschildEccentricWaveformBase">SchwarzschildEccentricWaveformBase</a>. This base class has already inherited from <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/main.html#few.utils.baseclasses.SchwarzschildEccentric">SchwarzschildEccentric</a>. It creates the common interface for all waveform modules (and how
 they interface with there constituent modules). A requirement when creating a module is to have properties describing the GPU capability of the waveform, as well as whether or not it allows for batching the waveform creation (after trajectory).</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[42]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[41]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2174,7 +2162,7 @@ they interface with there constituent modules). A requirement when creating a mo
 <h2>Test your waveform<a class="headerlink" href="#Test-your-waveform" title="Permalink to this headline">¶</a></h2>
 <p>It will have the same interface as the other waveforms.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[43]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[42]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2186,19 +2174,20 @@ they interface with there constituent modules). A requirement when creating a mo
 <span class="n">e0</span> <span class="o">=</span> <span class="mf">0.4</span>
 <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mf">3.</span>
 <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mf">4.</span>
+<span class="n">dist</span> <span class="o">=</span> <span class="mf">1.0</span>
 
 <span class="n">T</span> <span class="o">=</span> <span class="mf">0.2</span>
 <span class="n">dt</span> <span class="o">=</span> <span class="mf">15.0</span>
 
-<span class="n">wave1</span> <span class="o">=</span> <span class="n">test</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">)</span>
+<span class="n">wave1</span> <span class="o">=</span> <span class="n">test</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">)</span>
 
-<span class="n">wave2</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="p">)</span>
+<span class="n">wave2</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="p">)</span>
 
 </pre></div>
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[44]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[43]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2216,7 +2205,7 @@ they interface with there constituent modules). A requirement when creating a mo
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-mismatch: 0.9327224766401473
+mismatch: 0.9327224766401472
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -2242,7 +2231,7 @@ mismatch: 0.9327224766401473
 <p>The frequencies in that basis are found by taking the time derivatives of each equation above.</p>
 <p>This class has GPU capabilities and works from the sparse trajectory methodoligy with cubic spine interpolation of the smoothly varying waveform quantities. This waveform does not have the freedom in terms of user-chosen quantitites that <code class="docutils literal notranslate"><span class="pre">few.waveform.SchwarzschildEccentricWaveformBase</span></code> contains. This is mainly due to the specific waveform constructions particular to the AAK/AK.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[45]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[44]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2290,7 +2279,7 @@ mismatch: 0.9327224766401473
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[46]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[45]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2301,12 +2290,12 @@ mismatch: 0.9327224766401473
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[46]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[45]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0x7ffd0384ef50&gt;]
+[&lt;matplotlib.lines.Line2D at 0x7fa4313dead0&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -2318,7 +2307,7 @@ mismatch: 0.9327224766401473
 </div>
 <p>We can also assume a long-wavelength LISA response by setting <code class="docutils literal notranslate"><span class="pre">mich=True</span></code>. Please note this is not Time-delay interferometry (TDI).</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[47]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[46]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2327,7 +2316,7 @@ mismatch: 0.9327224766401473
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[48]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[47]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2338,12 +2327,12 @@ mismatch: 0.9327224766401473
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[48]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[47]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0x7ffd22d85650&gt;]
+[&lt;matplotlib.lines.Line2D at 0x7fa4442a7510&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -2357,7 +2346,7 @@ mismatch: 0.9327224766401473
 <h2>5PN Trajectory<a class="headerlink" href="#5PN-Trajectory" title="Permalink to this headline">¶</a></h2>
 <p>This new waveform includes 5PN trajectories from <a class="reference external" href="https://arxiv.org/abs/2008.13554">Fujita &amp; Shibata 2020</a>.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[49]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[48]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2367,7 +2356,7 @@ mismatch: 0.9327224766401473
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[50]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[49]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2401,7 +2390,7 @@ mismatch: 0.9327224766401473
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[51]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[50]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2435,7 +2424,7 @@ mismatch: 0.9327224766401473
 <div class="section" id="Building-an-AAK-waveform-from-a-given-trajectory-(in-this-case-the-5PN-trajectory)">
 <h2>Building an AAK waveform from a given trajectory (in this case the 5PN trajectory)<a class="headerlink" href="#Building-an-AAK-waveform-from-a-given-trajectory-(in-this-case-the-5PN-trajectory)" title="Permalink to this headline">¶</a></h2>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[52]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[51]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2444,7 +2433,7 @@ mismatch: 0.9327224766401473
 </div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[53]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[52]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2474,7 +2463,7 @@ mismatch: 0.9327224766401473
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[54]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[53]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2484,12 +2473,12 @@ mismatch: 0.9327224766401473
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[54]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[53]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0x7ffd6a9e9a90&gt;]
+[&lt;matplotlib.lines.Line2D at 0x7fa46078d250&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -2500,7 +2489,7 @@ mismatch: 0.9327224766401473
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[55]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[54]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2510,12 +2499,12 @@ mismatch: 0.9327224766401473
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[55]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[54]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0x7ffd6aa030d0&gt;]
+[&lt;matplotlib.lines.Line2D at 0x7fa4607c52d0&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -2533,7 +2522,7 @@ mismatch: 0.9327224766401473
 <div class="section" id="Fast-Schwarzschild-Eccentric-Waveforms">
 <h2>Fast Schwarzschild Eccentric Waveforms<a class="headerlink" href="#Fast-Schwarzschild-Eccentric-Waveforms" title="Permalink to this headline">¶</a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[56]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[55]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -2593,7 +2582,7 @@ mismatch: 0.9327224766401473
 <div class="section" id="New-and-Improved-AAK-with-5PN-Trajectory">
 <h2>New and Improved AAK with 5PN Trajectory<a class="headerlink" href="#New-and-Improved-AAK-with-5PN-Trajectory" title="Permalink to this headline">¶</a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[57]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[56]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>

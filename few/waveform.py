@@ -155,6 +155,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         e0,
         theta,
         phi,
+        dist,
         dt=10.0,
         T=1.0,
         eps=1e-5,
@@ -176,6 +177,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
             e0 (double): Initial eccentricity (:math:`0.0\leq e_0\leq0.7`).
             theta (double): Polar viewing angle (:math:`-\pi/2\leq\Theta\leq\pi/2`).
             phi (double): Azimuthal viewing angle.
+            dist (double): Luminosity distance in Gpc.
             dt (double, optional): Time between samples in seconds (inverse of
                 sampling frequency). Default is 10.0.
             T (double, optional): Total observation time in years.
@@ -364,7 +366,8 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
             else:
                 waveform = waveform_temp
 
-        return waveform
+        dist_dimensionless = (dist * Gpc) / (M * MRSUN_SI)
+        return waveform / dist_dimensionless
 
 
 class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
@@ -629,7 +632,8 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
     def citation(self):
         """Return citations related to this module"""
         return (
-            few_citation + few_software_citation
+            few_citation
+            + few_software_citation
             + AAK_citation_1
             + AAK_citation_2
             + AK_citation
