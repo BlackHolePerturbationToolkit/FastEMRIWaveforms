@@ -429,8 +429,12 @@ void make_waveform(cmplx *waveform,
     int start = 0;
     int end = num_teuk_here;
     int diff = 1;
+    #ifdef __USE_OMP__
+    #pragma omp parallel for
+    #endif // __USE_OMP__
     #endif
-        for (int i=start; i<end; i+=diff) {
+    for (int i=start; i<end; i+=diff)
+    {
 
         // fill mode values and Ylms
         int ind_re = old_ind*(2*num_teuk_modes+num_pars) + (init_ind + i);
