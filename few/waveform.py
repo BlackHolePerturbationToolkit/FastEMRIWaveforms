@@ -366,7 +366,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
             else:
                 waveform = waveform_temp
 
-        dist_dimensionless = (dist * Gpc) / (M * MRSUN_SI)
+        dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
         return waveform / dist_dimensionless
 
 
