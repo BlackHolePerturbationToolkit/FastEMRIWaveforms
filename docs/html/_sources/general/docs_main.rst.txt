@@ -68,6 +68,7 @@ Below are figures from our paper related to this package.
 Package TODOs
 ===============
 
+- add SNR calculator
 - run trajectory backward
 - add initial phases (special treatment needed)
 - zero out modes
@@ -78,7 +79,8 @@ Package TODOs
 Change Log
 ===========
 
-- 1.1.4: Distance added to FEW. 
+- 1.1.5: Distance bug fixed. Wrong mass scale. 
+- 1.1.4: Distance added to FEW.
 - 1.1.3: Schwarzschild eccentric fundamental frequencies added. Flux inspiral structure adjusted to this change. Change log added.
 - 1.1.2: Memory leak on GPU corrected.
 - 1.1.1: wget and lapack issues fixed.
