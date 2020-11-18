@@ -188,7 +188,7 @@ void set_spline_constants(double *t_arr, double *interp_array, double *B,
     int end2 = length - 1;
     int diff2 = 1;
 
-    #pragma omp parrallel
+    #pragma omp parallel for
     #endif
 
     for (int interp_i= start1;
