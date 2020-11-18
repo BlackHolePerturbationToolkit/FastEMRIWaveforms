@@ -183,7 +183,7 @@ class CubicSplineInterpolant:
             + self.c2[:, inds] * x2
             + self.c3[:, inds] * x3
         )
-        return out
+        return out.squeeze()
 
     def d1(self, tnew):
         inds = self.xp.searchsorted(self.t, tnew)
