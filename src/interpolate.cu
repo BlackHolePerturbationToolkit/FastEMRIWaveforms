@@ -141,6 +141,7 @@ void fill_B(double *t_arr, double *y_all, double *B, double *upper_diag, double 
     int end2 = length;
     int diff2 = 1;
 
+    #pragma omp parallel for
     #endif
     for (int interp_i= start1;
          interp_i<end1; // 2 for re and im
@@ -154,7 +155,6 @@ void fill_B(double *t_arr, double *y_all, double *B, double *upper_diag, double 
 
                 int lead_ind = interp_i*length;
                 prep_splines(i, length, &B[lead_ind], &upper_diag[lead_ind], &diag[lead_ind], &lower_diag[lead_ind], t_arr, &y_all[interp_i*length]);
-
             }
         }
 }
@@ -176,7 +176,7 @@ void set_spline_constants(double *t_arr, double *interp_array, double *B,
     int diff1 = blockDim.y*gridDim.y;
 
     int start2 = blockIdx.x*blockDim.x + threadIdx.x;
-    int end2 = length;
+    int end2 = length - 1;
     int diff2 = blockDim.x * gridDim.x;
     #else
 
@@ -188,6 +188,7 @@ void set_spline_constants(double *t_arr, double *interp_array, double *B,
     int end2 = length - 1;
     int diff2 = 1;
 
+    #pragma omp parrallel
     #endif
 
     for (int interp_i= start1;

@@ -99,13 +99,14 @@ class CubicSplineInterpolant:
         diag = self.xp.zeros_like(B)
         lower_diag = self.xp.zeros_like(B)
 
+        self.t = t.astype(xp.float64)
         # perform interpolation
         self.interpolate_arrays(
-            t, interp_array, ninterps, length, B, upper_diag, diag, lower_diag
+            self.t, interp_array, ninterps, length, B, upper_diag, diag, lower_diag,
         )
 
         # set up storage of necessary arrays
-        self.t = t
+
         self.interp_array = self.xp.transpose(
             interp_array.reshape(self.reshape_shape), [0, 2, 1]
         ).flatten()
