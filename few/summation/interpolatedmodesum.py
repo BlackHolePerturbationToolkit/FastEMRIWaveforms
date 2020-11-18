@@ -76,6 +76,8 @@ class CubicSplineInterpolant:
             self.xp = np
             self.interpolate_arrays = interpolate_arrays_wrap_cpu
 
+        y_all = self.xp.atleast_2d(y_all)
+
         # hardcoded,only cubic spline is available
         self.degree = 3
 
