@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import warnings
+
 import numpy as np
 
 # try to import cupy
@@ -58,8 +60,8 @@ class CubicSplineInterpolant:
 
     args:
         t (1D double xp.ndarray): t values as input for the spline.
-        y_all (2D double xp.ndarray): y values for the spline.
-            Shape: (ninterps, length).
+        y_all (1D or 2D double xp.ndarray): y values for the spline.
+            Shape: (length,) or (ninterps, length).
         use_gpu (bool, optional): If True, prepare arrays for a GPU. Default is
             False.
 
@@ -155,7 +157,8 @@ class CubicSplineInterpolant:
         """Evaluation function for the spline
 
         Put in an array of new t values at which all interpolants will be
-        evaluated.
+        evaluated. If t values are outside of the original t values, edge values
+        are used to fill the new array at these points.
 
         args:
             tnew (1D double xp.ndarray): Array of new t values. All of these new
@@ -170,9 +173,13 @@ class CubicSplineInterpolant:
         # find were in the old t array the new t values split
         inds = self.xp.searchsorted(self.t, tnew, side="right") - 1
 
+        # get values outside the edges
+        inds_bad_left = tnew < self.t[0]
+        inds_bad_right = tnew > self.t[-1]
+
         if np.any(inds < 0) or np.any(inds >= len(self.t)):
-            raise ValueError(
-                "New t array outside bounds of input t array. This is not allowed."
+            warnings.warn(
+                "New t array outside bounds of input t array. These points are filled with edge values."
             )
 
         x = tnew - self.t[inds]
@@ -185,6 +192,13 @@ class CubicSplineInterpolant:
             + self.c2[:, inds] * x2
             + self.c3[:, inds] * x3
         )
+
+        # fix bad values
+        if self.xp.any(inds_bad_left):
+            out[:, inds_bad_left] = self.y[:, 0]
+
+        if self.xp.any(inds_bad_right):
+            out[:, inds_bad_right] = self.y[:, -1]
         return out.squeeze()
 
     def d1(self, tnew):

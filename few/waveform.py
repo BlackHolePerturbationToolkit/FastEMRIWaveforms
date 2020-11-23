@@ -75,6 +75,8 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
             sum module during instantiation. Default is {}.
         Ylm_kwargs (dict, optional): Optional kwargs to pass to the
             Ylm generator during instantiation. Default is {}.
+        mode_selector_kwargs (dict, optional): Optional kwargs to pass to the
+            mode selector during instantiation. Default is {}.
         use_gpu (bool, optional): If True, use GPU resources. Default is False.
         normalize_amps (bool, optional): If True, it will normalize amplitudes
             to flux information output from the trajectory modules. Default
@@ -111,6 +113,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         amplitude_kwargs={},
         sum_kwargs={},
         Ylm_kwargs={},
+        mode_selector_kwargs={},
         use_gpu=False,
         normalize_amps=True,
     ):
@@ -140,7 +143,9 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         self.ylm_gen = GetYlms(use_gpu=use_gpu, **Ylm_kwargs)
 
         # selecting modes that contribute at threshold to the waveform
-        self.mode_selector = ModeSelector(self.m0mask, use_gpu=use_gpu)
+        self.mode_selector = ModeSelector(
+            self.m0mask, **mode_selector_kwargs, use_gpu=use_gpu
+        )
 
     @property
     def citation(self):
@@ -333,6 +338,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
             # mode selection based on input module
             else:
+                fund_freq_args = (M, 0.0, p_temp, e_temp, self.xp.zeros_like(e_temp))
                 modeinds = [self.l_arr, self.m_arr, self.n_arr]
                 (
                     teuk_modes_in,
@@ -340,7 +346,9 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
                     self.ls,
                     self.ms,
                     self.ns,
-                ) = self.mode_selector(teuk_modes, ylms, modeinds, eps=eps)
+                ) = self.mode_selector(
+                    teuk_modes, ylms, modeinds, fund_freq_args=fund_freq_args, eps=eps
+                )
 
             # store number of modes for external information
             self.num_modes_kept = teuk_modes_in.shape[1]
