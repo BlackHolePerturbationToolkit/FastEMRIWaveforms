@@ -442,11 +442,15 @@ def get_p_at_t(
     p_new = p_new[:ind_stop]
     t_end = t_end[:ind_stop]
 
+    if t_end[-1] < t_out * YRSID_SI:
+        return max_p
+
     # setup spline
     spline = CubicSpline(t_end, p_new)
 
     # return proper p value
-    return spline(t_out * YRSID_SI).item()
+    p_out = spline(t_out * YRSID_SI).item()
+    return p_out
 
 
 # data history is saved here nased on version nunber
@@ -458,6 +462,7 @@ record_by_version = {
     "1.1.3": 3981654,
     "1.1.4": 3981654,
     "1.1.5": 3981654,
+    "1.2.0": 3981654,
 }
 
 

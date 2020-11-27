@@ -17,7 +17,9 @@ cdef extern from "../include/FluxInspiral.hh":
                          np.float64_t *amp_norm,
                          np.float64_t *Phi_r, np.float64_t M,
                           np.float64_t mu, np.float64_t p0,
-                          np.float64_t e0, int*,
+                          np.float64_t e0,
+                          np.float64_t Phi_phi0, np.float64_t Phi_r0,
+                          int*,
                           double tmax,
                           double dt,
                           np.float64_t err,
@@ -39,7 +41,7 @@ cdef class pyFluxGenerator:
         if self.g:
             del self.g
 
-    def __call__(self, M, mu, p0, e0, T=1.0, dt=-1, err=1e-10, max_init_len=1000, DENSE_STEPPING=0, use_rk4=False):
+    def __call__(self, M, mu, p0, e0, Phi_phi0, Phi_r0, T=1.0, dt=-1, err=1e-10, max_init_len=1000, DENSE_STEPPING=0, use_rk4=False):
         cdef np.ndarray[ndim=1, dtype=np.float64_t] t = np.zeros(max_init_len, dtype=np.float64)
         cdef np.ndarray[ndim=1, dtype=np.float64_t] p = np.zeros(max_init_len, dtype=np.float64)
         cdef np.ndarray[ndim=1, dtype=np.float64_t] e = np.zeros(max_init_len, dtype=np.float64)
@@ -49,6 +51,6 @@ cdef class pyFluxGenerator:
 
         cdef int length
 
-        self.g.FLUXWrapper(&t[0], &p[0], &e[0], &Phi_phi[0], &Phi_r[0], &amp_norm[0], M, mu, p0, e0, &length, T, dt, err, DENSE_STEPPING, use_rk4, max_init_len)
+        self.g.FLUXWrapper(&t[0], &p[0], &e[0], &Phi_phi[0], &Phi_r[0], &amp_norm[0], M, mu, p0, e0, Phi_phi0, Phi_r0, &length, T, dt, err, DENSE_STEPPING, use_rk4, max_init_len)
 
         return (t[:length], p[:length], e[:length], Phi_phi[:length], Phi_r[:length], amp_norm[:length])
