@@ -36,21 +36,23 @@ public:
 		std::vector<double> Phi_r_arr;
         std::vector<double> amp_norm_out_arr;
 
-		double t0, M, mu, p0, e0, init_flux;
+		double t0, M, mu, p0, e0, Phi_phi0, Phi_r0, init_flux;
 
-		FLUXHolder(double t0_, double M_, double mu_, double p0_, double e0_, double init_flux_){
+		FLUXHolder(double t0_, double M_, double mu_, double p0_, double e0_, double Phi_phi0_, double Phi_r0_, double init_flux_){
 				t0 = t0_;
                 M = M_;
                 mu = mu_;
 				p0 = p0_;
 				e0 = e0_;
+                Phi_phi0 = Phi_phi0_;
+                Phi_r0 = Phi_r0_;
                 init_flux = init_flux_;
 
 				t_arr.push_back(t0);
 				p_arr.push_back(p0);
 				e_arr.push_back(e0);
-				Phi_phi_arr.push_back(0.0);
-				Phi_r_arr.push_back(0.0);
+				Phi_phi_arr.push_back(Phi_phi0);
+				Phi_r_arr.push_back(Phi_r0);
                 amp_norm_out_arr.push_back(init_flux);
 		};
 
@@ -75,9 +77,9 @@ public:
 
     FluxCarrier(std::string few_dir);
 
-    FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4);
+    FLUXHolder run_FLUX(double t0, double M, double mu, double p0, double e0, double Phi_phi0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4);
 
-    void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len);
+    void FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, double Phi_phi0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len);
 
     void dealloc();
 };
