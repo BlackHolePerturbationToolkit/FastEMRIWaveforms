@@ -40,9 +40,9 @@ class WaveformTest(unittest.TestCase):
         e0 = 0.2
         Y0 = 1.0
         qK = 0.2  # polar spin angle
-        phiK = np.pi / 4  # azimuthal viewing angle
-        qS = 0.1  # polar sky angle
-        phiS = np.pi / 3  # azimuthal viewing angle
+        phiK = 0.2  # azimuthal viewing angle
+        qS = 0.3  # polar sky angle
+        phiS = 0.3  # azimuthal viewing angle
         dist = 1.0  # distance
         Phi_phi0 = 1.0
         Phi_theta0 = 2.0
@@ -85,5 +85,3 @@ class WaveformTest(unittest.TestCase):
             T=T,
             dt=dt,
         )
-
-        breakpoint()

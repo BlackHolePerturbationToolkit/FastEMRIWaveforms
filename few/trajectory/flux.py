@@ -107,12 +107,10 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
                 This model can handle (p0 <= 18.0).
             e0 (double): Initial eccentricity (dimensionless).
                 This model can handle (e0 <= 0.7).
-
-            err (double, optional): Tolerance for integrator. Default is 1e-10.
-                Decreasing this parameter will give more steps over the
-                trajectory, but if it is too small, memory issues will occur as
-                the trajectory length will blow up. We recommend not adjusting
-                this parameter.
+            Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
+                Default is 0.0.
+            Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
+                Default is 0.0.
             *args (list, placeholder): Added for flexibility.
             **kwargs (dict, optional): kwargs passed from parent.
         Returns:
