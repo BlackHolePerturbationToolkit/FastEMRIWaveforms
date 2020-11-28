@@ -45,18 +45,54 @@ from few.summation.interpolatedmodesum import InterpolatedModeSum
 
 
 class GenerateEMRIWaveform:
+    """Generic waveform generator for data analysis
+
+    This class allows the user interface to be the exact same between any
+    waveform in the FEW package. For waveforms built in the source frame,
+    like :class:`few.waveform.FastSchwarzschildEccentricFlux`, the waveforms
+    are transformed to the detector frame. Waveforms like
+    :class:`few.waveform.Pn5AAKWaveform`that are built in the detector frame
+    are left alone effectively.
+
+    For waveforms that are less than Kerr generic (i.e. certain parameters are
+    unnecessary), this interface automatically removes the waveforms dependence
+    on those parameters.
+
+    Args:
+        waveform_class (str): String with the name of the waveform class to use.
+            See the `pre-built waveform models
+            <https://bhptoolkit.org/FastEMRIWaveforms/html/user/main.html#prebuilt-waveform-models>`_.
+        *args (list or tuple, optional): Arguments for the instantiation of
+            the waveform generation class.
+        frame (str, optional): Which frame to produce the output waveform in.
+            Default is "detector." Right now, the source frame is not implemented
+            for waveforms that are built in the detector frame.
+        return_list (bool, optional): If True, return :math:`h_p` and
+            :math:`h_x` as a list. If False, return :math:`hp - ihx`. Default
+            is False.
+        **kwargs (dict, optional): Dictionary with kwargs for the instantiation of
+            the waveform generator.
+
+    """
+
     def __init__(
         self, waveform_class, *args, frame="detector", return_list=False, **kwargs
     ):
 
+        # instantiate the class
         waveform = globals()[waveform_class]
         self.waveform_generator = waveform(*args, **kwargs)
 
-        if frame == "source":
+        self.frame = frame
+
+        # TODO: implement transformation to source frame for AAK
+        if frame == "source" and waveform_class == "Pn5AAKWaveform":
             raise NotImplementedError
 
         self.return_list = return_list
 
+        # setup arguments to remove based on the specific waveform
+        # also get proper phases
         self.args_remove = []
         if self.waveform_generator.descriptor == "eccentric":
             self.args_remove.append(5)
@@ -68,12 +104,15 @@ class GenerateEMRIWaveform:
             self.phases_needed = {"Phi_phi0": 11, "Phi_theta0": 12, "Phi_r0": 13}
 
         if self.waveform_generator.background == "Schwarzschild":
+            # remove spin
             self.args_remove.append(2)
 
+        # remove sky and orientation parameters
         if self.waveform_generator.frame == "source":
             for i in range(6, 11):
                 self.args_remove.append(i)
 
+        # these are the arguments that go in to the generator
         self.args_keep = np.delete(np.arange(11), self.args_remove)
 
     def _transform_frames(self, qS, phiS, qK, phiK):
@@ -99,15 +138,15 @@ class GenerateEMRIWaveform:
         n_hat_detector_frame = np.array([sqS * cphiS, sqS * sphiS, cqS])
 
         # transform
-        n_hat_source_frame = np.dot((rot1 + rot2), n_hat_detector_frame)
+        n_hat_source_frame = np.dot(rot1, np.dot(rot2, n_hat_detector_frame))
 
         nx = n_hat_source_frame[0]
         ny = n_hat_source_frame[1]
         nz = n_hat_source_frame[2]
 
         # get viewing angles
-        phi = np.arctan((nx ** 2 + ny ** 2 + nz ** 2) / (nx ** 2 + ny ** 2))
-        theta = np.arctan(ny / nx)
+        phi = np.arctan(ny / nx)
+        theta = np.arccos(nz / 1.0)  # normalized vector
 
         if theta < 0.0:
             theta = np.pi + theta
@@ -132,6 +171,37 @@ class GenerateEMRIWaveform:
         Phi_r0,
         **kwargs
     ):
+        """Generate the waveform with the given parameters.
+
+        Args:
+            M (double): Mass of larger black hole in solar masses.
+            mu (double): Mass of compact object in solar masses.
+            a (double): Dimensionless spin of massive black hole.
+            p0 (double): Initial semilatus rectum (Must be greater than
+                the separatrix at the the given e0 and Y0).
+                See documentation for more information on :math:`p_0<10`.
+            e0 (double): Initial eccentricity.
+            Y0 (double): Initial cosine of the inclination angle
+                (:math:`\cos{\iota}`).
+            dist (double): Luminosity distance in Gpc.
+            qS (double): Sky location polar angle in ecliptic
+                coordinates.
+            phiS (double): Sky location azimuthal angle in
+                ecliptic coordinates.
+            qK (double): Initial BH spin polar angle in ecliptic
+                coordinates.
+            phiK (double): Initial BH spin azimuthal angle in
+                ecliptic coordinates.
+            Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
+                Default is 0.0.
+            Phi_theta0 (double, optional): Initial phase for :math:`\Phi_\Theta`.
+                Default is 0.0.
+            Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
+                Default is 0.0.
+            **kwargs (dict, optional): Dictionary with kwargs for online waveform
+                generation.
+
+        """
 
         args_all = (
             M,
@@ -150,13 +220,18 @@ class GenerateEMRIWaveform:
             Phi_r0,
         )
 
+        # remove the arguments that are not used in this waveform
         args = tuple([args_all[i] for i in self.args_keep])
 
+        # pick out the phases to be used
         initial_phases = {key: args_all[i] for key, i in self.phases_needed.items()}
 
+        # generate waveform in source frame
         if self.waveform_generator.frame == "source":
+            # distance factor
             dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
 
+            # get viewing angles in the source frame
             theta_source, phi_source = self._transform_frames(qS, phiS, qK, phiK)
 
             args += (theta_source, phi_source)
@@ -164,6 +239,11 @@ class GenerateEMRIWaveform:
         else:
             dist_dimensionless = 1.0
 
+        if self.frame == "source":
+            # if output is to be in the source frame, need to not scale with distance
+            dist_dimensionless = 1.0
+
+        # get waveform
         h = (
             self.waveform_generator(*args, **{**initial_phases, **kwargs})
             / dist_dimensionless
@@ -842,6 +922,7 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
         args:
             M (double): Mass of larger black hole in solar masses.
             mu (double): Mass of compact object in solar masses.
+            a (double): Dimensionless spin of massive black hole.
             p0 (double): Initial semilatus rectum (Must be greater than
                 the separatrix at the the given e0 and Y0).
                 See documentation for more information on :math:`p_0<10`.

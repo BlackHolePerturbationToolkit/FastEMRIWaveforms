@@ -315,8 +315,8 @@ in cuda for an example of this.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>t</strong> (<em>1D double xp.ndarray</em>) – t values as input for the spline.</p></li>
-<li><p><strong>y_all</strong> (<em>2D double xp.ndarray</em>) – y values for the spline.
-Shape: (ninterps, length).</p></li>
+<li><p><strong>y_all</strong> (<em>1D</em><em> or </em><em>2D double xp.ndarray</em>) – y values for the spline.
+Shape: (length,) or (ninterps, length).</p></li>
 <li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, prepare arrays for a GPU. Default is
 False.</p></li>
 </ul>
@@ -386,7 +386,8 @@ coefficients. It is flattened after fitting from shape
 <code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tnew</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluation function for the spline</p>
 <p>Put in an array of new t values at which all interpolants will be
-evaluated.</p>
+evaluated. If t values are outside of the original t values, edge values
+are used to fill the new array at these points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>tnew</strong> (<em>1D double xp.ndarray</em>) – Array of new t values. All of these new

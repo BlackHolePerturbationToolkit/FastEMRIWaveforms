@@ -88,6 +88,7 @@
               <p class="caption"><span class="caption-text">Documentation:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Overall Waveform Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#generic-waveform-generator">Generic Waveform Generator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#prebuilt-waveform-models">Prebuilt Waveform Models</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#fast-schwarzschild-eccentric-flux-based-waveform">Fast Schwarzschild Eccentric Flux-based Waveform</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#slow-schwarzschild-eccentric-flux-based-waveform">Slow Schwarzschild Eccentric Flux-based Waveform</a></li>
@@ -229,6 +230,81 @@
 <div class="section" id="overall-waveform-models">
 <h1>Overall Waveform Models<a class="headerlink" href="#overall-waveform-models" title="Permalink to this headline">¶</a></h1>
 <p>The Fast EMRI Waveform (few) package provides multiple complete models/waveforms to generate waveforms from start to finish. These are detailed in this section. Please note there are other modules available in each subpackage that may not be listed as a part of a complete model here. We will also provide documentation in this section for the base classes that help standardize and build complete waveform models.</p>
+<div class="section" id="generic-waveform-generator">
+<h2>Generic Waveform Generator<a class="headerlink" href="#generic-waveform-generator" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="few.waveform.GenerateEMRIWaveform">
+<em class="property">class </em><code class="sig-prename descclassname">few.waveform.</code><code class="sig-name descname">GenerateEMRIWaveform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">waveform_class</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">frame</span><span class="o">=</span><span class="default_value">'detector'</span></em>, <em class="sig-param"><span class="n">return_list</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.GenerateEMRIWaveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Generic waveform generator for data analysis</p>
+<p>This class allows the user interface to be the exact same between any
+waveform in the FEW package. For waveforms built in the source frame,
+like <a class="reference internal" href="#few.waveform.FastSchwarzschildEccentricFlux" title="few.waveform.FastSchwarzschildEccentricFlux"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.FastSchwarzschildEccentricFlux</span></code></a>, the waveforms
+are transformed to the detector frame. Waveforms like
+:class:<a href="#id1"><span class="problematic" id="id2">`</span></a>few.waveform.Pn5AAKWaveform`that are built in the detector frame
+are left alone effectively.</p>
+<p>For waveforms that are less than Kerr generic (i.e. certain parameters are
+unnecessary), this interface automatically removes the waveforms dependence
+on those parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>waveform_class</strong> (<em>str</em>) – String with the name of the waveform class to use.
+See the <a class="reference external" href="https://bhptoolkit.org/FastEMRIWaveforms/html/user/main.html#prebuilt-waveform-models">pre-built waveform models</a>.</p></li>
+<li><p><strong>*args</strong> (<em>list</em><em> or </em><em>tuple</em><em>, </em><em>optional</em>) – Arguments for the instantiation of
+the waveform generation class.</p></li>
+<li><p><strong>frame</strong> (<em>str</em><em>, </em><em>optional</em>) – Which frame to produce the output waveform in.
+Default is “detector.” Right now, the source frame is not implemented
+for waveforms that are built in the detector frame.</p></li>
+<li><p><strong>return_list</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return <span class="math notranslate nohighlight">\(h_p\)</span> and
+<span class="math notranslate nohighlight">\(h_x\)</span> as a list. If False, return <span class="math notranslate nohighlight">\(hp - ihx\)</span>. Default
+is False.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Dictionary with kwargs for the instantiation of
+the waveform generator.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="few.waveform.GenerateEMRIWaveform.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">Y0</span></em>, <em class="sig-param"><span class="n">dist</span></em>, <em class="sig-param"><span class="n">qS</span></em>, <em class="sig-param"><span class="n">phiS</span></em>, <em class="sig-param"><span class="n">qK</span></em>, <em class="sig-param"><span class="n">phiK</span></em>, <em class="sig-param"><span class="n">Phi_phi0</span></em>, <em class="sig-param"><span class="n">Phi_theta0</span></em>, <em class="sig-param"><span class="n">Phi_r0</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.GenerateEMRIWaveform.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate the waveform with the given parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Mass of larger black hole in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – Mass of compact object in solar masses.</p></li>
+<li><p><strong>a</strong> (<em>double</em>) – Dimensionless spin of massive black hole.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (Must be greater than
+the separatrix at the the given e0 and Y0).
+See documentation for more information on <span class="math notranslate nohighlight">\(p_0&lt;10\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity.</p></li>
+<li><p><strong>Y0</strong> (<em>double</em>) – Initial cosine of the inclination angle
+(<span class="math notranslate nohighlight">\(\cos{\iota}\)</span>).</p></li>
+<li><p><strong>dist</strong> (<em>double</em>) – Luminosity distance in Gpc.</p></li>
+<li><p><strong>qS</strong> (<em>double</em>) – Sky location polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiS</strong> (<em>double</em>) – Sky location azimuthal angle in
+ecliptic coordinates.</p></li>
+<li><p><strong>qK</strong> (<em>double</em>) – Initial BH spin polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiK</strong> (<em>double</em>) – Initial BH spin azimuthal angle in
+ecliptic coordinates.</p></li>
+<li><p><strong>Phi_phi0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\phi\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>Phi_theta0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\Theta\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>Phi_r0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_r\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Dictionary with kwargs for online waveform
+generation.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 <div class="section" id="prebuilt-waveform-models">
 <h2>Prebuilt Waveform Models<a class="headerlink" href="#prebuilt-waveform-models" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="fast-schwarzschild-eccentric-flux-based-waveform">
@@ -309,14 +385,14 @@ kwarg. For this class it is False.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="id1">
-<em class="property">property </em><code class="sig-name descname">allow_batching</code><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
+<dt id="id3">
+<em class="property">property </em><code class="sig-name descname">allow_batching</code><a class="headerlink" href="#id3" title="Permalink to this definition">¶</a></dt>
 <dd><p>Indicator if module allows batching</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="few.waveform.FastSchwarzschildEccentricFlux.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em>, <em class="sig-param"><span class="n">dist</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em>, <em class="sig-param"><span class="n">show_progress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">mode_selection</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.__call__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em>, <em class="sig-param"><span class="n">dist</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">Phi_phi0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_r0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em>, <em class="sig-param"><span class="n">show_progress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">mode_selection</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.FastSchwarzschildEccentricFlux.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call function for SchwarzschildEccentric models.</p>
 <p>This function will take input parameters and produce Schwarzschild
 eccentric waveforms. It will use all of the modules preloaded to
@@ -331,7 +407,12 @@ See documentation for more information on <span class="math notranslate nohighli
 <li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity (<span class="math notranslate nohighlight">\(0.0\leq e_0\leq0.7\)</span>).</p></li>
 <li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle (<span class="math notranslate nohighlight">\(-\pi/2\leq\Theta\leq\pi/2\)</span>).</p></li>
 <li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
-<li><p><strong>dist</strong> (<em>double</em>) – Luminosity distance in Gpc.</p></li>
+<li><p><strong>dist</strong> (<em>double</em><em>, </em><em>optional</em>) – Luminosity distance in Gpc. Default is None. If None,
+will return source frame.</p></li>
+<li><p><strong>Phi_phi0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\phi\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>Phi_r0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_r\)</span>.
+Default is 0.0.</p></li>
 <li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time between samples in seconds (inverse of
 sampling frequency). Default is 10.0.</p></li>
 <li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Total observation time in years.
@@ -635,8 +716,8 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="id2">
-<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#id2" title="Permalink to this definition">¶</a></dt>
+<dt id="id4">
+<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#id4" title="Permalink to this definition">¶</a></dt>
 <dd><p>instantiated Ylm module.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -720,8 +801,8 @@ selection.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="id3">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#id3" title="Permalink to this definition">¶</a></dt>
+<dt id="id5">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id5" title="Permalink to this definition">¶</a></dt>
 <dd><p>Either numpy or CuPy based on gpu preference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -887,8 +968,8 @@ Ylm generator during instantiation. Default is {}.</p></li>
 <dt id="few.waveform.SlowSchwarzschildEccentricFlux.attributes_SlowSchwarzschildEccentricFlux">
 <code class="sig-name descname">attributes_SlowSchwarzschildEccentricFlux</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.attributes_SlowSchwarzschildEccentricFlux" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
-<dt id="id4">
-<code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#id4" title="Permalink to this definition">¶</a></dt>
+<dt id="id6">
+<code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#id6" title="Permalink to this definition">¶</a></dt>
 <dd><p>If True, this wavefrom can leverage gpu
 resources. For this class it is False.</p>
 <dl class="field-list simple">
@@ -899,8 +980,8 @@ resources. For this class it is False.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="id5">
-<code class="sig-name descname">allow_batching</code><a class="headerlink" href="#id5" title="Permalink to this definition">¶</a></dt>
+<dt id="id7">
+<code class="sig-name descname">allow_batching</code><a class="headerlink" href="#id7" title="Permalink to this definition">¶</a></dt>
 <dd><p>If True, this waveform can use the batch_size
 kwarg. For this class it is True.</p>
 <dl class="field-list simple">
@@ -914,7 +995,7 @@ kwarg. For this class it is True.</p>
 
 <dl class="py method">
 <dt id="few.waveform.SlowSchwarzschildEccentricFlux.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em>, <em class="sig-param"><span class="n">dist</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em>, <em class="sig-param"><span class="n">show_progress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">mode_selection</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.__call__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em>, <em class="sig-param"><span class="n">dist</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">Phi_phi0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_r0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em>, <em class="sig-param"><span class="n">show_progress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">mode_selection</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SlowSchwarzschildEccentricFlux.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call function for SchwarzschildEccentric models.</p>
 <p>This function will take input parameters and produce Schwarzschild
 eccentric waveforms. It will use all of the modules preloaded to
@@ -929,7 +1010,12 @@ See documentation for more information on <span class="math notranslate nohighli
 <li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity (<span class="math notranslate nohighlight">\(0.0\leq e_0\leq0.7\)</span>).</p></li>
 <li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle (<span class="math notranslate nohighlight">\(-\pi/2\leq\Theta\leq\pi/2\)</span>).</p></li>
 <li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
-<li><p><strong>dist</strong> (<em>double</em>) – Luminosity distance in Gpc.</p></li>
+<li><p><strong>dist</strong> (<em>double</em><em>, </em><em>optional</em>) – Luminosity distance in Gpc. Default is None. If None,
+will return source frame.</p></li>
+<li><p><strong>Phi_phi0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\phi\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>Phi_r0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_r\)</span>.
+Default is 0.0.</p></li>
 <li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time between samples in seconds (inverse of
 sampling frequency). Default is 10.0.</p></li>
 <li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Total observation time in years.
@@ -1234,8 +1320,8 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="id7">
-<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#id7" title="Permalink to this definition">¶</a></dt>
+<dt id="id9">
+<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#id9" title="Permalink to this definition">¶</a></dt>
 <dd><p>instantiated Ylm module.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1319,8 +1405,8 @@ selection.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="id8">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#id8" title="Permalink to this definition">¶</a></dt>
+<dt id="id10">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id10" title="Permalink to this definition">¶</a></dt>
 <dd><p>Either numpy or CuPy based on gpu preference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1439,7 +1525,7 @@ given in the
 <a class="reference external" href="https://github.com/alvincjk/EMRI_Kludge_Suite/">EMRI Kludge Suite</a>.
 However, here the trajectory is vastly improved by employing the 5PN
 fluxes for generic Kerr orbits from
-<a href="#id15"><span class="problematic" id="id16">`Fujita &amp; Shibata 2020&lt;https://arxiv.org/abs/2008.13554&gt;`_</span></a>.</p>
+<a href="#id17"><span class="problematic" id="id18">`Fujita &amp; Shibata 2020&lt;https://arxiv.org/abs/2008.13554&gt;`_</span></a>.</p>
 <p>The 5PN trajectory produces orbital and phase trajectories.
 The trajectory is calculated until the orbit reaches
 within 0.2 of the separatrix, determined from
@@ -1555,65 +1641,6 @@ eccentricity.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.waveform.Pn5AAKWaveform.allow_batching">
-<em class="property">property </em><code class="sig-name descname">allow_batching</code><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.allow_batching" title="Permalink to this definition">¶</a></dt>
-<dd><p>Indicator if module allows batching</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="few.waveform.Pn5AAKWaveform.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">Y0</span></em>, <em class="sig-param"><span class="n">qS</span></em>, <em class="sig-param"><span class="n">phiS</span></em>, <em class="sig-param"><span class="n">qK</span></em>, <em class="sig-param"><span class="n">phiK</span></em>, <em class="sig-param"><span class="n">dist</span></em>, <em class="sig-param"><span class="n">Phi_phi0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_theta0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_r0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">mich</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.__call__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Call function for AAK + 5PN model.</p>
-<p>This function will take input parameters and produce AAK waveforms with 5PN trajectories in generic Kerr.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>M</strong> (<em>double</em>) – Mass of larger black hole in solar masses.</p></li>
-<li><p><strong>mu</strong> (<em>double</em>) – Mass of compact object in solar masses.</p></li>
-<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (Must be greater than
-the separatrix at the the given e0 and Y0).
-See documentation for more information on <span class="math notranslate nohighlight">\(p_0&lt;10\)</span>.</p></li>
-<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity.</p></li>
-<li><p><strong>Y0</strong> (<em>double</em>) – Initial cosine of the inclination angle
-(<span class="math notranslate nohighlight">\(\cos{\iota}\)</span>).</p></li>
-<li><p><strong>qS</strong> (<em>double</em>) – Sky location polar angle in ecliptic
-coordinates.</p></li>
-<li><p><strong>phiS</strong> (<em>double</em>) – Sky location azimuthal angle in
-ecliptic coordinates.</p></li>
-<li><p><strong>qK</strong> (<em>double</em>) – Initial BH spin polar angle in ecliptic
-coordinates.</p></li>
-<li><p><strong>phiK</strong> (<em>double</em>) – Initial BH spin azimuthal angle in
-ecliptic coordinates.</p></li>
-<li><p><strong>dist</strong> (<em>double</em>) – Luminosity distance in Gpc.</p></li>
-<li><p><strong>Phi_phi0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\phi\)</span>.
-Default is 0.0.</p></li>
-<li><p><strong>Phi_theta0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\Theta\)</span>.
-Default is 0.0.</p></li>
-<li><p><strong>Phi_r0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_r\)</span>.
-Default is 0.0.</p></li>
-<li><p><strong>mich</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, produce waveform with
-long-wavelength response approximation (hI, hII). Please
-note this is not TDI. If False, return hplus and hcross.
-Default is False.</p></li>
-<li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time between samples in seconds
-(inverse of sampling frequency). Default is 10.0.</p></li>
-<li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Total observation time in years.
-Default is 1.0.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The output waveform.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>1D complex128 xp.ndarray</p>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – user selections are not allowed.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt id="few.waveform.Pn5AAKWaveform.adjust_gpu_usage">
 <code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adjust all inputs for gpu usage</p>
@@ -1632,11 +1659,17 @@ waveform generator.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt id="few.waveform.Pn5AAKWaveform.allow_batching">
+<em class="property">property </em><code class="sig-name descname">allow_batching</code><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.allow_batching" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicator if module allows batching</p>
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.waveform.Pn5AAKWaveform.attributes_Pn5AAK">
 <code class="sig-name descname">attributes_Pn5AAK</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.attributes_Pn5AAK" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
-<dt id="id9">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#id9" title="Permalink to this definition">¶</a></dt>
+<dt id="id11">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id11" title="Permalink to this definition">¶</a></dt>
 <dd><p>numpy or cupy based on hardware chosen.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1684,8 +1717,8 @@ waveform generator.</p></li>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="id10">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#id10" title="Permalink to this definition">¶</a></dt>
+<dt id="id12">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id12" title="Permalink to this definition">¶</a></dt>
 <dd><p>Either numpy or CuPy based on gpu preference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -1789,6 +1822,60 @@ the trajectory module.</p></li>
 <li><p><strong>warn</strong> – If any points in the trajectory are allowable,
     but outside calibration region.</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.waveform.Pn5AAKWaveform.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">Y0</span></em>, <em class="sig-param"><span class="n">dist</span></em>, <em class="sig-param"><span class="n">qS</span></em>, <em class="sig-param"><span class="n">phiS</span></em>, <em class="sig-param"><span class="n">qK</span></em>, <em class="sig-param"><span class="n">phiK</span></em>, <em class="sig-param"><span class="n">Phi_phi0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_theta0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_r0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">mich</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.Pn5AAKWaveform.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call function for AAK + 5PN model.</p>
+<p>This function will take input parameters and produce AAK waveforms with 5PN trajectories in generic Kerr.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Mass of larger black hole in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – Mass of compact object in solar masses.</p></li>
+<li><p><strong>a</strong> (<em>double</em>) – Dimensionless spin of massive black hole.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (Must be greater than
+the separatrix at the the given e0 and Y0).
+See documentation for more information on <span class="math notranslate nohighlight">\(p_0&lt;10\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity.</p></li>
+<li><p><strong>Y0</strong> (<em>double</em>) – Initial cosine of the inclination angle
+(<span class="math notranslate nohighlight">\(\cos{\iota}\)</span>).</p></li>
+<li><p><strong>dist</strong> (<em>double</em>) – Luminosity distance in Gpc.</p></li>
+<li><p><strong>qS</strong> (<em>double</em>) – Sky location polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiS</strong> (<em>double</em>) – Sky location azimuthal angle in
+ecliptic coordinates.</p></li>
+<li><p><strong>qK</strong> (<em>double</em>) – Initial BH spin polar angle in ecliptic
+coordinates.</p></li>
+<li><p><strong>phiK</strong> (<em>double</em>) – Initial BH spin azimuthal angle in
+ecliptic coordinates.</p></li>
+<li><p><strong>Phi_phi0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\phi\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>Phi_theta0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\Theta\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>Phi_r0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_r\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>mich</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, produce waveform with
+long-wavelength response approximation (hI, hII). Please
+note this is not TDI. If False, return hplus and hcross.
+Default is False.</p></li>
+<li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time between samples in seconds
+(inverse of sampling frequency). Default is 10.0.</p></li>
+<li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Total observation time in years.
+Default is 1.0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The output waveform.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>1D complex128 xp.ndarray</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – user selections are not allowed.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2292,7 +2379,7 @@ GPU capabilites.</p>
 
 <dl class="py class">
 <dt id="few.waveform.SchwarzschildEccentricWaveformBase">
-<em class="property">class </em><code class="sig-prename descclassname">few.waveform.</code><code class="sig-name descname">SchwarzschildEccentricWaveformBase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inspiral_module</span></em>, <em class="sig-param"><span class="n">amplitude_module</span></em>, <em class="sig-param"><span class="n">sum_module</span></em>, <em class="sig-param"><span class="n">inspiral_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">amplitude_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">sum_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">Ylm_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">normalize_amps</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">few.waveform.</code><code class="sig-name descname">SchwarzschildEccentricWaveformBase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inspiral_module</span></em>, <em class="sig-param"><span class="n">amplitude_module</span></em>, <em class="sig-param"><span class="n">sum_module</span></em>, <em class="sig-param"><span class="n">inspiral_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">amplitude_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">sum_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">Ylm_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">mode_selector_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">normalize_amps</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Base class for the actual Schwarzschild eccentric waveforms.</p>
 <p>This class carries information and methods that are common to any
@@ -2324,6 +2411,8 @@ amplitude generator during instantiation. Default is {}.</p></li>
 sum module during instantiation. Default is {}.</p></li>
 <li><p><strong>Ylm_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
 Ylm generator during instantiation. Default is {}.</p></li>
+<li><p><strong>mode_selector_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional kwargs to pass to the
+mode selector during instantiation. Default is {}.</p></li>
 <li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, use GPU resources. Default is False.</p></li>
 <li><p><strong>normalize_amps</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, it will normalize amplitudes
 to flux information output from the trajectory modules. Default
@@ -2379,8 +2468,8 @@ is True. This is stored as an attribute.</p></li>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="id11">
-<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#id11" title="Permalink to this definition">¶</a></dt>
+<dt id="id13">
+<code class="sig-name descname">ylm_gen</code><a class="headerlink" href="#id13" title="Permalink to this definition">¶</a></dt>
 <dd><p>instantiated Ylm module.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -2457,7 +2546,7 @@ selection.</p>
 
 <dl class="py method">
 <dt id="few.waveform.SchwarzschildEccentricWaveformBase.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em>, <em class="sig-param"><span class="n">dist</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em>, <em class="sig-param"><span class="n">show_progress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">mode_selection</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.__call__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em>, <em class="sig-param"><span class="n">dist</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">Phi_phi0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_r0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em>, <em class="sig-param"><span class="n">show_progress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">batch_size</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">mode_selection</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.waveform.SchwarzschildEccentricWaveformBase.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call function for SchwarzschildEccentric models.</p>
 <p>This function will take input parameters and produce Schwarzschild
 eccentric waveforms. It will use all of the modules preloaded to
@@ -2472,7 +2561,12 @@ See documentation for more information on <span class="math notranslate nohighli
 <li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity (<span class="math notranslate nohighlight">\(0.0\leq e_0\leq0.7\)</span>).</p></li>
 <li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle (<span class="math notranslate nohighlight">\(-\pi/2\leq\Theta\leq\pi/2\)</span>).</p></li>
 <li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
-<li><p><strong>dist</strong> (<em>double</em>) – Luminosity distance in Gpc.</p></li>
+<li><p><strong>dist</strong> (<em>double</em><em>, </em><em>optional</em>) – Luminosity distance in Gpc. Default is None. If None,
+will return source frame.</p></li>
+<li><p><strong>Phi_phi0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\phi\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>Phi_r0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_r\)</span>.
+Default is 0.0.</p></li>
 <li><p><strong>dt</strong> (<em>double</em><em>, </em><em>optional</em>) – Time between samples in seconds (inverse of
 sampling frequency). Default is 10.0.</p></li>
 <li><p><strong>T</strong> (<em>double</em><em>, </em><em>optional</em>) – Total observation time in years.
@@ -2749,8 +2843,8 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="id13">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#id13" title="Permalink to this definition">¶</a></dt>
+<dt id="id15">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id15" title="Permalink to this definition">¶</a></dt>
 <dd><p>Either numpy or CuPy based on gpu preference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -3040,8 +3134,8 @@ waveform generator.</p></li>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="id14">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#id14" title="Permalink to this definition">¶</a></dt>
+<dt id="id16">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id16" title="Permalink to this definition">¶</a></dt>
 <dd><p>Either numpy or CuPy based on gpu preference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>

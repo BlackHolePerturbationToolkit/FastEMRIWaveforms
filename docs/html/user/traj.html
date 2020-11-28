@@ -698,7 +698,7 @@ maps locations of -m values to +m values.</p>
 
 <dl class="py method">
 <dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.get_inspiral">
-<code class="sig-name descname">get_inspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.get_inspiral" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_inspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">Phi_phi0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_r0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.get_inspiral" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate the inspiral.</p>
 <p>This is the function for calling the creation of the flux-based
 trajectory. Inputs define the output time spacing. This class can be
@@ -715,11 +715,10 @@ for information on a more flexible interface to the trajectory modules.</p>
 This model can handle (p0 &lt;= 18.0).</p></li>
 <li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity (dimensionless).
 This model can handle (e0 &lt;= 0.7).</p></li>
-<li><p><strong>err</strong> (<em>double</em><em>, </em><em>optional</em>) – Tolerance for integrator. Default is 1e-10.
-Decreasing this parameter will give more steps over the
-trajectory, but if it is too small, memory issues will occur as
-the trajectory length will blow up. We recommend not adjusting
-this parameter.</p></li>
+<li><p><strong>Phi_phi0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\phi\)</span>.
+Default is 0.0.</p></li>
+<li><p><strong>Phi_r0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_r\)</span>.
+Default is 0.0.</p></li>
 <li><p><strong>*args</strong> (<em>list</em><em>, </em><em>placeholder</em>) – Added for flexibility.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – kwargs passed from parent.</p></li>
 </ul>
