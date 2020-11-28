@@ -59,9 +59,10 @@ class GenerateEMRIWaveform:
     on those parameters.
 
     Args:
-        waveform_class (str): String with the name of the waveform class to use.
+        waveform_class (str or obj): String with the name of the waveform class to use.
             See the `pre-built waveform models
             <https://bhptoolkit.org/FastEMRIWaveforms/html/user/main.html#prebuilt-waveform-models>`_.
+            If an object is provided, must be a waveform class.
         *args (list or tuple, optional): Arguments for the instantiation of
             the waveform generation class.
         frame (str, optional): Which frame to produce the output waveform in.
@@ -80,8 +81,16 @@ class GenerateEMRIWaveform:
     ):
 
         # instantiate the class
-        waveform = globals()[waveform_class]
-        self.waveform_generator = waveform(*args, **kwargs)
+        if isinstance(waveform_class, str):
+            try:
+                waveform = globals()[waveform_class]
+                self.waveform_generator = waveform(*args, **kwargs)
+            except KeyError:
+                raise ValueError(
+                    "{} waveform class is not available.".format(waveform_class)
+                )
+        else:
+            self.waveform_generator = waveform_class(*args, **kwargs)
 
         self.frame = frame
 
@@ -96,7 +105,6 @@ class GenerateEMRIWaveform:
         self.args_remove = []
         if self.waveform_generator.descriptor == "eccentric":
             self.args_remove.append(5)
-            self.args_remove.append(8)
 
             self.phases_needed = {"Phi_phi0": 11, "Phi_r0": 13}
 
@@ -145,7 +153,18 @@ class GenerateEMRIWaveform:
         nz = n_hat_source_frame[2]
 
         # get viewing angles
-        phi = np.arctan(ny / nx)
+        # guard against bad nx vs ny
+        if np.abs(nx) < 1e-10:
+            if ny > 1e-10:
+                phi = np.pi / 2.0
+            elif ny < -1e-10:
+                phi = 3.0 * np.pi / 2.0
+            else:
+                phi = 0.0
+
+        else:
+            phi = np.arctan(ny / nx)
+
         theta = np.arccos(nz / 1.0)  # normalized vector
 
         if theta < 0.0:
