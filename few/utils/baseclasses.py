@@ -324,6 +324,11 @@ class SchwarzschildEccentric(GPUModuleBase, ABC):
             )
 
     @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
+
+    @property
     def citation(self):
         """Return citations of this class"""
         return few_citation + few_software_citation
