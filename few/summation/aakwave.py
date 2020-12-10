@@ -40,7 +40,7 @@ except (ImportError, ModuleNotFoundError) as e:
     pass
 
 # Python imports
-from few.utils.baseclasses import Pn5AAK, SummationBase
+from few.utils.baseclasses import Pn5AAK, SummationBase, GPUModuleBase
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *
@@ -50,7 +50,7 @@ from few.summation.interpolatedmodesum import CubicSplineInterpolant
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class AAKSummation(SummationBase, Pn5AAK):
+class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
     """Calculate an AAK waveform from an input trajectory.
 
     Please see the documentations for
@@ -71,6 +71,7 @@ class AAKSummation(SummationBase, Pn5AAK):
 
     def __init__(self, **kwargs):
 
+        GPUModuleBase.__init__(self, **kwargs)
         Pn5AAK.__init__(self, **kwargs)
         SummationBase.__init__(self, **kwargs)
 
@@ -199,6 +200,9 @@ class AAKSummation(SummationBase, Pn5AAK):
 
         # lam in the code is iota
         lam = iota
+
+        # make sure same sky frame as few
+        # qK = np.pi / 2.0 - qK
 
         # convert to gpu if desired
         tvec_temp = self.xp.asarray(tvec)

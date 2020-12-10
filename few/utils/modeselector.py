@@ -21,6 +21,7 @@ import numpy as np
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *
+from few.utils.baseclasses import GPUModuleBase
 
 # check for cupy
 try:
@@ -30,7 +31,7 @@ except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
 
-class ModeSelector:
+class ModeSelector(GPUModuleBase):
     """Filter teukolsky amplitudes based on power contribution.
 
     This module takes teukolsky modes, combines them with their associated ylms,
@@ -63,11 +64,7 @@ class ModeSelector:
 
     def __init__(self, m0mask, sensitivity_fn=None, use_gpu=False):
 
-        if use_gpu:
-            self.xp = xp
-
-        else:
-            self.xp = np
+        GPUModuleBase.__init__(self, use_gpu=use_gpu)
 
         # store information releated to m values
         # the order is m = 0, m > 0, m < 0
@@ -77,6 +74,11 @@ class ModeSelector:
         self.num_m0 = len(self.xp.arange(len(m0mask))[~m0mask])
 
         self.sensitivity_fn = sensitivity_fn
+
+    @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
 
     def attributes_ModeSelector(self):
         """

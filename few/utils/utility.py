@@ -282,7 +282,7 @@ def get_mu_at_t(
         traj_module (obj): Instantiated trajectory module. It must output
             the time array of the trajectory sparse trajectory as the first
             output value in the tuple.
-        t_out (double): The desired length of time for the waveform.
+        t_out (double): The desired length of time for the waveform in years.
         traj_args (list): List of arguments for the trajectory function.
             mu is removed. **Note**: It must be a list, not a tuple because the
             new mu values are inserted into the argument list.

@@ -29,7 +29,7 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
-from few.utils.baseclasses import SchwarzschildEccentric, Pn5AAK
+from few.utils.baseclasses import SchwarzschildEccentric, Pn5AAK, GPUModuleBase
 from few.trajectory.pn5 import RunKerrGenericPn5Inspiral
 from few.trajectory.flux import RunSchwarzEccFluxInspiral
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
@@ -123,6 +123,16 @@ class GenerateEMRIWaveform:
         # these are the arguments that go in to the generator
         self.args_keep = np.delete(np.arange(11), self.args_remove)
 
+    @property
+    def stock_waveform_options(self):
+        print(
+            """
+            FastSchwarzschildEccentricFlux
+            SlowSchwarzschildEccentricFlux
+            Pn5AAKWaveform
+            """
+        )
+
     def _transform_frames(self, qS, phiS, qK, phiK):
         """Transform from the detector frame to the source frame"""
 
@@ -143,7 +153,7 @@ class GenerateEMRIWaveform:
         rot2 = np.array([[cphiK, -sphiK, 0.0], [sphiK, cphiK, 0.0], [0.0, 0.0, 1.0]])
 
         # sky location in ssb frame
-        n_hat_detector_frame = np.array([sqS * cphiS, sqS * sphiS, cqS])
+        n_hat_detector_frame = np.array([-sqS * cphiS, -sqS * sphiS, -cqS])
 
         # transform
         n_hat_source_frame = np.dot(rot1, np.dot(rot2, n_hat_detector_frame))
@@ -166,9 +176,6 @@ class GenerateEMRIWaveform:
             phi = np.arctan(ny / nx)
 
         theta = np.arccos(nz / 1.0)  # normalized vector
-
-        if theta < 0.0:
-            theta = np.pi + theta
 
         return (theta, phi)
 
@@ -277,7 +284,7 @@ class GenerateEMRIWaveform:
             return [hp, hx]
 
 
-class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
+class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, ABC):
     """Base class for the actual Schwarzschild eccentric waveforms.
 
     This class carries information and methods that are common to any
@@ -351,7 +358,8 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         normalize_amps=True,
     ):
 
-        SchwarzschildEccentric.__init__(self, use_gpu)
+        GPUModuleBase.__init__(self, use_gpu=use_gpu)
+        SchwarzschildEccentric.__init__(self)
 
         amplitude_kwargs, sum_kwargs = self.adjust_gpu_usage(
             use_gpu, [amplitude_kwargs, sum_kwargs]
@@ -806,7 +814,7 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         )
 
 
-class Pn5AAKWaveform(Pn5AAK, ABC):
+class Pn5AAKWaveform(Pn5AAK, GPUModuleBase, ABC):
     """Waveform generation class for AAK with 5PN trajectory.
 
     This class generates waveforms based on the Augmented Analytic Kludge
@@ -876,7 +884,8 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
 
     def __init__(self, inspiral_kwargs={}, sum_kwargs={}, use_gpu=False):
 
-        Pn5AAK.__init__(self, use_gpu)
+        GPUModuleBase.__init__(self, use_gpu=use_gpu)
+        Pn5AAK.__init__(self)
 
         sum_kwargs = self.adjust_gpu_usage(use_gpu, sum_kwargs)
 
