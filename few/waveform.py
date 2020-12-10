@@ -359,7 +359,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, 
     ):
 
         GPUModuleBase.__init__(self, use_gpu=use_gpu)
-        SchwarzschildEccentric.__init__(self)
+        SchwarzschildEccentric.__init__(self, use_gpu=use_gpu)
 
         amplitude_kwargs, sum_kwargs = self.adjust_gpu_usage(
             use_gpu, [amplitude_kwargs, sum_kwargs]

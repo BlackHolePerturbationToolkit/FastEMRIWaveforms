@@ -207,7 +207,7 @@ class SchwarzschildEccentric(GPUModuleBase, ABC):
 
     def __init__(self, *args, use_gpu=False, **kwargs):
 
-        GPUModuleBase.__init__(self, *args, **kwargs)
+        GPUModuleBase.__init__(self, *args, use_gpu=use_gpu, **kwargs)
         # some descriptive information
         self.background = "Schwarzschild"
         self.descriptor = "eccentric"
