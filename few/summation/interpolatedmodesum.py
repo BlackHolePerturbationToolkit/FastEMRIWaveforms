@@ -31,7 +31,7 @@ from pyinterp_cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
 from pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
 
 # Python imports
-from few.utils.baseclasses import SummationBase, SchwarzschildEccentric
+from few.utils.baseclasses import SummationBase, SchwarzschildEccentric, GPUModuleBase
 from few.utils.citations import *
 
 # Attempt Cython imports of GPU functions
@@ -42,7 +42,7 @@ except (ImportError, ModuleNotFoundError) as e:
     pass
 
 
-class CubicSplineInterpolant:
+class CubicSplineInterpolant(GPUModuleBase):
     """GPU-accelerated Multiple Cubic Splines
 
     This class produces multiple cubic splines on a GPU. It has a CPU option
@@ -69,13 +69,12 @@ class CubicSplineInterpolant:
 
     def __init__(self, t, y_all, use_gpu=False):
 
-        # set gpu usage and interpolation function based on gpu usage
+        GPUModuleBase.__init__(self, use_gpu=use_gpu)
+
         if use_gpu:
-            self.xp = xp
             self.interpolate_arrays = interpolate_arrays_wrap
 
         else:
-            self.xp = np
             self.interpolate_arrays = interpolate_arrays_wrap_cpu
 
         y_all = self.xp.atleast_2d(y_all)
@@ -127,6 +126,11 @@ class CubicSplineInterpolant:
                 (4, length, ninterps). The 4 is the 4 spline coefficients.
 
         """
+
+    @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
 
     @property
     def citation(self):
@@ -226,7 +230,7 @@ class CubicSplineInterpolant:
         return out
 
 
-class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
+class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase):
     """Create waveform by interpolating sparse trajectory.
 
     It interpolates all of the modes of interest and phases at sparse
@@ -239,17 +243,16 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
 
     def __init__(self, *args, **kwargs):
 
+        GPUModuleBase.__init__(self, *args, **kwargs)
         SchwarzschildEccentric.__init__(self, *args, **kwargs)
         SummationBase.__init__(self, *args, **kwargs)
 
         self.kwargs = kwargs
 
         if self.use_gpu:
-            self.xp = xp
             self.get_waveform = get_waveform_wrap
 
         else:
-            self.xp = np
             self.get_waveform = get_waveform_wrap_cpu
 
     def attributes_InterpolatedModeSum(self):
@@ -258,6 +261,11 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric):
             get_waveform (func): CPU or GPU function for waveform creation.
 
         """
+
+    @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
 
     @property
     def citation(self):

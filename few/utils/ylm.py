@@ -26,8 +26,11 @@ import numpy as np
 # import Cython wrapped C++ function
 from pySpinWeightedSpherHarm import get_spin_weighted_spher_harm_wrap
 
+# base classes
+from few.utils.baseclasses import GPUModuleBase
 
-class GetYlms:
+
+class GetYlms(GPUModuleBase):
     """(-2) Spin-weighted Spherical Harmonics
 
     The class generates (-2) spin-weighted spherical hackarmonics,
@@ -46,15 +49,14 @@ class GetYlms:
 
     def __init__(self, assume_positive_m=False, use_gpu=False):
 
+        GPUModuleBase.__init__(self, use_gpu=use_gpu)
         # see args in docstring
         self.assume_positive_m = assume_positive_m
 
-        # use cupy or numpy
-        if use_gpu:
-            self.xp = xp
-
-        else:
-            self.xp = np
+    @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
 
     def attributes_GetYlms(self):
         """

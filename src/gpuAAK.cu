@@ -372,7 +372,7 @@ void make_waveform(cmplx *waveform,
       hIItemp+=hnII;
   }
 
-    waveform[i] = cmplx(hItemp, hIItemp);
+    waveform[i] = cmplx(hItemp, -hIItemp);
     }
 }
 
