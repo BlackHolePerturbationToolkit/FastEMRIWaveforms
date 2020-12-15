@@ -522,14 +522,31 @@ class TFInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
             dtype=self.xp.complex128,
         )
 
+        t_test = np.arange(0, self.num_per_window) * dt
+
+        temp_sig = np.zeros(self.num_per_window, dtype=np.complex128)
+        temp_y_all = spline(t_test)
+
+        Phi_phi_test = temp_y_all[-2]
+        Phi_r_test = temp_y_all[-1]
+
+        wind = 0
+
         for i, (Amp_i, f_phi_i, f_r_i, Phi_phi_i, Phi_r_i) in enumerate(
             zip(Amps.T, f_phi_new, f_r_new, Phi_phi_new, Phi_r_new)
         ):
-            for j, (m, n) in enumerate(zip(m_arr, n_arr)):
+            for j, (m, n, ylm_plus_m, ylm_minus_m) in enumerate(
+                zip(m_arr, n_arr, ylms[:num_teuk_modes], ylms[num_teuk_modes:])
+            ):
 
                 freq_mode = m * f_phi_i + n * f_r_i
-                amp = Amp_i[j]
+                amp = Amp_i[j] * ylm_plus_m
                 phi0 = m * Phi_phi_i + n * Phi_r_i
+
+                if i == wind:
+                    temp_sig += amp.real * np.cos(
+                        m * Phi_phi_test + n * Phi_r_test
+                    ) + amp.imag * np.sin(m * Phi_phi_test + n * Phi_r_test)
 
                 # get (-m, -n) mode
                 max_bin = int(freq_mode / self.df)
@@ -560,15 +577,20 @@ class TFInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                     phi0=phi0 - np.pi / 2.0,
                 )
 
-                stft_hp[i, inds] += amp.real * temp_DFT_cos + amp.imag * temp_DFT_sin
-                stft_hx[i, inds] += -1 * (
-                    amp.imag * temp_DFT_cos - amp.real * temp_DFT_sin
+                stft_hp[i, inds] += np.conj(
+                    amp.real * temp_DFT_cos + amp.imag * temp_DFT_sin
                 )
+                stft_hx[i, inds] += -(amp.imag * temp_DFT_cos - amp.real * temp_DFT_sin)
 
                 if m > 0:
                     freq_mode = -m * f_phi_i - n * f_r_i
                     phi0 = -m * Phi_phi_i - n * Phi_r_i
-                    amp = self.xp.conjugate(amp)
+                    amp = self.xp.conjugate(amp) * ylm_minus_m
+
+                    if i == wind:
+                        temp_sig += amp.real * np.cos(
+                            -m * Phi_phi_test - n * Phi_r_test
+                        ) - amp.imag * np.sin(-m * Phi_phi_test - n * Phi_r_test)
 
                     # get (-m, -n) mode
                     max_bin = int(freq_mode / self.df)
@@ -604,14 +626,37 @@ class TFInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                         phi0=phi0 - np.pi / 2.0,
                     )
 
+                    # TODO: check conj
                     stft_hp[i, inds] += (
                         amp.real * temp_DFT_cos + amp.imag * temp_DFT_sin
                     )
-                    stft_hx[i, inds] += -1 * (
+                    stft_hx[i, inds] += -(
                         amp.imag * temp_DFT_cos - amp.real * temp_DFT_sin
                     )
 
+        """
+        import matplotlib.pyplot as plt
+
+        fig, (ax0, ax1, ax2) = plt.subplots(1, 3)
+
+        hp_f = self.xp.fft.rfft(temp_sig.real)
+
+        ax0.loglog(np.abs(hp_f))
+        ax0.loglog(np.abs(stft_hp[wind]), "--")
+
+        ax1.semilogx(hp_f.real)
+        ax1.semilogx(stft_hp[wind].real, "--")
+
+        ax2.semilogx(hp_f.imag)
+        ax2.semilogx(stft_hp[wind].imag, "--")
+
+        overlap = np.dot(hp_f.conj(), stft_hp[wind]) / np.sqrt(
+            np.dot(hp_f.conj(), hp_f) * np.dot(stft_hp[wind].conj(), stft_hp[wind])
+        )
+        print(overlap)
+        plt.show()
         breakpoint()
-        self.waveform[
-            : self.num_windows_for_waveform * self.num_frequencies
-        ] = stft.flatten()
+        """
+
+        self.waveform[0 : self.num_windows_for_waveform] = stft_hp
+        self.waveform[1 : self.num_windows_for_waveform] = stft_hx
