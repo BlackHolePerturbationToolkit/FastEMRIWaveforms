@@ -860,11 +860,10 @@ class SummationBase(ABC):
                 self.xp.arange(1, self.num_windows_for_waveform + 1)
                 * self.num_per_window
                 * self.dt
-            ) - (self.num_per_window * self.dt / 2.0)
+            )  # - (self.num_per_window * self.dt / 2.0)
 
             self.waveform = self.xp.zeros(
-                (2, self.num_per_window * self.num_windows, self.num_frequencies),
-                dtype=self.xp.complex128,
+                (2, self.num_windows, self.num_frequencies), dtype=self.xp.complex128,
             )
 
         # get the waveform summed in place
