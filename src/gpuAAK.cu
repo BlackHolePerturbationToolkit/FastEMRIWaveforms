@@ -169,18 +169,6 @@ void make_waveform(cmplx *waveform,
       double mu_sec = mu * MTSUN_SI;
       double zeta=mu_sec/dist/GPCINSEC; // M/D
 
-      double up_ldc = (cosqS*sinqK*cos(phiS-phiK) - cosqK*sinqS);
-        double dw_ldc = (sinqK*sin(phiS-phiK));
-        double psi_ldc;
-        if (dw_ldc != 0.0) {
-          psi_ldc = -atan2(up_ldc, dw_ldc);
-        }
-        else {
-      psi_ldc = 0.5*M_PI;
-        }
-        double c2psi_ldc=cos(2.*psi_ldc);
-        double s2psi_ldc=sin(2.*psi_ldc);
-
       double FplusI=c2psi_ldc;
       double FcrosI=-s2psi_ldc;
       double FplusII=s2psi_ldc;
@@ -287,7 +275,7 @@ void make_waveform(cmplx *waveform,
               double dw_ldc = (sinqK*sin(phiS-phiK));
               double psi_ldc;
               if (dw_ldc != 0.0) {
-                psi_ldc = -atan2(up_ldc, dw_ldc);
+                psi_ldc = atan2(up_ldc, dw_ldc);
               }
               else {
             psi_ldc = 0.5*M_PI;
