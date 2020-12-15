@@ -349,8 +349,8 @@ class SchwarzschildEccentric(GPUModuleBase, ABC):
             ValueError: If any of the angular values are not allowed.
 
         """
-        if theta < 0.0 or theta > np.pi:
-            raise ValueError("theta must be between 0 and pi.")
+        # if theta < 0.0 or theta > np.pi:
+        #    raise ValueError("theta must be between 0 and pi.")
 
         phi = phi % (2 * np.pi)
         return (theta, phi)
@@ -738,11 +738,23 @@ class SummationBase(ABC):
     args:
         pad_output (bool, optional): Add zero padding to the waveform for time
             between plunge and observation time. Default is False.
+        output_type (str, optional): Type of domain in which to calculate the waveform.
+            Default is 'td' for time domain. Options are 'td' (time domain), 'tf'
+            (time-frequency). In the future we hope to add 'fd' (Fourier domain)
+            and 'wd' (wavelet domain).
 
     """
 
-    def __init__(self, *args, pad_output=False, **kwargs):
+    def __init__(self, *args, output_type="td", pad_output=False, **kwargs):
         self.pad_output = pad_output
+
+        if output_type not in ["td", "tf"]:
+            raise ValueError(
+                "{} waveform domain not available. Choices are 'td' (time domain) or 'tf' (time-frequency).".format(
+                    output_type
+                )
+            )
+        self.output_type = output_type
 
     def attributes_SummationBase(self):
         """
@@ -769,7 +781,7 @@ class SummationBase(ABC):
         """
         raise NotImplementedError
 
-    def __call__(self, t, *args, T=1.0, dt=10.0, **kwargs):
+    def __call__(self, t, *args, T=1.0, dt=10.0, t_window=None, **kwargs):
         """Common call function for summation modules.
 
         Provides a common interface for summation modules. It can adjust for
@@ -786,7 +798,8 @@ class SummationBase(ABC):
 
         """
 
-        T = T * YRSID_SI
+        n_pts = int(T * YRSID_SI / dt)
+        T = n_pts * dt
         # determine the output array setup
 
         # adjust based on if observations time is less than or more than trajectory time array
@@ -805,10 +818,54 @@ class SummationBase(ABC):
         self.num_pts, self.num_pts_pad = num_pts, num_pts_pad
         self.dt = dt
 
-        # setup waveform holder
-        self.waveform = self.xp.zeros(
-            (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
-        )
+        if self.output_type == "td":
+            # setup waveform holder for time domain
+            self.waveform = self.xp.zeros(
+                (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
+            )
+
+        elif self.output_type == "tf":
+            if t_window is None:
+                raise ValueError(
+                    "If asking for waveform in time-frequency domain, must include t_window kwarg."
+                )
+
+            self.num_per_window = int(t_window / dt)
+
+            self.num_windows = int((num_pts + num_pts_pad) / self.num_per_window)
+
+            self.extra_points = (num_pts + num_pts_pad) - (
+                self.num_windows * self.num_per_window
+            )
+
+            if self.extra_points >= 0:
+                warnings.warn(
+                    "When using time-frequency domain, time points beyond last window are left out."
+                )
+
+            self.windows_for_padding = int(np.ceil(num_pts_pad / self.num_per_window))
+
+            if self.windows_for_padding * self.num_per_window > num_pts_pad:
+                warnings.warn(
+                    "Any time points that fall into a window that includes padding will be assumed to be zero."
+                )
+
+            self.num_windows_for_waveform = self.num_windows - self.windows_for_padding
+            self.bin_frequencies = self.xp.fft.rfftfreq(self.num_per_window, self.dt)
+            self.num_frequencies = len(self.bin_frequencies)
+            self.df = self.bin_frequencies[1] - self.bin_frequencies[0]
+
+            # TODO: check this arange below.
+            self.t_new = (
+                self.xp.arange(1, self.num_windows_for_waveform + 1)
+                * self.num_per_window
+                * self.dt
+            ) - (self.num_per_window * self.dt / 2.0)
+
+            self.waveform = self.xp.zeros(
+                (2, self.num_per_window * self.num_windows, self.num_frequencies),
+                dtype=self.xp.complex128,
+            )
 
         # get the waveform summed in place
         self.sum(t, *args, dt=dt, **kwargs)
