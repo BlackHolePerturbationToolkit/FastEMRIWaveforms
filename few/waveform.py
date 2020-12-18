@@ -41,7 +41,9 @@ from few.summation.directmodesum import DirectModeSum
 from few.summation.aakwave import AAKSummation
 from few.utils.constants import *
 from few.utils.citations import *
-from few.summation.interpolatedmodesum import InterpolatedModeSum, TFInterpolatedModeSum
+from few.summation.interpolatedmodesum import (
+    InterpolatedModeSum,
+)  # , TFInterpolatedModeSum
 
 
 class GenerateEMRIWaveform:
@@ -149,14 +151,21 @@ class GenerateEMRIWaveform:
         sphiK = np.sin(phiK)
 
         # rotation matrices based on spin angular momentum vector of MBH
-        rot1 = np.array([[1.0, 0.0, 0.0], [0.0, cqK, -sqK], [0.0, sqK, cqK]])
-        rot2 = np.array([[cphiK, -sphiK, 0.0], [sphiK, cphiK, 0.0], [0.0, 0.0, 1.0]])
+        rotation = np.array(
+            [
+                [cqK * cphiK, cqK * sphiK, -sqK,],
+                [-sphiK, cphiK, 0],
+                [sqK * cphiK, sqK * sphiK, cqK,],
+            ]
+        )
 
         # sky location in ssb frame
         n_hat_detector_frame = np.array([-sqS * cphiS, -sqS * sphiS, -cqS])
 
         # transform
-        n_hat_source_frame = np.dot(rot1, np.dot(rot2, n_hat_detector_frame))
+        n_hat_source_frame = np.dot(rotation, n_hat_detector_frame)
+
+        S_hat_detector_frame = np.array([sqK * cphiK, sqK * sphiK, cqK])
 
         nx = n_hat_source_frame[0]
         ny = n_hat_source_frame[1]
@@ -173,17 +182,26 @@ class GenerateEMRIWaveform:
                 phi = 0.0
 
         else:
-            phi = np.arctan(ny / nx)
+            phi = np.arctan(ny / nx) + np.pi
 
         theta = np.arccos(nz / 1.0)  # normalized vector
 
-        # to test Alvin's suggestion
-        R = np.array([sqS * cphiS, sqS * sphiS, cqS])
-        S = np.array([sqK * cphiK, sqK * sphiK, cqK])
+        # get polarization angle
+        negative_theta_hat_detector_frame = -1 * np.array(
+            [cqS * cphiS, cqS * sphiS, -sqS]
+        )
 
-        phi = 0.0
-        theta = np.arccos(-np.dot(R, S))
-        return (theta, phi)
+        psi = np.arccos(np.dot(S_hat_detector_frame, negative_theta_hat_detector_frame))
+
+        c2psi = np.cos(2.0 * psi)
+        s2psi = np.sin(2.0 * psi)
+
+        FplusI = c2psi
+        FcrosI = -s2psi
+        FplusII = s2psi
+        FcrosII = c2psi
+
+        return (theta, phi, FplusI, FplusII, FcrosI, FcrosII)
 
     def __call__(
         self,
@@ -264,16 +282,31 @@ class GenerateEMRIWaveform:
             dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
 
             # get viewing angles in the source frame
-            theta_source, phi_source = self._transform_frames(qS, phiS, qK, phiK)
+            (
+                theta_source,
+                phi_source,
+                FplusI,
+                FplusII,
+                FcrosI,
+                FcrosII,
+            ) = self._transform_frames(qS, phiS, qK, phiK)
 
             args += (theta_source, phi_source)
 
         else:
             dist_dimensionless = 1.0
 
+            FplusI = 1.0
+            FplusII = 0.0
+            FcrosI = 0.0
+            FcrosII = 1.0
+
+        # if output is to be in the source frame, need to properly scale with distance
         if self.frame == "source":
-            # if output is to be in the source frame, need to not scale with distance
-            dist_dimensionless = 1.0
+            if self.waveform_generator.frame == "detector":
+                dist_dimensionless = 1.0 / ((dist * Gpc) / (mu * MRSUN_SI))
+            else:
+                dist_dimensionless = 1.0
 
         # get waveform
         h = (
@@ -281,9 +314,13 @@ class GenerateEMRIWaveform:
             / dist_dimensionless
         )
 
-        if self.frame == "source":
-            h *= -1
+        h = (h.real * FplusI + h.imag * FcrosI) + 1j * (
+            h.real * FplusII + h.imag * FcrosII
+        )
 
+        if self.waveform_generator.frame == "source":
+            h *= -1
+            print("hmmm")
         if self.return_list is False:
             return h
 

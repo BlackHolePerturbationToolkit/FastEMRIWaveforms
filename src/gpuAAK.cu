@@ -169,11 +169,6 @@ void make_waveform(cmplx *waveform,
       double mu_sec = mu * MTSUN_SI;
       double zeta=mu_sec/dist/GPCINSEC; // M/D
 
-      double FplusI=c2psi_ldc;
-      double FcrosI=-s2psi_ldc;
-      double FplusII=s2psi_ldc;
-      double FcrosII=c2psi_ldc;
-
       #ifdef __CUDACC__
 
       start = start_ind + threadIdx.x + blockIdx.x * blockDim.x;

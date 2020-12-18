@@ -426,7 +426,7 @@ class TFInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
         e,
         *args,
         dt=10.0,
-        num_left_right=-1,
+        num_left_right=5,
         **kwargs,
     ):
         """Interpolated summation function.
@@ -549,7 +549,7 @@ class TFInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                     ) + amp.imag * np.sin(m * Phi_phi_test + n * Phi_r_test)
 
                 # get (-m, -n) mode
-                max_bin = int(freq_mode / self.df)
+                max_bin = int(np.abs(freq_mode) / self.df)
 
                 if num_left_right < 0:
                     temp_freqs = self.bin_frequencies
@@ -593,7 +593,7 @@ class TFInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                         ) - amp.imag * np.sin(-m * Phi_phi_test - n * Phi_r_test)
 
                     # get (-m, -n) mode
-                    max_bin = int(freq_mode / self.df)
+                    max_bin = int(np.abs(freq_mode) / self.df)
 
                     if num_left_right < 0:
                         temp_freqs = self.bin_frequencies
