@@ -266,6 +266,7 @@ void make_waveform(cmplx *waveform,
         }
         else
         {
+            /*
             double up_ldc = (cosqS*sinqK*cos(phiS-phiK) - cosqK*sinqS);
               double dw_ldc = (sinqK*sin(phiS-phiK));
               double psi_ldc;
@@ -281,7 +282,12 @@ void make_waveform(cmplx *waveform,
             FplusI=c2psi_ldc;
             FcrosI=-s2psi_ldc;
             FplusII=s2psi_ldc;
-            FcrosII=c2psi_ldc;
+            FcrosII=c2psi_ldc;*/
+
+            FplusI = 1.0;
+            FcrosI = 0.0;
+            FplusII = 0.0;
+            FcrosII = 1.0;
         }
 
           double Amp=pow(OmegaPhi*M_phys*MTSUN_SI,2./3.)*zeta;
