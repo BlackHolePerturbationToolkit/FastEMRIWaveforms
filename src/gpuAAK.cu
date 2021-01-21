@@ -69,7 +69,7 @@ void d_RotCoeff(double* rot, double* n, double* L, double* S, double* nxL, doubl
 CUDA_KERNEL
 void make_waveform(cmplx *waveform,
               double* interp_array,
-              double M_phys, double mu, double qS, double phiS, double qK, double phiK, double dist,
+              double M_phys, double S_phys, double mu, double qS, double phiS, double qK, double phiK, double dist,
               int nmodes, bool mich,
               double delta_t, double start_t, int old_ind, int start_ind, int end_ind, int init_length)
 {
@@ -159,6 +159,12 @@ void make_waveform(cmplx *waveform,
 
       CUDA_SYNC_THREADS;
 
+      double fill_val = 1e-6;
+      if (qS < fill_val) qS = fill_val;
+      if (qK < fill_val) qK = fill_val;
+      if (qS > M_PI - fill_val) qS = M_PI - fill_val;
+      if (qK > M_PI - fill_val) qK = M_PI - fill_val;
+
       double cosqS=cos(qS);
       double sinqS=sin(qS);
       double cosqK=cos(qK);
@@ -168,23 +174,6 @@ void make_waveform(cmplx *waveform,
       double halfsqrt3=sqrt(3.)/2.;
       double mu_sec = mu * MTSUN_SI;
       double zeta=mu_sec/dist/GPCINSEC; // M/D
-
-      double up_ldc = (cosqS*sinqK*cos(phiS-phiK) - cosqK*sinqS);
-        double dw_ldc = (sinqK*sin(phiS-phiK));
-        double psi_ldc;
-        if (dw_ldc != 0.0) {
-          psi_ldc = -atan2(up_ldc, dw_ldc);
-        }
-        else {
-      psi_ldc = 0.5*M_PI;
-        }
-        double c2psi_ldc=cos(2.*psi_ldc);
-        double s2psi_ldc=sin(2.*psi_ldc);
-
-      double FplusI=c2psi_ldc;
-      double FcrosI=-s2psi_ldc;
-      double FplusII=s2psi_ldc;
-      double FcrosII=c2psi_ldc;
 
       #ifdef __CUDACC__
 
@@ -242,6 +231,9 @@ void make_waveform(cmplx *waveform,
           double OmegaPhi = OmegaPhi_y + OmegaPhi_c1 * x + OmegaPhi_c2 * x2 + OmegaPhi_c3 * x3;
           double lam = lam_y + lam_c1 * x + lam_c2 * x2 + lam_c3 * x3;
 
+          if (lam > M_PI - fill_val) lam = M_PI - fill_val;
+          if (lam < fill_val) lam = fill_val;
+
           double coslam=cos(lam);
           double sinlam=sin(lam);
           double cosalp=cos(alp);
@@ -254,9 +246,17 @@ void make_waveform(cmplx *waveform,
           double Ldotn=cosqL*cosqS+sinqL*sinqS*cos(phiL-phiS);
           double Ldotn2=Ldotn*Ldotn;
           double Sdotn=cosqK*cosqS+sinqK*sinqS*cos(phiK-phiS);
-          double betaup=-Sdotn+coslam*Ldotn;
-          double betadown=sinqS*sin(phiK-phiS)*sinlam*cosalp+(cosqK*Sdotn-cosqS)/sinqK*sinlam*sinalp;
-          double beta=atan2(betaup,betadown);
+          double beta;
+          if (S_phys == 0.0)
+          {
+              beta = 0.0;
+          }
+          else
+          {
+              double betaup=-Sdotn+coslam*Ldotn;
+              double betadown=sinqS*sin(phiK-phiS)*sinlam*cosalp+(cosqK*Sdotn-cosqS)/sinqK*sinlam*sinalp;
+              beta=atan2(betaup,betadown);
+          }
           double gam=2.*(gim+beta);
           double cos2gam=cos(gam);
           double sin2gam=sin(gam);
@@ -283,11 +283,12 @@ void make_waveform(cmplx *waveform,
         }
         else
         {
+            /*
             double up_ldc = (cosqS*sinqK*cos(phiS-phiK) - cosqK*sinqS);
               double dw_ldc = (sinqK*sin(phiS-phiK));
               double psi_ldc;
               if (dw_ldc != 0.0) {
-                psi_ldc = -atan2(up_ldc, dw_ldc);
+                psi_ldc = atan2(up_ldc, dw_ldc);
               }
               else {
             psi_ldc = 0.5*M_PI;
@@ -298,7 +299,12 @@ void make_waveform(cmplx *waveform,
             FplusI=c2psi_ldc;
             FcrosI=-s2psi_ldc;
             FplusII=s2psi_ldc;
-            FcrosII=c2psi_ldc;
+            FcrosII=c2psi_ldc;*/
+
+            FplusI = 1.0;
+            FcrosI = 0.0;
+            FplusII = 0.0;
+            FcrosII = 1.0;
         }
 
           double Amp=pow(OmegaPhi*M_phys*MTSUN_SI,2./3.)*zeta;
@@ -372,7 +378,7 @@ void make_waveform(cmplx *waveform,
       hIItemp+=hnII;
   }
 
-    waveform[i] = cmplx(hItemp, hIItemp);
+    waveform[i] = cmplx(hItemp, -hIItemp);
     }
 }
 
@@ -409,7 +415,7 @@ void find_start_inds(int start_inds[], int unit_length[], double *t_arr, double 
 
 // function for building interpolated EMRI waveform from python
 void get_waveform(cmplx *waveform, double* interp_array,
-              double M_phys, double mu, double qS, double phiS, double qK, double phiK, double dist,
+              double M_phys, double S_phys, double mu, double qS, double phiS, double qK, double phiK, double dist,
               int nmodes, bool mich,
               int init_len, int out_len,
               double delta_t, double *h_t){
@@ -448,7 +454,7 @@ void get_waveform(cmplx *waveform, double* interp_array,
           // launch one worker kernel per stream
           make_waveform<<<gridDim, NUM_THREADS, 0, streams[i]>>>(waveform,
                         interp_array,
-                        M_phys, mu, qS, phiS, qK, phiK, dist,
+                        M_phys, S_phys, mu, qS, phiS, qK, phiK, dist,
                         nmodes, mich,
                         delta_t, h_t[i], i, start_inds[i], start_inds[i+1], init_len);
          #else
@@ -456,7 +462,7 @@ void get_waveform(cmplx *waveform, double* interp_array,
          // CPU waveform generation
          make_waveform(waveform,
                        interp_array,
-                       M_phys, mu, qS, phiS, qK, phiK, dist,
+                       M_phys, S_phys, mu, qS, phiS, qK, phiK, dist,
                        nmodes, mich,
                        delta_t, h_t[i], i, start_inds[i], start_inds[i+1], init_len);
          #endif

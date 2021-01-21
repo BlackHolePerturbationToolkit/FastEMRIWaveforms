@@ -90,7 +90,7 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
         """Return citation for this class"""
         return few_citation + few_software_citation
 
-    def get_inspiral(self, M, mu, p0, e0, *args, **kwargs):
+    def get_inspiral(self, M, mu, p0, e0, Phi_phi0=0.0, Phi_r0=0.0, *args, **kwargs):
         """Generate the inspiral.
 
         This is the function for calling the creation of the flux-based
@@ -107,12 +107,10 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
                 This model can handle (p0 <= 18.0).
             e0 (double): Initial eccentricity (dimensionless).
                 This model can handle (e0 <= 0.7).
-
-            err (double, optional): Tolerance for integrator. Default is 1e-10.
-                Decreasing this parameter will give more steps over the
-                trajectory, but if it is too small, memory issues will occur as
-                the trajectory length will blow up. We recommend not adjusting
-                this parameter.
+            Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
+                Default is 0.0.
+            Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
+                Default is 0.0.
             *args (list, placeholder): Added for flexibility.
             **kwargs (dict, optional): kwargs passed from parent.
         Returns:
@@ -126,6 +124,6 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
         # this will return in coordinate time
         # must include flux normalization in case normalization is desired
         t, p, e, Phi_phi, Phi_r, amp_norm = self.flux_generator(
-            M, mu, p0, e0, **temp_kwargs
+            M, mu, p0, e0, Phi_phi0, Phi_r0, **temp_kwargs
         )
         return (t, p, e, Phi_phi, Phi_r, amp_norm)

@@ -218,7 +218,7 @@ double get_step_flux(double p, double e, Interpolant *amp_vec_norm_interp)
 // It takes initial parameters and evolves a trajectory
 // tmax and dt affect integration length and time steps (mostly if DENSE_STEPPING == 1)
 // use_rk4 allows the use of the rk4 integrator
-FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, double e0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4){
+FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, double e0, double Phi_phi0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4){
 
     // years to seconds
     tmax = tmax*YRSID_SI;
@@ -227,7 +227,7 @@ FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, doub
     double init_flux = get_step_flux(p0, e0, amp_vec_norm_interp);
 
     // prepare containers for flux information
-    FLUXHolder flux_out(t0, M, mu, p0, e0, init_flux);
+    FLUXHolder flux_out(t0, M, mu, p0, e0, Phi_phi0, Phi_r0, init_flux);
 
 	//Set the mass ratio
 	interps->epsilon = mu/M;
@@ -241,7 +241,7 @@ FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, doub
     tmax = tmax/(M*MTSUN_SI);
 
     // initial point
-	double y[4] = { p0, e0, 0.0, 0.0 };
+	double y[4] = { p0, e0, Phi_phi0, Phi_r0 };
 
     // Initialize the ODE solver
     gsl_odeiv2_system sys = {func, NULL, 4, interps};
@@ -308,10 +308,10 @@ FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, doub
 }
 
 // wrapper for calling the flux inspiral from cython/python
-void FluxCarrier::FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len){
+void FluxCarrier::FLUXWrapper(double *t, double *p, double *e, double *Phi_phi, double *Phi_r, double *amp_norm, double M, double mu, double p0, double e0, double Phi_phi0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len){
 
 	double t0 = 0.0;
-		FLUXHolder flux_vals = run_FLUX(t0, M, mu, p0, e0, err, tmax, dt, DENSE_STEPPING, use_rk4);
+		FLUXHolder flux_vals = run_FLUX(t0, M, mu, p0, e0, Phi_phi0, Phi_r0, err, tmax, dt, DENSE_STEPPING, use_rk4);
 
         // make sure we have allocated enough memory through cython
         if (flux_vals.length > init_len){

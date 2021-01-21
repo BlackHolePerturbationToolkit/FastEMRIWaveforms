@@ -27,7 +27,7 @@ from pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
 from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 
 # Python imports
-from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase
+from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase, GPUModuleBase
 from few.utils.utility import check_for_file_download
 from few.utils.citations import *
 from few.utils.utility import p_to_y
@@ -48,7 +48,7 @@ except (ImportError, ModuleNotFoundError) as e:
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
+class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, GPUModuleBase):
     """Calculate Teukolsky amplitudes with a ROMAN.
 
     ROMAN stands for reduced-order models with artificial neurons. Please see
@@ -122,6 +122,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
 
     def __init__(self, max_init_len=1000, **kwargs):
 
+        GPUModuleBase.__init__(self, **kwargs)
         SchwarzschildEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
@@ -158,6 +159,11 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
     def citation(self):
         """Return citations for this module"""
         return romannet_citation + few_citation + few_software_citation
+
+    @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
 
     def _initialize_weights(self):
         # initalize weights/bias/dimensions for the neural network

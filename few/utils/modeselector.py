@@ -19,6 +19,9 @@
 import numpy as np
 
 from few.utils.citations import *
+from few.utils.utility import get_fundamental_frequencies
+from few.utils.constants import *
+from few.utils.baseclasses import GPUModuleBase
 
 # check for cupy
 try:
@@ -28,12 +31,14 @@ except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
 
-class ModeSelector:
+class ModeSelector(GPUModuleBase):
     """Filter teukolsky amplitudes based on power contribution.
 
     This module takes teukolsky modes, combines them with their associated ylms,
     and determines the power contribution from each mode. It then filters the
     modes bases on the fractional accuracy on the total power (eps) parameter.
+    Additionally, if a sensitivity curve is provided, the mode power is also
+    weighted according to the PSD of the sensitivity.
 
     The mode filtering is a major contributing factor to the speed of these
     waveforms as it removes large numbers of useles modes from the final
@@ -46,18 +51,20 @@ class ModeSelector:
         m0mask (1D bool xp.ndarray): This mask highlights which modes have
             :math:`m=0`. Value is False if :math:`m=0`, True if not.
             This only includes :math:`m\geq0`.
+        sensitivity_fn (object, optional): Sensitivity curve function that takes
+            a frequency (Hz) array as input and returns the Power Spectral Density (PSD)
+            of the sensitivity curve. Default is None. If this is not none, this
+            sennsitivity is used to weight the mode values when determining which
+            modes to keep. **Note**: if the sensitivity function is provided,
+            and GPUs are used, then this function must accept CuPy arrays as input.
         use_gpu (bool, optional): If True, allocate arrays for usage on a GPU.
             Default is False.
 
     """
 
-    def __init__(self, m0mask, use_gpu=False):
+    def __init__(self, m0mask, sensitivity_fn=None, use_gpu=False):
 
-        if use_gpu:
-            self.xp = xp
-
-        else:
-            self.xp = np
+        GPUModuleBase.__init__(self, use_gpu=use_gpu)
 
         # store information releated to m values
         # the order is m = 0, m > 0, m < 0
@@ -66,6 +73,13 @@ class ModeSelector:
         self.num_m_1_up = len(self.xp.arange(len(m0mask))[m0mask])
         self.num_m0 = len(self.xp.arange(len(m0mask))[~m0mask])
 
+        self.sensitivity_fn = sensitivity_fn
+
+    @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
+
     def attributes_ModeSelector(self):
         """
         attributes:
@@ -73,6 +87,7 @@ class ModeSelector:
             num_m_zero_up (int): Number of modes with :math:`m\geq0`.
             num_m_1_up (int): Number of modes with :math:`m\geq1`.
             num_m0 (int): Number of modes with :math:`m=0`.
+            sensitivity_fn (object): sensitivity generating function for power-weighting.
 
         """
         pass
@@ -82,7 +97,7 @@ class ModeSelector:
         """Return citations related to this class."""
         return few_citation + few_software_citation
 
-    def __call__(self, teuk_modes, ylms, modeinds, eps=1e-5):
+    def __call__(self, teuk_modes, ylms, modeinds, fund_freq_args=None, eps=1e-5):
         """Call to sort and filer teukolsky modes.
 
         This is the call function that takes the teukolsky modes, ylms,
@@ -100,6 +115,11 @@ class ModeSelector:
             modeinds (list of int xp.ndarrays): List containing the mode index arrays. If in an
                 equatorial model, need :math:`(l,m,n)` arrays. If generic,
                 :math:`(l,m,k,n)` arrays. e.g. [l_arr, m_arr, n_arr].
+            fund_freq_args (tuple, optional): Args necessary to determine
+                fundamental frequencies along trajectory. The tuple will represent
+                :math:`(M, a, e, p, \cos\iota)` where the large black hole mass (:math:`M`)
+                and spin (:math:`a`) are scalar and the other three quantities are xp.ndarrays.
+                This must be provided if sensitivity weighting is used. Default is None.
             eps (double, optional): Fractional accuracy of the total power used
                 to determine the contributing modes. Lowering this value will
                 calculate more modes slower the waveform down, but generally
@@ -121,6 +141,43 @@ class ModeSelector:
             )
             ** 2
         )
+
+        # if noise weighting
+        if self.sensitivity_fn is not None:
+            if fund_freq_args is None:
+                raise ValueError(
+                    "If sensitivity weighting is desired, the fund_freq_args kwarg must be provided."
+                )
+
+            M = fund_freq_args[0]
+            Msec = M * MTSUN_SI
+
+            # get dimensionless fundamental frequency
+            OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(
+                *fund_freq_args[1:]
+            )
+
+            # get frequencies in Hz
+            f_Phi, f_omega, f_r = OmegaPhi, OmegaTheta, OmegaR = (
+                self.xp.asarray(OmegaPhi) / (Msec * 2 * PI),
+                self.xp.asarray(OmegaTheta) / (Msec * 2 * PI),
+                self.xp.asarray(OmegaR) / (Msec * 2 * PI),
+            )
+
+            # TODO: update when in kerr
+            freqs = (
+                modeinds[1][self.xp.newaxis, :] * f_Phi[:, self.xp.newaxis]
+                + modeinds[2][self.xp.newaxis, :] * f_r[:, self.xp.newaxis]
+            )
+
+            freqs_shape = freqs.shape
+
+            # make all frequencies positive
+            freqs_in = self.xp.abs(freqs)
+            PSD = self.sensitivity_fn(freqs_in.flatten()).reshape(freqs_shape)
+
+            # weight by PSD
+            power /= PSD
 
         # sort the power for a cumulative summation
         inds_sort = self.xp.argsort(power, axis=1)[:, ::-1]

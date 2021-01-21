@@ -17,6 +17,7 @@
 
 
 import os
+import warnings
 
 import h5py
 import numpy as np
@@ -40,7 +41,7 @@ except (ImportError, ModuleNotFoundError) as e:
     pass
 
 # Python imports
-from few.utils.baseclasses import Pn5AAK, SummationBase
+from few.utils.baseclasses import Pn5AAK, SummationBase, GPUModuleBase
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *
@@ -50,7 +51,7 @@ from few.summation.interpolatedmodesum import CubicSplineInterpolant
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class AAKSummation(SummationBase, Pn5AAK):
+class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
     """Calculate an AAK waveform from an input trajectory.
 
     Please see the documentations for
@@ -71,6 +72,7 @@ class AAKSummation(SummationBase, Pn5AAK):
 
     def __init__(self, **kwargs):
 
+        GPUModuleBase.__init__(self, **kwargs)
         Pn5AAK.__init__(self, **kwargs)
         SummationBase.__init__(self, **kwargs)
 
@@ -200,6 +202,35 @@ class AAKSummation(SummationBase, Pn5AAK):
         # lam in the code is iota
         lam = iota
 
+        fill_val = 1e-6
+        if np.any((lam > np.pi - fill_val) | (lam < fill_val)):
+            warnings.warn(
+                "Inclination trajectory includes values within 1e-6 of the poles. We shift these values automatically away from poles by 1e-6."
+            )
+            inds_fix_up = lam > np.pi - fill_val
+            lam[inds_fix_up] = np.pi - fill_val
+
+            inds_fix_up = lam < fill_val
+            lam[inds_fix_up] = fill_val
+
+        if qK < fill_val or qK > np.pi - fill_val:
+            warnings.warn(
+                "qK is within 1e-6 of the poles. We shift this value automatically away from poles by 1e-6."
+            )
+            if qK < fill_val:
+                qK = fill_val
+            else:
+                qK = np.pi - fill_val
+
+        if qS < fill_val or qS > np.pi - fill_val:
+            warnings.warn(
+                "qS is within 1e-6 of the poles. We shift this value automatically away from poles by 1e-6."
+            )
+            if qS < fill_val:
+                qS = fill_val
+            else:
+                qS = np.pi - fill_val
+
         # convert to gpu if desired
         tvec_temp = self.xp.asarray(tvec)
         init_len = len(tvec)
@@ -228,6 +259,7 @@ class AAKSummation(SummationBase, Pn5AAK):
             self.waveform,
             self.spline.interp_array,
             M,
+            a,
             mu,
             qS,
             phiS,
