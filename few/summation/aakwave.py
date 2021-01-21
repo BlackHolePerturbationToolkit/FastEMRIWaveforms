@@ -201,8 +201,34 @@ class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
         # lam in the code is iota
         lam = iota
 
-        # make sure same sky frame as few
-        # qK = np.pi / 2.0 - qK
+        fill_val = 1e-6
+        if np.any((lam > np.pi - fill_val) | (lam < fill_val)):
+            warnings.warn(
+                "Inclination trajectory includes values with 1e-6 of the poles. We shift these values automatically away from poles by 1e-6."
+            )
+            inds_fix_up = lam > np.pi - fill_val
+            lam[inds_fix_up] = np.pi - fill_val
+
+            inds_fix_up = lam < fill_val
+            lam[inds_fix_up] = fill_val
+
+        if qK < fill_val or qK > np.pi - fill_val:
+            warnings.warn(
+                "qK is within 1e-6 of the poles. We shift this value automatically away from poles by 1e-6."
+            )
+            if qK < fill_val:
+                qK = fill_val
+            else:
+                qK = np.pi - fill_val
+
+        if qS < fill_val or qS > np.pi - fill_val:
+            warnings.warn(
+                "qS is within 1e-6 of the poles. We shift this value automatically away from poles by 1e-6."
+            )
+            if qS < fill_val:
+                qS = fill_val
+            else:
+                qS = np.pi - fill_val
 
         # convert to gpu if desired
         tvec_temp = self.xp.asarray(tvec)

@@ -159,6 +159,12 @@ void make_waveform(cmplx *waveform,
 
       CUDA_SYNC_THREADS;
 
+      double fill_val = 1e-6;
+      if (qS < fill_val) qS = fill_val;
+      if (qK < fill_val) qK = fill_val;
+      if (qS > M_PI - fill_val) qS = M_PI - fill_val;
+      if (qK > M_PI - fill_val) qK = M_PI - fill_val;
+
       double cosqS=cos(qS);
       double sinqS=sin(qS);
       double cosqK=cos(qK);
@@ -224,6 +230,9 @@ void make_waveform(cmplx *waveform,
           double gimdot = gimdot_y + gimdot_c1 * x + gimdot_c2 * x2 + gimdot_c3 * x3;
           double OmegaPhi = OmegaPhi_y + OmegaPhi_c1 * x + OmegaPhi_c2 * x2 + OmegaPhi_c3 * x3;
           double lam = lam_y + lam_c1 * x + lam_c2 * x2 + lam_c3 * x3;
+
+          if (lam > M_PI - fill_val) lam = M_PI - fill_val;
+          if (lam < fill_val) lam = fill_val;
 
           double coslam=cos(lam);
           double sinlam=sin(lam);
