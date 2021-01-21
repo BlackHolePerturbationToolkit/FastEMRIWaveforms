@@ -232,6 +232,7 @@ class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
             self.waveform,
             self.spline.interp_array,
             M,
+            a,
             mu,
             qS,
             phiS,

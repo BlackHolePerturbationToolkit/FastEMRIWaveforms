@@ -97,8 +97,8 @@ class GenerateEMRIWaveform:
         self.frame = frame
 
         # TODO: implement transformation to source frame for AAK
-        if frame == "source" and waveform_class == "Pn5AAKWaveform":
-            raise NotImplementedError
+        # if frame == "source" and waveform_class == "Pn5AAKWaveform":
+        #    raise NotImplementedError
 
         self.return_list = return_list
 
@@ -150,6 +150,95 @@ class GenerateEMRIWaveform:
         cphiK = np.cos(phiK)
         sphiK = np.sin(phiK)
 
+        R = np.array([sqS * cphiS, sqS * sphiS, cqS])
+        S = np.array([sqK * cphiK, sqK * sphiK, cqK])
+
+        S_sr = (1 - np.dot(S, R) ** 2) ** (1 / 2)
+
+        if S_sr == 0.0:
+            S_sr = 1.0
+
+        wave_frame = np.array(
+            [np.cross(R, S) / S_sr, (S - np.dot(S, R) * R) / S_sr, -R]
+        )
+
+        rotation = spin_frame = np.array(
+            [np.cross(R, S) / S_sr, (R - np.dot(R, S) * S) / S_sr, S]
+        )
+
+        n_hat_spin_frame = np.dot(rotation, -R)
+
+        nx = n_hat_spin_frame[0]
+        ny = n_hat_spin_frame[1]
+        nz = n_hat_spin_frame[2]
+
+        # get viewing angles
+        # guard against bad nx vs ny
+        phi = np.arctan2(ny, nx)
+
+        theta = np.arccos(nz / 1.0)  # normalized vector
+
+        theta_hat_source_frame = np.array(
+            [np.cos(theta) * np.cos(phi), np.cos(theta) * np.sin(phi), -np.sin(theta)]
+        )
+
+        theta_hat_detector_frame = np.dot(rotation.T, theta_hat_source_frame)
+
+        theta_hat_cross_wave_frame_x = np.cross(theta_hat_detector_frame, wave_frame[0])
+
+        direction = -np.dot(theta_hat_cross_wave_frame_x, -R)
+
+        psi = direction * np.arccos(np.dot(wave_frame[0], theta_hat_detector_frame))
+
+        c2psi = np.cos(2.0 * psi)
+        s2psi = np.sin(2.0 * psi)
+
+        FplusI = c2psi
+        FcrosI = -s2psi
+        FplusII = s2psi
+        FcrosII = c2psi
+        """
+        FplusI = 1.0
+        FcrosI = 0.0
+        FplusII = 0.0
+        FcrosII = 1.0
+        """
+
+        print(phi, theta)
+        """
+        Rxtheta_hat = np.cross(-R, theta_hat_detector_frame)
+        Rxwave_frame_x = np.cross(-R, wave_frame[0])
+
+        norm = np.linalg.norm(Rxtheta_hat) * np.linalg.norm(Rxwave_frame_x)
+
+        dot = np.dot(Rxtheta_hat, Rxwave_frame_x)
+
+        if norm < 1e-6:
+            norm = 1e-6
+
+        cosrot = dot / norm
+
+        dot = np.dot(theta_hat_detector_frame, Rxwave_frame_x)
+        sinrot = dot
+
+        dot = np.dot(wave_frame[0], Rxtheta_hat)
+        sinrot -= dot
+        sinrot /= norm
+
+        rot = np.zeros((2, 2))
+        rot[0][0] = 2.0 * cosrot * cosrot - 1.0
+        rot[0][1] = cosrot * sinrot
+        rot[1][0] = -rot[0][1]
+        rot[1][1] = rot[0][0]
+
+        psi = np.arccos(np.dot(wave_frame[0], theta_hat_detector_frame))
+        FplusI = rot[0][0]
+        FcrosI = rot[0][1]
+        FplusII = rot[1][0]
+        FcrosII = rot[1][1]
+        """
+        """
+
         # rotation matrices based on spin angular momentum vector of MBH
         rotation = np.array(
             [
@@ -186,7 +275,16 @@ class GenerateEMRIWaveform:
 
         theta = np.arccos(nz / 1.0)  # normalized vector
 
+        theta_hat_source_frame = np.array(
+            [np.cos(theta) * np.cos(phi), np.cos(theta) * np.sin(phi), -np.sin(theta)]
+        )
+
+        theta_hat_detector_frame = np.dot(rotation.T, theta_hat_source_frame)
+
+        psi = np.arccos(np.dot(theta_hat_detector_frame, ()))
         # get polarization angle
+        """
+        """
         negative_theta_hat_detector_frame = -1 * np.array(
             [cqS * cphiS, cqS * sphiS, -sqS]
         )
@@ -200,6 +298,7 @@ class GenerateEMRIWaveform:
         FcrosI = -s2psi
         FplusII = s2psi
         FcrosII = c2psi
+        """
 
         return (theta, phi, FplusI, FplusII, FcrosI, FcrosII)
 
@@ -318,13 +417,16 @@ class GenerateEMRIWaveform:
             h.real * FplusII + h.imag * FcrosII
         )
 
-        if self.waveform_generator.frame == "source":
-            h *= -1
-            print("hmmm")
+        print(FplusI, FcrosI, FplusII, FcrosII)
+
+        # if self.waveform_generator.frame == "source":
+        #    h *= -1
+        #    print("hmmm")
         if self.return_list is False:
             return h
 
         else:
+            # TODO: check about sign convention
             hp = h.real
             hx = -h.imag
             return [hp, hx]
