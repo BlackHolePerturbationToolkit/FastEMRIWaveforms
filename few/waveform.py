@@ -155,152 +155,53 @@ class GenerateEMRIWaveform:
 
         S_sr = (1 - np.dot(S, R) ** 2) ** (1 / 2)
 
-        if S_sr == 0.0:
-            S_sr = 1.0
-
-        wave_frame = np.array(
-            [np.cross(R, S) / S_sr, (S - np.dot(S, R) * R) / S_sr, -R]
-        )
-
-        rotation = spin_frame = np.array(
-            [np.cross(R, S) / S_sr, (R - np.dot(R, S) * S) / S_sr, S]
-        )
-
-        n_hat_spin_frame = np.dot(rotation, -R)
-
-        nx = n_hat_spin_frame[0]
-        ny = n_hat_spin_frame[1]
-        nz = n_hat_spin_frame[2]
-
-        # get viewing angles
-        # guard against bad nx vs ny
-        phi = np.arctan2(ny, nx)
-
-        theta = np.arccos(nz / 1.0)  # normalized vector
-
-        theta_hat_source_frame = np.array(
-            [np.cos(theta) * np.cos(phi), np.cos(theta) * np.sin(phi), -np.sin(theta)]
-        )
-
-        theta_hat_detector_frame = np.dot(rotation.T, theta_hat_source_frame)
-
-        theta_hat_cross_wave_frame_x = np.cross(theta_hat_detector_frame, wave_frame[0])
-
-        direction = -np.dot(theta_hat_cross_wave_frame_x, -R)
-
-        psi = direction * np.arccos(np.dot(wave_frame[0], theta_hat_detector_frame))
-
-        c2psi = np.cos(2.0 * psi)
-        s2psi = np.sin(2.0 * psi)
-
-        FplusI = c2psi
-        FcrosI = -s2psi
-        FplusII = s2psi
-        FcrosII = c2psi
-        """
-        FplusI = 1.0
-        FcrosI = 0.0
-        FplusII = 0.0
-        FcrosII = 1.0
-        """
-
-        print(phi, theta)
-        """
-        Rxtheta_hat = np.cross(-R, theta_hat_detector_frame)
-        Rxwave_frame_x = np.cross(-R, wave_frame[0])
-
-        norm = np.linalg.norm(Rxtheta_hat) * np.linalg.norm(Rxwave_frame_x)
-
-        dot = np.dot(Rxtheta_hat, Rxwave_frame_x)
-
-        if norm < 1e-6:
-            norm = 1e-6
-
-        cosrot = dot / norm
-
-        dot = np.dot(theta_hat_detector_frame, Rxwave_frame_x)
-        sinrot = dot
-
-        dot = np.dot(wave_frame[0], Rxtheta_hat)
-        sinrot -= dot
-        sinrot /= norm
-
-        rot = np.zeros((2, 2))
-        rot[0][0] = 2.0 * cosrot * cosrot - 1.0
-        rot[0][1] = cosrot * sinrot
-        rot[1][0] = -rot[0][1]
-        rot[1][1] = rot[0][0]
-
-        psi = np.arccos(np.dot(wave_frame[0], theta_hat_detector_frame))
-        FplusI = rot[0][0]
-        FcrosI = rot[0][1]
-        FplusII = rot[1][0]
-        FcrosII = rot[1][1]
-        """
-        """
-
-        # rotation matrices based on spin angular momentum vector of MBH
-        rotation = np.array(
-            [
-                [cqK * cphiK, cqK * sphiK, -sqK,],
-                [-sphiK, cphiK, 0],
-                [sqK * cphiK, sqK * sphiK, cqK,],
-            ]
-        )
-
-        # sky location in ssb frame
-        n_hat_detector_frame = np.array([-sqS * cphiS, -sqS * sphiS, -cqS])
-
-        # transform
-        n_hat_source_frame = np.dot(rotation, n_hat_detector_frame)
-
-        S_hat_detector_frame = np.array([sqK * cphiK, sqK * sphiK, cqK])
-
-        nx = n_hat_source_frame[0]
-        ny = n_hat_source_frame[1]
-        nz = n_hat_source_frame[2]
-
-        # get viewing angles
-        # guard against bad nx vs ny
-        if np.abs(nx) < 1e-10:
-            if ny > 1e-10:
-                phi = np.pi / 2.0
-            elif ny < -1e-10:
-                phi = 3.0 * np.pi / 2.0
-            else:
-                phi = 0.0
+        if S_sr < 1e-6:
+            S_sr
 
         else:
-            phi = np.arctan(ny / nx) + np.pi
 
-        theta = np.arccos(nz / 1.0)  # normalized vector
+            # get viewing angles
+            # guard against bad nx vs ny
+            phi = -np.pi / 2.0  # by definition of source frame
 
-        theta_hat_source_frame = np.array(
-            [np.cos(theta) * np.cos(phi), np.cos(theta) * np.sin(phi), -np.sin(theta)]
-        )
+            theta = np.arccos(-np.dot(R, S))  # normalized vector
 
-        theta_hat_detector_frame = np.dot(rotation.T, theta_hat_source_frame)
+        return (theta, phi)
 
-        psi = np.arccos(np.dot(theta_hat_detector_frame, ()))
-        # get polarization angle
-        """
-        """
-        negative_theta_hat_detector_frame = -1 * np.array(
-            [cqS * cphiS, cqS * sphiS, -sqS]
-        )
+    def _to_SSB_frame(self, hp, hc, qS, phiS, qK, phiK):
+        cqS = np.cos(qS)
+        sqS = np.sin(qS)
 
-        psi = np.arccos(np.dot(S_hat_detector_frame, negative_theta_hat_detector_frame))
+        cphiS = np.cos(phiS)
+        sphiS = np.sin(phiS)
 
-        c2psi = np.cos(2.0 * psi)
-        s2psi = np.sin(2.0 * psi)
+        cqK = np.cos(qK)
+        sqK = np.sin(qK)
 
-        FplusI = c2psi
-        FcrosI = -s2psi
-        FplusII = s2psi
-        FcrosII = c2psi
-        """
+        cphiK = np.cos(phiK)
+        sphiK = np.sin(phiK)
 
-        return (theta, phi, FplusI, FplusII, FcrosI, FcrosII)
+        up_ldc = cqS * sqK * np.cos(phiS - phiK) - cqK * sqS
+        dw_ldc = sqK * np.sin(phiS - phiK)
+
+        if dw_ldc != 0.0:
+            psi_ldc = -np.arctan2(up_ldc, dw_ldc)
+
+        else:
+            psi_ldc = 0.5 * np.pi / 2.0
+
+        c2psi_ldc = np.cos(2.0 * psi_ldc)
+        s2psi_ldc = np.sin(2.0 * psi_ldc)
+
+        FplusI = c2psi_ldc
+        FcrosI = -s2psi_ldc
+        FplusII = s2psi_ldc
+        FcrosII = c2psi_ldc
+
+        hp_new = FplusI * hp + FcrosI * hc
+        hc_new = FplusII * hp + FcrosII * hc
+
+        return hp_new, hc_new
 
     def __call__(
         self,
@@ -381,24 +282,12 @@ class GenerateEMRIWaveform:
             dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
 
             # get viewing angles in the source frame
-            (
-                theta_source,
-                phi_source,
-                FplusI,
-                FplusII,
-                FcrosI,
-                FcrosII,
-            ) = self._transform_frames(qS, phiS, qK, phiK)
+            (theta_source, phi_source,) = self._transform_frames(qS, phiS, qK, phiK)
 
             args += (theta_source, phi_source)
 
         else:
             dist_dimensionless = 1.0
-
-            FplusI = 1.0
-            FplusII = 0.0
-            FcrosI = 0.0
-            FcrosII = 1.0
 
         # if output is to be in the source frame, need to properly scale with distance
         if self.frame == "source":
@@ -413,15 +302,16 @@ class GenerateEMRIWaveform:
             / dist_dimensionless
         )
 
-        h = (h.real * FplusI + h.imag * FcrosI) + 1j * (
-            h.real * FplusII + h.imag * FcrosII
-        )
+        if self.waveform_generator.frame == "source":
+            h *= -1
 
-        print(FplusI, FcrosI, FplusII, FcrosII)
+        if self.frame == "detector":
+            hp = h.real
+            hc = -h.imag
 
-        # if self.waveform_generator.frame == "source":
-        #    h *= -1
-        #    print("hmmm")
+            hp, hc = self._to_SSB_frame(hp, hc, qS, phiS, qK, phiK)
+            h = hp - 1j * hc
+
         if self.return_list is False:
             return h
 
