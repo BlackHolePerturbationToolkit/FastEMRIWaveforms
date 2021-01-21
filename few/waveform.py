@@ -29,7 +29,7 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
-from few.utils.baseclasses import SchwarzschildEccentric, Pn5AAK
+from few.utils.baseclasses import SchwarzschildEccentric, Pn5AAK, GPUModuleBase
 from few.trajectory.pn5 import RunKerrGenericPn5Inspiral
 from few.trajectory.flux import RunSchwarzEccFluxInspiral
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
@@ -44,7 +44,289 @@ from few.utils.citations import *
 from few.summation.interpolatedmodesum import InterpolatedModeSum
 
 
-class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
+class GenerateEMRIWaveform:
+    """Generic waveform generator for data analysis
+
+    This class allows the user interface to be the exact same between any
+    waveform in the FEW package. For waveforms built in the source frame,
+    like :class:`few.waveform.FastSchwarzschildEccentricFlux`, the waveforms
+    are transformed to the detector frame. Waveforms like
+    :class:`few.waveform.Pn5AAKWaveform`that are built in the detector frame
+    are left alone effectively.
+
+    For waveforms that are less than Kerr generic (i.e. certain parameters are
+    unnecessary), this interface automatically removes the waveforms dependence
+    on those parameters.
+
+    Args:
+        waveform_class (str or obj): String with the name of the waveform class to use.
+            See the `pre-built waveform models
+            <https://bhptoolkit.org/FastEMRIWaveforms/html/user/main.html#prebuilt-waveform-models>`_.
+            If an object is provided, must be a waveform class.
+        *args (list or tuple, optional): Arguments for the instantiation of
+            the waveform generation class.
+        frame (str, optional): Which frame to produce the output waveform in. Choices are "detector" and "source".
+            Default is "detector."
+        return_list (bool, optional): If True, return :math:`h_p` and
+            :math:`h_x` as a list. If False, return :math:`hp - ihx`. Default
+            is False.
+        **kwargs (dict, optional): Dictionary with kwargs for the instantiation of
+            the waveform generator.
+
+    """
+
+    def __init__(
+        self, waveform_class, *args, frame="detector", return_list=False, **kwargs
+    ):
+
+        # instantiate the class
+        if isinstance(waveform_class, str):
+            try:
+                waveform = globals()[waveform_class]
+                self.waveform_generator = waveform(*args, **kwargs)
+            except KeyError:
+                raise ValueError(
+                    "{} waveform class is not available.".format(waveform_class)
+                )
+        else:
+            self.waveform_generator = waveform_class(*args, **kwargs)
+
+        self.frame = frame
+
+        # TODO: implement transformation to source frame for AAK
+        # if frame == "source" and waveform_class == "Pn5AAKWaveform":
+        #    raise NotImplementedError
+
+        self.return_list = return_list
+
+        # setup arguments to remove based on the specific waveform
+        # also get proper phases
+        self.args_remove = []
+        if self.waveform_generator.descriptor == "eccentric":
+            self.args_remove.append(5)
+
+            self.phases_needed = {"Phi_phi0": 11, "Phi_r0": 13}
+
+        else:
+            self.phases_needed = {"Phi_phi0": 11, "Phi_theta0": 12, "Phi_r0": 13}
+
+        if self.waveform_generator.background == "Schwarzschild":
+            # remove spin
+            self.args_remove.append(2)
+
+        # remove sky and orientation parameters
+        if self.waveform_generator.frame == "source":
+            for i in range(6, 11):
+                self.args_remove.append(i)
+
+        # these are the arguments that go in to the generator
+        self.args_keep = np.delete(np.arange(11), self.args_remove)
+
+    @property
+    def stock_waveform_options(self):
+        print(
+            """
+            FastSchwarzschildEccentricFlux
+            SlowSchwarzschildEccentricFlux
+            Pn5AAKWaveform
+            """
+        )
+
+    @property
+    def citation(self):
+        """Get citation for this class"""
+        return self.waveform_generator.citation
+
+    def _get_viewing_angles(self, qS, phiS, qK, phiK):
+        """Transform from the detector frame to the source frame"""
+
+        cqS = np.cos(qS)
+        sqS = np.sin(qS)
+
+        cphiS = np.cos(phiS)
+        sphiS = np.sin(phiS)
+
+        cqK = np.cos(qK)
+        sqK = np.sin(qK)
+
+        cphiK = np.cos(phiK)
+        sphiK = np.sin(phiK)
+
+        # sky location vector
+        R = np.array([sqS * cphiS, sqS * sphiS, cqS])
+
+        # spin vector
+        S = np.array([sqK * cphiK, sqK * sphiK, cqK])
+
+        # get viewing angles
+        phi = -np.pi / 2.0  # by definition of source frame
+
+        theta = np.arccos(-np.dot(R, S))  # normalized vector
+
+        return (theta, phi)
+
+    def _to_SSB_frame(self, hp, hc, qS, phiS, qK, phiK):
+        """Transform to SSB frame"""
+
+        cqS = np.cos(qS)
+        sqS = np.sin(qS)
+
+        cphiS = np.cos(phiS)
+        sphiS = np.sin(phiS)
+
+        cqK = np.cos(qK)
+        sqK = np.sin(qK)
+
+        cphiK = np.cos(phiK)
+        sphiK = np.sin(phiK)
+
+        # get polarization angle
+
+        up_ldc = cqS * sqK * np.cos(phiS - phiK) - cqK * sqS
+        dw_ldc = sqK * np.sin(phiS - phiK)
+
+        if dw_ldc != 0.0:
+            psi_ldc = -np.arctan2(up_ldc, dw_ldc)
+
+        else:
+            psi_ldc = 0.5 * np.pi / 2.0
+
+        c2psi_ldc = np.cos(2.0 * psi_ldc)
+        s2psi_ldc = np.sin(2.0 * psi_ldc)
+
+        # rotate
+        FplusI = c2psi_ldc
+        FcrosI = -s2psi_ldc
+        FplusII = s2psi_ldc
+        FcrosII = c2psi_ldc
+
+        hp_new = FplusI * hp + FcrosI * hc
+        hc_new = FplusII * hp + FcrosII * hc
+
+        return hp_new, hc_new
+
+    def __call__(
+        self,
+        M,
+        mu,
+        a,
+        p0,
+        e0,
+        Y0,
+        dist,
+        qS,
+        phiS,
+        qK,
+        phiK,
+        Phi_phi0,
+        Phi_theta0,
+        Phi_r0,
+        **kwargs
+    ):
+        """Generate the waveform with the given parameters.
+
+        Args:
+            M (double): Mass of larger black hole in solar masses.
+            mu (double): Mass of compact object in solar masses.
+            a (double): Dimensionless spin of massive black hole.
+            p0 (double): Initial semilatus rectum (Must be greater than
+                the separatrix at the the given e0 and Y0).
+                See documentation for more information on :math:`p_0<10`.
+            e0 (double): Initial eccentricity.
+            Y0 (double): Initial cosine of the inclination angle
+                (:math:`\cos{\iota}`).
+            dist (double): Luminosity distance in Gpc.
+            qS (double): Sky location polar angle in ecliptic
+                coordinates.
+            phiS (double): Sky location azimuthal angle in
+                ecliptic coordinates.
+            qK (double): Initial BH spin polar angle in ecliptic
+                coordinates.
+            phiK (double): Initial BH spin azimuthal angle in
+                ecliptic coordinates.
+            Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
+                Default is 0.0.
+            Phi_theta0 (double, optional): Initial phase for :math:`\Phi_\Theta`.
+                Default is 0.0.
+            Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
+                Default is 0.0.
+            **kwargs (dict, optional): Dictionary with kwargs for online waveform
+                generation.
+
+        """
+
+        args_all = (
+            M,
+            mu,
+            a,
+            p0,
+            e0,
+            Y0,
+            dist,
+            qS,
+            phiS,
+            qK,
+            phiK,
+            Phi_phi0,
+            Phi_theta0,
+            Phi_r0,
+        )
+
+        # remove the arguments that are not used in this waveform
+        args = tuple([args_all[i] for i in self.args_keep])
+
+        # pick out the phases to be used
+        initial_phases = {key: args_all[i] for key, i in self.phases_needed.items()}
+
+        # generate waveform in source frame
+        if self.waveform_generator.frame == "source":
+            # distance factor
+            dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
+
+            # get viewing angles in the source frame
+            (theta_source, phi_source,) = self._get_viewing_angles(qS, phiS, qK, phiK)
+
+            args += (theta_source, phi_source)
+
+        else:
+            dist_dimensionless = 1.0
+
+        # if output is to be in the source frame, need to properly scale with distance
+        if self.frame == "source":
+            if self.waveform_generator.frame == "detector":
+                dist_dimensionless = 1.0 / ((dist * Gpc) / (mu * MRSUN_SI))
+            else:
+                dist_dimensionless = 1.0
+
+        # get waveform
+        h = (
+            self.waveform_generator(*args, **{**initial_phases, **kwargs})
+            / dist_dimensionless
+        )
+
+        # by definition of the source frame, need to rotate by pi
+        if self.waveform_generator.frame == "source":
+            h *= -1
+
+        # transform to SSB frame if desired
+        if self.frame == "detector":
+            hp = h.real
+            hc = -h.imag
+
+            hp, hc = self._to_SSB_frame(hp, hc, qS, phiS, qK, phiK)
+            h = hp - 1j * hc
+
+        if self.return_list is False:
+            return h
+
+        else:
+            # TODO: check about sign convention
+            hp = h.real
+            hx = -h.imag
+            return [hp, hx]
+
+
+class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, ABC):
     """Base class for the actual Schwarzschild eccentric waveforms.
 
     This class carries information and methods that are common to any
@@ -75,6 +357,8 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
             sum module during instantiation. Default is {}.
         Ylm_kwargs (dict, optional): Optional kwargs to pass to the
             Ylm generator during instantiation. Default is {}.
+        mode_selector_kwargs (dict, optional): Optional kwargs to pass to the
+            mode selector during instantiation. Default is {}.
         use_gpu (bool, optional): If True, use GPU resources. Default is False.
         normalize_amps (bool, optional): If True, it will normalize amplitudes
             to flux information output from the trajectory modules. Default
@@ -111,11 +395,13 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         amplitude_kwargs={},
         sum_kwargs={},
         Ylm_kwargs={},
+        mode_selector_kwargs={},
         use_gpu=False,
         normalize_amps=True,
     ):
 
-        SchwarzschildEccentric.__init__(self, use_gpu)
+        GPUModuleBase.__init__(self, use_gpu=use_gpu)
+        SchwarzschildEccentric.__init__(self, use_gpu=use_gpu)
 
         amplitude_kwargs, sum_kwargs = self.adjust_gpu_usage(
             use_gpu, [amplitude_kwargs, sum_kwargs]
@@ -140,7 +426,9 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         self.ylm_gen = GetYlms(use_gpu=use_gpu, **Ylm_kwargs)
 
         # selecting modes that contribute at threshold to the waveform
-        self.mode_selector = ModeSelector(self.m0mask, use_gpu=use_gpu)
+        self.mode_selector = ModeSelector(
+            self.m0mask, **mode_selector_kwargs, use_gpu=use_gpu
+        )
 
     @property
     def citation(self):
@@ -155,13 +443,16 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
         e0,
         theta,
         phi,
-        dist,
+        dist=None,
+        Phi_phi0=0.0,
+        Phi_r0=0.0,
         dt=10.0,
         T=1.0,
         eps=1e-5,
         show_progress=False,
         batch_size=-1,
         mode_selection=None,
+        t_window=None,
     ):
         """Call function for SchwarzschildEccentric models.
 
@@ -177,7 +468,12 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
             e0 (double): Initial eccentricity (:math:`0.0\leq e_0\leq0.7`).
             theta (double): Polar viewing angle (:math:`-\pi/2\leq\Theta\leq\pi/2`).
             phi (double): Azimuthal viewing angle.
-            dist (double): Luminosity distance in Gpc.
+            dist (double, optional): Luminosity distance in Gpc. Default is None. If None,
+                will return source frame.
+            Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
+                Default is 0.0.
+            Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
+                Default is 0.0.
             dt (double, optional): Time between samples in seconds (inverse of
                 sampling frequency). Default is 10.0.
             T (double, optional): Total observation time in years.
@@ -215,7 +511,15 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
         # get trajectory
         (t, p, e, Phi_phi, Phi_r, amp_norm) = self.inspiral_generator(
-            M, mu, p0, e0, T=T, dt=dt, **self.inspiral_kwargs
+            M,
+            mu,
+            p0,
+            e0,
+            Phi_phi0=Phi_phi0,
+            Phi_r0=Phi_r0,
+            T=T,
+            dt=dt,
+            **self.inspiral_kwargs
         )
 
         # makes sure p and e are generally within the model
@@ -333,6 +637,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
 
             # mode selection based on input module
             else:
+                fund_freq_args = (M, 0.0, p_temp, e_temp, self.xp.zeros_like(e_temp))
                 modeinds = [self.l_arr, self.m_arr, self.n_arr]
                 (
                     teuk_modes_in,
@@ -340,7 +645,9 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
                     self.ls,
                     self.ms,
                     self.ns,
-                ) = self.mode_selector(teuk_modes, ylms, modeinds, eps=eps)
+                ) = self.mode_selector(
+                    teuk_modes, ylms, modeinds, fund_freq_args=fund_freq_args, eps=eps
+                )
 
             # store number of modes for external information
             self.num_modes_kept = teuk_modes_in.shape[1]
@@ -354,8 +661,12 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
                 Phi_r_temp,
                 self.ms,
                 self.ns,
+                M,
+                p,
+                e,
                 dt=dt,
                 T=T,
+                t_window=t_window,
             )
 
             # if batching, need to add the waveform
@@ -366,7 +677,12 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ABC):
             else:
                 waveform = waveform_temp
 
-        dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
+        if dist is not None:
+            dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
+
+        else:
+            dist_dimensionless = 1.0
+
         return waveform / dist_dimensionless
 
 
@@ -422,11 +738,13 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         **kwargs
     ):
 
+        mode_summation_module = InterpolatedModeSum
+
         SchwarzschildEccentricWaveformBase.__init__(
             self,
             RunSchwarzEccFluxInspiral,
             RomanAmplitude,
-            InterpolatedModeSum,
+            mode_summation_module,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
@@ -545,7 +863,7 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         )
 
 
-class Pn5AAKWaveform(Pn5AAK, ABC):
+class Pn5AAKWaveform(Pn5AAK, GPUModuleBase, ABC):
     """Waveform generation class for AAK with 5PN trajectory.
 
     This class generates waveforms based on the Augmented Analytic Kludge
@@ -553,7 +871,7 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
     `EMRI Kludge Suite <https://github.com/alvincjk/EMRI_Kludge_Suite/>`_.
     However, here the trajectory is vastly improved by employing the 5PN
     fluxes for generic Kerr orbits from
-    `Fujita & Shibata 2020<https://arxiv.org/abs/2008.13554>`_.
+    `Fujita & Shibata 2020 <https://arxiv.org/abs/2008.13554>`_.
 
     The 5PN trajectory produces orbital and phase trajectories.
     The trajectory is calculated until the orbit reaches
@@ -615,7 +933,8 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
 
     def __init__(self, inspiral_kwargs={}, sum_kwargs={}, use_gpu=False):
 
-        Pn5AAK.__init__(self, use_gpu)
+        GPUModuleBase.__init__(self, use_gpu=use_gpu)
+        Pn5AAK.__init__(self)
 
         sum_kwargs = self.adjust_gpu_usage(use_gpu, sum_kwargs)
 
@@ -646,6 +965,10 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
         return True
 
     @property
+    def is_source_frame(self):
+        return False
+
+    @property
     def allow_batching(self):
         return False
 
@@ -657,11 +980,11 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
         p0,
         e0,
         Y0,
+        dist,
         qS,
         phiS,
         qK,
         phiK,
-        dist,
         Phi_phi0=0.0,
         Phi_theta0=0.0,
         Phi_r0=0.0,
@@ -676,12 +999,14 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
         args:
             M (double): Mass of larger black hole in solar masses.
             mu (double): Mass of compact object in solar masses.
+            a (double): Dimensionless spin of massive black hole.
             p0 (double): Initial semilatus rectum (Must be greater than
                 the separatrix at the the given e0 and Y0).
                 See documentation for more information on :math:`p_0<10`.
             e0 (double): Initial eccentricity.
             Y0 (double): Initial cosine of the inclination angle
                 (:math:`\cos{\iota}`).
+            dist (double): Luminosity distance in Gpc.
             qS (double): Sky location polar angle in ecliptic
                 coordinates.
             phiS (double): Sky location azimuthal angle in
@@ -690,7 +1015,6 @@ class Pn5AAKWaveform(Pn5AAK, ABC):
                 coordinates.
             phiK (double): Initial BH spin azimuthal angle in
                 ecliptic coordinates.
-            dist (double): Luminosity distance in Gpc.
             Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
                 Default is 0.0.
             Phi_theta0 (double, optional): Initial phase for :math:`\Phi_\Theta`.

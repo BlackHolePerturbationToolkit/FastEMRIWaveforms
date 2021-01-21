@@ -70,7 +70,6 @@ Package TODOs
 
 - add SNR calculator
 - run trajectory backward
-- add initial phases (special treatment needed)
 - zero out modes
 - shared memory based on CUDA_ARCH / upping shared allocation
 - deal with file locations and removing files from git history
@@ -79,7 +78,8 @@ Package TODOs
 Change Log
 ===========
 
-- 1.1.5: Distance bug fixed. Wrong mass scale. 
+- 1.2.0: Generic waveform interface added. Angular protections added to AAK.
+- 1.1.5: Distance bug fixed. Wrong mass scale.
 - 1.1.4: Distance added to FEW.
 - 1.1.3: Schwarzschild eccentric fundamental frequencies added. Flux inspiral structure adjusted to this change. Change log added.
 - 1.1.2: Memory leak on GPU corrected.

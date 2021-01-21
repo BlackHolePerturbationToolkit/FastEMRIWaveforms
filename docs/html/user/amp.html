@@ -232,7 +232,7 @@ It deals with <span class="math notranslate nohighlight">\(A_{lmkn}\)</span> in 
 <dl class="py class">
 <dt id="few.amplitude.romannet.RomanAmplitude">
 <em class="property">class </em><code class="sig-prename descclassname">few.amplitude.romannet.</code><code class="sig-name descname">RomanAmplitude</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">max_init_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.AmplitudeBase</span></code>, <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.AmplitudeBase</span></code>, <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.GPUModuleBase</span></code></p>
 <p>Calculate Teukolsky amplitudes with a ROMAN.</p>
 <p>ROMAN stands for reduced-order models with artificial neurons. Please see
 the documentations for
@@ -473,6 +473,12 @@ value 1, except for the last layer with value 0.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="few.amplitude.romannet.RomanAmplitude.gpu_capability">
+<em class="property">property </em><code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Confirms GPU capability</p>
+</dd></dl>
+
+<dl class="py method">
 <dt id="few.amplitude.romannet.RomanAmplitude.__call__">
 <code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">specific_modes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Common call for Teukolsky amplitudes</p>
@@ -518,10 +524,32 @@ waveform generator.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt id="few.amplitude.romannet.RomanAmplitude.attributes_GPUModuleBase">
+<code class="sig-name descname">attributes_GPUModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.attributes_GPUModuleBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="id0">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py attribute">
-<dt id="few.amplitude.romannet.RomanAmplitude.allow_batching">
-<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.amplitude.romannet.RomanAmplitude'&gt;&gt;</em><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.allow_batching" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="few.amplitude.romannet.RomanAmplitude.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
 
 <dl class="py method">
 <dt id="few.amplitude.romannet.RomanAmplitude.attributes_SchwarzschildEccentric">
@@ -723,38 +751,6 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 </dd></dl>
-
-<dl class="py method">
-<dt id="few.amplitude.romannet.RomanAmplitude.attributes_WaveformBase">
-<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py attribute">
-<dt id="id0">
-<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
-<dd><p>If True, use GPU.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="few.amplitude.romannet.RomanAmplitude.xp">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.xp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Either numpy or CuPy based on gpu preference.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>obj</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="few.amplitude.romannet.RomanAmplitude.gpu_capability">
-<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.amplitude.romannet.RomanAmplitude'&gt;&gt;</em><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.gpu_capability" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="py method">
 <dt id="few.amplitude.romannet.RomanAmplitude.sanity_check_gpu">
@@ -1003,10 +999,32 @@ waveform generator.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_GPUModuleBase">
+<code class="sig-name descname">attributes_GPUModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_GPUModuleBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py attribute">
-<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.allow_batching">
-<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.amplitude.interp2dcubicspline.Interp2DAmplitude'&gt;&gt;</em><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.allow_batching" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
 
 <dl class="py method">
 <dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_SchwarzschildEccentric">
@@ -1210,36 +1228,10 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_WaveformBase">
-<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py attribute">
-<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.use_gpu">
-<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.use_gpu" title="Permalink to this definition">¶</a></dt>
-<dd><p>If True, use GPU.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.xp">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.xp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Either numpy or CuPy based on gpu preference.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>obj</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py attribute">
 <dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.gpu_capability">
-<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.amplitude.interp2dcubicspline.Interp2DAmplitude'&gt;&gt;</em><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.gpu_capability" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property">property </em><code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Confirms GPU capability</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_gpu">

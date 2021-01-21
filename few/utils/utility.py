@@ -282,7 +282,7 @@ def get_mu_at_t(
         traj_module (obj): Instantiated trajectory module. It must output
             the time array of the trajectory sparse trajectory as the first
             output value in the tuple.
-        t_out (double): The desired length of time for the waveform.
+        t_out (double): The desired length of time for the waveform in years.
         traj_args (list): List of arguments for the trajectory function.
             mu is removed. **Note**: It must be a list, not a tuple because the
             new mu values are inserted into the argument list.
@@ -347,6 +347,112 @@ def get_mu_at_t(
     return spline(t_out * YRSID_SI).item()
 
 
+def get_p_at_t(
+    traj_module,
+    t_out,
+    traj_args,
+    index_of_p=2,
+    traj_kwargs={},
+    min_p=8.0,
+    max_p=16.0,
+    num_p=100,
+):
+    """Find the value of p that will give a specific length inspiral.
+
+    If you want to generate an inspiral that is a specific length, you
+    can adjust p accordingly. This function tells you what that value of p
+    is based on the trajectory module and other input parameters at a
+    desired time of observation.
+
+    The function grids p values and finds their associated end times. These
+    end times then become the x values in a spline with the gridded p
+    values as the y values. The spline is then evaluated at the desired end time
+    in order to get the desired p value.
+
+    arguments:
+        traj_module (obj): Instantiated trajectory module. It must output
+            the time array of the trajectory sparse trajectory as the first
+            output value in the tuple.
+        t_out (double): The desired length of time for the waveform.
+        traj_args (list): List of arguments for the trajectory function.
+            p is removed. **Note**: It must be a list, not a tuple because the
+            new p values are inserted into the argument list.
+        index_of_p (int, optional): Index where to insert the new p values in
+            the :code:`traj_args` list. Default is 2 because p usually comes
+            after p.
+        traj_kwargs (dict, optional): Keyword arguments for :code:`traj_module`.
+            Default is an empty dict.
+        min_p (double, optional): The minumum value of p for search array.
+            Default is :math:`1 M_\odot`.
+        max_p (double, optional): The maximum value of p for search array.
+            Default is :math:`10^3M_\odot`.
+        num_p (int, optional): Number of p values to search over. Default is
+            100.
+
+    returns:
+        double: Value of p that creates the proper length trajectory.
+
+    """
+
+    # setup search array
+    p_new = np.linspace(min_p, max_p, num_p)
+
+    # set maximum time value of trajectory to be just beyond desired time
+    traj_kwargs["T"] = t_out * 1.1
+
+    # array for end time values for trajectories
+    t_end = np.zeros_like(p_new)
+
+    for i, p in enumerate(p_new):
+
+        # insert mu into args list
+        args_new = traj_args.copy()
+        args_new.insert(index_of_p, p)
+
+        # run the trajectory
+        out = traj_module(*args_new, **traj_kwargs)
+
+        # get the last time in the trajectory
+        t = out[0]
+        t_end[i] = t[-1]
+
+    # put them in increasing order
+    sort = np.argsort(t_end)
+    t_end = t_end[sort]
+    p_new = p_new[sort]
+
+    # get rid of extra values beyond the maximum allowable time
+
+    try:
+        ind_stop = np.where(np.diff(t_end) > 0.0)[0][-1] + 1
+
+    except IndexError:
+        if np.all(np.diff(t_end) == 0.0):
+            warnings.warn("All trajectories hit the end point. Returning max_p.")
+            return max_p
+
+        else:
+            raise IndexError
+
+    if ind_stop == 1:
+        ind_stop = 2
+
+    p_test = p_new.copy()
+    t_test = t_end.copy()
+    p_new = p_new[:ind_stop]
+    t_end = t_end[:ind_stop]
+
+    if t_end[-1] < t_out * YRSID_SI:
+        return max_p
+
+    # setup spline
+    spline = CubicSpline(t_end, p_new)
+
+    # return proper p value
+    p_out = spline(t_out * YRSID_SI).item()
+    return p_out
+
+
 # data history is saved here nased on version nunber
 record_by_version = {
     "1.0.0": 3981654,
@@ -356,6 +462,7 @@ record_by_version = {
     "1.1.3": 3981654,
     "1.1.4": 3981654,
     "1.1.5": 3981654,
+    "1.2.0": 3981654,
 }
 
 

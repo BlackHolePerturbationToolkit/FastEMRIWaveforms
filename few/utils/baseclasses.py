@@ -45,8 +45,8 @@ from few.utils.constants import *
 from few.utils.citations import *
 
 
-class WaveformBase(ABC):
-    """Base class for waveforms.
+class GPUModuleBase(ABC):
+    """Base class for modules that can use GPUs.
 
     This class mainly handles setting GPU usage.
 
@@ -55,7 +55,7 @@ class WaveformBase(ABC):
 
     """
 
-    def attributes_WaveformBase(self):
+    def attributes_GPUModuleBase(self):
         """
         attributes:
             use_gpu (bool): If True, use GPU.
@@ -64,7 +64,7 @@ class WaveformBase(ABC):
         """
         pass
 
-    def __init__(self, use_gpu=False, **kwargs):
+    def __init__(self, *args, use_gpu=False, **kwargs):
 
         self.use_gpu = use_gpu
 
@@ -80,12 +80,6 @@ class WaveformBase(ABC):
     @property
     def gpu_capability(self):
         """Indicator if the module has gpu capability"""
-        raise NotImplementedError
-
-    @classmethod
-    @property
-    def allow_batching(self):
-        """Indicator if module allows batching"""
         raise NotImplementedError
 
     @property
@@ -144,7 +138,7 @@ class WaveformBase(ABC):
         return kwargs
 
 
-class SchwarzschildEccentric(WaveformBase, ABC):
+class SchwarzschildEccentric(GPUModuleBase, ABC):
     """Base class for Schwarzschild eccentric waveforms.
 
     This class creates shared traits between different implementations of the
@@ -211,13 +205,13 @@ class SchwarzschildEccentric(WaveformBase, ABC):
         """
         pass
 
-    def __init__(self, use_gpu=False, **kwargs):
+    def __init__(self, *args, use_gpu=False, **kwargs):
 
-        WaveformBase.__init__(self, use_gpu=use_gpu, **kwargs)
-
+        GPUModuleBase.__init__(self, *args, use_gpu=use_gpu, **kwargs)
         # some descriptive information
         self.background = "Schwarzschild"
         self.descriptor = "eccentric"
+        self.frame = "source"
 
         # set mode index settings
         self.lmax = 10
@@ -330,6 +324,11 @@ class SchwarzschildEccentric(WaveformBase, ABC):
             )
 
     @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
+
+    @property
     def citation(self):
         """Return citations of this class"""
         return few_citation + few_software_citation
@@ -350,8 +349,8 @@ class SchwarzschildEccentric(WaveformBase, ABC):
             ValueError: If any of the angular values are not allowed.
 
         """
-        if theta < 0.0 or theta > np.pi:
-            raise ValueError("theta must be between 0 and pi.")
+        # if theta < 0.0 or theta > np.pi:
+        #    raise ValueError("theta must be between 0 and pi.")
 
         phi = phi % (2 * np.pi)
         return (theta, phi)
@@ -403,9 +402,9 @@ class SchwarzschildEccentric(WaveformBase, ABC):
             if test:
                 raise ValueError("{} is negative. It must be positive.".format(key))
 
-        if e0 > 0.7:
+        if e0 > 0.75:
             raise ValueError(
-                "Initial eccentricity above 0.7 not allowed. (e0={})".format(e0)
+                "Initial eccentricity above 0.75 not allowed. (e0={})".format(e0)
             )
 
         if e0 < 0.0:
@@ -435,7 +434,7 @@ class SchwarzschildEccentric(WaveformBase, ABC):
             )
 
 
-class Pn5AAK(WaveformBase, ABC):
+class Pn5AAK(ABC):
     """Base class for Pn5AAK waveforms.
 
     This class contains some basic checks and information for AAK waveforms
@@ -460,11 +459,10 @@ class Pn5AAK(WaveformBase, ABC):
 
     def __init__(self, use_gpu=False, **kwargs):
 
-        WaveformBase.__init__(self, use_gpu=use_gpu, **kwargs)
-
         # some descriptive information
         self.background = "Kerr"
-        self.descriptor = "Generic Orbits"
+        self.descriptor = "generic orbits"
+        self.frame = "detector"
 
     @property
     def citation(self):
@@ -771,7 +769,7 @@ class SummationBase(ABC):
         """
         raise NotImplementedError
 
-    def __call__(self, t, *args, T=1.0, dt=10.0, **kwargs):
+    def __call__(self, t, *args, T=1.0, dt=10.0, t_window=None, **kwargs):
         """Common call function for summation modules.
 
         Provides a common interface for summation modules. It can adjust for
@@ -788,7 +786,8 @@ class SummationBase(ABC):
 
         """
 
-        T = T * YRSID_SI
+        n_pts = int(T * YRSID_SI / dt)
+        T = n_pts * dt
         # determine the output array setup
 
         # adjust based on if observations time is less than or more than trajectory time array
@@ -807,7 +806,7 @@ class SummationBase(ABC):
         self.num_pts, self.num_pts_pad = num_pts, num_pts_pad
         self.dt = dt
 
-        # setup waveform holder
+        # setup waveform holder for time domain
         self.waveform = self.xp.zeros(
             (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
         )

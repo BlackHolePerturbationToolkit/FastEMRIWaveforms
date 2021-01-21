@@ -31,7 +31,7 @@ Getting Started
 
 Below is a quick set of instructions to get you started with ``few``.
 
-0) `Install Anaconda <https://bhptoolkit.org/FastEMRIWaveforms/>`__ if
+0) `Install Anaconda <https://docs.anaconda.com/anaconda/install/>`__ if
    you do not have it.
 
 1) Create a virtual environment. **Note**: There is no available
@@ -196,7 +196,7 @@ We use `SemVer <http://semver.org/>`__ for versioning. For the versions
 available, see the `tags on this
 repository <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags>`__.
 
-Current Version: 1.1.5
+Current Version: 1.2.0
 
 Authors
 -------

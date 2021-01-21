@@ -223,12 +223,14 @@
 <span id="mode-filtering"></span><h2>Mode Filtering<a class="headerlink" href="#module-few.utils.modeselector" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="few.utils.modeselector.ModeSelector">
-<em class="property">class </em><code class="sig-prename descclassname">few.utils.modeselector.</code><code class="sig-name descname">ModeSelector</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m0mask</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.modeselector.</code><code class="sig-name descname">ModeSelector</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m0mask</span></em>, <em class="sig-param"><span class="n">sensitivity_fn</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.GPUModuleBase</span></code></p>
 <p>Filter teukolsky amplitudes based on power contribution.</p>
 <p>This module takes teukolsky modes, combines them with their associated ylms,
 and determines the power contribution from each mode. It then filters the
-modes bases on the fractional accuracy on the total power (eps) parameter.</p>
+modes bases on the fractional accuracy on the total power (eps) parameter.
+Additionally, if a sensitivity curve is provided, the mode power is also
+weighted according to the PSD of the sensitivity.</p>
 <p>The mode filtering is a major contributing factor to the speed of these
 waveforms as it removes large numbers of useles modes from the final
 summation calculation.</p>
@@ -240,11 +242,23 @@ will in order of <span class="math notranslate nohighlight">\(m=0\)</span>, <spa
 <li><p><strong>m0mask</strong> (<em>1D bool xp.ndarray</em>) – This mask highlights which modes have
 <span class="math notranslate nohighlight">\(m=0\)</span>. Value is False if <span class="math notranslate nohighlight">\(m=0\)</span>, True if not.
 This only includes <span class="math notranslate nohighlight">\(m\geq0\)</span>.</p></li>
+<li><p><strong>sensitivity_fn</strong> (<em>object</em><em>, </em><em>optional</em>) – Sensitivity curve function that takes
+a frequency (Hz) array as input and returns the Power Spectral Density (PSD)
+of the sensitivity curve. Default is None. If this is not none, this
+sennsitivity is used to weight the mode values when determining which
+modes to keep. <strong>Note</strong>: if the sensitivity function is provided,
+and GPUs are used, then this function must accept CuPy arrays as input.</p></li>
 <li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, allocate arrays for usage on a GPU.
 Default is False.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt id="few.utils.modeselector.ModeSelector.gpu_capability">
+<em class="property">property </em><code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#few.utils.modeselector.ModeSelector.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Confirms GPU capability</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="few.utils.modeselector.ModeSelector.attributes_ModeSelector">
 <code class="sig-name descname">attributes_ModeSelector</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.attributes_ModeSelector" title="Permalink to this definition">¶</a></dt>
@@ -287,6 +301,17 @@ Default is False.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt id="few.utils.modeselector.ModeSelector.sensitivity_fn">
+<code class="sig-name descname">sensitivity_fn</code><a class="headerlink" href="#few.utils.modeselector.ModeSelector.sensitivity_fn" title="Permalink to this definition">¶</a></dt>
+<dd><p>sensitivity generating function for power-weighting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>object</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py method">
@@ -297,7 +322,7 @@ Default is False.</p></li>
 
 <dl class="py method">
 <dt id="few.utils.modeselector.ModeSelector.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">modeinds</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.__call__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">teuk_modes</span></em>, <em class="sig-param"><span class="n">ylms</span></em>, <em class="sig-param"><span class="n">modeinds</span></em>, <em class="sig-param"><span class="n">fund_freq_args</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-05</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call to sort and filer teukolsky modes.</p>
 <p>This is the call function that takes the teukolsky modes, ylms,
 mode indices and fractional accuracy of the total power and returns
@@ -315,6 +340,11 @@ ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
 <li><p><strong>modeinds</strong> (<em>list of int xp.ndarrays</em>) – List containing the mode index arrays. If in an
 equatorial model, need <span class="math notranslate nohighlight">\((l,m,n)\)</span> arrays. If generic,
 <span class="math notranslate nohighlight">\((l,m,k,n)\)</span> arrays. e.g. [l_arr, m_arr, n_arr].</p></li>
+<li><p><strong>fund_freq_args</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Args necessary to determine
+fundamental frequencies along trajectory. The tuple will represent
+<span class="math notranslate nohighlight">\((M, a, e, p, \cos\iota)\)</span> where the large black hole mass (<span class="math notranslate nohighlight">\(M\)</span>)
+and spin (<span class="math notranslate nohighlight">\(a\)</span>) are scalar and the other three quantities are xp.ndarrays.
+This must be provided if sensitivity weighting is used. Default is None.</p></li>
 <li><p><strong>eps</strong> (<em>double</em><em>, </em><em>optional</em>) – Fractional accuracy of the total power used
 to determine the contributing modes. Lowering this value will
 calculate more modes slower the waveform down, but generally
@@ -328,6 +358,68 @@ acceptable loss). Default that gives good mismatch qualities is
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt id="few.utils.modeselector.ModeSelector.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.modeselector.ModeSelector.attributes_GPUModuleBase">
+<code class="sig-name descname">attributes_GPUModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.attributes_GPUModuleBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.utils.modeselector.ModeSelector.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.utils.modeselector.ModeSelector.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="id0">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.modeselector.ModeSelector.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -336,7 +428,7 @@ acceptable loss). Default that gives good mismatch qualities is
 <dl class="py class">
 <dt id="few.utils.ylm.GetYlms">
 <em class="property">class </em><code class="sig-prename descclassname">few.utils.ylm.</code><code class="sig-name descname">GetYlms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">assume_positive_m</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.GPUModuleBase</span></code></p>
 <p>(-2) Spin-weighted Spherical Harmonics</p>
 <p>The class generates (-2) spin-weighted spherical hackarmonics,
 <span class="math notranslate nohighlight">\(Y_{lm}(\Theta,\phi)\)</span>. <strong>Important Note</strong>: this class also applies
@@ -353,6 +445,12 @@ Default is False.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt id="few.utils.ylm.GetYlms.gpu_capability">
+<em class="property">property </em><code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#few.utils.ylm.GetYlms.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Confirms GPU capability</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="few.utils.ylm.GetYlms.attributes_GetYlms">
 <code class="sig-name descname">attributes_GetYlms</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.attributes_GetYlms" title="Permalink to this definition">¶</a></dt>
@@ -389,6 +487,74 @@ angles.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>1D complex128 xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.ylm.GetYlms.adjust_gpu_usage">
+<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.ylm.GetYlms.attributes_GPUModuleBase">
+<code class="sig-name descname">attributes_GPUModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.attributes_GPUModuleBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.utils.ylm.GetYlms.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.utils.ylm.GetYlms.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="id1">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.ylm.GetYlms.citation">
+<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.utils.ylm.GetYlms.citation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return citations related to this module</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.utils.ylm.GetYlms.sanity_check_gpu">
+<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -537,7 +703,7 @@ in order to get the desired mu value.</p>
 <li><p><strong>traj_module</strong> (<em>obj</em>) – Instantiated trajectory module. It must output
 the time array of the trajectory sparse trajectory as the first
 output value in the tuple.</p></li>
-<li><p><strong>t_out</strong> (<em>double</em>) – The desired length of time for the waveform.</p></li>
+<li><p><strong>t_out</strong> (<em>double</em>) – The desired length of time for the waveform in years.</p></li>
 <li><p><strong>traj_args</strong> (<em>list</em>) – List of arguments for the trajectory function.
 mu is removed. <strong>Note</strong>: It must be a list, not a tuple because the
 new mu values are inserted into the argument list.</p></li>
@@ -558,6 +724,50 @@ If False, linspace search array. Default is True.</p></li>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>Value of mu that creates the proper length trajectory.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>double</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="few.utils.utility.get_p_at_t">
+<code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">get_p_at_t</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">traj_module</span></em>, <em class="sig-param"><span class="n">t_out</span></em>, <em class="sig-param"><span class="n">traj_args</span></em>, <em class="sig-param"><span class="n">index_of_p</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">traj_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">min_p</span><span class="o">=</span><span class="default_value">8.0</span></em>, <em class="sig-param"><span class="n">max_p</span><span class="o">=</span><span class="default_value">16.0</span></em>, <em class="sig-param"><span class="n">num_p</span><span class="o">=</span><span class="default_value">100</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.get_p_at_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the value of p that will give a specific length inspiral.</p>
+<p>If you want to generate an inspiral that is a specific length, you
+can adjust p accordingly. This function tells you what that value of p
+is based on the trajectory module and other input parameters at a
+desired time of observation.</p>
+<p>The function grids p values and finds their associated end times. These
+end times then become the x values in a spline with the gridded p
+values as the y values. The spline is then evaluated at the desired end time
+in order to get the desired p value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>traj_module</strong> (<em>obj</em>) – Instantiated trajectory module. It must output
+the time array of the trajectory sparse trajectory as the first
+output value in the tuple.</p></li>
+<li><p><strong>t_out</strong> (<em>double</em>) – The desired length of time for the waveform.</p></li>
+<li><p><strong>traj_args</strong> (<em>list</em>) – List of arguments for the trajectory function.
+p is removed. <strong>Note</strong>: It must be a list, not a tuple because the
+new p values are inserted into the argument list.</p></li>
+<li><p><strong>index_of_p</strong> (<em>int</em><em>, </em><em>optional</em>) – Index where to insert the new p values in
+the <code class="code docutils literal notranslate"><span class="pre">traj_args</span></code> list. Default is 2 because p usually comes
+after p.</p></li>
+<li><p><strong>traj_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments for <code class="code docutils literal notranslate"><span class="pre">traj_module</span></code>.
+Default is an empty dict.</p></li>
+<li><p><strong>min_p</strong> (<em>double</em><em>, </em><em>optional</em>) – The minumum value of p for search array.
+Default is <span class="math notranslate nohighlight">\(1 M_\odot\)</span>.</p></li>
+<li><p><strong>max_p</strong> (<em>double</em><em>, </em><em>optional</em>) – The maximum value of p for search array.
+Default is <span class="math notranslate nohighlight">\(10^3M_\odot\)</span>.</p></li>
+<li><p><strong>num_p</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of p values to search over. Default is
+100.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value of p that creates the proper length trajectory.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>double</p>
