@@ -41,9 +41,7 @@ from few.summation.directmodesum import DirectModeSum
 from few.summation.aakwave import AAKSummation
 from few.utils.constants import *
 from few.utils.citations import *
-from few.summation.interpolatedmodesum import (
-    InterpolatedModeSum,
-)  # , TFInterpolatedModeSum
+from few.summation.interpolatedmodesum import InterpolatedModeSum
 
 
 class GenerateEMRIWaveform:
@@ -135,7 +133,7 @@ class GenerateEMRIWaveform:
             """
         )
 
-    def _transform_frames(self, qS, phiS, qK, phiK):
+    def _get_viewing_angles(self, qS, phiS, qK, phiK):
         """Transform from the detector frame to the source frame"""
 
         cqS = np.cos(qS)
@@ -150,25 +148,22 @@ class GenerateEMRIWaveform:
         cphiK = np.cos(phiK)
         sphiK = np.sin(phiK)
 
+        # sky location vector
         R = np.array([sqS * cphiS, sqS * sphiS, cqS])
+
+        # spin vector
         S = np.array([sqK * cphiK, sqK * sphiK, cqK])
 
-        S_sr = (1 - np.dot(S, R) ** 2) ** (1 / 2)
+        # get viewing angles
+        phi = -np.pi / 2.0  # by definition of source frame
 
-        if S_sr < 1e-6:
-            S_sr
-
-        else:
-
-            # get viewing angles
-            # guard against bad nx vs ny
-            phi = -np.pi / 2.0  # by definition of source frame
-
-            theta = np.arccos(-np.dot(R, S))  # normalized vector
+        theta = np.arccos(-np.dot(R, S))  # normalized vector
 
         return (theta, phi)
 
     def _to_SSB_frame(self, hp, hc, qS, phiS, qK, phiK):
+        """Transform to SSB frame"""
+
         cqS = np.cos(qS)
         sqS = np.sin(qS)
 
@@ -180,6 +175,8 @@ class GenerateEMRIWaveform:
 
         cphiK = np.cos(phiK)
         sphiK = np.sin(phiK)
+
+        # get polarization angle
 
         up_ldc = cqS * sqK * np.cos(phiS - phiK) - cqK * sqS
         dw_ldc = sqK * np.sin(phiS - phiK)
@@ -193,6 +190,7 @@ class GenerateEMRIWaveform:
         c2psi_ldc = np.cos(2.0 * psi_ldc)
         s2psi_ldc = np.sin(2.0 * psi_ldc)
 
+        # rotate
         FplusI = c2psi_ldc
         FcrosI = -s2psi_ldc
         FplusII = s2psi_ldc
@@ -282,7 +280,7 @@ class GenerateEMRIWaveform:
             dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
 
             # get viewing angles in the source frame
-            (theta_source, phi_source,) = self._transform_frames(qS, phiS, qK, phiK)
+            (theta_source, phi_source,) = self._get_viewing_angles(qS, phiS, qK, phiK)
 
             args += (theta_source, phi_source)
 
@@ -302,9 +300,11 @@ class GenerateEMRIWaveform:
             / dist_dimensionless
         )
 
+        # by definition of the source frame, need to rotate by pi
         if self.waveform_generator.frame == "source":
             h *= -1
 
+        # transform to SSB frame if desired
         if self.frame == "detector":
             hp = h.real
             hc = -h.imag
