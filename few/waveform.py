@@ -65,8 +65,9 @@ class GenerateEMRIWaveform:
             If an object is provided, must be a waveform class.
         *args (list or tuple, optional): Arguments for the instantiation of
             the waveform generation class.
-        frame (str, optional): Which frame to produce the output waveform in. Choices are "detector" and "source".
-            Default is "detector."
+        frame (str, optional): Which frame to produce the output waveform in.
+            Default is "detector." Right now, the source frame is not implemented
+            for waveforms that are built in the detector frame.
         return_list (bool, optional): If True, return :math:`h_p` and
             :math:`h_x` as a list. If False, return :math:`hp - ihx`. Default
             is False.
@@ -131,11 +132,6 @@ class GenerateEMRIWaveform:
             Pn5AAKWaveform
             """
         )
-
-    @property
-    def citation(self):
-        """Get citation for this class"""
-        return self.waveform_generator.citation
 
     def _get_viewing_angles(self, qS, phiS, qK, phiK):
         """Transform from the detector frame to the source frame"""
@@ -738,7 +734,14 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         **kwargs
     ):
 
-        mode_summation_module = InterpolatedModeSum
+        if "output_type" in sum_kwargs:
+            if sum_kwargs["output_type"] == "tf":
+                mode_summation_module = TFInterpolatedModeSum
+            else:
+                mode_summation_module = InterpolatedModeSum
+
+        else:
+            mode_summation_module = InterpolatedModeSum
 
         SchwarzschildEccentricWaveformBase.__init__(
             self,
@@ -871,7 +874,7 @@ class Pn5AAKWaveform(Pn5AAK, GPUModuleBase, ABC):
     `EMRI Kludge Suite <https://github.com/alvincjk/EMRI_Kludge_Suite/>`_.
     However, here the trajectory is vastly improved by employing the 5PN
     fluxes for generic Kerr orbits from
-    `Fujita & Shibata 2020 <https://arxiv.org/abs/2008.13554>`_.
+    `Fujita & Shibata 2020<https://arxiv.org/abs/2008.13554>`_.
 
     The 5PN trajectory produces orbital and phase trajectories.
     The trajectory is calculated until the orbit reaches
