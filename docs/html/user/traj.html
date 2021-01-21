@@ -463,10 +463,32 @@ waveform generator.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.attributes_GPUModuleBase">
+<code class="sig-name descname">attributes_GPUModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.attributes_GPUModuleBase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.use_gpu">
+<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.use_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py attribute">
-<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.allow_batching">
-<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.trajectory.flux.RunSchwarzEccFluxInspiral'&gt;&gt;</em><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.allow_batching" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.xp">
+<code class="sig-name descname">xp</code><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.xp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
 
 <dl class="py method">
 <dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.attributes_SchwarzschildEccentric">
@@ -670,33 +692,6 @@ maps locations of -m values to +m values.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.attributes_WaveformBase">
-<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py attribute">
-<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.use_gpu">
-<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.use_gpu" title="Permalink to this definition">¶</a></dt>
-<dd><p>If True, use GPU.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.xp">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.xp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Either numpy or CuPy based on gpu preference.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>obj</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py method">
 <dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.get_inspiral">
 <code class="sig-name descname">get_inspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">Phi_phi0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_r0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.get_inspiral" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate the inspiral.</p>
@@ -732,10 +727,11 @@ Default is 0.0.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="py attribute">
+<dl class="py method">
 <dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.gpu_capability">
-<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.trajectory.flux.RunSchwarzEccFluxInspiral'&gt;&gt;</em><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.gpu_capability" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property">property </em><code class="sig-name descname">gpu_capability</code><a class="headerlink" href="#few.trajectory.flux.RunSchwarzEccFluxInspiral.gpu_capability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Confirms GPU capability</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="few.trajectory.flux.RunSchwarzEccFluxInspiral.sanity_check_gpu">
@@ -952,29 +948,6 @@ Default is {}.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.adjust_gpu_usage">
-<code class="sig-name descname">adjust_gpu_usage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.adjust_gpu_usage" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adjust all inputs for gpu usage</p>
-<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
-so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
-<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
-single dictionary for each constituent class in the
-waveform generator.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.allow_batching">
-<code class="sig-name descname">allow_batching</code><em class="property"> = &lt;bound method ? of &lt;class 'few.trajectory.pn5.RunKerrGenericPn5Inspiral'&gt;&gt;</em><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.allow_batching" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.attributes_Pn5AAK">
 <code class="sig-name descname">attributes_Pn5AAK</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.attributes_Pn5AAK" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
@@ -1006,33 +979,6 @@ waveform generator.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py method">
-<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.attributes_WaveformBase">
-<code class="sig-name descname">attributes_WaveformBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.attributes_WaveformBase" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py attribute">
-<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.use_gpu">
-<code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.use_gpu" title="Permalink to this definition">¶</a></dt>
-<dd><p>If True, use GPU.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="id0">
-<code class="sig-name descname">xp</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
-<dd><p>Either numpy or CuPy based on gpu preference.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>obj</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1077,11 +1023,6 @@ Default is 0.0.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="py attribute">
-<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.gpu_capability">
-<code class="sig-name descname">gpu_capability</code><em class="property"> = &lt;bound method ? of &lt;class 'few.trajectory.pn5.RunKerrGenericPn5Inspiral'&gt;&gt;</em><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.gpu_capability" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.sanity_check_angles">
 <code class="sig-name descname">sanity_check_angles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qS</span></em>, <em class="sig-param"><span class="n">phiS</span></em>, <em class="sig-param"><span class="n">qK</span></em>, <em class="sig-param"><span class="n">phiK</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.sanity_check_angles" title="Permalink to this definition">¶</a></dt>
@@ -1108,23 +1049,6 @@ ecliptic coordinates.</p></li>
 </dd>
 <dt class="field-even">Raises</dt>
 <dd class="field-even"><p><strong>ValueError</strong> – If any of the angular values are not allowed.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.sanity_check_gpu">
-<code class="sig-name descname">sanity_check_gpu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">use_gpu</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.sanity_check_gpu" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if this class has GPU capability</p>
-<p>If the user is requesting GPU usage, this will confirm the class has
-GPU capabilites.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
-    not have that capability.</p>
 </dd>
 </dl>
 </dd></dl>

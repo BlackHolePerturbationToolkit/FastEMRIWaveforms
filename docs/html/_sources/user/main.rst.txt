@@ -41,14 +41,6 @@ Generic Kerr AAK with 5PN Trajectory
 Base Classes
 ~~~~~~~~~~~~~
 
-General Waveform Base
-^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: few.utils.baseclasses.WaveformBase
-    :members:
-    :show-inheritance:
-    :inherited-members:
-
 Schwarzschild Eccentric
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -66,6 +58,14 @@ Schwarzschild Eccentric
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: few.utils.baseclasses.Pn5AAK
+    :members:
+    :show-inheritance:
+    :inherited-members:
+
+GPU Module Base Class
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: few.utils.baseclasses.GPUModuleBase
     :members:
     :show-inheritance:
     :inherited-members:
