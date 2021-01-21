@@ -17,6 +17,7 @@
 
 
 import os
+import warnings
 
 import h5py
 import numpy as np
@@ -204,7 +205,7 @@ class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
         fill_val = 1e-6
         if np.any((lam > np.pi - fill_val) | (lam < fill_val)):
             warnings.warn(
-                "Inclination trajectory includes values with 1e-6 of the poles. We shift these values automatically away from poles by 1e-6."
+                "Inclination trajectory includes values within 1e-6 of the poles. We shift these values automatically away from poles by 1e-6."
             )
             inds_fix_up = lam > np.pi - fill_val
             lam[inds_fix_up] = np.pi - fill_val
