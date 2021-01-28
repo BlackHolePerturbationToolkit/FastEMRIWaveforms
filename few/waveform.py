@@ -1068,6 +1068,8 @@ class Pn5AAKWaveform(Pn5AAK, GPUModuleBase, ABC):
 
         # number of modes to use (from original AAK model)
         self.num_modes_kept = self.nmodes = int(30 * e0)
+        if self.num_modes_kept < 4:
+            self.num_modes_kept = self.nmodes = 4
 
         waveform = self.create_waveform(
             t,
