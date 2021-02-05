@@ -208,7 +208,7 @@ void KerrGeoCoordinateFrequenciesVectorized(double* OmegaPhi_, double* OmegaThet
         else
         {
             SchwarzschildGeoCoordinateFrequencies(&OmegaPhi_[i], &OmegaR_[i], p[i], e[i]);
-            OmegaTheta_[i] = 0.0;
+            OmegaTheta_[i] = OmegaPhi_[i];
         }
 
     }
