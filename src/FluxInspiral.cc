@@ -231,10 +231,9 @@ double get_step_flux(double p, double e, Interpolant *amp_vec_norm_interp)
 }
 
 #define DIST_TO_SEPARATRIX 0.1
-
 #define INNER_THRESHOLD 1e-8
-
 #define PERCENT_STEP 0.25
+#define MAX_ITER 1000
 
 // main function in the FluxCarrier class
 // It takes initial parameters and evolves a trajectory
@@ -325,6 +324,8 @@ FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, doub
             double Phi_phi = y_prev[2];
             double Phi_r = y_prev[3];
 
+            double factor = 1.0;
+            int iter = 0;
             while (p - 6 - 2 * e > DIST_TO_SEPARATRIX + INNER_THRESHOLD)
             {
                 double pdot, edot, Omega_phi, Omega_r;
@@ -333,14 +334,41 @@ FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, doub
                 get_derivatives(&pdot, &edot, &Omega_phi, &Omega_r, interps, p, e, interps->epsilon);
 
                 // estimate the step to the breaking point and multiply by PERCENT_STEP
-                double step_size = PERCENT_STEP * ((6 + DIST_TO_SEPARATRIX + 2. * e - p)/(pdot + 2 * edot));
+                double step_size = PERCENT_STEP / factor * ((6 + DIST_TO_SEPARATRIX + 2. * e - p)/(pdot + 2 * edot));
 
-                // update points
-                t = t + step_size;
-                p = p + pdot * step_size;
-                e = e + edot * step_size;
-                Phi_phi = Phi_phi + Omega_phi * step_size;
-                Phi_r = Phi_r + Omega_r * step_size;
+                // check step
+                double temp_t = t + step_size;
+                double temp_p = p + pdot * step_size;
+                double temp_e = e + edot * step_size;
+                double temp_Phi_phi = Phi_phi + Omega_phi * step_size;
+                double temp_Phi_r = Phi_r + Omega_r * step_size;
+
+                double temp_stop = temp_p - 6.0 - 2.0 * temp_e;
+
+                if (temp_stop > DIST_TO_SEPARATRIX)
+                {
+                    // update points
+                    t = temp_t;
+                    p = temp_p;
+                    e = temp_e;
+                    Phi_phi = temp_Phi_phi;
+                    Phi_r = temp_Phi_r;
+                }
+                else
+                {
+                    // all variables stay the same
+
+                    // decrease step
+                    factor *= 0.5;
+                }
+
+                iter++;
+
+                // guard against diverging calculations
+                if (iter > MAX_ITER)
+                {
+                    break;
+                }
 
             }
 
