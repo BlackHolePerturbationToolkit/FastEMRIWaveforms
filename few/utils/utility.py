@@ -422,14 +422,13 @@ def get_p_at_t(
     p_new = p_new[sort]
 
     # get rid of extra values beyond the maximum allowable time
-
     try:
         ind_stop = np.where(np.diff(t_end) > 0.0)[0][-1] + 1
 
     except IndexError:
         if np.all(np.diff(t_end) == 0.0):
-            warnings.warn("All trajectories hit the end point. Returning max_p.")
-            return max_p
+            warnings.warn("All trajectories hit the end point. Returning min_p.")
+            return min_p
 
         else:
             raise IndexError
@@ -439,8 +438,8 @@ def get_p_at_t(
 
     p_test = p_new.copy()
     t_test = t_end.copy()
-    p_new = p_new[:ind_stop]
-    t_end = t_end[:ind_stop]
+    p_new = p_new[: ind_stop + 1]
+    t_end = t_end[: ind_stop + 1]
 
     if t_end[-1] < t_out * YRSID_SI:
         return max_p
@@ -464,6 +463,7 @@ record_by_version = {
     "1.1.5": 3981654,
     "1.2.0": 3981654,
     "1.2.1": 3981654,
+    "1.2.2": 3981654,
 }
 
 
