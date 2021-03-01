@@ -637,7 +637,13 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, 
 
             # mode selection based on input module
             else:
-                fund_freq_args = (M, 0.0, p_temp, e_temp, self.xp.zeros_like(e_temp))
+                fund_freq_args = (
+                    M,
+                    0.0,
+                    p_temp,
+                    e_temp,
+                    self.xp.zeros_like(e_temp),
+                )
                 modeinds = [self.l_arr, self.m_arr, self.n_arr]
                 (
                     teuk_modes_in,
@@ -646,7 +652,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, 
                     self.ms,
                     self.ns,
                 ) = self.mode_selector(
-                    teuk_modes, ylms, modeinds, fund_freq_args=fund_freq_args, eps=eps
+                    teuk_modes, ylms, modeinds, fund_freq_args=fund_freq_args, eps=eps,
                 )
 
             # store number of modes for external information

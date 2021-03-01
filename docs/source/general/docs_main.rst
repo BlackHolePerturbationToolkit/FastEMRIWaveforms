@@ -78,7 +78,8 @@ Package TODOs
 Change Log
 ===========
 
-- 1.2.1: Bug fix for time at end of orbital evolution. :math:`\Omega_\theta` fixed. 
+- 1.2.2: Bug fix for p(t), lapacke. Added e=0 for FastSchwarzschildEccentricFlux
+- 1.2.1: Bug fix for time at end of orbital evolution. :math:`\Omega_\theta` fixed.
 - 1.2.0: Generic waveform interface added. Angular protections added to AAK.
 - 1.1.5: Distance bug fixed. Wrong mass scale.
 - 1.1.4: Distance added to FEW.
