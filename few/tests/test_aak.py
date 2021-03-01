@@ -39,7 +39,7 @@ class AAKWaveformTest(unittest.TestCase):
         mu = 1e1
         a = 0.2
         p0 = 14.0
-        e0 = 0.9
+        e0 = 0.2
         iota0 = 0.1
         Y0 = np.cos(iota0)
 
