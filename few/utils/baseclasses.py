@@ -824,6 +824,7 @@ class SummationBase(ABC):
             self.waveform = self.xp.zeros(
                 (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
             )
+        # elif self.output_type == "fd":
 
         elif self.output_type == "tf":
             if t_window is None:
