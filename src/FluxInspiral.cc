@@ -52,19 +52,12 @@ const int Ne = 33;
 const int Ny = 50;
 
 
-// The RHS of the ODEs
-int func (double t, const double y[], double f[], void *params){
-	(void)(t); /* avoid unused parameter warning */
-	struct interp_params *interps = (struct interp_params *)params;
-
-	double epsilon = interps->epsilon;
-	double p = y[0];
-	double e = y[1];
-
-	double y1 = log((p -2.*e - 2.1));
+void get_derivatives(double* pdot_out, double* edot_out, double* Omega_phi_out, double* Omega_r_out, struct interp_params* interps, double p, double e, double epsilon)
+{
+    double y1 = log((p -2.*e - 2.1));
 
     // evaluate ODEs, starting with PN contribution, then interpolating over remaining flux contribution
-	double Omega_phi = 0.0;
+    double Omega_phi = 0.0;
     double Omega_r = 0.0;
 
     SchwarzschildGeoCoordinateFrequencies(&Omega_phi, &Omega_r, p, e);
@@ -79,10 +72,38 @@ int func (double t, const double y[], double f[], void *params){
 
 	double pdot = (-2*(Edot*Sqrt((4*Power(e,2) - Power(-2 + p,2))/(3 + Power(e,2) - p))*(3 + Power(e,2) - p)*Power(p,1.5) + Ldot*Power(-4 + p,2)*Sqrt(-3 - Power(e,2) + p)))/(4*Power(e,2) - Power(-6 + p,2));
 
-	double edot = -((Edot*Sqrt((4*Power(e,2) - Power(-2 + p,2))/(3 + Power(e,2) - p))*Power(p,1.5)*
-	  (18 + 2*Power(e,4) - 3*Power(e,2)*(-4 + p) - 9*p + Power(p,2)) +
-	 (-1 + Power(e,2))*Ldot*Sqrt(-3 - Power(e,2) + p)*(12 + 4*Power(e,2) - 8*p + Power(p,2)))/
-	(e*(4*Power(e,2) - Power(-6 + p,2))*p));
+    // handle e = 0.0
+    double edot = 0.0;
+	if (e > 0.)
+    {
+        edot = -((Edot*Sqrt((4*Power(e,2) - Power(-2 + p,2))/(3 + Power(e,2) - p))*Power(p,1.5)*
+            	  (18 + 2*Power(e,4) - 3*Power(e,2)*(-4 + p) - 9*p + Power(p,2)) +
+            	 (-1 + Power(e,2))*Ldot*Sqrt(-3 - Power(e,2) + p)*(12 + 4*Power(e,2) - 8*p + Power(p,2)))/
+            	(e*(4*Power(e,2) - Power(-6 + p,2))*p));
+    }
+
+    *pdot_out = pdot;
+    *edot_out = edot;
+    *Omega_phi_out = Omega_phi;
+    *Omega_r_out = Omega_r;
+
+}
+
+// The RHS of the ODEs
+int func (double t, const double y[], double f[], void *params){
+	(void)(t); /* avoid unused parameter warning */
+	struct interp_params *interps = (struct interp_params *)params;
+
+	double epsilon = interps->epsilon;
+	double p = y[0];
+	double e = y[1];
+
+    double Omega_phi = 0.0;
+    double Omega_r = 0.0;
+    double pdot = 0.0;
+    double edot = 0.0;
+
+    get_derivatives(&pdot, &edot, &Omega_phi, &Omega_r, interps, p, e, epsilon);
 
 	double Phi_phi_dot = Omega_phi;
     double Phi_r_dot = Omega_r;
@@ -214,6 +235,11 @@ double get_step_flux(double p, double e, Interpolant *amp_vec_norm_interp)
 
 }
 
+#define DIST_TO_SEPARATRIX 0.1
+#define INNER_THRESHOLD 1e-8
+#define PERCENT_STEP 0.25
+#define MAX_ITER 1000
+
 // main function in the FluxCarrier class
 // It takes initial parameters and evolves a trajectory
 // tmax and dt affect integration length and time steps (mostly if DENSE_STEPPING == 1)
@@ -261,6 +287,10 @@ FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, doub
     int ind = 1;
     int status = 0;
 
+    double prev_t = 0.0;
+    double y_prev[4] = {p0, e0, 0.0, 0.0};
+
+
 	while (t < tmax){
 
         // apply fixed step if dense stepping
@@ -282,16 +312,88 @@ FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, doub
 
         double step_flux = get_step_flux(p, e, amp_vec_norm_interp);
 
-        flux_out.add_point(t*Msec, y[0], y[1], y[2], y[3], step_flux); // adds time in seconds
-
         // count the number of points
         ind++;
 
         // Stop the inspiral when close to the separatrix
-        if(p - 6 -2*e < 0.1){
+        if(p - 6 -2*e < DIST_TO_SEPARATRIX){
+
+            // Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.
+            // To correct for this we self-integrate from the second-to-last point in the integation to
+            // within the INNER_THRESHOLD with respect to separatrix +  DIST_TO_SEPARATRIX
+
+            // Get old values
+            p = y_prev[0];
+            e = y_prev[1];
+            t = prev_t;
+            double Phi_phi = y_prev[2];
+            double Phi_r = y_prev[3];
+
+            double factor = 1.0;
+            int iter = 0;
+            while (p - 6 - 2 * e > DIST_TO_SEPARATRIX + INNER_THRESHOLD)
+            {
+                double pdot, edot, Omega_phi, Omega_r;
+
+                // Same function in the integrator
+                get_derivatives(&pdot, &edot, &Omega_phi, &Omega_r, interps, p, e, interps->epsilon);
+
+                // estimate the step to the breaking point and multiply by PERCENT_STEP
+                double step_size = PERCENT_STEP / factor * ((6 + DIST_TO_SEPARATRIX + 2. * e - p)/(pdot + 2 * edot));
+
+                // check step
+                double temp_t = t + step_size;
+                double temp_p = p + pdot * step_size;
+                double temp_e = e + edot * step_size;
+                double temp_Phi_phi = Phi_phi + Omega_phi * step_size;
+                double temp_Phi_r = Phi_r + Omega_r * step_size;
+
+                double temp_stop = temp_p - 6.0 - 2.0 * temp_e;
+
+                if (temp_stop > DIST_TO_SEPARATRIX)
+                {
+                    // update points
+                    t = temp_t;
+                    p = temp_p;
+                    e = temp_e;
+                    Phi_phi = temp_Phi_phi;
+                    Phi_r = temp_Phi_r;
+                }
+                else
+                {
+                    // all variables stay the same
+
+                    // decrease step
+                    factor *= 0.5;
+                }
+
+                iter++;
+
+                // guard against diverging calculations
+                if (iter > MAX_ITER)
+                {
+                    break;
+                }
+
+            }
+
+            // get associated step flux
+            step_flux = get_step_flux(p, e, amp_vec_norm_interp);
+
+            // add the point and end the integration
+            flux_out.add_point(t*Msec, p, e, Phi_phi, Phi_r, step_flux);
+
             //cout << "# Separatrix reached: exiting inspiral" << endl;
             break;
         }
+
+        flux_out.add_point(t*Msec, y[0], y[1], y[2], y[3], step_flux); // adds time in seconds
+
+        prev_t = t;
+
+        #pragma unroll
+        for (int jj = 0; jj < 4; jj += 1) y_prev[jj] = y[jj];
+
 	}
 
 	flux_out.length = ind;

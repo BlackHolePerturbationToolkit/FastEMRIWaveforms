@@ -420,11 +420,12 @@ class SchwarzschildEccentric(GPUModuleBase, ABC):
             )
 
         if p0 < 10.0:
-            warnings.warn(
-                "With p0 = {} < 10, the user must be careful the trajectory does not lie above the p0=10 e0=0.7 curve.".format(
-                    p0
+            if p0 < 7 * (6.0 + 2 * e0) - 41.9:
+                raise ValueError(
+                    "This p0 ({}) and e0 ({}) combination is outside of our domain of validity.".format(
+                        p0, e0
+                    )
                 )
-            )
 
         if p0 > 16.0 + 2 * e0:
             raise ValueError(
