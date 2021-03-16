@@ -743,6 +743,8 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         if "output_type" in sum_kwargs:
             if sum_kwargs["output_type"] == "tf":
                 mode_summation_module = TFInterpolatedModeSum
+            # elif sum_kwargs["output_type"] == "fd":
+            #    mode_summation_module = FDInterpolatedModeSum
             else:
                 mode_summation_module = InterpolatedModeSum
 
