@@ -53,6 +53,29 @@
 using namespace std;
 using namespace std::chrono;
 
+void get_derivatives(double* pdot, double* edot, double* Ydot,
+                     double* Omega_phi, double* Omega_theta, double* Omega_r,
+                     double epsilon, double a, double p, double e, double Y)
+{
+    // evaluate ODEs
+
+	int Nv = 10;
+    int ne = 10;
+    *pdot = epsilon * dpdt8H_5PNe10 (a, p, e, Y, Nv, ne);
+
+    // needs adjustment for validity
+    Nv = 10;
+    ne = 8;
+	*edot = epsilon * dedt8H_5PNe10 (a, p, e, Y, Nv, ne);
+
+    Nv = 7;
+    ne = 10;
+    *Ydot = epsilon * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);
+
+    KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, Y);
+
+}
+
 
 // The RHS of the ODEs
 int func (double t, const double y[], double f[], void *params){
@@ -62,29 +85,18 @@ int func (double t, const double y[], double f[], void *params){
 	//double epsilon = params_in->epsilon;
     //double q = params_in->q;
     double a = params_in->a;
-    double epilson = params_in->epsilon;
+    double epsilon = params_in->epsilon;
 	double p = y[0];
 	double e = y[1];
     double Y = y[2];
 
-    // evaluate ODEs
-
-	int Nv = 10;
-    int ne = 10;
-    double pdot = epilson * dpdt8H_5PNe10 (a, p, e, Y, Nv, ne);
-
-    // needs adjustment for validity
-    Nv = 10;
-    ne = 8;
-	double edot = epilson * dedt8H_5PNe10 (a, p, e, Y, Nv, ne);
-
-    Nv = 7;
-    ne = 10;
-    double Ydot = epilson * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);
-
+    double pdot, edot, Ydot;
 	double Phi_phi_dot, Phi_theta_dot, Phi_r_dot;
 
-    KerrGeoCoordinateFrequencies(&Phi_phi_dot, &Phi_theta_dot, &Phi_r_dot, a, p, e, Y);
+
+    get_derivatives(&pdot, &edot, &Ydot,
+                         &Phi_phi_dot, &Phi_theta_dot, &Phi_r_dot,
+                         epsilon, a, p, e, Y);
 
     f[0] = pdot;
 	f[1] = edot;
@@ -112,11 +124,17 @@ void Pn5Carrier::dealloc()
 }
 
 
+#define DIST_TO_SEPARATRIX 0.1
+#define INNER_THRESHOLD 1e-8
+#define PERCENT_STEP 0.25
+#define MAX_ITER 1000
+
 // main function in the Pn5Carrier class
 // It takes initial parameters and evolves a trajectory
 // tmax and dt affect integration length and time steps (mostly if DENSE_STEPPING == 1)
 // use_rk4 allows the use of the rk4 integrator
-Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4){
+Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4)
+{
 
     // years to seconds
     tmax = tmax*YRSID_SI;
@@ -158,6 +176,9 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
     int ind = 1;
     int status = 0;
 
+    double prev_t = 0.0;
+    double y_prev[6] = {p0, e0, Y0, 0.0, 0.0, 0.0};
+
 	while (t < tmax){
 
         // apply fixed step if dense stepping
@@ -178,22 +199,100 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
         double e 		= y[1];
         double Y        = y[2];
 
-        pn5_out.add_point(t*Msec, y[0], y[1], y[2], y[3], y[4], y[5]); // adds time in seconds
-
         // count the number of points
         ind++;
 
         // Stop the inspiral when close to the separatrix
 
-        if (p < 12.0)
+        double p_sep = get_separatrix(a, e, Y);
+
+        if(p - p_sep < DIST_TO_SEPARATRIX)
         {
-            double p_sep = get_separatrix(a, e, Y);
-            if(p - p_sep < 0.2)
+            // Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.
+            // To correct for this we self-integrate from the second-to-last point in the integation to
+            // within the INNER_THRESHOLD with respect to separatrix +  DIST_TO_SEPARATRIX
+
+            // Get old values
+            p = y_prev[0];
+            e = y_prev[1];
+            Y = y_prev[2];
+            double Phi_phi = y_prev[3];
+            double Phi_theta = y_prev[4];
+            double Phi_r = y_prev[5];
+            t = prev_t;
+
+            double factor = 1.0;
+            int iter = 0;
+
+            while (p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD)
             {
-                //cout << "# Separatrix reached: exiting inspiral" << endl;
-                break;
+                double pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r;
+
+                // Same function in the integrator
+                get_derivatives(&pdot, &edot, &Ydot,
+                                     &Omega_phi, &Omega_theta, &Omega_r,
+                                     params_holder->epsilon, a, p, e, Y);
+                // estimate the step to the breaking point and multiply by PERCENT_STEP
+
+                p_sep = get_separatrix(a, e, Y);
+
+                double step_size = PERCENT_STEP / factor * ((p_sep + DIST_TO_SEPARATRIX - p)/pdot);
+
+                // check step
+                double temp_t = t + step_size;
+                double temp_p = p + pdot * step_size;
+                double temp_e = e + edot * step_size;
+                double temp_Y = Y + Ydot * step_size;
+                double temp_Phi_phi = Phi_phi + Omega_phi * step_size;
+                double temp_Phi_theta = Phi_theta + Omega_theta * step_size;
+                double temp_Phi_r = Phi_r + Omega_r * step_size;
+
+
+                double temp_stop = temp_p - p_sep;
+
+                if (temp_stop > DIST_TO_SEPARATRIX)
+                {
+                    // update points
+                    t = temp_t;
+                    p = temp_p;
+                    e = temp_e;
+                    Y = temp_Y;
+                    Phi_phi = temp_Phi_phi;
+                    Phi_theta = temp_Phi_theta;
+                    Phi_r = temp_Phi_r;
+                }
+                else
+                {
+                    // all variables stay the same
+
+                    // decrease step
+                    factor *= 0.5;
+                }
+
+                iter++;
+
+                // guard against diverging calculations
+                if (iter > MAX_ITER)
+                {
+                    break;
+                }
+
             }
+
+            // add the point and end the integration
+            pn5_out.add_point(t*Msec, p, e, Y, Phi_phi, Phi_theta, Phi_r);
+
+            //cout << "# Separatrix reached: exiting inspiral" << endl;
+            break;
         }
+
+        pn5_out.add_point(t*Msec, y[0], y[1], y[2], y[3], y[4], y[5]); // adds time in seconds
+
+        prev_t = t;
+
+        #pragma unroll
+        for (int jj = 0; jj < 6; jj += 1) y_prev[jj] = y[jj];
+
 	}
 
 	pn5_out.length = ind;

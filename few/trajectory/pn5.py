@@ -19,6 +19,7 @@
 
 
 import os
+import warnings
 
 import numpy as np
 from scipy.interpolate import CubicSpline
@@ -87,7 +88,12 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
     @property
     def citation(self):
         """Return citation for this class"""
-        return few_citation + few_software_citation + Pn5_citation + kerr_separatrix_citation
+        return (
+            few_citation
+            + few_software_citation
+            + Pn5_citation
+            + kerr_separatrix_citation
+        )
 
     def get_inspiral(
         self,
@@ -131,6 +137,15 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
             tuple: Tuple of (t, p, e, Y, Phi_phi, Phi_r, Phi_theta).
 
         """
+
+        fill_value = 1e-6
+        if a < fill_value:
+            warnings.warn(
+                "Our Pn5AAK model breaks near a = 0. Adjusting to a = 1e-6.".format(
+                    fill_value
+                )
+            )
+            a = fill_value
 
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
