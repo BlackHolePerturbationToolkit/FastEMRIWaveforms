@@ -40,7 +40,7 @@ python setup.py install
 from few.waveform import FastSchwarzschildEccentricFlux
 ```
 
-See [examples notebook](examples/SchwarzschildEccentricWaveform_intro.ipynb).
+See [examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb).
 
 
 ### Prerequisites
