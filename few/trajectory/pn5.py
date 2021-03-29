@@ -124,7 +124,8 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
             a (double): Dimensionless spin of massive black hole.
             p0 (double): Initial semi-latus rectum in terms units of M (p/M).
             e0 (double): Initial eccentricity (dimensionless).
-            Y0 (double): Initial cosine of the inclination.
+            Y0 (double): Initial :math:`\cos{\iota}`. **Note**: This value is different from :math:`x_I`
+            used in the relativistic waveforms. TODO: add function for conversion.
             *args (list, placeholder): Added for flexibility.
             Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
                 Default is 0.0.

@@ -508,6 +508,7 @@ void make_waveform(cmplx *waveform,
                 trans_plus_m = get_mode_value(mode_val, Phi_phi_i, Phi_r_i, m, n, Ylm_plus_m);
 
                 // minus m if m > 0
+                // TODO: add flag that turns this on or off
                 if (m != 0)
                 {
 
