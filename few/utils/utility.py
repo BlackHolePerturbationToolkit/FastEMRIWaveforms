@@ -24,7 +24,12 @@ import warnings
 import numpy as np
 from scipy.interpolate import CubicSpline
 
-from pyFundamentalFrequencies import pyKerrGeoCoordinateFrequencies, pyGetSeparatrix
+from pyFundamentalFrequencies import (
+    pyKerrGeoCoordinateFrequencies,
+    pyGetSeparatrix,
+    pyKerrGeoConstantsOfMotionVectorized,
+    pyY_to_xI_vector,
+)
 
 # check to see if cupy is available for gpus
 try:
@@ -168,7 +173,8 @@ def get_fundamental_frequencies(a, p, e, x):
         e (double scalar or 1D double np.ndarray): Values of eccentricity,
             :math:`e`.
         x (double scalar or 1D double np.ndarray): Values of cosine of the
-            inclination, :math:`\cos{\iota}`.
+            inclination, :math:`x=\cos{I}`. Please note this is different from
+            :math:`Y=\cos{\iota}`.
 
     returns:
         tuple: Tuple of (OmegaPhi, OmegaTheta, OmegaR).
@@ -208,6 +214,144 @@ def get_fundamental_frequencies(a, p, e, x):
         return (OmegaPhi, OmegaTheta, OmegaR)
 
 
+def get_kerr_geo_constants_of_motion(a, p, e, x):
+    """Get Kerr constants of motion.
+
+    Determines the constants of motion: :math:`(E, L, Q)` associated with a
+    geodesic orbit in the generic Kerr spacetime.
+
+    arguments:
+        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+            black hole. If other parameters are arrays and the spin is scalar,
+            it will be cast to a 1D array.
+        p (double scalar or 1D double np.ndarray): Values of separation,
+            :math:`p`.
+        e (double scalar or 1D double np.ndarray): Values of eccentricity,
+            :math:`e`.
+        x (double scalar or 1D double np.ndarray): Values of cosine of the
+            inclination, :math:`x=\cos{I}`. Please note this is different from
+            :math:`Y=\cos{\iota}`.
+
+    returns:
+        tuple: Tuple of (E, L, Q).
+            These are 1D arrays or scalar values depending on inputs.
+
+    """
+
+    # check if inputs are scalar or array
+    if isinstance(p, float):
+        scalar = True
+
+    else:
+        scalar = False
+
+    p_in = np.atleast_1d(p)
+    e_in = np.atleast_1d(e)
+    x_in = np.atleast_1d(x)
+
+    # cast the spin to the same size array as p
+    if isinstance(a, float):
+        a_in = np.full_like(p_in, a)
+    else:
+        a_in = np.atleast_1d(a)
+
+    assert len(a_in) == len(p_in)
+
+    # get constants of motion
+    E, L, Q = pyKerrGeoConstantsOfMotionVectorized(a_in, p_in, e_in, x_in)
+
+    # set output to shape of input
+    if scalar:
+        return (E[0], L[0], Q[0])
+
+    else:
+        return (E, L, Q)
+
+
+def xI_to_Y(a, p, e, x):
+    """Convert from :math:`x_I=\cos{I}` to :math:`Y=\cos{\iota}`.
+
+    Converts between the two different inclination parameters. :math:`\cos{I}\equiv x_I`,
+    where :math:`I` describes the orbit's inclination from the equatorial plane.
+    :math:`\cos{\iota}\equiv Y`, where :math:`\cos{\iota}=L/\sqrt{L^2 + Q}`.
+
+    arguments:
+        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+            black hole. If other parameters are arrays and the spin is scalar,
+            it will be cast to a 1D array.
+        p (double scalar or 1D double np.ndarray): Values of separation,
+            :math:`p`.
+        e (double scalar or 1D double np.ndarray): Values of eccentricity,
+            :math:`e`.
+        x (double scalar or 1D double np.ndarray): Values of cosine of the
+            inclination, :math:`x=\cos{I}`.
+
+    returns:
+        1D array or scalar: :math:`Y=\cos{\iota}` value with shape based on input shapes.
+
+    """
+
+    # get constants of motion
+    E, L, Q = get_kerr_geo_constants_of_motion(a, p, e, x)
+
+    Y = L / np.sqrt(L ** 2 + Q)
+    return Y
+
+
+def Y_to_xI(a, p, e, Y):
+    """Convert from :math:`Y=\cos{\iota}` to :math:`x_I=\cos{I}`.
+
+    Converts between the two different inclination parameters. :math:`\cos{I}\equiv x_I`,
+    where :math:`I` describes the orbit's inclination from the equatorial plane.
+    :math:`\cos{\iota}\equiv Y`, where :math:`\cos{\iota}=L/\sqrt{L^2 + Q}`.
+
+    This computation may have issues near edge cases.
+
+    arguments:
+        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+            black hole. If other parameters are arrays and the spin is scalar,
+            it will be cast to a 1D array.
+        p (double scalar or 1D double np.ndarray): Values of separation,
+            :math:`p`.
+        e (double scalar or 1D double np.ndarray): Values of eccentricity,
+            :math:`e`.
+        Y (double scalar or 1D double np.ndarray): Values of cosine of the
+            :math:`\iota`.
+
+    returns:
+        1D array or scalar: :math:`x=\cos{I}` value with shape based on input shapes.
+
+    """
+
+    # determines shape of input
+    if isinstance(e, float):
+        scalar = True
+
+    else:
+        scalar = False
+
+    p_in = np.atleast_1d(p)
+    e_in = np.atleast_1d(e)
+    Y_in = np.atleast_1d(Y)
+
+    # cast spin values if necessary
+    if isinstance(a, float):
+        a_in = np.full_like(e_in, a)
+    else:
+        a_in = np.atleast_1d(a)
+
+    assert len(a_in) == len(e_in)
+
+    x = pyY_to_xI_vector(a_in, p_in, e_in, Y_in)
+
+    # output in same shape as input
+    if scalar:
+        return x[0]
+
+    else:
+        return x
+
+
 def get_separatrix(a, e, x):
     """Get separatrix in generic Kerr.
 
@@ -221,7 +365,8 @@ def get_separatrix(a, e, x):
         e (double scalar or 1D double np.ndarray): Values of eccentricity,
             :math:`e`.
         x (double scalar or 1D double np.ndarray): Values of cosine of the
-            inclination, :math:`\cos{\iota}`.
+            inclination, :math:`x=\cos{I}`. Please note this is different from
+            :math:`Y=\cos{\iota}`.
 
     returns:
         1D array or scalar: Separatrix value with shape based on input shapes.

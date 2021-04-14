@@ -43,7 +43,7 @@ except (ImportError, ModuleNotFoundError) as e:
 # Python imports
 from few.utils.baseclasses import Pn5AAK, SummationBase, GPUModuleBase
 from few.utils.citations import *
-from few.utils.utility import get_fundamental_frequencies
+from few.utils.utility import get_fundamental_frequencies, Y_to_xI
 from few.utils.constants import *
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
 
@@ -97,7 +97,8 @@ class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
     def citation(self):
         """Return citations for this class"""
         return (
-            few_citation
+            larger_few_citation
+            + few_citation
             + few_software_citation
             + AAK_citation_1
             + AAK_citation_2
@@ -182,8 +183,11 @@ class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
         # get inclination for mapping
         iota = np.arccos(Y)
 
+        # convert Y to x_I for fund freqs
+        xI = Y_to_xI(a, p, e, Y)
+
         # these are dimensionless and in radians
-        OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p, e, Y)
+        OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p, e, xI)
 
         # dimensionalize the frequencies
         OmegaPhi, OmegaTheta, OmegaR = (

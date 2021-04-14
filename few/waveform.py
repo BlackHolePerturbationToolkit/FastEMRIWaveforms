@@ -33,7 +33,7 @@ from few.utils.baseclasses import SchwarzschildEccentric, Pn5AAK, GPUModuleBase
 from few.trajectory.pn5 import RunKerrGenericPn5Inspiral
 from few.trajectory.flux import RunSchwarzEccFluxInspiral
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
-from few.utils.utility import get_mismatch
+from few.utils.utility import get_mismatch, xI_to_Y
 from few.amplitude.romannet import RomanAmplitude
 from few.utils.modeselector import ModeSelector
 from few.utils.ylm import GetYlms
@@ -208,7 +208,7 @@ class GenerateEMRIWaveform:
         a,
         p0,
         e0,
-        xI0,
+        x0,
         dist,
         qS,
         phiS,
@@ -226,10 +226,10 @@ class GenerateEMRIWaveform:
             mu (double): Mass of compact object in solar masses.
             a (double): Dimensionless spin of massive black hole.
             p0 (double): Initial semilatus rectum (Must be greater than
-                the separatrix at the the given e0 and xI0).
+                the separatrix at the the given e0 and x0).
                 See documentation for more information on :math:`p_0<10`.
             e0 (double): Initial eccentricity.
-            xI0 (double): Initial cosine of the inclination angle.
+            x0 (double): Initial cosine of the inclination angle.
                 (:math:`x_I=\cos{I}`). This differs from :math:`Y=\cos{\iota}\equiv L_z/\sqrt{L_z^2 + Q}`
                 used in the semi-relativistic formulation. When running kludge waveforms,
                 :math:`x_{I,0}` will be converted to :math:`Y_0`.
@@ -259,7 +259,7 @@ class GenerateEMRIWaveform:
             a,
             p0,
             e0,
-            xI0,
+            x0,
             dist,
             qS,
             phiS,
@@ -269,6 +269,14 @@ class GenerateEMRIWaveform:
             Phi_theta0,
             Phi_r0,
         )
+
+        # if Y is needed rather than x (inclination definition)
+        if (
+            hasattr(self.waveform_generator, "needs_Y")
+            and self.waveform_generator.background.lower() == "kerr"
+            and self.waveform_generator.needs_Y
+        ):
+            x0 = xI_to_Y(a, p0, e0, x0)
 
         # remove the arguments that are not used in this waveform
         args = tuple([args_all[i] for i in self.args_keep])
@@ -431,7 +439,12 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, 
     @property
     def citation(self):
         """Return citations related to this module"""
-        return few_citation + few_software_citation + romannet_citation
+        return (
+            larger_few_citation
+            + few_citation
+            + few_software_citation
+            + romannet_citation
+        )
 
     def __call__(
         self,
@@ -928,22 +941,6 @@ class Pn5AAKWaveform(Pn5AAK, GPUModuleBase, ABC):
 
     """
 
-    def attributes_Pn5AAKWaveform(self):
-        """
-        attributes:
-            inspiral_generator (obj): instantiated trajectory module.
-            create_waveform (obj): instantiated summation module.
-            inspiral_kwargs (dict): Kwargs related to the inspiral class:
-                :class:`few.trajectory.pn5.RunKerrGenericPn5Inspiral`.
-            xp (obj): numpy or cupy based on gpu usage.
-            num_modes_kept/nmodes (int): Number of modes for final waveform.
-                For this model, it is solely determined from the
-                eccentricity.
-
-
-        """
-        pass
-
     def __init__(self, inspiral_kwargs={}, sum_kwargs={}, use_gpu=False):
 
         GPUModuleBase.__init__(self, use_gpu=use_gpu)
@@ -960,11 +957,28 @@ class Pn5AAKWaveform(Pn5AAK, GPUModuleBase, ABC):
         # summation generator
         self.create_waveform = AAKSummation(**sum_kwargs)
 
+    def attributes_Pn5AAKWaveform(self):
+        """
+        attributes:
+            inspiral_generator (obj): instantiated trajectory module.
+            create_waveform (obj): instantiated summation module.
+            inspiral_kwargs (dict): Kwargs related to the inspiral class:
+                :class:`few.trajectory.pn5.RunKerrGenericPn5Inspiral`.
+            xp (obj): numpy or cupy based on gpu usage.
+            num_modes_kept/nmodes (int): Number of modes for final waveform.
+                For this model, it is solely determined from the
+                eccentricity.
+
+
+        """
+        pass
+
     @property
     def citation(self):
         """Return citations related to this module"""
         return (
-            few_citation
+            larger_few_citation
+            + few_citation
             + few_software_citation
             + AAK_citation_1
             + AAK_citation_2
@@ -992,7 +1006,7 @@ class Pn5AAKWaveform(Pn5AAK, GPUModuleBase, ABC):
         a,
         p0,
         e0,
-        xI0,
+        Y0,
         dist,
         qS,
         phiS,
@@ -1014,13 +1028,11 @@ class Pn5AAKWaveform(Pn5AAK, GPUModuleBase, ABC):
             mu (double): Mass of compact object in solar masses.
             a (double): Dimensionless spin of massive black hole.
             p0 (double): Initial semilatus rectum (Must be greater than
-                the separatrix at the the given e0 and xI0).
+                the separatrix at the the given e0 and Y0).
                 See documentation for more information.
             e0 (double): Initial eccentricity.
-            xI0 (double): Initial cosine of the inclination angle.
-                (:math:`x_I=\cos{I}`). This differs from :math:`Y=\cos{\iota}\equiv L_z/\sqrt{L_z^2 + Q}`
-                used in the semi-relativistic formulation. When running kludge waveforms,
-                :math:`x_{I,0}` will be converted to :math:`Y_0`.
+            Y0 (double): Initial cosine of :math:`\iota`. :math:`Y=\cos{\iota}\equiv L_z/\sqrt{L_z^2 + Q}`
+                in the semi-relativistic formulation.
             dist (double): Luminosity distance in Gpc.
             qS (double): Sky location polar angle in ecliptic
                 coordinates.
@@ -1056,10 +1068,7 @@ class Pn5AAKWaveform(Pn5AAK, GPUModuleBase, ABC):
         # makes sure angular extrinsic parameters are allowable
         qS, phiS, qK, phiK = self.sanity_check_angles(qS, phiS, qK, phiK)
 
-        self.sanity_check_init(M, mu, a, p0, e0, xI0)
-
-        # TODO: convert xI0 to Y0
-        Y0 = xI0
+        self.sanity_check_init(M, mu, a, p0, e0, Y0)
 
         # get trajectory
         t, p, e, Y, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(

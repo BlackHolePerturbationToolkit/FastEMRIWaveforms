@@ -103,7 +103,7 @@ class TFInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
 
     @property
     def citation(self):
-        return few_citation + few_software_citation
+        return larger_few_citation + few_citation + few_software_citation
 
     def sum(
         self,

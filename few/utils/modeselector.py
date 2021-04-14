@@ -95,7 +95,7 @@ class ModeSelector(GPUModuleBase):
     @property
     def citation(self):
         """Return citations related to this class."""
-        return few_citation + few_software_citation
+        return larger_few_citation + few_citation + few_software_citation
 
     def __call__(self, teuk_modes, ylms, modeinds, fund_freq_args=None, eps=1e-5):
         """Call to sort and filer teukolsky modes.
