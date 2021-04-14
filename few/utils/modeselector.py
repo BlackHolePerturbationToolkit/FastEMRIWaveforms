@@ -111,7 +111,7 @@ class ModeSelector(GPUModuleBase):
             ylms (1D complex128 xp.ndarray): Array of ylm values for each mode,
                 including m<0. Shape is (num of m==0,) + (num of m>0,)
                 + (num of m<0). Number of m<0 and m>0 is the same, but they are
-                ordered as (m==0 first then) m>0 then m<0.
+                ordered as (m==0) first then m>0 then m<0.
             modeinds (list of int xp.ndarrays): List containing the mode index arrays. If in an
                 equatorial model, need :math:`(l,m,n)` arrays. If generic,
                 :math:`(l,m,k,n)` arrays. e.g. [l_arr, m_arr, n_arr].
