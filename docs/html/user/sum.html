@@ -224,7 +224,7 @@ information over the course of an inspiral. It does contain GPU accelerated
 options. It deals with the overall summation of quantities seen in <a class="reference internal" href="../general/docs_main.html#equation-emri-wave-eq">(1)</a>.</p>
 <dl class="py class">
 <dt id="few.utils.baseclasses.SummationBase">
-<em class="property">class </em><code class="sig-prename descclassname">few.utils.baseclasses.</code><code class="sig-name descname">SummationBase</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">pad_output</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SummationBase" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.baseclasses.</code><code class="sig-name descname">SummationBase</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">output_type</span><span class="o">=</span><span class="default_value">'td'</span></em>, <em class="sig-param"><span class="n">pad_output</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.SummationBase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Base class used for summation modules.</p>
 <p>This class provides a common flexible interface to various summation
@@ -232,8 +232,14 @@ implementations. Specific arguments to each summation module can be found
 with each associated module discussed below.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>pad_output</strong> (<em>bool</em><em>, </em><em>optional</em>) – Add zero padding to the waveform for time
-between plunge and observation time. Default is False.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pad_output</strong> (<em>bool</em><em>, </em><em>optional</em>) – Add zero padding to the waveform for time
+between plunge and observation time. Default is False.</p></li>
+<li><p><strong>output_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of domain in which to calculate the waveform.
+Default is ‘td’ for time domain. Options are ‘td’ (time domain), ‘tf’
+(time-frequency). In the future we hope to add ‘fd’ (Fourier domain)
+and ‘wd’ (wavelet domain).</p></li>
+</ul>
 </dd>
 </dl>
 <dl class="py method">
@@ -1938,6 +1944,19 @@ waveform generator.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt id="few.summation.aakwave.AAKSummation.needs_Y">
+<code class="sig-name descname">needs_Y</code><a class="headerlink" href="#few.summation.aakwave.AAKSummation.needs_Y" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, indicates modules that inherit this class
+requires the inclination definition of <span class="math notranslate nohighlight">\(Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}\)</span>
+rather than <span class="math notranslate nohighlight">\(x_I\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py method">
@@ -2072,6 +2091,10 @@ the trajectory module.</p></li>
 <p>This function takes the inputs the trajectory in <span class="math notranslate nohighlight">\((p,e)\)</span> as arrays
 and returns the complex amplitude of all modes to adiabatic order at
 each step of the trajectory.</p>
+<p><strong>Please note:</strong> the 5PN trajectory and AAK waveform take the parameter
+<span class="math notranslate nohighlight">\(Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}\)</span> rather than <span class="math notranslate nohighlight">\(x_I\)</span> as is accepted
+for relativistic waveforms and in the generic waveform interface discussed above.
+The generic waveform interface directly converts <span class="math notranslate nohighlight">\(x_I\)</span> to <span class="math notranslate nohighlight">\(Y\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -2084,7 +2107,8 @@ the semi-latus rectum.</p></li>
 <li><p><strong>e</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
 the eccentricity.</p></li>
 <li><p><strong>Y</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for values of
-the cosine of the inclination.</p></li>
+<span class="math notranslate nohighlight">\(\cos{\iota}\)</span>. <strong>Note</strong>: This value is different from <span class="math notranslate nohighlight">\(x_I\)</span>
+used in the relativistic waveforms. TODO: add function for conversion.</p></li>
 <li><p><strong>Phi_phi</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for
 <span class="math notranslate nohighlight">\(\Phi_\phi\)</span>.</p></li>
 <li><p><strong>Phi_theta</strong> (<em>1D double numpy.ndarray</em>) – Array containing the trajectory for

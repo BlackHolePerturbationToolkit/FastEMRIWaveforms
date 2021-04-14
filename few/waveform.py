@@ -755,22 +755,11 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         **kwargs
     ):
 
-        if "output_type" in sum_kwargs:
-            if sum_kwargs["output_type"] == "tf":
-                mode_summation_module = TFInterpolatedModeSum
-            # elif sum_kwargs["output_type"] == "fd":
-            #    mode_summation_module = FDInterpolatedModeSum
-            else:
-                mode_summation_module = InterpolatedModeSum
-
-        else:
-            mode_summation_module = InterpolatedModeSum
-
         SchwarzschildEccentricWaveformBase.__init__(
             self,
             RunSchwarzEccFluxInspiral,
             RomanAmplitude,
-            mode_summation_module,
+            InterpolatedModeSum,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
@@ -929,6 +918,10 @@ class Pn5AAKWaveform(Pn5AAK, GPUModuleBase, ABC):
     This is mainly due to the specific waveform constructions particular
     to the AAK/AK.
 
+    **Please note:** the 5PN trajectory and AAK waveform take the parameter
+    :math:`Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}` rather than :math:`x_I` as is accepted
+    for relativistic waveforms and in the generic waveform interface discussed above.
+    The generic waveform interface directly converts :math:`x_I` to :math:`Y`.
 
     args:
         inspiral_kwargs (dict, optional): Optional kwargs to pass to the
