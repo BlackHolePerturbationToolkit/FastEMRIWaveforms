@@ -97,6 +97,24 @@ double KerrGeoCarterConstant(double a, double p, double e, double x, double En, 
 	return pow(zm, 2) * (pow(a, 2) * (1 - pow(En, 2)) + pow(L, 2)/(1 - pow(zm, 2)));
 }
 
+void KerrGeoConstantsOfMotion(double* E_out, double* L_out, double* Q_out, double a, double p, double e, double x)
+{
+    *E_out = KerrGeoEnergy(a, p , e, x);
+    *L_out = KerrGeoAngularMomentum(a, p, e, x, *E_out);
+    *Q_out = KerrGeoCarterConstant(a, p, e, x, *E_out, *L_out);
+}
+
+void KerrGeoConstantsOfMotionVectorized(double* E_out, double* L_out, double* Q_out, double* a, double* p, double* e, double* x, int n)
+{
+    #ifdef __USE_OMP__
+    #pragma omp parallel for
+    #endif
+    for (int i = 0; i < n; i += 1)
+    {
+        KerrGeoConstantsOfMotion(&E_out[i], &L_out[i], &Q_out[i], a[i], p[i], e[i], x[i]);
+    }
+}
+
 void KerrGeoRadialRoots(double* r1_, double*r2_, double* r3_, double* r4_, double a, double p, double e, double x, double En, double Q)
 {
     double M = 1.0;
@@ -218,7 +236,7 @@ void KerrGeoCoordinateFrequenciesVectorized(double* OmegaPhi_, double* OmegaThet
 
 struct params_holder
   {
-    double a, e, x;
+    double a, p, e, x, Y;
   };
 
 double separatrix_polynomial_full(double p, void *params_in)
@@ -294,7 +312,8 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
 
 double get_separatrix(double a, double e, double x)
 {
-    struct params_holder params = {a, e, x};
+    // fills in p and Y with zeros
+    struct params_holder params = {a, 0.0, e, x, 0.0};
     double x_lo, x_hi;
 
     // solve for polar p_sep
@@ -339,6 +358,58 @@ void get_separatrix_vector(double* separatrix, double* a, double* e, double* x, 
     }
 
 }
+
+double Y_to_xI_eq(double x, void *params_in)
+{
+    struct params_holder* params = (struct params_holder*)params_in;
+
+    double a = params->a;
+    double p = params->p;
+    double e = params->e;
+    double Y = params->Y;
+
+    double E, L, Q;
+
+    // get constants of motion
+    KerrGeoConstantsOfMotion(&E, &L, &Q, a, p, e, x);
+
+    double Y_ = L / sqrt(pow(L, 2) + Q);
+
+    return Y - Y_;
+}
+
+#define YLIM 0.998
+double Y_to_xI(double a, double p, double e, double Y)
+{
+    // TODO: check this
+    if (abs(Y) > YLIM) return Y;
+    // fills in x with 0.0
+    struct params_holder params = {a, p, e, 0.0, Y};
+    double x_lo, x_hi;
+
+    // set limits
+    x_lo = -0.999;
+    x_hi =  0.999;
+
+    double x = solver (&params, &Y_to_xI_eq, x_lo, x_hi);
+
+    return x;
+}
+
+void Y_to_xI_vector(double* x, double* a, double* p, double* e, double* Y, int length)
+{
+
+    #ifdef __USE_OMP__
+    #pragma omp parallel for
+    #endif
+    for (int i = 0; i < length; i += 1)
+    {
+        x[i] = Y_to_xI(a[i], p[i], e[i], Y[i]);
+    }
+
+}
+
+
 
 
 

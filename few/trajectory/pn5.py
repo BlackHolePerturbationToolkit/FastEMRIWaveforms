@@ -89,7 +89,7 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
     def citation(self):
         """Return citation for this class"""
         return (
-            few_citation
+            larger_few_citation + few_citation
             + few_software_citation
             + Pn5_citation
             + kerr_separatrix_citation

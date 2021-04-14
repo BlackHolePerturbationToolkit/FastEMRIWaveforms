@@ -79,7 +79,7 @@ class Interp2DAmplitude(AmplitudeBase, SchwarzschildEccentric):
     @property
     def citation(self):
         """Return citations for this class"""
-        return few_citation + few_software_citation
+        return larger_few_citation + few_citation + few_software_citation
 
     def get_amplitudes(self, p, e, *args, specific_modes=None, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
