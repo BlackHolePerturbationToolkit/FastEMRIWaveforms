@@ -134,6 +134,11 @@ class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
         and returns the complex amplitude of all modes to adiabatic order at
         each step of the trajectory.
 
+        **Please note:** the 5PN trajectory and AAK waveform take the parameter
+        :math:`Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}` rather than :math:`x_I` as is accepted
+        for relativistic waveforms and in the generic waveform interface discussed above.
+        The generic waveform interface directly converts :math:`x_I` to :math:`Y`.
+
         args:
             tvec (1D double numpy.ndarray): Array containing the time values
                 associated with the sparse trajectory.

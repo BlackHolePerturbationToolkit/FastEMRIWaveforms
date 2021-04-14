@@ -89,7 +89,8 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
     def citation(self):
         """Return citation for this class"""
         return (
-            larger_few_citation + few_citation
+            larger_few_citation
+            + few_citation
             + few_software_citation
             + Pn5_citation
             + kerr_separatrix_citation
@@ -117,6 +118,11 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
         method associated with its base class:
         (:class:`few.utils.baseclasses.TrajectoryBase`). See its documentation
         for information on a more flexible interface to the trajectory modules.
+
+        **Please note:** the 5PN trajectory and AAK waveform take the parameter
+        :math:`Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}` rather than :math:`x_I` as is accepted
+        for relativistic waveforms and in the generic waveform interface discussed above.
+        The generic waveform interface directly converts :math:`x_I` to :math:`Y`.
 
         args:
             M (double): Mass of massive black hole in solar masses.

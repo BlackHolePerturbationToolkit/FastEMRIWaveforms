@@ -68,7 +68,7 @@ Below is a quick set of instructions to get you started with ``few``.
    from few.waveform import FastSchwarzschildEccentricFlux
 
 See `examples
-notebook <examples/SchwarzschildEccentricWaveform_intro.ipynb>`__.
+notebook <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb>`__.
 
 Prerequisites
 ~~~~~~~~~~~~~
@@ -196,7 +196,7 @@ We use `SemVer <http://semver.org/>`__ for versioning. For the versions
 available, see the `tags on this
 repository <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags>`__.
 
-Current Version: 1.2.2
+Current Version: 1.3.0
 
 Authors
 -------
