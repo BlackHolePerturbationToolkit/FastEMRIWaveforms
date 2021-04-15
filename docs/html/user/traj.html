@@ -983,6 +983,19 @@ Default is {}.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral.needs_Y">
+<code class="sig-name descname">needs_Y</code><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral.needs_Y" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, indicates modules that inherit this class
+requires the inclination definition of <span class="math notranslate nohighlight">\(Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}\)</span>
+rather than <span class="math notranslate nohighlight">\(x_I\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py method">
@@ -995,6 +1008,10 @@ used on its own. However, it is generally accessed through the __call__
 method associated with its base class:
 (<a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a>). See its documentation
 for information on a more flexible interface to the trajectory modules.</p>
+<p><strong>Please note:</strong> the 5PN trajectory and AAK waveform take the parameter
+<span class="math notranslate nohighlight">\(Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}\)</span> rather than <span class="math notranslate nohighlight">\(x_I\)</span> as is accepted
+for relativistic waveforms and in the generic waveform interface discussed above.
+The generic waveform interface directly converts <span class="math notranslate nohighlight">\(x_I\)</span> to <span class="math notranslate nohighlight">\(Y\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1003,7 +1020,8 @@ for information on a more flexible interface to the trajectory modules.</p>
 <li><p><strong>a</strong> (<em>double</em>) – Dimensionless spin of massive black hole.</p></li>
 <li><p><strong>p0</strong> (<em>double</em>) – Initial semi-latus rectum in terms units of M (p/M).</p></li>
 <li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity (dimensionless).</p></li>
-<li><p><strong>Y0</strong> (<em>double</em>) – Initial cosine of the inclination.</p></li>
+<li><p><strong>Y0</strong> (<em>double</em>) – Initial <span class="math notranslate nohighlight">\(\cos{\iota}\)</span>. <strong>Note</strong>: This value is different from <span class="math notranslate nohighlight">\(x_I\)</span></p></li>
+<li><p><strong>in the relativistic waveforms.</strong> (<em>used</em>) – </p></li>
 <li><p><strong>*args</strong> (<em>list</em><em>, </em><em>placeholder</em>) – Added for flexibility.</p></li>
 <li><p><strong>Phi_phi0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\phi\)</span>.
 Default is 0.0.</p></li>

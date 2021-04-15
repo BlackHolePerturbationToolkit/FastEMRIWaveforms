@@ -158,7 +158,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, GPUModuleBase):
     @property
     def citation(self):
         """Return citations for this module"""
-        return romannet_citation + few_citation + few_software_citation
+        return romannet_citation + larger_few_citation + few_citation + few_software_citation
 
     @property
     def gpu_capability(self):

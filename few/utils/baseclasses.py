@@ -85,7 +85,7 @@ class GPUModuleBase(ABC):
     @property
     def citation(self):
         """Return citations related to this module"""
-        return few_citation + few_software_citation
+        return larger_few_citation + few_citation + few_software_citation
 
     @classmethod
     def __call__(*args, **kwargs):
@@ -331,7 +331,7 @@ class SchwarzschildEccentric(GPUModuleBase, ABC):
     @property
     def citation(self):
         """Return citations of this class"""
-        return few_citation + few_software_citation
+        return larger_few_citation + few_citation + few_software_citation
 
     def sanity_check_viewing_angles(self, theta, phi):
         """Sanity check on viewing angles.
@@ -454,6 +454,9 @@ class Pn5AAK(ABC):
             xp (module): numpy or cupy based on hardware chosen.
             background (str): Spacetime background for this model.
             descriptor (str): Short description for model validity.
+            needs_Y (bool): If True, indicates modules that inherit this class
+                requires the inclination definition of :math:`Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}`
+                rather than :math:`x_I`.
 
         """
         pass
@@ -464,11 +467,12 @@ class Pn5AAK(ABC):
         self.background = "Kerr"
         self.descriptor = "generic orbits"
         self.frame = "detector"
+        self.needs_Y = True
 
     @property
     def citation(self):
         """Return citations of this class"""
-        return few_citation + few_software_citation + Pn5_citation
+        return larger_few_citation + few_citation + few_software_citation + Pn5_citation
 
     def sanity_check_angles(self, qS, phiS, qK, phiK):
         """Sanity check on viewing angles.
@@ -586,7 +590,7 @@ class TrajectoryBase(ABC):
     @property
     def citation(self):
         """Return citation for this class"""
-        return few_citation + few_software_citation
+        return larger_few_citation + few_citation + few_software_citation
 
     @classmethod
     def get_inspiral(self, *args, **kwargs):
@@ -739,11 +743,22 @@ class SummationBase(ABC):
     args:
         pad_output (bool, optional): Add zero padding to the waveform for time
             between plunge and observation time. Default is False.
+        output_type (str, optional): Type of domain in which to calculate the waveform.
+            Default is 'td' for time domain. Options are 'td' (time domain). In the future we hope to add 'fd' (Fourier domain), 'tf'
+            (time-frequency) and 'wd' (wavelet domain).
 
     """
 
-    def __init__(self, *args, pad_output=False, **kwargs):
+    def __init__(self, *args, output_type="td", pad_output=False, **kwargs):
         self.pad_output = pad_output
+
+        if output_type not in ["td"]:
+            raise ValueError(
+                "{} waveform domain not available. Choices are 'td' (time domain) or 'tf' (time-frequency).".format(
+                    output_type
+                )
+            )
+        self.output_type = output_type
 
     def attributes_SummationBase(self):
         """
@@ -756,7 +771,7 @@ class SummationBase(ABC):
     @property
     def citation(self):
         """Return citation for this class"""
-        return few_citation + few_software_citation
+        return larger_few_citation + few_citation + few_software_citation
 
     @classmethod
     def sum(self, *args, **kwargs):
@@ -849,7 +864,7 @@ class AmplitudeBase(ABC):
     @property
     def citation(self):
         """Return citation for this class"""
-        return few_citation + few_software_citation
+        return larger_few_citation + few_citation + few_software_citation
 
     def __call__(self, *args, specific_modes=None, **kwargs):
         """Common call for Teukolsky amplitudes

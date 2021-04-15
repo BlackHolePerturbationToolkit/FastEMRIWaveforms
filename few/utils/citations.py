@@ -25,13 +25,29 @@ attribute.
 
 few_citation = """
 @article{Chua:2020stf,
-    author = "Chua, Alvin J.K. and Katz, Michael L. and Warburton, Niels and Hughes, Scott A.",
+    author = "Chua, Alvin J. K. and Katz, Michael L. and Warburton, Niels and Hughes, Scott A.",
     title = "{Rapid generation of fully relativistic extreme-mass-ratio-inspiral waveform templates for LISA data analysis}",
     eprint = "2008.06071",
     archivePrefix = "arXiv",
     primaryClass = "gr-qc",
-    month = "8",
-    year = "2020"
+    doi = "10.1103/PhysRevLett.126.051102",
+    journal = "Phys. Rev. Lett.",
+    volume = "126",
+    number = "5",
+    pages = "051102",
+    year = "2021"
+}
+"""
+
+larger_few_citation = """
+@article{Katz:2021yft,
+    author = "Katz, Michael L. and Chua, Alvin J. K. and Speri, Lorenzo and Warburton, Niels and Hughes, Scott A.",
+    title = "{FastEMRIWaveforms: New tools for millihertz gravitational-wave data analysis}",
+    eprint = "2104.04582",
+    archivePrefix = "arXiv",
+    primaryClass = "gr-qc",
+    month = "4",
+    year = "2021"
 }
 """
 

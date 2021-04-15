@@ -3,6 +3,7 @@ few: Fast EMRI Waveforms
 
 This package contains the highly modular framework for fast and accurate
 extreme mass ratio inspiral (EMRI) waveforms from
+`arxiv.org/2104.04582 <https://arxiv.org/abs/2104.04582>`__ and
 `arxiv.org/2008.06071 <https://arxiv.org/abs/2008.06071>`__. The
 waveforms in this package combine a variety of separately accessible
 modules to form EMRI waveforms on both CPUs and GPUs. Generally, the
@@ -22,6 +23,7 @@ This package is a part of the `Black Hole Perturbation
 Toolkit <https://bhptoolkit.org/>`__.
 
 If you use all or any parts of this code, please cite
+`arxiv.org/2104.04582 <https://arxiv.org/abs/2104.04582>`__ and
 `arxiv.org/2008.06071 <https://arxiv.org/abs/2008.06071>`__. See the
 `documentation <https://bhptoolkit.org/FastEMRIWaveforms/>`__ to
 properly cite specific modules.
@@ -68,7 +70,7 @@ Below is a quick set of instructions to get you started with ``few``.
    from few.waveform import FastSchwarzschildEccentricFlux
 
 See `examples
-notebook <examples/SchwarzschildEccentricWaveform_intro.ipynb>`__.
+notebook <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb>`__.
 
 Prerequisites
 ~~~~~~~~~~~~~
@@ -127,19 +129,13 @@ Installing
    git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
    cd FastEMRIWaveforms
 
-2) If using GPUs, use pip to `install
+3) If using GPUs, use pip to `install
    cupy <https://docs-cupy.chainer.org/en/stable/install.html>`__. If
    you have cuda version 9.2, for example:
 
 ::
 
    pip install cupy-cuda92
-
-3) Clone the repository.
-
-::
-
-   git clone https://github.com/mikekatz04/FastEMRIWaveforms.git
 
 4) Run install. Make sure CUDA is on your PATH.
 
@@ -196,7 +192,7 @@ We use `SemVer <http://semver.org/>`__ for versioning. For the versions
 available, see the `tags on this
 repository <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags>`__.
 
-Current Version: 1.2.2
+Current Version: 1.3.0
 
 Authors
 -------
@@ -204,6 +200,7 @@ Authors
 -  **Michael Katz**
 -  Alvin J. K. Chua
 -  Niels Warburton
+-  Lorenzo Speri
 
 Contibutors
 ~~~~~~~~~~~

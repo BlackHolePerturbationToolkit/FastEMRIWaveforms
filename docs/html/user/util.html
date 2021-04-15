@@ -336,7 +336,7 @@ Shape: (number of trajectory points, number of modes).</p></li>
 <li><p><strong>ylms</strong> (<em>1D complex128 xp.ndarray</em>) – Array of ylm values for each mode,
 including m&lt;0. Shape is (num of m==0,) + (num of m&gt;0,)
 + (num of m&lt;0). Number of m&lt;0 and m&gt;0 is the same, but they are
-ordered as (m==0 first then) m&gt;0 then m&lt;0.</p></li>
+ordered as (m==0) first then m&gt;0 then m&lt;0.</p></li>
 <li><p><strong>modeinds</strong> (<em>list of int xp.ndarrays</em>) – List containing the mode index arrays. If in an
 equatorial model, need <span class="math notranslate nohighlight">\((l,m,n)\)</span> arrays. If generic,
 <span class="math notranslate nohighlight">\((l,m,k,n)\)</span> arrays. e.g. [l_arr, m_arr, n_arr].</p></li>
@@ -642,7 +642,8 @@ it will be cast to a 1D array.</p></li>
 <li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of eccentricity,
 <span class="math notranslate nohighlight">\(e\)</span>.</p></li>
 <li><p><strong>x</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of cosine of the
-inclination, <span class="math notranslate nohighlight">\(\cos{\iota}\)</span>.</p></li>
+inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>. Please note this is different from
+<span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -654,6 +655,101 @@ inclination, <span class="math notranslate nohighlight">\(\cos{\iota}\)</span>.<
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="few.utils.utility.get_kerr_geo_constants_of_motion">
+<code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">get_kerr_geo_constants_of_motion</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.get_kerr_geo_constants_of_motion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get Kerr constants of motion.</p>
+<p>Determines the constants of motion: <span class="math notranslate nohighlight">\((E, L, Q)\)</span> associated with a
+geodesic orbit in the generic Kerr spacetime.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
+black hole. If other parameters are arrays and the spin is scalar,
+it will be cast to a 1D array.</p></li>
+<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of separation,
+<span class="math notranslate nohighlight">\(p\)</span>.</p></li>
+<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of eccentricity,
+<span class="math notranslate nohighlight">\(e\)</span>.</p></li>
+<li><p><strong>x</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of cosine of the
+inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>. Please note this is different from
+<span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Tuple of (E, L, Q).</dt><dd><p>These are 1D arrays or scalar values depending on inputs.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="few.utils.utility.xI_to_Y">
+<code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">xI_to_Y</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.xI_to_Y" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert from <span class="math notranslate nohighlight">\(x_I=\cos{I}\)</span> to <span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span>.</p>
+<p>Converts between the two different inclination parameters. <span class="math notranslate nohighlight">\(\cos{I}\equiv x_I\)</span>,
+where <span class="math notranslate nohighlight">\(I\)</span> describes the orbit’s inclination from the equatorial plane.
+<span class="math notranslate nohighlight">\(\cos{\iota}\equiv Y\)</span>, where <span class="math notranslate nohighlight">\(\cos{\iota}=L/\sqrt{L^2 + Q}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
+black hole. If other parameters are arrays and the spin is scalar,
+it will be cast to a 1D array.</p></li>
+<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of separation,
+<span class="math notranslate nohighlight">\(p\)</span>.</p></li>
+<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of eccentricity,
+<span class="math notranslate nohighlight">\(e\)</span>.</p></li>
+<li><p><strong>x</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of cosine of the
+inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span> value with shape based on input shapes.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>1D array or scalar</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="few.utils.utility.Y_to_xI">
+<code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">Y_to_xI</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p</span></em>, <em class="sig-param"><span class="n">e</span></em>, <em class="sig-param"><span class="n">Y</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.Y_to_xI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert from <span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span> to <span class="math notranslate nohighlight">\(x_I=\cos{I}\)</span>.</p>
+<p>Converts between the two different inclination parameters. <span class="math notranslate nohighlight">\(\cos{I}\equiv x_I\)</span>,
+where <span class="math notranslate nohighlight">\(I\)</span> describes the orbit’s inclination from the equatorial plane.
+<span class="math notranslate nohighlight">\(\cos{\iota}\equiv Y\)</span>, where <span class="math notranslate nohighlight">\(\cos{\iota}=L/\sqrt{L^2 + Q}\)</span>.</p>
+<p>This computation may have issues near edge cases.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
+black hole. If other parameters are arrays and the spin is scalar,
+it will be cast to a 1D array.</p></li>
+<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of separation,
+<span class="math notranslate nohighlight">\(p\)</span>.</p></li>
+<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of eccentricity,
+<span class="math notranslate nohighlight">\(e\)</span>.</p></li>
+<li><p><strong>Y</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of cosine of the
+<span class="math notranslate nohighlight">\(\iota\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><span class="math notranslate nohighlight">\(x=\cos{I}\)</span> value with shape based on input shapes.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>1D array or scalar</p>
 </dd>
 </dl>
 </dd></dl>
@@ -673,7 +769,8 @@ it will be cast to a 1D array.</p></li>
 <li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of eccentricity,
 <span class="math notranslate nohighlight">\(e\)</span>.</p></li>
 <li><p><strong>x</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of cosine of the
-inclination, <span class="math notranslate nohighlight">\(\cos{\iota}\)</span>.</p></li>
+inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>. Please note this is different from
+<span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
