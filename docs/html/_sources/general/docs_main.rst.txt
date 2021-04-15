@@ -2,7 +2,7 @@
 FastEMRIWaveforms Publication
 ==============================
 
-The Fast EMRI Waveforms paper can be found at `arxiv.org/2008.06071 <https://arxiv.org/abs/2008.06071>`_. Below is a brief description of the paper, including plots. Please refer to the paper for more detailed information.
+The Fast EMRI Waveforms papers can be found at `arxiv.org/2104.04582 <https://arxiv.org/abs/2104.04582>`_ and `arxiv.org/2008.06071 <https://arxiv.org/abs/2008.06071>`_. Below is a brief description of the paper, including plots. Please refer to the paper for more detailed information.
 
 Fast EMRI Waveform models are built for fast evaluation of the EMRI waveform summation equation, given by (`Drasco & Hughes 2006 <https://arxiv.org/abs/gr-qc/0509101>`_),
 
@@ -78,7 +78,7 @@ Package TODOs
 Change Log
 ===========
 
-- 1.3.0: x implemented instead of Y for cosine of inclination angle (includes conversion functions now). Python interface for KerrGeoConstantsOfMotion. Bug fix in examples. Updated citations. Changed constants to match LDC. More freedom in selecting specific modes. 
+- 1.3.0: x implemented instead of Y for cosine of inclination angle (includes conversion functions now). Python interface for KerrGeoConstantsOfMotion. Bug fix in examples. Updated citations. Changed constants to match LDC. More freedom in selecting specific modes.
 - 1.2.2: Bug fix for p(t), lapacke. Added e=0 for FastSchwarzschildEccentricFlux. Fixed major bug in 5PN trajectory.
 - 1.2.1: Bug fix for time at end of orbital evolution. :math:`\Omega_\theta` fixed.
 - 1.2.0: Generic waveform interface added. Angular protections added to AAK.
