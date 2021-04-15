@@ -1,8 +1,8 @@
 
-FastEMRIWaveforms Publication
-==============================
+FastEMRIWaveforms Publications
+================================
 
-The Fast EMRI Waveforms papers can be found at `arxiv.org/2104.04582 <https://arxiv.org/abs/2104.04582>`_ and `arxiv.org/2008.06071 <https://arxiv.org/abs/2008.06071>`_. Below is a brief description of the paper, including plots. Please refer to the paper for more detailed information.
+The Fast EMRI Waveforms papers can be found at `arxiv.org/2104.04582 <https://arxiv.org/abs/2104.04582>`_ and `arxiv.org/2008.06071 <https://arxiv.org/abs/2008.06071>`_. Below is a brief description of the model. Please refer to the paper for plots and more detailed information.
 
 Fast EMRI Waveform models are built for fast evaluation of the EMRI waveform summation equation, given by (`Drasco & Hughes 2006 <https://arxiv.org/abs/gr-qc/0509101>`_),
 
@@ -17,53 +17,9 @@ where :math:`Z_{lmkn}(a, p, e, x_I)` is the teukolsky amplitudes associated with
 
 .. math:: V_{lmkn}(\theta, \phi) = (s=-2)S_{lmkn}(\theta)e^{im\phi},
 
-where :math:`S_{lmkn}(\theta)` is the general angular function from `Drasco & Hughes 2006 <https://arxiv.org/abs/gr-qc/0509101>`_.
+where :math:`S_{lmkn}(\theta)` is the general angular function from `Drasco & Hughes 2006 <https://arxiv.org/abs/gr-qc/0509101>`_ (spin-weighted spheroidal harmonics).
 
 When these modules complete their calculations, the summation (:mod:`few.summation`) module takes all of this information and creates an EMRI waveform.
-
-Our model is valid at any :math:`(p_0,e_0)` that falls outside the separatrix, below the :math:`(p_0=10,e_0=0.7)` trajectory (see below trjectory figure), and within the outer limits (:math:`p_0 < 16 + 2e_0` and :math:`e_0 < 0.7`).
-
-Below are figures from our paper related to this package.
-
-.. figure:: ../img/EMRI_diagram.jpg
-    :width: 500px
-    :align: center
-    :height: 500px
-    :alt: alternate text
-    :figclass: align-center
-
-    A general schematic diagram for the creation of an EMRI waveform.
-
-
-.. figure:: ../img/traj.jpg
-    :width: 500px
-    :align: center
-    :height: 400px
-    :alt: alternate text
-    :figclass: align-center
-
-
-    Evolution of mismatch between fast and fiducial waveforms from :math:`(p_0,e_0)` to :math:`(p,e)`, for 12 EMRIs with :math:`M=10^6M_\odot`, :math:`\mu\in[15,304]M_\odot`, and :math:`(p_0,e_0)` along the model domain boundary. Each small mass is chosen such that the EMRI plunges after a year. These results are for :math:`(\theta,\varphi)=(\pi/2,0)`, but do not depend strongly on the viewing angle. In the worst case (top-left curve), the final 0.01% of the waveform causes the mismatch to increase from under :math:`4\times10^{-4}` to :math:`5\times10^{-4}`.
-
-
-.. figure:: ../img/waveform_example.jpg
-    :width: 500px
-    :align: center
-    :height: 350px
-    :alt: alternate text
-    :figclass: align-center
-
-    Six-hour snapshots of fast (orange) and fiducial (blue) waveforms, one year before plunge (top) and just before plunge (bottom). Waveforms are for the worst-case EMRI :math:`(M,\mu,p_0,e_0)=(10^{6}M_\odot, 15 M_\odot, 10, 0.7)`, with a one-year mismatch of :math:`5\times 10^{-4}`. Small amplitude deviations are visible just before plunge at :math:`(p,e)\approx(7,0.5)`, where the mode-distribution error approaches its maximum across the domain of validity.
-
-
-.. figure:: ../img/timing_plot_3.jpg
-    :width: 400px
-    :align: center
-    :height: 400px
-    :alt: alternate text
-    :figclass: align-center
-
-    Computational wall time for fast and fiducial waveforms, broken down into individual modules. All times are averaged over :math:`\geq5` evaluations of the worst-case waveform on a single CPU core (and GPU), where the CPU is an Intel Xeon Gold 6132 and the GPU is an NVIDIA Tesla V100.
 
 Package TODOs
 ===============

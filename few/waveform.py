@@ -502,8 +502,9 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, 
                 (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
                 provided, it will return those modes combined into a
                 single waveform.
-            include_minus_m (bool, optional): If True, then include (m < 0) modes when
-                computing a mode with (m > 0). Default is True.
+            include_minus_m (bool, optional): If True, then include -m modes when
+                computing a mode with m. This only effects modes if :code:`mode_selection`
+                is a list of specific modes. Default is True.
 
         Returns:
             1D complex128 xp.ndarray: The output waveform.
@@ -628,16 +629,22 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, 
                     raise ValueError("If mode selection is a list, cannot be empty.")
 
                 keep_modes = self.xp.zeros(len(mode_selection), dtype=self.xp.int32)
+
+                # for removing opposite m modes
                 fix_include_ms = self.xp.full(2 * len(mode_selection), False)
                 for jj, lmn in enumerate(mode_selection):
                     l, m, n = tuple(lmn)
+
+                    # keep modes only works with m>=0
                     lmn_in = (l, abs(m), n)
                     keep_modes[jj] = self.xp.int32(self.lmn_indices[lmn_in])
 
                     if not include_minus_m:
                         if m > 0:
+                            # minus m modes blocked
                             fix_include_ms[len(mode_selection) + jj] = True
                         elif m < 0:
+                            # positive m modes blocked
                             fix_include_ms[jj] = True
 
                 self.ls = self.l_arr[keep_modes]
@@ -650,7 +657,10 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, 
 
                 ylmkeep = self.xp.concatenate([keep_modes, temp2])
                 ylms_in = ylms[ylmkeep]
+
+                # remove modes if include_minus_m is False
                 ylms_in[fix_include_ms] = 0.0 + 1j * 0.0
+
                 teuk_modes_in = teuk_modes[:, keep_modes]
 
             # mode selection based on input module
