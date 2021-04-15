@@ -94,10 +94,6 @@ class GenerateEMRIWaveform:
 
         self.frame = frame
 
-        # TODO: implement transformation to source frame for AAK
-        # if frame == "source" and waveform_class == "Pn5AAKWaveform":
-        #    raise NotImplementedError
-
         self.return_list = return_list
 
         # setup arguments to remove based on the specific waveform
@@ -326,7 +322,6 @@ class GenerateEMRIWaveform:
             return h
 
         else:
-            # TODO: check about sign convention
             hp = h.real
             hx = -h.imag
             return [hp, hx]
@@ -463,7 +458,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, 
         show_progress=False,
         batch_size=-1,
         mode_selection=None,
-        t_window=None,
+        include_minus_m=True,
     ):
         """Call function for SchwarzschildEccentric models.
 
@@ -507,6 +502,8 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, 
                 (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
                 provided, it will return those modes combined into a
                 single waveform.
+            include_minus_m (bool, optional): If True, then include (m < 0) modes when
+                computing a mode with (m > 0). Default is True.
 
         Returns:
             1D complex128 xp.ndarray: The output waveform.
@@ -631,8 +628,17 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, 
                     raise ValueError("If mode selection is a list, cannot be empty.")
 
                 keep_modes = self.xp.zeros(len(mode_selection), dtype=self.xp.int32)
+                fix_include_ms = self.xp.full(2 * len(mode_selection), False)
                 for jj, lmn in enumerate(mode_selection):
-                    keep_modes[jj] = self.xp.int32(self.lmn_indices[tuple(lmn)])
+                    l, m, n = tuple(lmn)
+                    lmn_in = (l, abs(m), n)
+                    keep_modes[jj] = self.xp.int32(self.lmn_indices[lmn_in])
+
+                    if not include_minus_m:
+                        if m > 0:
+                            fix_include_ms[len(mode_selection) + jj] = True
+                        elif m < 0:
+                            fix_include_ms[jj] = True
 
                 self.ls = self.l_arr[keep_modes]
                 self.ms = self.m_arr[keep_modes]
@@ -644,6 +650,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, 
 
                 ylmkeep = self.xp.concatenate([keep_modes, temp2])
                 ylms_in = ylms[ylmkeep]
+                ylms_in[fix_include_ms] = 0.0 + 1j * 0.0
                 teuk_modes_in = teuk_modes[:, keep_modes]
 
             # mode selection based on input module
@@ -683,7 +690,7 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, 
                 e,
                 dt=dt,
                 T=T,
-                t_window=t_window,
+                include_minus_m=include_minus_m,
             )
 
             # if batching, need to add the waveform
