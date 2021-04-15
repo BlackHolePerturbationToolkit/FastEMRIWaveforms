@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>FastEMRIWaveforms Publication &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
+  <title>FastEMRIWaveforms Publications &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
   
 
   
@@ -110,7 +110,7 @@
 </ul>
 <p class="caption"><span class="caption-text">General Information:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">FastEMRIWaveforms Publication</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">FastEMRIWaveforms Publications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#package-todos">Package TODOs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#change-log">Change Log</a></li>
 </ul>
@@ -159,7 +159,7 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>FastEMRIWaveforms Publication</li>
+      <li>FastEMRIWaveforms Publications</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -209,9 +209,9 @@
     text-align: unset;
 }
 </style>
-<div class="section" id="fastemriwaveforms-publication">
-<h1>FastEMRIWaveforms Publication<a class="headerlink" href="#fastemriwaveforms-publication" title="Permalink to this headline">¶</a></h1>
-<p>The Fast EMRI Waveforms papers can be found at <a class="reference external" href="https://arxiv.org/abs/2104.04582">arxiv.org/2104.04582</a> and <a class="reference external" href="https://arxiv.org/abs/2008.06071">arxiv.org/2008.06071</a>. Below is a brief description of the paper, including plots. Please refer to the paper for more detailed information.</p>
+<div class="section" id="fastemriwaveforms-publications">
+<h1>FastEMRIWaveforms Publications<a class="headerlink" href="#fastemriwaveforms-publications" title="Permalink to this headline">¶</a></h1>
+<p>The Fast EMRI Waveforms papers can be found at <a class="reference external" href="https://arxiv.org/abs/2104.04582">arxiv.org/2104.04582</a> and <a class="reference external" href="https://arxiv.org/abs/2008.06071">arxiv.org/2008.06071</a>. Below is a brief description of the model. Please refer to the paper for plots and more detailed information.</p>
 <p>Fast EMRI Waveform models are built for fast evaluation of the EMRI waveform summation equation, given by (<a class="reference external" href="https://arxiv.org/abs/gr-qc/0509101">Drasco &amp; Hughes 2006</a>),</p>
 <div class="math notranslate nohighlight" id="equation-emri-wave-eq">
 <span class="eqno">(1)<a class="headerlink" href="#equation-emri-wave-eq" title="Permalink to this equation">¶</a></span>\[h_+ + ih_x=r^{-1}\sum_{lmkn}A_{lmkn}(t)e^{-i\Phi_{mkn}(t)}V_{lmkn}(\theta,\phi),\]</div>
@@ -221,26 +221,8 @@
 <p>where <span class="math notranslate nohighlight">\(Z_{lmkn}(a, p, e, x_I)\)</span> is the teukolsky amplitudes associated with a geodesic with spin, <span class="math notranslate nohighlight">\(a\)</span>; semilatus rectum, <span class="math notranslate nohighlight">\(p\)</span>; and inclination, <span class="math notranslate nohighlight">\(x_I\)</span>. <span class="math notranslate nohighlight">\(\omega_{mkn}\)</span> is the summation of fundamental frequencies of the geodesic with integer weights equivalent to the mode indices. The angular function, <span class="math notranslate nohighlight">\(V_{lmkn}\)</span> is given by,</p>
 <div class="math notranslate nohighlight">
 \[V_{lmkn}(\theta, \phi) = (s=-2)S_{lmkn}(\theta)e^{im\phi},\]</div>
-<p>where <span class="math notranslate nohighlight">\(S_{lmkn}(\theta)\)</span> is the general angular function from <a class="reference external" href="https://arxiv.org/abs/gr-qc/0509101">Drasco &amp; Hughes 2006</a>.</p>
+<p>where <span class="math notranslate nohighlight">\(S_{lmkn}(\theta)\)</span> is the general angular function from <a class="reference external" href="https://arxiv.org/abs/gr-qc/0509101">Drasco &amp; Hughes 2006</a> (spin-weighted spheroidal harmonics).</p>
 <p>When these modules complete their calculations, the summation (<a class="reference internal" href="../user/sum.html#module-few.summation" title="few.summation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">few.summation</span></code></a>) module takes all of this information and creates an EMRI waveform.</p>
-<p>Our model is valid at any <span class="math notranslate nohighlight">\((p_0,e_0)\)</span> that falls outside the separatrix, below the <span class="math notranslate nohighlight">\((p_0=10,e_0=0.7)\)</span> trajectory (see below trjectory figure), and within the outer limits (<span class="math notranslate nohighlight">\(p_0 &lt; 16 + 2e_0\)</span> and <span class="math notranslate nohighlight">\(e_0 &lt; 0.7\)</span>).</p>
-<p>Below are figures from our paper related to this package.</p>
-<div class="align-center figure" id="id2">
-<a class="reference internal image-reference" href="../_images/EMRI_diagram.jpg"><img alt="alternate text" src="../_images/EMRI_diagram.jpg" style="width: 500px; height: 500px;" /></a>
-<p class="caption"><span class="caption-text">A general schematic diagram for the creation of an EMRI waveform.</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
-</div>
-<div class="align-center figure" id="id3">
-<a class="reference internal image-reference" href="../_images/traj.jpg"><img alt="alternate text" src="../_images/traj.jpg" style="width: 500px; height: 400px;" /></a>
-<p class="caption"><span class="caption-text">Evolution of mismatch between fast and fiducial waveforms from <span class="math notranslate nohighlight">\((p_0,e_0)\)</span> to <span class="math notranslate nohighlight">\((p,e)\)</span>, for 12 EMRIs with <span class="math notranslate nohighlight">\(M=10^6M_\odot\)</span>, <span class="math notranslate nohighlight">\(\mu\in[15,304]M_\odot\)</span>, and <span class="math notranslate nohighlight">\((p_0,e_0)\)</span> along the model domain boundary. Each small mass is chosen such that the EMRI plunges after a year. These results are for <span class="math notranslate nohighlight">\((\theta,\varphi)=(\pi/2,0)\)</span>, but do not depend strongly on the viewing angle. In the worst case (top-left curve), the final 0.01% of the waveform causes the mismatch to increase from under <span class="math notranslate nohighlight">\(4\times10^{-4}\)</span> to <span class="math notranslate nohighlight">\(5\times10^{-4}\)</span>.</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
-</div>
-<div class="align-center figure" id="id4">
-<a class="reference internal image-reference" href="../_images/waveform_example.jpg"><img alt="alternate text" src="../_images/waveform_example.jpg" style="width: 500px; height: 350px;" /></a>
-<p class="caption"><span class="caption-text">Six-hour snapshots of fast (orange) and fiducial (blue) waveforms, one year before plunge (top) and just before plunge (bottom). Waveforms are for the worst-case EMRI <span class="math notranslate nohighlight">\((M,\mu,p_0,e_0)=(10^{6}M_\odot, 15 M_\odot, 10, 0.7)\)</span>, with a one-year mismatch of <span class="math notranslate nohighlight">\(5\times 10^{-4}\)</span>. Small amplitude deviations are visible just before plunge at <span class="math notranslate nohighlight">\((p,e)\approx(7,0.5)\)</span>, where the mode-distribution error approaches its maximum across the domain of validity.</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
-</div>
-<div class="align-center figure" id="id5">
-<a class="reference internal image-reference" href="../_images/timing_plot_3.jpg"><img alt="alternate text" src="../_images/timing_plot_3.jpg" style="width: 400px; height: 400px;" /></a>
-<p class="caption"><span class="caption-text">Computational wall time for fast and fiducial waveforms, broken down into individual modules. All times are averaged over <span class="math notranslate nohighlight">\(\geq5\)</span> evaluations of the worst-case waveform on a single CPU core (and GPU), where the CPU is an Intel Xeon Gold 6132 and the GPU is an NVIDIA Tesla V100.</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
-</div>
 </div>
 <div class="section" id="package-todos">
 <h1>Package TODOs<a class="headerlink" href="#package-todos" title="Permalink to this headline">¶</a></h1>

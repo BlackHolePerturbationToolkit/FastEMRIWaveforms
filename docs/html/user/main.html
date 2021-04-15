@@ -126,7 +126,7 @@
 </ul>
 <p class="caption"><span class="caption-text">General Information:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html">FastEMRIWaveforms Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html">FastEMRIWaveforms Publications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html#package-todos">Package TODOs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html#change-log">Change Log</a></li>
 </ul>
@@ -432,8 +432,9 @@ tuples (or lists) of mode indices
 (e.g. [(<span class="math notranslate nohighlight">\(l_1,m_1,n_1\)</span>), (<span class="math notranslate nohighlight">\(l_2,m_2,n_2\)</span>)]) is
 provided, it will return those modes combined into a
 single waveform.</p></li>
-<li><p><strong>include_minus_m</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, then include (m &lt; 0) modes when
-computing a mode with (m &gt; 0). Default is True.</p></li>
+<li><p><strong>include_minus_m</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, then include -m modes when
+computing a mode with m. This only effects modes if <code class="code docutils literal notranslate"><span class="pre">mode_selection</span></code>
+is a list of specific modes. Default is True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1032,8 +1033,9 @@ tuples (or lists) of mode indices
 (e.g. [(<span class="math notranslate nohighlight">\(l_1,m_1,n_1\)</span>), (<span class="math notranslate nohighlight">\(l_2,m_2,n_2\)</span>)]) is
 provided, it will return those modes combined into a
 single waveform.</p></li>
-<li><p><strong>include_minus_m</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, then include (m &lt; 0) modes when
-computing a mode with (m &gt; 0). Default is True.</p></li>
+<li><p><strong>include_minus_m</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, then include -m modes when
+computing a mode with m. This only effects modes if <code class="code docutils literal notranslate"><span class="pre">mode_selection</span></code>
+is a list of specific modes. Default is True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2492,8 +2494,9 @@ tuples (or lists) of mode indices
 (e.g. [(<span class="math notranslate nohighlight">\(l_1,m_1,n_1\)</span>), (<span class="math notranslate nohighlight">\(l_2,m_2,n_2\)</span>)]) is
 provided, it will return those modes combined into a
 single waveform.</p></li>
-<li><p><strong>include_minus_m</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, then include (m &lt; 0) modes when
-computing a mode with (m &gt; 0). Default is True.</p></li>
+<li><p><strong>include_minus_m</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, then include -m modes when
+computing a mode with m. This only effects modes if <code class="code docutils literal notranslate"><span class="pre">mode_selection</span></code>
+is a list of specific modes. Default is True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
