@@ -43,7 +43,7 @@ except (ImportError, ModuleNotFoundError) as e:
 # Python imports
 from few.utils.baseclasses import Pn5AAK, SummationBase, GPUModuleBase
 from few.utils.citations import *
-from few.utils.utility import get_fundamental_frequencies
+from few.utils.utility import get_fundamental_frequencies, Y_to_xI
 from few.utils.constants import *
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
 
@@ -97,7 +97,8 @@ class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
     def citation(self):
         """Return citations for this class"""
         return (
-            few_citation
+            larger_few_citation
+            + few_citation
             + few_software_citation
             + AAK_citation_1
             + AAK_citation_2
@@ -133,6 +134,11 @@ class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
         and returns the complex amplitude of all modes to adiabatic order at
         each step of the trajectory.
 
+        **Please note:** the 5PN trajectory and AAK waveform take the parameter
+        :math:`Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}` rather than :math:`x_I` as is accepted
+        for relativistic waveforms and in the generic waveform interface discussed above.
+        The generic waveform interface directly converts :math:`x_I` to :math:`Y`.
+
         args:
             tvec (1D double numpy.ndarray): Array containing the time values
                 associated with the sparse trajectory.
@@ -143,7 +149,8 @@ class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
             e (1D double numpy.ndarray): Array containing the trajectory for values of
                 the eccentricity.
             Y (1D double numpy.ndarray): Array containing the trajectory for values of
-                the cosine of the inclination.
+                :math:`\cos{\iota}`. **Note**: This value is different from :math:`x_I`
+                used in the relativistic waveforms.
             Phi_phi (1D double numpy.ndarray): Array containing the trajectory for
                 :math:`\Phi_\phi`.
             Phi_theta (1D double numpy.ndarray): Array containing the trajectory for
@@ -181,8 +188,11 @@ class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
         # get inclination for mapping
         iota = np.arccos(Y)
 
+        # convert Y to x_I for fund freqs
+        xI = Y_to_xI(a, p, e, Y)
+
         # these are dimensionless and in radians
-        OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p, e, Y)
+        OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p, e, xI)
 
         # dimensionalize the frequencies
         OmegaPhi, OmegaTheta, OmegaR = (

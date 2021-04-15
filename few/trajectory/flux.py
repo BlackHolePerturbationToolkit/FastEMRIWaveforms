@@ -88,7 +88,7 @@ class RunSchwarzEccFluxInspiral(TrajectoryBase, SchwarzschildEccentric):
     @property
     def citation(self):
         """Return citation for this class"""
-        return few_citation + few_software_citation
+        return larger_few_citation + few_citation + few_software_citation
 
     def get_inspiral(self, M, mu, p0, e0, Phi_phi0=0.0, Phi_r0=0.0, *args, **kwargs):
         """Generate the inspiral.

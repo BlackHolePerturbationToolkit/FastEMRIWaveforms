@@ -95,7 +95,7 @@ class ModeSelector(GPUModuleBase):
     @property
     def citation(self):
         """Return citations related to this class."""
-        return few_citation + few_software_citation
+        return larger_few_citation + few_citation + few_software_citation
 
     def __call__(self, teuk_modes, ylms, modeinds, fund_freq_args=None, eps=1e-5):
         """Call to sort and filer teukolsky modes.
@@ -111,7 +111,7 @@ class ModeSelector(GPUModuleBase):
             ylms (1D complex128 xp.ndarray): Array of ylm values for each mode,
                 including m<0. Shape is (num of m==0,) + (num of m>0,)
                 + (num of m<0). Number of m<0 and m>0 is the same, but they are
-                ordered as (m==0 first then) m>0 then m<0.
+                ordered as (m==0) first then m>0 then m<0.
             modeinds (list of int xp.ndarrays): List containing the mode index arrays. If in an
                 equatorial model, need :math:`(l,m,n)` arrays. If generic,
                 :math:`(l,m,k,n)` arrays. e.g. [l_arr, m_arr, n_arr].

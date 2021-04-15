@@ -110,7 +110,7 @@
 </ul>
 <p class="caption"><span class="caption-text">General Information:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="general/docs_main.html">FastEMRIWaveforms Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="general/docs_main.html">FastEMRIWaveforms Publications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="general/docs_main.html#package-todos">Package TODOs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="general/docs_main.html#change-log">Change Log</a></li>
 </ul>
@@ -213,6 +213,7 @@
 <h1>few: Fast EMRI Waveforms<a class="headerlink" href="#few-fast-emri-waveforms" title="Permalink to this headline">¶</a></h1>
 <p>This package contains the highly modular framework for fast and accurate
 extreme mass ratio inspiral (EMRI) waveforms from
+<a class="reference external" href="https://arxiv.org/abs/2104.04582">arxiv.org/2104.04582</a> and
 <a class="reference external" href="https://arxiv.org/abs/2008.06071">arxiv.org/2008.06071</a>. The
 waveforms in this package combine a variety of separately accessible
 modules to form EMRI waveforms on both CPUs and GPUs. Generally, the
@@ -230,6 +231,7 @@ and all past code release zip files can also be found on Zenodo
 <p>This package is a part of the <a class="reference external" href="https://bhptoolkit.org/">Black Hole Perturbation
 Toolkit</a>.</p>
 <p>If you use all or any parts of this code, please cite
+<a class="reference external" href="https://arxiv.org/abs/2104.04582">arxiv.org/2104.04582</a> and
 <a class="reference external" href="https://arxiv.org/abs/2008.06071">arxiv.org/2008.06071</a>. See the
 <a class="reference external" href="https://bhptoolkit.org/FastEMRIWaveforms/">documentation</a> to
 properly cite specific modules.</p>
@@ -270,7 +272,7 @@ you will probably need to add libraries and include paths to the
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">few.waveform</span> <span class="kn">import</span> <span class="n">FastSchwarzschildEccentricFlux</span>
 </pre></div>
 </div>
-<p>See <a class="reference external" href="examples/SchwarzschildEccentricWaveform_intro.ipynb">examples
+<p>See <a class="reference external" href="https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb">examples
 notebook</a>.</p>
 <div class="section" id="prerequisites">
 <h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
@@ -323,18 +325,12 @@ If you want a faster install, you can install the python packages (numpy, Cython
 <span class="n">cd</span> <span class="n">FastEMRIWaveforms</span>
 </pre></div>
 </div>
-<ol class="arabic simple" start="2">
+<ol class="arabic simple" start="3">
 <li><p>If using GPUs, use pip to <a class="reference external" href="https://docs-cupy.chainer.org/en/stable/install.html">install
 cupy</a>. If
 you have cuda version 9.2, for example:</p></li>
 </ol>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">cupy</span><span class="o">-</span><span class="n">cuda92</span>
-</pre></div>
-</div>
-<ol class="arabic simple" start="3">
-<li><p>Clone the repository.</p></li>
-</ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">mikekatz04</span><span class="o">/</span><span class="n">FastEMRIWaveforms</span><span class="o">.</span><span class="n">git</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="4">
@@ -387,7 +383,7 @@ code of conduct, and the process for submitting pull requests to us.</p>
 <p>We use <a class="reference external" href="http://semver.org/">SemVer</a> for versioning. For the versions
 available, see the <a class="reference external" href="https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags">tags on this
 repository</a>.</p>
-<p>Current Version: 1.2.2</p>
+<p>Current Version: 1.3.0</p>
 </div>
 <div class="section" id="authors">
 <h2>Authors<a class="headerlink" href="#authors" title="Permalink to this headline">¶</a></h2>
@@ -395,6 +391,7 @@ repository</a>.</p>
 <li><p><strong>Michael Katz</strong></p></li>
 <li><p>Alvin J. K. Chua</p></li>
 <li><p>Niels Warburton</p></li>
+<li><p>Lorenzo Speri</p></li>
 </ul>
 <div class="section" id="contibutors">
 <h3>Contibutors<a class="headerlink" href="#contibutors" title="Permalink to this headline">¶</a></h3>
@@ -494,6 +491,7 @@ computing facility at Northwestern University.</p></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Mode-selection-by-noise-weighted-power-contribution">Mode selection by noise-weighted power contribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Compare-the-two-waves-with-and-without-noise-weighting">Compare the two waves with and without noise-weighting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Specific-mode-selection">Specific mode selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Turn-off-(m-&lt;-0)">Turn off (<span class="math notranslate nohighlight">\(m &lt; 0\)</span>)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Parallelized-Cubic-Spline-Interpolation">Parallelized Cubic Spline Interpolation</a></li>
@@ -505,6 +503,8 @@ computing facility at Northwestern University.</p></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Utility-functions">Utility functions</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Fundamental-Frequencies">Fundamental Frequencies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Separatrix-in-Generic-Kerr">Separatrix in Generic Kerr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Get-Kerr-Constants-of-Motion-(E,-L,-Q)">Get Kerr Constants of Motion <span class="math notranslate nohighlight">\((E, L, Q)\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Convert-from-x_I-to-Y">Convert from <span class="math notranslate nohighlight">\(x_I\)</span> to <span class="math notranslate nohighlight">\(Y\)</span></a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Get-\mu-based-on-desired-duration-of-waveform">Get <span class="math notranslate nohighlight">\(\mu\)</span> based on desired duration of waveform</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Get-p_0-based-on-desired-duration-of-waveform">Get <span class="math notranslate nohighlight">\(p_0\)</span> based on desired duration of waveform</a></li>
 </ul>
@@ -532,7 +532,7 @@ computing facility at Northwestern University.</p></li>
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">General Information:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="general/docs_main.html">FastEMRIWaveforms Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="general/docs_main.html">FastEMRIWaveforms Publications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="general/docs_main.html#package-todos">Package TODOs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="general/docs_main.html#change-log">Change Log</a></li>
 </ul>
