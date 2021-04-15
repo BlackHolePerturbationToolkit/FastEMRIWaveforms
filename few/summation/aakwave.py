@@ -150,7 +150,7 @@ class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
                 the eccentricity.
             Y (1D double numpy.ndarray): Array containing the trajectory for values of
                 :math:`\cos{\iota}`. **Note**: This value is different from :math:`x_I`
-                used in the relativistic waveforms. TODO: add function for conversion.
+                used in the relativistic waveforms.
             Phi_phi (1D double numpy.ndarray): Array containing the trajectory for
                 :math:`\Phi_\phi`.
             Phi_theta (1D double numpy.ndarray): Array containing the trajectory for
