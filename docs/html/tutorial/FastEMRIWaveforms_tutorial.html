@@ -123,7 +123,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#Mode-selection-by-noise-weighted-power-contribution">Mode selection by noise-weighted power contribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#Compare-the-two-waves-with-and-without-noise-weighting">Compare the two waves with and without noise-weighting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#Specific-mode-selection">Specific mode selection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#Turn-off-(m-&lt;-0)">Turn off (<span class="math notranslate nohighlight">\(m &lt; 0\)</span>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Turn-off-(-m)">Turn off (<span class="math notranslate nohighlight">\(-m\)</span>)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="#Parallelized-Cubic-Spline-Interpolation">Parallelized Cubic Spline Interpolation</a></li>
@@ -1714,9 +1714,9 @@ mismatch with full wave: 0.04836413926836447
 </div>
 </div>
 </div>
-<div class="section" id="Turn-off-(m-&lt;-0)">
-<h2>Turn off (<span class="math notranslate nohighlight">\(m &lt; 0\)</span>)<a class="headerlink" href="#Turn-off-(m-<-0)" title="Permalink to this headline">¶</a></h2>
-<p>By default, symmetry is used to generate <span class="math notranslate nohighlight">\(-m\)</span> modes. To turn this off and only use modes with (<span class="math notranslate nohighlight">\(m\geq0\)</span>), provide <code class="docutils literal notranslate"><span class="pre">False</span></code> to the <code class="docutils literal notranslate"><span class="pre">include_minus_m</span></code> kwarg.</p>
+<div class="section" id="Turn-off-(-m)">
+<h2>Turn off (<span class="math notranslate nohighlight">\(-m\)</span>)<a class="headerlink" href="#Turn-off-(-m)" title="Permalink to this headline">¶</a></h2>
+<p>By default, symmetry is used to generate <span class="math notranslate nohighlight">\(-m\)</span> modes. To turn this off and only use modes with (<span class="math notranslate nohighlight">\(m\)</span>), provide <code class="docutils literal notranslate"><span class="pre">False</span></code> to the <code class="docutils literal notranslate"><span class="pre">include_minus_m</span></code> kwarg. This only affects the waveform when <code class="docutils literal notranslate"><span class="pre">mode_selection</span></code> is a list of specific modes.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[33]:
 </pre></div>
