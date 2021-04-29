@@ -744,7 +744,7 @@ class SummationBase(ABC):
         pad_output (bool, optional): Add zero padding to the waveform for time
             between plunge and observation time. Default is False.
         output_type (str, optional): Type of domain in which to calculate the waveform.
-            Default is 'td' for time domain. Options are 'td' (time domain). In the future we hope to add 'fd' (Fourier domain), 'tf'
+            Default is 'td' for time domain. Options are 'td' (time domain) or 'fd' (Fourier domain). In the future we hope to add 'tf'
             (time-frequency) and 'wd' (wavelet domain).
 
     """
@@ -752,9 +752,9 @@ class SummationBase(ABC):
     def __init__(self, *args, output_type="td", pad_output=False, **kwargs):
         self.pad_output = pad_output
 
-        if output_type not in ["td"]:
+        if output_type not in ["td","fd"]:
             raise ValueError(
-                "{} waveform domain not available. Choices are 'td' (time domain) or 'tf' (time-frequency).".format(
+                "{} waveform domain not available. Choices are 'td' (time domain) or 'fd' (frequency domain).".format(
                     output_type
                 )
             )

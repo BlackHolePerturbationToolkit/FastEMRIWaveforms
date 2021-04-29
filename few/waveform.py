@@ -42,7 +42,7 @@ from few.summation.aakwave import AAKSummation
 from few.utils.constants import *
 from few.utils.citations import *
 from few.summation.interpolatedmodesum import InterpolatedModeSum
-
+from few.summation.fdinterp import FDInterpolatedModeSum
 
 class GenerateEMRIWaveform:
     """Generic waveform generator for data analysis
@@ -772,11 +772,21 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         **kwargs
     ):
 
+        if "output_type" in sum_kwargs:
+            if sum_kwargs["output_type"] == "fd":
+                mode_summation_module = FDInterpolatedModeSum
+
+            else:
+                mode_summation_module = InterpolatedModeSum
+
+        else:
+            mode_summation_module = InterpolatedModeSum
+
         SchwarzschildEccentricWaveformBase.__init__(
             self,
             RunSchwarzEccFluxInspiral,
             RomanAmplitude,
-            InterpolatedModeSum,
+            mode_summation_module,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
