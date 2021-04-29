@@ -207,7 +207,17 @@ class CubicSplineInterpolant(GPUModuleBase):
             out[:, inds_bad_right] = self.y[:, -1]
         return out.squeeze()
 
-    def d1(self, tnew):
+    def deriv(self, tnew, order=1):
+        """derivative of the spline
+        """
+        if order == 0:
+            return self(tnew)
+        elif order > 0 and order <= 3:
+            return getattr(self, "_d" + str(order))(tnew)
+        else:
+            raise ValueError("order parameter must be 0, 1, 2 or 3.")
+
+    def _d1(self, tnew):
         inds = self.xp.searchsorted(self.t, tnew)
 
         x = tnew - self.t[inds]
@@ -218,15 +228,15 @@ class CubicSplineInterpolant(GPUModuleBase):
         )
         return out
 
-    def d2(self, tnew):
+    def _d2(self, tnew):
         inds = self.xp.searchsorted(self.t, tnew)
 
         x = tnew - self.t[inds]
 
-        out = 2.0 * self.c2[:, inds] * x + 6.0 * self.c3[:, inds] * x
+        out = 2.0 * self.c2[:, inds] + 6.0 * self.c3[:, inds] * x
         return out
 
-    def d3(self, tnew):
+    def _d3(self, tnew):
         inds = self.xp.searchsorted(self.t, tnew)
         out = 6.0 * self.c3[:, inds]
         return out
