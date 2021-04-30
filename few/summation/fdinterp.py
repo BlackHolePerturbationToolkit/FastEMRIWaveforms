@@ -304,7 +304,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                 # import matplotlib.pyplot as plt
                 # print(spline(t_f_sing))
 
-
+                """
                 # double contribution
                 t_f_first_half = modified_t_f( np.abs(self.frequency[index_double])  )
                 t_f_second_half = modified_t_f(np.abs(Fstar+Fstar/np.abs(Fstar) * np.abs(self.frequency[index_double] - Fstar)))
@@ -316,17 +316,20 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                                     np.exp( 1j*( 2*np.pi*f* t_two  - ( m * spline(t_two)[-2] + n * spline(t_two)[-1]) ) )
                                 for t_two,f in zip([t_f_first_half,t_f_second_half,t_f_sing],[self.frequency[index_double],self.frequency[index_double],self.frequency[index_single]])
                                 ]
+                """
 
+                #print(sign_slope,(initial_frequency<end_frequency) )
                 #breakpoint()
-                #h_contr = [(spline(t_two)[j] + 1j* spline(t_two)[num_teuk_modes+j] )*ylms[j]*\
-                #    self.waveform_spa_factors(fdot_spline(t_two), fddot_spline(t_two))*\
-                #    np.exp( 1j*( 2*np.pi*f* t_two  - ( m * spline(t_two)[-2] + n * spline(t_two)[-1]) ) )
-                #for t_two,f in zip([t_f_1,t_f_2],[self.frequency[ind_1],self.frequency[ind_2]])
-                #]
+                h_contr = [(spline(t_two)[j] + 1j* spline(t_two)[num_teuk_modes+j] )*ylms[j]*\
+                    self.waveform_spa_factors(fdot_spline(t_two), fddot_spline(t_two))*\
+                    np.exp( 1j*( 2*np.pi*f* t_two  - ( m * spline(t_two)[-2] + n * spline(t_two)[-1]) ) )
+                for t_two,f in zip([t_f_1,t_f_2],[self.frequency[ind_1],self.frequency[ind_2]])
+                ]
 
-
-                h[index_double] += np.sum(h_two_contr[:2],axis=0)
-                h[index_single] += h_two_contr[2]
+                h[ind_1] += h_contr[0]
+                h[ind_2] += h_contr[1]
+                #h[index_double] += np.sum(h_two_contr[:2],axis=0)
+                #h[index_single] += h_two_contr[2]
 
 
 
