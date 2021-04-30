@@ -194,11 +194,12 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
         # plt.plot(t,Omega_phi/(M * MTSUN_SI)); plt.plot(t,spline.deriv(t)[-2],'--' ); plt.show()
 
         # define a frequency vector
-        self.frequency = np.arange(-1/(2*dt),1/(2*dt),step=1/((self.num_pts + self.num_pts_pad)*dt) )
+        self.frequency = np.fft.fftfreq(self.num_pts + self.num_pts_pad,dt)
 
         # final waveform
         h = np.zeros_like(self.frequency, dtype=complex)
 
+        breakpoint()
 
         # indentify where there is a turnover
         for j, (m, n) in enumerate(zip(m_arr, n_arr)):
@@ -243,7 +244,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                 # HERE PROBLEM WITH THE CUBIC SPLINEInterp
                 # should throw a warning if decreasing
                 # need to put an absolute value but it might be incorrect for modes passing through zero
-                modified_t_f = CubicSpline(np.abs(new_F),t) # take axis frequency monotonically increasing
+                modified_t_f = CubicSplineInterpolant(np.abs(new_F),t) # take axis frequency monotonically increasing
 
                 # frequency split
                 initial_frequency = f_mn[0]
@@ -253,9 +254,23 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                     index_single = (self.frequency<initial_frequency)*(self.frequency>end_frequency)
 
                     if sign_slope>0:
+                        # alt imple
+                        modified2_t_f = CubicSpline((new_F),t)
+                        ind_1 = (self.frequency>end_frequency)*(self.frequency<Fstar)
+                        t_f_1 = modified2_t_f(Fstar+ np.abs(self.frequency[ind_1] - Fstar))
+                        ind_2 = (self.frequency>initial_frequency)*(self.frequency<Fstar)
+                        t_f_2 = modified_t_f(self.frequency[ind_2])
+
                         index_double = (self.frequency>initial_frequency)*(self.frequency<Fstar)
                         t_f_sing = modified_t_f(np.abs(Fstar+Fstar/np.abs(Fstar) * np.abs(self.frequency[index_single] - Fstar)))
                     else:
+                        modified2_t_f = CubicSpline(-(new_F),t) # 
+                        
+                        ind_1 = (self.frequency<end_frequency)*(self.frequency>Fstar)
+                        ind_2 = (self.frequency<initial_frequency)*(self.frequency>Fstar)
+                        t_f_1 = modified2_t_f(-(Fstar+Fstar/np.abs(Fstar) * np.abs(self.frequency[ind_1] - Fstar)))
+                        t_f_2 = modified2_t_f(-(self.frequency[ind_2]))
+
                         index_double = (self.frequency<end_frequency)*(self.frequency>Fstar)
                         t_f_sing = modified_t_f(np.abs(self.frequency[index_single]))
 
