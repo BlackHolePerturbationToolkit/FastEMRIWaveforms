@@ -199,8 +199,6 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
         # final waveform
         h = np.zeros_like(self.frequency, dtype=complex)
 
-        breakpoint()
-
         # indentify where there is a turnover
         for j, (m, n) in enumerate(zip(m_arr, n_arr)):
 
@@ -244,7 +242,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                 # HERE PROBLEM WITH THE CUBIC SPLINEInterp
                 # should throw a warning if decreasing
                 # need to put an absolute value but it might be incorrect for modes passing through zero
-                modified_t_f = CubicSplineInterpolant(np.abs(new_F),t) # take axis frequency monotonically increasing
+                modified_t_f = CubicSpline(np.abs(new_F),t) # take axis frequency monotonically increasing
 
                 # frequency split
                 initial_frequency = f_mn[0]
@@ -257,9 +255,9 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                         # alt imple
                         modified2_t_f = CubicSpline((new_F),t)
                         ind_1 = (self.frequency>end_frequency)*(self.frequency<Fstar)
-                        t_f_1 = modified2_t_f(Fstar+ np.abs(self.frequency[ind_1] - Fstar))
+                        t_f_1 = modified2_t_f(Fstar+Fstar/np.abs(Fstar) * np.abs(self.frequency[ind_1] - Fstar))
                         ind_2 = (self.frequency>initial_frequency)*(self.frequency<Fstar)
-                        t_f_2 = modified_t_f(self.frequency[ind_2])
+                        t_f_2 = modified2_t_f(self.frequency[ind_2])
 
                         index_double = (self.frequency>initial_frequency)*(self.frequency<Fstar)
                         t_f_sing = modified_t_f(np.abs(Fstar+Fstar/np.abs(Fstar) * np.abs(self.frequency[index_single] - Fstar)))
@@ -279,9 +277,24 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                     index_single = (self.frequency>initial_frequency)*(self.frequency<end_frequency)
                     
                     if sign_slope>0:
+
+                        modified2_t_f = CubicSpline((new_F),t)
+
+                        ind_1 = (self.frequency>initial_frequency)*(self.frequency<Fstar)
+                        ind_2 = (self.frequency>end_frequency)*(self.frequency<Fstar)
+                        t_f_2 = modified2_t_f((Fstar+Fstar/np.abs(Fstar) * np.abs(self.frequency[ind_2] - Fstar)))
+                        t_f_1 = modified2_t_f((self.frequency[ind_1]))
+
                         index_double = (self.frequency>end_frequency)*(self.frequency<Fstar)
                         t_f_sing = modified_t_f(np.abs(self.frequency[index_single]))
                     else:
+                        modified2_t_f = CubicSpline(-(new_F),t) # 
+                        
+                        ind_1 = (self.frequency<end_frequency)*(self.frequency>Fstar)
+                        ind_2 = (self.frequency<initial_frequency)*(self.frequency>Fstar)
+                        t_f_1 = modified2_t_f(-(Fstar+Fstar/np.abs(Fstar) * np.abs(self.frequency[ind_1] - Fstar)))
+                        t_f_2 = modified2_t_f(-(self.frequency[ind_2]))
+
                         index_double = (self.frequency<initial_frequency)*(self.frequency>Fstar)
                         t_f_sing = modified_t_f(np.abs(Fstar+Fstar/np.abs(Fstar) * np.abs(self.frequency[index_single] - Fstar)))
 
@@ -304,9 +317,18 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                                 for t_two,f in zip([t_f_first_half,t_f_second_half,t_f_sing],[self.frequency[index_double],self.frequency[index_double],self.frequency[index_single]])
                                 ]
 
+                #breakpoint()
+                #h_contr = [(spline(t_two)[j] + 1j* spline(t_two)[num_teuk_modes+j] )*ylms[j]*\
+                #    self.waveform_spa_factors(fdot_spline(t_two), fddot_spline(t_two))*\
+                #    np.exp( 1j*( 2*np.pi*f* t_two  - ( m * spline(t_two)[-2] + n * spline(t_two)[-1]) ) )
+                #for t_two,f in zip([t_f_1,t_f_2],[self.frequency[ind_1],self.frequency[ind_2]])
+                #]
+
 
                 h[index_double] += np.sum(h_two_contr[:2],axis=0)
                 h[index_single] += h_two_contr[2]
+
+
 
     
             else:
