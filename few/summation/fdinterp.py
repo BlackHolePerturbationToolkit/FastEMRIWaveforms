@@ -104,6 +104,71 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
 
         return 1j* fdot_spline/np.abs(fddot_spline) * K_1over3 * 2/np.sqrt(3)
 
+
+    def time_frequency_map(self,spline_f_mode,index_star):
+        # turn over index
+        index_star = index_star - 1 
+
+        t = spline_f_mode.t
+        f_mn = spline_f_mode.y[-1]
+
+        # find t_star analytically
+        ratio = spline_f_mode.c2[0,index_star]/(3*spline_f_mode.c3[0,index_star])
+        second_ratio = spline_f_mode.c1[0,index_star]/(3*spline_f_mode.c3[0,index_star])
+        t_star = t[index_star] -ratio + np.sqrt(ratio**2 - second_ratio)
+
+        # new frequancy vector
+        Fstar = spline_f_mode(t_star)
+        new_F = np.append(f_mn[:index_star+1], Fstar + Fstar/np.abs(Fstar) * np.abs(f_mn[index_star+1:] - Fstar) )
+
+        # new t_f
+        sign_slope = spline_f_mode.c1[0,0]/np.abs(spline_f_mode.c1[0,0])
+
+        # frequency split
+        initial_frequency = f_mn[0]
+        end_frequency = f_mn[-1]
+
+
+        if (initial_frequency>end_frequency):
+
+            if sign_slope>0:
+                # alt imple
+                modified2_t_f = CubicSpline((new_F),t)
+                ind_1 = (self.frequency>end_frequency)*(self.frequency<Fstar)
+                t_f_1 = modified2_t_f(Fstar+Fstar/np.abs(Fstar) * np.abs(self.frequency[ind_1] - Fstar))
+                ind_2 = (self.frequency>initial_frequency)*(self.frequency<Fstar)
+                t_f_2 = modified2_t_f(self.frequency[ind_2])
+
+            else:
+                modified2_t_f = CubicSpline(-(new_F),t) # 
+                ind_1 = (self.frequency<end_frequency)*(self.frequency>Fstar)
+                ind_2 = (self.frequency<initial_frequency)*(self.frequency>Fstar)
+                t_f_1 = modified2_t_f(-(Fstar+Fstar/np.abs(Fstar) * np.abs(self.frequency[ind_1] - Fstar)))
+                t_f_2 = modified2_t_f(-(self.frequency[ind_2]))
+
+
+        if (initial_frequency<end_frequency):
+            
+            if sign_slope>0:
+
+                modified2_t_f = CubicSpline((new_F),t)
+
+                ind_1 = (self.frequency>initial_frequency)*(self.frequency<Fstar)
+                ind_2 = (self.frequency>end_frequency)*(self.frequency<Fstar)
+                t_f_2 = modified2_t_f((Fstar+Fstar/np.abs(Fstar) * np.abs(self.frequency[ind_2] - Fstar)))
+                t_f_1 = modified2_t_f((self.frequency[ind_1]))
+
+            else:
+                modified2_t_f = CubicSpline(-(new_F),t) # 
+                
+                ind_1 = (self.frequency<end_frequency)*(self.frequency>Fstar)
+                ind_2 = (self.frequency<initial_frequency)*(self.frequency>Fstar)
+                t_f_1 = modified2_t_f(-(Fstar+Fstar/np.abs(Fstar) * np.abs(self.frequency[ind_1] - Fstar)))
+                t_f_2 = modified2_t_f(-(self.frequency[ind_2]))
+
+
+        return ind_1, ind_2, t_f_1, t_f_2
+
     @property
     def gpu_capability(self):
         """Confirms GPU capability"""
@@ -222,7 +287,11 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
             if index_star is not None:
                 print(m,n)
                 print('there is a turn-over')
+
+                # calculate frequency indeces and respective time of f
+                ind_1, ind_2, t_f_1, t_f_2 = self.time_frequency_map(spline_f_mode,index_star)
                 
+                """
                 # turn over index
                 index_star = index_star - 1 
 
@@ -247,7 +316,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                 # frequency split
                 initial_frequency = f_mn[0]
                 end_frequency = f_mn[-1]
-                
+
+
                 if (initial_frequency>end_frequency):
                     index_single = (self.frequency<initial_frequency)*(self.frequency>end_frequency)
 
@@ -285,8 +355,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                         t_f_2 = modified2_t_f((Fstar+Fstar/np.abs(Fstar) * np.abs(self.frequency[ind_2] - Fstar)))
                         t_f_1 = modified2_t_f((self.frequency[ind_1]))
 
-                        index_double = (self.frequency>end_frequency)*(self.frequency<Fstar)
-                        t_f_sing = modified_t_f(np.abs(self.frequency[index_single]))
+                        #index_double = (self.frequency>end_frequency)*(self.frequency<Fstar)
+                        #t_f_sing = modified_t_f(np.abs(self.frequency[index_single]))
                     else:
                         modified2_t_f = CubicSpline(-(new_F),t) # 
                         
@@ -304,7 +374,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                 # import matplotlib.pyplot as plt
                 # print(spline(t_f_sing))
 
-                """
+                
                 # double contribution
                 t_f_first_half = modified_t_f( np.abs(self.frequency[index_double])  )
                 t_f_second_half = modified_t_f(np.abs(Fstar+Fstar/np.abs(Fstar) * np.abs(self.frequency[index_double] - Fstar)))
@@ -332,10 +402,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                 #h[index_single] += h_two_contr[2]
 
 
-
-    
             else:
-                
 
                 # time of f
                 t_of_f = CubicSplineInterpolant(f_mn, t, use_gpu=self.use_gpu)
