@@ -24,11 +24,11 @@ few_base = FastSchwarzschildEccentricFlux(
 M = 1e6
 mu = 50
 p0 = 12
-e0 = 0.3
+e0 = 0.2
 theta= np.pi/3
 phi = np.pi/5
 dt=10
-T=.9
+T=1.
 
 
 
