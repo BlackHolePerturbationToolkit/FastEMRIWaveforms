@@ -33,7 +33,7 @@ T=1.
 
 
 #%% TIME DOMAIN
-wave_22 = few_base(M, mu, p0, e0, theta, phi,T=T,dt=dt, eps=1e-2)
+wave_22 = few_base(M, mu, p0, e0, theta, phi,T=T,dt=dt, eps=1e-3)
 freq_fft = np.fft.fftfreq(len(wave_22),dt)
 fft_wave = np.fft.fft(wave_22)*dt
 
@@ -43,7 +43,7 @@ sum_kwargs = dict(pad_output=True, output_type="fd",f=fft_wave)
 
 wave = FastSchwarzschildEccentricFlux(sum_kwargs=sum_kwargs)
 
-fd_h = wave(M,mu,p0,e0,theta,phi,T=T,dt=dt,eps=1e-2)
+fd_h = wave(M,mu,p0,e0,theta,phi,T=T,dt=dt,eps=1e-3)
 
 f = np.arange(-1/(2*dt),+1/(2*dt),1/(len(fd_h)*dt))
 #%% mismatch
