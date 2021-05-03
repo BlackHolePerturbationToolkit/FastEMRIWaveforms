@@ -23,8 +23,10 @@ few_base = FastSchwarzschildEccentricFlux(
 # p0=12;e0=0.3 -> mismatch =  0.000778239562794103
 
 M = 1e6; mu = 50; p0 = 10; e0 = 0.7; theta= np.pi/3; phi = np.pi/5 # mismatch =  0.0014153820095872405
+M = 1e6; mu = 50; p0 = 17.4; e0 = 0.7; theta= np.pi/3; phi = np.pi/5 # mismatch =  0.14
+
 dt=10
-T=2
+T=0.5
 
 
 l=3 #2
