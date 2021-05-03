@@ -100,7 +100,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
         # to correct the special function nan
         if np.sum(np.isnan(special.kv(1/3,arg))):
             X = 2*np.pi*fdot_spline**3 / (3*fddot_spline**2)
-            K_1over3[np.isnan(special.kv(1/3,arg))] = 0.0 # (np.sqrt(np.pi/2) /(1j*np.sqrt(np.abs(X))) * np.exp(-1j*np.pi/4) )[np.isnan(special.kv(1/3,arg))]
+            K_1over3[np.isnan(special.kv(1/3,arg))] =  (np.sqrt(np.pi/2) /(1j*np.sqrt(np.abs(X))) * np.exp(-1j*np.pi/4) )[np.isnan(special.kv(1/3,arg))]
 
         return 1j* fdot_spline/np.abs(fddot_spline) * K_1over3 * 2/np.sqrt(3)
 
@@ -384,7 +384,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
 
                 h_contr = [(spline(t_two)[j] + 1j* spline(t_two)[num_teuk_modes+j] )*ylms[j]*\
                     self.waveform_spa_factors(fdot_spline(t_two), fddot_spline(t_two))*\
-                    np.exp( 1j*( 2*np.pi*f* t_two  - ( m * spline(t_two)[-2] + n * spline(t_two)[-1]) ) )
+                    np.exp( 1j*( 2*np.pi*f* t_two - ( m * spline(t_two)[-2] + n * spline(t_two)[-1]) ) )
                 for t_two,f in zip([t_f_1,t_f_2],[self.frequency[ind_1],self.frequency[ind_2]])
                 ]
 
@@ -393,6 +393,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
 
                 # negative contribution
                 if m!=0:
+                    print('m different from zero')
 
                     h_contr = [(spline(t_two)[j] - 1j* spline(t_two)[num_teuk_modes+j] )*ylms[j+num_teuk_modes]*\
                         self.waveform_spa_factors(-fdot_spline(t_two), -fddot_spline(t_two))*\
@@ -405,8 +406,40 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
 
             else:
 
-                # time of f
-                t_of_f = CubicSplineInterpolant(f_mn, t, use_gpu=self.use_gpu)
+
+                initial_frequency = f_mn[0]
+                end_frequency = f_mn[-1]
+
+                sign_slope = spline_f_mode.c1[0,0]/np.abs(spline_f_mode.c1[0,0])
+
+                if sign_slope>0:
+                    t_of_f = CubicSplineInterpolant(f_mn, t, use_gpu=self.use_gpu)
+                    index = (self.frequency>initial_frequency)*(self.frequency<end_frequency)
+                    t_f = t_of_f(self.frequency[index])
+                else:
+                    t_of_f = CubicSplineInterpolant(-f_mn, t, use_gpu=self.use_gpu)
+                    index = (self.frequency<initial_frequency)*(self.frequency>end_frequency)
+                    t_f = t_of_f(-self.frequency[index])
+
+
+                h_contr = (spline(t_f)[j] + 1j* spline(t_f)[num_teuk_modes+j] )*ylms[j]*\
+                    self.waveform_spa_factors(fdot_spline(t_f), fddot_spline(t_f))*\
+                    np.exp( 1j*( 2*np.pi*self.frequency[index]* t_f  - ( m * spline(t_f)[-2] + n * spline(t_f)[-1]) ) )
+
+                h[index] += h_contr
+
+                
+                #if m!=0:
+                """
+                t_f = np.flip(t_f)
+                index = np.flip(index)
+
+                h_neg = (spline(t_f)[j] - 1j* spline(t_f)[num_teuk_modes+j] )*ylms[j+num_teuk_modes]*\
+                    self.waveform_spa_factors(-fdot_spline(t_f), -fddot_spline(t_f))*\
+                    np.exp( 1j*( 2*np.pi*self.frequency[index]* t_f  + ( m * spline(t_f)[-2] + n * spline(t_f)[-1]) ) )
+
+                h[index] += h_contr
+                """
                 
                 # frequency
                 index_positive_f = (self.frequency>min_f_mn)*(self.frequency<max_f_mn)
@@ -430,11 +463,57 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                 Exp_pos = np.exp(1j*(2*np.pi* f_pos * t_pos  - (m * spline(t_pos)[-2] + n * spline(t_pos)[-1]) ) )
                 
                 Exp_neg = np.exp(1j*(2*np.pi* f_neg * t_neg  + (m * spline(t_neg)[-2] + n * spline(t_neg)[-1]) ) )
-
+                
                 #breakpoint()
 
-                h[index_positive_f] += Teuk_sph_pos*Exp_pos
-                h[index_negative_f] += Teuk_sph_neg*Exp_neg
-        
-        
+                #h[index_positive_f] += Teuk_sph_pos*Exp_pos
+                #h[index_negative_f] += Teuk_sph_neg*Exp_neg
+            
+        """
+        for j, (m, n) in enumerate(zip(-m_arr, n_arr)):
+            
+            if m!=0:
+                print(m,n)
+                # check turnover
+                freq_mode_start = m * spline.c1[-4,0] + n * spline.c1[-3,0]
+                index_star = find_element_in_list(True, list(freq_mode_start*(m * spline.c1[-4,:] + n * spline.c1[-3,:])<0.))
+                
+                # frequency mode
+                f_mn = m * f_phi + n * f_r
+                spline_f_mode = CubicSplineInterpolant(t, f_mn, use_gpu=self.use_gpu)
+
+                min_f_mn = np.min(np.abs(f_mn))
+                max_f_mn = np.max(np.abs(f_mn))
+
+                # fdot
+                fdot_spline = CubicSplineInterpolant(t, np.asarray(spline_f_mode.deriv(t)), use_gpu=self.use_gpu)
+
+                # fddot
+                fddot_spline = CubicSplineInterpolant(t, np.asarray(fdot_spline.deriv(t)), use_gpu=self.use_gpu)
+
+                initial_frequency = f_mn[0]
+                end_frequency = f_mn[-1]
+                sign_slope = spline_f_mode.c1[0,0]/np.abs(spline_f_mode.c1[0,0])
+
+                if sign_slope>0:
+                    t_of_f = CubicSplineInterpolant(f_mn, t, use_gpu=self.use_gpu)
+                    index = (self.frequency>initial_frequency)*(self.frequency<end_frequency)
+                    t_f = t_of_f(self.frequency[index])
+                else:
+                    t_of_f = CubicSplineInterpolant(-f_mn, t, use_gpu=self.use_gpu)
+                    index = (self.frequency<initial_frequency)*(self.frequency>end_frequency)
+                    t_f = t_of_f(-self.frequency[index])
+
+                print(initial_frequency,end_frequency)
+                print(self.frequency[index])
+
+
+                h_contr = (spline(t_f)[j] - 1j* spline(t_f)[num_teuk_modes+j] )*ylms[j+num_teuk_modes]*\
+                    self.waveform_spa_factors(fdot_spline(t_f), fddot_spline(t_f))*\
+                    np.exp( 1j*( 2*np.pi*self.frequency[index]* t_f  - ( m * spline(t_f)[-2] + n * spline(t_f)[-1]) ) )
+
+                h[index] += h_contr
+        """
+
+            
         self.waveform = h
