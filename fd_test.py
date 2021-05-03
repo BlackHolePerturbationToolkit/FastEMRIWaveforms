@@ -26,7 +26,7 @@ M = 1e6; mu = 50; p0 = 10; e0 = 0.7; theta= np.pi/3; phi = np.pi/5 # mismatch = 
 M = 1e6; mu = 50; p0 = 17.4; e0 = 0.7; theta= np.pi/3; phi = np.pi/5 # mismatch =  0.14
 
 dt=10
-T=0.5
+T=4
 
 
 l=3 #2
