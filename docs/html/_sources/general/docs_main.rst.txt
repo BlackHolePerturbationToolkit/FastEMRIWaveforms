@@ -34,6 +34,7 @@ Package TODOs
 Change Log
 ===========
 
+- 1.3.1: Bug fix for root finding in xI. Y_to_xI in pn5 codes.
 - 1.3.0: x implemented instead of Y for cosine of inclination angle (includes conversion functions now). Python interface for KerrGeoConstantsOfMotion. Bug fix in examples. Updated citations. Changed constants to match LDC. More freedom in selecting specific modes.
 - 1.2.2: Bug fix for p(t), lapacke. Added e=0 for FastSchwarzschildEccentricFlux. Fixed major bug in 5PN trajectory.
 - 1.2.1: Bug fix for time at end of orbital evolution. :math:`\Omega_\theta` fixed.
