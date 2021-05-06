@@ -388,8 +388,12 @@ double Y_to_xI(double a, double p, double e, double Y)
     double x_lo, x_hi;
 
     // set limits
-    x_lo = -0.999;
-    x_hi =  0.999;
+    // assume Y is close to x
+    x_lo = Y - 0.1;
+    x_hi = Y + 0.1;
+
+    x_lo = x_lo > -YLIM? x_lo : -YLIM;
+    x_hi = x_hi < YLIM? x_hi : YLIM;
 
     double x = solver (&params, &Y_to_xI_eq, x_lo, x_hi);
 
