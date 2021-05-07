@@ -18,6 +18,7 @@ void get_separatrix_vector(double* separatrix, double* a, double* e, double* x, 
 void KerrGeoConstantsOfMotionVectorized(double* E_out, double* L_out, double* Q_out, double* a, double* p, double* e, double* x, int n);
 void KerrGeoConstantsOfMotion(double* E_out, double* L_out, double* Q_out, double a, double p, double e, double x);
 
+double Y_to_xI(double a, double p, double e, double Y);
 void Y_to_xI_vector(double* x, double* a, double* p, double* e, double* Y, int length);
 
 #endif // __FUND_FREQS__

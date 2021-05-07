@@ -298,14 +298,15 @@ FLUXHolder FluxCarrier::run_FLUX(double t0, double M, double mu, double p0, doub
 		if(DENSE_STEPPING) status = gsl_odeiv2_evolve_apply_fixed_step (evolve, control, step, &sys, &t, h, y);
         else int status = gsl_odeiv2_evolve_apply (evolve, control, step, &sys, &t, t1, &h, y);
 
-        // should not be needed but is safeguard against stepping past maximum allowable time
-        // the last point in the trajectory will be at t = tmax
-        if (t > tmax) break;
 
       	if (status != GSL_SUCCESS){
        		printf ("error, return value=%d\n", status);
           	break;
         }
+
+        // should not be needed but is safeguard against stepping past maximum allowable time
+        // the last point in the trajectory will be at t = tmax
+        if (t > tmax) break;
 
         double p 		= y[0];
         double e 		= y[1];

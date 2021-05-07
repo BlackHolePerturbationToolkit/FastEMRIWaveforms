@@ -72,7 +72,9 @@ void get_derivatives(double* pdot, double* edot, double* Ydot,
     ne = 10;
     *Ydot = epsilon * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);
 
-    KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, Y);
+    // convert to proper inclination input to fundamental frequencies
+    double xI = Y_to_xI(a, p, e, Y);
+    KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, xI);
 
 }
 
@@ -186,14 +188,15 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 		if(DENSE_STEPPING) status = gsl_odeiv2_evolve_apply_fixed_step (evolve, control, step, &sys, &t, h, y);
         else int status = gsl_odeiv2_evolve_apply (evolve, control, step, &sys, &t, t1, &h, y);
 
-        // should not be needed but is safeguard against stepping past maximum allowable time
-        // the last point in the trajectory will be at t = tmax
-        if (t > tmax) break;
-
+        
       	if (status != GSL_SUCCESS){
        		printf ("error, return value=%d\n", status);
           	break;
         }
+
+        // should not be needed but is safeguard against stepping past maximum allowable time
+        // the last point in the trajectory will be at t = tmax
+        if (t > tmax) break;
 
         double p 		= y[0];
         double e 		= y[1];
@@ -203,9 +206,9 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
         ind++;
 
         // Stop the inspiral when close to the separatrix
-
-        double p_sep = get_separatrix(a, e, Y);
-
+        // convert to proper inclination for separatrix
+        double xI = Y_to_xI(a, p, e, Y);
+        double p_sep = get_separatrix(a, e, xI);
         if(p - p_sep < DIST_TO_SEPARATRIX)
         {
             // Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.
@@ -233,8 +236,8 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
                                      &Omega_phi, &Omega_theta, &Omega_r,
                                      params_holder->epsilon, a, p, e, Y);
                 // estimate the step to the breaking point and multiply by PERCENT_STEP
-
-                p_sep = get_separatrix(a, e, Y);
+                xI = Y_to_xI(a, p, e, Y);
+                p_sep = get_separatrix(a, e, xI);
 
                 double step_size = PERCENT_STEP / factor * ((p_sep + DIST_TO_SEPARATRIX - p)/pdot);
 
