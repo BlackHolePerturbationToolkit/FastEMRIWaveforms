@@ -20,6 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <math.h>
+#include <cmath>
 #include <stdio.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv2.h>
@@ -78,7 +79,7 @@ void get_derivatives(double* pdot, double* edot, double* Ydot,
 
 }
 
-
+#define  ERROR_INSIDE_SEP  21
 // The RHS of the ODEs
 int func (double t, const double y[], double f[], void *params){
 	(void)(t); /* avoid unused parameter warning */
@@ -92,6 +93,17 @@ int func (double t, const double y[], double f[], void *params){
 	double e = y[1];
     double Y = y[2];
 
+    // check for separatrix
+    // integrator may naively step over separatrix
+    double xI = Y_to_xI(a, p, e, Y);
+    double p_sep = get_separatrix(a, e, xI);
+
+    // make sure we are outside the separatrix
+    if (p < p_sep)
+    {
+        return GSL_EBADFUNC;
+    }
+
     double pdot, edot, Ydot;
 	double Phi_phi_dot, Phi_theta_dot, Phi_r_dot;
 
@@ -99,6 +111,8 @@ int func (double t, const double y[], double f[], void *params){
     get_derivatives(&pdot, &edot, &Ydot,
                          &Phi_phi_dot, &Phi_theta_dot, &Phi_r_dot,
                          epsilon, a, p, e, Y);
+
+    //printf("checkit %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e\n", a, p, e, xI, y[3], y[4], y[5], Phi_phi_dot, Phi_theta_dot, Phi_r_dot);
 
     f[0] = pdot;
 	f[1] = edot;
@@ -181,18 +195,51 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
     double prev_t = 0.0;
     double y_prev[6] = {p0, e0, Y0, 0.0, 0.0, 0.0};
 
+    // control it if it keeps returning nans and what not
+    int bad_num = 0;
+    int bad_limit = 1000;
+
 	while (t < tmax){
 
         // apply fixed step if dense stepping
         // or do interpolated step
 		if(DENSE_STEPPING) status = gsl_odeiv2_evolve_apply_fixed_step (evolve, control, step, &sys, &t, h, y);
-        else int status = gsl_odeiv2_evolve_apply (evolve, control, step, &sys, &t, t1, &h, y);
+        else status = gsl_odeiv2_evolve_apply (evolve, control, step, &sys, &t, t1, &h, y);
 
-        
-      	if (status != GSL_SUCCESS){
+      	if ((status != GSL_SUCCESS) && (status != 9)){
        		printf ("error, return value=%d\n", status);
           	break;
         }
+        // if status is 9 meaning inside the separatrix
+        // or if any quantity is nan, step back and take a smaller step.
+        else if ((status == 9)||(std::isnan(y[0]))||(std::isnan(y[1]))||(std::isnan(y[2])) ||(std::isnan(y[3]))||(std::isnan(y[4]))||(std::isnan(y[5])))
+        {
+            // reset evolver
+            gsl_odeiv2_step_reset(step);
+            gsl_odeiv2_evolve_reset(evolve);
+
+            // go back to previous points
+            #pragma unroll
+            for (int i = 0; i < 6; i += 1)
+            {
+                y[i] = y_prev[i];
+            }
+            t = prev_t;
+            h /= 2.;
+
+            // check for number of tries to fix this
+            bad_num += 1;
+            if (bad_num >= bad_limit)
+            {
+                printf ("error, reached bad limit.\n");
+                break;
+            }
+
+            continue;
+        }
+
+        // if it made it here, reset bad num
+        bad_num = 0;
 
         // should not be needed but is safeguard against stepping past maximum allowable time
         // the last point in the trajectory will be at t = tmax
@@ -235,6 +282,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
                 get_derivatives(&pdot, &edot, &Ydot,
                                      &Omega_phi, &Omega_theta, &Omega_r,
                                      params_holder->epsilon, a, p, e, Y);
+
                 // estimate the step to the breaking point and multiply by PERCENT_STEP
                 xI = Y_to_xI(a, p, e, Y);
                 p_sep = get_separatrix(a, e, xI);
