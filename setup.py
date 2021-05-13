@@ -298,9 +298,10 @@ if run_cuda_install:
         gpu_extension["extra_compile_args"]["nvcc"].remove("-D__USE_OMP__")
         gpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
 
+    breakpoint()
     if args.ccbin is not None:
         gpu_extension["extra_compile_args"]["nvcc"].insert(
-            0, "--ccbin={0}".format(args.ccbin)
+            0, "-ccbin={0}".format(args.ccbin)
         )
 
     matmul_ext = Extension(
