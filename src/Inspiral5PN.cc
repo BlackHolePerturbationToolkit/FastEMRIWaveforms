@@ -193,6 +193,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
     int status = 0;
 
     double prev_t = 0.0;
+    double prev_p_sep = 0.0;
     double y_prev[6] = {p0, e0, Y0, 0.0, 0.0, 0.0};
 
     // control it if it keeps returning nans and what not
@@ -266,14 +267,19 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
             p = y_prev[0];
             e = y_prev[1];
             Y = y_prev[2];
+
             double Phi_phi = y_prev[3];
             double Phi_theta = y_prev[4];
             double Phi_r = y_prev[5];
             t = prev_t;
 
+            // update p_sep (fixes part of issue #17)
+            double p_sep = prev_p_sep;
+
+            // set initial values
             double factor = 1.0;
             int iter = 0;
-
+            
             while (p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD)
             {
                 double pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r;
@@ -340,7 +346,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
         pn5_out.add_point(t*Msec, y[0], y[1], y[2], y[3], y[4], y[5]); // adds time in seconds
 
         prev_t = t;
-
+        prev_p_sep = p_sep;
         #pragma unroll
         for (int jj = 0; jj < 6; jj += 1) y_prev[jj] = y[jj];
 
