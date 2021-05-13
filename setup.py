@@ -156,6 +156,10 @@ parser.add_argument(
     help="Directory of both gsl lib and include. '/include' and '/lib' will be added to the end of this string.",
 )
 
+parser.add_argument(
+    "--ccbin", help="path/to/compiler to link with nvcc when installing with CUDA."
+)
+
 args, unknown = parser.parse_known_args()
 
 for key in [
@@ -171,6 +175,8 @@ for key in [
     "--lapack",
     "--lapack_lib",
     "--lapack_include",
+    args.ccbin,
+    "--ccbin",
 ]:
     try:
         sys.argv.remove(key)
@@ -185,6 +191,7 @@ try:
     numpy_include = numpy.get_include()
 except AttributeError:
     numpy_include = numpy.get_numpy_include()
+
 
 if args.lapack is not None:
     add_lapack = True
@@ -290,6 +297,11 @@ if run_cuda_install:
         gpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
         gpu_extension["extra_compile_args"]["nvcc"].remove("-D__USE_OMP__")
         gpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
+
+    if args.ccbin is not None:
+        gpu_extension["extra_compile_args"]["nvcc"].insert(
+            0, "--ccbin={0}".format(args.ccbin)
+        )
 
     matmul_ext = Extension(
         "pymatmul", sources=["src/matmul.cu", "src/pymatmul.pyx"], **gpu_extension
