@@ -94,21 +94,28 @@ python setup.py --help
 usage: setup.py [-h] [--no_omp] [--lapack_lib LAPACK_LIB]
                 [--lapack_include LAPACK_INCLUDE] [--lapack LAPACK]
                 [--gsl_lib GSL_LIB] [--gsl_include GSL_INCLUDE] [--gsl GSL]
+                [--ccbin CCBIN]
 
 optional arguments:
   -h, --help            show this help message and exit
   --no_omp              If provided, install without OpenMP.
   --lapack_lib LAPACK_LIB
-                        Directory of the lapack lib.
+                        Directory of the lapack lib. If you add lapack lib,
+                        must also add lapack include.
   --lapack_include LAPACK_INCLUDE
-                        Directory of the lapack include.
+                        Directory of the lapack include. If you add lapack
+                        includ, must also add lapack lib.
   --lapack LAPACK       Directory of both lapack lib and include. '/include'
                         and '/lib' will be added to the end of this string.
-  --gsl_lib GSL_LIB     Directory of the gsl lib.
+  --gsl_lib GSL_LIB     Directory of the gsl lib. If you add gsl lib, must
+                        also add gsl include.
   --gsl_include GSL_INCLUDE
-                        Directory of the gsl include.
+                        Directory of the gsl include. If you add gsl include,
+                        must also add gsl lib.
   --gsl GSL             Directory of both gsl lib and include. '/include' and
                         '/lib' will be added to the end of this string.
+  --ccbin CCBIN         path/to/compiler to link with nvcc when installing
+                        with CUDA.
 ```
 
 
