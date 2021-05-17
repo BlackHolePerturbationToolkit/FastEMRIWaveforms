@@ -91,19 +91,36 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
 
         """
 
-    def waveform_spa_factors(self, fdot_spline, fddot_spline):
+    def waveform_spa_factors(self, fdot_spline, fddot_spline, extended_SPA=True):
 
-        # Waveform Amplitudes
-        arg = -1j* 2*np.pi*fdot_spline**3 / (3*fddot_spline**2)
-        K_1over3 =  special.kve(1./3.,arg) #special.kv(1./3.,arg)*np.exp(arg) #
         
-        # to correct the special function nan
-        if np.sum(np.isnan(special.kv(1/3,arg))):
-            
-            X = 2*np.pi*fdot_spline**3 / (3*fddot_spline**2)
-            K_1over3[np.isnan(special.kv(1/3,arg))] = 0.0# (np.sqrt(np.pi/2) /(1j*np.sqrt(np.abs(X))) * np.exp(-1j*np.pi/4) )[np.isnan(special.kv(1/3,arg))]
 
-        return 1j* fdot_spline/np.abs(fddot_spline) * K_1over3 * 2/np.sqrt(3)
+        if extended_SPA==True:
+
+            # Waveform Amplitudes
+            arg = -1j* 2.* np.pi * fdot_spline**3 / (3.*fddot_spline**2)
+            K_1over3 =  special.kve(1./3.,arg) #special.kv(1./3.,arg)*np.exp(arg) #
+            
+            # to correct the special function nan
+            if np.sum(np.isnan(special.kv(1/3,arg)))>0:
+                print('number of nans',np.sum(np.isnan(special.kv(1/3,arg))))
+                print(arg[np.isnan(special.kv(1./3.,arg))])
+                
+                X = 2*np.pi*fdot_spline**3 / (3*fddot_spline**2)
+                K_1over3[np.isnan(special.kv(1./3.,arg))] = (np.sqrt(np.pi/2) /(1j*np.sqrt(np.abs(X))) * np.exp(-1j*np.pi/4) )[np.isnan(special.kv(1./3.,arg))]
+                #print('isnan',np.sum(np.isnan(arg)),np.sum(np.isnan(fdot_spline/np.abs(fddot_spline))))
+            
+
+            amp = 1j* fdot_spline/np.abs(fddot_spline) * K_1over3 * 2./np.sqrt(3.)
+            amp[np.isnan(special.kv(1./3.,arg))]=(np.exp(- np.pi/4 *np.sign(fdot_spline))/np.sqrt(np.abs(fdot_spline)) * (1 - 5j/(48.*np.pi) * fddot_spline**2/(fdot_spline**3)) )[np.isnan(special.kv(1./3.,arg))]
+
+        else:
+            amp = np.exp(- np.pi/4 *fdot_spline/np.abs(fddot_spline) )/np.sqrt(np.abs(fdot_spline)) * (1 - 5j/(48.*np.pi) * fddot_spline**2/(fdot_spline**3))
+        
+        if np.sum(np.isnan(amp))>0:
+            print('nan in amplitude')
+        
+        return amp
 
 
     def time_frequency_map(self,spline_f_mode,index_star):
@@ -396,7 +413,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
 
                 # negative contribution
                 if m!=0:
-                    #print('m different from zero')
+                    print('m different from zero')
 
                     h_contr = [(spline(t_two)[j] - 1j* spline(t_two)[num_teuk_modes+j] )*ylms[j + num_teuk_modes]*\
                         self.waveform_spa_factors(-fdot_spline(t_two), -fddot_spline(t_two))*\
@@ -426,7 +443,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
 
 
                 h_contr = (spline(t_f)[j] + 1j* spline(t_f)[num_teuk_modes+j] )*ylms[j]*\
-                    self.waveform_spa_factors(fdot_spline(t_f), fddot_spline(t_f))*\
+                    self.waveform_spa_factors(fdot_spline(t_f), fddot_spline(t_f),extended_SPA=True)*\
                     np.exp( 1j*( 2*np.pi*self.frequency[index]* t_f  - ( m * spline(t_f)[-2] + n * spline(t_f)[-1]) ) )
 
                 h[index] += h_contr
@@ -438,7 +455,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                     index = np.flip(index)
 
                     h_neg = (spline(t_f)[j] - 1j* spline(t_f)[num_teuk_modes+j] )*ylms[j+num_teuk_modes]*\
-                        self.waveform_spa_factors(-fdot_spline(t_f), -fddot_spline(t_f))*\
+                        self.waveform_spa_factors(-fdot_spline(t_f), -fddot_spline(t_f),extended_SPA=True)*\
                         np.exp( 1j*( 2*np.pi*self.frequency[index]* t_f  + ( m * spline(t_f)[-2] + n * spline(t_f)[-1]) ) )
 
                     h[index] += h_neg
