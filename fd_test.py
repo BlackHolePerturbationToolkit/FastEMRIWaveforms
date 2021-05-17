@@ -3,6 +3,7 @@ from few.waveform import FastSchwarzschildEccentricFlux
 from few.utils.constants import *
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import signal
 
 
 sum_kwargs = dict(pad_output=True)
@@ -16,38 +17,39 @@ M = 1e6; mu = 40; p0 = 10; e0 = 0.7; theta= np.pi/3; phi = np.pi/5 # mismatch = 
 #M = 1e6; mu = 50; p0 = 17.4; e0 = 0.7; theta= np.pi/3; phi = np.pi/5 # mismatch =  0.02257016504821807
 
 # mism 0.0024275870323797744
-dt=5
-T=0.5
+dt=10
+T=1.
 
 
 l=2 #2
-m=1 #1
-n=-4 #-4
+m=0 #1
+n=2 #-4
 
 #%% TIME DOMAIN
-wave_22 = few_base(M, mu, p0, e0, theta, phi,T=T,dt=dt , eps=1e-2) #mode_selection=[(l,m,n)],include_minus_m=True) #,
+wave_22 = few_base(M, mu, p0, e0, theta, phi,T=T,dt=dt,eps=1e-2)# ,mode_selection=[(l,m,n)],include_minus_m=True) #
 freq_fft = np.fft.fftfreq(len(wave_22),dt)
-fft_wave = np.fft.fft(wave_22)*dt
+fft_wave = np.fft.fft(wave_22 )*dt #* signal.tukey(len(wave_22))
 
+rect_fft = np.fft.fft(np.ones_like(wave_22)) #* signal.tukey(len(wave_22))
 
 
 sum_kwargs = dict(pad_output=True, output_type="fd")
 
 wave = FastSchwarzschildEccentricFlux(sum_kwargs=sum_kwargs)
 
-fd_h = wave(M,mu,p0,e0,theta,phi,T=T,dt=dt , eps=1e-2) #,mode_selection=[(l,m,n)]) #
+fd_h = wave(M,mu,p0,e0,theta,phi,T=T,dt=dt,eps=1e-2)# , mode_selection=[(l,m,n)],include_minus_m=True) #
 
 f = np.arange(-1/(2*dt),+1/(2*dt),1/(len(fd_h)*dt))
 #%% mismatch
 fd_h[np.isnan(fd_h)] = 0
-print(np.sum(np.isnan(fd_h)))
 
-index_nonzero = [fd_h != 0][0]
-fd_h_correct = -np.roll( np.flip(np.real(fd_h)) + 1j* np.flip(np.imag(fd_h)), 1)
+fd_h_correct = -np.roll( np.flip(np.real(fd_h)) + 1j* np.flip(np.imag(fd_h)), 1)#np.sin(dt*len(wave_22)*freq_fft/4/np.pi)/np.sin(dt*freq_fft/4/np.pi)#*np.exp(-1j* (len(wave_22)-1)/2 )
+index_nonzero = [fd_h_correct != 0.0][0]
+
 # check nan
 
 den = np.sqrt(np.real(np.dot(np.conj(fft_wave[index_nonzero]),fft_wave[index_nonzero])) * np.real(np.dot(np.conj(fd_h_correct[index_nonzero]),fd_h_correct[index_nonzero])) )
-
+print('den',den,'index',index_nonzero)
 print("mismatch = " ,1-np.real(np.dot(np.conj(fd_h_correct[index_nonzero]) , fft_wave[index_nonzero] ) )/den)
 
 
