@@ -61,7 +61,7 @@ class CubicSplineInterpolant(GPUModuleBase):
     This class can be run on GPUs and CPUs.
 
     args:
-        t (1D double xp.ndarray): t values as input for the spline.
+        t (1D or 2D double xp.ndarray): t values as input for the spline. If 2D, must have shape (ninterps, length).
         y_all (1D or 2D double xp.ndarray): y values for the spline.
             Shape: (length,) or (ninterps, length).
         use_gpu (bool, optional): If True, prepare arrays for a GPU. Default is
@@ -86,6 +86,7 @@ class CubicSplineInterpolant(GPUModuleBase):
 
         # get quantities related to how many interpolations
         ninterps, length = y_all.shape
+        self.ninterps, self.length = ninterps, length
 
         # store this for reshaping flattened arrays
         self.reshape_shape = (self.degree + 1, ninterps, length)
@@ -104,7 +105,23 @@ class CubicSplineInterpolant(GPUModuleBase):
         diag = self.xp.zeros_like(B)
         lower_diag = self.xp.zeros_like(B)
 
-        self.t = t.astype(xp.float64)
+        if t.ndim == 1:
+            if len(t) < 2:
+                raise ValueError("t must have length greater than 2.")
+
+            # could save memory by adjusting c code to treat 1D differently
+            self.t = self.xp.tile(t, (ninterps, 1)).flatten().astype(xp.float64)
+
+        elif t.ndim == 2:
+            if t.shape[1] < 2:
+                raise ValueError("t must have length greater than 2 along time axis.")
+
+            # TODO: need copy?
+            self.t = t.flatten().copy().astype(xp.float64)
+
+        else:
+            raise ValueError("t must be 1 or 2 dimensions.")
+
         # perform interpolation
         self.interpolate_arrays(
             self.t, interp_array, ninterps, length, B, upper_diag, diag, lower_diag,
@@ -118,6 +135,7 @@ class CubicSplineInterpolant(GPUModuleBase):
 
         # update reshape_shape
         self.reshape_shape = (self.degree + 1, length, ninterps)
+        self.t = self.t.reshape((ninterps, length))
 
     def attributes_CubicSplineInterpolate(self):
         """
@@ -159,7 +177,28 @@ class CubicSplineInterpolant(GPUModuleBase):
         """constants for the cubic term"""
         return self.interp_array.reshape(self.reshape_shape)[3].T
 
-    def __call__(self, tnew):
+    def _get_inds(self, tnew):
+        # find were in the old t array the new t values split
+
+        inds = self.xp.zeros((self.ninterps, tnew.shape[1]), dtype=int)
+        # TODO: remove loop ? if speed needed
+        for i, (t, tnew_i) in enumerate(zip(self.t, tnew)):
+            inds[i] = self.xp.searchsorted(t, tnew_i, side="right") - 1
+
+            # fix end value
+            inds[i][tnew_i == t[-1]] = len(t) - 2
+
+        # get values outside the edges
+        inds_bad_left = tnew < self.t[:, 0][:, None]
+        inds_bad_right = tnew > self.t[:, -1][:, None]
+
+        if np.any(inds < 0) or np.any(inds >= self.t.shape[1]):
+            warnings.warn(
+                "New t array outside bounds of input t array. These points are filled with edge values."
+            )
+        return inds, inds_bad_left, inds_bad_right
+
+    def __call__(self, tnew, deriv_order=0):
         """Evaluation function for the spline
 
         Put in an array of new t values at which all interpolants will be
@@ -167,69 +206,95 @@ class CubicSplineInterpolant(GPUModuleBase):
         are used to fill the new array at these points.
 
         args:
-            tnew (1D double xp.ndarray): Array of new t values. All of these new
+            tnew (1D or 2D double xp.ndarray): Array of new t values. All of these new
                 t values must be within the bounds of the input t values,
-                including the beginning t and **excluding** the ending t.
+                including the beginning t and **excluding** the ending t. If tnew is 1D
+                and :code:`self.t` is 2D, tnew will be cast to 2D.
+            deriv_order (int, optional): Order of the derivative to evaluate. Default
+                is 0 meaning the basic spline is evaluated. deriv_order of 1, 2, and 3
+                correspond to their respective derivatives of the spline. Unlike :code:`scipy`,
+                this is purely an evaluation of the derivative values, not a new class to evaluate
+                for the derivative. 
 
         raises:
             ValueError: a new t value is not in the bounds of the input t array.
 
+        returns:
+            xp.ndarray: 1D or 2D array of evaluated spline values (or derivatives).
+
         """
 
-        # find were in the old t array the new t values split
-        inds = self.xp.searchsorted(self.t, tnew, side="right") - 1
+        tnew = self.xp.atleast_1d(tnew)
 
-        # get values outside the edges
-        inds_bad_left = tnew < self.t[0]
-        inds_bad_right = tnew > self.t[-1]
+        if tnew.ndim == 2:
+            if tnew.shape[0] != self.t.shape[0]:
+                raise ValueError(
+                    "If providing a 2D tnew array, must have some number of interpolants as was entered during initialization."
+                )
 
-        if np.any(inds < 0) or np.any(inds >= len(self.t)):
-            warnings.warn(
-                "New t array outside bounds of input t array. These points are filled with edge values."
-            )
+        # copy input to all splines
+        elif tnew.ndim == 1:
+            tnew = self.xp.tile(tnew, (self.t.shape[0], 1))
 
-        x = tnew - self.t[inds]
+        tnew = self.xp.atleast_2d(tnew)
+
+        # get indices into spline
+        inds, inds_bad_left, inds_bad_right = self._get_inds(tnew)
+
+        # x value for spline
+
+        # indexes for which spline
+        inds0 = np.tile(np.arange(self.ninterps), (tnew.shape[1], 1)).T
+        t_here = self.t[(inds0.flatten(), inds.flatten())].reshape(
+            self.ninterps, tnew.shape[1]
+        )
+
+        x = tnew - t_here
         x2 = x * x
         x3 = x2 * x
 
-        out = (
-            self.y[:, inds]
-            + self.c1[:, inds] * x
-            + self.c2[:, inds] * x2
-            + self.c3[:, inds] * x3
+        # get spline coefficients
+        y = self.y[(inds0.flatten(), inds.flatten())].reshape(
+            self.ninterps, tnew.shape[1]
+        )
+        c1 = self.c1[(inds0.flatten(), inds.flatten())].reshape(
+            self.ninterps, tnew.shape[1]
+        )
+        c2 = self.c2[(inds0.flatten(), inds.flatten())].reshape(
+            self.ninterps, tnew.shape[1]
+        )
+        c3 = self.c3[(inds0.flatten(), inds.flatten())].reshape(
+            self.ninterps, tnew.shape[1]
         )
 
-        # fix bad values
-        if self.xp.any(inds_bad_left):
-            out[:, inds_bad_left] = self.y[:, 0]
+        # evaluate spline
+        if deriv_order == 0:
+            out = y + c1 * x + c2 * x2 + c3 * x3
+            # fix bad values
+            if self.xp.any(inds_bad_left):
+                temp = self.xp.tile(self.y[:, 0], (tnew.shape[1], 1)).T
+                out[inds_bad_left] = temp[inds_bad_left]
 
-        if self.xp.any(inds_bad_right):
-            out[:, inds_bad_right] = self.y[:, -1]
+            if self.xp.any(inds_bad_right):
+                temp = self.xp.tile(self.y[:, -1], (tnew.shape[1], 1)).T
+                out[inds_bad_right] = temp[inds_bad_right]
+
+        else:
+            # derivatives
+            if self.xp.any(inds_bad_right) or self.xp.any(inds_bad_left):
+                raise ValueError(
+                    "x points outside of the domain of the spline are not supported when taking derivatives."
+                )
+            if deriv_order == 1:
+                out = c1 + 2 * c2 * x + 3 * c3 * x2
+            elif deriv_order == 2:
+                out = 2 * c2 + 6 * c3 * x
+            elif deriv_order == 3:
+                out = 6 * c3
+            else:
+                raise ValueError("deriv_order must be within 0 <= deriv_order <= 3.")
+
         return out.squeeze()
-
-    def d1(self, tnew):
-        inds = self.xp.searchsorted(self.t, tnew)
-
-        x = tnew - self.t[inds]
-        x2 = x * x
-
-        out = (
-            self.c1[:, inds] + 2.0 * self.c2[:, inds] * x + 3.0 * self.c3[:, inds] * x2
-        )
-        return out
-
-    def d2(self, tnew):
-        inds = self.xp.searchsorted(self.t, tnew)
-
-        x = tnew - self.t[inds]
-
-        out = 2.0 * self.c2[:, inds] * x + 6.0 * self.c3[:, inds] * x
-        return out
-
-    def d3(self, tnew):
-        inds = self.xp.searchsorted(self.t, tnew)
-        out = 6.0 * self.c3[:, inds]
-        return out
 
 
 class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase):

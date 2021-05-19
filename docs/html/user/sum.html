@@ -319,7 +319,7 @@ in cuda for an example of this.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>t</strong> (<em>1D double xp.ndarray</em>) – t values as input for the spline.</p></li>
+<li><p><strong>t</strong> (<em>1D</em><em> or </em><em>2D double xp.ndarray</em>) – t values as input for the spline. If 2D, must have shape (ninterps, length).</p></li>
 <li><p><strong>y_all</strong> (<em>1D</em><em> or </em><em>2D double xp.ndarray</em>) – y values for the spline.
 Shape: (length,) or (ninterps, length).</p></li>
 <li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, prepare arrays for a GPU. Default is
@@ -394,19 +394,33 @@ coefficients. It is flattened after fitting from shape
 
 <dl class="py method">
 <dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tnew</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.__call__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tnew</span></em>, <em class="sig-param"><span class="n">deriv_order</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluation function for the spline</p>
 <p>Put in an array of new t values at which all interpolants will be
 evaluated. If t values are outside of the original t values, edge values
 are used to fill the new array at these points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>tnew</strong> (<em>1D double xp.ndarray</em>) – Array of new t values. All of these new
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tnew</strong> (<em>1D</em><em> or </em><em>2D double xp.ndarray</em>) – Array of new t values. All of these new
 t values must be within the bounds of the input t values,
-including the beginning t and <strong>excluding</strong> the ending t.</p>
+including the beginning t and <strong>excluding</strong> the ending t. If tnew is 1D
+and <code class="code docutils literal notranslate"><span class="pre">self.t</span></code> is 2D, tnew will be cast to 2D.</p></li>
+<li><p><strong>deriv_order</strong> (<em>int</em><em>, </em><em>optional</em>) – Order of the derivative to evaluate. Default
+is 0 meaning the basic spline is evaluated. deriv_order of 1, 2, and 3
+correspond to their respective derivatives of the spline. Unlike <code class="code docutils literal notranslate"><span class="pre">scipy</span></code>,
+this is purely an evaluation of the derivative values, not a new class to evaluate
+for the derivative.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Raises</dt>
 <dd class="field-even"><p><strong>ValueError</strong> – a new t value is not in the bounds of the input t array.</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>1D or 2D array of evaluated spline values (or derivatives).</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>xp.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
@@ -544,22 +558,6 @@ waveform generator.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>obj</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py method">
-<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_InterpolatedModeSum">
-<code class="sig-name descname">attributes_InterpolatedModeSum</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_InterpolatedModeSum" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py attribute">
-<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.get_waveform">
-<code class="sig-name descname">get_waveform</code><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.get_waveform" title="Permalink to this definition">¶</a></dt>
-<dd><p>CPU or GPU function for waveform creation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>func</p>
 </dd>
 </dl>
 </dd></dl>
@@ -869,6 +867,22 @@ the trajectory module.</p></li>
 <dd class="field-even"><p><strong>ValueError</strong> – If any of the angular values are not allowed.</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_InterpolatedModeSum">
+<code class="sig-name descname">attributes_InterpolatedModeSum</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_InterpolatedModeSum" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.get_waveform">
+<code class="sig-name descname">get_waveform</code><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.get_waveform" title="Permalink to this definition">¶</a></dt>
+<dd><p>CPU or GPU function for waveform creation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>func</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py method">
