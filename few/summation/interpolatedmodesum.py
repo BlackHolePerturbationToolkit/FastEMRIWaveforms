@@ -159,6 +159,22 @@ class CubicSplineInterpolant(GPUModuleBase):
         """constants for the cubic term"""
         return self.interp_array.reshape(self.reshape_shape)[3].T
 
+    def _get_inds(self, tnew):
+        # find were in the old t array the new t values split
+        inds = self.xp.searchsorted(self.t, tnew, side="right") - 1
+
+        # get values outside the edges
+        inds_bad_left = tnew < self.t[0]
+        inds_bad_right = tnew > self.t[-1]
+
+        inds[tnew == self.t[-1]] = len(self.t) - 2
+
+        if np.any(inds < 0) or np.any(inds >= len(self.t)):
+            warnings.warn(
+                "New t array outside bounds of input t array. These points are filled with edge values."
+            )
+        return inds, inds_bad_left, inds_bad_right
+
     def __call__(self, tnew):
         """Evaluation function for the spline
 
@@ -176,17 +192,7 @@ class CubicSplineInterpolant(GPUModuleBase):
 
         """
 
-        # find were in the old t array the new t values split
-        inds = self.xp.searchsorted(self.t, tnew, side="right") - 1
-
-        # get values outside the edges
-        inds_bad_left = tnew < self.t[0]
-        inds_bad_right = tnew > self.t[-1]
-
-        if np.any(inds < 0) or np.any(inds >= len(self.t)):
-            warnings.warn(
-                "New t array outside bounds of input t array. These points are filled with edge values."
-            )
+        inds, inds_bad_left, inds_bad_right = self._get_inds(tnew)
 
         x = tnew - self.t[inds]
         x2 = x * x
@@ -218,7 +224,7 @@ class CubicSplineInterpolant(GPUModuleBase):
             raise ValueError("order parameter must be 0, 1, 2 or 3.")
 
     def _d1(self, tnew):
-        inds = self.xp.searchsorted(self.t, tnew)
+        inds, inds_bad_left, inds_bad_right = self._get_inds(tnew)
 
         x = tnew - self.t[inds]
         x2 = x * x
@@ -226,19 +232,34 @@ class CubicSplineInterpolant(GPUModuleBase):
         out = (
             self.c1[:, inds] + 2.0 * self.c2[:, inds] * x + 3.0 * self.c3[:, inds] * x2
         )
+
+        # fix bad values
+        if self.xp.any(inds_bad_left) or self.xp.any(inds_bad_right):
+            raise ValueError(
+                "New t array outside bounds of input t array. These points are not currently implemented in derivatives of the spline."
+            )
+
         return out
 
     def _d2(self, tnew):
-        inds = self.xp.searchsorted(self.t, tnew)
-
+        inds, inds_bad_left, inds_bad_right = self._get_inds(tnew)
         x = tnew - self.t[inds]
 
         out = 2.0 * self.c2[:, inds] + 6.0 * self.c3[:, inds] * x
+        # fix bad values
+        if self.xp.any(inds_bad_left) or self.xp.any(inds_bad_right):
+            raise ValueError(
+                "New t array outside bounds of input t array. These points are not currently implemented in derivatives of the spline."
+            )
         return out
 
     def _d3(self, tnew):
-        inds = self.xp.searchsorted(self.t, tnew)
+        inds, inds_bad_left, inds_bad_right = self._get_inds(tnew)
         out = 6.0 * self.c3[:, inds]
+        if self.xp.any(inds_bad_left) or self.xp.any(inds_bad_right):
+            raise ValueError(
+                "New t array outside bounds of input t array. These points are not currently implemented in derivatives of the spline."
+            )
         return out
 
 

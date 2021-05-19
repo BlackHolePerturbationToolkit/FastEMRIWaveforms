@@ -34,8 +34,8 @@ T=1.
 
 
 l=2 #2
-m=1 #1
-n=-4 #-4
+m=2 #1
+n=2 #-4
 
 #%% TIME DOMAIN
 wave_22 = few_base(M, mu, p0, e0, theta, phi,T=T,dt=dt,mode_selection=[(l,m,n)],include_minus_m=True) #,eps=1e-2)# 
