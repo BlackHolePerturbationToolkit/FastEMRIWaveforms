@@ -61,7 +61,7 @@ class CubicSplineInterpolant(GPUModuleBase):
     This class can be run on GPUs and CPUs.
 
     args:
-        t (1D double xp.ndarray): t values as input for the spline.
+        t (1D or 2D double xp.ndarray): t values as input for the spline. If 2D, must have shape (ninterps, length).
         y_all (1D or 2D double xp.ndarray): y values for the spline.
             Shape: (length,) or (ninterps, length).
         use_gpu (bool, optional): If True, prepare arrays for a GPU. Default is
@@ -206,12 +206,21 @@ class CubicSplineInterpolant(GPUModuleBase):
         are used to fill the new array at these points.
 
         args:
-            tnew (1D double xp.ndarray): Array of new t values. All of these new
+            tnew (1D or 2D double xp.ndarray): Array of new t values. All of these new
                 t values must be within the bounds of the input t values,
-                including the beginning t and **excluding** the ending t.
+                including the beginning t and **excluding** the ending t. If tnew is 1D
+                and :code:`self.t` is 2D, tnew will be cast to 2D.
+            deriv_order (int, optional): Order of the derivative to evaluate. Default
+                is 0 meaning the basic spline is evaluated. deriv_order of 1, 2, and 3
+                correspond to their respective derivatives of the spline. Unlike :code:`scipy`,
+                this is purely an evaluation of the derivative values, not a new class to evaluate
+                for the derivative. 
 
         raises:
             ValueError: a new t value is not in the bounds of the input t array.
+
+        returns:
+            xp.ndarray: 1D or 2D array of evaluated spline values (or derivatives).
 
         """
 
