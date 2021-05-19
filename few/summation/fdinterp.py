@@ -136,7 +136,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
         t_star = t[index_star] -ratio + np.sqrt(ratio**2 - second_ratio)
 
         # new frequancy vector
-        Fstar = spline_f_mode(t_star)
+        Fstar = spline_f_mode(np.array([t_star])).item()
         new_F = np.append(f_mn[:index_star+1], Fstar + Fstar/np.abs(Fstar) * np.abs(f_mn[index_star+1:] - Fstar) )
 
         # new t_f
@@ -384,16 +384,19 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
             # frequency mode
             f_mn = m * f_phi + n * f_r
             spline_f_mode = CubicSplineInterpolant(t, f_mn, use_gpu=self.use_gpu)
+
             second_spl = CubicSpline(t,f_mn)
 
             min_f_mn = np.min(np.abs(f_mn))
             max_f_mn = np.max(np.abs(f_mn))
 
             # fdot
-            fdot_spline = second_spl.derivative(nu=1) # CubicSpline(t, np.asarray(spline_f_mode.deriv(t)[-1])) # CubicSplineInterpolant(t, np.asarray(spline_f_mode.deriv(t)), use_gpu=self.use_gpu)
+            fdot_spline = spline_f_mode._d1 # second_spl.derivative(nu=1) # CubicSplineInterpolant(t, second_spl.derivative(nu=1), use_gpu=self.use_gpu) # CubicSpline(t, np.asarray(spline_f_mode.deriv(t)[-1])) # CubicSplineInterpolant(t, np.asarray(spline_f_mode.deriv(t)), use_gpu=self.use_gpu)
 
             # fddot
-            fddot_spline = second_spl.derivative(nu=2) #fdot_spline.derivative() # CubicSpline(t, fdot_spline.derivative(t)) #, use_gpu=self.use_gpu)
+            fddot_spline = spline_f_mode._d2 # second_spl.derivative(nu=2) #fdot_spline.derivative() # CubicSpline(t, fdot_spline.derivative(t)) #, use_gpu=self.use_gpu)
+
+            breakpoint()
 
             if index_star is not None:
                 print(m,n)
@@ -408,8 +411,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                 for t_two,f in zip([t_f_1,t_f_2],[self.frequency[ind_1],self.frequency[ind_2]])
                 ]
 
-                h[ind_1] += h_contr[0]
-                h[ind_2] += h_contr[1]
+                h[ind_1] += h_contr[0][0]
+                h[ind_2] += h_contr[1][0]
 
                 if np.sum(np.isnan(h_contr[0]))>0 or np.sum(np.isnan(h_contr[1]))>0:
                     breakpoint()
@@ -425,8 +428,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                     for t_two,f in zip([np.flip(t_f_1),np.flip(t_f_2)],[self.frequency[np.flip(ind_1)],self.frequency[np.flip(ind_2)]])
                     ]
 
-                    h[np.flip(ind_1)] += h_contr[0]
-                    h[np.flip(ind_2)] += h_contr[1]
+                    h[np.flip(ind_1)] += h_contr[0][0]
+                    h[np.flip(ind_2)] += h_contr[1][0]
 
 
                     if np.sum(np.isnan(h_contr[0]))>0 or np.sum(np.isnan(h_contr[1]))>0:
@@ -455,7 +458,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                     self.waveform_spa_factors(fdot_spline(t_f), fddot_spline(t_f),extended_SPA=True)*\
                     np.exp( 1j*( 2*np.pi*self.frequency[index]* t_f  - ( m * spline(t_f)[-2] + n * spline(t_f)[-1]) ) )
 
-                h[index] += h_contr
+                h[index] += h_contr[0]
 
                 
 
@@ -469,7 +472,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                         self.waveform_spa_factors(-fdot_spline(t_f), -fddot_spline(t_f),extended_SPA=True)*\
                         np.exp( 1j*( 2*np.pi*self.frequency[index]* t_f  + ( m * spline(t_f)[-2] + n * spline(t_f)[-1]) ) )
 
-                    h[index] += h_neg
+                    h[index] += h_neg[0]
 
                 
                 if np.sum(np.isnan(h_contr))>0 or np.sum(np.isnan(h_neg))>0:
