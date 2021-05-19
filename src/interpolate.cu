@@ -154,7 +154,7 @@ void fill_B(double *t_arr, double *y_all, double *B, double *upper_diag, double 
             {
 
                 int lead_ind = interp_i*length;
-                prep_splines(i, length, &B[lead_ind], &upper_diag[lead_ind], &diag[lead_ind], &lower_diag[lead_ind], t_arr, &y_all[interp_i*length]);
+                prep_splines(i, length, &B[lead_ind], &upper_diag[lead_ind], &diag[lead_ind], &lower_diag[lead_ind], &t_arr[lead_ind], &y_all[interp_i*length]);
             }
         }
 }
@@ -201,7 +201,7 @@ void set_spline_constants(double *t_arr, double *interp_array, double *B,
             i += diff2)
             {
 
-              dt = t_arr[i + 1] - t_arr[i];
+              dt = t_arr[interp_i * length + i + 1] - t_arr[interp_i * length + i];
 
               int lead_ind = interp_i*length;
               fill_coefficients(i, length, &B[lead_ind], dt,
