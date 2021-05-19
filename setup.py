@@ -156,26 +156,29 @@ parser.add_argument(
     help="Directory of both gsl lib and include. '/include' and '/lib' will be added to the end of this string.",
 )
 
+parser.add_argument(
+    "--ccbin", help="path/to/compiler to link with nvcc when installing with CUDA."
+)
+
 args, unknown = parser.parse_known_args()
 
-for key in [
-    args.gsl_include,
-    args.gsl_lib,
-    args.gsl,
-    "--gsl",
-    "--gsl_include",
-    "--gsl_lib",
-    args.lapack_include,
-    args.lapack_lib,
-    args.lapack,
-    "--lapack",
-    "--lapack_lib",
-    "--lapack_include",
+for key1, key2 in [
+    ["--gsl_include", args.gsl_include],
+    ["--gsl_lib", args.gsl_lib],
+    ["--gsl", args.gsl],
+    ["--lapack_include", args.lapack_include],
+    ["--lapack_lib", args.lapack_lib],
+    ["--lapack", args.lapack],
+    ["--ccbin", args.ccbin],
 ]:
-    try:
-        sys.argv.remove(key)
-    except ValueError:
-        pass
+    keys = [key1, key2]
+    if key2 is not None:
+        keys.append(key1 + "=" + key2)
+    for key in keys:
+        try:
+            sys.argv.remove(key)
+        except ValueError:
+            pass
 
 use_omp = not args.no_omp
 
@@ -185,6 +188,7 @@ try:
     numpy_include = numpy.get_include()
 except AttributeError:
     numpy_include = numpy.get_numpy_include()
+
 
 if args.lapack is not None:
     add_lapack = True
@@ -290,6 +294,11 @@ if run_cuda_install:
         gpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
         gpu_extension["extra_compile_args"]["nvcc"].remove("-D__USE_OMP__")
         gpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
+
+    if args.ccbin is not None:
+        gpu_extension["extra_compile_args"]["nvcc"].insert(
+            0, "-ccbin={0}".format(args.ccbin)
+        )
 
     matmul_ext = Extension(
         "pymatmul", sources=["src/matmul.cu", "src/pymatmul.pyx"], **gpu_extension
