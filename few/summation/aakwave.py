@@ -213,7 +213,11 @@ class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
         lam = iota
 
         fill_val = 1e-6
-        if np.any((lam > np.pi - fill_val) | (lam < fill_val)):
+        if np.any(
+            (lam > np.pi - fill_val)
+            | (lam < fill_val)
+            | (np.abs(lam - (np.pi / 2.0)) < fill_val)
+        ):
             warnings.warn(
                 "Inclination trajectory includes values within 1e-6 of the poles. We shift these values automatically away from poles by 1e-6."
             )
@@ -222,6 +226,12 @@ class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
 
             inds_fix_up = lam < fill_val
             lam[inds_fix_up] = fill_val
+
+            inds_fix = (np.abs(lam - (np.pi / 2.0)) < fill_val) & (lam > np.pi / 2.0)
+            lam[inds_fix] = np.pi / 2.0 + fill_val
+
+            inds_fix = (np.abs(lam - (np.pi / 2.0)) < fill_val) & (lam < np.pi / 2.0)
+            lam[inds_fix] = np.pi / 2.0 - fill_val
 
         if qK < fill_val or qK > np.pi - fill_val:
             warnings.warn(
