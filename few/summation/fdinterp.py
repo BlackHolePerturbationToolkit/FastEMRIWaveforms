@@ -396,8 +396,6 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
             # fddot
             fddot_spline = spline_f_mode._d2 # second_spl.derivative(nu=2) #fdot_spline.derivative() # CubicSpline(t, fdot_spline.derivative(t)) #, use_gpu=self.use_gpu)
 
-            breakpoint()
-
             if index_star is not None:
                 print(m,n)
                 print('there is a turn-over')
@@ -475,9 +473,9 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
                     h[index] += h_neg[0]
 
                 
-                if np.sum(np.isnan(h_contr))>0 or np.sum(np.isnan(h_neg))>0:
-                    breakpoint()
-                    print('nan in amplitude')
+                #if np.sum(np.isnan(h_contr))>0 or np.sum(np.isnan(h_neg))>0:
+                #    breakpoint()
+                #    print('nan in amplitude')
 
 
 
