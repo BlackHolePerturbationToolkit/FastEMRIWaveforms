@@ -35,7 +35,8 @@ Package TODOs
 Change Log
 ===========
 
-- 1.3.5: Interpolation updated for 2d and bug fixes on derivatives. 
+- 1.3.6: Fixed Y0 < 0.0 in new AAK. 
+- 1.3.5: Interpolation updated for 2d and bug fixes on derivatives.
 - 1.3.4: ccbin option added to setup.py.
 - 1.3.3: More bug fixes in Pn5 stepping over separatrix.
 - 1.3.2: 2 bug fixes in Pn5. Integrator stepping past separatrix. Randomly finding Nan returns from fundamental frequencies.
