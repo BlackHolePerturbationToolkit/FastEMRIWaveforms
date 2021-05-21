@@ -307,7 +307,7 @@ void make_waveform(cmplx *waveform,
             FcrosII = 1.0;
         }
 
-          double Amp=pow(OmegaPhi*M_phys*MTSUN_SI,2./3.)*zeta;
+          double Amp=pow(abs(OmegaPhi)*M_phys*MTSUN_SI,2./3.)*zeta;
 
           d_RotCoeff(rot, n_rot, L_rot, S_rot, nxL_rot, nxS_rot,
                    lam,qS,phiS,qK,phiK,alp);
