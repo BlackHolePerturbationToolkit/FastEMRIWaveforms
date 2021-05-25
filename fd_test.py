@@ -19,27 +19,27 @@ few_base = FastSchwarzschildEccentricFlux(
 
 M = 1e6; mu = 40.; p0 = 10.; e0 = 0.7; theta= np.pi/3; phi = np.pi/5 # mismatch =  0.0014153820095872405
 
-#M = 1e6; mu = 50; p0 = 11.48; e0 = 0.7; theta= np.pi/3; phi = np.pi/5 # mismatch =  0.02257016504821807
+M = 1e6; mu = 50; p0 = 11.48; e0 = 0.7; theta= np.pi/3; phi = np.pi/5 # mismatch =  0.02257016504821807
 
 #traj_args = [M, p0, e0]
 #traj_kwargs = {}
 #index_of_mu = 1
 
-t_out = 1.
+#t_out = 1.
 # run trajectory
 #mu = get_mu_at_t(traj_module, t_out, traj_args)
-print(mu)
+#print(mu)
 # mism 0.0024275870323797744
-dt=50
+dt=10
 T=1/2.5
 
 
 l=2 #2
-m=0 #1
-n=-2 #-4
+m=1 #1
+n=-4 #-4
 
 #%% TIME DOMAIN
-wave_22 = few_base(M, mu, p0, e0, theta, phi,T=T,dt=dt, batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #,eps=1e-2)# 
+wave_22 = few_base(M, mu, p0, e0, theta, phi,T=T,dt=dt,eps=1e-2)# , batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #
 freq_fft = np.fft.fftfreq(len(wave_22),dt)
 fft_wave = np.fft.fft(wave_22 )*dt #* signal.tukey(len(wave_22))
 
@@ -50,7 +50,7 @@ sum_kwargs = dict(pad_output=True, output_type="fd")
 
 wave = FastSchwarzschildEccentricFlux(sum_kwargs=sum_kwargs)
 
-fd_h = wave(M,mu,p0,e0,theta,phi,T=T,dt=dt,mode_selection=[(l,m,n)],include_minus_m=True) #,eps=1e-2)# , mode_selection=[(l,m,n)],include_minus_m=True) #
+fd_h = wave(M,mu,p0,e0,theta,phi,T=T,dt=dt,eps=1e-2)# ,mode_selection=[(l,m,n)],include_minus_m=True) #,eps=1e-2)# , mode_selection=[(l,m,n)],include_minus_m=True) #
 
 f = np.arange(-1/(2*dt),+1/(2*dt),1/(len(fd_h)*dt))
 
