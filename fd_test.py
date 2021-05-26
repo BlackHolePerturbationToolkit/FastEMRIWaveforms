@@ -39,7 +39,7 @@ m=1 #1
 n=-4 #-4
 
 #%% TIME DOMAIN
-wave_22 = few_base(M, mu, p0, e0, theta, phi,T=T,dt=dt,eps=1e-2)# , batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #
+wave_22 = few_base(M, mu, p0, e0, theta, phi,T=T,dt=dt,mode_selection=[(l,m,n)],include_minus_m=True) #,eps=1e-2)# , batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #
 freq_fft = np.fft.fftfreq(len(wave_22),dt)
 fft_wave = np.fft.fft(wave_22 )*dt #* signal.tukey(len(wave_22))
 
@@ -50,7 +50,7 @@ sum_kwargs = dict(pad_output=True, output_type="fd")
 
 wave = FastSchwarzschildEccentricFlux(sum_kwargs=sum_kwargs)
 
-fd_h = wave(M,mu,p0,e0,theta,phi,T=T,dt=dt,eps=1e-2)# ,mode_selection=[(l,m,n)],include_minus_m=True) #,eps=1e-2)# , mode_selection=[(l,m,n)],include_minus_m=True) #
+fd_h = wave(M,mu,p0,e0,theta,phi,T=T,dt=dt,mode_selection=[(l,m,n)],include_minus_m=True) #,eps=1e-2)# , mode_selection=[(l,m,n)],include_minus_m=True) #
 
 f = np.arange(-1/(2*dt),+1/(2*dt),1/(len(fd_h)*dt))
 
