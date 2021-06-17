@@ -277,7 +277,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
         # plt.plot(t,Omega_phi/(M * MTSUN_SI)); plt.plot(t,spline.deriv(t)[-2],'--' ); plt.show()
 
         # define a frequency vector
-        self.frequency = np.fft.fftfreq(self.num_pts + self.num_pts_pad,dt)
+        self.frequency = np.fft.fftshift(np.fft.fftfreq(self.num_pts + self.num_pts_pad,dt)) 
 
         # final waveform
         h = np.zeros_like(self.frequency, dtype=complex)
