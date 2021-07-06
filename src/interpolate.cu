@@ -1078,6 +1078,11 @@ cmplx get_mode_value_fd(double t, double f, double fdot, double fddot, cmplx amp
                 * gcmplx::exp(
                     I* (2. * PI * f * t - phase_term)
                 );
+
+    cmplx temp = gcmplx::exp(
+        I* (2. * PI * f * t - phase_term)
+    );
+
     return out;
 }
 
@@ -1334,6 +1339,11 @@ void make_waveform_fd(cmplx *waveform,
                 //printf("%d %d %d %d %d %d %d %d %d %d\n", i, mode_i, segment_i, start_ind, end_ind, init_length, ind_inds, start_ind_all[ind_inds - 1], start_ind_all[ind_inds], start_ind_all[ind_inds + 1]);
 
                 // determine interpolation information
+
+                int minus_m_freq_index = int((-f - start_freq) / df);
+                cmplx trans_plus_m(0.0, 0.0);
+                cmplx trans_minus_m(0.0, 0.0);
+
                 for (int jj = 0; jj < num_points; jj += 1)
                 {
                     double x_f = special_f[jj] - special_f_seg;
@@ -1369,31 +1379,40 @@ void make_waveform_fd(cmplx *waveform,
 
                     double phase_term = m * Phi_phi_i + n * Phi_r_i;
 
-                    cmplx trans_plus_m = get_mode_value_fd(t, f, fdot, fddot, mode_val, phase_term, Ylm_plus_m);
+                    trans_plus_m += get_mode_value_fd(t, f, fdot, fddot, mode_val, phase_term, Ylm_plus_m);
 
 
                     //printf("check: %d %d %d x_f: %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e\n", i, jj, segment_i, t, x_f, special_f[jj], special_f_seg, start_freq, df, f, fdot, fddot);  //;
-                    if (i == 1541651) printf("%d %d %.18e %.18e\n", m, n, trans_plus_m.real(), trans_plus_m.imag());
                     //if (i == 1541651)
                     //printf("%.18e %.18e %.18e %.18e %.18e\n", mode_val.real(), mode_val.imag(), phase_term, trans_plus_m.real(), trans_plus_m.imag());
                     // minus m if m > 0
                     // mode values for +/- m are taking care of when applying
                     //specific mode selection by setting ylms to zero for the opposites
-                    cmplx trans_minus_m;
+
                     if (m != 0)
                     {
-                        trans_minus_m = get_mode_value_fd(t, f, fdot, fddot, gcmplx::conj(mode_val), -phase_term, Ylm_minus_m);
+                        trans_minus_m += get_mode_value_fd(t, -f, -fdot, -fddot, gcmplx::conj(mode_val), -phase_term, Ylm_minus_m);
 
-                    } else trans_minus_m = 0.0 + 0.0*complexI;
+                    } else trans_minus_m += 0.0 + 0.0*complexI;
 
-                    trans = trans + trans_minus_m + trans_plus_m;
+                    if (i == 1541651) printf("%d %d %d %d %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e\n", jj, minus_m_freq_index, m, n, t, -f, -fdot, -fddot, gcmplx::conj(mode_val).real(), gcmplx::conj(mode_val).imag(), -phase_term, Ylm_minus_m.real(), Ylm_minus_m.imag(), trans_minus_m.real(), trans_minus_m.imag());
+
                 }
                 // fill waveform
                 #ifdef __CUDACC__
-                atomicAddcmplx(&waveform[i], trans);
+                atomicAddcmplx(&waveform[i], trans_plus_m);
                 #else
-                waveform[i] += trans;
+                waveform[i] += trans_plus_m;
                 #endif
+
+                if (m != 0.0)
+                {
+                    #ifdef __CUDACC__
+                    atomicAddcmplx(&waveform[minus_m_freq_index], trans_minus_m);
+                    #else
+                    waveform[minus_m_freq_index] += trans_plus_m;
+                    #endif
+                }
             }
         }
     }

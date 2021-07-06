@@ -472,6 +472,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
             self.frequency,
         )
 
+        breakpoint()
+
         """
         # indentify where there is a turnover
         for j, (m, n) in enumerate(zip(m_arr, n_arr)):

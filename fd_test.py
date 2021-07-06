@@ -96,9 +96,9 @@ f = np.arange(-1 / (2 * dt), +1 / (2 * dt), 1 / (len(fd_h) * dt))
 
 print("nans in waveform", np.sum(np.isnan(fd_h)))
 
-fd_h_correct = -np.roll(
-    np.flip(np.real(fd_h)) + 1j * np.flip(np.imag(fd_h)), 1
-)  # np.sin(dt*len(wave_22)*freq_fft/4/np.pi)/np.sin(dt*freq_fft/4/np.pi)#*np.exp(-1j* (len(wave_22)-1)/2 )
+fd_h_correct = fd_h  # -np.roll(
+# np.flip(np.real(fd_h)) + 1j * np.flip(np.imag(fd_h)), 1
+# )  # np.sin(dt*len(wave_22)*freq_fft/4/np.pi)/np.sin(dt*freq_fft/4/np.pi)#*np.exp(-1j* (len(wave_22)-1)/2 )
 index_nonzero = [np.abs(fd_h_correct) != complex(0.0)][0]
 
 # check nan
@@ -129,28 +129,43 @@ print(
     / den,
 )
 
+df = wave.create_waveform.frequency[1] - wave.create_waveform.frequency[0]
+
 # figure
 plt.figure()
 plt.ylabel(r"Re $\tilde{h}(f)$")
 plt.xlabel("f [Hz]")
 # TD model
-plt.plot(freq_fft, np.real(fft_wave), label="fft TD waveform")
+plt.plot(freq_fft - df, -np.real(fft_wave), label="fft TD waveform")
 # FD model
-plt.plot(freq_fft, np.real(fd_h_correct), "--", alpha=0.9, label="FD domain waveform")
+plt.plot(
+    wave.create_waveform.frequency,
+    np.real(fd_h_correct),
+    "--",
+    alpha=0.9,
+    label="FD domain waveform",
+)
 plt.legend(loc="right")
 plt.show()
 
 
 # %%
 
+breakpoint()
 
 # figure
 plt.figure()
 plt.ylabel(r"Imag $\tilde{h}(f)$")
 plt.xlabel("f [Hz]")
 # TD model
-plt.plot(freq_fft, np.imag(fft_wave), label="fft TD waveform")
+plt.plot(freq_fft - df, -np.imag(fft_wave), label="fft TD waveform")
 # FD model
-plt.plot(freq_fft, np.imag(fd_h_correct), "--", alpha=0.9, label="FD domain waveform")
+plt.plot(
+    wave.create_waveform.frequency,
+    np.imag(fd_h_correct),
+    "--",
+    alpha=0.9,
+    label="FD domain waveform",
+)
 plt.legend()
 plt.show()
