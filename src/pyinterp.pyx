@@ -20,7 +20,7 @@ cdef extern from "interpolate.hh":
                 int *m_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
                 double* t_arr, int* start_ind_all, int* end_ind_all, int init_length,
                 double start_freq, int* turnover_ind_all,
-                double* turnover_freqs, int max_points, double df);
+                double* turnover_freqs, int max_points, double df, double* f_data);
 
 @pointer_adjust
 def interpolate_arrays_wrap(t_arr, interp_array, ninterps, length, B, upper_diag, diag, lower_diag):
@@ -58,7 +58,7 @@ def get_waveform_fd_wrap(waveform,
            m_arr_in, n_arr_in, num_teuk_modes, Ylms_in,
            t_arr, start_ind_all, end_ind_all, init_length,
            start_freq, turnover_ind_all,
-           turnover_freqs, max_points, df):
+           turnover_freqs, max_points, df, f_data):
 
     cdef size_t waveform_in = waveform
     cdef size_t interp_array_in = interp_array
@@ -72,6 +72,7 @@ def get_waveform_fd_wrap(waveform,
     cdef size_t end_ind_all_in = end_ind_all
     cdef size_t turnover_ind_all_in = turnover_ind_all
     cdef size_t turnover_freqs_in = turnover_freqs
+    cdef size_t f_data_in = f_data
 
     get_waveform_fd(<cmplx *>waveform_in,
                <double *>interp_array_in,
@@ -80,4 +81,4 @@ def get_waveform_fd_wrap(waveform,
                 <int *>m_arr_in_in, <int *>n_arr_in_in, num_teuk_modes, <cmplx *>Ylms_in_in,
                 <double*> t_arr_in, <int*> start_ind_all_in, <int*> end_ind_all_in, init_length,
                 start_freq, <int*> turnover_ind_all_in,
-                <double*> turnover_freqs_in, max_points, df)
+                <double*> turnover_freqs_in, max_points, df, <double*> f_data_in)

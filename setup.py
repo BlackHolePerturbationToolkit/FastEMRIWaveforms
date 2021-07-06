@@ -264,13 +264,13 @@ if run_cuda_install:
             "gcc": ["-std=c++11", "-fopenmp", "-D__USE_OMP__"],  # '-g'],
             "nvcc": [
                 "-arch=sm_70",
-                "-gencode=arch=compute_30,code=sm_30",
-                "-gencode=arch=compute_50,code=sm_50",
-                "-gencode=arch=compute_52,code=sm_52",
-                "-gencode=arch=compute_60,code=sm_60",
-                "-gencode=arch=compute_61,code=sm_61",
-                "-gencode=arch=compute_70,code=sm_70",
-                "-gencode=arch=compute_75,code=sm_75",
+                # "-gencode=arch=compute_30,code=sm_30",
+                # "-gencode=arch=compute_50,code=sm_50",
+                # "-gencode=arch=compute_52,code=sm_52",
+                # "-gencode=arch=compute_60,code=sm_60",
+                # "-gencode=arch=compute_61,code=sm_61",
+                # "-gencode=arch=compute_70,code=sm_70",
+                # "-gencode=arch=compute_75,code=sm_75",
                 "-std=c++11",
                 "--default-stream=per-thread",
                 "--ptxas-options=-v",
@@ -439,7 +439,6 @@ if run_cuda_install:
 else:
     # extensions = [FLUX_ext, SlowFlux_ext, spher_harm_ext, Interp2DAmplitude_ext]
     extensions = cpu_extensions
-    # extensions = [interp_cpu_ext]
 
 with open("README.md", "r") as fh:
     long_description = fh.read()

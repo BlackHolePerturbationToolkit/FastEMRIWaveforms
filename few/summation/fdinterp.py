@@ -321,6 +321,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
         # plt.plot(t,Omega_phi/(M * MTSUN_SI)); plt.plot(t,spline.deriv(t)[-2],'--' ); plt.show()
 
         # define a frequency vector
+
+        # TODO: check fftshift
         self.frequency = self.xp.fft.fftshift(
             self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt)
         )
@@ -344,7 +346,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
 
         df = self.frequency[1] - self.frequency[0]
 
-        inds = self.xp.floor((changes - self.frequency[0]) / df).astype(int)
+        inds = self.xp.floor((changes - self.frequency[0]) / df).astype(np.int32)
 
         # inds[:, :, 0] += 1
         # inds[:, :, 1] -= 1
@@ -446,37 +448,29 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
 
         max_points = self.xp.diff(inds, axis=1).max().item()
 
-        import time
+        inds0_in = inds[:, :, 0].flatten().copy()
+        inds1_in = inds[:, :, 1].flatten().copy()
 
-        num = 10
-
-        st = time.perf_counter()
-
-        for _ in range(num):
-            self.get_waveform_fd(
-                h,
-                spline.interp_array,
-                special_f_spline.interp_array,
-                special_f_arrs.flatten().copy(),
-                m_arr,
-                n_arr,
-                num_teuk_modes,
-                ylms,
-                t,
-                inds[:, :, 0].flatten().copy(),
-                inds[:, :, 1].flatten().copy(),
-                init_len,
-                self.frequency[0].item(),
-                turnover_seg,
-                Fstar,
-                max_points,
-                df,
-            )
-
-        et = time.perf_counter()
-
-        print((et - st) / num)
-        exit()
+        self.get_waveform_fd(
+            h,
+            spline.interp_array,
+            special_f_spline.interp_array,
+            special_f_arrs.flatten().copy(),
+            m_arr,
+            n_arr,
+            num_teuk_modes,
+            ylms,
+            t,
+            inds0_in,
+            inds1_in,
+            init_len,
+            self.frequency[0].item(),
+            turnover_seg,
+            Fstar,
+            max_points,
+            df,
+            self.frequency,
+        )
 
         """
         # indentify where there is a turnover

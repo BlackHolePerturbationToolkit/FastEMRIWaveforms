@@ -1001,6 +1001,8 @@ cmplx kve(double v, cmplx x)
 CUDA_CALLABLE_MEMBER
 cmplx SPAFunc(const double x)
 {
+
+    //$x = (2\pi/3)\dot f^3/\ddot f^2$ and spafunc is $i \sqrt{x} e^{-i x} K_{1/3}(-i x)$.
   cmplx II(0.0, 1.0);
   cmplx ans;
   const double Gamp13 = 2.67893853470774763;  // Gamma(1/3)
@@ -1067,8 +1069,10 @@ cmplx get_mode_value_fd(double t, double f, double fdot, double fddot, cmplx amp
     //  #print('isnan',np.sum(np.isnan(arg)),np.sum(np.isnan(fdot/np.abs(fddot))))
 
     //cmplx amp_term2 = I* fdot/abs(fddot) * K_1over3 * 2./sqrt(3.);
+
+    // $x = (2\pi/3)\dot f^3/\ddot f^2$ and spafunc is $i \sqrt{x} e^{-i x} K_{1/3}(-i x)$.
     double arg = 2.* PI * pow(fdot, 3) / (3.* pow(fddot, 2));
-    cmplx amp_term2 = SPAFunc(arg);
+    cmplx amp_term2 = -1.0 * fdot/abs(fddot) * 2./sqrt(3.) * SPAFunc(arg) / gcmplx::sqrt(cmplx(arg, 0.0));
     //cmplx amp_term2 = 0.0;
     cmplx out = amp_term1 * Ylm * amp_term2
                 * gcmplx::exp(
@@ -1098,7 +1102,7 @@ void make_waveform_fd(cmplx *waveform,
               int *m_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
               double* t_arr, int* start_ind_all, int* end_ind_all, int init_length,
               double start_freq, int* turnover_ind_all,
-              double* turnover_freqs, double df)
+              double* turnover_freqs, double df, double* f_data)
 
 {
 
@@ -1182,7 +1186,6 @@ void make_waveform_fd(cmplx *waveform,
              CUDA_SHARED double initial_frequency;
              CUDA_SHARED double end_frequency;
              CUDA_SHARED double turnover_time;
-             CUDA_SHARED double turnover_frequency;
              CUDA_SHARED double special_f[2];
 
              CUDA_SHARED double sign_slope;
@@ -1249,7 +1252,7 @@ void make_waveform_fd(cmplx *waveform,
              }
              CUDA_SYNC_THREADS;
 
-            int ind_inds = mode_i * init_length + segment_i;
+            int ind_inds = mode_i * (init_length - 1) + segment_i;
             int start_ind = start_ind_all[ind_inds];
             int end_ind = end_ind_all[ind_inds];
             #ifdef __CUDACC__
@@ -1275,7 +1278,7 @@ void make_waveform_fd(cmplx *waveform,
                  i += diff)
             {
                 cmplx trans(0.0, 0.0);
-                double f = start_freq + df * i;
+                double f = f_data[i]; //  start_freq + df * i;
                 double Fstar = turnover_frequency;
 
                 int num_points;
@@ -1299,12 +1302,12 @@ void make_waveform_fd(cmplx *waveform,
                 else if (segment_i < turnover_ind)
                 {
                     num_points = 1;
-                    special_f[0] = f;
+                    special_f[0] = abs(f);
                 }
                 else
                 {
                     num_points = 2;
-                    special_f[0] = f;
+                    special_f[0] = abs(f);
 
                     // slope at beginning of this segment
                     slope0 = m * fp_c1 + n * fr_c1;
@@ -1321,12 +1324,21 @@ void make_waveform_fd(cmplx *waveform,
                     }
                 }
 
+                if (i == 1541651){
+                    for (int lll = 0; lll < init_length; lll += 1)
+                    {
+                        //printf("%d %d\n", lll, start_ind_all[lll]);
+                    }
+                }
+                //printf("%d %d %d %d %d %d %e %e %e %e %e %d %d\n", i, mode_i, segment_i, start_ind, end_ind, num_points, f, Fstar, special_f[0], special_f[1], segment_i > turnover_ind, segment_i < turnover_ind);
+                //printf("%d %d %d %d %d %d %d %d %d %d\n", i, mode_i, segment_i, start_ind, end_ind, init_length, ind_inds, start_ind_all[ind_inds - 1], start_ind_all[ind_inds], start_ind_all[ind_inds + 1]);
+
                 // determine interpolation information
                 for (int jj = 0; jj < num_points; jj += 1)
                 {
                     double x_f = special_f[jj] - special_f_seg;
                     double x_f2 = x_f*x_f;
-                    double x_f3 = x_f*x_f;
+                    double x_f3 = x_f2*x_f;
 
                     double t = t_seg + tf_c1 * x_f + tf_c2 * x_f2 + tf_c3 * x_f3;
 
@@ -1359,6 +1371,11 @@ void make_waveform_fd(cmplx *waveform,
 
                     cmplx trans_plus_m = get_mode_value_fd(t, f, fdot, fddot, mode_val, phase_term, Ylm_plus_m);
 
+
+                    //printf("check: %d %d %d x_f: %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e\n", i, jj, segment_i, t, x_f, special_f[jj], special_f_seg, start_freq, df, f, fdot, fddot);  //;
+                    if (i == 1541651) printf("%d %d %.18e %.18e\n", m, n, trans_plus_m.real(), trans_plus_m.imag());
+                    //if (i == 1541651)
+                    //printf("%.18e %.18e %.18e %.18e %.18e\n", mode_val.real(), mode_val.imag(), phase_term, trans_plus_m.real(), trans_plus_m.imag());
                     // minus m if m > 0
                     // mode values for +/- m are taking care of when applying
                     //specific mode selection by setting ylms to zero for the opposites
@@ -1391,7 +1408,7 @@ void get_waveform_fd(cmplx *waveform,
               int *m_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
               double* t_arr, int* start_ind_all, int* end_ind_all, int init_length,
               double start_freq, int* turnover_ind_all,
-              double* turnover_freqs, int max_points, double df)
+              double* turnover_freqs, int max_points, double df, double* f_data)
 {
 
     #ifdef __CUDACC__
@@ -1411,7 +1428,7 @@ void get_waveform_fd(cmplx *waveform,
                   m_arr_in, n_arr_in, num_teuk_modes, Ylms_in,
                   t_arr, start_ind_all, end_ind_all, init_length,
                   start_freq, turnover_ind_all,
-                  turnover_freqs, df);
+                  turnover_freqs, df, f_data);
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());
 
@@ -1424,7 +1441,7 @@ void get_waveform_fd(cmplx *waveform,
                   m_arr_in, n_arr_in, num_teuk_modes, Ylms_in,
                   t_arr, start_ind_all, end_ind_all, init_length,
                   start_freq, turnover_ind_all,
-                  turnover_freqs, df);
+                  turnover_freqs, df, f_data);
 
     #endif
 }
