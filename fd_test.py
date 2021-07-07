@@ -111,9 +111,9 @@ den = np.sqrt(
 )
 print("den", den, "index", np.sum(index_nonzero))
 print(
-    "mismatch = ",
+    "full mismatch = ",
     1
-    - np.real(np.dot(np.conj(fd_h_correct[index_nonzero]), fft_wave[index_nonzero]))
+    - np.real(np.dot(np.conj(fd_h_correct[index_nonzero]), -fft_wave[index_nonzero]))
     / den,
 )
 
@@ -169,3 +169,5 @@ plt.plot(
 )
 plt.legend()
 plt.show()
+
+breakpoint()

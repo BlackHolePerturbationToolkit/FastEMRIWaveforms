@@ -1083,6 +1083,11 @@ cmplx get_mode_value_fd(double t, double f, double fdot, double fddot, cmplx amp
         I* (2. * PI * f * t - phase_term)
     );
 
+    if (f == -0.0008109157222460759)
+    {
+        printf("%.18e %.18e %.18e %.18e %.18e %.18e\n", amp_term1.real(), amp_term1.imag(), amp_term2.real(), amp_term2.imag(), temp.real(), temp.imag());
+    }
+
     return out;
 }
 
@@ -1286,7 +1291,7 @@ void make_waveform_fd(cmplx *waveform,
                 // start is index of min f and end is index of max f
 
             for (int i = start;
-                 i < end_ind;
+                 i <= end_ind; // goes from ceil to floor so need to <=
                  i += diff)
             {
                 cmplx trans(0.0, 0.0);
@@ -1363,10 +1368,10 @@ void make_waveform_fd(cmplx *waveform,
                     }
                 }
 
-                if (i == 1552316)
-                {
-                    printf("%d %d %d %.18e %.18e %.18e %.18e %.18e %.18e %.18e\n", segment_i, turnover_ind, num_points, slope0, f, f_seg_begin, f_seg_end, special_f[0], special_f[1], Fstar);
-                }
+                //if (i == 1552316)
+                //{
+                //    printf("%d %d %d %.18e %.18e %.18e %.18e %.18e %.18e %.18e\n", segment_i, turnover_ind, num_points, slope0, f, f_seg_begin, f_seg_end, special_f[0], special_f[1], Fstar);
+                //}
                 //printf("%d %d %d %d %d %d %e %e %e %e %e %d %d\n", i, mode_i, segment_i, start_ind, end_ind, num_points, f, Fstar, special_f[0], special_f[1], segment_i > turnover_ind, segment_i < turnover_ind);
                 //printf("%d %d %d %d %d %d %d %d %d %d\n", i, mode_i, segment_i, start_ind, end_ind, init_length, ind_inds, start_ind_all[ind_inds - 1], start_ind_all[ind_inds], start_ind_all[ind_inds + 1]);
 
@@ -1421,7 +1426,6 @@ void make_waveform_fd(cmplx *waveform,
                     double phase_term = m * Phi_phi_i + n * Phi_r_i;
 
                     trans_plus_m += get_mode_value_fd(t, f, fdot, fddot, mode_val, phase_term, Ylm_plus_m);
-
 
                     //printf("check: %d %d %d x_f: %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e\n", i, jj, segment_i, t, x_f, special_f[jj], special_f_seg, start_freq, df, f, fdot, fddot);  //;
                     //if (i == 1541651)
