@@ -64,8 +64,10 @@ wave_22 = few_base(
     mode_selection=[(l, m, n)],
     include_minus_m=True,
 )  # ,eps=1e-2)# , batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #
-freq_fft = np.fft.fftfreq(len(wave_22), dt)
-fft_wave = np.fft.fft(wave_22) * dt  # * signal.tukey(len(wave_22))
+freq_fft = np.fft.fftshift(np.fft.fftfreq(len(wave_22), dt))
+fft_wave = np.flip(
+    np.fft.fftshift(np.fft.fft(wave_22)) * dt
+)  # * signal.tukey(len(wave_22))
 
 rect_fft = np.fft.fft(np.ones_like(wave_22))  # * signal.tukey(len(wave_22))
 
@@ -136,7 +138,7 @@ plt.figure()
 plt.ylabel(r"Re $\tilde{h}(f)$")
 plt.xlabel("f [Hz]")
 # TD model
-plt.plot(freq_fft - df, -np.real(fft_wave), label="fft TD waveform")
+plt.plot(freq_fft, -np.real(fft_wave), label="fft TD waveform")
 # FD model
 plt.plot(
     wave.create_waveform.frequency,
@@ -151,14 +153,12 @@ plt.show()
 
 # %%
 
-breakpoint()
-
 # figure
 plt.figure()
 plt.ylabel(r"Imag $\tilde{h}(f)$")
 plt.xlabel("f [Hz]")
 # TD model
-plt.plot(freq_fft - df, -np.imag(fft_wave), label="fft TD waveform")
+plt.plot(freq_fft, -np.imag(fft_wave), label="fft TD waveform")
 # FD model
 plt.plot(
     wave.create_waveform.frequency,

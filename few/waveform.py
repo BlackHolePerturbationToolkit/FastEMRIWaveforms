@@ -45,7 +45,7 @@ from few.summation.interpolatedmodesum import InterpolatedModeSum
 
 from few.summation.fdinterp import FDInterpolatedModeSum
 
-from few.summation.temp_fdinterp import FDInterpolatedModeSum
+# from few.summation.temp_fdinterp import FDInterpolatedModeSum
 
 
 class GenerateEMRIWaveform:

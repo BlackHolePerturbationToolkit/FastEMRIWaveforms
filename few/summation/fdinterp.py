@@ -346,8 +346,16 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
 
         df = self.frequency[1] - self.frequency[0]
 
-        inds = self.xp.floor((changes - self.frequency[0]) / df).astype(np.int32)
+        inds = np.zeros_like(changes).astype(np.int32)
 
+        inds[:, :, 0] = self.xp.ceil(
+            (changes[:, :, 0] - self.frequency[0]) / df
+        ).astype(np.int32)
+        inds[:, :, 1] = self.xp.floor(
+            (changes[:, :, 1] - self.frequency[0]) / df
+        ).astype(np.int32)
+
+        breakpoint()
         # inds[:, :, 0] += 1
         # inds[:, :, 1] -= 1
 
@@ -451,6 +459,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
         inds0_in = inds[:, :, 0].flatten().copy()
         inds1_in = inds[:, :, 1].flatten().copy()
 
+        zero_index = int(len(self.frequency) / 2)
+
         self.get_waveform_fd(
             h,
             spline.interp_array,
@@ -470,6 +480,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
             max_points,
             df,
             self.frequency,
+            zero_index,
         )
 
         breakpoint()

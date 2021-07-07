@@ -31,6 +31,6 @@ void get_waveform_fd(cmplx *waveform,
             int *m_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
             double* t_arr, int* start_ind_all, int* end_ind_all, int init_length,
             double start_freq, int* turnover_ind_all,
-            double* turnover_freqs, int max_points, double df, double* f_data);
+            double* turnover_freqs, int max_points, double df, double* f_data, int zero_index);
 
 #endif // __INTERP_H__
