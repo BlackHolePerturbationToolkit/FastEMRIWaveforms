@@ -154,7 +154,7 @@ void fill_B(double *t_arr, double *y_all, double *B, double *upper_diag, double 
             {
 
                 int lead_ind = interp_i*length;
-                prep_splines(i, length, &B[lead_ind], &upper_diag[lead_ind], &diag[lead_ind], &lower_diag[lead_ind], t_arr, &y_all[interp_i*length]);
+                prep_splines(i, length, &B[lead_ind], &upper_diag[lead_ind], &diag[lead_ind], &lower_diag[lead_ind], &t_arr[lead_ind], &y_all[interp_i*length]);
             }
         }
 }
@@ -201,7 +201,7 @@ void set_spline_constants(double *t_arr, double *interp_array, double *B,
             i += diff2)
             {
 
-              dt = t_arr[i + 1] - t_arr[i];
+              dt = t_arr[interp_i * length + i + 1] - t_arr[interp_i * length + i];
 
               int lead_ind = interp_i*length;
               fill_coefficients(i, length, &B[lead_ind], dt,
@@ -1083,10 +1083,10 @@ cmplx get_mode_value_fd(double t, double f, double fdot, double fddot, cmplx amp
         I* (2. * PI * f * t - phase_term)
     );
 
-    if (f == -0.0008109157222460759)
-    {
-        printf("%.18e %.18e %.18e %.18e %.18e %.18e\n", amp_term1.real(), amp_term1.imag(), amp_term2.real(), amp_term2.imag(), temp.real(), temp.imag());
-    }
+    //if (abs(f) == 0.0)
+    //{
+    //    printf("IN: %d %.18e %.18e %.18e %.18e %.18e %.18e\n", f > 0.0, amp_term1.real(), amp_term1.imag(), amp_term2.real(), amp_term2.imag(), temp.real(), temp.imag());
+    //}
 
     return out;
 }
@@ -1259,6 +1259,11 @@ void make_waveform_fd(cmplx *waveform,
                 tf_c2 = special_f_interp_array[2 * num_base_tf + ind_tf];
                 tf_c3 = special_f_interp_array[3 * num_base_tf + ind_tf];
 
+                //if ((m == 1) && (n == -4) && (segment_i == 100))
+                //{
+                //    printf("%d %d %e %e %e %e\n", num_base_tf, ind_tf, t_seg, tf_c1, tf_c2, tf_c3);
+                //}
+
                 special_f_seg = special_f_seg_in[ind_tf];
 
                  m = m_arr_in[mode_i];
@@ -1314,13 +1319,23 @@ void make_waveform_fd(cmplx *waveform,
 
                     if (slope0 < 0.0)
                     {
-                        special_f[0] = abs(Fstar - Fstar / abs(Fstar) * abs(f - Fstar));
+                        special_f[0] = abs(Fstar + Fstar / abs(Fstar) * abs(f - Fstar));
+                        //if ((f == 0.0))
+                        //{
+                        //    printf("AHAH1: %d %d %d %.18e %.18e %.18e\n", turnover_ind, mode_i, segment_i, special_f[0], f, Fstar);
+                        //}
                     }
                     else
                     {
                         // TODO: check this special_f
                         special_f[0] = abs(Fstar + Fstar / abs(Fstar) * abs(f - Fstar));
+                        //if ((f == 0.0))
+                        //{
+                        //    printf("AHAH2: %d %d %d %.18e %.18e %.18e\n", turnover_ind, mode_i, segment_i, special_f[0], f, Fstar);
+                        //}
                     }
+
+
                 }
                 else if (segment_i < turnover_ind)
                 {
@@ -1334,6 +1349,11 @@ void make_waveform_fd(cmplx *waveform,
 
                     if ((abs(f) > abs(f_seg_begin)) && (abs(f) > abs(f_seg_end)))
                     {
+                        //if (f == 0.0)
+                        //{
+                        //    printf("YAYAY: %d %d %d %.18e %.18e %.18e\n", turnover_ind, mode_i, segment_i, special_f[0], f, Fstar);
+                        //}
+
                         num_points = 2;
                         special_f[0] = abs(f);
 
@@ -1359,11 +1379,20 @@ void make_waveform_fd(cmplx *waveform,
                         if (slope0 < 0.0)
                         {
                             special_f[0] = abs(Fstar - Fstar / abs(Fstar) * abs(f - Fstar));
+                            //if (f == 0.0)
+                            //{
+                            //    printf("YAYAY3: %d %d %d %.18e %.18e %.18e\n", turnover_ind, mode_i, segment_i, special_f[0], f, Fstar);
+                            //}
                         }
                         else
                         {
                             // TODO: check this special_f
-                            special_f[0] = abs(Fstar + Fstar / abs(Fstar) * abs(f - Fstar));
+                            special_f[0] = abs(Fstar - Fstar / abs(Fstar) * abs(f - Fstar));
+                            //if (f == 0.0)
+                            //{
+                            //    printf("YAYAY4: %d %d %d %.18e %.18e %.18e\n", turnover_ind, mode_i, segment_i, special_f[0], f, Fstar);
+                            //}
+
                         }
                     }
                 }
@@ -1392,11 +1421,17 @@ void make_waveform_fd(cmplx *waveform,
 
                 for (int jj = 0; jj < num_points; jj += 1)
                 {
+
                     double x_f = special_f[jj] - special_f_seg;
                     double x_f2 = x_f*x_f;
                     double x_f3 = x_f2*x_f;
 
                     double t = t_seg + tf_c1 * x_f + tf_c2 * x_f2 + tf_c3 * x_f3;
+
+                    //if ((f == 0.0))
+                    //{
+                    //    printf("he: %d %d %d %.18e %.18e %.18e %.18e %.18e %.18e %.18e\n", turnover_ind, mode_i, segment_i, special_f[jj], special_f_seg, f, Fstar, x_f, t_seg, t);
+                    //}
 
                     double x = t - t_seg;
                     double x2 = x * x;

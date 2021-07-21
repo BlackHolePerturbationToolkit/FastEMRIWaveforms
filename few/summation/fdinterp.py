@@ -355,7 +355,6 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
             (changes[:, :, 1] - self.frequency[0]) / df
         ).astype(np.int32)
 
-        breakpoint()
         # inds[:, :, 0] += 1
         # inds[:, :, 1] -= 1
 
@@ -374,7 +373,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
 
         inds_turnover = self.xp.full(num_teuk_modes, False)
         inds_turnover[inds0] = True
-        turnover_seg = self.xp.empty(num_teuk_modes, dtype=int)
+        turnover_seg = self.xp.empty(num_teuk_modes, dtype=np.int32)
 
         turnover_seg[inds_turnover] = inds1
         turnover_seg[~inds_turnover] = seg_freqs.shape[1]
@@ -385,7 +384,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
 
         bad = turnover_seg >= init_len
 
-        turnover_seg[bad] = 134
+        turnover_seg[bad] = init_len - 1
         c1 = (
             m_arr[:] * spline.c1[-4, turnover_seg]
             + n_arr[:] * spline.c1[-3, turnover_seg]
@@ -417,10 +416,10 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
         Fstar = m_arr * spline_out[-4] + n_arr * spline_out[-3]
 
         special_f_arrs = self.xp.abs(
-            seg_freqs * (t[None, :] < t_star[:, None])
+            seg_freqs * (t[None, :] <= t_star[:, None])
             + (
                 Fstar[:, None]
-                - Fstar[:, None] / abs(Fstar[:, None]) * abs(seg_freqs - Fstar[:, None])
+                + Fstar[:, None] / abs(Fstar[:, None]) * abs(seg_freqs - Fstar[:, None])
             )
             * ((t[None, :] > t_star[:, None]) & (slope0[:, None] >= 0.0))
             + (
@@ -465,7 +464,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
             h,
             spline.interp_array,
             special_f_spline.interp_array,
-            special_f_arrs.flatten().copy(),
+            special_f_arrs.T.flatten().copy(),
             m_arr,
             n_arr,
             num_teuk_modes,
@@ -482,8 +481,6 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
             self.frequency,
             zero_index,
         )
-
-        breakpoint()
 
         """
         # indentify where there is a turnover

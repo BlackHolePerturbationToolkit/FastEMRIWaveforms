@@ -28,8 +28,8 @@ phi = np.pi / 5  # mismatch =  0.0014153820095872405
 
 M = 1e6
 mu = 50
-p0 = 11.48
-e0 = 0.7
+p0 = 11.0
+e0 = 0.4
 theta = np.pi / 3
 phi = np.pi / 5  # mismatch =  0.02257016504821807
 
@@ -42,7 +42,7 @@ phi = np.pi / 5  # mismatch =  0.02257016504821807
 # mu = get_mu_at_t(traj_module, t_out, traj_args)
 # print(mu)
 # mism 0.0024275870323797744
-dt = 10
+dt = 15
 T = 1.0
 
 
@@ -50,6 +50,7 @@ l = 2  # 2
 m = 1  # 1
 n = -4  # -4
 
+modes = [(2, 1, -4,)]
 #%% TIME DOMAIN
 wave_22 = few_base(
     M,
@@ -60,8 +61,8 @@ wave_22 = few_base(
     phi,
     T=T,
     dt=dt,
-    # eps=1e-5,
-    mode_selection=[(l, m, n)],
+    # eps=1e-2,
+    mode_selection=modes,
     include_minus_m=True,
 )  # ,eps=1e-2)# , batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #
 freq_fft = np.fft.fftshift(np.fft.fftfreq(len(wave_22), dt))
@@ -84,7 +85,7 @@ fd_h = wave(
     phi,
     T=T,
     dt=dt,
-    mode_selection=[(l, m, n)],
+    mode_selection=modes,
     # eps=1e-2,
     include_minus_m=True,
 )  # ,eps=1e-2)# , mode_selection=[(l,m,n)],include_minus_m=True) #
@@ -102,6 +103,8 @@ fd_h_correct = fd_h  # -np.roll(
 # np.flip(np.real(fd_h)) + 1j * np.flip(np.imag(fd_h)), 1
 # )  # np.sin(dt*len(wave_22)*freq_fft/4/np.pi)/np.sin(dt*freq_fft/4/np.pi)#*np.exp(-1j* (len(wave_22)-1)/2 )
 index_nonzero = [np.abs(fd_h_correct) != complex(0.0)][0]
+
+# index_nonzero = np.arange(len(fd_h_correct))
 
 # check nan
 
@@ -143,7 +146,7 @@ plt.plot(freq_fft, -np.real(fft_wave), label="fft TD waveform")
 plt.plot(
     wave.create_waveform.frequency,
     np.real(fd_h_correct),
-    "--",
+    # "--",
     alpha=0.9,
     label="FD domain waveform",
 )
@@ -163,6 +166,23 @@ plt.plot(freq_fft, -np.imag(fft_wave), label="fft TD waveform")
 plt.plot(
     wave.create_waveform.frequency,
     np.imag(fd_h_correct),
+    "--",
+    alpha=0.9,
+    label="FD domain waveform",
+)
+plt.legend()
+plt.show()
+
+# figure
+plt.figure()
+plt.ylabel(r"Abs $\tilde{h}(f)$")
+plt.xlabel("f [Hz]")
+# TD model
+plt.plot(freq_fft, np.abs(fft_wave), label="fft TD waveform")
+# FD model
+plt.plot(
+    wave.create_waveform.frequency,
+    np.abs(fd_h_correct),
     "--",
     alpha=0.9,
     label="FD domain waveform",
