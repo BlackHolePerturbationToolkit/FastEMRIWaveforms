@@ -214,7 +214,7 @@ class CubicSplineInterpolant(GPUModuleBase):
                 is 0 meaning the basic spline is evaluated. deriv_order of 1, 2, and 3
                 correspond to their respective derivatives of the spline. Unlike :code:`scipy`,
                 this is purely an evaluation of the derivative values, not a new class to evaluate
-                for the derivative. 
+                for the derivative.
 
         raises:
             ValueError: a new t value is not in the bounds of the input t array.

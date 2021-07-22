@@ -1,5 +1,9 @@
 #%%
-from few.waveform import FastSchwarzschildEccentricFlux, RunSchwarzEccFluxInspiral, SlowSchwarzschildEccentricFlux
+from few.waveform import (
+    FastSchwarzschildEccentricFlux,
+    RunSchwarzEccFluxInspiral,
+    SlowSchwarzschildEccentricFlux,
+)
 from few.utils.utility import *
 from few.utils.utility import get_mu_at_t
 from few.utils.constants import *
@@ -11,87 +15,179 @@ use_gpu = False
 
 sum_kwargs = dict(pad_output=True)
 
-few_base = FastSchwarzschildEccentricFlux(
-    sum_kwargs=sum_kwargs,
-)
+few_base = FastSchwarzschildEccentricFlux(sum_kwargs=sum_kwargs, use_gpu=use_gpu)
+# p0=12;e0=0.3 -> mismatch =  0.000778239562794103
 
-# initial condition
-M = 1e6; mu = 40.; p0 = 10.; e0 = 0.7; theta= np.pi/3; phi = np.pi/5 # mismatch =  0.0014153820095872405
-#M = 1e6; mu = 50; p0 = 11.48; e0 = 0.7; theta= np.pi/3; phi = np.pi/5 # mismatch =  0.02257016504821807
+M = 1e6
+mu = 40.0
+p0 = 10.0
+e0 = 0.7
+theta = np.pi / 3
+phi = np.pi / 5  # mismatch =  0.0014153820095872405
 
-# you can get mu to plung in one year
-traj_args = [M, p0, e0]
-traj_kwargs = {}
-index_of_mu = 1
-t_out = 1.
+M = 1e6
+mu = 50
+p0 = 11.0
+e0 = 0.4
+theta = np.pi / 3
+phi = np.pi / 5  # mismatch =  0.02257016504821807
+
+# traj_args = [M, p0, e0]
+# traj_kwargs = {}
+# index_of_mu = 1
+
+# t_out = 1.
 # run trajectory
-traj_module = RunSchwarzEccFluxInspiral()
-mu = get_mu_at_t(traj_module, t_out, traj_args)
-print(mu)
+# mu = get_mu_at_t(traj_module, t_out, traj_args)
+# print(mu)
 # mism 0.0024275870323797744
-dt=10.
-T=1.#/2.5
+dt = 15
+T = 1.0
 
 
-l = 2 #2
-m = 1 #1
-n = 3 #-4
+l = 2  # 2
+m = 1  # 1
+n = -4  # -4
 
+modes = [(2, 1, -4,)]
 #%% TIME DOMAIN
-wave_22 = few_base(M, mu, p0, e0, theta, phi,T=T,dt=dt,eps=5e-2)#,mode_selection=[(l,m,n)])mode_selection=[(l,m,n)],include_minus_m=True)  , batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #
-freq_fft = np.fft.fftshift(np.fft.fftfreq(len(wave_22),dt))
-fft_wave = np.fft.fftshift(np.fft.fft(np.real(wave_22)-1j* np.imag(wave_22) )*dt)
+wave_22 = few_base(
+    M,
+    mu,
+    p0,
+    e0,
+    theta,
+    phi,
+    T=T,
+    dt=dt,
+    # eps=1e-2,
+    mode_selection=modes,
+    include_minus_m=True,
+)  # ,eps=1e-2)# , batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #
+freq_fft = np.fft.fftshift(np.fft.fftfreq(len(wave_22), dt))
+fft_wave = np.flip(
+    np.fft.fftshift(np.fft.fft(wave_22)) * dt
+)  # * signal.tukey(len(wave_22))
+
+rect_fft = np.fft.fft(np.ones_like(wave_22))  # * signal.tukey(len(wave_22))
 
 sum_kwargs = dict(pad_output=True, output_type="fd")
 
-wave = FastSchwarzschildEccentricFlux(sum_kwargs=sum_kwargs)
+wave = FastSchwarzschildEccentricFlux(sum_kwargs=sum_kwargs, use_gpu=use_gpu)
 
-fd_h = wave(M,mu,p0,e0,theta,phi,T=T,dt=dt,eps=5e-2)#,mode_selection=[(l,m,n)])#,eps=1e-2)#,include_minus_m=True) #,eps=1e-2)# , mode_selection=[(l,m,n)],include_minus_m=True) #
+fd_h = wave(
+    M,
+    mu,
+    p0,
+    e0,
+    theta,
+    phi,
+    T=T,
+    dt=dt,
+    mode_selection=modes,
+    # eps=1e-2,
+    include_minus_m=True,
+)  # ,eps=1e-2)# , mode_selection=[(l,m,n)],include_minus_m=True) #
 
-f = np.arange(-1/(2*dt),+1/(2*dt),1/(len(fd_h)*dt))
+f = np.arange(-1 / (2 * dt), +1 / (2 * dt), 1 / (len(fd_h) * dt))
 
-real_fd = np.real(fd_h + np.flip(fd_h))/2 + 1j* np.imag(fd_h - np.flip(fd_h))/2
-imag_fd = -np.imag(fd_h + np.flip(fd_h))/2 - 1j* np.real(fd_h - np.flip(fd_h))/2
-
+# plt.plot(f, fd_h.real)
+# plt.show()
+# breakpoint()
 #%% mismatch
 
 print("nans in waveform", np.sum(np.isnan(fd_h)))
 
-fd_h_correct = fd_h #-np.roll( np.flip(np.real(fd_h)) + 1j* np.flip(np.imag(fd_h)), 1)#np.sin(dt*len(wave_22)*freq_fft/4/np.pi)/np.sin(dt*freq_fft/4/np.pi)#*np.exp(-1j* (len(wave_22)-1)/2 )
+fd_h_correct = fd_h  # -np.roll(
+# np.flip(np.real(fd_h)) + 1j * np.flip(np.imag(fd_h)), 1
+# )  # np.sin(dt*len(wave_22)*freq_fft/4/np.pi)/np.sin(dt*freq_fft/4/np.pi)#*np.exp(-1j* (len(wave_22)-1)/2 )
+index_nonzero = [np.abs(fd_h_correct) != complex(0.0)][0]
+
+# index_nonzero = np.arange(len(fd_h_correct))
 
 def innprod(a,b):
     return np.real(np.dot(np.conj(a),b))
 
-# check nan
-den = np.sqrt(innprod(fft_wave,fft_wave) * innprod(fd_h_correct,fd_h_correct))
-print("mismatch = " ,1-innprod(fft_wave,fft_wave)/den)
-print("overlap = " ,innprod(fft_wave,fft_wave)/den)
+den = np.sqrt(
+    np.real(np.dot(np.conj(fft_wave[index_nonzero]), fft_wave[index_nonzero]))
+    * np.real(np.dot(np.conj(fd_h_correct[index_nonzero]), fd_h_correct[index_nonzero]))
+)
+print("den", den, "index", np.sum(index_nonzero))
+print(
+    "full mismatch = ",
+    1
+    - np.real(np.dot(np.conj(fd_h_correct[index_nonzero]), -fft_wave[index_nonzero]))
+    / den,
+)
 
+den = np.sqrt(
+    np.real(np.dot(np.conj(fft_wave[index_nonzero]), fft_wave[index_nonzero]))
+    * np.real(np.dot(np.conj(fd_h_correct[index_nonzero]), fd_h_correct[index_nonzero]))
+)
+print("den", den, "index", np.sum(index_nonzero))
+print(
+    "mismatch = ",
+    1
+    - np.real(
+        np.dot(np.abs(fd_h_correct[index_nonzero]), np.abs(fft_wave[index_nonzero]))
+    )
+    / den,
+)
+
+df = wave.create_waveform.frequency[1] - wave.create_waveform.frequency[0]
 
 # figure
 plt.figure()
-plt.ylabel(r' $|\tilde{h}(f)|$')
-plt.xlabel('f [Hz]')
+plt.ylabel(r"Re $\tilde{h}(f)$")
+plt.xlabel("f [Hz]")
 # TD model
-plt.semilogx(freq_fft, np.abs(fft_wave), label='fft TD waveform')
+plt.plot(freq_fft, -np.real(fft_wave), label="fft TD waveform")
 # FD model
-plt.semilogx(freq_fft, np.abs(fd_h_correct),'--',alpha=0.9,label='FD domain waveform' )
-plt.legend(loc='best')
+plt.plot(
+    wave.create_waveform.frequency,
+    np.real(fd_h_correct),
+    # "--",
+    alpha=0.9,
+    label="FD domain waveform",
+)
+plt.legend(loc="right")
 plt.show()
 
 
 # %%
 
-
 # figure
 plt.figure()
-plt.ylabel(r'Imag $\tilde{h}(f)$')
-plt.xlabel('f [Hz]')
+plt.ylabel(r"Imag $\tilde{h}(f)$")
+plt.xlabel("f [Hz]")
 # TD model
-plt.semilogx(freq_fft, np.imag(fft_wave), label='fft TD waveform')
+plt.plot(freq_fft, -np.imag(fft_wave), label="fft TD waveform")
 # FD model
-plt.semilogx(freq_fft, np.imag(fd_h_correct),'--',alpha=0.9,label='FD domain waveform' )
+plt.plot(
+    wave.create_waveform.frequency,
+    np.imag(fd_h_correct),
+    "--",
+    alpha=0.9,
+    label="FD domain waveform",
+)
 plt.legend()
 plt.show()
 
-# %%
+# figure
+plt.figure()
+plt.ylabel(r"Abs $\tilde{h}(f)$")
+plt.xlabel("f [Hz]")
+# TD model
+plt.plot(freq_fft, np.abs(fft_wave), label="fft TD waveform")
+# FD model
+plt.plot(
+    wave.create_waveform.frequency,
+    np.abs(fd_h_correct),
+    "--",
+    alpha=0.9,
+    label="FD domain waveform",
+)
+plt.legend()
+plt.show()
+
+breakpoint()

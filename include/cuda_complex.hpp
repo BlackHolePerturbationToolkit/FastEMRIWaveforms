@@ -897,7 +897,7 @@ inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 log(const complex<_Tp>& __x)
 {
-    return complex<_Tp>(log(abs(__x)), arg(__x));
+    return complex<_Tp>(std::log(abs(__x)), arg(__x));
 }
 
 // log10
@@ -925,7 +925,7 @@ sqrt(const complex<_Tp>& __x)
             return complex<_Tp>(__x.real(), isnan(__x.imag()) ? __x.imag() : copysign(_Tp(0), __x.imag()));
         return complex<_Tp>(isnan(__x.imag()) ? __x.imag() : _Tp(0), copysign(__x.real(), __x.imag()));
     }
-    return polar(sqrt(abs(__x)), arg(__x) / _Tp(2));
+    return polar(std::sqrt(abs(__x)), arg(__x) / _Tp(2));
 }
 
 // exp
@@ -1093,7 +1093,7 @@ sinh(const complex<_Tp>& __x)
         return complex<_Tp>(__x.real(), _Tp(NAN));
     if (__x.imag() == 0 && !isfinite(__x.real()))
         return __x;
-    return complex<_Tp>(sinh(__x.real()) * cos(__x.imag()), cosh(__x.real()) * sin(__x.imag()));
+    return complex<_Tp>(std::sinh(__x.real()) * cos(__x.imag()), std::cosh(__x.real()) * sin(__x.imag()));
 }
 
 // cosh
@@ -1111,7 +1111,7 @@ cosh(const complex<_Tp>& __x)
         return complex<_Tp>(_Tp(1), __x.imag());
     if (__x.imag() == 0 && !isfinite(__x.real()))
         return complex<_Tp>(fabs(__x.real()), __x.imag());
-    return complex<_Tp>(cosh(__x.real()) * cos(__x.imag()), sinh(__x.real()) * sin(__x.imag()));
+    return complex<_Tp>(std::cosh(__x.real()) * cos(__x.imag()), std::sinh(__x.real()) * sin(__x.imag()));
 }
 
 // tanh
@@ -1132,7 +1132,7 @@ tanh(const complex<_Tp>& __x)
     _Tp __2r(_Tp(2) * __x.real());
     _Tp __2i(_Tp(2) * __x.imag());
     _Tp __d(cosh(__2r) + cos(__2i));
-    return  complex<_Tp>(sinh(__2r)/__d, sin(__2i)/__d);
+    return  complex<_Tp>(std::sinh(__2r)/__d, sin(__2i)/__d);
 }
 
 // asin
@@ -1202,7 +1202,7 @@ CUDA_CALLABLE_MEMBER
 complex<_Tp>
 sin(const complex<_Tp>& __x)
 {
-    complex<_Tp> __z = sinh(complex<_Tp>(-__x.imag(), __x.real()));
+    complex<_Tp> __z = gcmplx::sinh(complex<_Tp>(-__x.imag(), __x.real()));
     return complex<_Tp>(__z.imag(), -__z.real());
 }
 
@@ -1213,7 +1213,7 @@ inline CUDA_CALLABLE_MEMBER
 complex<_Tp>
 cos(const complex<_Tp>& __x)
 {
-    return cosh(complex<_Tp>(-__x.imag(), __x.real()));
+    return gcmplx::cosh(complex<_Tp>(-__x.imag(), __x.real()));
 }
 
 // tan

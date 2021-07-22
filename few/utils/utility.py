@@ -323,6 +323,7 @@ def Y_to_xI(a, p, e, Y):
 
     """
 
+    # TODO: check error for not c-contiguous
     # determines shape of input
     if isinstance(e, float):
         scalar = True
