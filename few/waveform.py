@@ -181,7 +181,7 @@ class GenerateEMRIWaveform:
             psi_ldc = -np.arctan2(up_ldc, dw_ldc)
 
         else:
-            psi_ldc = 0.5 * np.pi / 2.0
+            psi_ldc = 0.5 * np.pi
 
         c2psi_ldc = np.cos(2.0 * psi_ldc)
         s2psi_ldc = np.sin(2.0 * psi_ldc)
