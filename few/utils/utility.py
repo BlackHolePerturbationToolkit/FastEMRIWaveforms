@@ -475,15 +475,16 @@ def get_mu_at_t(
         t = out[0]
         t_end[i] = t[-1]
 
+    # get rid of extra values beyond the maximum allowable time
+    ind_stop = np.where(np.diff(t_end) > 0.0)[0][-1] + 1
+    
+    mu_new = mu_new[:ind_stop]
+    t_end = t_end[:ind_stop]
+
     # put them in increasing order
     sort = np.argsort(t_end)
     t_end = t_end[sort]
     mu_new = mu_new[sort]
-
-    # get rid of extra values beyond the maximum allowable time
-    ind_stop = np.where(np.diff(t_end) > 0.0)[0][-1] + 1
-    mu_new = mu_new[:ind_stop]
-    t_end = t_end[:ind_stop]
 
     # setup spline
     spline = CubicSpline(t_end, mu_new)
@@ -560,14 +561,12 @@ def get_p_at_t(
         # get the last time in the trajectory
         t = out[0]
         t_end[i] = t[-1]
-
-    # put them in increasing order
-    sort = np.argsort(t_end)
-    t_end = t_end[sort]
-    p_new = p_new[sort]
-
-    # get rid of extra values beyond the maximum allowable time
+    
+    # get rid of low values that returned zero-duration waveforms due to domain error
     try:
+        ind_start = np.where(np.diff(t_end) > 0.0)[0][0] + 1
+
+        # get rid of extra values beyond the maximum allowable time
         ind_stop = np.where(np.diff(t_end) > 0.0)[0][-1] + 1
 
     except IndexError:
@@ -583,8 +582,14 @@ def get_p_at_t(
 
     p_test = p_new.copy()
     t_test = t_end.copy()
-    p_new = p_new[: ind_stop + 1]
-    t_end = t_end[: ind_stop + 1]
+    p_new = p_new[ind_start:ind_stop + 1]
+    t_end = t_end[ind_start:ind_stop + 1]
+
+
+    # put them in increasing order
+    sort = np.argsort(t_end)
+    t_end = t_end[sort]
+    p_new = p_new[sort]
 
     if t_end[-1] < t_out * YRSID_SI:
         return max_p
