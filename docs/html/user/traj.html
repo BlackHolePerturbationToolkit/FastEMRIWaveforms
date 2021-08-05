@@ -827,7 +827,7 @@ the trajectory module.</p></li>
 <span id="pn-generic-kerr-inspiral"></span><h2>5PN Generic Kerr Inspiral<a class="headerlink" href="#module-few.trajectory.pn5" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="few.trajectory.pn5.RunKerrGenericPn5Inspiral">
-<em class="property">class </em><code class="sig-prename descclassname">few.trajectory.pn5.</code><code class="sig-name descname">RunKerrGenericPn5Inspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">few.trajectory.pn5.</code><code class="sig-name descname">RunKerrGenericPn5Inspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">enforce_schwarz_sep</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.pn5.RunKerrGenericPn5Inspiral" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK" title="few.utils.baseclasses.Pn5AAK"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.Pn5AAK</span></code></a></p>
 <p>Pn5-based trajectory module.</p>
 <p>This module implements a Pn5-based trajectory by integrating with an
@@ -840,6 +840,10 @@ timestep.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>enforce_schwarz_sep</strong> (<em>bool</em><em>, </em><em>optional</em>) – Enforce the separatrix of Schwarzschild
+spacetime. This helps to midigate issues at higher spin and/or higher
+eccentricity where the PN approximations are more likely to fail.
+Default is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 <li><p><strong>*args</strong> (<em>list</em>) – Any arguments for parent
 class <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a> or
 class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK" title="few.utils.baseclasses.Pn5AAK"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.Pn5AAK</span></code></a>.</p></li>

@@ -476,10 +476,19 @@ def get_mu_at_t(
         t_end[i] = t[-1]
 
     # get rid of extra values beyond the maximum allowable time
-    ind_stop = np.where(np.diff(t_end) > 0.0)[0][-1] + 1
-    
-    mu_new = mu_new[:ind_stop]
-    t_end = t_end[:ind_stop]
+    # remove repeated initital values for proper splining.
+    try:
+        ind_stop = np.where(np.diff(t_end) > 0.0)[0][-1] + 1
+    except IndexError:
+        ind_stop = len(t_end)
+
+    try:
+        ind_start = np.where(np.diff(t_end) == 0.0)[0][-1] + 1
+    except IndexError:
+        ind_stop = 0
+
+    mu_new = mu_new[ind_start:ind_stop]
+    t_end = t_end[ind_start:ind_stop]
 
     # put them in increasing order
     sort = np.argsort(t_end)
@@ -561,7 +570,7 @@ def get_p_at_t(
         # get the last time in the trajectory
         t = out[0]
         t_end[i] = t[-1]
-    
+
     # get rid of low values that returned zero-duration waveforms due to domain error
     try:
         ind_start = np.where(np.diff(t_end) > 0.0)[0][0] + 1
@@ -582,9 +591,8 @@ def get_p_at_t(
 
     p_test = p_new.copy()
     t_test = t_end.copy()
-    p_new = p_new[ind_start:ind_stop + 1]
-    t_end = t_end[ind_start:ind_stop + 1]
-
+    p_new = p_new[ind_start : ind_stop + 1]
+    t_end = t_end[ind_start : ind_stop + 1]
 
     # put them in increasing order
     sort = np.argsort(t_end)
@@ -621,6 +629,7 @@ record_by_version = {
     "1.3.4": 3981654,
     "1.3.5": 3981654,
     "1.3.6": 3981654,
+    "1.3.7": 3981654,
 }
 
 

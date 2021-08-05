@@ -149,7 +149,7 @@ void Pn5Carrier::dealloc()
 // It takes initial parameters and evolves a trajectory
 // tmax and dt affect integration length and time steps (mostly if DENSE_STEPPING == 1)
 // use_rk4 allows the use of the rk4 integrator
-Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4)
+Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4, bool enforce_schwarz_sep)
 {
 
     // years to seconds
@@ -256,7 +256,15 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
         // Stop the inspiral when close to the separatrix
         // convert to proper inclination for separatrix
         double xI = Y_to_xI(a, p, e, Y);
-        double p_sep = get_separatrix(a, e, xI);
+        double p_sep = 0.0;
+        if (enforce_schwarz_sep)
+        {
+            p_sep = 6. + 2. * e;
+        }
+        else
+        {
+            p_sep = get_separatrix(a, e, xI);
+        }
         if(p - p_sep < DIST_TO_SEPARATRIX)
         {
             // Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.
@@ -274,12 +282,12 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
             t = prev_t;
 
             // update p_sep (fixes part of issue #17)
-            double p_sep = prev_p_sep;
+            p_sep = prev_p_sep;
 
             // set initial values
             double factor = 1.0;
             int iter = 0;
-            
+
             while (p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD)
             {
                 double pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r;
@@ -291,7 +299,14 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 
                 // estimate the step to the breaking point and multiply by PERCENT_STEP
                 xI = Y_to_xI(a, p, e, Y);
-                p_sep = get_separatrix(a, e, xI);
+                if (enforce_schwarz_sep)
+                {
+                    p_sep = 6. + 2. * e;
+                }
+                else
+                {
+                    p_sep = get_separatrix(a, e, xI);
+                }
 
                 double step_size = PERCENT_STEP / factor * ((p_sep + DIST_TO_SEPARATRIX - p)/pdot);
 
@@ -366,10 +381,10 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 }
 
 // wrapper for calling the Pn5 inspiral from cython/python
-void Pn5Carrier::Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len){
+void Pn5Carrier::Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, bool enforce_schwarz_sep){
 
 	double t0 = 0.0;
-		Pn5Holder Pn5_vals = run_Pn5(t0, M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, err, tmax, dt, DENSE_STEPPING, use_rk4);
+		Pn5Holder Pn5_vals = run_Pn5(t0, M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, err, tmax, dt, DENSE_STEPPING, use_rk4, enforce_schwarz_sep);
 
         // make sure we have allocated enough memory through cython
         if (Pn5_vals.length > init_len){

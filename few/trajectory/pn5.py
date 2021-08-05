@@ -51,6 +51,10 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
     `Fujita & Shibata 2020<https://arxiv.org/abs/2008.13554>`_.
 
     args:
+        enforce_schwarz_sep (bool, optional): Enforce the separatrix of Schwarzschild
+            spacetime. This helps to midigate issues at higher spin and/or higher
+            eccentricity where the PN approximations are more likely to fail.
+            Default is ``False``.
         *args (list): Any arguments for parent
             class :class:`few.utils.baseclasses.TrajectoryBase` or
             class :class:`few.utils.baseclasses.Pn5AAK`.
@@ -60,11 +64,12 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, enforce_schwarz_sep=False, **kwargs):
 
         TrajectoryBase.__init__(self, *args, **kwargs)
         Pn5AAK.__init__(self, *args, **kwargs)
 
+        self.enforce_schwarz_sep = enforce_schwarz_sep
         self.Pn5_generator = pyPn5Generator()
 
         self.specific_kwarg_keys = [
@@ -156,6 +161,8 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
 
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
+
+        temp_kwargs["enforce_schwarz_sep"] = self.enforce_schwarz_sep
 
         # this will return in coordinate time
         # must include Pn5 normalization in case normalization is desired
