@@ -305,9 +305,9 @@ void interpolate_arrays(double *t_arr, double *interp_array, int ninterps, int l
 
 // build mode value with specific phase and amplitude values; mode indexes; and spherical harmonics
 CUDA_CALLABLE_MEMBER
-cmplx get_mode_value(cmplx teuk_mode, fod Phi_phi, fod Phi_r, int m, int n, cmplx Ylm){
+cmplx get_mode_value(cmplx teuk_mode, double Phi_phi, double Phi_r, int m, int n, cmplx Ylm){
     cmplx minus_I(0.0, -1.0);
-    fod phase = m*Phi_phi + n*Phi_r;
+    double phase = m*Phi_phi + n*Phi_r;
     cmplx out = (teuk_mode*Ylm)*gcmplx::exp(minus_I*phase);
     return out;
 }
@@ -333,7 +333,7 @@ __device__ double atomicAddDouble(double* address, double val)
 }
 
 // Add functionality for proper summation in the kernel
-__device__ void atomicAddComplex(cmplx* a, cmplx b){
+__device__ void atomicAddcmplx(cmplx* a, cmplx b){
   //transform the addresses of real and imag. parts to double pointers
   double *x = (double*)a;
   double *y = x+1;
@@ -523,7 +523,7 @@ void make_waveform(cmplx *waveform,
 
         // fill waveform
         #ifdef __CUDACC__
-        atomicAddComplex(&waveform[i], trans);
+        atomicAddcmplx(&waveform[i], trans);
         #else
         waveform[i] += trans;
         #endif

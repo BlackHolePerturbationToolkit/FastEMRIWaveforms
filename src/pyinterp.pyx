@@ -21,6 +21,14 @@ cdef extern from "interpolate.hh":
               double start_freq, int* turnover_ind_all,
               double* turnover_freqs, int max_points, double df, double* f_data, int zero_index);
 
+    void get_waveform_fd(cmplx *waveform,
+               double *interp_array,
+               double *special_f_interp_array,
+               double* special_f_seg_in,
+                int *m_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
+                double* t_arr, int* start_ind_all, int* end_ind_all, int init_length,
+                double start_freq, int* turnover_ind_all,
+                double* turnover_freqs, int max_points, double df, double* f_data, int zero_index);
 
 @pointer_adjust
 def interpolate_arrays_wrap(t_arr, interp_array, ninterps, length, B, upper_diag, diag, lower_diag):

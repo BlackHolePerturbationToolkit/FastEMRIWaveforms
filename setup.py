@@ -439,7 +439,6 @@ if run_cuda_install:
 else:
     # extensions = [FLUX_ext, SlowFlux_ext, spher_harm_ext, Interp2DAmplitude_ext]
     extensions = cpu_extensions
-    # extensions = [interp_cpu_ext]
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
