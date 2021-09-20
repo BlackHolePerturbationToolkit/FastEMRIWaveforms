@@ -5,33 +5,17 @@ from few.waveform import (
     SlowSchwarzschildEccentricFlux,
 )
 from few.utils.utility import *
-<<<<<<< HEAD
-=======
+
 from few.utils.utility import get_mu_at_t
->>>>>>> 3dfa55b11d66b8bc5679192554f92ff7ff9876ad
+
 from few.utils.constants import *
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 
-<<<<<<< HEAD
 
 use_gpu = False
 
-=======
-def zero_pad(data):
-    
-    N = len(data)
-    pow_2 = np.ceil(np.log2(N))
-    res = np.pad(data,(1,0),'constant')
-    N = len(res)
-    pow_2 = np.ceil(np.log2(N))
-    return np.pad(res,(0,int((2**pow_2)-N)),'constant')
-
-
-
-use_gpu = False
->>>>>>> 3dfa55b11d66b8bc5679192554f92ff7ff9876ad
 
 sum_kwargs = dict(pad_output=True)
 
@@ -80,9 +64,8 @@ wave_22 = few_base(
     phi,
     T=T,
     dt=dt,
-<<<<<<< HEAD
-    # eps=1e-2,
-    mode_selection=modes,
+    eps=0.5e-4,
+    # mode_selection=modes,
     include_minus_m=True,
 )  # ,eps=1e-2)# , batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #
 freq_fft = np.fft.fftshift(np.fft.fftfreq(len(wave_22), dt))
@@ -92,27 +75,6 @@ fft_wave = np.flip(
 
 rect_fft = np.fft.fft(np.ones_like(wave_22))  # * signal.tukey(len(wave_22))
 
-=======
-    #eps=1e-2,
-    mode_selection=modes,
-    include_minus_m=True,
-)  # ,eps=1e-2)# , batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #
-
-signal_td = wave_22 # zero_pad(wave_22)
-N = len(signal_td)
-
-# Window
-rect_td = zero_pad(signal.tukey(len(wave_22),alpha=0.5)) #zero_pad(np.ones_like(wave_22))/N
-rect_fft = np.fft.fftshift(np.fft.fft(rect_td))  # * signal.tukey(len(wave_22))
-
-freq_fft = np.fft.fftshift(np.fft.fftfreq(N, dt))
-fft_wave = np.flip( np.fft.fftshift(np.fft.fft(signal_td )) * dt)  # * signal.tukey(len(wave_22))
-
-
-######################################################
-#%%
-# FD
->>>>>>> 3dfa55b11d66b8bc5679192554f92ff7ff9876ad
 sum_kwargs = dict(pad_output=True, output_type="fd")
 
 wave = FastSchwarzschildEccentricFlux(sum_kwargs=sum_kwargs, use_gpu=use_gpu)
@@ -124,17 +86,10 @@ fd_h = wave(
     e0,
     theta,
     phi,
-<<<<<<< HEAD
     T=T,
     dt=dt,
-    mode_selection=modes,
-    # eps=1e-2,
-=======
-    T=T, #(N-1)*dt/YRSID_SI,
-    dt=dt,
-    mode_selection=modes,
-    #eps=1e-2,
->>>>>>> 3dfa55b11d66b8bc5679192554f92ff7ff9876ad
+    # mode_selection=modes,
+    eps=0.5e-4,
     include_minus_m=True,
 )  # ,eps=1e-2)# , mode_selection=[(l,m,n)],include_minus_m=True) #
 
@@ -143,31 +98,17 @@ f = np.arange(-1 / (2 * dt), +1 / (2 * dt), 1 / (len(fd_h) * dt))
 # plt.plot(f, fd_h.real)
 # plt.show()
 # breakpoint()
-<<<<<<< HEAD
-=======
 
->>>>>>> 3dfa55b11d66b8bc5679192554f92ff7ff9876ad
-#%% mismatch
 
-print("nans in waveform", np.sum(np.isnan(fd_h)))
-
-<<<<<<< HEAD
 fd_h_correct = fd_h  # -np.roll(
-=======
-fd_h_correct = fd_h # signal.fftconvolve(fd_h, rect_fft/N, mode='same')  # -np.roll(
->>>>>>> 3dfa55b11d66b8bc5679192554f92ff7ff9876ad
+
 # np.flip(np.real(fd_h)) + 1j * np.flip(np.imag(fd_h)), 1
 # )  # np.sin(dt*len(wave_22)*freq_fft/4/np.pi)/np.sin(dt*freq_fft/4/np.pi)#*np.exp(-1j* (len(wave_22)-1)/2 )
 index_nonzero = [np.abs(fd_h_correct) != complex(0.0)][0]
 
 # index_nonzero = np.arange(len(fd_h_correct))
 
-<<<<<<< HEAD
 # check nan
-=======
-def innprod(a,b):
-    return np.real(np.dot(np.conj(a),b))
->>>>>>> 3dfa55b11d66b8bc5679192554f92ff7ff9876ad
 
 den = np.sqrt(
     np.real(np.dot(np.conj(fft_wave[index_nonzero]), fft_wave[index_nonzero]))
@@ -251,8 +192,7 @@ plt.plot(
 plt.legend()
 plt.show()
 
-<<<<<<< HEAD
+
 breakpoint()
-=======
-#breakpoint()
->>>>>>> 3dfa55b11d66b8bc5679192554f92ff7ff9876ad
+
+# breakpoint()
