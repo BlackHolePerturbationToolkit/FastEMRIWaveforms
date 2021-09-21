@@ -1098,7 +1098,7 @@ void make_waveform_fd(cmplx *waveform,
               int *m_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
               double* t_arr, int* start_ind_all, int* end_ind_all, int init_length,
               double start_freq, int* turnover_ind_all,
-              double* turnover_freqs, double df, double* f_data, int zero_index)
+              double* turnover_freqs, double df, double* f_data, int zero_index, double* shift_freqs)
 
 {
 
@@ -1115,6 +1115,7 @@ void make_waveform_fd(cmplx *waveform,
 
         int turnover_ind = turnover_ind_all[mode_i];
         double turnover_frequency = turnover_freqs[mode_i];
+        double shift_freq = shift_freqs[mode_i];
 
         #ifdef __CUDACC__
         int segment_start = blockIdx.z;
@@ -1297,6 +1298,9 @@ void make_waveform_fd(cmplx *waveform,
                 double f_seg_begin = m * fp_y + n * fr_y;
                 double f_seg_end = m * fp_end_y + n * fr_end_y;
 
+                double f_here = f - shift_freq;
+                double Fstar_here = Fstar - shift_freq;
+
                 if (segment_i > turnover_ind)
                 {
                     num_points = 1;
@@ -1305,7 +1309,7 @@ void make_waveform_fd(cmplx *waveform,
 
                     if (slope0 < 0.0)
                     {
-                        special_f[0] = abs(Fstar + Fstar / abs(Fstar) * abs(f - Fstar));
+                        special_f[0] = abs(Fstar_here + Fstar_here / abs(Fstar_here) * abs(f_here - Fstar_here));
                         //if ((f == 0.0))
                         //{
                         //    printf("AHAH1: %d %d %d %.18e %.18e %.18e\n", turnover_ind, mode_i, segment_i, special_f[0], f, Fstar);
@@ -1314,7 +1318,7 @@ void make_waveform_fd(cmplx *waveform,
                     else
                     {
                         // TODO: check this special_f
-                        special_f[0] = abs(Fstar + Fstar / abs(Fstar) * abs(f - Fstar));
+                        special_f[0] = abs(Fstar_here + Fstar_here / abs(Fstar_here) * abs(f_here - Fstar_here));
                         //if ((f == 0.0))
                         //{
                         //    printf("AHAH2: %d %d %d %.18e %.18e %.18e\n", turnover_ind, mode_i, segment_i, special_f[0], f, Fstar);
@@ -1326,7 +1330,7 @@ void make_waveform_fd(cmplx *waveform,
                 else if (segment_i < turnover_ind)
                 {
                     num_points = 1;
-                    special_f[0] = abs(f);
+                    special_f[0] = abs(f_here);
                 }
                 else
                 {
@@ -1341,30 +1345,30 @@ void make_waveform_fd(cmplx *waveform,
                         //}
 
                         num_points = 2;
-                        special_f[0] = abs(f);
+                        special_f[0] = abs(f_here);
 
                         // this is beginning of segment, so past turnover will have opposite slope
                         if (slope0 < 0.0)
                         {
-                            special_f[1] = abs(Fstar + Fstar / abs(Fstar) * abs(f - Fstar));
+                            special_f[1] = abs(Fstar_here + Fstar_here / abs(Fstar_here) * abs(f_here - Fstar_here));
                         }
                         else
                         {
                             // TODO: check this special_f
-                            special_f[1] = abs(Fstar - Fstar / abs(Fstar) * abs(f - Fstar));
+                            special_f[1] = abs(Fstar_here - Fstar_here / abs(Fstar_here) * abs(f_here - Fstar_here));
                         }
                     }
                     else if (abs(f) > abs(f_seg_begin))
                     {
                         num_points = 1;
-                        special_f[0] = abs(f);
+                        special_f[0] = abs(f_here);
                     }
                     else // (abs(f) > abs(f_seg_end))
                     {
                         num_points = 1;
                         if (slope0 < 0.0)
                         {
-                            special_f[0] = abs(Fstar - Fstar / abs(Fstar) * abs(f - Fstar));
+                            special_f[0] = abs(Fstar_here - Fstar_here / abs(Fstar_here) * abs(f_here - Fstar_here));
                             //if (f == 0.0)
                             //{
                             //    printf("YAYAY3: %d %d %d %.18e %.18e %.18e\n", turnover_ind, mode_i, segment_i, special_f[0], f, Fstar);
@@ -1373,7 +1377,7 @@ void make_waveform_fd(cmplx *waveform,
                         else
                         {
                             // TODO: check this special_f
-                            special_f[0] = abs(Fstar - Fstar / abs(Fstar) * abs(f - Fstar));
+                            special_f[0] = abs(Fstar_here - Fstar_here / abs(Fstar_here) * abs(f_here - Fstar_here));
                             //if (f == 0.0)
                             //{
                             //    printf("YAYAY4: %d %d %d %.18e %.18e %.18e\n", turnover_ind, mode_i, segment_i, special_f[0], f, Fstar);
@@ -1462,7 +1466,6 @@ void make_waveform_fd(cmplx *waveform,
                     } else trans_minus_m += 0.0 + 0.0*complexI;
 
                     //if (i == 1541654) printf("%d %d %d %d %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e\n", jj, minus_m_freq_index, m, n, t, -f, -fdot, -fddot, gcmplx::conj(mode_val).real(), gcmplx::conj(mode_val).imag(), -phase_term, Ylm_minus_m.real(), Ylm_minus_m.imag(), trans_minus_m.real(), trans_minus_m.imag());
-
                 }
                 // fill waveform
                 #ifdef __CUDACC__
@@ -1493,7 +1496,7 @@ void get_waveform_fd(cmplx *waveform,
               int *m_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
               double* t_arr, int* start_ind_all, int* end_ind_all, int init_length,
               double start_freq, int* turnover_ind_all,
-              double* turnover_freqs, int max_points, double df, double* f_data, int zero_index)
+              double* turnover_freqs, int max_points, double df, double* f_data, int zero_index, double* shift_freq)
 {
 
     #ifdef __CUDACC__
@@ -1513,7 +1516,7 @@ void get_waveform_fd(cmplx *waveform,
                   m_arr_in, n_arr_in, num_teuk_modes, Ylms_in,
                   t_arr, start_ind_all, end_ind_all, init_length,
                   start_freq, turnover_ind_all,
-                  turnover_freqs, df, f_data, zero_index);
+                  turnover_freqs, df, f_data, zero_index, shift_freq);
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());
 
@@ -1526,7 +1529,7 @@ void get_waveform_fd(cmplx *waveform,
                   m_arr_in, n_arr_in, num_teuk_modes, Ylms_in,
                   t_arr, start_ind_all, end_ind_all, init_length,
                   start_freq, turnover_ind_all,
-                  turnover_freqs, df, f_data, zero_index);
+                  turnover_freqs, df, f_data, zero_index, shift_freq);
 
     #endif
 }

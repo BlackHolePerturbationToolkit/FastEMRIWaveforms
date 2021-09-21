@@ -45,7 +45,7 @@ phi = np.pi / 5  # mismatch =  0.02257016504821807
 # mu = get_mu_at_t(traj_module, t_out, traj_args)
 # print(mu)
 # mism 0.0024275870323797744
-dt = 15
+dt = 10.0
 T = 1.0
 
 
@@ -53,7 +53,8 @@ l = 2  # 2
 m = 1  # 1
 n = -4  # -4
 
-modes = [(2, 1, -4,)]
+modes = [(2, 2, -3)]
+eps = 1e-3
 #%% TIME DOMAIN
 wave_22 = few_base(
     M,
@@ -64,13 +65,13 @@ wave_22 = few_base(
     phi,
     T=T,
     dt=dt,
-    eps=0.5e-4,
+    eps=eps,
     # mode_selection=modes,
-    include_minus_m=True,
+    include_minus_m=False,
 )  # ,eps=1e-2)# , batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #
 freq_fft = np.fft.fftshift(np.fft.fftfreq(len(wave_22), dt))
-fft_wave = np.flip(
-    np.fft.fftshift(np.fft.fft(wave_22)) * dt
+fft_wave = np.roll(
+    np.flip(np.fft.fftshift(np.fft.fft(wave_22)) * dt), 0
 )  # * signal.tukey(len(wave_22))
 
 rect_fft = np.fft.fft(np.ones_like(wave_22))  # * signal.tukey(len(wave_22))
@@ -89,8 +90,8 @@ fd_h = wave(
     T=T,
     dt=dt,
     # mode_selection=modes,
-    eps=0.5e-4,
-    include_minus_m=True,
+    eps=eps,
+    include_minus_m=False,
 )  # ,eps=1e-2)# , mode_selection=[(l,m,n)],include_minus_m=True) #
 
 f = np.arange(-1 / (2 * dt), +1 / (2 * dt), 1 / (len(fd_h) * dt))
@@ -143,10 +144,9 @@ plt.figure()
 plt.ylabel(r"Re $\tilde{h}(f)$")
 plt.xlabel("f [Hz]")
 # TD model
-plt.plot(freq_fft, -np.real(fft_wave), label="fft TD waveform")
+plt.plot(-np.real(fft_wave), label="fft TD waveform")
 # FD model
 plt.plot(
-    wave.create_waveform.frequency,
     np.real(fd_h_correct),
     # "--",
     alpha=0.9,
@@ -154,7 +154,7 @@ plt.plot(
 )
 plt.legend(loc="right")
 plt.show()
-
+breakpoint()
 
 # %%
 

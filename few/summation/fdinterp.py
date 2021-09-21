@@ -415,16 +415,30 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
 
         Fstar = m_arr * spline_out[-4] + n_arr * spline_out[-3]
 
+        inds_pass_through_zero = self.xp.any(
+            self.xp.diff(self.xp.sign(seg_freqs), axis=1) != 0.0, axis=1
+        )
+
+        shift_freq = seg_freqs.min(axis=1)
+        shift_freq[~inds_pass_through_zero] = 0.0
+
+        seg_freqs_for_special = seg_freqs - shift_freq[:, None]
+        Fstar_for_special = Fstar - shift_freq
+
         special_f_arrs = self.xp.abs(
-            seg_freqs * (t[None, :] <= t_star[:, None])
+            seg_freqs_for_special * (t[None, :] <= t_star[:, None])
             + (
-                Fstar[:, None]
-                + Fstar[:, None] / abs(Fstar[:, None]) * abs(seg_freqs - Fstar[:, None])
+                Fstar_for_special[:, None]
+                + Fstar_for_special[:, None]
+                / abs(Fstar_for_special[:, None])
+                * abs(seg_freqs_for_special - Fstar_for_special[:, None])
             )
             * ((t[None, :] > t_star[:, None]) & (slope0[:, None] >= 0.0))
             + (
-                Fstar[:, None]
-                + Fstar[:, None] / abs(Fstar[:, None]) * abs(seg_freqs - Fstar[:, None])
+                Fstar_for_special[:, None]
+                + Fstar_for_special[:, None]
+                / abs(Fstar_for_special[:, None])
+                * abs(seg_freqs_for_special - Fstar_for_special[:, None])
             )
             * ((t[None, :] > t_star[:, None]) & (slope0[:, None] < 0.0))
         )
@@ -480,6 +494,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
             df,
             self.frequency,
             zero_index,
+            shift_freq,
         )
 
         """

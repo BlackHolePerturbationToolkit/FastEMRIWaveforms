@@ -137,6 +137,14 @@ class CubicSplineInterpolant(GPUModuleBase):
         self.reshape_shape = (self.degree + 1, length, ninterps)
         self.t = self.t.reshape((ninterps, length))
 
+        # fill final derivative
+        for i in range(1, 4):
+            self.interp_array[
+                (i * length + (length - 1))
+                * ninterps : ((i + 1) * length + 0)
+                * ninterps
+            ] = self(self.t[:, -1:], deriv_order=i)
+
     def attributes_CubicSplineInterpolate(self):
         """
         attributes:
@@ -229,7 +237,7 @@ class CubicSplineInterpolant(GPUModuleBase):
         if tnew.ndim == 2:
             if tnew.shape[0] != self.t.shape[0]:
                 raise ValueError(
-                    "If providing a 2D tnew array, must have some number of interpolants as was entered during initialization."
+                    "If providing a 2D tnew array, must have same number of interpolants as was entered during initialization."
                 )
 
         # copy input to all splines
