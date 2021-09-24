@@ -51,6 +51,9 @@ class WaveformTest(unittest.TestCase):
         # keyword arguments for summation generator (InterpolatedModeSum)
         sum_kwargs = {}
 
+        #from cupy.cuda.runtime import setDevice
+
+        #setDevice(0)
         fast = FastSchwarzschildEccentricFlux(
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
@@ -77,12 +80,13 @@ class WaveformTest(unittest.TestCase):
 
         # keyword arguments for summation generator (InterpolatedModeSum)
         sum_kwargs = {"use_gpu": False}  # GPU is availabel for this type of summation
-
+        mode_selector_kwargs = {}
         slow = SlowSchwarzschildEccentricFlux(
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             sum_kwargs=sum_kwargs,
+            mode_selector_kwargs=mode_selector_kwargs,
             use_gpu=False,
         )
 
