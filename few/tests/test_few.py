@@ -51,9 +51,6 @@ class WaveformTest(unittest.TestCase):
         # keyword arguments for summation generator (InterpolatedModeSum)
         sum_kwargs = {}
 
-        #from cupy.cuda.runtime import setDevice
-
-        #setDevice(0)
         fast = FastSchwarzschildEccentricFlux(
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
