@@ -5,7 +5,7 @@ from libcpp cimport bool
 
 assert sizeof(int) == sizeof(np.int32_t)
 
-cdef extern from "../include/FundamentalFrequencies.hh":
+cdef extern from "../include/Utility.hh":
     void KerrGeoCoordinateFrequenciesVectorized(double* OmegaPhi_, double* OmegaTheta_, double* OmegaR_,
                               double* a, double* p, double* e, double* x, int length);
 

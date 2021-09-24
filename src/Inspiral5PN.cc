@@ -39,7 +39,7 @@
 
 #include "Inspiral5PN.hh"
 #include "dIdt8H_5PNe10.h"
-#include "FundamentalFrequencies.hh"
+#include "Utility.hh"
 #include "global.h"
 
 #include <iostream>
