@@ -25,11 +25,11 @@ except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
 # Necessary base classes
-from few.utils.baseclasses import SummationBase, SchwarzschildEccentric, GPUModuleBase
+from few.utils.baseclasses import SummationBase, SchwarzschildEccentric, ParallelModuleBase
 from few.utils.citations import *
 
 
-class DirectModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase):
+class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
     """Create waveform by direct summation.
 
     This class sums the amplitude and phase information as received.
@@ -42,7 +42,7 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase):
 
     def __init__(self, *args, use_gpu=False, **kwargs):
 
-        GPUModuleBase.__init__(self, *args, **kwargs)
+        ParallelModuleBase.__init__(self, *args, **kwargs)
         SchwarzschildEccentric.__init__(self, *args, **kwargs)
         SummationBase.__init__(self, *args, **kwargs)
 
