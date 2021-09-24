@@ -223,8 +223,8 @@
 <span id="mode-filtering"></span><h2>Mode Filtering<a class="headerlink" href="#module-few.utils.modeselector" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="few.utils.modeselector.ModeSelector">
-<em class="property">class </em><code class="sig-prename descclassname">few.utils.modeselector.</code><code class="sig-name descname">ModeSelector</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m0mask</span></em>, <em class="sig-param"><span class="n">sensitivity_fn</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.GPUModuleBase" title="few.utils.baseclasses.GPUModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.GPUModuleBase</span></code></a></p>
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.modeselector.</code><code class="sig-name descname">ModeSelector</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m0mask</span></em>, <em class="sig-param"><span class="n">sensitivity_fn</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.ParallelModuleBase</span></code></a></p>
 <p>Filter teukolsky amplitudes based on power contribution.</p>
 <p>This module takes teukolsky modes, combines them with their associated ylms,
 and determines the power contribution from each mode. It then filters the
@@ -248,8 +248,9 @@ of the sensitivity curve. Default is None. If this is not none, this
 sennsitivity is used to weight the mode values when determining which
 modes to keep. <strong>Note</strong>: if the sensitivity function is provided,
 and GPUs are used, then this function must accept CuPy arrays as input.</p></li>
-<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, allocate arrays for usage on a GPU.
-Default is False.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments for the base classes:
+<a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.ParallelModuleBase</span></code></a>.
+Default is {}.</p></li>
 </ul>
 </dd>
 </dl>
@@ -377,8 +378,8 @@ waveform generator.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.utils.modeselector.ModeSelector.attributes_GPUModuleBase">
-<code class="sig-name descname">attributes_GPUModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.attributes_GPUModuleBase" title="Permalink to this definition">¶</a></dt>
+<dt id="few.utils.modeselector.ModeSelector.attributes_ParallelModuleBase">
+<code class="sig-name descname">attributes_ParallelModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.attributes_ParallelModuleBase" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
 <dt id="few.utils.modeselector.ModeSelector.use_gpu">
 <code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.utils.modeselector.ModeSelector.use_gpu" title="Permalink to this definition">¶</a></dt>
@@ -427,8 +428,8 @@ GPU capabilites.</p>
 <span id="spin-weighted-spherical-harmonics"></span><h2>(-2) Spin-Weighted Spherical Harmonics<a class="headerlink" href="#module-few.utils.ylm" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="few.utils.ylm.GetYlms">
-<em class="property">class </em><code class="sig-prename descclassname">few.utils.ylm.</code><code class="sig-name descname">GetYlms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">assume_positive_m</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.GPUModuleBase" title="few.utils.baseclasses.GPUModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.GPUModuleBase</span></code></a></p>
+<em class="property">class </em><code class="sig-prename descclassname">few.utils.ylm.</code><code class="sig-name descname">GetYlms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">assume_positive_m</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.ParallelModuleBase</span></code></a></p>
 <p>(-2) Spin-weighted Spherical Harmonics</p>
 <p>The class generates (-2) spin-weighted spherical hackarmonics,
 <span class="math notranslate nohighlight">\(Y_{lm}(\Theta,\phi)\)</span>. <strong>Important Note</strong>: this class also applies
@@ -440,8 +441,9 @@ the parity operator (<span class="math notranslate nohighlight">\(-1^l\)</span>)
 it will return twice the number of requested modes with the seconds
 half as modes with <span class="math notranslate nohighlight">\(m&lt;0\)</span>. <strong>Warning</strong>: It will also duplicate
 the <span class="math notranslate nohighlight">\(m=0\)</span> modes. Default is False.</p></li>
-<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, allocate arrays for GPU.
-Default is False.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments for the base classes:
+<a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.ParallelModuleBase</span></code></a>.
+Default is {}.</p></li>
 </ul>
 </dd>
 </dl>
@@ -510,8 +512,8 @@ waveform generator.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.utils.ylm.GetYlms.attributes_GPUModuleBase">
-<code class="sig-name descname">attributes_GPUModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.attributes_GPUModuleBase" title="Permalink to this definition">¶</a></dt>
+<dt id="few.utils.ylm.GetYlms.attributes_ParallelModuleBase">
+<code class="sig-name descname">attributes_ParallelModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.attributes_ParallelModuleBase" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
 <dt id="few.utils.ylm.GetYlms.use_gpu">
 <code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.utils.ylm.GetYlms.use_gpu" title="Permalink to this definition">¶</a></dt>
@@ -939,6 +941,35 @@ then properly cast the pointer as it enters the c++ function. See the
 Cython codes
 <a class="reference external" href="https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/src">here</a>
 for examples.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="few.utils.utility.omp_set_num_threads">
+<code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">omp_set_num_threads</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_threads</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.omp_set_num_threads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Globally sets OMP_NUM_THREADS</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>num_threads</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of parallel threads to use in OpenMP.
+Default is 1.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="few.utils.utility.omp_get_num_threads">
+<code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">omp_get_num_threads</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.omp_get_num_threads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get global variable OMP_NUM_THREADS</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="few.utils.utility.cuda_set_device">
+<code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">cuda_set_device</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dev</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.cuda_set_device" title="Permalink to this definition">¶</a></dt>
+<dd><p>Globally sets CUDA device</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dev</strong> (<em>int</em>) – CUDA device number.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
