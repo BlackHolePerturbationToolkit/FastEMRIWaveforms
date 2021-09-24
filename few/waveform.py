@@ -213,6 +213,7 @@ class GenerateEMRIWaveform:
         Phi_phi0,
         Phi_theta0,
         Phi_r0,
+        *add_args,
         **kwargs
     ):
         """Generate the waveform with the given parameters.
@@ -244,6 +245,7 @@ class GenerateEMRIWaveform:
                 Default is 0.0.
             Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
                 Default is 0.0.
+            *args (tuple, optional): Tuple of any extra parameters that go into the model.
             **kwargs (dict, optional): Dictionary with kwargs for online waveform
                 generation.
 
@@ -275,7 +277,7 @@ class GenerateEMRIWaveform:
             x0 = xI_to_Y(a, p0, e0, x0)
 
         # remove the arguments that are not used in this waveform
-        args = tuple([args_all[i] for i in self.args_keep])
+        args = tuple([args_all[i] for i in self.args_keep]) + add_args
 
         # pick out the phases to be used
         initial_phases = {key: args_all[i] for key, i in self.phases_needed.items()}

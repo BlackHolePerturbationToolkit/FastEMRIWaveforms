@@ -355,7 +355,7 @@ FLUX_ext = Extension(
     "pyFLUX",
     sources=[
         "src/Interpolant.cc",
-        "src/FundamentalFrequencies.cc",
+        "src/Utility.cc",
         "src/FluxInspiral.cc",
         "src/FLUX.pyx",
     ],
@@ -365,7 +365,7 @@ FLUX_ext = Extension(
 Pn5_ext = Extension(
     "pyPn5",
     sources=[
-        "src/FundamentalFrequencies.cc",
+        "src/Utility.cc",
         "src/dIdt8H_5PNe10.cc",
         "src/Inspiral5PN.cc",
         "src/Pn5.pyx",
@@ -380,8 +380,8 @@ par_map_ext = Extension(
 )
 
 fund_freqs_ext = Extension(
-    "pyFundamentalFrequencies",
-    sources=["src/FundamentalFrequencies.cc", "src/FundFreqs.pyx"],
+    "pyUtility",
+    sources=["src/Utility.cc", "src/utility_functions.pyx"],
     **cpu_extension,
 )
 

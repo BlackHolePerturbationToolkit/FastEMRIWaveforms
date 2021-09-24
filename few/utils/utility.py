@@ -24,7 +24,7 @@ import warnings
 import numpy as np
 from scipy.interpolate import CubicSpline
 
-from pyFundamentalFrequencies import (
+from pyUtility import (
     pyKerrGeoCoordinateFrequencies,
     pyGetSeparatrix,
     pyKerrGeoConstantsOfMotionVectorized,

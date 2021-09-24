@@ -32,7 +32,7 @@
 #include "Interpolant.h"
 #include "FluxInspiral.hh"
 #include "global.h"
-#include "FundamentalFrequencies.hh"
+#include "Utility.hh"
 
 #include <iostream>
 #include <fstream>
