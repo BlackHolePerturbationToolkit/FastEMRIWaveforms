@@ -162,7 +162,7 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
 
-        temp_kwargs["enforce_schwarz_sep"] = self.enforce_schwarz_sep
+        temp_kwargs["enforce_schwarz_sep"] = self.enforce_schwarz_sep if Y0 < 0.0 else False
 
         # this will return in coordinate time
         # must include Pn5 normalization in case normalization is desired

@@ -812,8 +812,7 @@ def cuda_set_device(dev):
     """Globally sets CUDA device
 
     Args:
-        num_threads (int, optional): Number of parallel threads to use in OpenMP.
-            Default is 1.
+        dev (int): CUDA device number.
 
     """
     if setDevice is not None:

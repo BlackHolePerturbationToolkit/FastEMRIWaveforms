@@ -65,7 +65,7 @@ Schwarzschild Eccentric
 GPU Module Base Class
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: few.utils.baseclasses.GPUModuleBase
+.. autoclass:: few.utils.baseclasses.ParallelModuleBase
     :members:
     :show-inheritance:
     :inherited-members:
