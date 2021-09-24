@@ -29,7 +29,7 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
-from few.utils.baseclasses import SchwarzschildEccentric, Pn5AAK, GPUModuleBase
+from few.utils.baseclasses import SchwarzschildEccentric, Pn5AAK, ParallelModuleBase
 from few.trajectory.pn5 import RunKerrGenericPn5Inspiral
 from few.trajectory.flux import RunSchwarzEccFluxInspiral
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
@@ -327,7 +327,7 @@ class GenerateEMRIWaveform:
             return [hp, hx]
 
 
-class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, ABC):
+class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, ParallelModuleBase, ABC):
     """Base class for the actual Schwarzschild eccentric waveforms.
 
     This class carries information and methods that are common to any
@@ -361,6 +361,9 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, 
         mode_selector_kwargs (dict, optional): Optional kwargs to pass to the
             mode selector during instantiation. Default is {}.
         use_gpu (bool, optional): If True, use GPU resources. Default is False.
+        num_threads (int, optional): Number of parallel threads to use in OpenMP.
+            If :code:`None`, will not set the global variable :code:`OMP_NUM_THREADS`.
+            Default is None.
         normalize_amps (bool, optional): If True, it will normalize amplitudes
             to flux information output from the trajectory modules. Default
             is True. This is stored as an attribute.
@@ -398,14 +401,15 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, 
         Ylm_kwargs={},
         mode_selector_kwargs={},
         use_gpu=False,
+        num_threads=None,
         normalize_amps=True,
     ):
 
-        GPUModuleBase.__init__(self, use_gpu=use_gpu)
+        ParallelModuleBase.__init__(self, use_gpu=use_gpu, num_threads=num_threads)
         SchwarzschildEccentric.__init__(self, use_gpu=use_gpu)
 
-        amplitude_kwargs, sum_kwargs = self.adjust_gpu_usage(
-            use_gpu, [amplitude_kwargs, sum_kwargs]
+        amplitude_kwargs, sum_kwargs, Ylm_kwargs, mode_selector_kwargs = self.adjust_gpu_usage(
+            use_gpu, [amplitude_kwargs, sum_kwargs, Ylm_kwargs, mode_selector_kwargs]
         )
 
         # normalize amplitudes to flux at each step from trajectory
@@ -424,11 +428,11 @@ class SchwarzschildEccentricWaveformBase(SchwarzschildEccentric, GPUModuleBase, 
         self.create_waveform = sum_module(**sum_kwargs)
 
         # angular harmonics generation
-        self.ylm_gen = GetYlms(use_gpu=use_gpu, **Ylm_kwargs)
+        self.ylm_gen = GetYlms(**Ylm_kwargs)
 
         # selecting modes that contribute at threshold to the waveform
         self.mode_selector = ModeSelector(
-            self.m0mask, **mode_selector_kwargs, use_gpu=use_gpu
+            self.m0mask, **mode_selector_kwargs
         )
 
     @property
@@ -895,7 +899,7 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         )
 
 
-class Pn5AAKWaveform(Pn5AAK, GPUModuleBase, ABC):
+class Pn5AAKWaveform(Pn5AAK, ParallelModuleBase, ABC):
     """Waveform generation class for AAK with 5PN trajectory.
 
     This class generates waveforms based on the Augmented Analytic Kludge
@@ -948,12 +952,15 @@ class Pn5AAKWaveform(Pn5AAK, GPUModuleBase, ABC):
         sum_kwargs (dict, optional): Optional kwargs to pass to the
             sum module during instantiation. Default is {}.
         use_gpu (bool, optional): If True, use GPU resources. Default is False.
+        num_threads (int, optional): Number of parallel threads to use in OpenMP.
+            If :code:`None`, will not set the global variable :code:`OMP_NUM_THREADS`.
+            Default is None.
 
     """
 
-    def __init__(self, inspiral_kwargs={}, sum_kwargs={}, use_gpu=False):
+    def __init__(self, inspiral_kwargs={}, sum_kwargs={}, use_gpu=False, num_threads=None):
 
-        GPUModuleBase.__init__(self, use_gpu=use_gpu)
+        ParallelModuleBase.__init__(self, use_gpu=use_gpu, num_threads=num_threads)
         Pn5AAK.__init__(self)
 
         sum_kwargs = self.adjust_gpu_usage(use_gpu, sum_kwargs)

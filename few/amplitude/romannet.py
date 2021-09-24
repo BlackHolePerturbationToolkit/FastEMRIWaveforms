@@ -27,7 +27,7 @@ from pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
 from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 
 # Python imports
-from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase, GPUModuleBase
+from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase, ParallelModuleBase
 from few.utils.utility import check_for_file_download
 from few.utils.citations import *
 from few.utils.utility import p_to_y
@@ -48,7 +48,7 @@ except (ImportError, ModuleNotFoundError) as e:
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, GPUModuleBase):
+class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
     """Calculate Teukolsky amplitudes with a ROMAN.
 
     ROMAN stands for reduced-order models with artificial neurons. Please see
@@ -75,10 +75,11 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, GPUModuleBase):
             user requests more length, a warning will be thrown and the
             max_init_len will be increased accordingly and arrays reallocated.
             Default is 1000.
-
-        **kwargs (dict, optional): Keyword arguments for the base class:
-            :class:`few.utils.baseclasses.SchwarzschildEccentric`. Default is
-            {}.
+        **kwargs (dict, optional): Keyword arguments for the base classes:
+            :class:`few.utils.baseclasses.SchwarzschildEccentric`,
+            :class:`few.utils.baseclasses.AmplitudeBase`,
+            :class:`few.utils.baseclasses.ParallelModuleBase`.
+            Default is {}.
 
     """
 
@@ -122,7 +123,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, GPUModuleBase):
 
     def __init__(self, max_init_len=1000, **kwargs):
 
-        GPUModuleBase.__init__(self, **kwargs)
+        ParallelModuleBase.__init__(self, **kwargs)
         SchwarzschildEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
