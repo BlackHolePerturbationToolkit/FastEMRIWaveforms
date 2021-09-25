@@ -64,13 +64,15 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
 
     """
 
-    def __init__(self, *args, enforce_schwarz_sep=False, **kwargs):
+    def __init__(self, *args, enforce_schwarz_sep=False, func="pn5", **kwargs):
 
         TrajectoryBase.__init__(self, *args, **kwargs)
         Pn5AAK.__init__(self, *args, **kwargs)
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
         self.Pn5_generator = pyPn5Generator()
+
+        self.func = func.encode()
 
         self.specific_kwarg_keys = [
             "T",
@@ -167,6 +169,6 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
         # this will return in coordinate time
         # must include Pn5 normalization in case normalization is desired
         t, p, e, Y, Phi_phi, Phi_theta, Phi_r = self.Pn5_generator(
-            M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, **temp_kwargs
+            M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, func=self.func, **temp_kwargs
         )
         return (t, p, e, Y, Phi_phi, Phi_theta, Phi_r)
