@@ -1,6 +1,8 @@
 #ifndef __FUND_FREQS__
 #define __FUND_FREQS__
 
+void throw_python_error(char* str_in, int status);
+
 void KerrGeoMinoFrequencies(double* CapitalGamma_, double* CapitalUpsilonPhi_, double* CapitalUpsilonTheta_, double* CapitalUpsilonr_,
                               double a, double p, double e, double x);
 

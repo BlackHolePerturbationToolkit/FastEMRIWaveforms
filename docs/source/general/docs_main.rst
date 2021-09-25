@@ -35,7 +35,7 @@ Package TODOs
 Change Log
 ===========
 
-- 1.3.8: Ability to access OMP threads. Set CUDA device.
+- 1.3.8: Ability to access OMP threads. Set CUDA device. Change fundamental frequency files to "utility". Initial error handler.
 - 1.3.7: Fixed get_at_t functions. Added new GPU architecture. Removed oldest architecture. Fixed issue #30 & #32.
 - 1.3.6: Fixed Y0 < 0.0 in new AAK.
 - 1.3.5: Interpolation updated for 2d and bug fixes on derivatives.
