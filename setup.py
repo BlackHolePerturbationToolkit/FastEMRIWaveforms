@@ -9,6 +9,9 @@ import numpy
 import shutil
 import argparse
 
+# prepare the ode files
+from few.utils.utility import ode_prepare
+ode_prepare()
 
 def find_in_path(name, path):
     """Find a file in a search path"""
@@ -367,7 +370,7 @@ Pn5_ext = Extension(
     sources=[
         "src/Utility.cc",
         "src/dIdt8H_5PNe10.cc",
-        "src/ode.cc", 
+        "src/ode.cc",
         "src/Inspiral5PN.cc",
         "src/Pn5.pyx",
     ],
