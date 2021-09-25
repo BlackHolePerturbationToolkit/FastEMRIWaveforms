@@ -819,3 +819,100 @@ def cuda_set_device(dev):
         setDevice(dev)
     else:
         warnings.warn("Setting cuda device, but cupy/cuda not detected.")
+
+
+def get_ode_function_lines_names():
+    with open("src/ode_base.cc", "r") as fp:
+        lines = fp.readlines()
+
+    function_names = []
+    for i in range(len(lines) - 1):
+        if lines[i][:9] == "__deriv__":
+            if lines[i][9] != "\n":
+                line = lines[i]
+                add = 1
+            else:
+                line = lines[i + 1]
+                add = 0
+            name = line.split('(')[0].split(' ')[1 + add]
+
+            function_names.append(name)
+
+    return lines, function_names
+
+def ode_prepare():
+
+    lines, function_names = get_ode_function_lines_names()
+    full = ""
+    for line in lines:
+        full += line
+
+    full += """
+
+    void get_derivatives(double* pdot, double* edot, double* Ydot,
+                      double* Omega_phi, double* Omega_theta, double* Omega_r,
+                      double epsilon, double a, double p, double e, double Y, std::string func)
+    {
+    """
+
+    for i, func in enumerate(function_names):
+        lead = "if" if i == 0 else "else if"
+        full += (
+        """
+
+            {0} (func == "{1}")
+            {2}
+                {1}(pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r,
+                   epsilon, a, p, e, Y);
+            {3}
+
+        """.format(lead, func, '{', '}')
+        )
+
+    full += (
+    """
+    }
+    """
+    )
+
+    with open("src/ode.cc", "w") as fp:
+        fp.write(full)
+
+    full_hh = """
+    #ifndef __ODE__
+    #define __ODE__
+
+    #include "global.h"
+
+    #define __deriv__
+
+    """
+
+    for i, func in enumerate(function_names):
+        full_hh += """
+
+        void {0}(double* pdot, double* edot, double* Ydot,
+               double* Omega_phi, double* Omega_theta, double* Omega_r,
+               double epsilon, double a, double p, double e, double Y);
+
+        """.format(func)
+
+
+    full_hh += """
+
+    void get_derivatives(double* pdot, double* edot, double* Ydot,
+                      double* Omega_phi, double* Omega_theta, double* Omega_r,
+                      double epsilon, double a, double p, double e, double Y, std::string func);
+
+
+    #endif // __ODE__
+
+    """
+
+    with open("include/ode.hh", "w") as fp:
+        fp.write(full_hh)
+
+
+def get_ode_function_options():
+    lines, function_names = get_ode_function_lines_names()
+    return function_names

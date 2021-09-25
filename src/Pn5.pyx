@@ -28,7 +28,8 @@ cdef extern from "../include/Inspiral5PN.hh":
                           int  DENSE_STEPPING,
                           bool use_rk4,
                           int init_len,
-                          bool enforce_schwarz_sep)
+                          bool enforce_schwarz_sep,
+                          string func)
 
 
 
@@ -43,7 +44,7 @@ cdef class pyPn5Generator:
         if self.g:
             del self.g
 
-    def __call__(self, M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, T=1.0, dt=-1, err=1e-10, max_init_len=1000, DENSE_STEPPING=0, use_rk4=False, enforce_schwarz_sep=False):
+    def __call__(self, M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, T=1.0, dt=-1, err=1e-10, max_init_len=1000, DENSE_STEPPING=0, use_rk4=False, enforce_schwarz_sep=False, func="pn5"):
         cdef np.ndarray[ndim=1, dtype=np.float64_t] t = np.zeros(max_init_len, dtype=np.float64)
         cdef np.ndarray[ndim=1, dtype=np.float64_t] p = np.zeros(max_init_len, dtype=np.float64)
         cdef np.ndarray[ndim=1, dtype=np.float64_t] e = np.zeros(max_init_len, dtype=np.float64)
@@ -54,6 +55,6 @@ cdef class pyPn5Generator:
 
         cdef int length
 
-        self.g.Pn5Wrapper(&t[0], &p[0], &e[0], &Y[0], &Phi_phi[0], &Phi_theta[0], &Phi_r[0], M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, &length, T, dt, err, DENSE_STEPPING, use_rk4, max_init_len, enforce_schwarz_sep)
+        self.g.Pn5Wrapper(&t[0], &p[0], &e[0], &Y[0], &Phi_phi[0], &Phi_theta[0], &Phi_r[0], M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, &length, T, dt, err, DENSE_STEPPING, use_rk4, max_init_len, enforce_schwarz_sep, <string>func)
 
         return (t[:length], p[:length], e[:length], Y[:length], Phi_phi[:length], Phi_theta[:length], Phi_r[:length])

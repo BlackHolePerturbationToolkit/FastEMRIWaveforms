@@ -38,9 +38,9 @@
 #include <cmath>
 
 #include "Inspiral5PN.hh"
-#include "dIdt8H_5PNe10.h"
 #include "Utility.hh"
 #include "global.h"
+#include "ode.hh"
 
 #include <iostream>
 #include <fstream>
@@ -54,34 +54,9 @@
 using namespace std;
 using namespace std::chrono;
 
-void get_derivatives(double* pdot, double* edot, double* Ydot,
-                     double* Omega_phi, double* Omega_theta, double* Omega_r,
-                     double epsilon, double a, double p, double e, double Y)
-{
-    // evaluate ODEs
-
-	int Nv = 10;
-    int ne = 10;
-    *pdot = epsilon * dpdt8H_5PNe10 (a, p, e, Y, Nv, ne);
-
-    // needs adjustment for validity
-    Nv = 10;
-    ne = 8;
-	*edot = epsilon * dedt8H_5PNe10 (a, p, e, Y, Nv, ne);
-
-    Nv = 7;
-    ne = 10;
-    *Ydot = epsilon * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);
-
-    // convert to proper inclination input to fundamental frequencies
-    double xI = Y_to_xI(a, p, e, Y);
-    KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, xI);
-
-}
-
 #define  ERROR_INSIDE_SEP  21
 // The RHS of the ODEs
-int func (double t, const double y[], double f[], void *params){
+int func_ode_wrap (double t, const double y[], double f[], void *params){
 	(void)(t); /* avoid unused parameter warning */
 
     ParamsHolder* params_in = (ParamsHolder*) params;
@@ -89,6 +64,7 @@ int func (double t, const double y[], double f[], void *params){
     //double q = params_in->q;
     double a = params_in->a;
     double epsilon = params_in->epsilon;
+    std::string func = params_in->func;
 	double p = y[0];
 	double e = y[1];
     double Y = y[2];
@@ -110,7 +86,7 @@ int func (double t, const double y[], double f[], void *params){
 
     get_derivatives(&pdot, &edot, &Ydot,
                          &Phi_phi_dot, &Phi_theta_dot, &Phi_r_dot,
-                         epsilon, a, p, e, Y);
+                         epsilon, a, p, e, Y, func);
 
     //printf("checkit %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e\n", a, p, e, xI, y[3], y[4], y[5], Phi_phi_dot, Phi_theta_dot, Phi_r_dot);
 
@@ -149,7 +125,7 @@ void Pn5Carrier::dealloc()
 // It takes initial parameters and evolves a trajectory
 // tmax and dt affect integration length and time steps (mostly if DENSE_STEPPING == 1)
 // use_rk4 allows the use of the rk4 integrator
-Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4, bool enforce_schwarz_sep)
+Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4, bool enforce_schwarz_sep, std::string func)
 {
 
     // years to seconds
@@ -162,6 +138,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 	//Set the mass ratio
 	params_holder->epsilon = mu/M;
     params_holder->a = a;
+    params_holder->func = func;
 
     double Msec = MTSUN_SI*M;
 
@@ -175,7 +152,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 	double y[6] = { p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0};
 
     // Initialize the ODE solver
-    gsl_odeiv2_system sys = {func, NULL, 6, params_holder};
+    gsl_odeiv2_system sys = {func_ode_wrap, NULL, 6, params_holder};
 
     const gsl_odeiv2_step_type *T;
     if (use_rk4) T = gsl_odeiv2_step_rk4;
@@ -295,7 +272,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
                 // Same function in the integrator
                 get_derivatives(&pdot, &edot, &Ydot,
                                      &Omega_phi, &Omega_theta, &Omega_r,
-                                     params_holder->epsilon, a, p, e, Y);
+                                     params_holder->epsilon, a, p, e, Y, params_holder->func);
 
                 // estimate the step to the breaking point and multiply by PERCENT_STEP
                 xI = Y_to_xI(a, p, e, Y);
@@ -381,10 +358,10 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 }
 
 // wrapper for calling the Pn5 inspiral from cython/python
-void Pn5Carrier::Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, bool enforce_schwarz_sep){
+void Pn5Carrier::Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, bool enforce_schwarz_sep, std::string func){
 
 	double t0 = 0.0;
-		Pn5Holder Pn5_vals = run_Pn5(t0, M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, err, tmax, dt, DENSE_STEPPING, use_rk4, enforce_schwarz_sep);
+		Pn5Holder Pn5_vals = run_Pn5(t0, M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, err, tmax, dt, DENSE_STEPPING, use_rk4, enforce_schwarz_sep, func);
 
         // make sure we have allocated enough memory through cython
         if (Pn5_vals.length > init_len){

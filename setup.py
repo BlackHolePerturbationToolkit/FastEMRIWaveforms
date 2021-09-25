@@ -367,6 +367,7 @@ Pn5_ext = Extension(
     sources=[
         "src/Utility.cc",
         "src/dIdt8H_5PNe10.cc",
+        "src/ode.cc", 
         "src/Inspiral5PN.cc",
         "src/Pn5.pyx",
     ],
