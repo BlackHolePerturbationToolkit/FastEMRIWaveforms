@@ -45,7 +45,7 @@ void pn5(double* pdot, double* edot, double* Ydot,
 
     Nv = 7;
     ne = 10;
-    *Ydot = epsilon * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);
+    *Ydot = -epsilon * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);
 
     // convert to proper inclination input to fundamental frequencies
     double xI = Y_to_xI(a, p, e, Y);
