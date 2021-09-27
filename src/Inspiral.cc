@@ -1,4 +1,4 @@
-// Code to compute an eccentric Pn5 driven insipral
+// Code to compute an eccentric Inspiral driven insipral
 // into a Schwarzschild black hole
 
 // Copyright (C) 2020 Niels Warburton, Michael L. Katz, Alvin J.K. Chua, Scott A. Hughes
@@ -38,7 +38,7 @@
 #include <cmath>
 
 #include "Interpolant.h"
-#include "Inspiral5PN.hh"
+#include "Inspiral.hh"
 #include "Utility.hh"
 #include "global.h"
 #include "ode.hh"
@@ -123,7 +123,7 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
 
 // Class to carry gsl interpolants for the inspiral data
 // also executes inspiral calculations
-Pn5Carrier::Pn5Carrier(std::string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_)
+InspiralCarrier::InspiralCarrier(std::string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_)
 {
     params_holder = new ParamsHolder;
     params_holder->func_name = func_name;
@@ -137,7 +137,7 @@ Pn5Carrier::Pn5Carrier(std::string func_name, bool enforce_schwarz_sep_, int num
 
 // When interfacing with cython, it helps to have dealloc function to explicitly call
 // rather than the deconstructor
-void Pn5Carrier::dealloc()
+void InspiralCarrier::dealloc()
 {
     delete params_holder->func;
     delete params_holder->additional_args;
@@ -145,18 +145,18 @@ void Pn5Carrier::dealloc()
 }
 
 
-// main function in the Pn5Carrier class
+// main function in the InspiralCarrier class
 // It takes initial parameters and evolves a trajectory
 // tmax and dt affect integration length and time steps (mostly if DENSE_STEPPING == 1)
 // use_rk4 allows the use of the rk4 integrator
-Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4)
+InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4)
 {
     // years to seconds
     tmax = tmax*YRSID_SI;
 
     // get flux at initial values
     // prepare containers for flux information
-    Pn5Holder pn5_out(t0, M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0);
+    InspiralHolder inspiral_out(t0, M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0);
 
 	//Set the mass ratio
 	params_holder->epsilon = mu/M;
@@ -374,13 +374,13 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
             }
 
             // add the point and end the integration
-            pn5_out.add_point(t*Msec, p, e, x, Phi_phi, Phi_theta, Phi_r);
+            inspiral_out.add_point(t*Msec, p, e, x, Phi_phi, Phi_theta, Phi_r);
 
             //cout << "# Separatrix reached: exiting inspiral" << endl;
             break;
         }
 
-        pn5_out.add_point(t*Msec, y[0], y[1], y[2], y[3], y[4], y[5]); // adds time in seconds
+        inspiral_out.add_point(t*Msec, y[0], y[1], y[2], y[3], y[4], y[5]); // adds time in seconds
 
         prev_t = t;
         prev_p_sep = p_sep;
@@ -389,7 +389,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 
 	}
 
-	pn5_out.length = ind;
+	inspiral_out.length = ind;
 	//high_resolution_clock::time_point t2 = high_resolution_clock::now();
 
 	//	duration<double> time_span = duration_cast<duration<double> >(t2 - t1);
@@ -398,33 +398,33 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
         gsl_odeiv2_control_free (control);
         gsl_odeiv2_step_free (step);
 		//cout << "# Computing the inspiral took: " << time_span.count() << " seconds." << endl;
-		return pn5_out;
+		return inspiral_out;
 
 }
 
-// wrapper for calling the Pn5 inspiral from cython/python
-void Pn5Carrier::Pn5Wrapper(double *t, double *p, double *e, double *x, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, double* additional_args){
+// wrapper for calling the Inspiral inspiral from cython/python
+void InspiralCarrier::InspiralWrapper(double *t, double *p, double *e, double *x, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, double* additional_args){
 
 	    double t0 = 0.0;
         std::memcpy(params_holder->additional_args, additional_args, params_holder->num_add_args * sizeof(double));
 
-		Pn5Holder Pn5_vals = run_Pn5(t0, M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0, err, tmax, dt, DENSE_STEPPING, use_rk4);
+		InspiralHolder Inspiral_vals = run_Inspiral(t0, M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0, err, tmax, dt, DENSE_STEPPING, use_rk4);
 
         // make sure we have allocated enough memory through cython
-        if (Pn5_vals.length > init_len){
+        if (Inspiral_vals.length > init_len){
             throw std::runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
         }
 
         // copy data
-		memcpy(t, &Pn5_vals.t_arr[0], Pn5_vals.length*sizeof(double));
-		memcpy(p, &Pn5_vals.p_arr[0], Pn5_vals.length*sizeof(double));
-		memcpy(e, &Pn5_vals.e_arr[0], Pn5_vals.length*sizeof(double));
-        memcpy(x, &Pn5_vals.x_arr[0], Pn5_vals.length*sizeof(double));
-		memcpy(Phi_phi, &Pn5_vals.Phi_phi_arr[0], Pn5_vals.length*sizeof(double));
-		memcpy(Phi_theta, &Pn5_vals.Phi_theta_arr[0], Pn5_vals.length*sizeof(double));
-        memcpy(Phi_r, &Pn5_vals.Phi_r_arr[0], Pn5_vals.length*sizeof(double));
+		memcpy(t, &Inspiral_vals.t_arr[0], Inspiral_vals.length*sizeof(double));
+		memcpy(p, &Inspiral_vals.p_arr[0], Inspiral_vals.length*sizeof(double));
+		memcpy(e, &Inspiral_vals.e_arr[0], Inspiral_vals.length*sizeof(double));
+        memcpy(x, &Inspiral_vals.x_arr[0], Inspiral_vals.length*sizeof(double));
+		memcpy(Phi_phi, &Inspiral_vals.Phi_phi_arr[0], Inspiral_vals.length*sizeof(double));
+		memcpy(Phi_theta, &Inspiral_vals.Phi_theta_arr[0], Inspiral_vals.length*sizeof(double));
+        memcpy(Phi_r, &Inspiral_vals.Phi_r_arr[0], Inspiral_vals.length*sizeof(double));
 
         // indicate how long is the trajectory
-		*length = Pn5_vals.length;
+		*length = Inspiral_vals.length;
 
 }

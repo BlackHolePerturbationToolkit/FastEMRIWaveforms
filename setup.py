@@ -365,15 +365,15 @@ FLUX_ext = Extension(
     **cpu_extension,
 )
 
-Pn5_ext = Extension(
-    "pyPn5",
+inspiral_ext = Extension(
+    "pyInspiral",
     sources=[
         "src/Utility.cc",
         "src/Interpolant.cc",
         "src/dIdt8H_5PNe10.cc",
         "src/ode.cc",
-        "src/Inspiral5PN.cc",
-        "src/Pn5.pyx",
+        "src/Inspiral.cc",
+        "src/inspiralwrap.pyx",
     ],
     **cpu_extension,
 )
@@ -429,7 +429,7 @@ spher_harm_ext = Extension(
 cpu_extensions = [
     matmul_cpu_ext,
     FLUX_ext,
-    Pn5_ext,
+    inspiral_ext,
     par_map_ext,
     interp_cpu_ext,
     spher_harm_ext,
@@ -473,7 +473,7 @@ setup(
     packages=["few", "few.utils", "few.trajectory", "few.amplitude", "few.summation"],
     py_modules=[
         "few.trajectory.flux",
-        "few.trajectory.pn5",
+        "few.trajectory.trajectory",
         "few.waveform",
         "few.amplitude.romannet",
         "few.amplitude.interp2dcubicspline",

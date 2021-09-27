@@ -25,10 +25,10 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 
 # Cython/C++ imports
-from pyPn5 import pyPn5Generator
+from pyInspiral import pyInspiralGenerator
 
 # Python imports
-from few.utils.baseclasses import TrajectoryBase, Pn5AAK
+from few.utils.baseclasses import TrajectoryBase
 from few.utils.utility import check_for_file_download, get_ode_function_options
 from few.utils.constants import *
 from few.utils.citations import *
@@ -38,7 +38,7 @@ from few.utils.citations import *
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
+class EMRIInspiral(TrajectoryBase):
     """Pn5-based trajectory module.
 
     This module implements a Pn5-based trajectory by integrating with an
@@ -46,6 +46,9 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
     cubic spline interpolation. Additionally, it gives the option for
     a dense trajectory, which integrates the trajectory at the user-defined
     timestep.
+
+    # TODO: transfer sanity checks
+    # TODO: update
 
     The trajectory calculations are based on
     `Fujita & Shibata 2020<https://arxiv.org/abs/2008.13554>`_.
@@ -69,7 +72,6 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
     def __init__(self, func, *args, enforce_schwarz_sep=False, **kwargs):
 
         TrajectoryBase.__init__(self, *args, **kwargs)
-        Pn5AAK.__init__(self, *args, **kwargs)
 
         ode_info = get_ode_function_options()
 
@@ -81,7 +83,7 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
         for key, item in ode_info[func].items():
             setattr(self, key, item)
 
-        self.Pn5_generator = pyPn5Generator(func, enforce_schwarz_sep, self.num_add_args, self.convert_Y)
+        self.inspiral_generator = pyInspiralGenerator(func, enforce_schwarz_sep, self.num_add_args, self.convert_Y)
 
         self.func = func
 
@@ -94,10 +96,10 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
             "use_rk4",
         ]
 
-    def attributes_RunKerrGenericPn5Inspiral(self):
+    def attributes_EMRIInspiral(self):
         """
         attributes:
-            Pn5_generator (obj): C++ class for Pn5 trajectory generation.
+            inspiral_generator (obj): C++ class for inspiral trajectory generation.
             specific_kwarg_keys (list): specific kwargs from
                 :class:`few.utils.baseclasses.TrajectoryBase` that apply to this
                 inspiral generator.
@@ -106,6 +108,7 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
     @property
     def citation(self):
         """Return citation for this class"""
+        # TODO: adjust this properly
         return (
             larger_few_citation
             + few_citation
@@ -170,7 +173,7 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
             a = 0.0
         elif a < fill_value:
             warnings.warn(
-                "Our Pn5AAK model breaks near a = 0. Adjusting to a = 1e-6.".format(
+                "Our model with spin breaks near a = 0. Adjusting to a = 1e-6.".format(
                     fill_value
                 )
             )
@@ -192,8 +195,7 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
             args_in = np.array([0.0])
 
         # this will return in coordinate time
-        # must include Pn5 normalization in case normalization is desired
-        t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.Pn5_generator(
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(
             M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0, args_in, **temp_kwargs
         )
         return (t, p, e, x, Phi_phi, Phi_theta, Phi_r)

@@ -127,7 +127,7 @@ void load_and_interpolate_flux_data(struct interp_params *interps, const std::st
 
 // Class to carry gsl interpolants for the inspiral data
 // also executes inspiral calculations
-FluxCarrier::FluxCarrier()
+SchwarzEccFlux::SchwarzEccFlux()
 {
     std::string few_dir = "./";
     interps = new interp_params;
@@ -139,11 +139,11 @@ FluxCarrier::FluxCarrier()
 	//load_and_interpolate_amp_vec_norm_data(&amp_vec_norm_interp, few_dir);
 }
 
-#define FluxCarrier_num_add_args 0
-#define FluxCarrier_spinless
-#define FluxCarrier_equatorial
+#define SchwarzEccFlux_num_add_args 0
+#define SchwarzEccFlux_spinless
+#define SchwarzEccFlux_equatorial
 __deriv__
-void FluxCarrier::deriv_func(double* pdot, double* edot, double* xdot,
+void SchwarzEccFlux::deriv_func(double* pdot, double* edot, double* xdot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,
                   double epsilon, double a, double p, double e, double x, double* additional_args)
 {
@@ -197,7 +197,7 @@ void FluxCarrier::deriv_func(double* pdot, double* edot, double* xdot,
 
 // When interfacing with cython, it helps to have  dealloc function to explicitly call
 // rather than the deconstructor
-FluxCarrier::~FluxCarrier()
+SchwarzEccFlux::~SchwarzEccFlux()
 {
 
     delete interps->Edot;
