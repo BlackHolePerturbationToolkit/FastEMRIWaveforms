@@ -77,7 +77,9 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
             raise ValueError(f"func not available. Options are {list(ode_info.keys())}.")
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
-        self.num_add_args = ode_info[func]["num_add_args"]
+
+        for key, item in ode_info[func].items():
+            setattr(self, key, item)
 
         self.Pn5_generator = pyPn5Generator(func, enforce_schwarz_sep, self.num_add_args)
 
@@ -162,13 +164,22 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
         """
 
         fill_value = 1e-6
-        #if a < fill_value:
-        #    warnings.warn(
-        #        "Our Pn5AAK model breaks near a = 0. Adjusting to a = 1e-6.".format(
-        #            fill_value
-        #        )
-        #    )
-        #    a = fill_value
+
+        if self.background == "Schwarzschild":
+            a = 0.0
+        elif a < fill_value:
+            warnings.warn(
+                "Our Pn5AAK model breaks near a = 0. Adjusting to a = 1e-6.".format(
+                    fill_value
+                )
+            )
+            a = fill_value
+
+        if self.equatorial:
+            Y0 = 1.0
+
+        if self.circular:
+            e0 = 0.0
 
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
