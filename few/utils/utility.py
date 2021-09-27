@@ -826,47 +826,171 @@ def get_ode_function_lines_names():
         lines = fp.readlines()
 
     function_names = []
+    function_types = []
     for i in range(len(lines) - 1):
         if lines[i][:9] == "__deriv__":
             if lines[i][9] != "\n":
                 line = lines[i]
-                add = 1
+                name = line.split('(')[0].split(' ')[2]
+                func_type = 'func'
             else:
                 line = lines[i + 1]
-                add = 0
-            name = line.split('(')[0].split(' ')[1 + add]
+
+                if "::" in line:
+                    name = line.split('::')[0].split(' ')[1]
+                    func_type = 'class'
+
+                else:
+                    name = line.split('(')[0].split(' ')[1]
+                    func_type = 'func'
 
             function_names.append(name)
+            function_types.append(func_type)
 
-    return lines, function_names
+    return lines, function_names, function_types
 
 def ode_prepare():
 
-    lines, function_names = get_ode_function_lines_names()
+    lines, function_names, function_types = get_ode_function_lines_names()
+
     full = ""
     for line in lines:
+        for func in function_names:
+            if "void " + func + "(double* " in line:
+                line = line.replace("void " + func + "(double* ", "void " + func + "_base_func" + "(double* ")
         full += line
+
+    for i, (func, func_type) in enumerate(zip(function_names, function_types)):
+        if func_type == "func":
+            full.replace("void " + func, "void " + func + "_base_func")
+
+
+
+            full += """
+                {0}::{0}(){1}{2}
+
+                {0}::~{0}(){1}{2}
+
+                void {0}::deriv_func(double* pdot, double* edot, double* Ydot,
+                                  double* Omega_phi, double* Omega_theta, double* Omega_r,
+                                  double epsilon, double a, double p, double e, double Y)
+                {1}
+                    {0}_base_func(pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r,
+                                  epsilon, a, p, e, Y);
+                {2}
+            """.format(func, '{', '}')
 
     full += """
 
-    void get_derivatives(double* pdot, double* edot, double* Ydot,
+    ODECarrier::ODECarrier(std::string func_name_)
+    {
+        func_name = func_name_;
+    """
+
+    for i, (func, func_type) in enumerate(zip(function_names, function_types)):
+        lead = "if" if i == 0 else "else if"
+
+
+        full += (
+        """
+            {0} (func_name == "{1}")
+            {2}
+        """.format(lead, func, '{')
+
+        )
+        full += (
+            """
+                {0}* temp = new {0}();
+
+                func = (void*) temp;
+
+            """.format(func)
+            )
+
+        full += (
+        """
+            }
+
+        """
+        )
+
+    full += (
+    """
+    }
+    """
+    )
+
+    full += """
+
+    void ODECarrier::get_derivatives(double* pdot, double* edot, double* Ydot,
                       double* Omega_phi, double* Omega_theta, double* Omega_r,
-                      double epsilon, double a, double p, double e, double Y, std::string func)
+                      double epsilon, double a, double p, double e, double Y)
     {
     """
 
-    for i, func in enumerate(function_names):
+    for i, (func, func_type) in enumerate(zip(function_names, function_types)):
         lead = "if" if i == 0 else "else if"
+
         full += (
         """
-
-            {0} (func == "{1}")
+            {0} (func_name == "{1}")
             {2}
-                {1}(pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r,
-                   epsilon, a, p, e, Y);
-            {3}
+        """.format(lead, func, '{')
 
-        """.format(lead, func, '{', '}')
+        )
+        full += (
+            """
+                {0}* temp = ({0}*)func;
+
+                temp->deriv_func(pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r,
+                                epsilon, a, p, e, Y);
+
+            """.format(func)
+            )
+
+        full += (
+        """
+            }
+
+        """
+        )
+
+    full += (
+    """
+    }
+    """
+    )
+
+    full += """
+
+    ODECarrier::~ODECarrier()
+    {
+    """
+
+    for i, (func, func_type) in enumerate(zip(function_names, function_types)):
+        lead = "if" if i == 0 else "else if"
+
+        full += (
+        """
+            {0} (func_name == "{1}")
+            {2}
+        """.format(lead, func, '{')
+
+        )
+        full += (
+            """
+                {0}* temp = ({0}*)func;
+
+                delete temp;
+
+            """.format(func)
+            )
+
+        full += (
+        """
+            }
+
+        """
         )
 
     full += (
@@ -878,32 +1002,55 @@ def ode_prepare():
     with open("src/ode.cc", "w") as fp:
         fp.write(full)
 
+    with open("include/ode_base.hh", "r") as fp:
+        hh_lines = fp.read()
+
     full_hh = """
     #ifndef __ODE__
     #define __ODE__
 
     #include "global.h"
+    #include <cstring>
 
     #define __deriv__
 
     """
 
-    for i, func in enumerate(function_names):
-        full_hh += """
+    full_hh += hh_lines
 
-        void {0}(double* pdot, double* edot, double* Ydot,
-               double* Omega_phi, double* Omega_theta, double* Omega_r,
-               double epsilon, double a, double p, double e, double Y);
+    for i, (func, func_type) in enumerate(zip(function_names, function_types)):
+        if func_type == "func":
+            full_hh += """
 
-        """.format(func)
+            class {0}{1}
+            public:
+                double test;
+
+                {0}();
+
+                void deriv_func(double* pdot, double* edot, double* Ydot,
+                                  double* Omega_phi, double* Omega_theta, double* Omega_r,
+                                  double epsilon, double a, double p, double e, double Y);
+                ~{0}();
+            {2};
+
+        """.format(func, '{', '}')
 
 
+    # TODO do dealloc
     full_hh += """
 
-    void get_derivatives(double* pdot, double* edot, double* Ydot,
-                      double* Omega_phi, double* Omega_theta, double* Omega_r,
-                      double epsilon, double a, double p, double e, double Y, std::string func);
+    class ODECarrier{
+        public:
+            std::string func_name;
+            void* func;
+            ODECarrier(std::string func_name_);
+            ~ODECarrier();
+            void get_derivatives(double* pdot, double* edot, double* Ydot,
+                              double* Omega_phi, double* Omega_theta, double* Omega_r,
+                              double epsilon, double a, double p, double e, double Y);
 
+    };
 
     #endif // __ODE__
 
