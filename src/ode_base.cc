@@ -29,7 +29,7 @@
 __deriv__
 void pn5(double* pdot, double* edot, double* Ydot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,
-                  double epsilon, double a, double p, double e, double Y)
+                  double epsilon, double a, double p, double e, double Y, double* additional_args)
 {
     // evaluate ODEs
 
@@ -55,7 +55,7 @@ void pn5(double* pdot, double* edot, double* Ydot,
 
 __deriv__ void backup_test(double* pdot, double* edot, double* Ydot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,
-                  double epsilon, double a, double p, double e, double Y)
+                  double epsilon, double a, double p, double e, double Y, double* additional_args)
 {
     // evaluate ODEs
 
@@ -138,12 +138,12 @@ FluxCarrier::FluxCarrier()
 	//load_and_interpolate_amp_vec_norm_data(&amp_vec_norm_interp, few_dir);
 }
 
+#define FluxCarrier_num_add_args 0
 __deriv__
 void FluxCarrier::deriv_func(double* pdot, double* edot, double* Ydot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,
-                  double epsilon, double a, double p, double e, double Y)
+                  double epsilon, double a, double p, double e, double Y, double* additional_args)
 {
-
     if ((6.0 + 2. * e) > p)
     {
         *pdot = 0.0;

@@ -98,7 +98,7 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
 
     params_in->func->get_derivatives(&pdot, &edot, &Ydot,
                          &Phi_phi_dot, &Phi_theta_dot, &Phi_r_dot,
-                         epsilon, a, p, e, Y);
+                         epsilon, a, p, e, Y, params_in->additional_args);
 
     f[0] = pdot;
 	f[1] = edot;
@@ -113,12 +113,15 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
 
 // Class to carry gsl interpolants for the inspiral data
 // also executes inspiral calculations
-Pn5Carrier::Pn5Carrier(std::string func_name, bool enforce_schwarz_sep_)
+Pn5Carrier::Pn5Carrier(std::string func_name, bool enforce_schwarz_sep_, int num_add_args_)
 {
     params_holder = new ParamsHolder;
     params_holder->func_name = func_name;
     params_holder->func = new ODECarrier(func_name);
     params_holder->enforce_schwarz_sep = enforce_schwarz_sep_;
+    params_holder->num_add_args = num_add_args_;
+
+    params_holder->additional_args = new double[num_add_args_];
 }
 
 // When interfacing with cython, it helps to have dealloc function to explicitly call
@@ -126,6 +129,7 @@ Pn5Carrier::Pn5Carrier(std::string func_name, bool enforce_schwarz_sep_)
 void Pn5Carrier::dealloc()
 {
     delete params_holder->func;
+    delete params_holder->additional_args;
     delete params_holder;
 }
 
@@ -282,7 +286,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
                 // Same function in the integrator
                 params_holder->func->get_derivatives(&pdot, &edot, &Ydot,
                                      &Omega_phi, &Omega_theta, &Omega_r,
-                                     params_holder->epsilon, a, p, e, Y);
+                                     params_holder->epsilon, a, p, e, Y, params_holder->additional_args);
 
                 // estimate the step to the breaking point and multiply by PERCENT_STEP
                 xI = Y_to_xI(a, p, e, Y);
@@ -368,9 +372,11 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 }
 
 // wrapper for calling the Pn5 inspiral from cython/python
-void Pn5Carrier::Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len){
+void Pn5Carrier::Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, double* additional_args){
 
 	    double t0 = 0.0;
+        std::memcpy(params_holder->additional_args, additional_args, params_holder->num_add_args * sizeof(double));
+
 		Pn5Holder Pn5_vals = run_Pn5(t0, M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, err, tmax, dt, DENSE_STEPPING, use_rk4);
 
         // make sure we have allocated enough memory through cython
