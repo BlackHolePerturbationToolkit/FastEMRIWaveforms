@@ -81,7 +81,7 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
         for key, item in ode_info[func].items():
             setattr(self, key, item)
 
-        self.Pn5_generator = pyPn5Generator(func, enforce_schwarz_sep, self.num_add_args)
+        self.Pn5_generator = pyPn5Generator(func, enforce_schwarz_sep, self.num_add_args, self.convert_Y)
 
         self.func = func
 
@@ -121,7 +121,7 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
         a,
         p0,
         e0,
-        Y0,
+        x0,
         *args,
         Phi_phi0=0.0,
         Phi_theta0=0.0,
@@ -130,6 +130,7 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
     ):
         """Generate the inspiral.
 
+        # TODO: fix
         This is the function for calling the creation of the Pn5-based
         trajectory. Inputs define the output time spacing. This class can be
         used on its own. However, it is generally accessed through the __call__
@@ -148,7 +149,7 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
             a (double): Dimensionless spin of massive black hole.
             p0 (double): Initial semi-latus rectum in terms units of M (p/M).
             e0 (double): Initial eccentricity (dimensionless).
-            Y0 (double): Initial :math:`\cos{\iota}`. **Note**: This value is different from :math:`x_I`
+            x0 (double): Initial :math:`\cos{\iota}`. **Note**: This value is different from :math:`x_I`
             used in the relativistic waveforms.
             *args (list, placeholder): Added for flexibility.
             Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
@@ -159,7 +160,7 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
                 Default is 0.0.
             **kwargs (dict, optional): kwargs passed from parent.
         Returns:
-            tuple: Tuple of (t, p, e, Y, Phi_phi, Phi_r, Phi_theta).
+            tuple: Tuple of (t, p, e, x, Phi_phi, Phi_r, Phi_theta).
 
         """
 
@@ -176,7 +177,7 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
             a = fill_value
 
         if self.equatorial:
-            Y0 = 1.0
+            x0 = 1.0
 
         if self.circular:
             e0 = 0.0
@@ -192,7 +193,7 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
 
         # this will return in coordinate time
         # must include Pn5 normalization in case normalization is desired
-        t, p, e, Y, Phi_phi, Phi_theta, Phi_r = self.Pn5_generator(
-            M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, args_in, **temp_kwargs
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.Pn5_generator(
+            M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0, args_in, **temp_kwargs
         )
-        return (t, p, e, Y, Phi_phi, Phi_theta, Phi_r)
+        return (t, p, e, x, Phi_phi, Phi_theta, Phi_r)

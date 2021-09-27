@@ -26,6 +26,7 @@
 #include "dIdt8H_5PNe10.h"
 #include "ode.hh"
 
+#define pn5_Y
 __deriv__
 void pn5(double* pdot, double* edot, double* Ydot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,
@@ -52,7 +53,7 @@ void pn5(double* pdot, double* edot, double* Ydot,
 
 }
 
-
+#define backup_test_Y
 __deriv__ void backup_test(double* pdot, double* edot, double* Ydot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,
                   double epsilon, double a, double p, double e, double Y, double* additional_args)
@@ -142,15 +143,15 @@ FluxCarrier::FluxCarrier()
 #define FluxCarrier_spinless
 #define FluxCarrier_equatorial
 __deriv__
-void FluxCarrier::deriv_func(double* pdot, double* edot, double* Ydot,
+void FluxCarrier::deriv_func(double* pdot, double* edot, double* xdot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,
-                  double epsilon, double a, double p, double e, double Y, double* additional_args)
+                  double epsilon, double a, double p, double e, double x, double* additional_args)
 {
     if ((6.0 + 2. * e) > p)
     {
         *pdot = 0.0;
         *edot = 0.0;
-        *Ydot = 0.0;
+        *xdot = 0.0;
         *Omega_phi = 0.0;
         *Omega_theta = 0.0;
         *Omega_r = 0.0;
@@ -187,10 +188,10 @@ void FluxCarrier::deriv_func(double* pdot, double* edot, double* Ydot,
         *edot = 0.0;
     }
 
-    *Ydot = 0.0;
+    *xdot = 0.0;
     *Omega_theta = *Omega_phi;
 
-    //printf("%e %e %e %e %e\n", p, e, Y, Edot, interps->Edot->eval(y1, e));
+    //printf("%e %e %e %e %e\n", p, e, x, Edot, interps->Edot->eval(y1, e));
 }
 
 
