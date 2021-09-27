@@ -860,6 +860,9 @@ def get_ode_function_lines_names():
                 elif line.split(' ')[1][0:0 + len(name) + 9] == f"{name}_circular":
                     functions_info[name]["circular"] = True
 
+                elif line.split(' ')[1][0:0 + len(name) + 2] == f"{name}_Y":
+                    functions_info[name]["convert_Y"] = True
+
     for name, info in functions_info.items():
         if "num_add_args" not in info:
             functions_info[name]["num_add_args"] = 0
@@ -869,6 +872,8 @@ def get_ode_function_lines_names():
             functions_info[name]["equatorial"] = False
         if "circular" not in info:
             functions_info[name]["circular"] = False
+        if "convert_Y" not in info:
+            functions_info[name]["convert_Y"] = False
 
     return lines, functions_info
 

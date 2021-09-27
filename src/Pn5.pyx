@@ -9,7 +9,7 @@ assert sizeof(int) == sizeof(np.int32_t)
 
 cdef extern from "../include/Inspiral5PN.hh":
     cdef cppclass Pn5CarrierWrap "Pn5Carrier":
-        Pn5CarrierWrap(string func, bool enforce_schwarz_sep_, int num_add_args_)
+        Pn5CarrierWrap(string func, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_)
         void dealloc()
 
         void Pn5Wrapper(np.float64_t *t, np.float64_t *p,
@@ -36,8 +36,8 @@ cdef extern from "../include/ode.hh":
 cdef class pyPn5Generator:
     cdef Pn5CarrierWrap *g
 
-    def __cinit__(self, func_name, enforce_schwarz_sep, num_add_args):
-        self.g = new Pn5CarrierWrap(func_name.encode(), enforce_schwarz_sep, num_add_args)
+    def __cinit__(self, func_name, enforce_schwarz_sep, num_add_args, convert_Y):
+        self.g = new Pn5CarrierWrap(func_name.encode(), enforce_schwarz_sep, num_add_args, convert_Y)
 
     def __dealloc__(self):
         self.g.dealloc()
