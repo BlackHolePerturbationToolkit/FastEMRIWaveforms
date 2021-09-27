@@ -213,7 +213,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
         }
         // if status is 9 meaning inside the separatrix
         // or if any quantity is nan, step back and take a smaller step.
-        else if ((status == 9)||(std::isnan(y[0]))||(std::isnan(y[1]))||(std::isnan(y[2])) ||(std::isnan(y[3]))||(std::isnan(y[4]))||(std::isnan(y[5])))
+        else if ((std::isnan(y[0]))||(std::isnan(y[1]))||(std::isnan(y[2])) ||(std::isnan(y[3]))||(std::isnan(y[4]))||(std::isnan(y[5])))
         {
             ///printf("checkit error %.18e %.18e %.18e %.18e \n", y[0], y_prev[0], y[1], y_prev[1]);
             // reset evolver
@@ -257,27 +257,32 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
         // Stop the inspiral when close to the separatrix
         // convert to proper inclination for separatrix
         double x_temp;
-        if (params_holder->convert_Y)
-        {
-            x_temp = Y_to_xI(a, p, e, x);
-        }
-        else
-        {
-            x_temp = x;
-        }
-
         double p_sep = 0.0;
-        if (params_holder->enforce_schwarz_sep || (a == 0.0))
+        if (status != 9)
         {
-            p_sep = 6.0 + 2. * e;
-        }
-        else
-        {
-            p_sep = get_separatrix(a, e, x_temp);
-        }
+
+            if (params_holder->convert_Y)
+            {
+                x_temp = Y_to_xI(a, p, e, x);
+            }
+            else
+            {
+                x_temp = x;
+            }
 
 
-        if(p - p_sep < DIST_TO_SEPARATRIX)
+            if (params_holder->enforce_schwarz_sep || (a == 0.0))
+            {
+                p_sep = 6.0 + 2. * e;
+            }
+            else
+            {
+                p_sep = get_separatrix(a, e, x_temp);
+            }
+
+        }
+
+        if((status == 9) || (p - p_sep < DIST_TO_SEPARATRIX))
         {
             // Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.
             // To correct for this we self-integrate from the second-to-last point in the integation to
@@ -320,7 +325,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
                     x_temp = x;
                 }
 
-                double p_sep = 0.0;
                 if (params_holder->enforce_schwarz_sep || (a == 0.0))
                 {
                     p_sep = 6.0 + 2. * e;
@@ -341,9 +345,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
                 double temp_Phi_theta = Phi_theta + Omega_theta * step_size;
                 double temp_Phi_r = Phi_r + Omega_r * step_size;
 
-
                 double temp_stop = temp_p - p_sep;
-
                 if (temp_stop > DIST_TO_SEPARATRIX)
                 {
                     // update points

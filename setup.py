@@ -472,8 +472,7 @@ setup(
     ext_modules=extensions,
     packages=["few", "few.utils", "few.trajectory", "few.amplitude", "few.summation"],
     py_modules=[
-        "few.trajectory.flux",
-        "few.trajectory.trajectory",
+        "few.trajectory.inpsiral",
         "few.waveform",
         "few.amplitude.romannet",
         "few.amplitude.interp2dcubicspline",

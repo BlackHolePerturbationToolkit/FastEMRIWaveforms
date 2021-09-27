@@ -69,7 +69,10 @@ class EMRIInspiral(TrajectoryBase):
 
     """
 
-    def __init__(self, func, *args, enforce_schwarz_sep=False, **kwargs):
+    def __init__(self, *args, func=None, enforce_schwarz_sep=False, **kwargs):
+
+        if func is None:
+            raise ValueError("Must provide func kwarg.")
 
         TrajectoryBase.__init__(self, *args, **kwargs)
 
