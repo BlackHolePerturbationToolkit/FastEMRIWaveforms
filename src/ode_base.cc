@@ -139,6 +139,8 @@ FluxCarrier::FluxCarrier()
 }
 
 #define FluxCarrier_num_add_args 0
+#define FluxCarrier_spinless
+#define FluxCarrier_equatorial
 __deriv__
 void FluxCarrier::deriv_func(double* pdot, double* edot, double* Ydot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,

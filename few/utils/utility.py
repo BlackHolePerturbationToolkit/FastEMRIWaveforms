@@ -851,9 +851,24 @@ def get_ode_function_lines_names():
                 if line.split(' ')[1][0:0 + len(name) + 13] == f"{name}_num_add_args":
                     functions_info[name]["num_add_args"] = int(line.split(' ')[2][:-1])
 
+                elif line.split(' ')[1][0:0 + len(name) + 9] == f"{name}_spinless":
+                    functions_info[name]["background"] = "Schwarzschild"
+
+                elif line.split(' ')[1][0:0 + len(name) + 11] == f"{name}_equatorial":
+                    functions_info[name]["equatorial"] = True
+
+                elif line.split(' ')[1][0:0 + len(name) + 9] == f"{name}_circular":
+                    functions_info[name]["circular"] = True
+
     for name, info in functions_info.items():
         if "num_add_args" not in info:
             functions_info[name]["num_add_args"] = 0
+        if "background" not in info:
+            functions_info[name]["background"] = "Kerr"
+        if "equatorial" not in info:
+            functions_info[name]["equatorial"] = False
+        if "circular" not in info:
+            functions_info[name]["circular"] = False
 
     return lines, functions_info
 
