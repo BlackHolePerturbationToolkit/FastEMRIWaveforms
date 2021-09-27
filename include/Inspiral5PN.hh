@@ -6,6 +6,7 @@
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv2.h>
 #include <gsl/gsl_sf_ellint.h>
+#include "ode.hh"
 
 #include "Interpolant.h"
 
@@ -24,7 +25,9 @@ typedef struct tag_ParamsHolder{
 	double epsilon;
 	double a;
     double q;
-    std::string func;
+    std::string func_name;
+    ODECarrier* func;
+    bool enforce_schwarz_sep;
 } ParamsHolder;
 
 class Pn5Holder{
@@ -82,12 +85,12 @@ class Pn5Carrier{
 public:
     ParamsHolder *params_holder;
 
-    Pn5Carrier();
+    Pn5Carrier(std::string func_name, bool enforce_schwarz_sep_);
 
     Pn5Holder run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0,
-        double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4, bool enforce_schwarz_sep, std::string func);
+        double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4);
 
-    void Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, bool enforce_schwarz_sep, std::string func);
+    void Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len);
 
     void dealloc();
 };

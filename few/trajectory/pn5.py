@@ -70,9 +70,9 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
         Pn5AAK.__init__(self, *args, **kwargs)
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
-        self.Pn5_generator = pyPn5Generator()
+        self.Pn5_generator = pyPn5Generator(func, enforce_schwarz_sep)
 
-        self.func = func.encode()
+        self.func = func
 
         self.specific_kwarg_keys = [
             "T",
@@ -153,22 +153,20 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
         """
 
         fill_value = 1e-6
-        if a < fill_value:
-            warnings.warn(
-                "Our Pn5AAK model breaks near a = 0. Adjusting to a = 1e-6.".format(
-                    fill_value
-                )
-            )
-            a = fill_value
+        #if a < fill_value:
+        #    warnings.warn(
+        #        "Our Pn5AAK model breaks near a = 0. Adjusting to a = 1e-6.".format(
+        #            fill_value
+        #        )
+        #    )
+        #    a = fill_value
 
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
 
-        temp_kwargs["enforce_schwarz_sep"] = self.enforce_schwarz_sep if Y0 < 0.0 else False
-
         # this will return in coordinate time
         # must include Pn5 normalization in case normalization is desired
         t, p, e, Y, Phi_phi, Phi_theta, Phi_r = self.Pn5_generator(
-            M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, func=self.func, **temp_kwargs
+            M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, **temp_kwargs
         )
         return (t, p, e, Y, Phi_phi, Phi_theta, Phi_r)

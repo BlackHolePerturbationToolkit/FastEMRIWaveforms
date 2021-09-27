@@ -117,4 +117,7 @@ typedef struct tagModeReImContainer {
 
 } ModeReImContainer;
 
+
+typedef void (*fptr)(double *, double *, double *, double *, double *, double *, double, double, double, double, double);
+
 #endif

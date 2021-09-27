@@ -37,6 +37,7 @@
 #include <complex>
 #include <cmath>
 
+#include "Interpolant.h"
 #include "Inspiral5PN.hh"
 #include "Utility.hh"
 #include "global.h"
@@ -55,6 +56,11 @@ using namespace std;
 using namespace std::chrono;
 
 #define  ERROR_INSIDE_SEP  21
+
+#define DIST_TO_SEPARATRIX 0.1
+#define INNER_THRESHOLD 1e-8
+#define PERCENT_STEP 0.25
+#define MAX_ITER 1000
 // The RHS of the ODEs
 int func_ode_wrap (double t, const double y[], double f[], void *params){
 	(void)(t); /* avoid unused parameter warning */
@@ -64,7 +70,6 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
     //double q = params_in->q;
     double a = params_in->a;
     double epsilon = params_in->epsilon;
-    std::string func = params_in->func;
 	double p = y[0];
 	double e = y[1];
     double Y = y[2];
@@ -72,10 +77,18 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
     // check for separatrix
     // integrator may naively step over separatrix
     double xI = Y_to_xI(a, p, e, Y);
-    double p_sep = get_separatrix(a, e, xI);
+    double p_sep = 0.0;
+    if (params_in->enforce_schwarz_sep || (a == 0.0))
+    {
+        p_sep = 6.0 + 2. * e;
+    }
+    else
+    {
+        p_sep = get_separatrix(a, e, xI);
+    }
 
     // make sure we are outside the separatrix
-    if (p < p_sep)
+    if (p < p_sep + DIST_TO_SEPARATRIX)
     {
         return GSL_EBADFUNC;
     }
@@ -83,12 +96,9 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
     double pdot, edot, Ydot;
 	double Phi_phi_dot, Phi_theta_dot, Phi_r_dot;
 
-
-    get_derivatives(&pdot, &edot, &Ydot,
+    params_in->func->get_derivatives(&pdot, &edot, &Ydot,
                          &Phi_phi_dot, &Phi_theta_dot, &Phi_r_dot,
-                         epsilon, a, p, e, Y, func);
-
-    //printf("checkit %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e\n", a, p, e, xI, y[3], y[4], y[5], Phi_phi_dot, Phi_theta_dot, Phi_r_dot);
+                         epsilon, a, p, e, Y);
 
     f[0] = pdot;
 	f[1] = edot;
@@ -103,31 +113,29 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
 
 // Class to carry gsl interpolants for the inspiral data
 // also executes inspiral calculations
-Pn5Carrier::Pn5Carrier()
+Pn5Carrier::Pn5Carrier(std::string func_name, bool enforce_schwarz_sep_)
 {
     params_holder = new ParamsHolder;
+    params_holder->func_name = func_name;
+    params_holder->func = new ODECarrier(func_name);
+    params_holder->enforce_schwarz_sep = enforce_schwarz_sep_;
 }
 
 // When interfacing with cython, it helps to have dealloc function to explicitly call
 // rather than the deconstructor
 void Pn5Carrier::dealloc()
 {
+    delete params_holder->func;
     delete params_holder;
 }
 
-
-#define DIST_TO_SEPARATRIX 0.1
-#define INNER_THRESHOLD 1e-8
-#define PERCENT_STEP 0.25
-#define MAX_ITER 1000
 
 // main function in the Pn5Carrier class
 // It takes initial parameters and evolves a trajectory
 // tmax and dt affect integration length and time steps (mostly if DENSE_STEPPING == 1)
 // use_rk4 allows the use of the rk4 integrator
-Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4, bool enforce_schwarz_sep, std::string func)
+Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4)
 {
-
     // years to seconds
     tmax = tmax*YRSID_SI;
 
@@ -138,7 +146,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 	//Set the mass ratio
 	params_holder->epsilon = mu/M;
     params_holder->a = a;
-    params_holder->func = func;
+    params_holder->enforce_schwarz_sep;
 
     double Msec = MTSUN_SI*M;
 
@@ -192,6 +200,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
         // or if any quantity is nan, step back and take a smaller step.
         else if ((status == 9)||(std::isnan(y[0]))||(std::isnan(y[1]))||(std::isnan(y[2])) ||(std::isnan(y[3]))||(std::isnan(y[4]))||(std::isnan(y[5])))
         {
+            ///printf("checkit error %.18e %.18e %.18e %.18e \n", y[0], y_prev[0], y[1], y_prev[1]);
             // reset evolver
             gsl_odeiv2_step_reset(step);
             gsl_odeiv2_evolve_reset(evolve);
@@ -234,7 +243,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
         // convert to proper inclination for separatrix
         double xI = Y_to_xI(a, p, e, Y);
         double p_sep = 0.0;
-        if (enforce_schwarz_sep)
+        if (params_holder->enforce_schwarz_sep || (a == 0.0))
         {
             p_sep = 6. + 2. * e;
         }
@@ -242,6 +251,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
         {
             p_sep = get_separatrix(a, e, xI);
         }
+
         if(p - p_sep < DIST_TO_SEPARATRIX)
         {
             // Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.
@@ -270,13 +280,13 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
                 double pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r;
 
                 // Same function in the integrator
-                get_derivatives(&pdot, &edot, &Ydot,
+                params_holder->func->get_derivatives(&pdot, &edot, &Ydot,
                                      &Omega_phi, &Omega_theta, &Omega_r,
-                                     params_holder->epsilon, a, p, e, Y, params_holder->func);
+                                     params_holder->epsilon, a, p, e, Y);
 
                 // estimate the step to the breaking point and multiply by PERCENT_STEP
                 xI = Y_to_xI(a, p, e, Y);
-                if (enforce_schwarz_sep)
+                if (params_holder->enforce_schwarz_sep || (a == 0.0))
                 {
                     p_sep = 6. + 2. * e;
                 }
@@ -358,10 +368,10 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 }
 
 // wrapper for calling the Pn5 inspiral from cython/python
-void Pn5Carrier::Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, bool enforce_schwarz_sep, std::string func){
+void Pn5Carrier::Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len){
 
-	double t0 = 0.0;
-		Pn5Holder Pn5_vals = run_Pn5(t0, M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, err, tmax, dt, DENSE_STEPPING, use_rk4, enforce_schwarz_sep, func);
+	    double t0 = 0.0;
+		Pn5Holder Pn5_vals = run_Pn5(t0, M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, err, tmax, dt, DENSE_STEPPING, use_rk4);
 
         // make sure we have allocated enough memory through cython
         if (Pn5_vals.length > init_len){
