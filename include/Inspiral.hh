@@ -1,5 +1,5 @@
-#ifndef __PN5_H__
-#define __PN5_H__
+#ifndef __INSPIRAL_H__
+#define __INSPIRAL_H__
 
 #include <math.h>
 #include <stdio.h>
@@ -33,7 +33,7 @@ typedef struct tag_ParamsHolder{
     bool convert_Y;
 } ParamsHolder;
 
-class Pn5Holder{
+class InspiralHolder{
 public:
 		int length;
 		std::vector<double> t_arr;
@@ -47,7 +47,7 @@ public:
 
 		double t0, M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0; // , init_flux;
 
-		Pn5Holder(double t0_, double M_, double mu_, double a_, double p0_, double e0_, double x0_, double Phi_phi0_, double Phi_theta0_, double Phi_r0_){
+		InspiralHolder(double t0_, double M_, double mu_, double a_, double p0_, double e0_, double x0_, double Phi_phi0_, double Phi_theta0_, double Phi_r0_){
 				t0 = t0_;
                 M = M_;
                 mu = mu_;
@@ -79,25 +79,25 @@ public:
 			Phi_r_arr.push_back(Phi_r);
 		}
 
-	//	~Pn5Holder();
+	//	~InspiralHolder();
 
 };
 
 
-class Pn5Carrier{
+class InspiralCarrier{
 public:
     ParamsHolder *params_holder;
 
-    Pn5Carrier(std::string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_);
+    InspiralCarrier(std::string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_);
 
-    Pn5Holder run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0,
+    InspiralHolder run_Inspiral(double t0, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0,
         double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4);
 
-    void Pn5Wrapper(double *t, double *p, double *e, double *x, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, double* additional_args);
+    void InspiralWrapper(double *t, double *p, double *e, double *x, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, double* additional_args);
 
     void dealloc();
 };
 
 
 
-#endif //__PN5_H__
+#endif //__INSPIRAL_H__
