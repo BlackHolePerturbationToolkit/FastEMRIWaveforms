@@ -825,8 +825,7 @@ def get_ode_function_lines_names():
     with open("src/ode_base.cc", "r") as fp:
         lines = fp.readlines()
 
-    function_names = []
-    function_types = []
+    functions_info = {}
     for i in range(len(lines) - 1):
         if lines[i][:9] == "__deriv__":
             if lines[i][9] != "\n":
@@ -844,24 +843,33 @@ def get_ode_function_lines_names():
                     name = line.split('(')[0].split(' ')[1]
                     func_type = 'func'
 
-            function_names.append(name)
-            function_types.append(func_type)
+            functions_info[name] = {"type": func_type}
 
-    return lines, function_names, function_types
+    for line in lines:
+        if line[:7] == "#define":
+            for name in functions_info.keys():
+                if line.split(' ')[1][0:0 + len(name) + 13] == f"{name}_num_add_args":
+                    functions_info[name]["num_add_args"] = int(line.split(' ')[2][:-1])
+
+    for name, info in functions_info.items():
+        if "num_add_args" not in info:
+            functions_info[name]["num_add_args"] = 0
+
+    return lines, functions_info
 
 def ode_prepare():
 
-    lines, function_names, function_types = get_ode_function_lines_names()
+    lines, functions_info = get_ode_function_lines_names()
 
     full = ""
     for line in lines:
-        for func in function_names:
+        for func in functions_info:
             if "void " + func + "(double* " in line:
                 line = line.replace("void " + func + "(double* ", "void " + func + "_base_func" + "(double* ")
         full += line
 
-    for i, (func, func_type) in enumerate(zip(function_names, function_types)):
-        if func_type == "func":
+    for i, (func, info) in enumerate(functions_info.items()):
+        if info["type"] == "func":
             full.replace("void " + func, "void " + func + "_base_func")
 
 
@@ -873,10 +881,10 @@ def ode_prepare():
 
                 void {0}::deriv_func(double* pdot, double* edot, double* Ydot,
                                   double* Omega_phi, double* Omega_theta, double* Omega_r,
-                                  double epsilon, double a, double p, double e, double Y)
+                                  double epsilon, double a, double p, double e, double Y, double* additional_args)
                 {1}
                     {0}_base_func(pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r,
-                                  epsilon, a, p, e, Y);
+                                  epsilon, a, p, e, Y, additional_args);
                 {2}
             """.format(func, '{', '}')
 
@@ -887,7 +895,7 @@ def ode_prepare():
         func_name = func_name_;
     """
 
-    for i, (func, func_type) in enumerate(zip(function_names, function_types)):
+    for i, (func, info) in enumerate(functions_info.items()):
         lead = "if" if i == 0 else "else if"
 
 
@@ -924,11 +932,12 @@ def ode_prepare():
 
     void ODECarrier::get_derivatives(double* pdot, double* edot, double* Ydot,
                       double* Omega_phi, double* Omega_theta, double* Omega_r,
-                      double epsilon, double a, double p, double e, double Y)
+                      double epsilon, double a, double p, double e, double Y, double* additional_args)
     {
     """
 
-    for i, (func, func_type) in enumerate(zip(function_names, function_types)):
+    for i, (func, info) in enumerate(functions_info.items()):
+
         lead = "if" if i == 0 else "else if"
 
         full += (
@@ -943,7 +952,7 @@ def ode_prepare():
                 {0}* temp = ({0}*)func;
 
                 temp->deriv_func(pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r,
-                                epsilon, a, p, e, Y);
+                                epsilon, a, p, e, Y, additional_args);
 
             """.format(func)
             )
@@ -967,7 +976,8 @@ def ode_prepare():
     {
     """
 
-    for i, (func, func_type) in enumerate(zip(function_names, function_types)):
+    for i, (func, info) in enumerate(functions_info.items()):
+
         lead = "if" if i == 0 else "else if"
 
         full += (
@@ -1018,8 +1028,9 @@ def ode_prepare():
 
     full_hh += hh_lines
 
-    for i, (func, func_type) in enumerate(zip(function_names, function_types)):
-        if func_type == "func":
+    for i, (func, info) in enumerate(functions_info.items()):
+
+        if info["type"] == "func":
             full_hh += """
 
             class {0}{1}
@@ -1030,7 +1041,7 @@ def ode_prepare():
 
                 void deriv_func(double* pdot, double* edot, double* Ydot,
                                   double* Omega_phi, double* Omega_theta, double* Omega_r,
-                                  double epsilon, double a, double p, double e, double Y);
+                                  double epsilon, double a, double p, double e, double Y, double* additional_args);
                 ~{0}();
             {2};
 
@@ -1048,7 +1059,7 @@ def ode_prepare():
             ~ODECarrier();
             void get_derivatives(double* pdot, double* edot, double* Ydot,
                               double* Omega_phi, double* Omega_theta, double* Omega_r,
-                              double epsilon, double a, double p, double e, double Y);
+                              double epsilon, double a, double p, double e, double Y, double* additional_args);
 
     };
 
@@ -1061,5 +1072,5 @@ def ode_prepare():
 
 
 def get_ode_function_options():
-    lines, function_names = get_ode_function_lines_names()
-    return function_names
+    lines, functions_info = get_ode_function_lines_names()
+    return functions_info

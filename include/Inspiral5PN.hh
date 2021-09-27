@@ -28,6 +28,8 @@ typedef struct tag_ParamsHolder{
     std::string func_name;
     ODECarrier* func;
     bool enforce_schwarz_sep;
+    double* additional_args;
+    int num_add_args;
 } ParamsHolder;
 
 class Pn5Holder{
@@ -85,12 +87,12 @@ class Pn5Carrier{
 public:
     ParamsHolder *params_holder;
 
-    Pn5Carrier(std::string func_name, bool enforce_schwarz_sep_);
+    Pn5Carrier(std::string func_name, bool enforce_schwarz_sep_, int num_add_args_);
 
     Pn5Holder run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0,
         double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4);
 
-    void Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len);
+    void Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, double* additional_args);
 
     void dealloc();
 };

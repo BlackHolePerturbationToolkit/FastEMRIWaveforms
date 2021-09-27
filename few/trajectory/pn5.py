@@ -29,7 +29,7 @@ from pyPn5 import pyPn5Generator
 
 # Python imports
 from few.utils.baseclasses import TrajectoryBase, Pn5AAK
-from few.utils.utility import check_for_file_download
+from few.utils.utility import check_for_file_download, get_ode_function_options
 from few.utils.constants import *
 from few.utils.citations import *
 
@@ -51,6 +51,8 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
     `Fujita & Shibata 2020<https://arxiv.org/abs/2008.13554>`_.
 
     args:
+        func (str): Function name for the ode to use in the integration. To get
+            the options for this argument, use :func:`few.utils.utility.get_ode_function_options`.
         enforce_schwarz_sep (bool, optional): Enforce the separatrix of Schwarzschild
             spacetime. This helps to midigate issues at higher spin and/or higher
             eccentricity where the PN approximations are more likely to fail.
@@ -64,13 +66,20 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
 
     """
 
-    def __init__(self, *args, enforce_schwarz_sep=False, func="pn5", **kwargs):
+    def __init__(self, func, *args, enforce_schwarz_sep=False, **kwargs):
 
         TrajectoryBase.__init__(self, *args, **kwargs)
         Pn5AAK.__init__(self, *args, **kwargs)
 
+        ode_info = get_ode_function_options()
+
+        if func not in ode_info:
+            raise ValueError(f"func not available. Options are {list(ode_info.keys())}.")
+
         self.enforce_schwarz_sep = enforce_schwarz_sep
-        self.Pn5_generator = pyPn5Generator(func, enforce_schwarz_sep)
+        self.num_add_args = ode_info[func]["num_add_args"]
+
+        self.Pn5_generator = pyPn5Generator(func, enforce_schwarz_sep, self.num_add_args)
 
         self.func = func
 
@@ -164,9 +173,15 @@ class RunKerrGenericPn5Inspiral(TrajectoryBase, Pn5AAK):
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
 
+        args_in = np.asarray(args)
+
+        # correct for issue in Cython pass
+        if len(args_in) == 0:
+            args_in = np.array([0.0])
+
         # this will return in coordinate time
         # must include Pn5 normalization in case normalization is desired
         t, p, e, Y, Phi_phi, Phi_theta, Phi_r = self.Pn5_generator(
-            M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, **temp_kwargs
+            M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, args_in, **temp_kwargs
         )
         return (t, p, e, Y, Phi_phi, Phi_theta, Phi_r)
