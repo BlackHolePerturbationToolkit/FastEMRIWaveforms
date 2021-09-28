@@ -99,6 +99,7 @@ class GenerateEMRIWaveform:
         # setup arguments to remove based on the specific waveform
         # also get proper phases
         self.args_remove = []
+        self.phases_needed = {"Phi_phi0": 11, "Phi_theta0": 12, "Phi_r0": 13}
         """
         if self.waveform_generator.descriptor == "eccentric":
             self.args_remove.append(5)
@@ -106,7 +107,7 @@ class GenerateEMRIWaveform:
             self.phases_needed = {"Phi_phi0": 11, "Phi_r0": 13}
 
         else:
-            self.phases_needed = {"Phi_phi0": 11, "Phi_theta0": 12, "Phi_r0": 13}
+
 
         if self.waveform_generator.background == "Schwarzschild":
             # remove spin
