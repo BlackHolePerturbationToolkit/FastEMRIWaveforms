@@ -10,7 +10,7 @@ import shutil
 import argparse
 
 # prepare the ode files
-from few.utils.utility import ode_prepare
+from few.utils.odeprepare import ode_prepare
 
 ode_prepare()
 
@@ -473,20 +473,7 @@ setup(
     url="https://github.com/mikekatz04/FastEMRIWaveforms",
     ext_modules=extensions,
     packages=["few", "few.utils", "few.trajectory", "few.amplitude", "few.summation"],
-    py_modules=[
-        "few.trajectory.inpsiral",
-        "few.waveform",
-        "few.amplitude.romannet",
-        "few.amplitude.interp2dcubicspline",
-        "few.utils.modeselector",
-        "few.summation.directmodesum",
-        "few.summation.interpolatedmodesum",
-        "few.summation.aakwave",
-        "few.utils.ylm",
-        "few.utils.constants",
-        "few.utils.odeoptions",
-        "few.utils.citations",
-    ],
+    py_modules=["few.waveform"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License (GPL)",
