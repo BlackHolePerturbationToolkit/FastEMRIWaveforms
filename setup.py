@@ -9,11 +9,6 @@ import numpy
 import shutil
 import argparse
 
-# prepare the ode files
-from few.utils.odeprepare import ode_prepare
-
-ode_prepare()
-
 
 def find_in_path(name, path):
     """Find a file in a search path"""
@@ -447,6 +442,11 @@ for line in lines:
 
 with open("few/_version.py", "w") as f:
     f.write("__version__ = '{}'".format(version_string))
+
+# prepare the ode files
+from few.utils.odeprepare import ode_prepare
+
+ode_prepare()
 
 setup(
     name="few",
