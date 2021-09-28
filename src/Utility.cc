@@ -6,7 +6,7 @@
 #include <gsl/gsl_sf_ellint.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_roots.h>
-#include "python.h"
+#include "Python.h"
 
 #ifdef __USE_OMP__
 #include "omp.h"
