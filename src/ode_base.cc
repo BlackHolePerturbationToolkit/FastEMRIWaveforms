@@ -127,9 +127,8 @@ void load_and_interpolate_flux_data(struct interp_params *interps, const std::st
 
 // Class to carry gsl interpolants for the inspiral data
 // also executes inspiral calculations
-SchwarzEccFlux::SchwarzEccFlux()
+SchwarzEccFlux::SchwarzEccFlux(std::string few_dir)
 {
-    std::string few_dir = "./";
     interps = new interp_params;
 
     // prepare the data
@@ -142,6 +141,7 @@ SchwarzEccFlux::SchwarzEccFlux()
 #define SchwarzEccFlux_num_add_args 0
 #define SchwarzEccFlux_spinless
 #define SchwarzEccFlux_equatorial
+#define SchwarzEccFlux_file1 FluxNewMinusPNScaled_fixed_y_order.dat
 __deriv__
 void SchwarzEccFlux::deriv_func(double* pdot, double* edot, double* xdot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,

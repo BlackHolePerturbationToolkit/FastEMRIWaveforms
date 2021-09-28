@@ -71,6 +71,8 @@ class EMRIInspiral(TrajectoryBase):
 
     def __init__(self, *args, func=None, enforce_schwarz_sep=False, **kwargs):
 
+        few_dir = dir_path + "/../../"
+
         if func is None:
             raise ValueError("Must provide func kwarg.")
 
@@ -79,14 +81,25 @@ class EMRIInspiral(TrajectoryBase):
         ode_info = get_ode_function_options()
 
         if func not in ode_info:
-            raise ValueError(f"func not available. Options are {list(ode_info.keys())}.")
+            raise ValueError(
+                f"func not available. Options are {list(ode_info.keys())}."
+            )
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
 
         for key, item in ode_info[func].items():
             setattr(self, key, item)
 
-        self.inspiral_generator = pyInspiralGenerator(func, enforce_schwarz_sep, self.num_add_args, self.convert_Y)
+        for fp in self.files:
+            check_for_file_download(fp, few_dir)
+
+        self.inspiral_generator = pyInspiralGenerator(
+            func,
+            enforce_schwarz_sep,
+            self.num_add_args,
+            self.convert_Y,
+            few_dir.encode(),
+        )
 
         self.func = func
 
@@ -132,7 +145,7 @@ class EMRIInspiral(TrajectoryBase):
         Phi_phi0=0.0,
         Phi_theta0=0.0,
         Phi_r0=0.0,
-        **kwargs
+        **kwargs,
     ):
         """Generate the inspiral.
 

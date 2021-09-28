@@ -30,22 +30,27 @@ from pyUtility import (
     pyKerrGeoConstantsOfMotionVectorized,
     pyY_to_xI_vector,
     set_threads_wrap,
-    get_threads_wrap
+    get_threads_wrap,
 )
 
 # check to see if cupy is available for gpus
 try:
     import cupy as cp
     from cupy.cuda.runtime import setDevice
+
     gpu = True
 
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
+
     setDevice = None
     gpu = False
 
 import few
 from few.utils.constants import *
+
+# get path to this file
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def get_overlap(time_series_1, time_series_2, use_gpu=False):
@@ -822,7 +827,16 @@ def cuda_set_device(dev):
 
 
 def get_ode_function_lines_names():
-    with open("src/ode_base.cc", "r") as fp:
+    """Get names for ODE derivative options
+
+
+    Returns:
+        tuple: (:code:`list`, :code:`dict`)
+            First entry is .readlines() on :code:`ode.cc`.
+            Second entry is dictionary with information on
+            available ODE functions.
+    """
+    with open(dir_path + "/../../src/ode_base.cc", "r") as fp:
         lines = fp.readlines()
 
     functions_info = {}
@@ -830,38 +844,41 @@ def get_ode_function_lines_names():
         if lines[i][:9] == "__deriv__":
             if lines[i][9] != "\n":
                 line = lines[i]
-                name = line.split('(')[0].split(' ')[2]
-                func_type = 'func'
+                name = line.split("(")[0].split(" ")[2]
+                func_type = "func"
             else:
                 line = lines[i + 1]
 
                 if "::" in line:
-                    name = line.split('::')[0].split(' ')[1]
-                    func_type = 'class'
+                    name = line.split("::")[0].split(" ")[1]
+                    func_type = "class"
 
                 else:
-                    name = line.split('(')[0].split(' ')[1]
-                    func_type = 'func'
+                    name = line.split("(")[0].split(" ")[1]
+                    func_type = "func"
 
-            functions_info[name] = {"type": func_type}
+            functions_info[name] = {"type": func_type, "files": []}
 
     for line in lines:
         if line[:7] == "#define":
             for name in functions_info.keys():
-                if line.split(' ')[1][0:0 + len(name) + 13] == f"{name}_num_add_args":
-                    functions_info[name]["num_add_args"] = int(line.split(' ')[2][:-1])
+                if line.split(" ")[1][0 : 0 + len(name) + 13] == f"{name}_num_add_args":
+                    functions_info[name]["num_add_args"] = int(line.split(" ")[2][:-1])
 
-                elif line.split(' ')[1][0:0 + len(name) + 9] == f"{name}_spinless":
+                elif line.split(" ")[1][0 : 0 + len(name) + 9] == f"{name}_spinless":
                     functions_info[name]["background"] = "Schwarzschild"
 
-                elif line.split(' ')[1][0:0 + len(name) + 11] == f"{name}_equatorial":
+                elif line.split(" ")[1][0 : 0 + len(name) + 11] == f"{name}_equatorial":
                     functions_info[name]["equatorial"] = True
 
-                elif line.split(' ')[1][0:0 + len(name) + 9] == f"{name}_circular":
+                elif line.split(" ")[1][0 : 0 + len(name) + 9] == f"{name}_circular":
                     functions_info[name]["circular"] = True
 
-                elif line.split(' ')[1][0:0 + len(name) + 2] == f"{name}_Y":
+                elif line.split(" ")[1][0 : 0 + len(name) + 2] == f"{name}_Y":
                     functions_info[name]["convert_Y"] = True
+
+                elif line.split(" ")[1][0 : 0 + len(name) + 5] == f"{name}_file":
+                    functions_info[name]["files"].append(line.split(" ")[2][:-1])
 
     for name, info in functions_info.items():
         if "num_add_args" not in info:
@@ -877,25 +894,30 @@ def get_ode_function_lines_names():
 
     return lines, functions_info
 
+
 def ode_prepare():
 
     lines, functions_info = get_ode_function_lines_names()
+
+    with open(dir_path + "/../../few/utils/odeoptions.py", "w") as fp:
+        fp.write("ode_options = " + functions_info.__repr__())
 
     full = ""
     for line in lines:
         for func in functions_info:
             if "void " + func + "(double* " in line:
-                line = line.replace("void " + func + "(double* ", "void " + func + "_base_func" + "(double* ")
+                line = line.replace(
+                    "void " + func + "(double* ",
+                    "void " + func + "_base_func" + "(double* ",
+                )
         full += line
 
     for i, (func, info) in enumerate(functions_info.items()):
         if info["type"] == "func":
             full.replace("void " + func, "void " + func + "_base_func")
 
-
-
             full += """
-                {0}::{0}(){1}{2}
+                {0}::{0}(std::string few_dir){1}{2}
 
                 {0}::~{0}(){1}{2}
 
@@ -906,47 +928,44 @@ def ode_prepare():
                     {0}_base_func(pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r,
                                   epsilon, a, p, e, Y, additional_args);
                 {2}
-            """.format(func, '{', '}')
+            """.format(
+                func, "{", "}"
+            )
 
     full += """
 
-    ODECarrier::ODECarrier(std::string func_name_)
+    ODECarrier::ODECarrier(std::string func_name_, std::string few_dir_)
     {
         func_name = func_name_;
+        few_dir = few_dir_;
     """
 
     for i, (func, info) in enumerate(functions_info.items()):
         lead = "if" if i == 0 else "else if"
 
-
-        full += (
-        """
+        full += """
             {0} (func_name == "{1}")
             {2}
-        """.format(lead, func, '{')
-
+        """.format(
+            lead, func, "{"
         )
-        full += (
-            """
-                {0}* temp = new {0}();
+        full += """
+                {0}* temp = new {0}(few_dir);
 
                 func = (void*) temp;
 
-            """.format(func)
-            )
+            """.format(
+            func
+        )
 
-        full += (
-        """
+        full += """
             }
 
         """
-        )
 
-    full += (
-    """
+    full += """
     }
     """
-    )
 
     full += """
 
@@ -960,35 +979,30 @@ def ode_prepare():
 
         lead = "if" if i == 0 else "else if"
 
-        full += (
-        """
+        full += """
             {0} (func_name == "{1}")
             {2}
-        """.format(lead, func, '{')
-
+        """.format(
+            lead, func, "{"
         )
-        full += (
-            """
+        full += """
                 {0}* temp = ({0}*)func;
 
                 temp->deriv_func(pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r,
                                 epsilon, a, p, e, Y, additional_args);
 
-            """.format(func)
-            )
+            """.format(
+            func
+        )
 
-        full += (
-        """
+        full += """
             }
 
         """
-        )
 
-    full += (
-    """
+    full += """
     }
     """
-    )
 
     full += """
 
@@ -1000,34 +1014,29 @@ def ode_prepare():
 
         lead = "if" if i == 0 else "else if"
 
-        full += (
-        """
+        full += """
             {0} (func_name == "{1}")
             {2}
-        """.format(lead, func, '{')
-
+        """.format(
+            lead, func, "{"
         )
-        full += (
-            """
+        full += """
                 {0}* temp = ({0}*)func;
 
                 delete temp;
 
-            """.format(func)
-            )
+            """.format(
+            func
+        )
 
-        full += (
-        """
+        full += """
             }
 
         """
-        )
 
-    full += (
-    """
+    full += """
     }
     """
-    )
 
     with open("src/ode.cc", "w") as fp:
         fp.write(full)
@@ -1057,7 +1066,7 @@ def ode_prepare():
             public:
                 double test;
 
-                {0}();
+                {0}(std::string few_dir);
 
                 void deriv_func(double* pdot, double* edot, double* Ydot,
                                   double* Omega_phi, double* Omega_theta, double* Omega_r,
@@ -1065,8 +1074,9 @@ def ode_prepare():
                 ~{0}();
             {2};
 
-        """.format(func, '{', '}')
-
+        """.format(
+                func, "{", "}"
+            )
 
     # TODO do dealloc
     full_hh += """
@@ -1074,8 +1084,9 @@ def ode_prepare():
     class ODECarrier{
         public:
             std::string func_name;
+            std::string few_dir;
             void* func;
-            ODECarrier(std::string func_name_);
+            ODECarrier(std::string func_name_, std::string few_dir_);
             ~ODECarrier();
             void get_derivatives(double* pdot, double* edot, double* Ydot,
                               double* Omega_phi, double* Omega_theta, double* Omega_r,
@@ -1092,5 +1103,9 @@ def ode_prepare():
 
 
 def get_ode_function_options():
-    lines, functions_info = get_ode_function_lines_names()
-    return functions_info
+    try:
+        from few.utils.odeoptions import ode_options
+    except (ImportError, ModuleNotFoundError) as e:
+        raise ValueError("ODE files not built yet.")
+
+    return ode_options
