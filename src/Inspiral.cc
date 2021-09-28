@@ -282,6 +282,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
 
         }
 
+        // status 9 indicates integrator stepped inside separatrix limit
         if((status == 9) || (p - p_sep < DIST_TO_SEPARATRIX))
         {
             // Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.

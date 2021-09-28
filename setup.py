@@ -11,7 +11,9 @@ import argparse
 
 # prepare the ode files
 from few.utils.utility import ode_prepare
+
 ode_prepare()
+
 
 def find_in_path(name, path):
     """Find a file in a search path"""
@@ -482,7 +484,7 @@ setup(
         "few.summation.aakwave",
         "few.utils.ylm",
         "few.utils.constants",
-        "few.utils.getfiles",
+        "few.utils.odeoptions",
         "few.utils.citations",
     ],
     classifiers=[
