@@ -23,6 +23,7 @@ import warnings
 
 import numpy as np
 from scipy.interpolate import CubicSpline
+from scipy.optimize import brentq
 
 from pyUtility import (
     pyKerrGeoCoordinateFrequencies,
@@ -509,27 +510,85 @@ def get_mu_at_t(
     return spline(t_out * YRSID_SI).item()
 
 
+def get_at_t(
+    traj_module,
+    traj_args,
+    bounds,
+    t_out,
+    index_of_interest,
+    traj_kwargs={},
+    xtol=2e-12,
+    rtol=8.881784197001252e-16,
+):
+    """Root finding wrapper using Brent's method.
+
+    This function uses scipy's brentq routine to find root.
+
+    arguments:
+        traj_module (obj): Instantiated trajectory module. It must output
+            the time array of the trajectory sparse trajectory as the first
+            output value in the tuple.
+        traj_args (list): List of arguments for the trajectory function.
+            p is removed. **Note**: It must be a list, not a tuple because the
+            new p values are inserted into the argument list.
+        bounds (list): Minimum and maximum values over which brentq will search for a root.
+        t_out (double): The desired length of time for the waveform.
+        index_of_interest (int): Index where to insert the new values in
+            the :code:`traj_args` list.
+        traj_kwargs (dict, optional): Keyword arguments for :code:`traj_module`.
+            Default is an empty dict.
+        xtol (float, optional): Absolute tolerance of the brentq root-finding - see :code: `np.allclose()` for details.
+            Defaults to 2e-12 (scipy default).
+        rtol (float, optional): Relative tolerance of the brentq root-finding - see :code: `np.allclose()` for details.
+            Defaults to ~8.8e-16 (scipy default).
+
+    returns:
+        double: Root value.
+
+    """
+
+    def get_time_root(val, traj, inj_args, traj_kwargs, t_out, ind_interest):
+        """
+        Function with one p root at T = t_outp, for brentq input.
+        """
+        inputs = inj_args.copy()
+        inputs.insert(ind_interest, val)
+        traj_kwargs["T"] = t_out * 2.0
+        out = traj(*inputs, **traj_kwargs)
+        return out[0][-1] - t_out * YRSID_SI
+
+    root = brentq(
+        get_time_root,
+        bounds[0],
+        bounds[1],
+        xtol=xtol,
+        rtol=rtol,
+        args=(traj_module, traj_args, traj_kwargs, t_out, index_of_interest),
+    )
+    return root
+
+
 def get_p_at_t(
     traj_module,
     t_out,
     traj_args,
-    index_of_p=2,
-    traj_kwargs={},
-    min_p=8.0,
-    max_p=16.0,
-    num_p=100,
+    index_of_p=3,
+    index_of_a=2,
+    index_of_e=4,
+    index_of_x=5,
+    kerr_separatrix=True,
+    bounds=None,
+    **kwargs,
 ):
-    """Find the value of p that will give a specific length inspiral.
+    """Find the value of p that will give a specific length inspiral using Brent's method.
 
     If you want to generate an inspiral that is a specific length, you
     can adjust p accordingly. This function tells you what that value of p
     is based on the trajectory module and other input parameters at a
     desired time of observation.
 
-    The function grids p values and finds their associated end times. These
-    end times then become the x values in a spline with the gridded p
-    values as the y values. The spline is then evaluated at the desired end time
-    in order to get the desired p value.
+    This function uses scipy's brentq routine to find the (presumed only)
+    value of p that gives a trajectory of duration t_out.
 
     arguments:
         traj_module (obj): Instantiated trajectory module. It must output
@@ -540,81 +599,102 @@ def get_p_at_t(
             p is removed. **Note**: It must be a list, not a tuple because the
             new p values are inserted into the argument list.
         index_of_p (int, optional): Index where to insert the new p values in
-            the :code:`traj_args` list. Default is 2 because p usually comes
-            after p.
-        traj_kwargs (dict, optional): Keyword arguments for :code:`traj_module`.
-            Default is an empty dict.
-        min_p (double, optional): The minumum value of p for search array.
-            Default is :math:`1 M_\odot`.
-        max_p (double, optional): The maximum value of p for search array.
-            Default is :math:`10^3M_\odot`.
-        num_p (int, optional): Number of p values to search over. Default is
-            100.
+            the :code:`traj_args` list. Default is 3.
+        index_of_a (int, optional): Index of a in provided :code:`traj_module` arguments. Default is 2.
+        index_of_e (int, optional): Index of e0 in provided :code:`traj_module` arguments. Default is 4.
+        index_of_x (int, optional): Index of x0 in provided :code:`traj_module` arguments. Default is 5.
+        kerr_separatrix (bool, optional): If True, the default lower bound of the root-finding will be
+            (approximately) the Kerr separatrix. If False, uses the Schwarzchild separatrix 6 + 2e.
+            Defaults to True.
+        bounds (list, optional): Minimum and maximum values of p over which brentq will search for a root.
+            If not given, will be set to [separatrix + 0.101, 50]. To supply only one of these two limits, set the
+            other limit to None.
+        **kwargs (dict, optional): Keyword arguments for :func:`get_at_t`.
 
     returns:
         double: Value of p that creates the proper length trajectory.
 
     """
 
-    # setup search array
-    p_new = np.linspace(min_p, max_p, num_p)
+    # fix indexes for p
+    if index_of_a > index_of_p:
+        index_of_a -= 1
+    if index_of_e > index_of_p:
+        index_of_e -= 1
+    if index_of_x > index_of_p:
+        index_of_x -= 1
 
-    # set maximum time value of trajectory to be just beyond desired time
-    traj_kwargs["T"] = t_out * 1.1
-
-    # array for end time values for trajectories
-    t_end = np.zeros_like(p_new)
-
-    for i, p in enumerate(p_new):
-
-        # insert mu into args list
-        args_new = traj_args.copy()
-        args_new.insert(index_of_p, p)
-
-        # run the trajectory
-        out = traj_module(*args_new, **traj_kwargs)
-
-        # get the last time in the trajectory
-        t = out[0]
-        t_end[i] = t[-1]
-
-    # get rid of low values that returned zero-duration waveforms due to domain error
-    try:
-        ind_start = np.where(np.diff(t_end) > 0.0)[0][0] + 1
-
-        # get rid of extra values beyond the maximum allowable time
-        ind_stop = np.where(np.diff(t_end) > 0.0)[0][-1] + 1
-
-    except IndexError:
-        if np.all(np.diff(t_end) == 0.0):
-            warnings.warn("All trajectories hit the end point. Returning min_p.")
-            return min_p
-
+    # fix bounds
+    if bounds is None:
+        if kerr_separatrix:
+            p_sep = get_separatrix(
+                traj_args[index_of_a], traj_args[index_of_e], traj_args[index_of_Y]
+            )  # should be fairly close.
         else:
-            raise IndexError
+            p_sep = 6 + 2 * traj_args[index_of_e]
+        bounds = [p_sep + 0.101, 16.0 + 2 * traj_args[index_of_e]]
 
-    if ind_stop == 1:
-        ind_stop = 2
+    elif bounds[0] is None:
+        if kerr_separatrix:
+            p_sep = get_separatrix(
+                traj_args[index_of_a], traj_args[index_of_e], traj_args[index_of_Y]
+            )  # should be fairly close.
+        else:
+            p_sep = 6 + 2 * traj_args[index_of_e]
+        bounds[0] = p_sep + 0.101
 
-    p_test = p_new.copy()
-    t_test = t_end.copy()
-    p_new = p_new[ind_start : ind_stop + 1]
-    t_end = t_end[ind_start : ind_stop + 1]
+    elif bounds[1] is None:
+        bounds[1] = 16.0 + 2 * traj_args[index_of_e]
 
-    # put them in increasing order
-    sort = np.argsort(t_end)
-    t_end = t_end[sort]
-    p_new = p_new[sort]
+    root = get_at_t(traj_module, traj_args, bounds, t_out, index_of_p, **kwargs)
+    return root
 
-    if t_end[-1] < t_out * YRSID_SI:
-        return max_p
 
-    # setup spline
-    spline = CubicSpline(t_end, p_new)
+def get_mu_at_t(
+    traj_module, t_out, traj_args, index_of_mu=1, bounds=None, **kwargs,
+):
+    """Find the value of mu that will give a specific length inspiral using Brent's method.
 
-    # return proper p value
-    p_out = spline(t_out * YRSID_SI).item()
-    return p_out
+    If you want to generate an inspiral that is a specific length, you
+    can adjust mu accordingly. This function tells you what that value of mu
+    is based on the trajectory module and other input parameters at a
+    desired time of observation.
+
+    This function uses scipy's brentq routine to find the (presumed only)
+    value of mu that gives a trajectory of duration t_out.
+
+    arguments:
+        traj_module (obj): Instantiated trajectory module. It must output
+            the time array of the trajectory sparse trajectory as the first
+            output value in the tuple.
+        t_out (double): The desired length of time for the waveform.
+        traj_args (list): List of arguments for the trajectory function.
+            p is removed. **Note**: It must be a list, not a tuple because the
+            new p values are inserted into the argument list.
+        index_of_mu (int, optional): Index where to insert the new p values in
+            the :code:`traj_args` list. Default is 1.
+        bounds (list, optional): Minimum and maximum values of p over which brentq will search for a root.
+            If not given, will be set to [1e-1, 1e3]. To supply only one of these two limits, set the
+            other limit to None.
+        **kwargs (dict, optional): Keyword arguments for :func:`get_at_t`.
+
+    returns:
+        double: Value of mu that creates the proper length trajectory.
+
+    """
+
+    # fix bounds
+    if bounds is None:
+        bounds = [1e-1, 1e3]
+
+    elif bounds[0] is None:
+        bounds[0] = 1e-1
+
+    elif bounds[1] is None:
+        bounds[1] = 1e3
+
+    root = get_at_t(traj_module, traj_args, bounds, t_out, index_of_mu, **kwargs)
+    return root
 
 
 # data history is saved here nased on version nunber
@@ -637,6 +717,7 @@ record_by_version = {
     "1.3.5": 3981654,
     "1.3.6": 3981654,
     "1.3.7": 3981654,
+    "1.4.0": 3981654,
 }
 
 
@@ -839,6 +920,7 @@ def get_ode_function_lines_names():
     with open(dir_path + "/../../src/ode_base.cc", "r") as fp:
         lines = fp.readlines()
 
+    # find derivative functions and get info
     functions_info = {}
     for i in range(len(lines) - 1):
         if lines[i][:9] == "__deriv__":
@@ -859,6 +941,7 @@ def get_ode_function_lines_names():
 
             functions_info[name] = {"type": func_type, "files": []}
 
+    # get all the additional information on functions in the c file
     for line in lines:
         if line[:7] == "#define":
             for name in functions_info.keys():
@@ -880,6 +963,7 @@ def get_ode_function_lines_names():
                 elif line.split(" ")[1][0 : 0 + len(name) + 5] == f"{name}_file":
                     functions_info[name]["files"].append(line.split(" ")[2][:-1])
 
+    # fill anything that did not appear
     for name, info in functions_info.items():
         if "num_add_args" not in info:
             functions_info[name]["num_add_args"] = 0
@@ -896,13 +980,20 @@ def get_ode_function_lines_names():
 
 
 def ode_prepare():
+    """Prepare files for ODEs"""
 
+    # get all the info
     lines, functions_info = get_ode_function_lines_names()
 
+    # write out the function info to a python file
     with open(dir_path + "/../../few/utils/odeoptions.py", "w") as fp:
         fp.write("ode_options = " + functions_info.__repr__())
 
+    # start preparing ode.cc
+
     full = ""
+
+    # adjust function names for functions that are not classes
     for line in lines:
         for func in functions_info:
             if "void " + func + "(double* " in line:
@@ -912,6 +1003,7 @@ def ode_prepare():
                 )
         full += line
 
+    # build class for functions in ode_base.cc
     for i, (func, info) in enumerate(functions_info.items()):
         if info["type"] == "func":
             full.replace("void " + func, "void " + func + "_base_func")
@@ -932,6 +1024,7 @@ def ode_prepare():
                 func, "{", "}"
             )
 
+    # put together ODE carrier C++ class
     full += """
 
     ODECarrier::ODECarrier(std::string func_name_, std::string few_dir_)
@@ -940,6 +1033,7 @@ def ode_prepare():
         few_dir = few_dir_;
     """
 
+    # setup for all functions in ode_base.cc
     for i, (func, info) in enumerate(functions_info.items()):
         lead = "if" if i == 0 else "else if"
 
@@ -967,6 +1061,7 @@ def ode_prepare():
     }
     """
 
+    # setup get_derivatives functions
     full += """
 
     void ODECarrier::get_derivatives(double* pdot, double* edot, double* Ydot,
@@ -1003,7 +1098,7 @@ def ode_prepare():
     full += """
     }
     """
-
+    # destructor
     full += """
 
     ODECarrier::~ODECarrier()
@@ -1038,9 +1133,11 @@ def ode_prepare():
     }
     """
 
+    # write out to ode.cc
     with open("src/ode.cc", "w") as fp:
         fp.write(full)
 
+    # get ode_base.hh
     with open("include/ode_base.hh", "r") as fp:
         hh_lines = fp.read()
 
@@ -1057,6 +1154,7 @@ def ode_prepare():
 
     full_hh += hh_lines
 
+    # putting together class info for functions that are not classes
     for i, (func, info) in enumerate(functions_info.items()):
 
         if info["type"] == "func":
@@ -1078,7 +1176,7 @@ def ode_prepare():
                 func, "{", "}"
             )
 
-    # TODO do dealloc
+    # ode carrier hh info
     full_hh += """
 
     class ODECarrier{
@@ -1098,11 +1196,24 @@ def ode_prepare():
 
     """
 
+    # add to ode.hh
     with open("include/ode.hh", "w") as fp:
         fp.write(full_hh)
 
 
 def get_ode_function_options():
+    """Get ode options.
+
+    This includes all the subinfo for each ODE derivative
+    function that is available.
+
+    Returns:
+        dict: Dictionary with all the information on available functions.
+
+    Raises:
+        ValueError: ODE files have not been built.
+
+    """
     try:
         from few.utils.odeoptions import ode_options
     except (ImportError, ModuleNotFoundError) as e:
