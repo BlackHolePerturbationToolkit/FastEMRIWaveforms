@@ -2,6 +2,7 @@
 #define _GLOBAL_HEADER_
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <complex>
 #include "cuda_complex.hpp"
 
