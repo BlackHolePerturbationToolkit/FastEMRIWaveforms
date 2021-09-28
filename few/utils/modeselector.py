@@ -21,7 +21,7 @@ import numpy as np
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *
-from few.utils.baseclasses import GPUModuleBase
+from few.utils.baseclasses import ParallelModuleBase
 
 # check for cupy
 try:
@@ -31,7 +31,7 @@ except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
 
-class ModeSelector(GPUModuleBase):
+class ModeSelector(ParallelModuleBase):
     """Filter teukolsky amplitudes based on power contribution.
 
     This module takes teukolsky modes, combines them with their associated ylms,
@@ -57,14 +57,15 @@ class ModeSelector(GPUModuleBase):
             sennsitivity is used to weight the mode values when determining which
             modes to keep. **Note**: if the sensitivity function is provided,
             and GPUs are used, then this function must accept CuPy arrays as input.
-        use_gpu (bool, optional): If True, allocate arrays for usage on a GPU.
-            Default is False.
+        **kwargs (dict, optional): Keyword arguments for the base classes:
+            :class:`few.utils.baseclasses.ParallelModuleBase`.
+            Default is {}.
 
     """
 
-    def __init__(self, m0mask, sensitivity_fn=None, use_gpu=False):
+    def __init__(self, m0mask, sensitivity_fn=None, **kwargs):
 
-        GPUModuleBase.__init__(self, use_gpu=use_gpu)
+        ParallelModuleBase.__init__(self, **kwargs)
 
         # store information releated to m values
         # the order is m = 0, m > 0, m < 0

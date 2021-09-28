@@ -7,12 +7,12 @@ from few.utils.utility import pointer_adjust
 
 assert sizeof(int) == sizeof(np.int32_t)
 
-cdef extern from "../include/Inspiral5PN.hh":
-    cdef cppclass Pn5CarrierWrap "Pn5Carrier":
-        Pn5CarrierWrap()
+cdef extern from "../include/Inspiral.hh":
+    cdef cppclass InspiralCarrierWrap "InspiralCarrier":
+        InspiralCarrierWrap(string func, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_, string few_dir)
         void dealloc()
 
-        void Pn5Wrapper(np.float64_t *t, np.float64_t *p,
+        void InspiralWrapper(np.float64_t *t, np.float64_t *p,
                          np.float64_t *e, np.float64_t *Y,
                          np.float64_t *Phi_phi,
                          np.float64_t *Phi_theta, np.float64_t *Phi_r,
@@ -28,22 +28,23 @@ cdef extern from "../include/Inspiral5PN.hh":
                           int  DENSE_STEPPING,
                           bool use_rk4,
                           int init_len,
-                          bool enforce_schwarz_sep)
+                          double* additional_args)
 
+cdef extern from "../include/ode.hh":
+    void prepare_derivatives()
 
+cdef class pyInspiralGenerator:
+    cdef InspiralCarrierWrap *g
 
-cdef class pyPn5Generator:
-    cdef Pn5CarrierWrap *g
-
-    def __cinit__(self):
-        self.g = new Pn5CarrierWrap()
+    def __cinit__(self, func_name, enforce_schwarz_sep, num_add_args, convert_Y, few_dir):
+        self.g = new InspiralCarrierWrap(func_name.encode(), enforce_schwarz_sep, num_add_args, convert_Y, few_dir)
 
     def __dealloc__(self):
         self.g.dealloc()
         if self.g:
             del self.g
 
-    def __call__(self, M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, T=1.0, dt=-1, err=1e-10, max_init_len=1000, DENSE_STEPPING=0, use_rk4=False, enforce_schwarz_sep=False):
+    def __call__(self, M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, np.ndarray[ndim=1, dtype=np.float64_t] additional_args, T=1.0, dt=-1, err=1e-10, max_init_len=1000, DENSE_STEPPING=0, use_rk4=False):
         cdef np.ndarray[ndim=1, dtype=np.float64_t] t = np.zeros(max_init_len, dtype=np.float64)
         cdef np.ndarray[ndim=1, dtype=np.float64_t] p = np.zeros(max_init_len, dtype=np.float64)
         cdef np.ndarray[ndim=1, dtype=np.float64_t] e = np.zeros(max_init_len, dtype=np.float64)
@@ -54,6 +55,6 @@ cdef class pyPn5Generator:
 
         cdef int length
 
-        self.g.Pn5Wrapper(&t[0], &p[0], &e[0], &Y[0], &Phi_phi[0], &Phi_theta[0], &Phi_r[0], M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, &length, T, dt, err, DENSE_STEPPING, use_rk4, max_init_len, enforce_schwarz_sep)
+        self.g.InspiralWrapper(&t[0], &p[0], &e[0], &Y[0], &Phi_phi[0], &Phi_theta[0], &Phi_r[0], M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, &length, T, dt, err, DENSE_STEPPING, use_rk4, max_init_len, &additional_args[0])
 
         return (t[:length], p[:length], e[:length], Y[:length], Phi_phi[:length], Phi_theta[:length], Phi_r[:length])

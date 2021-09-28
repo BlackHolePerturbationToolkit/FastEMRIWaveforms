@@ -41,7 +41,7 @@ except (ImportError, ModuleNotFoundError) as e:
     pass
 
 # Python imports
-from few.utils.baseclasses import Pn5AAK, SummationBase, GPUModuleBase
+from few.utils.baseclasses import Pn5AAK, SummationBase, ParallelModuleBase
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies, Y_to_xI
 from few.utils.constants import *
@@ -51,7 +51,7 @@ from few.summation.interpolatedmodesum import CubicSplineInterpolant
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
+class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
     """Calculate an AAK waveform from an input trajectory.
 
     Please see the documentations for
@@ -65,14 +65,16 @@ class AAKSummation(SummationBase, Pn5AAK, GPUModuleBase):
 
     args:
         **kwargs (dict, optional): Keyword arguments for the base class:
-            :class:`few.utils.baseclasses.SchwarzschildEccentric`. Default is
-            {}.
+            :class:`few.utils.baseclasses.SchwarzschildEccentric`,
+            :class:`few.utils.baseclasses.ParallelModuleBase`,
+            :class:`few.utils.baseclasses.SummationBase`. 
+            Default is {}.
 
     """
 
     def __init__(self, **kwargs):
 
-        GPUModuleBase.__init__(self, **kwargs)
+        ParallelModuleBase.__init__(self, **kwargs)
         Pn5AAK.__init__(self, **kwargs)
         SummationBase.__init__(self, **kwargs)
 

@@ -23,27 +23,35 @@ import warnings
 
 import numpy as np
 from scipy.interpolate import CubicSpline
+from scipy.optimize import brentq
 
-from pyFundamentalFrequencies import (
+from pyUtility import (
     pyKerrGeoCoordinateFrequencies,
     pyGetSeparatrix,
     pyKerrGeoConstantsOfMotionVectorized,
     pyY_to_xI_vector,
+    set_threads_wrap,
+    get_threads_wrap,
 )
 
 # check to see if cupy is available for gpus
 try:
     import cupy as cp
+    from cupy.cuda.runtime import setDevice
 
     gpu = True
 
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
 
+    setDevice = None
     gpu = False
 
 import few
 from few.utils.constants import *
+
+# get path to this file
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def get_overlap(time_series_1, time_series_2, use_gpu=False):
@@ -503,27 +511,85 @@ def get_mu_at_t(
     return spline(t_out * YRSID_SI).item()
 
 
+def get_at_t(
+    traj_module,
+    traj_args,
+    bounds,
+    t_out,
+    index_of_interest,
+    traj_kwargs={},
+    xtol=2e-12,
+    rtol=8.881784197001252e-16,
+):
+    """Root finding wrapper using Brent's method.
+
+    This function uses scipy's brentq routine to find root.
+
+    arguments:
+        traj_module (obj): Instantiated trajectory module. It must output
+            the time array of the trajectory sparse trajectory as the first
+            output value in the tuple.
+        traj_args (list): List of arguments for the trajectory function.
+            p is removed. **Note**: It must be a list, not a tuple because the
+            new p values are inserted into the argument list.
+        bounds (list): Minimum and maximum values over which brentq will search for a root.
+        t_out (double): The desired length of time for the waveform.
+        index_of_interest (int): Index where to insert the new values in
+            the :code:`traj_args` list.
+        traj_kwargs (dict, optional): Keyword arguments for :code:`traj_module`.
+            Default is an empty dict.
+        xtol (float, optional): Absolute tolerance of the brentq root-finding - see :code: `np.allclose()` for details.
+            Defaults to 2e-12 (scipy default).
+        rtol (float, optional): Relative tolerance of the brentq root-finding - see :code: `np.allclose()` for details.
+            Defaults to ~8.8e-16 (scipy default).
+
+    returns:
+        double: Root value.
+
+    """
+
+    def get_time_root(val, traj, inj_args, traj_kwargs, t_out, ind_interest):
+        """
+        Function with one p root at T = t_outp, for brentq input.
+        """
+        inputs = inj_args.copy()
+        inputs.insert(ind_interest, val)
+        traj_kwargs["T"] = t_out * 2.0
+        out = traj(*inputs, **traj_kwargs)
+        return out[0][-1] - t_out * YRSID_SI
+
+    root = brentq(
+        get_time_root,
+        bounds[0],
+        bounds[1],
+        xtol=xtol,
+        rtol=rtol,
+        args=(traj_module, traj_args, traj_kwargs, t_out, index_of_interest),
+    )
+    return root
+
+
 def get_p_at_t(
     traj_module,
     t_out,
     traj_args,
-    index_of_p=2,
-    traj_kwargs={},
-    min_p=8.0,
-    max_p=16.0,
-    num_p=100,
+    index_of_p=3,
+    index_of_a=2,
+    index_of_e=4,
+    index_of_x=5,
+    kerr_separatrix=True,
+    bounds=None,
+    **kwargs,
 ):
-    """Find the value of p that will give a specific length inspiral.
+    """Find the value of p that will give a specific length inspiral using Brent's method.
 
     If you want to generate an inspiral that is a specific length, you
     can adjust p accordingly. This function tells you what that value of p
     is based on the trajectory module and other input parameters at a
     desired time of observation.
 
-    The function grids p values and finds their associated end times. These
-    end times then become the x values in a spline with the gridded p
-    values as the y values. The spline is then evaluated at the desired end time
-    in order to get the desired p value.
+    This function uses scipy's brentq routine to find the (presumed only)
+    value of p that gives a trajectory of duration t_out.
 
     arguments:
         traj_module (obj): Instantiated trajectory module. It must output
@@ -534,81 +600,102 @@ def get_p_at_t(
             p is removed. **Note**: It must be a list, not a tuple because the
             new p values are inserted into the argument list.
         index_of_p (int, optional): Index where to insert the new p values in
-            the :code:`traj_args` list. Default is 2 because p usually comes
-            after p.
-        traj_kwargs (dict, optional): Keyword arguments for :code:`traj_module`.
-            Default is an empty dict.
-        min_p (double, optional): The minumum value of p for search array.
-            Default is :math:`1 M_\odot`.
-        max_p (double, optional): The maximum value of p for search array.
-            Default is :math:`10^3M_\odot`.
-        num_p (int, optional): Number of p values to search over. Default is
-            100.
+            the :code:`traj_args` list. Default is 3.
+        index_of_a (int, optional): Index of a in provided :code:`traj_module` arguments. Default is 2.
+        index_of_e (int, optional): Index of e0 in provided :code:`traj_module` arguments. Default is 4.
+        index_of_x (int, optional): Index of x0 in provided :code:`traj_module` arguments. Default is 5.
+        kerr_separatrix (bool, optional): If True, the default lower bound of the root-finding will be
+            (approximately) the Kerr separatrix. If False, uses the Schwarzchild separatrix 6 + 2e.
+            Defaults to True.
+        bounds (list, optional): Minimum and maximum values of p over which brentq will search for a root.
+            If not given, will be set to [separatrix + 0.101, 50]. To supply only one of these two limits, set the
+            other limit to None.
+        **kwargs (dict, optional): Keyword arguments for :func:`get_at_t`.
 
     returns:
         double: Value of p that creates the proper length trajectory.
 
     """
 
-    # setup search array
-    p_new = np.linspace(min_p, max_p, num_p)
+    # fix indexes for p
+    if index_of_a > index_of_p:
+        index_of_a -= 1
+    if index_of_e > index_of_p:
+        index_of_e -= 1
+    if index_of_x > index_of_p:
+        index_of_x -= 1
 
-    # set maximum time value of trajectory to be just beyond desired time
-    traj_kwargs["T"] = t_out * 1.1
-
-    # array for end time values for trajectories
-    t_end = np.zeros_like(p_new)
-
-    for i, p in enumerate(p_new):
-
-        # insert mu into args list
-        args_new = traj_args.copy()
-        args_new.insert(index_of_p, p)
-
-        # run the trajectory
-        out = traj_module(*args_new, **traj_kwargs)
-
-        # get the last time in the trajectory
-        t = out[0]
-        t_end[i] = t[-1]
-
-    # get rid of low values that returned zero-duration waveforms due to domain error
-    try:
-        ind_start = np.where(np.diff(t_end) > 0.0)[0][0] + 1
-
-        # get rid of extra values beyond the maximum allowable time
-        ind_stop = np.where(np.diff(t_end) > 0.0)[0][-1] + 1
-
-    except IndexError:
-        if np.all(np.diff(t_end) == 0.0):
-            warnings.warn("All trajectories hit the end point. Returning min_p.")
-            return min_p
-
+    # fix bounds
+    if bounds is None:
+        if kerr_separatrix:
+            p_sep = get_separatrix(
+                traj_args[index_of_a], traj_args[index_of_e], traj_args[index_of_Y]
+            )  # should be fairly close.
         else:
-            raise IndexError
+            p_sep = 6 + 2 * traj_args[index_of_e]
+        bounds = [p_sep + 0.101, 16.0 + 2 * traj_args[index_of_e]]
 
-    if ind_stop == 1:
-        ind_stop = 2
+    elif bounds[0] is None:
+        if kerr_separatrix:
+            p_sep = get_separatrix(
+                traj_args[index_of_a], traj_args[index_of_e], traj_args[index_of_Y]
+            )  # should be fairly close.
+        else:
+            p_sep = 6 + 2 * traj_args[index_of_e]
+        bounds[0] = p_sep + 0.101
 
-    p_test = p_new.copy()
-    t_test = t_end.copy()
-    p_new = p_new[ind_start : ind_stop + 1]
-    t_end = t_end[ind_start : ind_stop + 1]
+    elif bounds[1] is None:
+        bounds[1] = 16.0 + 2 * traj_args[index_of_e]
 
-    # put them in increasing order
-    sort = np.argsort(t_end)
-    t_end = t_end[sort]
-    p_new = p_new[sort]
+    root = get_at_t(traj_module, traj_args, bounds, t_out, index_of_p, **kwargs)
+    return root
 
-    if t_end[-1] < t_out * YRSID_SI:
-        return max_p
 
-    # setup spline
-    spline = CubicSpline(t_end, p_new)
+def get_mu_at_t(
+    traj_module, t_out, traj_args, index_of_mu=1, bounds=None, **kwargs,
+):
+    """Find the value of mu that will give a specific length inspiral using Brent's method.
 
-    # return proper p value
-    p_out = spline(t_out * YRSID_SI).item()
-    return p_out
+    If you want to generate an inspiral that is a specific length, you
+    can adjust mu accordingly. This function tells you what that value of mu
+    is based on the trajectory module and other input parameters at a
+    desired time of observation.
+
+    This function uses scipy's brentq routine to find the (presumed only)
+    value of mu that gives a trajectory of duration t_out.
+
+    arguments:
+        traj_module (obj): Instantiated trajectory module. It must output
+            the time array of the trajectory sparse trajectory as the first
+            output value in the tuple.
+        t_out (double): The desired length of time for the waveform.
+        traj_args (list): List of arguments for the trajectory function.
+            p is removed. **Note**: It must be a list, not a tuple because the
+            new p values are inserted into the argument list.
+        index_of_mu (int, optional): Index where to insert the new p values in
+            the :code:`traj_args` list. Default is 1.
+        bounds (list, optional): Minimum and maximum values of p over which brentq will search for a root.
+            If not given, will be set to [1e-1, 1e3]. To supply only one of these two limits, set the
+            other limit to None.
+        **kwargs (dict, optional): Keyword arguments for :func:`get_at_t`.
+
+    returns:
+        double: Value of mu that creates the proper length trajectory.
+
+    """
+
+    # fix bounds
+    if bounds is None:
+        bounds = [1e-1, 1e3]
+
+    elif bounds[0] is None:
+        bounds[0] = 1e-1
+
+    elif bounds[1] is None:
+        bounds[1] = 1e3
+
+    root = get_at_t(traj_module, traj_args, bounds, t_out, index_of_mu, **kwargs)
+    return root
 
 
 # data history is saved here nased on version nunber
@@ -631,6 +718,7 @@ record_by_version = {
     "1.3.5": 3981654,
     "1.3.6": 3981654,
     "1.3.7": 3981654,
+    "1.4.0": 3981654,
 }
 
 
@@ -788,3 +876,55 @@ def pointer_adjust(func):
         return func(*targs, **tkwargs)
 
     return func_wrapper
+
+
+def omp_set_num_threads(num_threads=1):
+    """Globally sets OMP_NUM_THREADS
+
+    Args:
+        num_threads (int, optional):
+        Number of parallel threads to use in OpenMP.
+            Default is 1.
+
+    """
+    set_threads_wrap(num_threads)
+
+
+def omp_get_num_threads():
+    """Get global variable OMP_NUM_THREADS"""
+    num_threads = get_threads_wrap()
+    return num_threads
+
+
+def cuda_set_device(dev):
+    """Globally sets CUDA device
+
+    Args:
+        dev (int): CUDA device number.
+
+    """
+    if setDevice is not None:
+        setDevice(dev)
+    else:
+        warnings.warn("Setting cuda device, but cupy/cuda not detected.")
+
+
+def get_ode_function_options():
+    """Get ode options.
+
+    This includes all the subinfo for each ODE derivative
+    function that is available.
+
+    Returns:
+        dict: Dictionary with all the information on available functions.
+
+    Raises:
+        ValueError: ODE files have not been built.
+
+    """
+    try:
+        from few.utils.odeoptions import ode_options
+    except (ImportError, ModuleNotFoundError) as e:
+        raise ValueError("ODE files not built yet.")
+
+    return ode_options

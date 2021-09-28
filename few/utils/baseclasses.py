@@ -24,10 +24,12 @@ a common interface and pass information related to each model.
 
 from abc import ABC
 import warnings
+import os
 
 import numpy as np
 from scipy.interpolate import CubicSpline
 from scipy import constants as ct
+
 
 # try to import cupy
 try:
@@ -43,19 +45,23 @@ except:
 # Python imports
 from few.utils.constants import *
 from few.utils.citations import *
+from few.utils.utility import omp_set_num_threads
 
 
-class GPUModuleBase(ABC):
+class ParallelModuleBase(ABC):
     """Base class for modules that can use GPUs.
 
     This class mainly handles setting GPU usage.
 
     args:
         use_gpu (bool, optional): If True, use GPU resources. Default is False.
+        num_threads (int, optional): Number of parallel threads to use in OpenMP.
+            If :code:`None`, will not set the global variable :code:`OMP_NUM_THREADS`.
+            Default is None.
 
     """
 
-    def attributes_GPUModuleBase(self):
+    def attributes_ParallelModuleBase(self):
         """
         attributes:
             use_gpu (bool): If True, use GPU.
@@ -64,7 +70,7 @@ class GPUModuleBase(ABC):
         """
         pass
 
-    def __init__(self, *args, use_gpu=False, **kwargs):
+    def __init__(self, *args, use_gpu=False, num_threads=None, **kwargs):
 
         self.use_gpu = use_gpu
 
@@ -72,6 +78,12 @@ class GPUModuleBase(ABC):
             self.xp = xp
         else:
             self.xp = np
+
+        if num_threads is not None:
+            if not isinstance(num_threads, int):
+                raise ValueError(f"num_threads must be None or int.")
+
+            omp_set_num_threads(num_threads)
 
         # checks if gpu capability is available if requested
         self.sanity_check_gpu(use_gpu)
@@ -138,7 +150,7 @@ class GPUModuleBase(ABC):
         return kwargs
 
 
-class SchwarzschildEccentric(GPUModuleBase, ABC):
+class SchwarzschildEccentric(ParallelModuleBase, ABC):
     """Base class for Schwarzschild eccentric waveforms.
 
     This class creates shared traits between different implementations of the
@@ -207,7 +219,7 @@ class SchwarzschildEccentric(GPUModuleBase, ABC):
 
     def __init__(self, *args, use_gpu=False, **kwargs):
 
-        GPUModuleBase.__init__(self, *args, use_gpu=use_gpu, **kwargs)
+        ParallelModuleBase.__init__(self, *args, use_gpu=use_gpu, **kwargs)
         # some descriptive information
         self.background = "Schwarzschild"
         self.descriptor = "eccentric"

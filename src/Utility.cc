@@ -6,11 +6,18 @@
 #include <gsl/gsl_sf_ellint.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_roots.h>
+#include "Python.h"
 
 #ifdef __USE_OMP__
 #include "omp.h"
 #endif
 
+void throw_python_error(char* str_in, int status)
+{
+    char str[1000];
+    sprintf(str, "%s / Error code: %d", str_in, status);
+    PyErr_SetString(PyExc_SystemError, str);
+}
 
 // Define elliptic integrals that use Mathematica's conventions
 double EllipticK(double k){
@@ -135,6 +142,7 @@ void KerrGeoRadialRoots(double* r1_, double*r2_, double* r3_, double* r4_, doubl
 void KerrGeoMinoFrequencies(double* CapitalGamma_, double* CapitalUpsilonPhi_, double* CapitalUpsilonTheta_, double* CapitalUpsilonr_,
                               double a, double p, double e, double x)
 {
+
     double M = 1.0;
 
     double En = KerrGeoEnergy(a, p, e, x);
@@ -280,6 +288,7 @@ double separatrix_polynomial_equat(double p, void *params_in)
 double
 solver (struct params_holder* params, double (*func)(double, void*), double x_lo, double x_hi)
 {
+    gsl_set_error_handler_off();
     int status;
     int iter = 0, max_iter = 100;
     const gsl_root_fsolver_type *T;
@@ -305,6 +314,11 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
                                          0, 0.001);
       }
     while (status == GSL_CONTINUE && iter < max_iter);
+
+    if (status != GSL_SUCCESS)
+    {
+        throw_python_error("Brent root solver failed.", status);
+    }
 
     gsl_root_fsolver_free (s);
     return r;
@@ -413,6 +427,23 @@ void Y_to_xI_vector(double* x, double* a, double* p, double* e, double* Y, int l
 
 }
 
+
+void set_threads(int num_threads)
+{
+    omp_set_num_threads(num_threads);
+}
+
+int get_threads()
+{
+    int num_threads;
+    #pragma omp parallel for
+    for (int i = 0; i < 1; i +=1)
+    {
+        num_threads = omp_get_num_threads();
+    }
+
+    return num_threads;
+}
 
 
 
