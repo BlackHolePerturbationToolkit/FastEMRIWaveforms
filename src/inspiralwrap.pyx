@@ -9,7 +9,7 @@ assert sizeof(int) == sizeof(np.int32_t)
 
 cdef extern from "../include/Inspiral.hh":
     cdef cppclass InspiralCarrierWrap "InspiralCarrier":
-        InspiralCarrierWrap(string func, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_)
+        InspiralCarrierWrap(string func, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_, string few_dir)
         void dealloc()
 
         void InspiralWrapper(np.float64_t *t, np.float64_t *p,
@@ -36,8 +36,8 @@ cdef extern from "../include/ode.hh":
 cdef class pyInspiralGenerator:
     cdef InspiralCarrierWrap *g
 
-    def __cinit__(self, func_name, enforce_schwarz_sep, num_add_args, convert_Y):
-        self.g = new InspiralCarrierWrap(func_name.encode(), enforce_schwarz_sep, num_add_args, convert_Y)
+    def __cinit__(self, func_name, enforce_schwarz_sep, num_add_args, convert_Y, few_dir):
+        self.g = new InspiralCarrierWrap(func_name.encode(), enforce_schwarz_sep, num_add_args, convert_Y, few_dir)
 
     def __dealloc__(self):
         self.g.dealloc()

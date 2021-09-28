@@ -88,7 +88,7 @@ class InspiralCarrier{
 public:
     ParamsHolder *params_holder;
 
-    InspiralCarrier(std::string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_);
+    InspiralCarrier(std::string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_, std::string few_dir);
 
     InspiralHolder run_Inspiral(double t0, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0,
         double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4);

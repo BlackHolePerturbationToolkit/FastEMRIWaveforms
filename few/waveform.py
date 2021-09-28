@@ -33,7 +33,7 @@ except (ImportError, ModuleNotFoundError) as e:
 from few.utils.baseclasses import SchwarzschildEccentric, Pn5AAK, ParallelModuleBase
 from few.trajectory.inspiral import EMRIInspiral
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
-from few.utils.utility import get_mismatch, xI_to_Y, p_to_y
+from few.utils.utility import get_mismatch, xI_to_Y, p_to_y, check_for_file_download
 from few.amplitude.romannet import RomanAmplitude
 from few.utils.modeselector import ModeSelector
 from few.utils.ylm import GetYlms
@@ -329,6 +329,10 @@ class GenerateEMRIWaveform:
             return [hp, hx]
 
 
+# get path to this file
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
+
 class SchwarzschildEccentricWaveformBase(
     SchwarzschildEccentric, ParallelModuleBase, ABC
 ):
@@ -443,9 +447,14 @@ class SchwarzschildEccentricWaveformBase(
         self.mode_selector = ModeSelector(self.m0mask, **mode_selector_kwargs)
 
         # setup amplitude normalization
+        fp = "AmplitudeVectorNorm.dat"
+        few_dir = dir_path + "/../"
+        check_for_file_download(fp, few_dir)
 
         # TODO: fix file locations
-        y_in, e_in, norm = np.genfromtxt("few/files/AmplitudeVectorNorm.dat").T
+        y_in, e_in, norm = np.genfromtxt(
+            few_dir + "/few/files/AmplitudeVectorNorm.dat"
+        ).T
 
         num_y = len(np.unique(y_in))
         num_e = len(np.unique(e_in))
@@ -1014,8 +1023,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         attributes:
             inspiral_generator (obj): instantiated trajectory module.
             create_waveform (obj): instantiated summation module.
-            inspiral_kwargs (dict): Kwargs related to the inspiral class:
-                :class:`few.trajectory.pn5.RunKerrGenericPn5Inspiral`.
+            inspiral_kwargs (dict): Kwargs related to the inspiral.
             xp (obj): numpy or cupy based on gpu usage.
             num_modes_kept/nmodes (int): Number of modes for final waveform.
                 For this model, it is solely determined from the

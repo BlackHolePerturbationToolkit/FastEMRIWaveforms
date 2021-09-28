@@ -123,11 +123,11 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
 
 // Class to carry gsl interpolants for the inspiral data
 // also executes inspiral calculations
-InspiralCarrier::InspiralCarrier(std::string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_)
+InspiralCarrier::InspiralCarrier(std::string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_, std::string few_dir)
 {
     params_holder = new ParamsHolder;
     params_holder->func_name = func_name;
-    params_holder->func = new ODECarrier(func_name);
+    params_holder->func = new ODECarrier(func_name, few_dir);
     params_holder->enforce_schwarz_sep = enforce_schwarz_sep_;
     params_holder->num_add_args = num_add_args_;
     params_holder->convert_Y = convert_Y_;
