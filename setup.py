@@ -356,17 +356,6 @@ Interp2DAmplitude_ext = Extension(
     **cpu_extension,
 )
 
-FLUX_ext = Extension(
-    "pyFLUX",
-    sources=[
-        "src/Interpolant.cc",
-        "src/Utility.cc",
-        "src/FluxInspiral.cc",
-        "src/FLUX.pyx",
-    ],
-    **cpu_extension,
-)
-
 inspiral_ext = Extension(
     "pyInspiral",
     sources=[
@@ -430,7 +419,6 @@ spher_harm_ext = Extension(
 
 cpu_extensions = [
     matmul_cpu_ext,
-    FLUX_ext,
     inspiral_ext,
     par_map_ext,
     interp_cpu_ext,
@@ -444,9 +432,7 @@ if run_cuda_install:
     gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext]
     extensions = gpu_extensions + cpu_extensions
 else:
-    # extensions = [FLUX_ext, SlowFlux_ext, spher_harm_ext, Interp2DAmplitude_ext]
     extensions = cpu_extensions
-    # extensions = [interp_cpu_ext]
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
