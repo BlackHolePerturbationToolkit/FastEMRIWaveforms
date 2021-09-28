@@ -1,7 +1,6 @@
 #%%
 from few.waveform import (
     FastSchwarzschildEccentricFlux,
-    RunSchwarzEccFluxInspiral,
     SlowSchwarzschildEccentricFlux,
 )
 from few.utils.utility import *

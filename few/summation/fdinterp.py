@@ -32,7 +32,11 @@ from pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
 from pyinterp_cpu import get_waveform_fd_wrap as get_waveform_fd_wrap_cpu
 
 # Python imports
-from few.utils.baseclasses import SummationBase, SchwarzschildEccentric, GPUModuleBase
+from few.utils.baseclasses import (
+    SummationBase,
+    SchwarzschildEccentric,
+    ParallelModuleBase,
+)
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *
@@ -63,7 +67,7 @@ def find_element_in_list(element, list_element):
         return None
 
 
-class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase):
+class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
     """Create waveform by interpolating sparse trajectory in the frequency domain.
 
     It interpolates all of the modes of interest and phases at sparse
@@ -75,7 +79,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase
 
     def __init__(self, *args, **kwargs):
 
-        GPUModuleBase.__init__(self, *args, **kwargs)
+        ParallelModuleBase.__init__(self, *args, **kwargs)
         SchwarzschildEccentric.__init__(self, *args, **kwargs)
         SummationBase.__init__(self, *args, **kwargs)
 
