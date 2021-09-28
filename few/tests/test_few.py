@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import warnings
 
-from few.trajectory.flux import RunSchwarzEccFluxInspiral
+from few.trajectory.inspiral import EMRIInspiral
 from few.amplitude.romannet import RomanAmplitude
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 from few.waveform import FastSchwarzschildEccentricFlux, SlowSchwarzschildEccentricFlux
@@ -145,7 +145,7 @@ class ModuleTest(unittest.TestCase):
     def test_trajectory(self):
 
         # initialize trajectory class
-        traj = RunSchwarzEccFluxInspiral()
+        traj = EMRIInspiral(func="SchwarzEccFlux")
 
         # set initial parameters
         M = 1e5
@@ -154,9 +154,7 @@ class ModuleTest(unittest.TestCase):
         e0 = 0.7
 
         # run trajectory
-        t, p, e, Phi_phi, Phi_r, flux = traj(M, mu, p0, e0)
-
-        traj.sanity_check_traj(p, e)
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, 0.0, p0, e0, 1.0)
 
     def test_amplitudes(self):
 
