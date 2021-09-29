@@ -25,7 +25,6 @@ Package TODOs
 ===============
 
 - add SNR calculator
-- adjust C implementation for trajectories towards standard
 - run trajectory backward
 - zero out modes
 - shared memory based on CUDA_ARCH / upping shared allocation
