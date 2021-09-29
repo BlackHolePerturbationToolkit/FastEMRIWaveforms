@@ -351,24 +351,15 @@ Interp2DAmplitude_ext = Extension(
     **cpu_extension,
 )
 
-FLUX_ext = Extension(
-    "pyFLUX",
+inspiral_ext = Extension(
+    "pyInspiral",
     sources=[
+        "src/Utility.cc",
         "src/Interpolant.cc",
-        "src/FundamentalFrequencies.cc",
-        "src/FluxInspiral.cc",
-        "src/FLUX.pyx",
-    ],
-    **cpu_extension,
-)
-
-Pn5_ext = Extension(
-    "pyPn5",
-    sources=[
-        "src/FundamentalFrequencies.cc",
         "src/dIdt8H_5PNe10.cc",
-        "src/Inspiral5PN.cc",
-        "src/Pn5.pyx",
+        "src/ode.cc",
+        "src/Inspiral.cc",
+        "src/inspiralwrap.pyx",
     ],
     **cpu_extension,
 )
@@ -380,8 +371,8 @@ par_map_ext = Extension(
 )
 
 fund_freqs_ext = Extension(
-    "pyFundamentalFrequencies",
-    sources=["src/FundamentalFrequencies.cc", "src/FundFreqs.pyx"],
+    "pyUtility",
+    sources=["src/Utility.cc", "src/utility_functions.pyx"],
     **cpu_extension,
 )
 
@@ -423,8 +414,7 @@ spher_harm_ext = Extension(
 
 cpu_extensions = [
     matmul_cpu_ext,
-    FLUX_ext,
-    Pn5_ext,
+    inspiral_ext,
     par_map_ext,
     interp_cpu_ext,
     spher_harm_ext,
@@ -437,9 +427,7 @@ if run_cuda_install:
     gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext]
     extensions = gpu_extensions + cpu_extensions
 else:
-    # extensions = [FLUX_ext, SlowFlux_ext, spher_harm_ext, Interp2DAmplitude_ext]
     extensions = cpu_extensions
-    # extensions = [interp_cpu_ext]
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -455,6 +443,11 @@ for line in lines:
 with open("few/_version.py", "w") as f:
     f.write("__version__ = '{}'".format(version_string))
 
+# prepare the ode files
+from few.utils.odeprepare import ode_prepare
+
+ode_prepare()
+
 setup(
     name="few",
     author="Michael Katz",
@@ -466,21 +459,7 @@ setup(
     url="https://github.com/mikekatz04/FastEMRIWaveforms",
     ext_modules=extensions,
     packages=["few", "few.utils", "few.trajectory", "few.amplitude", "few.summation"],
-    py_modules=[
-        "few.trajectory.flux",
-        "few.trajectory.pn5",
-        "few.waveform",
-        "few.amplitude.romannet",
-        "few.amplitude.interp2dcubicspline",
-        "few.utils.modeselector",
-        "few.summation.directmodesum",
-        "few.summation.interpolatedmodesum",
-        "few.summation.aakwave",
-        "few.utils.ylm",
-        "few.utils.constants",
-        "few.utils.getfiles",
-        "few.utils.citations",
-    ],
+    py_modules=["few.waveform"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License (GPL)",

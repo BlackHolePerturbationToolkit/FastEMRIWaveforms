@@ -6,35 +6,90 @@
 #include <gsl/gsl_sf_ellint.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_roots.h>
+#include "Python.h"
 
 #ifdef __USE_OMP__
 #include "omp.h"
 #endif
 
+void throw_python_error(char* str_in, int status)
+{
+    char str[1000];
+    sprintf(str, "%s / Error code: %d", str_in, status);
+    PyErr_SetString(PyExc_SystemError, str);
+}
 
 // Define elliptic integrals that use Mathematica's conventions
 double EllipticK(double k){
-        return gsl_sf_ellint_Kcomp(sqrt(k), GSL_PREC_DOUBLE);
+    gsl_sf_result result;
+    int status = gsl_sf_ellint_Kcomp_e(sqrt(k), GSL_PREC_DOUBLE, &result);
+    if (status != GSL_SUCCESS)
+    {
+        char str[1000];
+        sprintf(str, "EllipticK failed with argument k: %e", k);
+        throw_python_error(str, status);
+    }
+    return result.val;
 }
 
 double EllipticF(double phi, double k){
-        return gsl_sf_ellint_F(phi, sqrt(k), GSL_PREC_DOUBLE) ;
+    gsl_sf_result result;
+    int status = gsl_sf_ellint_F_e(phi, sqrt(k), GSL_PREC_DOUBLE, &result);
+    if (status != GSL_SUCCESS)
+    {
+        char str[1000];
+        sprintf(str, "EllipticF failed with arguments phi:%e k: %e", phi, k);
+        throw_python_error(str, status);
+    }
+    return result.val;
 }
 
 double EllipticE(double k){
-        return gsl_sf_ellint_Ecomp(sqrt(k), GSL_PREC_DOUBLE);
+    gsl_sf_result result;
+    int status = gsl_sf_ellint_Ecomp_e(sqrt(k), GSL_PREC_DOUBLE, &result);
+    if (status != GSL_SUCCESS)
+    {
+        char str[1000];
+        sprintf(str, "EllipticE failed with argument k: %e", k);
+        throw_python_error(str, status);
+    }
+    return result.val;
 }
 
 double EllipticEIncomp(double phi, double k){
-        return gsl_sf_ellint_E(phi, sqrt(k), GSL_PREC_DOUBLE) ;
+    gsl_sf_result result;
+    int status = gsl_sf_ellint_E_e(phi, sqrt(k), GSL_PREC_DOUBLE, &result);
+    if (status != GSL_SUCCESS)
+    {
+        char str[1000];
+        sprintf(str, "EllipticEIncomp failed with argument k: %e", k);
+        throw_python_error(str, status);
+    }
+    return result.val;
 }
 
 double EllipticPi(double n, double k){
-        return gsl_sf_ellint_Pcomp(sqrt(k), -n, GSL_PREC_DOUBLE);
+    gsl_sf_result result;
+    int status = gsl_sf_ellint_Pcomp_e(sqrt(k), -n, GSL_PREC_DOUBLE, &result);
+    if (status != GSL_SUCCESS)
+    {
+        char str[1000];
+        sprintf(str, "EllipticPi failed with argument k: %e", k);
+        throw_python_error(str, status);
+    }
+    return result.val;
 }
 
 double EllipticPiIncomp(double n, double phi, double k){
-        return gsl_sf_ellint_P(phi, sqrt(k), -n, GSL_PREC_DOUBLE);
+    gsl_sf_result result;
+    int status = gsl_sf_ellint_P_e(phi, sqrt(k), -n, GSL_PREC_DOUBLE, &result);
+    if (status != GSL_SUCCESS)
+    {
+        char str[1000];
+        sprintf(str, "EllipticPiIncomp failed with argument k: %e", k);
+        throw_python_error(str, status);
+    }
+    return result.val;
 }
 
 
@@ -135,6 +190,7 @@ void KerrGeoRadialRoots(double* r1_, double*r2_, double* r3_, double* r4_, doubl
 void KerrGeoMinoFrequencies(double* CapitalGamma_, double* CapitalUpsilonPhi_, double* CapitalUpsilonTheta_, double* CapitalUpsilonr_,
                               double a, double p, double e, double x)
 {
+
     double M = 1.0;
 
     double En = KerrGeoEnergy(a, p, e, x);
@@ -280,6 +336,7 @@ double separatrix_polynomial_equat(double p, void *params_in)
 double
 solver (struct params_holder* params, double (*func)(double, void*), double x_lo, double x_hi)
 {
+    gsl_set_error_handler_off();
     int status;
     int iter = 0, max_iter = 100;
     const gsl_root_fsolver_type *T;
@@ -305,6 +362,11 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
                                          0, 0.001);
       }
     while (status == GSL_CONTINUE && iter < max_iter);
+
+    if (status != GSL_SUCCESS)
+    {
+        throw_python_error("Brent root solver failed.", status);
+    }
 
     gsl_root_fsolver_free (s);
     return r;
@@ -413,6 +475,23 @@ void Y_to_xI_vector(double* x, double* a, double* p, double* e, double* Y, int l
 
 }
 
+
+void set_threads(int num_threads)
+{
+    omp_set_num_threads(num_threads);
+}
+
+int get_threads()
+{
+    int num_threads;
+    #pragma omp parallel for
+    for (int i = 0; i < 1; i +=1)
+    {
+        num_threads = omp_get_num_threads();
+    }
+
+    return num_threads;
+}
 
 
 

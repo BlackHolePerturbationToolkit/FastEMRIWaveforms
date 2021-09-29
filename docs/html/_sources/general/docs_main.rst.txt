@@ -25,7 +25,6 @@ Package TODOs
 ===============
 
 - add SNR calculator
-- adjust C implementation for trajectories towards standard
 - run trajectory backward
 - zero out modes
 - shared memory based on CUDA_ARCH / upping shared allocation
@@ -35,7 +34,8 @@ Package TODOs
 Change Log
 ===========
 
-- 1.3.7: Fixed get_at_t functions. Added new GPU architecture. Removed oldest architecture. Fixed issue #30 & #32. 
+- 1.4.0: Ability to access OMP threads. Set CUDA device. Change fundamental frequency files to "utility". Initial error handler. Trajectory overhaul. get_at_t function updates.
+- 1.3.7: Fixed get_at_t functions. Added new GPU architecture. Removed oldest architecture. Fixed issue #30 & #32.
 - 1.3.6: Fixed Y0 < 0.0 in new AAK.
 - 1.3.5: Interpolation updated for 2d and bug fixes on derivatives.
 - 1.3.4: ccbin option added to setup.py.

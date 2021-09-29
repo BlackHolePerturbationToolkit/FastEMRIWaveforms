@@ -303,8 +303,8 @@ rate). Default is 10.0.</p></li>
 <span id="interpolated-summation"></span><h2>Interpolated Summation<a class="headerlink" href="#module-few.summation.interpolatedmodesum" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant">
-<em class="property">class </em><code class="sig-prename descclassname">few.summation.interpolatedmodesum.</code><code class="sig-name descname">CubicSplineInterpolant</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">y_all</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.GPUModuleBase" title="few.utils.baseclasses.GPUModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.GPUModuleBase</span></code></a></p>
+<em class="property">class </em><code class="sig-prename descclassname">few.summation.interpolatedmodesum.</code><code class="sig-name descname">CubicSplineInterpolant</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">y_all</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.ParallelModuleBase</span></code></a></p>
 <p>GPU-accelerated Multiple Cubic Splines</p>
 <p>This class produces multiple cubic splines on a GPU. It has a CPU option
 as well. The cubic splines are produced with “not-a-knot” boundary
@@ -322,8 +322,9 @@ in cuda for an example of this.</p>
 <li><p><strong>t</strong> (<em>1D</em><em> or </em><em>2D double xp.ndarray</em>) – t values as input for the spline. If 2D, must have shape (ninterps, length).</p></li>
 <li><p><strong>y_all</strong> (<em>1D</em><em> or </em><em>2D double xp.ndarray</em>) – y values for the spline.
 Shape: (length,) or (ninterps, length).</p></li>
-<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, prepare arrays for a GPU. Default is
-False.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments for the base classes:
+<a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.ParallelModuleBase</span></code></a>.
+Default is {}.</p></li>
 </ul>
 </dd>
 </dl>
@@ -444,8 +445,8 @@ waveform generator.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant.attributes_GPUModuleBase">
-<code class="sig-name descname">attributes_GPUModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.attributes_GPUModuleBase" title="Permalink to this definition">¶</a></dt>
+<dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant.attributes_ParallelModuleBase">
+<code class="sig-name descname">attributes_ParallelModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.attributes_ParallelModuleBase" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
 <dt id="few.summation.interpolatedmodesum.CubicSplineInterpolant.use_gpu">
 <code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.summation.interpolatedmodesum.CubicSplineInterpolant.use_gpu" title="Permalink to this definition">¶</a></dt>
@@ -492,7 +493,7 @@ GPU capabilites.</p>
 <dl class="py class">
 <dt id="few.summation.interpolatedmodesum.InterpolatedModeSum">
 <em class="property">class </em><code class="sig-prename descclassname">few.summation.interpolatedmodesum.</code><code class="sig-name descname">InterpolatedModeSum</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.SummationBase" title="few.utils.baseclasses.SummationBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SummationBase</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.GPUModuleBase" title="few.utils.baseclasses.GPUModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.GPUModuleBase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.SummationBase" title="few.utils.baseclasses.SummationBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SummationBase</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.ParallelModuleBase</span></code></a></p>
 <p>Create waveform by interpolating sparse trajectory.</p>
 <p>It interpolates all of the modes of interest and phases at sparse
 trajectories. Within the summation phase, the values are calculated using
@@ -538,8 +539,8 @@ waveform generator.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_GPUModuleBase">
-<code class="sig-name descname">attributes_GPUModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_GPUModuleBase" title="Permalink to this definition">¶</a></dt>
+<dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_ParallelModuleBase">
+<code class="sig-name descname">attributes_ParallelModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_ParallelModuleBase" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
 <dt id="few.summation.interpolatedmodesum.InterpolatedModeSum.use_gpu">
 <code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.summation.interpolatedmodesum.InterpolatedModeSum.use_gpu" title="Permalink to this definition">¶</a></dt>
@@ -937,7 +938,7 @@ rate). Default is 10.0.</p></li>
 <dl class="py class">
 <dt id="few.summation.directmodesum.DirectModeSum">
 <em class="property">class </em><code class="sig-prename descclassname">few.summation.directmodesum.</code><code class="sig-name descname">DirectModeSum</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">use_gpu</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.SummationBase" title="few.utils.baseclasses.SummationBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SummationBase</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.GPUModuleBase" title="few.utils.baseclasses.GPUModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.GPUModuleBase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.SummationBase" title="few.utils.baseclasses.SummationBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SummationBase</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.ParallelModuleBase</span></code></a></p>
 <p>Create waveform by direct summation.</p>
 <p>This class sums the amplitude and phase information as received.</p>
 <dl class="field-list simple">
@@ -1029,8 +1030,8 @@ waveform generator.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.summation.directmodesum.DirectModeSum.attributes_GPUModuleBase">
-<code class="sig-name descname">attributes_GPUModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.attributes_GPUModuleBase" title="Permalink to this definition">¶</a></dt>
+<dt id="few.summation.directmodesum.DirectModeSum.attributes_ParallelModuleBase">
+<code class="sig-name descname">attributes_ParallelModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.attributes_ParallelModuleBase" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
 <dt id="few.summation.directmodesum.DirectModeSum.use_gpu">
 <code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.summation.directmodesum.DirectModeSum.use_gpu" title="Permalink to this definition">¶</a></dt>
@@ -1368,7 +1369,7 @@ the trajectory module.</p></li>
 <dl class="py class">
 <dt id="few.summation.aakwave.AAKSummation">
 <em class="property">class </em><code class="sig-prename descclassname">few.summation.aakwave.</code><code class="sig-name descname">AAKSummation</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.aakwave.AAKSummation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.SummationBase" title="few.utils.baseclasses.SummationBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SummationBase</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK" title="few.utils.baseclasses.Pn5AAK"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.Pn5AAK</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.GPUModuleBase" title="few.utils.baseclasses.GPUModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.GPUModuleBase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.SummationBase" title="few.utils.baseclasses.SummationBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SummationBase</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK" title="few.utils.baseclasses.Pn5AAK"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.Pn5AAK</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.ParallelModuleBase</span></code></a></p>
 <p>Calculate an AAK waveform from an input trajectory.</p>
 <p>Please see the documentations for
 <a class="reference internal" href="main.html#few.waveform.Pn5AAKWaveform" title="few.waveform.Pn5AAKWaveform"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.waveform.Pn5AAKWaveform</span></code></a>
@@ -1380,8 +1381,10 @@ Analytic Kludge model. Please see
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments for the base class:
-<a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>. Default is
-{}.</p>
+<a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>,
+<a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.ParallelModuleBase</span></code></a>,
+<a class="reference internal" href="#few.utils.baseclasses.SummationBase" title="few.utils.baseclasses.SummationBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SummationBase</span></code></a>.
+Default is {}.</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -1453,8 +1456,8 @@ waveform generator.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.summation.aakwave.AAKSummation.attributes_GPUModuleBase">
-<code class="sig-name descname">attributes_GPUModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.aakwave.AAKSummation.attributes_GPUModuleBase" title="Permalink to this definition">¶</a></dt>
+<dt id="few.summation.aakwave.AAKSummation.attributes_ParallelModuleBase">
+<code class="sig-name descname">attributes_ParallelModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.summation.aakwave.AAKSummation.attributes_ParallelModuleBase" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
 <dt id="few.summation.aakwave.AAKSummation.use_gpu">
 <code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.summation.aakwave.AAKSummation.use_gpu" title="Permalink to this definition">¶</a></dt>

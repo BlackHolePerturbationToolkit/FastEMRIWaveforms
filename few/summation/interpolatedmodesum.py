@@ -31,7 +31,11 @@ from pyinterp_cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
 from pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
 
 # Python imports
-from few.utils.baseclasses import SummationBase, SchwarzschildEccentric, GPUModuleBase
+from few.utils.baseclasses import (
+    SummationBase,
+    SchwarzschildEccentric,
+    ParallelModuleBase,
+)
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *
@@ -44,7 +48,7 @@ except (ImportError, ModuleNotFoundError) as e:
     pass
 
 
-class CubicSplineInterpolant(GPUModuleBase):
+class CubicSplineInterpolant(ParallelModuleBase):
     """GPU-accelerated Multiple Cubic Splines
 
     This class produces multiple cubic splines on a GPU. It has a CPU option
@@ -64,16 +68,17 @@ class CubicSplineInterpolant(GPUModuleBase):
         t (1D or 2D double xp.ndarray): t values as input for the spline. If 2D, must have shape (ninterps, length).
         y_all (1D or 2D double xp.ndarray): y values for the spline.
             Shape: (length,) or (ninterps, length).
-        use_gpu (bool, optional): If True, prepare arrays for a GPU. Default is
-            False.
+        **kwargs (dict, optional): Keyword arguments for the base classes:
+            :class:`few.utils.baseclasses.ParallelModuleBase`.
+            Default is {}.
 
     """
 
-    def __init__(self, t, y_all, use_gpu=False):
+    def __init__(self, t, y_all, **kwargs):
 
-        GPUModuleBase.__init__(self, use_gpu=use_gpu)
+        ParallelModuleBase.__init__(self, **kwargs)
 
-        if use_gpu:
+        if self.use_gpu:
             self.interpolate_arrays = interpolate_arrays_wrap
 
         else:
@@ -116,7 +121,6 @@ class CubicSplineInterpolant(GPUModuleBase):
             if t.shape[1] < 2:
                 raise ValueError("t must have length greater than 2 along time axis.")
 
-            # TODO: need copy?
             self.t = t.flatten().copy().astype(xp.float64)
 
         else:
@@ -181,7 +185,8 @@ class CubicSplineInterpolant(GPUModuleBase):
         # find were in the old t array the new t values split
 
         inds = self.xp.zeros((self.ninterps, tnew.shape[1]), dtype=int)
-        # TODO: remove loop ? if speed needed
+
+        # Optional TODO: remove loop ? if speed needed
         for i, (t, tnew_i) in enumerate(zip(self.t, tnew)):
             inds[i] = self.xp.searchsorted(t, tnew_i, side="right") - 1
 
@@ -214,7 +219,7 @@ class CubicSplineInterpolant(GPUModuleBase):
                 is 0 meaning the basic spline is evaluated. deriv_order of 1, 2, and 3
                 correspond to their respective derivatives of the spline. Unlike :code:`scipy`,
                 this is purely an evaluation of the derivative values, not a new class to evaluate
-                for the derivative. 
+                for the derivative.
 
         raises:
             ValueError: a new t value is not in the bounds of the input t array.
@@ -297,7 +302,7 @@ class CubicSplineInterpolant(GPUModuleBase):
         return out.squeeze()
 
 
-class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase):
+class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
     """Create waveform by interpolating sparse trajectory.
 
     It interpolates all of the modes of interest and phases at sparse
@@ -310,7 +315,7 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, GPUModuleBase):
 
     def __init__(self, *args, **kwargs):
 
-        GPUModuleBase.__init__(self, *args, **kwargs)
+        ParallelModuleBase.__init__(self, *args, **kwargs)
         SchwarzschildEccentric.__init__(self, *args, **kwargs)
         SummationBase.__init__(self, *args, **kwargs)
 

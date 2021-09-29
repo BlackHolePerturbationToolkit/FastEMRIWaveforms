@@ -1,4 +1,4 @@
-// Code to compute an eccentric Pn5 driven insipral
+// Code to compute an eccentric Inspiral driven insipral
 // into a Schwarzschild black hole
 
 // Copyright (C) 2020 Niels Warburton, Michael L. Katz, Alvin J.K. Chua, Scott A. Hughes
@@ -37,10 +37,11 @@
 #include <complex>
 #include <cmath>
 
-#include "Inspiral5PN.hh"
-#include "dIdt8H_5PNe10.h"
-#include "FundamentalFrequencies.hh"
+#include "Interpolant.h"
+#include "Inspiral.hh"
+#include "Utility.hh"
 #include "global.h"
+#include "ode.hh"
 
 #include <iostream>
 #include <fstream>
@@ -54,34 +55,14 @@
 using namespace std;
 using namespace std::chrono;
 
-void get_derivatives(double* pdot, double* edot, double* Ydot,
-                     double* Omega_phi, double* Omega_theta, double* Omega_r,
-                     double epsilon, double a, double p, double e, double Y)
-{
-    // evaluate ODEs
-
-	int Nv = 10;
-    int ne = 10;
-    *pdot = epsilon * dpdt8H_5PNe10 (a, p, e, Y, Nv, ne);
-
-    // needs adjustment for validity
-    Nv = 10;
-    ne = 8;
-	*edot = epsilon * dedt8H_5PNe10 (a, p, e, Y, Nv, ne);
-
-    Nv = 7;
-    ne = 10;
-    *Ydot = epsilon * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);
-
-    // convert to proper inclination input to fundamental frequencies
-    double xI = Y_to_xI(a, p, e, Y);
-    KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, xI);
-
-}
-
 #define  ERROR_INSIDE_SEP  21
+
+#define DIST_TO_SEPARATRIX 0.1
+#define INNER_THRESHOLD 1e-8
+#define PERCENT_STEP 0.25
+#define MAX_ITER 1000
 // The RHS of the ODEs
-int func (double t, const double y[], double f[], void *params){
+int func_ode_wrap (double t, const double y[], double f[], void *params){
 	(void)(t); /* avoid unused parameter warning */
 
     ParamsHolder* params_in = (ParamsHolder*) params;
@@ -91,35 +72,51 @@ int func (double t, const double y[], double f[], void *params){
     double epsilon = params_in->epsilon;
 	double p = y[0];
 	double e = y[1];
-    double Y = y[2];
+    double x = y[2];
 
     // check for separatrix
     // integrator may naively step over separatrix
-    double xI = Y_to_xI(a, p, e, Y);
-    double p_sep = get_separatrix(a, e, xI);
+    double x_temp;
+    if (params_in->convert_Y)
+    {
+        x_temp = Y_to_xI(a, p, e, x);
+    }
+    else
+    {
+        x_temp = x;
+    }
+
+    double p_sep = 0.0;
+    if (params_in->enforce_schwarz_sep || (a == 0.0))
+    {
+        p_sep = 6.0 + 2. * e;
+    }
+    else
+    {
+        p_sep = get_separatrix(a, e, x_temp);
+    }
+
 
     // make sure we are outside the separatrix
-    if (p < p_sep)
+    if (p < p_sep + DIST_TO_SEPARATRIX)
     {
         return GSL_EBADFUNC;
     }
 
-    double pdot, edot, Ydot;
-	double Phi_phi_dot, Phi_theta_dot, Phi_r_dot;
+    double pdot, edot, xdot;
+	double Omega_phi, Omega_theta, Omega_r;
 
-
-    get_derivatives(&pdot, &edot, &Ydot,
-                         &Phi_phi_dot, &Phi_theta_dot, &Phi_r_dot,
-                         epsilon, a, p, e, Y);
-
-    //printf("checkit %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e\n", a, p, e, xI, y[3], y[4], y[5], Phi_phi_dot, Phi_theta_dot, Phi_r_dot);
+    KerrGeoCoordinateFrequencies(&Omega_phi, &Omega_theta, &Omega_r, a, p, e, x);
+    params_in->func->get_derivatives(&pdot, &edot, &xdot,
+                         Omega_phi, Omega_theta, Omega_r,
+                         epsilon, a, p, e, x, params_in->additional_args);
 
     f[0] = pdot;
 	f[1] = edot;
-    f[2] = Ydot;
-	f[3] = Phi_phi_dot;
-    f[4] = Phi_theta_dot;
-	f[5] = Phi_r_dot;
+    f[2] = xdot;
+	f[3] = Omega_phi;
+    f[4] = Omega_theta;
+	f[5] = Omega_r;
 
   return GSL_SUCCESS;
 }
@@ -127,41 +124,45 @@ int func (double t, const double y[], double f[], void *params){
 
 // Class to carry gsl interpolants for the inspiral data
 // also executes inspiral calculations
-Pn5Carrier::Pn5Carrier()
+InspiralCarrier::InspiralCarrier(std::string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_, std::string few_dir)
 {
     params_holder = new ParamsHolder;
+    params_holder->func_name = func_name;
+    params_holder->func = new ODECarrier(func_name, few_dir);
+    params_holder->enforce_schwarz_sep = enforce_schwarz_sep_;
+    params_holder->num_add_args = num_add_args_;
+    params_holder->convert_Y = convert_Y_;
+
+    params_holder->additional_args = new double[num_add_args_];
 }
 
 // When interfacing with cython, it helps to have dealloc function to explicitly call
 // rather than the deconstructor
-void Pn5Carrier::dealloc()
+void InspiralCarrier::dealloc()
 {
+    delete params_holder->func;
+    delete params_holder->additional_args;
     delete params_holder;
 }
 
 
-#define DIST_TO_SEPARATRIX 0.1
-#define INNER_THRESHOLD 1e-8
-#define PERCENT_STEP 0.25
-#define MAX_ITER 1000
-
-// main function in the Pn5Carrier class
+// main function in the InspiralCarrier class
 // It takes initial parameters and evolves a trajectory
 // tmax and dt affect integration length and time steps (mostly if DENSE_STEPPING == 1)
 // use_rk4 allows the use of the rk4 integrator
-Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4, bool enforce_schwarz_sep)
+InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4)
 {
-
     // years to seconds
     tmax = tmax*YRSID_SI;
 
     // get flux at initial values
     // prepare containers for flux information
-    Pn5Holder pn5_out(t0, M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0);
+    InspiralHolder inspiral_out(t0, M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0);
 
 	//Set the mass ratio
 	params_holder->epsilon = mu/M;
     params_holder->a = a;
+    params_holder->enforce_schwarz_sep;
 
     double Msec = MTSUN_SI*M;
 
@@ -172,10 +173,10 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
     tmax = tmax/(M*MTSUN_SI);
 
     // initial point
-	double y[6] = { p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0};
+	double y[6] = { p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0};
 
     // Initialize the ODE solver
-    gsl_odeiv2_system sys = {func, NULL, 6, params_holder};
+    gsl_odeiv2_system sys = {func_ode_wrap, NULL, 6, params_holder};
 
     const gsl_odeiv2_step_type *T;
     if (use_rk4) T = gsl_odeiv2_step_rk4;
@@ -194,7 +195,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 
     double prev_t = 0.0;
     double prev_p_sep = 0.0;
-    double y_prev[6] = {p0, e0, Y0, 0.0, 0.0, 0.0};
+    double y_prev[6] = {p0, e0, x0, 0.0, 0.0, 0.0};
 
     // control it if it keeps returning nans and what not
     int bad_num = 0;
@@ -213,8 +214,9 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
         }
         // if status is 9 meaning inside the separatrix
         // or if any quantity is nan, step back and take a smaller step.
-        else if ((status == 9)||(std::isnan(y[0]))||(std::isnan(y[1]))||(std::isnan(y[2])) ||(std::isnan(y[3]))||(std::isnan(y[4]))||(std::isnan(y[5])))
+        else if ((std::isnan(y[0]))||(std::isnan(y[1]))||(std::isnan(y[2])) ||(std::isnan(y[3]))||(std::isnan(y[4]))||(std::isnan(y[5])))
         {
+            ///printf("checkit error %.18e %.18e %.18e %.18e \n", y[0], y_prev[0], y[1], y_prev[1]);
             // reset evolver
             gsl_odeiv2_step_reset(step);
             gsl_odeiv2_evolve_reset(evolve);
@@ -248,24 +250,41 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 
         double p 		= y[0];
         double e 		= y[1];
-        double Y        = y[2];
+        double x        = y[2];
 
         // count the number of points
         ind++;
 
         // Stop the inspiral when close to the separatrix
         // convert to proper inclination for separatrix
-        double xI = Y_to_xI(a, p, e, Y);
+        double x_temp;
         double p_sep = 0.0;
-        if (enforce_schwarz_sep)
+        if (status != 9)
         {
-            p_sep = 6. + 2. * e;
+
+            if (params_holder->convert_Y)
+            {
+                x_temp = Y_to_xI(a, p, e, x);
+            }
+            else
+            {
+                x_temp = x;
+            }
+
+
+            if (params_holder->enforce_schwarz_sep || (a == 0.0))
+            {
+                p_sep = 6.0 + 2. * e;
+            }
+            else
+            {
+                p_sep = get_separatrix(a, e, x_temp);
+            }
+
         }
-        else
-        {
-            p_sep = get_separatrix(a, e, xI);
-        }
-        if(p - p_sep < DIST_TO_SEPARATRIX)
+
+        // status 9 indicates integrator stepped inside separatrix limit
+        if((status == 9) || (p - p_sep < DIST_TO_SEPARATRIX))
         {
             // Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.
             // To correct for this we self-integrate from the second-to-last point in the integation to
@@ -274,7 +293,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
             // Get old values
             p = y_prev[0];
             e = y_prev[1];
-            Y = y_prev[2];
+            x = y_prev[2];
 
             double Phi_phi = y_prev[3];
             double Phi_theta = y_prev[4];
@@ -290,22 +309,32 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 
             while (p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD)
             {
-                double pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r;
+                double pdot, edot, xdot, Omega_phi, Omega_theta, Omega_r;
 
+                KerrGeoCoordinateFrequencies(&Omega_phi, &Omega_theta, &Omega_r, a, p, e, x);
                 // Same function in the integrator
-                get_derivatives(&pdot, &edot, &Ydot,
-                                     &Omega_phi, &Omega_theta, &Omega_r,
-                                     params_holder->epsilon, a, p, e, Y);
+                params_holder->func->get_derivatives(&pdot, &edot, &xdot,
+                                     Omega_phi, Omega_theta, Omega_r,
+                                     params_holder->epsilon, a, p, e, x, params_holder->additional_args);
 
                 // estimate the step to the breaking point and multiply by PERCENT_STEP
-                xI = Y_to_xI(a, p, e, Y);
-                if (enforce_schwarz_sep)
+                double x_temp;
+                if (params_holder->convert_Y)
                 {
-                    p_sep = 6. + 2. * e;
+                    x_temp = Y_to_xI(a, p, e, x);
                 }
                 else
                 {
-                    p_sep = get_separatrix(a, e, xI);
+                    x_temp = x;
+                }
+
+                if (params_holder->enforce_schwarz_sep || (a == 0.0))
+                {
+                    p_sep = 6.0 + 2. * e;
+                }
+                else
+                {
+                    p_sep = get_separatrix(a, e, x_temp);
                 }
 
                 double step_size = PERCENT_STEP / factor * ((p_sep + DIST_TO_SEPARATRIX - p)/pdot);
@@ -314,21 +343,19 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
                 double temp_t = t + step_size;
                 double temp_p = p + pdot * step_size;
                 double temp_e = e + edot * step_size;
-                double temp_Y = Y + Ydot * step_size;
+                double temp_x = x + xdot * step_size;
                 double temp_Phi_phi = Phi_phi + Omega_phi * step_size;
                 double temp_Phi_theta = Phi_theta + Omega_theta * step_size;
                 double temp_Phi_r = Phi_r + Omega_r * step_size;
 
-
                 double temp_stop = temp_p - p_sep;
-
                 if (temp_stop > DIST_TO_SEPARATRIX)
                 {
                     // update points
                     t = temp_t;
                     p = temp_p;
                     e = temp_e;
-                    Y = temp_Y;
+                    x = temp_x;
                     Phi_phi = temp_Phi_phi;
                     Phi_theta = temp_Phi_theta;
                     Phi_r = temp_Phi_r;
@@ -352,13 +379,13 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
             }
 
             // add the point and end the integration
-            pn5_out.add_point(t*Msec, p, e, Y, Phi_phi, Phi_theta, Phi_r);
+            inspiral_out.add_point(t*Msec, p, e, x, Phi_phi, Phi_theta, Phi_r);
 
             //cout << "# Separatrix reached: exiting inspiral" << endl;
             break;
         }
 
-        pn5_out.add_point(t*Msec, y[0], y[1], y[2], y[3], y[4], y[5]); // adds time in seconds
+        inspiral_out.add_point(t*Msec, y[0], y[1], y[2], y[3], y[4], y[5]); // adds time in seconds
 
         prev_t = t;
         prev_p_sep = p_sep;
@@ -367,7 +394,7 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
 
 	}
 
-	pn5_out.length = ind;
+	inspiral_out.length = ind;
 	//high_resolution_clock::time_point t2 = high_resolution_clock::now();
 
 	//	duration<double> time_span = duration_cast<duration<double> >(t2 - t1);
@@ -376,31 +403,33 @@ Pn5Holder Pn5Carrier::run_Pn5(double t0, double M, double mu, double a, double p
         gsl_odeiv2_control_free (control);
         gsl_odeiv2_step_free (step);
 		//cout << "# Computing the inspiral took: " << time_span.count() << " seconds." << endl;
-		return pn5_out;
+		return inspiral_out;
 
 }
 
-// wrapper for calling the Pn5 inspiral from cython/python
-void Pn5Carrier::Pn5Wrapper(double *t, double *p, double *e, double *Y, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double Y0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, bool enforce_schwarz_sep){
+// wrapper for calling the Inspiral inspiral from cython/python
+void InspiralCarrier::InspiralWrapper(double *t, double *p, double *e, double *x, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, double* additional_args){
 
-	double t0 = 0.0;
-		Pn5Holder Pn5_vals = run_Pn5(t0, M, mu, a, p0, e0, Y0, Phi_phi0, Phi_theta0, Phi_r0, err, tmax, dt, DENSE_STEPPING, use_rk4, enforce_schwarz_sep);
+	    double t0 = 0.0;
+        std::memcpy(params_holder->additional_args, additional_args, params_holder->num_add_args * sizeof(double));
+
+		InspiralHolder Inspiral_vals = run_Inspiral(t0, M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0, err, tmax, dt, DENSE_STEPPING, use_rk4);
 
         // make sure we have allocated enough memory through cython
-        if (Pn5_vals.length > init_len){
+        if (Inspiral_vals.length > init_len){
             throw std::runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
         }
 
         // copy data
-		memcpy(t, &Pn5_vals.t_arr[0], Pn5_vals.length*sizeof(double));
-		memcpy(p, &Pn5_vals.p_arr[0], Pn5_vals.length*sizeof(double));
-		memcpy(e, &Pn5_vals.e_arr[0], Pn5_vals.length*sizeof(double));
-        memcpy(Y, &Pn5_vals.Y_arr[0], Pn5_vals.length*sizeof(double));
-		memcpy(Phi_phi, &Pn5_vals.Phi_phi_arr[0], Pn5_vals.length*sizeof(double));
-		memcpy(Phi_theta, &Pn5_vals.Phi_theta_arr[0], Pn5_vals.length*sizeof(double));
-        memcpy(Phi_r, &Pn5_vals.Phi_r_arr[0], Pn5_vals.length*sizeof(double));
+		memcpy(t, &Inspiral_vals.t_arr[0], Inspiral_vals.length*sizeof(double));
+		memcpy(p, &Inspiral_vals.p_arr[0], Inspiral_vals.length*sizeof(double));
+		memcpy(e, &Inspiral_vals.e_arr[0], Inspiral_vals.length*sizeof(double));
+        memcpy(x, &Inspiral_vals.x_arr[0], Inspiral_vals.length*sizeof(double));
+		memcpy(Phi_phi, &Inspiral_vals.Phi_phi_arr[0], Inspiral_vals.length*sizeof(double));
+		memcpy(Phi_theta, &Inspiral_vals.Phi_theta_arr[0], Inspiral_vals.length*sizeof(double));
+        memcpy(Phi_r, &Inspiral_vals.Phi_r_arr[0], Inspiral_vals.length*sizeof(double));
 
         // indicate how long is the trajectory
-		*length = Pn5_vals.length;
+		*length = Inspiral_vals.length;
 
 }

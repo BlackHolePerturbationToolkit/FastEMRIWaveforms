@@ -27,10 +27,10 @@ import numpy as np
 from pySpinWeightedSpherHarm import get_spin_weighted_spher_harm_wrap
 
 # base classes
-from few.utils.baseclasses import GPUModuleBase
+from few.utils.baseclasses import ParallelModuleBase
 
 
-class GetYlms(GPUModuleBase):
+class GetYlms(ParallelModuleBase):
     """(-2) Spin-weighted Spherical Harmonics
 
     The class generates (-2) spin-weighted spherical hackarmonics,
@@ -42,14 +42,15 @@ class GetYlms(GPUModuleBase):
             it will return twice the number of requested modes with the seconds
             half as modes with :math:`m<0`. **Warning**: It will also duplicate
             the :math:`m=0` modes. Default is False.
-        use_gpu (bool, optional): If True, allocate arrays for GPU.
-            Default is False.
+        **kwargs (dict, optional): Keyword arguments for the base classes:
+            :class:`few.utils.baseclasses.ParallelModuleBase`.
+            Default is {}.
 
     """
 
-    def __init__(self, assume_positive_m=False, use_gpu=False):
+    def __init__(self, assume_positive_m=False, **kwargs):
 
-        GPUModuleBase.__init__(self, use_gpu=use_gpu)
+        ParallelModuleBase.__init__(self, **kwargs)
         # see args in docstring
         self.assume_positive_m = assume_positive_m
 
