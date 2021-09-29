@@ -21,27 +21,75 @@ void throw_python_error(char* str_in, int status)
 
 // Define elliptic integrals that use Mathematica's conventions
 double EllipticK(double k){
-        return gsl_sf_ellint_Kcomp(sqrt(k), GSL_PREC_DOUBLE);
+    gsl_sf_result result;
+    int status = gsl_sf_ellint_Kcomp_e(sqrt(k), GSL_PREC_DOUBLE, &result);
+    if (status != GSL_SUCCESS)
+    {
+        char str[1000];
+        sprintf(str, "EllipticK failed with argument k: %e", k);
+        throw_python_error(str, status);
+    }
+    return result.val;
 }
 
 double EllipticF(double phi, double k){
-        return gsl_sf_ellint_F(phi, sqrt(k), GSL_PREC_DOUBLE) ;
+    gsl_sf_result result;
+    int status = gsl_sf_ellint_F_e(phi, sqrt(k), GSL_PREC_DOUBLE, &result);
+    if (status != GSL_SUCCESS)
+    {
+        char str[1000];
+        sprintf(str, "EllipticF failed with arguments phi:%e k: %e", phi, k);
+        throw_python_error(str, status);
+    }
+    return result.val;
 }
 
 double EllipticE(double k){
-        return gsl_sf_ellint_Ecomp(sqrt(k), GSL_PREC_DOUBLE);
+    gsl_sf_result result;
+    int status = gsl_sf_ellint_Ecomp_e(sqrt(k), GSL_PREC_DOUBLE, &result);
+    if (status != GSL_SUCCESS)
+    {
+        char str[1000];
+        sprintf(str, "EllipticE failed with argument k: %e", k);
+        throw_python_error(str, status);
+    }
+    return result.val;
 }
 
 double EllipticEIncomp(double phi, double k){
-        return gsl_sf_ellint_E(phi, sqrt(k), GSL_PREC_DOUBLE) ;
+    gsl_sf_result result;
+    int status = gsl_sf_ellint_E_e(phi, sqrt(k), GSL_PREC_DOUBLE, &result);
+    if (status != GSL_SUCCESS)
+    {
+        char str[1000];
+        sprintf(str, "EllipticEIncomp failed with argument k: %e", k);
+        throw_python_error(str, status);
+    }
+    return result.val;
 }
 
 double EllipticPi(double n, double k){
-        return gsl_sf_ellint_Pcomp(sqrt(k), -n, GSL_PREC_DOUBLE);
+    gsl_sf_result result;
+    int status = gsl_sf_ellint_Pcomp_e(sqrt(k), -n, GSL_PREC_DOUBLE, &result);
+    if (status != GSL_SUCCESS)
+    {
+        char str[1000];
+        sprintf(str, "EllipticPi failed with argument k: %e", k);
+        throw_python_error(str, status);
+    }
+    return result.val;
 }
 
 double EllipticPiIncomp(double n, double phi, double k){
-        return gsl_sf_ellint_P(phi, sqrt(k), -n, GSL_PREC_DOUBLE);
+    gsl_sf_result result;
+    int status = gsl_sf_ellint_P_e(phi, sqrt(k), -n, GSL_PREC_DOUBLE, &result);
+    if (status != GSL_SUCCESS)
+    {
+        char str[1000];
+        sprintf(str, "EllipticPiIncomp failed with argument k: %e", k);
+        throw_python_error(str, status);
+    }
+    return result.val;
 }
 
 
