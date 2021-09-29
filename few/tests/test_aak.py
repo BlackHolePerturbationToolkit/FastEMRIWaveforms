@@ -2,7 +2,6 @@ import unittest
 import numpy as np
 import warnings
 
-from few.trajectory.pn5 import RunKerrGenericPn5Inspiral
 from few.waveform import Pn5AAKWaveform
 from few.utils.utility import get_overlap, get_mismatch
 

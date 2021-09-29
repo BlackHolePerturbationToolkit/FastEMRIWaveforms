@@ -2,6 +2,7 @@
 #define _GLOBAL_HEADER_
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <complex>
 #include "cuda_complex.hpp"
 
@@ -116,5 +117,8 @@ typedef struct tagModeReImContainer {
     fod *im_c3;
 
 } ModeReImContainer;
+
+
+typedef void (*fptr)(double *, double *, double *, double *, double *, double *, double, double, double, double, double);
 
 #endif

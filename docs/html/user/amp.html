@@ -232,7 +232,7 @@ It deals with <span class="math notranslate nohighlight">\(A_{lmkn}\)</span> in 
 <dl class="py class">
 <dt id="few.amplitude.romannet.RomanAmplitude">
 <em class="property">class </em><code class="sig-prename descclassname">few.amplitude.romannet.</code><code class="sig-name descname">RomanAmplitude</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">max_init_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.AmplitudeBase</span></code>, <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.GPUModuleBase" title="few.utils.baseclasses.GPUModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.GPUModuleBase</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.AmplitudeBase</span></code>, <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.ParallelModuleBase</span></code></a></p>
 <p>Calculate Teukolsky amplitudes with a ROMAN.</p>
 <p>ROMAN stands for reduced-order models with artificial neurons. Please see
 the documentations for
@@ -254,9 +254,11 @@ buffers. This allows the user to limit memory usage. However, if the
 user requests more length, a warning will be thrown and the
 max_init_len will be increased accordingly and arrays reallocated.
 Default is 1000.</p></li>
-<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments for the base class:
-<a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>. Default is
-{}.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments for the base classes:
+<a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.SchwarzschildEccentric</span></code></a>,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.AmplitudeBase</span></code>,
+<a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.ParallelModuleBase</span></code></a>.
+Default is {}.</p></li>
 </ul>
 </dd>
 </dl>
@@ -525,8 +527,8 @@ waveform generator.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.amplitude.romannet.RomanAmplitude.attributes_GPUModuleBase">
-<code class="sig-name descname">attributes_GPUModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.attributes_GPUModuleBase" title="Permalink to this definition">¶</a></dt>
+<dt id="few.amplitude.romannet.RomanAmplitude.attributes_ParallelModuleBase">
+<code class="sig-name descname">attributes_ParallelModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.attributes_ParallelModuleBase" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
 <dt id="id0">
 <code class="sig-name descname">use_gpu</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
@@ -1000,8 +1002,8 @@ waveform generator.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_GPUModuleBase">
-<code class="sig-name descname">attributes_GPUModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_GPUModuleBase" title="Permalink to this definition">¶</a></dt>
+<dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_ParallelModuleBase">
+<code class="sig-name descname">attributes_ParallelModuleBase</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_ParallelModuleBase" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
 <dt id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.use_gpu">
 <code class="sig-name descname">use_gpu</code><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.use_gpu" title="Permalink to this definition">¶</a></dt>
