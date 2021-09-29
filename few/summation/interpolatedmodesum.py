@@ -31,7 +31,11 @@ from pyinterp_cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
 from pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
 
 # Python imports
-from few.utils.baseclasses import SummationBase, SchwarzschildEccentric, ParallelModuleBase
+from few.utils.baseclasses import (
+    SummationBase,
+    SchwarzschildEccentric,
+    ParallelModuleBase,
+)
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *
@@ -117,7 +121,6 @@ class CubicSplineInterpolant(ParallelModuleBase):
             if t.shape[1] < 2:
                 raise ValueError("t must have length greater than 2 along time axis.")
 
-            # TODO: need copy?
             self.t = t.flatten().copy().astype(xp.float64)
 
         else:
@@ -190,7 +193,8 @@ class CubicSplineInterpolant(ParallelModuleBase):
         # find were in the old t array the new t values split
 
         inds = self.xp.zeros((self.ninterps, tnew.shape[1]), dtype=int)
-        # TODO: remove loop ? if speed needed
+
+        # Optional TODO: remove loop ? if speed needed
         for i, (t, tnew_i) in enumerate(zip(self.t, tnew)):
             inds[i] = self.xp.searchsorted(t, tnew_i, side="right") - 1
 

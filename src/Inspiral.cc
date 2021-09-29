@@ -104,18 +104,19 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
     }
 
     double pdot, edot, xdot;
-	double Phi_phi_dot, Phi_theta_dot, Phi_r_dot;
+	double Omega_phi, Omega_theta, Omega_r;
 
+    KerrGeoCoordinateFrequencies(&Omega_phi, &Omega_theta, &Omega_r, a, p, e, x);
     params_in->func->get_derivatives(&pdot, &edot, &xdot,
-                         &Phi_phi_dot, &Phi_theta_dot, &Phi_r_dot,
+                         Omega_phi, Omega_theta, Omega_r,
                          epsilon, a, p, e, x, params_in->additional_args);
 
     f[0] = pdot;
 	f[1] = edot;
     f[2] = xdot;
-	f[3] = Phi_phi_dot;
-    f[4] = Phi_theta_dot;
-	f[5] = Phi_r_dot;
+	f[3] = Omega_phi;
+    f[4] = Omega_theta;
+	f[5] = Omega_r;
 
   return GSL_SUCCESS;
 }
@@ -310,9 +311,10 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
             {
                 double pdot, edot, xdot, Omega_phi, Omega_theta, Omega_r;
 
+                KerrGeoCoordinateFrequencies(&Omega_phi, &Omega_theta, &Omega_r, a, p, e, x);
                 // Same function in the integrator
                 params_holder->func->get_derivatives(&pdot, &edot, &xdot,
-                                     &Omega_phi, &Omega_theta, &Omega_r,
+                                     Omega_phi, Omega_theta, Omega_r,
                                      params_holder->epsilon, a, p, e, x, params_holder->additional_args);
 
                 // estimate the step to the breaking point and multiply by PERCENT_STEP

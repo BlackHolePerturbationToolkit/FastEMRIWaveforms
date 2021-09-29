@@ -281,7 +281,7 @@ class GenerateEMRIWaveform:
             x0 = xI_to_Y(a, p0, e0, x0)
 
         # remove the arguments that are not used in this waveform
-        args = tuple([args_all[i] for i in self.args_keep]) + add_args
+        args = tuple([args_all[i] for i in self.args_keep])
 
         # pick out the phases to be used
         initial_phases = {key: args_all[i] for key, i in self.phases_needed.items()}
@@ -305,6 +305,9 @@ class GenerateEMRIWaveform:
                 dist_dimensionless = 1.0 / ((dist * Gpc) / (mu * MRSUN_SI))
             else:
                 dist_dimensionless = 1.0
+
+        # add additional arguments to waveform interface
+        args += add_args
 
         # get waveform
         h = (
@@ -455,7 +458,6 @@ class SchwarzschildEccentricWaveformBase(
         few_dir = dir_path + "/../"
         check_for_file_download(fp, few_dir)
 
-        # TODO: fix file locations
         y_in, e_in, norm = np.genfromtxt(
             few_dir + "/few/files/AmplitudeVectorNorm.dat"
         ).T
