@@ -39,23 +39,40 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 class EMRIInspiral(TrajectoryBase):
-    """Pn5-based trajectory module.
+    """EMRI trajectory module.
 
-    This module implements a Pn5-based trajectory by integrating with an
+    This module implements generic trajectories by integrating with an
     RK8 integrator. It can also adjust the output time-spacing using
     cubic spline interpolation. Additionally, it gives the option for
     a dense trajectory, which integrates the trajectory at the user-defined
     timestep.
 
-    # TODO: transfer sanity checks
-    # TODO: update
+    The trajectory operates on generic ODE functions that are defined in
+    :code:`src/ode_base.cc` and :code:`include/ode_base.hh`. The ODE can be either
+    a function or a C++ class that has constructor function, destructor function,
+    and function for get the derivatives called :code:`deriv_func`. Implemented examples
+    for the Schwarzchild eccentric flux-based trajectory (ODE class) and
+    the 5PN trajecotry (ODE function) can be found in the :code:`ode_base` files.
+    The ODE as a function or the :code:`deriv_func` method must take an exact
+    set of arguments::
 
-    The trajectory calculations are based on
-    `Fujita & Shibata 2020<https://arxiv.org/abs/2008.13554>`_.
+        __deriv__
+        func(double* pdot, double* edot, double* xdot,
+             double* Omega_phi, double* Omega_theta, double* Omega_r,
+             double epsilon, double a, double p, double e, double Y, double* additional_args)
+
+    :code:`pdot, edot, xdot, Omega_phi, Omega_theta`
+    The :code:`__deriv__` decorator let's the installer know which functions are actually the
+    derivative functions, in case there are other auxillary functions in the file.
+    The user then uses :code:`#define` lines to indicate to the code limitations
+    or settings specific to that ODE. See the tutorial documentation for more detail.
+
 
     args:
-        func (str): Function name for the ode to use in the integration. To get
+        func (str): Function name for the ode to use in the integration.
+            This must be given as a keyword argument, even though it is required. To get
             the options for this argument, use :func:`few.utils.utility.get_ode_function_options`.
+            Stock options include :code:`"SchwarzEccFlux"` and :code:`"pn5"`.
         enforce_schwarz_sep (bool, optional): Enforce the separatrix of Schwarzschild
             spacetime. This helps to midigate issues at higher spin and/or higher
             eccentricity where the PN approximations are more likely to fail.
@@ -67,6 +84,25 @@ class EMRIInspiral(TrajectoryBase):
             class :class:`few.utils.baseclasses.TrajectoryBase` or
             class :class:`few.utils.baseclasses.Pn5AAK`.
 
+    attributes:
+        num_add_args (int): Number of additional arguments for the ODE function.
+        background (str): "Either Schwarzschild" or "Kerr".
+        equatorial (bool): True if equatorial orbit.
+        circular (bool): True if circular orbit.
+        convert_Y (bool): If the ODE is integrated in :math:`Y` rather than
+            :math:`x_I`.
+        files (list): List of files necessary for this ODE.
+        citations (list): list of additional citations for this ODE.
+        enforce_schwarz_sep (bool): Enforce the separatrix of Schwarzschild
+            spacetime.
+        inspiral_generator (func): Inspiral C/C++ wrapped function.
+        func (str): ODE function name.
+        specific_kwarg_keys (dict): Specific keywords that need to transferred
+            to the inspiral function that can be adjusted with each call.
+
+    Raises:
+        ValueError: :code:`func` kwarg not given or not available.
+        ValueError: File necessary for ODE not found.
     """
 
     def __init__(self, *args, func=None, enforce_schwarz_sep=False, **kwargs):
@@ -87,11 +123,18 @@ class EMRIInspiral(TrajectoryBase):
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
 
+        # set defaults from the ODE function specifically
         for key, item in ode_info[func].items():
             setattr(self, key, item)
 
+        # make sure all files needed for the ode specifically are downloaded
         for fp in self.files:
-            check_for_file_download(fp, few_dir)
+            try:
+                check_for_file_download(fp, few_dir)
+            except FileNotFoundError:
+                raise ValueError(
+                    f"File required for this ODE ({fp}) was not found in the proper folder ({few_dir + 'few/files/'}) or on zenodo."
+                )
 
         self.inspiral_generator = pyInspiralGenerator(
             func,
@@ -124,14 +167,16 @@ class EMRIInspiral(TrajectoryBase):
     @property
     def citation(self):
         """Return citation for this class"""
-        # TODO: adjust this properly
-        return (
+        citations_out = (
             larger_few_citation
             + few_citation
             + few_software_citation
-            + Pn5_citation
             + kerr_separatrix_citation
         )
+
+        for citation in self.citations:
+            citations_out += globals()[citation]
+        return citations_out
 
     def get_inspiral(
         self,
@@ -149,18 +194,12 @@ class EMRIInspiral(TrajectoryBase):
     ):
         """Generate the inspiral.
 
-        # TODO: fix
-        This is the function for calling the creation of the Pn5-based
-        trajectory. Inputs define the output time spacing. This class can be
-        used on its own. However, it is generally accessed through the __call__
-        method associated with its base class:
-        (:class:`few.utils.baseclasses.TrajectoryBase`). See its documentation
-        for information on a more flexible interface to the trajectory modules.
+        This is the function for calling the creation of the trajectory.
+        Inputs define the output time spacing.
 
-        **Please note:** the 5PN trajectory and AAK waveform take the parameter
-        :math:`Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}` rather than :math:`x_I` as is accepted
-        for relativistic waveforms and in the generic waveform interface discussed above.
-        The generic waveform interface directly converts :math:`x_I` to :math:`Y`.
+        This class can be used on its own. However, it is generally accessed
+        through the __call__ method associated with its base class:
+        (:class:`few.utils.baseclasses.TrajectoryBase`).
 
         args:
             M (double): Mass of massive black hole in solar masses.
@@ -178,12 +217,15 @@ class EMRIInspiral(TrajectoryBase):
             Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
                 Default is 0.0.
             **kwargs (dict, optional): kwargs passed from parent.
+            
         Returns:
-            tuple: Tuple of (t, p, e, x, Phi_phi, Phi_r, Phi_theta).
+            tuple: Tuple of (t, p, e, x, Phi_phi, Phi_theta, Phi_r).
 
         """
 
         fill_value = 1e-6
+
+        # fix for specific requirements of different odes
 
         if self.background == "Schwarzschild":
             a = 0.0
