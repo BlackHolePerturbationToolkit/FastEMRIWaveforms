@@ -974,8 +974,10 @@ for examples.</p>
 <dd><p>Globally sets OMP_NUM_THREADS</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>num_threads</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of parallel threads to use in OpenMP.
-Default is 1.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_threads</strong> (<em>int</em><em>, </em><em>optional</em>) – </p></li>
+<li><p><strong>of parallel threads to use in OpenMP.</strong> (<em>Number</em>) – Default is 1.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -995,32 +997,6 @@ Default is 1.</p>
 <dd class="field-odd"><p><strong>dev</strong> (<em>int</em>) – CUDA device number.</p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="few.utils.utility.get_ode_function_lines_names">
-<code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">get_ode_function_lines_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.get_ode_function_lines_names" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get names for ODE derivative options</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><dl class="simple">
-<dt>(<code class="code docutils literal notranslate"><span class="pre">list</span></code>, <code class="code docutils literal notranslate"><span class="pre">dict</span></code>)</dt><dd><p>First entry is .readlines() on <code class="code docutils literal notranslate"><span class="pre">ode.cc</span></code>.
-Second entry is dictionary with information on
-available ODE functions.</p>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>tuple</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt id="few.utils.utility.ode_prepare">
-<code class="sig-prename descclassname">few.utils.utility.</code><code class="sig-name descname">ode_prepare</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.ode_prepare" title="Permalink to this definition">¶</a></dt>
-<dd><p>Prepare files for ODEs</p>
 </dd></dl>
 
 <dl class="py function">

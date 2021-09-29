@@ -36,7 +36,7 @@ def get_ode_function_lines_names():
                     name = line.split("(")[0].split(" ")[1]
                     func_type = "func"
 
-            functions_info[name] = {"type": func_type, "files": []}
+            functions_info[name] = {"type": func_type, "files": [], "citations": []}
 
     # get all the additional information on functions in the c file
     for line in lines:
@@ -60,18 +60,20 @@ def get_ode_function_lines_names():
                 elif line.split(" ")[1][0 : 0 + len(name) + 5] == f"{name}_file":
                     functions_info[name]["files"].append(line.split(" ")[2][:-1])
 
+                elif line.split(" ")[1][0 : 0 + len(name) + 9] == f"{name}_citation":
+                    functions_info[name]["citations"].append(line.split(" ")[2][:-1])
+
+    defaults = {
+        "num_add_args": 0,
+        "background": "Kerr",
+        "equatorial": False,
+        "circular": False,
+        "convert_Y": False,
+    }
     # fill anything that did not appear
     for name, info in functions_info.items():
-        if "num_add_args" not in info:
-            functions_info[name]["num_add_args"] = 0
-        if "background" not in info:
-            functions_info[name]["background"] = "Kerr"
-        if "equatorial" not in info:
-            functions_info[name]["equatorial"] = False
-        if "circular" not in info:
-            functions_info[name]["circular"] = False
-        if "convert_Y" not in info:
-            functions_info[name]["convert_Y"] = False
+        for key, val in defaults.items():
+            functions_info[name][key] = info.get(key, val)
 
     return lines, functions_info
 
@@ -111,7 +113,7 @@ def ode_prepare():
                 {0}::~{0}(){1}{2}
 
                 void {0}::deriv_func(double* pdot, double* edot, double* Ydot,
-                                  double* Omega_phi, double* Omega_theta, double* Omega_r,
+                                  double Omega_phi, double Omega_theta, double Omega_r,
                                   double epsilon, double a, double p, double e, double Y, double* additional_args)
                 {1}
                     {0}_base_func(pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r,
@@ -162,7 +164,7 @@ def ode_prepare():
     full += """
 
     void ODECarrier::get_derivatives(double* pdot, double* edot, double* Ydot,
-                      double* Omega_phi, double* Omega_theta, double* Omega_r,
+                      double Omega_phi, double Omega_theta, double Omega_r,
                       double epsilon, double a, double p, double e, double Y, double* additional_args)
     {
     """
@@ -264,7 +266,7 @@ def ode_prepare():
                 {0}(std::string few_dir);
 
                 void deriv_func(double* pdot, double* edot, double* Ydot,
-                                  double* Omega_phi, double* Omega_theta, double* Omega_r,
+                                  double Omega_phi, double Omega_theta, double Omega_r,
                                   double epsilon, double a, double p, double e, double Y, double* additional_args);
                 ~{0}();
             {2};
@@ -284,7 +286,7 @@ def ode_prepare():
             ODECarrier(std::string func_name_, std::string few_dir_);
             ~ODECarrier();
             void get_derivatives(double* pdot, double* edot, double* Ydot,
-                              double* Omega_phi, double* Omega_theta, double* Omega_r,
+                              double Omega_phi, double Omega_theta, double Omega_r,
                               double epsilon, double a, double p, double e, double Y, double* additional_args);
 
     };

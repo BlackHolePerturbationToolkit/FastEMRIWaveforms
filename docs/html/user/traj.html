@@ -328,21 +328,38 @@ Default is {}.</p></li>
 <dt id="few.trajectory.inspiral.EMRIInspiral">
 <em class="property">class </em><code class="sig-prename descclassname">few.trajectory.inspiral.</code><code class="sig-name descname">EMRIInspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">func</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">enforce_schwarz_sep</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a></p>
-<p>Pn5-based trajectory module.</p>
-<p>This module implements a Pn5-based trajectory by integrating with an
+<p>EMRI trajectory module.</p>
+<p>This module implements generic trajectories by integrating with an
 RK8 integrator. It can also adjust the output time-spacing using
 cubic spline interpolation. Additionally, it gives the option for
 a dense trajectory, which integrates the trajectory at the user-defined
 timestep.</p>
-<p># TODO: transfer sanity checks
-# TODO: update</p>
-<p>The trajectory calculations are based on
-<a href="#id1"><span class="problematic" id="id2">`Fujita &amp; Shibata 2020&lt;https://arxiv.org/abs/2008.13554&gt;`_</span></a>.</p>
+<p>The trajectory operates on generic ODE functions that are defined in
+<code class="code docutils literal notranslate"><span class="pre">src/ode_base.cc</span></code> and <code class="code docutils literal notranslate"><span class="pre">include/ode_base.hh</span></code>. The ODE can be either
+a function or a C++ class that has constructor function, destructor function,
+and function for get the derivatives called <code class="code docutils literal notranslate"><span class="pre">deriv_func</span></code>. Implemented examples
+for the Schwarzchild eccentric flux-based trajectory (ODE class) and
+the 5PN trajecotry (ODE function) can be found in the <code class="code docutils literal notranslate"><span class="pre">ode_base</span></code> files.
+The ODE as a function or the <code class="code docutils literal notranslate"><span class="pre">deriv_func</span></code> method must take an exact
+set of arguments:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">__deriv__</span>
+<span class="n">func</span><span class="p">(</span><span class="n">double</span><span class="o">*</span> <span class="n">pdot</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">edot</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">xdot</span><span class="p">,</span>
+     <span class="n">double</span><span class="o">*</span> <span class="n">Omega_phi</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">Omega_theta</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">Omega_r</span><span class="p">,</span>
+     <span class="n">double</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">double</span> <span class="n">a</span><span class="p">,</span> <span class="n">double</span> <span class="n">p</span><span class="p">,</span> <span class="n">double</span> <span class="n">e</span><span class="p">,</span> <span class="n">double</span> <span class="n">Y</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">additional_args</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="code docutils literal notranslate"><span class="pre">pdot,</span> <span class="pre">edot,</span> <span class="pre">xdot,</span> <span class="pre">Omega_phi,</span> <span class="pre">Omega_theta</span></code>
+The <code class="code docutils literal notranslate"><span class="pre">__deriv__</span></code> decorator let’s the installer know which functions are actually the
+derivative functions, in case there are other auxillary functions in the file.
+The user then uses <code class="code docutils literal notranslate"><span class="pre">#define</span></code> lines to indicate to the code limitations
+or settings specific to that ODE. See the tutorial documentation for more detail.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>func</strong> (<em>str</em>) – Function name for the ode to use in the integration. To get
-the options for this argument, use <a class="reference internal" href="util.html#few.utils.utility.get_ode_function_options" title="few.utils.utility.get_ode_function_options"><code class="xref py py-func docutils literal notranslate"><span class="pre">few.utils.utility.get_ode_function_options()</span></code></a>.</p></li>
+<li><p><strong>func</strong> (<em>str</em>) – Function name for the ode to use in the integration.
+This must be given as a keyword argument, even though it is required. To get
+the options for this argument, use <a class="reference internal" href="util.html#few.utils.utility.get_ode_function_options" title="few.utils.utility.get_ode_function_options"><code class="xref py py-func docutils literal notranslate"><span class="pre">few.utils.utility.get_ode_function_options()</span></code></a>.
+Stock options include <code class="code docutils literal notranslate"><span class="pre">&quot;SchwarzEccFlux&quot;</span></code> and <code class="code docutils literal notranslate"><span class="pre">&quot;pn5&quot;</span></code>.</p></li>
 <li><p><strong>enforce_schwarz_sep</strong> (<em>bool</em><em>, </em><em>optional</em>) – Enforce the separatrix of Schwarzschild
 spacetime. This helps to midigate issues at higher spin and/or higher
 eccentricity where the PN approximations are more likely to fail.
@@ -356,12 +373,144 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 </ul>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt id="few.trajectory.inspiral.EMRIInspiral.num_add_args">
+<code class="sig-name descname">num_add_args</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.num_add_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of additional arguments for the ODE function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.inspiral.EMRIInspiral.background">
+<code class="sig-name descname">background</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.background" title="Permalink to this definition">¶</a></dt>
+<dd><p>“Either Schwarzschild” or “Kerr”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.inspiral.EMRIInspiral.equatorial">
+<code class="sig-name descname">equatorial</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.equatorial" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if equatorial orbit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.inspiral.EMRIInspiral.circular">
+<code class="sig-name descname">circular</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.circular" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if circular orbit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.inspiral.EMRIInspiral.convert_Y">
+<code class="sig-name descname">convert_Y</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.convert_Y" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the ODE is integrated in <span class="math notranslate nohighlight">\(Y\)</span> rather than
+<span class="math notranslate nohighlight">\(x_I\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.inspiral.EMRIInspiral.files">
+<code class="sig-name descname">files</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.files" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of files necessary for this ODE.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.inspiral.EMRIInspiral.citations">
+<code class="sig-name descname">citations</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.citations" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of additional citations for this ODE.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.inspiral.EMRIInspiral.enforce_schwarz_sep">
+<code class="sig-name descname">enforce_schwarz_sep</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.enforce_schwarz_sep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enforce the separatrix of Schwarzschild
+spacetime.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.inspiral.EMRIInspiral.inspiral_generator">
+<code class="sig-name descname">inspiral_generator</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.inspiral_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inspiral C/C++ wrapped function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>func</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.inspiral.EMRIInspiral.func">
+<code class="sig-name descname">func</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.func" title="Permalink to this definition">¶</a></dt>
+<dd><p>ODE function name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="few.trajectory.inspiral.EMRIInspiral.specific_kwarg_keys">
+<code class="sig-name descname">specific_kwarg_keys</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.specific_kwarg_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specific keywords that need to transferred
+to the inspiral function that can be adjusted with each call.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ValueError</strong> – <code class="code docutils literal notranslate"><span class="pre">func</span></code> kwarg not given or not available.</p></li>
+<li><p><strong>ValueError</strong> – File necessary for ODE not found.</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt id="few.trajectory.inspiral.EMRIInspiral.attributes_EMRIInspiral">
 <code class="sig-name descname">attributes_EMRIInspiral</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.attributes_EMRIInspiral" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py attribute">
-<dt id="few.trajectory.inspiral.EMRIInspiral.inspiral_generator">
-<code class="sig-name descname">inspiral_generator</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.inspiral_generator" title="Permalink to this definition">¶</a></dt>
+<dt id="id0">
+<code class="sig-name descname">inspiral_generator</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
 <dd><p>C++ class for inspiral trajectory generation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -371,8 +520,8 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="few.trajectory.inspiral.EMRIInspiral.specific_kwarg_keys">
-<code class="sig-name descname">specific_kwarg_keys</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.specific_kwarg_keys" title="Permalink to this definition">¶</a></dt>
+<dt id="id1">
+<code class="sig-name descname">specific_kwarg_keys</code><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
 <dd><p>specific kwargs from
 <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a> that apply to this
 inspiral generator.</p>
@@ -458,17 +607,11 @@ Default is {}.</p></li>
 <dt id="few.trajectory.inspiral.EMRIInspiral.get_inspiral">
 <code class="sig-name descname">get_inspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">x0</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">Phi_phi0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_theta0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_r0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.get_inspiral" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate the inspiral.</p>
-<p># TODO: fix
-This is the function for calling the creation of the Pn5-based
-trajectory. Inputs define the output time spacing. This class can be
-used on its own. However, it is generally accessed through the __call__
-method associated with its base class:
-(<a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a>). See its documentation
-for information on a more flexible interface to the trajectory modules.</p>
-<p><strong>Please note:</strong> the 5PN trajectory and AAK waveform take the parameter
-<span class="math notranslate nohighlight">\(Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}\)</span> rather than <span class="math notranslate nohighlight">\(x_I\)</span> as is accepted
-for relativistic waveforms and in the generic waveform interface discussed above.
-The generic waveform interface directly converts <span class="math notranslate nohighlight">\(x_I\)</span> to <span class="math notranslate nohighlight">\(Y\)</span>.</p>
+<p>This is the function for calling the creation of the trajectory.
+Inputs define the output time spacing.</p>
+<p>This class can be used on its own. However, it is generally accessed
+through the __call__ method associated with its base class:
+(<a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -490,7 +633,7 @@ Default is 0.0.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Tuple of (t, p, e, x, Phi_phi, Phi_r, Phi_theta).</p>
+<dd class="field-even"><p>Tuple of (t, p, e, x, Phi_phi, Phi_theta, Phi_r).</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>tuple</p>
