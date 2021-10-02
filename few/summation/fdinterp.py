@@ -30,6 +30,7 @@ except (ImportError, ModuleNotFoundError) as e:
 from pyinterp_cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
 from pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
 from pyinterp_cpu import get_waveform_fd_wrap as get_waveform_fd_wrap_cpu
+from pyinterp_cpu import interp_time_for_fd as interp_time_for_fd_cpu
 
 # Python imports
 from few.utils.baseclasses import (
@@ -48,6 +49,7 @@ try:
         interpolate_arrays_wrap,
         get_waveform_wrap,
         get_waveform_fd_wrap,
+        interp_time_for_fd,
     )
 
 except (ImportError, ModuleNotFoundError) as e:
@@ -89,10 +91,12 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         if self.use_gpu:
             self.get_waveform = get_waveform_wrap
             self.get_waveform_fd = get_waveform_fd_wrap
+            self.interp_time = interp_time_for_fd
 
         else:
             self.get_waveform = get_waveform_wrap_cpu
             self.get_waveform_fd = get_waveform_fd_wrap_cpu
+            self.interp_time = interp_time_for_fd_cpu
 
     def attributes_FDInterpolatedModeSum(self):
         """
@@ -100,140 +104,6 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             get_waveform (func): CPU or GPU function for waveform creation.
 
         """
-
-    def waveform_spa_factors(self, fdot_spline, fddot_spline, extended_SPA=True):
-
-        if extended_SPA == True:
-
-            # Waveform Amplitudes
-            arg = -1j * 2.0 * np.pi * fdot_spline ** 3 / (3.0 * fddot_spline ** 2)
-
-            K_1over3 = special.kve(
-                1.0 / 3.0, arg
-            )  # special.kv(1./3.,arg)*np.exp(arg) #
-
-            # to correct the special function nan
-            if np.sum(np.isnan(special.kv(1 / 3, arg))) > 0:
-                print("number of nans", np.sum(np.isnan(special.kv(1 / 3, arg))))
-                # print(arg[np.isnan(special.kv(1./3.,arg))])
-
-                X = 2 * np.pi * fdot_spline ** 3 / (3 * fddot_spline ** 2)
-                # K_1over3[np.isnan(special.kv(1./3.,arg))] = (np.sqrt(np.pi/2) /(1j*np.sqrt(np.abs(X))) * np.exp(-1j*np.pi/4) )[np.isnan(special.kv(1./3.,arg))]
-                # print('isnan',np.sum(np.isnan(arg)),np.sum(np.isnan(fdot_spline/np.abs(fddot_spline))))
-
-            amp = (
-                1j * fdot_spline / np.abs(fddot_spline) * K_1over3 * 2.0 / np.sqrt(3.0)
-            )
-
-            amp[np.isnan(amp)] = (
-                np.exp(-1j * np.pi / 4 * np.sign(fdot_spline))
-                / np.sqrt(np.abs(fdot_spline))
-                * (
-                    1
-                    - 1j
-                    * (5.0 / (48.0 * np.pi))
-                    * fddot_spline ** 2
-                    / (fdot_spline ** 3)
-                )
-            )[
-                np.isnan(amp)
-            ]  #
-
-        else:
-            amp = (
-                np.exp(-np.pi / 4 * fnp.sign(fdot_spline))
-                / np.sqrt(np.abs(fdot_spline))
-                * (1 - 5j / (48.0 * np.pi) * fddot_spline ** 2 / (fdot_spline ** 3))
-            )
-
-        if np.sum(np.isnan(amp)) > 0:
-            print("nan in amplitude")
-
-        return amp
-
-    def time_frequency_map(self, spline_f_mode, index_star):
-        # turn over index
-        index_star = index_star - 1
-
-        t = spline_f_mode.t[-1]
-        f_mn = spline_f_mode.y[-1]
-
-        # find t_star analytically
-        ratio = spline_f_mode.c2[0, index_star] / (3 * spline_f_mode.c3[0, index_star])
-        second_ratio = spline_f_mode.c1[0, index_star] / (
-            3 * spline_f_mode.c3[0, index_star]
-        )
-        t_star = t[index_star] - ratio + np.sqrt(ratio ** 2 - second_ratio)
-
-        # new frequancy vector
-        Fstar = spline_f_mode(np.array([t_star])).item()
-        new_F = np.append(
-            f_mn[: index_star + 1],
-            Fstar + Fstar / np.abs(Fstar) * np.abs(f_mn[index_star + 1 :] - Fstar),
-        )
-
-        # new t_f
-        sign_slope = spline_f_mode.c1[0, 0] / np.abs(spline_f_mode.c1[0, 0])
-
-        # frequency split
-        initial_frequency = f_mn[0]
-        end_frequency = f_mn[-1]
-
-        if initial_frequency > end_frequency:
-
-            if sign_slope > 0:
-                # alt imple
-                modified2_t_f = CubicSpline((new_F), t)
-                ind_1 = (self.frequency > end_frequency) * (self.frequency < Fstar)
-                t_f_1 = modified2_t_f(
-                    Fstar
-                    + Fstar / np.abs(Fstar) * np.abs(self.frequency[ind_1] - Fstar)
-                )
-                ind_2 = (self.frequency > initial_frequency) * (self.frequency < Fstar)
-                t_f_2 = modified2_t_f(self.frequency[ind_2])
-
-            else:
-                modified2_t_f = CubicSpline(-(new_F), t)  #
-                ind_1 = (self.frequency < end_frequency) * (self.frequency > Fstar)
-                ind_2 = (self.frequency < initial_frequency) * (self.frequency > Fstar)
-                t_f_1 = modified2_t_f(
-                    -(
-                        Fstar
-                        + Fstar / np.abs(Fstar) * np.abs(self.frequency[ind_1] - Fstar)
-                    )
-                )
-                t_f_2 = modified2_t_f(-(self.frequency[ind_2]))
-
-        if initial_frequency < end_frequency:
-
-            if sign_slope > 0:
-
-                modified2_t_f = CubicSpline((new_F), t)
-
-                ind_1 = (self.frequency > initial_frequency) * (self.frequency < Fstar)
-                ind_2 = (self.frequency > end_frequency) * (self.frequency < Fstar)
-                t_f_2 = modified2_t_f(
-                    (
-                        Fstar
-                        + Fstar / np.abs(Fstar) * np.abs(self.frequency[ind_2] - Fstar)
-                    )
-                )
-                t_f_1 = modified2_t_f((self.frequency[ind_1]))
-
-            else:
-                modified2_t_f = CubicSpline(-(new_F), t)  #
-
-                ind_1 = (self.frequency < end_frequency) * (self.frequency > Fstar)
-                ind_2 = (self.frequency < initial_frequency) * (self.frequency > Fstar)
-                t_f_1 = modified2_t_f(
-                    -(
-                        Fstar
-                        + Fstar / np.abs(Fstar) * np.abs(self.frequency[ind_1] - Fstar)
-                    )
-                )
-                t_f_2 = modified2_t_f(-(self.frequency[ind_2]))
-
-        return ind_1, ind_2, t_f_1, t_f_2
 
     @property
     def gpu_capability(self):
@@ -286,6 +156,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             **kwargs (dict, placeholder): Added for future flexibility.
 
         """
+        # TODO: check fftshift
 
         init_len = len(t)  # length of sparse traj
         num_teuk_modes = teuk_modes.shape[1]
@@ -326,7 +197,6 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         # define a frequency vector
 
-        # TODO: check fftshift
         self.frequency = self.xp.fft.fftshift(
             self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt)
         )
@@ -360,11 +230,9 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         ).astype(np.int32)
 
         # inds[:, :, 0] += 1
-        # inds[:, :, 1] -= 1
+        # inds[:, :, 1] -= 1`
 
         seg_inds = self.xp.zeros_like(seg_freqs, dtype=int)
-        inds_pos = self.xp.where(seg_freqs[:, 0] > 0.0)[0]
-        inds_neg = self.xp.where(seg_freqs[:, 0] < 0.0)[0]
 
         freq_mode_start = (
             m_arr[:, None] * spline.c1[-4, None, :]
@@ -387,6 +255,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         # find t_star analytically
 
         bad = turnover_seg >= init_len
+
+        # still ~1 ms
 
         turnover_seg[bad] = init_len - 1
         c1 = (
@@ -412,37 +282,70 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         t_star[bad] = t[-1]
 
         # TODO: don't evaluate everything
-        spline_out = spline(t_star)
+        inds_eval = self.xp.searchsorted(t, t_star).astype(self.xp.int32)
 
+        num_modes_here = int(1 / 2 * (ninterps - 4))
+        spline_out = self.xp.zeros((int(2 * num_modes_here),))
+
+        run = ~bad
+
+        self.interp_time(
+            spline_out,
+            t,
+            t_star,
+            turnover_seg,
+            spline.interp_array,
+            ninterps,
+            length,
+            run,
+        )
+
+        spline_out = spline_out.reshape(2, num_modes_here)
+
+        spline_out[0, bad] = f_phi[-1]
+        spline_out[1, bad] = f_r[-1]
+
+        # 34
         if spline_out.ndim == 1:
             spline_out = spline_out[:, None]
 
-        Fstar = m_arr * spline_out[-4] + n_arr * spline_out[-3]
+        Fstar = m_arr * spline_out[0] + n_arr * spline_out[1]
 
         inds_pass_through_zero = self.xp.any(
             self.xp.diff(self.xp.sign(seg_freqs), axis=1) != 0.0, axis=1
         )
 
-        shift_freq = seg_freqs.min(axis=1)
+        min_freq = seg_freqs.min(axis=1) * (Fstar > seg_freqs.min(axis=1)) + Fstar * (
+            Fstar <= seg_freqs.min(axis=1)
+        )
+        shift_freq = 2 * min_freq
         shift_freq[~inds_pass_through_zero] = 0.0
 
-        seg_freqs_for_special = seg_freqs - shift_freq[:, None]
-        Fstar_for_special = Fstar - shift_freq
+        fix_negative = (seg_freqs - shift_freq[:, None])[:, 0] < 0.0
+        seg_freqs_for_special = self.xp.abs(seg_freqs - shift_freq[:, None])
+        Fstar_for_special = self.xp.abs(Fstar - shift_freq)
 
-        special_f_arrs = self.xp.abs(
-            seg_freqs_for_special * (t[None, :] <= t_star[:, None])
+        temp1 = Fstar_for_special[:, None] + abs(
+            seg_freqs_for_special - Fstar_for_special[:, None]
+        )
+        temp2 = Fstar_for_special[:, None] - abs(
+            seg_freqs_for_special - Fstar_for_special[:, None]
+        )
+
+        slope0[fix_negative] = slope0[fix_negative] * -1
+
+        special_f_arrs = (
+            seg_freqs_for_special
+            * ((t[None, :] <= t_star[:, None]) & (slope0[:, None] >= 0.0))
+            + (temp1) * ((t[None, :] > t_star[:, None]) & (slope0[:, None] >= 0.0))
             + (
-                Fstar_for_special[:, None]
-                + Fstar_for_special[:, None]
-                / abs(Fstar_for_special[:, None])
-                * abs(seg_freqs_for_special - Fstar_for_special[:, None])
+                seg_freqs_for_special[:, 0][:, None]
+                + (seg_freqs_for_special[:, 0][:, None] - seg_freqs_for_special)
             )
-            * ((t[None, :] > t_star[:, None]) & (slope0[:, None] >= 0.0))
+            * ((t[None, :] <= t_star[:, None]) & (slope0[:, None] < 0.0))
             + (
-                Fstar_for_special[:, None]
-                + Fstar_for_special[:, None]
-                / abs(Fstar_for_special[:, None])
-                * abs(seg_freqs_for_special - Fstar_for_special[:, None])
+                seg_freqs_for_special[:, 0][:, None]
+                + (seg_freqs_for_special[:, 0][:, None] - temp2)
             )
             * ((t[None, :] > t_star[:, None]) & (slope0[:, None] < 0.0))
         )
@@ -454,6 +357,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             use_gpu=self.use_gpu,
         )
 
+        # fix non-turnover setup
         inds_fix = self.xp.arange(len(turnover_seg))[~bad]
 
         fixed_inds = ((Fstar[inds_fix] - self.frequency[0]) / df).astype(int)
@@ -478,6 +382,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         zero_index = int(len(self.frequency) / 2)
 
+        # 85
+        initial_freqs = seg_freqs_for_special[:, 0].copy()
         self.get_waveform_fd(
             h,
             spline.interp_array,
@@ -499,157 +405,10 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             self.frequency,
             zero_index,
             shift_freq,
+            slope0,
+            initial_freqs,
         )
 
-        """
-        # indentify where there is a turnover
-        for j, (m, n) in enumerate(zip(m_arr, n_arr)):
-            print("percent", j / len(m_arr))
-
-            # check turnover
-            freq_mode_start = m * spline.c1[-4, 0] + n * spline.c1[-3, 0]
-            index_star = find_element_in_list(
-                True,
-                list(
-                    freq_mode_start * (m * spline.c1[-4, :] + n * spline.c1[-3, :])
-                    < 0.0
-                ),
-            )
-
-            # frequency mode
-            f_mn = m * f_phi + n * f_r
-            spline_f_mode = CubicSplineInterpolant(t, f_mn, use_gpu=self.use_gpu)
-
-            second_spl = CubicSpline(t, f_mn)
-
-            min_f_mn = np.min(np.abs(f_mn))
-            max_f_mn = np.max(np.abs(f_mn))
-
-            # fdot
-            fdot_spline = second_spl.derivative(
-                nu=1
-            )  # # CubicSplineInterpolant(t, second_spl.derivative(nu=1), use_gpu=self.use_gpu) # CubicSpline(t, np.asarray(spline_f_mode.deriv(t)[-1])) # CubicSplineInterpolant(t, np.asarray(spline_f_mode.deriv(t)), use_gpu=self.use_gpu)
-
-            # fddot
-            fddot_spline = second_spl.derivative(
-                nu=2
-            )  # spline_f_mode._d2 #  #fdot_spline.derivative() # CubicSpline(t, fdot_spline.derivative(t)) #, use_gpu=self.use_gpu)
-
-            if index_star is not None:
-                print(m, n)
-                print("there is a turn-over")
-
-                # calculate frequency indeces and respective time of f
-                ind_1, ind_2, t_f_1, t_f_2 = self.time_frequency_map(
-                    spline_f_mode, index_star
-                )
-
-                h_contr = [
-                    (spline(t_two)[j] + 1j * spline(t_two)[num_teuk_modes + j])
-                    * ylms[j]
-                    * self.waveform_spa_factors(fdot_spline(t_two), fddot_spline(t_two))
-                    * np.exp(
-                        1j
-                        * (
-                            2 * np.pi * f * t_two
-                            - (m * spline(t_two)[-2] + n * spline(t_two)[-1])
-                        )
-                    )
-                    for t_two, f in zip(
-                        [t_f_1, t_f_2], [self.frequency[ind_1], self.frequency[ind_2]]
-                    )
-                ]
-
-                h[ind_1] += h_contr[0]
-                h[ind_2] += h_contr[1]
-
-                # negative contribution
-                if m != 0:
-                    print("m different from zero")
-
-                    h_contr = [
-                        (spline(t_two)[j] - 1j * spline(t_two)[num_teuk_modes + j])
-                        * ylms[j + num_teuk_modes]
-                        * self.waveform_spa_factors(
-                            -fdot_spline(t_two), -fddot_spline(t_two)
-                        )
-                        * np.exp(
-                            1j
-                            * (
-                                2 * np.pi * f * t_two
-                                + (m * spline(t_two)[-2] + n * spline(t_two)[-1])
-                            )
-                        )
-                        for t_two, f in zip(
-                            [np.flip(t_f_1), np.flip(t_f_2)],
-                            [
-                                self.frequency[np.flip(ind_1)],
-                                self.frequency[np.flip(ind_2)],
-                            ],
-                        )
-                    ]
-
-                    h[np.flip(ind_1)] += h_contr[0]
-                    h[np.flip(ind_2)] += h_contr[1]
-
-            else:
-
-                initial_frequency = f_mn[0]
-                end_frequency = f_mn[-1]
-
-                sign_slope = spline_f_mode.c1[0, 0] / np.abs(spline_f_mode.c1[0, 0])
-
-                if sign_slope > 0:
-                    t_of_f = CubicSplineInterpolant(f_mn, t, use_gpu=self.use_gpu)
-                    index = (self.frequency > initial_frequency) * (
-                        self.frequency < end_frequency
-                    )
-                    t_f = t_of_f(self.frequency[index])
-                else:
-                    t_of_f = CubicSplineInterpolant(-f_mn, t, use_gpu=self.use_gpu)
-                    index = (self.frequency < initial_frequency) * (
-                        self.frequency > end_frequency
-                    )
-                    t_f = t_of_f(-self.frequency[index])
-
-                h_contr = (
-                    (spline(t_f)[j] + 1j * spline(t_f)[num_teuk_modes + j])
-                    * ylms[j]
-                    * self.waveform_spa_factors(
-                        fdot_spline(t_f), fddot_spline(t_f), extended_SPA=True
-                    )
-                    * np.exp(
-                        1j
-                        * (
-                            2 * np.pi * self.frequency[index] * t_f
-                            - (m * spline(t_f)[-2] + n * spline(t_f)[-1])
-                        )
-                    )
-                )
-
-                h[index] += h_contr
-
-                if m != 0:
-
-                    # negative contribution
-                    t_f = np.flip(t_f)
-                    index = np.flip(index)
-
-                    h_neg = (
-                        (spline(t_f)[j] - 1j * spline(t_f)[num_teuk_modes + j])
-                        * ylms[j + num_teuk_modes]
-                        * self.waveform_spa_factors(
-                            -fdot_spline(t_f), -fddot_spline(t_f), extended_SPA=True
-                        )
-                        * np.exp(
-                            1j
-                            * (
-                                2 * np.pi * self.frequency[index] * t_f
-                                + (m * spline(t_f)[-2] + n * spline(t_f)[-1])
-                            )
-                        )
-                    )
-
-                    h[index] += h_neg
-        """
         self.waveform = h
+
+        # 95

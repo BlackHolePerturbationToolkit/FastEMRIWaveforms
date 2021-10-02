@@ -125,9 +125,9 @@ void fill_B(double *t_arr, double *y_all, double *B, double *upper_diag, double 
 
     #ifdef __CUDACC__
 
-    int start1 = blockIdx.y*blockDim.y + threadIdx.y;
+    int start1 = blockIdx.y;
     int end1 = ninterps;
-    int diff1 = blockDim.y*gridDim.y;
+    int diff1 = gridDim.y;
 
     int start2 = blockIdx.x*blockDim.x + threadIdx.x;
     int end2 = length;
@@ -172,9 +172,9 @@ void set_spline_constants(double *t_arr, double *interp_array, double *B,
     InterpContainer mode_vals;
 
     #ifdef __CUDACC__
-    int start1 = blockIdx.y*blockDim.y + threadIdx.y;
+    int start1 = blockIdx.y;
     int end1 = ninterps;
-    int diff1 = blockDim.y*gridDim.y;
+    int diff1 = gridDim.y;
 
     int start2 = blockIdx.x*blockDim.x + threadIdx.x;
     int end2 = length - 1;
@@ -259,6 +259,48 @@ void fit_wrap(int m, int n, double *a, double *b, double *c, double *d_in)
   #endif
 }
 
+CUDA_KERNEL
+void fill_final_derivs(double *t_arr, double *interp_array,
+                      int ninterps, int length)
+{
+    #ifdef __CUDACC__
+    int start1 = blockIdx.x*blockDim.x + threadIdx.x;
+    int end1 = ninterps;
+    int diff1 = blockDim.x * gridDim.x;
+    #else
+
+    int start1 = 0;
+    int end1 = ninterps;
+    int diff1 = 1;
+
+    #pragma omp parallel for
+    #endif
+
+    for (int interp_i= start1;
+         interp_i<end1; // 2 for re and im
+         interp_i+= diff1)
+         {
+
+             int lead_ind = interp_i*length;
+            double c1 = interp_array[(1 * ninterps +  interp_i) * length + length - 2];
+            double c2 = interp_array[(2 * ninterps +  interp_i) * length + length - 2];
+            double c3 = interp_array[(3 * ninterps +  interp_i) * length + length - 2];
+
+            double t_begin = t_arr[interp_i * length + length - 2];
+            double t_end = t_arr[interp_i * length + length - 1];
+            double x = t_end - t_begin;
+            double x2 = x * x;
+            double final_c1 = c1 + 2 * c2 * x + 3 * c3 * x2;
+            double final_c2 = (2. * c2 + 6. * c3 * x)/2.;
+            double final_c3 = c3;
+
+            interp_array[(1 * ninterps +  interp_i) * length + length - 1] = c1;
+            interp_array[(2 * ninterps +  interp_i) * length + length - 1] = c2;
+            interp_array[(3 * ninterps +  interp_i) * length + length - 1] = c3;
+
+        }
+}
+
 // interpolate many y arrays (interp_array) with a singular x array (t_arr)
 // see python documentation for shape necessary for this to be done
 void interpolate_arrays(double *t_arr, double *interp_array, int ninterps, int length, double *B, double *upper_diag, double *diag, double *lower_diag)
@@ -272,7 +314,7 @@ void interpolate_arrays(double *t_arr, double *interp_array, int ninterps, int l
   #ifdef __CUDACC__
   int NUM_THREADS = 64;
   int num_blocks = std::ceil((length + NUM_THREADS -1)/NUM_THREADS);
-  dim3 gridDim(num_blocks); //, num_teuk_modes);
+  dim3 gridDim(num_blocks, ninterps);
   fill_B<<<gridDim, NUM_THREADS>>>(t_arr, interp_array, B, upper_diag, diag, lower_diag, ninterps, length);
   cudaDeviceSynchronize();
   gpuErrchk(cudaGetLastError());
@@ -281,6 +323,12 @@ void interpolate_arrays(double *t_arr, double *interp_array, int ninterps, int l
 
   set_spline_constants<<<gridDim, NUM_THREADS>>>(t_arr, interp_array, B,
                                  ninterps, length);
+  cudaDeviceSynchronize();
+  gpuErrchk(cudaGetLastError());
+
+  int num_blocks_fill_derivs = std::ceil((ninterps + NUM_THREADS -1)/NUM_THREADS);
+
+  fill_final_derivs<<<num_blocks_fill_derivs, NUM_THREADS>>>(t_arr, interp_array, ninterps, length);
   cudaDeviceSynchronize();
   gpuErrchk(cudaGetLastError());
 
@@ -293,8 +341,84 @@ void interpolate_arrays(double *t_arr, double *interp_array, int ninterps, int l
   set_spline_constants(t_arr, interp_array, B,
                                  ninterps, length);
 
+  fill_final_derivs(t_arr, interp_array, ninterps, length);
+
   #endif
 
+}
+
+CUDA_KERNEL
+void interp_time_for_fd(double* output, double *t_arr, double *tstar, int* ind_tstar, double *interp_array, int ninterps, int length, bool* run)
+{
+
+    int num_modes = int((ninterps - 4) / 2.);
+    #ifdef __CUDACC__
+    int start1 = blockIdx.x*blockDim.x + threadIdx.x;
+    int end1 = num_modes;
+    int diff1 = blockDim.x * gridDim.x;
+    #else
+
+    int start1 = 0;
+    int end1 = num_modes;
+    int diff1 = 1;
+
+    #pragma omp parallel for
+    #endif
+
+    for (int interp_i= start1;
+         interp_i<end1; // 2 for re and im
+         interp_i+= diff1)
+    {
+             bool run_here = run[interp_i];
+             if (!run_here) continue;
+
+             int ind = ind_tstar[interp_i];
+            double t_segment = t_arr[ind];
+            double t = tstar[interp_i];
+            double x = t - t_segment;
+            double x2 = x * x;
+            double x3 = x * x2;
+
+
+             #ifdef __CUDACC__
+             #else
+             #pragma omp parallel for
+             #endif
+             for (int i = 0; i < 2; i += 1)
+             {
+
+                 int num_base = length * ninterps;
+                // fill phase values. These will be same for all modes
+                 int ind_f = ind * ninterps + (ninterps - 3 - i);
+
+                 // access the frequencies
+                double y0 = interp_array[0 * num_base + ind_f];
+                double c1 = interp_array[1 * num_base + ind_f];
+                double c2 = interp_array[2 * num_base + ind_f];
+                double c3 = interp_array[3 * num_base + ind_f];
+
+                double temp = y0 + c1 * x + c2 * x2 + c3 * x3;
+
+                output[(1 - i) * num_modes + interp_i] = temp;
+
+            }
+    }
+}
+
+void interp_time_for_fd_wrap(double* output, double *t_arr, double *tstar, int* ind_tstar, double *interp_array, int ninterps, int length, bool* run)
+{
+    int num_modes = int((ninterps - 4) / 2.);
+    #ifdef __CUDACC__
+    int NUM_THREADS = 64;
+    int num_blocks = std::ceil((num_modes + NUM_THREADS -1)/NUM_THREADS);
+    interp_time_for_fd<<<num_blocks, NUM_THREADS>>>(output, t_arr, tstar, ind_tstar, interp_array, ninterps, length,run);
+    cudaDeviceSynchronize();
+    gpuErrchk(cudaGetLastError());
+
+    #else
+    interp_time_for_fd(output, t_arr, tstar, ind_tstar, interp_array, ninterps, length,run);
+
+    #endif
 }
 
 /////////////////////////////////
@@ -1099,7 +1223,7 @@ void make_waveform_fd(cmplx *waveform,
               int *m_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
               double* t_arr, int* start_ind_all, int* end_ind_all, int init_length,
               double start_freq, int* turnover_ind_all,
-              double* turnover_freqs, double df, double* f_data, int zero_index, double* shift_freqs)
+              double* turnover_freqs, double df, double* f_data, int zero_index, double* shift_freqs, double* slope0_all, double* initial_freqs)
 
 {
 
@@ -1117,6 +1241,8 @@ void make_waveform_fd(cmplx *waveform,
         int turnover_ind = turnover_ind_all[mode_i];
         double turnover_frequency = turnover_freqs[mode_i];
         double shift_freq = shift_freqs[mode_i];
+        double slope0 = slope0_all[mode_i];
+        double initial_freq = initial_freqs[mode_i];
 
         #ifdef __CUDACC__
         int segment_start = blockIdx.z;
@@ -1186,7 +1312,10 @@ void make_waveform_fd(cmplx *waveform,
              CUDA_SHARED double initial_frequency;
              CUDA_SHARED double end_frequency;
              CUDA_SHARED double turnover_time;
+
+             #ifdef __CUDACC__
              CUDA_SHARED double special_f[2];
+             #endif
 
              CUDA_SHARED double sign_slope;
 
@@ -1287,43 +1416,37 @@ void make_waveform_fd(cmplx *waveform,
                  i <= end_ind; // goes from ceil to floor so need to <=
                  i += diff)
             {
+                #ifdef __CUDACC__
+                #else
+                double special_f[2];
+                #endif
                 cmplx trans(0.0, 0.0);
                 double f = f_data[i]; //  start_freq + df * i;
                 double Fstar = turnover_frequency;
 
                 int num_points;
-                double slope0;
                 special_f[0] = 0.0;
                 special_f[1] = 0.0;
 
                 double f_seg_begin = m * fp_y + n * fr_y;
                 double f_seg_end = m * fp_end_y + n * fr_end_y;
 
-                double f_here = f - shift_freq;
-                double Fstar_here = Fstar - shift_freq;
-
+                double f_here = abs(f - shift_freq);
+                double Fstar_here = abs(Fstar - shift_freq);
+                double temp_here;
                 if (segment_i > turnover_ind)
                 {
                     num_points = 1;
                     // slope at beginning of this segment
-                    slope0 = m * fp_c1 + n * fr_c1;
 
                     if (slope0 < 0.0)
                     {
-                        special_f[0] = abs(Fstar_here + Fstar_here / abs(Fstar_here) * abs(f_here - Fstar_here));
-                        //if ((f == 0.0))
-                        //{
-                        //    printf("AHAH1: %d %d %d %.18e %.18e %.18e\n", turnover_ind, mode_i, segment_i, special_f[0], f, Fstar);
-                        //}
+                        temp_here = Fstar_here - abs(f_here - Fstar_here);
+                        special_f[0] = initial_freq + (initial_freq - temp_here);
                     }
                     else
                     {
-                        // TODO: check this special_f
-                        special_f[0] = abs(Fstar_here + Fstar_here / abs(Fstar_here) * abs(f_here - Fstar_here));
-                        //if ((f == 0.0))
-                        //{
-                        //    printf("AHAH2: %d %d %d %.18e %.18e %.18e\n", turnover_ind, mode_i, segment_i, special_f[0], f, Fstar);
-                        //}
+                        special_f[0] = Fstar_here + abs(f_here - Fstar_here);
                     }
 
 
@@ -1331,12 +1454,19 @@ void make_waveform_fd(cmplx *waveform,
                 else if (segment_i < turnover_ind)
                 {
                     num_points = 1;
-                    special_f[0] = abs(f_here);
+                    if (slope0 < 0.0)
+                    {
+                        special_f[0] = initial_freq + (initial_freq - f_here);
+                    }
+                    else
+                    {
+                        // TODO: check this special_f
+                        special_f[0] = f_here;
+                    }
                 }
                 else
                 {
                     // slope at beginning of this segment
-                    slope0 = m * fp_c1 + n * fr_c1;
 
                     if ((abs(f) > abs(f_seg_begin)) && (abs(f) > abs(f_seg_end)))
                     {
@@ -1346,52 +1476,57 @@ void make_waveform_fd(cmplx *waveform,
                         //}
 
                         num_points = 2;
-                        special_f[0] = abs(f_here);
 
-                        // this is beginning of segment, so past turnover will have opposite slope
                         if (slope0 < 0.0)
                         {
-                            special_f[1] = abs(Fstar_here + Fstar_here / abs(Fstar_here) * abs(f_here - Fstar_here));
+                            special_f[0] = initial_freq + (initial_freq - f_here);
                         }
                         else
                         {
                             // TODO: check this special_f
-                            special_f[1] = abs(Fstar_here - Fstar_here / abs(Fstar_here) * abs(f_here - Fstar_here));
+                            special_f[0] = f_here;
                         }
+
+                        if (slope0 < 0.0)
+                        {
+                            temp_here = Fstar_here - abs(f_here - Fstar_here);
+                            special_f[1] = initial_freq + (initial_freq - temp_here);
+                        }
+                        else
+                        {
+                            special_f[1] = Fstar_here + abs(f_here - Fstar_here);
+                        }
+
                     }
                     else if (abs(f) > abs(f_seg_begin))
                     {
                         num_points = 1;
-                        special_f[0] = abs(f_here);
+                        if (slope0 < 0.0)
+                        {
+                            special_f[0] = initial_freq + (initial_freq - f_here);
+                        }
+                        else
+                        {
+                            // TODO: check this special_f
+                            special_f[0] = f_here;
+                        }
                     }
                     else // (abs(f) > abs(f_seg_end))
                     {
                         num_points = 1;
                         if (slope0 < 0.0)
                         {
-                            special_f[0] = abs(Fstar_here - Fstar_here / abs(Fstar_here) * abs(f_here - Fstar_here));
-                            //if (f == 0.0)
-                            //{
-                            //    printf("YAYAY3: %d %d %d %.18e %.18e %.18e\n", turnover_ind, mode_i, segment_i, special_f[0], f, Fstar);
-                            //}
+                            temp_here = Fstar_here - abs(f_here - Fstar_here);
+                            special_f[0] = initial_freq + (initial_freq - temp_here);
                         }
                         else
                         {
-                            // TODO: check this special_f
-                            special_f[0] = abs(Fstar_here - Fstar_here / abs(Fstar_here) * abs(f_here - Fstar_here));
-                            //if (f == 0.0)
-                            //{
-                            //    printf("YAYAY4: %d %d %d %.18e %.18e %.18e\n", turnover_ind, mode_i, segment_i, special_f[0], f, Fstar);
-                            //}
-
+                            special_f[0] = Fstar_here + abs(f_here - Fstar_here);
                         }
                     }
                 }
 
-                //if (i == 1552316)
-                //{
-                //    printf("%d %d %d %.18e %.18e %.18e %.18e %.18e %.18e %.18e\n", segment_i, turnover_ind, num_points, slope0, f, f_seg_begin, f_seg_end, special_f[0], special_f[1], Fstar);
-                //}
+
                 //printf("%d %d %d %d %d %d %e %e %e %e %e %d %d\n", i, mode_i, segment_i, start_ind, end_ind, num_points, f, Fstar, special_f[0], special_f[1], segment_i > turnover_ind, segment_i < turnover_ind);
                 //printf("%d %d %d %d %d %d %d %d %d %d\n", i, mode_i, segment_i, start_ind, end_ind, init_length, ind_inds, start_ind_all[ind_inds - 1], start_ind_all[ind_inds], start_ind_all[ind_inds + 1]);
 
@@ -1414,15 +1549,11 @@ void make_waveform_fd(cmplx *waveform,
                 {
 
                     double x_f = special_f[jj] - special_f_seg;
+
                     double x_f2 = x_f*x_f;
                     double x_f3 = x_f2*x_f;
 
                     double t = t_seg + tf_c1 * x_f + tf_c2 * x_f2 + tf_c3 * x_f3;
-
-                    //if ((f == 0.0))
-                    //{
-                    //    printf("he: %d %d %d %.18e %.18e %.18e %.18e %.18e %.18e %.18e\n", turnover_ind, mode_i, segment_i, special_f[jj], special_f_seg, f, Fstar, x_f, t_seg, t);
-                    //}
 
                     double x = t - t_seg;
                     double x2 = x * x;
@@ -1497,7 +1628,7 @@ void get_waveform_fd(cmplx *waveform,
               int *m_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
               double* t_arr, int* start_ind_all, int* end_ind_all, int init_length,
               double start_freq, int* turnover_ind_all,
-              double* turnover_freqs, int max_points, double df, double* f_data, int zero_index, double* shift_freq)
+              double* turnover_freqs, int max_points, double df, double* f_data, int zero_index, double* shift_freq, double* slope0_all, double* initial_freqs)
 {
 
     #ifdef __CUDACC__
@@ -1517,7 +1648,7 @@ void get_waveform_fd(cmplx *waveform,
                   m_arr_in, n_arr_in, num_teuk_modes, Ylms_in,
                   t_arr, start_ind_all, end_ind_all, init_length,
                   start_freq, turnover_ind_all,
-                  turnover_freqs, df, f_data, zero_index, shift_freq);
+                  turnover_freqs, df, f_data, zero_index, shift_freq, slope0_all, initial_freqs);
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());
 
@@ -1530,7 +1661,7 @@ void get_waveform_fd(cmplx *waveform,
                   m_arr_in, n_arr_in, num_teuk_modes, Ylms_in,
                   t_arr, start_ind_all, end_ind_all, init_length,
                   start_freq, turnover_ind_all,
-                  turnover_freqs, df, f_data, zero_index, shift_freq);
+                  turnover_freqs, df, f_data, zero_index, shift_freq, slope0_all, initial_freqs);
 
     #endif
 }

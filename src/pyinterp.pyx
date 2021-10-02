@@ -1,5 +1,6 @@
 import numpy as np
 cimport numpy as np
+from libcpp cimport bool
 
 from few.utils.utility import pointer_adjust
 
@@ -28,7 +29,10 @@ cdef extern from "interpolate.hh":
                 int *m_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
                 double* t_arr, int* start_ind_all, int* end_ind_all, int init_length,
                 double start_freq, int* turnover_ind_all,
-                double* turnover_freqs, int max_points, double df, double* f_data, int zero_index, double* shift_freq);
+                double* turnover_freqs, int max_points, double df, double* f_data, int zero_index, double* shift_freq, double* slope0_all, double* initial_freqs);
+
+    void interp_time_for_fd_wrap(double* output, double *t_arr, double *tstar, int* ind_tstar, double *interp_array, int ninterps, int length, bool* run)
+
 
 @pointer_adjust
 def interpolate_arrays_wrap(t_arr, interp_array, ninterps, length, B, upper_diag, diag, lower_diag):
@@ -66,7 +70,7 @@ def get_waveform_fd_wrap(waveform,
            m_arr_in, n_arr_in, num_teuk_modes, Ylms_in,
            t_arr, start_ind_all, end_ind_all, init_length,
            start_freq, turnover_ind_all,
-           turnover_freqs, max_points, df, f_data, zero_index, shift_freq):
+           turnover_freqs, max_points, df, f_data, zero_index, shift_freq, slope0_all, initial_freqs):
 
     cdef size_t waveform_in = waveform
     cdef size_t interp_array_in = interp_array
@@ -82,6 +86,8 @@ def get_waveform_fd_wrap(waveform,
     cdef size_t turnover_freqs_in = turnover_freqs
     cdef size_t f_data_in = f_data
     cdef size_t shift_freq_in = shift_freq
+    cdef size_t slope0_all_in = slope0_all
+    cdef size_t initial_freqs_in = initial_freqs
 
     get_waveform_fd(<cmplx *>waveform_in,
                <double *>interp_array_in,
@@ -90,4 +96,15 @@ def get_waveform_fd_wrap(waveform,
                 <int *>m_arr_in_in, <int *>n_arr_in_in, num_teuk_modes, <cmplx *>Ylms_in_in,
                 <double*> t_arr_in, <int*> start_ind_all_in, <int*> end_ind_all_in, init_length,
                 start_freq, <int*> turnover_ind_all_in,
-                <double*> turnover_freqs_in, max_points, df, <double*> f_data_in, zero_index, <double*> shift_freq_in)
+                <double*> turnover_freqs_in, max_points, df, <double*> f_data_in, zero_index, <double*> shift_freq_in, <double*> slope0_all_in, <double*> initial_freqs_in)
+
+@pointer_adjust
+def interp_time_for_fd(output, t_arr, tstar, ind_tstar, interp_array, ninterps, length, run):
+    cdef size_t output_in = output
+    cdef size_t t_arr_in = t_arr
+    cdef size_t tstar_in = tstar
+    cdef size_t ind_tstar_in = ind_tstar
+    cdef size_t interp_array_in = interp_array
+    cdef size_t run_in = run
+
+    interp_time_for_fd_wrap(<double*> output_in, <double*> t_arr_in, <double*> tstar_in, <int*> ind_tstar_in, <double*> interp_array_in, ninterps, length, <bool*> run_in)

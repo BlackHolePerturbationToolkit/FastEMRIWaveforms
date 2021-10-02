@@ -141,14 +141,6 @@ class CubicSplineInterpolant(ParallelModuleBase):
         self.reshape_shape = (self.degree + 1, length, ninterps)
         self.t = self.t.reshape((ninterps, length))
 
-        # fill final derivative
-        for i in range(1, 4):
-            self.interp_array[
-                (i * length + (length - 1))
-                * ninterps : ((i + 1) * length + 0)
-                * ninterps
-            ] = self(self.t[:, -1:], deriv_order=i)
-
     def attributes_CubicSplineInterpolate(self):
         """
         attributes:

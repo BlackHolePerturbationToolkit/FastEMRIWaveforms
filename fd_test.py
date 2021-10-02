@@ -30,8 +30,8 @@ phi = np.pi / 5  # mismatch =  0.0014153820095872405
 
 M = 1e6
 mu = 50
-p0 = 11.0
-e0 = 0.4
+p0 = 10.0
+e0 = 0.7
 theta = np.pi / 3
 phi = np.pi / 5  # mismatch =  0.02257016504821807
 
@@ -52,28 +52,8 @@ l = 2  # 2
 m = 1  # 1
 n = -4  # -4
 
-modes = [(2, 2, -3)]
-eps = 1e-3
-#%% TIME DOMAIN
-wave_22 = few_base(
-    M,
-    mu,
-    p0,
-    e0,
-    theta,
-    phi,
-    T=T,
-    dt=dt,
-    eps=eps,
-    # mode_selection=modes,
-    include_minus_m=False,
-)  # ,eps=1e-2)# , batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #
-freq_fft = np.fft.fftshift(np.fft.fftfreq(len(wave_22), dt))
-fft_wave = np.roll(
-    np.flip(np.fft.fftshift(np.fft.fft(wave_22)) * dt), 0
-)  # * signal.tukey(len(wave_22))
-
-rect_fft = np.fft.fft(np.ones_like(wave_22))  # * signal.tukey(len(wave_22))
+modes = [(2, 2, -4)]
+eps = 1e-5
 
 sum_kwargs = dict(pad_output=True, output_type="fd")
 
@@ -90,8 +70,30 @@ fd_h = wave(
     dt=dt,
     # mode_selection=modes,
     eps=eps,
-    include_minus_m=False,
+    include_minus_m=True,
 )  # ,eps=1e-2)# , mode_selection=[(l,m,n)],include_minus_m=True) #
+
+#%% TIME DOMAIN
+wave_22 = few_base(
+    M,
+    mu,
+    p0,
+    e0,
+    theta,
+    phi,
+    T=T,
+    dt=dt,
+    eps=eps,
+    # mode_selection=modes,
+    include_minus_m=True,
+)  # ,eps=1e-2)# , batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #
+freq_fft = np.fft.fftshift(np.fft.fftfreq(len(wave_22), dt))
+fft_wave = np.roll(
+    np.flip(np.fft.fftshift(np.fft.fft(wave_22)) * dt), 0
+)  # * signal.tukey(len(wave_22))
+
+rect_fft = np.fft.fft(np.ones_like(wave_22))  # * signal.tukey(len(wave_22))
+
 
 f = np.arange(-1 / (2 * dt), +1 / (2 * dt), 1 / (len(fd_h) * dt))
 
@@ -154,6 +156,7 @@ plt.plot(
 plt.legend(loc="right")
 plt.show()
 breakpoint()
+
 
 # %%
 
