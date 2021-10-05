@@ -576,7 +576,6 @@ def get_p_at_t(
     index_of_a=2,
     index_of_e=4,
     index_of_x=5,
-    kerr_separatrix=True,
     bounds=None,
     **kwargs,
 ):
@@ -615,6 +614,8 @@ def get_p_at_t(
         double: Value of p that creates the proper length trajectory.
 
     """
+    
+    kerr_separatrix = not traj_module.enforce_schwarz_sep
 
     # fix indexes for p
     if index_of_a > index_of_p:
@@ -628,20 +629,20 @@ def get_p_at_t(
     if bounds is None:
         if kerr_separatrix:
             p_sep = get_separatrix(
-                traj_args[index_of_a], traj_args[index_of_e], traj_args[index_of_Y]
+                traj_args[index_of_a], traj_args[index_of_e], traj_args[index_of_x]
             )  # should be fairly close.
         else:
             p_sep = 6 + 2 * traj_args[index_of_e]
-        bounds = [p_sep + 0.101, 16.0 + 2 * traj_args[index_of_e]]
+        bounds = [p_sep + 0.1, 16.0 + 2 * traj_args[index_of_e]]
 
     elif bounds[0] is None:
         if kerr_separatrix:
             p_sep = get_separatrix(
-                traj_args[index_of_a], traj_args[index_of_e], traj_args[index_of_Y]
+                traj_args[index_of_a], traj_args[index_of_e], traj_args[index_of_x]
             )  # should be fairly close.
         else:
             p_sep = 6 + 2 * traj_args[index_of_e]
-        bounds[0] = p_sep + 0.101
+        bounds[0] = p_sep + 0.1
 
     elif bounds[1] is None:
         bounds[1] = 16.0 + 2 * traj_args[index_of_e]
