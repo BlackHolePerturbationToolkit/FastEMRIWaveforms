@@ -57,7 +57,9 @@ eps = 1e-5
 
 sum_kwargs = dict(pad_output=True, output_type="fd")
 
-wave = FastSchwarzschildEccentricFlux(sum_kwargs=sum_kwargs, use_gpu=use_gpu)
+wave = FastSchwarzschildEccentricFlux(
+    sum_kwargs=sum_kwargs, use_gpu=use_gpu, num_threads=4
+)
 
 fd_h = wave(
     M,
@@ -152,6 +154,7 @@ plt.plot(
     # "--",
     alpha=0.9,
     label="FD domain waveform",
+    ls="--",
 )
 plt.legend(loc="right")
 plt.show()
