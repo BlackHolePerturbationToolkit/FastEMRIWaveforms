@@ -576,7 +576,6 @@ def get_p_at_t(
     index_of_a=2,
     index_of_e=4,
     index_of_x=5,
-    kerr_separatrix=True,
     bounds=None,
     **kwargs,
 ):
@@ -603,9 +602,6 @@ def get_p_at_t(
         index_of_a (int, optional): Index of a in provided :code:`traj_module` arguments. Default is 2.
         index_of_e (int, optional): Index of e0 in provided :code:`traj_module` arguments. Default is 4.
         index_of_x (int, optional): Index of x0 in provided :code:`traj_module` arguments. Default is 5.
-        kerr_separatrix (bool, optional): If True, the default lower bound of the root-finding will be
-            (approximately) the Kerr separatrix. If False, uses the Schwarzchild separatrix 6 + 2e.
-            Defaults to True.
         bounds (list, optional): Minimum and maximum values of p over which brentq will search for a root.
             If not given, will be set to [separatrix + 0.101, 50]. To supply only one of these two limits, set the
             other limit to None.
@@ -624,20 +620,26 @@ def get_p_at_t(
     if index_of_x > index_of_p:
         index_of_x -= 1
 
+    if "traj_kwargs" in kwargs and "enforce_schwarz_sep" in kwargs["traj_kwargs"]:
+        enforce_schwarz_sep = kwargs["traj_kwargs"]["enforce_schwarz_sep"]
+
+    else:
+        enforce_schwarz_sep = False
+
     # fix bounds
     if bounds is None:
-        if kerr_separatrix:
+        if not enforce_schwarz_sep:
             p_sep = get_separatrix(
-                traj_args[index_of_a], traj_args[index_of_e], traj_args[index_of_Y]
+                traj_args[index_of_a], traj_args[index_of_e], traj_args[index_of_x]
             )  # should be fairly close.
         else:
             p_sep = 6 + 2 * traj_args[index_of_e]
         bounds = [p_sep + 0.101, 16.0 + 2 * traj_args[index_of_e]]
 
     elif bounds[0] is None:
-        if kerr_separatrix:
+        if not enforce_schwarz_sep:
             p_sep = get_separatrix(
-                traj_args[index_of_a], traj_args[index_of_e], traj_args[index_of_Y]
+                traj_args[index_of_a], traj_args[index_of_e], traj_args[index_of_x]
             )  # should be fairly close.
         else:
             p_sep = 6 + 2 * traj_args[index_of_e]
@@ -718,6 +720,7 @@ record_by_version = {
     "1.3.6": 3981654,
     "1.3.7": 3981654,
     "1.4.0": 3981654,
+    "1.4.1": 3981654,
 }
 
 
