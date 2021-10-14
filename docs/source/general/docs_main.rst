@@ -34,6 +34,7 @@ Package TODOs
 Change Log
 ===========
 
+- 1.4.1: Bug fixes.
 - 1.4.0: Ability to access OMP threads. Set CUDA device. Change fundamental frequency files to "utility". Initial error handler. Trajectory overhaul. get_at_t function updates.
 - 1.3.7: Fixed get_at_t functions. Added new GPU architecture. Removed oldest architecture. Fixed issue #30 & #32.
 - 1.3.6: Fixed Y0 < 0.0 in new AAK.
