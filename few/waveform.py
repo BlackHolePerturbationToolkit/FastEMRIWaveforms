@@ -214,7 +214,7 @@ class GenerateEMRIWaveform:
         Phi_theta0,
         Phi_r0,
         *add_args,
-        **kwargs
+        **kwargs,
     ):
         """Generate the waveform with the given parameters.
 
@@ -565,7 +565,7 @@ class SchwarzschildEccentricWaveformBase(
             Phi_r0=Phi_r0,
             T=T,
             dt=dt,
-            **self.inspiral_kwargs
+            **self.inspiral_kwargs,
         )
 
         # makes sure p and e are generally within the model
@@ -809,7 +809,7 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         Ylm_kwargs={},
         use_gpu=False,
         *args,
-        **kwargs
+        **kwargs,
     ):
 
         inspiral_kwargs["func"] = "SchwarzEccFlux"
@@ -825,7 +825,7 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
             Ylm_kwargs=Ylm_kwargs,
             use_gpu=use_gpu,
             *args,
-            **kwargs
+            **kwargs,
         )
 
     def attributes_FastSchwarzschildEccentricFlux(self):
@@ -916,7 +916,7 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         Ylm_kwargs={},
         use_gpu=False,
         *args,
-        **kwargs
+        **kwargs,
     ):
 
         # declare specific properties
@@ -934,7 +934,7 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
             Ylm_kwargs=Ylm_kwargs,
             use_gpu=use_gpu,
             *args,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -1073,6 +1073,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         phiS,
         qK,
         phiK,
+        *args,
         Phi_phi0=0.0,
         Phi_theta0=0.0,
         Phi_r0=0.0,
@@ -1103,6 +1104,8 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
                 coordinates.
             phiK (double): Initial BH spin azimuthal angle in
                 ecliptic coordinates.
+            *args (tuple, optional): Any additional arguments required for the
+                trajectory.
             Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
                 Default is 0.0.
             Phi_theta0 (double, optional): Initial phase for :math:`\Phi_\Theta`.
@@ -1139,12 +1142,13 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
             p0,
             e0,
             Y0,
+            *args,
             Phi_phi0=Phi_phi0,
             Phi_theta0=Phi_theta0,
             Phi_r0=Phi_r0,
             T=T,
             dt=dt,
-            **self.inspiral_kwargs
+            **self.inspiral_kwargs,
         )
 
         # makes sure p, Y, and e are generally within the model
