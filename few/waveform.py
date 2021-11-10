@@ -483,6 +483,7 @@ class SchwarzschildEccentricWaveformBase(
         e0,
         theta,
         phi,
+        *args,
         dist=None,
         Phi_phi0=0.0,
         Phi_r0=0.0,
@@ -508,6 +509,7 @@ class SchwarzschildEccentricWaveformBase(
             e0 (double): Initial eccentricity (:math:`0.0\leq e_0\leq0.7`).
             theta (double): Polar viewing angle (:math:`-\pi/2\leq\Theta\leq\pi/2`).
             phi (double): Azimuthal viewing angle.
+            *args (list): extra args for trajectory model.
             dist (double, optional): Luminosity distance in Gpc. Default is None. If None,
                 will return source frame.
             Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
@@ -560,6 +562,7 @@ class SchwarzschildEccentricWaveformBase(
             p0,
             e0,
             1.0,
+            *args,
             Phi_phi0=Phi_phi0,
             Phi_theta0=0.0,
             Phi_r0=Phi_r0,

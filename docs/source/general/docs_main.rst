@@ -34,6 +34,7 @@ Package TODOs
 Change Log
 ===========
 
+- 1.4.3: Bug fixes for additional arguments in SchEcc waveform base.
 - 1.4.2: Bug fixes for additional arguments in AAK waveform.
 - 1.4.1: Bug fixes.
 - 1.4.0: Ability to access OMP threads. Set CUDA device. Change fundamental frequency files to "utility". Initial error handler. Trajectory overhaul. get_at_t function updates.
