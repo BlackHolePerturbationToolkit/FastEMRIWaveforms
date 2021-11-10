@@ -634,7 +634,7 @@ def get_p_at_t(
             )  # should be fairly close.
         else:
             p_sep = 6 + 2 * traj_args[index_of_e]
-        bounds = [p_sep + 0.101, 16.0 + 2 * traj_args[index_of_e]]
+        bounds = [p_sep + 0.1, 16.0 + 2 * traj_args[index_of_e]]
 
     elif bounds[0] is None:
         if not enforce_schwarz_sep:
@@ -643,7 +643,7 @@ def get_p_at_t(
             )  # should be fairly close.
         else:
             p_sep = 6 + 2 * traj_args[index_of_e]
-        bounds[0] = p_sep + 0.101
+        bounds[0] = p_sep + 0.1
 
     elif bounds[1] is None:
         bounds[1] = 16.0 + 2 * traj_args[index_of_e]
@@ -722,6 +722,8 @@ record_by_version = {
     "1.4.0": 3981654,
     "1.4.1": 3981654,
     "1.4.2": 3981654,
+    "1.4.3": 3981654,
+
 }
 
 
