@@ -14,8 +14,12 @@ def get_ode_function_lines_names():
             Second entry is dictionary with information on
             available ODE functions.
     """
-    with open(dir_path + "/../../src/ode_base.cc", "r") as fp:
+    with open(dir_path + "/../../src/ode_base_example.cc", "r") as fp:
         lines = fp.readlines()
+
+    if "ode_base.cc" in os.listdir(dir_path + "/../../src/"):
+        with open(dir_path + "/../../src/ode_base.cc", "r") as fp:
+            lines += fp.readlines()
 
     # find derivative functions and get info
     functions_info = {}
@@ -102,7 +106,7 @@ def ode_prepare():
                 )
         full += line
 
-    # build class for functions in ode_base.cc
+    # build class for functions in ode_base_example.cc
     for i, (func, info) in enumerate(functions_info.items()):
         if info["type"] == "func":
             full.replace("void " + func, "void " + func + "_base_func")
@@ -113,7 +117,7 @@ def ode_prepare():
                 {0}::~{0}(){1}{2}
 
                 void {0}::deriv_func(double* pdot, double* edot, double* Ydot,
-                                  double Omega_phi, double Omega_theta, double Omega_r,
+                                  double* Omega_phi, double* Omega_theta, double* Omega_r,
                                   double epsilon, double a, double p, double e, double Y, double* additional_args)
                 {1}
                     {0}_base_func(pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r,
@@ -132,7 +136,7 @@ def ode_prepare():
         few_dir = few_dir_;
     """
 
-    # setup for all functions in ode_base.cc
+    # setup for all functions in ode_base_example.cc
     for i, (func, info) in enumerate(functions_info.items()):
         lead = "if" if i == 0 else "else if"
 
@@ -164,7 +168,7 @@ def ode_prepare():
     full += """
 
     void ODECarrier::get_derivatives(double* pdot, double* edot, double* Ydot,
-                      double Omega_phi, double Omega_theta, double Omega_r,
+                      double* Omega_phi, double* Omega_theta, double* Omega_r,
                       double epsilon, double a, double p, double e, double Y, double* additional_args)
     {
     """
@@ -233,12 +237,16 @@ def ode_prepare():
     """
 
     # write out to ode.cc
-    with open("src/ode.cc", "w") as fp:
+    with open(dir_path + "/../../src/ode.cc", "w") as fp:
         fp.write(full)
 
-    # get ode_base.hh
-    with open("include/ode_base.hh", "r") as fp:
+    # get ode_base_example.hh
+    with open(dir_path + "/../../include/ode_base_example.hh", "r") as fp:
         hh_lines = fp.read()
+
+    if "ode_base.hh" in os.listdir(dir_path + "/../../include/"):
+        with open(dir_path + "/../../include/ode_base.hh", "r") as fp:
+            hh_lines += fp.read()
 
     full_hh = """
     #ifndef __ODE__
@@ -266,7 +274,7 @@ def ode_prepare():
                 {0}(std::string few_dir);
 
                 void deriv_func(double* pdot, double* edot, double* Ydot,
-                                  double Omega_phi, double Omega_theta, double Omega_r,
+                                  double* Omega_phi, double* Omega_theta, double* Omega_r,
                                   double epsilon, double a, double p, double e, double Y, double* additional_args);
                 ~{0}();
             {2};
@@ -286,7 +294,7 @@ def ode_prepare():
             ODECarrier(std::string func_name_, std::string few_dir_);
             ~ODECarrier();
             void get_derivatives(double* pdot, double* edot, double* Ydot,
-                              double Omega_phi, double Omega_theta, double Omega_r,
+                              double* Omega_phi, double* Omega_theta, double* Omega_r,
                               double epsilon, double a, double p, double e, double Y, double* additional_args);
 
     };
