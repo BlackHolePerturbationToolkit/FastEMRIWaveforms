@@ -34,6 +34,7 @@ Package TODOs
 Change Log
 ===========
 
+- 1.4.4: Bug fix at zero eccentricity. Frequencies back in ODE. Fix for git pull issue with ode_base files.
 - 1.4.3: Bug fixes for additional arguments in SchEcc waveform base.
 - 1.4.2: Bug fixes for additional arguments in AAK waveform.
 - 1.4.1: Bug fixes.
