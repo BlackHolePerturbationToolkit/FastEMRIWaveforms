@@ -30,10 +30,14 @@
 #define pn5_citation1 Pn5_citation
 __deriv__
 void pn5(double* pdot, double* edot, double* Ydot,
-                  double Omega_phi, double Omega_theta, double Omega_r,
+                  double* Omega_phi, double* Omega_theta, double* Omega_r,
                   double epsilon, double a, double p, double e, double Y, double* additional_args)
 {
     // evaluate ODEs
+
+    // the frequency variables are pointers!
+    double x = Y_to_xI(a, p, e, Y);
+    KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);
 
 	int Nv = 10;
     int ne = 10;
@@ -115,7 +119,7 @@ SchwarzEccFlux::SchwarzEccFlux(std::string few_dir)
 #define SchwarzEccFlux_file1 FluxNewMinusPNScaled_fixed_y_order.dat
 __deriv__
 void SchwarzEccFlux::deriv_func(double* pdot, double* edot, double* xdot,
-                  double Omega_phi, double Omega_theta, double Omega_r,
+                  double* Omega_phi, double* Omega_theta, double* Omega_r,
                   double epsilon, double a, double p, double e, double x, double* additional_args)
 {
     if ((6.0 + 2. * e) > p)
@@ -125,11 +129,15 @@ void SchwarzEccFlux::deriv_func(double* pdot, double* edot, double* xdot,
         *xdot = 0.0;
         return;
     }
+
+    SchwarzschildGeoCoordinateFrequencies(Omega_phi, Omega_r, p, e);
+    *Omega_theta = *Omega_phi;
+
     double y1 = log((p -2.*e - 2.1));
 
     // evaluate ODEs, starting with PN contribution, then interpolating over remaining flux contribution
 
-	double yPN = pow((Omega_phi),2./3.);
+	double yPN = pow((*Omega_phi),2./3.);
 
 	double EdotPN = (96 + 292*Power(e,2) + 37*Power(e,4))/(15.*Power(1 - Power(e,2),3.5)) * pow(yPN, 5);
 	double LdotPN = (4*(8 + 7*Power(e,2)))/(5.*Power(-1 + Power(e,2),2)) * pow(yPN, 7./2.);
