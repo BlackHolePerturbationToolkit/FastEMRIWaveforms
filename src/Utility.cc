@@ -374,38 +374,69 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
 
 double get_separatrix(double a, double e, double x)
 {
-    // fills in p and Y with zeros
-    struct params_holder params = {a, 0.0, e, x, 0.0};
-    double x_lo, x_hi;
-
-    // solve for polar p_sep
-    x_lo = 1.0 + sqrt(3.0) + sqrt(3.0 + 2.0 * sqrt(3.0));
-    x_hi = 8.0;
-
-
-
-    double polar_p_sep = solver (&params, &separatrix_polynomial_polar, x_lo, x_hi);
-    if (x == 0.0) return polar_p_sep;
-
-    double equat_p_sep, p_sep;
-    if (x > 0.0)
+    double p_sep, z1, z2;
+    double sign;
+    if (a == 0.0)
     {
-        x_lo = 1.0 + e;
-        x_hi = 6 + 2. * e;
-
-        equat_p_sep = solver (&params, &separatrix_polynomial_equat, x_lo, x_hi);
-
-        x_lo = equat_p_sep;
-        x_hi = polar_p_sep;
-    } else
-    {
-        x_lo = polar_p_sep;
-        x_hi = 12.0;
+        p_sep = 6.0 + 2.0 * e;
+        return p_sep;
     }
+    else if ((e == 0.0) & (abs(x) == 1.0))
+    {
+        z1 = 1. + pow((1. - pow(a,  2)), 1./3.) * (pow((1. + a), 1./3.)
+             + pow((1. - a), 1./3.));
 
-    p_sep = solver (&params, &separatrix_polynomial_full, x_lo, x_hi);
+        z2 = sqrt(3. * pow(a, 2) + pow(z1, 2));
 
-    return p_sep;
+        // prograde
+        if (x > 0.0)
+        {
+            sign = -1.0;
+        }
+        // retrograde
+        else
+        {
+            sign = +1.0;
+        }
+
+        p_sep = (3. + z2 + sign * sqrt((3. - z1) * (3. + z1 + 2. * z2)));
+        return p_sep;
+    }
+    else
+    {
+        // fills in p and Y with zeros
+        struct params_holder params = {a, 0.0, e, x, 0.0};
+        double x_lo, x_hi;
+
+        // solve for polar p_sep
+        x_lo = 1.0 + sqrt(3.0) + sqrt(3.0 + 2.0 * sqrt(3.0));
+        x_hi = 8.0;
+
+
+
+        double polar_p_sep = solver (&params, &separatrix_polynomial_polar, x_lo, x_hi);
+        if (x == 0.0) return polar_p_sep;
+
+        double equat_p_sep;
+        if (x > 0.0)
+        {
+            x_lo = 1.0 + e;
+            x_hi = 6 + 2. * e;
+
+            equat_p_sep = solver (&params, &separatrix_polynomial_equat, x_lo, x_hi);
+
+            x_lo = equat_p_sep;
+            x_hi = polar_p_sep;
+        } else
+        {
+            x_lo = polar_p_sep;
+            x_hi = 12.0;
+        }
+
+        p_sep = solver (&params, &separatrix_polynomial_full, x_lo, x_hi);
+
+        return p_sep;
+    }
 }
 
 void get_separatrix_vector(double* separatrix, double* a, double* e, double* x, int length)
