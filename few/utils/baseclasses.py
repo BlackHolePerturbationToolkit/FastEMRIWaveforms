@@ -834,6 +834,12 @@ class SummationBase(ABC):
         self.num_pts, self.num_pts_pad = num_pts, num_pts_pad
         self.dt = dt
 
+        # make sure that the FD waveform has always an odd number of points
+        if self.output_type=="fd":
+            if self.num_pts + self.num_pts_pad % 2:
+                self.num_pts_pad = self.num_pts_pad + 1
+                # print("n points",self.num_pts + self.num_pts_pad)
+
         # setup waveform holder for time domain
         self.waveform = self.xp.zeros(
             (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128

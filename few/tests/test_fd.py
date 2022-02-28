@@ -105,8 +105,9 @@ class WaveformTest(unittest.TestCase):
 
         N = int(T*365*3600*24/dt)
         f_in = xp.array(np.linspace(-1 / (2 * dt), +1 / (2 * dt), num= N))
+        kwargs = dict(f_arr=f_in)
 
-        fast_wave = fast(M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, f_arr=f_in)
+        fast_wave = fast(M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kwargs)
 
         mm = get_mismatch(fast_wave, fast_wave, use_gpu=gpu_available)
 

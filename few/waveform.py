@@ -497,6 +497,7 @@ class SchwarzschildEccentricWaveformBase(
         batch_size=-1,
         mode_selection=None,
         include_minus_m=True,
+        **kwargs,
     ):
         """Call function for SchwarzschildEccentric models.
 
@@ -745,6 +746,7 @@ class SchwarzschildEccentricWaveformBase(
                 dt=dt,
                 T=T,
                 include_minus_m=include_minus_m,
+                **kwargs,
             )
 
             # if batching, need to add the waveform
