@@ -59,37 +59,20 @@ class WaveformTest(unittest.TestCase):
             use_gpu=gpu_available,
         )
 
-        # setup slow
+        # setup td
+        sum_kwargs = dict(pad_output=True)
 
-        # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
-        inspiral_kwargs = {
-            "DENSE_STEPPING": 1,  # we want a sparsely sampled trajectory
-            "max_init_len": int(1e7),  # dense stepping trajectories
-        }
-
-        # keyword arguments for inspiral generator (RomanAmplitude)
-        amplitude_kwargs = {"max_init_len": int(1e4)}  # this must be >= batch_size
-
-        # keyword arguments for Ylm generator (GetYlms)
-        Ylm_kwargs = {
-            "assume_positive_m": False  # if we assume positive m, it will generate negative m for all m>0
-        }
-
-        # keyword arguments for summation generator (InterpolatedModeSum)
-        sum_kwargs = {"use_gpu": False}  # GPU is availabel for this type of summation
-        mode_selector_kwargs = {}
-        slow = SlowSchwarzschildEccentricFlux(
+        slow = FastSchwarzschildEccentricFlux(
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             sum_kwargs=sum_kwargs,
-            mode_selector_kwargs=mode_selector_kwargs,
-            use_gpu=False,
+            use_gpu=gpu_available,
         )
 
         # parameters
-        T = 0.001  # years
-        dt = 15.0  # seconds
+        T = 1.0  # years
+        dt = 11.0  # seconds
         M = 1e6
         mu = 1e1
         p0 = 8.0
@@ -99,20 +82,50 @@ class WaveformTest(unittest.TestCase):
         dist = 1.0  # distance
         batch_size = int(1e4)
 
-        # slow_wave = slow(
-        #     M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, batch_size=batch_size
-        # )
+        slow_wave = slow(
+            M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, #mode_selection=[(2,2,0)]
+        )
 
-        N = int(T*365*3600*24/dt)
-        f_in = xp.array(np.linspace(-1 / (2 * dt), +1 / (2 * dt), num= N))
+        # N = int(T*365*3600*24/dt)+1
+        f_in = xp.array(np.linspace(-1 / (2 * dt), +1 / (2 * dt), num= len(slow_wave) ))
+        N = len(f_in)
         kwargs = dict(f_arr=f_in)
 
-        fast_wave = fast(M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kwargs)
+        fast_wave = fast(
+            M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kwargs, #mode_selection=[(2,2,0)]
+            )
 
-        mm = get_mismatch(fast_wave, fast_wave, use_gpu=gpu_available)
+        # process FD
+        fd_sig = -xp.flip(fast_wave)
 
-        self.assertLess(mm, 1e-4)
+        ind =int(( len(fd_sig) - 1 ) / 2 + 1)
 
-        # test_rk4
-        fast.inspiral_kwargs["use_rk4"] = True
-        fast_wave = fast(M, mu, p0, e0, theta, phi, dist, T=T, dt=dt)
+        fft_sig_r = xp.real(fd_sig + xp.flip(fd_sig) )/2.0 + 1j * xp.imag(fd_sig - xp.flip(fd_sig))/2.0
+        fft_sig_i = -xp.imag(fd_sig + xp.flip(fd_sig) )/2.0 + 1j * xp.real(fd_sig - xp.flip(fd_sig))/2.0
+
+        # take fft of TD
+        freq = f_in[int(( N - 1 ) / 2 + 1):].get()
+        h_td = xp.asarray(slow_wave)
+
+        h_td_real = xp.real(h_td)
+        h_td_imag = -xp.imag(h_td)
+        time_series_1_fft = xp.fft.fftshift(xp.fft.fft(h_td_real))[int(( N - 1 ) / 2 + 1):] * dt #- 1j * xp.fft.fftshift(xp.fft.fft(h_td_imag))[int(( N - 1 ) / 2 + 1):] * dt
+        time_series_2_fft = fft_sig_r[ind:]
+        
+        # make sure they have equal length
+        self.assertAlmostEqual(len(time_series_1_fft), len(time_series_2_fft))
+
+        # overlap
+        ac = xp.dot(time_series_1_fft.conj(), time_series_2_fft) / xp.sqrt(
+            xp.dot(time_series_1_fft.conj(), time_series_1_fft)
+            * xp.dot(time_series_2_fft.conj(), time_series_2_fft)
+        )
+        
+        if gpu_available:
+            result = ac.item().real
+
+        # import matplotlib.pyplot as plt
+        # plt.figure(); plt.semilogx(freq, xp.real(time_series_1_fft).get(), alpha=0.5); plt.plot(freq, xp.real(time_series_2_fft).get(), '--', alpha=0.5); plt.xlim([3e-3,3.01e-3]); plt.savefig('test_real') 
+        # plt.figure(); plt.semilogx(freq, xp.imag(time_series_1_fft).get(), alpha=0.5); plt.plot(freq, xp.imag(time_series_2_fft).get(), '--', alpha=0.5); plt.xlim([3e-3,3.01e-3]);plt.savefig('test_imag') 
+
+        self.assertLess(1-result, 1e-2)

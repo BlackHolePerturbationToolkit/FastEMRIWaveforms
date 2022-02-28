@@ -835,10 +835,10 @@ class SummationBase(ABC):
         self.dt = dt
 
         # make sure that the FD waveform has always an odd number of points
-        if self.output_type=="fd":
-            if self.num_pts + self.num_pts_pad % 2:
-                self.num_pts_pad = self.num_pts_pad + 1
-                # print("n points",self.num_pts + self.num_pts_pad)
+        # if self.output_type=="fd":
+        #     if self.num_pts + self.num_pts_pad % 2:
+        #         self.num_pts_pad = self.num_pts_pad + 1
+        #         print("n points",self.num_pts + self.num_pts_pad)
 
         # setup waveform holder for time domain
         self.waveform = self.xp.zeros(
@@ -847,6 +847,17 @@ class SummationBase(ABC):
 
         # get the waveform summed in place
         self.sum(t, *args, dt=dt, **kwargs)
+
+        # if self.output_type=="fd":
+        #     fd_sig = self.xp.flip(self.waveform)
+
+        #     ind =int(( len(fd_sig) - 1 ) / 2 + 1)
+
+        #     fft_sig_r = self.xp.real(fd_sig + self.xp.flip(fd_sig) )/2.0 + 1j * self.xp.imag(fd_sig - self.xp.flip(fd_sig))/2.0
+        #     fft_sig_i = -self.xp.imag(fd_sig + self.xp.flip(fd_sig) )/2.0 + 1j * self.xp.real(fd_sig - self.xp.flip(fd_sig))/2.0
+
+        #     self.waveform = fft_sig_r[ind:] - 1j*fft_sig_i[ind:]
+
 
         return self.waveform
 
