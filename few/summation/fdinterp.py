@@ -196,10 +196,12 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         # plt.plot(t,Omega_phi/(M * MTSUN_SI)); plt.plot(t,spline.deriv(t)[-2],'--' ); plt.show()
 
         # define a frequency vector
-
-        self.frequency = self.xp.fft.fftshift(
-            self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt)
-        )
+        try:
+            self.frequency = kwargs["f_arr"]
+        except:
+            self.frequency = self.xp.fft.fftshift(
+                self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt)
+            )
 
         seg_freqs = m_arr[:, None] * f_phi[None, :] + n_arr[:, None] * f_r[None, :]
 
@@ -351,6 +353,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         )
 
         # TODO: this spline sets the turnover slightly off
+        self.f_modes = special_f_arrs
         special_f_spline = CubicSplineInterpolant(
             special_f_arrs,
             self.xp.tile(t, (special_f_arrs.shape[0], 1)),
