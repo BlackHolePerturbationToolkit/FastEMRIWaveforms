@@ -80,7 +80,7 @@ slow = FastSchwarzschildEccentricFlux(
 )
 
 # parameters
-T = 0.2  # years
+T = 1.0  # years
 dt = 9.0  # seconds
 M = 1e6
 mu = 5e1
@@ -140,10 +140,6 @@ f_to_eval = [xp.array([fb[int(len(fb)*0.2)], fb[int(len(fb)/2)], fb[int(len(fb)*
 # this step is not necessary because we could find the correspondent index
 ind_f = [xp.array([xp.where(freq==ff[i])[0] for i in range(bin_number*3)]).flatten() for ff in f_to_eval]
 print("ind_f", ind_f)
-# import matplotlib.pyplot as plt
-# f_min = np.min(f_to_eval[0].get())
-# f_max = np.max(f_to_eval[0].get())
-# plt.figure(); plt.semilogx(freq.get(), xp.real(ref_wave_p_c[0][0]).get(), alpha=0.5); plt.axvline(f_to_eval[0][0].get()); plt.axvline(f_to_eval[0][1].get());plt.axvline(f_to_eval[0][2].get()); plt.xlim([f_min*0.99, f_max*1.01]); plt.savefig('test_rel') 
 # ------------- online computation ------------- #
 # ind_minus_f = xp.array([xp.where(f_in==-f_to_eval[0][i])[0] for i in range(bin_number*3)]).flatten()
 # ind_plus_f = xp.array([xp.where(f_in==f_to_eval[0][i])[0] for i in range(bin_number*3)]).flatten()
@@ -153,7 +149,7 @@ kw = dict(f_arr = f_in )
 import time
 st = time.time()
 list_h = fast(
-    M*(1+1e-7), mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kw, mode_selection=mod_sel
+    M*(1+5e-7), mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kw, mode_selection=mod_sel
     )
 
 h_wave_mode_pol = xp.array([transform_to_fft_hp_hcross(ll) for ll in list_h])
@@ -175,14 +171,8 @@ print("r_vec",r_vec)
 # sum along the modes and then take the real part and sum along polarizations
 d_h_app =xp.real(xp.sum(A_vec*r_vec))
 print(time.time()- st)
-print('d h',d_h_app)
-check_h = slow(
-    M*(1+1e-8), mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kw, mode_selection=mod_sel
-    )
-h_p, h_c = transform_to_fft_hp_hcross(check_h)
-d_h_true = xp.real(xp.dot(xp.conj(d_p),h_p)) + xp.real(xp.dot(xp.conj(d_c),h_c))
-# h_h = 4*xp.real(xp.dot(xp.conj(ref_wave_p_c[0][0]),ref_wave_p_c[0][0])) #+ 4*xp.real(xp.dot(ref_wave_p_c[0][1],ref_wave_p_c[0][1]))
-print('d h true',d_h_true)
+
+# CHECK #
 
 # check each polarizartion
 tot = 0.0
@@ -192,10 +182,6 @@ for i in range(len(mod_sel)):
     print(xp.real(xp.dot(A_vec[i,1,:],r_vec[i,1,:])),'=', xp.real(xp.dot(xp.conj(d_c),h_wave_mode_pol[i,1,:]))  )
     tot = tot + xp.real(xp.dot(xp.conj(d_p),h_wave_mode_pol[i,0,:])) + xp.real(xp.dot(xp.conj(d_c),h_wave_mode_pol[i,1,:]))
 
-print("sum of the pieces", tot)
-
-breakpoint()
-
-
-
-
+print('d h',d_h_app)
+print("d h true", tot)
+print(" rel diff", (d_h_app - tot)/tot)
