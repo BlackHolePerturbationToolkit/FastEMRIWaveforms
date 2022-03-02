@@ -10,6 +10,8 @@ from few.utils.utility import get_overlap, get_mismatch
 from few.utils.ylm import GetYlms
 from few.utils.modeselector import ModeSelector
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
+from few.utils.utility import get_fundamental_frequencies
+from few.utils.constants import *
 
 try:
     import cupy as xp
@@ -78,7 +80,7 @@ slow = FastSchwarzschildEccentricFlux(
 )
 
 # parameters
-T = 1.0  # years
+T = 0.2  # years
 dt = 9.0  # seconds
 M = 1e6
 mu = 5e1
@@ -88,7 +90,7 @@ theta = np.pi / 3  # polar viewing angle
 phi = np.pi / 4  # azimuthal viewing angle
 dist = 1.0  # distance
 
-
+mod_sel = [ (2,2,1), (3,3,1)]#, (2,2,0)]#, (3,2,0), (3,2,2)]
 # FD f array
 
 N = 2854577#len(f_in)
@@ -98,66 +100,95 @@ kwargs = dict(f_arr=f_in)
 
 # full datastream
 datastream = slow(
-    M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kwargs, mode_selection=[(2,2,0)]#, (2,2,2)]
+    M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kwargs, mode_selection=mod_sel,
 )
 # crosse and plus
 d_p, d_c = transform_to_fft_hp_hcross(datastream)
-
-
+t, p, e, x, Phi_phi, Phi_theta, Phi_r = slow.inspiral_generator(M,mu, 0.0, p0, e0, 1.0, T=T, dt=dt)
+Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(
+            0.0, p, e, np.zeros_like(e)
+        )
+f_phi, f_r = (
+            xp.asarray(Omega_phi / (2 * np.pi * M * MTSUN_SI)),
+            xp.asarray(Omega_r / (2 * np.pi * M * MTSUN_SI)),
+        )
+f_range = xp.array([mm[1]*f_phi + mm[2]*f_r for mm in mod_sel])
 # ------------- pre computation ------------- #
 # list of reference waveforms
-list_ref_waves = fast(
-    M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kwargs, mode_selection=[(2,2,0)]#, (2,2,2)]
-    )
-ref_wave_p_c = [transform_to_fft_hp_hcross(ll) for ll in list_ref_waves]
+list_ref_waves = [slow(
+    M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kwargs, mode_selection=mm
+    ) for mm in mod_sel]
+ref_wave_mode_pol = xp.array([transform_to_fft_hp_hcross(ll) for ll in list_ref_waves])
+
+def A_vector(d, h_ref):
+    return xp.array([xp.dot(xp.conj(d), h_ref*fpow)  for fpow in [xp.ones_like(freq), freq, freq**2]])
+
 # A_vector
-A_vec_p = [xp.array([xp.dot(xp.conj(d_p), wave_mode[0]*fpow)  for fpow in [xp.ones_like(freq), freq, freq**2]]) for wave_mode in ref_wave_p_c]
-A_vec_c = [xp.array([xp.dot(xp.conj(d_c), wave_mode[1]*fpow)  for fpow in [xp.ones_like(freq), freq, freq**2]]) for wave_mode in ref_wave_p_c]
+A_vec = xp.array([[A_vector(d_p, wave_mode[0]), A_vector(d_c, wave_mode[1])] for wave_mode in ref_wave_mode_pol])
+
 # get frequency bin of each mode
-mask_mode = [(ll[0]!=complex(0.0)) for ll in ref_wave_p_c]
-f_bin = [freq[mm] for mm in mask_mode]
-check = [ref_wave_p_c[0][0][mm] for mm in mask_mode]
+f_bin = [freq[((xp.min(fr)<freq)*(freq<xp.max(fr)))] for fr in f_range]
+print([f_bin[i] for  i in range(len(mod_sel))])
 # frequency to evaluate
 bin_number = 1
-f_to_eval = [xp.array([fb[i] for i in xp.linspace(int((len(fb)-2)*0.2), int((len(fb)-2)*0.8), num=bin_number*3, dtype=int)]) for fb in f_bin]
-feval = xp.sort(xp.array(f_to_eval)).flatten()
-f_sym = xp.sort(xp.hstack((feval,0,-feval))).flatten()
+f_to_eval = [xp.array([fb[int(len(fb)*0.2)], fb[int(len(fb)/2)], fb[int(len(fb)*0.8)]]) for fb in f_bin]
+# print("f eval", f_to_eval)
+
+# feval = xp.sort(xp.array(f_to_eval)).flatten()
+# f_sym = xp.sort(xp.hstack((feval,0,-feval))).flatten()
 # re-compute list of reference waveforms at specific frequencies
 # this step is not necessary because we could find the correspondent index
-ind_f = xp.array([xp.where(freq==f_to_eval[0][i])[0] for i in range(bin_number*3)]).flatten()
-ref_waves = [[ref_w[0][ind_f],ref_w[1][ind_f]]  for ref_w in ref_wave_p_c]
-
-import matplotlib.pyplot as plt
-f_min = np.min(f_to_eval[0].get())
-f_max = np.max(f_to_eval[0].get())
-plt.figure(); plt.semilogx(freq.get(), xp.real(ref_wave_p_c[0][0]).get(), alpha=0.5); plt.axvline(f_to_eval[0][0].get()); plt.axvline(f_to_eval[0][1].get());plt.axvline(f_to_eval[0][2].get()); plt.xlim([f_min*0.99, f_max*1.01]); plt.savefig('test_rel') 
+ind_f = [xp.array([xp.where(freq==ff[i])[0] for i in range(bin_number*3)]).flatten() for ff in f_to_eval]
+print("ind_f", ind_f)
+# import matplotlib.pyplot as plt
+# f_min = np.min(f_to_eval[0].get())
+# f_max = np.max(f_to_eval[0].get())
+# plt.figure(); plt.semilogx(freq.get(), xp.real(ref_wave_p_c[0][0]).get(), alpha=0.5); plt.axvline(f_to_eval[0][0].get()); plt.axvline(f_to_eval[0][1].get());plt.axvline(f_to_eval[0][2].get()); plt.xlim([f_min*0.99, f_max*1.01]); plt.savefig('test_rel') 
 # ------------- online computation ------------- #
 # ind_minus_f = xp.array([xp.where(f_in==-f_to_eval[0][i])[0] for i in range(bin_number*3)]).flatten()
 # ind_plus_f = xp.array([xp.where(f_in==f_to_eval[0][i])[0] for i in range(bin_number*3)]).flatten()
 # ind_final = xp.append(ind_minus_f, ind_plus_f)
 # kw = dict(f_arr = f_in[ind_final] )
 kw = dict(f_arr = f_in )
+import time
+st = time.time()
+list_h = [slow(
+    M*(1+1e-7), mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kw, mode_selection=mm
+    ) for mm in mod_sel]
 
-list_h = fast(
-    M*(1+1e-8), mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kw, mode_selection=[ (2,2,0)]
-    )
-h_wave_p_c = [transform_to_fft_hp_hcross(ll) for ll in list_h]
-h_waves = [[ref_w[0][ind_f],ref_w[1][ind_f]]  for ref_w in h_wave_p_c]
+h_wave_mode_pol = xp.array([transform_to_fft_hp_hcross(ll) for ll in list_h])
 
-
+# get the ratio
+bb = xp.array([h_wave_mode_pol[i,:,ind_f[i]]/ref_wave_mode_pol[i,:,ind_f[i]] for i in range(len(mod_sel))])
+print("bb",bb)
+# construct matrix for 2nd order poly
 Mat_F = [xp.array([[xp.ones_like(ff), ff, ff**2] for ff in fev]) for fev in f_to_eval]
-# ratio of the waveforms
-ratio_p = [num[0]/den[0] for num,den in zip(h_waves, ref_waves)]
-ratio_c = [num[1]/den[1] for num,den in zip(h_waves, ref_waves)]
-# breakpoint()
-r_p = [xp.linalg.solve(Matrix, B) for Matrix,B in zip(Mat_F,ratio_p) ]
-r_c = [xp.linalg.solve(Matrix, B) for Matrix,B in zip(Mat_F,ratio_c) ]
+print("mat",Mat_F)
+# solve system of eq
+r_vec = xp.array([[xp.linalg.solve(Mat_F[mod_numb], bb[mod_numb,:, pol]) for pol in range(2)] for mod_numb in range(len(mod_sel))])
+
+print("r_vec",r_vec)
+# r_c = [xp.linalg.solve(Matrix, B) for Matrix,B in zip(Mat_F,ratio_c) ]
 # approximate d h
-d_h_app = 4*xp.real(xp.dot(A_vec_p[0],r_p[0])) #+ 4*xp.real(xp.dot(xp.array(A_vec_c[0]),r_c[0]))
+# breakpoint()
+# xp.array([[ xp.dot(A_vec[mod,pol,:], r_vec[mod,pol,:]) for pol in range(2)] for mod in range(len(mod_sel))])
+# sum along the modes and then take the real part and sum along polarizations
+d_h_app =xp.real(xp.sum(A_vec*r_vec))
+print(time.time()- st)
 print('d h',d_h_app)
-d_h_true = 4*xp.real(xp.dot(xp.conj(h_wave_p_c[0][0]),ref_wave_p_c[0][0])) #+ 4*xp.real(xp.dot(h_wave_p_c[0][1],ref_wave_p_c[0][1]))
-h_h = 4*xp.real(xp.dot(xp.conj(ref_wave_p_c[0][0]),ref_wave_p_c[0][0])) #+ 4*xp.real(xp.dot(ref_wave_p_c[0][1],ref_wave_p_c[0][1]))
+check_h = slow(
+    M*(1+1e-8), mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kw, mode_selection=mod_sel
+    )
+h_p, h_c = transform_to_fft_hp_hcross(check_h)
+d_h_true = xp.real(xp.dot(xp.conj(d_p),h_p)) + xp.real(xp.dot(xp.conj(d_c),h_c))
+# h_h = 4*xp.real(xp.dot(xp.conj(ref_wave_p_c[0][0]),ref_wave_p_c[0][0])) #+ 4*xp.real(xp.dot(ref_wave_p_c[0][1],ref_wave_p_c[0][1]))
 print('d h true',d_h_true)
+for i in range(len(mod_sel)):
+    print(mod_sel[i])
+    print(A_vec[i,0,:],r_vec[i,0,:])
+    print(xp.real(xp.dot(A_vec[i,0,:],r_vec[i,0,:])), xp.real(xp.dot(xp.conj(ref_wave_mode_pol[i,0,:]),h_wave_mode_pol[i,0,:]))  )
+    print(xp.real(xp.dot(A_vec[i,1,:],r_vec[i,1,:])), xp.real(xp.dot(xp.conj(ref_wave_mode_pol[i,1,:]),h_wave_mode_pol[i,1,:]))  )
+
 breakpoint()
 
 
