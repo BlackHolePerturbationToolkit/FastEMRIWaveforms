@@ -90,7 +90,7 @@ theta = np.pi / 3  # polar viewing angle
 phi = np.pi / 4  # azimuthal viewing angle
 dist = 1.0  # distance
 
-mod_sel = [ (2,2,1), (3,3,1)]#, (2,2,0)]#, (3,2,0), (3,2,2)]
+mod_sel = [ (2,2,1), (3,2,0), (2,2,0), (3,2,2)]
 # FD f array
 
 N = 2854577#len(f_in)
@@ -115,9 +115,9 @@ f_phi, f_r = (
 f_range = xp.array([mm[1]*f_phi + mm[2]*f_r for mm in mod_sel])
 # ------------- pre computation ------------- #
 # list of reference waveforms
-list_ref_waves = [slow(
-    M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kwargs, mode_selection=mm
-    ) for mm in mod_sel]
+list_ref_waves = fast(
+    M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kwargs, mode_selection=mod_sel
+)
 ref_wave_mode_pol = xp.array([transform_to_fft_hp_hcross(ll) for ll in list_ref_waves])
 
 def A_vector(d, h_ref):
@@ -152,9 +152,9 @@ print("ind_f", ind_f)
 kw = dict(f_arr = f_in )
 import time
 st = time.time()
-list_h = [slow(
-    M*(1+1e-7), mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kw, mode_selection=mm
-    ) for mm in mod_sel]
+list_h = fast(
+    M*(1+1e-7), mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kw, mode_selection=mod_sel
+    )
 
 h_wave_mode_pol = xp.array([transform_to_fft_hp_hcross(ll) for ll in list_h])
 
@@ -183,11 +183,16 @@ h_p, h_c = transform_to_fft_hp_hcross(check_h)
 d_h_true = xp.real(xp.dot(xp.conj(d_p),h_p)) + xp.real(xp.dot(xp.conj(d_c),h_c))
 # h_h = 4*xp.real(xp.dot(xp.conj(ref_wave_p_c[0][0]),ref_wave_p_c[0][0])) #+ 4*xp.real(xp.dot(ref_wave_p_c[0][1],ref_wave_p_c[0][1]))
 print('d h true',d_h_true)
+
+# check each polarizartion
+tot = 0.0
 for i in range(len(mod_sel)):
     print(mod_sel[i])
-    print(A_vec[i,0,:],r_vec[i,0,:])
-    print(xp.real(xp.dot(A_vec[i,0,:],r_vec[i,0,:])), xp.real(xp.dot(xp.conj(ref_wave_mode_pol[i,0,:]),h_wave_mode_pol[i,0,:]))  )
-    print(xp.real(xp.dot(A_vec[i,1,:],r_vec[i,1,:])), xp.real(xp.dot(xp.conj(ref_wave_mode_pol[i,1,:]),h_wave_mode_pol[i,1,:]))  )
+    print(xp.real(xp.dot(A_vec[i,0,:],r_vec[i,0,:])),'=', xp.real(xp.dot(xp.conj(d_p),h_wave_mode_pol[i,0,:]))  )
+    print(xp.real(xp.dot(A_vec[i,1,:],r_vec[i,1,:])),'=', xp.real(xp.dot(xp.conj(d_c),h_wave_mode_pol[i,1,:]))  )
+    tot = tot + xp.real(xp.dot(xp.conj(d_p),h_wave_mode_pol[i,0,:])) + xp.real(xp.dot(xp.conj(d_c),h_wave_mode_pol[i,1,:]))
+
+print("sum of the pieces", tot)
 
 breakpoint()
 
