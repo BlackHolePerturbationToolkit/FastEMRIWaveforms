@@ -123,12 +123,22 @@ ref_wave_mode_pol = xp.array([transform_to_fft_hp_hcross(ll) for ll in list_ref_
 def A_vector(d, h_ref):
     return xp.array([xp.dot(xp.conj(d), h_ref*fpow)  for fpow in [xp.ones_like(freq), freq, freq**2]])
 
+def B_vector(d, h_ref):
+    return xp.array([xp.dot(xp.conj(d), h_ref*fpow)  for fpow in [xp.ones_like(freq), freq, freq**2, freq**3, freq**4]])
+
 # A_vector
 A_vec = xp.array([[A_vector(d_p, wave_mode[0]), A_vector(d_c, wave_mode[1])] for wave_mode in ref_wave_mode_pol])
 
+# B matrix
+B_matrix_p = xp.array([[B_vector(ref_wave_mode_pol[m1,pol,:], ref_wave_mode_pol[m2,pol,:]) for m1 in range(len(mod_sel)) for m2 in range(len(mod_sel)) if m1<=m2] for pol in range(2) ])
+# tri_up_list = [xp.triu(B_matrix_p[:,i]) for i in range(n_voices)]
+# final_B = xp.array([tri_up + tri_up.T - xp.diag(xp.diag(tri_up)) for tri_up in tri_up_list])
+# tri = xp.zeros((n_voices,n_voices))
+# tri[np.triu_indices(n_voices)] = B_matrix_p[:,0]
+
 # get frequency bin of each mode
 f_bin = [freq[((xp.min(fr)<freq)*(freq<xp.max(fr)))] for fr in f_range]
-print([f_bin[i] for  i in range(len(mod_sel))])
+# print([f_bin[i] for  i in range(len(mod_sel))])
 # frequency to evaluate
 bin_number = 1
 f_to_eval = [xp.array([fb[int(len(fb)*0.2)], fb[int(len(fb)/2)], fb[int(len(fb)*0.8)]]) for fb in f_bin]
@@ -139,7 +149,7 @@ f_to_eval = [xp.array([fb[int(len(fb)*0.2)], fb[int(len(fb)/2)], fb[int(len(fb)*
 # re-compute list of reference waveforms at specific frequencies
 # this step is not necessary because we could find the correspondent index
 ind_f = [xp.array([xp.where(freq==ff[i])[0] for i in range(bin_number*3)]).flatten() for ff in f_to_eval]
-print("ind_f", ind_f)
+# print("ind_f", ind_f)
 # ------------- online computation ------------- #
 # ind_minus_f = xp.array([xp.where(f_in==-f_to_eval[0][i])[0] for i in range(bin_number*3)]).flatten()
 # ind_plus_f = xp.array([xp.where(f_in==f_to_eval[0][i])[0] for i in range(bin_number*3)]).flatten()
@@ -156,12 +166,22 @@ h_wave_mode_pol = xp.array([transform_to_fft_hp_hcross(ll) for ll in list_h])
 
 # get the ratio
 bb = xp.array([h_wave_mode_pol[i,:,ind_f[i]]/ref_wave_mode_pol[i,:,ind_f[i]] for i in range(len(mod_sel))])
-print("bb",bb)
+# print("bb",bb)
 # construct matrix for 2nd order poly
 Mat_F = [xp.array([[xp.ones_like(ff), ff, ff**2] for ff in fev]) for fev in f_to_eval]
-print("mat",Mat_F)
+# print("mat",Mat_F)
 # solve system of eq
 r_vec = xp.array([[xp.linalg.solve(Mat_F[mod_numb], bb[mod_numb,:, pol]) for pol in range(2)] for mod_numb in range(len(mod_sel))])
+
+r_mat = xp.array([[
+    [
+        xp.conj(r_vec[v1, pol, 0])*r_vec[v2, pol, 0],
+        xp.conj(r_vec[v1, pol, 0])*r_vec[v2, pol, 1] + xp.conj(r_vec[v1, pol, 1])*r_vec[v2, pol, 0],
+        xp.conj(r_vec[v1, pol, 0])*r_vec[v2, pol, 2] + xp.conj(r_vec[v1, pol, 1])*r_vec[v2, pol, 1] + xp.conj(r_vec[v1, pol, 2])*r_vec[v2, pol, 0],
+        xp.conj(r_vec[v1, pol, 1])*r_vec[v2, pol, 2] + xp.conj(r_vec[v1, pol, 2])*r_vec[v2, pol, 1],
+        xp.conj(r_vec[v1, pol, 2])*r_vec[v2, pol, 2]
+    ]  for v1 in range(len(mod_sel)) for v2 in range(len(mod_sel)) if v1<=v2] for pol in range(2)])
+
 
 print("r_vec",r_vec)
 # r_c = [xp.linalg.solve(Matrix, B) for Matrix,B in zip(Mat_F,ratio_c) ]
@@ -170,18 +190,30 @@ print("r_vec",r_vec)
 # xp.array([[ xp.dot(A_vec[mod,pol,:], r_vec[mod,pol,:]) for pol in range(2)] for mod in range(len(mod_sel))])
 # sum along the modes and then take the real part and sum along polarizations
 d_h_app =xp.real(xp.sum(A_vec*r_vec))
+h_h_app = xp.sum(xp.array([[xp.real(xp.dot(B_matrix_p[pol,:,mm],r_mat[pol,:,mm])) for mm in range(len(mod_sel))] for pol in range(2)]))
+
 print(time.time()- st)
 
 # CHECK #
 
 # check each polarizartion
-tot = 0.0
+tot_dh = 0.0
+tot_hh_p = xp.array([xp.dot(xp.conj(h_wave_mode_pol[v1,0,:]),h_wave_mode_pol[v2,0,:]) for v1 in range(len(mod_sel)) for v2 in range(len(mod_sel)) if v1<=v2])
+tot_hh_c = xp.array([xp.dot(xp.conj(h_wave_mode_pol[v1,1,:]),h_wave_mode_pol[v2,1,:]) for v1 in range(len(mod_sel)) for v2 in range(len(mod_sel)) if v1<=v2])
+tot_hh = xp.real(xp.sum(tot_hh_p) + xp.sum(tot_hh_c))
 for i in range(len(mod_sel)):
     print(mod_sel[i])
     print(xp.real(xp.dot(A_vec[i,0,:],r_vec[i,0,:])),'=', xp.real(xp.dot(xp.conj(d_p),h_wave_mode_pol[i,0,:]))  )
     print(xp.real(xp.dot(A_vec[i,1,:],r_vec[i,1,:])),'=', xp.real(xp.dot(xp.conj(d_c),h_wave_mode_pol[i,1,:]))  )
-    tot = tot + xp.real(xp.dot(xp.conj(d_p),h_wave_mode_pol[i,0,:])) + xp.real(xp.dot(xp.conj(d_c),h_wave_mode_pol[i,1,:]))
+    tot_dh = tot_dh + xp.real(xp.dot(xp.conj(d_p),h_wave_mode_pol[i,0,:])) + xp.real(xp.dot(xp.conj(d_c),h_wave_mode_pol[i,1,:]))
+
 
 print('d h',d_h_app)
-print("d h true", tot)
-print(" rel diff", (d_h_app - tot)/tot)
+print("d h true", tot_dh)
+print(" rel diff", (d_h_app - tot_dh)/tot_dh)
+
+
+print('h h',h_h_app)
+print("h h true", tot_hh)
+print(" rel diff", (h_h_app - tot_hh)/tot_hh)
+breakpoint()
