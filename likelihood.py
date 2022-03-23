@@ -23,6 +23,8 @@ from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *
 from few.waveform import GenerateEMRIWaveform
 
+from scipy.interpolate import CubicSpline
+
 try:
     import cupy as xp
 
@@ -133,16 +135,20 @@ class fd_waveform():
         self.mod_sel = [[(int(l),int(m),int(n))] for l,m,n in zip(self.wave.waveform_generator.ls, self.wave.waveform_generator.ms, self.wave.waveform_generator.ns)]
 
         # get inspiral generator from waveform
-        t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.wave.waveform_generator.inspiral_generator(*ref_params[:6], T=self.wave_kwargs["T"], dt=self.wave_kwargs["dt"])
+        self.new_t=np.linspace(0.0, 365*3600*24*self.wave_kwargs["T"] ,num=100)
+        self.inspiral = self.wave.waveform_generator.inspiral_generator
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.inspiral(*ref_params[:6], T=self.wave_kwargs["T"])#, new_t=self.new_t)
         Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(
                     0.0, p, e, np.zeros_like(e)
                 )
+
         f_phi, f_r = (
                     self.xp.asarray(Omega_phi / (2 * np.pi * M * MTSUN_SI)),
                     self.xp.asarray(Omega_r / (2 * np.pi * M * MTSUN_SI)),
                 )
         # frequency range per each harmonic
         f_range = self.xp.array([m*f_phi + n*f_r for m,n in zip(self.wave.waveform_generator.ms, self.wave.waveform_generator.ns)])
+        phase_evolution = self.xp.array([m* self.xp.asarray(Phi_phi) + n* self.xp.asarray(Phi_r) for m,n in zip(self.wave.waveform_generator.ms, self.wave.waveform_generator.ns)])
 
         # delete eps if present
         self.new_kw = self.wave_kwargs.copy()
@@ -166,11 +172,71 @@ class fd_waveform():
         # frequency of each bin
         freq = self.f_in
         f_bin = [freq[((xp.min(fr)<freq)*(freq<xp.max(fr)))] for fr in f_range]
-        self.f_to_eval = [self.xp.array([fb[int(len(fb)*0.2)], fb[int(len(fb)/2)], fb[int(len(fb)*0.8)]]) for fb in f_bin]
+        # take some points in the frequency bin
+        self.f_to_eval = [self.xp.array([fb[int(len(fb)*0.25)], fb[int(len(fb)/2)], fb[int(len(fb)*0.75)]]) for fb in f_bin]
         self.ind_f = [self.xp.array([xp.where(freq==ff[i])[0] for i in range(3)]).flatten() for ff in self.f_to_eval]
 
+        # approximate ratio
+        self.f_sym = self.xp.asarray([self.xp.sort(self.xp.hstack((ftemp,0,-ftemp) )) for ftemp in self.f_to_eval])
+        self.ref_wave_noAmp = self.xp.asarray([self.phase_ev( t, f_range[i], phase_evolution[i], self.f_sym[i]) for i in range(len(f_range))])
 
-    def get_RB_ll(self, params):
+    def get_approximate_ratios(self, *par):
+        # get inspiral generator from waveform
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.inspiral(*par, T=self.wave_kwargs["T"])#, new_t=self.new_t)
+        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(
+                    0.0, p, e, np.zeros_like(e)
+                )
+
+        f_phi, f_r = (
+                    self.xp.asarray(Omega_phi / (2 * np.pi * M * MTSUN_SI)),
+                    self.xp.asarray(Omega_r / (2 * np.pi * M * MTSUN_SI)),
+                )
+        # frequency range per each harmonic
+        m_n_arr = self.xp.asarray(self.mod_sel)
+        m_arr = m_n_arr[:,:,1].flatten()
+        n_arr = m_n_arr[:,:,2].flatten()
+        f_range = self.xp.array([m*f_phi + n*f_r for m,n in zip(m_arr, n_arr)])
+        phase_evolution = self.xp.array([m * self.xp.asarray(Phi_phi) + n * self.xp.asarray(Phi_r) for m,n in zip(m_arr, n_arr)])
+        self.h_noAmp = self.xp.asarray([self.phase_ev( t, f_range[i], phase_evolution[i], self.f_sym[i]) for i in range(len(f_range))])
+        return self.h_noAmp/self.ref_wave_noAmp
+
+    def phase_ev(self, t, frequency_evolution, phase_evolution, f_array):
+
+        phase_spline = CubicSplineInterpolant(t, phase_evolution, use_gpu=self.use_gpu)
+
+        time_f_spline_0 = CubicSplineInterpolant(frequency_evolution, t, use_gpu=self.use_gpu)
+
+        # frequency
+        index_positive_f = (f_array>self.xp.min(frequency_evolution))*(f_array<self.xp.max(frequency_evolution))
+        index_negative_f = self.xp.flip(index_positive_f)
+        # index_negative_f = (freq>self.xp.min(-frequency_evolution))*(freq<self.xp.max(-frequency_evolution))
+        f_0 = f_array[index_positive_f]
+        f_1 = f_array[index_negative_f]
+
+        # time evluated quantities
+        t_f_0 = time_f_spline_0(f_0)
+        t_f_1 = self.xp.flip(t_f_0)#time_f_spline_0(-f_1)#
+
+        # fdot
+        fdot_spline_0 = phase_spline(t_f_0, deriv_order=2)
+        fdot_spline_1 = -phase_spline(t_f_1, deriv_order=2)
+
+        Exp0 = self.xp.exp(-1j*(2*self.xp.pi*f_0* t_f_0  - phase_spline(t_f_0)- self.xp.pi/4) ) / self.xp.sqrt(self.xp.abs(fdot_spline_0))
+        Exp1 = self.xp.exp(-1j*(2*self.xp.pi*f_1* t_f_1  + phase_spline(t_f_1)+ self.xp.pi/4) ) / self.xp.sqrt(self.xp.abs(fdot_spline_1))
+
+        # final waveform
+        h = self.xp.zeros_like(f_array, dtype=complex) 
+        h[index_positive_f] = Exp0
+        h[index_negative_f] = Exp1
+
+        fd_sig = self.xp.flip(-h )
+        fft_sig_r = self.xp.real(fd_sig + self.xp.flip(fd_sig) )/2.0 + 1j * self.xp.imag(fd_sig - self.xp.flip(fd_sig))/2.0
+        ind = int(( len(f_array) - 1 ) / 2 + 1)
+        final_h = self.xp.real(fft_sig_r[ind:]) - 1j* self.xp.imag(fft_sig_r[ind:])
+
+        return final_h/ Gpc * MRSUN_SI
+
+    def get_RB_ll(self, params, approximate_ratio=False):
         
         # -------------- ONLINE computation -----------------------
         full_params = np.asarray(self.inj_params)
@@ -179,6 +245,21 @@ class fd_waveform():
         h_wave_mode_pol = self.xp.asarray([self.__call__(*full_params, **self.new_kw, mode_selection=md) for md in self.mod_sel])
         # get left hand side of M r = b
         bb = self.xp.array([h_wave_mode_pol[i,:,self.ind_f[i]]/self.ref_wave_mode_pol[i,:,self.ind_f[i]] for i in range(len(self.mod_sel))])
+        # np.abs ( (bb[:,:,0]-bb[:,:,1])/bb[:,:,1] ) h plus and cross have equal ratios
+        app_ratios = self.get_approximate_ratios(*full_params[:6])
+        if approximate_ratio:
+            bb = self.xp.empty((len(self.mod_sel),3,2))
+            bb[:,:,0] = app_ratios
+            bb[:,:,1] = app_ratios
+
+        # check against the true ones
+        # for i in range(len(self.mod_sel)):
+        #     print('--------------------------------------------')
+        #     print("true",h_wave_mode_pol[i,0,self.ind_f[i]]/self.ref_wave_mode_pol[i,0,self.ind_f[i]])
+        #     print("app",app_ratios[i,:])
+        #     print("max", np.max(np.abs ( (bb[:,:,0]-bb[:,:,1])/bb[:,:,1] )) )
+
+        
         # construct matrix
         Mat_F = [self.xp.array([[self.xp.ones_like(ff), ff, ff**2] for ff in fev]) for fev in self.f_to_eval]
         # get solutions for A and B vector
@@ -216,12 +297,12 @@ class fd_waveform():
         return self.xp.array([4.0*self.xp.dot(self.xp.conj(d), h_ref*fpow/ self.psd)  for fpow in [self.xp.ones_like(freq), freq, freq**2, freq**3, freq**4]])
 
     def transform_to_fft_hp_hcross(self, wave):
-        fd_sig = -xp.flip(wave)
+        fd_sig = -self.xp.flip(wave)
 
         ind =int(( len(fd_sig) - 1 ) / 2 + 1)
 
-        fft_sig_r = xp.real(fd_sig + xp.flip(fd_sig) )/2.0 + 1j * xp.imag(fd_sig - xp.flip(fd_sig))/2.0
-        fft_sig_i = -xp.imag(fd_sig + xp.flip(fd_sig) )/2.0 + 1j * xp.real(fd_sig - xp.flip(fd_sig))/2.0
+        fft_sig_r = self.xp.real(fd_sig + self.xp.flip(fd_sig) )/2.0 + 1j * self.xp.imag(fd_sig - self.xp.flip(fd_sig))/2.0
+        fft_sig_i = -self.xp.imag(fd_sig + self.xp.flip(fd_sig) )/2.0 + 1j * self.xp.real(fd_sig - self.xp.flip(fd_sig))/2.0
         return [fft_sig_r[ind:], fft_sig_i[ind:]]
 
     def PowerSpectralDensity(self, f):
@@ -362,7 +443,7 @@ priors = [uniform_dist(injection_params[test_inds[0]]*(1-perc), injection_params
 
 N=int(3.14e6+1)
 eps=5e-1
-waveform_kwargs = {"T": T, "dt": dt, "mode_selection": [ (2,2,0), (2,2,1), (3,2,2), (2,2,-1)]}##"eps": eps}#, 
+waveform_kwargs = {"T": T, "dt": dt, "eps": eps}#"mode_selection": [ (2,2,0), (2,2,1), (3,2,0), (2,2,-1)]}##
 
 
 gen_wave = fd_waveform(fd_wave, N=N, use_gpu=gpu_available)
@@ -375,7 +456,7 @@ gen_wave.inject_signal(test_inds, *injection_params,**waveform_kwargs)
 # gen_wave.get_ll(injection_params[test_inds] )
 
 for i in range(10):
-    factor = 1e-7
+    factor = 1e-6
     start_points = injection_params[test_inds].copy()
     start_points = injection_params[test_inds] * (1 + factor * np.random.normal( len(test_inds) ) )
     true_ll = gen_wave.get_ll(start_points)
@@ -422,7 +503,7 @@ like = Likelihood(gen_wave, priors)
 ndim = len(test_inds)
 nwalkers = 16
 
-factor = 1e-8
+factor = 1e-5
 start_points = injection_params[test_inds] * (1 + factor * np.random.randn(nwalkers, ndim))
 
 print(like(start_points))
