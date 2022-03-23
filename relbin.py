@@ -1,3 +1,12 @@
+dev = 7
+import os
+os.system(f"CUDA_VISIBLE_DEVICES={dev}")
+os.environ["CUDA_VISIBLE_DEVICES"] = f"{dev}"
+os.system("echo $CUDA_VISIBLE_DEVICES")
+
+os.system("export OMP_NUM_THREADS=1")
+os.environ["OMP_NUM_THREADS"] = "1"
+
 import unittest
 import numpy as np
 import warnings
@@ -90,7 +99,7 @@ theta = np.pi / 3  # polar viewing angle
 phi = np.pi / 4  # azimuthal viewing angle
 dist = 1.0  # distance
 
-mod_sel = [ (2,2,1), (3,2,0), (2,2,0), (3,2,2)]
+mod_sel = [ (2,2,1), (3,2,0), (2,2,0), (3,2,2), (2,2,-1)]#, (3,2,1)]
 # FD f array
 
 N = 2854577#len(f_in)
@@ -144,8 +153,8 @@ bin_number = 1
 f_to_eval = [xp.array([fb[int(len(fb)*0.2)], fb[int(len(fb)/2)], fb[int(len(fb)*0.8)]]) for fb in f_bin]
 # print("f eval", f_to_eval)
 
-# feval = xp.sort(xp.array(f_to_eval)).flatten()
-# f_sym = xp.sort(xp.hstack((feval,0,-feval))).flatten()
+# feval = xp.unique(xp.array(f_to_eval).flatten())
+# f_sym = xp.sort(xp.hstack((f_in[0],feval,0,-feval,f_in[-1])).flatten())
 # re-compute list of reference waveforms at specific frequencies
 # this step is not necessary because we could find the correspondent index
 ind_f = [xp.array([xp.where(freq==ff[i])[0] for i in range(bin_number*3)]).flatten() for ff in f_to_eval]
@@ -155,16 +164,18 @@ ind_f = [xp.array([xp.where(freq==ff[i])[0] for i in range(bin_number*3)]).flatt
 # ind_plus_f = xp.array([xp.where(f_in==f_to_eval[0][i])[0] for i in range(bin_number*3)]).flatten()
 # ind_final = xp.append(ind_minus_f, ind_plus_f)
 # kw = dict(f_arr = f_in[ind_final] )
+# breakpoint()
 kw = dict(f_arr = f_in )
-import time
-st = time.time()
+# kw = dict(f_arr = f_sym )
+
 list_h = fast(
-    M*(1+5e-7), mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kw, mode_selection=mod_sel
+    M*(1+5e-6), mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kw, mode_selection=mod_sel
     )
 
 h_wave_mode_pol = xp.array([transform_to_fft_hp_hcross(ll) for ll in list_h])
 
 # get the ratio
+# to insert the approximation we need to change only this ratio
 bb = xp.array([h_wave_mode_pol[i,:,ind_f[i]]/ref_wave_mode_pol[i,:,ind_f[i]] for i in range(len(mod_sel))])
 # print("bb",bb)
 # construct matrix for 2nd order poly
@@ -192,8 +203,6 @@ print("r_vec",r_vec)
 d_h_app =xp.real(xp.sum(A_vec*r_vec))
 h_h_app = xp.sum(xp.array([[xp.real(xp.dot(B_matrix_p[pol,:,mm],r_mat[pol,:,mm])) for mm in range(len(mod_sel))] for pol in range(2)]))
 
-print(time.time()- st)
-
 # CHECK #
 
 # check each polarizartion
@@ -216,4 +225,4 @@ print(" rel diff", (d_h_app - tot_dh)/tot_dh)
 print('h h',h_h_app)
 print("h h true", tot_hh)
 print(" rel diff", (h_h_app - tot_hh)/tot_hh)
-breakpoint()
+# breakpoint()
