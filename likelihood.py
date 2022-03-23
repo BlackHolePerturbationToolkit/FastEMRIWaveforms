@@ -116,7 +116,7 @@ class fd_waveform():
         d_h = self.InnerProduct(h,self.d)
 
         like_out = -1.0 / 2.0 * (self.d_d + h_h - 2.0 * d_h).real
-        # print("d_h", d_h, "h_h", h_h, "like", like_out)
+        print("d_h", d_h, "h_h", h_h, "like", like_out)
 
         # back to CPU if on GPU
         try:
@@ -173,7 +173,7 @@ class fd_waveform():
         freq = self.f_in
         f_bin = [freq[((xp.min(fr)<freq)*(freq<xp.max(fr)))] for fr in f_range]
         # take some points in the frequency bin
-        self.f_to_eval = [self.xp.array([fb[int(len(fb)*0.25)], fb[int(len(fb)/2)], fb[int(len(fb)*0.75)]]) for fb in f_bin]
+        self.f_to_eval = [self.xp.array([fb[int(len(fb)*0.2)], fb[int(len(fb)*0.5)], fb[int(len(fb)*0.8)]]) for fb in f_bin]
         self.ind_f = [self.xp.array([xp.where(freq==ff[i])[0] for i in range(3)]).flatten() for ff in self.f_to_eval]
 
         # approximate ratio
@@ -241,17 +241,19 @@ class fd_waveform():
         # -------------- ONLINE computation -----------------------
         full_params = np.asarray(self.inj_params)
         full_params[self.inds] = params
-        # get template, notice I am generating the inspiral multiple times, this should be avoided!
-        h_wave_mode_pol = self.xp.asarray([self.__call__(*full_params, **self.new_kw, mode_selection=md) for md in self.mod_sel])
-        # get left hand side of M r = b
-        bb = self.xp.array([h_wave_mode_pol[i,:,self.ind_f[i]]/self.ref_wave_mode_pol[i,:,self.ind_f[i]] for i in range(len(self.mod_sel))])
-        # np.abs ( (bb[:,:,0]-bb[:,:,1])/bb[:,:,1] ) h plus and cross have equal ratios
-        app_ratios = self.get_approximate_ratios(*full_params[:6])
+        
         if approximate_ratio:
-            bb = self.xp.empty((len(self.mod_sel),3,2))
+            app_ratios = self.get_approximate_ratios(*full_params[:6])
+            bb = self.xp.empty((len(self.mod_sel),3,2), dtype=complex) 
             bb[:,:,0] = app_ratios
             bb[:,:,1] = app_ratios
-
+        else:
+            # get template, notice I am generating the inspiral multiple times, this should be avoided!
+            h_wave_mode_pol = self.xp.asarray([self.__call__(*full_params, **self.new_kw, mode_selection=md) for md in self.mod_sel])
+            # get left hand side of M r = b
+            bb = self.xp.array([h_wave_mode_pol[i,:,self.ind_f[i]]/self.ref_wave_mode_pol[i,:,self.ind_f[i]] for i in range(len(self.mod_sel))])
+            # np.abs ( (bb[:,:,0]-bb[:,:,1])/bb[:,:,1] ) h plus and cross have equal ratios
+        
         # check against the true ones
         # for i in range(len(self.mod_sel)):
         #     print('--------------------------------------------')
@@ -279,7 +281,7 @@ class fd_waveform():
         h_h_app = self.xp.sum(self.xp.real(self.B_matrix_p*r_mat))#self.xp.sum(self.xp.real(self.xp.sum(self.B_matrix_p*r_mat, axis=1))) #self.xp.sum(xp.array([[self.xp.real(self.xp.dot(self.B_matrix_p[pol,:,mm],r_mat[pol,:,mm])) for mm in range(len(self.mod_sel))] for pol in range(2)]))
 
         like_out = -1.0 / 2.0 * (self.d_d + h_h_app - 2 * d_h_app).real
-        # print("d_h_app", d_h_app, "h_h_app", h_h_app, "like", like_out)
+        print("d_h_app", d_h_app, "h_h_app", h_h_app, "like", like_out)
 
         # back to CPU if on GPU
         try:
@@ -454,22 +456,26 @@ gen_wave.inject_signal(test_inds, *injection_params,**waveform_kwargs)
 
 # gen_wave.get_RB_ll(injection_params[test_inds])
 # gen_wave.get_ll(injection_params[test_inds] )
+true_ll = gen_wave.get_ll(injection_params[test_inds])
+app_ll = gen_wave.get_RB_ll(injection_params[test_inds])
+print("ll true", true_ll, " app ll ", app_ll ) 
 
-for i in range(10):
-    factor = 1e-6
+for i in range(50):
+    print('-----------------------------------------------')
+    factor = 10**(-np.random.randint(6,9))
     start_points = injection_params[test_inds].copy()
     start_points = injection_params[test_inds] * (1 + factor * np.random.normal( len(test_inds) ) )
     true_ll = gen_wave.get_ll(start_points)
     app_ll = gen_wave.get_RB_ll(start_points)
-    print("ll true", true_ll, " rel diff ", (true_ll - app_ll)/true_ll ) 
+    print("\n")
+    print("ll true", true_ll, " relative diff ", (true_ll - app_ll)/true_ll, " absolute diff ", (true_ll - app_ll) ) 
     
 
 
-breakpoint()
 ####################################
 
 class Likelihood:
-    def __init__(self, lnlike, priors, relative_binning=False):
+    def __init__(self, lnlike, priors, relative_binning=True):
         self.priors = priors
         self.lnlike = lnlike
         if relative_binning:
