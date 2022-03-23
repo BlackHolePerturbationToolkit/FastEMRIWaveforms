@@ -114,7 +114,8 @@ class fd_waveform():
         d_h = self.InnerProduct(h,self.d)
 
         like_out = -1.0 / 2.0 * (self.d_d + h_h - 2.0 * d_h).real
-        print("d_h", d_h, "h_h", h_h, "like", like_out)
+        # print("d_h", d_h, "h_h", h_h, "like", like_out)
+
         # back to CPU if on GPU
         try:
             return like_out.get()
@@ -197,7 +198,8 @@ class fd_waveform():
         h_h_app = self.xp.sum(self.xp.real(self.B_matrix_p*r_mat))#self.xp.sum(self.xp.real(self.xp.sum(self.B_matrix_p*r_mat, axis=1))) #self.xp.sum(xp.array([[self.xp.real(self.xp.dot(self.B_matrix_p[pol,:,mm],r_mat[pol,:,mm])) for mm in range(len(self.mod_sel))] for pol in range(2)]))
 
         like_out = -1.0 / 2.0 * (self.d_d + h_h_app - 2 * d_h_app).real
-        print("d_h_app", d_h_app, "h_h_app", h_h_app, "like", like_out)
+        # print("d_h_app", d_h_app, "h_h_app", h_h_app, "like", like_out)
+
         # back to CPU if on GPU
         try:
             return like_out.get()
@@ -330,7 +332,7 @@ def uniform_dist(min, max):
     dist = uniform(min, sig)
     return dist
 
-test_inds = np.array([0, 1]) 
+test_inds = np.array([0, 1, 3, 4]) 
 
 # injection array
 injection_params = np.array(
@@ -360,7 +362,7 @@ priors = [uniform_dist(injection_params[test_inds[0]]*(1-perc), injection_params
 
 N=int(3.14e6+1)
 eps=5e-1
-waveform_kwargs = {"T": T, "dt": dt, "mode_selection": [ (2,2,0), (2,2,1)]}##"eps": eps}#, (2,2,0), (3,2,2), (2,2,-1)
+waveform_kwargs = {"T": T, "dt": dt, "mode_selection": [ (2,2,0), (2,2,1), (3,2,2), (2,2,-1)]}##"eps": eps}#, 
 
 
 gen_wave = fd_waveform(fd_wave, N=N, use_gpu=gpu_available)
@@ -373,20 +375,26 @@ gen_wave.inject_signal(test_inds, *injection_params,**waveform_kwargs)
 # gen_wave.get_ll(injection_params[test_inds] )
 
 for i in range(10):
-    factor = 1e-5
+    factor = 1e-7
     start_points = injection_params[test_inds].copy()
-    start_points[0] = start_points[0] * (1+factor *np.random.normal() )
-    gen_wave.get_ll(start_points)
-    gen_wave.get_RB_ll(start_points)
+    start_points = injection_params[test_inds] * (1 + factor * np.random.normal( len(test_inds) ) )
+    true_ll = gen_wave.get_ll(start_points)
+    app_ll = gen_wave.get_RB_ll(start_points)
+    print("ll true", true_ll, " rel diff ", (true_ll - app_ll)/true_ll ) 
+    
 
 
 breakpoint()
 ####################################
 
 class Likelihood:
-    def __init__(self, lnlike, priors):
+    def __init__(self, lnlike, priors, relative_binning=False):
         self.priors = priors
         self.lnlike = lnlike
+        if relative_binning:
+            self.loglike_func = self.lnlike.get_RB_ll
+        else:
+            self.loglike_func = self.lnlike.get_ll
 
     def __call__(self, x):
         prior_vals = np.zeros((x.shape[0]))
@@ -402,7 +410,8 @@ class Likelihood:
         if len(inds_eval) == 0:
             return np.array([-loglike_vals, prior_vals]).T
 
-        temp = [self.lnlike.get_ll(good_x) for good_x in x[inds_eval]]
+        
+        temp = [self.loglike_func(good_x) for good_x in x[inds_eval]]
 
         loglike_vals[inds_eval] = temp
 
@@ -427,6 +436,6 @@ sampler = emcee.EnsembleSampler(
             vectorize=True,
         )
 
-# nsteps = 1000
-# sampler.reset()
-# sampler.run_mcmc(start_points, nsteps, progress=True)
+nsteps = 1000
+sampler.reset()
+sampler.run_mcmc(start_points, nsteps, progress=True)
