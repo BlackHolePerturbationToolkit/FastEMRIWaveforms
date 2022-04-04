@@ -175,11 +175,12 @@ class fd_waveform():
         # A vector shape (len(self.mod_sel) , 2,  3)
         self.A_vec = self.xp.array([[self.A_vector(self.d[0], wave_mode[0]), self.A_vector(self.d[1], wave_mode[1])] for wave_mode in self.ref_wave_mode_pol])
         # B vector shape (2, (len(self.mod_sel)+1)*len(self.mod_sel)/2 , 5)
-        self.B_matrix_p = self.xp.array([[self.B_vector(self.ref_wave_mode_pol[m1,pol,:], self.ref_wave_mode_pol[m2,pol,:]) for m1 in range(len(self.mod_sel)) for m2 in range(len(self.mod_sel)) if m1<=m2] for pol in range(2) ])
+        # I am ignoring the cross terms for now
+        self.B_matrix_p = self.xp.array([[self.B_vector(self.ref_wave_mode_pol[m1,pol,:], self.ref_wave_mode_pol[m2,pol,:]) for m1 in range(len(self.mod_sel)) for m2 in range(len(self.mod_sel)) if m1==m2] for pol in range(2) ])
         
         # frequency of each bin
         freq = self.f_in
-        f_bin = [freq[((xp.min(fr)<freq)*(freq<xp.max(fr)))] for fr in f_range]
+        f_bin = [freq[((self.xp.min(fr)<freq)*(freq<self.xp.max(fr)))] for fr in f_range]
         # take some points in the frequency bin
         self.f_to_eval = [self.xp.array([fb[int(len(fb)*0.2)], fb[int(len(fb)*0.5)], fb[int(len(fb)*0.8)]]) for fb in f_bin]
         self.ind_f = [self.xp.array([xp.where(freq==ff[i])[0] for i in range(3)]).flatten() for ff in self.f_to_eval]
@@ -274,7 +275,8 @@ class fd_waveform():
         return -Exp0#/ Gpc * MRSUN_SI
 
     def get_RB_ll(self, params, approximate_ratio=True):
-        
+
+    
         # -------------- ONLINE computation -----------------------
         full_params = np.asarray(self.inj_params)
         full_params[self.inds] = params
@@ -301,7 +303,7 @@ class fd_waveform():
             bb = self.xp.array([h_wave_mode_pol[i,:,self.ind_f[i]]/self.ref_wave_mode_pol[i,:,self.ind_f[i]] for i in range(len(self.mod_sel))])
             # np.abs ( (bb[:,:,0]-bb[:,:,1])/bb[:,:,1] ) h plus and cross have equal ratios
             
-        # up to here it takes 0.0258 seconds with approximate ratio
+        # up to here it takes 0.018-0.0258 seconds with approximate ratio
 
         # check against the true ones
         # for i in range(len(self.mod_sel)):
@@ -310,12 +312,24 @@ class fd_waveform():
         #     print("app",app_ratios[i,:])
         #     print("max", np.max(np.abs ( (bb[:,:,0]-bb[:,:,1])/bb[:,:,1] )) )
 
- 
+
+        
+            
+        
+        # it takes 0.03 seconds for this part to be executed
+        
         # construct matrix
-        Mat_F = self.xp.array([self.xp.array([[self.xp.ones_like(ff), ff, ff**2] for ff in fev]) for fev in self.f_to_eval])
-        # breakpoint()
+        f_array = self.xp.array(self.f_to_eval).T
+        Mat_F = self.xp.array([self.xp.ones_like(f_array), f_array, f_array**2]).T #self.xp.array([self.xp.array([[self.xp.ones_like(ff), ff, ff**2] for ff in fev]) for fev in self.f_to_eval])
+        
+        # import time
+        # num = 50
+        # st = time.perf_counter()
+        # for i in range(num):
+
         # get solutions for A and B vector
         r_vec = self.xp.array([[self.xp.linalg.solve(Mat_F[mod_numb], bb[mod_numb,:, pol]) for pol in range(2)] for mod_numb in range(len(self.mod_sel))])
+        # I am ignoring the cross terms for now
         r_mat = self.xp.array([[
             [
                 self.xp.conj(r_vec[v1, pol, 0])*r_vec[v2, pol, 0], # f^0
@@ -323,8 +337,10 @@ class fd_waveform():
                 self.xp.conj(r_vec[v1, pol, 0])*r_vec[v2, pol, 2] + self.xp.conj(r_vec[v1, pol, 1])*r_vec[v2, pol, 1] + self.xp.conj(r_vec[v1, pol, 2])*r_vec[v2, pol, 0],
                 self.xp.conj(r_vec[v1, pol, 1])*r_vec[v2, pol, 2] + self.xp.conj(r_vec[v1, pol, 2])*r_vec[v2, pol, 1],
                 self.xp.conj(r_vec[v1, pol, 2])*r_vec[v2, pol, 2]
-            ]  for v1 in range(len(self.mod_sel)) for v2 in range(len(self.mod_sel)) if v1<=v2] for pol in range(2)])
+            ]  for v1 in range(len(self.mod_sel)) for v2 in range(len(self.mod_sel)) if v1==v2] for pol in range(2)])
 
+        # print('RB like', (time.perf_counter() - st)/num)
+        # breakpoint()
 
         d_h_app = self.xp.real(self.xp.sum(self.A_vec*r_vec))
         h_h_app = self.xp.sum(self.xp.real(self.B_matrix_p*r_mat))#self.xp.sum(self.xp.real(self.xp.sum(self.B_matrix_p*r_mat, axis=1))) #self.xp.sum(xp.array([[self.xp.real(self.xp.dot(self.B_matrix_p[pol,:,mm],r_mat[pol,:,mm])) for mm in range(len(self.mod_sel))] for pol in range(2)]))
@@ -335,6 +351,7 @@ class fd_waveform():
         like_out = -1.0 / 2.0 * (self.d_d + h_h_app - 2 * d_h_app).real
         # print("d_h_app", d_h_app, "h_h_app", h_h_app, "like", like_out)
         
+
 
         # back to CPU if on GPU
         try:
@@ -434,7 +451,7 @@ fd_wave = GenerateEMRIWaveform(
     use_gpu=gpu_available,
     return_list=False,
 )
-T = 2.0  # years
+T = 1.0  # years
 dt = 10.0  # seconds
 
 M = 1e6
@@ -490,7 +507,7 @@ injection_params = np.array(
     ]
 )
 
-perc = 1e-6
+perc = 1e-4
 priors = [uniform_dist(injection_params[test_inds[0]]*(1-perc), injection_params[test_inds[0]]*(1+perc)), 
              uniform_dist(injection_params[test_inds[1]]*(1-perc), injection_params[test_inds[1]]*(1+perc)),
              uniform_dist(injection_params[test_inds[2]]*(1-perc), injection_params[test_inds[2]]*(1+perc)),
@@ -499,8 +516,13 @@ priors = [uniform_dist(injection_params[test_inds[0]]*(1-perc), injection_params
 
 
 N=int(3.14e6+1)
-eps=5e-1
-waveform_kwargs = {"T": T, "dt": dt, "mode_selection": [ (2,2,i) for i in range(10)]}#"eps": eps}#
+eps=5e-2
+mode_selection = [ (2,2,i) for i in range(6)]
+
+for i in range(1,6):
+    mode_selection.append((2,0,i) )
+
+waveform_kwargs = {"T": T, "dt": dt, "mode_selection": mode_selection}#"eps": eps}#
 
 
 gen_wave = fd_waveform(fd_wave, N=N, use_gpu=gpu_available)
@@ -519,21 +541,22 @@ import matplotlib.pyplot as plt
 plt.figure()
 for i in range(100):
     print('-----------------------------------------------')
-    # factor = 10**(-np.random.randint(6,9))
-    # start_points = injection_params[test_inds].copy()
-    # start_points = injection_params[test_inds] * (1 + factor * np.random.normal( len(test_inds) ) )
-    start_points = [prior_i.rvs() for prior_i in priors]
+    factor = 10**(-np.random.randint(7,9))
+    start_points = injection_params[test_inds].copy()
+    start_points = injection_params[test_inds] * (1 + factor * np.random.normal( len(test_inds) ) )
+    # start_points = [prior_i.rvs() for prior_i in priors]
 
     true_ll = gen_wave.get_ll(start_points)
     app_ll = gen_wave.get_RB_ll(start_points)
     plt.semilogy(true_ll, np.abs(true_ll - app_ll), '.')
     # print("\n")
     print("ll true", true_ll, " relative diff ", (true_ll - app_ll)/true_ll, " absolute diff ", (true_ll - app_ll) ) 
+
 plt.xlabel('true log-like')
 plt.ylabel(r'$\Delta$ log-like')
 plt.savefig('delta_log_like')
 
-
+breakpoint()
 ####################################
 
 class Likelihood:
@@ -590,6 +613,7 @@ for i in range(num):
     likeRB(start_points)
 print('RB like', (time.perf_counter() - st)/num)
 
+breakpoint()
 import emcee
 
 sampler = emcee.EnsembleSampler(
