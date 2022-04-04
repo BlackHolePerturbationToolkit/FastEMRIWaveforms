@@ -30,6 +30,13 @@ try:
 
     gpu_available = True
 
+    # import numpy as xp
+
+    # warnings.warn(
+    #     "CuPy is not installed or a gpu is not available. If trying to run on a gpu, please install CuPy."
+    # )
+    # gpu_available = False
+
 except (ModuleNotFoundError, ImportError) as e:
     import numpy as xp
 
@@ -182,7 +189,9 @@ class fd_waveform():
         self.ref_wave_noAmp = self.xp.asarray([self.phase_ev( t, f_range[i], phase_evolution[i], self.f_sym[i]) for i in range(len(f_range))])
 
     def get_approximate_ratios(self, *par):
+
         
+
         # breakpoint()
         # get inspiral generator from waveform
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.inspiral(*par, T=self.wave_kwargs["T"])#, new_t=self.new_t)
@@ -200,33 +209,34 @@ class fd_waveform():
         n_arr = m_n_arr[:,:,2].flatten()
         f_range = m_arr[:, None] * f_phi[None, :] + n_arr[:, None] * f_r[None, :]
         phase_evolution = m_arr[:, None] * self.xp.asarray(Phi_phi)[None, :] + n_arr[:, None] * self.xp.asarray(Phi_r)[None, :] #self.xp.array([m *  + n * self.xp.asarray(Phi_r) for m,n in zip(m_arr, n_arr)])
+        
+    
         # interpolate all together
         length = len(t)
         ninterps = len(m_arr)*2
         y_all = self.xp.zeros((ninterps, length))
-        
+        # spline of phase evolution
         y_all[:len(m_arr),:] = phase_evolution
+        # time frequency mapping
         y_all[len(m_arr):,:] = self.xp.tile(t, (len(m_arr), 1) ) 
-        spline_phi_t_of_f = CubicSplineInterpolant(self.xp.tile(f_range, (2, 1) ), y_all, use_gpu=self.use_gpu)
-        breakpoint()
-        # time_of_f = CubicSplineInterpolant(f_range, y_all, use_gpu=self.use_gpu)
-        # f_array_eval = self.xp.tile(self.f_sym[:,3:], (2, 1) )
-        # phi_f_t_f = spline_phi_t_of_f(f_array_eval)
-        # self.xp.exp(-1j*(2*self.xp.pi* self.f_sym[:,3:] * phi_f_t_f[len(m_arr):]  - phi_f_t_f[len(m_arr):]- self.xp.pi/4) )
+        frequency_evolution_harmonics = self.xp.tile(f_range, (2, 1) )
+        spline_phi_t_of_f = CubicSplineInterpolant(frequency_evolution_harmonics, y_all, use_gpu=self.use_gpu)
+
+        # get only positive frequencies, this is why from number 4
+        f_array_eval = self.xp.tile(self.f_sym[:,4:], (2, 1) )
+        phi_f_t_f = spline_phi_t_of_f(f_array_eval)
+        # breakpoint()
+        harmonic_noAmp = -self.xp.exp(-1j*(2*self.xp.pi* self.f_sym[:,4:] * phi_f_t_f[len(m_arr):]  - phi_f_t_f[:len(m_arr)]- self.xp.pi/4) )
         
-        self.h_noAmp = self.xp.asarray([self.phase_ev( t, f_range[i], phase_evolution[i], self.f_sym[i]) for i in range(len(f_range))])
+        self.h_noAmp = harmonic_noAmp#self.xp.asarray([self.phase_ev( t, f_range[i], phase_evolution[i], self.f_sym[i]) for i in range(len(f_range))])
+    
         return self.h_noAmp/self.ref_wave_noAmp
 
-    def frequency_domain_harmonic(self, spline, f_array):
-        frequency_evolution = spline_phi_t_of_f.t
-        return final_h/ Gpc * MRSUN_SI
 
     def phase_ev(self, t, frequency_evolution, phase_evolution, f_array):
         
-        # import time
-        # num=50
-        # start = time.perf_counter()
-        # for i in range(num):
+
+
         phase_spline = CubicSplineInterpolant(t, phase_evolution, use_gpu=self.use_gpu)
 
         time_f_spline_0 = CubicSplineInterpolant(frequency_evolution, t, use_gpu=self.use_gpu)
@@ -245,9 +255,9 @@ class fd_waveform():
         # fdot
         fdot_spline_0 = phase_spline(t_f_0, deriv_order=2)
         fdot_spline_1 = -phase_spline(t_f_1, deriv_order=2)
-
-        Exp0 = self.xp.exp(-1j*(2*self.xp.pi*f_0* t_f_0  - phase_spline(t_f_0)- self.xp.pi/4) ) / self.xp.sqrt(self.xp.abs(fdot_spline_0))
-        Exp1 = self.xp.exp(-1j*(2*self.xp.pi*f_1* t_f_1  + phase_spline(t_f_1)+ self.xp.pi/4) ) / self.xp.sqrt(self.xp.abs(fdot_spline_1))
+        
+        Exp0 = self.xp.exp(-1j*(2*self.xp.pi*f_0* t_f_0  - phase_spline(t_f_0)- self.xp.pi/4) ) #/ self.xp.sqrt(self.xp.abs(fdot_spline_0))
+        Exp1 = self.xp.exp(-1j*(2*self.xp.pi*f_1* t_f_1  + phase_spline(t_f_1)+ self.xp.pi/4) ) #/ self.xp.sqrt(self.xp.abs(fdot_spline_1))
 
         # final waveform
         # h = self.xp.zeros_like(f_array, dtype=complex) 
@@ -260,16 +270,14 @@ class fd_waveform():
         # final_h = self.xp.real(fft_sig_r[ind:]) - 1j* self.xp.imag(fft_sig_r[ind:])
         # print(final_h + Exp0 )
 
-        # print( (time.perf_counter() - start )/num )
-        # breakpoint()
-        return -Exp0/ Gpc * MRSUN_SI
+        
+        return -Exp0#/ Gpc * MRSUN_SI
 
     def get_RB_ll(self, params, approximate_ratio=True):
         
         # -------------- ONLINE computation -----------------------
         full_params = np.asarray(self.inj_params)
         full_params[self.inds] = params
-        
         if approximate_ratio:
             
             app_ratios = self.get_approximate_ratios(*full_params[:6])
@@ -277,7 +285,6 @@ class fd_waveform():
             bb[:,:,0] = app_ratios
             bb[:,:,1] = app_ratios
 
-        
         else:
             # get template, notice I am generating the inspiral multiple times, this should be avoided!
             h_wave_mode_pol = self.xp.asarray([self.__call__(*full_params, **self.new_kw, mode_selection=md) for md in self.mod_sel])
@@ -294,7 +301,8 @@ class fd_waveform():
             bb = self.xp.array([h_wave_mode_pol[i,:,self.ind_f[i]]/self.ref_wave_mode_pol[i,:,self.ind_f[i]] for i in range(len(self.mod_sel))])
             # np.abs ( (bb[:,:,0]-bb[:,:,1])/bb[:,:,1] ) h plus and cross have equal ratios
             
-        
+        # up to here it takes 0.0258 seconds with approximate ratio
+
         # check against the true ones
         # for i in range(len(self.mod_sel)):
         #     print('--------------------------------------------')
@@ -302,9 +310,10 @@ class fd_waveform():
         #     print("app",app_ratios[i,:])
         #     print("max", np.max(np.abs ( (bb[:,:,0]-bb[:,:,1])/bb[:,:,1] )) )
 
-
+ 
         # construct matrix
-        Mat_F = [self.xp.array([[self.xp.ones_like(ff), ff, ff**2] for ff in fev]) for fev in self.f_to_eval]
+        Mat_F = self.xp.array([self.xp.array([[self.xp.ones_like(ff), ff, ff**2] for ff in fev]) for fev in self.f_to_eval])
+        # breakpoint()
         # get solutions for A and B vector
         r_vec = self.xp.array([[self.xp.linalg.solve(Mat_F[mod_numb], bb[mod_numb,:, pol]) for pol in range(2)] for mod_numb in range(len(self.mod_sel))])
         r_mat = self.xp.array([[
@@ -317,7 +326,6 @@ class fd_waveform():
             ]  for v1 in range(len(self.mod_sel)) for v2 in range(len(self.mod_sel)) if v1<=v2] for pol in range(2)])
 
 
-
         d_h_app = self.xp.real(self.xp.sum(self.A_vec*r_vec))
         h_h_app = self.xp.sum(self.xp.real(self.B_matrix_p*r_mat))#self.xp.sum(self.xp.real(self.xp.sum(self.B_matrix_p*r_mat, axis=1))) #self.xp.sum(xp.array([[self.xp.real(self.xp.dot(self.B_matrix_p[pol,:,mm],r_mat[pol,:,mm])) for mm in range(len(self.mod_sel))] for pol in range(2)]))
 
@@ -327,8 +335,7 @@ class fd_waveform():
         like_out = -1.0 / 2.0 * (self.d_d + h_h_app - 2 * d_h_app).real
         # print("d_h_app", d_h_app, "h_h_app", h_h_app, "like", like_out)
         
-        
-        
+
         # back to CPU if on GPU
         try:
             return like_out.get()
@@ -427,13 +434,13 @@ fd_wave = GenerateEMRIWaveform(
     use_gpu=gpu_available,
     return_list=False,
 )
-T = 1.0  # years
+T = 2.0  # years
 dt = 10.0  # seconds
 
 M = 1e6
 mu = 5e1
 p0 = 10.0
-e0 = 0.3
+e0 = 0.7
 
 dist = 4.10864264e00
 Phi_phi0 = 1.4
@@ -483,7 +490,7 @@ injection_params = np.array(
     ]
 )
 
-perc = 1e-5
+perc = 1e-6
 priors = [uniform_dist(injection_params[test_inds[0]]*(1-perc), injection_params[test_inds[0]]*(1+perc)), 
              uniform_dist(injection_params[test_inds[1]]*(1-perc), injection_params[test_inds[1]]*(1+perc)),
              uniform_dist(injection_params[test_inds[2]]*(1-perc), injection_params[test_inds[2]]*(1+perc)),
@@ -491,9 +498,9 @@ priors = [uniform_dist(injection_params[test_inds[0]]*(1-perc), injection_params
              ]
 
 
-N=int(3.14e5+1)
+N=int(3.14e6+1)
 eps=5e-1
-waveform_kwargs = {"T": T, "dt": dt, "mode_selection": [ (2,2,0), (2,2,1), (2,2,2)]}#"eps": eps}#
+waveform_kwargs = {"T": T, "dt": dt, "mode_selection": [ (2,2,i) for i in range(10)]}#"eps": eps}#
 
 
 gen_wave = fd_waveform(fd_wave, N=N, use_gpu=gpu_available)
@@ -527,11 +534,10 @@ plt.ylabel(r'$\Delta$ log-like')
 plt.savefig('delta_log_like')
 
 
-breakpoint()
 ####################################
 
 class Likelihood:
-    def __init__(self, lnlike, priors, relative_binning=False):
+    def __init__(self, lnlike, priors, relative_binning=True):
         self.priors = priors
         self.lnlike = lnlike
         if relative_binning:
@@ -560,7 +566,8 @@ class Likelihood:
 
         return np.array([loglike_vals, prior_vals]).T
 
-like = Likelihood(gen_wave, priors)
+likeRB = Likelihood(gen_wave, priors, relative_binning=True)
+like = Likelihood(gen_wave, priors, relative_binning=False)
 
 ndim = len(test_inds)
 nwalkers = 16
@@ -568,14 +575,27 @@ nwalkers = 16
 factor = 1e-5
 start_points = injection_params[test_inds] * (1 + factor * np.random.randn(nwalkers, ndim))
 
-print(like(start_points))
+import time
+num = 100
+st = time.perf_counter()
+
+for i in range(num):
+    like(start_points)
+
+print('std like', (time.perf_counter() - st)/num)
+
+
+st = time.perf_counter()
+for i in range(num):
+    likeRB(start_points)
+print('RB like', (time.perf_counter() - st)/num)
 
 import emcee
 
 sampler = emcee.EnsembleSampler(
             nwalkers,
             ndim,
-            like,
+            likeRB,
             vectorize=True,
         )
 
