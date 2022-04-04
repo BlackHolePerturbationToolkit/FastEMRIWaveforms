@@ -1,4 +1,4 @@
-dev = 7
+dev = 4
 import os
 os.system(f"CUDA_VISIBLE_DEVICES={dev}")
 os.environ["CUDA_VISIBLE_DEVICES"] = f"{dev}"
@@ -102,6 +102,7 @@ class fd_waveform():
         self.d_d = self.InnerProduct(self.d, self.d)#sum([self.InnerProduct(data, data) for data in self.d])
 
         self.set_up_RelativeBinning()
+        print("SNR = ",self.xp.sqrt(self.d_d) )
 
         return self.d
 
@@ -116,7 +117,7 @@ class fd_waveform():
         d_h = self.InnerProduct(h,self.d)
 
         like_out = -1.0 / 2.0 * (self.d_d + h_h - 2.0 * d_h).real
-        print("d_h", d_h, "h_h", h_h, "like", like_out)
+        # print("d_h", d_h, "h_h", h_h, "like", like_out)
 
         # back to CPU if on GPU
         try:
@@ -135,7 +136,7 @@ class fd_waveform():
         self.mod_sel = [[(int(l),int(m),int(n))] for l,m,n in zip(self.wave.waveform_generator.ls, self.wave.waveform_generator.ms, self.wave.waveform_generator.ns)]
 
         # get inspiral generator from waveform
-        self.new_t=np.linspace(0.0, 365*3600*24*self.wave_kwargs["T"] ,num=100)
+        # self.new_t=np.linspace(0.0, 365*3600*24*self.wave_kwargs["T"] ,num=100)
         self.inspiral = self.wave.waveform_generator.inspiral_generator
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.inspiral(*ref_params[:6], T=self.wave_kwargs["T"])#, new_t=self.new_t)
         Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(
@@ -181,6 +182,8 @@ class fd_waveform():
         self.ref_wave_noAmp = self.xp.asarray([self.phase_ev( t, f_range[i], phase_evolution[i], self.f_sym[i]) for i in range(len(f_range))])
 
     def get_approximate_ratios(self, *par):
+        
+        # breakpoint()
         # get inspiral generator from waveform
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.inspiral(*par, T=self.wave_kwargs["T"])#, new_t=self.new_t)
         Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(
@@ -195,13 +198,35 @@ class fd_waveform():
         m_n_arr = self.xp.asarray(self.mod_sel)
         m_arr = m_n_arr[:,:,1].flatten()
         n_arr = m_n_arr[:,:,2].flatten()
-        f_range = self.xp.array([m*f_phi + n*f_r for m,n in zip(m_arr, n_arr)])
-        phase_evolution = self.xp.array([m * self.xp.asarray(Phi_phi) + n * self.xp.asarray(Phi_r) for m,n in zip(m_arr, n_arr)])
+        f_range = m_arr[:, None] * f_phi[None, :] + n_arr[:, None] * f_r[None, :]
+        phase_evolution = m_arr[:, None] * self.xp.asarray(Phi_phi)[None, :] + n_arr[:, None] * self.xp.asarray(Phi_r)[None, :] #self.xp.array([m *  + n * self.xp.asarray(Phi_r) for m,n in zip(m_arr, n_arr)])
+        # interpolate all together
+        length = len(t)
+        ninterps = len(m_arr)*2
+        y_all = self.xp.zeros((ninterps, length))
+        
+        y_all[:len(m_arr),:] = phase_evolution
+        y_all[len(m_arr):,:] = self.xp.tile(t, (len(m_arr), 1) ) 
+        spline_phi_t_of_f = CubicSplineInterpolant(self.xp.tile(f_range, (2, 1) ), y_all, use_gpu=self.use_gpu)
+        breakpoint()
+        # time_of_f = CubicSplineInterpolant(f_range, y_all, use_gpu=self.use_gpu)
+        # f_array_eval = self.xp.tile(self.f_sym[:,3:], (2, 1) )
+        # phi_f_t_f = spline_phi_t_of_f(f_array_eval)
+        # self.xp.exp(-1j*(2*self.xp.pi* self.f_sym[:,3:] * phi_f_t_f[len(m_arr):]  - phi_f_t_f[len(m_arr):]- self.xp.pi/4) )
+        
         self.h_noAmp = self.xp.asarray([self.phase_ev( t, f_range[i], phase_evolution[i], self.f_sym[i]) for i in range(len(f_range))])
         return self.h_noAmp/self.ref_wave_noAmp
 
-    def phase_ev(self, t, frequency_evolution, phase_evolution, f_array):
+    def frequency_domain_harmonic(self, spline, f_array):
+        frequency_evolution = spline_phi_t_of_f.t
+        return final_h/ Gpc * MRSUN_SI
 
+    def phase_ev(self, t, frequency_evolution, phase_evolution, f_array):
+        
+        # import time
+        # num=50
+        # start = time.perf_counter()
+        # for i in range(num):
         phase_spline = CubicSplineInterpolant(t, phase_evolution, use_gpu=self.use_gpu)
 
         time_f_spline_0 = CubicSplineInterpolant(frequency_evolution, t, use_gpu=self.use_gpu)
@@ -225,34 +250,50 @@ class fd_waveform():
         Exp1 = self.xp.exp(-1j*(2*self.xp.pi*f_1* t_f_1  + phase_spline(t_f_1)+ self.xp.pi/4) ) / self.xp.sqrt(self.xp.abs(fdot_spline_1))
 
         # final waveform
-        h = self.xp.zeros_like(f_array, dtype=complex) 
-        h[index_positive_f] = Exp0
-        h[index_negative_f] = Exp1
+        # h = self.xp.zeros_like(f_array, dtype=complex) 
+        # h[index_positive_f] = Exp0
+        # h[index_negative_f] = Exp1
 
-        fd_sig = self.xp.flip(-h )
-        fft_sig_r = self.xp.real(fd_sig + self.xp.flip(fd_sig) )/2.0 + 1j * self.xp.imag(fd_sig - self.xp.flip(fd_sig))/2.0
-        ind = int(( len(f_array) - 1 ) / 2 + 1)
-        final_h = self.xp.real(fft_sig_r[ind:]) - 1j* self.xp.imag(fft_sig_r[ind:])
+        # fd_sig = self.xp.flip(-h )
+        # fft_sig_r = self.xp.real(fd_sig + self.xp.flip(fd_sig) )/2.0 + 1j * self.xp.imag(fd_sig - self.xp.flip(fd_sig))/2.0
+        # ind = int(( len(f_array) - 1 ) / 2 + 1)
+        # final_h = self.xp.real(fft_sig_r[ind:]) - 1j* self.xp.imag(fft_sig_r[ind:])
+        # print(final_h + Exp0 )
 
-        return final_h/ Gpc * MRSUN_SI
+        # print( (time.perf_counter() - start )/num )
+        # breakpoint()
+        return -Exp0/ Gpc * MRSUN_SI
 
-    def get_RB_ll(self, params, approximate_ratio=False):
+    def get_RB_ll(self, params, approximate_ratio=True):
         
         # -------------- ONLINE computation -----------------------
         full_params = np.asarray(self.inj_params)
         full_params[self.inds] = params
         
         if approximate_ratio:
+            
             app_ratios = self.get_approximate_ratios(*full_params[:6])
             bb = self.xp.empty((len(self.mod_sel),3,2), dtype=complex) 
             bb[:,:,0] = app_ratios
             bb[:,:,1] = app_ratios
+
+        
         else:
             # get template, notice I am generating the inspiral multiple times, this should be avoided!
             h_wave_mode_pol = self.xp.asarray([self.__call__(*full_params, **self.new_kw, mode_selection=md) for md in self.mod_sel])
             # get left hand side of M r = b
+            # import matplotlib.pyplot as plt
+            # rat = h_wave_mode_pol[0,0,:]/self.ref_wave_mode_pol[0,0,:]
+            # rat2 = h_wave_mode_pol[0,0,self.ind_f[0]]/self.ref_wave_mode_pol[0,0,self.ind_f[0]]
+            
+            # pol = np.polynomial.chebyshev.chebfit(self.f_in[self.ind_f[0]].get(), rat2.get(),2) 
+            # fff = np.linspace(self.xp.min(self.f_to_eval[0].get()), self.xp.max(self.f_to_eval[0].get())) 
+            # cheb = np.polynomial.chebyshev.chebval(fff, pol)
+            # plt.figure(); plt.plot(self.f_in.get(),rat.get()); plt.plot(fff,cheb, '--'); plt.plot(self.f_in[self.ind_f[0]].get(), rat2.get(), '.'); plt.savefig('ratio')
+
             bb = self.xp.array([h_wave_mode_pol[i,:,self.ind_f[i]]/self.ref_wave_mode_pol[i,:,self.ind_f[i]] for i in range(len(self.mod_sel))])
             # np.abs ( (bb[:,:,0]-bb[:,:,1])/bb[:,:,1] ) h plus and cross have equal ratios
+            
         
         # check against the true ones
         # for i in range(len(self.mod_sel)):
@@ -261,14 +302,14 @@ class fd_waveform():
         #     print("app",app_ratios[i,:])
         #     print("max", np.max(np.abs ( (bb[:,:,0]-bb[:,:,1])/bb[:,:,1] )) )
 
-        
+
         # construct matrix
         Mat_F = [self.xp.array([[self.xp.ones_like(ff), ff, ff**2] for ff in fev]) for fev in self.f_to_eval]
         # get solutions for A and B vector
         r_vec = self.xp.array([[self.xp.linalg.solve(Mat_F[mod_numb], bb[mod_numb,:, pol]) for pol in range(2)] for mod_numb in range(len(self.mod_sel))])
         r_mat = self.xp.array([[
             [
-                self.xp.conj(r_vec[v1, pol, 0])*r_vec[v2, pol, 0],
+                self.xp.conj(r_vec[v1, pol, 0])*r_vec[v2, pol, 0], # f^0
                 self.xp.conj(r_vec[v1, pol, 0])*r_vec[v2, pol, 1] + self.xp.conj(r_vec[v1, pol, 1])*r_vec[v2, pol, 0],
                 self.xp.conj(r_vec[v1, pol, 0])*r_vec[v2, pol, 2] + self.xp.conj(r_vec[v1, pol, 1])*r_vec[v2, pol, 1] + self.xp.conj(r_vec[v1, pol, 2])*r_vec[v2, pol, 0],
                 self.xp.conj(r_vec[v1, pol, 1])*r_vec[v2, pol, 2] + self.xp.conj(r_vec[v1, pol, 2])*r_vec[v2, pol, 1],
@@ -276,13 +317,18 @@ class fd_waveform():
             ]  for v1 in range(len(self.mod_sel)) for v2 in range(len(self.mod_sel)) if v1<=v2] for pol in range(2)])
 
 
+
         d_h_app = self.xp.real(self.xp.sum(self.A_vec*r_vec))
-        # breakpoint()
         h_h_app = self.xp.sum(self.xp.real(self.B_matrix_p*r_mat))#self.xp.sum(self.xp.real(self.xp.sum(self.B_matrix_p*r_mat, axis=1))) #self.xp.sum(xp.array([[self.xp.real(self.xp.dot(self.B_matrix_p[pol,:,mm],r_mat[pol,:,mm])) for mm in range(len(self.mod_sel))] for pol in range(2)]))
 
+        # print([np.max(np.abs(self.B_matrix_p[0,i,:])) for i in range(5)])
+        # print([np.max(np.abs(r_mat[0,i,:])) for i in range(5)])
+        
         like_out = -1.0 / 2.0 * (self.d_d + h_h_app - 2 * d_h_app).real
-        print("d_h_app", d_h_app, "h_h_app", h_h_app, "like", like_out)
-
+        # print("d_h_app", d_h_app, "h_h_app", h_h_app, "like", like_out)
+        
+        
+        
         # back to CPU if on GPU
         try:
             return like_out.get()
@@ -437,15 +483,17 @@ injection_params = np.array(
     ]
 )
 
-perc = 1e-2
+perc = 1e-5
 priors = [uniform_dist(injection_params[test_inds[0]]*(1-perc), injection_params[test_inds[0]]*(1+perc)), 
              uniform_dist(injection_params[test_inds[1]]*(1-perc), injection_params[test_inds[1]]*(1+perc)),
+             uniform_dist(injection_params[test_inds[2]]*(1-perc), injection_params[test_inds[2]]*(1+perc)),
+             uniform_dist(injection_params[test_inds[3]]*(1-perc), injection_params[test_inds[3]]*(1+perc)),
              ]
 
 
-N=int(3.14e6+1)
+N=int(3.14e5+1)
 eps=5e-1
-waveform_kwargs = {"T": T, "dt": dt, "eps": eps}#"mode_selection": [ (2,2,0), (2,2,1), (3,2,0), (2,2,-1)]}##
+waveform_kwargs = {"T": T, "dt": dt, "mode_selection": [ (2,2,0), (2,2,1), (2,2,2)]}#"eps": eps}#
 
 
 gen_wave = fd_waveform(fd_wave, N=N, use_gpu=gpu_available)
@@ -460,22 +508,30 @@ true_ll = gen_wave.get_ll(injection_params[test_inds])
 app_ll = gen_wave.get_RB_ll(injection_params[test_inds])
 print("ll true", true_ll, " app ll ", app_ll ) 
 
-for i in range(50):
+import matplotlib.pyplot as plt
+plt.figure()
+for i in range(100):
     print('-----------------------------------------------')
-    factor = 10**(-np.random.randint(6,9))
-    start_points = injection_params[test_inds].copy()
-    start_points = injection_params[test_inds] * (1 + factor * np.random.normal( len(test_inds) ) )
+    # factor = 10**(-np.random.randint(6,9))
+    # start_points = injection_params[test_inds].copy()
+    # start_points = injection_params[test_inds] * (1 + factor * np.random.normal( len(test_inds) ) )
+    start_points = [prior_i.rvs() for prior_i in priors]
+
     true_ll = gen_wave.get_ll(start_points)
     app_ll = gen_wave.get_RB_ll(start_points)
-    print("\n")
+    plt.semilogy(true_ll, np.abs(true_ll - app_ll), '.')
+    # print("\n")
     print("ll true", true_ll, " relative diff ", (true_ll - app_ll)/true_ll, " absolute diff ", (true_ll - app_ll) ) 
-    
+plt.xlabel('true log-like')
+plt.ylabel(r'$\Delta$ log-like')
+plt.savefig('delta_log_like')
 
 
+breakpoint()
 ####################################
 
 class Likelihood:
-    def __init__(self, lnlike, priors, relative_binning=True):
+    def __init__(self, lnlike, priors, relative_binning=False):
         self.priors = priors
         self.lnlike = lnlike
         if relative_binning:
@@ -526,3 +582,9 @@ sampler = emcee.EnsembleSampler(
 nsteps = 1000
 sampler.reset()
 sampler.run_mcmc(start_points, nsteps, progress=True)
+
+samples = sampler.get_chain(flat=True)
+import corner
+plt.figure()
+corner.corner(samples)
+plt.savefig('posterior')
