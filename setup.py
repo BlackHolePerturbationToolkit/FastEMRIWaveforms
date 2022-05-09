@@ -247,6 +247,8 @@ with open(fp_out_name, "w") as fp_out:
                     except (ValueError) as e:
                         continue
 
+# combine files for pn amp
+os.system("cat src/temp_gather_hat_Zlmkn.c src/Zlmkn8_5PNe10_base.c > src/Zlmkn8_5PNe10.cu")
 
 # if installing for CUDA, build Cython extensions for gpu modules
 if run_cuda_install:
@@ -310,6 +312,10 @@ if run_cuda_install:
 
     gpuAAK_ext = Extension(
         "pygpuAAK", sources=["src/gpuAAK.cu", "src/gpuAAKWrap.pyx"], **gpu_extension
+    )
+
+    pnAmp_ext = Extension(
+        "pypnamp", sources=["src/Utility.cc", "src/Zlmkn8_5PNe10.cu", "src/pypnampWrap.pyx"], **gpu_extension
     )
 
 # build all cpu modules
@@ -382,8 +388,8 @@ fund_freqs_ext = Extension(
 # also copy pyx files to cpu version
 src = "src/"
 
-cp_cu_files = ["matmul", "interpolate", "gpuAAK"]
-cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap"]
+cp_cu_files = ["matmul", "interpolate", "gpuAAK", "Zlmkn8_5PNe10"]
+cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap", "pypnampWrap"]
 
 for fp in cp_cu_files:
     shutil.copy(src + fp + ".cu", src + fp + ".cpp")
@@ -405,12 +411,17 @@ AAK_cpu_ext = Extension(
     "pycpuAAK", sources=["src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"], **cpu_extension
 )
 
+pnAmp_cpu_ext = Extension(
+        "pycpupnamp", sources=["src/Utility.cc", "src/Zlmkn8_5PNe10.cpp", "src/pypnampWrap_cpu.pyx"], **cpu_extension
+    )
+
 
 spher_harm_ext = Extension(
     "pySpinWeightedSpherHarm",
     sources=["src/SWSH.cc", "src/pySWSH.pyx"],
     **cpu_extension,
 )
+
 
 cpu_extensions = [
     matmul_cpu_ext,
@@ -421,10 +432,11 @@ cpu_extensions = [
     Interp2DAmplitude_ext,
     fund_freqs_ext,
     AAK_cpu_ext,
+    pnAmp_cpu_ext,
 ]
 
 if run_cuda_install:
-    gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext]
+    gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext, pnAmp_ext]
     extensions = gpu_extensions + cpu_extensions
 else:
     extensions = cpu_extensions

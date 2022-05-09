@@ -586,6 +586,230 @@ class Pn5AAK(ABC):
                 "Y0 is greater than 1 or less than -1. Must be between -1 and 1."
             )
 
+class Pn5AdiabaticAmp(Pn5AAK):
+    """Base class for Pn5AAK waveforms.
+
+    # TODO: update 
+    This class contains some basic checks and information for AAK waveforms
+    with a 5PN trajectory model. Please see :class:`few.waveform.Pn5AAKWaveform`
+    for more details.
+
+    args:
+        use_gpu (bool, optional): If True, will allocate arrays on the GPU.
+            Default is False.
+
+    """
+
+    def attributes_Pn5AAK(self):
+        """
+        attributes:
+            xp (module): numpy or cupy based on hardware chosen.
+            background (str): Spacetime background for this model.
+            descriptor (str): Short description for model validity.
+            needs_Y (bool): If True, indicates modules that inherit this class
+                requires the inclination definition of :math:`Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}`
+                rather than :math:`x_I`.
+
+        """
+        pass
+
+    def __init__(self, use_gpu=False, **kwargs):
+
+        # some descriptive information
+        self.background = "Kerr"
+        self.descriptor = "generic orbits"
+        self.frame = "source"
+        self.needs_Y = True
+
+        # set mode index settings
+        self.lmax = 10
+        self.nmax = 10  
+
+        self.ndim = 3
+
+        # fill all lmn mode values
+        md = []
+
+        # store m + k + n > 0 and m + k + n = 0 for n < 0
+        for l in range(2, self.lmax + 1):
+            
+            if l == 2:
+                nrange = range(-5, 11)
+                kmax = 8
+            elif l == 3:
+                nrange = range(-6, 11)
+                kmax = 10
+            elif l == 4:
+                nrange = range(-7, 11)
+                kmax = 10
+            elif l == 5:
+                nrange = range(-6, 11)
+                kmax = 12
+            elif l == 6:
+                nrange = range(-7, 11)
+                kmax = 14
+            elif l == 7:
+                nrange = range(-8, 11)
+                kmax = 16
+            elif l == 8:
+                nrange = range(-9, 11)
+                kmax = 18
+            elif l == 9:
+                nrange = range(-9, 11)
+                kmax = 18
+            elif l == 10:
+                nrange = range(-9, 11)
+                kmax = 20
+
+            for n in nrange:
+                for m in range(-l, l + 1):
+                    for k in range(-kmax, kmax + 1):
+                        if (m + k + n) > 0 or ((m + k + n) == 0 and (n < 0)):
+                            md.append([l, m, k, n])
+
+        # total number of modes in the model
+        self.num_modes = self.num_teuk_modes = len(md)
+
+        # sorts the mode indexes
+        md = self.xp.asarray(md).T.astype(self.xp.int32)
+
+        # store l m and n values
+        self.l_arr, self.m_arr, self.k_arr, self.n_arr = [md[i] for i in range(4)]
+
+        # adjust with .get method for cupy
+        try:
+            self.lmkn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T.get())}
+
+        except AttributeError:
+            self.lmkn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
+
+        # store the mask as m != 0 is True
+        self.m0mask = self.m_arr != 0
+
+        # create final arrays to include -m modes
+       
+        # creates special maps to the modes
+        self.index_map = {}
+        self.special_index_map = {}  # maps the minus m values to positive m
+        for i, (l, m, k, n) in enumerate(zip(self.l_arr, self.m_arr, self.k_arr, self.n_arr)):
+
+            try:
+                l = l.item()
+                m = m.item()
+                k = k.item()
+                n = n.item()
+
+            except AttributeError:
+                pass
+
+            # regular index to mode tuple
+            self.index_map[(l, m, k, n)] = i
+
+    @property
+    def citation(self):
+        """Return citations of this class"""
+        return larger_few_citation + few_citation + few_software_citation + Pn5_citation
+
+    def sanity_check_angles(self, qS, phiS, qK, phiK):
+        """Sanity check on viewing angles.
+
+        Make sure parameters are within allowable ranges.
+
+        args:
+            qS (double): Sky location polar angle in ecliptic
+                coordinates.
+            phiS (double): Sky location azimuthal angle in
+                ecliptic coordinates.
+            qK (double): Initial BH spin polar angle in ecliptic
+                coordinates.
+            phiK (double): Initial BH spin azimuthal angle in
+                ecliptic coordinates.
+
+        Returns:
+            tuple: (qS, phiS, qK, phiK). phiS and phiK are wrapped.
+
+        Raises:
+            ValueError: If any of the angular values are not allowed.
+
+        """
+        if qS < 0.0 or qS > np.pi:
+            raise ValueError("qS must be between 0 and pi.")
+
+        if qK < 0.0 or qK > np.pi:
+            raise ValueError("qK must be between 0 and pi.")
+
+        phiS = phiS % (2 * np.pi)
+        phiK = phiK % (2 * np.pi)
+        return (qS, phiS, qK, phiK)
+
+    def sanity_check_traj(self, p, e, Y):
+        """Sanity check on parameters output from thte trajectory module.
+
+        Make sure parameters are within allowable ranges.
+
+        args:
+            p (1D np.ndarray): Array of semi-latus rectum values produced by
+                the trajectory module.
+            e (1D np.ndarray): Array of eccentricity values produced by
+                the trajectory module.
+            Y (1D np.ndarray): Array of cos:math:`\iota` values produced by
+                the trajectory module.
+
+        Raises:
+            ValueError: If any of the trajectory points are not allowed.
+            warn: If any points in the trajectory are allowable,
+                but outside calibration region.
+
+        """
+
+        if np.any(e < 0.0):
+            raise ValueError("Members of e array are less than zero.")
+
+        if np.any(p < 0.0):
+            raise ValueError("Members of p array are less than zero.")
+
+        if np.any(Y < -1.0) or np.any(Y > 1.0):
+            raise ValueError(
+                "Members of Y array are greater than 1.0 or less than -1.0."
+            )
+
+    def sanity_check_init(self, M, mu, a, p0, e0, Y0):
+        """Sanity check initial parameters.
+
+        Make sure parameters are within allowable ranges.
+
+        args:
+            M (double): Massive black hole mass in solar masses.
+            mu (double): compact object mass in solar masses.
+            a (double): Dimensionless spin of massive black hole.
+            p0 (double): Initial semilatus rectum (dimensionless)
+                :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
+                more information on :math:`p_0 \leq 10.0`.
+            e0 (double): Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
+            Y0 (double): Initial cos:math:`\iota` :math:`(-1.0\leq Y_0\leq1.0)`.
+
+        Raises:
+            ValueError: If any of the parameters are not allowed.
+
+        """
+
+        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"], [a, "a"]]:
+            test = val < 0.0
+            if test:
+                raise ValueError("{} is negative. It must be positive.".format(key))
+
+        if mu / M > 1e-4:
+            warnings.warn(
+                "Mass ratio is outside of generally accepted range for an extreme mass ratio (1e-4). (q={})".format(
+                    mu / M
+                )
+            )
+
+        if Y0 > 1.0 or Y0 < -1.0:
+            raise ValueError(
+                "Y0 is greater than 1 or less than -1. Must be between -1 and 1."
+            )
+
 
 class TrajectoryBase(ABC):
     """Base class used for trajectory modules.
