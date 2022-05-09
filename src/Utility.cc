@@ -1,6 +1,7 @@
 #include "stdio.h"
 #include "math.h"
 #include "global.h"
+#include "Utility.hh"
 
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_sf_ellint.h>
