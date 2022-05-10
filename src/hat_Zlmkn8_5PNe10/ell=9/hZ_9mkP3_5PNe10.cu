@@ -44,10 +44,10 @@ m + k + n > 0 and m + k + n = 0 with n <= 0
 #include <math.h>
 
 // GSL headers
-#include<gsl/gsl_complex.h>
+//#include<gsl/cmplx.h>
 
 // BHPC headers
-#include "hZ_9mkP3_5PNe10.h"
+#include "hat_Zlmkn8_5PNe10/ell=9/hZ_9mkP3_5PNe10.h"
 
 /*-*-*-*-*-*-*-*-*-*-*-* Global variables (but used only within hZ_9mkP0_5PNe10.c) *-*-*-*-*-*-*-*-*-*-*-*/
 
@@ -56,18 +56,19 @@ m + k + n > 0 and m + k + n = 0 with n <= 0
 
 
 /*-*-*-*-*-*-*-*-*-*-*-* External functions (can be refered by other source files) *-*-*-*-*-*-*-*-*-*-*-*/
-gsl_complex hZ_9mkP3(const int m, const int k, inspiral_orb_PNvar* PN_orb) { //
+CUDA_CALLABLE_MEMBER
+cmplx hZ_9mkP3(const int m, const int k, inspiral_orb_PNvar* PN_orb) { //
 
-    gsl_complex hZ_9mkP3 = { 0.0 };
+    cmplx hZ_9mkP3 = { 0.0 };
 
-    double  Re_9mkP3;
-    double  Im_9mkP3;
+    double  Re_9mkP3 = 0.0;
+    double  Im_9mkP3 = 0.0;
 
     // NULL check
     if (PN_orb == NULL) {
 
-        perror("Pointer errors: hZ_9mkP3");
-        exit(1);
+        //perror("Point errors: hZ_9mkP3");
+        //exit(1);
 
     }
 
@@ -1610,12 +1611,12 @@ if (m == 9 && k == 1) {
 
  else {
 
-        perror("Parameter errors: hZ_9mkP3");
-        exit(1);
+        //perror("Parameter errors: hZ_9mkP3");
+        //exit(1);
 
     }
 
-    GSL_SET_COMPLEX(&hZ_9mkP3, Re_9mkP3, Im_9mkP3);
+    hZ_9mkP3 = cmplx(Re_9mkP3, Im_9mkP3);
     return hZ_9mkP3;
 
 }

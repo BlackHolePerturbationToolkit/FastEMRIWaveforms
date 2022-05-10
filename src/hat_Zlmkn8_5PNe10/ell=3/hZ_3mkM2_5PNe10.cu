@@ -44,10 +44,10 @@ m + k + n > 0 and m + k + n = 0 with n <= 0
 #include <math.h>
 
 // GSL headers
-#include<gsl/gsl_complex.h>
+//#include<gsl/cmplx.h>
 
 // BHPC headers
-#include "hZ_3mkM2_5PNe10.h"
+#include "hat_Zlmkn8_5PNe10/ell=3/hZ_3mkM2_5PNe10.h"
 
 /*-*-*-*-*-*-*-*-*-*-*-* Global variables (but used only within hZ_3mkP0_5PNe10.c) *-*-*-*-*-*-*-*-*-*-*-*/
 //static int lmax = 2;
@@ -57,18 +57,19 @@ m + k + n > 0 and m + k + n = 0 with n <= 0
 
 
 /*-*-*-*-*-*-*-*-*-*-*-* External functions (can be refered by other source files) *-*-*-*-*-*-*-*-*-*-*-*/
-gsl_complex hZ_3mkM2(const int m, const int k, inspiral_orb_PNvar* PN_orb) { //
+CUDA_CALLABLE_MEMBER
+cmplx hZ_3mkM2(const int m, const int k, inspiral_orb_PNvar* PN_orb) { //
 
-    gsl_complex hZ_3mkM2 = { 0.0 };
+    cmplx hZ_3mkM2 = { 0.0 };
 
-    double  Re_3mkM2;
-    double  Im_3mkM2;
+    double  Re_3mkM2 = 0.0;
+    double  Im_3mkM2 = 0.0;
 
     // NULL check
     if (PN_orb == NULL) {
 
-        perror("Pointer errors: hZ_3mkM2");
-        exit(1);
+        //perror("Point errors: hZ_3mkM2");
+        //exit(1);
 
     }
 
@@ -334,12 +335,12 @@ if (m == 3 && k == 4) {
  } 
  else {
 
-        perror("Parameter errors: hZ_3mkM2");
-        exit(1);
+        //perror("Parameter errors: hZ_3mkM2");
+        //exit(1);
 
     }
 
-    GSL_SET_COMPLEX(&hZ_3mkM2, Re_3mkM2, Im_3mkM2);
+    hZ_3mkM2 = cmplx(Re_3mkM2, Im_3mkM2);
     return hZ_3mkM2;
 
 }

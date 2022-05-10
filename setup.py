@@ -258,8 +258,13 @@ with open(fp_out_name, "w") as fp_out:
                     except (ValueError) as e:
                         continue
 
-# combine files for pn amp
-#os.system("cat src/temp_gather_hat_Zlmkn.c src/Zlmkn8_5PNe10_base.c > src/Zlmkn8_5PNe10.cu")
+# gather pn amplitude files
+files_for_pn_amp = []
+for l in range(2, 13):
+    path = f"hat_Zlmkn8_5PNe10/ell={l}/"
+    for fp in os.listdir("src/" + path):
+        if fp[-2:] == "cu":
+            files_for_pn_amp.append("src/" + path + fp)
 
 # if installing for CUDA, build Cython extensions for gpu modules
 if run_cuda_install:
@@ -329,7 +334,7 @@ if run_cuda_install:
     gpu_extension_device = deepcopy(gpu_extension)
     gpu_extension_device2 = deepcopy(gpu_extension)
 
-    gpu_extension_device["extra_compile_args"]["nvcc"] += ["-rdc=true", "-c"]
+    gpu_extension_device["extra_compile_args"]["nvcc"] += ["-rdc=true", "-c", "-Xptxas", "--disable-optimizer-constants"]
 
     """pnAmp_ext1 = Extension(
         "pypnamp1", sources=["src/hZ_2mkP0_5PNe10.cu"], **gpu_extension_device
@@ -344,7 +349,7 @@ if run_cuda_install:
     #)
 
     pnAmp_ext = Extension(
-        "pypnamp", sources=["src/hZ_2mkP0_5PNe10.cu", "src/Zlmkn8_5PNe10_base.cu", "src/Utility.cc", "src/pypnampWrap.pyx", "zzzzzzzzzzzlink.cu"], **gpu_extension_device
+        "pypnamp", sources=files_for_pn_amp + ["src/Zlmkn8_5PNe10_base.cu", "src/Utility.cc", "src/pypnampWrap.pyx", "zzzzzzzzzzzlink.cu"], **gpu_extension_device
     )
 
 # build all cpu modules
@@ -417,7 +422,7 @@ fund_freqs_ext = Extension(
 # also copy pyx files to cpu version
 src = "src/"
 
-cp_cu_files = ["matmul", "interpolate", "gpuAAK", "Zlmkn8_5PNe10_base", "hZ_2mkP0_5PNe10"]
+cp_cu_files = ["matmul", "interpolate", "gpuAAK", "Zlmkn8_5PNe10_base"] + [fp[4:-3] for fp in files_for_pn_amp]
 cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap", "pypnampWrap"]
 
 for fp in cp_cu_files:
@@ -440,8 +445,9 @@ AAK_cpu_ext = Extension(
     "pycpuAAK", sources=["src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"], **cpu_extension
 )
 
+cpu_files_for_pn_amp = [fp[:-3] + ".cpp" for fp in files_for_pn_amp]
 pnAmp_cpu_ext = Extension(
-        "pycpupnamp", sources=["src/Utility.cc", "src/hZ_2mkP0_5PNe10.cpp", "src/Zlmkn8_5PNe10_base.cpp", "src/pypnampWrap_cpu.pyx"], **cpu_extension
+        "pycpupnamp", sources=cpu_files_for_pn_amp + ["src/Utility.cc", "src/Zlmkn8_5PNe10_base.cpp", "src/pypnampWrap_cpu.pyx"], **cpu_extension
     )
 
 
@@ -470,7 +476,6 @@ if run_cuda_install:
 else:
     extensions = cpu_extensions
 
-#extensions = [pnAmp_ext]
 with open("README.md", "r") as fh:
     long_description = fh.read()
 

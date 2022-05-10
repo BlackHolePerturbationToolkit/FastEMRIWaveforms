@@ -11,14 +11,17 @@
 
 //! \file hZ_3mkP6_5PNe10.h
 
+#include "global.h"
+
 // BHPC headers
-#include "../../Zlmkn8_5PNe10.h"
+#include "Zlmkn8_5PNe10.h"
 
 
 // Define type
 
 
 // Declare prototype 
-gsl_complex hZ_3mkP6(const int m, const int k, inspiral_orb_PNvar* PN_orb);
+CUDA_CALLABLE_MEMBER
+cmplx hZ_3mkP6(const int m, const int k, inspiral_orb_PNvar* PN_orb);
 
 #endif // hZ_3mkP6_5PNe10_H_ 

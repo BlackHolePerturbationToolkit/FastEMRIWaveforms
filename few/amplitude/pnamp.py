@@ -170,22 +170,39 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
         """
         input_len = len(p)
 
+        
         if specific_modes is not None:
             if not isinstance(specific_modes, list):
                 raise ValueError("If providing specific_modes, needs to be a list of tuples.")
-            num_modes = len(specific_modes)
+            
+            modes_tmp = self.xp.asarray(specific_modes)
+            if modes_tmp.shape[0] == 4 and modes_tmp.shape[1] != 4:
+                l_all, m_all, k_all, n_all = [modes_tmp[i].copy() for i in range(4)]
+                num_modes = modes_tmp.shape[1]
+                
+            elif modes_tmp.shape[1] == 4 and modes_tmp.shape[0] != 4:
+                l_all, m_all, k_all, n_all = [modes_tmp.T[i].copy() for i in range(4)]
+                num_modes = modes_tmp.shape[0]
 
-            modes_tmp = self.xp.asarray(specific_modes).T
-            l_all, m_all, k_all, n_all = [modes_tmp[i].copy() for i in range(4)]
+            else:
+                if modes_tmp.shape[1] == 4 and modes_tmp.shape[0] == 4:
+                    raise ValueError("Input specific_modes shape is (4, 4), which is not allowed. A length of 4 is reserved for the dimension along lmkn.")
+                else:
+                    raise ValueError(f"specific_modes has shape {modes_tmp.shape}. One dimension must be 4 indicating lmkn.")
 
         else:
             num_modes = self.num_teuk_modes
             l_all, m_all, k_all, n_all = self.l_arr.copy(), self.m_arr.copy(), self.k_arr.copy(), self.n_arr.copy()
-
+    
+    
         l_all, m_all, k_all, n_all = l_all.astype(self.xp.int32), m_all.astype(self.xp.int32), k_all.astype(self.xp.int32), n_all.astype(self.xp.int32)
+
+        
+        # 14 ms single thread
         # convert Y to x_I for fund freqs
         xI = Y_to_xI(q, p, e, Y)
 
+        # 13 ms single thread
         # these are dimensionless and in radians
         OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(q, p, e, xI)
 
@@ -198,9 +215,9 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
         #)
         Zlmkn_out = self.xp.zeros((num_modes * input_len,), dtype=complex)
 
-        p, e, Y, q, OmegaPhi, OmegaTheta, OmegaR = self.xp.asarray(p), self.xp.asarray(e), self.xp.asarray(Y), self.xp.asarray(q), self.xp.asarray(OmegaPhi), self.xp.asarray(OmegaTheta), self.xp.asarray(OmegaR)
+        p_in, e_in, Y_in, q_in, OmegaPhi_in, OmegaTheta_in, OmegaR_in = self.xp.asarray(p), self.xp.asarray(e), self.xp.asarray(Y), self.xp.asarray(q), self.xp.asarray(OmegaPhi), self.xp.asarray(OmegaTheta), self.xp.asarray(OmegaR)
 
-        self.Zlmkn8_5PNe10(Zlmkn_out, l_all, m_all, k_all, n_all, q, p, e, Y, OmegaR, OmegaTheta, OmegaPhi, num_modes, input_len)
+        self.Zlmkn8_5PNe10(Zlmkn_out, l_all, m_all, k_all, n_all, q_in, p_in, e_in, Y_in, OmegaR_in, OmegaTheta_in, OmegaPhi_in, num_modes, input_len)
 
         # reshape the teukolsky modes
         Zlmkn_out = Zlmkn_out.reshape(num_modes, input_len).T

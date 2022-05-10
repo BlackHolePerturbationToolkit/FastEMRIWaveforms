@@ -44,11 +44,13 @@ m + k + n > 0 and m + k + n = 0 with n <= 0
 #include <math.h>
 
 // GSL headers
-#include<gsl/gsl_complex.h>
+//#include<gsl/cmplx.h>
+
+#include "global.h"
 
 // BHPC headers
-//#include "../../Zlmkn8_5PNe10.h"
-#include "hZ_2mkP0_5PNe10.h"
+#include "Zlmkn8_5PNe10.h"
+#include "hat_Zlmkn8_5PNe10/ell=2/hZ_2mkP0_5PNe10.h"
 
 /*-*-*-*-*-*-*-*-*-*-*-* Global variables (but used only within hZ_2mkM5_5PNe10.c) *-*-*-*-*-*-*-*-*-*-*-*/
 //static int lmax = 2;
@@ -58,19 +60,20 @@ m + k + n > 0 and m + k + n = 0 with n <= 0
 
 
 /*-*-*-*-*-*-*-*-*-*-*-* External functions (can be refered by other source files) *-*-*-*-*-*-*-*-*-*-*-*/
-gsl_complex hZ_2mkP0(const int m, const int k, inspiral_orb_PNvar* PN_orb) { //
+CUDA_CALLABLE_MEMBER
+cmplx hZ_2mkP0(const int m, const int k, inspiral_orb_PNvar* PN_orb) { //
 
-    gsl_complex hZ_2mkP0 = { 0.0 };
-    //GSL_SET_COMPLEX(&hZ_2mkP0, 0.0, 0.0);
+    cmplx hZ_2mkP0 = { 0.0 };
+    //&hZ_2mkP0, 0.0, 0.0);
 
-    double  Re_2mkP0;
-    double  Im_2mkP0;
+    double  Re_2mkP0 = 0.0;
+    double  Im_2mkP0 = 0.0;
 
     // NULL check
     if (PN_orb == NULL) {
 
-        perror("Pointer errors: hZ_2mkP0");
-        exit(1);
+        //perror("Point errors: hZ_2mkP0");
+        //exit(1);
 
     }
 
@@ -335,14 +338,14 @@ if (m == 2 && k == 4) {
 
  else {
 
-        perror("Parameter errors: hZ_2mkP0");
+        //perror("Parameter errors: hZ_2mkP0");
         //printf("mkn[%d, %d, %d] \n", m, k, 0);
-        exit(1);
+        //exit(1);
 
     }
 
     //printf("hat_Z2mkP0[%d, %d] = %.7e + i %.7e \n", m, k, Re_2mkP0, Im_2mkP0);
-    GSL_SET_COMPLEX(&hZ_2mkP0, Re_2mkP0, Im_2mkP0);
+    hZ_2mkP0 = cmplx(Re_2mkP0, Im_2mkP0);
     return hZ_2mkP0;
 
 }
