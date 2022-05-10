@@ -1,4 +1,5 @@
 # from future.utils import iteritems
+from copy import deepcopy
 import os
 import sys
 from os.path import join as pjoin
@@ -79,6 +80,9 @@ def customize_compiler_for_nvcc(self):
     # Tell the compiler it can processes .cu
     self.src_extensions.append(".cu")
 
+    # track all the object files generated with cuda device code
+    self.cuda_object_files = []
+
     # Save references to the default compiler_so and _comple methods
     default_compiler_so = self.compiler_so
     super = self._compile
@@ -87,11 +91,18 @@ def customize_compiler_for_nvcc(self):
     # object but distutils doesn't have the ability to change compilers
     # based on source extension: we add it.
     def _compile(obj, src, ext, cc_args, extra_postargs, pp_opts):
-        if os.path.splitext(src)[1] == ".cu":
+        if src == 'zzzzzzzzzzzlink.cu':
+            self.set_executable('compiler_so', CUDA['nvcc'])
+            postargs = extra_postargs['nvcclink']
+            cc_args = self.cuda_object_files[1:]
+            
+            src = self.cuda_object_files[0]
+        elif os.path.splitext(src)[1] == ".cu":
             # use the cuda for .cu files
             self.set_executable("compiler_so", CUDA["nvcc"])
             # use only a subset of the extra_postargs, which are 1-1
             # translated from the extra_compile_args in the Extension class
+            self.cuda_object_files.append(obj)
             postargs = extra_postargs["nvcc"]
         else:
             postargs = extra_postargs["gcc"]
@@ -248,13 +259,13 @@ with open(fp_out_name, "w") as fp_out:
                         continue
 
 # combine files for pn amp
-os.system("cat src/temp_gather_hat_Zlmkn.c src/Zlmkn8_5PNe10_base.c > src/Zlmkn8_5PNe10.cu")
+#os.system("cat src/temp_gather_hat_Zlmkn.c src/Zlmkn8_5PNe10_base.c > src/Zlmkn8_5PNe10.cu")
 
 # if installing for CUDA, build Cython extensions for gpu modules
 if run_cuda_install:
 
     gpu_extension = dict(
-        libraries=["cudart", "cublas", "cusparse", "gomp"],
+        libraries=["gsl", "gslcblas", "cudart", "cublas", "cusparse", "gomp"],
         library_dirs=[CUDA["lib64"]],
         runtime_library_dirs=[CUDA["lib64"]],
         language="c++",
@@ -265,13 +276,13 @@ if run_cuda_install:
         extra_compile_args={
             "gcc": ["-std=c++11", "-fopenmp", "-D__USE_OMP__"],  # '-g'],
             "nvcc": [
-                "-arch=sm_70",
-                "-gencode=arch=compute_50,code=sm_50",
-                "-gencode=arch=compute_52,code=sm_52",
-                "-gencode=arch=compute_60,code=sm_60",
-                "-gencode=arch=compute_61,code=sm_61",
-                "-gencode=arch=compute_70,code=sm_70",
-                "-gencode=arch=compute_75,code=sm_75",
+                "-arch=sm_80",
+                #"-gencode=arch=compute_50,code=sm_50",
+                #"-gencode=arch=compute_52,code=sm_52",
+                #"-gencode=arch=compute_60,code=sm_60",
+                #"-gencode=arch=compute_61,code=sm_61",
+                #"-gencode=arch=compute_70,code=sm_70",
+                #"-gencode=arch=compute_75,code=sm_75",
                 "-gencode=arch=compute_80,code=sm_80",
                 "-std=c++11",
                 "--default-stream=per-thread",
@@ -287,6 +298,7 @@ if run_cuda_install:
                 # "-O0",
                 # "-lineinfo",
             ],  # for debugging
+            'nvcclink': ['-arch=sm_80', '--device-link', '--compiler-options', "'-fPIC'"],
         },
         include_dirs=[numpy_include, CUDA["include"], "include"],
     )
@@ -314,8 +326,25 @@ if run_cuda_install:
         "pygpuAAK", sources=["src/gpuAAK.cu", "src/gpuAAKWrap.pyx"], **gpu_extension
     )
 
+    gpu_extension_device = deepcopy(gpu_extension)
+    gpu_extension_device2 = deepcopy(gpu_extension)
+
+    gpu_extension_device["extra_compile_args"]["nvcc"] += ["-rdc=true", "-c"]
+
+    """pnAmp_ext1 = Extension(
+        "pypnamp1", sources=["src/hZ_2mkP0_5PNe10.cu"], **gpu_extension_device
+    )
+
+    pnAmp_ext2 = Extension(
+        "pypnamp2", sources=["src/Zlmkn8_5PNe10_base.cu"], **gpu_extension_device
+    )"""
+
+    #pnAmp_ext3 = Extension(
+    #    "pypnamp3", sources=["src/tempfile.cu"], extra_objects=["build/temp.linux-x86_64-3.9/src/Zlmkn8_5PNe10_base.o", "build/temp.linux-x86_64-3.9/src/hZ_2mkP0_5PNe10.o"], **gpu_extension_device2
+    #)
+
     pnAmp_ext = Extension(
-        "pypnamp", sources=["src/Utility.cc", "src/Zlmkn8_5PNe10.cu", "src/pypnampWrap.pyx"], **gpu_extension
+        "pypnamp", sources=["src/hZ_2mkP0_5PNe10.cu", "src/Zlmkn8_5PNe10_base.cu", "src/Utility.cc", "src/pypnampWrap.pyx", "zzzzzzzzzzzlink.cu"], **gpu_extension_device
     )
 
 # build all cpu modules
@@ -388,7 +417,7 @@ fund_freqs_ext = Extension(
 # also copy pyx files to cpu version
 src = "src/"
 
-cp_cu_files = ["matmul", "interpolate", "gpuAAK", "Zlmkn8_5PNe10"]
+cp_cu_files = ["matmul", "interpolate", "gpuAAK", "Zlmkn8_5PNe10_base", "hZ_2mkP0_5PNe10"]
 cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap", "pypnampWrap"]
 
 for fp in cp_cu_files:
@@ -412,7 +441,7 @@ AAK_cpu_ext = Extension(
 )
 
 pnAmp_cpu_ext = Extension(
-        "pycpupnamp", sources=["src/Utility.cc", "src/Zlmkn8_5PNe10.cpp", "src/pypnampWrap_cpu.pyx"], **cpu_extension
+        "pycpupnamp", sources=["src/Utility.cc", "src/hZ_2mkP0_5PNe10.cpp", "src/Zlmkn8_5PNe10_base.cpp", "src/pypnampWrap_cpu.pyx"], **cpu_extension
     )
 
 
@@ -441,6 +470,7 @@ if run_cuda_install:
 else:
     extensions = cpu_extensions
 
+#extensions = [pnAmp_ext]
 with open("README.md", "r") as fh:
     long_description = fh.read()
 

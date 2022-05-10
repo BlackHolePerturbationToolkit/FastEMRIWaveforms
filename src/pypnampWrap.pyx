@@ -5,6 +5,9 @@ from few.utils.utility import pointer_adjust
 
 assert sizeof(int) == sizeof(np.int32_t)
 
+cdef extern from "Python.h":
+    pass
+
 cdef extern from "Zlmkn8_5PNe10.h":
     ctypedef void* cmplx 'cmplx'
     void Zlmkn8_5PNe10_wrap(cmplx *Zlmkn_out, int *l_all, int *m_all, int *k_all, int *n_all, double *q_all, double *tp_all, double *te_all, double *tY_all, double *tWr_all, double *tWth_all, double *tWph_all, int num_modes, int num_points);

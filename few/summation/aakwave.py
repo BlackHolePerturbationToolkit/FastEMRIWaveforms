@@ -107,6 +107,10 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
             + AK_citation
         )
 
+    @property
+    def gpu_capability(self):
+        return True
+
     def sum(
         self,
         tvec,

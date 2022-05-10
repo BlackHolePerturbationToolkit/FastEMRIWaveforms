@@ -50,7 +50,6 @@ class AAKWaveformTest(unittest.TestCase):
         mich = False
         dt = 10.0
         T = 0.001
-
         wave_cpu = Pn5AAKWaveform(inspiral_kwargs, sum_kwargs, use_gpu=False)
 
         waveform_cpu = wave_cpu(
@@ -61,8 +60,8 @@ class AAKWaveformTest(unittest.TestCase):
             np.all(np.abs(waveform_cpu) > 0.0)
             and np.all(np.isnan(waveform_cpu) == False)
         )
-
         if gpu_available:
+           
             wave_gpu = Pn5AAKWaveform(inspiral_kwargs, sum_kwargs, use_gpu=True)
 
             waveform = wave_gpu(
