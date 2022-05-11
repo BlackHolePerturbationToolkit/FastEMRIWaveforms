@@ -23,7 +23,7 @@ import numpy as np
 import h5py
 
 # Cython/C++ imports
-from pycpupnamp import Zlmkn8_5PNe10 as Zlmkn8_5PNe10_cpu
+#from pycpupnamp import Zlmkn8_5PNe10 as Zlmkn8_5PNe10_cpu
 
 # Python imports
 from few.utils.baseclasses import Pn5AdiabaticAmp, AmplitudeBase, ParallelModuleBase
@@ -130,8 +130,8 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
         if self.use_gpu:
             self.Zlmkn8_5PNe10 = Zlmkn8_5PNe10
 
-        else:
-            self.Zlmkn8_5PNe10 = Zlmkn8_5PNe10_cpu
+        #else:
+            #self.Zlmkn8_5PNe10 = Zlmkn8_5PNe10_cpu
 
     @property
     def citation(self):
@@ -143,7 +143,7 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
         """Confirms GPU capability"""
         return True
 
-    def get_amplitudes(self, p, e, Y, q, *args, specific_modes=None, **kwargs):
+    def get_amplitudes(self, p, e, Y, q, theta, *args, specific_modes=None, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays
@@ -169,7 +169,6 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
 
         """
         input_len = len(p)
-
         
         if specific_modes is not None:
             if not isinstance(specific_modes, list):
@@ -213,13 +212,20 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
         #    OmegaTheta / Msec,
         #    OmegaR / Msec,
         #)
-        Zlmkn_out = self.xp.zeros((num_modes * input_len,), dtype=complex)
+        Almkn_out = self.xp.zeros((2 * num_modes * input_len,), dtype=complex)
 
-        p_in, e_in, Y_in, q_in, OmegaPhi_in, OmegaTheta_in, OmegaR_in = self.xp.asarray(p), self.xp.asarray(e), self.xp.asarray(Y), self.xp.asarray(q), self.xp.asarray(OmegaPhi), self.xp.asarray(OmegaTheta), self.xp.asarray(OmegaR)
+        p_in, e_in, Y_in, q_in, theta_in, OmegaPhi_in, OmegaTheta_in, OmegaR_in = self.xp.asarray(self.xp.atleast_1d(p)), self.xp.asarray(self.xp.atleast_1d(e)), self.xp.asarray(self.xp.atleast_1d(Y)), self.xp.asarray(self.xp.atleast_1d(q)), self.xp.asarray(self.xp.atleast_1d(theta)), self.xp.asarray(self.xp.atleast_1d(OmegaPhi)), self.xp.asarray(self.xp.atleast_1d(OmegaTheta)), self.xp.asarray(self.xp.atleast_1d(OmegaR))
 
-        self.Zlmkn8_5PNe10(Zlmkn_out, l_all, m_all, k_all, n_all, q_in, p_in, e_in, Y_in, OmegaR_in, OmegaTheta_in, OmegaPhi_in, num_modes, input_len)
+        if len(p_in) != len(theta_in):
+            if len(theta_in) != 1:
+                raise ValueError("Length of theta array must be same as p,e,Y if input as an array rather than a scalar.")
+            theta_in = self.xp.repeat(theta_in, len(p_in))
+            breakpoint()
+
+        self.Zlmkn8_5PNe10(Almkn_out, l_all, m_all, k_all, n_all, q_in, theta_in, p_in, e_in, Y_in, OmegaR_in, OmegaTheta_in, OmegaPhi_in, num_modes, input_len)
 
         # reshape the teukolsky modes
-        Zlmkn_out = Zlmkn_out.reshape(num_modes, input_len).T
+        # len(dim0) = 2, 0 is right, 1 is left
+        Almkn_out = Almkn_out.reshape(2, num_modes, input_len).T
 
-        return Zlmkn_out
+        return Almkn_out
