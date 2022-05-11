@@ -569,6 +569,7 @@ class SchwarzschildEccentricWaveformBase(
             Phi_theta0=0.0,
             Phi_r0=Phi_r0,
             T=T,
+            # new_t=np.linspace(0.0, T*365*24*3600,num=500),
             dt=dt,
             **self.inspiral_kwargs
         )

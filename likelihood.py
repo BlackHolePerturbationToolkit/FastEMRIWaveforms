@@ -70,6 +70,15 @@ Ylm_kwargs = {
 sum_kwargs = dict(pad_output=True, output_type="fd")
 
 # list of waveforms
+fast_harm = FastSchwarzschildEccentricFluxHarmonics(
+    inspiral_kwargs=inspiral_kwargs,
+    amplitude_kwargs=amplitude_kwargs,
+    Ylm_kwargs=Ylm_kwargs,
+    sum_kwargs=sum_kwargs,
+    use_gpu=gpu_available,
+)
+
+# list of waveforms
 fast = FastSchwarzschildEccentricFluxHarmonics(
     inspiral_kwargs=inspiral_kwargs,
     amplitude_kwargs=amplitude_kwargs,
@@ -77,6 +86,7 @@ fast = FastSchwarzschildEccentricFluxHarmonics(
     sum_kwargs=sum_kwargs,
     use_gpu=gpu_available,
 )
+
 
 class fd_waveform():
 
@@ -274,7 +284,7 @@ class fd_waveform():
         
         return -Exp0#/ Gpc * MRSUN_SI
 
-    def get_RB_ll(self, params, approximate_ratio=True):
+    def get_RB_ll(self, params, approximate_ratio=False):
 
     
         # -------------- ONLINE computation -----------------------
@@ -289,7 +299,15 @@ class fd_waveform():
 
         else:
             # get template, notice I am generating the inspiral multiple times, this should be avoided!
-            h_wave_mode_pol = self.xp.asarray([self.__call__(*full_params, **self.new_kw, mode_selection=md) for md in self.mod_sel])
+            # h_wave_mode_pol = self.xp.asarray([self.__call__(*full_params, **self.new_kw, mode_selection=md) for md in self.mod_sel])
+
+             # list of reference waveforms
+            # breakpoint()
+            # list_ref_waves = fast_harm(
+            #     *full_params, **self.new_kw, mode_selection=self.wave_kwargs["mode_selection"]
+            #     )
+            # h_wave_mode_pol = self.xp.asarray([self.transform_to_fft_hp_hcross(ll) for ll in list_ref_waves])
+
             # get left hand side of M r = b
             # import matplotlib.pyplot as plt
             # rat = h_wave_mode_pol[0,0,:]/self.ref_wave_mode_pol[0,0,:]
@@ -312,9 +330,6 @@ class fd_waveform():
         #     print("app",app_ratios[i,:])
         #     print("max", np.max(np.abs ( (bb[:,:,0]-bb[:,:,1])/bb[:,:,1] )) )
 
-
-        
-            
         
         # it takes 0.03 seconds for this part to be executed
         
@@ -599,7 +614,7 @@ factor = 1e-5
 start_points = injection_params[test_inds] * (1 + factor * np.random.randn(nwalkers, ndim))
 
 import time
-num = 100
+num = 50
 st = time.perf_counter()
 
 for i in range(num):
