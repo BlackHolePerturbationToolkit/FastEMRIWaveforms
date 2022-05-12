@@ -1417,7 +1417,7 @@ class GenericModeDecomposedWaveformBase(
         a,
         p0,
         e0,
-        Y0,
+        x0,
         theta,
         phi,
         *args,
@@ -1495,10 +1495,10 @@ class GenericModeDecomposedWaveformBase(
         (t, p, e, x, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
             M,
             mu,
-            0.0,
+            a,
             p0,
             e0,
-            1.0,
+            x0,
             *args,
             Phi_phi0=Phi_phi0,
             Phi_theta0=0.0,
@@ -1509,25 +1509,17 @@ class GenericModeDecomposedWaveformBase(
         )
 
         # makes sure p and e are generally within the model
-        self.sanity_check_traj(p, e)
-
-        # get the vector norm
-        amp_norm = self.amp_norm_spline.ev(p_to_y(p, e), e)
+        self.sanity_check_traj(p, e, x)
 
         self.end_time = t[-1]
         # convert for gpu
         t = self.xp.asarray(t)
         p = self.xp.asarray(p)
         e = self.xp.asarray(e)
+        x = self.xp.asarray(x)
         Phi_phi = self.xp.asarray(Phi_phi)
+        Phi_phi = self.xp.asarray(Phi_theta)
         Phi_r = self.xp.asarray(Phi_r)
-        amp_norm = self.xp.asarray(amp_norm)
-
-        # get ylms only for unique (l,m) pairs
-        # then expand to all (lmn with self.inverse_lm)
-        ylms = self.ylm_gen(self.unique_l, self.unique_m, theta, phi).copy()[
-            self.inverse_lm
-        ]
 
         # split into batches
 
@@ -1557,29 +1549,13 @@ class GenericModeDecomposedWaveformBase(
             t_temp = t[inds_in]
             p_temp = p[inds_in]
             e_temp = e[inds_in]
+            x_temp = x[inds_in]
             Phi_phi_temp = Phi_phi[inds_in]
+            Phi_theta_temp = Phi_theta[inds_in]
             Phi_r_temp = Phi_r[inds_in]
-            amp_norm_temp = amp_norm[inds_in]
 
             # amplitudes
-            teuk_modes = self.amplitude_generator(p_temp, e_temp)
-
-            # normalize by flux produced in trajectory
-            if self.normalize_amps:
-                amp_for_norm = self.xp.sum(
-                    self.xp.abs(
-                        self.xp.concatenate(
-                            [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
-                            axis=1,
-                        )
-                    )
-                    ** 2,
-                    axis=1,
-                ) ** (1 / 2)
-
-                # normalize
-                factor = amp_norm_temp / amp_for_norm
-                teuk_modes = teuk_modes * factor[:, np.newaxis]
+            teuk_modes = self.amplitude_generator(p_temp, e_temp, x_temp, a, theta, phi)
 
             # different types of mode selection
             # sets up ylm and teuk_modes properly for summation
@@ -1589,16 +1565,8 @@ class GenericModeDecomposedWaveformBase(
                 if mode_selection == "all":
                     self.ls = self.l_arr[: teuk_modes.shape[1]]
                     self.ms = self.m_arr[: teuk_modes.shape[1]]
+                    self.ks = self.k_arr[: teuk_modes.shape[1]]
                     self.ns = self.n_arr[: teuk_modes.shape[1]]
-
-                    keep_modes = self.xp.arange(teuk_modes.shape[1])
-                    temp2 = keep_modes * (keep_modes < self.num_m0) + (
-                        keep_modes + self.num_m_1_up
-                    ) * (keep_modes >= self.num_m0)
-
-                    ylmkeep = self.xp.concatenate([keep_modes, temp2])
-                    ylms_in = ylms[ylmkeep]
-                    teuk_modes_in = teuk_modes
 
                 else:
                     raise ValueError("If mode selection is a string, must be `all`.")
