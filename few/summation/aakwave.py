@@ -96,6 +96,10 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         pass
 
     @property
+    def gpu_capability(self):
+        return True
+
+    @property
     def citation(self):
         """Return citations for this class"""
         return (
@@ -276,6 +280,9 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         # get all cubic splines
         self.spline = CubicSplineInterpolant(tvec_temp, y_all, use_gpu=self.use_gpu)
 
+        new_t = self.xp.arange(self.num_pts) * dt
+        interval_inds = self.xp.searchsorted(tvec_temp, new_t, side="right").astype(self.xp.int32) - 1
+
         # generator the waveform
         self.waveform_generator(
             self.waveform,
@@ -293,7 +300,8 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
             init_len,
             self.num_pts,
             dt,
-            tvec,
+            tvec_temp,
+            interval_inds
         )
 
         return

@@ -1,6 +1,7 @@
 #include "stdio.h"
 
 #include "global.h"
+#include "Utility.hh"
 
 #ifdef __CUDACC__
 #else
@@ -66,12 +67,13 @@ void d_RotCoeff(double* rot, double* n, double* L, double* S, double* nxL, doubl
 }
 
 #define  NUM_PARS 8
+#define MAX_SPLINE_POINTS 160
 CUDA_KERNEL
 void make_waveform(cmplx *waveform,
               double* interp_array,
               double M_phys, double S_phys, double mu, double qS, double phiS, double qK, double phiK, double dist,
               int nmodes, bool mich,
-              double delta_t, double start_t, int old_ind, int start_ind, int end_ind, int init_length)
+              double delta_t, double *start_t_all, int *interval_inds, int data_length, int init_length)
 {
 
       cmplx I(0.0, 1.0);
@@ -94,16 +96,17 @@ void make_waveform(cmplx *waveform,
 
       #endif
 
-      CUDA_SHARED double spline_coeffs[NUM_PARS * 4];
+      CUDA_SHARED double spline_coeffs[NUM_PARS * 4 * MAX_SPLINE_POINTS];
+      CUDA_SHARED double start_t[MAX_SPLINE_POINTS];
 
       int start, end, increment;
       #ifdef __CUDACC__
       start = threadIdx.x;
-      end = 4 * NUM_PARS;
+      end = 4 * NUM_PARS * init_length;
       increment = blockDim.x;
       #else
       start = 0;
-      end = 4 * NUM_PARS;
+      end = 4 * NUM_PARS * init_length;
       increment = 1;
 
       #ifdef __USE_OMP__
@@ -115,50 +118,17 @@ void make_waveform(cmplx *waveform,
       // 8 parameters, 4 coefficient values for each parameter
       for (int i = start; i < end; i += increment)
       {
-          int coeff_num = (int) (i / NUM_PARS);
-          int par_num = i % NUM_PARS;
-
-          int index = (coeff_num * init_length + old_ind) * NUM_PARS + par_num;
-
-          spline_coeffs[par_num * 4 + coeff_num] = interp_array[index];
-
+          spline_coeffs[i] = interp_array[i];
       }
 
       CUDA_SYNC_THREADS;
+
+      for (int i = start; i < init_length; i += increment)
+      {
+          start_t[i] = start_t_all[i];
+      }
 
       // unroll coefficients
-
-      CUDA_SHARED double e_y, e_c1, e_c2, e_c3;
-      CUDA_SHARED double Phi_y, Phi_c1, Phi_c2, Phi_c3;
-      CUDA_SHARED double gim_y, gim_c1, gim_c2, gim_c3;
-      CUDA_SHARED double alp_y, alp_c1, alp_c2, alp_c3;
-      CUDA_SHARED double nu_y, nu_c1, nu_c2, nu_c3;
-      CUDA_SHARED double gimdot_y, gimdot_c1, gimdot_c2, gimdot_c3;
-      CUDA_SHARED double OmegaPhi_y, OmegaPhi_c1, OmegaPhi_c2, OmegaPhi_c3;
-      CUDA_SHARED double lam_y, lam_c1, lam_c2, lam_c3;
-
-      #ifdef __CUDACC__
-      if (threadIdx.x == 0)
-      #else
-      if (true)
-      #endif
-      {
-          // p_y = spline_coeffs[0 * 4 + 0]; p_c1 = spline_coeffs[0 * 4 + 1]; p_c2 = spline_coeffs[0 * 4 + 2]; p_c3 = spline_coeffs[0 * 4 + 3];
-          e_y = spline_coeffs[0 * 4 + 0]; e_c1 = spline_coeffs[0 * 4 + 1]; e_c2 = spline_coeffs[0 * 4 + 2]; e_c3 = spline_coeffs[0 * 4 + 3];
-
-          Phi_y = spline_coeffs[1 * 4 + 0]; Phi_c1 = spline_coeffs[1 * 4 + 1]; Phi_c2 = spline_coeffs[1 * 4 + 2]; Phi_c3 = spline_coeffs[1 * 4 + 3];
-          gim_y = spline_coeffs[2 * 4 + 0]; gim_c1 = spline_coeffs[2 * 4 + 1]; gim_c2 = spline_coeffs[2 * 4 + 2]; gim_c3 = spline_coeffs[2 * 4 + 3];
-          alp_y = spline_coeffs[3 * 4 + 0]; alp_c1 = spline_coeffs[3 * 4 + 1]; alp_c2 = spline_coeffs[3 * 4 + 2]; alp_c3 = spline_coeffs[3 * 4 + 3];
-
-          nu_y = spline_coeffs[4 * 4 + 0]; nu_c1 = spline_coeffs[4 * 4 + 1]; nu_c2 = spline_coeffs[4 * 4 + 2]; nu_c3 = spline_coeffs[4 * 4 + 3];
-
-          gimdot_y = spline_coeffs[5 * 4 + 0]; gimdot_c1 = spline_coeffs[5 * 4 + 1]; gimdot_c2 = spline_coeffs[5 * 4 + 2]; gimdot_c3 = spline_coeffs[5 * 4 + 3];
-          OmegaPhi_y = spline_coeffs[6 * 4 + 0]; OmegaPhi_c1 = spline_coeffs[6 * 4 + 1]; OmegaPhi_c2 = spline_coeffs[6 * 4 + 2]; OmegaPhi_c3 = spline_coeffs[6 * 4 + 3];
-          lam_y = spline_coeffs[7 * 4 + 0]; lam_c1 = spline_coeffs[7 * 4 + 1]; lam_c2 = spline_coeffs[7 * 4 + 2]; lam_c3 = spline_coeffs[7 * 4 + 3];
-      }
-
-      CUDA_SYNC_THREADS;
-
       double fill_val = 1e-6;
       if (qS < fill_val) qS = fill_val;
       if (qK < fill_val) qK = fill_val;
@@ -177,14 +147,14 @@ void make_waveform(cmplx *waveform,
 
       #ifdef __CUDACC__
 
-      start = start_ind + threadIdx.x + blockIdx.x * blockDim.x;
-      end = end_ind;
+      start = 0 + threadIdx.x + blockIdx.x * blockDim.x;
+      end = data_length;
       increment = blockDim.x * gridDim.x;
 
       #else
 
-      start = start_ind;
-      end = end_ind;
+      start = 0;
+      end = data_length;
       increment = 1;
 
       #ifdef __USE_OMP__
@@ -212,12 +182,52 @@ void make_waveform(cmplx *waveform,
           double* nxS_rot = &nxS_temp[0];
 
           #endif
-
           waveform[i] = cmplx(0.0, 0.0);
 
           double t=delta_t * i;
 
-          double x = t - start_t;
+          int old_ind = interval_inds[i];
+          double start_t_i = start_t[old_ind];
+
+          // p_y = spline_coeffs[(0 * init_length + old_ind) * NUM_PARS + 0]; p_c1 = spline_coeffs[(1 * init_length + old_ind) * NUM_PARS + 0]; p_c2 = spline_coeffs[(2 * init_length + old_ind) * NUM_PARS + 0]; p_c3 = spline_coeffs[(3 * init_length + old_ind) * NUM_PARS + 0];
+          //int index = (coeff_num * init_length + old_ind) * NUM_PARS + par_num;
+          double e_y = spline_coeffs[(0 * init_length + old_ind) * NUM_PARS + 0];
+          double e_c1 = spline_coeffs[(1 * init_length + old_ind) * NUM_PARS + 0];
+          double e_c2 = spline_coeffs[(2 * init_length + old_ind) * NUM_PARS + 0];
+          double e_c3 = spline_coeffs[(3 * init_length + old_ind) * NUM_PARS + 0];
+
+          double Phi_y = spline_coeffs[(0 * init_length + old_ind) * NUM_PARS + 1];
+          double Phi_c1 = spline_coeffs[(1 * init_length + old_ind) * NUM_PARS + 1];
+          double Phi_c2 = spline_coeffs[(2 * init_length + old_ind) * NUM_PARS + 1];
+          double Phi_c3 = spline_coeffs[(3 * init_length + old_ind) * NUM_PARS + 1];
+          double gim_y = spline_coeffs[(0 * init_length + old_ind) * NUM_PARS + 2];
+          double gim_c1 = spline_coeffs[(1 * init_length + old_ind) * NUM_PARS + 2];
+          double gim_c2 = spline_coeffs[(2 * init_length + old_ind) * NUM_PARS + 2];
+          double gim_c3 = spline_coeffs[(3 * init_length + old_ind) * NUM_PARS + 2];
+          double alp_y = spline_coeffs[(0 * init_length + old_ind) * NUM_PARS + 3];
+          double alp_c1 = spline_coeffs[(1 * init_length + old_ind) * NUM_PARS + 3];
+          double alp_c2 = spline_coeffs[(2 * init_length + old_ind) * NUM_PARS + 3];
+          double alp_c3 = spline_coeffs[(3 * init_length + old_ind) * NUM_PARS + 3];
+
+          double nu_y = spline_coeffs[(0 * init_length + old_ind) * NUM_PARS + 4];
+          double nu_c1 = spline_coeffs[(1 * init_length + old_ind) * NUM_PARS + 4];
+          double nu_c2 = spline_coeffs[(2 * init_length + old_ind) * NUM_PARS + 4];
+          double nu_c3 = spline_coeffs[(3 * init_length + old_ind) * NUM_PARS + 4];
+
+          double gimdot_y = spline_coeffs[(0 * init_length + old_ind) * NUM_PARS + 5];
+          double gimdot_c1 = spline_coeffs[(1 * init_length + old_ind) * NUM_PARS + 5];
+          double gimdot_c2 = spline_coeffs[(2 * init_length + old_ind) * NUM_PARS + 5];
+          double gimdot_c3 = spline_coeffs[(3 * init_length + old_ind) * NUM_PARS + 5];
+          double OmegaPhi_y = spline_coeffs[(0 * init_length + old_ind) * NUM_PARS + 6];
+          double OmegaPhi_c1 = spline_coeffs[(1 * init_length + old_ind) * NUM_PARS + 6];
+          double OmegaPhi_c2 = spline_coeffs[(2 * init_length + old_ind) * NUM_PARS + 6];
+          double OmegaPhi_c3 = spline_coeffs[(3 * init_length + old_ind) * NUM_PARS + 6];
+          double lam_y = spline_coeffs[(0 * init_length + old_ind) * NUM_PARS + 7];
+          double lam_c1 = spline_coeffs[(1 * init_length + old_ind) * NUM_PARS + 7];
+          double lam_c2 = spline_coeffs[(2 * init_length + old_ind) * NUM_PARS + 7];
+          double lam_c3 = spline_coeffs[(3 * init_length + old_ind) * NUM_PARS + 7];
+
+          double x = t - start_t_i;
           double x2 = x * x;
           double x3 = x * x2;
 
@@ -418,68 +428,34 @@ void get_waveform(cmplx *waveform, double* interp_array,
               double M_phys, double S_phys, double mu, double qS, double phiS, double qK, double phiK, double dist,
               int nmodes, bool mich,
               int init_len, int out_len,
-              double delta_t, double *h_t){
+              double delta_t, double *t, int *interval_inds){
 
     // arrays for determining spline windows for new arrays
-    int start_inds[init_len];
-    int unit_length[init_len-1];
-
-    int number_of_old_spline_points = init_len;
-
-    // find the spline window information based on equally spaced new array
-    find_start_inds(start_inds, unit_length, h_t, delta_t, &number_of_old_spline_points, out_len);
-
+    if (init_len > MAX_SPLINE_POINTS)
+    {
+      char str[1000];
+        sprintf(str, "Initial length is greater than the number of maximum allowable spline points: %d > %d", init_len, MAX_SPLINE_POINTS);
+        throw_python_error(str, 23);
+    }
     #ifdef __CUDACC__
+    int num_blocks = std::ceil((out_len + NUM_THREADS -1)/NUM_THREADS);
+    dim3 gridDim(num_blocks);
 
-    // prepare streams for CUDA
-    cudaStream_t streams[number_of_old_spline_points-1];
+    // launch one worker kernel per stream
+    make_waveform<<<gridDim, NUM_THREADS>>>(waveform,
+                  interp_array,
+                  M_phys, S_phys, mu, qS, phiS, qK, phiK, dist,
+                  nmodes, mich,
+                  delta_t, t, interval_inds, out_len, init_len);
+    cudaDeviceSynchronize();
+    gpuErrchk(cudaGetLastError());
+    #else
 
+    // CPU waveform generation
+    make_waveform(waveform,
+                  interp_array,
+                  M_phys, S_phys, mu, qS, phiS, qK, phiK, dist,
+                  nmodes, mich,
+                  delta_t, t, interval_inds, out_len, init_len);
     #endif
-
-    #ifdef __USE_OMP__
-    #pragma omp parallel for
-    #endif
-    for (int i = 0; i < number_of_old_spline_points-1; i++) {
-          #ifdef __CUDACC__
-
-          // create and execute with streams
-          cudaStreamCreate(&streams[i]);
-          int num_blocks = std::ceil((unit_length[i] + NUM_THREADS -1)/NUM_THREADS);
-
-          // sometimes a spline interval will have zero points
-          if (num_blocks <= 0) continue;
-
-          dim3 gridDim(num_blocks, 1);
-
-          // launch one worker kernel per stream
-          make_waveform<<<gridDim, NUM_THREADS, 0, streams[i]>>>(waveform,
-                        interp_array,
-                        M_phys, S_phys, mu, qS, phiS, qK, phiK, dist,
-                        nmodes, mich,
-                        delta_t, h_t[i], i, start_inds[i], start_inds[i+1], init_len);
-         #else
-
-         // CPU waveform generation
-         make_waveform(waveform,
-                       interp_array,
-                       M_phys, S_phys, mu, qS, phiS, qK, phiK, dist,
-                       nmodes, mich,
-                       delta_t, h_t[i], i, start_inds[i], start_inds[i+1], init_len);
-         #endif
-
-      }
-
-      //synchronize after all streams finish
-      #ifdef __CUDACC__
-      cudaDeviceSynchronize();
-      gpuErrchk(cudaGetLastError());
-
-      #ifdef __USE_OMP__
-      #pragma omp parallel for
-      #endif
-      for (int i = 0; i < number_of_old_spline_points-1; i++) {
-            //destroy the streams
-            cudaStreamDestroy(streams[i]);
-        }
-      #endif
 }
