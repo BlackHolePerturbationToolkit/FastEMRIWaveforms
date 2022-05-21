@@ -31,6 +31,9 @@ from pyinterp_cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
 from pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
 from pyinterp_cpu import get_waveform_fd_wrap as get_waveform_fd_wrap_cpu
 from pyinterp_cpu import interp_time_for_fd as interp_time_for_fd_cpu
+from pyinterp_cpu import find_segments_fd as find_segments_fd_cpu
+from pyinterp_cpu import find_segments_fd as find_segments_fd_cpu
+from pyinterp_cpu import get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_cpu
 
 # Python imports
 from few.utils.baseclasses import (
@@ -50,6 +53,8 @@ try:
         get_waveform_wrap,
         get_waveform_fd_wrap,
         interp_time_for_fd,
+        find_segments_fd,
+        get_waveform_generic_fd_wrap
     )
 
 except (ImportError, ModuleNotFoundError) as e:
@@ -67,6 +72,64 @@ def find_element_in_list(element, list_element):
         return index_element
     except ValueError:
         return None
+
+
+def searchsorted2d_vec(a,b, batch_size=-1, xp=None, **kwargs):
+
+    if xp is None:
+        xp = np
+
+    if a.ndim == 1:
+        if b.ndim > 1:
+            reshape = b.shape
+            b = b.flatten()
+        else:
+            reshape = None
+        out = xp.searchsorted(a, b, **kwargs)
+
+        if reshape is not None:
+            out = out.reshape(reshape)
+        return out
+
+    elif a.ndim > 2 or b.ndim > 2:
+        raise ValueError("Input arrays must not be more than 2 dimensions.")
+
+    if b.ndim == 1:
+        b = xp.expand_dims(b, (0,))
+
+    if batch_size < 0:
+            inds_split_all = [xp.arange(a.shape[0])]
+    else:
+        split_inds = []
+        i = 0
+        while i < a.shape[0]:
+            i += batch_size
+            if i >= a.shape[0]:
+                break
+            split_inds.append(i)
+
+        inds_split_all = xp.split(xp.arange(a.shape[0]), split_inds)
+
+    # select tqdm if user wants to see progress
+    iterator = enumerate(inds_split_all)
+    #iterator = tqdm(iterator, desc="time batch") if show_progress else iterator
+
+    out = xp.zeros((a.shape[0], b.shape[1]))
+    for i, inds_in in iterator:
+        # get subsections of the arrays for each batch
+        a_temp = a[inds_in]
+        if b.shape[0] > 1:
+            b_temp = b[inds_in]
+        else:
+            b_temp = b
+
+        m,n = a_temp.shape
+        max_num = xp.maximum(a_temp.max() - a_temp.min(), b_temp.max() - b_temp.min()) + 1
+        r = max_num*xp.arange(a_temp.shape[0])[:,None]
+        p = xp.searchsorted( (a_temp+r).ravel(), (b_temp+r).ravel(), **kwargs).reshape(m,-1)
+        out[inds_in] = p - n*(xp.arange(m)[:,None])
+    
+    return out
 
 
 class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
@@ -90,13 +153,15 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         # eventually the name will change to adapt for the gpu implementantion
         if self.use_gpu:
             self.get_waveform = get_waveform_wrap
-            self.get_waveform_fd = get_waveform_fd_wrap
+            self.get_waveform_fd = get_waveform_generic_fd_wrap
             self.interp_time = interp_time_for_fd
+            self.find_segments = find_segments_fd
 
         else:
             self.get_waveform = get_waveform_wrap_cpu
-            self.get_waveform_fd = get_waveform_fd_wrap_cpu
+            self.get_waveform_fd = get_waveform_generic_fd_wrap_cpu
             self.interp_time = interp_time_for_fd_cpu
+            self.find_segments = find_segments_fd_cpu
 
     def attributes_FDInterpolatedModeSum(self):
         """
@@ -203,8 +268,58 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
                 self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt)
             )
 
-        seg_freqs = m_arr[:, None] * f_phi[None, :] + n_arr[:, None] * f_r[None, :]
+        seg_freqs = m_arr[:, None] * f_phi[None, :] + n_arr[:, None] * f_r[None, :] 
+        
+        sort_inds_seg_freqs = xp.argsort(seg_freqs, axis=1)
+        sorted_seg_freqs = xp.take_along_axis(seg_freqs, sort_inds_seg_freqs, axis=1)
+        out = self.xp.searchsorted(self.frequency, seg_freqs.flatten(), side="right").reshape(sorted_seg_freqs.shape) - 1
+        inds_start = out.min(axis=1)
+        inds_end = out.max(axis=1) + 1
+        start_inds_seg = out[:, :-1]
+        end_inds_seg = out[:, 1:]
+        lengths = inds_end - inds_start
+        max_length = lengths.max().item()
+        inds = self.xp.tile(self.xp.arange(max_length), (lengths.shape[0], 1)) + inds_start[:, None]
+        self.freqs_temp = self.frequency[inds]
+        num_segments = seg_freqs.shape[1] - 1
+       
+        segment_out = -self.xp.ones(int(np.prod(inds.shape + (2,))), dtype=self.xp.int32)
+        self.find_segments(segment_out, start_inds_seg.flatten().copy().astype(self.xp.int32), end_inds_seg.flatten().copy().astype(self.xp.int32), inds_start.astype(self.xp.int32), num_segments, seg_freqs.shape[0], max_length)
 
+        # segment_out = segment_out.reshape(inds.shape + (2,))
+
+        k_arr = self.xp.zeros_like(m_arr)
+        data_length = len(self.frequency)
+
+        spline_in = spline.interp_array.reshape(spline.reshape_shape).transpose((0, 2, 1)).flatten().copy()
+
+        self.get_waveform_fd(
+            self.waveform,
+            spline_in,
+            m_arr,
+            k_arr, 
+            n_arr,
+            num_teuk_modes,
+            dt, 
+            t, 
+            init_len, 
+            data_length, 
+            segment_out,
+            self.frequency, 
+            inds_start.astype(self.xp.int32), 
+            lengths.astype(self.xp.int32), 
+            max_length
+        )
+        breakpoint()
+        # TODO: check this missed_turn_overs
+        """
+            =x   =   {q + [q2 + (r-p2)3]1/2}1/3   +   {q - [q2 + (r-p2)3]1/2}1/3   +   p
+        where
+
+        p = -b/(3a),   q = p3 + (bc-3ad)/(6a2),   r = c/(3a)
+        """
+
+        breakpoint()
         changes = self.xp.concatenate(
             [seg_freqs[:, :-1, None], seg_freqs[:, 1:, None]], axis=-1
         )

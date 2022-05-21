@@ -252,7 +252,7 @@ with open(fp_out_name, "w") as fp_out:
 if run_cuda_install:
 
     gpu_extension = dict(
-        libraries=["cudart", "cublas", "cusparse", "gomp"],
+        libraries=["gsl", "gslcblas", "cudart", "cublas", "cusparse", "gomp"],
         library_dirs=[CUDA["lib64"]],
         runtime_library_dirs=[CUDA["lib64"]],
         language="c++",
@@ -305,7 +305,7 @@ if run_cuda_install:
     )
 
     interp_ext = Extension(
-        "pyinterp", sources=["src/interpolate.cu", "src/pyinterp.pyx"], **gpu_extension
+        "pyinterp", sources=["src/Utility.cc", "src/interpolate.cu", "src/pyinterp.pyx"], **gpu_extension
     )
 
     gpuAAK_ext = Extension(
@@ -397,7 +397,7 @@ matmul_cpu_ext = Extension(
 
 interp_cpu_ext = Extension(
     "pyinterp_cpu",
-    sources=["src/interpolate.cpp", "src/pyinterp_cpu.pyx"],
+    sources=["src/Utility.cc", "src/interpolate.cpp", "src/pyinterp_cpu.pyx"],
     **cpu_extension,
 )
 

@@ -18,7 +18,7 @@
 #include "global.h"
 #include "interpolate.hh"
 #include <stdio.h>
-
+#include "Utility.hh"
 // adjust imports based on CUDA or not
 #ifdef __CUDACC__
 #include "cusparse.h"
@@ -1664,4 +1664,480 @@ void get_waveform_fd(cmplx *waveform,
                   turnover_freqs, df, f_data, zero_index, shift_freq, slope0_all, initial_freqs);
 
     #endif
+}
+
+
+CUDA_KERNEL
+void find_segments_fd(int *segment_out, int *start_inds_seg, int *end_inds_seg, int *mode_start_inds, int num_segments, int num_modes, int max_length)
+{
+    #ifdef __CUDACC__
+    int start2 = blockIdx.z;
+    int increment2 = gridDim.z;
+    #else
+    int start2 = 0;
+    int increment2 = 1;
+    #pragma omp parallel for
+    #endif
+    for (int mode_i = start2; mode_i < num_modes; mode_i += increment2)
+    {
+
+        int mode_start_ind = mode_start_inds[mode_i];
+
+        #ifdef __CUDACC__
+        int start1 = blockIdx.y;
+        int increment1 = gridDim.y;
+        #else
+        int start1 = 0;
+        int increment1 = 1;
+        #pragma omp parallel for
+        #endif
+        for (int seg_i = start1; seg_i < num_segments; seg_i += increment1)
+        {
+
+            int seg_start = start_inds_seg[mode_i * num_segments + seg_i];
+            int seg_end = end_inds_seg[mode_i * num_segments + seg_i];
+
+            int real_seg_start, real_seg_end;
+            int which_point_index;
+            if (seg_start <= seg_end)
+            {
+                real_seg_start = seg_start;
+                real_seg_end = seg_end;
+                which_point_index = 0;
+            }
+            else
+            {
+                real_seg_start = seg_end + 1;
+                real_seg_end = seg_start + 1;
+                which_point_index = 1;
+            }
+
+            // TODO: should we shift the indexing back
+            #ifdef __CUDACC__
+            int start = real_seg_start + threadIdx.x + blockDim.x * blockIdx.x;
+            int increment = blockDim.x * gridDim.x;
+            #else
+            int start = real_seg_start;
+            int increment = 1;
+            #pragma omp parallel for
+            #endif
+            for (int i = start; i < real_seg_end; i += increment)
+            {
+                //if ((mode_i == 0)) printf("%d %d %d %d %d %d %d\n", mode_i, seg_i, i, real_seg_start, max_length, mode_start_ind, which_point_index);
+                int ind_out = (mode_i * max_length + (i - mode_start_ind)) * 2 + which_point_index;
+                segment_out[ind_out] = seg_i;
+            }
+        }
+    }
+}
+
+void find_segments_fd_wrap(int *segment_out, int *start_inds_seg, int *end_inds_seg, int *mode_start_inds, int num_segments, int num_modes, int max_length)
+{
+
+    #ifdef __CUDACC__
+    // prepare streams for CUDA
+    int NUM_THREADS = 256;
+
+    int num_blocks = 1; // std::ceil((max_length + NUM_THREADS -1)/NUM_THREADS);
+
+    //printf("%d %d %d\n", num_blocks, num_teuk_modes, init_length - 1);
+    dim3 gridDim(1, num_segments, num_modes);
+
+    find_segments_fd<<<gridDim, NUM_THREADS>>>(segment_out, start_inds_seg, end_inds_seg, mode_start_inds, num_segments, num_modes, max_length);
+    cudaDeviceSynchronize();
+    gpuErrchk(cudaGetLastError());
+
+    #else
+
+    find_segments_fd(segment_out, start_inds_seg, end_inds_seg, mode_start_inds, num_segments, num_modes, max_length);
+    #endif
+
+}
+
+CUDA_CALLABLE_MEMBER
+void cube_roots(double *root1, double *root2, double *root3, double a, double b, double c, double d, bool check)
+{
+    double b2 = b * b;
+    double b3 = b2 * b;
+    double a2 = a * a;
+
+    double Delta_0 = (b2 - 3 * a * c);
+    double Delta_1 = (2 * b3 - 9 * a * b * c + 27 * a2 * d);
+
+    
+    cmplx C = pow((Delta_1 +  sqrt(cmplx(Delta_1 * Delta_1  - 4 * ( Delta_0 * Delta_0 * Delta_0), 0.0)))/ 2., 1./3.);
+
+    cmplx xi = (-1. + sqrt(cmplx(-3., 0.0))) / 2.;
+
+    cmplx r1 = - (1. / (3 * a)) * (b + xi * C + Delta_0 / (xi * C));
+    cmplx r2 = - (1. / (3 * a)) * (b + (xi * xi) * C + Delta_0 / (xi * C));
+    cmplx r3 = - (1. / (3 * a)) * (b + (xi * xi * xi) * C + Delta_0 / (xi * C));
+    
+    if (abs(r1.imag() / r1.real()) < 1e-10)
+    {
+        *root1 = r1.real();
+    } 
+
+    if (abs(r2.imag() / r1.real()) < 1e-10)
+    {
+        *root2 = r2.real();
+    } 
+
+    if (abs(r3.imag() / r1.real()) < 1e-10)
+    {
+        *root3 = r3.real();
+    } 
+}
+
+
+// make a waveform in parallel
+// this uses an efficient summation by loading mode information into shared memory
+// shared memory is leveraged heavily
+#define MAX_SPLINE_POINTS 210
+CUDA_KERNEL
+void make_generic_kerr_waveform_fd(cmplx *waveform,
+             double *interp_array,
+              int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
+              double delta_t, double *old_time_arr, int init_length, int data_length, int *interval_inds,
+              double *frequencies, int *mode_start_inds, int *mode_lengths, int max_length)
+{
+
+    int num_pars = 4;
+  
+
+    cmplx complexI(0.0, 1.0);
+    double re_y, re_c1, re_c2, re_c3, im_y, im_c1, im_c2, im_c3;
+     CUDA_SHARED double pp_y, pp_c1, pp_c2, pp_c3, pr_y, pr_c1, pr_c2, pr_c3;
+
+     // declare all the shared memory
+     // MAX_MODES_BLOCK is fixed based on shared memory
+     CUDA_SHARED double old_time[MAX_SPLINE_POINTS];
+
+     CUDA_SHARED double R_mode_re_y[MAX_SPLINE_POINTS];
+     CUDA_SHARED double R_mode_re_c1[MAX_SPLINE_POINTS];
+     CUDA_SHARED double R_mode_re_c2[MAX_SPLINE_POINTS];
+     CUDA_SHARED double R_mode_re_c3[MAX_SPLINE_POINTS];
+
+     CUDA_SHARED double R_mode_im_y[MAX_SPLINE_POINTS];
+     CUDA_SHARED double R_mode_im_c1[MAX_SPLINE_POINTS];
+     CUDA_SHARED double R_mode_im_c2[MAX_SPLINE_POINTS];
+     CUDA_SHARED double R_mode_im_c3[MAX_SPLINE_POINTS];
+
+     CUDA_SHARED double Phi_phi_y[MAX_SPLINE_POINTS];
+     CUDA_SHARED double Phi_phi_c1[MAX_SPLINE_POINTS];
+     CUDA_SHARED double Phi_phi_c2[MAX_SPLINE_POINTS];
+     CUDA_SHARED double Phi_phi_c3[MAX_SPLINE_POINTS];
+
+     CUDA_SHARED double Phi_r_y[MAX_SPLINE_POINTS];
+     CUDA_SHARED double Phi_r_c1[MAX_SPLINE_POINTS];
+     CUDA_SHARED double Phi_r_c2[MAX_SPLINE_POINTS];
+     CUDA_SHARED double Phi_r_c3[MAX_SPLINE_POINTS];
+
+     CUDA_SHARED double f_phi_y[MAX_SPLINE_POINTS];
+     CUDA_SHARED double f_phi_c1[MAX_SPLINE_POINTS];
+     CUDA_SHARED double f_phi_c2[MAX_SPLINE_POINTS];
+     CUDA_SHARED double f_phi_c3[MAX_SPLINE_POINTS];
+
+     CUDA_SHARED double f_r_y[MAX_SPLINE_POINTS];
+     CUDA_SHARED double f_r_c1[MAX_SPLINE_POINTS];
+     CUDA_SHARED double f_r_c2[MAX_SPLINE_POINTS];
+     CUDA_SHARED double f_r_c3[MAX_SPLINE_POINTS];
+
+     // number of splines
+     int num_base = (2 * num_teuk_modes + num_pars) * init_length;
+
+    #ifdef __CUDACC__
+
+    int start2 = blockIdx.y;
+    int diff2 = gridDim.y;
+
+    #else
+
+    int start2 = 0;
+    int diff2 = 1;
+    #ifdef __USE_OMP__
+    #pragma omp parallel for
+    #endif // __USE_OMP__
+    #endif
+    for (int mode_i = start2; mode_i < num_teuk_modes; mode_i += diff2) 
+    {
+
+      int m = m_arr_in[mode_i];
+      int k = k_arr_in[mode_i];
+      int n = n_arr_in[mode_i];
+
+      int mode_start_ind_here = mode_start_inds[mode_i];
+      int mode_length_here = mode_lengths[mode_i];
+
+      CUDA_SYNC_THREADS;
+      #ifdef __CUDACC__
+
+      int start = threadIdx.x;
+      int diff = blockDim.x;
+
+      #else
+
+      int start = 0;
+      int diff = 1;
+      #ifdef __USE_OMP__
+      #pragma omp parallel for
+      #endif // __USE_OMP__
+      #endif
+      
+      for (int i = start; i < init_length; i += diff)
+      {
+          old_time[i] = old_time_arr[i];
+
+          int y_ind = 0 * num_base + mode_i * init_length + i;
+          int c1_ind = 1 * num_base + mode_i * init_length + i;
+          int c2_ind = 2 * num_base + mode_i * init_length + i;
+          int c3_ind = 3 * num_base + mode_i * init_length + i;
+
+          R_mode_re_y[i] = interp_array[y_ind];
+          R_mode_re_c1[i] = interp_array[c1_ind];
+          R_mode_re_c2[i] = interp_array[c2_ind];
+          R_mode_re_c3[i] = interp_array[c3_ind];
+
+          y_ind = 0 * num_base + (num_teuk_modes + mode_i) * init_length + i;
+          c1_ind = 1 * num_base + (num_teuk_modes + mode_i) * init_length + i;
+          c2_ind = 2 * num_base + (num_teuk_modes + mode_i) * init_length + i;
+          c3_ind = 3 * num_base + (num_teuk_modes + mode_i) * init_length + i;
+
+          R_mode_im_y[i] = interp_array[y_ind];
+          R_mode_im_c1[i] = interp_array[c1_ind];
+          R_mode_im_c2[i] = interp_array[c2_ind];
+          R_mode_im_c3[i] = interp_array[c3_ind];
+
+          y_ind = 0 * num_base + (2 + 2 * num_teuk_modes + mode_i) * init_length + i;
+          c1_ind = 1 * num_base + (2 + 2 * num_teuk_modes + mode_i) * init_length + i;
+          c2_ind = 2 * num_base + (2 + 2 * num_teuk_modes + mode_i) * init_length + i;
+          c3_ind = 3 * num_base + (2 + 2 * num_teuk_modes + mode_i) * init_length + i;
+
+          Phi_phi_y[i] = interp_array[y_ind];
+          Phi_phi_c1[i] = interp_array[c1_ind];
+          Phi_phi_c2[i] = interp_array[c2_ind];
+          Phi_phi_c3[i] = interp_array[c3_ind];
+
+          y_ind = 0 * num_base + (3 + 2 * num_teuk_modes + mode_i) * init_length + i;
+          c1_ind = 1 * num_base + (3 + 2 * num_teuk_modes + mode_i) * init_length + i;
+          c2_ind = 2 * num_base + (3 + 2 * num_teuk_modes + mode_i) * init_length + i;
+          c3_ind = 3 * num_base + (3 + 2 * num_teuk_modes + mode_i) * init_length + i;
+
+          Phi_r_y[i] = interp_array[y_ind];
+          Phi_r_c1[i] = interp_array[c1_ind];
+          Phi_r_c2[i] = interp_array[c2_ind];
+          Phi_r_c3[i] = interp_array[c3_ind];
+
+          y_ind = 0 * num_base + (0 + 2 * num_teuk_modes + mode_i) * init_length + i;
+          c1_ind = 1 * num_base + (0 + 2 * num_teuk_modes + mode_i) * init_length + i;
+          c2_ind = 2 * num_base + (0 + 2 * num_teuk_modes + mode_i) * init_length + i;
+          c3_ind = 3 * num_base + (0 + 2 * num_teuk_modes + mode_i) * init_length + i;
+
+          f_phi_y[i] = interp_array[y_ind];
+          f_phi_c1[i] = interp_array[c1_ind];
+          f_phi_c2[i] = interp_array[c2_ind];
+          f_phi_c3[i] = interp_array[c3_ind];
+
+          y_ind = 0 * num_base + (1 + 2 * num_teuk_modes + mode_i) * init_length + i;
+          c1_ind = 1 * num_base + (1 + 2 * num_teuk_modes + mode_i) * init_length + i;
+          c2_ind = 2 * num_base + (1 + 2 * num_teuk_modes + mode_i) * init_length + i;
+          c3_ind = 3 * num_base + (1 + 2 * num_teuk_modes + mode_i) * init_length + i;
+
+          f_r_y[i] = interp_array[y_ind];
+          f_r_c1[i] = interp_array[c1_ind];
+          f_r_c2[i] = interp_array[c2_ind];
+          f_r_c3[i] = interp_array[c3_ind];
+
+      }
+
+      CUDA_SYNC_THREADS;
+    
+      #ifdef __CUDACC__
+
+      start = threadIdx.x + blockDim.x * blockIdx.x;
+      diff = blockDim.x * gridDim.x;
+
+      #else
+
+      start = 0;
+      diff = 1;
+      #ifdef __USE_OMP__
+      #pragma omp parallel for
+      #endif // __USE_OMP__
+      #endif
+      for (int i = start; i < mode_length_here; i += diff)
+       {
+          int ind_f = i + mode_start_ind_here;
+          double f = frequencies[ind_f];
+           
+          for (int which = 0; which < 2; which += 1)
+          {
+              
+              int ind_i = interval_inds[(mode_i * max_length + i) * 2 + which];
+                if ((ind_i == -1) || (ind_i == -10)) continue;
+
+                double start_t = old_time[ind_i];
+                double end_t = old_time[ind_i + 1];
+          
+                
+                double R_mode_re_y_i = R_mode_re_y[ind_i];
+                double R_mode_re_c1_i = R_mode_re_c1[ind_i];
+                double R_mode_re_c2_i = R_mode_re_c2[ind_i];
+                double R_mode_re_c3_i = R_mode_re_c3[ind_i];
+
+                double R_mode_im_y_i = R_mode_im_y[ind_i];
+                double R_mode_im_c1_i = R_mode_im_c1[ind_i];
+                double R_mode_im_c2_i = R_mode_im_c2[ind_i];
+                double R_mode_im_c3_i = R_mode_im_c3[ind_i];
+
+                double pp_y = Phi_phi_y[ind_i];
+                double pp_c1 = Phi_phi_c1[ind_i];
+                double pp_c2 = Phi_phi_c2[ind_i];
+                double pp_c3 = Phi_phi_c3[ind_i];
+
+                double pr_y = Phi_r_y[ind_i];
+                double pr_c1 = Phi_r_c1[ind_i];
+                double pr_c2 = Phi_r_c2[ind_i];
+                double pr_c3 = Phi_r_c3[ind_i];
+
+                double fp_y = f_phi_y[ind_i];
+                double fp_c1 = f_phi_c1[ind_i];
+                double fp_c2 = f_phi_c2[ind_i];
+                double fp_c3 = f_phi_c3[ind_i];
+
+                double fr_y = f_r_y[ind_i];
+                double fr_c1 = f_r_c1[ind_i];
+                double fr_c2 = f_r_c2[ind_i];
+                double fr_c3 = f_r_c3[ind_i];
+
+                double f_y2 = m * f_phi_y[ind_i + 1] + n * f_r_y[ind_i + 1];
+                double f_y = m * fp_y + n * fr_y;
+                double f_c1 = m * fp_c1 + n * fr_c1;
+                double f_c2 = m * fp_c2 + n * fr_c2;
+                double f_c3 = m * fp_c3 + n * fr_c3;
+
+                double root1 = -1e300;
+                double root2 = -1e300;
+                double root3 = -1e300;
+                
+                bool check = false;
+                if ((mode_i == 0) && ((i > 100) && (i < 150))) check = true;
+                cube_roots(&root1, &root2, &root3, f_c3, f_c2, f_c1, (f_y - f), check);
+                if ((mode_i == 0) && ((i > 100) && (i < 150))) printf("roots: %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %d %d %d\n", root1, root2, root3, f_c3, f_c2, f_c1, f_y, f_y2, f, start_t, end_t, ind_i, m, n);
+                /*
+                double t;
+                double x, x2, x3;
+                t = root1;
+                if ((t < end_t) && (t >= start_t))
+                {
+                    x = t - start_t;
+                    x2 = x*x;
+                    x3 = x*x2;
+                    printf("root1: %.18e %.18e %.18e %.18e %.18e %.18e %.18e", t, start_t, end_t, f_c3, f_c2, f_c1, (f_y - f));
+                }
+
+                t = root2;
+                if ((t < end_t) && (t >= start_t))
+                {
+                    x = t - start_t;
+                    x2 = x*x;
+                    x3 = x*x2;
+                    printf("root2: %e %e %e", t, start_t, end_t);
+                }
+
+                t = root3;
+                if ((t < end_t) && (t >= start_t))
+                {
+                    x = t - start_t;
+                    x2 = x*x;
+                    x3 = x*x2;
+                    printf("root3: %e %e %e", t, start_t, end_t);
+                }
+                // solve for cube roots
+            */  
+          }
+            /*
+          // determine interpolation information
+         
+
+            // get mode values at this timestep
+            double R_mode_re = R_mode_re_y_i + R_mode_re_c1_i * x + R_mode_re_c2_i * x2  + R_mode_re_c3_i * x3;
+            double R_mode_im = R_mode_im_y_i + R_mode_im_c1_i * x + R_mode_im_c2_i * x2  + R_mode_im_c3_i * x3;
+            double L_mode_re = L_mode_re_y_i + L_mode_re_c1_i * x + L_mode_re_c2_i * x2  + L_mode_re_c3_i * x3;
+            double L_mode_im = L_mode_im_y_i + L_mode_im_c1_i * x + L_mode_im_c2_i * x2  + L_mode_im_c3_i * x3;
+
+            // get phases at this timestep
+            double Phi_phi_i = pp_y + pp_c1 * x + pp_c2 * x2  + pp_c3 * x3;
+            double Phi_theta_i = pt_y + pt_c1 * x + pt_c2 * x2 + pt_c3 * x3;
+            double Phi_r_i = pr_y + pr_c1 * x + pr_c2 * x2  + pr_c3 * x3;
+
+            cmplx R_amp(R_mode_re, R_mode_im);
+            cmplx L_amp(L_mode_re, L_mode_im);
+
+            cmplx R_tmp = get_mode_value_generic(R_amp, Phi_phi_i, Phi_r_i, Phi_theta_i, m, k, n);
+
+
+            cmplx L_tmp(0.0, 0.0);
+            if (m + k + n != 0)
+            {
+              L_tmp = get_mode_value_generic(L_amp, Phi_phi_i, Phi_r_i, Phi_theta_i, -m, -k, -n);
+            }
+            cmplx wave_mode_out = R_tmp + L_tmp;
+
+            // fill waveform
+            #ifdef __CUDACC__
+            atomicAddComplex(&waveform[i], wave_mode_out);
+            #else
+            waveform[i] += wave_mode_out;
+            #endif
+            */
+        }
+    }
+    CUDA_SYNC_THREADS;
+}
+
+
+// function for building interpolated EMRI waveform from python
+void get_waveform_generic_fd(cmplx *waveform,
+             double *interp_array,
+              int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
+              double delta_t, double *old_time_arr, int init_length, int data_length, int *interval_inds,
+              double *frequencies, int *mode_start_inds, int *mode_lengths, int max_length)
+{
+
+     int NUM_THREADS = 256;
+
+     if (init_length > MAX_SPLINE_POINTS)
+     {
+        char str[1000];
+        sprintf(str, "Number of initial points is more than allowed for interpolated summation. (%d > %d)", init_length, MAX_SPLINE_POINTS);
+        throw_python_error(str, 22);
+     }
+
+     #ifdef __CUDACC__
+
+      int num_blocks = std::ceil((max_length + NUM_THREADS -1)/NUM_THREADS);
+      
+      dim3 gridDim(num_blocks, num_teuk_modes);
+
+      // launch one worker kernel per stream
+      make_generic_kerr_waveform_fd<<<gridDim, NUM_THREADS>>>(waveform,
+             interp_array,
+              m_arr_in, k_arr_in, n_arr_in, num_teuk_modes,
+              delta_t, old_time_arr, init_length, data_length, interval_inds,
+              frequencies, mode_start_inds, mode_lengths, max_length);
+      cudaDeviceSynchronize();
+      gpuErrchk(cudaGetLastError());
+      
+      #else
+
+         // CPU waveform generation
+         make_generic_kerr_waveform_fd(waveform,
+             interp_array,
+              m_arr_in, k_arr_in, n_arr_in, num_teuk_modes,
+              delta_t, old_time_arr, init_length, data_length, interval_inds,
+              frequencies, mode_start_inds, mode_lengths, max_length);
+         
+        #endif
+
 }

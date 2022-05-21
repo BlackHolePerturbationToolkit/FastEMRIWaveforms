@@ -13,7 +13,10 @@ import matplotlib.pyplot as plt
 from scipy import signal
 
 
-use_gpu = False
+import cupy as xp
+xp.cuda.runtime.setDevice(7)
+
+use_gpu = True
 
 
 sum_kwargs = dict(pad_output=True)
