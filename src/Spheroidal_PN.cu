@@ -35,6 +35,7 @@ SX[n]... = 1, X, X ^ 2, ..., X ^ 15, X^ 16
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "global.h"
 
 // GSL headers
 
@@ -44,15 +45,16 @@ SX[n]... = 1, X, X ^ 2, ..., X ^ 15, X^ 16
 
 /*-*-*-*-*-*-*-*-*-*-*-* Global variables (but used only within Spheroidal_PN.c) *-*-*-*-*-*-*-*-*-*-*-*/
 /* Cut off numbers for `Slm_aw_PNvar` (assuming ell_max = 12)*/
-static int Sq_max = 5; /*PNq[n]... = 1, q, q ^2, q^3, q^4*/
+CUDA_CALLABLE_MEMBER static int Sq_max = 5; /*PNq[n]... = 1, q, q ^2, q^3, q^4*/
 //static int Sw_max = 5;
 
-static int Xp_max = 6; /*Xp[n]... = 1, Xp, Xp^ 2, ..., Xp^5*/
-static int X_max = 17; /*X[n]... = 1, X, X ^ 2, ..., X ^ 15, X^ 16*/
+CUDA_CALLABLE_MEMBER static int Xp_max = 6; /*Xp[n]... = 1, Xp, Xp^ 2, ..., Xp^5*/
+CUDA_CALLABLE_MEMBER static int X_max = 17; /*X[n]... = 1, X, X ^ 2, ..., X ^ 15, X^ 16*/
 
 
 /*-*-*-*-*-*-*-*-*-*-*-* Global functions (used only within Spheroidal_PN.c) *-*-*-*-*-*-*-*-*-*-*-*/
 // New, 6.0PN (w^4) expressions
+CUDA_CALLABLE_MEMBER
 double S2m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
 
     double S2m;
@@ -120,6 +122,7 @@ double S2m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
     return S2m;
 
 }
+CUDA_CALLABLE_MEMBER
 double S3m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
 
     double S3m;
@@ -200,6 +203,7 @@ double S3m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
     return S3m;
 
 }
+CUDA_CALLABLE_MEMBER
 double S4m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
 
     double S4m;
@@ -293,6 +297,7 @@ double S4m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
     return S4m;
 
 }
+CUDA_CALLABLE_MEMBER
 double S5m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
 
     double S5m;
@@ -397,6 +402,7 @@ double S5m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
     return S5m;
 
 }
+CUDA_CALLABLE_MEMBER
 double S6m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
 
     double S6m;
@@ -514,6 +520,7 @@ double S6m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
     return S6m;
 
 }
+CUDA_CALLABLE_MEMBER
 double S7m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
 
     double S7m;
@@ -643,6 +650,7 @@ double S7m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
     return S7m;
 
 }
+CUDA_CALLABLE_MEMBER
 double S8m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
 
     double S8m;
@@ -785,6 +793,7 @@ double S8m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
     return S8m;
 
 }
+CUDA_CALLABLE_MEMBER
 double S9m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
 
     double S9m;
@@ -942,6 +951,7 @@ double S9m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
 
 }
 
+CUDA_CALLABLE_MEMBER
 double S10m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
 
     double S10m;
@@ -1111,6 +1121,7 @@ double S10m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
     return S10m;
 
 }
+CUDA_CALLABLE_MEMBER
 double S11m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
 
     double S11m;
@@ -1295,6 +1306,7 @@ double S11m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
     return S11m;
 
 }
+CUDA_CALLABLE_MEMBER
 double S12m_aw(const int m, Slm_aw_PNvar* PN_Slm) { //
 
     double S12m;
@@ -2539,6 +2551,7 @@ if (m == 10) {
 
 
 /*-*-*-*-*-*-*-*-*-*-*-* External functions (can be refered by other source files) *-*-*-*-*-*-*-*-*-*-*-*/
+CUDA_CALLABLE_MEMBER
 void init_PNSlm(const double q, const double Theta, Slm_aw_PNvar* PN_Slm, const int flag) {
 
     int i;
@@ -2599,6 +2612,7 @@ void init_PNSlm(const double q, const double Theta, Slm_aw_PNvar* PN_Slm, const 
 
 
 }
+CUDA_CALLABLE_MEMBER
 double Slm_aw(const int l, const int m, Slm_aw_PNvar* PN_Slm) { //
 
     // NULL check

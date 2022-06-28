@@ -11,6 +11,7 @@
 
 //! \file Spheroidal.h
 
+#include "global.h"
 
 // Define type
 typedef struct Slm_aw_PNvar { // see datails for BHPC's Maple: outputC_Slm_Zlmkn.mw (by Sis)
@@ -31,7 +32,9 @@ typedef struct Slm_aw_PNvar { // see datails for BHPC's Maple: outputC_Slm_Zlmkn
 
 
 // Declare prototype 
+CUDA_CALLABLE_MEMBER
 void init_PNSlm(const double q, const double Theta, Slm_aw_PNvar* PN_Slm, const int flag);
+CUDA_CALLABLE_MEMBER
 double Slm_aw (const int l, const int m, Slm_aw_PNvar* PN_Slm);
 
 #endif // SPHEROIDAL_PN_H_ 
