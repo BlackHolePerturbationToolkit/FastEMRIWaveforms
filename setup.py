@@ -328,7 +328,7 @@ if run_cuda_install:
     )
 
     gpuAAK_ext = Extension(
-        "pygpuAAK", sources=["src/gpuAAK.cu", "src/gpuAAKWrap.pyx"], **gpu_extension
+        "pygpuAAK", sources=["src/Utility.cc", "src/gpuAAK.cu", "src/gpuAAKWrap.pyx"], **gpu_extension
     )
 
     gpu_extension_device = deepcopy(gpu_extension)
@@ -442,7 +442,7 @@ interp_cpu_ext = Extension(
 )
 
 AAK_cpu_ext = Extension(
-    "pycpuAAK", sources=["src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"], **cpu_extension
+    "pycpuAAK", sources=["src/Utility.cc", "src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"], **cpu_extension
 )
 
 cpu_files_for_pn_amp = [fp[:-3] + ".cpp" for fp in files_for_pn_amp]
