@@ -32,18 +32,19 @@ from pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
 from pyinterp_cpu import get_waveform_generic_wrap as get_waveform_generic_wrap_cpu
 
 # Python imports
-from few.utils.baseclasses import (
+from ..utils.baseclasses import (
     SummationBase,
     SchwarzschildEccentric,
     ParallelModuleBase,
+    GenericWaveform
 )
-from few.utils.citations import *
-from few.utils.utility import get_fundamental_frequencies
-from few.utils.constants import *
+from ..utils.citations import *
+from ..utils.utility import get_fundamental_frequencies
+from ..utils.constants import *
 
 # Attempt Cython imports of GPU functions
 try:
-    from pyinterp import interpolate_arrays_wrap, get_waveform_wrap, get_waveform_generic_wrap_cpu
+    from pyinterp import interpolate_arrays_wrap, get_waveform_wrap, get_waveform_generic_wrap
 
 except (ImportError, ModuleNotFoundError) as e:
     pass
@@ -434,8 +435,8 @@ class InterpolatedModeSumGeneric(SummationBase, GenericWaveform, ParallelModuleB
     def __init__(self, *args, **kwargs):
 
         ParallelModuleBase.__init__(self, *args, **kwargs)
-        GenericWaveform.__init__(self, *args, **kwargs)
         SummationBase.__init__(self, *args, **kwargs)
+        GenericWaveform.__init__(self, *args, **kwargs)
 
         self.kwargs = kwargs
 
@@ -503,16 +504,21 @@ class InterpolatedModeSumGeneric(SummationBase, GenericWaveform, ParallelModuleB
         """
 
         init_len = len(t)
-        num_teuk_modes = teuk_modes.shape[-1]
+        num_teuk_modes = int(teuk_modes.shape[-1] / 2)
         data_length = self.num_pts
 
         length = init_len
         ninterps = self.ndim + 4 * num_teuk_modes  # 4 for re and im of combinations of Slm and Zlmkn
         y_all = self.xp.zeros((ninterps, length))
 
-        y_all[:2 * num_teuk_modes] = teuk_modes.T.real
-        y_all[2 * num_teuk_modes : 4 * num_teuk_modes] = teuk_modes.T.imag
+        # R modes
+        y_all[: num_teuk_modes] = teuk_modes.T.real[:num_teuk_modes]
+        y_all[num_teuk_modes: 2 * num_teuk_modes] = teuk_modes.T.imag[:num_teuk_modes]
 
+        # L modes
+        y_all[2 * num_teuk_modes: 3 * num_teuk_modes] = teuk_modes.T.real[num_teuk_modes:]
+        y_all[3 * num_teuk_modes: 4 * num_teuk_modes] = teuk_modes.T.imag[num_teuk_modes:]
+    
         y_all[-3] = Phi_phi
         y_all[-2] = Phi_theta
         y_all[-1] = Phi_r
@@ -521,17 +527,16 @@ class InterpolatedModeSumGeneric(SummationBase, GenericWaveform, ParallelModuleB
 
         new_time_vals = self.xp.arange(data_length) * dt
 
-        interval_inds = self.xp.searchsorted(t, new_time_vals, side="right")
-
-        breakpoint()
+        interval_inds = self.xp.searchsorted(t, new_time_vals, side="right").astype(self.xp.int32) - 1
 
         # the base class function __call__ will return the waveform
-        self.get_waveform_generic(
+        # TODO: make better spline interp_arry part?
+        self.get_waveform(
             self.waveform,
-            spline.interp_array,
-            m_arr,
-            n_arr,
-            k_arr, 
+            spline.interp_array.reshape(spline.reshape_shape).transpose((0, 2, 1)).flatten().copy(),
+            m_arr.astype(self.xp.int32),
+            k_arr.astype(self.xp.int32),
+            n_arr.astype(self.xp.int32), 
             num_teuk_modes,
             dt, 
             t, 
@@ -539,3 +544,5 @@ class InterpolatedModeSumGeneric(SummationBase, GenericWaveform, ParallelModuleB
             data_length, 
             interval_inds
         )
+
+        breakpoint()

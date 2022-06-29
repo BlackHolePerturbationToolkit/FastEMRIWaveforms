@@ -324,7 +324,7 @@ if run_cuda_install:
     )
 
     interp_ext = Extension(
-        "pyinterp", sources=["src/interpolate.cu", "src/pyinterp.pyx"], **gpu_extension
+        "pyinterp", sources=["src/Utility.cc", "src/interpolate.cu", "src/pyinterp.pyx"], **gpu_extension
     )
 
     gpuAAK_ext = Extension(
@@ -437,7 +437,7 @@ matmul_cpu_ext = Extension(
 
 interp_cpu_ext = Extension(
     "pyinterp_cpu",
-    sources=["src/interpolate.cpp", "src/pyinterp_cpu.pyx"],
+    sources=["src/Utility.cc", "src/interpolate.cpp", "src/pyinterp_cpu.pyx"],
     **cpu_extension,
 )
 
@@ -467,16 +467,15 @@ cpu_extensions = [
     Interp2DAmplitude_ext,
     fund_freqs_ext,
     AAK_cpu_ext,
-    pnAmp_cpu_ext,
+    #pnAmp_cpu_ext,
 ]
 
 if run_cuda_install:
-    gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext, pnAmp_ext]
+    gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext] #, pnAmp_ext]
     extensions = gpu_extensions + cpu_extensions
 else:
     extensions = cpu_extensions
 
-extensions = [interp_ext, interp_cpu_ext]
 with open("README.md", "r") as fh:
     long_description = fh.read()
 

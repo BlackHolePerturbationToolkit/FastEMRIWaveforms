@@ -30,18 +30,18 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
-from few.utils.baseclasses import SchwarzschildEccentric, Pn5AAK, ParallelModuleBase
-from few.trajectory.inspiral import EMRIInspiral
-from few.amplitude.interp2dcubicspline import Interp2DAmplitude
-from few.utils.utility import get_mismatch, xI_to_Y, p_to_y, check_for_file_download
-from few.amplitude.romannet import RomanAmplitude
-from few.utils.modeselector import ModeSelector
-from few.utils.ylm import GetYlms
-from few.summation.directmodesum import DirectModeSum
-from few.summation.aakwave import AAKSummation
-from few.utils.constants import *
-from few.utils.citations import *
-from few.summation.interpolatedmodesum import InterpolatedModeSum
+from .utils.baseclasses import SchwarzschildEccentric, Pn5AAK, ParallelModuleBase, GenericWaveform
+from .trajectory.inspiral import EMRIInspiral
+from .amplitude.interp2dcubicspline import Interp2DAmplitude
+from .utils.utility import get_mismatch, xI_to_Y, p_to_y, check_for_file_download
+from .amplitude.romannet import RomanAmplitude, RomanAmplitudeGenericWrapper
+from .utils.modeselector import ModeSelector
+from .utils.ylm import GetYlms
+from .summation.directmodesum import DirectModeSum
+from .summation.aakwave import AAKSummation
+from .utils.constants import *
+from .utils.citations import *
+from .summation.interpolatedmodesum import InterpolatedModeSum, InterpolatedModeSumGeneric
 
 
 class GenerateEMRIWaveform:
@@ -821,7 +821,7 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
             self,
             EMRIInspiral,
             RomanAmplitude,
-            InterpolatedModeSum,
+            InterpolatedModeSumGeneric,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
@@ -1398,7 +1398,7 @@ class GenericModeDecomposedWaveformBase(
         self.create_waveform = sum_module(**sum_kwargs)
 
         # selecting modes that contribute at threshold to the waveform
-        self.mode_selector = ModeSelector(self.m0mask, **mode_selector_kwargs)
+        # self.mode_selector = ModeSelector(None, **mode_selector_kwargs)
 
     @property
     def citation(self):
@@ -1518,7 +1518,7 @@ class GenericModeDecomposedWaveformBase(
         e = self.xp.asarray(e)
         x = self.xp.asarray(x)
         Phi_phi = self.xp.asarray(Phi_phi)
-        Phi_phi = self.xp.asarray(Phi_theta)
+        Phi_theta = self.xp.asarray(Phi_theta)
         Phi_r = self.xp.asarray(Phi_r)
 
         # split into batches
@@ -1555,7 +1555,7 @@ class GenericModeDecomposedWaveformBase(
             Phi_r_temp = Phi_r[inds_in]
 
             # amplitudes
-            teuk_modes = self.amplitude_generator(p_temp, e_temp, x_temp, a, theta, phi)
+            teuk_modes = self.amplitude_generator(a, p_temp, e_temp, x_temp, theta, phi, self.l_arr, self.m_arr, self.k_arr, self.n_arr)[:, 4483:4483+10]
 
             # different types of mode selection
             # sets up ylm and teuk_modes properly for summation
@@ -1571,6 +1571,8 @@ class GenericModeDecomposedWaveformBase(
                 else:
                     raise ValueError("If mode selection is a string, must be `all`.")
 
+                teuk_modes_in = teuk_modes
+            """
             # get a specific subset of modes
             elif isinstance(mode_selection, list):
                 if mode_selection == []:
@@ -1630,22 +1632,25 @@ class GenericModeDecomposedWaveformBase(
                 ) = self.mode_selector(
                     teuk_modes, ylms, modeinds, fund_freq_args=fund_freq_args, eps=eps,
                 )
-
+            """
             # store number of modes for external information
-            self.num_modes_kept = teuk_modes_in.shape[1]
+            self.num_modes_kept = int(teuk_modes_in.shape[1] / 2)
 
             # create waveform
             waveform_temp = self.create_waveform(
                 t_temp,
                 teuk_modes_in,
-                ylms_in,
                 Phi_phi_temp,
+                Phi_theta_temp,
                 Phi_r_temp,
                 self.ms,
+                self.ks,
                 self.ns,
                 M,
+                a,
                 p,
                 e,
+                x,
                 dt=dt,
                 T=T,
                 include_minus_m=include_minus_m,
@@ -1668,7 +1673,7 @@ class GenericModeDecomposedWaveformBase(
         return waveform / dist_dimensionless
 
 
-class Pn5TrajPn5AdiabaticWaveform(SchwarzschildEccentricWaveformBase):
+class Pn5TrajPn5AdiabaticWaveform(GenericModeDecomposedWaveformBase):
     """Prebuilt model for fast Schwarzschild eccentric flux-based waveforms.
 
     This model combines the most efficient modules to produce the fastest
@@ -1714,7 +1719,6 @@ class Pn5TrajPn5AdiabaticWaveform(SchwarzschildEccentricWaveformBase):
         inspiral_kwargs={},
         amplitude_kwargs={},
         sum_kwargs={},
-        Ylm_kwargs={},
         use_gpu=False,
         *args,
         **kwargs,
@@ -1722,15 +1726,14 @@ class Pn5TrajPn5AdiabaticWaveform(SchwarzschildEccentricWaveformBase):
 
         inspiral_kwargs["func"] = "SchwarzEccFlux"
 
-        SchwarzschildEccentricWaveformBase.__init__(
+        GenericModeDecomposedWaveformBase.__init__(
             self,
             EMRIInspiral,
-            RomanAmplitude,
-            InterpolatedModeSum,
+            RomanAmplitudeGenericWrapper,
+            InterpolatedModeSumGeneric,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
-            Ylm_kwargs=Ylm_kwargs,
             use_gpu=use_gpu,
             *args,
             **kwargs,

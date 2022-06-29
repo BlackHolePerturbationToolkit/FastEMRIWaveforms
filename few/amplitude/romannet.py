@@ -27,10 +27,11 @@ from pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
 from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 
 # Python imports
-from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase, ParallelModuleBase
-from few.utils.utility import check_for_file_download
-from few.utils.citations import *
-from few.utils.utility import p_to_y
+from ..utils.baseclasses import SchwarzschildEccentric, AmplitudeBase, ParallelModuleBase
+from ..utils.utility import check_for_file_download
+from ..utils.citations import *
+from ..utils.utility import p_to_y
+from ..utils.ylm import GetYlms
 
 # check for cupy and GPU version of pymatmul
 try:
@@ -330,3 +331,23 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
                     temp[lmn] = self.xp.conj(temp[lmn])
 
             return temp
+
+class RomanAmplitudeGenericWrapper(RomanAmplitude):
+    def __init__(self, *args, Ylm_kwargs={}, **kwargs):
+        self.ylm_gen = GetYlms(**Ylm_kwargs)
+        self.get_amplitude_roman = RomanAmplitude.get_amplitudes
+        RomanAmplitude.__init__(self, *args, **kwargs)
+        
+    def get_amplitudes(self, a, p, e, x, theta, phi, l, m, k, n, *args, **kwargs):
+        amps = self.get_amplitude_roman(self, p, e)
+        ylms = self.xp.asarray(self.ylm_gen(l, m, theta, phi))
+
+        # for testing
+        ylms_R = ylms[: amps.shape[1]]
+        ylms_L = ylms[amps.shape[1] : 2 * amps.shape[1]]
+
+        amps_R = amps * ylms_R
+        amps_L = amps.conj() * ylms_L
+
+        amps_out = self.xp.concatenate([amps_R, amps_L], axis=1)
+        return amps_out

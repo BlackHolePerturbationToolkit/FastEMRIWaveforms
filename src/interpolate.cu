@@ -700,14 +700,14 @@ void make_generic_kerr_waveform(cmplx *waveform,
      CUDA_SHARED double Phi_r_c1[MAX_SPLINE_POINTS];
      CUDA_SHARED double Phi_r_c2[MAX_SPLINE_POINTS];
      CUDA_SHARED double Phi_r_c3[MAX_SPLINE_POINTS];
-
+       
      // number of splines
      int num_base = (4 * num_teuk_modes + num_pars) * init_length;
 
     #ifdef __CUDACC__
 
-    int start2 = threadIdx.x;
-    int diff2 = blockDim.x;
+    int start2 = blockIdx.y;
+    int diff2 = gridDim.y;
 
     #else
 
@@ -719,13 +719,13 @@ void make_generic_kerr_waveform(cmplx *waveform,
     #endif
     for (int mode_i = start2; mode_i < num_teuk_modes; mode_i += diff2) 
     {
-
+      
       int m = m_arr_in[mode_i];
       int k = k_arr_in[mode_i];
       int n = n_arr_in[mode_i];
 
-
       CUDA_SYNC_THREADS;
+     
       #ifdef __CUDACC__
 
       int start = threadIdx.x;
@@ -741,7 +741,6 @@ void make_generic_kerr_waveform(cmplx *waveform,
       #endif
       for (int i = start; i < init_length; i += diff)
       {
-
           old_time[i] = old_time_arr[i];
 
           int y_ind = 0 * num_base + mode_i * init_length + i;
@@ -784,43 +783,43 @@ void make_generic_kerr_waveform(cmplx *waveform,
           L_mode_im_c2[i] = interp_array[c2_ind];
           L_mode_im_c3[i] = interp_array[c3_ind];
 
-          y_ind = 0 * num_base + (4 * num_teuk_modes + mode_i) * init_length + i;
-          c1_ind = 1 * num_base + (4 * num_teuk_modes + mode_i) * init_length + i;
-          c2_ind = 2 * num_base + (4 * num_teuk_modes + mode_i) * init_length + i;
-          c3_ind = 3 * num_base + (4 * num_teuk_modes + mode_i) * init_length + i;
+          y_ind = 0 * num_base + (4 * num_teuk_modes) * init_length + i;
+          c1_ind = 1 * num_base + (4 * num_teuk_modes) * init_length + i;
+          c2_ind = 2 * num_base + (4 * num_teuk_modes) * init_length + i;
+          c3_ind = 3 * num_base + (4 * num_teuk_modes) * init_length + i;
 
           Phi_phi_y[i] = interp_array[y_ind];
           Phi_phi_c1[i] = interp_array[c1_ind];
           Phi_phi_c2[i] = interp_array[c2_ind];
           Phi_phi_c3[i] = interp_array[c3_ind];
 
-          y_ind = 0 * num_base + (1 + 4 * num_teuk_modes + mode_i) * init_length + i;
-          c1_ind = 1 * num_base + (1 + 4 * num_teuk_modes + mode_i) * init_length + i;
-          c2_ind = 2 * num_base + (1 + 4 * num_teuk_modes + mode_i) * init_length + i;
-          c3_ind = 3 * num_base + (1 + 4 * num_teuk_modes + mode_i) * init_length + i;
+          y_ind = 0 * num_base + (1 + 4 * num_teuk_modes) * init_length + i;
+          c1_ind = 1 * num_base + (1 + 4 * num_teuk_modes) * init_length + i;
+          c2_ind = 2 * num_base + (1 + 4 * num_teuk_modes) * init_length + i;
+          c3_ind = 3 * num_base + (1 + 4 * num_teuk_modes) * init_length + i;
 
           Phi_theta_y[i] = interp_array[y_ind];
           Phi_theta_c1[i] = interp_array[c1_ind];
           Phi_theta_c2[i] = interp_array[c2_ind];
           Phi_theta_c3[i] = interp_array[c3_ind];
 
-          y_ind = 0 * num_base + (2 + 4 * num_teuk_modes + mode_i) * init_length + i;
-          c1_ind = 1 * num_base + (2 + 4 * num_teuk_modes + mode_i) * init_length + i;
-          c2_ind = 2 * num_base + (2 + 4 * num_teuk_modes + mode_i) * init_length + i;
-          c3_ind = 3 * num_base + (2 + 4 * num_teuk_modes + mode_i) * init_length + i;
+          y_ind = 0 * num_base + (2 + 4 * num_teuk_modes) * init_length + i;
+          c1_ind = 1 * num_base + (2 + 4 * num_teuk_modes) * init_length + i;
+          c2_ind = 2 * num_base + (2 + 4 * num_teuk_modes) * init_length + i;
+          c3_ind = 3 * num_base + (2 + 4 * num_teuk_modes) * init_length + i;
 
           Phi_r_y[i] = interp_array[y_ind];
           Phi_r_c1[i] = interp_array[c1_ind];
           Phi_r_c2[i] = interp_array[c2_ind];
           Phi_r_c3[i] = interp_array[c3_ind];
-
       }
 
       CUDA_SYNC_THREADS;
+
       #ifdef __CUDACC__
 
       start = threadIdx.x + blockDim.x * blockIdx.x;
-      diff = blockDim.x;
+      diff = blockDim.x * gridDim.x;
 
       #else
 
@@ -891,7 +890,7 @@ void make_generic_kerr_waveform(cmplx *waveform,
 
             cmplx R_tmp = get_mode_value_generic(R_amp, Phi_phi_i, Phi_r_i, Phi_theta_i, m, k, n);
 
-
+            
             cmplx L_tmp(0.0, 0.0);
             if (m + k + n != 0)
             {
@@ -906,7 +905,7 @@ void make_generic_kerr_waveform(cmplx *waveform,
             waveform[i] += wave_mode_out;
             #endif
       }
-    }           
+    }          
     CUDA_SYNC_THREADS;
 }
 
@@ -934,7 +933,6 @@ void get_waveform_generic(cmplx *waveform,
       int num_blocks = std::ceil((data_length + NUM_THREADS -1)/NUM_THREADS);
 
       dim3 gridDim(num_blocks, num_teuk_modes);
-
       // launch one worker kernel per stream
       make_generic_kerr_waveform<<<gridDim, NUM_THREADS>>>(waveform,
              interp_array,
