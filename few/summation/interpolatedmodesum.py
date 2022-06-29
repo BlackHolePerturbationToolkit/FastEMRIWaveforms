@@ -505,7 +505,7 @@ class InterpolatedModeSumGeneric(SummationBase, GenericWaveform, ParallelModuleB
         """
 
         init_len = len(t)
-        num_teuk_modes = int(teuk_modes.shape[-1] / 2)
+        num_teuk_modes = teuk_modes.shape[1]
         data_length = self.num_pts
 
         length = init_len
@@ -513,13 +513,12 @@ class InterpolatedModeSumGeneric(SummationBase, GenericWaveform, ParallelModuleB
         y_all = self.xp.zeros((ninterps, length))
 
         # R modes
-        y_all[: num_teuk_modes] = teuk_modes.T.real[:num_teuk_modes]
-        y_all[num_teuk_modes: 2 * num_teuk_modes] = teuk_modes.T.imag[:num_teuk_modes]
-
+        y_all[: num_teuk_modes] = teuk_modes[:, :, 0].real.T
+        y_all[num_teuk_modes: 2 * num_teuk_modes] = teuk_modes[:, :, 0].imag.T
         # L modes
-        y_all[2 * num_teuk_modes: 3 * num_teuk_modes] = teuk_modes.T.real[num_teuk_modes:]
-        y_all[3 * num_teuk_modes: 4 * num_teuk_modes] = teuk_modes.T.imag[num_teuk_modes:]
-    
+        y_all[2 * num_teuk_modes: 3 * num_teuk_modes] = teuk_modes[:, :, 1].real.T
+        y_all[3 * num_teuk_modes: 4 * num_teuk_modes] = teuk_modes[:, :, 1].imag.T
+
         y_all[-3] = Phi_phi
         y_all[-2] = Phi_theta
         y_all[-1] = Phi_r
@@ -553,5 +552,4 @@ class InterpolatedModeSumGeneric(SummationBase, GenericWaveform, ParallelModuleB
 
         # reshape array if separating modes
         if separate_modes:
-            self.waveform = self.waveform.reshape(2 * num_teuk_modes, -1)
-        breakpoint()
+            self.waveform = self.waveform.reshape(2, num_teuk_modes, -1)

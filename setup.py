@@ -260,7 +260,7 @@ with open(fp_out_name, "w") as fp_out:
 
 # gather pn amplitude files
 files_for_pn_amp = []
-for l in range(2, 13):
+for l in range(2, 3 + 1):
     path = f"hat_Zlmkn8_5PNe10/ell={l}/"
     for fp in os.listdir("src/" + path):
         if fp[-2:] == "cu":
@@ -348,6 +348,7 @@ if run_cuda_install:
     #    "pypnamp3", sources=["src/tempfile.cu"], extra_objects=["build/temp.linux-x86_64-3.9/src/Zlmkn8_5PNe10_base.o", "build/temp.linux-x86_64-3.9/src/hZ_2mkP0_5PNe10.o"], **gpu_extension_device2
     #)
 
+    breakpoint()
     pnAmp_ext = Extension(
         "pypnamp", sources=files_for_pn_amp + ["src/Spheroidal_PN.cu", "src/Zlmkn8_5PNe10_base.cu", "src/Utility.cc", "src/pypnampWrap.pyx", "zzzzzzzzzzzlink.cu"], **gpu_extension_device
     )
@@ -471,7 +472,7 @@ cpu_extensions = [
 ]
 
 if run_cuda_install:
-    gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext] #, pnAmp_ext]
+    gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext, pnAmp_ext]
     extensions = gpu_extensions + cpu_extensions
 else:
     extensions = cpu_extensions

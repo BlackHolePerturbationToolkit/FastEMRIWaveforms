@@ -82,7 +82,7 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
 
     """
 
-    def attributes_RomanAmplitude(self):
+    def attributes_Pn5Amplitude(self):
         """
         attributes:
             few_dir (str): absolute path to the FastEMRIWaveforms directory
@@ -143,7 +143,7 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
         """Confirms GPU capability"""
         return True
 
-    def get_amplitudes(self, p, e, Y, q, theta, *args, specific_modes=None, **kwargs):
+    def get_amplitudes(self, q, p, e, Y, theta, *args, specific_modes=None, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays
@@ -199,11 +199,25 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
         
         # 14 ms single thread
         # convert Y to x_I for fund freqs
-        xI = Y_to_xI(q, p, e, Y)
+        try:
+            q_in = q.get()
+        except AttributeError:
+            q_in = q
+
+        try:
+            p_in = p.get()
+            e_in = e.get()
+            Y_in = Y.get()
+        except AttributeError:
+            p_in = p
+            e_in = e
+            Y_in = Y
+
+        xI = Y_to_xI(q_in, p_in, e_in, Y_in)
 
         # 13 ms single thread
         # these are dimensionless and in radians
-        OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(q, p, e, xI)
+        OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(q_in, p_in, e_in, xI)
 
         # dimensionalize the frequencies
         # TODO: do I need to dimensionalize
@@ -220,7 +234,11 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
             if len(theta_in) != 1:
                 raise ValueError("Length of theta array must be same as p,e,Y if input as an array rather than a scalar.")
             theta_in = self.xp.repeat(theta_in, len(p_in))
-            breakpoint()
+
+        if len(p_in) != len(q_in):
+            if len(q_in) != 1:
+                raise ValueError("Length of theta array must be same as p,e,Y if input as an array rather than a scalar.")
+            q_in = self.xp.repeat(q_in, len(p_in))
 
         self.Zlmkn8_5PNe10(Almkn_out, l_all, m_all, k_all, n_all, q_in, theta_in, p_in, e_in, Y_in, OmegaR_in, OmegaTheta_in, OmegaPhi_in, num_modes, input_len)
 

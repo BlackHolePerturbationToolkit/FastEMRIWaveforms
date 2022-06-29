@@ -35,6 +35,7 @@ from .trajectory.inspiral import EMRIInspiral
 from .amplitude.interp2dcubicspline import Interp2DAmplitude
 from .utils.utility import get_mismatch, xI_to_Y, p_to_y, check_for_file_download
 from .amplitude.romannet import RomanAmplitude, RomanAmplitudeGenericWrapper
+from .amplitude.pnamp import Pn5Amplitude
 from .utils.modeselector import ModeSelector
 from .utils.ylm import GetYlms
 from .summation.directmodesum import DirectModeSum
@@ -1564,10 +1565,10 @@ class GenericModeDecomposedWaveformBase(
 
                 # use all modes
                 if mode_selection == "all":
-                    self.ls = self.l_arr[: teuk_modes.shape[1]]
-                    self.ms = self.m_arr[: teuk_modes.shape[1]]
-                    self.ks = self.k_arr[: teuk_modes.shape[1]]
-                    self.ns = self.n_arr[: teuk_modes.shape[1]]
+                    self.ls = self.l_arr
+                    self.ms = self.m_arr
+                    self.ks = self.k_arr
+                    self.ns = self.n_arr
 
                 else:
                     raise ValueError("If mode selection is a string, must be `all`.")
@@ -1635,7 +1636,7 @@ class GenericModeDecomposedWaveformBase(
                 )
             """
             # store number of modes for external information
-            self.num_modes_kept = int(teuk_modes_in.shape[1] / 2)
+            self.num_modes_kept = teuk_modes_in.shape[1]
 
             # create waveform
             waveform_temp = self.create_waveform(
@@ -1726,12 +1727,12 @@ class Pn5TrajPn5AdiabaticWaveform(GenericModeDecomposedWaveformBase):
         **kwargs,
     ):
 
-        inspiral_kwargs["func"] = "SchwarzEccFlux"
+        inspiral_kwargs["func"] = "pn5"
 
         GenericModeDecomposedWaveformBase.__init__(
             self,
             EMRIInspiral,
-            RomanAmplitudeGenericWrapper,
+            Pn5Amplitude,
             InterpolatedModeSumGeneric,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,

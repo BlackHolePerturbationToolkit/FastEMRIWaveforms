@@ -824,7 +824,7 @@ class Pn5AdiabaticAmp(Pn5AAK):
         self.needs_Y = True
 
         # set mode index settings
-        self.lmax = 10
+        self.lmax = 3  #  10
         self.nmax = 10  
 
         self.ndim = 3
