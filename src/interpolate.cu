@@ -653,7 +653,7 @@ CUDA_KERNEL
 void make_generic_kerr_waveform(cmplx *waveform,
              double *interp_array,
               int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
-              double delta_t, double *old_time_arr, int init_length, int data_length, int *interval_inds){
+              double delta_t, double *old_time_arr, int init_length, int data_length, int *interval_inds, bool separate_modes){
 
     int num_pars = 3;
   
@@ -896,14 +896,24 @@ void make_generic_kerr_waveform(cmplx *waveform,
             {
               L_tmp = get_mode_value_generic(L_amp, Phi_phi_i, Phi_r_i, Phi_theta_i, -m, -k, -n);
             }
-            cmplx wave_mode_out = R_tmp + L_tmp;
 
-            // fill waveform
-            #ifdef __CUDACC__
-            atomicAddComplex(&waveform[i], wave_mode_out);
-            #else
-            waveform[i] += wave_mode_out;
-            #endif
+            cmplx wave_mode_out(0.0, 0.0);
+            if (!separate_modes)
+            {
+              wave_mode_out = R_tmp + L_tmp;
+
+              // fill waveform
+              #ifdef __CUDACC__
+              atomicAddComplex(&waveform[i], wave_mode_out);
+              #else
+              waveform[i] += wave_mode_out;
+              #endif
+            }
+            else 
+            {
+              waveform[mode_i * data_length + i] = R_tmp;
+              waveform[(num_teuk_modes * data_length) + mode_i * data_length + i] = L_tmp;
+            }
       }
     }          
     CUDA_SYNC_THREADS;
@@ -916,7 +926,7 @@ void make_generic_kerr_waveform(cmplx *waveform,
 void get_waveform_generic(cmplx *waveform,
              double *interp_array,
               int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
-              double delta_t, double *old_time_arr, int init_length, int data_length, int *interval_inds)
+              double delta_t, double *old_time_arr, int init_length, int data_length, int *interval_inds, bool separate_modes)
 {
 
      int NUM_THREADS = 256;
@@ -937,7 +947,7 @@ void get_waveform_generic(cmplx *waveform,
       make_generic_kerr_waveform<<<gridDim, NUM_THREADS>>>(waveform,
              interp_array,
               m_arr_in, k_arr_in, n_arr_in, num_teuk_modes,
-              delta_t, old_time_arr, init_length, data_length, interval_inds);
+              delta_t, old_time_arr, init_length, data_length, interval_inds, separate_modes);
       cudaDeviceSynchronize();
       gpuErrchk(cudaGetLastError());
       
@@ -947,7 +957,7 @@ void get_waveform_generic(cmplx *waveform,
          make_generic_kerr_waveform(waveform,
              interp_array,
               m_arr_in, k_arr_in, n_arr_in, num_teuk_modes,
-              delta_t, old_time_arr, init_length, data_length, interval_inds);
+              delta_t, old_time_arr, init_length, data_length, interval_inds, separate_modes);
          
         #endif
 

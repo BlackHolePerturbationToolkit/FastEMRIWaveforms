@@ -1431,6 +1431,7 @@ class GenericModeDecomposedWaveformBase(
         batch_size=-1,
         mode_selection=None,
         include_minus_m=True,  # TODO: fix this
+        separate_modes=False,
     ):
         """Call function for SchwarzschildEccentric models.
 
@@ -1555,7 +1556,7 @@ class GenericModeDecomposedWaveformBase(
             Phi_r_temp = Phi_r[inds_in]
 
             # amplitudes
-            teuk_modes = self.amplitude_generator(a, p_temp, e_temp, x_temp, theta, phi, self.l_arr, self.m_arr, self.k_arr, self.n_arr)[:, 4483:4483+10]
+            teuk_modes = self.amplitude_generator(a, p_temp, e_temp, x_temp, theta, phi, self.l_arr, self.m_arr, self.k_arr, self.n_arr)
 
             # different types of mode selection
             # sets up ylm and teuk_modes properly for summation
@@ -1654,6 +1655,7 @@ class GenericModeDecomposedWaveformBase(
                 dt=dt,
                 T=T,
                 include_minus_m=include_minus_m,
+                separate_modes=separate_modes
             )
 
             # if batching, need to add the waveform

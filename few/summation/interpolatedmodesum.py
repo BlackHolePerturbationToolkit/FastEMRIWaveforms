@@ -474,6 +474,7 @@ class InterpolatedModeSumGeneric(SummationBase, GenericWaveform, ParallelModuleB
         n_arr,
         *args,
         dt=10.0,
+        separate_modes=False,
         **kwargs,
     ):
         """Interpolated summation function.
@@ -529,6 +530,10 @@ class InterpolatedModeSumGeneric(SummationBase, GenericWaveform, ParallelModuleB
 
         interval_inds = self.xp.searchsorted(t, new_time_vals, side="right").astype(self.xp.int32) - 1
 
+        # scale waveform array for separating modes
+        if separate_modes:
+            self.waveform = self.xp.tile(self.waveform, (2 * num_teuk_modes, 1)).flatten()
+
         # the base class function __call__ will return the waveform
         # TODO: make better spline interp_arry part?
         self.get_waveform(
@@ -542,7 +547,11 @@ class InterpolatedModeSumGeneric(SummationBase, GenericWaveform, ParallelModuleB
             t, 
             init_len, 
             data_length, 
-            interval_inds
+            interval_inds,
+            separate_modes
         )
 
+        # reshape array if separating modes
+        if separate_modes:
+            self.waveform = self.waveform.reshape(2 * num_teuk_modes, -1)
         breakpoint()
