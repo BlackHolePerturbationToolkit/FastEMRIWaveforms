@@ -14,7 +14,7 @@ from scipy import signal
 
 
 import cupy as xp
-xp.cuda.runtime.setDevice(7)
+xp.cuda.runtime.setDevice(2)
 
 use_gpu = True
 

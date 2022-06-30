@@ -1755,7 +1755,7 @@ void find_segments_fd_wrap(int *segment_out, int *start_inds_seg, int *end_inds_
 }
 
 CUDA_CALLABLE_MEMBER
-void cube_roots(double *root1, double *root2, double *root3, double a, double b, double c, double d, bool check)
+void cube_roots(double *roots, double a, double b, double c, double d, bool check)
 {
     double b2 = b * b;
     double b3 = b2 * b;
@@ -1775,21 +1775,21 @@ void cube_roots(double *root1, double *root2, double *root3, double a, double b,
     
     if (abs(r1.imag() / r1.real()) < 1e-10)
     {
-        *root1 = r1.real();
+        roots[0] = r1.real();
     } 
 
     if (abs(r2.imag() / r1.real()) < 1e-10)
     {
-        *root2 = r2.real();
+        roots[1] = r2.real();
     } 
 
     if (abs(r3.imag() / r1.real()) < 1e-10)
     {
-        *root3 = r3.real();
+        roots[2] = r3.real();
     } 
 }
 
-
+#define NUM_THREADS_FD 64
 // make a waveform in parallel
 // this uses an efficient summation by loading mode information into shared memory
 // shared memory is leveraged heavily
@@ -1843,6 +1843,12 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
      CUDA_SHARED double f_r_c2[MAX_SPLINE_POINTS];
      CUDA_SHARED double f_r_c3[MAX_SPLINE_POINTS];
 
+    #ifdef __CUDACC__
+     CUDA_SHARED double roots_all[3 * NUM_THREADS_FD];
+
+     double *roots = &roots_all[3 * threadIdx.x];
+    #endif
+
      // number of splines
      int num_base = (2 * num_teuk_modes + num_pars) * init_length;
 
@@ -1886,6 +1892,11 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
       
       for (int i = start; i < init_length; i += diff)
       {
+          #ifdef __CUDACC__
+          #else
+            double roots[3];
+            //double * = &roots[0];
+        #endif
           old_time[i] = old_time_arr[i];
 
           int y_ind = 0 * num_base + mode_i * init_length + i;
@@ -1967,6 +1978,13 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
       #endif
       for (int i = start; i < mode_length_here; i += diff)
        {
+
+           #ifdef __CUDACC__
+           #else
+            double roots[3];
+
+            //double *roots = &roots_all[0];
+            #endif
           int ind_f = i + mode_start_ind_here;
           double f = frequencies[ind_f];
            
@@ -2022,21 +2040,76 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                 
                 bool check = false;
                 if ((mode_i == 0) && ((i > 100) && (i < 150))) check = true;
-                cube_roots(&root1, &root2, &root3, f_c3, f_c2, f_c1, (f_y - f), check);
-                if ((mode_i == 0) && ((i > 100) && (i < 150))) printf("roots: %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %d %d %d\n", root1, root2, root3, f_c3, f_c2, f_c1, f_y, f_y2, f, start_t, end_t, ind_i, m, n);
-                /*
+                cube_roots(roots, f_c3, f_c2, f_c1, (f_y - f), check);
+                //if ((mode_i == 0) && ((i > 100) && (i < 150))) printf("roots: %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %d %d %d\n", root1, root2, root3, f_c3, f_c2, f_c1, f_y, f_y2, f, start_t, end_t, ind_i, m, n);
+                
                 double t;
                 double x, x2, x3;
-                t = root1;
-                if ((t < end_t) && (t >= start_t))
+                for (int root_i = 0; root_i < 3; root_i += 1)
                 {
-                    x = t - start_t;
-                    x2 = x*x;
-                    x3 = x*x2;
-                    printf("root1: %.18e %.18e %.18e %.18e %.18e %.18e %.18e", t, start_t, end_t, f_c3, f_c2, f_c1, (f_y - f));
+                    t = roots[root_i];
+                    if ((t < end_t) && (t >= start_t))
+                    {
+                        x = t - start_t;
+                        x2 = x*x;
+                        x3 = x*x2;
+                        //printf("root1: %.18e %.18e %.18e %.18e %.18e %.18e %.18e", t, start_t, end_t, f_c3, f_c2, f_c1, (f_y - f));
+
+                        // get mode values at this timestep
+                        double R_mode_re = R_mode_re_y_i + R_mode_re_c1_i * x + R_mode_re_c2_i * x2  + R_mode_re_c3_i * x3;
+                        double R_mode_im = R_mode_im_y_i + R_mode_im_c1_i * x + R_mode_im_c2_i * x2  + R_mode_im_c3_i * x3;
+                        //double L_mode_re = L_mode_re_y_i + L_mode_re_c1_i * x + L_mode_re_c2_i * x2  + L_mode_re_c3_i * x3;
+                        //double L_mode_im = L_mode_im_y_i + L_mode_im_c1_i * x + L_mode_im_c2_i * x2  + L_mode_im_c3_i * x3;
+
+                        // get phases at this timestep
+                        double Phi_phi_i = pp_y + pp_c1 * x + pp_c2 * x2  + pp_c3 * x3;
+                        //double Phi_theta_i = pt_y + pt_c1 * x + pt_c2 * x2 + pt_c3 * x3;
+                        double Phi_theta_i = 0.0;
+                        double Phi_r_i = pr_y + pr_c1 * x + pr_c2 * x2  + pr_c3 * x3;
+
+                        double fdot_phi_i = fp_c1 + 2 * fp_c2 * x  + 3 * fp_c3 * x2;
+                        //double Phi_theta_i = pt_y + pt_c1 * x + pt_c2 * x2 + pt_c3 * x3;
+                        double fdot_theta_i = 0.0;  // ft_c1 + 2 * ft_c2 * x  + 3 * ft_c3 * x2;
+                        double fdot_r_i = fr_c1 + 2 * fr_c2 * x  + 3 * fr_c3 * x2;
+
+                        double fddot_phi_i = 2 * fp_c2 * x  + 6 * fp_c3 * x;
+                        //double Phi_theta_i = pt_y + pt_c1 * x + pt_c2 * x2 + pt_c3 * x3;
+                        double fddot_theta_i = 0.0;  // 2 * ft_c2 * x  + 6 * ft_c3 * x;
+                        double fddot_r_i = 2 * fr_c2 * x  + 6 * fr_c3 * x;
+
+                        double phase_term = m * Phi_phi_i + k * Phi_theta_i + n * Phi_r_i;
+                        double fdot = m * fdot_phi_i + k * fdot_theta_i + n * fdot_r_i;
+                        double fddot = m * fddot_phi_i + k * fddot_theta_i + n * fddot_r_i;
+
+                        cmplx R_amp(R_mode_re, R_mode_im);
+                        cmplx Ylm(1.0, 0.0);
+                        cmplx R_tmp = get_mode_value_fd(t, f, fdot, fddot, R_amp, phase_term, Ylm);
+
+                        cmplx L_tmp(0.0, 0.0);
+                        //if (m + k + n != 0)
+                        //{
+                        //cmplx L_tmp = get_mode_value_generic(L_amp, Phi_phi_i, Phi_r_i, Phi_theta_i, -m, -k, -n);
+                        //}
+                        cmplx wave_mode_out = R_tmp + L_tmp;
+
+                        // fill waveform
+                        #ifdef __CUDACC__
+                        atomicAddcmplx(&waveform[i], wave_mode_out);
+                        #else
+                        waveform[i] += wave_mode_out;
+                        #endif
+                        //cmplx L_amp(L_mode_re, L_mode_im);
+
+                        //cmplx R_tmp = get_mode_value_generic(R_amp, Phi_phi_i, Phi_r_i, Phi_theta_i, m, k, n);
+                    }
                 }
 
-                t = root2;
+                
+
+                    
+                /*
+                t = root2;q
+
                 if ((t < end_t) && (t >= start_t))
                 {
                     x = t - start_t;
@@ -2060,36 +2133,9 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
           // determine interpolation information
          
 
-            // get mode values at this timestep
-            double R_mode_re = R_mode_re_y_i + R_mode_re_c1_i * x + R_mode_re_c2_i * x2  + R_mode_re_c3_i * x3;
-            double R_mode_im = R_mode_im_y_i + R_mode_im_c1_i * x + R_mode_im_c2_i * x2  + R_mode_im_c3_i * x3;
-            double L_mode_re = L_mode_re_y_i + L_mode_re_c1_i * x + L_mode_re_c2_i * x2  + L_mode_re_c3_i * x3;
-            double L_mode_im = L_mode_im_y_i + L_mode_im_c1_i * x + L_mode_im_c2_i * x2  + L_mode_im_c3_i * x3;
+            
 
-            // get phases at this timestep
-            double Phi_phi_i = pp_y + pp_c1 * x + pp_c2 * x2  + pp_c3 * x3;
-            double Phi_theta_i = pt_y + pt_c1 * x + pt_c2 * x2 + pt_c3 * x3;
-            double Phi_r_i = pr_y + pr_c1 * x + pr_c2 * x2  + pr_c3 * x3;
-
-            cmplx R_amp(R_mode_re, R_mode_im);
-            cmplx L_amp(L_mode_re, L_mode_im);
-
-            cmplx R_tmp = get_mode_value_generic(R_amp, Phi_phi_i, Phi_r_i, Phi_theta_i, m, k, n);
-
-
-            cmplx L_tmp(0.0, 0.0);
-            if (m + k + n != 0)
-            {
-              L_tmp = get_mode_value_generic(L_amp, Phi_phi_i, Phi_r_i, Phi_theta_i, -m, -k, -n);
-            }
-            cmplx wave_mode_out = R_tmp + L_tmp;
-
-            // fill waveform
-            #ifdef __CUDACC__
-            atomicAddComplex(&waveform[i], wave_mode_out);
-            #else
-            waveform[i] += wave_mode_out;
-            #endif
+            
             */
         }
     }
@@ -2105,7 +2151,7 @@ void get_waveform_generic_fd(cmplx *waveform,
               double *frequencies, int *mode_start_inds, int *mode_lengths, int max_length)
 {
 
-     int NUM_THREADS = 256;
+     //int NUM_THREADS = 256;
 
      if (init_length > MAX_SPLINE_POINTS)
      {
@@ -2116,12 +2162,12 @@ void get_waveform_generic_fd(cmplx *waveform,
 
      #ifdef __CUDACC__
 
-      int num_blocks = std::ceil((max_length + NUM_THREADS -1)/NUM_THREADS);
+      int num_blocks = std::ceil((max_length + NUM_THREADS_FD -1)/NUM_THREADS_FD);
       
       dim3 gridDim(num_blocks, num_teuk_modes);
 
       // launch one worker kernel per stream
-      make_generic_kerr_waveform_fd<<<gridDim, NUM_THREADS>>>(waveform,
+      make_generic_kerr_waveform_fd<<<gridDim, NUM_THREADS_FD>>>(waveform,
              interp_array,
               m_arr_in, k_arr_in, n_arr_in, num_teuk_modes,
               delta_t, old_time_arr, init_length, data_length, interval_inds,
