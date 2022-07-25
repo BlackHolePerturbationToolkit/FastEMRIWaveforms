@@ -26,4 +26,7 @@ void Y_to_xI_vector(double* x, double* a, double* p, double* e, double* Y, int l
 void set_threads(int num_threads);
 int get_threads();
 
+double KerrGeoEnergy(double a, double p, double e, double x);
+double KerrGeoAngularMomentum(double a, double p, double e, double x, double En);
+
 #endif // __FUND_FREQS__

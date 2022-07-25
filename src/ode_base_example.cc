@@ -208,26 +208,38 @@ void KerrCircularEquatorial(double* pdot, double* edot, double* Ydot,
     // cout << "omegaphi circ " <<  Omega_phi_sep_circ << " omegaphi " <<  *Omega_phi << endl;
     // cout  << a  << '\t' <<  p << '\t' << e << endl;
     // cout << "r " <<  r << " plso " <<  p_sep << endl;
+    double En = KerrGeoEnergy(a, p, e, x);
+    double Lz = KerrGeoAngularMomentum(a, p, e, x, En);
+    double Q = 0.0;
     
+    // Class to transform to p e i evolution
+    GenericKerrRadiation* GKR = new GenericKerrRadiation(p, e, En, Lz, Q, a);
 
-    int Nv = 10;
-    int ne = 10;
     // Edot as a function of 
     double Edot = dEdt_Cheby(a, p, e, r);
     double Ldot = dLdt_Cheby(a, p, e, r);
-    cout  << a  << '\t' <<  p << '\t' << e << endl;
-    cout << " Edot Cheb " <<  Edot << " PN " <<  dEdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
-    cout << " Ldot Cheb " <<  Ldot << " PN " <<  dLdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
+    
+    // Intepolator check
+    // int Nv = 10;
+    // int ne = 10;
+    // cout  << a  << '\t' <<  p << '\t' << e << endl;
+    // cout << " Edot Cheb " <<  Edot << " PN " <<  dEdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
+    // cout << " Ldot Cheb " <<  Ldot << " PN " <<  dLdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
 
-    *pdot = epsilon * dpdt8H_5PNe10 (a, p, e, Y, Nv, ne);
+    // consistency check
+    // GKR->pei_FluxEvolution(dEdt8H_5PNe10 (a, p, e, Y, Nv, ne), dLdt8H_5PNe10 (a, p, e, Y, Nv, ne), 0.0);
+    // cout << " pdot Cheb " <<  GKR->pdot << " PN " <<  dpdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
+    // cout << " edot Cheb " <<  GKR->edot << " PN " <<  dedt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
+
+    // transform to p e Y evolution
+    GKR->pei_FluxEvolution(Edot, Ldot, 0.0);
+
+    *pdot = -epsilon * GKR->pdot;
 
     // needs adjustment for validity
-    Nv = 10;
-    ne = 8;
-	*edot = epsilon * dedt8H_5PNe10 (a, p, e, Y, Nv, ne);
+    *edot = -epsilon * GKR->edot;
 
-    Nv = 7;
-    ne = 10;
-    *Ydot = epsilon * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);
+    *Ydot = 0.0;
+
 
 }
