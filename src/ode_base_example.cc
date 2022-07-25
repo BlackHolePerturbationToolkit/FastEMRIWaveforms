@@ -25,6 +25,7 @@
 
 #include "dIdt8H_5PNe10.h"
 #include "ode.hh"
+#include "KerrEqCirc.h"
 
 #define pn5_Y
 #define pn5_citation1 Pn5_citation
@@ -173,5 +174,60 @@ SchwarzEccFlux::~SchwarzEccFlux()
     delete interps->Ldot;
     delete interps;
 
+
+}
+
+//--------------------------------------------------------------------------------
+#define KerrCircularEquatorial_Y
+#define KerrCircularEquatorial_equatorial
+
+__deriv__
+void KerrCircularEquatorial(double* pdot, double* edot, double* Ydot,
+                  double* Omega_phi, double* Omega_theta, double* Omega_r,
+                  double epsilon, double a, double p, double e, double Y, double* additional_args)
+{
+    // evaluate ODEs
+
+    // the frequency variables are pointers!
+    double x = Y_to_xI(a, p, e, Y);
+    KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);
+    
+    // get r variable
+    double Omega_phi_sep_circ;
+    double p_sep = get_separatrix(a, e, x);
+    double r;
+    // reference frequency
+    Omega_phi_sep_circ = 1.0/ (a + pow(p_sep/( 1.0 + e ), 1.5) );
+    r = pow(*Omega_phi/Omega_phi_sep_circ, 2.0/3.0 ) * (1.0 + e);
+    
+    // checked values against mathematica
+    // {a -> 0.7, p -> 3.72159, e -> 0.189091 x-> 1.0}
+    // r 1.01037 p_sep 3.62159
+    // Omega_phi_sep_circ 0.166244
+    // *Omega_phi 0.13021
+    // cout << "omegaphi circ " <<  Omega_phi_sep_circ << " omegaphi " <<  *Omega_phi << endl;
+    // cout  << a  << '\t' <<  p << '\t' << e << endl;
+    // cout << "r " <<  r << " plso " <<  p_sep << endl;
+    
+
+    int Nv = 10;
+    int ne = 10;
+    // Edot as a function of 
+    double Edot = dEdt_Cheby(a, p, e, r);
+    double Ldot = dLdt_Cheby(a, p, e, r);
+    cout  << a  << '\t' <<  p << '\t' << e << endl;
+    cout << " Edot Cheb " <<  Edot << " PN " <<  dEdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
+    cout << " Ldot Cheb " <<  Ldot << " PN " <<  dLdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
+
+    *pdot = epsilon * dpdt8H_5PNe10 (a, p, e, Y, Nv, ne);
+
+    // needs adjustment for validity
+    Nv = 10;
+    ne = 8;
+	*edot = epsilon * dedt8H_5PNe10 (a, p, e, Y, Nv, ne);
+
+    Nv = 7;
+    ne = 10;
+    *Ydot = epsilon * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);
 
 }
