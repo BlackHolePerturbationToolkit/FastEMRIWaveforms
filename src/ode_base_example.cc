@@ -178,11 +178,11 @@ SchwarzEccFlux::~SchwarzEccFlux()
 }
 
 //--------------------------------------------------------------------------------
-#define KerrCircularEquatorial_Y
-#define KerrCircularEquatorial_equatorial
+#define KerrEccentricEquatorial_Y
+#define KerrEccentricEquatorial_equatorial
 
 __deriv__
-void KerrCircularEquatorial(double* pdot, double* edot, double* Ydot,
+void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,
                   double epsilon, double a, double p, double e, double Y, double* additional_args)
 {
@@ -241,5 +241,6 @@ void KerrCircularEquatorial(double* pdot, double* edot, double* Ydot,
 
     *Ydot = 0.0;
 
+    delete GKR;
 
 }

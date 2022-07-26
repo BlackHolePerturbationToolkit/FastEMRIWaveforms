@@ -29,7 +29,7 @@ class ModuleTest(unittest.TestCase):
     def test_trajectory(self):
 
         # initialize trajectory class
-        traj = EMRIInspiral(func="KerrCircularEquatorial")
+        traj = EMRIInspiral(func="KerrEccentricEquatorial")
 
         # set initial parameters
         M = 1e5
@@ -41,7 +41,7 @@ class ModuleTest(unittest.TestCase):
         # run trajectory
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0)
 
-traj = EMRIInspiral(func="KerrCircularEquatorial")
+traj = EMRIInspiral(func="KerrEccentricEquatorial")
 
 # set initial parameters
 M = 1e6
