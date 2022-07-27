@@ -21,6 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
+        conda activate few_env
     - name: Test with pytest
       run: |
         python setup.py install
