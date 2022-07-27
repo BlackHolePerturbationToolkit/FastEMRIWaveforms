@@ -18,11 +18,8 @@ jobs:
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
-    - name: Install dependencies
+    - name: Install dependencies and test
       run: |
-        conda install gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 python=3.7
-        pip install hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib
-    - name: Test with pytest
-      run: |
+        conda install gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 python=3.7 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib
         python setup.py install
         python -m unittest discover
