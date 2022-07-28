@@ -20,6 +20,6 @@ jobs:
         echo $CONDA/bin >> $GITHUB_PATH
     - name: Install dependencies and test
       run: |
-        $CONDA/bin/conda install gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 python=3.7 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib
+        $CONDA/bin/conda install --channel=conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 python=3.7 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib
         python setup.py install
         python -m unittest discover
