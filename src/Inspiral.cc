@@ -51,6 +51,8 @@
 #include <iomanip>      // std::setprecision
 #include <cstring>
 
+#include <stdexcept>
+
 
 using namespace std;
 using namespace std::chrono;
@@ -77,32 +79,40 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
     // check for separatrix
     // integrator may naively step over separatrix
     double x_temp;
-    if (params_in->convert_Y)
-    {
-        x_temp = Y_to_xI(a, p, e, x);
+
+    // define a sanity check otherwise the separatrix and Y_to_xI will try to calculate no sense quantities
+    if(sanity_check(a, p, e, x)==1){
+        if (params_in->convert_Y)
+        {
+            x_temp = Y_to_xI(a, p, e, x);
+        }
+        else
+        {
+            x_temp = x;
+        }
+
+        double p_sep = 0.0;
+        if (params_in->enforce_schwarz_sep || (a == 0.0))
+        {
+            p_sep = 6.0 + 2. * e;
+        }
+        else
+        {
+            p_sep = get_separatrix(a, e, x_temp);
+        }
+
+        // make sure we are outside the separatrix
+        if (p < p_sep + DIST_TO_SEPARATRIX)
+        {
+            return GSL_EBADFUNC;
+        }
     }
     else
-    {
-        x_temp = x;
-    }
-
-    double p_sep = 0.0;
-    if (params_in->enforce_schwarz_sep || (a == 0.0))
-    {
-        p_sep = 6.0 + 2. * e;
-    }
-    else
-    {
-        p_sep = get_separatrix(a, e, x_temp);
-    }
-
-
-    // make sure we are outside the separatrix
-    if (p < p_sep + DIST_TO_SEPARATRIX)
     {
         return GSL_EBADFUNC;
     }
-
+    
+    
     double pdot, edot, xdot;
 	double Omega_phi, Omega_theta, Omega_r;
 
@@ -264,6 +274,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
             if (params_holder->convert_Y)
             {
                 x_temp = Y_to_xI(a, p, e, x);
+                
             }
             else
             {
@@ -415,7 +426,8 @@ void InspiralCarrier::InspiralWrapper(double *t, double *p, double *e, double *x
 
         // make sure we have allocated enough memory through cython
         if (Inspiral_vals.length > init_len){
-            throw std::runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
+            throw_python_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral. Inspiral.cc \n", 0);
+            // throw std::runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
         }
 
         // copy data

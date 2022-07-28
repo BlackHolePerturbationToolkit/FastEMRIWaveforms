@@ -20,6 +20,20 @@ void throw_python_error(char* str_in, int status)
     PyErr_SetString(PyExc_SystemError, str);
 }
 
+int sanity_check(double a, double p, double e, double Y){
+    int res = 0;
+    if ((a>1.0)||(a<0.0)) return 1;
+    if (p<0.0) return 1;
+    if ((e>1.0)||(e<0.0)) return 1;
+    if ((Y>1.0)||(Y<-1.0)) return 1;
+    
+    if (res==1){
+        printf("a, p, e, Y = %f %f %f %f ",a, p, e, Y);
+        // throw std::invalid_argument( "Sanity check wrong");
+    }
+    return res;
+}
+
 // Define elliptic integrals that use Mathematica's conventions
 double EllipticK(double k){
     gsl_sf_result result;
@@ -352,8 +366,8 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
     s = gsl_root_fsolver_alloc (T);
     gsl_root_fsolver_set (s, &F, x_lo, x_hi);
 
-    printf("-----------START------------------- \n");
-    printf("xlo xhi %f %f\n", x_lo, x_hi);
+    // printf("-----------START------------------- \n");
+    // printf("xlo xhi %f %f\n", x_lo, x_hi);
     double epsrel=0.001;
 
     do
@@ -363,18 +377,18 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
         r = gsl_root_fsolver_root (s);
         x_lo = gsl_root_fsolver_x_lower (s);
         x_hi = gsl_root_fsolver_x_upper (s);
-        status = gsl_root_test_interval (x_lo, x_hi, 0.0, epsrel);//gsl_root_test_residual(r, 1e-3); //gsl_root_test_delta(x_lo, x_hi, 0.0, epsrel); //
-        printf("result %f %f %f \n", r, x_lo, x_hi);
+        status = gsl_root_test_interval (x_lo, x_hi, 0.0, epsrel);
+        // printf("result %f %f %f \n", r, x_lo, x_hi);
       }
     while (status == GSL_CONTINUE && iter < max_iter);
     
-    printf("stat, iter %d %d \n", status, iter);
-    printf("-----------END------------------- \n");
+    // printf("stat, iter %d %d \n", status, iter);
+    // printf("-----------END------------------- \n");
 
     if (status != GSL_SUCCESS)
     {
-        throw std::invalid_argument( "Brent root solver failed.");
-        // throw_python_error("Brent root solver failed.", status);
+        // throw std::invalid_argument( "Brent root solver failed.");
+        throw_python_error("Brent root solver failed. Utility.cc", status);
     }
 
     gsl_root_fsolver_free (s);
@@ -474,7 +488,6 @@ double Y_to_xI_eq(double x, void *params_in)
 
     // get constants of motion
     KerrGeoConstantsOfMotion(&E, &L, &Q, a, p, e, x);
-
     double Y_ = L / sqrt(pow(L, 2) + Q);
 
     return Y - Y_;
@@ -491,17 +504,16 @@ double Y_to_xI(double a, double p, double e, double Y)
 
     // set limits
     // assume Y is close to x
-    x_lo = Y - 0.2;
-    x_hi = Y + 0.2;
+    x_lo = Y - 0.1;
+    x_hi = Y + 0.1;
 
-    
     x_lo = x_lo > -YLIM? x_lo : -YLIM;
     x_hi = x_hi < YLIM? x_hi : YLIM;
 
     double x = solver (&params, &Y_to_xI_eq, x_lo, x_hi);
     // if (abs(x) > 1.0) throw_python_error("wrong Y to xI conversion", 0);
-    if (abs(x) > 1.0) throw std::invalid_argument( "wrong Y to xI conversion.");
-    if ((x < x_lo)||(x > x_hi)) throw std::invalid_argument( "xI found is wrong.");
+    // if (abs(x) > 1.0) throw std::invalid_argument( "wrong Y to xI conversion.");
+    // if ((x < x_lo)||(x > x_hi)) throw std::invalid_argument( "xI found is wrong.");
 
     return x;
 }
@@ -540,6 +552,8 @@ int get_threads()
 
 
 
+
+
 /*
 int main()
 {
@@ -554,3 +568,4 @@ int main()
     //printf("%e %e %e\n", En, L, C);
 }
 */
+
