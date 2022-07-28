@@ -5,21 +5,18 @@ on: [push]
 jobs:
   build-linux:
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 5
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v2
     - name: Set up Python 3.7
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v2
       with:
         python-version: 3.7
-    - name: Add conda to system path
+    - name: Install dependencies
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
-    - name: Install dependencies and test
+        $CONDA/bin/conda env update --name base --channel=conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib
+    - name: Test
       run: |
-        $CONDA/bin/conda install --channel=conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 python=3.7 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib
         python setup.py install
         python -m unittest discover
