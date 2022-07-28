@@ -1,6 +1,7 @@
 #include "stdio.h"
 #include "math.h"
 #include "global.h"
+#include <stdexcept>
 
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_sf_ellint.h>
@@ -338,7 +339,7 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
 {
     gsl_set_error_handler_off();
     int status;
-    int iter = 0, max_iter = 100;
+    int iter = 0, max_iter = 1000;
     const gsl_root_fsolver_type *T;
     gsl_root_fsolver *s;
     double r = 0, r_expected = sqrt (5.0);
@@ -351,6 +352,10 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
     s = gsl_root_fsolver_alloc (T);
     gsl_root_fsolver_set (s, &F, x_lo, x_hi);
 
+    printf("-----------START------------------- \n");
+    printf("xlo xhi %f %f\n", x_lo, x_hi);
+    double epsrel=0.001;
+
     do
       {
         iter++;
@@ -358,14 +363,18 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
         r = gsl_root_fsolver_root (s);
         x_lo = gsl_root_fsolver_x_lower (s);
         x_hi = gsl_root_fsolver_x_upper (s);
-        status = gsl_root_test_interval (x_lo, x_hi,
-                                         0, 0.001);
+        status = gsl_root_test_interval (x_lo, x_hi, 0.0, epsrel);//gsl_root_test_residual(r, 1e-3); //gsl_root_test_delta(x_lo, x_hi, 0.0, epsrel); //
+        printf("result %f %f %f \n", r, x_lo, x_hi);
       }
     while (status == GSL_CONTINUE && iter < max_iter);
+    
+    printf("stat, iter %d %d \n", status, iter);
+    printf("-----------END------------------- \n");
 
     if (status != GSL_SUCCESS)
     {
-        throw_python_error("Brent root solver failed.", status);
+        throw std::invalid_argument( "Brent root solver failed.");
+        // throw_python_error("Brent root solver failed.", status);
     }
 
     gsl_root_fsolver_free (s);
@@ -482,13 +491,17 @@ double Y_to_xI(double a, double p, double e, double Y)
 
     // set limits
     // assume Y is close to x
-    x_lo = Y - 0.1;
-    x_hi = Y + 0.1;
+    x_lo = Y - 0.2;
+    x_hi = Y + 0.2;
 
+    
     x_lo = x_lo > -YLIM? x_lo : -YLIM;
     x_hi = x_hi < YLIM? x_hi : YLIM;
 
     double x = solver (&params, &Y_to_xI_eq, x_lo, x_hi);
+    // if (abs(x) > 1.0) throw_python_error("wrong Y to xI conversion", 0);
+    if (abs(x) > 1.0) throw std::invalid_argument( "wrong Y to xI conversion.");
+    if ((x < x_lo)||(x > x_hi)) throw std::invalid_argument( "xI found is wrong.");
 
     return x;
 }
