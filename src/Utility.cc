@@ -22,10 +22,11 @@ void throw_python_error(char* str_in, int status)
 
 int sanity_check(double a, double p, double e, double Y){
     int res = 0;
-    if ((a>1.0)||(a<0.0)) return 1;
+    
     if (p<0.0) return 1;
     if ((e>1.0)||(e<0.0)) return 1;
     if ((Y>1.0)||(Y<-1.0)) return 1;
+    if ((a>1.0)||(a<0.0)) return 1;
     
     if (res==1){
         printf("a, p, e, Y = %f %f %f %f ",a, p, e, Y);

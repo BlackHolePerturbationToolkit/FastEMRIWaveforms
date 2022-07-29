@@ -81,36 +81,35 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
     double x_temp;
 
     // define a sanity check otherwise the separatrix and Y_to_xI will try to calculate no sense quantities
-    if(sanity_check(a, p, e, x)!=1){
-        if (params_in->convert_Y)
-        {
-            x_temp = Y_to_xI(a, p, e, x);
-        }
-        else
-        {
-            x_temp = x;
-        }
-
-        double p_sep = 0.0;
-        if (params_in->enforce_schwarz_sep || (a == 0.0))
-        {
-            p_sep = 6.0 + 2. * e;
-        }
-        else
-        {
-            p_sep = get_separatrix(a, e, x_temp);
-        }
-
-        // make sure we are outside the separatrix
-        if (p < p_sep + DIST_TO_SEPARATRIX)
-        {
-            return GSL_EBADFUNC;
-        }
+    if(sanity_check(a, p, e, x)==1){
+        return GSL_EBADFUNC;
+    }
+    
+    if (params_in->convert_Y)
+    {
+        x_temp = Y_to_xI(a, p, e, x);
     }
     else
     {
+        x_temp = x;
+    }
+
+    double p_sep = 0.0;
+    if (params_in->enforce_schwarz_sep || (a == 0.0))
+    {
+        p_sep = 6.0 + 2. * e;
+    }
+    else
+    {
+        p_sep = get_separatrix(a, e, x_temp);
+    }
+
+    // make sure we are outside the separatrix
+    if (p < p_sep + DIST_TO_SEPARATRIX)
+    {
         return GSL_EBADFUNC;
     }
+
     
     
     double pdot, edot, xdot;
