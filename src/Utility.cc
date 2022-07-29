@@ -383,13 +383,23 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
       }
     while (status == GSL_CONTINUE && iter < max_iter);
     
-    // printf("stat, iter %d %d \n", status, iter);
+    // printf("result %f %f %f \n", r, x_lo, x_hi);
+    // printf("stat, iter, GSL_SUCCESS %d %d %d\n", status, iter, GSL_SUCCESS);
     // printf("-----------END------------------- \n");
 
     if (status != GSL_SUCCESS)
     {
-        // throw std::invalid_argument( "Brent root solver failed.");
-        throw_python_error("Brent root solver failed. Utility.cc", status);
+        // warning if it did not converge otherwise throw error
+        if (iter == max_iter){
+            printf("WARNING: Maximum iteration reached in Utility.cc in Brent root solver.\n");
+            printf("Result=%f, x_low=%f, x_high=%f \n", r, x_lo, x_hi);
+            printf("a, p, e, Y = %f %f %f %f \n", params->a, params->p, params->e, params->Y);
+        }
+        else
+        {
+            throw_python_error("In Utility.cc Brent root solver failed", status);
+        }
+        // throw std::invalid_argument( "Brent root solver failed. Utility.cc");
     }
 
     gsl_root_fsolver_free (s);
@@ -505,8 +515,8 @@ double Y_to_xI(double a, double p, double e, double Y)
 
     // set limits
     // assume Y is close to x
-    x_lo = Y - 0.1;
-    x_hi = Y + 0.1;
+    x_lo = Y - 0.15;
+    x_hi = Y + 0.15;
 
     x_lo = x_lo > -YLIM? x_lo : -YLIM;
     x_hi = x_hi < YLIM? x_hi : YLIM;

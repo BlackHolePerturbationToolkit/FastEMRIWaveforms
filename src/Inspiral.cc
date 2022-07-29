@@ -80,7 +80,7 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
     // integrator may naively step over separatrix
     double x_temp;
 
-    // define a sanity check otherwise the separatrix and Y_to_xI will try to calculate no sense quantities
+    // define a sanity check
     if(sanity_check(a, p, e, x)==1){
         return GSL_EBADFUNC;
     }
@@ -273,7 +273,9 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
             if (params_holder->convert_Y)
             {
                 x_temp = Y_to_xI(a, p, e, x);
-                
+                // if(sanity_check(a, p, e, x_temp)==1){
+                //     throw std::invalid_argument( "277 Wrong conversion to x_temp.");
+                // }
             }
             else
             {
@@ -330,6 +332,9 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
                 if (params_holder->convert_Y)
                 {
                     x_temp = Y_to_xI(a, p, e, x);
+                    // if(sanity_check(a, p, e, x_temp)==1){
+                    // throw std::invalid_argument( "336 Wrong conversion to x_temp");
+                    // }
                 }
                 else
                 {
