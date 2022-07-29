@@ -94,10 +94,10 @@ for dt in dt_vec[::-1]:
     print(dt, mean_err)
     plt.loglog(err_vec[:-1], mean_err, 'o-', label=f'dt={dt:.2e}')
 
-plt.xlabel('mean error')
-plt.xlabel('err')
+plt.ylabel('absolute squared error in p evolution')
+plt.xlabel('error integrator')
 plt.legend()
-plt.show()
+plt.savefig('absolute_error_p')
 
 
 
@@ -107,6 +107,7 @@ names = list(mcolors.TABLEAU_COLORS)
 plt.figure()
 [plt.semilogy(t, np.abs(dd), color=cc) for dd,err,cc in zip(diff,err_vec,names)]
 [plt.axhline(err , label=f'err = {err:.2e}', color=cc, linestyle=':') for dd,err,cc in zip(diff,err_vec,names)]
-# [plt.plot(t, pp) for pp in p_vec]
+plt.ylabel('absolute error in p evolution')
+plt.xlabel('time')
 plt.legend()
-plt.show()
+plt.savefig('absolute_error_p_evolution')
