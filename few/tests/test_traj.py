@@ -3,8 +3,7 @@ import numpy as np
 import warnings
 import time 
 from few.trajectory.inspiral import EMRIInspiral
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
+
 try:
     import cupy as xp
 

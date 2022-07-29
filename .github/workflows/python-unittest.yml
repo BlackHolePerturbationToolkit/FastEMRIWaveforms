@@ -22,7 +22,7 @@ jobs:
       run: |
         conda install -c conda-forge gcc_linux-64 gxx_linux-64 
         conda install -c conda-forge wget gsl lapack=3.6.1 hdf5
-        pip install numpy Cython scipy tqdm h5py requests
+        pip install numpy Cython scipy tqdm h5py requests matplotlib
         
     - name: Test with unittest
       shell: bash -l {0}
