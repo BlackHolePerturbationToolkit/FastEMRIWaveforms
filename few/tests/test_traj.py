@@ -1,9 +1,10 @@
 import unittest
 import numpy as np
 import warnings
-
+import time 
 from few.trajectory.inspiral import EMRIInspiral
-
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 try:
     import cupy as xp
 
@@ -41,33 +42,62 @@ traj = EMRIInspiral(func="pn5")
 M = 1e6
 mu = 5e1
 p0 = 12.0
-e0 = 0.5
-a=0.7
+e0 = 0.1
+a=0.9
+Y0 = 0.8
 
 # run trajectory
-err_vec = 10**np.linspace(-5.0, -15.0, num=10)
-p_vec = []
-for err in err_vec:
-    insp_kw = {
-            "T": 2.0,
-            "dt": 3600.0*12,
-            "err": err,
-            # "DENSE_STEPPING": 0,
-            "max_init_len": int(1e5),
-            # "use_rk4": False,
-            "upsample": True,
-            "fix_T": False
+T=1.0
+t_vec = np.linspace(0.0, T*365.0*3600*24)
+err_vec = 10**np.linspace(-1.0, -15.0, num=10)
+dt_vec = 10**np.linspace(0.0, 4,num=10)
 
-            }
+insp_kw = {
+        "T": T,
+        "dt":1e-10,
+        "err": 1e-20,
+        "DENSE_STEPPING": 0,
+        "max_init_len": int(1e3),
+        "use_rk4": False,
+        "upsample": True,
+        "new_t": t_vec
+        }
 
-    t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 0.5, **insp_kw)#err=err)
-    p_vec.append(p)
+t, p_true, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, Y0, **insp_kw)#err=err)
 
-diff = p_vec - p_vec[-1]
-diff = np.array(diff)[:-1]
+plt.figure()
+for dt in dt_vec[::-1]:
+    p_vec = []
+    for err in err_vec:
+        insp_kw = {
+                "T": T,
+                "dt": dt,
+                "err": err,
+                "DENSE_STEPPING": 0,
+                "max_init_len": int(1e3),
+                "use_rk4": False,
+                "upsample": True,
+                "new_t": t_vec
+                }
 
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
+        st = time.time()
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, Y0, **insp_kw)#err=err)
+        print("trajectory timing",time.time()-st )
+        p_vec.append(p)
+
+    diff = p_vec - p_vec[-1]#p_true#p_vec[-1]
+    diff = np.array(diff)[:-1]
+    # print(np.mean(diff,axis=1))
+    mean_err = np.sum(np.abs(diff)**2,axis=1)
+    print(dt, mean_err)
+    plt.loglog(err_vec[:-1], mean_err, 'o-', label=f'dt={dt:.2e}')
+
+plt.xlabel('mean error')
+plt.xlabel('err')
+plt.legend()
+plt.show()
+
+
 
 names = list(mcolors.TABLEAU_COLORS)
 # breakpoint()
