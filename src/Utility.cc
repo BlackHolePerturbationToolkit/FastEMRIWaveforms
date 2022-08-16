@@ -2,6 +2,7 @@
 #include "math.h"
 #include "global.h"
 #include <stdexcept>
+#include "Utility.hh"
 
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_sf_ellint.h>
@@ -12,13 +13,6 @@
 #ifdef __USE_OMP__
 #include "omp.h"
 #endif
-
-void throw_python_error(char* str_in, int status)
-{
-    char str[1000];
-    sprintf(str, "%s / Error code: %d", str_in, status);
-    PyErr_SetString(PyExc_SystemError, str);
-}
 
 int sanity_check(double a, double p, double e, double Y){
     int res = 0;
@@ -43,7 +37,7 @@ double EllipticK(double k){
     {
         char str[1000];
         sprintf(str, "EllipticK failed with argument k: %e", k);
-        throw_python_error(str, status);
+        throw std::invalid_argument(str);
     }
     return result.val;
 }
@@ -55,7 +49,7 @@ double EllipticF(double phi, double k){
     {
         char str[1000];
         sprintf(str, "EllipticF failed with arguments phi:%e k: %e", phi, k);
-        throw_python_error(str, status);
+        throw std::invalid_argument(str);
     }
     return result.val;
 }
@@ -67,7 +61,7 @@ double EllipticE(double k){
     {
         char str[1000];
         sprintf(str, "EllipticE failed with argument k: %e", k);
-        throw_python_error(str, status);
+        throw std::invalid_argument(str);
     }
     return result.val;
 }
@@ -79,7 +73,7 @@ double EllipticEIncomp(double phi, double k){
     {
         char str[1000];
         sprintf(str, "EllipticEIncomp failed with argument k: %e", k);
-        throw_python_error(str, status);
+        throw std::invalid_argument(str);
     }
     return result.val;
 }
@@ -90,8 +84,9 @@ double EllipticPi(double n, double k){
     if (status != GSL_SUCCESS)
     {
         char str[1000];
-        sprintf(str, "EllipticPi failed with argument k: %e", k);
-        throw_python_error(str, status);
+        printf("55: %e\n", k);
+        sprintf(str, "EllipticPi failed with arguments (k,n): (%e,%e)", k, n);
+        throw std::invalid_argument(str);
     }
     return result.val;
 }
@@ -103,7 +98,7 @@ double EllipticPiIncomp(double n, double phi, double k){
     {
         char str[1000];
         sprintf(str, "EllipticPiIncomp failed with argument k: %e", k);
-        throw_python_error(str, status);
+        throw std::invalid_argument(str);
     }
     return result.val;
 }
@@ -206,7 +201,6 @@ void KerrGeoRadialRoots(double* r1_, double*r2_, double* r3_, double* r4_, doubl
 void KerrGeoMinoFrequencies(double* CapitalGamma_, double* CapitalUpsilonPhi_, double* CapitalUpsilonTheta_, double* CapitalUpsilonr_,
                               double a, double p, double e, double x)
 {
-
     double M = 1.0;
 
     double En = KerrGeoEnergy(a, p, e, x);
@@ -264,7 +258,6 @@ void KerrGeoCoordinateFrequencies(double* OmegaPhi_, double* OmegaTheta_, double
 
 void SchwarzschildGeoCoordinateFrequencies(double* OmegaPhi, double* OmegaR, double p, double e)
 {
-
     // Need to evaluate 4 different elliptic integrals here. Cache them first to avoid repeated calls.
 	double EllipE 	= EllipticE(4*e/(p-6.0+2*e));
 	double EllipK 	= EllipticK(4*e/(p-6.0+2*e));;
@@ -379,6 +372,7 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
         x_lo = gsl_root_fsolver_x_lower (s);
         x_hi = gsl_root_fsolver_x_upper (s);
         status = gsl_root_test_interval (x_lo, x_hi, 0.0, epsrel);
+       
         // printf("result %f %f %f \n", r, x_lo, x_hi);
       }
     while (status == GSL_CONTINUE && iter < max_iter);
@@ -393,13 +387,12 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
         if (iter == max_iter){
             printf("WARNING: Maximum iteration reached in Utility.cc in Brent root solver.\n");
             printf("Result=%f, x_low=%f, x_high=%f \n", r, x_lo, x_hi);
-            printf("a, p, e, Y = %f %f %f %f \n", params->a, params->p, params->e, params->Y);
+            printf("a, p, e, Y, sep = %f %f %f %f %f\n", params->a, params->p, params->e, params->Y, get_separatrix(params->a, params->e, r));
         }
         else
         {
-            throw_python_error("In Utility.cc Brent root solver failed", status);
+            throw std::invalid_argument( "In Utility.cc Brent root solver failed");
         }
-        // throw std::invalid_argument( "Brent root solver failed. Utility.cc");
     }
 
     gsl_root_fsolver_free (s);
@@ -522,10 +515,7 @@ double Y_to_xI(double a, double p, double e, double Y)
     x_hi = x_hi < YLIM? x_hi : YLIM;
 
     double x = solver (&params, &Y_to_xI_eq, x_lo, x_hi);
-    // if (abs(x) > 1.0) throw_python_error("wrong Y to xI conversion", 0);
-    // if (abs(x) > 1.0) throw std::invalid_argument( "wrong Y to xI conversion.");
-    // if ((x < x_lo)||(x > x_hi)) throw std::invalid_argument( "xI found is wrong.");
-
+   
     return x;
 }
 

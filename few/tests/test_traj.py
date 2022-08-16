@@ -27,7 +27,7 @@ insp_kw = {
 "DENSE_STEPPING": 0,
 "max_init_len": int(1e4),
 "use_rk4": False,
-"upsample": True,
+"upsample": False,
 }
 np.random.seed(42)
 
@@ -40,13 +40,19 @@ class ModuleTest(unittest.TestCase):
         # set initial parameters
         M = 1e5
         mu = 1e1
-        for i in range(10):
+        np.random.seed(42)
+        for i in range(1000):
             p0 = np.random.uniform(10.0,15)
             e0 = np.random.uniform(0.0, 1.0)
             a = np.random.uniform(0.0, 1.0)
             Y0 = np.random.uniform(-1.0, 1.0)
 
+            # do not want to be too close to polar
+            if np.abs(Y0) < 1e-2:
+                Y0 = np.sign(Y0) * 1e-2
+
             # run trajectory
+            #print("start", a, p0, e0, Y0)
             t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, Y0, **insp_kw)
 
     def test_trajectory_SchwarzEccFlux(self):

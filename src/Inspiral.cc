@@ -84,17 +84,24 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
     if(sanity_check(a, p, e, x)==1){
         return GSL_EBADFUNC;
     }
-    
+    double p_sep = 0.0;
     if (params_in->convert_Y)
     {
+        // estimate separatrix with Y since it is close to x
+        // make sure we are not inside it or root solver will struggle
+        p_sep = get_separatrix(a, e, x);
+        // make sure we are outside the separatrix
+        if (p < p_sep + DIST_TO_SEPARATRIX)
+        {
+            return GSL_EBADFUNC;
+        }
         x_temp = Y_to_xI(a, p, e, x);
     }
     else
     {
         x_temp = x;
     }
-
-    double p_sep = 0.0;
+    
     if (params_in->enforce_schwarz_sep || (a == 0.0))
     {
         p_sep = 6.0 + 2. * e;
@@ -110,8 +117,6 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
         return GSL_EBADFUNC;
     }
 
-    
-    
     double pdot, edot, xdot;
 	double Omega_phi, Omega_theta, Omega_r;
 
@@ -430,7 +435,7 @@ void InspiralCarrier::InspiralWrapper(double *t, double *p, double *e, double *x
 
         // make sure we have allocated enough memory through cython
         if (Inspiral_vals.length > init_len){
-            throw_python_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral. Inspiral.cc \n", 0);
+            throw std::invalid_argument("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral. Inspiral.cc \n");
             // throw std::runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
         }
 
