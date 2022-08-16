@@ -110,6 +110,39 @@ void create_amplitude_interpolant(hid_t file_id, int l, int m, int n, int Ne, in
     delete[] modeData;
 }
 
+// initialize amplitude interpolants for each mode
+void create_amplitude_interpolant_rho_phase(hid_t file_id, int l, int m, int n, int Ne, int Ny, vector<double>& ys, vector<double>& es, Interpolant **re, Interpolant **im){
+
+	// amplitude data has a real and imaginary part
+	double *modeData = new double[2*Ne*Ny];
+
+	char dataset_name[50];
+
+	sprintf( dataset_name, "/l%dm%d/n%dk0", l,m,n );
+
+	/* read dataset */
+	H5LTread_dataset_double(file_id, dataset_name, modeData);
+
+	vector<double> modeData_re(Ne*Ny);
+	vector<double> modeData_im(Ne*Ny);
+
+	for(int i = 0; i < Ne; i++)
+    {
+		for(int j = 0; j < Ny; j++)
+        {
+			modeData_re[j + Ny*i] = sqrt( modeData[2*(Ny - 1 -j + Ny*i)]*modeData[2*(Ny - 1 -j + Ny*i)] + modeData[2*(Ny - 1 -j + Ny*i) + 1]*modeData[2*(Ny - 1 -j + Ny*i) + 1] );
+			modeData_im[j + Ny*i] = atan2(modeData[2*(Ny - 1 -j + Ny*i) + 1], modeData[2*(Ny - 1 -j + Ny*i)]);
+        }   
+	}
+
+    // initialize interpolants
+    // now the re = rho and im = phase
+	*re = new Interpolant(ys, es, modeData_re);
+	*im = new Interpolant(ys, es, modeData_im);
+
+    delete[] modeData;
+}
+
 // collect data and initialize amplitude interpolants
 void load_and_interpolate_amplitude_data(int lmax, int nmax, struct waveform_amps *amps, const std::string& few_dir){
 
@@ -215,6 +248,7 @@ void AmplitudeCarrier::Interp2DAmplitude(std::complex<double> *amplitude_out, do
 
     complex<double> I(0.0, 1.0);
 
+
     #ifdef __USE_OMP__
     #pragma omp parallel for collapse(2)
     #endif
@@ -229,8 +263,11 @@ void AmplitudeCarrier::Interp2DAmplitude(std::complex<double> *amplitude_out, do
 
             // calculate amplitudes for this mode
             int l = l_arr[mode_i]; int m = m_arr[mode_i]; int n = n_arr[mode_i];
+            // alternatively 
+			// if (amps->re[l][m][n+nmax]->eval(y,e)<0.0) printf("(%d,%d) %f, %f\n",l,m, amps->re[l][m][n+nmax]->eval(y,e)*1e10, amps->im[l][m][n+nmax]->eval(y,e));
+            // amplitude_out[i*num_modes + mode_i] = std::polar( abs(amps->re[l][m][n+nmax]->eval(y,e)), amps->im[l][m][n+nmax]->eval(y,e) );//amps->re[l][m][n+nmax]->eval(y,e) * std::exp( I*amps->im[l][m][n+nmax]->eval(y,e) );
 			amplitude_out[i*num_modes + mode_i]= amps->re[l][m][n+nmax]->eval(y,e) + I*amps->im[l][m][n+nmax]->eval(y,e);
-
         }
     }
+	
 }

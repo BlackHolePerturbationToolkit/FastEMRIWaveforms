@@ -51,6 +51,8 @@
 #include <iomanip>      // std::setprecision
 #include <cstring>
 
+#include <stdexcept>
+
 
 using namespace std;
 using namespace std::chrono;
@@ -77,16 +79,29 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
     // check for separatrix
     // integrator may naively step over separatrix
     double x_temp;
+
+    // define a sanity check
+    if(sanity_check(a, p, e, x)==1){
+        return GSL_EBADFUNC;
+    }
+    double p_sep = 0.0;
     if (params_in->convert_Y)
     {
+        // estimate separatrix with Y since it is close to x
+        // make sure we are not inside it or root solver will struggle
+        p_sep = get_separatrix(a, e, x);
+        // make sure we are outside the separatrix
+        if (p < p_sep + DIST_TO_SEPARATRIX)
+        {
+            return GSL_EBADFUNC;
+        }
         x_temp = Y_to_xI(a, p, e, x);
     }
     else
     {
         x_temp = x;
     }
-
-    double p_sep = 0.0;
+    
     if (params_in->enforce_schwarz_sep || (a == 0.0))
     {
         p_sep = 6.0 + 2. * e;
@@ -95,7 +110,6 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
     {
         p_sep = get_separatrix(a, e, x_temp);
     }
-
 
     // make sure we are outside the separatrix
     if (p < p_sep + DIST_TO_SEPARATRIX)
@@ -182,7 +196,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
     else T = gsl_odeiv2_step_rk8pd;
 
     gsl_odeiv2_step *step 			= gsl_odeiv2_step_alloc (T, 6);
-    gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (1e-10, 0);
+    gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (pow(10.0,err), 0);
     gsl_odeiv2_evolve *evolve 		= gsl_odeiv2_evolve_alloc (6);
 
     // Compute the inspiral
@@ -264,6 +278,9 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
             if (params_holder->convert_Y)
             {
                 x_temp = Y_to_xI(a, p, e, x);
+                // if(sanity_check(a, p, e, x_temp)==1){
+                //     throw std::invalid_argument( "277 Wrong conversion to x_temp.");
+                // }
             }
             else
             {
@@ -320,6 +337,9 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
                 if (params_holder->convert_Y)
                 {
                     x_temp = Y_to_xI(a, p, e, x);
+                    // if(sanity_check(a, p, e, x_temp)==1){
+                    // throw std::invalid_argument( "336 Wrong conversion to x_temp");
+                    // }
                 }
                 else
                 {
@@ -415,7 +435,8 @@ void InspiralCarrier::InspiralWrapper(double *t, double *p, double *e, double *x
 
         // make sure we have allocated enough memory through cython
         if (Inspiral_vals.length > init_len){
-            throw std::runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
+            throw std::invalid_argument("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral. Inspiral.cc \n");
+            // throw std::runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
         }
 
         // copy data
