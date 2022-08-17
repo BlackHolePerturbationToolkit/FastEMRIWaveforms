@@ -1558,6 +1558,7 @@ class GenericModeDecomposedWaveformBase(
 
             # amplitudes
             teuk_modes = self.amplitude_generator(a, p_temp, e_temp, x_temp, theta, phi, self.l_arr, self.m_arr, self.k_arr, self.n_arr)
+            breakpoint()
 
             # different types of mode selection
             # sets up ylm and teuk_modes properly for summation

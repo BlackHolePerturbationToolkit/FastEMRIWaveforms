@@ -54,6 +54,7 @@ class ModuleTest(unittest.TestCase):
             # run trajectory
             #print("start", a, p0, e0, Y0)
             t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, Y0, **insp_kw)
+            breakpoint()
 
     def test_trajectory_SchwarzEccFlux(self):
         # initialize trajectory class
@@ -67,3 +68,4 @@ class ModuleTest(unittest.TestCase):
 
         # run trajectory
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, 0.0, p0, e0, 1.0)
+        breakpoint()
