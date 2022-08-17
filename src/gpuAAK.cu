@@ -433,7 +433,7 @@ void get_waveform(cmplx *waveform, double* interp_array,
     // arrays for determining spline windows for new arrays
     if (init_len > MAX_SPLINE_POINTS)
     {
-      char str[1000];
+        char str[1000];
         sprintf(str, "Initial length is greater than the number of maximum allowable spline points: %d > %d", init_len, MAX_SPLINE_POINTS);
         throw std::invalid_argument(str);
     }

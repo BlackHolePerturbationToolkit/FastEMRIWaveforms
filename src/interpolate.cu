@@ -935,7 +935,7 @@ void get_waveform_generic(cmplx *waveform,
      {
         char str[1000];
         sprintf(str, "Number of initial points is more than allowed for interpolated summation. (%d > %d)", init_length, MAX_SPLINE_POINTS);
-        throw_python_error(str, 22);
+        throw std::invalid_argument(str);
      }
 
      #ifdef __CUDACC__
