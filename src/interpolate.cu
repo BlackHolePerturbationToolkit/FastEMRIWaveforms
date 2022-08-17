@@ -1755,7 +1755,7 @@ void find_segments_fd_wrap(int *segment_out, int *start_inds_seg, int *end_inds_
 }
 
 CUDA_CALLABLE_MEMBER
-void cube_roots(double *roots, double a, double b, double c, double d, bool check)
+void cube_roots(double *r1o, double *r2o, double *r3o, double a, double b, double c, double d, bool check)
 {
     double b2 = b * b;
     double b3 = b2 * b;
@@ -1764,14 +1764,19 @@ void cube_roots(double *roots, double a, double b, double c, double d, bool chec
     double Delta_0 = (b2 - 3 * a * c);
     double Delta_1 = (2 * b3 - 9 * a * b * c + 27 * a2 * d);
 
-    
     cmplx C = pow((Delta_1 +  sqrt(cmplx(Delta_1 * Delta_1  - 4 * ( Delta_0 * Delta_0 * Delta_0), 0.0)))/ 2., 1./3.);
 
     cmplx xi = (-1. + sqrt(cmplx(-3., 0.0))) / 2.;
 
-    cmplx r1 = - (1. / (3 * a)) * (b + xi * C + Delta_0 / (xi * C));
-    cmplx r2 = - (1. / (3 * a)) * (b + (xi * xi) * C + Delta_0 / (xi * C));
-    cmplx r3 = - (1. / (3 * a)) * (b + (xi * xi * xi) * C + Delta_0 / (xi * C));
+    cmplx r1 = - (1. / (3 * a)) * (b + C + Delta_0 / (C));
+    cmplx r2 = - (1. / (3 * a)) * (b + xi * C + Delta_0 / (xi * C));
+    cmplx r3 = - (1. / (3 * a)) * (b + xi * xi * C + Delta_0 / (xi * xi * C));
+    
+    *r1o = r1.real();
+    *r2o = r2.real();
+    *r3o = r3.real();
+
+    /*
     
     if (abs(r1.imag() / r1.real()) < 1e-10)
     {
@@ -1787,6 +1792,7 @@ void cube_roots(double *roots, double a, double b, double c, double d, bool chec
     {
         roots[2] = r3.real();
     } 
+    */
 }
 
 #define NUM_THREADS_FD 64
@@ -2040,9 +2046,12 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                 
                 bool check = false;
                 if ((mode_i == 0) && ((i > 100) && (i < 150))) check = true;
-                cube_roots(roots, f_c3, f_c2, f_c1, (f_y - f), check);
+                cube_roots(&root1, &root2, &root3, f_c3, f_c2, f_c1, (f_y - f), check);
                 //if ((mode_i == 0) && ((i > 100) && (i < 150))) printf("roots: %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %d %d %d\n", root1, root2, root3, f_c3, f_c2, f_c1, f_y, f_y2, f, start_t, end_t, ind_i, m, n);
                 
+                if ((i < 10) && (mode_i < 3)) printf("root check: %d %d %.18e %.18e %.18e %.18e %.18e \n", mode_i, i, root1, root2, root3, start_t, end_t);
+                    
+
                 double t;
                 double x, x2, x3;
                 for (int root_i = 0; root_i < 3; root_i += 1)
@@ -2053,7 +2062,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                         x = t - start_t;
                         x2 = x*x;
                         x3 = x*x2;
-                        //printf("root1: %.18e %.18e %.18e %.18e %.18e %.18e %.18e", t, start_t, end_t, f_c3, f_c2, f_c1, (f_y - f));
+                        
 
                         // get mode values at this timestep
                         double R_mode_re = R_mode_re_y_i + R_mode_re_c1_i * x + R_mode_re_c2_i * x2  + R_mode_re_c3_i * x3;
