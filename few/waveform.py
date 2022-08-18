@@ -30,7 +30,7 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
-from .utils.baseclasses import SchwarzschildEccentric, Pn5AAK, ParallelModuleBase, GenericWaveform
+from .utils.baseclasses import SchwarzschildEccentric, Pn5AAK, ParallelModuleBase, GenericWaveform, Pn5AdiabaticAmp
 from .trajectory.inspiral import EMRIInspiral
 from .amplitude.interp2dcubicspline import Interp2DAmplitude
 from .utils.utility import get_mismatch, xI_to_Y, p_to_y, check_for_file_download
@@ -1558,8 +1558,7 @@ class GenericModeDecomposedWaveformBase(
 
             # amplitudes
             teuk_modes = self.amplitude_generator(a, p_temp, e_temp, x_temp, theta, phi, self.l_arr, self.m_arr, self.k_arr, self.n_arr)
-            breakpoint()
-
+            
             # different types of mode selection
             # sets up ylm and teuk_modes properly for summation
             if isinstance(mode_selection, str):
@@ -1677,7 +1676,7 @@ class GenericModeDecomposedWaveformBase(
         return waveform / dist_dimensionless
 
 
-class Pn5TrajPn5AdiabaticWaveform(GenericModeDecomposedWaveformBase):
+class Pn5TrajPn5AdiabaticWaveform(Pn5AdiabaticAmp, GenericModeDecomposedWaveformBase):
     """Prebuilt model for fast Schwarzschild eccentric flux-based waveforms.
 
     This model combines the most efficient modules to produce the fastest
@@ -1729,7 +1728,7 @@ class Pn5TrajPn5AdiabaticWaveform(GenericModeDecomposedWaveformBase):
     ):
 
         inspiral_kwargs["func"] = "pn5"
-
+        
         GenericModeDecomposedWaveformBase.__init__(
             self,
             EMRIInspiral,
@@ -1742,6 +1741,8 @@ class Pn5TrajPn5AdiabaticWaveform(GenericModeDecomposedWaveformBase):
             *args,
             **kwargs,
         )
+
+        Pn5AdiabaticAmp.__init__(self, *args, **kwargs)
 
     def attributes_FastSchwarzschildEccentricFlux(self):
         """

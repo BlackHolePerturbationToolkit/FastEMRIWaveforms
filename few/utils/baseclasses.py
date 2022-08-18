@@ -524,13 +524,13 @@ class GenericWaveform(ParallelModuleBase, ABC):
         self.frame = "source"
 
         # set mode index settings
-        self.lmax = 10
+        self.lmax = 4
         self.kmax = 10
         self.nmax = 30
 
         md = []
 
-        for l in range(self.lmax):
+        for l in range(2, self.lmax + 1):
             for m in range(-l, l + 1):
                 for k in range(-self.kmax, self.kmax + 1):
                     for n in range(0, self.nmax + 1):
@@ -824,7 +824,7 @@ class Pn5AdiabaticAmp(Pn5AAK):
         self.needs_Y = True
 
         # set mode index settings
-        self.lmax = 3  #  10
+        self.lmax = 4  #  10
         self.nmax = 10  
 
         self.ndim = 3
