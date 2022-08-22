@@ -397,6 +397,7 @@ def get_separatrix(a, e, x):
         a_in = np.atleast_1d(a)
 
     assert len(a_in) == len(e_in)
+    assert len(x_in) == len(e_in)
 
     separatrix = pyGetSeparatrix(a_in, e_in, x_in)
 
