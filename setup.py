@@ -332,6 +332,9 @@ if run_cuda_install:
         "pygpuAAK", sources=["src/Utility.cc", "src/gpuAAK.cu", "src/gpuAAKWrap.pyx"], **gpu_extension
     )
 
+    gpu_amp_interp_2d_ext = Extension(
+        "pyAmpInterp2D", sources=["src/AmpInterp2D.cu", "src/pyampinterp2D.pyx"], **gpu_extension
+    )
     gpu_extension_device = deepcopy(gpu_extension)
     gpu_extension_device2 = deepcopy(gpu_extension)
 
@@ -468,11 +471,11 @@ cpu_extensions = [
     Interp2DAmplitude_ext,
     fund_freqs_ext,
     AAK_cpu_ext,
-    #pnAmp_cpu_ext,
+    pnAmp_cpu_ext,
 ]
 
 if run_cuda_install:
-    gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext, pnAmp_ext]
+    gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext, pnAmp_ext, gpu_amp_interp_2d_ext]
     extensions = gpu_extensions + cpu_extensions
 else:
     extensions = cpu_extensions
