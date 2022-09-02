@@ -1190,7 +1190,7 @@ class SummationBase(ABC):
     def __init__(self, *args, output_type="td", pad_output=False, **kwargs):
         self.pad_output = pad_output
 
-        if output_type not in ["td"]:
+        if output_type not in ["td", "tf"]:
             raise ValueError(
                 "{} waveform domain not available. Choices are 'td' (time domain) or 'tf' (time-frequency).".format(
                     output_type
@@ -1260,14 +1260,56 @@ class SummationBase(ABC):
         self.num_pts, self.num_pts_pad = num_pts, num_pts_pad
         self.dt = dt
 
-        # setup waveform holder for time domain
-        self.waveform = self.xp.zeros(
-            (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
-        )
+        if self.output_type == "td":
+            # setup waveform holder for time domain
+            self.waveform = self.xp.zeros(
+                (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
+            )
+
+        elif self.output_type == "tf":
+            if t_window is None:
+                raise ValueError(
+                    "If asking for waveform in time-frequency domain, must include t_window kwarg."
+                )
+
+            self.num_per_window = int(t_window / dt)
+
+            self.num_windows = int((num_pts + num_pts_pad) / self.num_per_window)
+
+            self.extra_points = (num_pts + num_pts_pad) - (
+                self.num_windows * self.num_per_window
+            )
+
+            if self.extra_points >= 0:
+                warnings.warn(
+                    "When using time-frequency domain, time points beyond last window are left out."
+                )
+
+            self.windows_for_padding = int(np.ceil(num_pts_pad / self.num_per_window))
+
+            if self.windows_for_padding * self.num_per_window > num_pts_pad:
+                warnings.warn(
+                    "Any time points that fall into a window that includes padding will be assumed to be zero."
+                )
+
+            self.num_windows_for_waveform = self.num_windows - self.windows_for_padding
+            self.bin_frequencies = self.xp.fft.rfftfreq(self.num_per_window, self.dt)
+            self.num_frequencies = len(self.bin_frequencies)
+            self.df = self.bin_frequencies[1] - self.bin_frequencies[0]
+
+            # TODO: check this arange below.
+            self.t_new = (
+                self.xp.arange(1, self.num_windows_for_waveform + 1)
+                * self.num_per_window
+                * self.dt
+            )  # - (self.num_per_window * self.dt / 2.0)
+
+            self.waveform = self.xp.zeros(
+                (2, self.num_windows, self.num_frequencies), dtype=self.xp.complex128,
+            )
 
         # get the waveform summed in place
         self.sum(t, *args, dt=dt, **kwargs)
-
         return self.waveform
 
 

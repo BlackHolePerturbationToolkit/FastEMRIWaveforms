@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from multiprocessing.dummy import Value
 import sys
 import os
 from abc import ABC
@@ -43,6 +44,7 @@ from .summation.aakwave import AAKSummation
 from .utils.constants import *
 from .utils.citations import *
 from .summation.interpolatedmodesum import InterpolatedModeSum, InterpolatedModeSumGeneric
+from .summation.tfinterp import InterpolatedModeSumGenericTF
 
 
 class GenerateEMRIWaveform:
@@ -1433,6 +1435,8 @@ class GenericModeDecomposedWaveformBase(
         mode_selection=None,
         include_minus_m=True,  # TODO: fix this
         separate_modes=False,
+        t_window=None,
+        inds_left_right=-1,
     ):
         """Call function for SchwarzschildEccentric models.
 
@@ -1656,7 +1660,9 @@ class GenericModeDecomposedWaveformBase(
                 dt=dt,
                 T=T,
                 include_minus_m=include_minus_m,
-                separate_modes=separate_modes
+                separate_modes=separate_modes,
+                t_window=t_window,
+                inds_left_right=inds_left_right,
             )
 
             # if batching, need to add the waveform
@@ -1723,17 +1729,26 @@ class Pn5TrajPn5AdiabaticWaveform(Pn5AdiabaticAmp, GenericModeDecomposedWaveform
         amplitude_kwargs={},
         sum_kwargs={},
         use_gpu=False,
+        output_type="td",
         *args,
         **kwargs,
     ):
 
+        sum_kwargs['output_type'] = output_type
         inspiral_kwargs["func"] = "pn5"
+
+        if output_type == "td":
+            sum_module = InterpolatedModeSumGeneric
+        elif output_type == "tf":
+            sum_module = InterpolatedModeSumGenericTF
+        else:
+            raise ValueError("output_type must be td or tf.")
         
         GenericModeDecomposedWaveformBase.__init__(
             self,
             EMRIInspiral,
             Pn5Amplitude,
-            InterpolatedModeSumGeneric,
+            sum_module,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,

@@ -1,7 +1,7 @@
 #include "stdio.h"
 #include "AmpInterp2D.hh"
 
-#define NUM_THREADS 32
+#define NUM_THREADS 256
 __inline__ __device__
 void fpbspl(const double* t, int k, double x, int l, double* h)
 {

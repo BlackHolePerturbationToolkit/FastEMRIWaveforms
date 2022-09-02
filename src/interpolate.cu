@@ -962,3 +962,392 @@ void get_waveform_generic(cmplx *waveform,
         #endif
 
 }
+
+
+
+// build mode value with specific phase and amplitude values; mode indexes; and spherical harmonics
+CUDA_CALLABLE_MEMBER
+cmplx get_mode_value_generic_tf(cmplx teuk_mode, fod Phi_phi, fod Phi_theta, fod Phi_r, int m, int k, int n){
+    cmplx minus_I(0.0, -1.0);
+    fod phase = m * Phi_phi + k * Phi_theta + n * Phi_r;
+    cmplx out = teuk_mode * gcmplx::exp(minus_I*phase);
+    return out;
+}
+
+CUDA_CALLABLE_MEMBER
+cmplx DirichletKernel(double f, double T, double dt)
+{
+    cmplx I(0.0, 1.0);
+    double num = sin(M_PI * f * T);
+    double denom = sin(M_PI * f * dt);
+    double out;
+    if (denom == 0.0)
+    {
+      out = 1.0;
+    }
+    else
+    {
+      out = num / denom;
+    }
+    return gcmplx::exp(-I * M_PI * f * (T - dt)) * out;
+}
+    
+CUDA_CALLABLE_MEMBER
+cmplx get_DFT(double A, int n, double dt, double f, double f0, double phi0)
+{
+  cmplx I(0.0, 1.0);
+  double T = n * dt;
+  return (
+        A
+        * (
+            DirichletKernel(f - f0, T, dt) * gcmplx::exp(-I * phi0)
+            + DirichletKernel(f + f0, T, dt) * gcmplx::exp(+I * phi0)
+        )
+        / 2.
+    );
+}
+    
+
+// make a waveform in parallel
+// this uses an efficient summation by loading mode information into shared memory
+// shared memory is leveraged heavily
+#define MAX_SPLINE_POINTS 210
+CUDA_KERNEL
+void make_generic_kerr_waveform_tf(cmplx *waveform,
+             double *interp_array,
+              int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
+              double delta_t, double start_t, double *old_time_arr, int init_length, int data_length, int *interval_inds, bool separate_modes, int num_windows, int num_per_window, int inds_left_right, int freq_length, bool include_L){
+
+    int num_pars = 6;
+
+    #ifdef __CUDACC__
+    extern __shared__  unsigned char shared_mem[];
+    cmplx* window_output = (cmplx *) shared_mem;
+    #else
+    cmplx window_output_temp[freq_length];
+    cmplx* window_output = &window_output_temp[0];
+    #endif
+  
+
+    cmplx complexI(0.0, 1.0);
+    double re_y, re_c1, re_c2, re_c3, im_y, im_c1, im_c2, im_c3;
+     CUDA_SHARED double pp_y, pp_c1, pp_c2, pp_c3, pr_y, pr_c1, pr_c2, pr_c3;
+
+     // declare all the shared memory
+     // MAX_MODES_BLOCK is fixed based on shared memory
+     double old_time;
+
+     double R_mode_re_y;
+     double R_mode_re_c1;
+     double R_mode_re_c2;
+     double R_mode_re_c3;
+
+     double R_mode_im_y;
+     double R_mode_im_c1;
+     double R_mode_im_c2;
+     double R_mode_im_c3;
+
+     double L_mode_re_y;
+     double L_mode_re_c1;
+     double L_mode_re_c2;
+     double L_mode_re_c3;
+
+     double L_mode_im_y;
+     double L_mode_im_c1;
+     double L_mode_im_c2;
+     double L_mode_im_c3;
+
+     double Phi_phi_y;
+     double Phi_phi_c1;
+     double Phi_phi_c2;
+     double Phi_phi_c3;
+
+     double Phi_theta_y;
+     double Phi_theta_c1;
+     double Phi_theta_c2;
+     double Phi_theta_c3;
+
+     double Phi_r_y;
+     double Phi_r_c1;
+     double Phi_r_c2;
+     double Phi_r_c3;
+       
+     // number of splines
+     int num_base = (4 * num_teuk_modes + num_pars) * init_length;
+     int total_middle = (4 * num_teuk_modes + num_pars);
+
+    double T_window = num_per_window * delta_t;
+    double df_window = 1. / T_window;
+    double Phi_phi, Phi_theta, Phi_r, f_phi_y, f_phi_c1, f_phi_c2, f_phi_c3, f_theta_y, f_theta_c1, f_theta_c2, f_theta_c3, f_r_y, f_r_c1, f_r_c2, f_r_c3, R_mode_re, R_mode_im, L_mode_re, L_mode_im, f_phi, f_theta, f_r;
+
+    int start_ind;
+
+    #ifdef __CUDACC__
+
+    int start = blockIdx.x;
+    int diff = gridDim.x;
+
+    #else
+
+    int start = 0;
+    int diff = 1;
+    #ifdef __USE_OMP__
+    #pragma omp parallel for
+    #endif // __USE_OMP__
+    #endif
+    for (int t_i = start; t_i < init_length; t_i += diff) 
+    {
+      
+      double t_new = start_t + t_i * delta_t;
+      int ind_here = interval_inds[t_i];
+      double t_old = old_time_arr[ind_here];
+      double x = t_new - t_old;
+      double x2 = x * x;
+      double x3 = x2 * x;
+
+      int y_ind = 0 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 0);
+      int c1_ind = 1 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 0);
+      int c2_ind = 2 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 0);
+      int c3_ind = 3 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 0);
+
+      Phi_phi_y = interp_array[y_ind];
+      Phi_phi_c1 = interp_array[c1_ind];
+      Phi_phi_c2 = interp_array[c2_ind];
+      Phi_phi_c3 = interp_array[c3_ind];
+
+      Phi_phi = Phi_phi_y + Phi_phi_c1 * x + Phi_phi_c2 * x2 + Phi_phi_c3 * x3;
+
+      y_ind = 0 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 1);
+      c1_ind = 1 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 1);
+      c2_ind = 2 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 1);
+      c3_ind = 3 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 1);
+
+      Phi_theta_y = interp_array[y_ind];
+      Phi_theta_c1 = interp_array[c1_ind];
+      Phi_theta_c2 = interp_array[c2_ind];
+      Phi_theta_c3 = interp_array[c3_ind];
+
+      Phi_theta = Phi_theta_y + Phi_theta_c1 * x + Phi_theta_c2 * x2 + Phi_theta_c3 * x3;
+
+      y_ind = 0 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 2);
+      c1_ind = 1 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 2);
+      c2_ind = 2 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 2);
+      c3_ind = 3 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 2);
+
+      Phi_r_y = interp_array[y_ind];
+      Phi_r_c1 = interp_array[c1_ind];
+      Phi_r_c2 = interp_array[c2_ind];
+      Phi_r_c3 = interp_array[c3_ind];
+
+      Phi_r = Phi_r_y + Phi_r_c1 * x + Phi_r_c2 * x2 + Phi_r_c3 * x3;
+
+      y_ind = 0 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 3);
+      c1_ind = 1 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 3);
+      c2_ind = 2 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 3);
+      c3_ind = 3 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 3);
+
+      f_phi_y = interp_array[y_ind];
+      f_phi_c1 = interp_array[c1_ind];
+      f_phi_c2 = interp_array[c2_ind];
+      f_phi_c3 = interp_array[c3_ind];
+
+      f_phi = f_phi_y + f_phi_c1 * x + f_phi_c2 * x2 + f_phi_c3 * x3;
+
+      y_ind = 0 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 4);
+      c1_ind = 1 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 4);
+      c2_ind = 2 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 4);
+      c3_ind = 3 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 4);
+
+      f_theta_y = interp_array[y_ind];
+      f_theta_c1 = interp_array[c1_ind];
+      f_theta_c2 = interp_array[c2_ind];
+      f_theta_c3 = interp_array[c3_ind];
+
+      f_theta = f_theta_y + f_theta_c1 * x + f_theta_c2 * x2 + f_theta_c3 * x3;
+
+      y_ind = 0 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 5);
+      c1_ind = 1 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 5);
+      c2_ind = 2 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 5);
+      c3_ind = 3 * num_base + (ind_here * total_middle) + (4 * num_teuk_modes + 5);
+
+      f_r_y = interp_array[y_ind];
+      f_r_c1 = interp_array[c1_ind];
+      f_r_c2 = interp_array[c2_ind];
+      f_r_c3 = interp_array[c3_ind];
+
+      f_r = f_r_y + f_r_c1 * x + f_r_c2 * x2 + f_r_c3 * x3;
+
+      #ifdef __CUDACC__
+
+      int start2 = threadIdx.x;
+      int diff2 = blockDim.x;
+
+      #else
+
+      int start2 = 0;
+      int diff2 = 1;
+      #ifdef __USE_OMP__
+      #pragma omp parallel for
+      #endif // __USE_OMP__
+      #endif
+      for (int mode_i = start2; mode_i < num_teuk_modes; mode_i += diff2)
+      {
+          
+          int m = m_arr_in[mode_i];
+          int k = k_arr_in[mode_i];
+          int n = n_arr_in[mode_i];
+
+          y_ind = 0 * num_base + (ind_here * total_middle) + mode_i;
+          c1_ind = 1 * num_base + (ind_here * total_middle) + mode_i;
+          c2_ind = 2 * num_base + (ind_here * total_middle) + mode_i;
+          c3_ind = 3 * num_base + (ind_here * total_middle) + mode_i;
+
+          R_mode_re_y = interp_array[y_ind];
+          R_mode_re_c1 = interp_array[c1_ind];
+          R_mode_re_c2 = interp_array[c2_ind];
+          R_mode_re_c3 = interp_array[c3_ind];
+
+          R_mode_re = R_mode_re_y + R_mode_re_c1 * x + R_mode_re_c2 * x2 + R_mode_re_c3 * x3;
+
+          y_ind = 0 * num_base + (ind_here * total_middle) + num_teuk_modes + mode_i;
+          c1_ind = 1 * num_base + (ind_here * total_middle) + num_teuk_modes+ mode_i;
+          c2_ind = 2 * num_base + (ind_here * total_middle) + num_teuk_modes+ mode_i;
+          c3_ind = 3 * num_base + (ind_here * total_middle) + num_teuk_modes+ mode_i;
+
+          R_mode_im_y = interp_array[y_ind];
+          R_mode_im_c1 = interp_array[c1_ind];
+          R_mode_im_c2 = interp_array[c2_ind];
+          R_mode_im_c3 = interp_array[c3_ind];
+
+          R_mode_im = R_mode_im_y + R_mode_im_c1 * x + R_mode_im_c2 * x2 + R_mode_im_c3 * x3;
+
+          y_ind = 0 * num_base + (ind_here * total_middle) + 2 * num_teuk_modes + mode_i;
+          c1_ind = 1 * num_base + (ind_here * total_middle) + 2 * num_teuk_modes + mode_i;
+          c2_ind = 2 * num_base + (ind_here * total_middle) + 2 * num_teuk_modes + mode_i;
+          c3_ind = 3 * num_base + (ind_here * total_middle) + 2 * num_teuk_modes + mode_i;
+
+          L_mode_re_y = interp_array[y_ind];
+          L_mode_re_c1 = interp_array[c1_ind];
+          L_mode_re_c2 = interp_array[c2_ind];
+          L_mode_re_c3 = interp_array[c3_ind];
+
+          L_mode_re = L_mode_re_y + L_mode_re_c1 * x + L_mode_re_c2 * x2 + L_mode_re_c3 * x3;
+
+          y_ind = 0 * num_base + (ind_here * total_middle) + 3 * num_teuk_modes + mode_i;
+          c1_ind = 1 * num_base + (ind_here * total_middle) + 3 * num_teuk_modes + mode_i;
+          c2_ind = 2 * num_base + (ind_here * total_middle) + 3 * num_teuk_modes + mode_i;
+          c3_ind = 3 * num_base + (ind_here * total_middle) + 3 * num_teuk_modes + mode_i;
+
+          L_mode_im_y = interp_array[y_ind];
+          L_mode_im_c1 = interp_array[c1_ind];
+          L_mode_im_c2 = interp_array[c2_ind];
+          L_mode_im_c3 = interp_array[c3_ind];
+
+          L_mode_im = L_mode_im_y + L_mode_im_c1 * x + L_mode_im_c2 * x2 + L_mode_im_c3 * x3;
+
+          cmplx R_amp(R_mode_re, R_mode_im);
+          cmplx L_amp(L_mode_re, L_mode_im);
+
+          double f_mode = m * f_phi + k * f_theta + n * f_r;
+          double phase_mode = m * Phi_phi + k * Phi_theta + n * Phi_r;
+          
+          int closest_f_ind = (int)rint(f_mode / df_window);
+
+          int start_f_ind = closest_f_ind - inds_left_right;
+          int end_f_ind = closest_f_ind + inds_left_right;
+
+          if (start_f_ind < 0) start_f_ind = 0;
+          if (end_f_ind >= freq_length) end_f_ind = freq_length - 1;
+
+          double f_tmp;
+          // must be <=
+          for (int j = start_ind; j <= end_f_ind; j += 1)
+          {
+              f_tmp = j * df_window;
+              cmplx sin_term_R = get_DFT(
+                    1.0, num_per_window, delta_t, f_tmp, f_mode, phase_mode
+              );
+
+              cmplx cos_term_R = get_DFT(
+                    1.0, num_per_window, delta_t, f_tmp, f_mode, phase_mode - M_PI / 4.
+              );
+
+              cmplx R_tmp_plus = (R_amp.real() * cos_term_R + R_amp.imag() * sin_term_R);
+              cmplx R_tmp_cross = (R_amp.real() * sin_term_R - R_amp.imag() * cos_term_R);
+
+              cmplx L_tmp_plus, L_tmp_cross, sin_term_L, cos_term_L;
+              if (include_L)
+              {
+                  sin_term_L = get_DFT(
+                    1.0, num_per_window, delta_t, f_tmp, -f_mode, -phase_mode
+                );
+                  cos_term_L = get_DFT(
+                    1.0, num_per_window, delta_t, f_tmp, -f_mode, -phase_mode - M_PI / 4.
+                );
+                L_tmp_plus = (L_amp.real() * cos_term_L + L_amp.imag() * sin_term_L);
+                L_tmp_cross = (L_amp.real() * sin_term_L - L_amp.imag() * cos_term_L);
+              }
+                
+              else
+              {
+                L_tmp_plus = cmplx(0.0, 0.0);
+                L_tmp_cross = cmplx(0.0, 0.0);
+              }
+              window_output[j] = R_amp_plus + L_amp_plus;
+              window_output[f_length + j] = R_amp_cross + L_amp_cross;
+
+          }
+          
+      }
+      CUDA_SYNC_THREADS;
+      for (int j = start2; j < 2 * freq_length; j += diff2)
+      {
+          // does both plus and cross
+          waveform[t_i * (2 * freq_length) + j] = window_output[j];
+      }
+    }
+}
+
+
+#include "Utility.hh"
+
+// function for building interpolated EMRI waveform from python
+void get_waveform_tf_generic(cmplx *waveform,
+             double *interp_array,
+              int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
+              double delta_t, double start_t, double *old_time_arr, int init_length, int data_length, int *interval_inds, bool separate_modes, int num_windows, int num_per_window, int inds_left_right, int freq_length, bool include_L)
+{
+
+     int NUM_THREADS = 256;
+
+     #ifdef __CUDACC__
+
+     auto shared_memory_size = freq_length * sizeof(cmplx);
+
+    // Increase max shared memory if needed
+    gpuErrchk(cudaFuncSetAttribute(
+        make_generic_kerr_waveform_tf,
+        cudaFuncAttributeMaxDynamicSharedMemorySize,
+        shared_memory_size));
+
+      dim3 gridDim(num_windows);
+      // launch one worker kernel per stream
+      make_generic_kerr_waveform_tf<<<gridDim, NUM_THREADS, shared_memory_size>>>(waveform,
+             interp_array,
+              m_arr_in, k_arr_in, n_arr_in, num_teuk_modes,
+              delta_t, start_t, old_time_arr, init_length, data_length, interval_inds, separate_modes, num_windows, num_per_window, inds_left_right, freq_length, include_L);
+      cudaDeviceSynchronize();
+      gpuErrchk(cudaGetLastError());
+      
+      #else
+
+         // CPU waveform generation
+         make_generic_kerr_waveform_tf(waveform,
+             interp_array,
+              m_arr_in, k_arr_in, n_arr_in, num_teuk_modes,
+              delta_t, start_t, old_time_arr, init_length, data_length, interval_inds, separate_modes, num_windows, num_per_window, inds_left_right, freq_length, include_L);
+         
+        #endif
+
+}
+
