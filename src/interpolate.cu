@@ -1248,6 +1248,11 @@ void make_generic_kerr_waveform_tf(cmplx *waveform,
           cmplx R_amp(R_mode_re, R_mode_im);
           cmplx L_amp(L_mode_re, L_mode_im);
 
+          cmplx R_amp_plus(0.0, 0.0);
+          cmplx L_amp_plus(0.0, 0.0);
+          cmplx R_amp_cross(0.0, 0.0);
+          cmplx L_amp_cross(0.0, 0.0);
+
           double f_mode = m * f_phi + k * f_theta + n * f_r;
           double phase_mode = m * Phi_phi + k * Phi_theta + n * Phi_r;
           
@@ -1294,7 +1299,7 @@ void make_generic_kerr_waveform_tf(cmplx *waveform,
                 L_tmp_cross = cmplx(0.0, 0.0);
               }
               window_output[j] = R_amp_plus + L_amp_plus;
-              window_output[f_length + j] = R_amp_cross + L_amp_cross;
+              window_output[freq_length + j] = R_amp_cross + L_amp_cross;
 
           }
           
