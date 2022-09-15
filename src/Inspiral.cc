@@ -182,7 +182,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
     else T = gsl_odeiv2_step_rk8pd;
 
     gsl_odeiv2_step *step 			= gsl_odeiv2_step_alloc (T, 6);
-    gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (1e-10, 0);
+    gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (err, 0);
     gsl_odeiv2_evolve *evolve 		= gsl_odeiv2_evolve_alloc (6);
 
     // Compute the inspiral
@@ -415,7 +415,8 @@ void InspiralCarrier::InspiralWrapper(double *t, double *p, double *e, double *x
 
         // make sure we have allocated enough memory through cython
         if (Inspiral_vals.length > init_len){
-            throw std::runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
+            throw_python_error("Error: Inspiral requires more points or less precision. Need to raise max_init_len parameter for inspiral or reduce err.\n",0);
+            // throw std::runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
         }
 
         // copy data
