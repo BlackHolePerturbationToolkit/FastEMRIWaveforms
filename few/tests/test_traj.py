@@ -52,7 +52,7 @@ e0 = 0.4
 a=0.7
 
 # run trajectory
-err_vec = 10**np.linspace(-5.0, -15.0, num=3)
+err_vec = 10**np.linspace(-5.0, -10.0, num=3)
 p_vec = []
 for err in err_vec:
     insp_kw = {
@@ -60,7 +60,7 @@ for err in err_vec:
             "dt": 10.0,
             "err": err,
             "DENSE_STEPPING": 0,
-            "max_init_len": int(1e9),
+            "max_init_len": int(1e4),
             "use_rk4": False,
             "upsample": True,
             "fix_T": True
@@ -68,7 +68,7 @@ for err in err_vec:
             }
 
     t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, **insp_kw)
-    print(p[-1])
+    print('err',err)
     p_vec.append(p)
 
 diff = p_vec - p_vec[-1]

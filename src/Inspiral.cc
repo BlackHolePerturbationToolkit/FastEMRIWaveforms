@@ -182,7 +182,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
     else T = gsl_odeiv2_step_rk8pd;
 
     gsl_odeiv2_step *step 			= gsl_odeiv2_step_alloc (T, 6);
-    gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (pow(10.0,err), 0);
+    gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (err, 0);
     gsl_odeiv2_evolve *evolve 		= gsl_odeiv2_evolve_alloc (6);
 
     // Compute the inspiral
