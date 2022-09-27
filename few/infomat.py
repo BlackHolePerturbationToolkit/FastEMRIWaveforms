@@ -205,7 +205,7 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
         batch_size=-1,
         mode_selection=None,
         include_minus_m=True,
-        index=0,
+        deriv_inds=[0, 1, 3, 4],
     ):
         """Call function for SchwarzschildEccentric models.
 
@@ -327,156 +327,163 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
 
         if show_progress:
             print("total:", len(inds_split_all))
+        
+        wave = []
+        for index in deriv_inds:
+            for i, inds_in in iterator:
 
-        for i, inds_in in iterator:
+                # get subsections of the arrays for each batch
+                t_temp = t[inds_in]
+                p_temp = p[inds_in]
+                e_temp = e[inds_in]
+                Phi_phi_temp = Phi_phi[inds_in]
+                Phi_r_temp = Phi_r[inds_in]
+                amp_norm_temp = amp_norm[inds_in]
 
-            # get subsections of the arrays for each batch
-            t_temp = t[inds_in]
-            p_temp = p[inds_in]
-            e_temp = e[inds_in]
-            Phi_phi_temp = Phi_phi[inds_in]
-            Phi_r_temp = Phi_r[inds_in]
-            amp_norm_temp = amp_norm[inds_in]
+                # amplitudes
+                teuk_modes_amp = self.amplitude_generator(p_temp, e_temp)
 
-            # amplitudes
-            teuk_modes = self.amplitude_generator(p_temp, e_temp)
+                # derivatives
+                dd = 1e-2
+                params = np.array([M, mu, 0.0, p0, e0, 1.0])
+                kw = {"T": T, "dt": dt, "new_t": t_temp}
 
-            # derivatives
-            dd = 1e-2
-            params = np.array([M, mu, 0.0, p0, e0, 1.0])
-            kw = {"T": T, "dt": dt, "new_t": t_temp, "upsample":True}
+                # derivatived of phases
+                dw = self.dh_dlambda(self.phase_of_traj, params, dd, index, waveform_kwargs=kw)
+                dA = self.dh_dlambda(self.amp_mode, params, dd, index, waveform_kwargs=kw)
+                dphi = np.array([el[1] * dw[0] + el[2] * dw[2] for el in self.amplitude_generator.lmn_indices]).T
+                teuk_modes = teuk_modes_amp * -1j * dphi + dA
 
-            # derivatived of phases
-            dw = self.dh_dlambda(self.phase_of_traj, params, dd, index, waveform_kwargs=kw)
-            dphi = np.array([el[1] * dw[0] + el[2] * dw[2] for el in self.amplitude_generator.lmn_indices]).T
-            teuk_modes = teuk_modes * -1j * dphi
-
-            # normalize by flux produced in trajectory
-            if self.normalize_amps:
-                amp_for_norm = self.xp.sum(
-                    self.xp.abs(
-                        self.xp.concatenate(
-                            [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
-                            axis=1,
+                # normalize by flux produced in trajectory
+                # check the normalization
+                if self.normalize_amps:
+                    amp_for_norm = self.xp.sum(
+                        self.xp.abs(
+                            self.xp.concatenate(
+                                [teuk_modes_amp, self.xp.conj(teuk_modes_amp[:, self.m0mask])],
+                                axis=1,
+                            )
                         )
-                    )
-                    ** 2,
-                    axis=1,
-                ) ** (1 / 2)
+                        ** 2,
+                        axis=1,
+                    ) ** (1 / 2)
 
-                # normalize
-                factor = amp_norm_temp / amp_for_norm
-                teuk_modes = teuk_modes * factor[:, np.newaxis]
+                    # normalize
+                    factor = amp_norm_temp / amp_for_norm
+                    teuk_modes = teuk_modes * factor[:, np.newaxis]
 
-            # different types of mode selection
-            # sets up ylm and teuk_modes properly for summation
-            if isinstance(mode_selection, str):
+                # different types of mode selection
+                # sets up ylm and teuk_modes properly for summation
+                if isinstance(mode_selection, str):
 
-                # use all modes
-                if mode_selection == "all":
-                    self.ls = self.l_arr[: teuk_modes.shape[1]]
-                    self.ms = self.m_arr[: teuk_modes.shape[1]]
-                    self.ns = self.n_arr[: teuk_modes.shape[1]]
+                    # use all modes
+                    if mode_selection == "all":
+                        self.ls = self.l_arr[: teuk_modes.shape[1]]
+                        self.ms = self.m_arr[: teuk_modes.shape[1]]
+                        self.ns = self.n_arr[: teuk_modes.shape[1]]
 
-                    keep_modes = self.xp.arange(teuk_modes.shape[1])
+                        keep_modes = self.xp.arange(teuk_modes.shape[1])
+                        temp2 = keep_modes * (keep_modes < self.num_m0) + (
+                            keep_modes + self.num_m_1_up
+                        ) * (keep_modes >= self.num_m0)
+
+                        ylmkeep = self.xp.concatenate([keep_modes, temp2])
+                        ylms_in = ylms[ylmkeep]
+                        teuk_modes_in = teuk_modes
+
+                    else:
+                        raise ValueError("If mode selection is a string, must be `all`.")
+
+                # get a specific subset of modes
+                elif isinstance(mode_selection, list):
+                    if mode_selection == []:
+                        raise ValueError("If mode selection is a list, cannot be empty.")
+
+                    keep_modes = self.xp.zeros(len(mode_selection), dtype=self.xp.int32)
+
+                    # for removing opposite m modes
+                    fix_include_ms = self.xp.full(2 * len(mode_selection), False)
+                    for jj, lmn in enumerate(mode_selection):
+                        l, m, n = tuple(lmn)
+
+                        # keep modes only works with m>=0
+                        lmn_in = (l, abs(m), n)
+                        keep_modes[jj] = self.xp.int32(self.lmn_indices[lmn_in])
+
+                        if not include_minus_m:
+                            if m > 0:
+                                # minus m modes blocked
+                                fix_include_ms[len(mode_selection) + jj] = True
+                            elif m < 0:
+                                # positive m modes blocked
+                                fix_include_ms[jj] = True
+
+                    self.ls = self.l_arr[keep_modes]
+                    self.ms = self.m_arr[keep_modes]
+                    self.ns = self.n_arr[keep_modes]
+
                     temp2 = keep_modes * (keep_modes < self.num_m0) + (
                         keep_modes + self.num_m_1_up
                     ) * (keep_modes >= self.num_m0)
 
                     ylmkeep = self.xp.concatenate([keep_modes, temp2])
                     ylms_in = ylms[ylmkeep]
-                    teuk_modes_in = teuk_modes
 
+                    # remove modes if include_minus_m is False
+                    ylms_in[fix_include_ms] = 0.0 + 1j * 0.0
+
+                    teuk_modes_in = teuk_modes[:, keep_modes]
+
+                # mode selection based on input module
                 else:
-                    raise ValueError("If mode selection is a string, must be `all`.")
+                    fund_freq_args = (
+                        M,
+                        0.0,
+                        p_temp,
+                        e_temp,
+                        self.xp.zeros_like(e_temp),
+                    )
+                    modeinds = [self.l_arr, self.m_arr, self.n_arr]
+                    (
+                        teuk_modes_in,
+                        ylms_in,
+                        self.ls,
+                        self.ms,
+                        self.ns,
+                    ) = self.mode_selector(
+                        teuk_modes, ylms, modeinds, fund_freq_args=fund_freq_args, eps=eps,
+                    )
 
-            # get a specific subset of modes
-            elif isinstance(mode_selection, list):
-                if mode_selection == []:
-                    raise ValueError("If mode selection is a list, cannot be empty.")
+                # store number of modes for external information
+                self.num_modes_kept = teuk_modes_in.shape[1]
 
-                keep_modes = self.xp.zeros(len(mode_selection), dtype=self.xp.int32)
-
-                # for removing opposite m modes
-                fix_include_ms = self.xp.full(2 * len(mode_selection), False)
-                for jj, lmn in enumerate(mode_selection):
-                    l, m, n = tuple(lmn)
-
-                    # keep modes only works with m>=0
-                    lmn_in = (l, abs(m), n)
-                    keep_modes[jj] = self.xp.int32(self.lmn_indices[lmn_in])
-
-                    if not include_minus_m:
-                        if m > 0:
-                            # minus m modes blocked
-                            fix_include_ms[len(mode_selection) + jj] = True
-                        elif m < 0:
-                            # positive m modes blocked
-                            fix_include_ms[jj] = True
-
-                self.ls = self.l_arr[keep_modes]
-                self.ms = self.m_arr[keep_modes]
-                self.ns = self.n_arr[keep_modes]
-
-                temp2 = keep_modes * (keep_modes < self.num_m0) + (
-                    keep_modes + self.num_m_1_up
-                ) * (keep_modes >= self.num_m0)
-
-                ylmkeep = self.xp.concatenate([keep_modes, temp2])
-                ylms_in = ylms[ylmkeep]
-
-                # remove modes if include_minus_m is False
-                ylms_in[fix_include_ms] = 0.0 + 1j * 0.0
-
-                teuk_modes_in = teuk_modes[:, keep_modes]
-
-            # mode selection based on input module
-            else:
-                fund_freq_args = (
-                    M,
-                    0.0,
-                    p_temp,
-                    e_temp,
-                    self.xp.zeros_like(e_temp),
-                )
-                modeinds = [self.l_arr, self.m_arr, self.n_arr]
-                (
+                # create waveform
+                waveform_temp = self.create_waveform(
+                    t_temp,
                     teuk_modes_in,
                     ylms_in,
-                    self.ls,
+                    Phi_phi_temp,
+                    Phi_r_temp,
                     self.ms,
                     self.ns,
-                ) = self.mode_selector(
-                    teuk_modes, ylms, modeinds, fund_freq_args=fund_freq_args, eps=eps,
+                    M,
+                    p,
+                    e,
+                    dt=dt,
+                    T=T,
+                    include_minus_m=include_minus_m,
                 )
 
-            # store number of modes for external information
-            self.num_modes_kept = teuk_modes_in.shape[1]
+                # if batching, need to add the waveform
+                if i > 0:
+                    waveform = self.xp.concatenate([waveform, waveform_temp])
 
-            # create waveform
-            waveform_temp = self.create_waveform(
-                t_temp,
-                teuk_modes_in,
-                ylms_in,
-                Phi_phi_temp,
-                Phi_r_temp,
-                self.ms,
-                self.ns,
-                M,
-                p,
-                e,
-                dt=dt,
-                T=T,
-                include_minus_m=include_minus_m,
-            )
+                # return entire waveform
+                else:
+                    waveform = waveform_temp
+            wave.append(waveform)
 
-            # if batching, need to add the waveform
-            if i > 0:
-                waveform = self.xp.concatenate([waveform, waveform_temp])
-
-            # return entire waveform
-            else:
-                waveform = waveform_temp
+        wave = np.array(wave)
 
         if dist is not None:
             dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
@@ -484,7 +491,7 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
         else:
             dist_dimensionless = 1.0
 
-        return waveform / dist_dimensionless
+        return wave / dist_dimensionless
 
     
     def h_var_p_eps(self,
@@ -511,7 +518,14 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
         # spl = CubicSpline(t, Phi_phi)
         return spl(kwargs["new_t"])
 
-
+    def amp_mode(self, *args, **kwargs):
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(*args, **kwargs)
+        spl = CubicSplineInterpolant(t, [p,e])
+        p, e = spl(kwargs["new_t"])
+        res = self.amplitude_generator(p, e, self.amplitude_generator.l_arr, self.amplitude_generator.m_arr, self.amplitude_generator.n_arr)
+        if np.sum(np.isnan(res))>0.0:
+            breakpoint()
+        return res
 
     def dh_dlambda(self,
         waveform_model,

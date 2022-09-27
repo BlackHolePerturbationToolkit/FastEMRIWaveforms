@@ -58,6 +58,7 @@ class WaveformTest(unittest.TestCase):
             Ylm_kwargs=Ylm_kwargs,
             sum_kwargs=sum_kwargs,
             use_gpu=gpu_available,
+            # normalize_amps=False
         )
 
         # setup slow
@@ -81,7 +82,7 @@ class WaveformTest(unittest.TestCase):
         mode_selector_kwargs = {}
 
         # parameters
-        T = 0.001  # years
+        T = 0.01  # years
         dt = 15.0  # seconds
         M = 1e6
         mu = 1e1
@@ -92,4 +93,6 @@ class WaveformTest(unittest.TestCase):
         dist = 1.0  # distance
         batch_size = int(1e4)
 
-        fast_wave = fast(M, mu, p0, e0, theta, phi, dist, T=T, dt=dt)
+        fast_wave = fast(M, mu, p0, e0, theta, phi, dist, T=T, dt=dt,eps=1e-2)
+        import matplotlib.pyplot as plt
+        plt.plot(fast_wave[0]); plt.show()
