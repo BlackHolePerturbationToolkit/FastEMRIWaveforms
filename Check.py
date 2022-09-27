@@ -75,29 +75,36 @@ fast = InfoMatrixFastSchwarzschildEccentricFlux(
     Ylm_kwargs=Ylm_kwargs,
     sum_kwargs=sum_kwargs,
     use_gpu=gpu_available,
-    # normalize_amps=False
+    normalize_amps=False
 )
 
 # parameters
 T = 0.5  # years
 dt = 15.0  # seconds
 M = 1e6
-mu = 1e1
-p0 = 8.0
-e0 = 0.2
+mu = 5e1
+p0 = 10.0
+e0 = 0.65
 theta = np.pi / 3  # polar viewing angle
 phi = np.pi / 4  # azimuthal viewing angle
 dist = 1.0  # distance
 batch_size = int(1e4)
 
-wv_kw = dict(T=T, dt=dt, eps=1e-2)
-fast_wave = fast(M, mu, p0, e0, theta, phi, dist, delta_deriv=[1e-7], deriv_inds=[3], **wv_kw)
+wv_kw = dict(T=T, dt=dt, mode_selection=[(2,2,0)])
+fast_wave = fast(M, mu, p0, e0, theta, phi, delta_deriv=[1e-2], deriv_inds=[0], **wv_kw)
 
 from lisatools.diagnostic import *
 
 inner_product_kwargs = dict(dt=dt, PSD="cornish_lisa_psd")
 
 par = np.array([M, mu, p0, e0, theta, phi])
-fish, dh = fisher(gen_wave, par, 1e-7, deriv_inds=[2], return_derivs=True, waveform_kwargs=wv_kw, inner_product_kwargs=inner_product_kwargs)
+fish, dh = fisher(gen_wave, par, 1e-2, deriv_inds=[0], return_derivs=True, waveform_kwargs=wv_kw, inner_product_kwargs=inner_product_kwargs)
+
+
+print(inner_product(fast_wave[0], dh[0], **inner_product_kwargs, normalize=True))
+Gamma = inner_product(fast_wave[0], fast_wave[0], **inner_product_kwargs)
+print(Gamma, fish)
+fish = inner_product(dh[0], dh[0], **inner_product_kwargs)
+print(Gamma, fish)
 
 plt.plot(dh[0], '-', label='fish'); plt.plot(fast_wave[0], '--', label='app'); plt.legend(); plt.show()
