@@ -115,32 +115,32 @@ Gamma = inner_product(fast_wave[0].real, fast_wave[0].real, **inner_product_kwar
     inner_product(fast_wave[0].imag, fast_wave[0].imag, **inner_product_kwargs)
 print(Gamma, fish)
 
-plt.plot(dh[0], '-', label='fish'); plt.plot(fast_wave[0], '--', label='app'); plt.legend(); plt.show()
+# plt.plot(dh[0], '-', label='fish'); plt.plot(fast_wave[0], '--', label='app'); plt.legend(); plt.show()
 
-# numerical
-newpar = par.copy()
-newpar[0] += fish[0][0]**(-0.5)
-h_plus_dh_num = gen_wave(*newpar, **wv_kw)
-app = h + dh[0]*fish[0][0]**(-0.5)
-check2 = inner_product(app.real, h_plus_dh_num.real, **inner_product_kwargs, normalize=True)
-print("check", check2)
+# # numerical
+# newpar = par.copy()
+# newpar[0] += fish[0][0]**(-0.5)
+# h_plus_dh_num = gen_wave(*newpar, **wv_kw)
+# app = h + dh[0]*fish[0][0]**(-0.5)
+# check2 = inner_product(app.real, h_plus_dh_num.real, **inner_product_kwargs, normalize=True)
+# print("check", check2)
 
-# analytical
-newpar = par.copy()
-newpar[0] += Gamma**(-0.5)
-h_plus_dh_an = gen_wave(*newpar, **wv_kw)
-print(len(h), len(fast_wave[0]))
+# # analytical
+# newpar = par.copy()
+# newpar[0] += Gamma**(-0.5)
+# h_plus_dh_an = gen_wave(*newpar, **wv_kw)
+# print(len(h), len(fast_wave[0]))
 
-app = h + fast_wave[0] * Gamma**(-0.5)
-check2 = inner_product(app.real, h_plus_dh_an.real, **inner_product_kwargs, normalize=True)
-print("check", check2)
+# app = h + fast_wave[0] * Gamma**(-0.5)
+# check2 = inner_product(app.real, h_plus_dh_an.real, **inner_product_kwargs, normalize=True)
+# print("check", check2)
 
 
 ###################################################
 
 deriv_inds = [0, 1]
 dim = len(deriv_inds)
-fast_wave = fast(M, mu, p0, e0, theta, phi, delta_deriv=[5e-2, 1e-2], deriv_inds=deriv_inds, **wv_kw)
+fast_wave = fast(M, mu, p0, e0, theta, phi, delta_deriv=[1e-1, 1e-2], deriv_inds=deriv_inds, **wv_kw)
 
 # cross corr
 Gamma = np.array([inner_product(fast_wave[i].real, fast_wave[j].real, **inner_product_kwargs) + \
@@ -152,20 +152,52 @@ X = np.zeros((size_X,size_X))
 X[np.triu_indices(X.shape[0], k = 0)] = Gamma
 X = X + X.T - np.diag(np.diag(X))
 
-newpar = par.copy()
-newpar[0] += X[0,0]**(-0.5)
-newpar[1] += -2.0* X[0,1]/( X[0,0]**(0.5) * X[1,1])
-h_plus_dh = gen_wave(*newpar, **wv_kw)
-delta_h = h - h_plus_dh
-print(inner_product(delta_h, delta_h, **inner_product_kwargs))
+X_my = X.copy()
+
+# newpar = par.copy()
+# newpar[0] += X[0,0]**(-0.5)
+# newpar[1] += -2.0* X[0,1]/( X[0,0]**(0.5) * X[1,1])
+# h_plus_dh = gen_wave(*newpar, **wv_kw)
+# delta_h = h - h_plus_dh
+# print(inner_product(delta_h, delta_h, **inner_product_kwargs))
 
 deriv_inds = [0, 1]
 fish, dh = fisher(gen_wave, par, 1e-2, deriv_inds=deriv_inds, return_derivs=True, waveform_kwargs=wv_kw, inner_product_kwargs=inner_product_kwargs)
 
-X = fish
-newpar = par.copy()
-newpar[0] += X[0,0]**(-0.5)
-newpar[1] += -2.0* X[0,1]/( X[0,0]**(0.5) * X[1,1])
-h_plus_dh = gen_wave(*newpar, **wv_kw)
-delta_h = h - h_plus_dh
-print(inner_product(delta_h, delta_h, **inner_product_kwargs))
+X_num = fish.copy()
+
+# X = fish
+# newpar = par.copy()
+# newpar[0] += X[0,0]**(-0.5)
+# newpar[1] += -2.0* X[0,1]/( X[0,0]**(0.5) * X[1,1])
+# h_plus_dh = gen_wave(*newpar, **wv_kw)
+# delta_h = h - h_plus_dh
+# print(inner_product(delta_h, delta_h, **inner_product_kwargs))
+
+######################################################################################################
+
+def loglike(pp):
+    htmp = gen_wave(*pp, **wv_kw)
+    d_m_h = h - htmp
+    return inner_product(d_m_h, d_m_h, **inner_product_kwargs)
+
+diff_ll = []
+diff_ll_num = []
+ll_vec = []
+for i in range(100):
+    x0 = np.random.multivariate_normal(par[:2], np.linalg.inv(X_my)*1000.0)
+    newpar = par.copy()
+    newpar[:2] = x0
+    delta_par = par[:2] - x0
+    check_sigma = 1/2 * np.dot(delta_par.T, np.dot(X_my,delta_par))
+    check_sigma_num = 1/2 * np.dot(delta_par.T, np.dot(X_num,delta_par))
+
+    ll = loglike(newpar)
+    
+    print(ll , check_sigma, check_sigma_num, "\t", 1-check_sigma/ll )
+    
+    ll_vec.append(ll)
+    diff_ll.append(check_sigma - ll)
+    diff_ll_num.append(check_sigma_num - ll)
+
+plt.figure(); plt.plot(ll_vec, diff_ll, '.'); plt.plot(ll_vec, diff_ll_num, '.'); plt.show()
