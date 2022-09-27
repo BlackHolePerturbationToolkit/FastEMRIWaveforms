@@ -74,5 +74,3 @@ class WaveformTest(unittest.TestCase):
         batch_size = int(1e4)
 
         fast_wave = fast(M, mu, p0, e0, theta, phi, dist, T=T, dt=dt,eps=1e-2)
-        import matplotlib.pyplot as plt
-        plt.plot(fast_wave[0]); plt.show()
