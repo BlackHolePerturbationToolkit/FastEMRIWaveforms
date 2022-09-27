@@ -206,6 +206,7 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
         mode_selection=None,
         include_minus_m=True,
         deriv_inds=[0, 1, 3, 4],
+        delta_deriv=[1e-7, 1e-7, 1e-7, 1e-7]
     ):
         """Call function for SchwarzschildEccentric models.
 
@@ -321,15 +322,16 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
 
             inds_split_all = self.xp.split(self.xp.arange(len(t)), split_inds)
 
-        # select tqdm if user wants to see progress
-        iterator = enumerate(inds_split_all)
-        iterator = tqdm(iterator, desc="time batch") if show_progress else iterator
 
-        if show_progress:
-            print("total:", len(inds_split_all))
-        
         wave = []
-        for index in deriv_inds:
+        for index,dd in zip(deriv_inds,delta_deriv):
+            # select tqdm if user wants to see progress
+            iterator = enumerate(inds_split_all)
+            iterator = tqdm(iterator, desc="time batch") if show_progress else iterator
+
+            if show_progress:
+                print("total:", len(inds_split_all))
+
             for i, inds_in in iterator:
 
                 # get subsections of the arrays for each batch
@@ -344,7 +346,6 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
                 teuk_modes_amp = self.amplitude_generator(p_temp, e_temp)
 
                 # derivatives
-                dd = 1e-2
                 params = np.array([M, mu, 0.0, p0, e0, 1.0])
                 kw = {"T": T, "dt": dt, "new_t": t_temp}
 
@@ -353,6 +354,7 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
                 dA = self.dh_dlambda(self.amp_mode, params, dd, index, waveform_kwargs=kw)
                 dphi = np.array([el[1] * dw[0] + el[2] * dw[2] for el in self.amplitude_generator.lmn_indices]).T
                 teuk_modes = teuk_modes_amp * -1j * dphi + dA
+                # print(index, teuk_modes[10,10])
 
                 # normalize by flux produced in trajectory
                 # check the normalization

@@ -28,7 +28,7 @@ from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 from few.utils.modeselector import ModeSelector
 from few.infomat import InfoMatrixFastSchwarzschildEccentricFlux
 
-gen_wave = FastSchwarzschildEccentricFlux()#GenerateEMRIWaveform("FastSchwarzschildEccentricFlux", return_list=False)
+
 
 # Attempt Cython imports of GPU functions
 try:
@@ -67,7 +67,13 @@ Ylm_kwargs = {
 }
 
 # keyword arguments for summation generator (InterpolatedModeSum)
-sum_kwargs = {}
+sum_kwargs = {"pad_output":True}
+
+gen_wave = FastSchwarzschildEccentricFlux(inspiral_kwargs=inspiral_kwargs,
+    amplitude_kwargs=amplitude_kwargs,
+    Ylm_kwargs=Ylm_kwargs,
+    sum_kwargs=sum_kwargs,
+    use_gpu=gpu_available,)
 
 fast = InfoMatrixFastSchwarzschildEccentricFlux(
     inspiral_kwargs=inspiral_kwargs,
@@ -75,14 +81,14 @@ fast = InfoMatrixFastSchwarzschildEccentricFlux(
     Ylm_kwargs=Ylm_kwargs,
     sum_kwargs=sum_kwargs,
     use_gpu=gpu_available,
-    normalize_amps=False
+    # normalize_amps=False
 )
 
 # parameters
 T = 0.5  # years
 dt = 15.0  # seconds
 M = 1e6
-mu = 5e1
+mu = 3e1
 p0 = 10.0
 e0 = 0.65
 theta = np.pi / 3  # polar viewing angle
@@ -90,21 +96,61 @@ phi = np.pi / 4  # azimuthal viewing angle
 dist = 1.0  # distance
 batch_size = int(1e4)
 
-wv_kw = dict(T=T, dt=dt, mode_selection=[(2,2,0)])
-fast_wave = fast(M, mu, p0, e0, theta, phi, delta_deriv=[1e-2], deriv_inds=[0], **wv_kw)
+deriv_inds = [0]
+wv_kw = dict(T=T, dt=dt, mode_selection=[(2,2,0),(2,2,-1),(2,2,-2),(2,2,-4), (2,2,2),(4,2,0)], dist=0.3)
+fast_wave = fast(M, mu, p0, e0, theta, phi, delta_deriv=[5e-2], deriv_inds=deriv_inds, **wv_kw)
 
 from lisatools.diagnostic import *
 
 inner_product_kwargs = dict(dt=dt, PSD="cornish_lisa_psd")
 
 par = np.array([M, mu, p0, e0, theta, phi])
-fish, dh = fisher(gen_wave, par, 1e-2, deriv_inds=[0], return_derivs=True, waveform_kwargs=wv_kw, inner_product_kwargs=inner_product_kwargs)
+fish, dh = fisher(gen_wave, par, 1e-2, deriv_inds=deriv_inds, return_derivs=True, waveform_kwargs=wv_kw, inner_product_kwargs=inner_product_kwargs)
 
+h = gen_wave(*par, **wv_kw)
+print("snr", inner_product(h, h, **inner_product_kwargs)**(1/2))
 
-print(inner_product(fast_wave[0], dh[0], **inner_product_kwargs, normalize=True))
-Gamma = inner_product(fast_wave[0], fast_wave[0], **inner_product_kwargs)
-print(Gamma, fish)
-fish = inner_product(dh[0], dh[0], **inner_product_kwargs)
+print("overlap deriv",inner_product(fast_wave[0], dh[0], **inner_product_kwargs, normalize=True))
+Gamma = inner_product(fast_wave[0].real, fast_wave[0].real, **inner_product_kwargs) + \
+    inner_product(fast_wave[0].imag, fast_wave[0].imag, **inner_product_kwargs)
 print(Gamma, fish)
 
 plt.plot(dh[0], '-', label='fish'); plt.plot(fast_wave[0], '--', label='app'); plt.legend(); plt.show()
+
+# numerical
+newpar = par.copy()
+newpar[0] += fish[0][0]**(-0.5)
+h_plus_dh_num = gen_wave(*newpar, **wv_kw)
+app = h + dh[0]*fish[0][0]**(-0.5)
+check2 = inner_product(app.real, h_plus_dh_num.real, **inner_product_kwargs, normalize=True)
+print("check", check2)
+
+# analytical
+newpar = par.copy()
+newpar[0] += Gamma**(-0.5)
+h_plus_dh_an = gen_wave(*newpar, **wv_kw)
+print(len(h), len(fast_wave[0]))
+
+app = h + fast_wave[0] * Gamma**(-0.5)
+check2 = inner_product(app.real, h_plus_dh_an.real, **inner_product_kwargs, normalize=True)
+print("check", check2)
+
+# check derivatives
+
+###################################################
+
+deriv_inds = [0, 1]
+dim = len(deriv_inds)
+fast_wave = fast(M, mu, p0, e0, theta, phi, delta_deriv=[5e-2, 1e-2], deriv_inds=deriv_inds, **wv_kw)
+
+# cross corr
+Gamma = np.array([inner_product(fast_wave[i].real, fast_wave[j].real, **inner_product_kwargs) + \
+    inner_product(fast_wave[i].imag, fast_wave[j].imag, **inner_product_kwargs) for i in range(dim) for j in range(dim) if i>=j])
+
+size_X = dim
+X = np.zeros((size_X,size_X))
+X[np.triu_indices(X.shape[0], k = 0)] = Gamma
+X = X + X.T - np.diag(np.diag(X))
+
+deriv_inds = [0, 1]
+fish, dh = fisher(gen_wave, par, 1e-2, deriv_inds=deriv_inds, return_derivs=True, waveform_kwargs=wv_kw, inner_product_kwargs=inner_product_kwargs)

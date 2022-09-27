@@ -61,26 +61,6 @@ class WaveformTest(unittest.TestCase):
             # normalize_amps=False
         )
 
-        # setup slow
-
-        # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
-        inspiral_kwargs = {
-            "DENSE_STEPPING": 1,  # we want a sparsely sampled trajectory
-            "max_init_len": int(1e7),  # dense stepping trajectories
-        }
-
-        # keyword arguments for inspiral generator (RomanAmplitude)
-        amplitude_kwargs = {"max_init_len": int(1e4)}  # this must be >= batch_size
-
-        # keyword arguments for Ylm generator (GetYlms)
-        Ylm_kwargs = {
-            "assume_positive_m": False  # if we assume positive m, it will generate negative m for all m>0
-        }
-
-        # keyword arguments for summation generator (InterpolatedModeSum)
-        sum_kwargs = {"use_gpu": False}  # GPU is availabel for this type of summation
-        mode_selector_kwargs = {}
-
         # parameters
         T = 0.01  # years
         dt = 15.0  # seconds
