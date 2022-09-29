@@ -206,7 +206,7 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
         mode_selection=None,
         include_minus_m=True,
         deriv_inds=[0, 1, 3, 4],
-        delta_deriv=[1e-7, 1e-7, 1e-7, 1e-7]
+        delta_deriv= [10.0, 1e-2, 1e-2, 1e-2]
     ):
         """Call function for SchwarzschildEccentric models.
 
@@ -346,14 +346,24 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
                 teuk_modes_amp = self.amplitude_generator(p_temp, e_temp)
 
                 # derivatives
+                # params = np.array([np.log(M), np.log(mu), 0.0, p0, e0, 1.0])
                 params = np.array([M, mu, 0.0, p0, e0, 1.0])
                 kw = {"T": T, "dt": dt, "new_t": t_temp}
 
+                # test transform
+                trans = None#{0: np.exp, 1: np.exp}
+                # print(self.transform_base_parameters(params,trans))
+                # breakpoint()
+
                 # derivatived of phases
-                dw = self.dh_dlambda(self.phase_of_traj, params, dd, index, waveform_kwargs=kw)
-                dA = self.dh_dlambda(self.amp_mode, params, dd, index, waveform_kwargs=kw)
+                dw = self.dh_dlambda(self.phase_of_traj, params, dd, index, waveform_kwargs=kw, parameter_transforms=trans)
+                dA = self.dh_dlambda(self.amp_mode, params, dd, index, waveform_kwargs=kw, parameter_transforms=trans)
                 dphi = np.array([el[1] * dw[0] + el[2] * dw[2] for el in self.amplitude_generator.lmn_indices]).T
-                teuk_modes = teuk_modes_amp * -1j * dphi + dA
+                
+                if index==1:
+                    teuk_modes = teuk_modes_amp * -1j * dphi  + teuk_modes_amp/mu + dA
+                else:
+                    teuk_modes = teuk_modes_amp * -1j * dphi + dA
                 # print(index, teuk_modes[10,10])
 
                 # normalize by flux produced in trajectory
@@ -483,6 +493,7 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
                 # return entire waveform
                 else:
                     waveform = waveform_temp
+            
             wave.append(waveform)
 
         wave = np.array(wave)
@@ -507,7 +518,7 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
 
         if parameter_transforms:
             # transform
-            params_p_eps = parameter_transforms.transform_base_parameters(params_p_eps)
+            params_p_eps = self.transform_base_parameters(params_p_eps,parameter_transforms)
 
         dh = waveform_model(*params_p_eps, **waveform_kwargs)
 
@@ -529,6 +540,14 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
             breakpoint()
         return res
 
+    def transform_base_parameters(self, params, transform):
+        params_temp = params.copy().T
+        # regular transforms to waveform domain
+        for ind, trans_fn in transform.items():
+            params_temp[ind] = trans_fn(params_temp[ind])
+        
+        return params_temp
+
     def dh_dlambda(self,
         waveform_model,
         params,
@@ -536,7 +555,7 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
         i,
         parameter_transforms=None,
         waveform_kwargs={},
-        accuracy=True,
+        accuracy=False,
     ):
         """
         Calculate the derivative of the waveform with precision of order (step^4)
