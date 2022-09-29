@@ -90,109 +90,49 @@ dt = 10.0  # seconds
 M = 1e6
 mu = 3e1
 p0 = 11.0
-e0 = 0.657
+e0 = 0.321
 theta = np.pi / 3  # polar viewing angle
 phi = np.pi / 4  # azimuthal viewing angle
-dist = 0.1  # distance
+dist = 1.0  # distance
 batch_size = int(1e4)
 par = np.array([M, mu, p0, e0, theta, phi])
-wv_kw = dict(T=T, dt=dt, mode_selection=[(2,2,0), (2,2,1), (2,-2,0)], dist=dist)
+wv_kw = dict(T=T, dt=dt, mode_selection=[(2,2,i) for i in range(-10,11)], dist=dist)
 
 from lisatools.diagnostic import *
 
 inner_product_kwargs = dict(dt=dt, PSD="cornish_lisa_psd")
-
-# fast_wave = fast(M, mu, p0, e0, theta, phi, delta_deriv=[1e-3,1e-3,1e-3,1e-3], deriv_inds=deriv_inds, **wv_kw)
-# fish, dh = fisher(gen_wave, par, 1e-4, deriv_inds=deriv_inds, return_derivs=True, waveform_kwargs=wv_kw, inner_product_kwargs=inner_product_kwargs)
 
 h = gen_wave(*par, **wv_kw)
 window =1.0#signal.tukey(len(h),0.01)
 
 print("snr", inner_product(h*window, h*window, **inner_product_kwargs)**(1/2))
 print("h end", h[-10:])
-# print("overlap deriv",inner_product(fast_wave[0], dh[0], **inner_product_kwargs, normalize=True))
-# Gamma = inner_product(fast_wave[0].real, fast_wave[0].real, **inner_product_kwargs) + \
-#     inner_product(fast_wave[0].imag, fast_wave[0].imag, **inner_product_kwargs)
-# print(Gamma, fish)
-
-# print("zero check",[inner_product(h,fast_wave[i], **inner_product_kwargs) for i in range(4)] )
-# print("zero check",[inner_product(h,dh[i], **inner_product_kwargs) for i in range(4)] )
-# breakpoint()
-# plt.plot(dh[0], '-', label='fish'); plt.plot(fast_wave[0], '--', label='app'); plt.legend(); plt.show()
-
-# # numerical
-# newpar = par.copy()
-# newpar[0] += fish[0][0]**(-0.5)
-# h_plus_dh_num = gen_wave(*newpar, **wv_kw)
-# app = h + dh[0]*fish[0][0]**(-0.5)
-# check2 = inner_product(app.real, h_plus_dh_num.real, **inner_product_kwargs, normalize=True)
-# print("check", check2)
-
-# # analytical
-# newpar = par.copy()
-# newpar[0] += Gamma**(-0.5)
-# h_plus_dh_an = gen_wave(*newpar, **wv_kw)
-# print(len(h), len(fast_wave[0]))
-
-# app = h + fast_wave[0] * Gamma**(-0.5)
-# check2 = inner_product(app.real, h_plus_dh_an.real, **inner_product_kwargs, normalize=True)
-# print("check", check2)
-
-
 ###################################################
 
 deriv_inds = [0, 1, 3, 4]
 list_ind = [0, 1, 2, 3]
-delta_deriv = [10.0, 1e-2, 1e-2, 1e-2]
+delta_deriv = [5.0, 1e-2, 1e-2, 1e-2]
 
 dim = len(deriv_inds)
 fast_wave = fast(M, mu, p0, e0, theta, phi, delta_deriv=delta_deriv, deriv_inds=deriv_inds, **wv_kw)
-# fast_wave[0] *= M
-# fast_wave[1] *= mu
 
 # cross corr
 X = np.array([[inner_product(fast_wave[i].real*window, fast_wave[j].real*window, **inner_product_kwargs) + \
     inner_product(fast_wave[i].imag*window, fast_wave[j].imag*window, **inner_product_kwargs) for i in range(dim)] for j in range(dim)])
-# Gamma = np.array([inner_product(fast_wave[i].real, fast_wave[j].real, **inner_product_kwargs) for i in range(dim) for j in range(dim) if i>=j])
-
-# size_X = dim
-# X = np.zeros((size_X,size_X))
-# X[np.triu_indices(X.shape[0], k = 0)] = Gamma
-# X = X + X.T - np.diag(np.diag(X))
 
 X_my = X.copy()
 print(X_my)
-breakpoint()
-# newpar = par.copy()
-# newpar[0] += X[0,0]**(-0.5)
-# newpar[1] += -2.0* X[0,1]/( X[0,0]**(0.5) * X[1,1])
-# h_plus_dh = gen_wave(*newpar, **wv_kw)
-# delta_h = h - h_plus_dh
-# print(inner_product(delta_h, delta_h, **inner_product_kwargs))
 
-# breakpoint()
-# deriv_inds = [0, 1]
-fish, dh = fisher(gen_wave, par, 1e-2, deriv_inds=[0, 1, 2, 3], return_derivs=True, waveform_kwargs=wv_kw, inner_product_kwargs=inner_product_kwargs)
-
-X_num = fish.copy()
-
-# X = fish
-# newpar = par.copy()
-# newpar[0] += X[0,0]**(-0.5)
-# newpar[1] += -2.0* X[0,1]/( X[0,0]**(0.5) * X[1,1])
-# h_plus_dh = gen_wave(*newpar, **wv_kw)
-# delta_h = h - h_plus_dh
-# print(inner_product(delta_h, delta_h, **inner_product_kwargs))
-
+print("zero check",[inner_product(h,fast_wave[i], **inner_product_kwargs) for i in range(4)] )
 ######################################################################################################
 
 def loglike(pp):
     htmp = gen_wave(*pp, **wv_kw)
     d_m_h = h - htmp
-    return inner_product(d_m_h*window, d_m_h*window, **inner_product_kwargs)
+    d_m_h = [d_m_h.real, d_m_h.imag]
+    return inner_product(d_m_h, d_m_h, **inner_product_kwargs)
 
 diff_ll = []
-diff_ll_num = []
 ll_vec = []
 
 from scipy import linalg
@@ -203,33 +143,25 @@ w,v = np.linalg.eig(X_my)
 print(v,w)
 for i in range(dim):
     v_tilde = v[:,i] * w[i]**(-0.5)
-    check_sigma = 1/2 * np.dot(v_tilde.T, np.dot(X_my,v_tilde))
+    check_sigma = np.dot(v_tilde.T, np.dot(X_my,v_tilde))
     newpar = par.copy()
     newpar[list_ind] = par[list_ind] + v_tilde
-    # newpar[0] = (par[0] + par[0]*v_tilde[0] + par[0]*v_tilde[0]**2 /2 + par[0]*v_tilde[0]**3 /6)
-    # newpar[1] = (par[1] + par[1]*v_tilde[1] + par[1]*v_tilde[1]**2 /2 + par[1]*v_tilde[1]**3 /6)
     print(v_tilde)
     ll = loglike(newpar)
     print(ll , check_sigma)
-breakpoint()
 
 for i in range(100):
-    delta_par = np.random.multivariate_normal(np.zeros(dim) , inv_X*1.0)
+    delta_par = np.random.multivariate_normal(np.zeros(dim) , inv_X*100.0)
 
     newpar = par.copy()
     newpar[list_ind] = par[list_ind] + delta_par
-    # newpar[0] = (par[0] + par[0]*delta_par[0] + par[0]*delta_par[0]**2 /2 + par[0]*delta_par[0]**3 /6)
-    # newpar[1] = (par[1] + par[1]*delta_par[1] + par[1]*delta_par[1]**2 /2 + par[1]*delta_par[1]**3 /6)
-
-    check_sigma = 1/2 * np.dot(delta_par.T, np.dot(X_my,delta_par))
-    check_sigma_num = 1/2 * np.dot(delta_par.T, np.dot(X_num,delta_par))
+    check_sigma = np.dot(delta_par.T, np.dot(X_my,delta_par))
     
     ll = loglike(newpar)
     
-    print(ll , check_sigma, check_sigma_num, "\t", 1-check_sigma/ll )
+    print(ll , check_sigma, "\t", 1-check_sigma/ll )
     
     ll_vec.append(ll)
     diff_ll.append(check_sigma - ll)
-    diff_ll_num.append(check_sigma_num - ll)
 
-plt.figure(); plt.plot(ll_vec, diff_ll, '.'); plt.plot(ll_vec, diff_ll_num, '.'); plt.show()
+plt.figure(); plt.plot(ll_vec, diff_ll, '.'); plt.ylabel(r'$\Delta \ln p$'); plt.xlabel(r'$ \ln p$');  plt.show()
