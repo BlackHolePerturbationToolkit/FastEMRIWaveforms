@@ -358,7 +358,7 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
                 # derivatived of phases
                 dw = self.dh_dlambda(self.phase_of_traj, params, dd, index, waveform_kwargs=kw, parameter_transforms=trans)
                 dA = self.dh_dlambda(self.amp_mode, params, dd, index, waveform_kwargs=kw, parameter_transforms=trans)
-                dphi = np.array([el[1] * dw[0] + el[2] * dw[2] for el in self.amplitude_generator.lmn_indices]).T
+                dphi = self.xp.array([el[1] * dw[0] + el[2] * dw[2] for el in self.amplitude_generator.lmn_indices]).T
                 
                 if index==1:
                     teuk_modes = teuk_modes_amp * -1j * dphi  + teuk_modes_amp/mu + dA
@@ -496,7 +496,7 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
             
             wave.append(waveform)
 
-        wave = np.array(wave)
+        wave = self.xp.array(wave)
 
         if dist is not None:
             dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
@@ -527,13 +527,13 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
 
     def phase_of_traj(self, *args, **kwargs):
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(*args, **kwargs)
-        spl = CubicSplineInterpolant(t, [Phi_phi, Phi_theta, Phi_r])
+        spl = CubicSplineInterpolant(t, [Phi_phi, Phi_theta, Phi_r], use_gpu=self.use_gpu)
         # spl = CubicSpline(t, Phi_phi)
         return spl(kwargs["new_t"])
 
     def amp_mode(self, *args, **kwargs):
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(*args, **kwargs)
-        spl = CubicSplineInterpolant(t, [p,e])
+        spl = CubicSplineInterpolant(t, [p,e],  use_gpu=self.use_gpu)
         p, e = spl(kwargs["new_t"])
         res = self.amplitude_generator(p, e, self.amplitude_generator.l_arr, self.amplitude_generator.m_arr, self.amplitude_generator.n_arr)
         if np.sum(np.isnan(res))>0.0:
