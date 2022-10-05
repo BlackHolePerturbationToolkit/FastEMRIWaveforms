@@ -85,7 +85,7 @@ fast = InfoMatrixFastSchwarzschildEccentricFlux(
 )
 
 # parameters
-T = 0.1  # years
+T = 0.5  # years
 dt = 10.0  # seconds
 M = 1e6
 mu = 3e1
@@ -170,7 +170,7 @@ def propose_param(datastream, current_param, it=0):
     return  pp - current_param 
 
 
-for i in range(1):
+for i in range(10):
     delta_par = np.random.multivariate_normal(np.zeros(dim) , inv_X*100.0)
 
     newpar = par.copy()
@@ -190,7 +190,7 @@ for i in range(1):
     print("ll",prop_ll)
     print("---------")
 
-
+breakpoint()
 # plt.figure(); plt.plot(ll_vec, diff_ll, '.'); plt.ylabel(r'$\Delta \ln p$'); plt.xlabel(r'$ \ln p$');  plt.show()
 
 ##############################################################################################################
