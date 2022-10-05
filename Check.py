@@ -85,7 +85,7 @@ fast = InfoMatrixFastSchwarzschildEccentricFlux(
 )
 
 # parameters
-T = 0.5  # years
+T = 0.1  # years
 dt = 10.0  # seconds
 M = 1e6
 mu = 3e1
@@ -130,6 +130,9 @@ def loglike(pp):
     htmp = gen_wave(*pp, **wv_kw)
     d_m_h = h - htmp
     d_m_h = [d_m_h.real, d_m_h.imag]
+    norm_h = htmp / inner_product([htmp.real, htmp.imag], [htmp.real, htmp.imag], **inner_product_kwargs)**.5
+    mm = inner_product([h.real, h.imag], [norm_h.real, norm_h.imag], **inner_product_kwargs)
+    print("matched snr", mm)
     return inner_product(d_m_h, d_m_h, **inner_product_kwargs)
 
 diff_ll = []
@@ -150,7 +153,24 @@ for i in range(dim):
     ll = loglike(newpar)
     print(ll , check_sigma)
 
-for i in range(100):
+# test Fisher
+def propose_param(datastream, current_param, it=0):
+    htmp = gen_wave(*current_param, **wv_kw)
+    d_m_h = datastream - htmp
+    d_m_h = [d_m_h.real, d_m_h.imag]
+    fast_wave = fast(*current_param, delta_deriv=delta_deriv, deriv_inds=deriv_inds, **wv_kw)
+    X = np.array([[inner_product(fast_wave[i].real*window, fast_wave[j].real*window, **inner_product_kwargs) + inner_product(fast_wave[i].imag*window, fast_wave[j].imag*window, **inner_product_kwargs) for i in range(dim)] for j in range(dim)])
+    invGamma = np.linalg.inv(X)
+    vec = np.array([inner_product(d_m_h, [fast_wave[i].real, fast_wave[i].imag], **inner_product_kwargs) for i in range(4)])
+    proposed_step = np.dot(invGamma,vec)
+    pp = current_param.copy()
+    gamma = -0.6
+    epsilon_t = (1+it)**gamma
+    pp[list_ind] += proposed_step #+ epsilon_t*np.random.multivariate_normal(np.zeros_like(pp[list_ind]), invGamma )
+    return  pp - current_param 
+
+
+for i in range(1):
     delta_par = np.random.multivariate_normal(np.zeros(dim) , inv_X*100.0)
 
     newpar = par.copy()
@@ -164,4 +184,71 @@ for i in range(100):
     ll_vec.append(ll)
     diff_ll.append(check_sigma - ll)
 
-plt.figure(); plt.plot(ll_vec, diff_ll, '.'); plt.ylabel(r'$\Delta \ln p$'); plt.xlabel(r'$ \ln p$');  plt.show()
+    # 
+    pp = newpar + propose_param(h, newpar)
+    prop_ll = loglike(pp)
+    print("ll",prop_ll)
+    print("---------")
+
+
+# plt.figure(); plt.plot(ll_vec, diff_ll, '.'); plt.ylabel(r'$\Delta \ln p$'); plt.xlabel(r'$ \ln p$');  plt.show()
+
+##############################################################################################################
+
+ll_vec = []
+def sgd(gradient, data, start, learn_rate=1.0, batch_size=1, n_iter=50,
+    tolerance=1e-1, dtype="float64", random_state=None, decay_rate=0.0):
+
+    # Checking if the gradient is callable
+    if not callable(gradient):
+        raise TypeError("'gradient' must be callable")
+
+    # Setting up and checking the maximal number of iterations
+    n_iter = int(n_iter)
+    if n_iter <= 0:
+        raise ValueError("'n_iter' must be greater than zero")
+
+    # Setting up and checking the tolerance
+    if np.any(tolerance <= 0):
+        raise ValueError("'tolerance' must be greater than zero")
+    
+    diff = 0.0
+    n_obs = 1
+    vector = start
+
+    # Performing the gradient descent loop
+    for it in range(n_iter):
+
+        # Performing minibatch moves
+        # for start in range(0, n_obs, batch_size):
+        # print("st",start)
+        # stop = start + batch_size
+
+        # Recalculating the difference
+        grad = gradient(data, vector, it=it)
+        diff = learn_rate * grad
+        # diff = -decay_rate * diff #+ learn_rate * grad
+
+        # Updating the values of the variables
+        vector += diff
+
+        print(vector - par)
+
+        prop_ll = loglike(vector)
+        print("diff",diff)
+        print("ll",prop_ll)
+        ll_vec.append(prop_ll)
+
+        # Checking if the absolute difference is small enough
+        if prop_ll <= tolerance:
+            break
+
+    return vector if vector.shape else vector.item()
+
+
+sgd(
+    propose_param, h, start=newpar, learn_rate=1.0, decay_rate=1.0,
+    batch_size=0, n_iter=1000, random_state=0, tolerance=1e-2
+)
+
+plt.figure(); plt.plot(ll_vec); plt.show()
