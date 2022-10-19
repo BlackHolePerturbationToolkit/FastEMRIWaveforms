@@ -191,7 +191,7 @@ class MultiMassSchwarzschildEccentricWaveformBase(
     def __call__(
         self,
         M_vec,
-        mu,
+        eta,
         p0,
         e0,
         theta,
@@ -263,6 +263,7 @@ class MultiMassSchwarzschildEccentricWaveformBase(
 
         """
         M = np.min(M_vec)
+        mu = eta * M
 
         # makes sure viewing angles are allowable
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
@@ -463,8 +464,8 @@ class MultiMassSchwarzschildEccentricWaveformBase(
                     T=T,
                     include_minus_m=include_minus_m,
                 )
-                print(waveform_temp[10])
                 wave.append(waveform_temp)
+                # print(waveform_temp[10])
 
             # if batching, need to add the waveform
             if i > 0:

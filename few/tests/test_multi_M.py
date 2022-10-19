@@ -64,8 +64,8 @@ class WaveformTest(unittest.TestCase):
         # parameters
         T = 1.0  # years
         dt = 15.0  # seconds
-        M = 10.0**np.linspace(5.5,6.5, num=10)
-        mu = 1e1
+        M = 10.0**np.linspace(5.5,6.5, num=100)
+        mu = 1e-5
         p0 = 8.0
         e0 = 0.2
         theta = np.pi / 3  # polar viewing angle
