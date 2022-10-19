@@ -62,9 +62,9 @@ class WaveformTest(unittest.TestCase):
         )
 
         # parameters
-        T = 1.0  # years
+        T = 2.0  # years
         dt = 15.0  # seconds
-        M = 10.0**np.linspace(5.5,6.5, num=100)
+        M = 10.0**np.linspace(5.5,6.5, num=1000)
         mu = 1e-5
         p0 = 8.0
         e0 = 0.2
@@ -75,9 +75,10 @@ class WaveformTest(unittest.TestCase):
         
         import time
         st = time.time()
-        fast_wave = fast(M, mu, p0, e0, theta, phi, dist, T=T, dt=dt,eps=1e-2)
+        fast(M, mu, p0, e0, theta, phi, dist, T=T, dt=dt,eps=1e-2)#,mode_selection='all')
         en = time.time()
         print(en-st)
+
         st = time.time()
         [fast(np.array([MM]), mu, p0, e0, theta, phi, dist, T=T, dt=dt,eps=1e-2) for MM in M]
         en = time.time()

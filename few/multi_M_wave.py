@@ -329,7 +329,7 @@ class MultiMassSchwarzschildEccentricWaveformBase(
         if show_progress:
             print("total:", len(inds_split_all))
 
-        wave = []
+        wave = dict()
 
         for i, inds_in in iterator:
 
@@ -445,8 +445,10 @@ class MultiMassSchwarzschildEccentricWaveformBase(
 
             # store number of modes for external information
             self.num_modes_kept = teuk_modes_in.shape[1]
+            # print(self.num_modes_kept)
 
-            multi_t = t_temp[None,:] / M * M_vec[:,None]
+            multi_t = t_temp[None,:] / M * self.xp.asarray(M_vec[:,None])
+            jj = 0
             for tt,MM in zip(multi_t,M_vec):
                 # create waveform
                 waveform_temp = self.create_waveform(
@@ -464,26 +466,19 @@ class MultiMassSchwarzschildEccentricWaveformBase(
                     T=T,
                     include_minus_m=include_minus_m,
                 )
-                wave.append(waveform_temp)
+                secondary_mass = mu * MM
+                
+                if dist is not None:
+                    dist_dimensionless = (dist * Gpc) / (secondary_mass * MRSUN_SI)
+                else:
+                    dist_dimensionless = 1.0
+                
+                wave[jj] = self.xp.asarray(waveform_temp/ dist_dimensionless)
                 # print(waveform_temp[10])
+                jj+=1
 
-            # if batching, need to add the waveform
-            if i > 0:
-                waveform = self.xp.concatenate([waveform, waveform_temp])
-
-            # return entire waveform
-
-            else:
-                waveform = self.xp.asarray(wave)
-
-
-        if dist is not None:
-            dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
-
-        else:
-            dist_dimensionless = 1.0
-
-        return waveform / dist_dimensionless
+        
+        return wave 
 
 
 class FastMultiMassSchwarzschildEccentricFlux(MultiMassSchwarzschildEccentricWaveformBase):
