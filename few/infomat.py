@@ -362,6 +362,10 @@ class InfoMatrixSchwarzschildEccentricWaveformBase(
                 
                 if index==1:
                     teuk_modes = teuk_modes_amp * -1j * dphi  + teuk_modes_amp/mu + dA
+                elif index==5: # Phi_phi0
+                    teuk_modes = -1j * teuk_modes_amp * self.xp.array([el[1] for el in self.amplitude_generator.lmn_indices]).T
+                elif index==6: # r0
+                    teuk_modes = -1j * teuk_modes_amp * self.xp.array([el[2] for el in self.amplitude_generator.lmn_indices]).T
                 else:
                     teuk_modes = teuk_modes_amp * -1j * dphi + dA
                 # print(index, teuk_modes[10,10])
