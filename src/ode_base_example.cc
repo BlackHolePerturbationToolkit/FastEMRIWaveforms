@@ -178,8 +178,8 @@ SchwarzEccFlux::~SchwarzEccFlux()
 }
 
 //--------------------------------------------------------------------------------
-#define KerrEccentricEquatorial_Y
-#define KerrEccentricEquatorial_equatorial
+// #define KerrEccentricEquatorial_Y
+// #define KerrEccentricEquatorial_equatorial
 
 __deriv__
 void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
@@ -187,9 +187,10 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
                   double epsilon, double a, double p, double e, double Y, double* additional_args)
 {
     // evaluate ODEs
-
+    
     // the frequency variables are pointers!
-    double x = Y_to_xI(a, p, e, Y);
+    double x = Y; // equatorial orbits
+    // cout  << a  << '\t' <<  p << '\t' << e <<  '\t' << x << endl;
     KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);
     
     // get r variable
@@ -197,8 +198,9 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     double p_sep = get_separatrix(a, e, x);
     double r;
     // reference frequency
-    Omega_phi_sep_circ = 1.0/ (a + pow(p_sep/( 1.0 + e ), 1.5) );
+    Omega_phi_sep_circ = x * 1.0/ (x*a + pow(p_sep/( 1.0 + e ), 1.5) );
     r = pow(*Omega_phi/Omega_phi_sep_circ, 2.0/3.0 ) * (1.0 + e);
+    
     
     // checked values against mathematica
     // {a -> 0.7, p -> 3.72159, e -> 0.189091 x-> 1.0}
@@ -211,20 +213,26 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     double En = KerrGeoEnergy(a, p, e, x);
     double Lz = KerrGeoAngularMomentum(a, p, e, x, En);
     double Q = 0.0;
+    // cout << "r " <<  r << " plso " <<  p_sep << endl;
+    // cout << "En " <<  En << Lz << Q << endl;
+    
     
     // Class to transform to p e i evolution
     GenericKerrRadiation* GKR = new GenericKerrRadiation(p, e, En, Lz, Q, a);
 
     // Edot as a function of 
-    double Edot = dEdt_Cheby(a, p, e, r);
-    double Ldot = dLdt_Cheby(a, p, e, r);
+    double Edot = dEdt_Cheby(x*a, p, e, r);
+    double Ldot = x*dLdt_Cheby(x*a, p, e, r);
+    
     
     // Intepolator check
     // int Nv = 10;
     // int ne = 10;
-    // cout  << a  << '\t' <<  p << '\t' << e << endl;
-    // cout << " Edot Cheb " <<  Edot << " PN " <<  dEdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
-    // cout << " Ldot Cheb " <<  Ldot << " PN " <<  dLdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
+    // cout  << a  << '\t' <<  p << '\t' << e <<  '\t' << x << '\t' << r << endl;
+    // cout << " Edot Cheb " <<  -Edot << " PN " <<  dEdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
+    // cout << " Ldot Cheb " <<  -Ldot << " PN " <<  dLdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
+    // if (a>0.0){throw std::exception();} 
+    // cout << " Edot relative error " << abs((-Edot - dEdt8H_5PNe10 (a, p, e, Y, Nv, ne))/Edot) << endl;
 
     // consistency check
     // GKR->pei_FluxEvolution(dEdt8H_5PNe10 (a, p, e, Y, Nv, ne), dLdt8H_5PNe10 (a, p, e, Y, Nv, ne), 0.0);

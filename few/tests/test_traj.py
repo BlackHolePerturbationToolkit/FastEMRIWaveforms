@@ -47,38 +47,40 @@ traj = EMRIInspiral(func="KerrEccentricEquatorial")
 # set initial parameters
 M = 1e6
 mu = 5e1
-p0 = 10.0
-e0 = 0.4
-a=0.7
+p0 = 15.0
+e0 = 0.4999
+a=0.989999
 
 # run trajectory
-err_vec = 10**np.linspace(-5.0, -10.0, num=3)
+err_vec = 10**np.linspace(-8.0, -10.0, num=1)
 p_vec = []
+e_vec = []
 for err in err_vec:
     insp_kw = {
-            "T": 1.0,
+            "T": 5.0,
             "dt": 10.0,
             "err": err,
             "DENSE_STEPPING": 0,
             "max_init_len": int(1e4),
             "use_rk4": False,
-            "upsample": True,
-            "fix_T": True
+            # "upsample": True,
+            # "fix_T": True
 
             }
 
-    t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, **insp_kw)
+    t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, -1.0, **insp_kw)
     print('err',err)
+    print(Phi_phi[-1])
     p_vec.append(p)
+    e_vec.append(e)
 
 diff = p_vec - p_vec[-1]
 diff = np.array(diff)
 
-breakpoint()
 import matplotlib.pyplot as plt
 plt.figure()
 # [plt.semilogy(t, np.abs(dd) , label='err = ') for dd in diff]
-[plt.plot(t, pp) for pp in p_vec]
+[plt.plot(pp, ee) for pp,ee in zip(p_vec,e_vec)]
 plt.show()
 
 print("DONE")
