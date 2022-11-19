@@ -190,6 +190,7 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     
     // the frequency variables are pointers!
     double x = Y; // equatorial orbits
+
     // cout  << a  << '\t' <<  p << '\t' << e <<  '\t' << x << endl;
     KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);
     
@@ -201,6 +202,11 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     Omega_phi_sep_circ = x * 1.0/ (x*a + pow(p_sep/( 1.0 + e ), 1.5) );
     r = pow(*Omega_phi/Omega_phi_sep_circ, 2.0/3.0 ) * (1.0 + e);
     
+    if (isnan(r)){
+        cout  << a  << '\t' <<  p << '\t' << e <<  '\t' << x << '\t' << r << " plso =" <<  p_sep << endl;
+        cout << "omegaphi circ " <<  Omega_phi_sep_circ << " omegaphi " <<  *Omega_phi << endl;
+        throw std::exception();
+        } 
     
     // checked values against mathematica
     // {a -> 0.7, p -> 3.72159, e -> 0.189091 x-> 1.0}
@@ -231,9 +237,10 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     // cout  << a  << '\t' <<  p << '\t' << e <<  '\t' << x << '\t' << r << endl;
     // cout << " Edot Cheb " <<  -Edot << " PN " <<  dEdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
     // cout << " Ldot Cheb " <<  -Ldot << " PN " <<  dLdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
-    // if (a>0.0){throw std::exception();} 
+    
     // cout << " Edot relative error " << abs((-Edot - dEdt8H_5PNe10 (a, p, e, Y, Nv, ne))/Edot) << endl;
 
+    // if (a>0.0){throw std::exception();} 
     // consistency check
     // GKR->pei_FluxEvolution(dEdt8H_5PNe10 (a, p, e, Y, Nv, ne), dLdt8H_5PNe10 (a, p, e, Y, Nv, ne), 0.0);
     // cout << " pdot Cheb " <<  GKR->pdot << " PN " <<  dpdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;

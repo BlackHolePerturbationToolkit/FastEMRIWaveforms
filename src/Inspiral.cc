@@ -103,6 +103,12 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
         return GSL_EBADFUNC;
     }
 
+    // make sure we are outside the separatrix
+    if (e < 0.0)
+    {   
+        return GSL_EBADFUNC;
+    }
+
     double pdot, edot, xdot;
 	double Omega_phi, Omega_theta, Omega_r;
 
@@ -283,8 +289,9 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
         }
 
         // status 9 indicates integrator stepped inside separatrix limit
-        if((status == 9) || (p - p_sep < DIST_TO_SEPARATRIX))
+        if((status == 9) || (p - p_sep < DIST_TO_SEPARATRIX) || (e < 0.0) )
         {
+
             // Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.
             // To correct for this we self-integrate from the second-to-last point in the integation to
             // within the INNER_THRESHOLD with respect to separatrix +  DIST_TO_SEPARATRIX
@@ -347,7 +354,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
                 double temp_Phi_r = Phi_r + Omega_r * step_size;
 
                 double temp_stop = temp_p - p_sep;
-                if (temp_stop > DIST_TO_SEPARATRIX)
+                if ((temp_stop > DIST_TO_SEPARATRIX))//&&(temp_e>0.0))
                 {
                     // update points
                     t = temp_t;
@@ -361,7 +368,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
                 else
                 {
                     // all variables stay the same
-
+                    // cout << "ecc \t" << e << endl;
                     // decrease step
                     factor *= 0.5;
                 }
