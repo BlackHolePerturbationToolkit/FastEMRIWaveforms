@@ -130,6 +130,18 @@ or if on MACOSX:
 python setup.py install --ccbin /path/to/anaconda3/envs/few_env/bin/x86_64-apple-darwin13.4.0-clang
 ```
 
+# Installing on an M1 chip
+
+If you are encountering problem in installing the package on a M1 chip, this is expected. A possible way around is to follow these steps:
+
+1. Remove compiler installed in FEW conda (maybe in /path/to/anaconda3/envs/few_env/bin/x86_64-apple-darwin13.4.0-clang)
+2. set flag --no\_omp
+3. Export CC=/usr/bin/clang   # Make sure that this corresponds to default M1 compiler
+4. Export CCXX = /usr/bin/clang++
+5. Comment out line 512 "omp\_set\_num\_threads(num\_threads);" in src/Utility.cc 
+6. Comment between line 517 and 523. Change line 524 to "return 1;"] in src/Utility.cc 
+7. python setup.py install --no\_omp
+
 ## Running the Tests
 
 In the main directory of the package run in the terminal:
