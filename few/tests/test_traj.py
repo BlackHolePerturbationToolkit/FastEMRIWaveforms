@@ -81,7 +81,7 @@ import matplotlib.pyplot as plt
 plt.figure()
 for _ in range(1):
     p0 = 16.021478000424167 
-    e0 = 0.3#0.029088984025761766
+    e0 = 0.029088984025761766
     # p0 = np.random.uniform(15.0, 20.0)
     # e0 = np.random.uniform(0.0, 0.5)
     print(p0,e0,get_separatrix(a,e0,p0))
