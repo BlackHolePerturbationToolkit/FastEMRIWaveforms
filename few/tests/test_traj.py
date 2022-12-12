@@ -1,3 +1,4 @@
+#python -m unittest few/tests/test_traj.py 
 import unittest
 import numpy as np
 import warnings

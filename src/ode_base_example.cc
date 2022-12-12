@@ -203,7 +203,7 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     r = pow(*Omega_phi/Omega_phi_sep_circ, 2.0/3.0 ) * (1.0 + e);
     
     if (isnan(r)){
-        cout  << a  << '\t' <<  p << '\t' << e <<  '\t' << x << '\t' << r << " plso =" <<  p_sep << endl;
+        cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
         cout << "omegaphi circ " <<  Omega_phi_sep_circ << " omegaphi " <<  *Omega_phi << endl;
         throw std::exception();
         } 
