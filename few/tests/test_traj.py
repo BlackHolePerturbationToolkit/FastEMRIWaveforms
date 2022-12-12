@@ -42,6 +42,19 @@ class ModuleTest(unittest.TestCase):
         # run trajectory
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0)
 
+        traj = EMRIInspiral(func="pn5")
+
+        # set initial parameters
+        M = 1e5
+        mu = 1e1
+        p0 = 10.0
+        e0 = 0.7
+        a=0.7
+
+        # run trajectory
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0)
+
+
 
 traj = EMRIInspiral(func="KerrEccentricEquatorial")
 
@@ -68,6 +81,10 @@ for err in err_vec:
             # "fix_T": True
 
             }
+
+    trajpn5 = EMRIInspiral(func="pn5")
+    # works for pn5
+    t, p, e, x, Phi_phi, Phi_theta, Phi_r = trajpn5(M, mu, a, p0, e0, -1.0, **insp_kw)
 
     t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, -1.0, **insp_kw)
     print('err',err)
