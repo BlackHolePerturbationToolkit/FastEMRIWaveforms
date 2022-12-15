@@ -433,9 +433,9 @@ void get_waveform(cmplx *waveform, double* interp_array,
     // arrays for determining spline windows for new arrays
     if (init_len > MAX_SPLINE_POINTS)
     {
-      char str[1000];
+        char str[1000];
         sprintf(str, "Initial length is greater than the number of maximum allowable spline points: %d > %d", init_len, MAX_SPLINE_POINTS);
-        throw_python_error(str, 23);
+        throw std::invalid_argument(str);
     }
     #ifdef __CUDACC__
     int num_blocks = std::ceil((out_len + NUM_THREADS -1)/NUM_THREADS);

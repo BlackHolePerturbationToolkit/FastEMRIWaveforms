@@ -12,7 +12,7 @@ cdef extern from "../include/gpuAAK.hh":
                   double M_phys, double S_phys, double mu, double qS, double phiS, double qK, double phiK, double dist,
                   int nmodes, bool mich,
                   int init_len, int out_len,
-                  double delta_t, double *t, int *interval_inds)
+                  double delta_t, double *t, int *interval_inds) except+
 
 
 @pointer_adjust
