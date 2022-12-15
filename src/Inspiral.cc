@@ -243,13 +243,30 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
         // if it made it here, reset bad num
         bad_num = 0;
 
+        double p 		= y[0];
+        double e 		= y[1];
+        double x        = y[2];
+
+        // check eccentricity
+        if (e < 0.0)
+        {
+            // integrator may have leaked past zero
+            if (e > -1e-3)
+            {
+                e = 1e-6;
+            }
+            // integrator went way past zero throw error.
+            else 
+            {
+                throw std::invalid_argument("Error: the integrator is stepping the eccentricity too far across zero (e < -1e-3).\n");
+            }
+        }
+
         // should not be needed but is safeguard against stepping past maximum allowable time
         // the last point in the trajectory will be at t = tmax
         if (t > tmax) break;
 
-        double p 		= y[0];
-        double e 		= y[1];
-        double x        = y[2];
+        
 
         // count the number of points
         ind++;
@@ -415,7 +432,7 @@ void InspiralCarrier::InspiralWrapper(double *t, double *p, double *e, double *x
 
         // make sure we have allocated enough memory through cython
         if (Inspiral_vals.length > init_len){
-            throw std::runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
+            throw std::invalid_argument("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
         }
 
         // copy data
