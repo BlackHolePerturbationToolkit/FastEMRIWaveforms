@@ -363,6 +363,40 @@ line options when installing. You can also remove usage of OpenMP.</p>
                         <span class="k">with</span> <span class="n">CUDA</span><span class="o">.</span>
 </pre></div>
 </div>
+<p>When installing the package with <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></code>, the setup
+file uses the C compiler present in your <code class="docutils literal notranslate"><span class="pre">PATH</span></code>. However, it might
+happen that the setup file incorrectly uses another compiler present on
+your path. To solve this issue you can directly specify the C compiler
+using the flag <code class="docutils literal notranslate"><span class="pre">--ccbin</span></code> as in the following example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">ccbin</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">anaconda3</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">few_env</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">x86_64</span><span class="o">-</span><span class="n">conda</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">gnu</span><span class="o">-</span><span class="n">gcc</span>
+</pre></div>
+</div>
+<p>or if on MACOSX:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">ccbin</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">anaconda3</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">few_env</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">x86_64</span><span class="o">-</span><span class="n">apple</span><span class="o">-</span><span class="n">darwin13</span><span class="o">.</span><span class="mf">4.0</span><span class="o">-</span><span class="n">clang</span>
+</pre></div>
+</div>
+<div class="section" id="installing-on-an-m1-chip">
+<h4>Installing on an M1 chip<a class="headerlink" href="#installing-on-an-m1-chip" title="Permalink to this headline">¶</a></h4>
+<p>If you are encountering a problem in installing the package on an M1
+chip, this is expected. A possible way around is to follow the steps
+below. This is definitely not a preferable way to handle this issue and
+may or may not work. We will further investigate this when we find time
+and access to an M1 chip.</p>
+<p>Steps for one found solution so far:</p>
+<ol class="arabic simple">
+<li><p>Remove compiler installed in FEW conda (maybe in
+/path/to/anaconda3/envs/few_env/bin/x86_64-apple-darwin13.4.0-clang)</p></li>
+<li><p>set flag –no_omp</p></li>
+<li><p>Export CC=/usr/bin/clang # Make sure that this corresponds to default
+M1 compiler</p></li>
+<li><p>Export CCXX = /usr/bin/clang++</p></li>
+<li><p>Comment out line 512 “omp_set_num_threads(num_threads);” in
+src/Utility.cc</p></li>
+<li><p>Comment between line 517 and 523. Change line 524 to “return 1;”] in
+src/Utility.cc</p></li>
+<li><p>python setup.py install –no_omp</p></li>
+</ol>
+</div>
 </div>
 </div>
 <div class="section" id="running-the-tests">
@@ -382,7 +416,7 @@ code of conduct, and the process for submitting pull requests to us.</p>
 <p>We use <a class="reference external" href="http://semver.org/">SemVer</a> for versioning. For the versions
 available, see the <a class="reference external" href="https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags">tags on this
 repository</a>.</p>
-<p>Current Version: 1.4.7</p>
+<p>Current Version: 1.4.8</p>
 </div>
 <div class="section" id="authors">
 <h2>Authors<a class="headerlink" href="#authors" title="Permalink to this headline">¶</a></h2>
