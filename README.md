@@ -130,9 +130,11 @@ or if on MACOSX:
 python setup.py install --ccbin /path/to/anaconda3/envs/few_env/bin/x86_64-apple-darwin13.4.0-clang
 ```
 
-# Installing on an M1 chip
+#### Installing on an M1 chip
 
-If you are encountering problem in installing the package on a M1 chip, this is expected. A possible way around is to follow these steps:
+If you are encountering a problem in installing the package on an M1 chip, this is expected. A possible way around is to follow the steps below. This is definitely not a preferable way to handle this issue and may or may not work. We will further investigate this when we find time and access to an M1 chip. 
+
+Steps for one found solution so far:
 
 1. Remove compiler installed in FEW conda (maybe in /path/to/anaconda3/envs/few_env/bin/x86_64-apple-darwin13.4.0-clang)
 2. set flag --no\_omp
