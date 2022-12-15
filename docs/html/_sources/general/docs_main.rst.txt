@@ -34,6 +34,7 @@ Package TODOs
 Change Log
 ===========
 
+- 1.4.7: A quick bug fix for GPU device issues.
 - 1.4.5: Separatrix c function generalized for Schwarzschild, generic Kerr, and circular, equatorial Kerr.
 - 1.4.4: Bug fix at zero eccentricity. Frequencies back in ODE. Fix for git pull issue with ode_base files.
 - 1.4.3: Bug fixes for additional arguments in SchEcc waveform base.
