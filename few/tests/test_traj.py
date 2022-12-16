@@ -7,7 +7,7 @@ from few.trajectory.inspiral import EMRIInspiral
 from few.amplitude.romannet import RomanAmplitude
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 from few.waveform import FastSchwarzschildEccentricFlux, SlowSchwarzschildEccentricFlux
-from few.utils.utility import get_overlap, get_mismatch, get_separatrix
+from few.utils.utility import get_overlap, get_mismatch, get_separatrix, get_fundamental_frequencies
 from few.utils.ylm import GetYlms
 from few.utils.modeselector import ModeSelector
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
@@ -103,6 +103,7 @@ for _ in range(1):
     # p0 = np.random.uniform(15.0, 20.0)
     # e0 = np.random.uniform(0.0, 0.5)
     print(p0,e0,get_separatrix(a,e0,p0))
+    get_fundamental_frequencies(a,16.021478000424167, 1e-6, 1.0)
     t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, **insp_kw)
     # [plt.semilogy(t, np.abs(dd) , label='err = ') for dd in diff]
     plt.plot(p, e)

@@ -187,7 +187,8 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
                   double epsilon, double a, double p, double e, double Y, double* additional_args)
 {
     // evaluate ODEs
-    
+    cout << "beginning" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<endl;
+
     // the frequency variables are pointers!
     double x = Y; // equatorial orbits
 
@@ -207,6 +208,7 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
         cout << "omegaphi circ " <<  Omega_phi_sep_circ << " omegaphi " <<  *Omega_phi << endl;
         throw std::exception();
         } 
+    
     
     // checked values against mathematica
     // {a -> 0.7, p -> 3.72159, e -> 0.189091 x-> 1.0}
@@ -247,13 +249,22 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     // cout << " edot Cheb " <<  GKR->edot << " PN " <<  dedt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
 
     // transform to p e Y evolution
+    // cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
     GKR->pei_FluxEvolution(Edot, Ldot, 0.0);
 
     *pdot = -epsilon * GKR->pdot;
 
     // needs adjustment for validity
-    *edot = -epsilon * GKR->edot;
+    if (e > 1e-6)
+    {
+        *edot = -epsilon * GKR->edot;
+    }
+    else{
+        *edot = 0.0;
+        cout << "end" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
+    }
 
+    
     *Ydot = 0.0;
 
     delete GKR;
