@@ -267,20 +267,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
         double e 		= y[1];
         double x        = y[2];
 
-        // check eccentricity
-        if (e < 0.0)
-        {
-            // integrator may have leaked past zero
-            if (e > -1e-3)
-            {
-                e = 1e-6;
-            }
-            // integrator went way past zero throw error.
-            else 
-            {
-                throw std::invalid_argument("Error: the integrator is stepping the eccentricity too far across zero (e < -1e-3).\n");
-            }
-        }
 
         // should not be needed but is safeguard against stepping past maximum allowable time
         // the last point in the trajectory will be at t = tmax
@@ -320,14 +306,17 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
 
         }
 
+        
+
         // status 9 indicates integrator stepped inside separatrix limit
-        if((status == 9) || (p - p_sep < DIST_TO_SEPARATRIX) || (e < 0.0) )
+        if((status == 9) || (p - p_sep < DIST_TO_SEPARATRIX))
         {
 
             // Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.
             // To correct for this we self-integrate from the second-to-last point in the integation to
             // within the INNER_THRESHOLD with respect to separatrix +  DIST_TO_SEPARATRIX
-
+            if(e<1e-4){break;}
+            cout << status << p - p_sep << endl;
             // Get old values
             p = y_prev[0];
             e = y_prev[1];
