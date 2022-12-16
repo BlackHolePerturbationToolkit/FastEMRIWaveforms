@@ -3,6 +3,8 @@
 
 void throw_python_error(char* str_in, int status);
 
+int sanity_check(double a, double p, double e, double Y);
+
 void KerrGeoMinoFrequencies(double* CapitalGamma_, double* CapitalUpsilonPhi_, double* CapitalUpsilonTheta_, double* CapitalUpsilonr_,
                               double a, double p, double e, double x);
 
