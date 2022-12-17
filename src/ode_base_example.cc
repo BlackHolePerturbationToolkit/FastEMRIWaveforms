@@ -189,13 +189,13 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
 
 
     // needs adjustment for validity
-    if (e < 1e-6)
-    {
-        *pdot = 0.0;
-        *edot = 0.0;
-        *Ydot = 0.0;
-        return;
-    }
+    // if (e < 1e-6)
+    // {
+    //     *pdot = 0.0;
+    //     *edot = 0.0;
+    //     *Ydot = 0.0;
+    //     return;
+    // }
 
     // evaluate ODEs
     // cout << "beginning" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<endl;
@@ -266,7 +266,7 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     *pdot = -epsilon * GKR->pdot;
 
     // needs adjustment for validity
-    if (e > 1e-6)
+    if (e > 1e-10)
     {
         *edot = -epsilon * GKR->edot;
     }
@@ -279,5 +279,6 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     *Ydot = 0.0;
 
     delete GKR;
+    return;
 
 }

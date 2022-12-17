@@ -78,14 +78,14 @@ insp_kw = {
     # "fix_T": True
 
     }
-
+np.random.seed(32)
 import matplotlib.pyplot as plt
 plt.figure()
-for _ in range(100):
-    # p0 = 16.021478000424167 
-    # e0 = 0.29088984025761766
-    p0 = np.random.uniform(15.0, 20.0)
-    e0 = np.random.uniform(0.0, 0.5)
+for _ in range(1):
+    p0 = 10.021478000424167 
+    e0 = 0.0029088984025761766
+    # p0 = np.random.uniform(15.0, 20.0)
+    # e0 = np.random.uniform(0.0, 0.5)
     # t, p, e, x, Phi_phi, Phi_theta, Phi_r = trajpn5(M, mu, a, p0, e0, 1.0, **insp_kw)
     t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, **insp_kw)
     plt.plot(p, e,'.')
