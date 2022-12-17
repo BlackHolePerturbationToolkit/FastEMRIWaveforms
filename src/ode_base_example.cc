@@ -187,7 +187,7 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
                   double epsilon, double a, double p, double e, double Y, double* additional_args)
 {
     // evaluate ODEs
-    cout << "beginning" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<endl;
+    // cout << "beginning" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<endl;
 
     // the frequency variables are pointers!
     double x = Y; // equatorial orbits
@@ -261,7 +261,7 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     }
     else{
         *edot = 0.0;
-        cout << "end" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
+        // cout << "end" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
     }
 
     

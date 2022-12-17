@@ -57,7 +57,7 @@ class ModuleTest(unittest.TestCase):
 
 
 traj = EMRIInspiral(func="KerrEccentricEquatorial")
-
+trajpn5 = EMRIInspiral(func="pn5")
 # set initial parameters
 M = 1e6
 mu = 5e1
@@ -71,7 +71,7 @@ p_vec = []
 e_vec = []
 for err in err_vec:
     insp_kw = {
-            "T": 5.0,
+            "T": 4.0,
             "dt": 10.0,
             "err": err,
             "DENSE_STEPPING": 0,
@@ -82,7 +82,7 @@ for err in err_vec:
 
             }
 
-    trajpn5 = EMRIInspiral(func="pn5")
+    
     # works for pn5
     t, p, e, x, Phi_phi, Phi_theta, Phi_r = trajpn5(M, mu, a, p0, e0, -1.0, **insp_kw)
 
@@ -103,10 +103,13 @@ for _ in range(1):
     # p0 = np.random.uniform(15.0, 20.0)
     # e0 = np.random.uniform(0.0, 0.5)
     print(p0,e0,get_separatrix(a,e0,p0))
+
     get_fundamental_frequencies(a,16.021478000424167, 1e-6, 1.0)
+    breakpoint()
+    trajpn5(M, mu, a, p0, e0, 1.0, **insp_kw)
     t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, **insp_kw)
     # [plt.semilogy(t, np.abs(dd) , label='err = ') for dd in diff]
-    plt.plot(p, e)
+    plt.plot(p, e,'.')
     # [plt.plot(p, e) for pp,ee in zip(p_vec,e_vec)]
 plt.show()
 

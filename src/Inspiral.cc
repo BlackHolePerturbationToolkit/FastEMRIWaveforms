@@ -80,8 +80,16 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
     // integrator may naively step over separatrix
     double x_temp;
 
+
+    // make sure we are outside the separatrix
+    if (e < 0.0)
+    {   
+        cout << "# Stepped into negative eccentricities. Circularizing the binary"<< endl;
+        return 10;
+    }
     // define a sanity check
     if(sanity_check(a, p, e, x)==1){
+        cout << "# Sanity checked not passed" << endl;
         return GSL_EBADFUNC;
     }
     double p_sep = 0.0;
@@ -117,11 +125,7 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
         return GSL_EBADFUNC;
     }
 
-    // make sure we are outside the separatrix
-    if (e < 0.0)
-    {   
-        return GSL_EBADFUNC;
-    }
+
 
     double pdot, edot, xdot;
 	double Omega_phi, Omega_theta, Omega_r;
@@ -227,7 +231,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
 		if(DENSE_STEPPING) status = gsl_odeiv2_evolve_apply_fixed_step (evolve, control, step, &sys, &t, h, y);
         else status = gsl_odeiv2_evolve_apply (evolve, control, step, &sys, &t, t1, &h, y);
 
-      	if ((status != GSL_SUCCESS) && (status != 9)){
+      	if ((status != GSL_SUCCESS) && (status != 9) && (status != 10)){
        		printf ("error, return value=%d\n", status);
           	break;
         }
@@ -306,8 +310,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
 
         }
 
-        
-
         // status 9 indicates integrator stepped inside separatrix limit
         if((status == 9) || (p - p_sep < DIST_TO_SEPARATRIX))
         {
@@ -315,8 +317,9 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
             // Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.
             // To correct for this we self-integrate from the second-to-last point in the integation to
             // within the INNER_THRESHOLD with respect to separatrix +  DIST_TO_SEPARATRIX
-            if(e<1e-4){break;}
-            cout << status << p - p_sep << endl;
+
+                
+            
             // Get old values
             p = y_prev[0];
             e = y_prev[1];
@@ -336,6 +339,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
 
             while (p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD)
             {
+
                 double pdot, edot, xdot, Omega_phi, Omega_theta, Omega_r;
 
                 // Same function in the integrator
@@ -378,6 +382,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
                 double temp_Phi_r = Phi_r + Omega_r * step_size;
 
                 double temp_stop = temp_p - p_sep;
+
                 if ((temp_stop > DIST_TO_SEPARATRIX))//&&(temp_e>0.0))
                 {
                     // update points
@@ -410,11 +415,107 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
             // add the point and end the integration
             inspiral_out.add_point(t*Msec, p, e, x, Phi_phi, Phi_theta, Phi_r);
 
-            //cout << "# Separatrix reached: exiting inspiral" << endl;
+            // cout << "# Separatrix reached: exiting inspiral" << endl;
             break;
         }
+        
+        /*
+        if(status == 10)
+        {
 
+            // Get old values
+            p = y_prev[0];
+            e = y_prev[1];
+            x = y_prev[2];
+
+            double Phi_phi = y_prev[3];
+            double Phi_theta = y_prev[4];
+            double Phi_r = y_prev[5];
+            t = prev_t;
+
+            // update p_sep (fixes part of issue #17)
+            p_sep = prev_p_sep;
+
+            // set initial values
+            double factor = 1.0;
+            int iter = 0;
+
+
+            double pdot, edot, xdot, Omega_phi, Omega_theta, Omega_r;
+
+            // Same function in the integrator
+            params_holder->func->get_derivatives(&pdot, &edot, &xdot,
+                                    &Omega_phi, &Omega_theta, &Omega_r,
+                                    params_holder->epsilon, a, p, e, x, params_holder->additional_args);
+
+            // estimate the step to the breaking point and multiply by PERCENT_STEP
+            double x_temp;
+            if (params_holder->convert_Y)
+            {
+                x_temp = Y_to_xI(a, p, e, x);
+                // if(sanity_check(a, p, e, x_temp)==1){
+                // throw std::invalid_argument( "336 Wrong conversion to x_temp");
+                // }
+            }
+            else
+            {
+                x_temp = x;
+            }
+
+            if (params_holder->enforce_schwarz_sep || (a == 0.0))
+            {
+                p_sep = 6.0 + 2. * e;
+            }
+            else
+            {
+                p_sep = get_separatrix(a, e, x_temp);
+            }
+
+            double step_size = PERCENT_STEP * abs(e/edot);
+
+            // check step
+            double temp_t = t + step_size;
+            double temp_p = p + pdot * step_size;
+            double temp_e = e + edot * step_size;
+            double temp_x = x + xdot * step_size;
+            double temp_Phi_phi = Phi_phi + Omega_phi * step_size;
+            double temp_Phi_theta = Phi_theta + Omega_theta * step_size;
+            double temp_Phi_r = Phi_r + Omega_r * step_size;
+
+
+            // // update points
+            // t = temp_t;
+            // y[0] = temp_p;
+            // y[1] = temp_e;
+            // y[2] = temp_x;
+            // y[3] = temp_Phi_phi;
+            // y[4] = temp_Phi_theta;
+            // y[5] = temp_Phi_r;
+
+            // cout << status << "\t GSL success = " << GSL_SUCCESS << endl;
+            // break;
+        }
+        */
+
+        
+        cout << "# Add point " << t*Msec << "\t" <<y[0] << "\t" <<y[1] << "\t" <<y[2] << "\t" <<y[3] << "\t" <<y[4] << "\t" <<y[5] << endl;
+        cout << "# Tmax = " << tmax << "\t step = " << h << "\t t = " << t << endl;
         inspiral_out.add_point(t*Msec, y[0], y[1], y[2], y[3], y[4], y[5]); // adds time in seconds
+        if (h < dt){
+            cout << "WARNING: The time step got too short" << endl;
+            cout << "status integrator = " << status << endl;
+
+            double pdot, edot, xdot, Omega_phi, Omega_theta, Omega_r;
+
+            // Same function in the integrator
+            params_holder->func->get_derivatives(&pdot, &edot, &xdot,
+                                    &Omega_phi, &Omega_theta, &Omega_r,
+                                    params_holder->epsilon, a, p, e, x, params_holder->additional_args);
+
+            cout << "edot, pdot = " << edot << "\t" << pdot << endl;
+            h = dt;
+            break;
+        }
 
         prev_t = t;
         prev_p_sep = p_sep;
