@@ -186,6 +186,17 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,
                   double epsilon, double a, double p, double e, double Y, double* additional_args)
 {
+
+
+    // needs adjustment for validity
+    if (e < 1e-6)
+    {
+        *pdot = 0.0;
+        *edot = 0.0;
+        *Ydot = 0.0;
+        return;
+    }
+
     // evaluate ODEs
     // cout << "beginning" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<endl;
 

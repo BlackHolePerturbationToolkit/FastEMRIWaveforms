@@ -66,51 +66,31 @@ e0 = 0.4999
 a=0.8
 
 # run trajectory
-err_vec = 10**np.linspace(-10.0, -10.0, num=1)
-p_vec = []
-e_vec = []
-for err in err_vec:
-    insp_kw = {
-            "T": 4.0,
-            "dt": 10.0,
-            "err": err,
-            "DENSE_STEPPING": 0,
-            "max_init_len": int(1e4),
-            "use_rk4": False,
-            # "upsample": True,
-            # "fix_T": True
+err = 1e-10
+insp_kw = {
+    "T": 10.0,
+    "dt": 10.0,
+    "err": err,
+    "DENSE_STEPPING": 0,
+    "max_init_len": int(1e4),
+    "use_rk4": False,
+    # "upsample": True,
+    # "fix_T": True
 
-            }
-
-    
-    # works for pn5
-    t, p, e, x, Phi_phi, Phi_theta, Phi_r = trajpn5(M, mu, a, p0, e0, -1.0, **insp_kw)
-
-    t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, -1.0, **insp_kw)
-    print('err',err)
-    print(Phi_phi[-1])
-    p_vec.append(p)
-    e_vec.append(e)
-
-diff = p_vec - p_vec[-1]
-diff = np.array(diff)
+    }
 
 import matplotlib.pyplot as plt
 plt.figure()
-for _ in range(1):
-    p0 = 16.021478000424167 
-    e0 = 0.029088984025761766
-    # p0 = np.random.uniform(15.0, 20.0)
-    # e0 = np.random.uniform(0.0, 0.5)
-    print(p0,e0,get_separatrix(a,e0,p0))
-
-    get_fundamental_frequencies(a,16.021478000424167, 1e-6, 1.0)
-    breakpoint()
-    trajpn5(M, mu, a, p0, e0, 1.0, **insp_kw)
+for _ in range(100):
+    # p0 = 16.021478000424167 
+    # e0 = 0.29088984025761766
+    p0 = np.random.uniform(15.0, 20.0)
+    e0 = np.random.uniform(0.0, 0.5)
+    # t, p, e, x, Phi_phi, Phi_theta, Phi_r = trajpn5(M, mu, a, p0, e0, 1.0, **insp_kw)
     t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, **insp_kw)
-    # [plt.semilogy(t, np.abs(dd) , label='err = ') for dd in diff]
     plt.plot(p, e,'.')
-    # [plt.plot(p, e) for pp,ee in zip(p_vec,e_vec)]
+plt.ylim([0.0, 0.5])
+plt.xlim([2.0, 16.0])
 plt.show()
 
 print("DONE")
