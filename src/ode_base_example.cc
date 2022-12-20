@@ -245,8 +245,8 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     
     
     // Intepolator check
-    // int Nv = 10;
-    // int ne = 10;
+    int Nv = 10;
+    int ne = 10;
     // cout  << a  << '\t' <<  p << '\t' << e <<  '\t' << x << '\t' << r << endl;
     // cout << " Edot Cheb " <<  -Edot << " PN " <<  dEdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
     // cout << " Ldot Cheb " <<  -Ldot << " PN " <<  dLdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
@@ -263,15 +263,17 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     // cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
     GKR->pei_FluxEvolution(Edot, Ldot, 0.0);
 
-    *pdot = -epsilon * GKR->pdot;
+    
 
     // needs adjustment for validity
-    if (e > 1e-10)
+    if (e > 1e-6)
     {
+        *pdot = -epsilon * GKR->pdot;
         *edot = -epsilon * GKR->edot;
     }
     else{
         *edot = 0.0;
+        *pdot = epsilon * dpdt8H_5PNe10 (a, p, e, Y, Nv, ne);
         // cout << "end" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
     }
 

@@ -66,7 +66,7 @@ e0 = 0.4999
 a=0.8
 
 # run trajectory
-err = 1e-10
+err = 1e-5
 insp_kw = {
     "T": 10.0,
     "dt": 10.0,
