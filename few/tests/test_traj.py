@@ -37,7 +37,7 @@ class ModuleTest(unittest.TestCase):
         mu = 1e1
         p0 = 10.0
         e0 = 0.7
-        a=0.7
+        a=0.85
 
         # run trajectory
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0)
@@ -49,7 +49,7 @@ class ModuleTest(unittest.TestCase):
         mu = 1e1
         p0 = 10.0
         e0 = 0.7
-        a=0.7
+        a=0.85
 
         # run trajectory
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0)
@@ -63,10 +63,10 @@ M = 1e6
 mu = 5e1
 p0 = 15.0
 e0 = 0.4999
-a=0.8
+a=0.85
 
 # run trajectory
-err = 1e-5
+err = 1e-10
 insp_kw = {
     "T": 10.0,
     "dt": 10.0,

@@ -240,9 +240,10 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     GenericKerrRadiation* GKR = new GenericKerrRadiation(p, e, En, Lz, Q, a);
 
     // Edot as a function of 
-    double Edot = dEdt_Cheby(x*a, p, e, r);
-    double Ldot = x*dLdt_Cheby(x*a, p, e, r);
-    
+    double risco = get_separatrix(a, 0.0, x);
+    double Edot = dEdt_Cheby(x*a, p, e, risco, p_sep);
+    double Ldot = dLdt_Cheby(a, p, e, risco, p_sep);
+    GKR->pei_FluxEvolution(Edot, Ldot, 0.0);
     
     // Intepolator check
     int Nv = 10;
@@ -256,20 +257,20 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     // if (a>0.0){throw std::exception();} 
     // consistency check
     // GKR->pei_FluxEvolution(dEdt8H_5PNe10 (a, p, e, Y, Nv, ne), dLdt8H_5PNe10 (a, p, e, Y, Nv, ne), 0.0);
-    // cout << " pdot Cheb " <<  GKR->pdot << " PN " <<  dpdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
-    // cout << " edot Cheb " <<  GKR->edot << " PN " <<  dedt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
+    cout << " pdot Cheb " <<  GKR->pdot << " PN " <<  dpdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
+    cout << " edot Cheb " <<  GKR->edot << " PN " <<  dedt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
 
     // transform to p e Y evolution
     // cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
-    GKR->pei_FluxEvolution(Edot, Ldot, 0.0);
+    
 
     
 
     // needs adjustment for validity
     if (e > 1e-6)
     {
-        *pdot = -epsilon * GKR->pdot;
-        *edot = -epsilon * GKR->edot;
+        *pdot = epsilon * GKR->pdot;
+        *edot = epsilon * GKR->edot;
     }
     else{
         *edot = 0.0;

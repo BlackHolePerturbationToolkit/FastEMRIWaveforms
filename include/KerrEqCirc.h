@@ -12,8 +12,8 @@
 // Define type
 
 // Declare prototype 
-double dEdt_Cheby(const double a, const double p, const double e, const double r);
-double dLdt_Cheby(const double a, const double p, const double e, const double r);
+double dEdt_Cheby(const double a, const double p, const double e, const double rISCO, const double ps);
+double dLdt_Cheby(const double a, const double p, const double e, const double rISCO, const double ps);
 
 class GenericKerrRadiation {
 public:
