@@ -14,6 +14,8 @@
 // Declare prototype 
 double dEdt_Cheby(const double a, const double p, const double e, const double rISCO, const double ps);
 double dLdt_Cheby(const double a, const double p, const double e, const double rISCO, const double ps);
+double pdot_Cheby(const double a, const double p, const double e, const double rISCO, const double ps);
+double edot_Cheby(const double a, const double p, const double e, const double rISCO, const double ps);
 
 class GenericKerrRadiation {
 public:
