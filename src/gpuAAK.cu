@@ -109,10 +109,10 @@ void make_waveform(cmplx *waveform,
       end = 4 * NUM_PARS * init_length;
       increment = 1;
 
-      #ifdef __USE_OMP__
+#ifdef __USE_OMP__
       #pragma omp parallel for
-      #endif  // __USE_OMP__
-      #endif // __CUDACC__
+#endif  // __USE_OMP__
+#endif // __CUDACC__
 
        // prepare interpolants
       // 8 parameters, 4 coefficient values for each parameter
@@ -157,10 +157,10 @@ void make_waveform(cmplx *waveform,
       end = data_length;
       increment = 1;
 
-      #ifdef __USE_OMP__
+#ifdef __USE_OMP__
       #pragma omp parallel for
-      #endif
-      #endif
+#endif  // __USE_OMP__
+#endif // __CUDACC__
       for (int i = start; i < end; i += increment)
       {
 

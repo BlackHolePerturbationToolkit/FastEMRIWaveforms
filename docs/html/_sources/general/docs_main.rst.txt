@@ -34,6 +34,7 @@ Package TODOs
 Change Log
 ===========
 
+- 1.4.9: Fixed omp issue. 
 - 1.4.8: Throwing python errors from C++. Separatrix bug fix. 
 - 1.4.7: Updates to readme and small fixes.
 - 1.4.6: A quick bug fix for GPU device issues.
