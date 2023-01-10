@@ -25,7 +25,7 @@
 
 #include "dIdt8H_5PNe10.h"
 #include "ode.hh"
-#include "KerrEqCirc.h"
+#include "KerrEquatorial.h"
 
 #define pn5_Y
 #define pn5_citation1 Pn5_citation
@@ -261,7 +261,7 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     // cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
     
     // needs adjustment for validity
-    if (e > 1e-4)
+    if (e > 1e-6)
     {
         *pdot = epsilon * pdot_out;
         *edot = epsilon * edot_out;

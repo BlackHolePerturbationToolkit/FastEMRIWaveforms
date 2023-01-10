@@ -6,7 +6,7 @@
 // GSL headers
 
 // BHPC headers
-#include "KerrEqCirc.h"
+#include "KerrEquatorial.h"
 
 /*-*-*-*-*-*-*-*-*-*-*-* External functions (can be refered by other source files) *-*-*-*-*-*-*-*-*-*-*-*/
 double dEdt_Cheby(const double a, const double p, const double e, const double rISCO, const double ps) {

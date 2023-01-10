@@ -240,7 +240,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
 		if(DENSE_STEPPING) status = gsl_odeiv2_evolve_apply_fixed_step (evolve, control, step, &sys, &t, h, y);
         else status = gsl_odeiv2_evolve_apply (evolve, control, step, &sys, &t, t1, &h, y);
 
-        cout << "line 234 status integrator = " << status << endl;
+        // cout << "line 243 status integrator = " << status << endl;
       	if ((status != GSL_SUCCESS) && (status != 9)){
        		printf ("error, return value=%d\n", status);
           	break;
@@ -321,116 +321,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
 
         }
 
-        // cout << "line 298 " << status << " e= "<< e <<endl;
-        /* if eccentricity is negative
-        if((status == 9) && (p - p_sep > DIST_TO_SEPARATRIX))
-        {
-            if (circ>1){
-                cout << "Circularizing two times does not make sense" << endl;
-                break;
-            }
-
-            cout << "beginning" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<endl;
-
-            // Get old values
-            p = y_prev[0];
-            e = y_prev[1];
-            x = y_prev[2];
-
-            double Phi_phi = y_prev[3];
-            double Phi_theta = y_prev[4];
-            double Phi_r = y_prev[5];
-            t = prev_t;
-
-            // set initial values
-            double factor = 1.0;
-            int iter = 0;
-
-            double pdot, edot, xdot, Omega_phi, Omega_theta, Omega_r;
-
-            // Same function in the integrator
-            params_holder->func->get_derivatives(&pdot, &edot, &xdot,
-                                    &Omega_phi, &Omega_theta, &Omega_r,
-                                    params_holder->epsilon, a, p, e, x, params_holder->additional_args);
-
-            // estimate the step to the breaking point and multiply by PERCENT_STEP
-            double x_temp;
-            if (params_holder->convert_Y)
-            {
-                x_temp = Y_to_xI(a, p, e, x);
-                // if(sanity_check(a, p, e, x_temp)==1){
-                // throw std::invalid_argument( "336 Wrong conversion to x_temp");
-                // }
-            }
-            else
-            {
-                x_temp = x;
-            }
-
-            if (params_holder->enforce_schwarz_sep || (a == 0.0))
-            {
-                p_sep = 6.0 + 2. * e;
-            }
-            else
-            {
-                p_sep = get_separatrix(a, e, x_temp);
-            }
-
-            double step_size = h; // must be alwasy positive
-
-            // check step
-            double temp_t = t + step_size;
-            double temp_p = p + pdot * step_size;
-            double temp_e = e + edot * step_size;
-            double temp_x = x + xdot * step_size;
-            double temp_Phi_phi = Phi_phi + Omega_phi * step_size;
-            double temp_Phi_theta = Phi_theta + Omega_theta * step_size;
-            double temp_Phi_r = Phi_r + Omega_r * step_size;
-
-            cout << "check e = " <<temp_e << endl;;
-            if (temp_e>0.0)
-            {
-                // reset evolver
-                gsl_odeiv2_step_reset(step);
-                gsl_odeiv2_evolve_reset(evolve);
-
-                // go back to previous points
-                #pragma unroll
-                for (int i = 0; i < 6; i += 1)
-                {
-                    y[i] = y_prev[i];
-                }
-                t = prev_t;
-                h /= 2.;
-
-                continue;
-            }
-            else{
-                cout << "Time to be circular!"  << endl;
-                // reset evolver
-                gsl_odeiv2_step_reset(step);
-                gsl_odeiv2_evolve_reset(evolve);
-
-                // go back to previous points
-                #pragma unroll
-                for (int i = 0; i < 6; i += 1)
-                {
-                    y[i] = y_prev[i];
-                }
-                t = prev_t;
-
-                // update only eccentricity
-                y_prev[1] = 1e-10;
-                y[1] = 1e-10;
-                h = PERCENT_STEP / abs((p_sep + DIST_TO_SEPARATRIX - p)/pdot) ;
-
-                // status = GSL_SUCCESS;
-                circ++;
-                continue;
-
-            }
-        }
-        */
         
         // status 9 indicates integrator stepped inside separatrix limit
         if((status == 9) || (p - p_sep < DIST_TO_SEPARATRIX))
@@ -519,7 +409,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
                 else
                 {
                     // all variables stay the same
-                    // cout << "ecc \t" << e << endl;
                     // decrease step
                     factor *= 0.5;
                 }
@@ -542,7 +431,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
         }
         
         if (status == GSL_SUCCESS){
-            cout << "# Add point " << t*Msec << "\t" <<y[0] << "\t" <<y[1] << "\t" <<y[2] << "\t" <<y[3] << "\t" <<y[4] << "\t" <<y[5] << endl;
+            // cout << "# Add point " << t*Msec << "\t" <<y[0] << "\t" <<y[1] << "\t" <<y[2] << "\t" <<y[3] << "\t" <<y[4] << "\t" <<y[5] << endl;
             // cout << "# Tmax = " << tmax << "\t step = " << h << "\t t = " << t << endl;
             inspiral_out.add_point(t*Msec, y[0], y[1], y[2], y[3], y[4], y[5]); // adds time in seconds
         }

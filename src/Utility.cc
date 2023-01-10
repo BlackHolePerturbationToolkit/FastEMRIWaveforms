@@ -242,14 +242,36 @@ void KerrGeoMinoFrequencies(double* CapitalGamma_, double* CapitalUpsilonPhi_, d
     *CapitalUpsilonr_ = CapitalUpsilonr;
 }
 
+void KerrEqGeoMinoFrequencies(double* CapitalGamma_, double* CapitalUpsilonPhi_, double* CapitalUpsilonTheta_, double* CapitalUpsilonr_,
+                              double a, double p, double e, double x)
+{
+    double CapitalUpsilonr = Sqrt((p*(-2*Power(a,2) + 6*a*Sqrt(p) + (-5 + p)*p + (Power(a - Sqrt(p),2)*(Power(a,2) - 4*a*Sqrt(p) - (-4 + p)*p))/abs(Power(a,2) - 4*a*Sqrt(p) - (-4 + p)*p)))/(2*a*Sqrt(p) + (-3 + p)*p));
+    double CapitalUpsilonTheta = abs((Power(p,0.25)*Sqrt(3*Power(a,2) - 4*a*Sqrt(p) + Power(p,2)))/Sqrt(2*a + (-3 + p)*Sqrt(p)));
+    double CapitalUpsilonPhi = Power(p,1.25)/Sqrt(2*a + (-3 + p)*Sqrt(p));
+    double CapitalGamma = (Power(p,1.25)*(a + Power(p,1.5)))/Sqrt(2*a + (-3 + p)*Sqrt(p));
+
+    *CapitalGamma_ = CapitalGamma;
+    *CapitalUpsilonPhi_ = CapitalUpsilonPhi;
+    *CapitalUpsilonTheta_ = CapitalUpsilonTheta;
+    *CapitalUpsilonr_ = CapitalUpsilonr;
+}
+
 
 void KerrGeoCoordinateFrequencies(double* OmegaPhi_, double* OmegaTheta_, double* OmegaR_,
                               double a, double p, double e, double x)
 {
     // printf("here p e %f %f %f %f \n", a, p, e, x);
     double CapitalGamma, CapitalUpsilonPhi, CapitalUpsilonTheta, CapitalUpsilonR;
-    KerrGeoMinoFrequencies(&CapitalGamma, &CapitalUpsilonPhi, &CapitalUpsilonTheta, &CapitalUpsilonR,
+    if (abs(x)==1.0){
+        KerrEqGeoMinoFrequencies(&CapitalGamma, &CapitalUpsilonPhi, &CapitalUpsilonTheta, &CapitalUpsilonR,
                                   a, p, e, x);
+    }
+    else{
+        KerrGeoMinoFrequencies(&CapitalGamma, &CapitalUpsilonPhi, &CapitalUpsilonTheta, &CapitalUpsilonR,
+                                  a, p, e, x);
+    }
+    
+
     if ((CapitalUpsilonPhi!=CapitalUpsilonPhi) || (CapitalGamma!=CapitalGamma) || (CapitalUpsilonR!=CapitalUpsilonR) ){
         printf("(a, p, e, x) = (%f , %f , %f , %f) \n", a, p, e, x);
         throw std::invalid_argument("Nan in fundamental frequencies");

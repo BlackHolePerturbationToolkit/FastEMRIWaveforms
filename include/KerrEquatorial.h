@@ -5,7 +5,7 @@
   Header of the Interpolated fluxes
 */
 
-//! \file KerrEqCirc.h
+//! \file KerrEquatorial.h
 
 // Define macro 
 

@@ -36,7 +36,7 @@ class ModuleTest(unittest.TestCase):
         M = 1e5
         mu = 1e1
         p0 = 10.0
-        e0 = 0.7
+        e0 = 0.3
         a=0.85
 
         # run trajectory
@@ -48,7 +48,7 @@ class ModuleTest(unittest.TestCase):
         M = 1e5
         mu = 1e1
         p0 = 10.0
-        e0 = 0.7
+        e0 = 0.3
         a=0.85
 
         # run trajectory
@@ -72,7 +72,7 @@ insp_kw = {
     "dt": 10.0,
     "err": err,
     "DENSE_STEPPING": 0,
-    "max_init_len": int(1e6),
+    "max_init_len": int(1e4),
     "use_rk4": False,
     # "upsample": True,
     # "fix_T": True
@@ -85,8 +85,8 @@ for _ in range(10):
     # p0 = 9.6097
     # e0 = 0.000143448 
     p0 = np.random.uniform(9.0, 15.0)
-    e0 = np.random.uniform(0.0, 0.1)
-    # t, p, e, x, Phi_phi, Phi_theta, Phi_r = trajpn5(M, mu, a, p0, e0, 1.0, **insp_kw)
+    e0 = np.random.uniform(0.0, 0.7)
+    # t, p, e, x, Phi_phi, Phi_theta, Phi_r = trajpn5(M, mu, a, p0, e0, 1.0, **insp_kw) 
     t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, **insp_kw)
     plt.plot(p, e,'.')
 plt.ylim([0.0, 0.5])
