@@ -66,13 +66,13 @@ e0 = 0.4999
 a=0.85
 
 # run trajectory
-err = 1e-5
+err = 1e-10
 insp_kw = {
     "T": 10.0,
     "dt": 10.0,
     "err": err,
     "DENSE_STEPPING": 0,
-    "max_init_len": int(1e4),
+    "max_init_len": int(1e6),
     "use_rk4": False,
     # "upsample": True,
     # "fix_T": True
@@ -81,11 +81,11 @@ insp_kw = {
 np.random.seed(32)
 import matplotlib.pyplot as plt
 plt.figure()
-for _ in range(50):
-    # p0 = 10.021478000424167 
-    # e0 = 0.29088984025761766
-    p0 = np.random.uniform(10.0, 20.0)
-    e0 = np.random.uniform(0.0, 0.5)
+for _ in range(10):
+    # p0 = 9.6097
+    # e0 = 0.000143448 
+    p0 = np.random.uniform(9.0, 15.0)
+    e0 = np.random.uniform(0.0, 0.1)
     # t, p, e, x, Phi_phi, Phi_theta, Phi_r = trajpn5(M, mu, a, p0, e0, 1.0, **insp_kw)
     t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, **insp_kw)
     plt.plot(p, e,'.')

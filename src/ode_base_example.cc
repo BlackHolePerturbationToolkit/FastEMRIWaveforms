@@ -204,7 +204,7 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     double x = Y; // equatorial orbits
 
     // cout  << a  << '\t' <<  p << '\t' << e <<  '\t' << x << endl;
-    KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x - 1e-8);// shift to avoid problem in fundamental frequencies
+    KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);// shift to avoid problem in fundamental frequencies
     
     // get r variable
     double Omega_phi_sep_circ;
@@ -236,16 +236,16 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
 
     // Edot as a function of 
     double risco = get_separatrix(a, 0.0, x);
-    double Edot = dEdt_Cheby(a, p, e, risco, p_sep);
-    double Ldot = dLdt_Cheby(a, p, e, risco, p_sep);
-    GKR->pei_FluxEvolution(Edot, Ldot, 0.0);
+    // double Edot = dEdt_Cheby(a, p, e, risco, p_sep);
+    // double Ldot = dLdt_Cheby(a, p, e, risco, p_sep);
+    // GKR->pei_FluxEvolution(Edot, Ldot, 0.0);
     
     // Intepolator check
     int Nv = 10;
     int ne = 10;
-    cout  << a  << '\t' <<  p << '\t' << e <<  '\t' << x << '\t' << r << endl;
-    cout << " Edot Cheb " <<  Edot << " PN " <<  dEdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
-    cout << " Ldot Cheb " <<  Ldot << " PN " <<  dLdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
+    // cout  << a  << '\t' <<  p << '\t' << e <<  '\t' << x << '\t' << r << endl;
+    // cout << " Edot Cheb " <<  Edot << " PN " <<  dEdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
+    // cout << " Ldot Cheb " <<  Ldot << " PN " <<  dLdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
     
     double pdot_out = pdot_Cheby(a, p, e, risco, p_sep);
     double edot_out = edot_Cheby(a, p, e, risco, p_sep);
@@ -254,14 +254,14 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     // if (a>0.0){throw std::exception();} 
     
     // consistency check
-    cout << "transf pdot Cheb " <<  GKR->pdot << " pdot " <<  pdot_out << " PN " << dpdt8H_5PNe10(a, p, e, Y, Nv, ne) << endl;
-    cout << "transf edot Cheb " <<  GKR->edot << " edot " <<  edot_out << " PN " << dedt8H_5PNe10(a, p, e, Y, Nv, ne) << endl;
+    // cout << "transf pdot Cheb " <<  GKR->pdot << " pdot " <<  pdot_out << " PN " << dpdt8H_5PNe10(a, p, e, Y, Nv, ne) << endl;
+    // cout << "transf edot Cheb " <<  GKR->edot << " edot " <<  edot_out << " PN " << dedt8H_5PNe10(a, p, e, Y, Nv, ne) << endl;
 
     // transform to p e Y evolution
     // cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
     
     // needs adjustment for validity
-    if (e > 1e-6)
+    if (e > 1e-4)
     {
         *pdot = epsilon * pdot_out;
         *edot = epsilon * edot_out;
