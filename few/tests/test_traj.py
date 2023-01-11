@@ -73,24 +73,34 @@ insp_kw = {
     "err": err,
     "DENSE_STEPPING": 0,
     "max_init_len": int(1e4),
-    "use_rk4": False,
     # "upsample": True,
     # "fix_T": True
 
     }
 np.random.seed(32)
 import matplotlib.pyplot as plt
+import time, os
+print(os.getpid())
 plt.figure()
-for _ in range(10):
+for i in range(10):
     # p0 = 9.6097
     # e0 = 0.000143448 
+    
     p0 = np.random.uniform(9.0, 15.0)
-    e0 = np.random.uniform(0.0, 0.7)
+    e0 = np.random.uniform(0.0, 0.5)
+    print('--------------------')
+    print(i, p0, e0)
+    
+    tic = time.time()
     # t, p, e, x, Phi_phi, Phi_theta, Phi_r = trajpn5(M, mu, a, p0, e0, 1.0, **insp_kw) 
     t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, **insp_kw)
-    plt.plot(p, e,'.')
-plt.ylim([0.0, 0.5])
-plt.xlim([2.0, 16.0])
+    toc = time.time()
+    print(toc-tic, Phi_phi[-1])
+    plt.plot(p, e,'.',label=f"time = {toc-tic:.3}, N={len(t)}")
+# plt.ylim([0.0, 0.5])
+# plt.xlim([2.0, 16.0])
+plt.legend()
 plt.show()
+
 
 print("DONE")
