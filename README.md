@@ -165,7 +165,7 @@ cd FastEMRIWaveforms
 python setup.py install --no_omp
 ```
 
-Please consider contacting the developer if you the installation does not work.
+Please contact the developers if the installation does not work.
 
 ## Running the Tests
 
