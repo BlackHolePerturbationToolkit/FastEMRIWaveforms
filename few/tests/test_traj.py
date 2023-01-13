@@ -29,78 +29,28 @@ except (ModuleNotFoundError, ImportError) as e:
 class ModuleTest(unittest.TestCase):
     def test_trajectory(self):
 
+
+        err = 1e-10
+        
         # initialize trajectory class
         traj = EMRIInspiral(func="KerrEccentricEquatorial")
 
         # set initial parameters
-        M = 1e5
+        M = 1e6
         mu = 1e1
-        p0 = 10.0
-        e0 = 0.3
+        p0 = 30.0
+        e0 = 0.0001
         a=0.85
 
         # run trajectory
-        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0)
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, T=10, err=err)
+        # t_pn, p_pn, e_pn, x_pn, Phi_phi_pn, Phi_theta_pn, Phi_r_pn = traj(M, mu, a, p0, e0, 1.0, new_t=t, upsample=True, err=err/10)
 
         traj = EMRIInspiral(func="pn5")
 
-        # set initial parameters
-        M = 1e5
-        mu = 1e1
-        p0 = 10.0
-        e0 = 0.3
-        a=0.85
-
         # run trajectory
-        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0)
+        t_pn, p_pn, e_pn, x_pn, Phi_phi_pn, Phi_theta_pn, Phi_r_pn = traj(M, mu, a, p0, e0, 1.0, T=10)#new_t=t, upsample=True, err=err)
 
-
-
-traj = EMRIInspiral(func="KerrEccentricEquatorial")
-trajpn5 = EMRIInspiral(func="pn5")
-# set initial parameters
-M = 1e6
-mu = 5e1
-p0 = 15.0
-e0 = 0.4999
-a=0.85
-
-# run trajectory
-err = 1e-10
-insp_kw = {
-    "T": 10.0,
-    "dt": 10.0,
-    "err": err,
-    "DENSE_STEPPING": 0,
-    "max_init_len": int(1e4),
-    # "upsample": True,
-    # "fix_T": True
-
-    }
-np.random.seed(32)
-import matplotlib.pyplot as plt
-import time, os
-print(os.getpid())
-plt.figure()
-for i in range(10):
-    # p0 = 9.6097
-    # e0 = 0.000143448 
-    
-    p0 = np.random.uniform(9.0, 15.0)
-    e0 = np.random.uniform(0.0, 0.5)
-    print('--------------------')
-    print(i, p0, e0)
-    
-    tic = time.time()
-    # t, p, e, x, Phi_phi, Phi_theta, Phi_r = trajpn5(M, mu, a, p0, e0, 1.0, **insp_kw) 
-    t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, **insp_kw)
-    toc = time.time()
-    print(toc-tic, Phi_phi[-1])
-    plt.plot(p, e,'.',label=f"time = {toc-tic:.3}, N={len(t)}")
-# plt.ylim([0.0, 0.5])
-# plt.xlim([2.0, 16.0])
-plt.legend()
-plt.show()
-
-
-print("DONE")
+        import matplotlib.pyplot as plt
+        plt.figure(); plt.semilogy(p, Phi_phi); plt.semilogy(p_pn, Phi_phi_pn, label='pn5'); plt.legend(); plt.show()
+        plt.figure(); plt.plot(p, e); plt.plot(p_pn, e_pn, label='pn5'); plt.legend(); plt.show()

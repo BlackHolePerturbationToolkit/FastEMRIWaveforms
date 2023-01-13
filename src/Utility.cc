@@ -578,6 +578,135 @@ int get_threads()
 }
 
 
+// Secondary Spin functions
+
+double P(double r, double a, double En, double xi)
+{
+    return En*r*r - a*xi;
+}
+
+double deltaP(double r, double a, double En, double xi, double deltaEn, double deltaxi)
+{
+    return deltaEn*r*r - xi/r - a*deltaxi;
+}
+
+
+double deltaRt(double r, double am1, double a0, double a1, double a2)
+{
+    return am1/r + a0 + r*( a1 + r*a2 );
+}
+
+
+void KerrSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi_,
+                              double a, double p, double e, double x)
+{
+
+    double En = KerrGeoEnergy(a, p, e, x);
+    double xi = KerrGeoAngularMomentum(a, p, e, x, En) - a*En;
+
+    // get radial roots
+    double r1, r2, r3, r4;
+    KerrGeoRadialRoots(&r1, &r2, &r3, &r4, a, p, e, x, En, 0.);
+
+    double deltaEn, deltaxi;
+    double M = 1.0; // added for convinience
+
+    deltaEn = (xi*(-(a*pow(En,2)*pow(r1,2)*pow(r2,2)) - En*pow(r1,2)*pow(r2,2)*xi + pow(a,2)*En*(pow(r1,2) + r1*r2 + pow(r2,2))*xi + 
+       a*(pow(r1,2) + r1*(-2 + r2) + (-2 + r2)*r2)*pow(xi,2)))/
+   (pow(r1,2)*pow(r2,2)*(a*pow(En,2)*r1*r2*(r1 + r2) + En*(pow(r1,2)*(-2 + r2) + r1*(-2 + r2)*r2 - 2*pow(r2,2))*xi + 2*a*pow(xi,2)));
+
+    deltaxi = ((pow(r1,2) + r1*r2 + pow(r2,2))*xi*(En*pow(r2,2) - a*xi)*(-(En*pow(r1,2)) + a*xi))/
+   (pow(r1,2)*pow(r2,2)*(a*pow(En,2)*r1*r2*(r1 + r2) + En*(pow(r1,2)*(-2 + r2) + r1*(-2 + r2)*r2 - 2*pow(r2,2))*xi + 2*a*pow(xi,2)));
+
+    double am1, a0, a1, a2;
+    am1 = (-2*a*pow(xi,2))/(r1*r2);  
+    a0 = -2*En*(-(a*deltaxi) + deltaEn*pow(r1,2) + deltaEn*r1*r2 + deltaEn*pow(r2,2)) + 2*(a*deltaEn + deltaxi)*xi;
+    a1 = -2*deltaEn*En*(r1 + r2);
+    a2 = -2*deltaEn*En;
+
+    double kr = (r1-r2)/(r1-r3) * (r3-r4)/(r2-r4); //convention without the sqrt
+    double hr = (r1 - r2)/(r1 - r3);
+
+    double rp = M + sqrt(pow(M, 2) - pow(a, 2));
+    double rm = M - sqrt(pow(M, 2) - pow(a, 2));
+
+    double hp = ((r1 - r2) * (r3 - rp))/((r1 - r3) * (r2 - rp));
+    double hm = ((r1 - r2) * (r3 - rm))/((r1 - r3) * (r2 - rm));
+
+    double Kkr = EllipticK(kr); //(* Elliptic integral of the first kind *)
+    double Ekr = EllipticE(kr); //(* Elliptic integral of the second kind *)
+    double Pihrkr = EllipticPi(hr, kr); //(* Elliptic integral of the third kind *)
+    double Pihmkr = EllipticPi(hm, kr);
+    double Pihpkr = EllipticPi(hp, kr);
+
+    double Vtr3 = a*deltaxi + (r3*r3 + a*a)/CapitalDelta(r3, a)*deltaP(r3, a, En, xi, deltaEn, deltaxi);
+    double deltaVtr3 = a*deltaxi + (r3*r3 + a*a)/CapitalDelta(r3, a)*deltaP(r3, a, En, xi, deltaEn, deltaxi);
+
+    double deltaIt1 = (2*((deltaEn*Pihrkr*(r2 - r3)*(4 + r1 + r2 + r3))/2. + (Ekr*(r1 - r3)*(deltaEn*r1*r2*r3 + 2*xi))/(2.*r1*r3) + 
+       ((r2 - r3)*((Pihmkr*(pow(a,2) + pow(rm,2))*deltaP(rm, a, En, xi, deltaEn, deltaxi))/((r2 - rm)*(r3 - rm)) - 
+            (Pihpkr*(pow(a,2) + pow(rp,2))*deltaP(rp, a, En, xi, deltaEn, deltaxi)))/((r2 - rp)*(r3 - rp))))/(-rm + rp) + 
+       Kkr*(-0.5*(deltaEn*(r1 - r3)*(r2 - r3)) + deltaVtr3)))/sqrt((1 - pow(En,2))*(r1 - r3)*(r2 - r4));
+
+    double cK = Kkr*(-0.5*(a2*En*(r1 - r3)*(r2 - r3)) + (pow(a,4)*En*r3*(-am1 + pow(r3,2)*(a1 + 2*a2*r3)) + 
+        2*pow(a,2)*En*pow(r3,2)*(-(am1*(-2 + r3)) + a0*r3 + pow(r3,3)*(a1 - a2 + 2*a2*r3)) + 
+        En*pow(r3,5)*(-2*a0 - am1 + r3*(a1*(-4 + r3) + 2*a2*(-3 + r3)*r3)) + 2*pow(a,3)*(2*am1 + a0*r3 - a2*pow(r3,3))*xi + 
+        2*a*r3*(am1*(-6 + 4*r3) + r3*(2*a1*(-1 + r3)*r3 + a2*pow(r3,3) + a0*(-4 + 3*r3)))*xi)/(pow(r3,2)*pow(r3 - rm,2)*pow(r3 - rp,2)));
+    double cEPi = (En*(a2*Ekr*r2*(r1 - r3) + Pihrkr*(r2 - r3)*(2*a1 + a2*(4 + r1 + r2 + 3*r3))))/2.;
+    double cPi = ((-r2 + r3)*((Pihmkr*(pow(a,2) + pow(rm,2))*P(rm, a, En, xi)*deltaRt(rm, a, En, xi, deltaEn, deltaxi))/((r2 - rm)*pow(r3 - rm,2)*rm) - 
+       (Pihpkr*(pow(a,2) + pow(rp,2))*P(rp, a, En, xi)*deltaRt(rp, a, En, xi, deltaEn, deltaxi))/((r2 - rp)*pow(r3 - rp,2)*rp)))/(-rm + rp);
+    double cE = (Ekr*((2*am1*(-r1 + r3)*xi)/(a*r1) + (r2*Vtr3*deltaRt(r3, a, En, xi, deltaEn, deltaxi))/(r2 - r3)))/pow(r3,2);
+
+    double deltaIt2 = -((cE + cEPi + cK + cPi)/(pow(1 - pow(En,2),1.5)*sqrt((r1 - r3)*(r2 - r4))));
+    double deltaIt = deltaIt1 + deltaIt2;
+
+    double It = (2*((En*(Ekr*r2*(r1 - r3) + Pihrkr*(r2 - r3)*(4 + r1 + r2 + r3)))/2. + 
+       ((r2 - r3)*((Pihmkr*(pow(a,2) + pow(rm,2))*P(rm, a, En, xi))/((r2 - rm)*(r3 - rm)) - 
+            (Pihpkr*(pow(a,2) + pow(rp,2))*P(rp, a, En, xi))/((r2 - rp)*(r3 - rp))))/(-rm + rp) + 
+       Kkr*(-0.5*(En*(r1 - r3)*(r2 - r3)) + Vtr3)))/sqrt((1 - pow(En,2))*(r1 - r3)*(r2 - r4));
+
+    double VPhir3 = xi + a/CapitalDelta(r3, a)*P(r3, a, En, xi);
+    double deltaVPhir3 = deltaxi + a/CapitalDelta(r3, a)*deltaP(r3, a, En, xi, deltaEn, deltaxi);
+
+    double deltaIPhi1 = (2*((Ekr*(r1 - r3)*xi)/(a*r1*r3) + (a*(r2 - r3)*((Pihmkr*deltaP(rm, a, En, xi, deltaEn, deltaxi)))/((r2 - rm)*(r3 - rm)) - 
+            (Pihpkr*deltaP(rp, a, En, xi, deltaEn, deltaxi)))/((r2 - rp)*(r3 - rp))))/(-rm + rp) + Kkr*deltaVPhir3))/sqrt((1 - pow(En,2))*(r1 - r3)*(r2 - r4));
+
+    double dK = (Kkr*(-(a*En*pow(r3,2)*(2*a0*(-1 + r3)*r3 + (a1 + 2*a2)*pow(r3,3) + am1*(-4 + 3*r3))) - pow(a,3)*En*r3*(am1 - pow(r3,2)*(a1 + 2*a2*r3)) - 
+       pow(a,2)*(am1*(-4 + r3) - 2*a0*r3 - (a1 + 2*a2*(-1 + r3))*pow(r3,3))*xi - pow(-2 + r3,2)*r3*(3*am1 + r3*(2*a0 + a1*r3))*xi))/
+   (pow(r3,2)*pow(r3 - rm,2)*pow(r3 - rp,2));
+    double dPi = -((a*(r2 - r3)*((Pihmkr*P(rm, a, En, xi*deltaRt(rm, a, En, xi, deltaEn, deltaxi))/((r2 - rm)*pow(r3 - rm,2)*rm) - 
+         (Pihpkr*P(rp, a, En, xi)*deltaRt(rp, a, En, xi, deltaEn, deltaxi))/((r2 - rp)*pow(r3 - rp,2)*rp)))/(-rm + rp));
+    double dE = (Ekr*((-2*am1*(r1 - r3)*xi)/(pow(a,2)*r1) + (r2*VPhir3*deltaRt(r3, a, En, xi, deltaEn, deltaxi))/(r2 - r3)))/pow(r3,2);
+
+    double deltaIPhi2 = -((dE + dK + dPi)/(pow(1 - pow(En,2),1.5)*sqrt((r1 - r3)*(r2 - r4))));
+    double deltaIPhi = deltaIPhi1 + deltaIPhi2;
+
+    double IPhi = (2*((a*(r2 - r3)*((Pihmkr*P(rm, a, En, xi))/((r2 - rm)*(r3 - rm)) - (Pihpkr*P(rp, a, En, xi))/((r2 - rp)*(r3 - rp))))/(-rm + rp) + 
+       Kkr*VPhir3))/sqrt((1 - pow(En,2))*(r1 - r3)*(r2 - r4));
+
+    double deltaOmegaR = -M_PI/pow(It,2)*deltaIt;
+    double deltaOmegaPhi = deltaIPhi/It-IPhi/pow(It,2)*deltaIt;
+
+    *deltaOmegaR_ = deltaOmegaR;
+    *deltaOmegaPhi_ = deltaOmegaPhi;
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
