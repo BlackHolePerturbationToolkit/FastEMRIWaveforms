@@ -80,7 +80,7 @@ cd FastEMRIWaveforms
 pip install cupy-cuda92
 ```
 
-4) Run install. Make sure CUDA is on your PATH.
+4) Run install.
 
 ```
 python setup.py install
@@ -132,22 +132,34 @@ python setup.py install --ccbin /path/to/anaconda3/envs/few_env/bin/x86_64-apple
 
 #### Installing on an M1 chip
 
-If you are encountering a problem in installing the package on an M1 chip, this is expected. A possible way around is to follow the steps below. This may or may not work. We will further investigate this when we find time and access to an M1 chip. 
+If you are encountering a problem when installing the package on an M1 chip, this is expected. A possible solution is to follow the steps below. This may or may not work. We will further investigate this when we find time and access to an M1 chip.
 
 Steps for one found solution so far:
+
+
+0) [Install Anaconda](https://docs.anaconda.com/anaconda/install/) if you do not have it.
+
+1) Create a virtual environment.
 
 ```
 conda env create --name few_env --file=M1_environment.yml
 ```
 
-Then remove the compilers installed in FEW conda (they are usually installed in /path/to/anaconda3/envs/few_env/bin/ you can check with ```which clang```):
+2) Then remove the compilers installed in FEW conda (they are usually installed in /path/to/anaconda3/envs/few_env/bin/ you can check with ```which clang```):
 
 ```
 rm /path/to/anaconda3/envs/few_env/bin/clang
 rm /path/to/anaconda3/envs/few_env/bin/clang++
 ```
 
-Install:
+2) Clone the repository.
+
+```
+git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
+cd FastEMRIWaveforms
+```
+
+3) Install:
 
 ```
 python setup.py install --no_omp
@@ -171,7 +183,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags).
 
-Current Version: 1.4.9
+Current Version: 1.4.10
 
 ## Authors
 
