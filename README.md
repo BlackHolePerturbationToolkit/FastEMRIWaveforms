@@ -132,17 +132,28 @@ python setup.py install --ccbin /path/to/anaconda3/envs/few_env/bin/x86_64-apple
 
 #### Installing on an M1 chip
 
-If you are encountering a problem in installing the package on an M1 chip, this is expected. A possible way around is to follow the steps below. This is definitely not a preferable way to handle this issue and may or may not work. We will further investigate this when we find time and access to an M1 chip. 
+If you are encountering a problem in installing the package on an M1 chip, this is expected. A possible way around is to follow the steps below. This may or may not work. We will further investigate this when we find time and access to an M1 chip. 
 
 Steps for one found solution so far:
 
-1. Remove compiler installed in FEW conda (maybe in /path/to/anaconda3/envs/few_env/bin/x86_64-apple-darwin13.4.0-clang)
-2. set flag --no\_omp
-3. Export CC=/usr/bin/clang   # Make sure that this corresponds to default M1 compiler
-4. Export CCXX = /usr/bin/clang++
-5. Comment out line 512 "omp\_set\_num\_threads(num\_threads);" in src/Utility.cc 
-6. Comment between line 517 and 523. Change line 524 to "return 1;"] in src/Utility.cc 
-7. python setup.py install --no\_omp
+```
+conda env create --name few_env --file=M1_environment.yml
+```
+
+Then remove the compilers installed in FEW conda (they are usually installed in /path/to/anaconda3/envs/few_env/bin/ you can check with ```which clang```):
+
+```
+rm /path/to/anaconda3/envs/few_env/bin/clang
+rm /path/to/anaconda3/envs/few_env/bin/clang++
+```
+
+Install:
+
+```
+python setup.py install --no_omp
+```
+
+Please consider contacting the developer if you the installation does not work.
 
 ## Running the Tests
 
