@@ -26,7 +26,7 @@ conda create -n few_env -c conda-forge clangxx_osx-64 clang_osx-64 wget gsl lapa
 conda activate few_env
 ```
 
-If on M1 chip, please check the section "Installing on an M1 chip".
+If on M1 chip, please check the section Installing on an M1 chip.
 
 2) Clone the repository.
 
@@ -146,7 +146,7 @@ Steps for one found solution so far:
 
 0) [Install Anaconda](https://docs.anaconda.com/anaconda/install/) if you do not have it.
 
-1) Clone the repository. If you have already cloned the repository and tried to install, please re-download it.
+1) Clone the repository. If you have already cloned the repository and tried to install, please download it again in order to have a clean repo.
 
 ```
 git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
