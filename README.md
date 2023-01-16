@@ -19,7 +19,14 @@ conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack
 conda activate few_env
 ```
 
-    If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
+If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
+
+```
+conda create -n few_env -c conda-forge clangxx_osx-64 clang_osx-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
+conda activate few_env
+```
+
+If on M1 chip, please check the section "Installing on an M1 chip".
 
 2) Clone the repository.
 
@@ -139,30 +146,23 @@ Steps for one found solution so far:
 
 0) [Install Anaconda](https://docs.anaconda.com/anaconda/install/) if you do not have it.
 
-1) Create a virtual environment.
-
-```
-conda env create --name few_env --file=M1_environment.yml
-```
-
-2) Then remove the compilers installed in FEW conda (they are usually installed in /path/to/anaconda3/envs/few_env/bin/ you can check with ```which clang```):
-
-```
-rm /path/to/anaconda3/envs/few_env/bin/clang
-rm /path/to/anaconda3/envs/few_env/bin/clang++
-```
-
-2) Clone the repository.
+1) Clone the repository. If you have already cloned the repository and tried to install, please re-download it.
 
 ```
 git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
 cd FastEMRIWaveforms
 ```
 
+2) Create a virtual environment.
+
+```
+conda env create --name few_env --file=M1_environment.yml
+```
+
 3) Install:
 
 ```
-python setup.py install --no_omp
+python setup.py install --no_omp --ccbin /usr/bin/
 ```
 
 Please contact the developers if the installation does not work.
@@ -183,7 +183,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags).
 
-Current Version: 1.4.10
+Current Version: 1.4.9
 
 ## Authors
 

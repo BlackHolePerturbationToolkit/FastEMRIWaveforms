@@ -25,14 +25,7 @@ dependencies:
   - certifi=2022.9.24=py310hca03da5_0
   - cffi=1.15.1=py310h2399d43_2
   - charset-normalizer=2.1.1=pyhd8ed1ab_0
-  - clang=14.0.4=hce30654_0
-  - clang-14=14.0.4=default_h81a5282_0
-  - clang_osx-64=14.0.4=hf752de9_2
-  - clangxx=14.0.4=default_hb7ecf47_0
-  - clangxx_osx-64=14.0.4=hc75efaf_2
   - colorama=0.4.6=pyhd8ed1ab_0
-  - compiler-rt=14.0.4=h4418234_0
-  - compiler-rt_osx-arm64=14.0.4=hb07f8d1_0
   - contourpy=1.0.5=py310h2887b22_1
   - cryptography=38.0.2=py310hfc83b78_2
   - cycler=0.11.0=pyhd8ed1ab_0
@@ -78,7 +71,6 @@ dependencies:
   - libbrotlidec=1.0.9=h1a8c8d9_8
   - libbrotlienc=1.0.9=h1a8c8d9_8
   - libcblas=3.9.0=1_h9886b1c_netlib
-  - libclang-cpp14=14.0.4=default_h81a5282_0
   - libcurl=7.86.0=h1c293e1_0
   - libcxx=14.0.6=h2692d47_0
   - libdeflate=1.14=h1a8c8d9_0
@@ -91,7 +83,6 @@ dependencies:
   - libidn2=2.3.4=h1a8c8d9_0
   - liblapack=3.9.0=1_h9886b1c_netlib
   - liblapacke=3.9.0=1_h9886b1c_netlib
-  - libllvm14=14.0.4=h37c5ba8_0
   - libnghttp2=1.47.0=h519802c_1
   - libopenblas=0.3.21=openmp_hc731615_3
   - libpng=1.6.38=h76d750c_0
@@ -103,8 +94,6 @@ dependencies:
   - libwebp-base=1.2.4=h57fd34a_0
   - libxcb=1.13=h9b22ae9_1004
   - libzlib=1.2.13=h03a7124_4
-  - llvm-openmp=14.0.4=hd125106_0
-  - llvm-tools=14.0.4=h37c5ba8_0
   - markupsafe=2.1.1=py310h8e9501a_2
   - matplotlib=3.6.1=py310hb6292c7_0
   - matplotlib-base=3.6.1=py310h78c5c2f_0
