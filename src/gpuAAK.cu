@@ -67,7 +67,13 @@ void d_RotCoeff(double* rot, double* n, double* L, double* S, double* nxL, doubl
 }
 
 #define  NUM_PARS 8
+
+#ifdef __CUDACC__
 #define MAX_SPLINE_POINTS 200
+#else
+#define MAX_SPLINE_POINTS 10000
+#endif
+
 CUDA_KERNEL
 void make_waveform(cmplx *waveform,
               double* interp_array,
