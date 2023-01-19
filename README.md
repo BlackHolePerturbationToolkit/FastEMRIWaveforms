@@ -156,13 +156,13 @@ cd FastEMRIWaveforms
 2) Create a virtual environment.
 
 ```
-conda create -n few_env -c conda-forge wget gsl hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.9
+conda create -n few_env -c conda-forge wget gsl hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.9 openblas lapack liblapacke
 ```
 
 3) Install:
 
 ```
-python setup.py install --no_omp --ccbin /usr/bin/ --lapack /path/to/lapack
+python setup.py install --no_omp --ccbin /usr/bin/
 ```
 
 Please contact the developers if the installation does not work.
