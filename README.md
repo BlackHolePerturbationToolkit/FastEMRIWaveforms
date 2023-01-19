@@ -54,10 +54,10 @@ If on M1 chip use the following command:
 python setup.py install --no_omp --ccbin /usr/bin/
 ```
 
-4) To import few:
+4) To test few run:
 
 ```
-from few.waveform import FastSchwarzschildEccentricFlux
+python -m unittest discover
 ```
 
 See [examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb).
