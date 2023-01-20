@@ -2291,7 +2291,7 @@ interfaces, but ensures the strict interface will be the same for all trajectory
 
         <span class="c1"># guard against bad integration steps</span>
         <span class="k">if</span> <span class="n">e</span> <span class="o">&gt;=</span> <span class="mf">1.0</span> <span class="ow">or</span> <span class="n">e</span> <span class="o">&lt;</span> <span class="mf">1e-2</span> <span class="ow">or</span> <span class="n">p</span> <span class="o">&lt;</span> <span class="mf">6.0</span> <span class="ow">or</span> <span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mi">6</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span> <span class="n">e</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
 
 
         <span class="c1"># perform elliptic calculations</span>
