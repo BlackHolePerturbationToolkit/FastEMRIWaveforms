@@ -1,71 +1,38 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trajectory Package &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-
-  
-  
-  
-  
-
-  
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="../_static/language_data.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-
-    
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Amplitude Package" href="amp.html" />
     <link rel="prev" title="Overall Waveform Models" href="main.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search"  style="background: coral" >
-          
-
-          
-            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> few: Fast EMRI Waveforms
-          
-
-          
+            <a href="../index.html" class="icon icon-home"> few: Fast EMRI Waveforms
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -73,19 +40,8 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <p class="caption"><span class="caption-text">Documentation:</span></p>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="main.html">Overall Waveform Models</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Trajectory Package</a><ul>
@@ -97,7 +53,7 @@
 <li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cite.html">Citations</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Tutorial:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Tutorial:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/FastEMRIWaveforms_tutorial.html">Fast and Accurate EMRI Waveforms Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/FastEMRIWaveforms_tutorial.html#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric">Full EMRI Waveforms in Schwarzschild Eccentric</a></li>
@@ -112,85 +68,40 @@
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/FastEMRIWaveforms_tutorial.html#Augmented-Analytic-Kludge-with-5PN-trajectory">Augmented Analytic Kludge with 5PN trajectory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/FastEMRIWaveforms_tutorial.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
 </ul>
-<p class="caption"><span class="caption-text">General Information:</span></p>
+<p class="caption" role="heading"><span class="caption-text">General Information:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html">FastEMRIWaveforms Publications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html#package-todos">Package TODOs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html#change-log">Change Log</a></li>
 </ul>
 
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: coral" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">few: Fast EMRI Waveforms</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
-        
-      <li>Trajectory Package</li>
-    
-    
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Trajectory Package</li>
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="../_sources/user/traj.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
-  </ul>
-
-  
-  <div class="rst-breadcrumbs-buttons" role="navigation" aria-label="breadcrumb navigation">
-      
-        <a href="amp.html" class="btn btn-neutral float-right" title="Amplitude Package" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="main.html" class="btn btn-neutral float-left" title="Overall Waveform Models" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+  </ul><div class="rst-breadcrumbs-buttons" role="navigation" aria-label="Sequential page navigation">
+        <a href="main.html" class="btn btn-neutral float-left" title="Overall Waveform Models" accesskey="p"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="amp.html" class="btn btn-neutral float-right" title="Amplitude Package" accesskey="n">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
   </div>
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   
 <style>
 /* CSS overrides for sphinx_rtd_theme */
@@ -215,29 +126,29 @@
     text-align: unset;
 }
 </style>
-<div class="section" id="module-few.trajectory">
-<span id="trajectory-package"></span><span id="trajectory-label"></span><h1>Trajectory Package<a class="headerlink" href="#module-few.trajectory" title="Permalink to this headline">¶</a></h1>
+<section id="module-few.trajectory">
+<span id="trajectory-package"></span><span id="trajectory-label"></span><h1>Trajectory Package<a class="headerlink" href="#module-few.trajectory" title="Permalink to this heading"></a></h1>
 <p>The trajectory package houses modules that turn initial orbital parameters into
 phase-space trajectories (orbital phases and orbital parameters). These are
 determined by numerical integrators that interpolate over the relevant
 quantities.</p>
 <dl class="py class">
-<dt id="few.utils.baseclasses.TrajectoryBase">
-<em class="property">class </em><code class="sig-prename descclassname">few.utils.baseclasses.</code><code class="sig-name descname">TrajectoryBase</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<dt class="sig sig-object py" id="few.utils.baseclasses.TrajectoryBase">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.baseclasses.</span></span><span class="sig-name descname"><span class="pre">TrajectoryBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Base class used for trajectory modules.</p>
 <p>This class provides a flexible interface to various trajectory
 implementations. Specific arguments to each trajectory can be found with
 each associated trajectory module discussed below.</p>
-<dl class="py method">
-<dt id="few.utils.baseclasses.TrajectoryBase.citation">
-<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase.citation" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="few.utils.baseclasses.TrajectoryBase.citation">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">citation</span></span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase.citation" title="Permalink to this definition"></a></dt>
 <dd><p>Return citation for this class</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.utils.baseclasses.TrajectoryBase.get_inspiral">
-<em class="property">classmethod </em><code class="sig-name descname">get_inspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase.get_inspiral" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.utils.baseclasses.TrajectoryBase.get_inspiral">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_inspiral</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase.get_inspiral" title="Permalink to this definition"></a></dt>
 <dd><p>Inspiral Generator</p>
 <p>&#64;classmethod that requires a child class to have a get_inspiral method.</p>
 <dl class="field-list simple">
@@ -258,8 +169,8 @@ each associated trajectory module discussed below.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.utils.baseclasses.TrajectoryBase.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">in_coordinate_time</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">new_t</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">spline_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">DENSE_STEPPING</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">max_init_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">upsample</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">err</span><span class="o">=</span><span class="default_value">1e-10</span></em>, <em class="sig-param"><span class="n">use_rk4</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">fix_t</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase.__call__" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.utils.baseclasses.TrajectoryBase.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_coordinate_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spline_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DENSE_STEPPING</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_init_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_rk4</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase.__call__" title="Permalink to this definition"></a></dt>
 <dd><p>Call function for trajectory interface.</p>
 <p>This is the function for calling the creation of the
 trajectory. Inputs define the output time spacing.</p>
@@ -322,12 +233,12 @@ Default is {}.</p></li>
 
 </dd></dl>
 
-<div class="section" id="module-few.trajectory.inspiral">
-<span id="generic-inspiral-generator-from-c-c-functions"></span><h2>Generic Inspiral Generator from C/C++ functions<a class="headerlink" href="#module-few.trajectory.inspiral" title="Permalink to this headline">¶</a></h2>
+<section id="module-few.trajectory.inspiral">
+<span id="generic-inspiral-generator-from-c-c-functions"></span><h2>Generic Inspiral Generator from C/C++ functions<a class="headerlink" href="#module-few.trajectory.inspiral" title="Permalink to this heading"></a></h2>
 <dl class="py class">
-<dt id="few.trajectory.inspiral.EMRIInspiral">
-<em class="property">class </em><code class="sig-prename descclassname">few.trajectory.inspiral.</code><code class="sig-name descname">EMRIInspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">func</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">enforce_schwarz_sep</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a></p>
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.trajectory.inspiral.</span></span><span class="sig-name descname"><span class="pre">EMRIInspiral</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enforce_schwarz_sep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrajectoryBase</span></code></a></p>
 <p>EMRI trajectory module.</p>
 <p>This module implements generic trajectories by integrating with an
 RK8 integrator. It can also adjust the output time-spacing using
@@ -374,8 +285,8 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 </dd>
 </dl>
 <dl class="py attribute">
-<dt id="few.trajectory.inspiral.EMRIInspiral.num_add_args">
-<code class="sig-name descname">num_add_args</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.num_add_args" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.num_add_args">
+<span class="sig-name descname"><span class="pre">num_add_args</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.num_add_args" title="Permalink to this definition"></a></dt>
 <dd><p>Number of additional arguments for the ODE function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -385,8 +296,8 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="few.trajectory.inspiral.EMRIInspiral.background">
-<code class="sig-name descname">background</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.background" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.background">
+<span class="sig-name descname"><span class="pre">background</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.background" title="Permalink to this definition"></a></dt>
 <dd><p>“Either Schwarzschild” or “Kerr”.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -396,8 +307,8 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="few.trajectory.inspiral.EMRIInspiral.equatorial">
-<code class="sig-name descname">equatorial</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.equatorial" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.equatorial">
+<span class="sig-name descname"><span class="pre">equatorial</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.equatorial" title="Permalink to this definition"></a></dt>
 <dd><p>True if equatorial orbit.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -407,8 +318,8 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="few.trajectory.inspiral.EMRIInspiral.circular">
-<code class="sig-name descname">circular</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.circular" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.circular">
+<span class="sig-name descname"><span class="pre">circular</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.circular" title="Permalink to this definition"></a></dt>
 <dd><p>True if circular orbit.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -418,8 +329,8 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="few.trajectory.inspiral.EMRIInspiral.convert_Y">
-<code class="sig-name descname">convert_Y</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.convert_Y" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.convert_Y">
+<span class="sig-name descname"><span class="pre">convert_Y</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.convert_Y" title="Permalink to this definition"></a></dt>
 <dd><p>If the ODE is integrated in <span class="math notranslate nohighlight">\(Y\)</span> rather than
 <span class="math notranslate nohighlight">\(x_I\)</span>.</p>
 <dl class="field-list simple">
@@ -430,8 +341,8 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="few.trajectory.inspiral.EMRIInspiral.files">
-<code class="sig-name descname">files</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.files" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.files">
+<span class="sig-name descname"><span class="pre">files</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.files" title="Permalink to this definition"></a></dt>
 <dd><p>List of files necessary for this ODE.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -441,8 +352,8 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="few.trajectory.inspiral.EMRIInspiral.citations">
-<code class="sig-name descname">citations</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.citations" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.citations">
+<span class="sig-name descname"><span class="pre">citations</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.citations" title="Permalink to this definition"></a></dt>
 <dd><p>list of additional citations for this ODE.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -452,8 +363,8 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="few.trajectory.inspiral.EMRIInspiral.enforce_schwarz_sep">
-<code class="sig-name descname">enforce_schwarz_sep</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.enforce_schwarz_sep" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.enforce_schwarz_sep">
+<span class="sig-name descname"><span class="pre">enforce_schwarz_sep</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.enforce_schwarz_sep" title="Permalink to this definition"></a></dt>
 <dd><p>Enforce the separatrix of Schwarzschild
 spacetime.</p>
 <dl class="field-list simple">
@@ -464,8 +375,8 @@ spacetime.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="few.trajectory.inspiral.EMRIInspiral.inspiral_generator">
-<code class="sig-name descname">inspiral_generator</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.inspiral_generator" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.inspiral_generator">
+<span class="sig-name descname"><span class="pre">inspiral_generator</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.inspiral_generator" title="Permalink to this definition"></a></dt>
 <dd><p>Inspiral C/C++ wrapped function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -475,8 +386,8 @@ spacetime.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="few.trajectory.inspiral.EMRIInspiral.func">
-<code class="sig-name descname">func</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.func" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.func">
+<span class="sig-name descname"><span class="pre">func</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.func" title="Permalink to this definition"></a></dt>
 <dd><p>ODE function name.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -486,8 +397,8 @@ spacetime.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="few.trajectory.inspiral.EMRIInspiral.specific_kwarg_keys">
-<code class="sig-name descname">specific_kwarg_keys</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.specific_kwarg_keys" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.specific_kwarg_keys">
+<span class="sig-name descname"><span class="pre">specific_kwarg_keys</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.specific_kwarg_keys" title="Permalink to this definition"></a></dt>
 <dd><p>Specific keywords that need to transferred
 to the inspiral function that can be adjusted with each call.</p>
 <dl class="field-list simple">
@@ -506,11 +417,11 @@ to the inspiral function that can be adjusted with each call.</p>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="few.trajectory.inspiral.EMRIInspiral.attributes_EMRIInspiral">
-<code class="sig-name descname">attributes_EMRIInspiral</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.attributes_EMRIInspiral" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.attributes_EMRIInspiral">
+<span class="sig-name descname"><span class="pre">attributes_EMRIInspiral</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.attributes_EMRIInspiral" title="Permalink to this definition"></a></dt>
 <dd><dl class="py attribute">
-<dt id="id0">
-<code class="sig-name descname">inspiral_generator</code><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">inspiral_generator</span></span><a class="headerlink" href="#id0" title="Permalink to this definition"></a></dt>
 <dd><p>C++ class for inspiral trajectory generation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -520,8 +431,8 @@ to the inspiral function that can be adjusted with each call.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="id1">
-<code class="sig-name descname">specific_kwarg_keys</code><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">specific_kwarg_keys</span></span><a class="headerlink" href="#id1" title="Permalink to this definition"></a></dt>
 <dd><p>specific kwargs from
 <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a> that apply to this
 inspiral generator.</p>
@@ -534,15 +445,15 @@ inspiral generator.</p>
 
 </dd></dl>
 
-<dl class="py method">
-<dt id="few.trajectory.inspiral.EMRIInspiral.citation">
-<em class="property">property </em><code class="sig-name descname">citation</code><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.citation" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.citation">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">citation</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.citation" title="Permalink to this definition"></a></dt>
 <dd><p>Return citation for this class</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.trajectory.inspiral.EMRIInspiral.__call__">
-<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">in_coordinate_time</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">new_t</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">spline_kwargs</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">DENSE_STEPPING</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">max_init_len</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">upsample</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">err</span><span class="o">=</span><span class="default_value">1e-10</span></em>, <em class="sig-param"><span class="n">use_rk4</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">fix_t</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.__call__" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_coordinate_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spline_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DENSE_STEPPING</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_init_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_rk4</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.__call__" title="Permalink to this definition"></a></dt>
 <dd><p>Call function for trajectory interface.</p>
 <p>This is the function for calling the creation of the
 trajectory. Inputs define the output time spacing.</p>
@@ -604,8 +515,8 @@ Default is {}.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="few.trajectory.inspiral.EMRIInspiral.get_inspiral">
-<code class="sig-name descname">get_inspiral</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">p0</span></em>, <em class="sig-param"><span class="n">e0</span></em>, <em class="sig-param"><span class="n">x0</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">Phi_phi0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_theta0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">Phi_r0</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.get_inspiral" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.get_inspiral">
+<span class="sig-name descname"><span class="pre">get_inspiral</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Phi_phi0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Phi_theta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Phi_r0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.get_inspiral" title="Permalink to this definition"></a></dt>
 <dd><p>Generate the inspiral.</p>
 <p>This is the function for calling the creation of the trajectory.
 Inputs define the output time spacing.</p>
@@ -621,7 +532,7 @@ through the __call__ method associated with its base class:
 <li><p><strong>p0</strong> (<em>double</em>) – Initial semi-latus rectum in terms units of M (p/M).</p></li>
 <li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity (dimensionless).</p></li>
 <li><p><strong>x0</strong> (<em>double</em>) – Initial <span class="math notranslate nohighlight">\(\cos{\iota}\)</span>. <strong>Note</strong>: This value is different from <span class="math notranslate nohighlight">\(x_I\)</span></p></li>
-<li><p><strong>in the relativistic waveforms.</strong> (<em>used</em>) – </p></li>
+<li><p><strong>waveforms.</strong> (<em>used in the relativistic</em>) – </p></li>
 <li><p><strong>*args</strong> (<em>list</em><em>, </em><em>placeholder</em>) – Added for flexibility.</p></li>
 <li><p><strong>Phi_phi0</strong> (<em>double</em><em>, </em><em>optional</em>) – Initial phase for <span class="math notranslate nohighlight">\(\Phi_\phi\)</span>.
 Default is 0.0.</p></li>
@@ -643,63 +554,38 @@ Default is 0.0.</p></li>
 
 </dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="amp.html" class="btn btn-neutral float-right" title="Amplitude Package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="main.html" class="btn btn-neutral float-left" title="Overall Waveform Models" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="main.html" class="btn btn-neutral float-left" title="Overall Waveform Models" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="amp.html" class="btn btn-neutral float-right" title="Amplitude Package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        
-        &copy; Copyright 2020, Michael Katz, Alvin Chua, Niels Warburton
-
-    </p>
+    <p>&#169; Copyright 2020, Michael Katz, Alvin Chua, Niels Warburton.</p>
   </div>
-    
-    
-    
-    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
-    
-    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

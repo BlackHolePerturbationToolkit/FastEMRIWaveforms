@@ -1,71 +1,38 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fast and Accurate EMRI Waveforms Tutorial &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-
-  
-  
-  
-  
-
-  
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="../_static/language_data.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
-    
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-
-    
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="FastEMRIWaveforms Publications" href="../general/docs_main.html" />
     <link rel="prev" title="Citations" href="../user/cite.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search"  style="background: coral" >
-          
-
-          
-            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> few: Fast EMRI Waveforms
-          
-
-          
+            <a href="../index.html" class="icon icon-home"> few: Fast EMRI Waveforms
           </a>
-
-          
-            
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -73,19 +40,8 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <p class="caption"><span class="caption-text">Documentation:</span></p>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../user/main.html">Overall Waveform Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user/traj.html">Trajectory Package</a></li>
@@ -94,7 +50,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../user/util.html">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user/cite.html">Citations</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Tutorial:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Tutorial:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Fast and Accurate EMRI Waveforms Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric">Full EMRI Waveforms in Schwarzschild Eccentric</a><ul>
@@ -168,85 +124,40 @@
 </ul>
 </li>
 </ul>
-<p class="caption"><span class="caption-text">General Information:</span></p>
+<p class="caption" role="heading"><span class="caption-text">General Information:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html">FastEMRIWaveforms Publications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html#package-todos">Package TODOs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html#change-log">Change Log</a></li>
 </ul>
 
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: coral" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">few: Fast EMRI Waveforms</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
-        
-      <li>Fast and Accurate EMRI Waveforms Tutorial</li>
-    
-    
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Fast and Accurate EMRI Waveforms Tutorial</li>
       <li class="wy-breadcrumbs-aside">
-        
-            
             <a href="../_sources/tutorial/FastEMRIWaveforms_tutorial.ipynb.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
-  </ul>
-
-  
-  <div class="rst-breadcrumbs-buttons" role="navigation" aria-label="breadcrumb navigation">
-      
-        <a href="../general/docs_main.html" class="btn btn-neutral float-right" title="FastEMRIWaveforms Publications" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="../user/cite.html" class="btn btn-neutral float-left" title="Citations" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+  </ul><div class="rst-breadcrumbs-buttons" role="navigation" aria-label="Sequential page navigation">
+        <a href="../user/cite.html" class="btn btn-neutral float-left" title="Citations" accesskey="p"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../general/docs_main.html" class="btn btn-neutral float-right" title="FastEMRIWaveforms Publications" accesskey="n">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
   </div>
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   
 <style>
 /* CSS for nbsphinx extension */
@@ -357,10 +268,11 @@ div.nboutput.container div.prompt > div {
     }
 }
 
-/* disable scrollbars on prompts */
+/* disable scrollbars and line breaks on prompts */
 div.nbinput.container div.prompt pre,
 div.nboutput.container div.prompt pre {
     overflow: hidden;
+    white-space: pre;
 }
 
 /* input/output area */
@@ -457,11 +369,12 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
-.prompt a.copybtn {
+.prompt .copybtn {
     display: none;
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -470,10 +383,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -485,12 +402,15 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
@@ -517,16 +437,15 @@ div.rendered_html tbody tr:hover {
     text-align: unset;
 }
 </style>
-<div class="section" id="Fast-and-Accurate-EMRI-Waveforms-Tutorial">
-<h1>Fast and Accurate EMRI Waveforms Tutorial<a class="headerlink" href="#Fast-and-Accurate-EMRI-Waveforms-Tutorial" title="Permalink to this headline">¶</a></h1>
+<section id="Fast-and-Accurate-EMRI-Waveforms-Tutorial">
+<h1>Fast and Accurate EMRI Waveforms Tutorial<a class="headerlink" href="#Fast-and-Accurate-EMRI-Waveforms-Tutorial" title="Permalink to this heading"></a></h1>
 <p>Here we provide a set of examples for creating EMRI waveforms as a whole; looking at separate creation pieces (trajectory, amplitude, summation, etc.); and creating your own module to build directly into this framework. For details on the specifics of our waveforms like constructions used and generally methodology, we refer you to our papers <a class="reference external" href="https://arxiv.org/abs/2104.04582">arxiv.org/2104.04582</a> and <a class="reference external" href="https://arxiv.org/abs/2008.06071">arxiv.org/2008.06071</a> and the <a class="reference external" href="https://bhptoolkit.org/FastEMRIWaveforms/">package
 documentation</a>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">sys</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">os</span>
 
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
@@ -559,14 +478,14 @@ documentation</a>.</p>
 </pre></div>
 </div>
 </div>
-</div>
-<div class="section" id="Full-EMRI-Waveforms-in-Schwarzschild-Eccentric">
-<h1>Full EMRI Waveforms in Schwarzschild Eccentric<a class="headerlink" href="#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric" title="Permalink to this headline">¶</a></h1>
+</section>
+<section id="Full-EMRI-Waveforms-in-Schwarzschild-Eccentric">
+<h1>Full EMRI Waveforms in Schwarzschild Eccentric<a class="headerlink" href="#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric" title="Permalink to this heading"></a></h1>
 <p>In the section, we will describe how to create EMRI waveforms with both our fast and slow EMRI waveform model. The current full models include <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.waveform.FastSchwarzschildEccentricFlux">FastSchwarzschildEccentricFlux</a> and <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.waveform.SlowSchwarzschildEccentricFlux">SlowSchwarzschildEccentricFlux</a>. These are fast and slow versions of models that evolve eccentric
 flux-based trajectories in a Schwarzschild background. The fast model can be run exactly as shown here on CPUs or GPUs by providing the correct initialization arguments.</p>
 <p>The waveform model produces <span class="math notranslate nohighlight">\(h(t) = h_p - ih_c(t)\)</span>. It takes as arguments <span class="math notranslate nohighlight">\(\{M, \mu, p_0, e_0, \Phi_{\phi,0}, \Phi_{r, 0}\}\)</span>. <span class="math notranslate nohighlight">\(M\)</span> is the larger mass (<span class="math notranslate nohighlight">\(M_\odot\)</span>), <span class="math notranslate nohighlight">\(\mu\)</span> is the compact object mass (<span class="math notranslate nohighlight">\(M_\odot\)</span>), <span class="math notranslate nohighlight">\(p_0\)</span> is the initial semi-latus rectum (dimensionless), <span class="math notranslate nohighlight">\(e_0\)</span> is the initial eccentricity, and the final two are the initial phases in <span class="math notranslate nohighlight">\(\phi, r\)</span>.</p>
-<div class="section" id="FastSchwarzschildEccentricFlux">
-<h2><a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.waveform.FastSchwarzschildEccentricFlux">FastSchwarzschildEccentricFlux</a><a class="headerlink" href="#FastSchwarzschildEccentricFlux" title="Permalink to this headline">¶</a></h2>
+<section id="FastSchwarzschildEccentricFlux">
+<h2><a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.waveform.FastSchwarzschildEccentricFlux">FastSchwarzschildEccentricFlux</a><a class="headerlink" href="#FastSchwarzschildEccentricFlux" title="Permalink to this heading"></a></h2>
 <p>The fast waveform generates sparse trajectories with ~100 points. Amplitudes for all modes are then determined with ROMAN network. From these amplitudes, we perform mode selection to remove modes that do not contribute significantly to the waveform. The remaining modes and phases are then interpolated with cubic splines. In one final step, the amplitude, phase, and angular harmonic information is then combined with an interpolated summation.</p>
 <ul class="simple">
 <li><p>Trajectory Module: <a class="reference external" href="https://bhptoolkit.org/FastEMRIWaveforms/html/user/traj.html#few.trajectory.flux.RunSchwarzEccFluxInspiral">RunSchwarzEccFluxInspiral</a></p></li>
@@ -579,8 +498,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">use_gpu</span> <span class="o">=</span> <span class="kc">False</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">use_gpu</span> <span class="o">=</span> <span class="kc">False</span>
 
 <span class="c1"># keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)</span>
 <span class="n">inspiral_kwargs</span><span class="o">=</span><span class="p">{</span>
@@ -638,8 +556,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># parameters</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># parameters</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mf">1e6</span>
 <span class="n">mu</span> <span class="o">=</span> <span class="mf">1e2</span>
 <span class="n">p0</span> <span class="o">=</span> <span class="mf">12.0</span>
@@ -656,8 +573,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">dt</span> <span class="o">=</span> <span class="mf">10.0</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dt</span> <span class="o">=</span> <span class="mf">10.0</span>
 <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">wave</span><span class="p">))</span> <span class="o">*</span> <span class="n">dt</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">real</span><span class="p">[:</span><span class="mi">1000</span><span class="p">])</span>
@@ -685,8 +601,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1000</span><span class="p">:],</span> <span class="n">wave</span><span class="o">.</span><span class="n">real</span><span class="p">[</span><span class="o">-</span><span class="mi">1000</span><span class="p">:])</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1000</span><span class="p">:],</span> <span class="n">wave</span><span class="o">.</span><span class="n">real</span><span class="p">[</span><span class="o">-</span><span class="mi">1000</span><span class="p">:])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1000</span><span class="p">:],</span> <span class="n">wave</span><span class="o">.</span><span class="n">imag</span><span class="p">[</span><span class="o">-</span><span class="mi">1000</span><span class="p">:])</span>
 </pre></div>
 </div>
@@ -712,8 +627,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># parameters</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># parameters</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mf">1e5</span>
 <span class="n">mu</span> <span class="o">=</span> <span class="mf">1e1</span>
 <span class="n">p0</span> <span class="o">=</span> <span class="mf">8.0</span>
@@ -756,8 +670,7 @@ flux-based trajectories in a Schwarzschild background. The fast model can be run
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">dt</span> <span class="o">=</span> <span class="mf">15.0</span> <span class="c1"># seconds</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dt</span> <span class="o">=</span> <span class="mf">15.0</span> <span class="c1"># seconds</span>
 <span class="n">T</span> <span class="o">=</span> <span class="mf">0.005</span>  <span class="c1"># years</span>
 <span class="n">wave1</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>  <span class="c1"># default</span>
 
@@ -795,16 +708,15 @@ wave1 used 451 modes. wave2 used 25 modes. The mismatch was 0.001212066171739856
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_14_1.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_14_1.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Waveform-scaled-by-distance-(generated-in-source-frame)">
-<h2>Waveform scaled by distance (generated in source frame)<a class="headerlink" href="#Waveform-scaled-by-distance-(generated-in-source-frame)" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Waveform-scaled-by-distance-(generated-in-source-frame)">
+<h2>Waveform scaled by distance (generated in source frame)<a class="headerlink" href="#Waveform-scaled-by-distance-(generated-in-source-frame)" title="Permalink to this heading"></a></h2>
 <p>The FastSchwarzschildEccentricFlux waveform is generated with source frame viewing angles. For all previous examples, the <code class="docutils literal notranslate"><span class="pre">dist</span></code> kwarg was left blank. To scale the waveform by the distance, you can add the distance in Gpc as a kwarg in the waveform generation class.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># parameters</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># parameters</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mf">1e5</span>
 <span class="n">mu</span> <span class="o">=</span> <span class="mf">1e1</span>
 <span class="n">p0</span> <span class="o">=</span> <span class="mf">8.0</span>
@@ -841,17 +753,16 @@ wave1 used 451 modes. wave2 used 25 modes. The mismatch was 0.001212066171739856
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_17_1.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_17_1.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Producing-waveforms-with-the-generic-interface">
-<h2>Producing waveforms with the generic interface<a class="headerlink" href="#Producing-waveforms-with-the-generic-interface" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Producing-waveforms-with-the-generic-interface">
+<h2>Producing waveforms with the generic interface<a class="headerlink" href="#Producing-waveforms-with-the-generic-interface" title="Permalink to this heading"></a></h2>
 <p>Waveforms can also be generated through a generic interface (<a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.waveform.GenerateEMRIWaveform">GenerateEMRIWaveform</a>) where the specific waveform model is chosen with an argument. This can also be used to produce waveforms in the detector frame used for data analysis. This interface includes all EMRI parameters, including spin and inclination, as well as sky and orientation parameters. When a specific waveform model does not
 require certain parameters, the parameters will not affect the waveform generation. A detector-frame waveform in this case means <span class="math notranslate nohighlight">\(h_+,h_x\)</span> in the SSB-frame.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">gen_wave</span> <span class="o">=</span> <span class="n">GenerateEMRIWaveform</span><span class="p">(</span><span class="s2">&quot;FastSchwarzschildEccentricFlux&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gen_wave</span> <span class="o">=</span> <span class="n">GenerateEMRIWaveform</span><span class="p">(</span><span class="s2">&quot;FastSchwarzschildEccentricFlux&quot;</span><span class="p">)</span>
 
 <span class="c1"># parameters</span>
 <span class="n">T</span> <span class="o">=</span> <span class="mf">0.01</span>  <span class="c1"># years</span>
@@ -910,9 +821,9 @@ require certain parameters, the parameters will not affect the waveform generati
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_20_1.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_20_1.png" />
 </div>
 </div>
-</div>
-<div class="section" id="SlowSchwarzschildEccentricFlux">
-<h2><a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.waveform.SlowSchwarzschildEccentricFlux">SlowSchwarzschildEccentricFlux</a><a class="headerlink" href="#SlowSchwarzschildEccentricFlux" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="SlowSchwarzschildEccentricFlux">
+<h2><a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.waveform.SlowSchwarzschildEccentricFlux">SlowSchwarzschildEccentricFlux</a><a class="headerlink" href="#SlowSchwarzschildEccentricFlux" title="Permalink to this heading"></a></h2>
 <p>The slow waveform generates dense trajectories with at every <code class="docutils literal notranslate"><span class="pre">dt</span></code> seconds within <code class="docutils literal notranslate"><span class="pre">T</span></code> years. Amplitudes for all modes are then determined with a 2d bicubic spline over semi-latus rectum and eccentricity for each mode. This is done at each dense time step. We do not perform mode selection because this is the slow and most accurate model against which we compare the fast model. The final summation is a direct combination of phase, amplitude, and Ylm information at each dense timestep.</p>
 <p><strong>Note</strong>: One thing to pay attention to with the slow waveform is batch size. This is determined by memory limits. Usually anything under ~10000 is fine.</p>
 <ul class="simple">
@@ -926,8 +837,7 @@ require certain parameters, the parameters will not affect the waveform generati
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">use_gpu</span> <span class="o">=</span> <span class="kc">False</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">use_gpu</span> <span class="o">=</span> <span class="kc">False</span>
 
 <span class="c1"># keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)</span>
 <span class="n">inspiral_kwargs</span><span class="o">=</span><span class="p">{</span>
@@ -987,8 +897,7 @@ require certain parameters, the parameters will not affect the waveform generati
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fast_wave</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dist</span><span class="o">=</span><span class="n">dist</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fast_wave</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dist</span><span class="o">=</span><span class="n">dist</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">slow_wave</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">fast_wave</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
@@ -1013,24 +922,23 @@ Mismatch: 2.308998239264337e-05
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_24_1.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_24_1.png" />
 </div>
 </div>
-</div>
-</div>
-<div class="section" id="Trajectory-Module">
-<h1>Trajectory Module<a class="headerlink" href="#Trajectory-Module" title="Permalink to this headline">¶</a></h1>
+</section>
+</section>
+<section id="Trajectory-Module">
+<h1>Trajectory Module<a class="headerlink" href="#Trajectory-Module" title="Permalink to this heading"></a></h1>
 <p>The trajectory module generates orbital and phase trajectories, <span class="math notranslate nohighlight">\(G(t)\)</span>, for an EMRI orbit:</p>
 <p><span class="math">\begin{equation}
 G(t) = \{p(t), e(t), \iota(t), \Phi_\phi(t), \Phi_\theta(t), \Phi_r(t)\}
 \end{equation}</span></p>
 <p>with inputs <span class="math notranslate nohighlight">\(M, \mu, p_0, e_0, \iota_0, \Phi_{\phi,0}, \Phi_{\theta,0}, \Phi_{r, 0}\)</span>. <span class="math notranslate nohighlight">\(M\)</span> is the larger mass (<span class="math notranslate nohighlight">\(M_\odot\)</span>), <span class="math notranslate nohighlight">\(\mu\)</span> is the compact object mass (<span class="math notranslate nohighlight">\(M_\odot\)</span>), <span class="math notranslate nohighlight">\(p_0\)</span> is the initial semi-latus rectum (dimensionless), <span class="math notranslate nohighlight">\(e_0\)</span> is the initial eccentricity, and the final three are the initial phases in <span class="math notranslate nohighlight">\(\phi, \theta, r\)</span>. When working in equatorial orbits, <span class="math notranslate nohighlight">\(\iota(t)\)</span> and <span class="math notranslate nohighlight">\(\Phi_\theta(t)\)</span> are zero. The trajectory module also produces the
 gravitational wave flux for normalization information.</p>
-<div class="section" id="Run-a-basic-trajectory">
-<h2>Run a basic trajectory<a class="headerlink" href="#Run-a-basic-trajectory" title="Permalink to this headline">¶</a></h2>
+<section id="Run-a-basic-trajectory">
+<h2>Run a basic trajectory<a class="headerlink" href="#Run-a-basic-trajectory" title="Permalink to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># initialize trajectory class</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># initialize trajectory class</span>
 <span class="n">traj</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="s2">&quot;SchwarzEccFlux&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -1039,8 +947,7 @@ gravitational wave flux for normalization information.</p>
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># set initial parameters</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># set initial parameters</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mf">1e5</span>
 <span class="n">mu</span> <span class="o">=</span> <span class="mf">1e1</span>
 <span class="n">p0</span> <span class="o">=</span> <span class="mf">10.0</span>
@@ -1056,8 +963,7 @@ gravitational wave flux for normalization information.</p>
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">wspace</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">set_size_inches</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
 <span class="n">axes</span> <span class="o">=</span> <span class="n">axes</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
@@ -1081,15 +987,14 @@ gravitational wave flux for normalization information.</p>
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_30_0.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_30_0.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Defining-a-new-t-vector">
-<h2>Defining a new t vector<a class="headerlink" href="#Defining-a-new-t-vector" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Defining-a-new-t-vector">
+<h2>Defining a new t vector<a class="headerlink" href="#Defining-a-new-t-vector" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">new_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">new_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
 
 <span class="c1"># set initial parameters</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mf">1e5</span>
@@ -1107,8 +1012,7 @@ gravitational wave flux for normalization information.</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">Phi_r1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;$\Phi_r$&#39;</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;t1 max:&#39;</span><span class="p">,</span> <span class="n">t1</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="s1">&#39;t2 max:&#39;</span><span class="p">,</span> <span class="n">t2</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1135,15 +1039,14 @@ t1 max: 999999.0 t2 max: 464363.0
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_32_2.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_32_2.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Defining-dt-and-T">
-<h2>Defining dt and T<a class="headerlink" href="#Defining-dt-and-T" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Defining-dt-and-T">
+<h2>Defining dt and T<a class="headerlink" href="#Defining-dt-and-T" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">dt</span> <span class="o">=</span> <span class="mf">15.0</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dt</span> <span class="o">=</span> <span class="mf">15.0</span>
 <span class="n">T</span> <span class="o">=</span> <span class="mf">0.005</span> <span class="c1"># years</span>
 
 <span class="c1"># set initial parameters</span>
@@ -1180,8 +1083,7 @@ t1 max: 999999.0 t2 max: 464363.0
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">t</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">t</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -1194,15 +1096,14 @@ t1 max: 999999.0 t2 max: 464363.0
 157785.0
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Getting-dimensionless-time-(t/M)">
-<h2>Getting dimensionless time (<span class="math notranslate nohighlight">\(t/M\)</span>)<a class="headerlink" href="#Getting-dimensionless-time-(t/M)" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Getting-dimensionless-time-(t/M)">
+<h2>Getting dimensionless time (<span class="math notranslate nohighlight">\(t/M\)</span>)<a class="headerlink" href="#Getting-dimensionless-time-(t/M)" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># set initial parameters</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># set initial parameters</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mf">1e5</span>
 <span class="n">mu</span> <span class="o">=</span> <span class="mf">1e1</span>
 <span class="n">p0</span> <span class="o">=</span> <span class="mf">10.0</span>
@@ -1232,15 +1133,14 @@ Dimensionless time step: 20.30254435033953
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_37_1.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_37_1.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Dense-Stepping">
-<h2>Dense Stepping<a class="headerlink" href="#Dense-Stepping" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Dense-Stepping">
+<h2>Dense Stepping<a class="headerlink" href="#Dense-Stepping" title="Permalink to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># initialize trajectory class</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># initialize trajectory class</span>
 <span class="n">dense_traj</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="s2">&quot;SchwarzEccFlux&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -1249,8 +1149,7 @@ Dimensionless time step: 20.30254435033953
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">dt</span> <span class="o">=</span> <span class="mf">15.0</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dt</span> <span class="o">=</span> <span class="mf">15.0</span>
 <span class="n">T</span> <span class="o">=</span> <span class="mf">0.005</span> <span class="c1"># years</span>
 
 <span class="c1"># set initial parameters</span>
@@ -1268,8 +1167,7 @@ Dimensionless time step: 20.30254435033953
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">t</span><span class="o">.</span><span class="n">shape</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">t</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
 </div>
 </div>
@@ -1282,20 +1180,19 @@ Dimensionless time step: 20.30254435033953
 (10520,)
 </pre></div></div>
 </div>
-</div>
-</div>
-<div class="section" id="Amplitude-Module">
-<h1>Amplitude Module<a class="headerlink" href="#Amplitude-Module" title="Permalink to this headline">¶</a></h1>
+</section>
+</section>
+<section id="Amplitude-Module">
+<h1>Amplitude Module<a class="headerlink" href="#Amplitude-Module" title="Permalink to this heading"></a></h1>
 <p>The amplitude module generates the complex mode amplitudes for each harmonic mode requested, <span class="math notranslate nohighlight">\(A_{lmkn}(t)\)</span> (<span class="math notranslate nohighlight">\(k=0\)</span> for equatorial orbits). With Schwarzschild eccentric amplitudes, the user provides <span class="math notranslate nohighlight">\(p\)</span> and <span class="math notranslate nohighlight">\(e\)</span> as arrays and is returned the requested Teukolsky modes in a 2D array of shape (trajectory length, number of modes).</p>
-<div class="section" id="ROMAN-amplitude-generation">
-<h2>ROMAN amplitude generation<a class="headerlink" href="#ROMAN-amplitude-generation" title="Permalink to this headline">¶</a></h2>
+<section id="ROMAN-amplitude-generation">
+<h2>ROMAN amplitude generation<a class="headerlink" href="#ROMAN-amplitude-generation" title="Permalink to this heading"></a></h2>
 <p>ROMAN uses a reduced order model representing the mode amplitude space. It then trains a neural network on this reduced model. The neural network is evaluated and the resulting matrix is transformed from the reduced basis back to the full mode space.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># initialize ROMAN class</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># initialize ROMAN class</span>
 <span class="n">amp</span> <span class="o">=</span> <span class="n">RomanAmplitude</span><span class="p">(</span><span class="n">max_init_len</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>  <span class="c1"># max_init_len creates memory buffers</span>
 </pre></div>
 </div>
@@ -1304,8 +1201,7 @@ Dimensionless time step: 20.30254435033953
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">14.0</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">14.0</span><span class="p">)</span>
 <span class="n">e</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">)</span>
 
 <span class="n">p_all</span><span class="p">,</span> <span class="n">e_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">temp</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span> <span class="k">for</span> <span class="n">temp</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">)])</span>
@@ -1350,8 +1246,7 @@ Text(0, 0.5, &#39;e&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># (2, 2, 0) and (7, -3, 1) modes</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># (2, 2, 0) and (7, -3, 1) modes</span>
 <span class="n">specific_modes</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
 
 <span class="c1"># notice this returns a dictionary with keys as the mode tuple and values as the mode values at all trajectory points</span>
@@ -1401,16 +1296,15 @@ Text(0, 0.5, &#39;e&#39;)
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_49_2.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_49_2.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Interpolate-modes-with-bicubic-spline">
-<h2>Interpolate modes with bicubic spline<a class="headerlink" href="#Interpolate-modes-with-bicubic-spline" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Interpolate-modes-with-bicubic-spline">
+<h2>Interpolate modes with bicubic spline<a class="headerlink" href="#Interpolate-modes-with-bicubic-spline" title="Permalink to this heading"></a></h2>
 <p>For this amplitude generator, amplitudes are interpolated in 2D (<span class="math notranslate nohighlight">\(p\)</span> and <span class="math notranslate nohighlight">\(e\)</span>) using bicubic splines. They are then evaluated for the desired modes. This is used to produce our slow waveform. This will also not scale well with dimensionality. <strong>Note</strong>: Specific modes can be selected in the same way as above.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># initialize class</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># initialize class</span>
 <span class="n">amp2</span> <span class="o">=</span> <span class="n">Interp2DAmplitude</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -1419,8 +1313,7 @@ Text(0, 0.5, &#39;e&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">14.0</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">14.0</span><span class="p">)</span>
 <span class="n">e</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">)</span>
 
 <span class="n">p_all</span><span class="p">,</span> <span class="n">e_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">temp</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span> <span class="k">for</span> <span class="n">temp</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">)])</span>
@@ -1462,16 +1355,15 @@ Text(0, 0.5, &#39;e&#39;)
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_53_2.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_53_2.png" />
 </div>
 </div>
-</div>
-</div>
-<div class="section" id="Spin-weighted-spherical-harmonics">
-<h1>Spin-weighted spherical harmonics<a class="headerlink" href="#Spin-weighted-spherical-harmonics" title="Permalink to this headline">¶</a></h1>
+</section>
+</section>
+<section id="Spin-weighted-spherical-harmonics">
+<h1>Spin-weighted spherical harmonics<a class="headerlink" href="#Spin-weighted-spherical-harmonics" title="Permalink to this heading"></a></h1>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">few</span> <span class="o">=</span> <span class="n">FastSchwarzschildEccentricFlux</span><span class="p">()</span>  <span class="c1"># get mode information</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">few</span> <span class="o">=</span> <span class="n">FastSchwarzschildEccentricFlux</span><span class="p">()</span>  <span class="c1"># get mode information</span>
 
 <span class="n">ylm_gen</span> <span class="o">=</span> <span class="n">GetYlms</span><span class="p">(</span><span class="n">assume_positive_m</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">use_gpu</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -1500,8 +1392,7 @@ Text(0, 0.5, &#39;e&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">ylm_gen</span> <span class="o">=</span> <span class="n">GetYlms</span><span class="p">(</span><span class="n">assume_positive_m</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_gpu</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ylm_gen</span> <span class="o">=</span> <span class="n">GetYlms</span><span class="p">(</span><span class="n">assume_positive_m</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_gpu</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <span class="n">ls</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 <span class="n">ms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
@@ -1537,19 +1428,18 @@ Text(0, 0.5, &#39;e&#39;)
 (2,-0): (0.2897056515173922+0j)
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Mode-Selection">
-<h1>Mode Selection<a class="headerlink" href="#Mode-Selection" title="Permalink to this headline">¶</a></h1>
+</section>
+<section id="Mode-Selection">
+<h1>Mode Selection<a class="headerlink" href="#Mode-Selection" title="Permalink to this heading"></a></h1>
 <p>The mode selection module is paramount to the computational efficiency of this model. Below we show how we perform this selection operation by moving from a set of amplitudes to only those that contribute.</p>
-<div class="section" id="Mode-selection-by-power-contribution">
-<h2>Mode selection by power contribution<a class="headerlink" href="#Mode-selection-by-power-contribution" title="Permalink to this headline">¶</a></h2>
+<section id="Mode-selection-by-power-contribution">
+<h2>Mode selection by power contribution<a class="headerlink" href="#Mode-selection-by-power-contribution" title="Permalink to this heading"></a></h2>
 <p>Modes can also be weighted by a Power Spectral Density (PSD) function from your favorite sensitivity curve.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># first, lets get amplitudes for a trajectory</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># first, lets get amplitudes for a trajectory</span>
 <span class="n">traj</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="s2">&quot;SchwarzEccFlux&quot;</span><span class="p">)</span>
 
 <span class="c1"># parameters</span>
@@ -1591,15 +1481,14 @@ Text(0, 0.5, &#39;e&#39;)
 We reduced the mode content from 3843 modes to 874 modes.
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Mode-selection-by-noise-weighted-power-contribution">
-<h2>Mode selection by noise-weighted power contribution<a class="headerlink" href="#Mode-selection-by-noise-weighted-power-contribution" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Mode-selection-by-noise-weighted-power-contribution">
+<h2>Mode selection by noise-weighted power contribution<a class="headerlink" href="#Mode-selection-by-noise-weighted-power-contribution" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># produce sensitivity function</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># produce sensitivity function</span>
 
 <span class="n">noise</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">genfromtxt</span><span class="p">(</span><span class="s2">&quot;files/LPA.txt&quot;</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">f</span><span class="p">,</span> <span class="n">PSD</span> <span class="o">=</span> <span class="p">(</span>
@@ -1646,15 +1535,14 @@ We reduced the mode content from 3843 modes to 783 modes when using noise-weight
   &#34;New t array outside bounds of input t array. These points are filled with edge values.&#34;
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Compare-the-two-waves-with-and-without-noise-weighting">
-<h2>Compare the two waves with and without noise-weighting<a class="headerlink" href="#Compare-the-two-waves-with-and-without-noise-weighting" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Compare-the-two-waves-with-and-without-noise-weighting">
+<h2>Compare the two waves with and without noise-weighting<a class="headerlink" href="#Compare-the-two-waves-with-and-without-noise-weighting" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">mode_selector_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mode_selector_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
 
 <span class="n">noise_weighted_mode_selector_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">sensitivity_fn</span><span class="o">=</span><span class="n">sens_fn</span><span class="p">)</span>
 
@@ -1714,16 +1602,15 @@ noise-weighted modes: 447
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_66_1.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_66_1.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Specific-mode-selection">
-<h2>Specific mode selection<a class="headerlink" href="#Specific-mode-selection" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Specific-mode-selection">
+<h2>Specific mode selection<a class="headerlink" href="#Specific-mode-selection" title="Permalink to this heading"></a></h2>
 <p>The user can also select a specific set of modes to use in the waveform.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># l = 2, m = 2 wave</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># l = 2, m = 2 wave</span>
 <span class="n">specific_modes</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="mi">30</span><span class="p">,</span> <span class="mi">31</span><span class="p">)]</span>
 
 <span class="n">wave_22</span> <span class="o">=</span> <span class="n">few_base</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dist</span><span class="o">=</span><span class="n">dist</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">mode_selection</span><span class="o">=</span><span class="n">specific_modes</span><span class="p">)</span>
@@ -1749,16 +1636,15 @@ mismatch with full wave: 0.04836198716639961
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_69_1.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_69_1.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Turn-off-(-m)">
-<h2>Turn off (<span class="math notranslate nohighlight">\(-m\)</span>)<a class="headerlink" href="#Turn-off-(-m)" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Turn-off-(-m)">
+<h2>Turn off (<span class="math notranslate nohighlight">\(-m\)</span>)<a class="headerlink" href="#Turn-off-(-m)" title="Permalink to this heading"></a></h2>
 <p>By default, symmetry is used to generate <span class="math notranslate nohighlight">\(-m\)</span> modes. To turn this off and only use modes with (<span class="math notranslate nohighlight">\(m\)</span>), provide <code class="docutils literal notranslate"><span class="pre">False</span></code> to the <code class="docutils literal notranslate"><span class="pre">include_minus_m</span></code> kwarg. This only affects the waveform when <code class="docutils literal notranslate"><span class="pre">mode_selection</span></code> is a list of specific modes.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[33]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
 <span class="c1"># l = 2, m = 2 wave without m = -2</span>
 <span class="n">specific_modes</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="mi">30</span><span class="p">,</span> <span class="mi">31</span><span class="p">)]</span>
 
@@ -1778,8 +1664,7 @@ mismatch with full wave: 0.04836198716639961
 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;mismatch with 22 wave with + and - m:&#39;</span><span class="p">,</span> <span class="n">get_mismatch</span><span class="p">(</span><span class="n">wave_22_minus_m</span><span class="p">,</span> <span class="n">wave_22_pos_m</span><span class="p">))</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;mismatch with 22 original wave with adding + and - m&#39;</span><span class="p">,</span> <span class="n">get_mismatch</span><span class="p">(</span><span class="n">wave_22</span><span class="p">,</span> <span class="n">wave_22_pos_m</span> <span class="o">+</span> <span class="n">wave_22_minus_m</span><span class="p">))</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1798,18 +1683,17 @@ mismatch with 22 original wave with adding + and - m 0.0
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_72_1.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_72_1.png" />
 </div>
 </div>
-</div>
-</div>
-<div class="section" id="Parallelized-Cubic-Spline-Interpolation">
-<h1>Parallelized Cubic Spline Interpolation<a class="headerlink" href="#Parallelized-Cubic-Spline-Interpolation" title="Permalink to this headline">¶</a></h1>
+</section>
+</section>
+<section id="Parallelized-Cubic-Spline-Interpolation">
+<h1>Parallelized Cubic Spline Interpolation<a class="headerlink" href="#Parallelized-Cubic-Spline-Interpolation" title="Permalink to this heading"></a></h1>
 <p>A part of the Fast EMRI waveforms package is parallelized cubic spline interpolation. This generally means fitting and evaluating many splines in parallel with the same input x array. This is available for GPUs and CPUs (OMP). The user can perform this operation entirely in Python while leveraging <a class="reference external" href="https://cupy.dev/">CuPy</a> for GPUs. However, the evaluation will not be as efficient as when it is implemented properly in a customized kernel. The spline class
 (<a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html?highlight=modeselector#few.summation.interpolatedmodesum.CubicSplineInterpolant">CubicSplineInterpolant</a>) can provide an 1D flattened array of all spline coefficients for use in a custom CUDA kernel.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[34]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># let&#39;s take the amplitudes from the last step and spline those.</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># let&#39;s take the amplitudes from the last step and spline those.</span>
 <span class="c1"># We have to arange everything in the shape (ninterps, length)</span>
 <span class="c1"># We will split real and imaginary components</span>
 
@@ -1826,8 +1710,7 @@ mismatch with 22 original wave with adding + and - m 0.0
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># get new values</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># get new values</span>
 <span class="n">t_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1000</span><span class="p">)</span>
 
 <span class="c1"># notice the new shape is (ninterps, length) just like the inital input to the spline</span>
@@ -1863,8 +1746,7 @@ mismatch with 22 original wave with adding + and - m 0.0
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[36]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">spline</span><span class="o">.</span><span class="n">interp_array</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">spline</span><span class="o">.</span><span class="n">interp_array</span>
 </pre></div>
 </div>
 </div>
@@ -1878,19 +1760,18 @@ array([ 6.23856751e-06,  3.56609646e-06, -1.26237401e-06, ...,
         0.00000000e+00,  0.00000000e+00,  0.00000000e+00])
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Mode-Summation">
-<h1>Mode Summation<a class="headerlink" href="#Mode-Summation" title="Permalink to this headline">¶</a></h1>
+</section>
+<section id="Mode-Summation">
+<h1>Mode Summation<a class="headerlink" href="#Mode-Summation" title="Permalink to this heading"></a></h1>
 <p>Mode summation is the bottleneck of this calculation. We handle this in two ways: interpolation for fast waveforms and direct summation for slow waveforms. They both have the same interface and produce the same product. They take Teukolsky modes and phases and combine that information to create the waveform.</p>
-<div class="section" id="Interpolated-summation">
-<h2>Interpolated summation<a class="headerlink" href="#Interpolated-summation" title="Permalink to this headline">¶</a></h2>
+<section id="Interpolated-summation">
+<h2>Interpolated summation<a class="headerlink" href="#Interpolated-summation" title="Permalink to this heading"></a></h2>
 <p>To maximize efficiency we use the cubic spline discussed above to accelerate the computation with interpolation and parallelized summation (on the GPU or OpenMP). This class is <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/sum.html?highlight=interpolated%20mode%20sum#few.summation.interpolatedmodesum.InterpolatedModeSum">InterpolatedModeSum</a>.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">M</span> <span class="o">=</span> <span class="mf">1e6</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="mf">1e6</span>
 <span class="n">mu</span> <span class="o">=</span> <span class="mf">1e1</span>
 <span class="n">p0</span> <span class="o">=</span> <span class="mf">12.0</span>
 <span class="n">e0</span> <span class="o">=</span> <span class="mf">0.4</span>
@@ -1955,17 +1836,16 @@ array([ 6.23856751e-06,  3.56609646e-06, -1.26237401e-06, ...,
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_82_1.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_82_1.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Direct-summation">
-<h2>Direct summation<a class="headerlink" href="#Direct-summation" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Direct-summation">
+<h2>Direct summation<a class="headerlink" href="#Direct-summation" title="Permalink to this heading"></a></h2>
 <p>For the direct mode summation, <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/sum.html?highlight=interpolated%20mode%20sum#few.summation.directmodesum.DirectModeSum">DirectModeSum</a>, we are summing up all modes at each time step directly. So, no interpolation. However, in this example, we will use interpolation up front because we need amplitude and phase arrays at all time steps for the direct mode sum because the direct mode sum will not fill in time steps like the interpolated
 mode sum.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">interp_in</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">teuk_modes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">teuk_modes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">interp_in</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">teuk_modes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">teuk_modes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
 
 <span class="n">interp_in</span><span class="p">[:</span><span class="n">teuk_modes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">teuk_modes</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">real</span>
 <span class="n">interp_in</span><span class="p">[</span><span class="n">teuk_modes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">teuk_modes</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">imag</span>
@@ -2014,18 +1894,17 @@ Mismatch: 0.0
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_84_1.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_84_1.png" />
 </div>
 </div>
-</div>
-</div>
-<div class="section" id="Utility-functions">
-<h1>Utility functions<a class="headerlink" href="#Utility-functions" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="Get-options-for-installed-ODE-functions">
-<h2>Get options for installed ODE functions<a class="headerlink" href="#Get-options-for-installed-ODE-functions" title="Permalink to this headline">¶</a></h2>
+</section>
+</section>
+<section id="Utility-functions">
+<h1>Utility functions<a class="headerlink" href="#Utility-functions" title="Permalink to this heading"></a></h1>
+<section id="Get-options-for-installed-ODE-functions">
+<h2>Get options for installed ODE functions<a class="headerlink" href="#Get-options-for-installed-ODE-functions" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[39]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">few.utils.utility</span> <span class="kn">import</span> <span class="n">get_ode_function_options</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">few.utils.utility</span> <span class="kn">import</span> <span class="n">get_ode_function_options</span>
 
 <span class="n">out</span> <span class="o">=</span> <span class="n">get_ode_function_options</span><span class="p">()</span>
 
@@ -2044,16 +1923,15 @@ Options: [&#39;pn5&#39;, &#39;SchwarzEccFlux&#39;]
 Info: {&#39;pn5&#39;: {&#39;type&#39;: &#39;func&#39;, &#39;files&#39;: [], &#39;convert_Y&#39;: True, &#39;num_add_args&#39;: 0, &#39;background&#39;: &#39;Kerr&#39;, &#39;equatorial&#39;: False, &#39;circular&#39;: False}, &#39;SchwarzEccFlux&#39;: {&#39;type&#39;: &#39;class&#39;, &#39;files&#39;: [&#39;FluxNewMinusPNScaled_fixed_y_order.dat&#39;], &#39;num_add_args&#39;: 0, &#39;background&#39;: &#39;Schwarzschild&#39;, &#39;equatorial&#39;: True, &#39;circular&#39;: False, &#39;convert_Y&#39;: False}}
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Fundamental-Frequencies">
-<h2>Fundamental Frequencies<a class="headerlink" href="#Fundamental-Frequencies" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Fundamental-Frequencies">
+<h2>Fundamental Frequencies<a class="headerlink" href="#Fundamental-Frequencies" title="Permalink to this heading"></a></h2>
 <p>Get dimensionless fundamental frequencies from <a class="reference external" href="https://arxiv.org/abs/gr-qc/0202090">Schmidt 2002</a>:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[40]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">a</span> <span class="o">=</span> <span class="mf">0.5</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="mf">0.5</span>
 
 <span class="n">num</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
@@ -2086,16 +1964,15 @@ p               e               x       OmegaPhi        OmegaTheta      OmegaR
  [10.          0.4         0.4         0.02626744  0.02545863  0.01731413]]
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Separatrix-in-Generic-Kerr">
-<h2>Separatrix in Generic Kerr<a class="headerlink" href="#Separatrix-in-Generic-Kerr" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Separatrix-in-Generic-Kerr">
+<h2>Separatrix in Generic Kerr<a class="headerlink" href="#Separatrix-in-Generic-Kerr" title="Permalink to this heading"></a></h2>
 <p>Get the separatrix in generic Kerr from <a class="reference external" href="https://arxiv.org/abs/1912.07609">Stein &amp; Warburton 2020</a>:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[41]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">a</span> <span class="o">=</span> <span class="mf">0.5</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="mf">0.5</span>
 
 <span class="n">num</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="n">e</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
@@ -2127,16 +2004,15 @@ e               x       separatrix
  [0.4        0.4        5.86727763]]
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Get-Kerr-Constants-of-Motion-(E,-L,-Q)">
-<h2>Get Kerr Constants of Motion <span class="math notranslate nohighlight">\((E, L, Q)\)</span><a class="headerlink" href="#Get-Kerr-Constants-of-Motion-(E,-L,-Q)" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Get-Kerr-Constants-of-Motion-(E,-L,-Q)">
+<h2>Get Kerr Constants of Motion <span class="math notranslate nohighlight">\((E, L, Q)\)</span><a class="headerlink" href="#Get-Kerr-Constants-of-Motion-(E,-L,-Q)" title="Permalink to this heading"></a></h2>
 <p>Get the three constants of motion <span class="math notranslate nohighlight">\((E,L,Q)\)</span> in generic Kerr spacetime.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[42]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">a</span> <span class="o">=</span> <span class="mf">0.5</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="mf">0.5</span>
 
 <span class="n">num</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
@@ -2169,16 +2045,15 @@ p               e               x       E       L       Q
  [10.          0.4         0.4         0.96165365  1.49243756 11.70948848]]
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Convert-from-x_I-to-Y">
-<h2>Convert from <span class="math notranslate nohighlight">\(x_I\)</span> to <span class="math notranslate nohighlight">\(Y\)</span><a class="headerlink" href="#Convert-from-x_I-to-Y" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Convert-from-x_I-to-Y">
+<h2>Convert from <span class="math notranslate nohighlight">\(x_I\)</span> to <span class="math notranslate nohighlight">\(Y\)</span><a class="headerlink" href="#Convert-from-x_I-to-Y" title="Permalink to this heading"></a></h2>
 <p><span class="math notranslate nohighlight">\(Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}\)</span> is different than <span class="math notranslate nohighlight">\(x_I\equiv \cos{I}\)</span>, which is accepted for relativistic waveforms and in the generic waveform interface discussed above. <span class="math notranslate nohighlight">\(I\)</span> is the inclination angle of the orbital plane to the to equatorial plane.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[43]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">a</span> <span class="o">=</span> <span class="mf">0.5</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="mf">0.5</span>
 
 <span class="n">num</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
@@ -2229,16 +2104,15 @@ p               e               x       Y
  [10.          0.4         0.4         0.39977325]]
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Get-\mu-based-on-desired-duration-of-waveform">
-<h2>Get <span class="math notranslate nohighlight">\(\mu\)</span> based on desired duration of waveform<a class="headerlink" href="#Get-\mu-based-on-desired-duration-of-waveform" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Get-\mu-based-on-desired-duration-of-waveform">
+<h2>Get <span class="math notranslate nohighlight">\(\mu\)</span> based on desired duration of waveform<a class="headerlink" href="#Get-\mu-based-on-desired-duration-of-waveform" title="Permalink to this heading"></a></h2>
 <p>If you have a desired length of waveform to analyze, this function will give you the value of <span class="math notranslate nohighlight">\(\mu\)</span> that corresponds to the proper evolution time.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[44]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">traj_module</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="s2">&quot;SchwarzEccFlux&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">traj_module</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="s2">&quot;SchwarzEccFlux&quot;</span><span class="p">)</span>
 
 <span class="c1"># set initial parameters</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mf">1e6</span>
@@ -2274,16 +2148,15 @@ p               e               x       Y
 mu = 18.804088097128368 will create a waveform that is 1.5 years long, given the other input parameters.
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Get-p_0-based-on-desired-duration-of-waveform">
-<h2>Get <span class="math notranslate nohighlight">\(p_0\)</span> based on desired duration of waveform<a class="headerlink" href="#Get-p_0-based-on-desired-duration-of-waveform" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Get-p_0-based-on-desired-duration-of-waveform">
+<h2>Get <span class="math notranslate nohighlight">\(p_0\)</span> based on desired duration of waveform<a class="headerlink" href="#Get-p_0-based-on-desired-duration-of-waveform" title="Permalink to this heading"></a></h2>
 <p>If you have a desired length of waveform to analyze, this function will give you the value of <span class="math notranslate nohighlight">\(p_0\)</span> that corresponds to the proper evolution time.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[45]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">traj_module</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="s2">&quot;SchwarzEccFlux&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">traj_module</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="s2">&quot;SchwarzEccFlux&quot;</span><span class="p">)</span>
 
 <span class="c1"># set initial parameters</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mf">1e6</span>
@@ -2323,15 +2196,14 @@ mu = 18.804088097128368 will create a waveform that is 1.5 years long, given the
 p0 = 13.059790473435857 will create a waveform that is 1.5 years long, given the other input parameters.
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Set/get-omp_num_threads">
-<h2>Set/get <code class="docutils literal notranslate"><span class="pre">omp_num_threads</span></code><a class="headerlink" href="#Set/get-omp_num_threads" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Set/get-omp_num_threads">
+<h2>Set/get <code class="docutils literal notranslate"><span class="pre">omp_num_threads</span></code><a class="headerlink" href="#Set/get-omp_num_threads" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[46]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">few.utils.utility</span> <span class="kn">import</span> <span class="n">omp_get_num_threads</span><span class="p">,</span> <span class="n">omp_set_num_threads</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">few.utils.utility</span> <span class="kn">import</span> <span class="n">omp_get_num_threads</span><span class="p">,</span> <span class="n">omp_set_num_threads</span>
 
 <span class="n">omp_set_num_threads</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">omp_get_num_threads</span><span class="p">()</span>
@@ -2347,29 +2219,28 @@ p0 = 13.059790473435857 will create a waveform that is 1.5 years long, given the
 3
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Change-CUDA-device">
-<h2>Change CUDA device<a class="headerlink" href="#Change-CUDA-device" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Change-CUDA-device">
+<h2>Change CUDA device<a class="headerlink" href="#Change-CUDA-device" title="Permalink to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[47]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">few.utils.utility</span> <span class="kn">import</span> <span class="n">cuda_set_device</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">few.utils.utility</span> <span class="kn">import</span> <span class="n">cuda_set_device</span>
 </pre></div>
 </div>
 </div>
-</div>
-</div>
-<div class="section" id="Creating-modules">
-<h1>Creating modules<a class="headerlink" href="#Creating-modules" title="Permalink to this headline">¶</a></h1>
+</section>
+</section>
+<section id="Creating-modules">
+<h1>Creating modules<a class="headerlink" href="#Creating-modules" title="Permalink to this heading"></a></h1>
 <p>In addition to using our built-in modules and waveforms, you can easily create your own module or waveform. Below is an example of creating your own trajectory module and using it in a custom waveform. If you can get a reasonably fast trajectory from your specific brand of EMRI physics, you can be generating waveforms in no time! Please see the <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/">documentation</a> on this for more details on the constructions behind this.</p>
 <p><strong>Important Note</strong>: If you do use this package to examine EMRI analysis problems, please contact the authors of this code (see docs) about possible collaboration and/or contribution.</p>
-<div class="section" id="Post-Newtonian-trajectory">
-<h2>Post-Newtonian trajectory<a class="headerlink" href="#Post-Newtonian-trajectory" title="Permalink to this headline">¶</a></h2>
+<section id="Post-Newtonian-trajectory">
+<h2>Post-Newtonian trajectory<a class="headerlink" href="#Post-Newtonian-trajectory" title="Permalink to this heading"></a></h2>
 <p>The example will be to implement a Post-Newtonian trajectory in a Schwarzschild eccentric waveform. This will be done purely in Python. However, most of our modules have backends in C/C++/CUDA for maximum efficiency. If you have a trajectory in python and want to see if it can be ported for speed, please contact the authors.</p>
 <p>To get started, we will import an integrator (<a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.DOP853.html#scipy.integrate.DOP853">DOP853</a>) and a library for elliptical integrals that mirrors the mathematica format <code class="docutils literal notranslate"><span class="pre">mpmath</span></code>. You can run:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">mpmath</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install mpmath
 </pre></div>
 </div>
 <p>in your conda environment to attain that library.</p>
@@ -2382,8 +2253,7 @@ interfaces, but ensures the strict interface will be the same for all trajectory
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[48]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># we need to import an integrator and elliptic integrals</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># we need to import an integrator and elliptic integrals</span>
 <span class="kn">from</span> <span class="nn">mpmath</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">scipy.integrate</span> <span class="kn">import</span> <span class="n">DOP853</span>
 
@@ -2520,15 +2390,14 @@ interfaces, but ensures the strict interface will be the same for all trajectory
 </pre></div>
 </div>
 </div>
-</div>
-<div class="section" id="Test-your-trajectory">
-<h2>Test your trajectory<a class="headerlink" href="#Test-your-trajectory" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Test-your-trajectory">
+<h2>Test your trajectory<a class="headerlink" href="#Test-your-trajectory" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[49]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">M</span> <span class="o">=</span> <span class="mf">1e6</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="mf">1e6</span>
 <span class="n">mu</span> <span class="o">=</span> <span class="mf">1e1</span>
 <span class="n">p0</span> <span class="o">=</span> <span class="mf">10.0</span>
 <span class="n">e0</span> <span class="o">=</span> <span class="mf">0.7</span>
@@ -2567,8 +2436,7 @@ interfaces, but ensures the strict interface will be the same for all trajectory
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[50]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">test</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">test</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">flux</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">flux</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;p&#39;</span><span class="p">)</span>
@@ -2595,8 +2463,7 @@ Text(0, 0.5, &#39;p&#39;)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[51]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">test</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">test</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">flux</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">flux</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;e&#39;</span><span class="p">)</span>
@@ -2619,9 +2486,9 @@ Text(0, 0.5, &#39;e&#39;)
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_118_1.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_118_1.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Implement-ODE-in-C/C++">
-<h2>Implement ODE in C/C++<a class="headerlink" href="#Implement-ODE-in-C/C++" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Implement-ODE-in-C/C++">
+<h2>Implement ODE in C/C++<a class="headerlink" href="#Implement-ODE-in-C/C++" title="Permalink to this heading"></a></h2>
 <p>If you want to implement a set of ODE equations in C/C++, you can add your function to <code class="docutils literal notranslate"><span class="pre">src/ode_base.cc</span></code>. You have to create the file if you have not already. Make sure it is in the <code class="docutils literal notranslate"><span class="pre">src/</span></code> directory. When you run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup</span> <span class="pre">install</span></code>, the installer will build a full file of ODEs and take care of all of the backend aspects to the integration. <strong>You only have to implement the ODE</strong>. You identify the ODE functions with <code class="docutils literal notranslate"><span class="pre">__deriv__</span></code> decorator. <code class="docutils literal notranslate"><span class="pre">#define</span></code> is then used to give extra
 necessary information on the function. Options are:</p>
 <ul class="simple">
@@ -2634,16 +2501,16 @@ necessary information on the function. Options are:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">#define</span> <span class="pre">{waveform</span> <span class="pre">function</span> <span class="pre">name}_citation{citation</span> <span class="pre">number}</span> <span class="pre">{citation</span> <span class="pre">name}</span></code>: Citations for the function. <code class="docutils literal notranslate"><span class="pre">citation</span> <span class="pre">name</span></code> should be the name of the variable the citation is assigned to in <code class="docutils literal notranslate"><span class="pre">few.utils.citations</span></code>.</p></li>
 </ul>
 <p>The <code class="docutils literal notranslate"><span class="pre">__deriv__</span></code> function must be of the form:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="p">{</span><span class="n">functionname</span><span class="p">}(</span><span class="n">double</span><span class="o">*</span> <span class="n">pdot</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">edot</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">Ydot</span><span class="p">,</span>
-                  <span class="n">double</span><span class="o">*</span> <span class="n">Omega_phi</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">Omega_theta</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">Omega_r</span><span class="p">,</span>
-                  <span class="n">double</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">double</span> <span class="n">a</span><span class="p">,</span> <span class="n">double</span> <span class="n">p</span><span class="p">,</span> <span class="n">double</span> <span class="n">e</span><span class="p">,</span> <span class="n">double</span> <span class="n">Y</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">additional_args</span><span class="p">)</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void {functionname}(double* pdot, double* edot, double* Ydot,
+                  double* Omega_phi, double* Omega_theta, double* Omega_r,
+                  double epsilon, double a, double p, double e, double Y, double* additional_args)
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">double*</span></code> args, except <code class="docutils literal notranslate"><span class="pre">additional_args</span></code>, represent pointers to doubles representing the output derivative values. <code class="docutils literal notranslate"><span class="pre">double</span></code> args are input values. <code class="docutils literal notranslate"><span class="pre">additional_args</span></code> is a pointer to a double array that holds any extra arguments to be included.</p>
-<div class="section" id="Analytic-functions-that-do-not-need-storage">
-<h3>Analytic functions that do not need storage<a class="headerlink" href="#Analytic-functions-that-do-not-need-storage" title="Permalink to this headline">¶</a></h3>
+<section id="Analytic-functions-that-do-not-need-storage">
+<h3>Analytic functions that do not need storage<a class="headerlink" href="#Analytic-functions-that-do-not-need-storage" title="Permalink to this heading"></a></h3>
 <p>If the ODE is purely analytic, a function will work. Here is an example with the 5PN trajectory (see<code class="docutils literal notranslate"><span class="pre">include/ode_base_example.cc</span></code>):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>#define pn5_Y
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#define pn5_Y
 #define pn5_citation1 pn5_citation
 __deriv__
 void pn5(double* pdot, double* edot, double* Ydot,
@@ -2673,125 +2540,124 @@ void pn5(double* pdot, double* edot, double* Ydot,
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">#define</span> <span class="pre">pn5_y</span></code> indicates the function integrates in <span class="math notranslate nohighlight">\(Y\)</span> rather than <span class="math notranslate nohighlight">\(x_I\)</span>.</p>
-</div>
-<div class="section" id="Functions-that-require-storage">
-<h3>Functions that require storage<a class="headerlink" href="#Functions-that-require-storage" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="Functions-that-require-storage">
+<h3>Functions that require storage<a class="headerlink" href="#Functions-that-require-storage" title="Permalink to this heading"></a></h3>
 <p>If your function requires the storage of files or interpolants, you can also build your ODE as a class. In this case, it must have a constructor, destructor, and method called <code class="docutils literal notranslate"><span class="pre">deriv_func</span></code> with the ODEs.</p>
 <p>Here is the implementation for the flux driven trajectory (see<code class="docutils literal notranslate"><span class="pre">include/ode_base_example.cc</span></code>):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Class</span> <span class="n">to</span> <span class="n">carry</span> <span class="n">gsl</span> <span class="n">interpolants</span> <span class="k">for</span> <span class="n">the</span> <span class="n">inspiral</span> <span class="n">data</span>
-<span class="o">//</span> <span class="n">also</span> <span class="n">executes</span> <span class="n">inspiral</span> <span class="n">calculations</span>
-<span class="n">SchwarzEccFlux</span><span class="p">::</span><span class="n">SchwarzEccFlux</span><span class="p">(</span><span class="n">std</span><span class="p">::</span><span class="n">string</span> <span class="n">few_dir</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">interps</span> <span class="o">=</span> <span class="n">new</span> <span class="n">interp_params</span><span class="p">;</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>// Class to carry gsl interpolants for the inspiral data
+// also executes inspiral calculations
+SchwarzEccFlux::SchwarzEccFlux(std::string few_dir)
+{
+    interps = new interp_params;
 
-    <span class="o">//</span> <span class="n">prepare</span> <span class="n">the</span> <span class="n">data</span>
-    <span class="o">//</span> <span class="n">python</span> <span class="n">will</span> <span class="n">download</span> <span class="n">the</span> <span class="n">data</span> <span class="k">if</span>
-    <span class="o">//</span> <span class="n">the</span> <span class="n">user</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">have</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">correct</span> <span class="n">place</span>
-    <span class="n">load_and_interpolate_flux_data</span><span class="p">(</span><span class="n">interps</span><span class="p">,</span> <span class="n">few_dir</span><span class="p">);</span>
-    <span class="o">//</span><span class="n">load_and_interpolate_amp_vec_norm_data</span><span class="p">(</span><span class="o">&amp;</span><span class="n">amp_vec_norm_interp</span><span class="p">,</span> <span class="n">few_dir</span><span class="p">);</span>
-<span class="p">}</span>
+    // prepare the data
+    // python will download the data if
+    // the user does not have it in the correct place
+    load_and_interpolate_flux_data(interps, few_dir);
+    //load_and_interpolate_amp_vec_norm_data(&amp;amp_vec_norm_interp, few_dir);
+}
 
-<span class="c1">#define SchwarzEccFlux_num_add_args 0</span>
-<span class="c1">#define SchwarzEccFlux_spinless</span>
-<span class="c1">#define SchwarzEccFlux_equatorial</span>
-<span class="c1">#define SchwarzEccFlux_file1 FluxNewMinusPNScaled_fixed_y_order.dat</span>
-<span class="n">__deriv__</span>
-<span class="n">void</span> <span class="n">SchwarzEccFlux</span><span class="p">::</span><span class="n">deriv_func</span><span class="p">(</span><span class="n">double</span><span class="o">*</span> <span class="n">pdot</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">edot</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">xdot</span><span class="p">,</span>
-                  <span class="n">double</span><span class="o">*</span> <span class="n">Omega_phi</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">Omega_theta</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">Omega_r</span><span class="p">,</span>
-                  <span class="n">double</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">double</span> <span class="n">a</span><span class="p">,</span> <span class="n">double</span> <span class="n">p</span><span class="p">,</span> <span class="n">double</span> <span class="n">e</span><span class="p">,</span> <span class="n">double</span> <span class="n">x</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">additional_args</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">if</span> <span class="p">((</span><span class="mf">6.0</span> <span class="o">+</span> <span class="mf">2.</span> <span class="o">*</span> <span class="n">e</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">p</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="o">*</span><span class="n">pdot</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-        <span class="o">*</span><span class="n">edot</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-        <span class="o">*</span><span class="n">xdot</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-        <span class="k">return</span><span class="p">;</span>
-    <span class="p">}</span>
+#define SchwarzEccFlux_num_add_args 0
+#define SchwarzEccFlux_spinless
+#define SchwarzEccFlux_equatorial
+#define SchwarzEccFlux_file1 FluxNewMinusPNScaled_fixed_y_order.dat
+__deriv__
+void SchwarzEccFlux::deriv_func(double* pdot, double* edot, double* xdot,
+                  double* Omega_phi, double* Omega_theta, double* Omega_r,
+                  double epsilon, double a, double p, double e, double x, double* additional_args)
+{
+    if ((6.0 + 2. * e) &gt; p)
+    {
+        *pdot = 0.0;
+        *edot = 0.0;
+        *xdot = 0.0;
+        return;
+    }
 
-    <span class="n">SchwarzschildGeoCoordinateFrequencies</span><span class="p">(</span><span class="n">Omega_phi</span><span class="p">,</span> <span class="n">Omega_r</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">);</span>
-    <span class="o">*</span><span class="n">Omega_theta</span> <span class="o">=</span> <span class="o">*</span><span class="n">Omega_phi</span><span class="p">;</span>
+    SchwarzschildGeoCoordinateFrequencies(Omega_phi, Omega_r, p, e);
+    *Omega_theta = *Omega_phi;
 
-    <span class="n">double</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">log</span><span class="p">((</span><span class="n">p</span> <span class="o">-</span><span class="mf">2.</span><span class="o">*</span><span class="n">e</span> <span class="o">-</span> <span class="mf">2.1</span><span class="p">));</span>
+    double y1 = log((p -2.*e - 2.1));
 
-    <span class="o">//</span> <span class="n">evaluate</span> <span class="n">ODEs</span><span class="p">,</span> <span class="n">starting</span> <span class="k">with</span> <span class="n">PN</span> <span class="n">contribution</span><span class="p">,</span> <span class="n">then</span> <span class="n">interpolating</span> <span class="n">over</span> <span class="n">remaining</span> <span class="n">flux</span> <span class="n">contribution</span>
+    // evaluate ODEs, starting with PN contribution, then interpolating over remaining flux contribution
 
-    <span class="n">double</span> <span class="n">yPN</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">((</span><span class="o">*</span><span class="n">Omega_phi</span><span class="p">),</span><span class="mf">2.</span><span class="o">/</span><span class="mf">3.</span><span class="p">);</span>
+    double yPN = pow((*Omega_phi),2./3.);
 
-    <span class="n">double</span> <span class="n">EdotPN</span> <span class="o">=</span> <span class="p">(</span><span class="mi">96</span> <span class="o">+</span> <span class="mi">292</span><span class="o">*</span><span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">37</span><span class="o">*</span><span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="mf">15.</span><span class="o">*</span><span class="n">Power</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span><span class="mf">3.5</span><span class="p">))</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="n">yPN</span><span class="p">,</span> <span class="mi">5</span><span class="p">);</span>
-    <span class="n">double</span> <span class="n">LdotPN</span> <span class="o">=</span> <span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="p">(</span><span class="mi">8</span> <span class="o">+</span> <span class="mi">7</span><span class="o">*</span><span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">)))</span><span class="o">/</span><span class="p">(</span><span class="mf">5.</span><span class="o">*</span><span class="n">Power</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">+</span> <span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span><span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="n">yPN</span><span class="p">,</span> <span class="mf">7.</span><span class="o">/</span><span class="mf">2.</span><span class="p">);</span>
+    double EdotPN = (96 + 292*Power(e,2) + 37*Power(e,4))/(15.*Power(1 - Power(e,2),3.5)) * pow(yPN, 5);
+    double LdotPN = (4*(8 + 7*Power(e,2)))/(5.*Power(-1 + Power(e,2),2)) * pow(yPN, 7./2.);
 
-    <span class="n">double</span> <span class="n">Edot</span> <span class="o">=</span> <span class="o">-</span><span class="n">epsilon</span><span class="o">*</span><span class="p">(</span><span class="n">interps</span><span class="o">-&gt;</span><span class="n">Edot</span><span class="o">-&gt;</span><span class="nb">eval</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span><span class="o">*</span><span class="nb">pow</span><span class="p">(</span><span class="n">yPN</span><span class="p">,</span><span class="mf">6.</span><span class="p">)</span> <span class="o">+</span> <span class="n">EdotPN</span><span class="p">);</span>
+    double Edot = -epsilon*(interps-&gt;Edot-&gt;eval(y1, e)*pow(yPN,6.) + EdotPN);
 
-    <span class="n">double</span> <span class="n">Ldot</span> <span class="o">=</span> <span class="o">-</span><span class="n">epsilon</span><span class="o">*</span><span class="p">(</span><span class="n">interps</span><span class="o">-&gt;</span><span class="n">Ldot</span><span class="o">-&gt;</span><span class="nb">eval</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span><span class="o">*</span><span class="nb">pow</span><span class="p">(</span><span class="n">yPN</span><span class="p">,</span><span class="mf">9.</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span> <span class="o">+</span> <span class="n">LdotPN</span><span class="p">);</span>
+    double Ldot = -epsilon*(interps-&gt;Ldot-&gt;eval(y1, e)*pow(yPN,9./2.) + LdotPN);
 
-    <span class="o">*</span><span class="n">pdot</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">Edot</span><span class="o">*</span><span class="n">Sqrt</span><span class="p">((</span><span class="mi">4</span><span class="o">*</span><span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">Power</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">+</span> <span class="n">p</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="mi">3</span> <span class="o">+</span> <span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">p</span><span class="p">))</span><span class="o">*</span><span class="p">(</span><span class="mi">3</span> <span class="o">+</span> <span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">p</span><span class="p">)</span><span class="o">*</span><span class="n">Power</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="mf">1.5</span><span class="p">)</span> <span class="o">+</span> <span class="n">Ldot</span><span class="o">*</span><span class="n">Power</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span> <span class="o">+</span> <span class="n">p</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">Sqrt</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span> <span class="o">-</span> <span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">p</span><span class="p">)))</span><span class="o">/</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">Power</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span> <span class="o">+</span> <span class="n">p</span><span class="p">,</span><span class="mi">2</span><span class="p">));</span>
+    *pdot = (-2*(Edot*Sqrt((4*Power(e,2) - Power(-2 + p,2))/(3 + Power(e,2) - p))*(3 + Power(e,2) - p)*Power(p,1.5) + Ldot*Power(-4 + p,2)*Sqrt(-3 - Power(e,2) + p)))/(4*Power(e,2) - Power(-6 + p,2));
 
-    <span class="o">//</span> <span class="n">handle</span> <span class="n">e</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">e</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="o">*</span><span class="n">edot</span> <span class="o">=</span> <span class="o">-</span><span class="p">((</span><span class="n">Edot</span><span class="o">*</span><span class="n">Sqrt</span><span class="p">((</span><span class="mi">4</span><span class="o">*</span><span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">Power</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">+</span> <span class="n">p</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="mi">3</span> <span class="o">+</span> <span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">p</span><span class="p">))</span><span class="o">*</span><span class="n">Power</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="mf">1.5</span><span class="p">)</span><span class="o">*</span>
-                  <span class="p">(</span><span class="mi">18</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span> <span class="o">+</span> <span class="n">p</span><span class="p">)</span> <span class="o">-</span> <span class="mi">9</span><span class="o">*</span><span class="n">p</span> <span class="o">+</span> <span class="n">Power</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span> <span class="o">+</span>
-                 <span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">+</span> <span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span><span class="o">*</span><span class="n">Ldot</span><span class="o">*</span><span class="n">Sqrt</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span> <span class="o">-</span> <span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">p</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">12</span> <span class="o">+</span> <span class="mi">4</span><span class="o">*</span><span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">8</span><span class="o">*</span><span class="n">p</span> <span class="o">+</span> <span class="n">Power</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="mi">2</span><span class="p">)))</span><span class="o">/</span>
-                <span class="p">(</span><span class="n">e</span><span class="o">*</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">Power</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">Power</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span> <span class="o">+</span> <span class="n">p</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span><span class="o">*</span><span class="n">p</span><span class="p">));</span>
-    <span class="p">}</span>
-    <span class="k">else</span>
-    <span class="p">{</span>
-        <span class="o">*</span><span class="n">edot</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-    <span class="p">}</span>
+    // handle e = 0.0
+    if (e &gt; 0.)
+    {
+        *edot = -((Edot*Sqrt((4*Power(e,2) - Power(-2 + p,2))/(3 + Power(e,2) - p))*Power(p,1.5)*
+                  (18 + 2*Power(e,4) - 3*Power(e,2)*(-4 + p) - 9*p + Power(p,2)) +
+                 (-1 + Power(e,2))*Ldot*Sqrt(-3 - Power(e,2) + p)*(12 + 4*Power(e,2) - 8*p + Power(p,2)))/
+                (e*(4*Power(e,2) - Power(-6 + p,2))*p));
+    }
+    else
+    {
+        *edot = 0.0;
+    }
 
-    <span class="o">*</span><span class="n">xdot</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-<span class="p">}</span>
+    *xdot = 0.0;
+}
 
-<span class="o">//</span> <span class="n">When</span> <span class="n">interfacing</span> <span class="k">with</span> <span class="n">cython</span><span class="p">,</span> <span class="n">it</span> <span class="n">helps</span> <span class="n">to</span> <span class="n">have</span>  <span class="n">dealloc</span> <span class="n">function</span> <span class="n">to</span> <span class="n">explicitly</span> <span class="n">call</span>
-<span class="o">//</span> <span class="n">rather</span> <span class="n">than</span> <span class="n">the</span> <span class="n">deconstructor</span>
-<span class="n">SchwarzEccFlux</span><span class="p">::</span><span class="o">~</span><span class="n">SchwarzEccFlux</span><span class="p">()</span>
-<span class="p">{</span>
+// When interfacing with cython, it helps to have  dealloc function to explicitly call
+// rather than the deconstructor
+SchwarzEccFlux::~SchwarzEccFlux()
+{
 
-    <span class="n">delete</span> <span class="n">interps</span><span class="o">-&gt;</span><span class="n">Edot</span><span class="p">;</span>
-    <span class="n">delete</span> <span class="n">interps</span><span class="o">-&gt;</span><span class="n">Ldot</span><span class="p">;</span>
-    <span class="n">delete</span> <span class="n">interps</span><span class="p">;</span>
+    delete interps-&gt;Edot;
+    delete interps-&gt;Ldot;
+    delete interps;
 
 
-<span class="p">}</span>
+}
 </pre></div>
 </div>
 <p>In this case, where the functions are implemented in a class, you will have to add the class to the header file: <code class="docutils literal notranslate"><span class="pre">include/ode_base.hh</span></code>. You do not need to add anything to the header file if you are working with functions and not classes. You will need to create this file if you have not already. Make sure it is in the <code class="docutils literal notranslate"><span class="pre">include/</span></code> directory. Here is an example of what is placed in the header file when working with classes (see <code class="docutils literal notranslate"><span class="pre">include/ode_base_example.hh</span></code>):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#include &quot;Interpolant.h&quot;</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#include &quot;Interpolant.h&quot;
 
-<span class="o">//</span> <span class="n">Used</span> <span class="n">to</span> <span class="k">pass</span> <span class="n">the</span> <span class="n">interpolants</span> <span class="n">to</span> <span class="n">the</span> <span class="n">ODE</span> <span class="n">solver</span>
-<span class="n">struct</span> <span class="n">interp_params</span><span class="p">{</span>
-    <span class="n">double</span> <span class="n">epsilon</span><span class="p">;</span>
-    <span class="n">Interpolant</span> <span class="o">*</span><span class="n">Edot</span><span class="p">;</span>
-    <span class="n">Interpolant</span> <span class="o">*</span><span class="n">Ldot</span><span class="p">;</span>
-<span class="p">};</span>
+// Used to pass the interpolants to the ODE solver
+struct interp_params{
+    double epsilon;
+    Interpolant *Edot;
+    Interpolant *Ldot;
+};
 
-<span class="k">class</span> <span class="nc">SchwarzEccFlux</span><span class="p">{</span>
-<span class="n">public</span><span class="p">:</span>
-    <span class="n">interp_params</span> <span class="o">*</span><span class="n">interps</span><span class="p">;</span>
-    <span class="n">Interpolant</span> <span class="o">*</span><span class="n">amp_vec_norm_interp</span><span class="p">;</span>
-    <span class="n">double</span> <span class="n">test</span><span class="p">;</span>
+class SchwarzEccFlux{
+public:
+    interp_params *interps;
+    Interpolant *amp_vec_norm_interp;
+    double test;
 
-    <span class="n">SchwarzEccFlux</span><span class="p">(</span><span class="n">std</span><span class="p">::</span><span class="n">string</span> <span class="n">few_dir</span><span class="p">);</span>
+    SchwarzEccFlux(std::string few_dir);
 
-    <span class="n">void</span> <span class="n">deriv_func</span><span class="p">(</span><span class="n">double</span><span class="o">*</span> <span class="n">pdot</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">edot</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">Ydot</span><span class="p">,</span>
-                      <span class="n">double</span><span class="o">*</span> <span class="n">Omega_phi</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">Omega_theta</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">Omega_r</span><span class="p">,</span>
-                      <span class="n">double</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">double</span> <span class="n">a</span><span class="p">,</span> <span class="n">double</span> <span class="n">p</span><span class="p">,</span> <span class="n">double</span> <span class="n">e</span><span class="p">,</span> <span class="n">double</span> <span class="n">Y</span><span class="p">,</span> <span class="n">double</span><span class="o">*</span> <span class="n">additional_args</span><span class="p">);</span>
-    <span class="o">~</span><span class="n">SchwarzEccFlux</span><span class="p">();</span>
-<span class="p">};</span>
+    void deriv_func(double* pdot, double* edot, double* Ydot,
+                      double* Omega_phi, double* Omega_theta, double* Omega_r,
+                      double epsilon, double a, double p, double e, double Y, double* additional_args);
+    ~SchwarzEccFlux();
+};
 </pre></div>
 </div>
-</div>
-</div>
-<div class="section" id="Make-a-waveform-model">
-<h2>Make a waveform model<a class="headerlink" href="#Make-a-waveform-model" title="Permalink to this headline">¶</a></h2>
+</section>
+</section>
+<section id="Make-a-waveform-model">
+<h2>Make a waveform model<a class="headerlink" href="#Make-a-waveform-model" title="Permalink to this heading"></a></h2>
 <p>Now we will create a waveform with our new trajectory model. To do this, we will start with <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/main.html#few.waveform.SchwarzschildEccentricWaveformBase">SchwarzschildEccentricWaveformBase</a>. This base class has already inherited from <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/main.html#few.utils.baseclasses.SchwarzschildEccentric">SchwarzschildEccentric</a>. It creates the common interface for all waveform modules (and how
 they interface with there constituent modules). A requirement when creating a module is to have properties describing the GPU capability of the waveform, as well as whether or not it allows for batching the waveform creation (after trajectory).</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[52]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="k">class</span> <span class="nc">FastSchwarzschildEccentricPn</span><span class="p">(</span><span class="n">SchwarzschildEccentricWaveformBase</span><span class="p">):</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">FastSchwarzschildEccentricPn</span><span class="p">(</span><span class="n">SchwarzschildEccentricWaveformBase</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inspiral_kwargs</span><span class="o">=</span><span class="p">{},</span>
@@ -2827,16 +2693,15 @@ they interface with there constituent modules). A requirement when creating a mo
 </pre></div>
 </div>
 </div>
-</div>
-<div class="section" id="Test-your-waveform">
-<h2>Test your waveform<a class="headerlink" href="#Test-your-waveform" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Test-your-waveform">
+<h2>Test your waveform<a class="headerlink" href="#Test-your-waveform" title="Permalink to this heading"></a></h2>
 <p>It will have the same interface as the other waveforms.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[53]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">test</span> <span class="o">=</span> <span class="n">FastSchwarzschildEccentricPn</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">test</span> <span class="o">=</span> <span class="n">FastSchwarzschildEccentricPn</span><span class="p">()</span>
 
 <span class="n">M</span> <span class="o">=</span> <span class="mf">1e6</span>
 <span class="n">mu</span> <span class="o">=</span> <span class="mf">1e1</span>
@@ -2852,16 +2717,14 @@ they interface with there constituent modules). A requirement when creating a mo
 <span class="n">wave1</span> <span class="o">=</span> <span class="n">test</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dist</span><span class="o">=</span><span class="n">dist</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">)</span>
 
 <span class="n">wave2</span> <span class="o">=</span> <span class="n">few</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">dist</span><span class="o">=</span><span class="n">dist</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">)</span>
-
-</pre></div>
+<br/></pre></div>
 </div>
 </div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[54]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># end of waveform is where we can see the difference</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># end of waveform is where we can see the difference</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wave1</span><span class="o">.</span><span class="n">real</span><span class="p">[</span><span class="o">-</span><span class="mi">6000</span><span class="p">:],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;pn&#39;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wave2</span><span class="o">.</span><span class="n">real</span><span class="p">[</span><span class="o">-</span><span class="mi">6000</span><span class="p">:],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;flux&#39;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
@@ -2885,10 +2748,10 @@ mismatch: 0.932708770516795
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_131_1.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_131_1.png" />
 </div>
 </div>
-</div>
-</div>
-<div class="section" id="Augmented-Analytic-Kludge-with-5PN-trajectory">
-<h1>Augmented Analytic Kludge with 5PN trajectory<a class="headerlink" href="#Augmented-Analytic-Kludge-with-5PN-trajectory" title="Permalink to this headline">¶</a></h1>
+</section>
+</section>
+<section id="Augmented-Analytic-Kludge-with-5PN-trajectory">
+<h1>Augmented Analytic Kludge with 5PN trajectory<a class="headerlink" href="#Augmented-Analytic-Kludge-with-5PN-trajectory" title="Permalink to this heading"></a></h1>
 <p>We have now implemented a new version of the Augmented Analytic Kludge with 5PN trajectories.</p>
 <p>Waveforms are generated based on the Augmented Analytic Kludge given in the <a class="reference external" href="https://github.com/alvincjk/EMRI_Kludge_Suite/">EMRI Kludge Suite</a>. However, here the trajectory is vastly improved by employing the 5PN fluxes for generic Kerr orbits from <a class="reference external" href="https://arxiv.org/abs/2008.13554">Fujita &amp; Shibata (2020)</a>.</p>
 <p>The 5PN trajectory produces orbital and phase trajectories. The trajectory is calculated until the orbit reaches within 0.2 of the separatrix, determined from <a class="reference external" href="https://arxiv.org/abs/1912.07609/">Stein and Warburton (2020)</a>. The fundamental frequencies along the trajectory at each point are then calculated from the orbital parameters and the spin value given by <a class="reference external" href="https://arxiv.org/abs/gr-qc/0202090%3E">Schmidt (2002)</a>.</p>
@@ -2905,8 +2768,7 @@ mismatch: 0.932708770516795
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[55]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">use_gpu</span> <span class="o">=</span> <span class="kc">False</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">use_gpu</span> <span class="o">=</span> <span class="kc">False</span>
 
 <span class="c1"># keyword arguments for inspiral generator (RunKerrGenericPn5Inspiral)</span>
 <span class="n">inspiral_kwargs</span> <span class="o">=</span> <span class="p">{</span>
@@ -2953,8 +2815,7 @@ mismatch: 0.932708770516795
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[56]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">waveform</span><span class="p">))</span> <span class="o">*</span> <span class="n">dt</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">waveform</span><span class="p">))</span> <span class="o">*</span> <span class="n">dt</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">waveform</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">waveform</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span>
 </pre></div>
@@ -2981,8 +2842,7 @@ mismatch: 0.932708770516795
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[57]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">waveform_lw</span> <span class="o">=</span> <span class="n">wave_generator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">Y0</span><span class="p">,</span> <span class="n">qS</span><span class="p">,</span> <span class="n">phiS</span><span class="p">,</span> <span class="n">qK</span><span class="p">,</span> <span class="n">phiK</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">mich</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">waveform_lw</span> <span class="o">=</span> <span class="n">wave_generator</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">Y0</span><span class="p">,</span> <span class="n">qS</span><span class="p">,</span> <span class="n">phiS</span><span class="p">,</span> <span class="n">qK</span><span class="p">,</span> <span class="n">phiK</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">mich</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -2990,8 +2850,7 @@ mismatch: 0.932708770516795
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[58]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">waveform_lw</span><span class="p">))</span> <span class="o">*</span> <span class="n">dt</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">waveform_lw</span><span class="p">))</span> <span class="o">*</span> <span class="n">dt</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">waveform_lw</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">waveform_lw</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span>
 </pre></div>
@@ -3013,15 +2872,14 @@ mismatch: 0.932708770516795
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_138_1.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_138_1.png" />
 </div>
 </div>
-<div class="section" id="5PN-Trajectory">
-<h2>5PN Trajectory<a class="headerlink" href="#5PN-Trajectory" title="Permalink to this headline">¶</a></h2>
+<section id="5PN-Trajectory">
+<h2>5PN Trajectory<a class="headerlink" href="#5PN-Trajectory" title="Permalink to this heading"></a></h2>
 <p>This new waveform includes 5PN trajectories from <a class="reference external" href="https://arxiv.org/abs/2008.13554">Fujita &amp; Shibata 2020</a>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[59]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># initialize trajectory class</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># initialize trajectory class</span>
 <span class="n">traj</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="s2">&quot;pn5&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -3030,8 +2888,7 @@ mismatch: 0.932708770516795
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[60]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># set initial parameters</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># set initial parameters</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mf">1e5</span>
 <span class="n">mu</span> <span class="o">=</span> <span class="mf">1e1</span>
 <span class="n">a</span> <span class="o">=</span> <span class="mf">0.5</span>
@@ -3064,8 +2921,7 @@ mismatch: 0.932708770516795
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[61]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">wspace</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">set_size_inches</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
 <span class="n">axes</span> <span class="o">=</span> <span class="n">axes</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
@@ -3096,8 +2952,7 @@ mismatch: 0.932708770516795
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[62]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># initialize trajectory class</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># initialize trajectory class</span>
 <span class="n">traj</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="s2">&quot;pn5&quot;</span><span class="p">,</span> <span class="n">enforce_schwarz_sep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -3106,8 +2961,7 @@ mismatch: 0.932708770516795
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[63]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># set initial parameters</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># set initial parameters</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mf">1e5</span>
 <span class="n">mu</span> <span class="o">=</span> <span class="mf">1e1</span>
 <span class="n">a</span> <span class="o">=</span> <span class="mf">0.5</span>
@@ -3140,8 +2994,7 @@ mismatch: 0.932708770516795
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[64]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">wspace</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">set_size_inches</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
 <span class="n">axes</span> <span class="o">=</span> <span class="n">axes</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
@@ -3167,15 +3020,14 @@ mismatch: 0.932708770516795
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_147_0.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_147_0.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Building-an-AAK-waveform-from-a-given-trajectory-(in-this-case-the-5PN-trajectory)">
-<h2>Building an AAK waveform from a given trajectory (in this case the 5PN trajectory)<a class="headerlink" href="#Building-an-AAK-waveform-from-a-given-trajectory-(in-this-case-the-5PN-trajectory)" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Building-an-AAK-waveform-from-a-given-trajectory-(in-this-case-the-5PN-trajectory)">
+<h2>Building an AAK waveform from a given trajectory (in this case the 5PN trajectory)<a class="headerlink" href="#Building-an-AAK-waveform-from-a-given-trajectory-(in-this-case-the-5PN-trajectory)" title="Permalink to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[65]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">few.utils.baseclasses</span> <span class="kn">import</span> <span class="n">Pn5AAK</span><span class="p">,</span> <span class="n">ParallelModuleBase</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">few.utils.baseclasses</span> <span class="kn">import</span> <span class="n">Pn5AAK</span><span class="p">,</span> <span class="n">ParallelModuleBase</span>
 
 <span class="k">class</span> <span class="nc">NewPn5AAKWaveform</span><span class="p">(</span><span class="n">AAKWaveformBase</span><span class="p">,</span> <span class="n">Pn5AAK</span><span class="p">,</span> <span class="n">ParallelModuleBase</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -3200,8 +3052,7 @@ mismatch: 0.932708770516795
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[66]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="c1"># set initial parameters</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># set initial parameters</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mf">1e6</span>
 <span class="n">mu</span> <span class="o">=</span> <span class="mf">1e1</span>
 <span class="n">a</span> <span class="o">=</span> <span class="mf">0.2</span>
@@ -3233,8 +3084,7 @@ mismatch: 0.932708770516795
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[67]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">AAK_out</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">AAK_out</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">AAK_out</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -3259,8 +3109,7 @@ mismatch: 0.932708770516795
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[68]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">AAK_out</span><span class="o">.</span><span class="n">real</span><span class="p">[:</span><span class="mi">400</span><span class="p">])</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">AAK_out</span><span class="o">.</span><span class="n">real</span><span class="p">[:</span><span class="mi">400</span><span class="p">])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">AAK_out</span><span class="o">.</span><span class="n">imag</span><span class="p">[:</span><span class="mi">400</span><span class="p">])</span>
 </pre></div>
 </div>
@@ -3281,15 +3130,14 @@ mismatch: 0.932708770516795
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_152_1.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_152_1.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Generating-the-new-AAK-with-the-generic-waveform-generator">
-<h2>Generating the new AAK with the generic waveform generator<a class="headerlink" href="#Generating-the-new-AAK-with-the-generic-waveform-generator" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="Generating-the-new-AAK-with-the-generic-waveform-generator">
+<h2>Generating the new AAK with the generic waveform generator<a class="headerlink" href="#Generating-the-new-AAK-with-the-generic-waveform-generator" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[69]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">gen_wave</span> <span class="o">=</span> <span class="n">GenerateEMRIWaveform</span><span class="p">(</span><span class="s2">&quot;Pn5AAKWaveform&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gen_wave</span> <span class="o">=</span> <span class="n">GenerateEMRIWaveform</span><span class="p">(</span><span class="s2">&quot;Pn5AAKWaveform&quot;</span><span class="p">)</span>
 
 <span class="c1"># parameters</span>
 <span class="n">T</span> <span class="o">=</span> <span class="mf">0.01</span>  <span class="c1"># years</span>
@@ -3348,19 +3196,18 @@ mismatch: 0.932708770516795
 <img alt="../_images/tutorial_FastEMRIWaveforms_tutorial_154_1.png" src="../_images/tutorial_FastEMRIWaveforms_tutorial_154_1.png" />
 </div>
 </div>
-</div>
-</div>
-<div class="section" id="Citing-waveforms-and-modules">
-<h1>Citing waveforms and modules<a class="headerlink" href="#Citing-waveforms-and-modules" title="Permalink to this headline">¶</a></h1>
+</section>
+</section>
+<section id="Citing-waveforms-and-modules">
+<h1>Citing waveforms and modules<a class="headerlink" href="#Citing-waveforms-and-modules" title="Permalink to this heading"></a></h1>
 <p>If you use any work from this package please cite our papers <a class="reference external" href="https://arxiv.org/abs/2104.04582">arxiv.org/2104.04582</a> and <a class="reference external" href="https://arxiv.org/abs/2008.06071">arxiv.org/2008.06071</a>. Additionally please cite any additional work for each module used by calling the <code class="docutils literal notranslate"><span class="pre">citation</span></code> attribute on the module class:</p>
-<div class="section" id="Fast-Schwarzschild-Eccentric-Waveforms">
-<h2>Fast Schwarzschild Eccentric Waveforms<a class="headerlink" href="#Fast-Schwarzschild-Eccentric-Waveforms" title="Permalink to this headline">¶</a></h2>
+<section id="Fast-Schwarzschild-Eccentric-Waveforms">
+<h2>Fast Schwarzschild Eccentric Waveforms<a class="headerlink" href="#Fast-Schwarzschild-Eccentric-Waveforms" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[70]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">wave</span> <span class="o">=</span> <span class="n">FastSchwarzschildEccentricFlux</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">wave</span> <span class="o">=</span> <span class="n">FastSchwarzschildEccentricFlux</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">wave</span><span class="o">.</span><span class="n">citation</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -3426,15 +3273,14 @@ mismatch: 0.932708770516795
 
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="New-and-Improved-AAK-with-5PN-Trajectory">
-<h2>New and Improved AAK with 5PN Trajectory<a class="headerlink" href="#New-and-Improved-AAK-with-5PN-Trajectory" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="New-and-Improved-AAK-with-5PN-Trajectory">
+<h2>New and Improved AAK with 5PN Trajectory<a class="headerlink" href="#New-and-Improved-AAK-with-5PN-Trajectory" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[71]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">wave_aak</span> <span class="o">=</span> <span class="n">Pn5AAKWaveform</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">wave_aak</span> <span class="o">=</span> <span class="n">Pn5AAKWaveform</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">wave_aak</span><span class="o">.</span><span class="n">citation</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -3555,63 +3401,38 @@ mismatch: 0.932708770516795
 
 </pre></div></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
-           
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="../general/docs_main.html" class="btn btn-neutral float-right" title="FastEMRIWaveforms Publications" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="../user/cite.html" class="btn btn-neutral float-left" title="Citations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../user/cite.html" class="btn btn-neutral float-left" title="Citations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../general/docs_main.html" class="btn btn-neutral float-right" title="FastEMRIWaveforms Publications" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        
-        &copy; Copyright 2020, Michael Katz, Alvin Chua, Niels Warburton
-
-    </p>
+    <p>&#169; Copyright 2020, Michael Katz, Alvin Chua, Niels Warburton.</p>
   </div>
-    
-    
-    
-    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
-    
-    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
-
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>
