@@ -132,7 +132,7 @@ class Interp2DAmplitude(AmplitudeBase, SchwarzschildEccentric):
             for i, (l, m, n) in enumerate(specific_modes):
                 l_arr[i] = l
                 m_arr[i] = np.abs(m)
-                n_arr[i] = n
+                n_arr[i] = np.sign(m) * n
 
                 if m < 0:
                     inds_revert.append(i)
