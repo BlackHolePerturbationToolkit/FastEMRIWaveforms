@@ -605,18 +605,17 @@ void KerrSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi_,
     double xi = KerrGeoAngularMomentum(a, p, e, x, En) - a*En;
 
     // get radial roots
+    double M=1.0;
     double r1, r2, r3, r4;
     KerrGeoRadialRoots(&r1, &r2, &r3, &r4, a, p, e, x, En, 0.);
 
     double deltaEn, deltaxi;
-    double M = 1.0; // added for convinience
 
     deltaEn = (xi*(-(a*pow(En,2)*pow(r1,2)*pow(r2,2)) - En*pow(r1,2)*pow(r2,2)*xi + pow(a,2)*En*(pow(r1,2) + r1*r2 + pow(r2,2))*xi + 
        a*(pow(r1,2) + r1*(-2 + r2) + (-2 + r2)*r2)*pow(xi,2)))/
    (pow(r1,2)*pow(r2,2)*(a*pow(En,2)*r1*r2*(r1 + r2) + En*(pow(r1,2)*(-2 + r2) + r1*(-2 + r2)*r2 - 2*pow(r2,2))*xi + 2*a*pow(xi,2)));
 
-    deltaxi = ((pow(r1,2) + r1*r2 + pow(r2,2))*xi*(En*pow(r2,2) - a*xi)*(-(En*pow(r1,2)) + a*xi))/
-   (pow(r1,2)*pow(r2,2)*(a*pow(En,2)*r1*r2*(r1 + r2) + En*(pow(r1,2)*(-2 + r2) + r1*(-2 + r2)*r2 - 2*pow(r2,2))*xi + 2*a*pow(xi,2)));
+    deltaxi = ((pow(r1,2) + r1*r2 + pow(r2,2))*xi*(En*pow(r2,2) - a*xi)*(-(En*pow(r1,2)) + a*xi))/(pow(r1,2)*pow(r2,2)*(a*pow(En,2)*r1*r2*(r1 + r2) + En*(pow(r1,2)*(-2 + r2) + r1*(-2 + r2)*r2 - 2*pow(r2,2))*xi + 2*a*pow(xi,2)));
 
     double am1, a0, a1, a2;
     am1 = (-2*a*pow(xi,2))/(r1*r2);  
@@ -652,9 +651,9 @@ void KerrSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi_,
         En*pow(r3,5)*(-2*a0 - am1 + r3*(a1*(-4 + r3) + 2*a2*(-3 + r3)*r3)) + 2*pow(a,3)*(2*am1 + a0*r3 - a2*pow(r3,3))*xi + 
         2*a*r3*(am1*(-6 + 4*r3) + r3*(2*a1*(-1 + r3)*r3 + a2*pow(r3,3) + a0*(-4 + 3*r3)))*xi)/(pow(r3,2)*pow(r3 - rm,2)*pow(r3 - rp,2)));
     double cEPi = (En*(a2*Ekr*r2*(r1 - r3) + Pihrkr*(r2 - r3)*(2*a1 + a2*(4 + r1 + r2 + 3*r3))))/2.;
-    double cPi = ((-r2 + r3)*((Pihmkr*(pow(a,2) + pow(rm,2))*P(rm, a, En, xi)*deltaRt(rm, a, En, xi, deltaEn, deltaxi))/((r2 - rm)*pow(r3 - rm,2)*rm) - 
-       (Pihpkr*(pow(a,2) + pow(rp,2))*P(rp, a, En, xi)*deltaRt(rp, a, En, xi, deltaEn, deltaxi))/((r2 - rp)*pow(r3 - rp,2)*rp)))/(-rm + rp);
-    double cE = (Ekr*((2*am1*(-r1 + r3)*xi)/(a*r1) + (r2*Vtr3*deltaRt(r3, a, En, xi, deltaEn, deltaxi))/(r2 - r3)))/pow(r3,2);
+    double cPi = ((-r2 + r3)*((Pihmkr*(pow(a,2) + pow(rm,2))*P(rm, a, En, xi)*deltaRt(rm, am1, a0, a1, a2))/((r2 - rm)*pow(r3 - rm,2)*rm) - 
+       (Pihpkr*(pow(a,2) + pow(rp,2))*P(rp, a, En, xi)*deltaRt(rp, am1, a0, a1, a2))/((r2 - rp)*pow(r3 - rp,2)*rp)))/(-rm + rp);
+    double cE = (Ekr*((2*am1*(-r1 + r3)*xi)/(a*r1) + (r2*Vtr3*deltaRt(r3, am1, a0, a1, a2))/(r2 - r3)))/pow(r3,2);
 
     double deltaIt2 = -((cE + cEPi + cK + cPi)/(pow(1 - pow(En,2),1.5)*sqrt((r1 - r3)*(r2 - r4))));
     double deltaIt = deltaIt1 + deltaIt2;
@@ -673,9 +672,9 @@ void KerrSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi_,
     double dK = (Kkr*(-(a*En*pow(r3,2)*(2*a0*(-1 + r3)*r3 + (a1 + 2*a2)*pow(r3,3) + am1*(-4 + 3*r3))) - pow(a,3)*En*r3*(am1 - pow(r3,2)*(a1 + 2*a2*r3)) - 
        pow(a,2)*(am1*(-4 + r3) - 2*a0*r3 - (a1 + 2*a2*(-1 + r3))*pow(r3,3))*xi - pow(-2 + r3,2)*r3*(3*am1 + r3*(2*a0 + a1*r3))*xi))/
    (pow(r3,2)*pow(r3 - rm,2)*pow(r3 - rp,2));
-    double dPi = -((a*(r2 - r3)*((Pihmkr*P(rm, a, En, xi*deltaRt(rm, a, En, xi, deltaEn, deltaxi))/((r2 - rm)*pow(r3 - rm,2)*rm) - 
-         (Pihpkr*P(rp, a, En, xi)*deltaRt(rp, a, En, xi, deltaEn, deltaxi))/((r2 - rp)*pow(r3 - rp,2)*rp)))/(-rm + rp));
-    double dE = (Ekr*((-2*am1*(r1 - r3)*xi)/(pow(a,2)*r1) + (r2*VPhir3*deltaRt(r3, a, En, xi, deltaEn, deltaxi))/(r2 - r3)))/pow(r3,2);
+    double dPi = -((a*(r2 - r3)*((Pihmkr*P(rm, a, En, xi*deltaRt(rm, am1, a0, a1, a2))/((r2 - rm)*pow(r3 - rm,2)*rm) - 
+         (Pihpkr*P(rp, a, En, xi)*deltaRt(rp, am1, a0, a1, a2))/((r2 - rp)*pow(r3 - rp,2)*rp)))/(-rm + rp));
+    double dE = (Ekr*((-2*am1*(r1 - r3)*xi)/(pow(a,2)*r1) + (r2*VPhir3*deltaRt(r3, am1, a0, a1, a2))/(r2 - r3)))/pow(r3,2);
 
     double deltaIPhi2 = -((dE + dK + dPi)/(pow(1 - pow(En,2),1.5)*sqrt((r1 - r3)*(r2 - r4))));
     double deltaIPhi = deltaIPhi1 + deltaIPhi2;
@@ -691,7 +690,6 @@ void KerrSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi_,
 
 
 }
-
 
 
 
