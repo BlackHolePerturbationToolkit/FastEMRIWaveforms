@@ -180,7 +180,7 @@ SchwarzEccFlux::~SchwarzEccFlux()
 //--------------------------------------------------------------------------------
 // #define KerrEccentricEquatorial_Y
 // #define KerrEccentricEquatorial_equatorial
-
+#define KerrEccentricEquatorial_num_add_args 1
 __deriv__
 void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,
@@ -207,6 +207,10 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);// shift to avoid problem in fundamental frequencies
     double delta_Omega_phi, delta_Omega_theta, delta_Omega_r;
     KerrEqSpinFrequenciesCorrection(&delta_Omega_phi, &delta_Omega_r, a, p, e, x);
+    cout  << additional_args[0]  << '\t' << delta_Omega_phi << '\t' << *Omega_phi <<endl;
+    // *Omega_phi = *Omega_phi + additional_args[0] * delta_Omega_phi;
+    // *Omega_theta = *Omega_theta + additional_args[0] * delta_Omega_phi;
+    // *Omega_r = *Omega_r + additional_args[0] * delta_Omega_r;
 
     // get r variable
     double Omega_phi_sep_circ;

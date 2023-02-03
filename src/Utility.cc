@@ -689,7 +689,6 @@ void KerrEqSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi
     *deltaOmegaR_ = deltaOmegaR;
     *deltaOmegaPhi_ = deltaOmegaPhi;
 
-
 }
 
 
