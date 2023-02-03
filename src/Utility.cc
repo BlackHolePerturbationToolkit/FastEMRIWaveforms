@@ -597,15 +597,15 @@ double deltaRt(double r, double am1, double a0, double a1, double a2)
 }
 
 
-void KerrSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi_,
+void KerrEqSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi_,
                               double a, double p, double e, double x)
 {
 
+    double M=1.0;
     double En = KerrGeoEnergy(a, p, e, x);
     double xi = KerrGeoAngularMomentum(a, p, e, x, En) - a*En;
 
     // get radial roots
-    double M=1.0;
     double r1, r2, r3, r4;
     KerrGeoRadialRoots(&r1, &r2, &r3, &r4, a, p, e, x, En, 0.);
 
@@ -615,7 +615,8 @@ void KerrSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi_,
        a*(pow(r1,2) + r1*(-2 + r2) + (-2 + r2)*r2)*pow(xi,2)))/
    (pow(r1,2)*pow(r2,2)*(a*pow(En,2)*r1*r2*(r1 + r2) + En*(pow(r1,2)*(-2 + r2) + r1*(-2 + r2)*r2 - 2*pow(r2,2))*xi + 2*a*pow(xi,2)));
 
-    deltaxi = ((pow(r1,2) + r1*r2 + pow(r2,2))*xi*(En*pow(r2,2) - a*xi)*(-(En*pow(r1,2)) + a*xi))/(pow(r1,2)*pow(r2,2)*(a*pow(En,2)*r1*r2*(r1 + r2) + En*(pow(r1,2)*(-2 + r2) + r1*(-2 + r2)*r2 - 2*pow(r2,2))*xi + 2*a*pow(xi,2)));
+    deltaxi = ((pow(r1,2) + r1*r2 + pow(r2,2))*xi*(En*pow(r2,2) - a*xi)*(-(En*pow(r1,2)) + a*xi))/
+   (pow(r1,2)*pow(r2,2)*(a*pow(En,2)*r1*r2*(r1 + r2) + En*(pow(r1,2)*(-2 + r2) + r1*(-2 + r2)*r2 - 2*pow(r2,2))*xi + 2*a*pow(xi,2)));
 
     double am1, a0, a1, a2;
     am1 = (-2*a*pow(xi,2))/(r1*r2);  
@@ -643,7 +644,7 @@ void KerrSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi_,
 
     double deltaIt1 = (2*((deltaEn*Pihrkr*(r2 - r3)*(4 + r1 + r2 + r3))/2. + (Ekr*(r1 - r3)*(deltaEn*r1*r2*r3 + 2*xi))/(2.*r1*r3) + 
        ((r2 - r3)*((Pihmkr*(pow(a,2) + pow(rm,2))*deltaP(rm, a, En, xi, deltaEn, deltaxi))/((r2 - rm)*(r3 - rm)) - 
-            (Pihpkr*(pow(a,2) + pow(rp,2))*deltaP(rp, a, En, xi, deltaEn, deltaxi)))/((r2 - rp)*(r3 - rp))))/(-rm + rp) + 
+            (Pihpkr*(pow(a,2) + pow(rp,2))*deltaP(rp, a, En, xi, deltaEn, deltaxi))/((r2 - rp)*(r3 - rp))))/(-rm + rp) + 
        Kkr*(-0.5*(deltaEn*(r1 - r3)*(r2 - r3)) + deltaVtr3)))/sqrt((1 - pow(En,2))*(r1 - r3)*(r2 - r4));
 
     double cK = Kkr*(-0.5*(a2*En*(r1 - r3)*(r2 - r3)) + (pow(a,4)*En*r3*(-am1 + pow(r3,2)*(a1 + 2*a2*r3)) + 
@@ -659,28 +660,28 @@ void KerrSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi_,
     double deltaIt = deltaIt1 + deltaIt2;
 
     double It = (2*((En*(Ekr*r2*(r1 - r3) + Pihrkr*(r2 - r3)*(4 + r1 + r2 + r3)))/2. + 
-       ((r2 - r3)*((Pihmkr*(pow(a,2) + pow(rm,2))*P(rm, a, En, xi))/((r2 - rm)*(r3 - rm)) - 
-            (Pihpkr*(pow(a,2) + pow(rp,2))*P(rp, a, En, xi))/((r2 - rp)*(r3 - rp))))/(-rm + rp) + 
-       Kkr*(-0.5*(En*(r1 - r3)*(r2 - r3)) + Vtr3)))/sqrt((1 - pow(En,2))*(r1 - r3)*(r2 - r4));
+       ((r2 - r3)*((Pihmkr*(pow(a,2) + pow(rm,2))*P(rm, a, En, xi))/((r2 - rm)*(r3 - rm)) - (Pihpkr*(pow(a,2) + pow(rp,2))*P(rp, a, En, xi))/((r2 - rp)*(r3 - rp))))/
+        (-rm + rp) + Kkr*(-0.5*(En*(r1 - r3)*(r2 - r3)) + Vtr3)))/sqrt((1 - pow(En,2))*(r1 - r3)*(r2 - r4));
 
     double VPhir3 = xi + a/CapitalDelta(r3, a)*P(r3, a, En, xi);
     double deltaVPhir3 = deltaxi + a/CapitalDelta(r3, a)*deltaP(r3, a, En, xi, deltaEn, deltaxi);
 
-    double deltaIPhi1 = (2*((Ekr*(r1 - r3)*xi)/(a*r1*r3) + (a*(r2 - r3)*((Pihmkr*deltaP(rm, a, En, xi, deltaEn, deltaxi)))/((r2 - rm)*(r3 - rm)) - 
-            (Pihpkr*deltaP(rp, a, En, xi, deltaEn, deltaxi)))/((r2 - rp)*(r3 - rp))))/(-rm + rp) + Kkr*deltaVPhir3))/sqrt((1 - pow(En,2))*(r1 - r3)*(r2 - r4));
+    double deltaIPhi1 = (2*((Ekr*(r1 - r3)*xi)/(a*r1*r3) + (a*(r2 - r3)*((Pihmkr*deltaP(rm, a, En, xi, deltaEn, deltaxi))/((r2 - rm)*(r3 - rm)) - 
+      (Pihpkr*deltaP(rp, a, En, xi, deltaEn, deltaxi))/((r2 - rp)*(r3 - rp))))/(-rm + rp) + Kkr*deltaVPhir3))/
+      sqrt((1 - pow(En,2))*(r1 - r3)*(r2 - r4));
 
     double dK = (Kkr*(-(a*En*pow(r3,2)*(2*a0*(-1 + r3)*r3 + (a1 + 2*a2)*pow(r3,3) + am1*(-4 + 3*r3))) - pow(a,3)*En*r3*(am1 - pow(r3,2)*(a1 + 2*a2*r3)) - 
        pow(a,2)*(am1*(-4 + r3) - 2*a0*r3 - (a1 + 2*a2*(-1 + r3))*pow(r3,3))*xi - pow(-2 + r3,2)*r3*(3*am1 + r3*(2*a0 + a1*r3))*xi))/
-   (pow(r3,2)*pow(r3 - rm,2)*pow(r3 - rp,2));
-    double dPi = -((a*(r2 - r3)*((Pihmkr*P(rm, a, En, xi*deltaRt(rm, am1, a0, a1, a2))/((r2 - rm)*pow(r3 - rm,2)*rm) - 
-         (Pihpkr*P(rp, a, En, xi)*deltaRt(rp, am1, a0, a1, a2))/((r2 - rp)*pow(r3 - rp,2)*rp)))/(-rm + rp));
+       (pow(r3,2)*pow(r3 - rm,2)*pow(r3 - rp,2));
+    double dPi = -((a*(r2 - r3)*((Pihmkr*P(rm, a, En, xi)*deltaRt(rm, am1, a0, a1, a2))/((r2 - rm)*pow(r3 - rm,2)*rm) - 
+      (Pihpkr*P(rp, a, En, xi)*deltaRt(rp, am1, a0, a1, a2))/((r2 - rp)*pow(r3 - rp,2)*rp)))/(-rm + rp));
     double dE = (Ekr*((-2*am1*(r1 - r3)*xi)/(pow(a,2)*r1) + (r2*VPhir3*deltaRt(r3, am1, a0, a1, a2))/(r2 - r3)))/pow(r3,2);
 
     double deltaIPhi2 = -((dE + dK + dPi)/(pow(1 - pow(En,2),1.5)*sqrt((r1 - r3)*(r2 - r4))));
     double deltaIPhi = deltaIPhi1 + deltaIPhi2;
 
-    double IPhi = (2*((a*(r2 - r3)*((Pihmkr*P(rm, a, En, xi))/((r2 - rm)*(r3 - rm)) - (Pihpkr*P(rp, a, En, xi))/((r2 - rp)*(r3 - rp))))/(-rm + rp) + 
-       Kkr*VPhir3))/sqrt((1 - pow(En,2))*(r1 - r3)*(r2 - r4));
+    double IPhi = (2*((a*(r2 - r3)*((Pihmkr*P(rm, a, En, xi))/((r2 - rm)*(r3 - rm)) - (Pihpkr*P(rp, a, En, xi))/((r2 - rp)*(r3 - rp))))/(-rm + rp) + Kkr*VPhir3))/
+   sqrt((1 - pow(En,2))*(r1 - r3)*(r2 - r4));
 
     double deltaOmegaR = -M_PI/pow(It,2)*deltaIt;
     double deltaOmegaPhi = deltaIPhi/It-IPhi/pow(It,2)*deltaIt;
@@ -693,6 +694,21 @@ void KerrSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi_,
 
 
 
+void KerrEqSpinFrequenciesCorrVectorized(double* OmegaPhi_, double* OmegaTheta_, double* OmegaR_,
+                              double* a, double* p, double* e, double* x, int length)
+{
+
+    #ifdef __USE_OMP__
+    #pragma omp parallel for
+    #endif
+    for (int i = 0; i < length; i += 1)
+    {
+
+        KerrEqSpinFrequenciesCorrection(&OmegaR_[i],&OmegaPhi_[i],
+                                    a[i], p[i], e[i], x[i]);
+    }
+
+}
 
 
 
