@@ -205,7 +205,9 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
 
     // cout  << a  << '\t' <<  p << '\t' << e <<  '\t' << x << endl;
     KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);// shift to avoid problem in fundamental frequencies
-    
+    double delta_Omega_phi, delta_Omega_theta, delta_Omega_r;
+    KerrEqSpinFrequenciesCorrection(&delta_Omega_phi, &delta_Omega_r, a, p, e, x);
+
     // get r variable
     double Omega_phi_sep_circ;
     double p_sep = get_separatrix(a, e, x);
