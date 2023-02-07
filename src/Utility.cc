@@ -600,7 +600,7 @@ double deltaRt(double r, double am1, double a0, double a1, double a2)
 void KerrEqSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi_,
                               double a, double p, double e, double x)
 {
-    printf("a, p, e, x, sep = %f %f %f %f\n", a, p, e, x);
+    // printf("a, p, e, x, sep = %f %f %f %f\n", a, p, e, x);
     double M=1.0;
     double En = KerrGeoEnergy(a, p, e, x);
     double xi = KerrGeoAngularMomentum(a, p, e, x, En) - a*En;

@@ -222,11 +222,11 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     
     // add corrections after you get the variable r
     double delta_Omega_phi, delta_Omega_theta, delta_Omega_r;
-    KerrEqSpinFrequenciesCorrection(&delta_Omega_phi, &delta_Omega_r, a, p, e, x);
-    // cout  << additional_args[0]  << '\t' << delta_Omega_phi << '\t' << *Omega_phi <<endl;
-    *Omega_phi = *Omega_phi + additional_args[0] * delta_Omega_phi;
-    *Omega_theta = *Omega_theta + additional_args[0] * delta_Omega_phi;
-    *Omega_r = *Omega_r + additional_args[0] * delta_Omega_r;
+    // KerrEqSpinFrequenciesCorrection(&delta_Omega_phi, &delta_Omega_r, a, p, e, x);
+    // // cout  << additional_args[0]  << '\t' << delta_Omega_phi << '\t' << *Omega_phi <<endl;
+    // *Omega_phi = *Omega_phi + additional_args[0] * delta_Omega_phi;
+    // *Omega_theta = *Omega_theta + additional_args[0] * delta_Omega_phi;
+    // *Omega_r = *Omega_r + additional_args[0] * delta_Omega_r;
 
     if (abs(delta_Omega_phi)>1.0){
         cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
