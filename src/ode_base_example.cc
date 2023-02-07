@@ -228,10 +228,10 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     // *Omega_theta = *Omega_theta + additional_args[0] * delta_Omega_phi;
     // *Omega_r = *Omega_r + additional_args[0] * delta_Omega_r;
 
-    if (abs(delta_Omega_phi)>1.0){
-        cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
-        throw std::exception();
-        } 
+    // if (abs(delta_Omega_phi)>1.0){
+    //     cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
+    //     throw std::exception();
+    //     } 
 
     // checked values against mathematica
     // {a -> 0.7, p -> 3.72159, e -> 0.189091 x-> 1.0}
