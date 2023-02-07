@@ -600,11 +600,11 @@ double deltaRt(double r, double am1, double a0, double a1, double a2)
 void KerrEqSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi_,
                               double a, double p, double e, double x)
 {
-
+    printf("a, p, e, x, sep = %f %f %f %f\n", a, p, e, x);
     double M=1.0;
     double En = KerrGeoEnergy(a, p, e, x);
     double xi = KerrGeoAngularMomentum(a, p, e, x, En) - a*En;
-
+    
     // get radial roots
     double r1, r2, r3, r4;
     KerrGeoRadialRoots(&r1, &r2, &r3, &r4, a, p, e, x, En, 0.);
@@ -618,12 +618,13 @@ void KerrEqSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi
     deltaxi = ((pow(r1,2) + r1*r2 + pow(r2,2))*xi*(En*pow(r2,2) - a*xi)*(-(En*pow(r1,2)) + a*xi))/
    (pow(r1,2)*pow(r2,2)*(a*pow(En,2)*r1*r2*(r1 + r2) + En*(pow(r1,2)*(-2 + r2) + r1*(-2 + r2)*r2 - 2*pow(r2,2))*xi + 2*a*pow(xi,2)));
 
+
     double am1, a0, a1, a2;
     am1 = (-2*a*pow(xi,2))/(r1*r2);  
     a0 = -2*En*(-(a*deltaxi) + deltaEn*pow(r1,2) + deltaEn*r1*r2 + deltaEn*pow(r2,2)) + 2*(a*deltaEn + deltaxi)*xi;
     a1 = -2*deltaEn*En*(r1 + r2);
     a2 = -2*deltaEn*En;
-
+    
     double kr = (r1-r2)/(r1-r3) * (r3-r4)/(r2-r4); //convention without the sqrt
     double hr = (r1 - r2)/(r1 - r3);
 
@@ -638,8 +639,9 @@ void KerrEqSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi
     double Pihrkr = EllipticPi(hr, kr); //(* Elliptic integral of the third kind *)
     double Pihmkr = EllipticPi(hm, kr);
     double Pihpkr = EllipticPi(hp, kr);
+    
 
-    double Vtr3 = a*deltaxi + (r3*r3 + a*a)/CapitalDelta(r3, a)*deltaP(r3, a, En, xi, deltaEn, deltaxi);
+    double Vtr3 = a*xi + ((pow(a,2) + pow(r3,2))*P(r3, a, En, xi))/CapitalDelta(r3,a); 
     double deltaVtr3 = a*deltaxi + (r3*r3 + a*a)/CapitalDelta(r3, a)*deltaP(r3, a, En, xi, deltaEn, deltaxi);
 
     double deltaIt1 = (2*((deltaEn*Pihrkr*(r2 - r3)*(4 + r1 + r2 + r3))/2. + (Ekr*(r1 - r3)*(deltaEn*r1*r2*r3 + 2*xi))/(2.*r1*r3) + 
@@ -654,6 +656,7 @@ void KerrEqSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi
     double cEPi = (En*(a2*Ekr*r2*(r1 - r3) + Pihrkr*(r2 - r3)*(2*a1 + a2*(4 + r1 + r2 + 3*r3))))/2.;
     double cPi = ((-r2 + r3)*((Pihmkr*(pow(a,2) + pow(rm,2))*P(rm, a, En, xi)*deltaRt(rm, am1, a0, a1, a2))/((r2 - rm)*pow(r3 - rm,2)*rm) - 
        (Pihpkr*(pow(a,2) + pow(rp,2))*P(rp, a, En, xi)*deltaRt(rp, am1, a0, a1, a2))/((r2 - rp)*pow(r3 - rp,2)*rp)))/(-rm + rp);
+    
     double cE = (Ekr*((2*am1*(-r1 + r3)*xi)/(a*r1) + (r2*Vtr3*deltaRt(r3, am1, a0, a1, a2))/(r2 - r3)))/pow(r3,2);
 
     double deltaIt2 = -((cE + cEPi + cK + cPi)/(pow(1 - pow(En,2),1.5)*sqrt((r1 - r3)*(r2 - r4))));
@@ -673,6 +676,7 @@ void KerrEqSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi
     double dK = (Kkr*(-(a*En*pow(r3,2)*(2*a0*(-1 + r3)*r3 + (a1 + 2*a2)*pow(r3,3) + am1*(-4 + 3*r3))) - pow(a,3)*En*r3*(am1 - pow(r3,2)*(a1 + 2*a2*r3)) - 
        pow(a,2)*(am1*(-4 + r3) - 2*a0*r3 - (a1 + 2*a2*(-1 + r3))*pow(r3,3))*xi - pow(-2 + r3,2)*r3*(3*am1 + r3*(2*a0 + a1*r3))*xi))/
        (pow(r3,2)*pow(r3 - rm,2)*pow(r3 - rp,2));
+    
     double dPi = -((a*(r2 - r3)*((Pihmkr*P(rm, a, En, xi)*deltaRt(rm, am1, a0, a1, a2))/((r2 - rm)*pow(r3 - rm,2)*rm) - 
       (Pihpkr*P(rp, a, En, xi)*deltaRt(rp, am1, a0, a1, a2))/((r2 - rp)*pow(r3 - rp,2)*rp)))/(-rm + rp));
     double dE = (Ekr*((-2*am1*(r1 - r3)*xi)/(pow(a,2)*r1) + (r2*VPhir3*deltaRt(r3, am1, a0, a1, a2))/(r2 - r3)))/pow(r3,2);
@@ -686,8 +690,15 @@ void KerrEqSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi
     double deltaOmegaR = -M_PI/pow(It,2)*deltaIt;
     double deltaOmegaPhi = deltaIPhi/It-IPhi/pow(It,2)*deltaIt;
 
+    //                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     cE,                deltaIt2,           It,                deltaIt,            deltaIPhi1, dK, dPi, dE, deltaIPhi2, deltaIPhi, IPhi
+    // 0.952696869207406, 2.601147313747245, 11.11111111111111, 9.09090909090909, 1.450341827498306, 0, -0.001534290476164244, -0.1322435748015139, -0.1205695381380546, -0.02411390762761123, 0.0590591407311683, 0.002923427466192832, 0.5641101056459328, 1.435889894354067, 0.03336154445124933, 0.2091139909146586, 0.0217342349165277, 0.0003947869154376093, 1.584149072588183, 1.55761216767624, 1.782193864035892, 1.601724642759611, 1.58446319264442, -112.2728614607676, 1.498105017522236, 111.1816561327114, 1.459858647716873, -7.095639020498573, 133.1766110081966, -7.640013106344259, -0.1508069013343114, -34.72953487758193, 34.00126350567278, 0.7853682931498268, -0.2170281681543273, -0.3678350694886387, 4.044867174992484
+    // 0.952697 2.601147                     11.111111          9.090909          1.450342           0.000000 -0.001534        -0.132244            -0.120570            -0.024114             0.059059            0.002923               0.564110           1.435890           0.033362             0.209114            0.021734            0.000395               1.584149           1.557612          1.782194           1.601725           1.584463          -112.272861         1.498105           111.181656         5.642003           -22.992171          -208.799031        -23.536545          -0.150807            -34.729535          34.001264          0.785368            -0.217028            -0.367835            4.044867
+    // 0.952697 2.601147 11.111111 9.090909 1.450342 0.000000 -0.001534 -0.132244 -0.120570 -0.024114 0.059059 0.002923 0.564110 1.435890 0.033362 0.209114 0.021734 0.000395 1.584149 1.557612 1.782194 1.601725 1.584463 -112.272861 1.498105 111.181656 1.459859 -7.095639 133.176611 -7.640013 -0.150807 -34.729535 34.001264 0.785368 -0.217028 -0.367835 4.044867
+    // 0.952696869207406, 2.601147313747245, 11.11111111111111, 9.09090909090909, 1.450341827498306, 0, -0.001534290476164244, -0.1322435748015139, -0.1205695381380546, -0.02411390762761123, 0.0590591407311683, 0.002923427466192832, 0.5641101056459328, 1.435889894354067, 0.03336154445124933, 0.2091139909146586, 0.0217342349165277, 0.0003947869154376093, 1.584149072588183, 1.55761216767624, 1.782193864035892, 1.601724642759611, 1.58446319264442, -112.2728614607676, 1.498105017522236, 111.1816561327114, 1.459858647716873, -7.095639020498573, 133.1766110081966, -7.640013106344259, -0.1508069013343114, -34.72953487758193, 34.00126350567278, 0.7853682931498268, -0.2170281681543273, -0.3678350694886387, 4.044867174992484
+    // printf("En, xi, r1, r2, r3, r4, deltaEn, deltaxi, am1, a0, a1, a2, rm, rp, kr, hr, hm, hp, Kkr, Ekr, Pihrkr, Pihmkr, Pihpkr, cK, cEPi, cPi, cE,deltaIt2, It, deltaIt, deltaPhi1, dK, dPi, dE, deltaPhi2, deltaPhi, IPhi =%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",En, xi, r1, r2, r3, r4, deltaEn, deltaxi, am1, a0, a1, a2, rm, rp, kr, hr, hm, hp, Kkr, Ekr, Pihrkr, Pihmkr, Pihpkr, cK, cEPi, cPi, cE, deltaIt2, It, deltaIt, deltaIPhi1, dK, dPi, dE, deltaIPhi2, deltaIPhi, IPhi);
     *deltaOmegaR_ = deltaOmegaR;
     *deltaOmegaPhi_ = deltaOmegaPhi;
+    printf("deltaOmegaR_, deltaOmegaPhi_, = %f %f\n", deltaOmegaR, deltaOmegaPhi);
 
 }
 

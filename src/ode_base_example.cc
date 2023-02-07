@@ -205,12 +205,6 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
 
     // cout  << a  << '\t' <<  p << '\t' << e <<  '\t' << x << endl;
     KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);// shift to avoid problem in fundamental frequencies
-    double delta_Omega_phi, delta_Omega_theta, delta_Omega_r;
-    KerrEqSpinFrequenciesCorrection(&delta_Omega_phi, &delta_Omega_r, a, p, e, x);
-    cout  << additional_args[0]  << '\t' << delta_Omega_phi << '\t' << *Omega_phi <<endl;
-    // *Omega_phi = *Omega_phi + additional_args[0] * delta_Omega_phi;
-    // *Omega_theta = *Omega_theta + additional_args[0] * delta_Omega_phi;
-    // *Omega_r = *Omega_r + additional_args[0] * delta_Omega_r;
 
     // get r variable
     double Omega_phi_sep_circ;
@@ -226,6 +220,19 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
         throw std::exception();
         } 
     
+    // add corrections after you get the variable r
+    double delta_Omega_phi, delta_Omega_theta, delta_Omega_r;
+    KerrEqSpinFrequenciesCorrection(&delta_Omega_phi, &delta_Omega_r, a, p, e, x);
+    // cout  << additional_args[0]  << '\t' << delta_Omega_phi << '\t' << *Omega_phi <<endl;
+    *Omega_phi = *Omega_phi + additional_args[0] * delta_Omega_phi;
+    *Omega_theta = *Omega_theta + additional_args[0] * delta_Omega_phi;
+    *Omega_r = *Omega_r + additional_args[0] * delta_Omega_r;
+
+    if (abs(delta_Omega_phi)>1.0){
+        cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
+        throw std::exception();
+        } 
+
     // checked values against mathematica
     // {a -> 0.7, p -> 3.72159, e -> 0.189091 x-> 1.0}
     // r 1.01037 p_sep 3.62159
