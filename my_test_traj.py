@@ -83,13 +83,13 @@ second_spin = 1e-7
 
 plt.figure()
 plt.title(f"a={a},M={M:.1e},mu={mu:.1e}, secondary spin={second_spin:.2e}")
-for i in range(1):
+for i in range(50):
     # p0 = 9.6097
     # e0 = 0.000143448 
      
     
-    p0 = 11.0#np.random.uniform(9.0, 15.0)
-    e0 = 0.5#np.random.uniform(0.0, 0.5)
+    p0 = np.random.uniform(9.0, 15.0)
+    e0 = np.random.uniform(0.0, 0.5)
     
     Y0 = np.random.uniform(-1.0, 1.0)
     print('--------------------')
@@ -100,7 +100,7 @@ for i in range(1):
     t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, second_spin, **insp_kw)
     toc = time.perf_counter()
     print("time=",toc-tic, Phi_phi[-1])
-    plt.plot(p, e,'x',label=f"time = {toc-tic:.3}, N={len(t)}, e0={e0:.2e}, p0={p0:.2e}")
+    plt.plot(p, e,'x',label=f" e0={e0:.2e}, p0={p0:.2e}")#time = {toc-tic:.3}, N={len(t)},
 
 # for i in range(5):
 #     # p0 = 9.6097

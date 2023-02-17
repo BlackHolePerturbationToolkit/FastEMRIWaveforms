@@ -265,21 +265,20 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     // std::chrono::duration<double>  msec = end-start;
     // std::cout << "elapsed time fund freqs: " << msec.count() << "s\n";
 
-    cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << " risco =" <<  risco << endl;
-    cout << "Omega:  phi =" << *Omega_phi  << "\t" << "theta=" <<  *Omega_theta << "\t" << "r=" << *Omega_r <<  "\t" << endl;
-    cout << "pdot =" << pdot_out  << "\t" << "edot=" <<  edot_out << "\t" << endl;
+    // cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << " risco =" <<  risco << endl;
+    // cout << "Omega:  phi =" << *Omega_phi  << "\t" << "theta=" <<  *Omega_theta << "\t" << "r=" << *Omega_r <<  "\t" << endl;
+    // cout << "pdot =" << pdot_out  << "\t" << "edot=" <<  edot_out << "\t" << endl;
 
     // Frequency corrections
     *Omega_phi = *Omega_phi + additional_args[0] * dOmegaPhi_dspin(a, p, e, risco, p_sep);
     *Omega_theta = *Omega_theta + additional_args[0] * dOmegaPhi_dspin(a, p, e, risco, p_sep);
     *Omega_r = *Omega_r + additional_args[0] * dOmegaR_dspin(a, p, e, risco, p_sep);
-    cout << "delta: Omega:  phi =" << dOmegaPhi_dspin(a, p, e, risco, p_sep)  << "\t" << "theta=" <<  dOmegaR_dspin(a, p, e, risco, p_sep) << endl;
+    // cout << "delta: Omega:  phi =" << dOmegaPhi_dspin(a, p, e, risco, p_sep)  << "\t" << "theta=" <<  dOmegaR_dspin(a, p, e, risco, p_sep) << endl;
 
     // Fluxes from secondary spin
     double pdot_dsigma = pdot_dspin_Cheby(a, p, e, risco, p_sep);
     double edot_dsigma = edot_dspin_Cheby(a, p, e, risco, p_sep);
-    cout << "delta pdot =" << pdot_dsigma  << "\t" << " delta edot=" <<  edot_dsigma << "\t" << endl;
-    // cout << " Edot relative error " << abs((-Edot - dEdt8H_5PNe10 (a, p, e, Y, Nv, ne))/Edot) << endl;
+    // cout << "delta pdot =" << pdot_dsigma  << "\t" << " delta edot=" <<  edot_dsigma << "\t" << endl;
 
     // if (a>0.0){throw std::exception();} 
     
