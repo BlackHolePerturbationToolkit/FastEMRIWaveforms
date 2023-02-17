@@ -38,7 +38,7 @@ Y0 = 1.0
 err = 1e-10
 insp_kw = {
     "T": 1.0,
-    "dt": 1.0,
+    "dt": 10.0,
     "err": err,
     "DENSE_STEPPING": 0,
     "max_init_len": int(1e4),
@@ -79,26 +79,28 @@ get_fundamental_frequencies(0.850000, 9.612440, 0.112196, 1.0)
 # plt.legend()
 # plt.show()
 
+second_spin = 1e-7
 
 plt.figure()
-plt.title(f"Y0={Y0},M={M:.1e},mu={mu:.1e}")
-for i in range(10):
+plt.title(f"a={a},M={M:.1e},mu={mu:.1e}, secondary spin={second_spin:.2e}")
+for i in range(1):
     # p0 = 9.6097
     # e0 = 0.000143448 
      
     
-    p0 = np.random.uniform(9.0, 15.0)
-    e0 = np.random.uniform(0.0, 0.5)
+    p0 = 11.0#np.random.uniform(9.0, 15.0)
+    e0 = 0.5#np.random.uniform(0.0, 0.5)
+    
     Y0 = np.random.uniform(-1.0, 1.0)
     print('--------------------')
     print(i, p0, e0, Y0)
     
     tic = time.perf_counter()
     # t, p, e, x, Phi_phi, Phi_theta, Phi_r = trajpn5(M, mu, a, p0, e0, Y0, **insp_kw) 
-    t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, 1e-10, **insp_kw)
+    t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, second_spin, **insp_kw)
     toc = time.perf_counter()
     print("time=",toc-tic, Phi_phi[-1])
-    plt.plot(p, e,'x',label=f"time = {toc-tic:.3}, N={len(t)}, e0={e0:.2e}")
+    plt.plot(p, e,'x',label=f"time = {toc-tic:.3}, N={len(t)}, e0={e0:.2e}, p0={p0:.2e}")
 
 # for i in range(5):
 #     # p0 = 9.6097
@@ -122,5 +124,10 @@ plt.ylabel('e')
 plt.legend()
 plt.show()
 
+np.savetxt("t_test.txt",t)
+np.savetxt("p_test.txt",p)
+np.savetxt("e_test.txt",e)
+np.savetxt("PhiPhi_test.txt",Phi_phi)
+np.savetxt("PhiR_test.txt",Phi_r)
 
 print("DONE")

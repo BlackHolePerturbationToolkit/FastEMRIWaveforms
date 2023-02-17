@@ -203,8 +203,13 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     // the frequency variables are pointers!
     double x = Y; // equatorial orbits
 
-    // cout  << a  << '\t' <<  p << '\t' << e <<  '\t' << x << endl;
+    
+    // auto start = std::chrono::steady_clock::now();
+    // the frequency variables are pointers!
     KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);// shift to avoid problem in fundamental frequencies
+    // auto end = std::chrono::steady_clock::now();
+    // std::chrono::duration<double>  msec = end-start;
+    // std::cout << "elapsed time fund freqs: " << msec.count() << "s\n";
 
     // get r variable
     double Omega_phi_sep_circ;
@@ -221,17 +226,8 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
         } 
     
     // add corrections after you get the variable r
-    double delta_Omega_phi, delta_Omega_theta, delta_Omega_r;
+    // double delta_Omega_phi, delta_Omega_theta, delta_Omega_r;
     // KerrEqSpinFrequenciesCorrection(&delta_Omega_phi, &delta_Omega_r, a, p, e, x);
-    // // cout  << additional_args[0]  << '\t' << delta_Omega_phi << '\t' << *Omega_phi <<endl;
-    // *Omega_phi = *Omega_phi + additional_args[0] * delta_Omega_phi;
-    // *Omega_theta = *Omega_theta + additional_args[0] * delta_Omega_phi;
-    // *Omega_r = *Omega_r + additional_args[0] * delta_Omega_r;
-
-    // if (abs(delta_Omega_phi)>1.0){
-    //     cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
-    //     throw std::exception();
-    //     } 
 
     // checked values against mathematica
     // {a -> 0.7, p -> 3.72159, e -> 0.189091 x-> 1.0}
@@ -241,11 +237,11 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     // cout << "omegaphi circ " <<  Omega_phi_sep_circ << " omegaphi " <<  *Omega_phi << endl;
     // cout  << a  << '\t' <<  p << '\t' << e << endl;
     // cout << "r " <<  r << " plso " <<  p_sep << endl;
-    double En,Lz,Q;
-    KerrGeoConstantsOfMotion(&En, &Lz, &Q, a, p, e, x);
+    // double En,Lz,Q;
+    // KerrGeoConstantsOfMotion(&En, &Lz, &Q, a, p, e, x);
     
     // Class to transform to p e i evolution
-    GenericKerrRadiation* GKR = new GenericKerrRadiation(p, e, En, Lz, Q, a);
+    // GenericKerrRadiation* GKR = new GenericKerrRadiation(p, e, En, Lz, Q, a);
 
     // Edot as a function of 
     double risco = get_separatrix(a, 0.0, x);
@@ -260,8 +256,29 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     // cout << " Edot Cheb " <<  Edot << " PN " <<  dEdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
     // cout << " Ldot Cheb " <<  Ldot << " PN " <<  dLdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
     
+    // auto start = std::chrono::steady_clock::now();
+    // the frequency variables are pointers!
+    // Fluxes from GR
     double pdot_out = pdot_Cheby(a, p, e, risco, p_sep);
     double edot_out = edot_Cheby(a, p, e, risco, p_sep);
+    // auto end = std::chrono::steady_clock::now();
+    // std::chrono::duration<double>  msec = end-start;
+    // std::cout << "elapsed time fund freqs: " << msec.count() << "s\n";
+
+    cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << " risco =" <<  risco << endl;
+    cout << "Omega:  phi =" << *Omega_phi  << "\t" << "theta=" <<  *Omega_theta << "\t" << "r=" << *Omega_r <<  "\t" << endl;
+    cout << "pdot =" << pdot_out  << "\t" << "edot=" <<  edot_out << "\t" << endl;
+
+    // Frequency corrections
+    *Omega_phi = *Omega_phi + additional_args[0] * dOmegaPhi_dspin(a, p, e, risco, p_sep);
+    *Omega_theta = *Omega_theta + additional_args[0] * dOmegaPhi_dspin(a, p, e, risco, p_sep);
+    *Omega_r = *Omega_r + additional_args[0] * dOmegaR_dspin(a, p, e, risco, p_sep);
+    cout << "delta: Omega:  phi =" << dOmegaPhi_dspin(a, p, e, risco, p_sep)  << "\t" << "theta=" <<  dOmegaR_dspin(a, p, e, risco, p_sep) << endl;
+
+    // Fluxes from secondary spin
+    double pdot_dsigma = pdot_dspin_Cheby(a, p, e, risco, p_sep);
+    double edot_dsigma = edot_dspin_Cheby(a, p, e, risco, p_sep);
+    cout << "delta pdot =" << pdot_dsigma  << "\t" << " delta edot=" <<  edot_dsigma << "\t" << endl;
     // cout << " Edot relative error " << abs((-Edot - dEdt8H_5PNe10 (a, p, e, Y, Nv, ne))/Edot) << endl;
 
     // if (a>0.0){throw std::exception();} 
@@ -270,14 +287,16 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     // cout << "transf pdot Cheb " <<  GKR->pdot << " pdot " <<  pdot_out << " PN " << dpdt8H_5PNe10(a, p, e, Y, Nv, ne) << endl;
     // cout << "transf edot Cheb " <<  GKR->edot << " edot " <<  edot_out << " PN " << dedt8H_5PNe10(a, p, e, Y, Nv, ne) << endl;
 
-    // transform to p e Y evolution
-    // cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
+    // check
+
+    
+    
     
     // needs adjustment for validity
     if (e > 1e-6)
     {
-        *pdot = epsilon * pdot_out;
-        *edot = epsilon * edot_out;
+        *pdot = epsilon * (pdot_out + additional_args[0] * pdot_dsigma);
+        *edot = epsilon * (edot_out + additional_args[0] * edot_dsigma);
     }
     else{
         *edot = 0.0;
@@ -288,7 +307,7 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     
     *Ydot = 0.0;
 
-    delete GKR;
+    // delete GKR;
     return;
 
 }
