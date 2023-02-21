@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import warnings
 import matplotlib.pyplot as plt
@@ -50,10 +51,10 @@ wave_generator = Pn5AAKWaveform( sum_kwargs=sum_kwargs, use_gpu=gpu_available)
 ####################
 # set initial parameters
 M = 5e5
-mu = 1e1
+mu = 2e1
 a = 0.85
 p0 = 8.0
-e0 = 0.2
+e0 = 0.33
 Y0 = 1.0
 Phi_phi0 = 0.2
 Phi_theta0 = 1.2
@@ -66,10 +67,19 @@ phiK = 0.8
 dist = 1.0
 mich = False
 dt = 1.0
-T = 1.0
+T = 2.0
 
 # new input
-secondary_spin = 0.0
+secondary_spin = 1e-5
+
+if gpu_available:
+    tic = time.perf_counter()
+    for _ in range(10):
+        output1 = waveform_class(M,mu,a,p0,e0,Y0,dist,qS,phiS,qK,phiK,secondary_spin,
+            Phi_phi0=0.0,Phi_theta0=0.0,Phi_r0=0.0,mich=False,dt=dt,T=T)
+    toc = time.perf_counter()
+    print((toc-tic)/10)
+breakpoint()
 
 # check limit
 output1 = waveform_class(M,mu,a,p0,e0,Y0,dist,qS,phiS,qK,phiK,secondary_spin,
@@ -79,7 +89,7 @@ secondary_spin = 1e-5
 output2 = waveform_class(M,mu,a,p0,e0,Y0,dist,qS,phiS,qK,phiK,secondary_spin,
         Phi_phi0=0.0,Phi_theta0=0.0,Phi_r0=0.0,mich=False,dt=dt,T=T)
 
-print(get_mismatch(output2.real, output1.real))
+# print(get_mismatch(output2.real, output1.real))
 
 plt.figure()
 plt.plot(output1.real[-100:],label='new wave')
