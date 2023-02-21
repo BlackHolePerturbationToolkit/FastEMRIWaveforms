@@ -450,11 +450,7 @@ void InspiralCarrier::InspiralWrapper(double *t, double *p, double *e, double *x
 
         // make sure we have allocated enough memory through cython
         if (Inspiral_vals.length > init_len){
-<<<<<<< HEAD
-            throw_python_error("Error: Inspiral requires more points or less precision. Need to raise max_init_len parameter for inspiral or reduce err.\n",0);
-=======
             throw std::invalid_argument("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
->>>>>>> master
             // throw std::runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
         }
 
