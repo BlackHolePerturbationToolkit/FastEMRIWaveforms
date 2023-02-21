@@ -22,6 +22,7 @@ from abc import ABC
 import numpy as np
 from tqdm import tqdm
 from scipy.interpolate import RectBivariateSpline
+import warnings
 
 # check if cupy is available / GPU is available
 try:
@@ -41,7 +42,7 @@ from few.summation.directmodesum import DirectModeSum
 from few.summation.aakwave import AAKSummation
 from few.utils.constants import *
 from few.utils.citations import *
-from few.summation.interpolatedmodesum import InterpolatedModeSum
+from few.summation.interpolatedmodesum import InterpolatedModeSum, CubicSplineInterpolant
 
 
 class GenerateEMRIWaveform:
@@ -1153,6 +1154,16 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
             dt=dt,
             **self.inspiral_kwargs,
         )
+        
+        if len(t)>160:
+            warnings.warn(f"The inspiral output length={len(t)} is greater than the number of maximum allowable spline points. Splining the output...")
+            y_all = np.stack((p, e, Y, Phi_phi, Phi_theta, Phi_r))
+            spline_output = CubicSplineInterpolant(t,y_all, use_gpu=self.use_gpu)
+            new_t = np.linspace(0.0, t[-1],num=160)
+            t = new_t.copy()
+            new_output_inspiral = spline_output(new_t)
+            p, e, Y, Phi_phi, Phi_theta, Phi_r = (new_output_inspiral[i] for i in range(6))
+
 
         # makes sure p, Y, and e are generally within the model
         self.sanity_check_traj(p, e, Y)
