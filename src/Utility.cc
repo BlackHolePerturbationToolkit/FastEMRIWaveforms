@@ -1,6 +1,8 @@
 #include "stdio.h"
 #include "math.h"
 #include "global.h"
+#include <stdexcept>
+#include "Utility.hh"
 
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_sf_ellint.h>
@@ -12,11 +14,19 @@
 #include "omp.h"
 #endif
 
-void throw_python_error(char* str_in, int status)
-{
-    char str[1000];
-    sprintf(str, "%s / Error code: %d", str_in, status);
-    PyErr_SetString(PyExc_SystemError, str);
+int sanity_check(double a, double p, double e, double Y){
+    int res = 0;
+    
+    if (p<0.0) return 1;
+    if ((e>1.0)||(e<0.0)) return 1;
+    if ((Y>1.0)||(Y<-1.0)) return 1;
+    if ((a>1.0)||(a<0.0)) return 1;
+    
+    if (res==1){
+        printf("a, p, e, Y = %f %f %f %f ",a, p, e, Y);
+        // throw std::invalid_argument( "Sanity check wrong");
+    }
+    return res;
 }
 
 // Define elliptic integrals that use Mathematica's conventions
@@ -27,7 +37,7 @@ double EllipticK(double k){
     {
         char str[1000];
         sprintf(str, "EllipticK failed with argument k: %e", k);
-        throw_python_error(str, status);
+        throw std::invalid_argument(str);
     }
     return result.val;
 }
@@ -39,7 +49,7 @@ double EllipticF(double phi, double k){
     {
         char str[1000];
         sprintf(str, "EllipticF failed with arguments phi:%e k: %e", phi, k);
-        throw_python_error(str, status);
+        throw std::invalid_argument(str);
     }
     return result.val;
 }
@@ -51,7 +61,7 @@ double EllipticE(double k){
     {
         char str[1000];
         sprintf(str, "EllipticE failed with argument k: %e", k);
-        throw_python_error(str, status);
+        throw std::invalid_argument(str);
     }
     return result.val;
 }
@@ -63,7 +73,7 @@ double EllipticEIncomp(double phi, double k){
     {
         char str[1000];
         sprintf(str, "EllipticEIncomp failed with argument k: %e", k);
-        throw_python_error(str, status);
+        throw std::invalid_argument(str);
     }
     return result.val;
 }
@@ -74,8 +84,9 @@ double EllipticPi(double n, double k){
     if (status != GSL_SUCCESS)
     {
         char str[1000];
-        sprintf(str, "EllipticPi failed with argument k: %e", k);
-        throw_python_error(str, status);
+        printf("55: %e\n", k);
+        sprintf(str, "EllipticPi failed with arguments (k,n): (%e,%e)", k, n);
+        throw std::invalid_argument(str);
     }
     return result.val;
 }
@@ -87,7 +98,7 @@ double EllipticPiIncomp(double n, double phi, double k){
     {
         char str[1000];
         sprintf(str, "EllipticPiIncomp failed with argument k: %e", k);
-        throw_python_error(str, status);
+        throw std::invalid_argument(str);
     }
     return result.val;
 }
@@ -161,9 +172,9 @@ void KerrGeoConstantsOfMotion(double* E_out, double* L_out, double* Q_out, doubl
 
 void KerrGeoConstantsOfMotionVectorized(double* E_out, double* L_out, double* Q_out, double* a, double* p, double* e, double* x, int n)
 {
-    #ifdef __USE_OMP__
+#ifdef __USE_OMP__
     #pragma omp parallel for
-    #endif
+#endif  // __USE_OMP__
     for (int i = 0; i < n; i += 1)
     {
         KerrGeoConstantsOfMotion(&E_out[i], &L_out[i], &Q_out[i], a[i], p[i], e[i], x[i]);
@@ -190,7 +201,6 @@ void KerrGeoRadialRoots(double* r1_, double*r2_, double* r3_, double* r4_, doubl
 void KerrGeoMinoFrequencies(double* CapitalGamma_, double* CapitalUpsilonPhi_, double* CapitalUpsilonTheta_, double* CapitalUpsilonr_,
                               double a, double p, double e, double x)
 {
-
     double M = 1.0;
 
     double En = KerrGeoEnergy(a, p, e, x);
@@ -248,7 +258,6 @@ void KerrGeoCoordinateFrequencies(double* OmegaPhi_, double* OmegaTheta_, double
 
 void SchwarzschildGeoCoordinateFrequencies(double* OmegaPhi, double* OmegaR, double p, double e)
 {
-
     // Need to evaluate 4 different elliptic integrals here. Cache them first to avoid repeated calls.
 	double EllipE 	= EllipticE(4*e/(p-6.0+2*e));
 	double EllipK 	= EllipticK(4*e/(p-6.0+2*e));;
@@ -269,9 +278,9 @@ void KerrGeoCoordinateFrequenciesVectorized(double* OmegaPhi_, double* OmegaThet
                               double* a, double* p, double* e, double* x, int length)
 {
 
-    #ifdef __USE_OMP__
+#ifdef __USE_OMP__
     #pragma omp parallel for
-    #endif
+#endif  // __USE_OMP__
     for (int i = 0; i < length; i += 1)
     {
         if (a[i] != 0.0)
@@ -338,7 +347,7 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
 {
     gsl_set_error_handler_off();
     int status;
-    int iter = 0, max_iter = 100;
+    int iter = 0, max_iter = 1000;
     const gsl_root_fsolver_type *T;
     gsl_root_fsolver *s;
     double r = 0, r_expected = sqrt (5.0);
@@ -351,6 +360,10 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
     s = gsl_root_fsolver_alloc (T);
     gsl_root_fsolver_set (s, &F, x_lo, x_hi);
 
+    // printf("-----------START------------------- \n");
+    // printf("xlo xhi %f %f\n", x_lo, x_hi);
+    double epsrel=0.001;
+
     do
       {
         iter++;
@@ -358,14 +371,28 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
         r = gsl_root_fsolver_root (s);
         x_lo = gsl_root_fsolver_x_lower (s);
         x_hi = gsl_root_fsolver_x_upper (s);
-        status = gsl_root_test_interval (x_lo, x_hi,
-                                         0, 0.001);
+        status = gsl_root_test_interval (x_lo, x_hi, 0.0, epsrel);
+       
+        // printf("result %f %f %f \n", r, x_lo, x_hi);
       }
     while (status == GSL_CONTINUE && iter < max_iter);
+    
+    // printf("result %f %f %f \n", r, x_lo, x_hi);
+    // printf("stat, iter, GSL_SUCCESS %d %d %d\n", status, iter, GSL_SUCCESS);
+    // printf("-----------END------------------- \n");
 
     if (status != GSL_SUCCESS)
     {
-        throw_python_error("Brent root solver failed.", status);
+        // warning if it did not converge otherwise throw error
+        if (iter == max_iter){
+            printf("WARNING: Maximum iteration reached in Utility.cc in Brent root solver.\n");
+            printf("Result=%f, x_low=%f, x_high=%f \n", r, x_lo, x_hi);
+            printf("a, p, e, Y, sep = %f %f %f %f %f\n", params->a, params->p, params->e, params->Y, get_separatrix(params->a, params->e, r));
+        }
+        else
+        {
+            throw std::invalid_argument( "In Utility.cc Brent root solver failed");
+        }
     }
 
     gsl_root_fsolver_free (s);
@@ -442,9 +469,9 @@ double get_separatrix(double a, double e, double x)
 void get_separatrix_vector(double* separatrix, double* a, double* e, double* x, int length)
 {
 
-    #ifdef __USE_OMP__
+#ifdef __USE_OMP__
     #pragma omp parallel for
-    #endif
+#endif  // __USE_OMP__
     for (int i = 0; i < length; i += 1)
     {
         separatrix[i] = get_separatrix(a[i], e[i], x[i]);
@@ -465,7 +492,6 @@ double Y_to_xI_eq(double x, void *params_in)
 
     // get constants of motion
     KerrGeoConstantsOfMotion(&E, &L, &Q, a, p, e, x);
-
     double Y_ = L / sqrt(pow(L, 2) + Q);
 
     return Y - Y_;
@@ -482,23 +508,23 @@ double Y_to_xI(double a, double p, double e, double Y)
 
     // set limits
     // assume Y is close to x
-    x_lo = Y - 0.1;
-    x_hi = Y + 0.1;
+    x_lo = Y - 0.15;
+    x_hi = Y + 0.15;
 
     x_lo = x_lo > -YLIM? x_lo : -YLIM;
     x_hi = x_hi < YLIM? x_hi : YLIM;
 
     double x = solver (&params, &Y_to_xI_eq, x_lo, x_hi);
-
+   
     return x;
 }
 
 void Y_to_xI_vector(double* x, double* a, double* p, double* e, double* Y, int length)
 {
 
-    #ifdef __USE_OMP__
+#ifdef __USE_OMP__
     #pragma omp parallel for
-    #endif
+#endif  // __USE_OMP__
     for (int i = 0; i < length; i += 1)
     {
         x[i] = Y_to_xI(a[i], p[i], e[i], Y[i]);
@@ -509,11 +535,16 @@ void Y_to_xI_vector(double* x, double* a, double* p, double* e, double* Y, int l
 
 void set_threads(int num_threads)
 {
+    #ifdef __USE_OMP__
     omp_set_num_threads(num_threads);
+    #else
+    throw std::invalid_argument("Attempting to set threads for openMP, but FEW was not installed with openMP due to the use of the flag --no_omp used during installation.");
+    #endif
 }
 
 int get_threads()
 {
+#ifdef __USE_OMP__
     int num_threads;
     #pragma omp parallel for
     for (int i = 0; i < 1; i +=1)
@@ -522,7 +553,12 @@ int get_threads()
     }
 
     return num_threads;
+#else
+    return 0;
+#endif // __USE_OMP__
 }
+
+
 
 
 
@@ -541,3 +577,4 @@ int main()
     //printf("%e %e %e\n", En, L, C);
 }
 */
+

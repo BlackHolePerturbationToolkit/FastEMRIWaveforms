@@ -215,9 +215,9 @@ void AmplitudeCarrier::Interp2DAmplitude(std::complex<double> *amplitude_out, do
 
     complex<double> I(0.0, 1.0);
 
-    #ifdef __USE_OMP__
+#ifdef __USE_OMP__
     #pragma omp parallel for collapse(2)
-    #endif
+#endif // __USE_OMP__
     for (int i=0; i<num; i++)
     {
     	for(int mode_i = 0; mode_i < num_modes; mode_i++)
