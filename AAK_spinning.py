@@ -41,11 +41,11 @@ waveform_class = AAKWaveformBase(
 
 ####################
 # set initial parameters
-M = 1e4
+M = 5e5
 mu = 1e1
 a = 0.85
-p0 = 12.0
-e0 = 0.3
+p0 = 8.0
+e0 = 0.4
 Y0 = 1.0
 Phi_phi0 = 0.2
 Phi_theta0 = 1.2
@@ -61,9 +61,13 @@ dt = 1.0
 T = 1.0
 
 # new input
-secondary_spin = 1e-10
+secondary_spin = 1e-4
 
-output = waveform_class(M,
+# plot as a function of dt
+dtvec = np.linspace(1,15, num=2)
+plt.figure()
+for dt in dtvec:
+    output = waveform_class(M,
         mu,
         a,
         p0,
@@ -79,10 +83,11 @@ output = waveform_class(M,
         Phi_theta0=0.0,
         Phi_r0=0.0,
         mich=False,
-        dt=10.0,
-        T=1.0,)
+        dt=dt,
+        T=T
+        )
 
-time = np.arange(len(output))*dt
-plt.figure()
-plt.plot(time, output.real)
+    time = np.arange(len(output))*dt
+    plt.plot(time[-100:], output.real[-100:],label=f'{dt}')
+plt.legend()
 plt.show()
