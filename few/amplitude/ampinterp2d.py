@@ -30,7 +30,7 @@ from scipy.interpolate import RectBivariateSpline
 from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase, ParallelModuleBase
 from few.utils.utility import check_for_file_download
 from few.utils.citations import *
-from few.utils.utility import p_to_y
+from few.utils.utility import p_to_y, kerr_p_to_u
 
 # check for cupy and GPU version of pymatmul
 try:
@@ -41,6 +41,8 @@ try:
 
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
+
+from pyAmpInterp2D_cpu import interp2D as interp2D_cpu
 
 
 # get path to this file
@@ -120,53 +122,67 @@ class AmpInterp2D(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         """
         pass
 
-    def __init__(self, max_init_len=1000, **kwargs):
+    def __init__(self, fp, max_init_len=1000, **kwargs):
 
         ParallelModuleBase.__init__(self, **kwargs)
         SchwarzschildEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
+        if self.use_gpu:
+            self.interp2D = interp2D
+
+        else:
+            self.interp2D = interp2D_cpu
+
         self.few_dir = dir_path + "/../../"
 
         # check if user has the necessary data
         # if not, the data will automatically download
-        fp = "Teuk_amps_a0.0_lmax_10_nmax_30_new.h5"
         check_for_file_download(fp, self.few_dir)
 
         data = {}
-        maxs = np.zeros(1650)
+        maxs = np.zeros(1440)
         # get information about this specific model from the file
         with h5py.File(self.few_dir + "few/files/" + fp, "r") as f:
             
             for key1 in f:
                 if key1 == "grid":
                     grid = f["grid"][:]
+
                 else:
-                    for key2 in f[key1]:
-                        tmp = f[key1][key2][:]
-                        tmp2 = tmp[:, 0] + 1j * tmp[:, 1]
-                        inds = np.abs(tmp2)**2 > maxs
-                        maxs[inds] = np.abs(tmp2[inds]) ** 2
-                        data[key1 + key2] = tmp2
+                    tmp = f[key1][:]
+                    tmp2 = tmp[:, 0] + 1j * tmp[:, 1]
+                    inds = np.abs(tmp2)**2 > maxs
+                    maxs[inds] = np.abs(tmp2[inds]) ** 2
+                    data[key1] = tmp2
 
         # adjust the grid
-        a, p, e, x = grid.T
+        a = grid.T[0].copy()
+        p = grid.T[1].copy()
+        e = grid.T[2].copy()
+        xI = grid.T[3].copy()
+        u = grid.T[4].copy()
+        sep = grid.T[5].copy()
+        w = grid.T[6].copy()
 
-        assert np.all(a == 0.0)
-        assert np.all(x == 1.0)
+        assert np.all(a == a[0])
+        assert np.all(xI == xI[0])
+
+        self.a_val_store = a[0]
+        self.xI_val_store = xI[0]
+
+        # for checking
+        # tmp = kerr_p_to_u(a, p, e, xI, use_gpu=False)
+
         grid_size = p.shape[0]
-        y = p_to_y(p, e)
-        unique_y = np.unique(y)
-        keep_y = np.ones_like(unique_y, dtype=bool)
-        keep_y[1:] = np.diff(unique_y) > 1e-10
+        
+        unique_u = self.unique_u = np.unique(u)
+        unique_w = self.unique_w = np.unique(w)
+        num_u = len(unique_u)
+        num_w = len(unique_w)
 
-        unique_y = unique_y[keep_y]
-        num_y = len(unique_y)
-        unique_e = np.unique(e)
-        num_e = len(unique_e)
-
-        check_y = y.reshape(num_e, num_y)
-        check_e = e.reshape(num_e, num_y)
+        check_u = u.reshape(num_w, num_u)
+        check_w = w.reshape(num_w, num_u)
 
         # filter out low power modes upfront. 
         # TODO: need to update other stuff for this?
@@ -176,13 +192,13 @@ class AmpInterp2D(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         for mode, vals in data.items():
             power = np.abs(vals) ** 2
             inds_fix = power < initial_cut * maxs
-            if inds_fix.sum() == power.shape[0]:
+            if False: # inds_fix.sum() == power.shape[0]:
                 self.removed_moded_initial.append(mode)
                 data_copy.pop(mode)
                 # print(power.max())
                 
             else:
-                data_copy[mode] = data_copy[mode].reshape(num_e, num_y)
+                data_copy[mode] = data_copy[mode].reshape(num_w, num_u)
             
         #data = {
         #    "l2m2n0k0": data_copy["l2m2n0k0"],
@@ -195,14 +211,15 @@ class AmpInterp2D(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
 
         self.spl2D = {name:
             [
-                RectBivariateSpline(unique_e, unique_y, val.real, kx=3, ky=3), 
-                RectBivariateSpline(unique_e, unique_y, val.imag, kx=3, ky=3)
+                RectBivariateSpline(unique_w, unique_u, val.real, kx=3, ky=3), 
+                RectBivariateSpline(unique_w, unique_u, val.imag, kx=3, ky=3)
             ]
         for name, val in data.items()}
 
         self.mode_keys = list(data.keys())
         self.num_teuk_modes = len(self.mode_keys)
-        spl = self.spl2D["l2m2n0k0"]
+
+        spl = self.spl2D["l2m2k0n0"]
 
         first_key = list(self.spl2D.keys())[0]
         example_spl = self.spl2D[first_key][0]
@@ -232,7 +249,7 @@ class AmpInterp2D(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         """Confirms GPU capability"""
         return True
 
-    def get_amplitudes(self, p, e, *args, specific_modes=None, **kwargs):
+    def __call__(self, a, p, e, xI, *args, specific_modes=None, **kwargs):
         """
         Evaluate the spline or its derivatives at given positions.
         Parameters
@@ -250,44 +267,130 @@ class AmpInterp2D(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         
         """
         grid = False
-        e = self.xp.asarray(e)
-        p = self.xp.asarray(p)
-        y = p_to_y(p, e)
 
-        te, ty, c = self.tck[:3]
-        ke, ky = self.degrees
+        try:
+            a_cpu, p_cpu, e_cpu, xI_cpu = a.get().copy(), p.get().copy(), e.get().copy(), xI.get().copy()
+        except AttributeError:
+            a_cpu, p_cpu, e_cpu, xI_cpu = a.copy(), p.copy(), e.copy(), xI.copy()
+
+        a = self.xp.asarray(a)
+        p = self.xp.asarray(p)
+        e = self.xp.asarray(e)
+        xI = self.xp.asarray(xI)
+
+        assert self.xp.all(a == self.a_val_store)
+        assert self.xp.all(xI == self.xI_val_store)
+
+        # TODO: make this GPU accessible
+        u = self.xp.asarray(kerr_p_to_u(a_cpu, p_cpu, e_cpu, xI_cpu, use_gpu=False))
+
+        w = self.xp.sqrt(e)
+
+        tw, tu, c = self.tck[:3]
+        kw, ku = self.degrees
         
         # standard Numpy broadcasting
-        if e.shape != y.shape:
-            e, y = np.broadcast_arrays(e, y)
+        if w.shape != u.shape:
+            w, u = np.broadcast_arrays(w, u)
 
-        shape = e.shape
-        e = e.ravel()
-        y = y.ravel()
+        shape = w.shape
+        w = w.ravel()
+        u = u.ravel()
 
-        if e.size == 0 or y.size == 0:
+        if w.size == 0 or u.size == 0:
             return np.zeros(shape, dtype=self.tck[2].dtype)
 
-        ne = te.shape[0]
-        ny = ty.shape[0]
-        me = e.shape[0]
-        my = y.shape[0]
+        nw = tw.shape[0]
+        nu = tu.shape[0]
+        mw = w.shape[0]
+        mu = u.shape[0]
 
         # TODO: adjustable
         mode_indexes = self.xp.arange(self.num_teuk_modes)
         num_modes_here = len(mode_indexes)
         
-        assert me == my
+        assert mw == mu
         
         num_indiv_c = 2 * num_modes_here  # Re and Im
         len_indiv_c = self.len_indiv_c
 
-        z = self.xp.zeros((num_indiv_c * me))
-        interp2D(z, te, ne, ty, ny, c, ke, ky, e, me, y, my, num_indiv_c, len_indiv_c)
+        z = self.xp.zeros((num_indiv_c * mw))
+        
+        self.interp2D(z, tw, nw, tu, nu, c, kw, ku, w, mw, u, mu, num_indiv_c, len_indiv_c)
 
         #check = np.asarray([[spl.ev(e.get(), y.get()) for spl in spl1] for spl1 in self.spl2D.values()]).transpose(2, 1, 0)
 
-        z = z.reshape(num_modes_here, 2, e.shape[0]).transpose(2, 1, 0)
+        z = z.reshape(num_modes_here, 2, w.shape[0]).transpose(2, 1, 0)
 
         z = z[:, 0] + 1j * z[:, 1]
         return z
+
+
+class AmpInterpKerrEqEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
+    def __init__(self, **kwargs):
+
+        ParallelModuleBase.__init__(self, **kwargs)
+        SchwarzschildEccentric.__init__(self, **kwargs)
+        AmplitudeBase.__init__(self, **kwargs)
+
+        self.few_dir = dir_path + "/../../"
+        
+        
+        spins_tmp = []
+        for fp in os.listdir(self.few_dir + "few/files/"):
+            if fp[:3] == "a0.":
+                spins_tmp.append(float(fp[1:5]))
+
+        # combine prograde and retrograde here
+        self.spin_values = np.unique(np.asarray(spins_tmp))
+
+        # TODO: add retrograde
+        self.spin_information_holder_prograde = [None for _ in self.spin_values]
+        for i, spin in enumerate(self.spin_values):
+            base_string = f"{spin:1.2f}"
+            if spin != 0.0:
+                base_string += "_p"
+            fp = f"Teuk_amps_a{base_string}_lmax_10_nmax_30_new.h5"
+
+            self.spin_information_holder_prograde[i] = AmpInterp2D(fp, use_gpu=self.use_gpu)
+
+    def get_amplitudes(self, a, p, e, xI):
+
+        assert isinstance(a, float)
+
+        assert np.all(xI == 1.0)
+
+        if a in self.spin_values:
+            ind_1 = np.where(self.spin_values == a)[0][0]
+
+            a_in = np.full_like(p, a)
+            xI_in = np.ones_like(p)
+            
+            z = self.spin_information_holder_prograde[ind_1](a_in, p, e, xI_in)
+
+        else:
+            ind_above = np.where(self.spin_values > a)[0][0]
+            ind_below = ind_above - 1
+            assert ind_above < len(self.spin_values)
+            assert ind_below >= 0
+
+            a_above = np.full_like(p, self.spin_values[ind_above])
+
+            a_above_single = a_above[0]
+            assert np.all(a_above_single == a_above[0])
+
+            a_below = np.full_like(p, self.spin_values[ind_below])
+            a_below_single = a_below[0]
+            assert np.all(a_below_single == a_below[0])
+
+            xI_in = np.ones_like(p)
+
+            z_above = self.spin_information_holder_prograde[ind_above](a_above, p, e, xI_in)
+            z_below = self.spin_information_holder_prograde[ind_below](a_below, p, e, xI_in)
+
+            z = ((z_above - z_below) / (a_above_single - a_below_single)) * (a - a_below_single) - z_below
+
+        return z
+
+
+

@@ -1,8 +1,9 @@
 #include "stdio.h"
+#include "global.h"
 #include "AmpInterp2D.hh"
 
 #define NUM_THREADS 256
-__inline__ __device__
+__inline__ CUDA_CALLABLE_MEMBER
 void fpbspl(const double* t, int k, double x, int l, double* h)
 {
 /*  subroutine fpbspl evaluates the (k+1) non-zero b-splines of
@@ -26,7 +27,7 @@ void fpbspl(const double* t, int k, double x, int l, double* h)
   }
 }
 
-__device__
+CUDA_CALLABLE_MEMBER
 void fpbisp(
              double* z,
              const double* tx, int nx, const double* ty, int ny, double *c,
@@ -111,42 +112,65 @@ void fpbisp(
   //delete [] lx;
 }
 
-__global__ 
+CUDA_KERNEL 
 void interp2D(double* z, const double* tx, int nx, const double* ty, int ny,
              double* c, int kx, int ky, const double* x, int mx,
              const double* y, int my, int num_indiv_c, int len_indiv_c)
 {
+    #ifdef __CUDACC__
     extern __shared__  unsigned char shared_mem[];
-
     double *shared_mem_in = (double*) shared_mem;
+    #else
+    double* shared_mem_in = new double[nx * ny * len_indiv_c];
+    #endif
+
     double *tx_shared = &shared_mem_in[0];
     double *ty_shared = &shared_mem_in[nx];
     double *c_indiv = &ty_shared[ny];
-
+    
     double z_temp;
+
+    #ifdef __CUDACC__
+    int start_block = blockIdx.y;
+    int block_inc = gridDim.y;
+
+    int start_thread = threadIdx.x;
+    int thread_inc = blockDim.x;
+
+    int full_loop_start = threadIdx.x + blockDim.x * blockIdx.x;
+    int full_loop_inc = blockDim.x * gridDim.x;
+
+    #else
+    int start_block = 0;
+    int block_inc = 1;
+
+    int start_thread = 0;
+    int thread_inc = 1;
+
+    int full_loop_start = 0;
+    int full_loop_inc = 1;
+    #endif
     
 
     //double h[6] = {0.};
-
-    for (int c_i = blockIdx.y; c_i < num_indiv_c; c_i += gridDim.y)
+    // TODO: add omp?
+    for (int c_i = start_block; c_i < num_indiv_c; c_i += block_inc)
     {
-        for (int i = threadIdx.x; i < nx; i += blockDim.x)
+        for (int i = start_thread; i < nx; i += thread_inc)
         {
             tx_shared[i] = tx[i];
         }
-        for (int i = threadIdx.x; i < ny; i += blockDim.x)
+        for (int i = start_thread; i < ny; i += thread_inc)
         {
             ty_shared[i] = ty[i];
         }
-
-        for (int i = threadIdx.x; i < len_indiv_c; i+= blockDim.x)
+        for (int i = start_thread; i < len_indiv_c; i+= thread_inc)
         {
             c_indiv[i] = c[c_i * len_indiv_c + i];
         }
-        __syncthreads();
+        CUDA_SYNC_THREADS;
 
-
-        for (int i = threadIdx.x + blockDim.x * blockIdx.x; i < mx; i += blockDim.x * gridDim.x)
+        for (int i = full_loop_start; i < mx; i += full_loop_inc)
         {
             fpbisp(
                     &z_temp,
@@ -158,6 +182,10 @@ void interp2D(double* z, const double* tx, int nx, const double* ty, int ny,
             
         }
     }
+    #ifdef __CUDACC__
+    #else
+    delete[] shared_mem_in;
+    #endif
 }
 
 void interp2D_wrap(double* z, const double* tx, int nx, const double* ty, int ny, double* c,
@@ -165,17 +193,18 @@ void interp2D_wrap(double* z, const double* tx, int nx, const double* ty, int ny
              const double* y, int my, int num_indiv_c, int len_indiv_c)
 {
 
+    if (mx != my)
+    {
+        throw std::invalid_argument("mx and my must be the same value.");
+    }
+
+    #ifdef __CUDACC__
     auto shared_memory_size = nx * sizeof(double) + ny * sizeof(double) + len_indiv_c * sizeof(double);
 
     gpuErrchk(cudaFuncSetAttribute(
         interp2D,
         cudaFuncAttributeMaxDynamicSharedMemorySize,
         shared_memory_size));
-
-    if (mx != my)
-    {
-        throw std::invalid_argument("mx and my must be the same value.");
-    }
 
     int num_blocks = std::ceil((mx + NUM_THREADS -1)/NUM_THREADS);
     dim3 grid(num_blocks, num_indiv_c);
@@ -187,6 +216,15 @@ void interp2D_wrap(double* z, const double* tx, int nx, const double* ty, int ny
     );
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
+    #else
+    interp2D(
+        z,
+        tx, nx, ty, ny, c,
+        kx, ky, x, mx, y, my,
+        num_indiv_c, len_indiv_c
+    );
+
+    #endif
 
 }
 

@@ -166,6 +166,38 @@ def p_to_y(p, e, use_gpu=False):
         return np.log(-(21 / 10) - 2 * e + p)
 
 
+
+def kerr_p_to_u(a, p, e, xI, use_gpu=False):
+    """Convert from separation :math:`p` to :math:`y` coordinate
+
+    Conversion from the semilatus rectum or separation :math:`p` to :math:`y`.
+
+    arguments:
+        p (double scalar or 1D double xp.ndarray): Values of separation,
+            :math:`p`, to convert.
+        e (double scalar or 1D double xp.ndarray): Associated eccentricity values
+            of :math:`p` necessary for conversion.
+        use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
+
+    """
+    xp = cp if use_gpu else np
+
+    delta_p = 0.05
+    alpha = 4.0
+
+    pLSO = get_separatrix(a, e, xI)  
+    beta = alpha - delta_p
+    u = xp.log((p + beta - pLSO) / alpha)
+
+    if xp.any(u < -1e9):
+        raise ValueError("u values are too far below zero.")
+
+    # numerical errors
+    u[u < 0.0] = 0.0
+
+    return u
+
+
 def get_fundamental_frequencies(a, p, e, x):
     """Get dimensionless fundamental frequencies.
 

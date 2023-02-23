@@ -426,8 +426,8 @@ fund_freqs_ext = Extension(
 # also copy pyx files to cpu version
 src = "src/"
 
-cp_cu_files = ["matmul", "interpolate", "gpuAAK", "Zlmkn8_5PNe10_base", "Spheroidal_PN"] + [fp[4:-3] for fp in files_for_pn_amp]
-cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap", "pypnampWrap"]
+cp_cu_files = ["matmul", "interpolate", "gpuAAK", "AmpInterp2D", "Zlmkn8_5PNe10_base", "Spheroidal_PN"] + [fp[4:-3] for fp in files_for_pn_amp]
+cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap", "pyampinterp2D", "pypnampWrap"]
 
 for fp in cp_cu_files:
     shutil.copy(src + fp + ".cu", src + fp + ".cpp")
@@ -461,6 +461,10 @@ spher_harm_ext = Extension(
     **cpu_extension,
 )
 
+amp_interp_2d_ext = Extension(
+        "pyAmpInterp2D_cpu", sources=["src/AmpInterp2D.cpp", "src/pyampinterp2D_cpu.pyx"], **gpu_extension
+    )
+
 
 cpu_extensions = [
     matmul_cpu_ext,
@@ -472,6 +476,7 @@ cpu_extensions = [
     fund_freqs_ext,
     AAK_cpu_ext,
     pnAmp_cpu_ext,
+    amp_interp_2d_ext,
 ]
 
 if run_cuda_install:
@@ -479,6 +484,8 @@ if run_cuda_install:
     extensions = gpu_extensions + cpu_extensions
 else:
     extensions = cpu_extensions
+
+extensions = [gpu_amp_interp_2d_ext, amp_interp_2d_ext]
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
