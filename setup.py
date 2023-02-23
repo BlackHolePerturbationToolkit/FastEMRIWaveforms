@@ -462,7 +462,7 @@ spher_harm_ext = Extension(
 )
 
 amp_interp_2d_ext = Extension(
-        "pyAmpInterp2D_cpu", sources=["src/AmpInterp2D.cpp", "src/pyampinterp2D_cpu.pyx"], **gpu_extension
+        "pyAmpInterp2D_cpu", sources=["src/AmpInterp2D.cpp", "src/pyampinterp2D_cpu.pyx"], **cpu_extension
     )
 
 
@@ -484,8 +484,6 @@ if run_cuda_install:
     extensions = gpu_extensions + cpu_extensions
 else:
     extensions = cpu_extensions
-
-extensions = [gpu_amp_interp_2d_ext, amp_interp_2d_ext]
 
 with open("README.md", "r") as fh:
     long_description = fh.read()

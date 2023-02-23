@@ -338,8 +338,10 @@ class AmpInterpKerrEqEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBa
         
         spins_tmp = []
         for fp in os.listdir(self.few_dir + "few/files/"):
-            if fp[:3] == "a0.":
-                spins_tmp.append(float(fp[1:5]))
+            if fp[:13] == "Teuk_amps_a0.":
+                if fp[14] == "_":
+                    continue
+                spins_tmp.append(float(fp[11:15]))
 
         # combine prograde and retrograde here
         self.spin_values = np.unique(np.asarray(spins_tmp))
