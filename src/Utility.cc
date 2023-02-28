@@ -464,11 +464,18 @@ double get_separatrix(double a, double e, double x)
         double x_lo, x_hi;
 
         // solve for polar p_sep
-        x_lo = 1.0;
-        x_hi = 6.0 + 4.0 * Sqrt(2.0);
+        if (x>0.0){
+            x_lo = 1.0 + e;
+            x_hi = 6.0 + 2.0*e;
+        }
+        else{
+            x_lo = 6.0 + 2.0*e;
+            x_hi = 5.0 + e + 4.0 * Sqrt(1.0+e) ;
+        }
 
         double eq_p_sep = solver (&params, &separatrix_polynomial_equat, x_lo, x_hi);
         return eq_p_sep;
+        
     }
     else
     {
