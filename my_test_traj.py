@@ -37,7 +37,7 @@ Y0 = 1.0
 # run trajectory
 err = 1e-10
 insp_kw = {
-    "T": 1.0,
+    "T": 10.0,
     "dt": 10.0,
     "err": err,
     "DENSE_STEPPING": 0,
@@ -46,6 +46,9 @@ insp_kw = {
     # "fix_T": True
 
     }
+trajpn5.get_derivatives(mu/M, a, p0, e0, 1.0, np.asarray([1.0]))
+traj.get_derivatives(mu/M, a, p0, e0, 1.0, np.asarray([0.0]))
+breakpoint()
 np.random.seed(32)
 import matplotlib.pyplot as plt
 import time, os
@@ -83,24 +86,27 @@ second_spin = 1e-7
 
 plt.figure()
 plt.title(f"a={a},M={M:.1e},mu={mu:.1e}, secondary spin={second_spin:.2e}")
-for i in range(50):
+count = 0
+for p0 in np.linspace(9.0, 20.0,num=10):
+    e0=0.5
     # p0 = 9.6097
     # e0 = 0.000143448 
-     
     
-    p0 = np.random.uniform(9.0, 15.0)
-    e0 = np.random.uniform(0.0, 0.5)
+    
+    # p0 = np.random.uniform(9.0, 25.0)
+    # e0 = np.random.uniform(0.0, 0.2)
     
     Y0 = np.random.uniform(-1.0, 1.0)
     print('--------------------')
-    print(i, p0, e0, Y0)
+    print(p0, e0, Y0)
     
     tic = time.perf_counter()
     # t, p, e, x, Phi_phi, Phi_theta, Phi_r = trajpn5(M, mu, a, p0, e0, Y0, **insp_kw) 
     t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, second_spin, **insp_kw)
     toc = time.perf_counter()
     print("time=",toc-tic, Phi_phi[-1])
-    plt.plot(p, e,'x',label=f" e0={e0:.2e}, p0={p0:.2e}")#time = {toc-tic:.3}, N={len(t)},
+    plt.plot(p, e,'.',label=f" e0={e0:.2e}, p0={p0:.2e}",alpha=0.1)#time = {toc-tic:.3}, N={len(t)},
+
 
 # for i in range(5):
 #     # p0 = 9.6097

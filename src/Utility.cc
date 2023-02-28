@@ -456,6 +456,20 @@ double get_separatrix(double a, double e, double x)
         p_sep = (3. + z2 + sign * sqrt((3. - z1) * (3. + z1 + 2. * z2)));
         return p_sep;
     }
+    else if (abs(x)==1.0)
+    {
+        // Equatorial orbits
+        // fills in p and Y with zeros
+        struct params_holder params = {a, 0.0, e, 1.0, 0.0};
+        double x_lo, x_hi;
+
+        // solve for polar p_sep
+        x_lo = 1.0;
+        x_hi = 6.0 + 4.0 * Sqrt(2.0);
+
+        double eq_p_sep = solver (&params, &separatrix_polynomial_equat, x_lo, x_hi);
+        return eq_p_sep;
+    }
     else
     {
         // fills in p and Y with zeros
@@ -465,8 +479,6 @@ double get_separatrix(double a, double e, double x)
         // solve for polar p_sep
         x_lo = 1.0 + sqrt(3.0) + sqrt(3.0 + 2.0 * sqrt(3.0));
         x_hi = 8.0;
-
-
 
         double polar_p_sep = solver (&params, &separatrix_polynomial_polar, x_lo, x_hi);
         if (x == 0.0) return polar_p_sep;
