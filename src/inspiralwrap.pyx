@@ -63,7 +63,7 @@ cdef class pyDerivative:
 
         self.g.get_derivatives(&pdot[0], &edot[0], &Ydot[0], &Omega_phi[0], &Omega_theta[0], &Omega_r[0], epsilon, a, p0, e0, Y0, &additional_args[0])
 
-        return (pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r)
+        return (pdot[0], edot[0], Ydot[0], Omega_phi[0], Omega_theta[0], Omega_r[0])
 
 
 

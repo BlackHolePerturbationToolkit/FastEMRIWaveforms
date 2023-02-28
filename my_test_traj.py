@@ -46,9 +46,9 @@ insp_kw = {
     # "fix_T": True
 
     }
-trajpn5.get_derivatives(mu/M, a, p0, e0, 1.0, np.asarray([1.0]))
-traj.get_derivatives(mu/M, a, p0, e0, 1.0, np.asarray([0.0]))
-breakpoint()
+trajpn5.get_derivative(mu/M, a, p0, e0, 1.0, np.asarray([1.0]))
+
+
 np.random.seed(32)
 import matplotlib.pyplot as plt
 import time, os
@@ -84,11 +84,11 @@ get_fundamental_frequencies(0.850000, 9.612440, 0.112196, 1.0)
 
 second_spin = 1e-7
 
-plt.figure()
+# plt.figure()
 plt.title(f"a={a},M={M:.1e},mu={mu:.1e}, secondary spin={second_spin:.2e}")
 count = 0
-for p0 in np.linspace(9.0, 20.0,num=10):
-    e0=0.5
+for p0 in np.linspace(11.0, 25.0,num=3):
+    e0=0.3
     # p0 = 9.6097
     # e0 = 0.000143448 
     
@@ -105,8 +105,25 @@ for p0 in np.linspace(9.0, 20.0,num=10):
     t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, second_spin, **insp_kw)
     toc = time.perf_counter()
     print("time=",toc-tic, Phi_phi[-1])
-    plt.plot(p, e,'.',label=f" e0={e0:.2e}, p0={p0:.2e}",alpha=0.1)#time = {toc-tic:.3}, N={len(t)},
+    
+    epsilon = mu/M
+    out = np.asarray([traj.get_derivative(epsilon, a, pp, ee, 1.0, np.asarray([0.0]))  for pp,ee in zip(p,e)])
+    outPN = np.asarray([trajpn5.get_derivative(epsilon, a, pp, ee, 1.0, np.asarray([0.0]))  for pp,ee in zip(p,e)])
 
+    plt.figure()
+    plt.plot(out[:,3]/out[:,5], out[:,1]/epsilon, '.',label='edot')
+    plt.plot(out[:,3]/out[:,5], out[:,0]/epsilon, '.',label='pdot')
+    plt.legend()
+    plt.show()
+    
+    # plt.plot(p, e,'.',label=f" e0={e0:.2e}, p0={p0:.2e}",alpha=0.1)#time = {toc-tic:.3}, N={len(t)},
+
+
+
+# plt.xlabel('p')
+# plt.ylabel('e')
+# plt.legend()
+# plt.show()
 
 # for i in range(5):
 #     # p0 = 9.6097
@@ -124,11 +141,6 @@ for p0 in np.linspace(9.0, 20.0,num=10):
 #     print(toc-tic, Phi_phi[-1])
 #     plt.plot(p, e,'.',label=f"time = {toc-tic:.3}, N={len(t)}, e0={e0:.2e}")
 
-
-plt.xlabel('p')
-plt.ylabel('e')
-plt.legend()
-plt.show()
 
 np.savetxt("t_test.txt",t)
 np.savetxt("p_test.txt",p)
