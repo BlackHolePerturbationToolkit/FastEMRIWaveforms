@@ -59,7 +59,7 @@ using namespace std::chrono;
 
 #define  ERROR_INSIDE_SEP  21
 
-#define DIST_TO_SEPARATRIX 0.1
+#define DIST_TO_SEPARATRIX 0.2
 #define INNER_THRESHOLD 1e-8
 #define PERCENT_STEP 0.25
 #define MAX_ITER 1000
