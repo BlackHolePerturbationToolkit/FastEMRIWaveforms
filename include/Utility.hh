@@ -37,4 +37,6 @@ int get_threads();
 double KerrGeoEnergy(double a, double p, double e, double x);
 double KerrGeoAngularMomentum(double a, double p, double e, double x, double En);
 
+double separatrix_KerrEquatorial(const double a, const double e);
+
 #endif // __FUND_FREQS__

@@ -38,7 +38,7 @@ trajpn5 = EMRIInspiral(func="pn5")
 insp_kw = {
     "T": 10.0,
     "dt": 10.0,
-    "err": 1e-13,
+    "err": 1e-10,
     "DENSE_STEPPING": 0,
     "max_init_len": int(1e4),
     # "upsample": True,
@@ -49,9 +49,9 @@ insp_kw = {
 M = 1e6
 mu = 50.0
 epsilon = mu/M
-p0 = 15.0
+p0 = 12.0
 e0 = 0.4
-a=0.85
+a=0.855
 Y0 = 1.0
 second_spin = 0.0
 
@@ -70,7 +70,7 @@ plt.colorbar(cb,label=r'$log_{10} (\dot{p}) $')
 plt.xlabel('p')
 plt.ylabel('e')
 plt.tight_layout()
-plt.savefig('pdot.png')
+# plt.savefig('pdot.png')
 
 plt.figure()
 cb = plt.tricontourf(p_all, e_all, np.log10(np.abs(edot)))
@@ -78,26 +78,44 @@ plt.colorbar(cb,label=r'$log_{10} (\dot{e}) $')
 plt.xlabel('p')
 plt.ylabel('e')
 plt.tight_layout()
-plt.savefig(f'edot.png')
+# plt.savefig(f'edot.png')
+# np.savetxt(f"p_e_pdot_edot.txt", np.asarray((p_all, e_all, pdot, edot)).T )
 
-np.savetxt(f"p_e_pdot_edot.txt", np.asarray((p_all, e_all, pdot, edot)).T )
-
+# breakpoint()
 #################################################################
 tic = time.perf_counter()
 t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, second_spin, **insp_kw)
 toc = time.perf_counter()
-print("time=",toc-tic, Phi_phi[-1])
+print("time=",toc-tic, Phi_phi[-1], "length", len(t))
 
 out = np.asarray([traj.get_derivative(epsilon, a, pp, ee, 1.0, np.asarray([0.0]))  for pp,ee in zip(p,e)])
+outS = np.asarray([trajpn5.get_derivative(epsilon, a, pp, ee, 1.0, np.asarray([0.0]))  for pp,ee in zip(p,e)])
 
-pdot = out[:,0]/epsilon
+psep = get_separatrix(a, e, x)
+pdot = out[:,0] / epsilon
 edot = out[:,1]/epsilon
 Omega_phi = out[:,3]
 Omega_r = out[:,5]
 
 om1,om2,om3 = get_fundamental_frequencies(a,p,e,np.ones_like(p))
 print("check = ",np.all(Omega_phi==om1),np.all(Omega_r==om3))
+##################################################################
+# Fundamental frequencies
+# Viktor = np.loadtxt('t_p_e_OmegaPhi_OmegaTheta_OmegaR.dat')
 
+# # breakpoint()
+# # get_fundamental_frequencies(0.855, Viktor[:,1], Viktor[:,2], np.ones_like(Viktor[:,1]))
+
+# for ii in range(Viktor.shape[0]):
+#     print('-----------------------')
+#     print(Viktor[ii,1], Viktor[ii,2])
+#     print(get_fundamental_frequencies(0.855, Viktor[ii,1], Viktor[ii,2], 1.0)[0] - Viktor[ii,3] )
+#     print(get_fundamental_frequencies(0.855, Viktor[ii,1], Viktor[ii,2], 1.0)[1] - Viktor[ii,4] )
+#     print(get_fundamental_frequencies(0.855, Viktor[ii,1], Viktor[ii,2], 1.0)[2] - Viktor[ii,5] )
+
+# ii = 0
+# print(Viktor[ii,1], Viktor[ii,2])
+# print(get_fundamental_frequencies(0.855, Viktor[ii,1], Viktor[ii,2], 1.0),Viktor[ii,3:])
 #################################################################
 
 fig, axes = plt.subplots(2, 3)
@@ -119,9 +137,9 @@ for i, (ax, x, y, xlab, ylab) in enumerate(zip(axes, xs, ys, xlabels, ylabels)):
     ax.set_xlabel(xlab, fontsize=16)
     ax.set_ylabel(ylab, fontsize=16)
 plt.tight_layout()
-plt.savefig(f'trajectory_evolution_info_M={M}_mu={mu}_p0={p0}_e0={e0}_a={a}.png')
-arr_out = np.asarray((t, p, e, Phi_phi, Phi_theta, Phi_r))
-np.savetxt(f"t[seconds]_p_e_Phiphi_Phitheta_Phir_info_M={M}_mu={mu}_p0={p0}_e0={e0}_a={a}.txt", arr_out.T )
+# plt.savefig(f'trajectory_evolution_info_M={M}_mu={mu}_p0={p0}_e0={e0}_a={a}.png')
+arr_out = np.asarray((t, p, e, Phi_phi, Phi_theta, Phi_r, om1, om2, om3))
+np.savetxt(f"t[seconds]_p_e_PhiPhi_PhiTheta_PhiR_OmegaPhi_OmegaTheta_OmegaR_info_M={M}_mu={mu}_p0={p0}_e0={e0}_a={a}.txt", arr_out.T )
 
 # plt.close('all')
 
@@ -131,15 +149,32 @@ np.savetxt(f"t[seconds]_p_e_Phiphi_Phitheta_Phir_info_M={M}_mu={mu}_p0={p0}_e0={
 # plt.plot(p,e,'r.',alpha=0.6)
 # plt.xlabel('p')
 # plt.ylabel('e')
-# plt.show()
 
 
 plt.figure()
-plt.title(r'numerical derivative $\partial_p \dot{p}$ over the trajectory')
-plt.semilogy(om2/om3, np.abs(np.gradient(pdot,p)),'.')
+# plt.title(r'numerical derivative $\partial_p \dot{p}$ over the trajectory')
+# plt.semilogy(om2/om3, np.abs(np.gradient(pdot,p)),'.')
+# plt.ylabel(r'$\frac{\partial \dot{p}}{\partial p} $')
+plt.plot(p, pdot,'.')
 plt.xlabel('p')
-plt.ylabel(r'$\frac{\partial \dot{p}}{\partial p} $')
-plt.savefig('numerical_derivative_pdot_dp_info_M={M}_mu={mu}_p0={p0}_e0={e0}_a={a}.txt.png')
+plt.ylabel('pdot')
+# plt.savefig('numerical_derivative_pdot_dp_info_M={M}_mu={mu}_p0={p0}_e0={e0}_a={a}.txt.png')
 
+plt.figure()
+# plt.title(r'numerical derivative $\partial_p \dot{p}$ over the trajectory')
+plt.semilogy(p, np.abs(np.gradient(pdot,p)),'.')
+# plt.ylabel(r'$\frac{\partial \dot{p}}{\partial p} $')
+plt.xlabel('p')
+plt.ylabel('pdot dp')
+
+
+plt.figure()
+# plt.title(r'numerical derivative $\partial_p \dot{p}$ over the trajectory')
+plt.semilogy(p, psep,'.')
+# plt.ylabel(r'$\frac{\partial \dot{p}}{\partial p} $')
+plt.xlabel('p')
+plt.ylabel('psep')
+
+plt.show()
 
 print("DONE")
