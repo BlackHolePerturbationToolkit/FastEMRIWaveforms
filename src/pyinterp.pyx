@@ -51,7 +51,6 @@ def get_waveform_wrap(d_waveform, interp_array,
 
     get_waveform(<cmplx *>d_waveform_in, <double *>interp_array_in,
                 <int *>d_m_in, <int *>d_n_in, init_len, out_len, num_teuk_modes, <cmplx *>d_Ylms_in,
-<<<<<<< HEAD
                 delta_t, <double *>h_t_in)
 
 @pointer_adjust
@@ -95,6 +94,3 @@ def get_waveform_tf_generic_wrap(waveform,
             num_windows, num_per_window, inds_left_right, freq_length, include_L);
 
   
-=======
-                delta_t, <double *>h_t_in, dev)
->>>>>>> kerr_ecc
