@@ -14,6 +14,12 @@ void KerrGeoCoordinateFrequencies(double* OmegaPhi_, double* OmegaTheta_, double
 void KerrGeoCoordinateFrequenciesVectorized(double* OmegaPhi_, double* OmegaTheta_, double* OmegaR_,
                               double* a, double* p, double* e, double* x, int length);
 
+void KerrEqSpinFrequenciesCorrVectorized(double* OmegaPhi_, double* OmegaTheta_, double* OmegaR_,
+                              double* a, double* p, double* e, double* x, int length);
+
+void KerrEqSpinFrequenciesCorrection(double* deltaOmegaR_, double* deltaOmegaPhi_,
+                              double a, double p, double e, double x);
+
 void SchwarzschildGeoCoordinateFrequencies(double* OmegaPhi, double* OmegaR, double p, double e);
 
 double get_separatrix(double a, double e, double x);
@@ -27,5 +33,8 @@ void Y_to_xI_vector(double* x, double* a, double* p, double* e, double* Y, int l
 
 void set_threads(int num_threads);
 int get_threads();
+
+double KerrGeoEnergy(double a, double p, double e, double x);
+double KerrGeoAngularMomentum(double a, double p, double e, double x, double En);
 
 #endif // __FUND_FREQS__

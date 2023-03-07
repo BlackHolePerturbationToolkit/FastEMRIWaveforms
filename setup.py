@@ -401,6 +401,7 @@ inspiral_ext = Extension(
         "src/Utility.cc",
         "src/Interpolant.cc",
         "src/dIdt8H_5PNe10.cc",
+        "src/KerrEquatorial.cc",
         "src/ode.cc",
         "src/Inspiral.cc",
         "src/inspiralwrap.pyx",

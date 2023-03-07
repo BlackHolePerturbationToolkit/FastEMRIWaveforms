@@ -80,8 +80,18 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
     // integrator may naively step over separatrix
     double x_temp;
 
+
+    // make sure we are outside the separatrix
+    if (e < 0.0)
+    {   
+        cout << "ecc=" << e << endl;
+        cout << "# Stepped into negative eccentricities. Circularizing the binary"<< endl;
+        return GSL_EBADFUNC+1;
+    }
+
     // define a sanity check
     if(sanity_check(a, p, e, x)==1){
+        cout << "# Sanity checked not passed" << endl;
         return GSL_EBADFUNC;
     }
     double p_sep = 0.0;
@@ -116,6 +126,8 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
     {
         return GSL_EBADFUNC;
     }
+
+
 
     double pdot, edot, xdot;
 	double Omega_phi, Omega_theta, Omega_r;
@@ -196,7 +208,11 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
     else T = gsl_odeiv2_step_rk8pd;
 
     gsl_odeiv2_step *step 			= gsl_odeiv2_step_alloc (T, 6);
-    gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (err, 0);
+    double rel_err = 0.0;
+    double abs_err =  err;
+    double a_y = 1.0;
+    double a_dydt = 0.0;
+    gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (err, 0);// gsl_odeiv2_control_standard_new(abs_err, rel_err, a_y, a_dydt); //gsl_odeiv2_control_y_new (err, 0);
     gsl_odeiv2_evolve *evolve 		= gsl_odeiv2_evolve_alloc (6);
 
     // Compute the inspiral
@@ -214,6 +230,9 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
     int bad_num = 0;
     int bad_limit = 1000;
 
+    // number of times to circularize
+    int circ = 0;
+
 	while (t < tmax){
 
         // apply fixed step if dense stepping
@@ -221,6 +240,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
 		if(DENSE_STEPPING) status = gsl_odeiv2_evolve_apply_fixed_step (evolve, control, step, &sys, &t, h, y);
         else status = gsl_odeiv2_evolve_apply (evolve, control, step, &sys, &t, t1, &h, y);
 
+        // cout << "line 243 status integrator = " << status << endl;
       	if ((status != GSL_SUCCESS) && (status != 9)){
        		printf ("error, return value=%d\n", status);
           	break;
@@ -229,7 +249,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
         // or if any quantity is nan, step back and take a smaller step.
         else if ((std::isnan(y[0]))||(std::isnan(y[1]))||(std::isnan(y[2])) ||(std::isnan(y[3]))||(std::isnan(y[4]))||(std::isnan(y[5])))
         {
-            ///printf("checkit error %.18e %.18e %.18e %.18e \n", y[0], y_prev[0], y[1], y_prev[1]);
+            printf("checkit error %.18e %.18e %.18e %.18e \n", y[0], y_prev[0], y[1], y_prev[1]);
             // reset evolver
             gsl_odeiv2_step_reset(step);
             gsl_odeiv2_evolve_reset(evolve);
@@ -257,21 +277,23 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
         // if it made it here, reset bad num
         bad_num = 0;
 
-        // should not be needed but is safeguard against stepping past maximum allowable time
-        // the last point in the trajectory will be at t = tmax
-        if (t > tmax) break;
-
         double p 		= y[0];
         double e 		= y[1];
         double x        = y[2];
 
+        // should not be needed but is safeguard against stepping past maximum allowable time
+        // the last point in the trajectory will be at t = tmax
+        if (t > tmax) break;
+
         // count the number of points
         ind++;
+        
 
         // Stop the inspiral when close to the separatrix
         // convert to proper inclination for separatrix
         double x_temp;
         double p_sep = 0.0;
+
         if (status != 9)
         {
 
@@ -299,13 +321,17 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
 
         }
 
+        
         // status 9 indicates integrator stepped inside separatrix limit
         if((status == 9) || (p - p_sep < DIST_TO_SEPARATRIX))
         {
+
             // Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.
             // To correct for this we self-integrate from the second-to-last point in the integation to
             // within the INNER_THRESHOLD with respect to separatrix +  DIST_TO_SEPARATRIX
 
+                
+            
             // Get old values
             p = y_prev[0];
             e = y_prev[1];
@@ -325,6 +351,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
 
             while (p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD)
             {
+
                 double pdot, edot, xdot, Omega_phi, Omega_theta, Omega_r;
 
                 // Same function in the integrator
@@ -355,7 +382,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
                     p_sep = get_separatrix(a, e, x_temp);
                 }
 
-                double step_size = PERCENT_STEP / factor * ((p_sep + DIST_TO_SEPARATRIX - p)/pdot);
+                double step_size = PERCENT_STEP / factor * abs((p_sep + DIST_TO_SEPARATRIX - p)/pdot); // must be alwasy positive
 
                 // check step
                 double temp_t = t + step_size;
@@ -367,7 +394,8 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
                 double temp_Phi_r = Phi_r + Omega_r * step_size;
 
                 double temp_stop = temp_p - p_sep;
-                if (temp_stop > DIST_TO_SEPARATRIX)
+
+                if ((temp_stop > DIST_TO_SEPARATRIX))//&&(temp_e>0.0))
                 {
                     // update points
                     t = temp_t;
@@ -381,7 +409,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
                 else
                 {
                     // all variables stay the same
-
                     // decrease step
                     factor *= 0.5;
                 }
@@ -399,11 +426,21 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
             // add the point and end the integration
             inspiral_out.add_point(t*Msec, p, e, x, Phi_phi, Phi_theta, Phi_r);
 
-            //cout << "# Separatrix reached: exiting inspiral" << endl;
+            // cout << "# Separatrix reached: exiting inspiral" << endl;
             break;
         }
-
-        inspiral_out.add_point(t*Msec, y[0], y[1], y[2], y[3], y[4], y[5]); // adds time in seconds
+        
+        if (status == GSL_SUCCESS){
+            // cout << "# Add point " << t*Msec << "\t" <<y[0] << "\t" <<y[1] << "\t" <<y[2] << "\t" <<y[3] << "\t" <<y[4] << "\t" <<y[5] << endl;
+            // cout << "# Tmax = " << tmax << "\t step = " << h << "\t t = " << t << endl;
+            inspiral_out.add_point(t*Msec, y[0], y[1], y[2], y[3], y[4], y[5]); // adds time in seconds
+        }
+        
+        if (h < dt/1000){
+            cout << "WARNING: The time step became 1000 times smaller than dt" << endl;
+            cout << "status integrator = " << status << endl;
+            // break;
+        }
 
         prev_t = t;
         prev_p_sep = p_sep;

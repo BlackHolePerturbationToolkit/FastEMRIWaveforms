@@ -1,8 +1,24 @@
+<<<<<<< HEAD
 import unittest
 import numpy as np
 import warnings
 import time 
 from few.trajectory.inspiral import EMRIInspiral
+=======
+#python -m unittest few/tests/test_traj.py 
+import unittest
+import numpy as np
+import warnings
+
+from few.trajectory.inspiral import EMRIInspiral
+from few.amplitude.romannet import RomanAmplitude
+from few.amplitude.interp2dcubicspline import Interp2DAmplitude
+from few.waveform import FastSchwarzschildEccentricFlux, SlowSchwarzschildEccentricFlux
+from few.utils.utility import get_overlap, get_mismatch, get_separatrix, get_fundamental_frequencies
+from few.utils.ylm import GetYlms
+from few.utils.modeselector import ModeSelector
+from few.summation.interpolatedmodesum import CubicSplineInterpolant
+>>>>>>> kerr_ecc
 
 try:
     import cupy as xp
@@ -68,4 +84,20 @@ class ModuleTest(unittest.TestCase):
 
         # run trajectory
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, 0.0, p0, e0, 1.0)
-        breakpoint()
+
+    def test_trajectory_KerrEccentricEquatorial(self):
+
+        err = 1e-10
+        
+        # initialize trajectory class
+        traj = EMRIInspiral(func="KerrEccentricEquatorial")
+
+        # set initial parameters
+        M = 1e6
+        mu = 1e1
+        p0 = 30.0
+        e0 = 0.0001
+        a=0.85
+
+        # run trajectory
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, T=10, err=err)

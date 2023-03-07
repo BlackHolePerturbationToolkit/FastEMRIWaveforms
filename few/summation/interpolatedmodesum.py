@@ -406,6 +406,11 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleB
         except:
             h_t = t
 
+        if not self.use_gpu:
+            dev = 0
+        else:
+            dev = int(self.xp.cuda.runtime.getDevice())
+
         # the base class function __call__ will return the waveform
         self.get_waveform(
             self.waveform,
@@ -418,6 +423,7 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleB
             ylms,
             dt,
             h_t,
+            dev
         )
 
 

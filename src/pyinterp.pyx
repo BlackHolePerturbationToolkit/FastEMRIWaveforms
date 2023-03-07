@@ -12,7 +12,7 @@ cdef extern from "interpolate.hh":
 
     void get_waveform(cmplx *d_waveform, double *interp_array,
                   int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cmplx *d_Ylms,
-                  double delta_t, double *h_t)
+                  double delta_t, double *h_t, int dev)
 
     void get_waveform_generic(cmplx *waveform,
              double *interp_array,
@@ -40,7 +40,7 @@ def interpolate_arrays_wrap(t_arr, interp_array, ninterps, length, B, upper_diag
 @pointer_adjust
 def get_waveform_wrap(d_waveform, interp_array,
               d_m, d_n, init_len, out_len, num_teuk_modes, d_Ylms,
-              delta_t, h_t):
+              delta_t, h_t, dev):
 
     cdef size_t d_waveform_in = d_waveform
     cdef size_t interp_array_in = interp_array
@@ -51,6 +51,7 @@ def get_waveform_wrap(d_waveform, interp_array,
 
     get_waveform(<cmplx *>d_waveform_in, <double *>interp_array_in,
                 <int *>d_m_in, <int *>d_n_in, init_len, out_len, num_teuk_modes, <cmplx *>d_Ylms_in,
+<<<<<<< HEAD
                 delta_t, <double *>h_t_in)
 
 @pointer_adjust
@@ -94,3 +95,6 @@ def get_waveform_tf_generic_wrap(waveform,
             num_windows, num_per_window, inds_left_right, freq_length, include_L);
 
   
+=======
+                delta_t, <double *>h_t_in, dev)
+>>>>>>> kerr_ecc

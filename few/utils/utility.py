@@ -32,6 +32,7 @@ from pyUtility import (
     pyY_to_xI_vector,
     set_threads_wrap,
     get_threads_wrap,
+    pyKerrEqSpinFrequenciesCorr
 )
 
 # check to see if cupy is available for gpus
@@ -252,6 +253,63 @@ def get_fundamental_frequencies(a, p, e, x):
 
     else:
         return (OmegaPhi, OmegaTheta, OmegaR)
+
+
+def get_fundamental_frequencies_spin_corrections(a, p, e, x):
+    """Get dimensionless fundamental frequencies.
+
+    Determines fundamental frequencies in generic Kerr from
+    `Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_.
+
+    arguments:
+        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+            black hole. If other parameters are arrays and the spin is scalar,
+            it will be cast to a 1D array.
+        p (double scalar or 1D double np.ndarray): Values of separation,
+            :math:`p`.
+        e (double scalar or 1D double np.ndarray): Values of eccentricity,
+            :math:`e`.
+        x (double scalar or 1D double np.ndarray): Values of cosine of the
+            inclination, :math:`x=\cos{I}`. Please note this is different from
+            :math:`Y=\cos{\iota}`.
+
+    returns:
+        tuple: Tuple of (OmegaPhi, OmegaTheta, OmegaR).
+            These are 1D arrays or scalar values depending on inputs.
+
+    """
+
+    # check if inputs are scalar or array
+    if isinstance(p, float):
+        scalar = True
+
+    else:
+        scalar = False
+
+    p_in = np.atleast_1d(p)
+    e_in = np.atleast_1d(e)
+    x_in = np.atleast_1d(x)
+
+    # cast the spin to the same size array as p
+    if isinstance(a, float):
+        a_in = np.full_like(p_in, a)
+    else:
+        a_in = np.atleast_1d(a)
+
+    assert len(a_in) == len(p_in)
+
+    # get frequencies
+    OmegaPhi, OmegaTheta, OmegaR = pyKerrEqSpinFrequenciesCorr(
+        a_in, p_in, e_in, x_in
+    )
+
+    # set output to shape of input
+    if scalar:
+        return (OmegaPhi[0], OmegaTheta[0], OmegaR[0])
+
+    else:
+        return (OmegaPhi, OmegaTheta, OmegaR)
+
 
 
 def get_kerr_geo_constants_of_motion(a, p, e, x):
@@ -759,6 +817,7 @@ record_by_version = {
     "1.4.4": 3981654,
     "1.4.5": 3981654,
     "1.4.6": 3981654,
+    "1.4.7": 3981654,
 }
 
 

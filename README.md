@@ -118,7 +118,31 @@ optional arguments:
                         with CUDA.
 ```
 
+When installing the package with `python setup.py install`, the setup file uses the C compiler present in your `PATH`. However, it might happen that the setup file incorrectly uses another compiler present on your path. To solve this issue you can directly specify the C compiler using the flag `--ccbin` as in the following example:
 
+```
+python setup.py install --ccbin /path/to/anaconda3/envs/few_env/bin/x86_64-conda-linux-gnu-gcc
+```
+
+or if on MACOSX:
+
+```
+python setup.py install --ccbin /path/to/anaconda3/envs/few_env/bin/x86_64-apple-darwin13.4.0-clang
+```
+
+#### Installing on an M1 chip
+
+If you are encountering a problem in installing the package on an M1 chip, this is expected. A possible way around is to follow the steps below. This is definitely not a preferable way to handle this issue and may or may not work. We will further investigate this when we find time and access to an M1 chip. 
+
+Steps for one found solution so far:
+
+1. Remove compiler installed in FEW conda (maybe in /path/to/anaconda3/envs/few_env/bin/x86_64-apple-darwin13.4.0-clang)
+2. set flag --no\_omp
+3. Export CC=/usr/bin/clang   # Make sure that this corresponds to default M1 compiler
+4. Export CCXX = /usr/bin/clang++
+5. Comment out line 512 "omp\_set\_num\_threads(num\_threads);" in src/Utility.cc 
+6. Comment between line 517 and 523. Change line 524 to "return 1;"] in src/Utility.cc 
+7. python setup.py install --no\_omp
 
 ## Running the Tests
 
@@ -136,7 +160,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags).
 
-Current Version: 1.4.6
+Current Version: 1.4.8
 
 ## Authors
 
