@@ -25,7 +25,7 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 
 # Cython/C++ imports
-from pyInspiral import pyInspiralGenerator
+from pyInspiral import pyInspiralGenerator, pyDerivative
 
 # Python imports
 from few.utils.baseclasses import TrajectoryBase
@@ -154,6 +154,8 @@ class EMRIInspiral(TrajectoryBase):
             "max_init_len",
             "use_rk4",
         ]
+
+        self.get_derivative = pyDerivative(self.func, few_dir.encode())
 
     def attributes_EMRIInspiral(self):
         """

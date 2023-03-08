@@ -2,7 +2,10 @@
 import unittest
 import numpy as np
 import warnings
-
+import matplotlib.pyplot as plt
+from matplotlib import cm
+import time, os
+print("PID",os.getpid())
 from few.trajectory.inspiral import EMRIInspiral
 from few.amplitude.romannet import RomanAmplitude
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
@@ -11,6 +14,8 @@ from few.utils.utility import get_overlap, get_mismatch, get_separatrix, get_fun
 from few.utils.ylm import GetYlms
 from few.utils.modeselector import ModeSelector
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
+from few.utils.constants import *
+np.random.seed(32)
 
 try:
     import cupy as xp
@@ -26,108 +31,150 @@ except (ModuleNotFoundError, ImportError) as e:
     gpu_available = False
 
 traj = EMRIInspiral(func="KerrEccentricEquatorial")
+trajS = EMRIInspiral(func="SchwarzEccFlux")
 trajpn5 = EMRIInspiral(func="pn5")
-# set initial parameters
-M = 1e4
-mu = 10.0
-p0 = 15.0
-e0 = 0.4999
-a=0.85
-Y0 = 1.0
-# run trajectory
-err = 1e-10
+
+
 insp_kw = {
-    "T": 1.0,
+    "T": 10.0,
     "dt": 10.0,
-    "err": err,
+    "err": 1e-10,
     "DENSE_STEPPING": 0,
     "max_init_len": int(1e4),
     # "upsample": True,
     # "fix_T": True
-
     }
-np.random.seed(32)
-import matplotlib.pyplot as plt
-import time, os
-print(os.getpid())
 
-# (Pdb) get_fundamental_frequencies_spin_corrections(0.9, 10.0, 0.1, 1.0)
-# (-0.0010196312485235952, 0.0, 0.0013532812299746403)
-# (Pdb) get_fundamental_frequencies_spin_corrections(0.9, 15.0, 0.3, 1.0)
-# (-0.000331335060747499, 0.0, 0.00033285096450886626)
-# (Pdb) get_fundamental_frequencies_spin_corrections(0.5, 13.0, 0.6, 1.0) 
-# (-0.0005431591165829322, 0.0, 0.00029071115906960485)
-get_fundamental_frequencies_spin_corrections(0.850000, 9.612440, 0.112196, 1.0)
-get_fundamental_frequencies(0.850000, 9.612440, 0.112196, 1.0)
+# set initial parameters
+M = 1e6
+mu = 50.0
+epsilon = mu/M
+p0 = 12.0
+e0 = 0.4
+a=0.855
+Y0 = 1.0
+second_spin = 0.0
 
-# plt.figure()
-# plt.title(f"Y0={Y0},M={M:.1e},mu={mu:.1e}")
-# for i in range(10000):
-#     # p0 = 9.6097
-#     # e0 = 0.000143448 
-        
-#     p0 = np.random.uniform(9.0, 15.0)
-#     e0 = np.random.uniform(0.0, 0.9)
-#     dom1,dom2,dom3 = get_fundamental_frequencies_spin_corrections(0.850000, p0,e0, 1.0)
-#     om1,om2,om3 = get_fundamental_frequencies(0.850000,  p0,e0, 1.0)
-    
-#     plt.semilogy(e0,np.abs(dom1),'.')
-#     plt.semilogy(e0,np.abs(dom3),'x')
-
-# plt.xlabel('sep')
-
-# plt.legend()
-# plt.show()
-
-second_spin = 1e-7
+# check fluxes
+p_all, e_all = np.asarray([temp.ravel() for temp in np.meshgrid( np.linspace(4.0, 14.0), np.linspace(0.01, 0.5))])
+out = np.asarray([traj.get_derivative(epsilon, a, pp, ee, 1.0, np.asarray([0.0]))  for pp,ee in zip(p_all,e_all)])
+pdot = out[:,0]/epsilon
+edot = out[:,1]/epsilon
+Omega_phi = out[:,3]
+Omega_r = out[:,5]
+pdot_full = pdot.copy()
 
 plt.figure()
-plt.title(f"a={a},M={M:.1e},mu={mu:.1e}, secondary spin={second_spin:.2e}")
-for i in range(50):
-    # p0 = 9.6097
-    # e0 = 0.000143448 
-     
-    
-    p0 = np.random.uniform(9.0, 15.0)
-    e0 = np.random.uniform(0.0, 0.5)
-    
-    Y0 = np.random.uniform(-1.0, 1.0)
-    print('--------------------')
-    print(i, p0, e0, Y0)
-    
-    tic = time.perf_counter()
-    # t, p, e, x, Phi_phi, Phi_theta, Phi_r = trajpn5(M, mu, a, p0, e0, Y0, **insp_kw) 
-    t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, second_spin, **insp_kw)
-    toc = time.perf_counter()
-    print("time=",toc-tic, Phi_phi[-1])
-    plt.plot(p, e,'x',label=f" e0={e0:.2e}, p0={p0:.2e}")#time = {toc-tic:.3}, N={len(t)},
-
-# for i in range(5):
-#     # p0 = 9.6097
-#     # e0 = 0.000143448 
-    
-#     p0 = np.random.uniform(9.0, 50.0)
-#     e0 = np.random.uniform(0.1, 0.9)
-#     print('--------------------')
-#     print(i, p0, e0)
-    
-#     tic = time.time()
-#     t, p, e, x, Phi_phi, Phi_theta, Phi_r = trajpn5(M, mu, a, p0, e0, Y0, **insp_kw) 
-#     # t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, **insp_kw)
-#     toc = time.time()
-#     print(toc-tic, Phi_phi[-1])
-#     plt.plot(p, e,'.',label=f"time = {toc-tic:.3}, N={len(t)}, e0={e0:.2e}")
-
-
+cb = plt.tricontourf(p_all, e_all, np.log10(np.abs(pdot)))
+plt.colorbar(cb,label=r'$log_{10} (\dot{p}) $')
 plt.xlabel('p')
 plt.ylabel('e')
-plt.legend()
-plt.show()
+plt.tight_layout()
+# plt.savefig('pdot.png')
 
-np.savetxt("t_test.txt",t)
-np.savetxt("p_test.txt",p)
-np.savetxt("e_test.txt",e)
-np.savetxt("PhiPhi_test.txt",Phi_phi)
-np.savetxt("PhiR_test.txt",Phi_r)
+plt.figure()
+cb = plt.tricontourf(p_all, e_all, np.log10(np.abs(edot)))
+plt.colorbar(cb,label=r'$log_{10} (\dot{e}) $')
+plt.xlabel('p')
+plt.ylabel('e')
+plt.tight_layout()
+# plt.savefig(f'edot.png')
+# np.savetxt(f"p_e_pdot_edot.txt", np.asarray((p_all, e_all, pdot, edot)).T )
+
+# breakpoint()
+#################################################################
+tic = time.perf_counter()
+t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, second_spin, **insp_kw)
+toc = time.perf_counter()
+print("time=",toc-tic, Phi_phi[-1], "length", len(t))
+
+out = np.asarray([traj.get_derivative(epsilon, a, pp, ee, 1.0, np.asarray([0.0]))  for pp,ee in zip(p,e)])
+outS = np.asarray([trajpn5.get_derivative(epsilon, a, pp, ee, 1.0, np.asarray([0.0]))  for pp,ee in zip(p,e)])
+
+psep = get_separatrix(a, e, x)
+pdot = out[:,0] / epsilon
+edot = out[:,1]/epsilon
+Omega_phi = out[:,3]
+Omega_r = out[:,5]
+
+om1,om2,om3 = get_fundamental_frequencies(a,p,e,np.ones_like(p))
+print("check = ",np.all(Omega_phi==om1),np.all(Omega_r==om3))
+##################################################################
+# Fundamental frequencies
+# Viktor = np.loadtxt('t_p_e_OmegaPhi_OmegaTheta_OmegaR.dat')
+
+# # breakpoint()
+# # get_fundamental_frequencies(0.855, Viktor[:,1], Viktor[:,2], np.ones_like(Viktor[:,1]))
+
+# for ii in range(Viktor.shape[0]):
+#     print('-----------------------')
+#     print(Viktor[ii,1], Viktor[ii,2])
+#     print(get_fundamental_frequencies(0.855, Viktor[ii,1], Viktor[ii,2], 1.0)[0] - Viktor[ii,3] )
+#     print(get_fundamental_frequencies(0.855, Viktor[ii,1], Viktor[ii,2], 1.0)[1] - Viktor[ii,4] )
+#     print(get_fundamental_frequencies(0.855, Viktor[ii,1], Viktor[ii,2], 1.0)[2] - Viktor[ii,5] )
+
+# ii = 0
+# print(Viktor[ii,1], Viktor[ii,2])
+# print(get_fundamental_frequencies(0.855, Viktor[ii,1], Viktor[ii,2], 1.0),Viktor[ii,3:])
+#################################################################
+
+fig, axes = plt.subplots(2, 3)
+
+plt.subplots_adjust(wspace=0.3)
+fig.set_size_inches(14, 8)
+err = insp_kw["err"]
+plt.title(f"a={a},M={M:.1},mu={mu:.1}, sec. spin={second_spin:.2e}\nprecision integrator = {err:.1e}")
+
+axes = axes.ravel()
+
+ylabels = [r'$e$', r'$p$', r'$e$', r'$\Phi_\phi$', r'$\Phi_r$', r'Flux']
+xlabels = [r'$p$', r'$t$ [seconds]', r'$t$ [seconds]', r'$t$ [seconds]', r'$t$ [seconds]', r'$t$ [seconds]', r'$t$ [seconds]', r'$t$ [seconds]']
+ys = [e, p, e, Phi_phi, Phi_r]
+xs = [p, t, t, t, t]
+
+for i, (ax, x, y, xlab, ylab) in enumerate(zip(axes, xs, ys, xlabels, ylabels)):
+    ax.plot(x, y)
+    ax.set_xlabel(xlab, fontsize=16)
+    ax.set_ylabel(ylab, fontsize=16)
+plt.tight_layout()
+# plt.savefig(f'trajectory_evolution_info_M={M}_mu={mu}_p0={p0}_e0={e0}_a={a}.png')
+arr_out = np.asarray((t, p, e, Phi_phi, Phi_theta, Phi_r, om1, om2, om3))
+np.savetxt(f"t[seconds]_p_e_PhiPhi_PhiTheta_PhiR_OmegaPhi_OmegaTheta_OmegaR_info_M={M}_mu={mu}_p0={p0}_e0={e0}_a={a}.txt", arr_out.T )
+
+# plt.close('all')
+
+# plt.figure()
+# cb = plt.tricontourf(p_all, e_all, np.log10(np.abs(pdot_full)))
+# plt.colorbar(cb,label=r'$log_{10} (\dot{p}) $')
+# plt.plot(p,e,'r.',alpha=0.6)
+# plt.xlabel('p')
+# plt.ylabel('e')
+
+
+plt.figure()
+# plt.title(r'numerical derivative $\partial_p \dot{p}$ over the trajectory')
+# plt.semilogy(om2/om3, np.abs(np.gradient(pdot,p)),'.')
+# plt.ylabel(r'$\frac{\partial \dot{p}}{\partial p} $')
+plt.plot(p, pdot,'.')
+plt.xlabel('p')
+plt.ylabel('pdot')
+# plt.savefig('numerical_derivative_pdot_dp_info_M={M}_mu={mu}_p0={p0}_e0={e0}_a={a}.txt.png')
+
+plt.figure()
+# plt.title(r'numerical derivative $\partial_p \dot{p}$ over the trajectory')
+plt.semilogy(p, np.abs(np.gradient(pdot,p)),'.')
+# plt.ylabel(r'$\frac{\partial \dot{p}}{\partial p} $')
+plt.xlabel('p')
+plt.ylabel('pdot dp')
+
+
+plt.figure()
+# plt.title(r'numerical derivative $\partial_p \dot{p}$ over the trajectory')
+plt.semilogy(p, psep,'.')
+# plt.ylabel(r'$\frac{\partial \dot{p}}{\partial p} $')
+plt.xlabel('p')
+plt.ylabel('psep')
+
+plt.show()
 
 print("DONE")
