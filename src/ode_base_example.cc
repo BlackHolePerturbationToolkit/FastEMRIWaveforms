@@ -179,12 +179,12 @@ SchwarzEccFlux::~SchwarzEccFlux()
 
 //--------------------------------------------------------------------------------
 // #define KerrEccentricEquatorial_Y
-// #define KerrEccentricEquatorial_equatorial
+#define KerrEccentricEquatorial_equatorial
 #define KerrEccentricEquatorial_num_add_args 1
 __deriv__
-void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
+void KerrEccentricEquatorial(double* pdot, double* edot, double* xdot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,
-                  double epsilon, double a, double p, double e, double Y, double* additional_args)
+                  double epsilon, double a, double p, double e, double x, double* additional_args)
 {
 
 
@@ -193,16 +193,12 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     {
         *pdot = 0.0;
         *edot = 0.0;
-        *Ydot = 0.0;
+        *xdot = 0.0;
         return;
     }
 
     // evaluate ODEs
     // cout << "beginning" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<endl;
-
-    // the frequency variables are pointers!
-    double x = Y; // equatorial orbits
-
     
     // auto start = std::chrono::steady_clock::now();
     // the frequency variables are pointers!
@@ -216,14 +212,14 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     double p_sep = get_separatrix(a, e, x);
     double r;
     // reference frequency
-    Omega_phi_sep_circ = x * 1.0/ (x*a + pow(p_sep/( 1.0 + e ), 1.5) );
-    r = pow(*Omega_phi/Omega_phi_sep_circ, 2.0/3.0 ) * (1.0 + e);
+    // Omega_phi_sep_circ = x * 1.0/ (x*a + pow(p_sep/( 1.0 + e ), 1.5) );
+    // r = pow(*Omega_phi/Omega_phi_sep_circ, 2.0/3.0 ) * (1.0 + e);
     
-    if (isnan(r)){
-        cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
-        cout << "omegaphi circ " <<  Omega_phi_sep_circ << " omegaphi " <<  *Omega_phi << " omegar " <<  *Omega_r <<endl;
-        throw std::exception();
-        } 
+    // if (isnan(r)){
+    //     cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
+    //     cout << "omegaphi circ " <<  Omega_phi_sep_circ << " omegaphi " <<  *Omega_phi << " omegar " <<  *Omega_r <<endl;
+    //     throw std::exception();
+    //     } 
     
     // add corrections after you get the variable r
     // double delta_Omega_phi, delta_Omega_theta, delta_Omega_r;
@@ -259,6 +255,7 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     // auto start = std::chrono::steady_clock::now();
     // the frequency variables are pointers!
     // Fluxes from GR
+    // cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "risco=" << risco << "\t" << " plso =" <<  p_sep << endl;
     double pdot_out = pdot_Cheby(a, p, e, risco, p_sep);
     double edot_out = edot_Cheby(a, p, e, risco, p_sep);
     // auto end = std::chrono::steady_clock::now();
@@ -286,11 +283,7 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     // cout << "transf pdot Cheb " <<  GKR->pdot << " pdot " <<  pdot_out << " PN " << dpdt8H_5PNe10(a, p, e, Y, Nv, ne) << endl;
     // cout << "transf edot Cheb " <<  GKR->edot << " edot " <<  edot_out << " PN " << dedt8H_5PNe10(a, p, e, Y, Nv, ne) << endl;
 
-    // check
 
-    
-    
-    
     // needs adjustment for validity
     if (e > 1e-6)
     {
@@ -304,7 +297,7 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* Ydot,
     }
 
     
-    *Ydot = 0.0;
+    *xdot = 0.0;
 
     // delete GKR;
     return;
