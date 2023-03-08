@@ -27,17 +27,17 @@ CuSparse error checking
 void interpolate_arrays(double *t_arr, double *interp_array, int ninterps, int length, double *B, double *upper_diag, double *diag, double *lower_diag);
 
 void get_waveform(cmplx *d_waveform, double *interp_array,
-              int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cmplx *d_Ylms,
-              double delta_t, double *h_t);
+                  int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cmplx *d_Ylms,
+                  double delta_t, double *h_t, int dev);
 
 void get_waveform_generic(cmplx *waveform,
-             double *interp_array,
-              int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
-              double delta_t, double *old_time_arr, int init_length, int data_length, int *interval_inds, bool separate_modes);
+                          double *interp_array,
+                          int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
+                          double delta_t, double *old_time_arr, int init_length, int data_length, int *interval_inds, bool separate_modes);
 
 void get_waveform_tf_generic(cmplx *waveform,
-             double *interp_array,
-              int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
-              double delta_t, double start_t, double *old_time_arr, int init_length, int data_length, int *interval_inds, bool separate_modes, int num_windows, int num_per_window, int inds_left_right, int freq_length, bool include_L);
+                             double *interp_array,
+                             int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
+                             double delta_t, double start_t, double *old_time_arr, int init_length, int data_length, int *interval_inds, bool separate_modes, int num_windows, int num_per_window, int inds_left_right, int freq_length, bool include_L);
 
 #endif // __INTERP_H__
