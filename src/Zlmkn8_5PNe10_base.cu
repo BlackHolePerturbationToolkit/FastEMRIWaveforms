@@ -1,6 +1,6 @@
 /*
 
-PN Teukolsky amplitudes at infinity: Z_lmkn8_5PNe10  
+PN Teukolsky amplitudes at infinity: Z_lmkn8_5PNe10
 
  --Sasaki and Tagoshi
     PTEP 2015 (2015) no.3, 033E01: 1412.5689
@@ -10,10 +10,10 @@ PN Teukolsky amplitudes at infinity: Z_lmkn8_5PNe10
 
 Convention
  Zlmkn8  = ( hat_Zlmkn8 * exp(-I * (B_inc - FH_ini) )
- 
+
  with initial orbital prameters: r=p/(1-e); \theta = 90; d\cos\theta/dt>0 [RF: 2020/09/12].
 
-The phase factor associated with the initial orbital condition 
+The phase factor associated with the initial orbital condition
 
  FH_ini = Pi * (n - k/2)
 
@@ -41,15 +41,15 @@ PNy[25]  = 1, y, y ^ 2, ..., y ^ 23, y ^ 24
  WARGNING !!
 `hZ_lmkn8_5PNe10` stores  only the PN amplitudes that has the index
 m + k + n > 0 and m + k + n = 0 with n <= 0
-This manifestly guarantees that omega_mkn > 0. 
+This manifestly guarantees that omega_mkn > 0.
 
  Other modes should be computed from the symmetry relation in `Zlmkn8.c`:
  Z8[l, -m, -k, -n] = (-1)^(l + k) * conjugate(Z8_[l, m, k, n])
 
-// ZERO-modes (k+m+n=0) can be tricky to switch. 
-The relevant zero modes up to 5PN are below: 
+// ZERO-modes (k+m+n=0) can be tricky to switch.
+The relevant zero modes up to 5PN are below:
 
-## Zlmkn8[l, m, k, n]: 
+## Zlmkn8[l, m, k, n]:
 zlmkn8[2 -2 3 -1] = O(v^17)
 zlmkn8[2 -2 4 -2] = O(v^16)
 zlmkn8[2 -1 2 -1] = O(v^17)
@@ -68,8 +68,7 @@ ell = 12 ONLY includes (m + k) = 0 (mod 2): NEEDS SEPARATE TREATMENT
 
 */
 
-
-// C headers 
+// C headers
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -77,18 +76,17 @@ ell = 12 ONLY includes (m + k) = 0 (mod 2): NEEDS SEPARATE TREATMENT
 #include "Spheroidal_PN.h"
 
 // GSL headers
-//#include<gsl/gsl_math.h>
-//#include<gsl/cmplx.h>
-//#include<gsl/cmplx_math.h>
+// #include<gsl/gsl_math.h>
+// #include<gsl/cmplx.h>
+// #include<gsl/cmplx_math.h>
 
 #include "global.h"
 #include "Zlmkn8_5PNe10.h"
-//#include "cuda_complex.hpp"
+// #include "cuda_complex.hpp"
 #include <stdio.h>
 
 // BHPC headers
-//#include "inspiral_waveform.h"
-
+// #include "inspiral_waveform.h"
 
 // Teukolsky amplitudes hat_Z_5PNe10 (ell = 2)
 #include "hat_Zlmkn8_5PNe10/ell=2/hZ_2mkP10_5PNe10.h"
@@ -137,7 +135,7 @@ ell = 12 ONLY includes (m + k) = 0 (mod 2): NEEDS SEPARATE TREATMENT
 #include "hat_Zlmkn8_5PNe10/ell=4/hZ_4mkP4_5PNe10.h"
 #include "hat_Zlmkn8_5PNe10/ell=4/hZ_4mkP3_5PNe10.h"
 #include "hat_Zlmkn8_5PNe10/ell=4/hZ_4mkP2_5PNe10.h"
-#include "hat_Zlmkn8_5PNe10/ell=4/hZ_4mkP1_5PNe10.h" 
+#include "hat_Zlmkn8_5PNe10/ell=4/hZ_4mkP1_5PNe10.h"
 #include "hat_Zlmkn8_5PNe10/ell=4/hZ_4mkP0_5PNe10.h"
 #include "hat_Zlmkn8_5PNe10/ell=4/hZ_4mkM1_5PNe10.h"
 #include "hat_Zlmkn8_5PNe10/ell=4/hZ_4mkM2_5PNe10.h"
@@ -321,8 +319,8 @@ ell = 12 ONLY includes (m + k) = 0 (mod 2): NEEDS SEPARATE TREATMENT
 #include "hat_Zlmkn8_5PNe10/ell=12/hZ_12mkM10_5PNe10.h"
 */
 /*-*-*-*-*-*-*-*-*-*-*-* Global variables (but used only within Zlmkn8_5PNe10.c) *-*-*-*-*-*-*-*-*-*-*-*/
-//static double pi = M_PI;
-//static double m_2pi = 2.0 * M_PI;
+// static double pi = M_PI;
+// static double m_2pi = 2.0 * M_PI;
 
 /* Cut off numbers for `inspiral_orb_PNvar` (ell_max = 12 with 5PNe10)*/
 CUDA_CALLABLE_MEMBER static int PNq_max = 11;
@@ -333,136 +331,147 @@ CUDA_CALLABLE_MEMBER static int PNY_max = 13;
 CUDA_CALLABLE_MEMBER static int PNYp_max = 13;
 CUDA_CALLABLE_MEMBER static int PNy_max = 25;
 
-
 /*-*-*-*-*-*-*-*-*-*-*-* Global functions (used only within Zlmkn8_5PNe10.c) *-*-*-*-*-*-*-*-*-*-*-*/
 CUDA_CALLABLE_MEMBER
-static inline int zero_modes (const int m, const int k, const int n) { 
+static inline int zero_modes(const int m, const int k, const int n)
+{
 
     /* Exceptional zero modes (|n| < 2! )*/
-    //zlmkn8[2 - 2 3 - 1] = O(v ^ 17)
-    //zlmkn8[2 - 2 4 - 2] = O(v ^ 16)
-    //zlmkn8[2 - 1 2 - 1] = O(v ^ 17)
-    //zlmkn8[2 - 1 3 - 2] = O(v ^ 16)
-    //zlmkn8[2 0 1 - 1] = O(v ^ 17)
-    //zlmkn8[2 0 2 - 2] = O(v ^ 16)
-    //zlmkn8[2 1 0 - 1] = O(v ^ 17)
-    //zlmkn8[2 1 1 - 2] = O(v ^ 16)
-    //zlmkn8[2 2 - 1 - 1] = O(v ^ 17)
-    //zlmkn8[2 2 0 - 2] = O(v ^ 16)
+    // zlmkn8[2 - 2 3 - 1] = O(v ^ 17)
+    // zlmkn8[2 - 2 4 - 2] = O(v ^ 16)
+    // zlmkn8[2 - 1 2 - 1] = O(v ^ 17)
+    // zlmkn8[2 - 1 3 - 2] = O(v ^ 16)
+    // zlmkn8[2 0 1 - 1] = O(v ^ 17)
+    // zlmkn8[2 0 2 - 2] = O(v ^ 16)
+    // zlmkn8[2 1 0 - 1] = O(v ^ 17)
+    // zlmkn8[2 1 1 - 2] = O(v ^ 16)
+    // zlmkn8[2 2 - 1 - 1] = O(v ^ 17)
+    // zlmkn8[2 2 0 - 2] = O(v ^ 16)
 
-     /* bool values: TRUE:1, FALSE: 0 */
+    /* bool values: TRUE:1, FALSE: 0 */
     /* Return TRUE: 1 if zero modes of Zlmkn8 vanishes*/
     /* Return FALSE: 0 if zero modes of Zlmkn8 survives*/
 
-    if ( (m + k + n) != 0) {
+    if ((m + k + n) != 0)
+    {
         ////perror("Parameter errors: zero_modes in `Zlmkn8_5PNe10.c`");
         ////exit(1);
     }
-    else if (m == -2 && k == 3 && n == -1) {
+    else if (m == -2 && k == 3 && n == -1)
+    {
         return 0;
     }
-    else if (m == -2 && k == 4 && n == -2) {
+    else if (m == -2 && k == 4 && n == -2)
+    {
         return 0;
     }
-    else if (m == -1 && k == 2 && n == -1) {
+    else if (m == -1 && k == 2 && n == -1)
+    {
         return 0;
     }
-    else if (m == -1 && k == 3 && n == -2) {
+    else if (m == -1 && k == 3 && n == -2)
+    {
         return 0;
     }
-    else if (m == 0 && k == 1 && n == -1) {
+    else if (m == 0 && k == 1 && n == -1)
+    {
         return 0;
     }
-    else if (m == 0 && k == 2 && n == -2) {
+    else if (m == 0 && k == 2 && n == -2)
+    {
         return 0;
     }
-    else if (m == 1 && k == 0 && n == -1) {
+    else if (m == 1 && k == 0 && n == -1)
+    {
         return 0;
     }
-    else if (m == 1 && k == 1 && n == -2) {
+    else if (m == 1 && k == 1 && n == -2)
+    {
         return 0;
     }
-    else if (m == 2 && k == -1 && n == -1) {
+    else if (m == 2 && k == -1 && n == -1)
+    {
         return 0;
     }
-    else if (m == 2 && k == 0 && n == -2) {
+    else if (m == 2 && k == 0 && n == -2)
+    {
         return 0;
     }
-    else {
+    else
+    {
         return 1;
     }
-
 }
 CUDA_CALLABLE_MEMBER
-inline void Binc(const int k, const int n, const double kappa, const double w, cmplx* Binc_phase) {
+inline void Binc(const int k, const int n, const double kappa, const double w, cmplx *Binc_phase)
+{
 
     double phase, ini_phase, exp_phase;
 
     // NULL check
-    if (Binc_phase == NULL) {
+    if (Binc_phase == NULL)
+    {
 
         ////perror("Point errors: Binc in `Zlmkn8_5PNe10.c`");
         ////exit(1);
-
     }
 
     //:::::::::::::::::::::::::::::::::::: BEGIN WARNING !! :::::::::::::::::::::::::::::::::::::::::::::://
     /* Compensate the initial-phase difference between NUM and PN */
     /* One CAN SET ini_phase = 0.0 if NUM/PN compairons is not needed. */
-    
-    ini_phase = M_PI * (double)( - k * 0.5 );      // Matches Maarten's initial orbital data  
-    //ini_phase = M_PI * (double)( n - k * 0.5 );  // Matches Ryuichi's initial orbital data  
+
+    ini_phase = M_PI * (double)(-k * 0.5); // Matches Maarten's initial orbital data
+    // ini_phase = M_PI * (double)( n - k * 0.5 );  // Matches Ryuichi's initial orbital data
 
     //:::::::::::::::::::::::::::::::::::::: END WARNING !! :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
 
+    if (w > 0)
+    { // cos(w*(4*ln(2) + 2*ln(w) - 1 + k) - ini) + sin(w*(4*ln(2) + 2*ln(w) - 1 + k) - ini) * I
 
-    if (w > 0) { // cos(w*(4*ln(2) + 2*ln(w) - 1 + k) - ini) + sin(w*(4*ln(2) + 2*ln(w) - 1 + k) - ini) * I
+        phase = (-w) * (0.4e1 * log(0.2e1) + 0.2e1 * log(w) - 0.1e1 + kappa);
 
-        phase = ( -w ) * (0.4e1 * log(0.2e1) + 0.2e1 * log(w) - 0.1e1 + kappa);
-        
-        //GSL_SET_REAL(Binc_phase, cos(phase - ini_phase));
-        //GSL_SET_IMAG(Binc_phase, sin(phase - ini_phase));
+        // GSL_SET_REAL(Binc_phase, cos(phase - ini_phase));
+        // GSL_SET_IMAG(Binc_phase, sin(phase - ini_phase));
         *Binc_phase = cmplx(cos(phase - ini_phase), sin(phase - ini_phase));
-
     }
-    else if (w < 0) { // exp(-2*w*Pi)*cos(w*(4*ln(2) + 2*ln(-w) - 1 + k) - ini) + exp(-2*w*Pi)*sin(w*(4*ln(2) + 2*ln(-w) - 1 + k) - ini)*I 
+    else if (w < 0)
+    { // exp(-2*w*Pi)*cos(w*(4*ln(2) + 2*ln(-w) - 1 + k) - ini) + exp(-2*w*Pi)*sin(w*(4*ln(2) + 2*ln(-w) - 1 + k) - ini)*I
 
-        phase = ( -w ) * ( 0.4e1 * log(0.2e1) + 0.2e1 * log( -w ) - 0.1e1 + kappa );
-        exp_phase = exp(2.0 *  ( -w ) * M_PI);
-       
-        //GSL_SET_REAL(Binc_phase, cos(phase - ini_phase) * exp_phase);
-        //GSL_SET_IMAG(Binc_phase, sin(phase - ini_phase) * exp_phase);
+        phase = (-w) * (0.4e1 * log(0.2e1) + 0.2e1 * log(-w) - 0.1e1 + kappa);
+        exp_phase = exp(2.0 * (-w) * M_PI);
+
+        // GSL_SET_REAL(Binc_phase, cos(phase - ini_phase) * exp_phase);
+        // GSL_SET_IMAG(Binc_phase, sin(phase - ini_phase) * exp_phase);
         *Binc_phase = cmplx(cos(phase - ini_phase) * exp_phase, sin(phase - ini_phase) * exp_phase);
-
     }
-    else {
+    else
+    {
 
-        //perror("Parameters err or w is zero : Binc in `Zlmkn8_5PNe10.c`");
+        // perror("Parameters err or w is zero : Binc in `Zlmkn8_5PNe10.c`");
         ////exit(1);
-
     }
-
-
 }
-
 
 /* Select (m, k, n) modes of {hat Z}  for a given ell (2 <= ell <= 12)*/
 CUDA_CALLABLE_MEMBER
-cmplx hZ_2mkn(const int m, const int k, const int n, inspiral_orb_PNvar* PN_orb) {//
+cmplx hZ_2mkn(const int m, const int k, const int n, inspiral_orb_PNvar *PN_orb)
+{ //
 
-    cmplx hZ = { 0.0 };
-   // printf("hZ_2mkn[%d, %d, %d, %d] \n", 2, m, k, n);
+    cmplx hZ = {0.0};
+    // printf("hZ_2mkn[%d, %d, %d, %d] \n", 2, m, k, n);
 
     /* For ell = 2, some of zero modes survive.*/
     /* Pick up these exceptional zero modes from `zero modes`*/
-   
+
     if ((m + k + n) == 0 && (zero_modes(m, k, n) == 1))
     {
-        //printf("zero mkn[%d, %d, %d] \n", m, k, n);
+        // printf("zero mkn[%d, %d, %d] \n", m, k, n);
         hZ = cmplx(0.0, 0.0);
-
-    } else {
-        switch (n) {
+    }
+    else
+    {
+        switch (n)
+        {
         case 0:
             hZ = hZ_2mkP0(m, k, PN_orb);
             break;
@@ -497,7 +506,7 @@ cmplx hZ_2mkn(const int m, const int k, const int n, inspiral_orb_PNvar* PN_orb)
             hZ = hZ_2mkP10(m, k, PN_orb);
             break;
             /// <summary>
-            /// 
+            ///
             /// </summary>
             /// <param name="m"></param>
             /// <param name="k"></param>
@@ -523,33 +532,31 @@ cmplx hZ_2mkn(const int m, const int k, const int n, inspiral_orb_PNvar* PN_orb)
             ////perror("Parameter errors: hZ_2mkn");
             ////exit(1);
             break;
-                
         }
     }
 
-
     return hZ;
-
 }
 
-
 CUDA_CALLABLE_MEMBER
-cmplx hZ_3mkn(const int m, const int k, const int n, inspiral_orb_PNvar* PN_orb) {//
+cmplx hZ_3mkn(const int m, const int k, const int n, inspiral_orb_PNvar *PN_orb)
+{ //
 
-    cmplx hZ = { 0.0 };
+    cmplx hZ = {0.0};
     // hZ = cmplx(0.0, 0.0);
     // printf("hZ_2mkn[%d, %d, %d, %d] \n", 2, m, k, n);
 
-     /* For ell = 3, all the zero modes are irrelevant within 5PNe10.*/
-    if ((m + k + n) == 0 )
+    /* For ell = 3, all the zero modes are irrelevant within 5PNe10.*/
+    if ((m + k + n) == 0)
     {
-        
-        hZ = cmplx(0.0, 0.0);
-        //printf("zero mkn[%d, %d, %d] \n", m, k, n);
 
+        hZ = cmplx(0.0, 0.0);
+        // printf("zero mkn[%d, %d, %d] \n", m, k, n);
     }
-    else {
-        switch (n) {
+    else
+    {
+        switch (n)
+        {
         case 0:
             hZ = hZ_3mkP0(m, k, PN_orb);
             break;
@@ -613,33 +620,30 @@ cmplx hZ_3mkn(const int m, const int k, const int n, inspiral_orb_PNvar* PN_orb)
             ////perror("Parameter errors: hZ_3mkn");
             ////exit(1);
             break;
-
         }
-
-
     }
 
     return hZ;
-
 }
 
-
 CUDA_CALLABLE_MEMBER
-cmplx hZ_4mkn(const int m, const int k, const int n, inspiral_orb_PNvar* PN_orb) {//
+cmplx hZ_4mkn(const int m, const int k, const int n, inspiral_orb_PNvar *PN_orb)
+{ //
 
-    cmplx hZ = { 0.0 };
+    cmplx hZ = {0.0};
     // printf("hZ_2mkn[%d, %d, %d, %d] \n", 2, m, k, n);
 
-     /* For ell = 4, all the zero modes are irrelevant within  5PNe10*/
+    /* For ell = 4, all the zero modes are irrelevant within  5PNe10*/
     if ((m + k + n) == 0)
     {
 
         hZ = cmplx(0.0, 0.0);
-        //printf("zero mkn[%d, %d, %d] \n", m, k, n);
-
+        // printf("zero mkn[%d, %d, %d] \n", m, k, n);
     }
-    else {
-        switch (n) {
+    else
+    {
+        switch (n)
+        {
         case 0:
             hZ = hZ_4mkP0(m, k, PN_orb);
             break;
@@ -706,21 +710,16 @@ cmplx hZ_4mkn(const int m, const int k, const int n, inspiral_orb_PNvar* PN_orb)
             ////perror("Parameter errors: hZ_4mkn");
             ////exit(1);
             break;
-
         }
-
-
     }
 
     return hZ;
-
 }
-
-
 
 /*-*-*-*-*-*-*-*-*-*-*-* External functions (can be refered by other source files) *-*-*-*-*-*-*-*-*-*-*-*/
 CUDA_CALLABLE_MEMBER
-void init_orb_PNvar(const double q, inspiral_orb_data* orb, inspiral_orb_PNvar* PN_orb) {
+void init_orb_PNvar(const double q, inspiral_orb_data *orb, inspiral_orb_PNvar *PN_orb)
+{
 
     int j;
 
@@ -731,77 +730,74 @@ void init_orb_PNvar(const double q, inspiral_orb_data* orb, inspiral_orb_PNvar* 
     double tmp_v = sqrt(1.0 / tmp_p);
 
     /* Precompute PNK and PNq[] OUTSIDE the for loop of the time evolution */
-   /* these variables stay CONSTANTS along the evolutions*/
+    /* these variables stay CONSTANTS along the evolutions*/
     PN_orb->PNK = sqrt(1.0 - q * q);
 
     /* PNq[n]... = 1, q, q ^2, ..., q ^ 9, q ^ 10 */
     PN_orb->PNq[0] = 1.0;
-    for (j = 1; j < PNq_max; j++) {
+    for (j = 1; j < PNq_max; j++)
+    {
 
         PN_orb->PNq[j] = q * PN_orb->PNq[j - 1];
-
     }
 
-
     /* Pre-compute repeatedly used variables at t = ti for PN amplitudes `hZ_lmkn8_5PNe10` */
-   /* Ym = Y - 1. y = sqrt(1. - Y ^ 2);  */
+    /* Ym = Y - 1. y = sqrt(1. - Y ^ 2);  */
     PN_orb->PNlnv = log(1.0 / sqrt(tmp_p));
     PN_orb->PNYm = tmp_Y - 1.0;
 
     /* PNe[10] = 1, e, e ^ 2, ..., e ^ 9, e ^ 10 */
     PN_orb->PNe[0] = 1.0;
-    for (j = 1; j < PNe_max; j++) {
+    for (j = 1; j < PNe_max; j++)
+    {
 
         PN_orb->PNe[j] = tmp_e * PN_orb->PNe[j - 1];
-
     }
 
     /* PNv[11] = v ^ 8, v ^ 9, ..., v ^ 17, v ^ 18 */
     /* Warning! Starts at PNv[0] = v^8 */
 
     PN_orb->PNv[0] = (tmp_v * tmp_v) * (tmp_v * tmp_v) * (tmp_v * tmp_v) * (tmp_v * tmp_v);
-    for (j = 1; j < PNv_max; j++) {
+    for (j = 1; j < PNv_max; j++)
+    {
 
         PN_orb->PNv[j] = tmp_v * PN_orb->PNv[j - 1];
-
     }
 
     /* PNY[13] = 1, Y, Y ^ 2, ..., Y ^ 11, Y ^ 12 */
     PN_orb->PNY[0] = 1.0;
-    for (j = 1; j < PNY_max; j++) {
+    for (j = 1; j < PNY_max; j++)
+    {
 
         PN_orb->PNY[j] = tmp_Y * PN_orb->PNY[j - 1];
-
     }
 
     /* PNYp[13]... = 1, Yp, Yp^2, ...,  Yp^12 where Yp = Y + 1. */
     PN_orb->PNYp[0] = 1.0;
-    for (j = 1; j < PNYp_max; j++) {
+    for (j = 1; j < PNYp_max; j++)
+    {
 
         PN_orb->PNYp[j] = (1.0 + tmp_Y) * PN_orb->PNYp[j - 1];
-
     }
 
     /* PNy[25] = 1, y, y ^ 2, ..., y ^ 23, y ^ 24 where y = sqrt(1 - Y^2) */
     PN_orb->PNy[0] = 1.0;
-    for (j = 1; j < PNy_max; j++) {
+    for (j = 1; j < PNy_max; j++)
+    {
 
         PN_orb->PNy[j] = sqrt(1.0 - tmp_Y * tmp_Y) * PN_orb->PNy[j - 1];
-
     }
-
-
 }
-
 
 /* Obtain the full (l, m, k, n) modes of {hat Z} */
 CUDA_CALLABLE_MEMBER
-cmplx hZ_lmkn(const int l, const int m, const int k, const int n, inspiral_orb_PNvar* PN_orb){ //
+cmplx hZ_lmkn(const int l, const int m, const int k, const int n, inspiral_orb_PNvar *PN_orb)
+{ //
 
-
-   // cmplx test;
-  // SET_COMPLEX(&test, 11.0, 3.4);
-    switch (l) {
+    // cmplx test;
+    // SET_COMPLEX(&test, 11.0, 3.4);
+    switch (l)
+    {
     case 2:
         return hZ_2mkn(m, k, n, PN_orb);
         break;
@@ -840,11 +836,11 @@ cmplx hZ_lmkn(const int l, const int m, const int k, const int n, inspiral_orb_P
         ////exit(1);
         break;
     }
-
 }
 
 CUDA_CALLABLE_MEMBER
-cmplx Zlmkn8_5PNe10(const int l, const int m, const int k, const int n, inspiral_orb_data* orb, inspiral_orb_PNvar* PN_orb) { //
+cmplx Zlmkn8_5PNe10(const int l, const int m, const int k, const int n, inspiral_orb_data *orb, inspiral_orb_PNvar *PN_orb)
+{ //
 
     int Zm, Zk, Zn;
 
@@ -854,15 +850,13 @@ cmplx Zlmkn8_5PNe10(const int l, const int m, const int k, const int n, inspiral
 
     cmplx hatZ, Zlmkn, Binc_phase;
 
-
     // NULL check
-    if (orb == NULL || PN_orb == NULL) {
+    if (orb == NULL || PN_orb == NULL)
+    {
 
         ////perror("Point errors: Zlmkn8_5PNe10");
         ////exit(1);
-
     }
-
 
     /* Read off the inspiral data from `inspiral_orb_PNvar`*/
     double q = PN_orb->PNq[1];
@@ -873,12 +867,13 @@ cmplx Zlmkn8_5PNe10(const int l, const int m, const int k, const int n, inspiral
     double Wph = orb->tWph;
 
     /* Make use of the symmetry: Z8[l, -m, -k, -n] = (-1)^(l + k) * conj(Z8_[l, m, k, n])*/
-    if ((m + k + n == 0) && (n == 0)) { // These amplitudes are zero within 5PNe10.
+    if ((m + k + n == 0) && (n == 0))
+    { // These amplitudes are zero within 5PNe10.
 
         Zlmkn = cmplx(0.0, 0.0);
-
     }
-    else if ((m + k + n < 0) || (m + k + n == 0) && (n > 0)) {
+    else if ((m + k + n < 0) || (m + k + n == 0) && (n > 0))
+    {
 
         Zm = (-m);
         Zk = (-k);
@@ -891,14 +886,14 @@ cmplx Zlmkn8_5PNe10(const int l, const int m, const int k, const int n, inspiral
 
         /* Phase factoes from `Binc`*/
         W_Zmkn = (double)(Zm * Wph + Zk * Wth + Zn * Wr);
-        //printf("elif W_Z[%d %d %d] %.7e \n", Zm, Zk, Zn, W_Zmkn);
+        // printf("elif W_Z[%d %d %d] %.7e \n", Zm, Zk, Zn, W_Zmkn);
         Binc(Zk, Zn, kappa, W_Zmkn, &Binc_phase);
         cos_Binc = gcmplx::real(Binc_phase);
         sin_Binc = gcmplx::imag(Binc_phase);
 
         /*Restore the full Teukolsky amplitude*/
         /* WARNING! Avoid cmplx functions for efficiency*/
-         /* (a + b*I) * exp(-I*(Bin - ini)) */
+        /* (a + b*I) * exp(-I*(Bin - ini)) */
         /*Re: a*cos(Bi - ini) + b*sin(Bi - ini) */
         /*im: b*cos(Bi - ini) - a*sin(Bi - ini) */
 
@@ -911,16 +906,15 @@ cmplx Zlmkn8_5PNe10(const int l, const int m, const int k, const int n, inspiral
         ReZ = (Re_hZ * cos_Binc + Im_hZ * sin_Binc) * sgn;
         ImZ = (Im_hZ * cos_Binc - Re_hZ * sin_Binc) * sgn * (-1.0);
         Zlmkn = cmplx(ReZ, ImZ);
-        
+
         /*
         if (Zn == 5 || Zn == -2) {
            printf("Zlmkn[%d, %d, %d, %d] = %.7e + i %.7e, cos_Binc = %.7e \n", l, Zm, Zk, Zn, ReZ, ImZ, cos_Binc);
         }
         */
-
-
     }
-    else {
+    else
+    {
 
         Zm = (m);
         Zk = (k);
@@ -937,12 +931,11 @@ cmplx Zlmkn8_5PNe10(const int l, const int m, const int k, const int n, inspiral
         cos_Binc = gcmplx::real(Binc_phase);
         sin_Binc = gcmplx::imag(Binc_phase);
 
-        //Binc = -W_Zmkn * (0.4e1 * log(0.2e1) + 0.2e1 * log(W_Zmkn) - 0.1e1 + kappa);
+        // Binc = -W_Zmkn * (0.4e1 * log(0.2e1) + 0.2e1 * log(W_Zmkn) - 0.1e1 + kappa);
 
-      // if (Zn == 0 || Zn == -1) {
-      //      printf("hat_Zlmkn[%d, %d, %d, %d] = %.7e + i %.7e, W_Zmkn = %.7e, cos_Binc = %.7e \n", l, Zm, Zk, Zn, Re_hZ, Im_hZ, W_Zmkn, cos_Binc);
-      //  }
-
+        // if (Zn == 0 || Zn == -1) {
+        //      printf("hat_Zlmkn[%d, %d, %d, %d] = %.7e + i %.7e, W_Zmkn = %.7e, cos_Binc = %.7e \n", l, Zm, Zk, Zn, Re_hZ, Im_hZ, W_Zmkn, cos_Binc);
+        //  }
 
         /*Restore the full Teukolsky amplitude*/
         /* WARNING! Avoid cmplx functions for efficiency*/
@@ -954,30 +947,27 @@ cmplx Zlmkn8_5PNe10(const int l, const int m, const int k, const int n, inspiral
         Zlmkn = cmplx(ReZ, ImZ);
 
         /* DEBUG POINT */
-      /*
-        if ( Zn == 0 || Zn == 3 ) {
+        /*
+          if ( Zn == 0 || Zn == 3 ) {
 
-        // printf("Zlmkn[%d, %d, %d, %d] = %.7e + i %.7e, cos_Binc = %.7e, sin_Binc = %.7e \n", l, Zm, Zk, Zn, Re_hZ, Im_hZ, cos_Binc, sin_Binc);
-         printf("Zlmkn[%d, %d, %d, %d] = %.7e + i %.7e \n", l, Zm, Zk, Zn, ReZ, ImZ);
+          // printf("Zlmkn[%d, %d, %d, %d] = %.7e + i %.7e, cos_Binc = %.7e, sin_Binc = %.7e \n", l, Zm, Zk, Zn, Re_hZ, Im_hZ, cos_Binc, sin_Binc);
+           printf("Zlmkn[%d, %d, %d, %d] = %.7e + i %.7e \n", l, Zm, Zk, Zn, ReZ, ImZ);
 
-        }
-      */
-
+          }
+        */
     }
 
-
-    //printf("Binc = %.7e, W_Zmkn = %.7e \n", Binc, W_Zmkn);
-    //printf("hat_Zlmkn[%d, %d, %d, %d] = %.7e + i %.7e \n", l, Zm, Zk, Zn, Re_hZ, Im_hZ);
-    //printf("Zlmkn[%d, %d, %d, %d] = %.7e + i %.7e \n", l, m, k, n, ReZ, ImZ);
-    //puts("\n");
+    // printf("Binc = %.7e, W_Zmkn = %.7e \n", Binc, W_Zmkn);
+    // printf("hat_Zlmkn[%d, %d, %d, %d] = %.7e + i %.7e \n", l, Zm, Zk, Zn, Re_hZ, Im_hZ);
+    // printf("Zlmkn[%d, %d, %d, %d] = %.7e + i %.7e \n", l, m, k, n, ReZ, ImZ);
+    // puts("\n");
 
     return Zlmkn;
-
 }
 
 /* low-freq. cut */
 /* MUST BE larger than the mass_ratio*/
-CUDA_CALLABLE_MEMBER static double W_static = 5.0e-3; 
+CUDA_CALLABLE_MEMBER static double W_static = 5.0e-3;
 
 /* high-freq. cut */
 /* TEST; NEED EXPERIMENTS (2021/02/09) */
@@ -989,29 +979,28 @@ CUDA_CALLABLE_MEMBER static double W_high = 0.205;
 
 CUDA_CALLABLE_MEMBER static double Slm_Pi = 0.3989422804014326779399461; /*Overall of Spheroidal harmonics Slm_aw: sqrt(2. * Pi)^(-1) in the BHPC convention*/
 
-
 CUDA_CALLABLE_MEMBER
-void get_Slm_vals(double *Slm_out, double *anti_Slm_out, const int l, const int m, const int k, const int n, inspiral_orb_data* orb, inspiral_orb_PNvar* PN_orb, Slm_aw_PNvar* PN_Slm, Slm_aw_PNvar* anti_PN_Slm) {
+void get_Slm_vals(double *Slm_out, double *anti_Slm_out, const int l, const int m, const int k, const int n, inspiral_orb_data *orb, inspiral_orb_PNvar *PN_orb, Slm_aw_PNvar *PN_Slm, Slm_aw_PNvar *anti_PN_Slm)
+{
 
     // NULL check
-    if (orb == NULL || PN_orb == NULL || PN_Slm == NULL || anti_PN_Slm == NULL) {
+    if (orb == NULL || PN_orb == NULL || PN_Slm == NULL || anti_PN_Slm == NULL)
+    {
 
-        //perror("Pointer errors: get_Slm_vals ");
-        //exit(1);
-
+        // perror("Pointer errors: get_Slm_vals ");
+        // exit(1);
     }
 
-
     /* Set Loop variables and cut off; j = m + k*/
-    //int mi, ki, ni;
-    //int m_max = select_m_max(l);
-    //int j_max = select_j_max(l);
+    // int mi, ki, ni;
+    // int m_max = select_m_max(l);
+    // int j_max = select_j_max(l);
 
     /* Tempral variables at a given fixed (l, m, k, n) modes*/
-    double Wr, Wth, Wph; 
+    double Wr, Wth, Wph;
 
     /* Complex amplitude of Zlmkn8*/
-    cmplx tmp_Z = { 0.0 };
+    cmplx tmp_Z = {0.0};
 
     /* Read out the orbital freq. and phase OUTSIEDE the loop */
     Wr = orb->tWr;
@@ -1034,8 +1023,9 @@ void get_Slm_vals(double *Slm_out, double *anti_Slm_out, const int l, const int 
     double Wmkn = (double)(m * Wph + k * Wth + n * Wr);
     double abs_Wmkn = fabs(Wmkn);
 
-    if (abs_Wmkn < W_static || abs_Wmkn > W_high ) {
-        //printf("Static! tt = %.5e, Wmkn[%d, %d, %d]  = %.7e \n", orb->tt, mi, k0, ni, Wmkn);
+    if (abs_Wmkn < W_static || abs_Wmkn > W_high)
+    {
+        // printf("Static! tt = %.5e, Wmkn[%d, %d, %d]  = %.7e \n", orb->tt, mi, k0, ni, Wmkn);
         return;
     }
     ///////////////////////////////////////////////////////////////////////////
@@ -1057,77 +1047,74 @@ void get_Slm_vals(double *Slm_out, double *anti_Slm_out, const int l, const int 
 
     // for the Right-mode sum (n => 0)
     *Slm_out = (Slm_Pi / Wmkn2) * Slm_aw(l, m, PN_Slm);
-    
+
     // for the Left-mode sum (n < 0)
     *anti_Slm_out = (Slm_Pi / Wmkn2) * Slm_aw(l, m, anti_PN_Slm) * pow(-1.0, (double)(l));
 
     //  if (mi == -1) {
 
-//        printf("Slm_aw[%d, %d; %d, %d] = %.7e with Wmkn = %.7e \n", l, mi, ki, ni, Slm_aw(l, mi, PN_Slm), Wmkn);
-        //puts("\n");
+    //        printf("Slm_aw[%d, %d; %d, %d] = %.7e with Wmkn = %.7e \n", l, mi, ki, ni, Slm_aw(l, mi, PN_Slm), Wmkn);
+    // puts("\n");
 
     //   }
 
-    
-
     /* Get the complex Teukolsky amplitude Zlmkn8[l, m, k, n]: `Zlmkn8_5PNe10.c` */
-
 }
 
 #define NUM_THREADS_PN 32
 CUDA_KERNEL
-void Zlmkn8_5PNe10_kernel(cmplx *Almkn_out, int *l_all, int *m_all, int *k_all, int *n_all, double *q_all, double *Theta_all, double *tp_all, double *te_all, double *tY_all, double *tWr_all, double *tWth_all, double *tWph_all, int num_modes, int num_points)
+void Zlmkn8_5PNe10_kernel(cmplx *Almkn_out, int *l_all, int *m_all, int *k_all, int *n_all, double *q_all, double *Theta_all, double *tp_all, double *te_all, double *tY_all, double *tWr_all, double *tWth_all, double *tWph_all, int num_modes, int num_points, bool apply_spheroidal)
 {
 
     int start, increment;
 
-    #ifdef __CUDACC__
+#ifdef __CUDACC__
     start = threadIdx.x + blockIdx.x * blockDim.x;
     increment = gridDim.x * blockDim.x;
-    #else
+#else
     start = 0;
     increment = 1;
-    //#pragma omp parallel for
-    #endif 
+// #pragma omp parallel for
+#endif
 
     for (int i = start; i < num_points; i += increment)
     {
         inspiral_orb_data orb;
         inspiral_orb_PNvar PN_orb;
-        //orb->tt = tt_all[i]; /* Slow time tilde t */
+        // orb->tt = tt_all[i]; /* Slow time tilde t */
 
         orb.tp = tp_all[i];
-        orb.te = te_all[i]; 
+        orb.te = te_all[i];
         orb.tY = tY_all[i]; /* orbital parameters [tilde p(tt), tilde e(tt), tilde Y(tt) ] */
 
         orb.tWr = tWr_all[i];
-        orb.tWth = tWth_all[i]; 
+        orb.tWth = tWth_all[i];
         orb.tWph = tWph_all[i]; /* orbital frequencies tilde W(tt) */
 
-       //orb->Pr = Pr_all[i]; 
-        //orb->Pth = Pth_all[i]; 
-        //orb->Pph = Pph_all[i]; /* orbital phase Phi */
+        // orb->Pr = Pr_all[i];
+        // orb->Pth = Pth_all[i];
+        // orb->Pph = Pph_all[i]; /* orbital phase Phi */
         double q = q_all[i];
         double Theta = Theta_all[i];
         init_orb_PNvar(q, &orb, &PN_orb);
 
-        Slm_aw_PNvar PN_Slm = { 0.0 };
-        Slm_aw_PNvar anti_PN_Slm = { 0.0 };
-        
-        init_PNSlm(q, Theta, &PN_Slm, 1); // flag = 1    
+        Slm_aw_PNvar PN_Slm = {0.0};
+        Slm_aw_PNvar anti_PN_Slm = {0.0};
+
+        init_PNSlm(q, Theta, &PN_Slm, 1);      // flag = 1
         init_PNSlm(q, Theta, &anti_PN_Slm, 0); // flag = 0
 
         int start2, increment2;
-        #ifdef __CUDACC__
+#ifdef __CUDACC__
         start2 = blockIdx.y;
         increment2 = gridDim.y;
-        #else
+#else
         start2 = 0;
         increment2 = 1;
-        //#pragma omp parallel for
-        #endif 
+// #pragma omp parallel for
+#endif
 
-        for (int mode_i = start2; mode_i < num_modes; mode_i += increment2 )
+        for (int mode_i = start2; mode_i < num_modes; mode_i += increment2)
         {
             int l_here = l_all[mode_i];
             int m_here = m_all[mode_i];
@@ -1140,7 +1127,15 @@ void Zlmkn8_5PNe10_kernel(cmplx *Almkn_out, int *l_all, int *m_all, int *k_all, 
             double Slm_out = 0.0;
             double anti_Slm_out = 0.0;
 
-            get_Slm_vals(&Slm_out, &anti_Slm_out, l_here, m_here, k_here, n_here, &orb, &PN_orb, &PN_Slm, &anti_PN_Slm);
+            if (apply_spheroidal)
+            {
+                get_Slm_vals(&Slm_out, &anti_Slm_out, l_here, m_here, k_here, n_here, &orb, &PN_orb, &PN_Slm, &anti_PN_Slm);
+            }
+            else
+            {
+                Slm_out = 1.0;
+                anti_Slm_out = 1.0;
+            }
 
             if ((Slm_out == 0.0) && (anti_Slm_out == 0.0))
             {
@@ -1159,24 +1154,21 @@ void Zlmkn8_5PNe10_kernel(cmplx *Almkn_out, int *l_all, int *m_all, int *k_all, 
             Almkn_out[mode_i * num_points + i] = right;
             // left is recorded in the second half of the array
             Almkn_out[num_modes * num_points + mode_i * num_points + i] = left;
-
         }
         // TODO: do we need this?
         CUDA_SYNC_THREADS;
     }
 }
 
-
-
-void Zlmkn8_5PNe10_wrap(cmplx *Almkn_out, int *l_all, int *m_all, int *k_all, int *n_all, double *q_all, double *Theta_all, double *tp_all, double *te_all, double *tY_all, double *tWr_all, double *tWth_all, double *tWph_all, int num_modes, int num_points)
+void Zlmkn8_5PNe10_wrap(cmplx *Almkn_out, int *l_all, int *m_all, int *k_all, int *n_all, double *q_all, double *Theta_all, double *tp_all, double *te_all, double *tY_all, double *tWr_all, double *tWth_all, double *tWph_all, int num_modes, int num_points, bool apply_spheroidal)
 {
-    #ifdef __CUDACC__
-    int num_blocks = std::ceil((num_points + NUM_THREADS_PN -1)/NUM_THREADS_PN);
+#ifdef __CUDACC__
+    int num_blocks = std::ceil((num_points + NUM_THREADS_PN - 1) / NUM_THREADS_PN);
     dim3 grid(num_blocks, num_modes);
-    Zlmkn8_5PNe10_kernel<<<grid, NUM_THREADS_PN>>>(Almkn_out, l_all, m_all, k_all, n_all, q_all, Theta_all, tp_all, te_all, tY_all, tWr_all, tWth_all, tWph_all, num_modes, num_points);
+    Zlmkn8_5PNe10_kernel<<<grid, NUM_THREADS_PN>>>(Almkn_out, l_all, m_all, k_all, n_all, q_all, Theta_all, tp_all, te_all, tY_all, tWr_all, tWth_all, tWph_all, num_modes, num_points, apply_spheroidal);
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());
-    #else
-    Zlmkn8_5PNe10_kernel(Almkn_out, l_all, m_all, k_all, n_all, q_all, Theta_all, tp_all, te_all, tY_all, tWr_all, tWth_all, tWph_all, num_modes, num_points);
-    #endif
+#else
+    Zlmkn8_5PNe10_kernel(Almkn_out, l_all, m_all, k_all, n_all, q_all, Theta_all, tp_all, te_all, tY_all, tWr_all, tWth_all, tWph_all, num_modes, num_points, apply_spheroidal);
+#endif
 }
