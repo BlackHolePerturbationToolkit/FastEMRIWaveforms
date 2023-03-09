@@ -143,7 +143,7 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
         """Confirms GPU capability"""
         return True
 
-    def get_amplitudes(self, q, p, e, Y, theta, *args, specific_modes=None, **kwargs):
+    def get_amplitudes(self, q, p, e, Y, theta, *args, specific_modes=None, include_spheroidal_harmonics=True, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays
@@ -240,7 +240,7 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
                 raise ValueError("Length of theta array must be same as p,e,Y if input as an array rather than a scalar.")
             q_in = self.xp.repeat(q_in, len(p_in))
 
-        self.Zlmkn8_5PNe10(Almkn_out, l_all, m_all, k_all, n_all, q_in, theta_in, p_in, e_in, Y_in, OmegaR_in, OmegaTheta_in, OmegaPhi_in, num_modes, input_len)
+        self.Zlmkn8_5PNe10(Almkn_out, l_all, m_all, k_all, n_all, q_in, theta_in, p_in, e_in, Y_in, OmegaR_in, OmegaTheta_in, OmegaPhi_in, num_modes, input_len, include_spheroidal_harmonics)
 
         # reshape the teukolsky modes
         # len(dim0) = 2, 0 is right, 1 is left
