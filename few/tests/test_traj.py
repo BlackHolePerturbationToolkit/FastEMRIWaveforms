@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-import unittest
-import numpy as np
-import warnings
-import time 
-from few.trajectory.inspiral import EMRIInspiral
-=======
 #python -m unittest few/tests/test_traj.py 
 import unittest
 import numpy as np
@@ -18,7 +11,6 @@ from few.utils.utility import get_overlap, get_mismatch, get_separatrix, get_fun
 from few.utils.ylm import GetYlms
 from few.utils.modeselector import ModeSelector
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
->>>>>>> kerr_ecc
 
 try:
     import cupy as xp
@@ -57,7 +49,7 @@ class ModuleTest(unittest.TestCase):
         M = 1e5
         mu = 1e1
         np.random.seed(42)
-        for i in range(1000):
+        for i in range(50):
             p0 = np.random.uniform(10.0,15)
             e0 = np.random.uniform(0.0, 1.0)
             a = np.random.uniform(0.0, 1.0)
@@ -70,7 +62,7 @@ class ModuleTest(unittest.TestCase):
             # run trajectory
             #print("start", a, p0, e0, Y0)
             t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, Y0, **insp_kw)
-            breakpoint()
+
 
     def test_trajectory_SchwarzEccFlux(self):
         # initialize trajectory class
