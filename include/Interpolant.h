@@ -21,10 +21,23 @@
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_interp2d.h>
 #include <gsl/gsl_spline2d.h>
+#include <gsl/gsl_bspline.h>
+#include <gsl/gsl_linalg.h>
+#include <stdbool.h>
+#import <stdlib.h>
 
+#define TPI_FAIL -1
+#define TPI_SUCCESS 0
+
+#define CHECK_RANGES
 using namespace std;
 
 typedef vector<double> Vector;
+
+typedef struct array_t {
+    double *vec;
+    int n;
+} array_yo;
 
 class Interpolant{
 	public:
@@ -48,4 +61,21 @@ class Interpolant{
 		gsl_interp_accel *xacc;
 		gsl_interp_accel *yacc;
 };
+
+void TP_Interpolation_Setup_ND(
+    array_yo *nodes,                       // Input: array of arrys containing the nodes
+                                        // for each parameter space dimension
+    int n,                              // Input: Dimensionality of parameter space
+    gsl_bspline_workspace ***bw_out     // Output: pointer to array of pointers to
+                                        // B-spline workspaces
+);
+
+int TP_Interpolation_ND(
+    double *v,                          // Input: flattened TP spline coefficient array
+    int n,                              // Input: length of TP spline coefficient array v
+    double* X,                          // Input: parameter space evaluation point of length m
+    int m,                              // Input: dimensionality of parameter space
+    gsl_bspline_workspace **bw,         // Input: array of pointers to B-spline workspaces
+    double *y                           // Output: TP spline evaluated at X
+);
 #endif // __INTERPOLANT_H__

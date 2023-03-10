@@ -280,7 +280,7 @@ if run_cuda_install:
         # and not with gcc the implementation of this trick is in
         # customize_compiler()
         extra_compile_args={
-            "gcc": ["-std=c++11", "-fopenmp", "-D__USE_OMP__"],  # '-g'],
+            "gcc": ["-std=c++11", "-fopenmp", "-D__USE_OMP__", "-std=c99"],  # '-g'],
             "nvcc": [
                 "-arch=sm_80",
                 #"-gencode=arch=compute_50,code=sm_50",
