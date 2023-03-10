@@ -21,6 +21,7 @@
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_interp2d.h>
 #include <gsl/gsl_spline2d.h>
+
 #include <gsl/gsl_bspline.h>
 #include <gsl/gsl_linalg.h>
 #include <stdbool.h>
@@ -61,6 +62,52 @@ class Interpolant{
 		gsl_interp_accel *xacc;
 		gsl_interp_accel *yacc;
 };
+
+/******************************* 1D functions *********************************/
+
+int Interpolation_Setup_1D(
+    double *xvec,                       // Input: knots: FIXME: knots are calculate internally, so shouldn't need to do that here
+    int nx,                             // Input length of knots array xvec
+    gsl_bspline_workspace **bw          // Output: Initialized B-spline workspace
+);
+
+int Bspline_basis_1D(
+    double *B_array,                    // Output: the evaluated cubic B-splines 
+                                        // B_i(x) for the knots defined in bw
+    int n,                              // Input: length of Bx4_array
+    gsl_bspline_workspace *bw,          // Input: Initialized B-spline workspace
+    double x                            // Input: evaluation point
+);
+
+int Bspline_basis_3rd_derivative_1D(
+    double *D3_B_array,                 // Output: the evaluated 3rd derivative of cubic
+                                        // B-splines B_i(x) for the knots defined in bw
+    int n,                              // Input: length of Bx4_array
+    gsl_bspline_workspace *bw,          // Input: Initialized B-spline workspace
+    double x                            // Input: evaluation point
+);
+
+int AssembleSplineMatrix_C(
+    gsl_vector *xi,                     // Input: nodes xi
+    gsl_matrix **phi,                   // Output: the matrix of spline coefficients
+    gsl_vector **knots,                 // Output: the vector of knots including the endpoints
+                                        // with multiplicity three
+    gsl_bspline_workspace **bw          // Output: Bspline workspace
+);
+
+int SetupSpline1D(
+    double *x,                          // Input: nodes
+    double *y,                          // Input: data
+    int n,                              // Input: number of data points
+    double **c,                         // Output: spline coefficients
+    gsl_bspline_workspace **bw          // Output: Bspline workspace
+);
+
+double EvaluateSpline1D(
+    double *c,                          // Input: spline coefficients output by SetupSpline1D()
+    gsl_bspline_workspace *bw,          // Input: Bspline workspace
+    double xx                           // Input: evaluation point for spline
+);
 
 void TP_Interpolation_Setup_ND(
     array_yo *nodes,                       // Input: array of arrys containing the nodes
