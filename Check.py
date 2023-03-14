@@ -191,64 +191,64 @@ for i in range(10):
     print("---------")
 
 breakpoint()
-# plt.figure(); plt.plot(ll_vec, diff_ll, '.'); plt.ylabel(r'$\Delta \ln p$'); plt.xlabel(r'$ \ln p$');  plt.show()
+# # plt.figure(); plt.plot(ll_vec, diff_ll, '.'); plt.ylabel(r'$\Delta \ln p$'); plt.xlabel(r'$ \ln p$');  plt.show()
 
-##############################################################################################################
+# ##############################################################################################################
 
-ll_vec = []
-def sgd(gradient, data, start, learn_rate=1.0, batch_size=1, n_iter=50,
-    tolerance=1e-1, dtype="float64", random_state=None, decay_rate=0.0):
+# ll_vec = []
+# def sgd(gradient, data, start, learn_rate=1.0, batch_size=1, n_iter=50,
+#     tolerance=1e-1, dtype="float64", random_state=None, decay_rate=0.0):
 
-    # Checking if the gradient is callable
-    if not callable(gradient):
-        raise TypeError("'gradient' must be callable")
+#     # Checking if the gradient is callable
+#     if not callable(gradient):
+#         raise TypeError("'gradient' must be callable")
 
-    # Setting up and checking the maximal number of iterations
-    n_iter = int(n_iter)
-    if n_iter <= 0:
-        raise ValueError("'n_iter' must be greater than zero")
+#     # Setting up and checking the maximal number of iterations
+#     n_iter = int(n_iter)
+#     if n_iter <= 0:
+#         raise ValueError("'n_iter' must be greater than zero")
 
-    # Setting up and checking the tolerance
-    if np.any(tolerance <= 0):
-        raise ValueError("'tolerance' must be greater than zero")
+#     # Setting up and checking the tolerance
+#     if np.any(tolerance <= 0):
+#         raise ValueError("'tolerance' must be greater than zero")
     
-    diff = 0.0
-    n_obs = 1
-    vector = start
+#     diff = 0.0
+#     n_obs = 1
+#     vector = start
 
-    # Performing the gradient descent loop
-    for it in range(n_iter):
+#     # Performing the gradient descent loop
+#     for it in range(n_iter):
 
-        # Performing minibatch moves
-        # for start in range(0, n_obs, batch_size):
-        # print("st",start)
-        # stop = start + batch_size
+#         # Performing minibatch moves
+#         # for start in range(0, n_obs, batch_size):
+#         # print("st",start)
+#         # stop = start + batch_size
 
-        # Recalculating the difference
-        grad = gradient(data, vector, it=it)
-        diff = learn_rate * grad
-        # diff = -decay_rate * diff #+ learn_rate * grad
+#         # Recalculating the difference
+#         grad = gradient(data, vector, it=it)
+#         diff = learn_rate * grad
+#         # diff = -decay_rate * diff #+ learn_rate * grad
 
-        # Updating the values of the variables
-        vector += diff
+#         # Updating the values of the variables
+#         vector += diff
 
-        print(vector - par)
+#         print(vector - par)
 
-        prop_ll = loglike(vector)
-        print("diff",diff)
-        print("ll",prop_ll)
-        ll_vec.append(prop_ll)
+#         prop_ll = loglike(vector)
+#         print("diff",diff)
+#         print("ll",prop_ll)
+#         ll_vec.append(prop_ll)
 
-        # Checking if the absolute difference is small enough
-        if prop_ll <= tolerance:
-            break
+#         # Checking if the absolute difference is small enough
+#         if prop_ll <= tolerance:
+#             break
 
-    return vector if vector.shape else vector.item()
+#     return vector if vector.shape else vector.item()
 
 
-sgd(
-    propose_param, h, start=newpar, learn_rate=1.0, decay_rate=1.0,
-    batch_size=0, n_iter=1000, random_state=0, tolerance=1e-2
-)
+# sgd(
+#     propose_param, h, start=newpar, learn_rate=1.0, decay_rate=1.0,
+#     batch_size=0, n_iter=1000, random_state=0, tolerance=1e-2
+# )
 
-plt.figure(); plt.plot(ll_vec); plt.show()
+# plt.figure(); plt.plot(ll_vec); plt.show()
