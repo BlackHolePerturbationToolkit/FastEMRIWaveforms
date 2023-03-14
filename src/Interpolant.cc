@@ -406,7 +406,7 @@ int AssembleSplineMatrix_C(gsl_vector *xi, gsl_matrix **phi, gsl_vector **knots,
     // fprintf(stderr, "%d %d\n", n, N);
     *phi = gsl_matrix_alloc(N, N);
     gsl_matrix_set_zero(*phi);
-    double *B_array = malloc(N*sizeof(double)); // temporary storage
+    double *B_array = (double *) malloc(N*sizeof(double)); // temporary storage
 
     // Initialize B-splines
     if (*bw != NULL)
@@ -433,8 +433,8 @@ int AssembleSplineMatrix_C(gsl_vector *xi, gsl_matrix **phi, gsl_vector **knots,
     double xim21mean = (x[n-2] + x[n-1]) / 2.;
 
     // Coefficients for first and last rows
-    double *r1 = malloc(N*sizeof(double));
-    double *rm1 = malloc(N*sizeof(double));
+    double *r1 = (double *) malloc(N*sizeof(double));
+    double *rm1 = (double *) malloc(N*sizeof(double));
 
     ret = Bspline_basis_3rd_derivative_1D(r1, N, *bw, xi12mean);
     ret |= Bspline_basis_3rd_derivative_1D(B_array, N, *bw, xi23mean);
@@ -501,7 +501,7 @@ int SetupSpline1D(double *x, double *y, int n, double **c, gsl_bspline_workspace
     // Store coefficients in output array
     if (*c != NULL)
         return TPI_FAIL;
-    *c = malloc(N*sizeof(double));
+    *c = (double *) malloc(N*sizeof(double));
     for (int i=0; i<N; i++)
         (*c)[i] = gsl_vector_get(d, i);
     gsl_vector_free(d);
