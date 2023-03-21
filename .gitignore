@@ -21,3 +21,4 @@ src/pyinterp_cpu.cpp
 src/pymatmul_cpu.cpp
 src/utility_functions.cpp
 *.DS_Store
+*.ipynb_checkpoints
