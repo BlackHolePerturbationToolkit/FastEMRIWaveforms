@@ -362,8 +362,8 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
 
     // printf("-----------START------------------- \n");
     // printf("xlo xhi %f %f\n", x_lo, x_hi);
-    double epsrel=0.001;
-
+    // double epsrel=0.001;
+    double epsrel = 0.00001; // Decreased tolorance
     do
       {
         iter++;
@@ -427,6 +427,30 @@ double get_separatrix(double a, double e, double x)
         }
 
         p_sep = (3. + z2 + sign * sqrt((3. - z1) * (3. + z1 + 2. * z2)));
+        return p_sep;
+    }
+    else if (x == 1.0) // Eccentric Prograde Equatorial
+    {
+        // fills in p and Y with zeros
+        struct params_holder params = {a, 0.0, e, x, 0.0};
+        double x_lo, x_hi;
+
+        x_lo = 1.0 + e;
+        x_hi = 6 + 2. * e;
+
+        p_sep = solver (&params, &separatrix_polynomial_equat, x_lo, x_hi);
+        return p_sep;
+    }
+    else if (x == -1.0) // Eccentric Retrograde Equatorial
+    {
+        // fills in p and Y with zeros
+        struct params_holder params = {a, 0.0, e, x, 0.0};
+        double x_lo, x_hi;
+
+        x_lo = 6 + 2. * e;
+        x_hi = 5+e+4 *Sqrt(1+e); 
+
+        p_sep = solver (&params, &separatrix_polynomial_equat, x_lo, x_hi);
         return p_sep;
     }
     else
