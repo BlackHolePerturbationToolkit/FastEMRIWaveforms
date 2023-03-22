@@ -544,9 +544,9 @@ double get_separatrix(double a, double e, double x)
             x_hi = 5.0 + e + 4.0 * Sqrt(1.0+e) ;
         }
 
-        double eq_p_sep;// = solver (&params, &separatrix_polynomial_equat, x_lo, x_hi);
+        double eq_p_sep = solver (&params, &separatrix_polynomial_equat, x_lo, x_hi);
         // printf("%f", eq_p_sep);
-        eq_p_sep = solver_derivative(&params, x_lo, x_hi);
+        // eq_p_sep = solver_derivative(&params, x_lo, x_hi);
         // printf("%f", eq_p_sep);
         // eq_p_sep = separatrix_KerrEquatorial(a, e);
         return eq_p_sep;
