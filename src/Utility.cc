@@ -367,10 +367,29 @@ double separatrix_polynomial_equat(double p, void *params_in)
     return (Power(a,4)*Power(-3 - 2*e + Power(e,2),2) + Power(p,2)*Power(-6 - 2*e + p,2) - 2*Power(a,2)*(1 + e)*p*(14 + 2*Power(e,2) + 3*p - e*p));
 }
 
+double derivative_polynomial_equat(double p, void *params_in)
+{
+    struct params_holder* params = (struct params_holder*)params_in;
+
+    double a = params->a;
+    double e = params->e;
+    double x = params->x;
+    return -2*Power(a,2)*(1 + e)*(14 + 2*Power(e,2) - e*p + 6*p) + 4*p*(18 + 2*Power(e,2) - 3*e*(-4 + p) - 9*p + Power(p,2));
+}
+
+void eq_pol_fdf (double p, void *params_in, double *y, double *dy)
+{
+    struct params_holder* params = (struct params_holder*)params_in;
+
+    double a = params->a;
+    double e = params->e;
+    double x = params->x;
+    *y = (Power(a,4)*Power(-3 - 2*e + Power(e,2),2) + Power(p,2)*Power(-6 - 2*e + p,2) - 2*Power(a,2)*(1 + e)*p*(14 + 2*Power(e,2) + 3*p - e*p));
+    *dy = -2*Power(a,2)*(1 + e)*(14 + 2*Power(e,2) - e*p + 6*p) + 4*p*(18 + 2*Power(e,2) - 3*e*(-4 + p) - 9*p + Power(p,2));
+}
 
 
-double
-solver (struct params_holder* params, double (*func)(double, void*), double x_lo, double x_hi)
+double solver (struct params_holder* params, double (*func)(double, void*), double x_lo, double x_hi)
 {
     gsl_set_error_handler_off();
     int status;
@@ -426,6 +445,58 @@ solver (struct params_holder* params, double (*func)(double, void*), double x_lo
     return r;
 }
 
+
+double solver_derivative(struct params_holder* params, double x_lo, double x_hi)
+{
+    gsl_set_error_handler_off();
+    int status;
+    int iter = 0, max_iter = 100;
+    const gsl_root_fdfsolver_type *T;
+    gsl_root_fdfsolver *s;
+    double x0, x = 0.8*(x_lo + x_hi);
+    gsl_function_fdf FDF;
+
+    FDF.f = &separatrix_polynomial_equat;
+    FDF.df = &derivative_polynomial_equat;
+    FDF.fdf = &eq_pol_fdf;
+    FDF.params = params;
+
+    T = gsl_root_fdfsolver_steffenson;
+    s = gsl_root_fdfsolver_alloc (T);
+    gsl_root_fdfsolver_set (s, &FDF, x);
+
+    do
+        {
+        iter++;
+        status = gsl_root_fdfsolver_iterate (s);
+        x0 = x;
+        x = gsl_root_fdfsolver_root (s);
+        status = gsl_root_test_delta (x, x0, 0, 1e-7);
+
+        }
+    while (status == GSL_CONTINUE && iter < max_iter);
+
+    if (status != GSL_SUCCESS)
+    {
+        // warning if it did not converge otherwise throw error
+        if (iter == max_iter){
+            printf("WARNING: Maximum iteration reached in Utility.cc in Brent root solver.\n");
+            printf("Result=%f, x_low=%f, x_high=%f \n", x, x_lo, x_hi);
+            printf("a, p, e, Y, sep = %f %f %f %f \n", params->a, params->p, params->e, params->Y);
+        }
+        else
+        {
+            throw std::invalid_argument( "In Utility.cc Brent root solver failed");
+        }
+    }
+
+    gsl_root_fdfsolver_free (s);
+
+    return x;
+}
+
+
+
 double get_separatrix(double a, double e, double x)
 {
     double p_sep, z1, z2;
@@ -474,7 +545,10 @@ double get_separatrix(double a, double e, double x)
         }
 
         double eq_p_sep;// = solver (&params, &separatrix_polynomial_equat, x_lo, x_hi);
-        eq_p_sep = separatrix_KerrEquatorial(a, e);
+        // printf("%f", eq_p_sep);
+        eq_p_sep = solver_derivative(&params, x_lo, x_hi);
+        // printf("%f", eq_p_sep);
+        // eq_p_sep = separatrix_KerrEquatorial(a, e);
         return eq_p_sep;
         
     }
@@ -923,6 +997,8 @@ void KerrEqSpinFrequenciesCorrVectorized(double* OmegaPhi_, double* OmegaTheta_,
     }
 
 }
+
+
 
 
 

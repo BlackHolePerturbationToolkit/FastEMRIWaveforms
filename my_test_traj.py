@@ -47,12 +47,11 @@ insp_kw = {
 
 # set initial parameters
 M = 1e6
-mu = 50.0
-epsilon = mu/M
+mu = 1e1
 p0 = 12.0
-e0 = 0.4
-a=0.855
-Y0 = 1.0
+e0 = 0.1
+a = 0.85
+epsilon = mu/M
 second_spin = 0.0
 
 # check fluxes

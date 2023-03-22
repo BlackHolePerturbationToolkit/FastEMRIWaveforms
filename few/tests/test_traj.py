@@ -25,10 +25,59 @@ except (ModuleNotFoundError, ImportError) as e:
     )
     gpu_available = False
 
+T = 4.0
+dt = 10.0
+
+insp_kw = {
+"T": T,
+"dt": dt,
+"err": 1e-10,
+"DENSE_STEPPING": 0,
+"max_init_len": int(1e4),
+"use_rk4": False,
+"upsample": False,
+}
+
+np.random.seed(42)
 
 class ModuleTest(unittest.TestCase):
-    def test_trajectory(self):
+    def test_trajectory_pn5(self):
 
+        # initialize trajectory class
+        traj = EMRIInspiral(func="pn5")
+
+        # set initial parameters
+        M = 1e5
+        mu = 1e1
+        np.random.seed(42)
+        for i in range(10):
+            p0 = np.random.uniform(10.0,15)
+            e0 = np.random.uniform(0.0, 1.0)
+            a = np.random.uniform(0.0, 1.0)
+            Y0 = np.random.uniform(-1.0, 1.0)
+
+            # do not want to be too close to polar
+            if np.abs(Y0) < 1e-2:
+                Y0 = np.sign(Y0) * 1e-2
+
+            # run trajectory
+            #print("start", a, p0, e0, Y0)
+            t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, Y0, **insp_kw)
+
+    def test_trajectory_SchwarzEccFlux(self):
+        # initialize trajectory class
+        traj = EMRIInspiral(func="SchwarzEccFlux")
+
+        # set initial parameters
+        M = 1e5
+        mu = 1e1
+        p0 = 10.0
+        e0 = 0.7
+
+        # run trajectory
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, 0.0, p0, e0, 1.0)
+
+    def test_trajectory_KerrEccentricEquatorial(self):
 
         err = 1e-10
         
@@ -38,19 +87,9 @@ class ModuleTest(unittest.TestCase):
         # set initial parameters
         M = 1e6
         mu = 1e1
-        p0 = 30.0
-        e0 = 0.0001
+        p0 = 12.0
+        e0 = 0.1
         a=0.85
 
         # run trajectory
-        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, T=10, err=err)
-        # t_pn, p_pn, e_pn, x_pn, Phi_phi_pn, Phi_theta_pn, Phi_r_pn = traj(M, mu, a, p0, e0, 1.0, new_t=t, upsample=True, err=err/10)
-
-        traj = EMRIInspiral(func="pn5")
-
-        # run trajectory
-        t_pn, p_pn, e_pn, x_pn, Phi_phi_pn, Phi_theta_pn, Phi_r_pn = traj(M, mu, a, p0, e0, 1.0, T=10)#new_t=t, upsample=True, err=err)
-
-        import matplotlib.pyplot as plt
-        plt.figure(); plt.semilogy(p, Phi_phi); plt.semilogy(p_pn, Phi_phi_pn, label='pn5'); plt.legend(); plt.show()
-        plt.figure(); plt.plot(p, e); plt.plot(p_pn, e_pn, label='pn5'); plt.legend(); plt.show()
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, **insp_kw)
