@@ -37,7 +37,7 @@ trajpn5 = EMRIInspiral(func="pn5")
 
 insp_kw = {
     "T": 5.0,
-    "dt": 10.0,
+    "dt": 100.0,
     "err": 1e-10,
     "DENSE_STEPPING": 0,
     "max_init_len": int(1e4),
@@ -49,10 +49,10 @@ insp_kw = {
 # get_fundamental_frequencies(0.850000 , 9.610630 , 0.070009 , 1.000000)
 # set initial parameters
 M = 1e6
-mu = 1e1
+mu = 5e1
 p0 = 12.0
-e0 = 0.1
-a = 0.85
+e0 = 0.43
+a = 0.86
 epsilon = mu/M
 second_spin = 0.0
 
@@ -139,8 +139,8 @@ for i, (ax, x, y, xlab, ylab) in enumerate(zip(axes, xs, ys, xlabels, ylabels)):
     ax.set_ylabel(ylab, fontsize=16)
 plt.tight_layout()
 # plt.savefig(f'trajectory_evolution_info_M={M}_mu={mu}_p0={p0}_e0={e0}_a={a}.png')
-arr_out = np.asarray((t, p, e, Phi_phi, Phi_theta, Phi_r, om1, om2, om3))
-np.savetxt(f"t[seconds]_p_e_PhiPhi_PhiTheta_PhiR_OmegaPhi_OmegaTheta_OmegaR_info_M={M}_mu={mu}_p0={p0}_e0={e0}_a={a}.txt", arr_out.T )
+arr_out = np.asarray((t, p, e, Phi_phi, Phi_theta, Phi_r, om1, om2, om3, pdot, edot))
+np.savetxt(f"t[seconds]_p_e_PhiPhi_PhiTheta_PhiR_OmegaPhi_OmegaTheta_OmegaR_pdot_edot_info_M={M}_mu={mu}_p0={p0}_e0={e0}_a={a}.txt", arr_out.T )
 
 # plt.close('all')
 

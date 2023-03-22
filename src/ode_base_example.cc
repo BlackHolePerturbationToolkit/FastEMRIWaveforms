@@ -233,11 +233,11 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* xdot,
     // cout << "omegaphi circ " <<  Omega_phi_sep_circ << " omegaphi " <<  *Omega_phi << endl;
     // cout  << a  << '\t' <<  p << '\t' << e << endl;
     // cout << "r " <<  r << " plso " <<  p_sep << endl;
-    double En,Lz,Q;
-    KerrGeoConstantsOfMotion(&En, &Lz, &Q, a, p, e, x);
+    // double En,Lz,Q;
+    // KerrGeoConstantsOfMotion(&En, &Lz, &Q, a, p, e, x);
     
     // Class to transform to p e i evolution
-    GenericKerrRadiation* GKR = new GenericKerrRadiation(p, e, En, Lz, Q, a);
+    // GenericKerrRadiation* GKR = new GenericKerrRadiation(p, e, En, Lz, Q, a);
 
     // Edot as a function of 
     double risco = get_separatrix(a, 0.0, x);

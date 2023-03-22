@@ -1,26 +1,23 @@
-// Code to compute an eccentric flux driven insipral
-// into a Schwarzschild black hole
+/*
+ * Copyright (C) 2017, 2022 Michael Pürrer, Jonathan Blackman.
+ *
+ *  This file is part of TPI.
+ *
+ *  TPI is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  TPI is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with TPI.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-// Copyright (C) 2020 Niels Warburton, Michael L. Katz, Alvin J.K. Chua, Scott A. Hughes
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-#include <Interpolant.h>
-#include <algorithm>
-
-#include <iostream>
-
+#include "TensorProductInterpolation.h"
 
 #ifdef DEBUG
 #include <time.h>
@@ -31,7 +28,7 @@
 /******************************* Generic code *********************************/
 
 void TP_Interpolation_Setup_ND(
-    array_yo *nodes,                     // Input: array of arrys containing the nodes
+    array *nodes,                     // Input: array of arrys containing the nodes
                                       // for each parameter space dimension
     int n,                            // Input: Dimensionality of parameter space
     gsl_bspline_workspace ***bw_out   // Output: pointer to array of pointers to
@@ -406,7 +403,7 @@ int AssembleSplineMatrix_C(gsl_vector *xi, gsl_matrix **phi, gsl_vector **knots,
     // fprintf(stderr, "%d %d\n", n, N);
     *phi = gsl_matrix_alloc(N, N);
     gsl_matrix_set_zero(*phi);
-    double *B_array = (double *) malloc(N*sizeof(double)); // temporary storage
+    double *B_array = malloc(N*sizeof(double)); // temporary storage
 
     // Initialize B-splines
     if (*bw != NULL)
@@ -433,8 +430,8 @@ int AssembleSplineMatrix_C(gsl_vector *xi, gsl_matrix **phi, gsl_vector **knots,
     double xim21mean = (x[n-2] + x[n-1]) / 2.;
 
     // Coefficients for first and last rows
-    double *r1 = (double *) malloc(N*sizeof(double));
-    double *rm1 = (double *) malloc(N*sizeof(double));
+    double *r1 = malloc(N*sizeof(double));
+    double *rm1 = malloc(N*sizeof(double));
 
     ret = Bspline_basis_3rd_derivative_1D(r1, N, *bw, xi12mean);
     ret |= Bspline_basis_3rd_derivative_1D(B_array, N, *bw, xi23mean);
@@ -501,7 +498,7 @@ int SetupSpline1D(double *x, double *y, int n, double **c, gsl_bspline_workspace
     // Store coefficients in output array
     if (*c != NULL)
         return TPI_FAIL;
-    *c = (double *) malloc(N*sizeof(double));
+    *c = malloc(N*sizeof(double));
     for (int i=0; i<N; i++)
         (*c)[i] = gsl_vector_get(d, i);
     gsl_vector_free(d);
@@ -522,64 +519,4 @@ double EvaluateSpline1D(double *c, gsl_bspline_workspace *bw, double xx) {
     for (int i=0; i<4; i++)
         sum += c[is + i] * gsl_vector_get(Bx, i);
     return sum;
-}
-
-//Construct a 1D interpolant of f(x)
-Interpolant::Interpolant(Vector x, Vector f){
-
-	interp_type = 1;
-
-	xacc = gsl_interp_accel_alloc();
-    spline = gsl_spline_alloc (gsl_interp_cspline, x.size());
-
-    gsl_spline_init (spline, &x[0], &f[0], x.size());
-
-}
-
-// Function that is called to evaluate the 1D interpolant
-double Interpolant::eval(double x){
-	return gsl_spline_eval(spline, x, xacc);
-}
-
-// Construct a 2D interpolant of f(x,y)
-Interpolant::Interpolant(Vector x, Vector y, Vector f){
-
-	interp_type = 2;
-
-	// Create the interpolant
-    const gsl_interp2d_type *T = gsl_interp2d_bicubic;
-
-    const size_t nx = x.size(); /* number of x grid points */
-    const size_t ny = y.size(); /* number of y grid points */
-
-    double *za = (double *)malloc(nx * ny * sizeof(double));
-    spline2d = gsl_spline2d_alloc(T, nx, ny);
-    xacc = gsl_interp_accel_alloc();
-    yacc = gsl_interp_accel_alloc();
-
-	for(unsigned int i = 0; i < nx; i++){
-		for(unsigned int j = 0; j < ny; j++){
-	    	gsl_spline2d_set(spline2d, za, i, j, f[j*nx + i]);
-		}
-	}
-
-	/* initialize interpolation */
-	gsl_spline2d_init(spline2d, &x[0], &y[0], za, nx, ny);
-
-}
-
-// Function that is called to evaluate the 2D interpolant
-double Interpolant::eval(double x, double y){
-	return gsl_spline2d_eval(spline2d, x, y, xacc, yacc);
-}
-
-// Destructor
-Interpolant::~Interpolant(){
-	delete(xacc);
-	if(interp_type == 1){
-		delete(spline);
-	}else{
-		delete(spline2d);
-		delete(yacc);
-	}
 }
