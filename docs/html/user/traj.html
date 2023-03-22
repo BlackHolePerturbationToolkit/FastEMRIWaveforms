@@ -452,6 +452,32 @@ inspiral generator.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.get_rhs_ode">
+<span class="sig-name descname"><span class="pre">get_rhs_ode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.get_rhs_ode" title="Permalink to this definition"></a></dt>
+<dd><p>Get the right hand side of the Ordinary Differential Equations used in the inspiral.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Mass of massive black hole in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – Mass of compact object in solar masses.</p></li>
+<li><p><strong>a</strong> (<em>double</em>) – Dimensionless spin of massive black hole.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semi-latus rectum in terms units of M (p/M).</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity (dimensionless).</p></li>
+<li><p><strong>x0</strong> (<em>double</em>) – Initial <span class="math notranslate nohighlight">\(\cos{\iota}\)</span>. <strong>Note</strong>: This value is different from <span class="math notranslate nohighlight">\(x_I\)</span></p></li>
+<li><p><strong>waveforms.</strong> (<em>used in the relativistic</em>) – </p></li>
+<li><p><strong>*args</strong> (<em>list</em><em>, </em><em>placeholder</em>) – Added for flexibility.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Tuple of (pdot, edot, xdot, OmegaPhi, OmegaTheta, OmegaR).</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.__call__">
 <span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_coordinate_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spline_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DENSE_STEPPING</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_init_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_rk4</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.__call__" title="Permalink to this definition"></a></dt>
 <dd><p>Call function for trajectory interface.</p>
