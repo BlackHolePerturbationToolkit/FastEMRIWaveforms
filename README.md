@@ -168,7 +168,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags).
 
-Current Version: 1.4.10
+Current Version: 1.4.11
 
 ## Authors
 
@@ -193,3 +193,11 @@ This project is licensed under the GNU License - see the [LICENSE.md](LICENSE.md
 
 * This research resulting in this code was supported by National Science Foundation under grant DGE-0948017 and the Chateaubriand Fellowship from the Office for Science \& Technology of the Embassy of France in the United States.
 * It was also supported in part through the computational resources and staff contributions provided for the Quest/Grail high performance computing facility at Northwestern University.
+
+## Update DOCS
+
+1. Open the README and update the version number.
+2. Update few/utils/utility.py dictionary with version numbers.
+3. Install package
+4. Go to docs/ and do `make html`
+5. Then run: `git add -u; git add docs/` then commit and push

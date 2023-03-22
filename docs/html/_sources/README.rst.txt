@@ -236,7 +236,7 @@ We use `SemVer <http://semver.org/>`__ for versioning. For the versions
 available, see the `tags on this
 repository <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags>`__.
 
-Current Version: 1.4.10
+Current Version: 1.4.11
 
 Authors
 -------
@@ -271,3 +271,12 @@ Acknowledgments
 -  It was also supported in part through the computational resources and
    staff contributions provided for the Quest/Grail high performance
    computing facility at Northwestern University.
+
+Update DOCS
+-----------
+
+1. Open the README and update the version number.
+2. Update few/utils/utility.py dictionary with version numbers.
+3. Install package
+4. Go to docs/ and do ``make html``
+5. Then run: ``git add -u; git add docs/`` then commit and push

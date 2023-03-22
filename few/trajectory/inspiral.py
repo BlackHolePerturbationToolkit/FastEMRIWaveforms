@@ -25,7 +25,7 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 
 # Cython/C++ imports
-from pyInspiral import pyInspiralGenerator
+from pyInspiral import pyInspiralGenerator, pyDerivative
 
 # Python imports
 from few.utils.baseclasses import TrajectoryBase
@@ -155,6 +155,8 @@ class EMRIInspiral(TrajectoryBase):
             "use_rk4",
         ]
 
+        self.get_derivative = pyDerivative(self.func, few_dir.encode())
+
     def attributes_EMRIInspiral(self):
         """
         attributes:
@@ -177,6 +179,65 @@ class EMRIInspiral(TrajectoryBase):
         for citation in self.citations:
             citations_out += globals()[citation]
         return citations_out
+
+    def get_rhs_ode(
+        self,
+        M,
+        mu,
+        a,
+        p0,
+        e0,
+        x0,
+        *args
+    ):
+        """Get the right hand side of the Ordinary Differential Equations used in the inspiral.
+
+        args:
+            M (double): Mass of massive black hole in solar masses.
+            mu (double): Mass of compact object in solar masses.
+            a (double): Dimensionless spin of massive black hole.
+            p0 (double): Initial semi-latus rectum in terms units of M (p/M).
+            e0 (double): Initial eccentricity (dimensionless).
+            x0 (double): Initial :math:`\cos{\iota}`. **Note**: This value is different from :math:`x_I`
+            used in the relativistic waveforms.
+            *args (list, placeholder): Added for flexibility.
+            
+        Returns:
+            tuple: Tuple of (pdot, edot, xdot, OmegaPhi, OmegaTheta, OmegaR).
+
+        """
+
+        fill_value = 1e-6
+
+        # fix for specific requirements of different odes
+
+        if self.background == "Schwarzschild":
+            a = 0.0
+        elif a < fill_value:
+            warnings.warn(
+                "Our model with spin breaks near a = 0. Adjusting to a = 1e-6.".format(
+                    fill_value
+                )
+            )
+            a = fill_value
+
+        if self.equatorial:
+            x0 = 1.0
+
+        if self.circular:
+            e0 = 0.0
+
+        args_in = np.asarray(args)
+
+        # correct for issue in Cython pass
+        if len(args_in) == 0:
+            args_in = np.array([0.0])
+
+        # this will return in coordinate time
+        pdot, edot, xdot, OmegaPhi, OmegaTheta, OmegaR = self.get_derivative(mu/M, a, p0, e0, x0, args_in)
+        
+        return (pdot, edot, xdot, OmegaPhi, OmegaTheta, OmegaR)
+
 
     def get_inspiral(
         self,
