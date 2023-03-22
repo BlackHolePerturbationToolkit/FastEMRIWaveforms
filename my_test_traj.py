@@ -36,7 +36,7 @@ trajpn5 = EMRIInspiral(func="pn5")
 
 
 insp_kw = {
-    "T": 10.0,
+    "T": 5.0,
     "dt": 10.0,
     "err": 1e-10,
     "DENSE_STEPPING": 0,
@@ -45,6 +45,8 @@ insp_kw = {
     # "fix_T": True
     }
 
+# breakpoint()
+# get_fundamental_frequencies(0.850000 , 9.610630 , 0.070009 , 1.000000)
 # set initial parameters
 M = 1e6
 mu = 1e1

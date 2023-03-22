@@ -262,18 +262,19 @@ void KerrGeoCoordinateFrequencies(double* OmegaPhi_, double* OmegaTheta_, double
 {
     // printf("here p e %f %f %f %f \n", a, p, e, x);
     double CapitalGamma, CapitalUpsilonPhi, CapitalUpsilonTheta, CapitalUpsilonR;
-    // if (abs(x)==1.0){
-    //     KerrEqGeoMinoFrequencies(&CapitalGamma, &CapitalUpsilonPhi, &CapitalUpsilonTheta, &CapitalUpsilonR,
-    //                               a, p, e, x);
-    // }
-    // else{
+    if (abs(x)==1.0){
         KerrGeoMinoFrequencies(&CapitalGamma, &CapitalUpsilonPhi, &CapitalUpsilonTheta, &CapitalUpsilonR,
                                   a, p, e, x);
-    // }
+    }
+    else{
+        KerrGeoMinoFrequencies(&CapitalGamma, &CapitalUpsilonPhi, &CapitalUpsilonTheta, &CapitalUpsilonR,
+                                  a, p, e, x);
+    }
     
 
     if ((CapitalUpsilonPhi!=CapitalUpsilonPhi) || (CapitalGamma!=CapitalGamma) || (CapitalUpsilonR!=CapitalUpsilonR) ){
         printf("(a, p, e, x) = (%f , %f , %f , %f) \n", a, p, e, x);
+        printf("(CapitalUpsilonPhi, CapitalUpsilonR, CapitalGamma) = (%f , %f , %f) \n", CapitalUpsilonPhi, CapitalUpsilonR, CapitalGamma);
         throw std::invalid_argument("Nan in fundamental frequencies");
     }
     // printf("here xhi %f %f\n", CapitalUpsilonPhi, CapitalGamma);

@@ -233,11 +233,11 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* xdot,
     // cout << "omegaphi circ " <<  Omega_phi_sep_circ << " omegaphi " <<  *Omega_phi << endl;
     // cout  << a  << '\t' <<  p << '\t' << e << endl;
     // cout << "r " <<  r << " plso " <<  p_sep << endl;
-    // double En,Lz,Q;
-    // KerrGeoConstantsOfMotion(&En, &Lz, &Q, a, p, e, x);
+    double En,Lz,Q;
+    KerrGeoConstantsOfMotion(&En, &Lz, &Q, a, p, e, x);
     
     // Class to transform to p e i evolution
-    // GenericKerrRadiation* GKR = new GenericKerrRadiation(p, e, En, Lz, Q, a);
+    GenericKerrRadiation* GKR = new GenericKerrRadiation(p, e, En, Lz, Q, a);
 
     // Edot as a function of 
     double risco = get_separatrix(a, 0.0, x);
@@ -280,8 +280,12 @@ void KerrEccentricEquatorial(double* pdot, double* edot, double* xdot,
     // if (a>0.0){throw std::exception();} 
     
     // consistency check
-    // cout << "transf pdot Cheb " <<  GKR->pdot << " pdot " <<  pdot_out << " PN " << dpdt8H_5PNe10(a, p, e, Y, Nv, ne) << endl;
-    // cout << "transf edot Cheb " <<  GKR->edot << " edot " <<  edot_out << " PN " << dedt8H_5PNe10(a, p, e, Y, Nv, ne) << endl;
+    // cout << "transf pdot Cheb " <<  GKR->pdot << " pdot " <<  pdot_out << " PN " << dpdt8H_5PNe10(a, p, e, x, Nv, ne) << endl;
+    // cout << "transf edot Cheb " <<  GKR->edot << " edot " <<  edot_out << " PN " << dedt8H_5PNe10(a, p, e, x, Nv, ne) << endl;
+    // cout << "ratio Edot Cheb " <<  Edot/dEdt8H_5PNe10(a, p, e, x, Nv, ne) << endl;
+    // cout << "ratio Ldot Cheb " <<  Ldot/dLdt8H_5PNe10(a, p, e, x, Nv, ne) << endl;
+    // cout << "ratio pdot Cheb " <<  GKR->pdot/pdot_out << endl;
+    // cout << "ratio edot Cheb " <<  GKR->edot/edot_out << endl;
 
 
     // needs adjustment for validity
