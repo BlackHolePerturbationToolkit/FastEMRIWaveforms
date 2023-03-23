@@ -178,11 +178,64 @@ SchwarzEccFlux::~SchwarzEccFlux()
 }
 
 //--------------------------------------------------------------------------------
+Vector fill_vector(std::string fp){
+	ifstream file_x(fp);
+
+    if (file_x.fail())
+    {
+        throw std::runtime_error("The file  did not open sucessfully. Make sure it is located in the proper directory.");
+    }
+    else{
+        cout << "importing " + fp << endl;
+    }
+
+	// Load the flux data into arrays
+	string string_x;
+    Vector xs;
+	double x;
+	while(getline(file_x, string_x)){
+		stringstream ss(string_x);
+		ss >> x ;
+		xs.push_back(x);
+	}
+    return xs;
+
+}
+
+KerrEccentricEquatorial::KerrEccentricEquatorial(std::string few_dir)
+{
+
+    // interpolant()
+    std::string fp;
+    fp = few_dir + "few/files/x0.dat";
+    Vector x1;
+    x1 = fill_vector(fp);
+    
+    fp = few_dir + "few/files/x1.dat";
+    Vector x2;
+    x2 = fill_vector(fp);
+
+    fp = few_dir + "few/files/x2.dat";
+    Vector x3;
+    x3 = fill_vector(fp);
+
+    fp = few_dir + "few/files/coeff.dat";
+    Vector coeff;
+    coeff = fill_vector(fp);
+
+
+    TensorInterpolant *pdot_interp = new TensorInterpolant(x1, x2, x3, coeff);
+
+    cout << "yo=" <<pdot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
+
+}
+
+
 // #define KerrEccentricEquatorial_Y
 #define KerrEccentricEquatorial_equatorial
 #define KerrEccentricEquatorial_num_add_args 1
 __deriv__
-void KerrEccentricEquatorial(double* pdot, double* edot, double* xdot,
+void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,
                   double epsilon, double a, double p, double e, double x, double* additional_args)
 {

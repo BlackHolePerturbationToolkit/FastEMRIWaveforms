@@ -63,6 +63,17 @@ class Interpolant{
 		gsl_interp_accel *yacc;
 };
 
+class TensorInterpolant{
+    public:
+    TensorInterpolant(Vector x, Vector y, Vector z, Vector flatten_coeff);
+    double eval(double x, double y, double z);
+
+    double *coeff;
+    int coeff_N;
+    gsl_bspline_workspace **bw_out;   // Output: pointer to array of pointers to
+};
+
+
 /******************************* 1D functions *********************************/
 
 int Interpolation_Setup_1D(

@@ -7,6 +7,13 @@ struct interp_params{
 	Interpolant *Ldot;
 };
 
+struct TPI_params{
+	double epsilon;
+	TensorInterpolant *pdot;
+	TensorInterpolant *edot;
+};
+
+
 class SchwarzEccFlux{
 public:
     interp_params *interps;
@@ -19,4 +26,15 @@ public:
                       double* Omega_phi, double* Omega_theta, double* Omega_r,
                       double epsilon, double a, double p, double e, double Y, double* additional_args);
     ~SchwarzEccFlux();
+};
+
+class KerrEccentricEquatorial{
+public:
+    TensorInterpolant *interpolant;
+    array_yo *nodes;                     // Input: array of arrys containing the nodes for each parameter space dimension
+    KerrEccentricEquatorial(std::string few_dir);
+
+    void deriv_func(double* pdot, double* edot, double* Ydot,
+                      double* Omega_phi, double* Omega_theta, double* Omega_r,
+                      double epsilon, double a, double p, double e, double x, double* additional_args);
 };
