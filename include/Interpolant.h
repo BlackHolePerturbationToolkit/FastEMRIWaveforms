@@ -71,6 +71,7 @@ class TensorInterpolant{
     double *coeff;
     int coeff_N;
     gsl_bspline_workspace **bw_out;   // Output: pointer to array of pointers to
+    ~TensorInterpolant();
 };
 
 

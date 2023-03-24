@@ -526,7 +526,7 @@ double EvaluateSpline1D(double *c, gsl_bspline_workspace *bw, double xx) {
 
 //-----------------------------------------------------------------------------------------------------//
 TensorInterpolant::TensorInterpolant(Vector x, Vector y, Vector z, Vector flatten_coeff){
-    array_yo *nodes = new array_yo;                     // Input: array of arrys containing the nodes for each parameter space dimension
+    array_yo *nodes = new array_yo[3];                     // Input: array of arrys containing the nodes for each parameter space dimension
     int n=3;                            // Input: Dimensionality of parameter space
     
     cout << x.size() << "\t" << y.size() << "\t" << z.size() <<  "\t" << flatten_coeff.size() << endl;
@@ -539,21 +539,25 @@ TensorInterpolant::TensorInterpolant(Vector x, Vector y, Vector z, Vector flatte
     nodes[0].vec = x.data();
     nodes[1].vec = y.data();
     nodes[2].vec = z.data();
-    cout << "3" << endl;
+    cout << "3  " << nodes[1].vec[5] << endl;
+    bw_out = (gsl_bspline_workspace **) malloc(3 * sizeof(gsl_bspline_workspace*));
     TP_Interpolation_Setup_ND(nodes, n, &bw_out);
     cout << "4" << endl;
     coeff_N = flatten_coeff.size();
     coeff = flatten_coeff.data();
     cout << "5" << endl;
+    delete[] nodes;
 }
 // Function that is called to evaluate the 1D interpolant
 double TensorInterpolant::eval(double x, double y, double z){
     double out;
 
-    double* X;
+    //double *X = new double[3]; delete[] X;
+    double X[3] = {0.};
+    //double* X;
     X[0] = x;
     X[1] = y;
-    X[3] = z;
+    X[2] = z;
 
     int X_N=3;
     int ret = TP_Interpolation_ND(coeff, coeff_N, X, X_N, bw_out, &out);
@@ -563,6 +567,11 @@ double TensorInterpolant::eval(double x, double y, double z){
 
     return out;
 }
+
+TensorInterpolant::~TensorInterpolant(){
+    free(bw_out);
+}
+
 //-----------------------------------------------------------------------------------------------------//
 //Construct a 1D interpolant of f(x)
 Interpolant::Interpolant(Vector x, Vector f){
