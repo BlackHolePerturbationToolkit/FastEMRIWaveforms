@@ -20,5 +20,11 @@ src/pyinterp2damp.cpp
 src/pyinterp_cpu.cpp
 src/pymatmul_cpu.cpp
 src/utility_functions.cpp
+src/gpuAAK.cpp
+src/gpuAAKWrap_cpu.pyx
+src/interpolate.cpp
+src/matmul.cpp
+src/pyinterp_cpu.pyx
+src/pymatmul_cpu.pyx
 *.DS_Store
 *.ipynb_checkpoints

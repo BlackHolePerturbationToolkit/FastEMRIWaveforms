@@ -11,6 +11,12 @@ void KerrGeoMinoFrequencies(double* CapitalGamma_, double* CapitalUpsilonPhi_, d
 void KerrGeoCoordinateFrequencies(double* OmegaPhi_, double* OmegaTheta_, double* OmegaR_,
                             double a, double p, double e, double x);
 
+void KerrGeoEquatorialMinoFrequencies(double* CapitalGamma_, double* CapitalUpsilonPhi_, double* CapitalUpsilonTheta_, double* CapitalUpsilonr_,
+                              double a, double p, double e, double x);
+
+void KerrGeoEquatorialCoordinateFrequencies(double* OmegaPhi_, double* OmegaTheta_, double* OmegaR_,
+                            double a, double p, double e, double x);
+
 void KerrGeoCoordinateFrequenciesVectorized(double* OmegaPhi_, double* OmegaTheta_, double* OmegaR_,
                               double* a, double* p, double* e, double* x, int length);
 
