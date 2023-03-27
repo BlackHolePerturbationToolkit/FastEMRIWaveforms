@@ -529,23 +529,27 @@ TensorInterpolant::TensorInterpolant(Vector x, Vector y, Vector z, Vector flatte
     array_yo *nodes = new array_yo[3];                     // Input: array of arrys containing the nodes for each parameter space dimension
     int n=3;                            // Input: Dimensionality of parameter space
     
-    cout << x.size() << "\t" << y.size() << "\t" << z.size() <<  "\t" << flatten_coeff.size() << endl;
+    // cout << x.size() << "\t" << y.size() << "\t" << z.size() <<  "\t" << flatten_coeff.size() << endl;
 
     nodes[0].n = x.size();
     nodes[1].n = y.size();
     nodes[2].n = z.size();
-    cout << "2" << endl;
+    // cout << "2" << endl;
 
     nodes[0].vec = x.data();
     nodes[1].vec = y.data();
     nodes[2].vec = z.data();
-    cout << "3  " << nodes[1].vec[5] << endl;
+    // cout << "3  " << nodes[1].vec[5] << endl;
     bw_out = (gsl_bspline_workspace **) malloc(3 * sizeof(gsl_bspline_workspace*));
+    // cout << "bw" << bw_out[0] << endl;
     TP_Interpolation_Setup_ND(nodes, n, &bw_out);
-    cout << "4" << endl;
+    // cout << "4" << endl;
     coeff_N = flatten_coeff.size();
-    coeff = flatten_coeff.data();
+    coeff = new double[coeff_N];
+    for (int i=0;i<coeff_N;i+=1) coeff[i] = flatten_coeff[i];
+    
     cout << "5" << endl;
+    // cout << "coeff " << coeff <<endl;
     delete[] nodes;
 }
 // Function that is called to evaluate the 1D interpolant

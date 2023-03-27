@@ -65,12 +65,13 @@ class Interpolant{
 
 class TensorInterpolant{
     public:
-    TensorInterpolant(Vector x, Vector y, Vector z, Vector flatten_coeff);
-    double eval(double x, double y, double z);
-
     double *coeff;
     int coeff_N;
     gsl_bspline_workspace **bw_out;   // Output: pointer to array of pointers to
+
+    TensorInterpolant(Vector x, Vector y, Vector z, Vector flatten_coeff);
+    double eval(double x, double y, double z);
+
     ~TensorInterpolant();
 };
 

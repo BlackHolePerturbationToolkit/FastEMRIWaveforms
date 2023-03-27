@@ -30,8 +30,9 @@ public:
 
 class KerrEccentricEquatorial{
 public:
-    TensorInterpolant *interpolant;
-    array_yo *nodes;                     // Input: array of arrys containing the nodes for each parameter space dimension
+    TensorInterpolant *pdot_interp;
+    TensorInterpolant *edot_interp;
+
     KerrEccentricEquatorial(std::string few_dir);
 
     void deriv_func(double* pdot, double* edot, double* Ydot,

@@ -176,6 +176,6 @@ plt.semilogy(p, psep,'.')
 plt.xlabel('p')
 plt.ylabel('psep')
 
-plt.show()
+# plt.show()
 
 print("DONE")
