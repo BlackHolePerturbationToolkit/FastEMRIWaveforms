@@ -313,15 +313,19 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     // double edot_out = edot_Cheby(a, p, e, risco, p_sep);
 
     // Flux from Viktor
-    double pdot_out = pdot_Cheby_full(a, p, e, r);
-    double edot_out = edot_Cheby_full(a, p, e, r);
+    double one_minus_e2 = 1-pow(e,2);
+    double pdot_out = pdot_Cheby_full(a, p, e, r) * (64/5 * pow(p,-3) * pow(one_minus_e2,0.5));
+    double edot_out = edot_Cheby_full(a, p, e, r) * (304/15 * pow(p,-4) * pow(one_minus_e2,1.5));
 
     // Flux from Scott
     double u = log((p-p_sep + 4.0 - 0.05)/4.0);
     double w = sqrt(e);
-    double one_minus_e2 = 1-pow(e,2);
+    
     // pdot_out = pdot_interp->eval(a, u, w) * (64/5 * pow(p,-3) * pow(one_minus_e2,0.5));
     // edot_out = edot_interp->eval(a, u, w) * (304/15 * pow(p,-4) * pow(one_minus_e2,1.5));
+
+    // cout << "ratio pdot Cheb " <<  (pdot_interp->eval(a, u, w) * (64/5 * pow(p,-3) * pow(one_minus_e2,0.5)))/pdot_out << endl;
+    // cout << "ratio edot Cheb " <<  (edot_interp->eval(a, u, w) * (304/15 * pow(p,-4) * pow(one_minus_e2,1.5)))/edot_out << endl;
 
     // auto end = std::chrono::steady_clock::now();
     // std::chrono::duration<double>  msec = end-start;
