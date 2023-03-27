@@ -20,6 +20,8 @@ double edot_dspin_Cheby(const double a, const double p, const double e, const do
 double pdot_dspin_Cheby(const double a, const double p, const double e, const double rISCO, const double ps);
 double dOmegaPhi_dspin(const double a, const double p, const double e, const double rISCO, const double ps);
 double dOmegaR_dspin(const double a, const double p, const double e, const double rISCO, const double ps);
+double edot_Cheby_full(const double a, const double p, const double e, const double r);
+double pdot_Cheby_full(const double a, const double p, const double e, const double r);
 
 class GenericKerrRadiation {
 public:

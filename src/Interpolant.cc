@@ -548,7 +548,7 @@ TensorInterpolant::TensorInterpolant(Vector x, Vector y, Vector z, Vector flatte
     coeff = new double[coeff_N];
     for (int i=0;i<coeff_N;i+=1) coeff[i] = flatten_coeff[i];
     
-    cout << "5" << endl;
+    // cout << "5" << endl;
     // cout << "coeff " << coeff <<endl;
     delete[] nodes;
 }

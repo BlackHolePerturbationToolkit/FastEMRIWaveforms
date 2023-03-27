@@ -183,10 +183,10 @@ Vector fill_vector(std::string fp){
 
     if (file_x.fail())
     {
-        // throw std::runtime_error("The file  did not open sucessfully. Make sure it is located in the proper directory.");
+        throw std::runtime_error("The file  did not open sucessfully. Make sure it is located in the proper directory.");
     }
     else{
-        cout << "importing " + fp << endl;
+        // cout << "importing " + fp << endl;
     }
 
 	// Load the flux data into arrays
@@ -224,8 +224,8 @@ KerrEccentricEquatorial::KerrEccentricEquatorial(std::string few_dir)
     edot_interp = new TensorInterpolant(x1, x2, x3, coeff2);
     pdot_interp = new TensorInterpolant(x1, x2, x3, coeff);
 
-    cout << "pdot=" << pdot_interp<< pdot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
-    cout << "edot=" << edot_interp<< edot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
+    // cout << "pdot=" << pdot_interp<< pdot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
+    // cout << "edot=" << edot_interp<< edot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
 
 }
 
@@ -264,8 +264,8 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     double p_sep = get_separatrix(a, e, x);
     double r;
     // reference frequency
-    // Omega_phi_sep_circ = x * 1.0/ (x*a + pow(p_sep/( 1.0 + e ), 1.5) );
-    // r = pow(*Omega_phi/Omega_phi_sep_circ, 2.0/3.0 ) * (1.0 + e);
+    Omega_phi_sep_circ = x * 1.0/ (x*a + pow(p_sep/( 1.0 + e ), 1.5) );
+    r = pow(*Omega_phi/Omega_phi_sep_circ, 2.0/3.0 ) * (1.0 + e);
     
     // if (isnan(r)){
     //     cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
@@ -306,10 +306,23 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     
     // auto start = std::chrono::steady_clock::now();
     // the frequency variables are pointers!
-    // Fluxes from GR
+    
+    // Flux from Viktor
     // cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "risco=" << risco << "\t" << " plso =" <<  p_sep << endl;
-    double pdot_out = pdot_Cheby(a, p, e, risco, p_sep);
-    double edot_out = edot_Cheby(a, p, e, risco, p_sep);
+    // double pdot_out = pdot_Cheby(a, p, e, risco, p_sep);
+    // double edot_out = edot_Cheby(a, p, e, risco, p_sep);
+
+    // Flux from Viktor
+    double pdot_out = pdot_Cheby_full(a, p, e, r);
+    double edot_out = edot_Cheby_full(a, p, e, r);
+
+    // Flux from Scott
+    double u = log((p-p_sep + 4.0 - 0.05)/4.0);
+    double w = sqrt(e);
+    double one_minus_e2 = 1-pow(e,2);
+    // pdot_out = pdot_interp->eval(a, u, w) * (64/5 * pow(p,-3) * pow(one_minus_e2,0.5));
+    // edot_out = edot_interp->eval(a, u, w) * (304/15 * pow(p,-4) * pow(one_minus_e2,1.5));
+
     // auto end = std::chrono::steady_clock::now();
     // std::chrono::duration<double>  msec = end-start;
     // std::cout << "elapsed time fund freqs: " << msec.count() << "s\n";
