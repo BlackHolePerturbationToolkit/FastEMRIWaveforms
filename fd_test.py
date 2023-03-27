@@ -14,9 +14,9 @@ from scipy import signal
 
 
 import cupy as xp
-xp.cuda.runtime.setDevice(1)
+xp.cuda.runtime.setDevice(5)
 
-use_gpu = True
+use_gpu = False
 
 
 sum_kwargs = dict(pad_output=True)
@@ -55,7 +55,7 @@ l = 2  # 2
 m = 1  # 1
 n = -4  # -4
 
-modes = [(2, 2, -4)]
+modes = [(2, 2, -10)]
 eps = 1e-5
 
 sum_kwargs = dict(pad_output=True, output_type="fd")
@@ -73,11 +73,11 @@ fd_h = wave(
     phi,
     T=T,
     dt=dt,
-    # mode_selection=modes,
-    eps=eps,
+    mode_selection=modes,
+    # eps=eps,
     include_minus_m=True,
 )  # ,eps=1e-2)# , mode_selection=[(l,m,n)],include_minus_m=True) #
-
+breakpoint()
 #%% TIME DOMAIN
 wave_22 = few_base(
     M,
@@ -98,7 +98,6 @@ fft_wave = np.roll(
 )  # * signal.tukey(len(wave_22))
 
 rect_fft = np.fft.fft(np.ones_like(wave_22))  # * signal.tukey(len(wave_22))
-
 
 f = np.arange(-1 / (2 * dt), +1 / (2 * dt), 1 / (len(fd_h) * dt))
 

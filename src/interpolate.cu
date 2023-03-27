@@ -1724,6 +1724,7 @@ void find_segments_fd(int *segment_out, int *start_inds_seg, int *end_inds_seg, 
             for (int i = start; i < real_seg_end; i += increment)
             {
                 //if ((mode_i == 0)) printf("%d %d %d %d %d %d %d\n", mode_i, seg_i, i, real_seg_start, max_length, mode_start_ind, which_point_index);
+                if (ind_out == 85016) print
                 int ind_out = (mode_i * max_length + (i - mode_start_ind)) * 2 + which_point_index;
                 segment_out[ind_out] = seg_i;
             }
@@ -2045,17 +2046,22 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                 double root3 = -1e300;
                 
                 bool check = false;
-                if ((mode_i == 0) && ((i > 100) && (i < 150))) check = true;
+                //if ((mode_i == 0) && ((i > 100) && (i < 150))) check = true;
                 cube_roots(&root1, &root2, &root3, f_c3, f_c2, f_c1, (f_y - f), check);
-                //if ((mode_i == 0) && ((i > 100) && (i < 150))) printf("roots: %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %d %d %d\n", root1, root2, root3, f_c3, f_c2, f_c1, f_y, f_y2, f, start_t, end_t, ind_i, m, n);
                 
-                if ((i < 10) && (mode_i < 3)) printf("root check: %d %d %.18e %.18e %.18e %.18e %.18e \n", mode_i, i, root1, root2, root3, start_t, end_t);
+                //if ((f_y - f > 0.0)) printf("roots: %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %d %d %d\n", root1, root2, root3, f_c3, f_c2, f_c1, f_y - f, f_y, f_y2, f, start_t, end_t, ind_i, m, n);
+                if ((f_y - f > 0.0)) printf("roots: %d %d %d %d %.12e %.12e %.12e %d %d\n", ind_i, m, n, (mode_i * max_length + i) * 2 + which, f,f_y, f_y2, mode_start_ind_here, i);
+                
+                // (mode_i == 0) && ((i > 100) && (i < 105))
+                //if ((i < 10) && (mode_i < 3)) printf("root check: %d %d %.18e %.18e %.18e %.18e %.18e \n", mode_i, i, root1, root2, root3, start_t, end_t);
+                //if ((i < 10) && (mode_i < 3)) printf("root check: %d %d %.18e %.18e %.18e %.18e %.18e %.18e \n", mode_i, i, f_c3, f_c2, f_c1, (f_y - f), f_y, f);
                     
 
                 double t;
                 double x, x2, x3;
                 for (int root_i = 0; root_i < 3; root_i += 1)
                 {
+                    // TODO: check imaginary part 
                     t = roots[root_i];
                     if ((t < end_t) && (t >= start_t))
                     {
