@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 from scipy import signal
 
 
-import cupy as xp
-xp.cuda.runtime.setDevice(5)
+# import cupy as xp
+# xp.cuda.runtime.setDevice(5)
 
 use_gpu = False
 
@@ -88,8 +88,8 @@ wave_22 = few_base(
     phi,
     T=T,
     dt=dt,
-    eps=eps,
-    # mode_selection=modes,
+    # eps=eps,
+    mode_selection=modes,
     include_minus_m=True,
 )  # ,eps=1e-2)# , batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #
 freq_fft = np.fft.fftshift(np.fft.fftfreq(len(wave_22), dt))

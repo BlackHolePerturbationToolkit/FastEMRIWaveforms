@@ -38,8 +38,8 @@ cdef extern from "interpolate.hh":
     void get_waveform_generic_fd(cmplx *waveform,
              double *interp_array,
               int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
-              double delta_t, double *old_time_arr, int init_length, int data_length, int *interval_inds,
-              double *frequencies, int *mode_start_inds, int *mode_lengths, int max_length);
+              double delta_t, double *old_time_arr, int init_length, int data_length,
+              double *frequencies, int *mode_start_inds, int *mode_end_inds, int num_segments);
 
 @pointer_adjust
 def interpolate_arrays_wrap(t_arr, interp_array, ninterps, length, B, upper_diag, diag, lower_diag):
@@ -132,8 +132,8 @@ def find_segments_fd(segment_out, start_inds_seg, end_inds_seg, mode_start_inds,
 def get_waveform_generic_fd_wrap(waveform,
              interp_array,
               m_arr_in, k_arr_in, n_arr_in, num_teuk_modes,
-              delta_t, old_time_arr, init_length, data_length, interval_inds,
-              frequencies, mode_start_inds, mode_lengths, max_length):
+              delta_t, old_time_arr, init_length, data_length,
+              frequencies, mode_start_inds, mode_end_inds, num_segments):
 
     cdef size_t waveform_in = waveform
     cdef size_t interp_array_in = interp_array
@@ -141,13 +141,12 @@ def get_waveform_generic_fd_wrap(waveform,
     cdef size_t k_arr_in_in = k_arr_in
     cdef size_t n_arr_in_in = n_arr_in
     cdef size_t old_time_arr_in = old_time_arr
-    cdef size_t interval_inds_in = interval_inds
     cdef size_t frequencies_in = frequencies
     cdef size_t mode_start_inds_in = mode_start_inds
-    cdef size_t mode_lengths_in = mode_lengths
+    cdef size_t mode_end_inds_in = mode_end_inds
 
     get_waveform_generic_fd(<cmplx *>waveform_in,
               <double *>interp_array_in,
               <int *>m_arr_in_in, <int *>k_arr_in_in, <int *>n_arr_in_in, num_teuk_modes,
-              delta_t, <double *>old_time_arr_in, init_length, data_length, <int *>interval_inds_in,
-              <double *>frequencies_in, <int *>mode_start_inds_in, <int *>mode_lengths_in, max_length)
+              delta_t, <double *>old_time_arr_in, init_length, data_length,
+              <double *>frequencies_in, <int *>mode_start_inds_in, <int *>mode_end_inds_in, num_segments)

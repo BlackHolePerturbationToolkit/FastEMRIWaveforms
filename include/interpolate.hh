@@ -40,7 +40,7 @@ void find_segments_fd_wrap(int *segment_out, int *start_inds_seg, int *end_inds_
 void get_waveform_generic_fd(cmplx *waveform,
              double *interp_array,
               int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
-              double delta_t, double *old_time_arr, int init_length, int data_length, int *interval_inds,
-              double *frequencies, int *mode_start_inds, int *mode_lengths, int max_length);
+              double delta_t, double *old_time_arr, int init_length, int data_length,
+              double *frequencies, int *mode_start_inds, int *mode_end_inds, int num_segments);
 
 #endif // __INTERP_H__
