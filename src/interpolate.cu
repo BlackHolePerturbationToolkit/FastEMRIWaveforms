@@ -1806,7 +1806,8 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
              double *interp_array,
               int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
               double delta_t, double *old_time_arr, int init_length, int data_length,
-              double *frequencies, int *seg_start_inds, int *seg_end_inds, int num_segments
+              double *frequencies, int *seg_start_inds, int *seg_end_inds, int num_segments,
+              cmplx *Ylm_all, int zero_index, bool include_minus_m, bool separate_modes
               )
 {
 
@@ -1872,6 +1873,8 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
         int m = m_arr_in[mode_i];
         int k = k_arr_in[mode_i];
         int n = n_arr_in[mode_i];
+        cmplx Ylm_plus_m = Ylm_all[mode_i];
+        cmplx Ylm_minus_m = Ylm_all[num_teuk_modes + mode_i];
 
         #ifdef __CUDACC__
 
@@ -1977,6 +1980,17 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                 int ind_f = i;
                 double f = frequencies[ind_f];
 
+                int minus_m_freq_index;
+                int diff = abs(zero_index - i);
+                if (i < zero_index)
+                {
+                    minus_m_freq_index = zero_index + diff;
+                }
+                else
+                {
+                    minus_m_freq_index = zero_index - diff;
+                }//= int((-f - start_freq) / df) + 1;
+
                 //double f_y2 = m * f_phi_y[ind_i + 1] + n * f_r_y[ind_i + 1];
                 double f_y = m * f_phi_y + n * f_r_y;
                 double f_y2 = m * f_phi_y2 + n * f_r_y2;
@@ -1999,7 +2013,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                 //if ((f_y - f > 0.0)) printf("roots: %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %d %d %d\n", root1, root2, root3, f_c3, f_c2, f_c1, f_y - f, f_y, f_y2, f, start_t, end_t, ind_i, m, n);
                 //if ((f_y - f > 0.0)) printf("roots: %d %d %d %d %.12e %.12e %.12e %d %d\n", ind_i, m, n, (mode_i * max_length + i) * 2 + which, f,f_y, f_y2, mode_start_ind_here, i);
 
-                if ((mode_i == 0) && (seg_i == 6)) printf("roots: %d %d %d %.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", i, m, n, old_time_start, old_time_end, f_c3, f_c2, f_c1, f_y, f, f_y2, root1.real(), root1.imag(), root2.real(), root2.imag(), root3.real(), root3.imag());
+                if ((mode_i == 0) && (seg_i == 80) && (i == seg_start_ind_here + 10)) printf("roots: i: %d seg_i: %d m: %d n: %d root1: %.12e\n t_s= %.12e\nt_f= %.12e \nf= %.12e \nf_phi_y= %.12e \nf_r_y= %.12e \nf_phi_c1= %.12e \nf_r_c1= %.12e \nf_phi_c2= %.12e \nf_r_c2= %.12e \nf_phi_c3= %.12e \nf_r_c3= %.12e\n", i, seg_i, m, n, roots[0], old_time_start, old_time_end, f, f_phi_y, f_r_y, f_phi_c1, f_r_c1, f_phi_c2, f_r_c2, f_phi_c3, f_r_c3);
                 //if ((mode_i == 0) && (seg_i == 6)) printf("roots: %d %d %d %.12e %.12e %.12e\n", i, m, n, f_phi_y, f_r_y, f_y);
 
                 //if ((i < 10) && (mode_i < 3)) printf("root check: %d %d %.18e %.18e %.18e %.18e %.18e \n", mode_i, i, root1, root2, root3, start_t, end_t);
@@ -2013,12 +2027,12 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                 {
                     // TODO: check imaginary part 
                     root_here = roots[root_i];
-                    if (f_y - f < 0.0) root_here *= -1;
+                    // if (f_y - f < 0.0) root_here *= -1;
                     t = old_time_start + root_here;
                     
                     if ((t < old_time_end) && (t >= old_time_start))
                     {
-                        x = t - old_time_start;
+                        x = root_here;
                         x2 = x*x;
                         x3 = x*x2;
                     
@@ -2039,32 +2053,56 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                         double fdot_theta_i = 0.0;  // ft_c1 + 2 * ft_c2 * x  + 3 * ft_c3 * x2;
                         double fdot_r_i = f_r_c1 + 2 * f_r_c2 * x  + 3 * f_r_c3 * x2;
 
-                        double fddot_phi_i = 2 * f_phi_c2 * x  + 6 * f_phi_c3 * x;
+                        double fddot_phi_i = 2 * f_phi_c2 + 6 * f_phi_c3 * x;
                         //double Phi_theta_i = pt_y + pt_c1 * x + pt_c2 * x2 + pt_c3 * x3;
                         double fddot_theta_i = 0.0;  // 2 * ft_c2 * x  + 6 * ft_c3 * x;
-                        double fddot_r_i = 2 * f_r_c2 * x  + 6 * f_r_c3 * x;
+                        double fddot_r_i = 2 * f_r_c2 + 6 * f_r_c3 * x;
 
                         double phase_term = m * Phi_phi_i + k * Phi_theta_i + n * Phi_r_i;
                         double fdot = m * fdot_phi_i + k * fdot_theta_i + n * fdot_r_i;
                         double fddot = m * fddot_phi_i + k * fddot_theta_i + n * fddot_r_i;
 
                         cmplx R_amp(R_mode_re, R_mode_im);
-                        cmplx Ylm(1.0, 0.0);
-                        cmplx R_tmp = get_mode_value_fd(t, f, fdot, fddot, R_amp, phase_term, Ylm);
+                        // if (i == 1653451) printf("%d %d %d %.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", i, m, n, t, f, fdot, fddot, R_amp.real(), R_amp.imag(), phase_term, fddot_phi_i, fddot_r_i);
+                        if (i == 1474705) printf("%d %d %d %.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", i, m, n, t, f, fdot, fddot, R_amp.real(), R_amp.imag(), phase_term);
+                    
+                        cmplx R_tmp = get_mode_value_fd(t, f, fdot, fddot, R_amp, phase_term, Ylm_plus_m);
 
+                        // TODO: improve for generic
                         cmplx L_tmp(0.0, 0.0);
+                        if ((m != 0.0) && (include_minus_m))
+                        {
+                            L_tmp = get_mode_value_fd(t, -f, -fdot, -fddot, gcmplx::conj(R_amp), -phase_term, Ylm_minus_m);
+                        }
+                        
+                        
                         //if (m + k + n != 0)
                         //{
                         //cmplx L_tmp = get_mode_value_generic(L_amp, Phi_phi_i, Phi_r_i, Phi_theta_i, -m, -k, -n);
                         //}
-                        cmplx wave_mode_out = R_tmp + L_tmp;
+                        //cmplx wave_mode_out = R_tmp + L_tmp;
+                        if (!separate_modes)
+                        {
+                            // fill waveform
+                            #ifdef __CUDACC__
+                            atomicAddcmplx(&waveform[i], R_tmp);
+                            #else
+                            waveform[i] += R_tmp;
+                            #endif
 
-                        // fill waveform
-                        #ifdef __CUDACC__
-                        atomicAddcmplx(&waveform[i], wave_mode_out);
-                        #else
-                        waveform[i] += wave_mode_out;
-                        #endif
+                            if ((m != 0.0) && (include_minus_m))
+                            {
+                                #ifdef __CUDACC__
+                                atomicAddcmplx(&waveform[minus_m_freq_index], L_tmp);
+                                #else
+                                waveform[minus_m_freq_index] += L_tmp;
+                                #endif
+                            }
+                        }
+                        else
+                        {
+                            waveform[mode_i * data_length + i] = R_tmp;
+                        }
                         //cmplx L_amp(L_mode_re, L_mode_im);
 
                         //cmplx R_tmp = get_mode_value_generic(R_amp, Phi_phi_i, Phi_r_i, Phi_theta_i, m, k, n);
@@ -2081,18 +2119,11 @@ void get_waveform_generic_fd(cmplx *waveform,
              double *interp_array,
               int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
               double delta_t, double *old_time_arr, int init_length, int data_length,
-              double *frequencies, int *seg_start_inds, int *seg_end_inds, int num_segments)
+              double *frequencies, int *seg_start_inds, int *seg_end_inds, int num_segments,
+              cmplx *Ylm_all, int zero_index, bool include_minus_m, bool separate_modes)
 {
 
      //int NUM_THREADS = 256;
-
-     if (init_length > MAX_SPLINE_POINTS)
-     {
-        char str[1000];
-        sprintf(str, "Number of initial points is more than allowed for interpolated summation. (%d > %d)", init_length, MAX_SPLINE_POINTS);
-        throw_python_error(str, 22);
-     }
-
      #ifdef __CUDACC__
 
       //int num_blocks = num_segments;
@@ -2104,7 +2135,8 @@ void get_waveform_generic_fd(cmplx *waveform,
              interp_array,
               m_arr_in, k_arr_in, n_arr_in, num_teuk_modes,
               delta_t, old_time_arr, init_length, data_length,
-              frequencies, seg_start_inds, seg_end_inds, num_segments);
+              frequencies, seg_start_inds, seg_end_inds, num_segments,
+              Ylm_all, zero_index, include_minus_m, separate_modes);
       cudaDeviceSynchronize();
       gpuErrchk(cudaGetLastError());
       
@@ -2115,7 +2147,8 @@ void get_waveform_generic_fd(cmplx *waveform,
              interp_array,
               m_arr_in, k_arr_in, n_arr_in, num_teuk_modes,
               delta_t, old_time_arr, init_length, data_length,
-              frequencies, seg_start_inds, seg_end_inds, num_segments);
+              frequencies, seg_start_inds, seg_end_inds, num_segments,
+              Ylm_all, zero_index, include_minus_m, separate_modes);
          
         #endif
 

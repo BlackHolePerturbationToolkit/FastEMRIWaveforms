@@ -192,6 +192,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         p,
         e,
         *args,
+        include_minus_m=True,
+        separate_modes=False,
         dt=10.0,
         **kwargs,
     ):
@@ -267,10 +269,10 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         tmp_freqs_base_sorted_segs = self.xp.sort(self.xp.asarray([seg_freqs[:, :-1], seg_freqs[:, 1:]]).transpose(1, 2, 0), axis=-1)
         
         new_freqs_per_mode = m_arr[:, None] * new_freqs[0][None, :] + n_arr[:, None] * new_freqs[1][None, :]
-        
+
         # fix for turnover
-        t_of_max_freq = t_new[self.xp.abs(new_freqs_per_mode).argmax(axis=-1)]
-        t_of_min_freq = t_new[self.xp.abs(new_freqs_per_mode).argmin(axis=-1)]
+        t_of_max_freq = t_new[new_freqs_per_mode.argmax(axis=-1)]
+        t_of_min_freq = t_new[new_freqs_per_mode.argmin(axis=-1)]
         check_turnover_list = [
             self.xp.where((t_of_max_freq > 0.0) & (t_of_max_freq < t[-1]))[0],
             self.xp.where((t_of_min_freq > 0.0) & (t_of_min_freq < t[-1]))[0]
@@ -286,32 +288,40 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
                 self.xp.searchsorted(t, t_of_min_freq[check_turnover_list[1]]) - 1
             )
 
-        fix_turnover_seg_ind = self.xp.concatenate(fix_turnover_seg_ind_list)
-        check_turnover = self.xp.concatenate(check_turnover_list)
+        try:
+            fix_turnover_seg_ind = self.xp.concatenate(fix_turnover_seg_ind_list)
+            check_turnover = self.xp.concatenate(check_turnover_list)
 
-        a = (m_arr[check_turnover] * (freqs_spline.c3[(0, fix_turnover_seg_ind)])  + n_arr[check_turnover] * freqs_spline.c3[(1, fix_turnover_seg_ind)])
-        b = (m_arr[check_turnover] * (freqs_spline.c2[(0, fix_turnover_seg_ind)])  + n_arr[check_turnover] * freqs_spline.c2[(1, fix_turnover_seg_ind)])
-        c = (m_arr[check_turnover] * (freqs_spline.c1[(0, fix_turnover_seg_ind)])  + n_arr[check_turnover] * freqs_spline.c1[(1, fix_turnover_seg_ind)])
-        d = (m_arr[check_turnover] * (freqs_spline.y[(0, fix_turnover_seg_ind)])  + n_arr[check_turnover] * freqs_spline.y[(1, fix_turnover_seg_ind)])
-        
-        roots_upper_1 = (-(2 * b) + self.xp.sqrt((2 * b) ** 2 - 4 * (3 * a) * c)) / (2 * (3 * a))
-        roots_upper_2 = (-(2 * b) - self.xp.sqrt((2 * b) ** 2 - 4 * (3 * a) * c)) / (2 * (3 * a))
-        
-        t_new_roots_upper_1 = t[fix_turnover_seg_ind] + roots_upper_1
-        t_new_roots_upper_2 = t[fix_turnover_seg_ind] + roots_upper_2
-        keep_root_1 = (t[fix_turnover_seg_ind] < t_new_roots_upper_1) & (t[fix_turnover_seg_ind + 1] > t_new_roots_upper_1)
-        keep_root_2 = (t[fix_turnover_seg_ind] < t_new_roots_upper_2) & (t[fix_turnover_seg_ind + 1] > t_new_roots_upper_2)
+            a = (m_arr[check_turnover] * (freqs_spline.c3[(0, fix_turnover_seg_ind)])  + n_arr[check_turnover] * freqs_spline.c3[(1, fix_turnover_seg_ind)])
+            b = (m_arr[check_turnover] * (freqs_spline.c2[(0, fix_turnover_seg_ind)])  + n_arr[check_turnover] * freqs_spline.c2[(1, fix_turnover_seg_ind)])
+            c = (m_arr[check_turnover] * (freqs_spline.c1[(0, fix_turnover_seg_ind)])  + n_arr[check_turnover] * freqs_spline.c1[(1, fix_turnover_seg_ind)])
+            d = (m_arr[check_turnover] * (freqs_spline.y[(0, fix_turnover_seg_ind)])  + n_arr[check_turnover] * freqs_spline.y[(1, fix_turnover_seg_ind)])
+            
+            inner_part = (2 * b) ** 2 - 4 * (3 * a) * c
+            if self.xp.any(inner_part < -1e10):
+                breakpoint()
+            inner_part[(inner_part < 0.0)] = 0.0
 
-        if self.xp.any(keep_root_1 & keep_root_2) or (fix_turnover_seg_ind.shape[0] > 0 and not self.xp.any(keep_root_1 | keep_root_2)):
-            breakpoint()
-        t_new_fix = t_new_roots_upper_1 * keep_root_1 + t_new_roots_upper_2 * keep_root_2
-        beginning_of_seg = t[fix_turnover_seg_ind]
-        x_fix = t_new_fix - beginning_of_seg
-        max_or_min_f = a * x_fix ** 3 + b * x_fix ** 2 + c * x_fix + d
-        tmp_segs_sorted_turnover = np.sort(np.concatenate([tmp_freqs_base_sorted_segs[check_turnover, fix_turnover_seg_ind], np.array([max_or_min_f])], axis=-1), axis=-1)
+            roots_upper_1 = (-(2 * b) + self.xp.sqrt(inner_part)) / (2 * (3 * a))
+            roots_upper_2 = (-(2 * b) - self.xp.sqrt(inner_part)) / (2 * (3 * a))
+            
+            t_new_roots_upper_1 = t[fix_turnover_seg_ind] + roots_upper_1
+            t_new_roots_upper_2 = t[fix_turnover_seg_ind] + roots_upper_2
+            keep_root_1 = (t[fix_turnover_seg_ind] < t_new_roots_upper_1) & (t[fix_turnover_seg_ind + 1] > t_new_roots_upper_1)
+            keep_root_2 = (t[fix_turnover_seg_ind] < t_new_roots_upper_2) & (t[fix_turnover_seg_ind + 1] > t_new_roots_upper_2)
 
-        tmp_freqs_base_sorted_segs[check_turnover, fix_turnover_seg_ind] = tmp_segs_sorted_turnover[:, np.array([0, 2])]
-        
+            if self.xp.any(keep_root_1 & keep_root_2) or (fix_turnover_seg_ind.shape[0] > 0 and not self.xp.any(keep_root_1 | keep_root_2)):
+                breakpoint()
+            t_new_fix = t_new_roots_upper_1 * keep_root_1 + t_new_roots_upper_2 * keep_root_2
+            beginning_of_seg = t[fix_turnover_seg_ind]
+            x_fix = t_new_fix - beginning_of_seg
+            max_or_min_f = a * x_fix ** 3 + b * x_fix ** 2 + c * x_fix + d
+            tmp_segs_sorted_turnover = np.sort(np.concatenate([tmp_freqs_base_sorted_segs[check_turnover, fix_turnover_seg_ind], np.array([max_or_min_f])], axis=-1), axis=-1)
+
+            tmp_freqs_base_sorted_segs[check_turnover, fix_turnover_seg_ind] = tmp_segs_sorted_turnover[:, np.array([0, 2])]
+            
+        except ValueError:
+            pass
         #import matplotlib.pyplot as plt
         #plt.plot(new_freqs_per_mode[0])
         #plt.savefig("check0.png")
@@ -335,8 +345,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         freq_check = self.frequency[inds_fin]
 
-        run_seg = np.diff(inds_fin, axis=-1) < 0
-
+        run_seg = (np.diff(inds_fin, axis=-1) < 0)[:, :, 0]
         while self.xp.any(((tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1]) | (tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])) & (run_seg)):
             breakpoint()
             fix_start = (((tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])) & (run_seg))
@@ -349,7 +358,12 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         k_arr = self.xp.zeros_like(m_arr)
         data_length = len(self.frequency)
 
+        breakpoint()
         spline_in = spline.interp_array.reshape(spline.reshape_shape).transpose((0, 2, 1)).flatten().copy()
+        zero_index = self.xp.where(self.frequency == 0.0)[0][0]
+
+        if separate_modes:
+            include_minus_m = False
 
         self.get_waveform_fd(
             self.waveform,
@@ -365,23 +379,28 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             self.frequency, 
             start_inds.flatten().copy().astype(self.xp.int32), 
             end_inds.flatten().copy().astype(self.xp.int32), 
-            init_len - 1
+            init_len - 1,
+            ylms,
+            zero_index,
+            include_minus_m,
+            separate_modes
         )
 
-        x = t - 2.437862320466e+03
-        a = 3.493477857013e-26
-        b = -3.663420619355e-18
-        c = -9.584604027841e-11
-        d = -1.979868908665e-03
+           
+        # x = t - 8.754992204872e+06
+        # a = 1.120059270283e-21
+        # b = 7.524898481384e-16
+        # c = 4.191674114826e-101
+        # d = -2.839495309885e-03
 
-        y_vals = a * x ** 3+ b * x ** 2 + c * x + d
-        import matplotlib.pyplot as plt
-        plt.plot(t, seg_freqs[0])
-        plt.plot(t, y_vals)
-        plt.axhline(-1.979867919153e-03)
-        plt.axvline(2.437862320466e+03 + 10.323977806829483)
-        plt.show()
-        breakpoint()
+        # y_vals = a * x ** 3+ b * x ** 2 + c * x + d
+        # import matplotlib.pyplot as plt
+        # plt.plot(t, seg_freqs[0])
+        # plt.plot(t, y_vals)
+        # plt.axhline(-2.813821469256e-03)
+        # plt.axvline(8.754992204872e+06 + 5.530640798130e+04)
+        # plt.show()
+        # breakpoint()
         return
         # TODO: check this missed_turn_overs
         """

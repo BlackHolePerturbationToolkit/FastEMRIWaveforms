@@ -55,8 +55,8 @@ l = 2  # 2
 m = 1  # 1
 n = -4  # -4
 
-modes = [(2, 2, -10)]
-eps = 1e-5
+modes = [(2, 2, 0), (2, 2, -10)]
+eps = 1e-2
 
 sum_kwargs = dict(pad_output=True, output_type="fd")
 
@@ -77,7 +77,7 @@ fd_h = wave(
     # eps=eps,
     include_minus_m=True,
 )  # ,eps=1e-2)# , mode_selection=[(l,m,n)],include_minus_m=True) #
-breakpoint()
+
 #%% TIME DOMAIN
 wave_22 = few_base(
     M,
