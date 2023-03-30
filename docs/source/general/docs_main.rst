@@ -34,6 +34,16 @@ Package TODOs
 Change Log
 ===========
 
+- 1.4.10: M1 installation and small bug fixes. 
+- 1.4.9: Fixed omp issue. 
+- 1.4.8: Throwing python errors from C++. Separatrix bug fix. 
+- 1.4.7: Updates to readme and small fixes.
+- 1.4.6: A quick bug fix for GPU device issues.
+- 1.4.5: Separatrix c function generalized for Schwarzschild, generic Kerr, and circular, equatorial Kerr.
+- 1.4.4: Bug fix at zero eccentricity. Frequencies back in ODE. Fix for git pull issue with ode_base files.
+- 1.4.3: Bug fixes for additional arguments in SchEcc waveform base.
+- 1.4.2: Bug fixes for additional arguments in AAK waveform.
+- 1.4.1: Bug fixes.
 - 1.4.0: Ability to access OMP threads. Set CUDA device. Change fundamental frequency files to "utility". Initial error handler. Trajectory overhaul. get_at_t function updates.
 - 1.3.7: Fixed get_at_t functions. Added new GPU architecture. Removed oldest architecture. Fixed issue #30 & #32.
 - 1.3.6: Fixed Y0 < 0.0 in new AAK.

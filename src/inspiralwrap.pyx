@@ -28,7 +28,7 @@ cdef extern from "../include/Inspiral.hh":
                           int  DENSE_STEPPING,
                           bool use_rk4,
                           int init_len,
-                          double* additional_args)
+                          double* additional_args) except+
 
 cdef extern from "../include/ode.hh":
     void prepare_derivatives()

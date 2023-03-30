@@ -32,22 +32,24 @@ with open("README.rst", "w") as fp:
 
 import sys, os
 
-sys.path.insert(0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveforms/"))
+dir_path = os.path.dirname(os.path.realpath(__file__)) + "/../../"
+
+sys.path.insert(0, os.path.abspath(dir_path))
 sys.path.insert(
-    0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveforms/few/")
+    0, os.path.abspath(dir_path + "few/")
 )
 sys.path.insert(
-    0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveforms/few/amplitude/")
+    0, os.path.abspath( dir_path +  "few/amplitude/")
 )
 sys.path.insert(
-    0, os.path.abspath("/Users/michaelkatz/Research/FastEMRIWaveforms/few/trajectory/")
+    0, os.path.abspath(dir_path +  "few/trajectory/")
 )
 
 import shutil
 
 shutil.copy(
-    "/Users/michaelkatz/Research/FastEMRIWaveforms/examples/FastEMRIWaveforms_tutorial.ipynb",
-    "/Users/michaelkatz/Research/FastEMRIWaveforms/docs/source/tutorial/FastEMRIWaveforms_tutorial.ipynb",
+    dir_path +  "examples/FastEMRIWaveforms_tutorial.ipynb",
+    dir_path +  "docs/source/tutorial/FastEMRIWaveforms_tutorial.ipynb",
 )
 
 

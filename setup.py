@@ -294,6 +294,7 @@ if run_cuda_install:
         gpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
         gpu_extension["extra_compile_args"]["nvcc"].remove("-D__USE_OMP__")
         gpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
+        gpu_extension["extra_compile_args"]["nvcc"].remove("-Xcompiler")
 
     if args.ccbin is not None:
         gpu_extension["extra_compile_args"]["nvcc"].insert(
@@ -309,7 +310,7 @@ if run_cuda_install:
     )
 
     gpuAAK_ext = Extension(
-        "pygpuAAK", sources=["src/gpuAAK.cu", "src/gpuAAKWrap.pyx"], **gpu_extension
+        "pygpuAAK", sources=["src/Utility.cc", "src/gpuAAK.cu", "src/gpuAAKWrap.pyx"], **gpu_extension
     )
 
 # build all cpu modules
@@ -402,7 +403,7 @@ interp_cpu_ext = Extension(
 )
 
 AAK_cpu_ext = Extension(
-    "pycpuAAK", sources=["src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"], **cpu_extension
+    "pycpuAAK", sources=["src/Utility.cc", "src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"], **cpu_extension
 )
 
 
