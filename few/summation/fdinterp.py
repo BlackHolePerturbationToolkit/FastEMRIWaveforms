@@ -310,15 +310,18 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             keep_root_1 = (t[fix_turnover_seg_ind] < t_new_roots_upper_1) & (t[fix_turnover_seg_ind + 1] > t_new_roots_upper_1)
             keep_root_2 = (t[fix_turnover_seg_ind] < t_new_roots_upper_2) & (t[fix_turnover_seg_ind + 1] > t_new_roots_upper_2)
 
-            if self.xp.any(keep_root_1 & keep_root_2) or (fix_turnover_seg_ind.shape[0] > 0 and not self.xp.any(keep_root_1 | keep_root_2)):
+            if self.xp.any(keep_root_1 & keep_root_2):
                 breakpoint()
-            t_new_fix = t_new_roots_upper_1 * keep_root_1 + t_new_roots_upper_2 * keep_root_2
-            beginning_of_seg = t[fix_turnover_seg_ind]
-            x_fix = t_new_fix - beginning_of_seg
-            max_or_min_f = a * x_fix ** 3 + b * x_fix ** 2 + c * x_fix + d
-            tmp_segs_sorted_turnover = np.sort(np.concatenate([tmp_freqs_base_sorted_segs[check_turnover, fix_turnover_seg_ind], np.array([max_or_min_f])], axis=-1), axis=-1)
+            elif not self.xp.any(keep_root_1 | keep_root_2):
+                pass
+            else:
+                t_new_fix = t_new_roots_upper_1 * keep_root_1 + t_new_roots_upper_2 * keep_root_2
+                beginning_of_seg = t[fix_turnover_seg_ind]
+                x_fix = t_new_fix - beginning_of_seg
+                max_or_min_f = a * x_fix ** 3 + b * x_fix ** 2 + c * x_fix + d
+                tmp_segs_sorted_turnover = np.sort(np.concatenate([tmp_freqs_base_sorted_segs[check_turnover, fix_turnover_seg_ind], np.array([max_or_min_f])], axis=-1), axis=-1)
 
-            tmp_freqs_base_sorted_segs[check_turnover, fix_turnover_seg_ind] = tmp_segs_sorted_turnover[:, np.array([0, 2])]
+                tmp_freqs_base_sorted_segs[check_turnover, fix_turnover_seg_ind] = tmp_segs_sorted_turnover[:, np.array([0, 2])]
             
         except ValueError:
             pass
@@ -343,6 +346,11 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         
         inds_fin = np.array([start_inds, end_inds]).transpose((1, 2, 0))
 
+        # just for checking
+        # inside the code it does not evaluate outside the bounds
+        inds_fin[inds_fin > len(self.frequency) - 1] = len(self.frequency) - 1
+        inds_fin[inds_fin < 0] = 0
+
         freq_check = self.frequency[inds_fin]
 
         run_seg = (np.diff(inds_fin, axis=-1) < 0)[:, :, 0]
@@ -358,7 +366,6 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         k_arr = self.xp.zeros_like(m_arr)
         data_length = len(self.frequency)
 
-        breakpoint()
         spline_in = spline.interp_array.reshape(spline.reshape_shape).transpose((0, 2, 1)).flatten().copy()
         zero_index = self.xp.where(self.frequency == 0.0)[0][0]
 
@@ -385,7 +392,6 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             include_minus_m,
             separate_modes
         )
-
            
         # x = t - 8.754992204872e+06
         # a = 1.120059270283e-21

@@ -55,8 +55,8 @@ l = 2  # 2
 m = 1  # 1
 n = -4  # -4
 
-modes = [(2, 2, 0), (2, 2, -10)]
-eps = 1e-2
+modes = [(2, 2, 2), (2, 2, 0)]
+eps = 1e-3
 
 sum_kwargs = dict(pad_output=True, output_type="fd")
 
@@ -64,69 +64,92 @@ wave = FastSchwarzschildEccentricFlux(
     sum_kwargs=sum_kwargs, use_gpu=use_gpu, num_threads=4
 )
 
-fd_h = wave(
-    M,
-    mu,
-    p0,
-    e0,
-    theta,
-    phi,
-    T=T,
-    dt=dt,
-    mode_selection=modes,
-    # eps=eps,
-    include_minus_m=True,
-)  # ,eps=1e-2)# , mode_selection=[(l,m,n)],include_minus_m=True) #
+num = 50
+M_arr = np.random.uniform(1e5, 1e6, num)
+mu_arr = np.random.uniform(1e1, 5e1, num)
+p0_arr = np.random.uniform(10.0, 16.0, num)
+e0_arr = np.random.uniform(0.05, 0.7, num)
+theta_arr = np.random.uniform(0.0, np.pi, num)
+phi_arr = np.random.uniform(0.0, 2 * np.pi, num)
 
-#%% TIME DOMAIN
-wave_22 = few_base(
-    M,
-    mu,
-    p0,
-    e0,
-    theta,
-    phi,
-    T=T,
-    dt=dt,
-    # eps=eps,
-    mode_selection=modes,
-    include_minus_m=True,
-)  # ,eps=1e-2)# , batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #
-freq_fft = np.fft.fftshift(np.fft.fftfreq(len(wave_22), dt))
-fft_wave = np.roll(
-    np.flip(np.fft.fftshift(np.fft.fft(wave_22)) * dt), 0
-)  # * signal.tukey(len(wave_22))
-
-rect_fft = np.fft.fft(np.ones_like(wave_22))  # * signal.tukey(len(wave_22))
-
-f = np.arange(-1 / (2 * dt), +1 / (2 * dt), 1 / (len(fd_h) * dt))
-
-# plt.plot(f, fd_h.real)
-# plt.show()
-# breakpoint()
+all_mm = []
+for i in range(num):
+    M = M_arr[i]
+    mu = mu_arr[i]
+    p0 = p0_arr[i]
+    e0 = e0_arr[i]
+    theta = theta_arr[i]
+    phi = phi_arr[i]
+    
 
 
-fd_h_correct = fd_h  # -np.roll(
+    fd_h = wave(
+        M,
+        mu,
+        p0,
+        e0,
+        theta,
+        phi,
+        T=T,
+        dt=dt,
+        # mode_selection=modes,
+        eps=eps,
+        include_minus_m=True,
+    )  # ,eps=1e-2)# , mode_selection=[(l,m,n)],include_minus_m=True) #
 
-# np.flip(np.real(fd_h)) + 1j * np.flip(np.imag(fd_h)), 1
-# )  # np.sin(dt*len(wave_22)*freq_fft/4/np.pi)/np.sin(dt*freq_fft/4/np.pi)#*np.exp(-1j* (len(wave_22)-1)/2 )
-index_nonzero = [np.abs(fd_h_correct) != complex(0.0)][0]
+    #%% TIME DOMAIN
+    wave_22 = few_base(
+        M,
+        mu,
+        p0,
+        e0,
+        theta,
+        phi,
+        T=T,
+        dt=dt,
+        eps=eps,
+        # mode_selection=modes,
+        include_minus_m=True,
+    )  # ,eps=1e-2)# , batch_size=int(1e2),mode_selection=[(l,m,n)])#,include_minus_m=True) #
+    freq_fft = np.fft.fftshift(np.fft.fftfreq(len(wave_22), dt))
+    fft_wave = np.roll(
+        np.flip(np.fft.fftshift(np.fft.fft(wave_22)) * dt), 0
+    )  # * signal.tukey(len(wave_22))
 
-# index_nonzero = np.arange(len(fd_h_correct))
+    rect_fft = np.fft.fft(np.ones_like(wave_22))  # * signal.tukey(len(wave_22))
 
-# check nan
+    f = np.arange(-1 / (2 * dt), +1 / (2 * dt), 1 / (len(fd_h) * dt))
 
-den = np.sqrt(
-    np.real(np.dot(np.conj(fft_wave[index_nonzero]), fft_wave[index_nonzero]))
-    * np.real(np.dot(np.conj(fd_h_correct[index_nonzero]), fd_h_correct[index_nonzero]))
-)
-print("den", den, "index", np.sum(index_nonzero))
-print(
-    "full mismatch = ",
-    1
-    - np.real(np.dot(np.conj(fd_h_correct[index_nonzero]), -fft_wave[index_nonzero]))
-    / den,
-)
+    # plt.plot(f, fd_h.real)
+    # plt.show()
+    # breakpoint()
+
+
+    fd_h_correct = fd_h  # -np.roll(
+
+    # np.flip(np.real(fd_h)) + 1j * np.flip(np.imag(fd_h)), 1
+    # )  # np.sin(dt*len(wave_22)*freq_fft/4/np.pi)/np.sin(dt*freq_fft/4/np.pi)#*np.exp(-1j* (len(wave_22)-1)/2 )
+    index_nonzero = [np.abs(fd_h_correct) != complex(0.0)][0]
+
+    # index_nonzero = np.arange(len(fd_h_correct))
+
+    # check nan
+
+    den = np.sqrt(
+        np.real(np.dot(np.conj(fft_wave[index_nonzero]), fft_wave[index_nonzero]))
+        * np.real(np.dot(np.conj(fd_h_correct[index_nonzero]), fd_h_correct[index_nonzero]))
+    )
+    # print("den", den, "index", np.sum(index_nonzero))
+    mismatch = (1
+        - np.real(np.dot(np.conj(fd_h_correct[index_nonzero]), -fft_wave[index_nonzero]))
+        / den)
+    print(
+        M, mu, p0, e0, theta, phi, "full mismatch = ", mismatch,
+    )
+    all_mm.append([M, mu, p0, e0, theta, phi, mismatch])
+
+np.save("mm_check", np.asarray(all_mm))
+breakpoint()
 
 den = np.sqrt(
     np.real(np.dot(np.conj(fft_wave[index_nonzero]), fft_wave[index_nonzero]))

@@ -1863,9 +1863,9 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
 
     int start2 = 0;
     int diff2 = 1;
-    #ifdef __USE_OMP__
-    #pragma omp parallel for
-    #endif // __USE_OMP__
+    // #ifdef __USE_OMP__
+    // #pragma omp parallel for
+    // #endif // __USE_OMP__
     #endif
     for (int mode_i = start2; mode_i < num_teuk_modes; mode_i += diff2) 
     {
@@ -1885,9 +1885,9 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
 
         int start3 = 0;
         int diff3 = 1;
-        #ifdef __USE_OMP__
-        #pragma omp parallel for
-        #endif // __USE_OMP__
+        // #ifdef __USE_OMP__
+        // #pragma omp parallel for
+        // #endif // __USE_OMP__
         #endif
         for (int seg_i = start3; seg_i < num_segments; seg_i += diff3) 
         {
@@ -1918,41 +1918,44 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
             R_mode_im_c2 = interp_array[c2_ind];
             R_mode_im_c3 = interp_array[c3_ind];
 
-            y_ind = 0 * num_base + (2 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
-            c1_ind = 1 * num_base + (2 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
-            c2_ind = 2 * num_base + (2 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
-            c3_ind = 3 * num_base + (2 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
+            y_ind = 0 * num_base + (2 + 2 * num_teuk_modes) * init_length + seg_i;
+            c1_ind = 1 * num_base + (2 + 2 * num_teuk_modes) * init_length + seg_i;
+            c2_ind = 2 * num_base + (2 + 2 * num_teuk_modes) * init_length + seg_i;
+            c3_ind = 3 * num_base + (2 + 2 * num_teuk_modes) * init_length + seg_i;
 
             Phi_phi_y = interp_array[y_ind];
             Phi_phi_c1 = interp_array[c1_ind];
             Phi_phi_c2 = interp_array[c2_ind];
             Phi_phi_c3 = interp_array[c3_ind];
 
-            y_ind = 0 * num_base + (3 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
-            c1_ind = 1 * num_base + (3 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
-            c2_ind = 2 * num_base + (3 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
-            c3_ind = 3 * num_base + (3 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
+            y_ind = 0 * num_base + (3 + 2 * num_teuk_modes) * init_length + seg_i;
+            c1_ind = 1 * num_base + (3 + 2 * num_teuk_modes) * init_length + seg_i;
+            c2_ind = 2 * num_base + (3 + 2 * num_teuk_modes) * init_length + seg_i;
+            c3_ind = 3 * num_base + (3 + 2 * num_teuk_modes) * init_length + seg_i;
 
             Phi_r_y = interp_array[y_ind];
             Phi_r_c1 = interp_array[c1_ind];
             Phi_r_c2 = interp_array[c2_ind];
             Phi_r_c3 = interp_array[c3_ind];
 
-            y_ind = 0 * num_base + (0 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
-            c1_ind = 1 * num_base + (0 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
-            c2_ind = 2 * num_base + (0 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
-            c3_ind = 3 * num_base + (0 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
+            y_ind = 0 * num_base + (0 + 2 * num_teuk_modes) * init_length + seg_i;
+            c1_ind = 1 * num_base + (0 + 2 * num_teuk_modes) * init_length + seg_i;
+            c2_ind = 2 * num_base + (0 + 2 * num_teuk_modes) * init_length + seg_i;
+            c3_ind = 3 * num_base + (0 + 2 * num_teuk_modes) * init_length + seg_i;
 
+            //if ((m == 2) && (n == 0) && (seg_i == 80))
+            //    printf("seg_i: %d m: %d n: %d , %d %d %d %d %d \n", seg_i, m, n, y_ind, num_base, num_teuk_modes, mode_i, init_length);
+                
             f_phi_y = interp_array[y_ind];
             double f_phi_y2 = interp_array[y_ind + 1];
             f_phi_c1 = interp_array[c1_ind];
             f_phi_c2 = interp_array[c2_ind];
             f_phi_c3 = interp_array[c3_ind];
 
-            y_ind = 0 * num_base + (1 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
-            c1_ind = 1 * num_base + (1 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
-            c2_ind = 2 * num_base + (1 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
-            c3_ind = 3 * num_base + (1 + 2 * num_teuk_modes + mode_i) * init_length + seg_i;
+            y_ind = 0 * num_base + (1 + 2 * num_teuk_modes) * init_length + seg_i;
+            c1_ind = 1 * num_base + (1 + 2 * num_teuk_modes) * init_length + seg_i;
+            c2_ind = 2 * num_base + (1 + 2 * num_teuk_modes) * init_length + seg_i;
+            c3_ind = 3 * num_base + (1 + 2 * num_teuk_modes) * init_length + seg_i;
 
             f_r_y = interp_array[y_ind];
             double f_r_y2 = interp_array[y_ind + 1];
@@ -1979,6 +1982,8 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
             {
                 int ind_f = i;
                 double f = frequencies[ind_f];
+
+                if ((i > data_length - 1) || (i < 0)) continue;
 
                 int minus_m_freq_index;
                 int diff = abs(zero_index - i);
@@ -2013,7 +2018,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                 //if ((f_y - f > 0.0)) printf("roots: %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %.18e %d %d %d\n", root1, root2, root3, f_c3, f_c2, f_c1, f_y - f, f_y, f_y2, f, start_t, end_t, ind_i, m, n);
                 //if ((f_y - f > 0.0)) printf("roots: %d %d %d %d %.12e %.12e %.12e %d %d\n", ind_i, m, n, (mode_i * max_length + i) * 2 + which, f,f_y, f_y2, mode_start_ind_here, i);
 
-                if ((mode_i == 0) && (seg_i == 80) && (i == seg_start_ind_here + 10)) printf("roots: i: %d seg_i: %d m: %d n: %d root1: %.12e\n t_s= %.12e\nt_f= %.12e \nf= %.12e \nf_phi_y= %.12e \nf_r_y= %.12e \nf_phi_c1= %.12e \nf_r_c1= %.12e \nf_phi_c2= %.12e \nf_r_c2= %.12e \nf_phi_c3= %.12e \nf_r_c3= %.12e\n", i, seg_i, m, n, roots[0], old_time_start, old_time_end, f, f_phi_y, f_r_y, f_phi_c1, f_r_c1, f_phi_c2, f_r_c2, f_phi_c3, f_r_c3);
+                // if ((m == 2) && (seg_i == 80) && (i == seg_start_ind_here + 10)) printf("roots: i: %d seg_i: %d m: %d n: %d root1: %.12e\n t_s= %.12e\nt_f= %.12e \nf= %.12e \nf_phi_y= %.12e \nf_r_y= %.12e \nf_phi_c1= %.12e \nf_r_c1= %.12e \nf_phi_c2= %.12e \nf_r_c2= %.12e \nf_phi_c3= %.12e \nf_r_c3= %.12e\n", i, seg_i, m, n, roots[0], old_time_start, old_time_end, f, f_phi_y, f_r_y, f_phi_c1, f_r_c1, f_phi_c2, f_r_c2, f_phi_c3, f_r_c3);
                 //if ((mode_i == 0) && (seg_i == 6)) printf("roots: %d %d %d %.12e %.12e %.12e\n", i, m, n, f_phi_y, f_r_y, f_y);
 
                 //if ((i < 10) && (mode_i < 3)) printf("root check: %d %d %.18e %.18e %.18e %.18e %.18e \n", mode_i, i, root1, root2, root3, start_t, end_t);
@@ -2064,7 +2069,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
 
                         cmplx R_amp(R_mode_re, R_mode_im);
                         // if (i == 1653451) printf("%d %d %d %.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", i, m, n, t, f, fdot, fddot, R_amp.real(), R_amp.imag(), phase_term, fddot_phi_i, fddot_r_i);
-                        if (i == 1474705) printf("%d %d %d %.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", i, m, n, t, f, fdot, fddot, R_amp.real(), R_amp.imag(), phase_term);
+                        // if (i == 1653451) printf("%d %d %d %.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", i, m, n, t, f, fdot, fddot, R_amp.real(), R_amp.imag(), phase_term);
                     
                         cmplx R_tmp = get_mode_value_fd(t, f, fdot, fddot, R_amp, phase_term, Ylm_plus_m);
 
