@@ -13,10 +13,10 @@ import matplotlib.pyplot as plt
 from scipy import signal
 
 
-# import cupy as xp
-# xp.cuda.runtime.setDevice(5)
+import cupy as xp
+xp.cuda.runtime.setDevice(5)
 
-use_gpu = False
+use_gpu = True
 
 
 sum_kwargs = dict(pad_output=True)
@@ -74,12 +74,12 @@ phi_arr = np.random.uniform(0.0, 2 * np.pi, num)
 
 all_mm = []
 for i in range(num):
-    M = M_arr[i]
-    mu = mu_arr[i]
-    p0 = p0_arr[i]
-    e0 = e0_arr[i]
-    theta = theta_arr[i]
-    phi = phi_arr[i]
+    M = M_arr[0]
+    mu = mu_arr[0]
+    p0 = p0_arr[0]
+    e0 = e0_arr[0]
+    theta = theta_arr[0]
+    phi = phi_arr[0]
     
 
 
@@ -146,8 +146,8 @@ for i in range(num):
     print(
         M, mu, p0, e0, theta, phi, "full mismatch = ", mismatch,
     )
-    all_mm.append([M, mu, p0, e0, theta, phi, mismatch])
-
+    all_mm.append([M, mu, p0, e0, theta, phi, mismatch.get().item()])
+breakpoint()
 np.save("mm_check", np.asarray(all_mm))
 breakpoint()
 

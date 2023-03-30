@@ -1621,7 +1621,7 @@ void make_waveform_fd(cmplx *waveform,
                 }
                 // fill waveform
                 #ifdef __CUDACC__
-                atomicAddcmplx(&waveform[i], trans_plus_m);
+                atomicAddComplex(&waveform[i], trans_plus_m);
                 #else
                 waveform[i] += trans_plus_m;
                 #endif
@@ -1629,7 +1629,7 @@ void make_waveform_fd(cmplx *waveform,
                 if (m != 0.0)
                 {
                     #ifdef __CUDACC__
-                    atomicAddcmplx(&waveform[minus_m_freq_index], trans_minus_m);
+                    atomicAddComplex(&waveform[minus_m_freq_index], trans_minus_m);
                     #else
                     waveform[minus_m_freq_index] += trans_minus_m;
                     #endif
@@ -2110,7 +2110,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                         {
                             // fill waveform
                             #ifdef __CUDACC__
-                            atomicAddcmplx(&waveform[i], R_tmp);
+                            atomicAddComplex(&waveform[i], R_tmp);
                             #else
                             waveform[i] += R_tmp;
                             #endif
@@ -2118,7 +2118,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                             if ((m != 0.0) && (include_minus_m))
                             {
                                 #ifdef __CUDACC__
-                                atomicAddcmplx(&waveform[minus_m_freq_index], L_tmp);
+                                atomicAddComplex(&waveform[minus_m_freq_index], L_tmp);
                                 #else
                                 waveform[minus_m_freq_index] += L_tmp;
                                 #endif

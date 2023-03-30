@@ -319,7 +319,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
                 beginning_of_seg = t[fix_turnover_seg_ind]
                 x_fix = t_new_fix - beginning_of_seg
                 max_or_min_f = a * x_fix ** 3 + b * x_fix ** 2 + c * x_fix + d
-                tmp_segs_sorted_turnover = np.sort(np.concatenate([tmp_freqs_base_sorted_segs[check_turnover, fix_turnover_seg_ind], np.array([max_or_min_f])], axis=-1), axis=-1)
+                tmp_segs_sorted_turnover = self.xp.sort(self.xp.concatenate([tmp_freqs_base_sorted_segs[check_turnover, fix_turnover_seg_ind], self.xp.array([max_or_min_f])], axis=-1), axis=-1)
 
                 tmp_freqs_base_sorted_segs[check_turnover, fix_turnover_seg_ind] = tmp_segs_sorted_turnover[:, np.array([0, 2])]
             
@@ -344,7 +344,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         start_inds = (inds_check[:, :, 0].copy() + 1).astype(int)
         end_inds = (inds_check[:, :, 1].copy()).astype(int)
         
-        inds_fin = np.array([start_inds, end_inds]).transpose((1, 2, 0))
+        inds_fin = self.xp.array([start_inds, end_inds]).transpose((1, 2, 0))
 
         # just for checking
         # inside the code it does not evaluate outside the bounds
@@ -367,7 +367,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         data_length = len(self.frequency)
 
         spline_in = spline.interp_array.reshape(spline.reshape_shape).transpose((0, 2, 1)).flatten().copy()
-        zero_index = self.xp.where(self.frequency == 0.0)[0][0]
+        zero_index = self.xp.where(self.frequency == 0.0)[0][0].item()
 
         if separate_modes:
             include_minus_m = False
