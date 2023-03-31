@@ -2275,6 +2275,96 @@ result = -2.3807621985371124 + 1.4861684791459857*Compile_$1 + 0.053335018363702
   return result;
 }
 
+double dE_de_Equatorial(const double a, const double p, const double e){
+  return ((-(((1 - pow(e,2))*(((-1 + pow(e,2))*(6*pow(a,2)*e + p*(-2*e - (4*pow(a,6)*e*(-1 + pow(e,2)) - 8*pow(a,2)*e*pow(p,2) + 4*pow(a,4)*e*p*(2 + p))/
+                       (pow(p,3)*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 
+                             2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/pow(p,3))))))/(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p) - 
+              ((-1 + pow(e,2))*(-16*pow(a,2)*e*(-1 + pow(e,2)) + 4*e*(3 + pow(e,2) - p)*p)*
+                 (pow(a,2)*(1 + 3*pow(e,2) + p) + p*(-3 - pow(e,2) + p - 
+                      2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/
+                         pow(p,3)))))/pow(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p,2) + 
+              (2*e*(pow(a,2)*(1 + 3*pow(e,2) + p) + p*(-3 - pow(e,2) + p - 
+                      2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/
+                         pow(p,3)))))/(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p)))/p) + 
+       (2*e*(1 + ((-1 + pow(e,2))*(pow(a,2)*(1 + 3*pow(e,2) + p) + 
+                 p*(-3 - pow(e,2) + p - 2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 
+                         2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/pow(p,3)))))/(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p)))/p)/
+     (2.*sqrt(1 - ((1 - pow(e,2))*(1 + ((-1 + pow(e,2))*(pow(a,2)*(1 + 3*pow(e,2) + p) + 
+                   p*(-3 - pow(e,2) + p - 2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 
+                           2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/pow(p,3)))))/(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p)))/p)));
+}
+
+double dE_dp_Equatorial(const double a, const double p, const double e){
+  return (((1 - pow(e,2))*(1 + ((-1 + pow(e,2))*(pow(a,2)*(1 + 3*pow(e,2) + p) + 
+               p*(-3 - pow(e,2) + p - 2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 
+                       2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/pow(p,3)))))/(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p)))/pow(p,2) - 
+     ((1 - pow(e,2))*(-(((-1 + pow(e,2))*(pow(3 + pow(e,2) - p,2) - 2*(3 + pow(e,2) - p)*p)*
+               (pow(a,2)*(1 + 3*pow(e,2) + p) + p*(-3 - pow(e,2) + p - 
+                    2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/pow(p,3))
+                    )))/pow(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p,2)) + 
+          ((-1 + pow(e,2))*(-3 + pow(a,2) - pow(e,2) + p - 2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 
+                    2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/pow(p,3)) + 
+               p*(1 - ((2*pow(a,4)*(1 + pow(e,2))*p + 2*pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*p + 2*pow(a,2)*(-2 + p)*pow(p,2) + 
+                        2*pow(a,4)*(-2 + p + pow(e,2)*(2 + p)))/pow(p,3) - 
+                     (3*(pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p))))/pow(p,4))/
+                   sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/pow(p,3)))))
+            /(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p)))/p)/
+   (2.*sqrt(1 - ((1 - pow(e,2))*(1 + ((-1 + pow(e,2))*(pow(a,2)*(1 + 3*pow(e,2) + p) + 
+                 p*(-3 - pow(e,2) + p - 2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 
+                         2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/pow(p,3)))))/(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p)))/p));
+}
+
+double dL_dp_Equatorial(const double a, const double p, const double e){
+  return ((-(((1 - pow(e,2))*(((-1 + pow(e,2))*(6*pow(a,2)*e + p*(-2*e - (4*pow(a,6)*e*(-1 + pow(e,2)) - 8*pow(a,2)*e*pow(p,2) + 4*pow(a,4)*e*p*(2 + p))/
+                       (pow(p,3)*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 
+                             2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/pow(p,3))))))/(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p) - 
+              ((-1 + pow(e,2))*(-16*pow(a,2)*e*(-1 + pow(e,2)) + 4*e*(3 + pow(e,2) - p)*p)*
+                 (pow(a,2)*(1 + 3*pow(e,2) + p) + p*(-3 - pow(e,2) + p - 
+                      2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/
+                         pow(p,3)))))/pow(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p,2) + 
+              (2*e*(pow(a,2)*(1 + 3*pow(e,2) + p) + p*(-3 - pow(e,2) + p - 
+                      2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/
+                         pow(p,3)))))/(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p)))/p) + 
+       (2*e*(1 + ((-1 + pow(e,2))*(pow(a,2)*(1 + 3*pow(e,2) + p) + 
+                 p*(-3 - pow(e,2) + p - 2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 
+                         2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/pow(p,3)))))/(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p)))/p)/
+     (2.*sqrt(1 - ((1 - pow(e,2))*(1 + ((-1 + pow(e,2))*(pow(a,2)*(1 + 3*pow(e,2) + p) + 
+                   p*(-3 - pow(e,2) + p - 2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 
+                           2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/pow(p,3)))))/(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p)))/p)));
+}
+
+double dL_de_Equatorial(const double a, const double p, const double e){
+  return ((-(((1 - pow(e,2))*(((-1 + pow(e,2))*(6*pow(a,2)*e + p*(-2*e - (4*pow(a,6)*e*(-1 + pow(e,2)) - 8*pow(a,2)*e*pow(p,2) + 4*pow(a,4)*e*p*(2 + p))/
+                       (pow(p,3)*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 
+                             2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/pow(p,3))))))/(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p) - 
+              ((-1 + pow(e,2))*(-16*pow(a,2)*e*(-1 + pow(e,2)) + 4*e*(3 + pow(e,2) - p)*p)*
+                 (pow(a,2)*(1 + 3*pow(e,2) + p) + p*(-3 - pow(e,2) + p - 
+                      2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/
+                         pow(p,3)))))/pow(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p,2) + 
+              (2*e*(pow(a,2)*(1 + 3*pow(e,2) + p) + p*(-3 - pow(e,2) + p - 
+                      2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/
+                         pow(p,3)))))/(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p)))/p) + 
+       (2*e*(1 + ((-1 + pow(e,2))*(pow(a,2)*(1 + 3*pow(e,2) + p) + 
+                 p*(-3 - pow(e,2) + p - 2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 
+                         2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/pow(p,3)))))/(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p)))/p)/
+     (2.*sqrt(1 - ((1 - pow(e,2))*(1 + ((-1 + pow(e,2))*(pow(a,2)*(1 + 3*pow(e,2) + p) + 
+                   p*(-3 - pow(e,2) + p - 2*sqrt((pow(a,6)*pow(-1 + pow(e,2),2) + pow(a,2)*(-4*pow(e,2) + pow(-2 + p,2))*pow(p,2) + 
+                           2*pow(a,4)*p*(-2 + p + pow(e,2)*(2 + p)))/pow(p,3)))))/(-4*pow(a,2)*pow(-1 + pow(e,2),2) + pow(3 + pow(e,2) - p,2)*p)))/p)));
+}
+
+double H_Equatorial(const double a, const double p, const double e){
+  return dE_dp_Equatorial(a,p,e) * dL_de_Equatorial(a,p,e) - dE_de_Equatorial(a,p,e) * dL_dp_Equatorial(a,p,e);
+}
+
+double pdot_from_fluxes(const double a, const double p, const double e, const double Edot, const double Ldot){
+  return  (dL_de_Equatorial(a,p,e) * Edot - dE_de_Equatorial(a,p,e) * Ldot)/ H_Equatorial(a,p,e);
+}
+
+double edot_from_fluxes(const double a, const double p, const double e, const double Edot, const double Ldot){
+  return  (dE_dp_Equatorial(a,p,e) * Ldot - dL_dp_Equatorial(a,p,e) * Edot)/ H_Equatorial(a,p,e);
+}
+
+
 GenericKerrRadiation::GenericKerrRadiation(const double semilatus, const double ecc, const double energy,
       const double angmom, const double carter, const double spin):
       p(semilatus), e(ecc), E(energy), Lz(angmom), Q(carter), kerr_a(spin)

@@ -22,6 +22,13 @@ double dOmegaPhi_dspin(const double a, const double p, const double e, const dou
 double dOmegaR_dspin(const double a, const double p, const double e, const double rISCO, const double ps);
 double edot_Cheby_full(const double a, const double p, const double e, const double r);
 double pdot_Cheby_full(const double a, const double p, const double e, const double r);
+double dE_de_Equatorial(const double a, const double p, const double e);
+double dL_de_Equatorial(const double a, const double p, const double e);
+double dL_dp_Equatorial(const double a, const double p, const double e);
+double dE_dp_Equatorial(const double a, const double p, const double e);
+double pdot_from_fluxes(const double a, const double p, const double e, const double Edot, const double Ldot);
+double edot_from_fluxes(const double a, const double p, const double e, const double Edot, const double Ldot);
+
 
 class GenericKerrRadiation {
 public:

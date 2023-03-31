@@ -267,63 +267,45 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     Omega_phi_sep_circ = x * 1.0/ (x*a + pow(p_sep/( 1.0 + e ), 1.5) );
     r = pow(*Omega_phi/Omega_phi_sep_circ, 2.0/3.0 ) * (1.0 + e);
     
-    // if (isnan(r)){
-    //     cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
-    //     cout << "omegaphi circ " <<  Omega_phi_sep_circ << " omegaphi " <<  *Omega_phi << " omegar " <<  *Omega_r <<endl;
-    //     throw std::exception();
-    //     } 
-    
-    // add corrections after you get the variable r
-    // double delta_Omega_phi, delta_Omega_theta, delta_Omega_r;
-    // KerrEqSpinFrequenciesCorrection(&delta_Omega_phi, &delta_Omega_r, a, p, e, x);
+    if (isnan(r)){
+        cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
+        cout << "omegaphi circ " <<  Omega_phi_sep_circ << " omegaphi " <<  *Omega_phi << " omegar " <<  *Omega_r <<endl;
+        throw std::exception();
+        }
 
     // checked values against mathematica
     // {a -> 0.7, p -> 3.72159, e -> 0.189091 x-> 1.0}
     // r 1.01037 p_sep 3.62159
     // Omega_phi_sep_circ 0.166244
     // *Omega_phi 0.13021
-    // cout << "omegaphi circ " <<  Omega_phi_sep_circ << " omegaphi " <<  *Omega_phi << endl;
-    // cout  << a  << '\t' <<  p << '\t' << e << endl;
-    // cout << "r " <<  r << " plso " <<  p_sep << endl;
-    // double En,Lz,Q;
-    // KerrGeoConstantsOfMotion(&En, &Lz, &Q, a, p, e, x);
-    
-    // Class to transform to p e i evolution
-    // GenericKerrRadiation* GKR = new GenericKerrRadiation(p, e, En, Lz, Q, a);
-
-    // Edot as a function of 
+    double pdot_out, edot_out;
     double risco = get_separatrix(a, 0.0, x);
-    // double Edot = dEdt_Cheby(a, p, e, risco, p_sep);
-    // double Ldot = dLdt_Cheby(a, p, e, risco, p_sep);
-    // GKR->pei_FluxEvolution(Edot, Ldot, 0.0);
-    
-    // Intepolator check
-    int Nv = 10;
-    int ne = 10;
-    // cout  << a  << '\t' <<  p << '\t' << e <<  '\t' << x << '\t' << r << endl;
-    // cout << " Edot Cheb " <<  Edot << " PN " <<  dEdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
-    // cout << " Ldot Cheb " <<  Ldot << " PN " <<  dLdt8H_5PNe10 (a, p, e, Y, Nv, ne) << endl;
-    
-    // auto start = std::chrono::steady_clock::now();
-    // the frequency variables are pointers!
-    
-    // Flux from Viktor
-    // cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "risco=" << risco << "\t" << " plso =" <<  p_sep << endl;
-    // double pdot_out = pdot_Cheby(a, p, e, risco, p_sep);
-    // double edot_out = edot_Cheby(a, p, e, risco, p_sep);
-
-    // Flux from Viktor
     double one_minus_e2 = 1-pow(e,2);
-    double pdot_out = pdot_Cheby_full(a, p, e, r) * (64/5 * pow(p,-3) * pow(one_minus_e2,0.5));
-    double edot_out = edot_Cheby_full(a, p, e, r) * (304/15 * pow(p,-4) * pow(one_minus_e2,1.5));
 
-    // Flux from Scott
-    double u = log((p-p_sep + 4.0 - 0.05)/4.0);
-    double w = sqrt(e);
+    if (additional_args[0]==0.0){
+        // Flux from Viktor
+        pdot_out = pdot_Cheby(a, p, e, risco, p_sep);
+        edot_out = edot_Cheby(a, p, e, risco, p_sep);
+        // cout << "V " << pdot_out << " " << edot_out << endl;
+    }
     
-    // pdot_out = pdot_interp->eval(a, u, w) * (64/5 * pow(p,-3) * pow(one_minus_e2,0.5));
-    // edot_out = edot_interp->eval(a, u, w) * (304/15 * pow(p,-4) * pow(one_minus_e2,1.5));
-
+    if (additional_args[0]>0.0){
+        // From Susanna
+        pdot_out = pdot_Cheby_full(a, p, e, r) * (64/5 * pow(p,-3) * pow(one_minus_e2,0.5));
+        edot_out = edot_Cheby_full(a, p, e, r) * (304/15 * pow(p,-4) * pow(one_minus_e2,1.5));
+        // cout << "SB " << pdot_out << " " << edot_out << endl;
+    }
+    
+    if (additional_args[0]<0.0){
+        // Flux from Scott
+        double u = log((p-p_sep + 4.0 - 0.05)/4.0);
+        double w = sqrt(e);
+        pdot_out = pdot_interp->eval(a, u, w) * (64/5 * pow(p,-3) * pow(one_minus_e2,0.5));
+        edot_out = edot_interp->eval(a, u, w) * (304/15 * pow(p,-4) * pow(one_minus_e2,1.5));
+        // cout << "SH " << pdot_out << " " << edot_out << endl;
+    }
+    
+    // cout << " edot Cheb " << edot_out << " " <<edot_transf  << endl;
     // cout << "ratio pdot Cheb " <<  (pdot_interp->eval(a, u, w) * (64/5 * pow(p,-3) * pow(one_minus_e2,0.5)))/pdot_out << endl;
     // cout << "ratio edot Cheb " <<  (edot_interp->eval(a, u, w) * (304/15 * pow(p,-4) * pow(one_minus_e2,1.5)))/edot_out << endl;
 
@@ -336,17 +318,14 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     // cout << "pdot =" << pdot_out  << "\t" << "edot=" <<  edot_out << "\t" << endl;
 
     // Frequency corrections
-    *Omega_phi = *Omega_phi + additional_args[0] * dOmegaPhi_dspin(a, p, e, risco, p_sep);
-    *Omega_theta = *Omega_theta + additional_args[0] * dOmegaPhi_dspin(a, p, e, risco, p_sep);
-    *Omega_r = *Omega_r + additional_args[0] * dOmegaR_dspin(a, p, e, risco, p_sep);
+    // *Omega_phi = *Omega_phi + additional_args[0] * dOmegaPhi_dspin(a, p, e, risco, p_sep);
+    // *Omega_theta = *Omega_theta + additional_args[0] * dOmegaPhi_dspin(a, p, e, risco, p_sep);
+    // *Omega_r = *Omega_r + additional_args[0] * dOmegaR_dspin(a, p, e, risco, p_sep);
     // cout << "delta: Omega:  phi =" << dOmegaPhi_dspin(a, p, e, risco, p_sep)  << "\t" << "theta=" <<  dOmegaR_dspin(a, p, e, risco, p_sep) << endl;
 
-    // Fluxes from secondary spin
-    double pdot_dsigma = pdot_dspin_Cheby(a, p, e, risco, p_sep);
-    double edot_dsigma = edot_dspin_Cheby(a, p, e, risco, p_sep);
-    // cout << "delta pdot =" << pdot_dsigma  << "\t" << " delta edot=" <<  edot_dsigma << "\t" << endl;
-
-    // if (a>0.0){throw std::exception();} 
+    // Fluxes from secondary spin from Viktor
+    // double pdot_dsigma = pdot_dspin_Cheby(a, p, e, risco, p_sep);
+    // double edot_dsigma = edot_dspin_Cheby(a, p, e, risco, p_sep);
     
     // consistency check
     // cout << "transf pdot Cheb " <<  GKR->pdot << " pdot " <<  pdot_out << " PN " << dpdt8H_5PNe10(a, p, e, x, Nv, ne) << endl;
@@ -360,8 +339,8 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     // needs adjustment for validity
     if (e > 1e-6)
     {
-        *pdot = epsilon * (pdot_out + additional_args[0] * pdot_dsigma);
-        *edot = epsilon * (edot_out + additional_args[0] * edot_dsigma);
+        *pdot = epsilon * pdot_out;
+        *edot = epsilon * edot_out;
     }
     else{
         *edot = 0.0;

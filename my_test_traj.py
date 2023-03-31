@@ -36,7 +36,7 @@ trajpn5 = EMRIInspiral(func="pn5")
 
 
 insp_kw = {
-    "T": 5.0,
+    "T": 0.02,
     "dt": 100.0,
     "err": 1e-10,
     "DENSE_STEPPING": 0,
@@ -51,7 +51,7 @@ insp_kw = {
 M = 1e6
 mu = 5e1
 p0 = 12.0
-e0 = 0.43
+e0 = 0.2
 a = 0.86
 epsilon = mu/M
 second_spin = 0.0
