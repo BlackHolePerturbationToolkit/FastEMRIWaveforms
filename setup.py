@@ -294,6 +294,7 @@ if run_cuda_install:
         gpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
         gpu_extension["extra_compile_args"]["nvcc"].remove("-D__USE_OMP__")
         gpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
+        gpu_extension["extra_compile_args"]["nvcc"].remove("-Xcompiler")
 
     if args.ccbin is not None:
         gpu_extension["extra_compile_args"]["nvcc"].insert(

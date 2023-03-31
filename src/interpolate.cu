@@ -140,9 +140,11 @@ void fill_B(double *t_arr, double *y_all, double *B, double *upper_diag, double 
   int end2 = length;
   int diff2 = 1;
 
-#pragma omp parallel for
-#endif
-  for (int interp_i = start1;
+#ifdef __USE_OMP__
+  #pragma omp parallel for
+#endif  // __USE_OMP__
+#endif // __CUDACC__
+for (int interp_i = start1;
        interp_i < end1; // 2 for re and im
        interp_i += diff1)
   {
@@ -186,8 +188,10 @@ void set_spline_constants(double *t_arr, double *interp_array, double *B,
   int end2 = length - 1;
   int diff2 = 1;
 
-#pragma omp parallel for
-#endif
+#ifdef __USE_OMP__
+  #pragma omp parallel for
+#endif  // __USE_OMP__
+#endif // __CUDACC__
 
   for (int interp_i = start1;
        interp_i < end1; // 2 for re and im
@@ -242,8 +246,8 @@ void fit_wrap(int m, int n, double *a, double *b, double *c, double *d_in)
 
 // use lapack on CPU
 #ifdef __USE_OMP__
-#pragma omp parallel for
-#endif
+  #pragma omp parallel for
+#endif  // __USE_OMP__
   for (int j = 0;
        j < n;
        j += 1)
@@ -251,7 +255,7 @@ void fit_wrap(int m, int n, double *a, double *b, double *c, double *d_in)
     int info = LAPACKE_dgtsv(LAPACK_COL_MAJOR, m, 1, &a[j * m + 1], &b[j * m], &c[j * m], &d_in[j * m], m);
   }
 
-#endif
+#endif // __CUDACC__
 }
 
 // interpolate many y arrays (interp_array) with a singular x array (t_arr)
@@ -434,9 +438,9 @@ void make_waveform(cmplx *waveform,
     int end = num_teuk_here;
     int diff = 1;
 #ifdef __USE_OMP__
-#pragma omp parallel for
-#endif // __USE_OMP__
-#endif
+    #pragma omp parallel for
+#endif  // __USE_OMP__
+#endif // __CUDACC__
     for (int i = start; i < end; i += diff)
     {
 
@@ -477,7 +481,7 @@ void make_waveform(cmplx *waveform,
 #ifdef __CUDACC__
 #else
 #ifdef __USE_OMP__
-#pragma omp parallel for
+    #pragma omp parallel for
 #endif // __USE_OMP__
 #endif // __CUDACC__
 
@@ -601,8 +605,8 @@ void get_waveform(cmplx *d_waveform, double *interp_array,
 #endif
 
 #ifdef __USE_OMP__
-#pragma omp parallel for
-#endif
+  #pragma omp parallel for
+#endif  // __USE_OMP__
   for (int i = 0; i < number_of_old_spline_points - 1; i++)
   {
 #ifdef __CUDACC__
@@ -640,8 +644,8 @@ void get_waveform(cmplx *d_waveform, double *interp_array,
   gpuErrchk(cudaGetLastError());
 
 #ifdef __USE_OMP__
-#pragma omp parallel for
-#endif
+  #pragma omp parallel for
+#endif  // __USE_OMP__
   for (int i = 0; i < number_of_old_spline_points - 1; i++)
   {
     // destroy the streams

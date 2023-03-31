@@ -36,7 +36,7 @@ trajpn5 = EMRIInspiral(func="pn5")
 
 
 insp_kw = {
-    "T": 0.02,
+    "T": 5.02,
     "dt": 100.0,
     "err": 1e-10,
     "DENSE_STEPPING": 0,

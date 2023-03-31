@@ -14,12 +14,26 @@ Below is a quick set of instructions to get you started with `few`.
 
 1) Create a virtual environment. **Note**: There is no available `conda` compiler for Windows. If you want to install for Windows, you will probably need to add libraries and include paths to the `setup.py` file.
 
+If on linux:
+
 ```
 conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
 conda activate few_env
 ```
 
-    If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
+If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64` as follows:
+
+```
+conda create -n few_env -c conda-forge clangxx_osx-64 clang_osx-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
+conda activate few_env
+```
+
+If on M1 chip use the following command:
+
+```
+conda create -n few_env -c conda-forge wget gsl hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.9 openblas lapack liblapacke
+conda activate few_env
+```
 
 2) Clone the repository.
 
@@ -28,16 +42,22 @@ git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
 cd FastEMRIWaveforms
 ```
 
-3) Run install. Make sure CUDA is on your PATH.
+3) If on MACOSX or linux run install:
 
 ```
 python setup.py install
 ```
 
-4) To import few:
+If on M1 chip use the following command:
 
 ```
-from few.waveform import FastSchwarzschildEccentricFlux
+python setup.py install --no_omp --ccbin /usr/bin/
+```
+
+4) To test few run:
+
+```
+python -m unittest discover
 ```
 
 See [examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb).
@@ -80,7 +100,7 @@ cd FastEMRIWaveforms
 pip install cupy-cuda92
 ```
 
-4) Run install. Make sure CUDA is on your PATH.
+4) Run install.
 
 ```
 python setup.py install
@@ -130,19 +150,7 @@ or if on MACOSX:
 python setup.py install --ccbin /path/to/anaconda3/envs/few_env/bin/x86_64-apple-darwin13.4.0-clang
 ```
 
-#### Installing on an M1 chip
-
-If you are encountering a problem in installing the package on an M1 chip, this is expected. A possible way around is to follow the steps below. This is definitely not a preferable way to handle this issue and may or may not work. We will further investigate this when we find time and access to an M1 chip. 
-
-Steps for one found solution so far:
-
-1. Remove compiler installed in FEW conda (maybe in /path/to/anaconda3/envs/few_env/bin/x86_64-apple-darwin13.4.0-clang)
-2. set flag --no\_omp
-3. Export CC=/usr/bin/clang   # Make sure that this corresponds to default M1 compiler
-4. Export CCXX = /usr/bin/clang++
-5. Comment out line 512 "omp\_set\_num\_threads(num\_threads);" in src/Utility.cc 
-6. Comment between line 517 and 523. Change line 524 to "return 1;"] in src/Utility.cc 
-7. python setup.py install --no\_omp
+Please contact the developers if the installation does not work.
 
 ## Running the Tests
 
@@ -160,7 +168,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags).
 
-Current Version: 1.4.8
+Current Version: 1.4.10
 
 ## Authors
 
@@ -176,6 +184,7 @@ Current Version: 1.4.8
 * Soichiro Isoyama
 * Ryuichi Fujita
 * Monica Rizzo
+* Philip Lynch
 
 ## License
 
