@@ -117,6 +117,7 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         p,
         e,
         Y,
+        dist,
         Phi_phi,
         Phi_theta,
         Phi_r,
@@ -125,7 +126,6 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         phiS,
         qK,
         phiK,
-        dist,
         nmodes,
         *args,
         mich=False,
@@ -155,6 +155,7 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
             Y (1D double numpy.ndarray): Array containing the trajectory for values of
                 :math:`\cos{\iota}`. **Note**: This value is different from :math:`x_I`
                 used in the relativistic waveforms.
+            dist (double): Luminosity distance in Gpc.
             Phi_phi (1D double numpy.ndarray): Array containing the trajectory for
                 :math:`\Phi_\phi`.
             Phi_theta (1D double numpy.ndarray): Array containing the trajectory for
@@ -170,7 +171,6 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
                 coordinates.
             phiK (double): Initial BH spin azimuthal angle in
                 ecliptic coordinates.
-            dist (double): Luminosity distance in Gpc.
             nmodes (int): Number of modes to analyze. This is determined by
                 the eccentricity.
             *args (tuple, placeholder): Added to create flexibility when calling different
