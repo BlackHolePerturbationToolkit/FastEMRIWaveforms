@@ -388,7 +388,11 @@ def get_separatrix(a, e, x):
         scalar = False
 
     e_in = np.atleast_1d(e)
-    x_in = np.atleast_1d(x)
+
+    if isinstance(x, float):
+        x_in = np.full_like(e_in, x)
+    else:
+        x_in = np.atleast_1d(x)
 
     # cast spin values if necessary
     if isinstance(a, float):
@@ -396,7 +400,7 @@ def get_separatrix(a, e, x):
     else:
         a_in = np.atleast_1d(a)
 
-    assert len(a_in) == len(e_in)
+    assert len(a_in) == len(e_in) == len(x_in)
 
     separatrix = pyGetSeparatrix(a_in, e_in, x_in)
 
