@@ -65,10 +65,8 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
 
     args:
         **kwargs (dict, optional): Keyword arguments for the base class:
-            :class:`few.utils.baseclasses.SchwarzschildEccentric`,
-            :class:`few.utils.baseclasses.ParallelModuleBase`,
-            :class:`few.utils.baseclasses.SummationBase`. 
-            Default is {}.
+            :class:`few.utils.baseclasses.SchwarzschildEccentric`. Default is
+            {}.
 
     """
 
@@ -84,6 +82,10 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         else:
             self.waveform_generator = pyWaveform_cpu
 
+    @property
+    def gpu_capability(self):
+        return True
+
     def attributes_AmplitudeAAK(self):
         """
         attributes:
@@ -94,10 +96,6 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
 
         """
         pass
-
-    @property
-    def gpu_capability(self):
-        return True
 
     @property
     def citation(self):
@@ -280,9 +278,6 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         # get all cubic splines
         self.spline = CubicSplineInterpolant(tvec_temp, y_all, use_gpu=self.use_gpu)
 
-        new_t = self.xp.arange(self.num_pts) * dt
-        interval_inds = self.xp.searchsorted(tvec_temp, new_t, side="right").astype(self.xp.int32) - 1
-
         # generator the waveform
         self.waveform_generator(
             self.waveform,
@@ -300,8 +295,7 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
             init_len,
             self.num_pts,
             dt,
-            tvec_temp,
-            interval_inds
+            tvec,
         )
 
         return
