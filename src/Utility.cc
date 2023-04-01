@@ -262,15 +262,9 @@ void KerrGeoCoordinateFrequencies(double* OmegaPhi_, double* OmegaTheta_, double
 {
     // printf("here p e %f %f %f %f \n", a, p, e, x);
     double CapitalGamma, CapitalUpsilonPhi, CapitalUpsilonTheta, CapitalUpsilonR;
-    if (abs(x)==1.0){
-        KerrGeoMinoFrequencies(&CapitalGamma, &CapitalUpsilonPhi, &CapitalUpsilonTheta, &CapitalUpsilonR,
+
+    KerrGeoMinoFrequencies(&CapitalGamma, &CapitalUpsilonPhi, &CapitalUpsilonTheta, &CapitalUpsilonR,
                                   a, p, e, x);
-    }
-    else{
-        KerrGeoMinoFrequencies(&CapitalGamma, &CapitalUpsilonPhi, &CapitalUpsilonTheta, &CapitalUpsilonR,
-                                  a, p, e, x);
-    }
-    
 
     if ((CapitalUpsilonPhi!=CapitalUpsilonPhi) || (CapitalGamma!=CapitalGamma) || (CapitalUpsilonR!=CapitalUpsilonR) ){
         printf("(a, p, e, x) = (%f , %f , %f , %f) \n", a, p, e, x);

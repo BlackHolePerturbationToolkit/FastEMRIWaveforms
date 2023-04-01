@@ -254,7 +254,7 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     
     // auto start = std::chrono::steady_clock::now();
     // the frequency variables are pointers!
-    KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);// shift to avoid problem in fundamental frequencies
+    KerrGeoEquatorialCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);// shift to avoid problem in fundamental frequencies
     // auto end = std::chrono::steady_clock::now();
     // std::chrono::duration<double>  msec = end-start;
     // std::cout << "elapsed time fund freqs: " << msec.count() << "s\n";
@@ -264,7 +264,7 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     double p_sep = get_separatrix(a, e, x);
     double r;
     // reference frequency
-    Omega_phi_sep_circ = x * 1.0/ (x*a + pow(p_sep/( 1.0 + e ), 1.5) );
+    Omega_phi_sep_circ = 1.0/ (a + pow(p_sep/( 1.0 + e ), 1.5) );
     r = pow(*Omega_phi/Omega_phi_sep_circ, 2.0/3.0 ) * (1.0 + e);
     
     if (isnan(r)){
@@ -291,8 +291,8 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     
     if (additional_args[0]>0.0){
         // From Susanna
-        pdot_out = pdot_Cheby_full(a, p, e, r) * (64/5 * pow(p,-3) * pow(one_minus_e2,0.5));
-        edot_out = edot_Cheby_full(a, p, e, r) * (304/15 * pow(p,-4) * pow(one_minus_e2,1.5));
+        pdot_out = pdot_Cheby_full(a, p, e, r, p_sep, risco);
+        edot_out = edot_Cheby_full(a, p, e, r, p_sep, risco);
         // cout << "SB " << pdot_out << " " << edot_out << endl;
     }
     
@@ -300,8 +300,8 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
         // Flux from Scott
         double u = log((p-p_sep + 4.0 - 0.05)/4.0);
         double w = sqrt(e);
-        pdot_out = pdot_interp->eval(a, u, w) * (64/5 * pow(p,-3) * pow(one_minus_e2,0.5));
-        edot_out = edot_interp->eval(a, u, w) * (304/15 * pow(p,-4) * pow(one_minus_e2,1.5));
+        pdot_out = pdot_interp->eval(a, u, w) * ((8.*Power(1. - Power(e,2),1.5)*(8. + 7.*Power(e,2)))/(5.*p*(Power(p - risco,2) - Power(-risco + p_sep,2))));
+        edot_out = edot_interp->eval(a, u, w) * ((Power(1. - Power(e,2),1.5)*(304. + 121.*Power(e,2)))/(15.*Power(p,2)*(Power(p - risco,2) - Power(-risco + p_sep,2))));
         // cout << "SH " << pdot_out << " " << edot_out << endl;
     }
     
