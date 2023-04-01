@@ -279,7 +279,7 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     // Omega_phi_sep_circ 0.166244
     // *Omega_phi 0.13021
     double pdot_out, edot_out;
-    double risco = get_separatrix(a, 0.0, x);
+    double risco = get_separatrix(a+1e-500, 0.0, x);
     double one_minus_e2 = 1-pow(e,2);
 
     if (additional_args[0]==0.0){
@@ -291,8 +291,8 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     
     if (additional_args[0]>0.0){
         // From Susanna
-        pdot_out = pdot_Cheby_full(a, p, e, r, p_sep, risco);
-        edot_out = edot_Cheby_full(a, p, e, r, p_sep, risco);
+        pdot_out = pdot_Cheby_full(a, e, r) * ((8.*pow(1. - pow(e,2),1.5)*(8. + 7.*pow(e,2)))/(5.*p*(pow(p - risco,2) - pow(-risco + p_sep,2))));
+        edot_out = edot_Cheby_full(a, e, r) * ((pow(1. - pow(e,2),1.5)*(304. + 121.*pow(e,2)))/(15.*pow(p,2)*(pow(p - risco,2) - pow(-risco + p_sep,2))));
         // cout << "SB " << pdot_out << " " << edot_out << endl;
     }
     
@@ -300,8 +300,8 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
         // Flux from Scott
         double u = log((p-p_sep + 4.0 - 0.05)/4.0);
         double w = sqrt(e);
-        pdot_out = pdot_interp->eval(a, u, w) * ((8.*Power(1. - Power(e,2),1.5)*(8. + 7.*Power(e,2)))/(5.*p*(Power(p - risco,2) - Power(-risco + p_sep,2))));
-        edot_out = edot_interp->eval(a, u, w) * ((Power(1. - Power(e,2),1.5)*(304. + 121.*Power(e,2)))/(15.*Power(p,2)*(Power(p - risco,2) - Power(-risco + p_sep,2))));
+        pdot_out = pdot_interp->eval(a, u, w) * ((8.*pow(1. - pow(e,2),1.5)*(8. + 7.*pow(e,2)))/(5.*p*(pow(p - risco,2) - pow(-risco + p_sep,2))));
+        edot_out = edot_interp->eval(a, u, w) * ((pow(1. - pow(e,2),1.5)*(304. + 121.*pow(e,2)))/(15.*pow(p,2)*(pow(p - risco,2) - pow(-risco + p_sep,2))));
         // cout << "SH " << pdot_out << " " << edot_out << endl;
     }
     
