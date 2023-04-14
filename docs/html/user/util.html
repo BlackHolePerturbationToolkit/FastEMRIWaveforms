@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Utilities &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
@@ -11,11 +11,11 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -31,11 +31,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search"  style="background: coral" >
-            <a href="../index.html" class="icon icon-home"> few: Fast EMRI Waveforms
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            few: Fast EMRI Waveforms
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -48,9 +52,63 @@
 <li class="toctree-l1"><a class="reference internal" href="amp.html">Amplitude Package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sum.html">Summation Package</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Utilities</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.modeselector">Mode Filtering</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.utility">Analysis and Other Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.modeselector">Mode Filtering</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.modeselector.ModeSelector"><code class="docutils literal notranslate"><span class="pre">ModeSelector</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.gpu_capability"><code class="docutils literal notranslate"><span class="pre">ModeSelector.gpu_capability</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.attributes_ModeSelector"><code class="docutils literal notranslate"><span class="pre">ModeSelector.attributes_ModeSelector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.xp"><code class="docutils literal notranslate"><span class="pre">ModeSelector.xp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.num_m_zero_up"><code class="docutils literal notranslate"><span class="pre">ModeSelector.num_m_zero_up</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.num_m_1_up"><code class="docutils literal notranslate"><span class="pre">ModeSelector.num_m_1_up</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.num_m0"><code class="docutils literal notranslate"><span class="pre">ModeSelector.num_m0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.sensitivity_fn"><code class="docutils literal notranslate"><span class="pre">ModeSelector.sensitivity_fn</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.citation"><code class="docutils literal notranslate"><span class="pre">ModeSelector.citation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.__call__"><code class="docutils literal notranslate"><span class="pre">ModeSelector.__call__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.adjust_gpu_usage"><code class="docutils literal notranslate"><span class="pre">ModeSelector.adjust_gpu_usage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.attributes_ParallelModuleBase"><code class="docutils literal notranslate"><span class="pre">ModeSelector.attributes_ParallelModuleBase()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.use_gpu"><code class="docutils literal notranslate"><span class="pre">ModeSelector.use_gpu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">ModeSelector.xp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.sanity_check_gpu"><code class="docutils literal notranslate"><span class="pre">ModeSelector.sanity_check_gpu()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.ylm.GetYlms"><code class="docutils literal notranslate"><span class="pre">GetYlms</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.gpu_capability"><code class="docutils literal notranslate"><span class="pre">GetYlms.gpu_capability</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.attributes_GetYlms"><code class="docutils literal notranslate"><span class="pre">GetYlms.attributes_GetYlms()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.xp"><code class="docutils literal notranslate"><span class="pre">GetYlms.xp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.__call__"><code class="docutils literal notranslate"><span class="pre">GetYlms.__call__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.adjust_gpu_usage"><code class="docutils literal notranslate"><span class="pre">GetYlms.adjust_gpu_usage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.attributes_ParallelModuleBase"><code class="docutils literal notranslate"><span class="pre">GetYlms.attributes_ParallelModuleBase()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.use_gpu"><code class="docutils literal notranslate"><span class="pre">GetYlms.use_gpu</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">GetYlms.xp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.citation"><code class="docutils literal notranslate"><span class="pre">GetYlms.citation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.sanity_check_gpu"><code class="docutils literal notranslate"><span class="pre">GetYlms.sanity_check_gpu()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.utility">Analysis and Other Tools</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_overlap"><code class="docutils literal notranslate"><span class="pre">get_overlap()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_mismatch"><code class="docutils literal notranslate"><span class="pre">get_mismatch()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.p_to_y"><code class="docutils literal notranslate"><span class="pre">p_to_y()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_fundamental_frequencies"><code class="docutils literal notranslate"><span class="pre">get_fundamental_frequencies()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_kerr_geo_constants_of_motion"><code class="docutils literal notranslate"><span class="pre">get_kerr_geo_constants_of_motion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.xI_to_Y"><code class="docutils literal notranslate"><span class="pre">xI_to_Y()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.Y_to_xI"><code class="docutils literal notranslate"><span class="pre">Y_to_xI()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_separatrix"><code class="docutils literal notranslate"><span class="pre">get_separatrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_at_t"><code class="docutils literal notranslate"><span class="pre">get_at_t()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_p_at_t"><code class="docutils literal notranslate"><span class="pre">get_p_at_t()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_mu_at_t"><code class="docutils literal notranslate"><span class="pre">get_mu_at_t()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.check_for_file_download"><code class="docutils literal notranslate"><span class="pre">check_for_file_download()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.wrapper"><code class="docutils literal notranslate"><span class="pre">wrapper()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.pointer_adjust"><code class="docutils literal notranslate"><span class="pre">pointer_adjust()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.omp_set_num_threads"><code class="docutils literal notranslate"><span class="pre">omp_set_num_threads()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.omp_get_num_threads"><code class="docutils literal notranslate"><span class="pre">omp_get_num_threads()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.cuda_set_device"><code class="docutils literal notranslate"><span class="pre">cuda_set_device()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_ode_function_options"><code class="docutils literal notranslate"><span class="pre">get_ode_function_options()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cite.html">Citations</a></li>
@@ -90,7 +148,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home"></a></li>
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Utilities</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/user/util.rst.txt" rel="nofollow"> View page source</a>
@@ -104,31 +162,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  
-<style>
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
-</style>
-<section id="module-few.utils">
+  <section id="module-few.utils">
 <span id="utilities"></span><span id="utilities-label"></span><h1>Utilities<a class="headerlink" href="#module-few.utils" title="Permalink to this heading"></a></h1>
 <section id="module-few.utils.modeselector">
 <span id="mode-filtering"></span><h2>Mode Filtering<a class="headerlink" href="#module-few.utils.modeselector" title="Permalink to this heading"></a></h2>
@@ -148,7 +182,7 @@ summation calculation.</p>
 <p>Be careful as this is built based on the construction that input mode arrays
 will in order of <span class="math notranslate nohighlight">\(m=0\)</span>, <span class="math notranslate nohighlight">\(m&gt;0\)</span>, and then <span class="math notranslate nohighlight">\(m&lt;0\)</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>m0mask</strong> (<em>1D bool xp.ndarray</em>) – This mask highlights which modes have
 <span class="math notranslate nohighlight">\(m=0\)</span>. Value is False if <span class="math notranslate nohighlight">\(m=0\)</span>, True if not.
@@ -185,7 +219,7 @@ Default is {}.</p></li>
 <span class="sig-name descname"><span class="pre">num_m_zero_up</span></span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.num_m_zero_up" title="Permalink to this definition"></a></dt>
 <dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq0\)</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int</p>
 </dd>
 </dl>
@@ -196,7 +230,7 @@ Default is {}.</p></li>
 <span class="sig-name descname"><span class="pre">num_m_1_up</span></span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.num_m_1_up" title="Permalink to this definition"></a></dt>
 <dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq1\)</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int</p>
 </dd>
 </dl>
@@ -207,7 +241,7 @@ Default is {}.</p></li>
 <span class="sig-name descname"><span class="pre">num_m0</span></span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.num_m0" title="Permalink to this definition"></a></dt>
 <dd><p>Number of modes with <span class="math notranslate nohighlight">\(m=0\)</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int</p>
 </dd>
 </dl>
@@ -218,7 +252,7 @@ Default is {}.</p></li>
 <span class="sig-name descname"><span class="pre">sensitivity_fn</span></span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.sensitivity_fn" title="Permalink to this definition"></a></dt>
 <dd><p>sensitivity generating function for power-weighting.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>object</p>
 </dd>
 </dl>
@@ -240,7 +274,7 @@ Default is {}.</p></li>
 mode indices and fractional accuracy of the total power and returns
 filtered teukolsky modes and ylms.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>teuk_modes</strong> (<em>2D complex128 xp.ndarray</em>) – Complex teukolsky amplitudes
 from the amplitude modules.
@@ -249,7 +283,7 @@ Shape: (number of trajectory points, number of modes).</p></li>
 including m&lt;0. Shape is (num of m==0,) + (num of m&gt;0,)
 + (num of m&lt;0). Number of m&lt;0 and m&gt;0 is the same, but they are
 ordered as (m==0) first then m&gt;0 then m&lt;0.</p></li>
-<li><p><strong>modeinds</strong> (<em>list of int xp.ndarrays</em>) – List containing the mode index arrays. If in an
+<li><p><strong>modeinds</strong> (<em>list</em><em> of </em><em>int xp.ndarrays</em>) – List containing the mode index arrays. If in an
 equatorial model, need <span class="math notranslate nohighlight">\((l,m,n)\)</span> arrays. If generic,
 <span class="math notranslate nohighlight">\((l,m,k,n)\)</span> arrays. e.g. [l_arr, m_arr, n_arr].</p></li>
 <li><p><strong>fund_freq_args</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Args necessary to determine
@@ -277,10 +311,10 @@ acceptable loss). Default that gives good mismatch qualities is
 <p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
 so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
-<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+<li><p><strong>kwargs</strong> (<em>list</em><em> of </em><em>dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
 single dictionary for each constituent class in the
 waveform generator.</p></li>
 </ul>
@@ -296,7 +330,7 @@ waveform generator.</p></li>
 <span class="sig-name descname"><span class="pre">use_gpu</span></span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.use_gpu" title="Permalink to this definition"></a></dt>
 <dd><p>If True, use GPU.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
@@ -307,7 +341,7 @@ waveform generator.</p></li>
 <span class="sig-name descname"><span class="pre">xp</span></span><a class="headerlink" href="#id0" title="Permalink to this definition"></a></dt>
 <dd><p>Either numpy or CuPy based on gpu preference.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>obj</p>
 </dd>
 </dl>
@@ -322,10 +356,10 @@ waveform generator.</p></li>
 <p>If the user is requesting GPU usage, this will confirm the class has
 GPU capabilites.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
 </dd>
-<dt class="field-even">Raises</dt>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
     not have that capability.</p>
 </dd>
@@ -346,7 +380,7 @@ GPU capabilites.</p>
 <span class="math notranslate nohighlight">\(Y_{lm}(\Theta,\phi)\)</span>. <strong>Important Note</strong>: this class also applies
 the parity operator (<span class="math notranslate nohighlight">\(-1^l\)</span>) to modes with <span class="math notranslate nohighlight">\(m&lt;0\)</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>assume_positive_m</strong> (<em>bool</em><em>, </em><em>optional</em>) – Set true if only providing <span class="math notranslate nohighlight">\(m\geq0\)</span>,
 it will return twice the number of requested modes with the seconds
@@ -372,7 +406,7 @@ Default is {}.</p></li>
 <span class="sig-name descname"><span class="pre">xp</span></span><a class="headerlink" href="#few.utils.ylm.GetYlms.xp" title="Permalink to this definition"></a></dt>
 <dd><p>cupy or numpy based on GPU usage.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>obj</p>
 </dd>
 </dl>
@@ -387,7 +421,7 @@ Default is {}.</p></li>
 <p>This returns ylms based on requested <span class="math notranslate nohighlight">\((l,m)\)</span> values and viewing
 angles.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>l_in</strong> (<em>1D int xp.ndarray</em>) – <span class="math notranslate nohighlight">\(l\)</span> values requested.</p></li>
 <li><p><strong>m_in</strong> (<em>1D int xp.ndarray</em>) – <span class="math notranslate nohighlight">\(m\)</span> values requested.</p></li>
@@ -395,10 +429,10 @@ angles.</p>
 <li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Ylm values.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>1D complex128 xp.ndarray</p>
 </dd>
 </dl>
@@ -411,10 +445,10 @@ angles.</p>
 <p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
 so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
-<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+<li><p><strong>kwargs</strong> (<em>list</em><em> of </em><em>dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
 single dictionary for each constituent class in the
 waveform generator.</p></li>
 </ul>
@@ -430,7 +464,7 @@ waveform generator.</p></li>
 <span class="sig-name descname"><span class="pre">use_gpu</span></span><a class="headerlink" href="#few.utils.ylm.GetYlms.use_gpu" title="Permalink to this definition"></a></dt>
 <dd><p>If True, use GPU.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
@@ -441,7 +475,7 @@ waveform generator.</p></li>
 <span class="sig-name descname"><span class="pre">xp</span></span><a class="headerlink" href="#id1" title="Permalink to this definition"></a></dt>
 <dd><p>Either numpy or CuPy based on gpu preference.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>obj</p>
 </dd>
 </dl>
@@ -462,10 +496,10 @@ waveform generator.</p></li>
 <p>If the user is requesting GPU usage, this will confirm the class has
 GPU capabilites.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
 </dd>
-<dt class="field-even">Raises</dt>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
     not have that capability.</p>
 </dd>
@@ -490,7 +524,7 @@ overlap. The overlap of <span class="math notranslate nohighlight">\(a(t)\)</spa
 \[\gamma_{a,b} = &lt;a,b&gt;/(&lt;a,a&gt;&lt;b,b&gt;)^{(1/2)},\]</div>
 <p>where <span class="math notranslate nohighlight">\(&lt;a,b&gt;\)</span> is the inner product of the two time series.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>time_series_1</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 1.</p></li>
 <li><p><strong>time_series_2</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 2.</p></li>
@@ -509,7 +543,7 @@ is False.</p></li>
 <code class="xref py py-func docutils literal notranslate"><span class="pre">few.utils.utility.overlap()</span></code> for information on the overlap
 calculation.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>time_series_1</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 1.</p></li>
 <li><p><strong>time_series_2</strong> (<em>1D complex128 xp.ndarray</em>) – Strain time series 2.</p></li>
@@ -526,7 +560,7 @@ is False.</p></li>
 <dd><p>Convert from separation <span class="math notranslate nohighlight">\(p\)</span> to <span class="math notranslate nohighlight">\(y\)</span> coordinate</p>
 <p>Conversion from the semilatus rectum or separation <span class="math notranslate nohighlight">\(p\)</span> to <span class="math notranslate nohighlight">\(y\)</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D double xp.ndarray</em>) – Values of separation,
 <span class="math notranslate nohighlight">\(p\)</span>, to convert.</p></li>
@@ -545,7 +579,7 @@ of <span class="math notranslate nohighlight">\(p\)</span> necessary for convers
 <p>Determines fundamental frequencies in generic Kerr from
 <a class="reference external" href="https://arxiv.org/abs/gr-qc/0202090">Schmidt 2002</a>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
 black hole. If other parameters are arrays and the spin is scalar,
@@ -559,14 +593,14 @@ inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>. Pl
 <span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><dl class="simple">
 <dt>Tuple of (OmegaPhi, OmegaTheta, OmegaR).</dt><dd><p>These are 1D arrays or scalar values depending on inputs.</p>
 </dd>
 </dl>
 </p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
@@ -579,7 +613,7 @@ inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>. Pl
 <p>Determines the constants of motion: <span class="math notranslate nohighlight">\((E, L, Q)\)</span> associated with a
 geodesic orbit in the generic Kerr spacetime.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
 black hole. If other parameters are arrays and the spin is scalar,
@@ -593,14 +627,14 @@ inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>. Pl
 <span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><dl class="simple">
 <dt>Tuple of (E, L, Q).</dt><dd><p>These are 1D arrays or scalar values depending on inputs.</p>
 </dd>
 </dl>
 </p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
@@ -614,7 +648,7 @@ inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>. Pl
 where <span class="math notranslate nohighlight">\(I\)</span> describes the orbit’s inclination from the equatorial plane.
 <span class="math notranslate nohighlight">\(\cos{\iota}\equiv Y\)</span>, where <span class="math notranslate nohighlight">\(\cos{\iota}=L/\sqrt{L^2 + Q}\)</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
 black hole. If other parameters are arrays and the spin is scalar,
@@ -627,10 +661,10 @@ it will be cast to a 1D array.</p></li>
 inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span> value with shape based on input shapes.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>1D array or scalar</p>
 </dd>
 </dl>
@@ -645,7 +679,7 @@ where <span class="math notranslate nohighlight">\(I\)</span> describes the orbi
 <span class="math notranslate nohighlight">\(\cos{\iota}\equiv Y\)</span>, where <span class="math notranslate nohighlight">\(\cos{\iota}=L/\sqrt{L^2 + Q}\)</span>.</p>
 <p>This computation may have issues near edge cases.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
 black hole. If other parameters are arrays and the spin is scalar,
@@ -658,10 +692,10 @@ it will be cast to a 1D array.</p></li>
 <span class="math notranslate nohighlight">\(\iota\)</span>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="math notranslate nohighlight">\(x=\cos{I}\)</span> value with shape based on input shapes.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>1D array or scalar</p>
 </dd>
 </dl>
@@ -674,7 +708,7 @@ it will be cast to a 1D array.</p></li>
 <p>Determines separatrix in generic Kerr from
 <a class="reference external" href="https://arxiv.org/abs/1912.07609">Stein &amp; Warburton 2020</a>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
 black hole. If other parameters are arrays and the spin is scalar,
@@ -686,10 +720,10 @@ inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>. Pl
 <span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Separatrix value with shape based on input shapes.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>1D array or scalar</p>
 </dd>
 </dl>
@@ -701,7 +735,7 @@ inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>. Pl
 <dd><p>Root finding wrapper using Brent’s method.</p>
 <p>This function uses scipy’s brentq routine to find root.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>traj_module</strong> (<em>obj</em>) – Instantiated trajectory module. It must output
 the time array of the trajectory sparse trajectory as the first
@@ -721,10 +755,10 @@ Defaults to 2e-12 (scipy default).</p></li>
 Defaults to ~8.8e-16 (scipy default).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Root value.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>double</p>
 </dd>
 </dl>
@@ -741,7 +775,7 @@ desired time of observation.</p>
 <p>This function uses scipy’s brentq routine to find the (presumed only)
 value of p that gives a trajectory of duration t_out.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>traj_module</strong> (<em>obj</em>) – Instantiated trajectory module. It must output
 the time array of the trajectory sparse trajectory as the first
@@ -761,10 +795,10 @@ other limit to None.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments for <a class="reference internal" href="#few.utils.utility.get_at_t" title="few.utils.utility.get_at_t"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_at_t()</span></code></a>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Value of p that creates the proper length trajectory.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>double</p>
 </dd>
 </dl>
@@ -781,7 +815,7 @@ desired time of observation.</p>
 <p>This function uses scipy’s brentq routine to find the (presumed only)
 value of mu that gives a trajectory of duration t_out.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>traj_module</strong> (<em>obj</em>) – Instantiated trajectory module. It must output
 the time array of the trajectory sparse trajectory as the first
@@ -798,10 +832,10 @@ other limit to None.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments for <a class="reference internal" href="#few.utils.utility.get_at_t" title="few.utils.utility.get_at_t"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_at_t()</span></code></a>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Value of mu that creates the proper length trajectory.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>double</p>
 </dd>
 </dl>
@@ -816,7 +850,7 @@ downloaded based on the associated record for each version (<cite>record_by_vers
 <p>The version is determined from the <cite>__version__</cite> attribute of <cite>few</cite> unless
 a version string is provided.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fp</strong> (<em>string</em>) – File name.</p></li>
 <li><p><strong>few_dir</strong> (<em>string</em>) – absolute path to FastEMRIWaveforms directory.</p></li>
@@ -824,7 +858,7 @@ a version string is provided.</p>
 get a specific dataset. Default is None.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Raises</dt>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – Version string does not exist.</p>
 </dd>
 </dl>
@@ -844,20 +878,20 @@ Cython codes
 <a class="reference external" href="https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/src">here</a>
 for examples.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>*args</strong> (<em>list</em>) – list of the arguments for a function.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em>) – dictionary of keyword arguments to be converted.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><dl class="simple">
 <dt>(targs, tkwargs) where t indicates target (with pointer values</dt><dd><p>rather than python objects).</p>
 </dd>
 </dl>
 </p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Tuple</p>
 </dd>
 </dl>
@@ -881,10 +915,10 @@ for examples.</p>
 <span class="sig-prename descclassname"><span class="pre">few.utils.utility.</span></span><span class="sig-name descname"><span class="pre">omp_set_num_threads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.omp_set_num_threads" title="Permalink to this definition"></a></dt>
 <dd><p>Globally sets OMP_NUM_THREADS</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>num_threads</strong> (<em>int</em><em>, </em><em>optional</em>) – </p></li>
-<li><p><strong>OpenMP.</strong> (<em>Number of parallel threads to use in</em>) – Default is 1.</p></li>
+<li><p><strong>OpenMP.</strong> (<em>Number</em><em> of </em><em>parallel threads to use in</em>) – Default is 1.</p></li>
 </ul>
 </dd>
 </dl>
@@ -901,7 +935,7 @@ for examples.</p>
 <span class="sig-prename descclassname"><span class="pre">few.utils.utility.</span></span><span class="sig-name descname"><span class="pre">cuda_set_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dev</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.cuda_set_device" title="Permalink to this definition"></a></dt>
 <dd><p>Globally sets CUDA device</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>dev</strong> (<em>int</em>) – CUDA device number.</p>
 </dd>
 </dl>
@@ -914,13 +948,13 @@ for examples.</p>
 <p>This includes all the subinfo for each ODE derivative
 function that is available.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Dictionary with all the information on available functions.</p>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>dict</p>
 </dd>
-<dt class="field-odd">Raises</dt>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>ValueError</strong> – ODE files have not been built.</p>
 </dd>
 </dl>

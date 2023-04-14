@@ -1,10 +1,3 @@
-__pycache__/
-.vscode/
-.ipynb_checkpoints/
-dist/
-build/
-*.egg-info/
-
 build/*
 dist/*
 few.egg-info/*
