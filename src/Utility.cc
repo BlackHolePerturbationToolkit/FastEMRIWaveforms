@@ -242,7 +242,7 @@ void KerrGeoMinoFrequencies(double* CapitalGamma_, double* CapitalUpsilonPhi_, d
     *CapitalUpsilonr_ = CapitalUpsilonr;
 }
 
-void KerrEqGeoMinoFrequencies(double* CapitalGamma_, double* CapitalUpsilonPhi_, double* CapitalUpsilonTheta_, double* CapitalUpsilonr_,
+void KerrCircularMinoFrequencies(double* CapitalGamma_, double* CapitalUpsilonPhi_, double* CapitalUpsilonTheta_, double* CapitalUpsilonr_,
                               double a, double p, double e, double x)
 {
     double CapitalUpsilonr = sqrt((p*(-2*pow(a,2) + 6*a*sqrt(p) + (-5 + p)*p + (pow(a - sqrt(p),2)*(pow(a,2) - 4*a*sqrt(p) - (-4 + p)*p))/abs(pow(a,2) - 4*a*sqrt(p) - (-4 + p)*p)))/(2*a*sqrt(p) + (-3 + p)*p));
@@ -327,9 +327,16 @@ void KerrGeoEquatorialCoordinateFrequencies(double* OmegaPhi_, double* OmegaThet
 {
     double CapitalGamma, CapitalUpsilonPhi, CapitalUpsilonTheta, CapitalUpsilonR;
     
-    KerrGeoEquatorialMinoFrequencies(&CapitalGamma, &CapitalUpsilonPhi, &CapitalUpsilonTheta, &CapitalUpsilonR,
+    // printf("(a, p, e, x) = (%f , %f , %f , %f) \n", a, p, e, x);
+    // if (e=0.0){
+    //     KerrCircularMinoFrequencies(&CapitalGamma, &CapitalUpsilonPhi, &CapitalUpsilonTheta, &CapitalUpsilonR,
+    //                               a, p, e, x);
+    // }
+    // else{
+        KerrGeoEquatorialMinoFrequencies(&CapitalGamma, &CapitalUpsilonPhi, &CapitalUpsilonTheta, &CapitalUpsilonR,
                                   a, p, e, x);
-
+    // }
+    
     *OmegaPhi_ = CapitalUpsilonPhi / CapitalGamma;
     *OmegaTheta_ = CapitalUpsilonTheta / CapitalGamma;
     *OmegaR_ = CapitalUpsilonR / CapitalGamma;
@@ -472,7 +479,7 @@ double solver (struct params_holder* params, double (*func)(double, void*), doub
     // printf("-----------START------------------- \n");
     // printf("xlo xhi %f %f\n", x_lo, x_hi);
     // double epsrel=0.001;
-    double epsrel = 0.00001; // Decreased tolorance
+    double epsrel = 1e-10; // Decreased tolorance
     do
       {
         iter++;
@@ -599,7 +606,8 @@ double get_separatrix(double a, double e, double x)
         x_lo = 1.0 + e;
         x_hi = 6 + 2. * e;
 
-        p_sep = solver (&params, &separatrix_polynomial_equat, x_lo, x_hi);
+        
+        p_sep = solver (&params, &separatrix_polynomial_equat, x_lo, x_hi);//separatrix_KerrEquatorial(a, e);//
         return p_sep;
     }
     else if (x == -1.0) // Eccentric Retrograde Equatorial

@@ -239,9 +239,9 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
                   double epsilon, double a, double p, double e, double x, double* additional_args)
 {
 
-
-    // needs adjustment for validity
-    if (e < 0.0)
+    double p_sep = get_separatrix(a, e, x);
+    // make sure we do not step into separatrix
+    if ((e < 0.0)||(p<p_sep))
     {
         *pdot = 0.0;
         *edot = 0.0;
@@ -260,12 +260,13 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     // std::cout << "elapsed time fund freqs: " << msec.count() << "s\n";
 
     // get r variable
-    double Omega_phi_sep_circ;
-    double p_sep = get_separatrix(a, e, x);
-    double r;
+    // double *Omega_phi_sep_circ,*Omega_theta_sep_circ,*Omega_r_sep_circ;
+    // KerrGeoEquatorialCoordinateFrequencies(Omega_phi_sep_circ, Omega_theta_sep_circ, Omega_r_sep_circ, a, p_sep, 0.0, x);// shift to avoid problem in fundamental frequencies
+    
+    double r,Omega_phi_sep_circ;
     // reference frequency
     Omega_phi_sep_circ = 1.0/ (a + pow(p_sep/( 1.0 + e ), 1.5) );
-    r = pow(*Omega_phi/Omega_phi_sep_circ, 2.0/3.0 ) * (1.0 + e);
+    r = pow(*Omega_phi/ Omega_phi_sep_circ, 2.0/3.0 ) * (1.0 + e);
     
     if (isnan(r)){
         cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
@@ -279,7 +280,7 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     // Omega_phi_sep_circ 0.166244
     // *Omega_phi 0.13021
     double pdot_out, edot_out;
-    double risco = get_separatrix(a+1e-500, 0.0, x);
+    double risco = get_separatrix(a, 0.0, x);
     double one_minus_e2 = 1-pow(e,2);
 
     if (additional_args[0]==0.0){

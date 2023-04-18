@@ -52,14 +52,14 @@ M = 1e6
 mu = 5e1
 p0 = 12.0
 e0 = 0.2
-a = 0.86
+a = 0.7
 epsilon = mu/M
-second_spin = 0.0
+second_spin = -1.0
 
 # check fluxes
-p_all, e_all = np.asarray([temp.ravel() for temp in np.meshgrid( np.linspace(4.0, 14.0), np.linspace(0.01, 0.5))])
+p_all, e_all = np.asarray([temp.ravel() for temp in np.meshgrid( np.linspace(8.0, 14.0), np.linspace(0.01, 0.5))])
 out = np.asarray([traj.get_derivative(epsilon, a, pp, ee, 1.0, np.asarray([0.0]))  for pp,ee in zip(p_all,e_all)])
-pdot = out[:,0]/epsilon
+pdot = out[:,0]/epsilon 
 edot = out[:,1]/epsilon
 Omega_phi = out[:,3]
 Omega_r = out[:,5]
