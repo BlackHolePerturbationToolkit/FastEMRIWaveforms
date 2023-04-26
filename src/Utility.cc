@@ -479,7 +479,7 @@ double solver (struct params_holder* params, double (*func)(double, void*), doub
     // printf("-----------START------------------- \n");
     // printf("xlo xhi %f %f\n", x_lo, x_hi);
     // double epsrel=0.001;
-    double epsrel = 1e-10; // Decreased tolorance
+    double epsrel = 1e-11; // Decreased tolorance
     do
       {
         iter++;

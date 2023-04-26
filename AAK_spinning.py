@@ -66,11 +66,11 @@ qK = 0.8
 phiK = 0.8
 dist = 1.0
 mich = False
-dt = 1.0
-T = 2.0
+dt = 10.0
+T = 0.1
 
 # new input
-secondary_spin = 1e-5
+secondary_spin = 0.0
 
 if gpu_available:
     tic = time.perf_counter()
@@ -85,15 +85,15 @@ breakpoint()
 output1 = waveform_class(M,mu,a,p0,e0,Y0,dist,qS,phiS,qK,phiK,secondary_spin,
         Phi_phi0=0.0,Phi_theta0=0.0,Phi_r0=0.0,mich=False,dt=dt,T=T)
 
-secondary_spin = 1e-5
+secondary_spin = 1.0
 output2 = waveform_class(M,mu,a,p0,e0,Y0,dist,qS,phiS,qK,phiK,secondary_spin,
         Phi_phi0=0.0,Phi_theta0=0.0,Phi_r0=0.0,mich=False,dt=dt,T=T)
 
-# print(get_mismatch(output2.real, output1.real))
+print(get_mismatch(output2.real, output1.real))
 
 plt.figure()
-plt.plot(output1.real[-100:],label='new wave')
-plt.plot(output2.real[-100:],label='AAK wave')
+plt.plot(output1.real[:],label='new wave')
+plt.plot(output2.real[:],label='AAK wave')
 plt.legend()
 plt.show()
 

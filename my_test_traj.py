@@ -54,7 +54,7 @@ p0 = 12.0
 e0 = 0.2
 a = 0.7
 epsilon = mu/M
-second_spin = -1.0
+second_spin = 1.0
 
 # check fluxes
 p_all, e_all = np.asarray([temp.ravel() for temp in np.meshgrid( np.linspace(8.0, 14.0), np.linspace(0.01, 0.5))])
@@ -80,7 +80,7 @@ plt.xlabel('p')
 plt.ylabel('e')
 plt.tight_layout()
 # plt.savefig(f'edot.png')
-# np.savetxt(f"p_e_pdot_edot.txt", np.asarray((p_all, e_all, pdot, edot)).T )
+np.savetxt(f"p_e_pdot_edot_info_a={a}.txt", np.asarray((p_all, e_all, pdot, edot)).T )
 
 # breakpoint()
 #################################################################
