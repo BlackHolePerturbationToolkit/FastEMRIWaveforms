@@ -329,12 +329,11 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         #plt.plot(new_freqs_per_mode[0])
         #plt.savefig("check0.png")
         try:
-            raise NotImplementedError
             self.frequency = kwargs["f_arr"]
+            # fmax = 1 / (dt 2)
+            # dt = float(1/self.xp.max(self.frequency) * 2.0)
         except:
-            self.frequency = self.xp.fft.fftshift(
-                self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt)
-            )
+            self.frequency = self.xp.fft.fftshift(self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt))
 
         ind_zero = self.xp.where(self.frequency == 0)[0][0]
         first_frequency =  self.frequency[0]
@@ -354,14 +353,14 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         freq_check = self.frequency[inds_fin]
 
         run_seg = (np.diff(inds_fin, axis=-1) < 0)[:, :, 0]
-        while self.xp.any(((tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1]) | (tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])) & (run_seg)):
-            breakpoint()
-            fix_start = (((tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])) & (run_seg))
-            start_inds[fix_start] += 1
+        # while self.xp.any(((tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1]) | (tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])) & (run_seg)):
+        #     # breakpoint()
+        #     fix_start = (((tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])) & (run_seg))
+        #     start_inds[fix_start] += 1
             
-            fix_end = (((tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1])) & (run_seg))
-            end_inds[fix_end] -= 1
-            print("check")
+        #     fix_end = (((tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1])) & (run_seg))
+        #     end_inds[fix_end] -= 1
+        #     print("check")
         
         k_arr = self.xp.zeros_like(m_arr)
         data_length = len(self.frequency)

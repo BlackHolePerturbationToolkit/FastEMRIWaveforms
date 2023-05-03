@@ -331,9 +331,18 @@ class GenerateEMRIWaveform:
             return h
 
         else:
-            hp = h.real
-            hx = -h.imag
-            return [hp, hx]
+            
+            # return fft of plus and cross if return list
+            if self.waveform_generator.create_waveform.output_type=="fd":
+                mask_positive = (self.waveform_generator.create_waveform.frequency>=0.0)
+                fd_sig = -xp.flip(h)
+                fft_sig_p = xp.real(fd_sig + xp.flip(fd_sig) )/2.0 + 1j * xp.imag(fd_sig - xp.flip(fd_sig))/2.0
+                fft_sig_c = -xp.imag(fd_sig + xp.flip(fd_sig) )/2.0 + 1j * xp.real(fd_sig - xp.flip(fd_sig))/2.0
+                return [fft_sig_p[mask_positive], fft_sig_c[mask_positive]]
+            else:
+                hp = h.real
+                hx = -h.imag
+                return [hp, hx]
 
 
 # get path to this file
