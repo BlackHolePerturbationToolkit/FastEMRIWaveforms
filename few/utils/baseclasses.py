@@ -758,11 +758,13 @@ class SummationBase(ABC):
         output_type (str, optional): Type of domain in which to calculate the waveform.
             Default is 'td' for time domain. Options are 'td' (time domain) or 'fd' (Fourier domain). In the future we hope to add 'tf'
             (time-frequency) and 'wd' (wavelet domain).
+        odd_len (bool, optional): The waveform output will be padded to be an odd number if True. Default is False.
 
     """
 
-    def __init__(self, *args, output_type="td", pad_output=False, **kwargs):
+    def __init__(self, *args, output_type="td", pad_output=False, odd_len=False, **kwargs):
         self.pad_output = pad_output
+        self.odd_len = odd_len
 
         if output_type not in ["td","fd"]:
             raise ValueError(
@@ -834,6 +836,12 @@ class SummationBase(ABC):
         self.num_pts, self.num_pts_pad = num_pts, num_pts_pad
         self.dt = dt
 
+        # impose to be always odd
+        if self.odd_len:
+            if (self.num_pts + self.num_pts_pad) % 2 == 0:
+                self.num_pts_pad = self.num_pts_pad + 1
+                # print("n points",self.num_pts + self.num_pts_pad)
+
         # make sure that the FD waveform has always an odd number of points
         if self.output_type=="fd":
             try:
@@ -845,7 +853,7 @@ class SummationBase(ABC):
                 self.waveform = self.xp.zeros(
                             Nf, dtype=self.xp.complex128
                         )
-                print("user defined frequencies Nf=", Nf)
+                # print("user defined frequencies Nf=", Nf)
             except:
                 self.waveform = self.xp.zeros(
                     (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
