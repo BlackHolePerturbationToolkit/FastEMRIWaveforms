@@ -320,7 +320,7 @@ class GenerateEMRIWaveform:
             h *= -1
 
         # transform to SSB frame if desired
-        if self.frame == "detector":
+        if (self.frame == "detector")and(self.waveform_generator.create_waveform.output_type=="td"):
             hp = h.real
             hc = -h.imag
 
@@ -338,7 +338,11 @@ class GenerateEMRIWaveform:
                 fd_sig = -xp.flip(h)
                 fft_sig_p = xp.real(fd_sig + xp.flip(fd_sig) )/2.0 + 1j * xp.imag(fd_sig - xp.flip(fd_sig))/2.0
                 fft_sig_c = -xp.imag(fd_sig + xp.flip(fd_sig) )/2.0 + 1j * xp.real(fd_sig - xp.flip(fd_sig))/2.0
-                return [fft_sig_p[mask_positive], fft_sig_c[mask_positive]]
+                if (self.frame == "detector"):
+                    return list(self._to_SSB_frame(fft_sig_p[mask_positive], fft_sig_c[mask_positive], qS, phiS, qK, phiK))
+                else:
+                    return [fft_sig_p[mask_positive], fft_sig_c[mask_positive]]
+
             else:
                 hp = h.real
                 hx = -h.imag
