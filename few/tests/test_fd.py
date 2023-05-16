@@ -10,6 +10,8 @@ from few.utils.utility import get_overlap, get_mismatch
 from few.utils.ylm import GetYlms
 from few.utils.modeselector import ModeSelector
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
+from few.waveform import GenerateEMRIWaveform
+
 
 try:
     import cupy as xp
@@ -24,6 +26,13 @@ except (ModuleNotFoundError, ImportError) as e:
     )
     gpu_available = False
 
+
+few_gen = GenerateEMRIWaveform(
+    "FastSchwarzschildEccentricFlux", 
+    sum_kwargs=dict(pad_output=True, output_type="fd", odd_len=True),
+    use_gpu=gpu_available,
+    return_list=False,
+)
 
 class WaveformTest(unittest.TestCase):
     def test_fast_and_slow(self):
@@ -72,11 +81,11 @@ class WaveformTest(unittest.TestCase):
 
         # parameters
         T = 1.0  # years
-        dt = 11.0  # seconds
-        M = 1e6
-        mu = 1e1
-        p0 = 8.0
-        e0 = 0.2
+        dt = 10.0  # seconds
+        M = 1000000.0
+        mu = 50.0
+        p0 = 12.510272236947417
+        e0 = 0.4
         theta = np.pi / 3  # polar viewing angle
         phi = np.pi / 4  # azimuthal viewing angle
         dist = 1.0  # distance
@@ -92,25 +101,21 @@ class WaveformTest(unittest.TestCase):
         kwargs = dict(f_arr=f_in)
 
         fast_wave = fast(
-            M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, **kwargs, #mode_selection=[(2,2,0)]
+            M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, eps=1e-3, **kwargs
             )
 
         # process FD
-        fd_sig = -xp.flip(fast_wave)
-
-        ind =int(( len(fd_sig) - 1 ) / 2 + 1)
-
-        fft_sig_r = xp.real(fd_sig + xp.flip(fd_sig) )/2.0 + 1j * xp.imag(fd_sig - xp.flip(fd_sig))/2.0
-        fft_sig_i = -xp.imag(fd_sig + xp.flip(fd_sig) )/2.0 + 1j * xp.real(fd_sig - xp.flip(fd_sig))/2.0
+        freq = fast.create_waveform.frequency
+        mask = (freq>=0.0)
 
         # take fft of TD
-        freq = f_in[int(( N - 1 ) / 2 + 1):].get()
         h_td = xp.asarray(slow_wave)
-
         h_td_real = xp.real(h_td)
         h_td_imag = -xp.imag(h_td)
-        time_series_1_fft = xp.fft.fftshift(xp.fft.fft(h_td_real))[int(( N - 1 ) / 2 + 1):] * dt #- 1j * xp.fft.fftshift(xp.fft.fft(h_td_imag))[int(( N - 1 ) / 2 + 1):] * dt
-        time_series_2_fft = fft_sig_r[ind:]
+        time_series_1_fft = xp.fft.fftshift(xp.fft.fft(h_td_real))[mask]
+        
+        # mask only positive frequencies
+        time_series_2_fft = fast_wave[0,mask]
         
         # make sure they have equal length
         self.assertAlmostEqual(len(time_series_1_fft), len(time_series_2_fft))
@@ -121,11 +126,16 @@ class WaveformTest(unittest.TestCase):
             * xp.dot(time_series_2_fft.conj(), time_series_2_fft)
         )
         
+        # problematic point
+        prob_point = xp.array([1864440.3414742905, 10.690959453789679, 0.0, 12.510272236947417, 0.5495976916153483, 1.0, 57.88963690750407, 2.7464152838466274, 3.2109893163133503, 0.20280877216654694, 1.2513852793041993, 2.4942857598445087, 0.0, 3.003630047126699])
+        if gpu_available:
+            few_gen(*prob_point.get(),T=1.0,eps=1e-3,dt=6.0)
+
         if gpu_available:
             result = ac.item().real
 
         # import matplotlib.pyplot as plt
         # plt.figure(); plt.semilogx(freq, xp.real(time_series_1_fft).get(), alpha=0.5); plt.plot(freq, xp.real(time_series_2_fft).get(), '--', alpha=0.5); plt.xlim([3e-3,3.01e-3]); plt.savefig('test_real') 
         # plt.figure(); plt.semilogx(freq, xp.imag(time_series_1_fft).get(), alpha=0.5); plt.plot(freq, xp.imag(time_series_2_fft).get(), '--', alpha=0.5); plt.xlim([3e-3,3.01e-3]);plt.savefig('test_imag') 
-
+        print("mismatch", 1-result)
         self.assertLess(1-result, 1e-2)

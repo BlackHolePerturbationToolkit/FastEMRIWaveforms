@@ -353,14 +353,14 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         freq_check = self.frequency[inds_fin]
 
         run_seg = (np.diff(inds_fin, axis=-1) < 0)[:, :, 0]
-        # while self.xp.any(((tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1]) | (tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])) & (run_seg)):
-        #     # breakpoint()
-        #     fix_start = (((tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])) & (run_seg))
-        #     start_inds[fix_start] += 1
+        while self.xp.any(((tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1]) | (tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])) & (run_seg)):
+            breakpoint()
+            fix_start = (((tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])) & (run_seg))
+            start_inds[fix_start] += 1
             
-        #     fix_end = (((tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1])) & (run_seg))
-        #     end_inds[fix_end] -= 1
-        #     print("check")
+            fix_end = (((tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1])) & (run_seg))
+            end_inds[fix_end] -= 1
+            print("check")
         
         k_arr = self.xp.zeros_like(m_arr)
         data_length = len(self.frequency)
@@ -391,7 +391,12 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             include_minus_m,
             separate_modes
         )
-           
+
+        fd_sig = -self.xp.flip(self.waveform)
+        fft_sig_p = self.xp.real(fd_sig + self.xp.flip(fd_sig) )/2.0 + 1j * self.xp.imag(fd_sig - self.xp.flip(fd_sig))/2.0
+        fft_sig_c = -self.xp.imag(fd_sig + self.xp.flip(fd_sig) )/2.0 + 1j * self.xp.real(fd_sig - self.xp.flip(fd_sig))/2.0
+        self.waveform = self.xp.vstack((fft_sig_p, fft_sig_c))
+
         # x = t - 8.754992204872e+06
         # a = 1.120059270283e-21
         # b = 7.524898481384e-16

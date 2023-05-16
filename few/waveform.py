@@ -321,32 +321,15 @@ class GenerateEMRIWaveform:
 
         # transform to SSB frame if desired
         if (self.frame == "detector")and(self.waveform_generator.create_waveform.output_type=="td"):
-            hp = h.real
-            hc = -h.imag
-
-            hp, hc = self._to_SSB_frame(hp, hc, qS, phiS, qK, phiK)
-            h = hp - 1j * hc
+            hp, hc = self._to_SSB_frame(h.real, -h.imag, qS, phiS, qK, phiK)
+        
+        if (self.frame == "detector")and(self.waveform_generator.create_waveform.output_type=="fd"):
+            hp, hc = self._to_SSB_frame(h[0], h[1], qS, phiS, qK, phiK)
 
         if self.return_list is False:
-            return h
-
+            return hp - 1j * hc
         else:
-            
-            # return fft of plus and cross if return list
-            if self.waveform_generator.create_waveform.output_type=="fd":
-                mask_positive = (self.waveform_generator.create_waveform.frequency>=0.0)
-                fd_sig = -xp.flip(h)
-                fft_sig_p = xp.real(fd_sig + xp.flip(fd_sig) )/2.0 + 1j * xp.imag(fd_sig - xp.flip(fd_sig))/2.0
-                fft_sig_c = -xp.imag(fd_sig + xp.flip(fd_sig) )/2.0 + 1j * xp.real(fd_sig - xp.flip(fd_sig))/2.0
-                if (self.frame == "detector"):
-                    return list(self._to_SSB_frame(fft_sig_p[mask_positive], fft_sig_c[mask_positive], qS, phiS, qK, phiK))
-                else:
-                    return [fft_sig_p[mask_positive], fft_sig_c[mask_positive]]
-
-            else:
-                hp = h.real
-                hx = -h.imag
-                return [hp, hx]
+            return [hp, hc]
 
 
 # get path to this file
