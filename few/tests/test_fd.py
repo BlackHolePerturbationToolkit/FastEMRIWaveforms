@@ -129,7 +129,12 @@ class WaveformTest(unittest.TestCase):
         # problematic point
         prob_point = xp.array([1864440.3414742905, 10.690959453789679, 0.0, 12.510272236947417, 0.5495976916153483, 1.0, 57.88963690750407, 2.7464152838466274, 3.2109893163133503, 0.20280877216654694, 1.2513852793041993, 2.4942857598445087, 0.0, 3.003630047126699])
         if gpu_available:
+            few_gen(*prob_point.get(),T=1.0,eps=1e-3,dt=6.0,f_arr=freq)
+            print("works, freq=",freq)
+            few_gen(*prob_point.get(),T=4.0,eps=1e-3,dt=6.0)
+            print("works")
             few_gen(*prob_point.get(),T=1.0,eps=1e-3,dt=6.0)
+            print("nope")
 
         if gpu_available:
             result = ac.item().real

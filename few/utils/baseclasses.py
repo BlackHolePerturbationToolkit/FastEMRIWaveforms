@@ -773,6 +773,8 @@ class SummationBase(ABC):
                 )
             )
         self.output_type = output_type
+        if self.output_type=='fd':
+            self.odd_len=True
 
     def attributes_SummationBase(self):
         """
