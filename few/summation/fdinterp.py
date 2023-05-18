@@ -195,6 +195,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         include_minus_m=True,
         separate_modes=False,
         dt=10.0,
+        f_arr=None,
+        mask_positive=False,
         **kwargs,
     ):
         """Interpolated summation function.
@@ -328,13 +330,16 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         #import matplotlib.pyplot as plt
         #plt.plot(new_freqs_per_mode[0])
         #plt.savefig("check0.png")
-        try:
-            self.frequency = kwargs["f_arr"]
-            # fmax = 1 / (dt 2)
-            # dt = float(1/self.xp.max(self.frequency) * 2.0)
-        except:
+    
+        
+        if f_arr is not None:
+            self.frequency = f_arr
+        else:
             self.frequency = self.xp.fft.fftshift(self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt))
-
+        
+        # TODO make check for frequency
+        assert 1==np.sum(self.frequency==0.0)
+        
         ind_zero = self.xp.where(self.frequency == 0)[0][0]
         first_frequency =  self.frequency[0]
         df = self.frequency[1] - self.frequency[0]
@@ -395,7 +400,11 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         fd_sig = -self.xp.flip(self.waveform)
         fft_sig_p = self.xp.real(fd_sig + self.xp.flip(fd_sig) )/2.0 + 1j * self.xp.imag(fd_sig - self.xp.flip(fd_sig))/2.0
         fft_sig_c = -self.xp.imag(fd_sig + self.xp.flip(fd_sig) )/2.0 + 1j * self.xp.real(fd_sig - self.xp.flip(fd_sig))/2.0
-        self.waveform = self.xp.vstack((fft_sig_p, fft_sig_c))
+        if mask_positive:
+            mask = (self.frequency>=0.0)
+            self.waveform = self.xp.vstack((fft_sig_p[mask], fft_sig_c[mask]))
+        else:
+            self.waveform = self.xp.vstack((fft_sig_p, fft_sig_c))
 
         # x = t - 8.754992204872e+06
         # a = 1.120059270283e-21
