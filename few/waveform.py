@@ -320,11 +320,18 @@ class GenerateEMRIWaveform:
             h *= -1
 
         # transform to SSB frame if desired
-        if (self.frame == "detector")and(self.waveform_generator.create_waveform.output_type=="td"):
-            hp, hc = self._to_SSB_frame(h.real, -h.imag, qS, phiS, qK, phiK)
+        if self.waveform_generator.create_waveform.output_type=="td":
+            if self.frame == "detector":
+                hp, hc = self._to_SSB_frame(h.real, -h.imag, qS, phiS, qK, phiK)
+            elif self.frame == "source":
+                hp, hc = h.real, -h.imag
         
-        if (self.frame == "detector")and(self.waveform_generator.create_waveform.output_type=="fd"):
-            hp, hc = self._to_SSB_frame(h[0], h[1], qS, phiS, qK, phiK)
+        if self.waveform_generator.create_waveform.output_type=="fd":
+            if self.frame == "detector":
+                hp, hc = self._to_SSB_frame(h[0], h[1], qS, phiS, qK, phiK)
+            elif self.frame == "source":
+                hp, hc = h[0], h[1]
+        
 
         if self.return_list is False:
             return hp - 1j * hc
