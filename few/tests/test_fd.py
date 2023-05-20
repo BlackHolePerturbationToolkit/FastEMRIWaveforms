@@ -34,6 +34,13 @@ few_gen = GenerateEMRIWaveform(
     return_list=False,
 )
 
+few_gen_list = GenerateEMRIWaveform(
+    "FastSchwarzschildEccentricFlux", 
+    sum_kwargs=dict(pad_output=True, output_type="fd", odd_len=True),
+    use_gpu=gpu_available,
+    return_list=True,
+)
+
 class WaveformTest(unittest.TestCase):
     def test_fast_and_slow(self):
 
@@ -125,7 +132,12 @@ class WaveformTest(unittest.TestCase):
             xp.dot(time_series_1_fft.conj(), time_series_1_fft)
             * xp.dot(time_series_2_fft.conj(), time_series_2_fft)
         )
-        
+
+        injection_in = np.array([1.16350676e+06, 1.27978018e+02, 0.00000000e+00, 1.39313102e+01, 5.87723275e-01, 0.00000000e+00, 1.00000085e+00, 2.38505897e+00, 5.95081752e+00, 2.50714543e+00, 2.82403338e+00, 4.33433216e+00, 0.00000000e+00, 2.73356978e+00])
+        data_channels_fd = few_gen(*injection_in)
+        sig_fd = few_gen_list(*injection_in)
+        print("check 1 == ", xp.dot(xp.conj(sig_fd[0] - 1j * sig_fd[1]),data_channels_fd)/xp.dot(xp.conj(data_channels_fd),data_channels_fd) )
+
         # problematic point
         # 3697957.511659888 861.3377098262883 14.418959668893407 0.6707784770461537
         prob_point = xp.array([909080.3243424094, 39.53732872443626, 0.0, 13.902109123486886, 0.5590977383700271, 1.0, 57.88963690750407, 2.7464152838466274, 3.2109893163133503, 0.20280877216654694, 1.2513852793041993, 2.4942857598445087, 0.0, 3.003630047126699])
