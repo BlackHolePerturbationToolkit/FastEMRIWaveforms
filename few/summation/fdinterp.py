@@ -254,25 +254,45 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         except AttributeError:
             pass
 
+        # get fundamental frequencies across trajectory
         Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(
             0.0, p, e, np.zeros_like(e)
         )
 
+        # convert from dimensionless frequencies
         f_phi, f_r = (
             self.xp.asarray(Omega_phi / (2 * np.pi * M * MTSUN_SI)),
             self.xp.asarray(Omega_r / (2 * np.pi * M * MTSUN_SI)),
         )
 
+        # add them for splines
         y_all[-4] = f_phi
         y_all[-3] = f_r
 
+        # for a frequency-only spline because you
+        # have to evaluate all splines when you evaluate the spline class
         y_all_freqs = self.xp.asarray([f_phi, f_r])
+
+        # create two splines
+        # spline: freqs, phases, and amplitudes for the summation kernel
+        # freqs_spline: only the frequencies [f(t)]
         freqs_spline = CubicSplineInterpolant(t, y_all_freqs, use_gpu=self.use_gpu)
         spline = CubicSplineInterpolant(t, y_all, use_gpu=self.use_gpu)
+
+        # t_new is a denser (but not completely dense) set
+        # of time values to help estimate where/when turnovers occur
+        # the denser it is the more likely you will not miss a turnover
+        # but it is a tradeoff with speed (not exactly checked, just thought about)
         t_new = self.xp.linspace(t.min(), t.max(), 5000)
+
+        # denser frequencies
         new_freqs = freqs_spline(t_new)
+
+        # mode frequencies along the sparse trajectory
         seg_freqs = m_arr[:, None] * f_phi[None, :] + n_arr[:, None] * f_r[None, :]
 
+        # takes every segment and orders the frequencies at the start
+        # and end of the segment in increasing order (absolute value)
         argsort = self.xp.argsort(
             self.xp.abs(
                 self.xp.asarray([seg_freqs[:, :-1], seg_freqs[:, 1:]]).transpose(
@@ -289,24 +309,37 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             ),
             axis=-1,
         )
+
+        # properly orders each segment without absolute value
         tmp_freqs_base_sorted_segs = self.xp.sort(
             self.xp.asarray([seg_freqs[:, :-1], seg_freqs[:, 1:]]).transpose(1, 2, 0),
             axis=-1,
         )
 
+        # denser mode frequencies
         new_freqs_per_mode = (
             m_arr[:, None] * new_freqs[0][None, :]
             + n_arr[:, None] * new_freqs[1][None, :]
         )
 
-        # fix for turnover
+        # max/min frequency along dense array
+        # helps determine where the turnover is because
+        # it will always be above/below the max/min frequency
+        # you get from the segment boundaries
         t_of_max_freq = t_new[new_freqs_per_mode.argmax(axis=-1)]
         t_of_min_freq = t_new[new_freqs_per_mode.argmin(axis=-1)]
+
+        # checks what time the turnover happens
+        # if it is at the initial time or end time (i.e. there is no turnover)
+        # it is not included (hence >/< not <=/>=)
         check_turnover_list = [
             self.xp.where((t_of_max_freq > 0.0) & (t_of_max_freq < t[-1]))[0],
             self.xp.where((t_of_min_freq > 0.0) & (t_of_min_freq < t[-1]))[0],
         ]
 
+        # figure out which segment the turnover occurs in
+        # first list entry is turnovers at maximum
+        # second list entry is turnovers at minimum
         fix_turnover_seg_ind_list = []
         if len(check_turnover_list[0]) > 0:
             fix_turnover_seg_ind_list.append(
@@ -317,6 +350,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
                 self.xp.searchsorted(t, t_of_min_freq[check_turnover_list[1]]) - 1
             )
 
+        # determine the true maximum/minimum frequency and associated quantities
+        # by solving for roots in the derivative of the cubic
         try:
             fix_turnover_seg_ind = self.xp.concatenate(fix_turnover_seg_ind_list)
             check_turnover = self.xp.concatenate(check_turnover_list)
@@ -346,8 +381,11 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             roots_upper_1 = (-(2 * b) + self.xp.sqrt(inner_part)) / (2 * (3 * a))
             roots_upper_2 = (-(2 * b) - self.xp.sqrt(inner_part)) / (2 * (3 * a))
 
+            # t roots of potential minimum/maximum
             t_new_roots_upper_1 = t[fix_turnover_seg_ind] + roots_upper_1
             t_new_roots_upper_2 = t[fix_turnover_seg_ind] + roots_upper_2
+
+            # check to make sure root is in the segment of interest
             keep_root_1 = (t[fix_turnover_seg_ind] < t_new_roots_upper_1) & (
                 t[fix_turnover_seg_ind + 1] > t_new_roots_upper_1
             )
@@ -355,18 +393,30 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
                 t[fix_turnover_seg_ind + 1] > t_new_roots_upper_2
             )
 
+            # should only be one root at maximum
             if self.xp.any(keep_root_1 & keep_root_2):
                 breakpoint()
+
+            # sometimes (I think?) neither root is kept
             elif not self.xp.any(keep_root_1 | keep_root_2):
                 pass
             else:
+                # new time of minimum / maximum frequencies
                 t_new_fix = (
                     t_new_roots_upper_1 * keep_root_1
                     + t_new_roots_upper_2 * keep_root_2
                 )
+
+                # calculate the actual max/min frequencies
                 beginning_of_seg = t[fix_turnover_seg_ind]
                 x_fix = t_new_fix - beginning_of_seg
                 max_or_min_f = a * x_fix**3 + b * x_fix**2 + c * x_fix + d
+
+                # extends any segments with turnover to include all frequencies
+                # up to and including the turnover frequency
+                # this array holds the edge frequencies that occur in each
+                # segment, so we need to make sure when the segment edges do not include
+                # up to the turnover, they are added here
                 tmp_segs_sorted_turnover = self.xp.sort(
                     self.xp.concatenate(
                         [
@@ -389,19 +439,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         # import matplotlib.pyplot as plt
         # plt.plot(new_freqs_per_mode[0])
         # plt.savefig("check0.png")
-        try:
-            self.frequency = kwargs["f_arr"]
-            # fmax = 1 / (dt 2)
-            # dt = float(1/self.xp.max(self.frequency) * 2.0)
-        except:
-            self.frequency = self.xp.fft.fftshift(
-                self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt)
-            )
 
-        # import matplotlib.pyplot as plt
-        # plt.plot(new_freqs_per_mode[0])
-        # plt.savefig("check0.png")
-
+        # get frequencies of interest
         if f_arr is not None:
             self.frequency = f_arr
         else:
@@ -409,19 +448,30 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
                 self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt)
             )
 
-        # TODO make check for frequency
+        # TODO: make check for frequency
         assert 1 == np.sum(self.frequency == 0.0)
 
         ind_zero = self.xp.where(self.frequency == 0)[0][0]
+
+        # frequencies must be equally spaced for now
+        # first frequency helps quickly determine which segments each
+        # frequency in self.frequency falls into.
         first_frequency = self.frequency[0]
         df = self.frequency[1] - self.frequency[0]
         # inds_check = self.xp.searchsorted(self.frequency, seg_freqs.flatten(), side="right").reshape(seg_freqs.shape)
+
+        # figures out where in self.frequency each segment frequency falls
         inds_check = self.xp.abs(
             (tmp_freqs_base_sorted_segs - first_frequency) / df
         ).astype(int)
+
+        # start frequency index of each segment
         start_inds = (inds_check[:, :, 0].copy() + 1).astype(int)
+
+        # end frequency index of each segment
         end_inds = (inds_check[:, :, 1].copy()).astype(int)
 
+        # final inds array
         inds_fin = self.xp.array([start_inds, end_inds]).transpose((1, 2, 0))
 
         # just for checking
@@ -429,10 +479,17 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         inds_fin[inds_fin > len(self.frequency) - 1] = len(self.frequency) - 1
         inds_fin[inds_fin < 0] = 0
 
+        # frequencies to check boundaries
         freq_check = self.frequency[inds_fin]
 
+        # get rid of any segments that do not actually include
+        # any from self.frequencies
+        # especially happens at the beginning when the time step is so small
         run_seg = (np.diff(inds_fin, axis=-1) < 0)[:, :, 0]
 
+        # checks boundaries of frequencies within each segment
+        # adjusts them if needed
+        # TODO: check
         while self.xp.any(
             (
                 (tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1])
@@ -452,20 +509,26 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             end_inds[fix_end] -= 1
             print("check")
 
+        # place holder for k array
         k_arr = self.xp.zeros_like(m_arr)
         data_length = len(self.frequency)
 
+        # prepare spline for GPU evaluation
         spline_in = (
             spline.interp_array.reshape(spline.reshape_shape)
             .transpose((0, 2, 1))
             .flatten()
             .copy()
         )
+
+        # where is the zero index
+        # for +/- m type of thing
         zero_index = self.xp.where(self.frequency == 0.0)[0][0].item()
 
         if separate_modes:
             include_minus_m = False
 
+        # run GPU kernel
         self.get_waveform_fd(
             self.waveform,
             spline_in,
@@ -487,6 +550,9 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             separate_modes,
         )
 
+        # adjust from fourier transform across +/- frequencies
+        # to h+/hx at positive frequencies
+        # TODO: check not just above
         fd_sig = -self.xp.flip(self.waveform)
         fft_sig_p = (
             self.xp.real(fd_sig + self.xp.flip(fd_sig)) / 2.0
@@ -505,243 +571,12 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             -self.xp.imag(fd_sig + self.xp.flip(fd_sig)) / 2.0
             + 1j * self.xp.real(fd_sig - self.xp.flip(fd_sig)) / 2.0
         )
+
+        # mask to only have positive frequency values
         if mask_positive:
             mask = self.frequency >= 0.0
             self.waveform = self.xp.vstack((fft_sig_p[mask], fft_sig_c[mask]))
         else:
             self.waveform = self.xp.vstack((fft_sig_p, fft_sig_c))
 
-        # x = t - 8.754992204872e+06
-        # a = 1.120059270283e-21
-        # b = 7.524898481384e-16
-        # c = 4.191674114826e-101
-        # d = -2.839495309885e-03
-
-        # y_vals = a * x ** 3+ b * x ** 2 + c * x + d
-        # import matplotlib.pyplot as plt
-        # plt.plot(t, seg_freqs[0])
-        # plt.plot(t, y_vals)
-        # plt.axhline(-2.813821469256e-03)
-        # plt.axvline(8.754992204872e+06 + 5.530640798130e+04)
-        # plt.show()
-        # breakpoint()
         return
-        # TODO: check this missed_turn_overs
-        """
-            =x   =   {q + [q2 + (r-p2)3]1/2}1/3   +   {q - [q2 + (r-p2)3]1/2}1/3   +   p
-        where
-
-        p = -b/(3a),   q = p3 + (bc-3ad)/(6a2),   r = c/(3a)
-        """
-
-        breakpoint()
-        changes = self.xp.concatenate(
-            [seg_freqs[:, :-1, None], seg_freqs[:, 1:, None]], axis=-1
-        )
-
-        changes_copy = changes.copy()
-        changes[:, :, 0] = changes_copy[:, :, 1] * (
-            changes_copy[:, :, 0] > changes_copy[:, :, 1]
-        ) + changes_copy[:, :, 0] * (changes_copy[:, :, 0] < changes_copy[:, :, 1])
-
-        changes[:, :, 1] = changes_copy[:, :, 0] * (
-            changes_copy[:, :, 0] > changes_copy[:, :, 1]
-        ) + changes_copy[:, :, 1] * (changes_copy[:, :, 0] < changes_copy[:, :, 1])
-
-        reshape_shape = changes.shape
-
-        df = self.frequency[1] - self.frequency[0]
-
-        inds = np.zeros_like(changes).astype(np.int32)
-
-        inds[:, :, 0] = self.xp.ceil(
-            (changes[:, :, 0] - self.frequency[0]) / df
-        ).astype(np.int32)
-        inds[:, :, 1] = self.xp.floor(
-            (changes[:, :, 1] - self.frequency[0]) / df
-        ).astype(np.int32)
-
-        # inds[:, :, 0] += 1
-        # inds[:, :, 1] -= 1`
-
-        seg_inds = self.xp.zeros_like(seg_freqs, dtype=int)
-
-        freq_mode_start = (
-            m_arr[:, None] * spline.c1[-4, None, :]
-            + n_arr[:, None] * spline.c1[-3, None, :]
-        )
-
-        inds0, inds1 = self.xp.where(
-            (self.xp.abs(self.xp.diff(self.xp.sign(freq_mode_start))) == 2.0)
-        )
-
-        inds_turnover = self.xp.full(num_teuk_modes, False)
-        inds_turnover[inds0] = True
-        turnover_seg = self.xp.empty(num_teuk_modes, dtype=np.int32)
-
-        turnover_seg[inds_turnover] = inds1
-        turnover_seg[~inds_turnover] = seg_freqs.shape[1]
-
-        turnover_slice = (self.xp.arange(len(turnover_seg)), turnover_seg)
-
-        # find t_star analytically
-
-        bad = turnover_seg >= init_len
-
-        # still ~1 ms
-
-        turnover_seg[bad] = init_len - 1
-        c1 = (
-            m_arr[:] * spline.c1[-4, turnover_seg]
-            + n_arr[:] * spline.c1[-3, turnover_seg]
-        )
-        c2 = (
-            m_arr[:] * spline.c2[-4, turnover_seg]
-            + n_arr[:] * spline.c2[-3, turnover_seg]
-        )
-        c3 = (
-            m_arr[:] * spline.c3[-4, turnover_seg]
-            + n_arr[:] * spline.c3[-3, turnover_seg]
-        )
-        slope0 = m_arr[:] * spline.c1[-4, 0] + n_arr[:] * spline.c1[-3, 0]
-
-        ratio = c2 / (3 * c3)
-        second_ratio = c1 / (3 * c3)
-
-        # shape is (nmodes, init_len)
-        t_star = t[turnover_seg] - ratio + self.xp.sqrt(ratio**2 - second_ratio)
-
-        t_star[bad] = t[-1]
-
-        # TODO: don't evaluate everything
-        inds_eval = self.xp.searchsorted(t, t_star).astype(self.xp.int32)
-
-        num_modes_here = int(1 / 2 * (ninterps - 4))
-        spline_out = self.xp.zeros((int(2 * num_modes_here),))
-
-        run = ~bad
-
-        self.interp_time(
-            spline_out,
-            t,
-            t_star,
-            turnover_seg,
-            spline.interp_array,
-            ninterps,
-            length,
-            run,
-        )
-
-        spline_out = spline_out.reshape(2, num_modes_here)
-
-        spline_out[0, bad] = f_phi[-1]
-        spline_out[1, bad] = f_r[-1]
-
-        # 34
-        if spline_out.ndim == 1:
-            spline_out = spline_out[:, None]
-
-        Fstar = m_arr * spline_out[0] + n_arr * spline_out[1]
-
-        inds_pass_through_zero = self.xp.any(
-            self.xp.diff(self.xp.sign(seg_freqs), axis=1) != 0.0, axis=1
-        )
-
-        min_freq = seg_freqs.min(axis=1) * (Fstar > seg_freqs.min(axis=1)) + Fstar * (
-            Fstar <= seg_freqs.min(axis=1)
-        )
-        shift_freq = 2 * min_freq
-        shift_freq[~inds_pass_through_zero] = 0.0
-
-        fix_negative = (seg_freqs - shift_freq[:, None])[:, 0] < 0.0
-        seg_freqs_for_special = self.xp.abs(seg_freqs - shift_freq[:, None])
-        Fstar_for_special = self.xp.abs(Fstar - shift_freq)
-
-        temp1 = Fstar_for_special[:, None] + abs(
-            seg_freqs_for_special - Fstar_for_special[:, None]
-        )
-        temp2 = Fstar_for_special[:, None] - abs(
-            seg_freqs_for_special - Fstar_for_special[:, None]
-        )
-
-        slope0[fix_negative] = slope0[fix_negative] * -1
-
-        special_f_arrs = (
-            seg_freqs_for_special
-            * ((t[None, :] <= t_star[:, None]) & (slope0[:, None] >= 0.0))
-            + (temp1) * ((t[None, :] > t_star[:, None]) & (slope0[:, None] >= 0.0))
-            + (
-                seg_freqs_for_special[:, 0][:, None]
-                + (seg_freqs_for_special[:, 0][:, None] - seg_freqs_for_special)
-            )
-            * ((t[None, :] <= t_star[:, None]) & (slope0[:, None] < 0.0))
-            + (
-                seg_freqs_for_special[:, 0][:, None]
-                + (seg_freqs_for_special[:, 0][:, None] - temp2)
-            )
-            * ((t[None, :] > t_star[:, None]) & (slope0[:, None] < 0.0))
-        )
-
-        # TODO: this spline sets the turnover slightly off
-        self.f_modes = special_f_arrs
-        special_f_spline = CubicSplineInterpolant(
-            special_f_arrs,
-            self.xp.tile(t, (special_f_arrs.shape[0], 1)),
-            use_gpu=self.use_gpu,
-        )
-
-        # fix non-turnover setup
-        inds_fix = self.xp.arange(len(turnover_seg))[~bad]
-
-        fixed_inds = ((Fstar[inds_fix] - self.frequency[0]) / df).astype(int)
-
-        fixed_inds = fixed_inds * (slope0[inds_fix] > 0.0) + (fixed_inds + 1) * (
-            slope0[inds_fix] < 0.0
-        )
-
-        which_to_switch = self.xp.ones_like(fixed_inds) * (
-            slope0[inds_fix] > 0.0
-        ) + self.xp.zeros_like(fixed_inds) * (slope0[inds_fix] < 0.0)
-
-        inds[(inds_fix, turnover_seg[~bad], which_to_switch)] = fixed_inds
-
-        # final waveform
-        h = self.xp.zeros_like(self.frequency, dtype=complex)
-
-        max_points = self.xp.diff(inds, axis=1).max().item()
-
-        inds0_in = inds[:, :, 0].flatten().copy()
-        inds1_in = inds[:, :, 1].flatten().copy()
-
-        zero_index = int(len(self.frequency) / 2)
-
-        # 85
-        initial_freqs = seg_freqs_for_special[:, 0].copy()
-        self.get_waveform_fd(
-            h,
-            spline.interp_array,
-            special_f_spline.interp_array,
-            special_f_arrs.T.flatten().copy(),
-            m_arr,
-            n_arr,
-            num_teuk_modes,
-            ylms,
-            t,
-            inds0_in,
-            inds1_in,
-            init_len,
-            self.frequency[0].item(),
-            turnover_seg,
-            Fstar,
-            max_points,
-            df,
-            self.frequency,
-            zero_index,
-            shift_freq,
-            slope0,
-            initial_freqs,
-        )
-
-        self.waveform = h
-
-        # 95
