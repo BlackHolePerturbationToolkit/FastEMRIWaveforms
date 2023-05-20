@@ -135,10 +135,17 @@ class WaveformTest(unittest.TestCase):
             print("works")
             few_gen(*prob_point.get(),T=1.0,eps=1e-3,dt=6.0)
             print("nope")
+        else:
+            few_gen(*prob_point,T=1.0,eps=1e-3,dt=6.0,f_arr=freq)
+            print("works, freq=",freq)
+            few_gen(*prob_point,T=4.0,eps=1e-3,dt=6.0)
+            print("works")
+            few_gen(*prob_point,T=1.0,eps=1e-3,dt=6.0)
+            print("nope")
 
-        if gpu_available:
-            result = ac.item().real
-
+        # if gpu_available:
+        result = ac.item().real
+        
         # import matplotlib.pyplot as plt
         # plt.figure(); plt.semilogx(freq, xp.real(time_series_1_fft).get(), alpha=0.5); plt.plot(freq, xp.real(time_series_2_fft).get(), '--', alpha=0.5); plt.xlim([3e-3,3.01e-3]); plt.savefig('test_real') 
         # plt.figure(); plt.semilogx(freq, xp.imag(time_series_1_fft).get(), alpha=0.5); plt.plot(freq, xp.imag(time_series_2_fft).get(), '--', alpha=0.5); plt.xlim([3e-3,3.01e-3]);plt.savefig('test_imag') 
