@@ -33,7 +33,9 @@ from pyinterp_cpu import get_waveform_fd_wrap as get_waveform_fd_wrap_cpu
 from pyinterp_cpu import interp_time_for_fd as interp_time_for_fd_cpu
 from pyinterp_cpu import find_segments_fd as find_segments_fd_cpu
 from pyinterp_cpu import find_segments_fd as find_segments_fd_cpu
-from pyinterp_cpu import get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_cpu
+from pyinterp_cpu import (
+    get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_cpu,
+)
 
 # Python imports
 from few.utils.baseclasses import (
@@ -54,7 +56,7 @@ try:
         get_waveform_fd_wrap,
         interp_time_for_fd,
         find_segments_fd,
-        get_waveform_generic_fd_wrap
+        get_waveform_generic_fd_wrap,
     )
 
 except (ImportError, ModuleNotFoundError) as e:
@@ -65,6 +67,7 @@ from scipy import special
 from scipy.interpolate import CubicSpline
 import multiprocessing as mp
 
+
 # added to return element or none in list
 def find_element_in_list(element, list_element):
     try:
@@ -74,8 +77,7 @@ def find_element_in_list(element, list_element):
         return None
 
 
-def searchsorted2d_vec(a,b, batch_size=-1, xp=None, **kwargs):
-
+def searchsorted2d_vec(a, b, batch_size=-1, xp=None, **kwargs):
     if xp is None:
         xp = np
 
@@ -98,7 +100,7 @@ def searchsorted2d_vec(a,b, batch_size=-1, xp=None, **kwargs):
         b = xp.expand_dims(b, (0,))
 
     if batch_size < 0:
-            inds_split_all = [xp.arange(a.shape[0])]
+        inds_split_all = [xp.arange(a.shape[0])]
     else:
         split_inds = []
         i = 0
@@ -112,7 +114,7 @@ def searchsorted2d_vec(a,b, batch_size=-1, xp=None, **kwargs):
 
     # select tqdm if user wants to see progress
     iterator = enumerate(inds_split_all)
-    #iterator = tqdm(iterator, desc="time batch") if show_progress else iterator
+    # iterator = tqdm(iterator, desc="time batch") if show_progress else iterator
 
     out = xp.zeros((a.shape[0], b.shape[1]))
     for i, inds_in in iterator:
@@ -123,12 +125,16 @@ def searchsorted2d_vec(a,b, batch_size=-1, xp=None, **kwargs):
         else:
             b_temp = b
 
-        m,n = a_temp.shape
-        max_num = xp.maximum(a_temp.max() - a_temp.min(), b_temp.max() - b_temp.min()) + 1
-        r = max_num*xp.arange(a_temp.shape[0])[:,None]
-        p = xp.searchsorted( (a_temp+r).ravel(), (b_temp+r).ravel(), **kwargs).reshape(m,-1)
-        out[inds_in] = p - n*(xp.arange(m)[:,None])
-    
+        m, n = a_temp.shape
+        max_num = (
+            xp.maximum(a_temp.max() - a_temp.min(), b_temp.max() - b_temp.min()) + 1
+        )
+        r = max_num * xp.arange(a_temp.shape[0])[:, None]
+        p = xp.searchsorted(
+            (a_temp + r).ravel(), (b_temp + r).ravel(), **kwargs
+        ).reshape(m, -1)
+        out[inds_in] = p - n * (xp.arange(m)[:, None])
+
     return out
 
 
@@ -143,7 +149,6 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
     """
 
     def __init__(self, *args, **kwargs):
-
         ParallelModuleBase.__init__(self, *args, **kwargs)
         SchwarzschildEccentric.__init__(self, *args, **kwargs)
         SummationBase.__init__(self, *args, **kwargs)
@@ -262,20 +267,40 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         spline = CubicSplineInterpolant(t, y_all, use_gpu=self.use_gpu)
         t_new = self.xp.linspace(t.min(), t.max(), 5000)
         new_freqs = freqs_spline(t_new)
-        seg_freqs = m_arr[:, None] * f_phi[None, :] + n_arr[:, None] * f_r[None, :] 
-        
-        argsort = self.xp.argsort(self.xp.abs(self.xp.asarray([seg_freqs[:, :-1], seg_freqs[:, 1:]]).transpose(1, 2, 0)), axis=-1)
-        tmp_freqs_segs = self.xp.sort(self.xp.abs(self.xp.asarray([seg_freqs[:, :-1], seg_freqs[:, 1:]]).transpose(1, 2, 0)), axis=-1)
-        tmp_freqs_base_sorted_segs = self.xp.sort(self.xp.asarray([seg_freqs[:, :-1], seg_freqs[:, 1:]]).transpose(1, 2, 0), axis=-1)
-        
-        new_freqs_per_mode = m_arr[:, None] * new_freqs[0][None, :] + n_arr[:, None] * new_freqs[1][None, :]
+        seg_freqs = m_arr[:, None] * f_phi[None, :] + n_arr[:, None] * f_r[None, :]
+
+        argsort = self.xp.argsort(
+            self.xp.abs(
+                self.xp.asarray([seg_freqs[:, :-1], seg_freqs[:, 1:]]).transpose(
+                    1, 2, 0
+                )
+            ),
+            axis=-1,
+        )
+        tmp_freqs_segs = self.xp.sort(
+            self.xp.abs(
+                self.xp.asarray([seg_freqs[:, :-1], seg_freqs[:, 1:]]).transpose(
+                    1, 2, 0
+                )
+            ),
+            axis=-1,
+        )
+        tmp_freqs_base_sorted_segs = self.xp.sort(
+            self.xp.asarray([seg_freqs[:, :-1], seg_freqs[:, 1:]]).transpose(1, 2, 0),
+            axis=-1,
+        )
+
+        new_freqs_per_mode = (
+            m_arr[:, None] * new_freqs[0][None, :]
+            + n_arr[:, None] * new_freqs[1][None, :]
+        )
 
         # fix for turnover
         t_of_max_freq = t_new[new_freqs_per_mode.argmax(axis=-1)]
         t_of_min_freq = t_new[new_freqs_per_mode.argmin(axis=-1)]
         check_turnover_list = [
             self.xp.where((t_of_max_freq > 0.0) & (t_of_max_freq < t[-1]))[0],
-            self.xp.where((t_of_min_freq > 0.0) & (t_of_min_freq < t[-1]))[0]
+            self.xp.where((t_of_min_freq > 0.0) & (t_of_min_freq < t[-1]))[0],
         ]
 
         fix_turnover_seg_ind_list = []
@@ -292,11 +317,23 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             fix_turnover_seg_ind = self.xp.concatenate(fix_turnover_seg_ind_list)
             check_turnover = self.xp.concatenate(check_turnover_list)
 
-            a = (m_arr[check_turnover] * (freqs_spline.c3[(0, fix_turnover_seg_ind)])  + n_arr[check_turnover] * freqs_spline.c3[(1, fix_turnover_seg_ind)])
-            b = (m_arr[check_turnover] * (freqs_spline.c2[(0, fix_turnover_seg_ind)])  + n_arr[check_turnover] * freqs_spline.c2[(1, fix_turnover_seg_ind)])
-            c = (m_arr[check_turnover] * (freqs_spline.c1[(0, fix_turnover_seg_ind)])  + n_arr[check_turnover] * freqs_spline.c1[(1, fix_turnover_seg_ind)])
-            d = (m_arr[check_turnover] * (freqs_spline.y[(0, fix_turnover_seg_ind)])  + n_arr[check_turnover] * freqs_spline.y[(1, fix_turnover_seg_ind)])
-            
+            a = (
+                m_arr[check_turnover] * (freqs_spline.c3[(0, fix_turnover_seg_ind)])
+                + n_arr[check_turnover] * freqs_spline.c3[(1, fix_turnover_seg_ind)]
+            )
+            b = (
+                m_arr[check_turnover] * (freqs_spline.c2[(0, fix_turnover_seg_ind)])
+                + n_arr[check_turnover] * freqs_spline.c2[(1, fix_turnover_seg_ind)]
+            )
+            c = (
+                m_arr[check_turnover] * (freqs_spline.c1[(0, fix_turnover_seg_ind)])
+                + n_arr[check_turnover] * freqs_spline.c1[(1, fix_turnover_seg_ind)]
+            )
+            d = (
+                m_arr[check_turnover] * (freqs_spline.y[(0, fix_turnover_seg_ind)])
+                + n_arr[check_turnover] * freqs_spline.y[(1, fix_turnover_seg_ind)]
+            )
+
             inner_part = (2 * b) ** 2 - 4 * (3 * a) * c
             if self.xp.any(inner_part < -1e10):
                 breakpoint()
@@ -304,45 +341,69 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
             roots_upper_1 = (-(2 * b) + self.xp.sqrt(inner_part)) / (2 * (3 * a))
             roots_upper_2 = (-(2 * b) - self.xp.sqrt(inner_part)) / (2 * (3 * a))
-            
+
             t_new_roots_upper_1 = t[fix_turnover_seg_ind] + roots_upper_1
             t_new_roots_upper_2 = t[fix_turnover_seg_ind] + roots_upper_2
-            keep_root_1 = (t[fix_turnover_seg_ind] < t_new_roots_upper_1) & (t[fix_turnover_seg_ind + 1] > t_new_roots_upper_1)
-            keep_root_2 = (t[fix_turnover_seg_ind] < t_new_roots_upper_2) & (t[fix_turnover_seg_ind + 1] > t_new_roots_upper_2)
+            keep_root_1 = (t[fix_turnover_seg_ind] < t_new_roots_upper_1) & (
+                t[fix_turnover_seg_ind + 1] > t_new_roots_upper_1
+            )
+            keep_root_2 = (t[fix_turnover_seg_ind] < t_new_roots_upper_2) & (
+                t[fix_turnover_seg_ind + 1] > t_new_roots_upper_2
+            )
 
             if self.xp.any(keep_root_1 & keep_root_2):
                 breakpoint()
             elif not self.xp.any(keep_root_1 | keep_root_2):
                 pass
             else:
-                t_new_fix = t_new_roots_upper_1 * keep_root_1 + t_new_roots_upper_2 * keep_root_2
+                t_new_fix = (
+                    t_new_roots_upper_1 * keep_root_1
+                    + t_new_roots_upper_2 * keep_root_2
+                )
                 beginning_of_seg = t[fix_turnover_seg_ind]
                 x_fix = t_new_fix - beginning_of_seg
-                max_or_min_f = a * x_fix ** 3 + b * x_fix ** 2 + c * x_fix + d
-                tmp_segs_sorted_turnover = self.xp.sort(self.xp.concatenate([tmp_freqs_base_sorted_segs[check_turnover, fix_turnover_seg_ind], self.xp.array([max_or_min_f])], axis=-1), axis=-1)
+                max_or_min_f = a * x_fix**3 + b * x_fix**2 + c * x_fix + d
+                tmp_segs_sorted_turnover = self.xp.sort(
+                    self.xp.concatenate(
+                        [
+                            tmp_freqs_base_sorted_segs[
+                                check_turnover, fix_turnover_seg_ind
+                            ],
+                            self.xp.array([max_or_min_f]),
+                        ],
+                        axis=-1,
+                    ),
+                    axis=-1,
+                )
 
-                tmp_freqs_base_sorted_segs[check_turnover, fix_turnover_seg_ind] = tmp_segs_sorted_turnover[:, np.array([0, 2])]
-            
+                tmp_freqs_base_sorted_segs[
+                    check_turnover, fix_turnover_seg_ind
+                ] = tmp_segs_sorted_turnover[:, np.array([0, 2])]
+
         except ValueError:
             pass
-        #import matplotlib.pyplot as plt
-        #plt.plot(new_freqs_per_mode[0])
-        #plt.savefig("check0.png")
+        # import matplotlib.pyplot as plt
+        # plt.plot(new_freqs_per_mode[0])
+        # plt.savefig("check0.png")
         try:
             self.frequency = kwargs["f_arr"]
             # fmax = 1 / (dt 2)
             # dt = float(1/self.xp.max(self.frequency) * 2.0)
         except:
-            self.frequency = self.xp.fft.fftshift(self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt))
+            self.frequency = self.xp.fft.fftshift(
+                self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt)
+            )
 
         ind_zero = self.xp.where(self.frequency == 0)[0][0]
-        first_frequency =  self.frequency[0]
+        first_frequency = self.frequency[0]
         df = self.frequency[1] - self.frequency[0]
         # inds_check = self.xp.searchsorted(self.frequency, seg_freqs.flatten(), side="right").reshape(seg_freqs.shape)
-        inds_check = self.xp.abs((tmp_freqs_base_sorted_segs -  first_frequency)/ df).astype(int)
+        inds_check = self.xp.abs(
+            (tmp_freqs_base_sorted_segs - first_frequency) / df
+        ).astype(int)
         start_inds = (inds_check[:, :, 0].copy() + 1).astype(int)
         end_inds = (inds_check[:, :, 1].copy()).astype(int)
-        
+
         inds_fin = self.xp.array([start_inds, end_inds]).transpose((1, 2, 0))
 
         # just for checking
@@ -353,19 +414,35 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         freq_check = self.frequency[inds_fin]
 
         run_seg = (np.diff(inds_fin, axis=-1) < 0)[:, :, 0]
-        while self.xp.any(((tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1]) | (tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])) & (run_seg)):
+
+        while self.xp.any(
+            (
+                (tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1])
+                | (tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])
+            )
+            & (run_seg)
+        ):
             breakpoint()
-            fix_start = (((tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])) & (run_seg))
+            fix_start = (
+                (tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])
+            ) & (run_seg)
             start_inds[fix_start] += 1
-            
-            fix_end = (((tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1])) & (run_seg))
+
+            fix_end = ((tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1])) & (
+                run_seg
+            )
             end_inds[fix_end] -= 1
             print("check")
-        
+
         k_arr = self.xp.zeros_like(m_arr)
         data_length = len(self.frequency)
 
-        spline_in = spline.interp_array.reshape(spline.reshape_shape).transpose((0, 2, 1)).flatten().copy()
+        spline_in = (
+            spline.interp_array.reshape(spline.reshape_shape)
+            .transpose((0, 2, 1))
+            .flatten()
+            .copy()
+        )
         zero_index = self.xp.where(self.frequency == 0.0)[0][0].item()
 
         if separate_modes:
@@ -375,26 +452,32 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             self.waveform,
             spline_in,
             m_arr,
-            k_arr, 
+            k_arr,
             n_arr,
             num_teuk_modes,
-            dt, 
-            t, 
-            init_len, 
+            dt,
+            t,
+            init_len,
             data_length,
-            self.frequency, 
-            start_inds.flatten().copy().astype(self.xp.int32), 
-            end_inds.flatten().copy().astype(self.xp.int32), 
+            self.frequency,
+            start_inds.flatten().copy().astype(self.xp.int32),
+            end_inds.flatten().copy().astype(self.xp.int32),
             init_len - 1,
             ylms,
             zero_index,
             include_minus_m,
-            separate_modes
+            separate_modes,
         )
 
         fd_sig = -self.xp.flip(self.waveform)
-        fft_sig_p = self.xp.real(fd_sig + self.xp.flip(fd_sig) )/2.0 + 1j * self.xp.imag(fd_sig - self.xp.flip(fd_sig))/2.0
-        fft_sig_c = -self.xp.imag(fd_sig + self.xp.flip(fd_sig) )/2.0 + 1j * self.xp.real(fd_sig - self.xp.flip(fd_sig))/2.0
+        fft_sig_p = (
+            self.xp.real(fd_sig + self.xp.flip(fd_sig)) / 2.0
+            + 1j * self.xp.imag(fd_sig - self.xp.flip(fd_sig)) / 2.0
+        )
+        fft_sig_c = (
+            -self.xp.imag(fd_sig + self.xp.flip(fd_sig)) / 2.0
+            + 1j * self.xp.real(fd_sig - self.xp.flip(fd_sig)) / 2.0
+        )
         self.waveform = self.xp.vstack((fft_sig_p, fft_sig_c))
 
         # x = t - 8.754992204872e+06
@@ -495,7 +578,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         second_ratio = c1 / (3 * c3)
 
         # shape is (nmodes, init_len)
-        t_star = t[turnover_seg] - ratio + self.xp.sqrt(ratio ** 2 - second_ratio)
+        t_star = t[turnover_seg] - ratio + self.xp.sqrt(ratio**2 - second_ratio)
 
         t_star[bad] = t[-1]
 
