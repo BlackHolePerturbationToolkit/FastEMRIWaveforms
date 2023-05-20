@@ -200,6 +200,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         include_minus_m=True,
         separate_modes=False,
         dt=10.0,
+        f_arr=None,
+        mask_positive=False,
         **kwargs,
     ):
         """Interpolated summation function.
@@ -382,6 +384,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         except ValueError:
             pass
+<<<<<<< HEAD
         # import matplotlib.pyplot as plt
         # plt.plot(new_freqs_per_mode[0])
         # plt.savefig("check0.png")
@@ -394,6 +397,21 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
                 self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt)
             )
 
+=======
+        #import matplotlib.pyplot as plt
+        #plt.plot(new_freqs_per_mode[0])
+        #plt.savefig("check0.png")
+    
+        
+        if f_arr is not None:
+            self.frequency = f_arr
+        else:
+            self.frequency = self.xp.fft.fftshift(self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt))
+        
+        # TODO make check for frequency
+        assert 1==np.sum(self.frequency==0.0)
+        
+>>>>>>> 233f2cfde0efa8e9e224452432f47cdb9dc0fbdc
         ind_zero = self.xp.where(self.frequency == 0)[0][0]
         first_frequency = self.frequency[0]
         df = self.frequency[1] - self.frequency[0]
@@ -470,6 +488,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         )
 
         fd_sig = -self.xp.flip(self.waveform)
+<<<<<<< HEAD
         fft_sig_p = (
             self.xp.real(fd_sig + self.xp.flip(fd_sig)) / 2.0
             + 1j * self.xp.imag(fd_sig - self.xp.flip(fd_sig)) / 2.0
@@ -479,6 +498,15 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             + 1j * self.xp.real(fd_sig - self.xp.flip(fd_sig)) / 2.0
         )
         self.waveform = self.xp.vstack((fft_sig_p, fft_sig_c))
+=======
+        fft_sig_p = self.xp.real(fd_sig + self.xp.flip(fd_sig) )/2.0 + 1j * self.xp.imag(fd_sig - self.xp.flip(fd_sig))/2.0
+        fft_sig_c = -self.xp.imag(fd_sig + self.xp.flip(fd_sig) )/2.0 + 1j * self.xp.real(fd_sig - self.xp.flip(fd_sig))/2.0
+        if mask_positive:
+            mask = (self.frequency>=0.0)
+            self.waveform = self.xp.vstack((fft_sig_p[mask], fft_sig_c[mask]))
+        else:
+            self.waveform = self.xp.vstack((fft_sig_p, fft_sig_c))
+>>>>>>> 233f2cfde0efa8e9e224452432f47cdb9dc0fbdc
 
         # x = t - 8.754992204872e+06
         # a = 1.120059270283e-21
