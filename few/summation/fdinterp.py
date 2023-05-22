@@ -482,33 +482,6 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         # frequencies to check boundaries
         freq_check = self.frequency[inds_fin]
 
-        # get rid of any segments that do not actually include
-        # any from self.frequencies
-        # especially happens at the beginning when the time step is so small
-        run_seg = (np.diff(inds_fin, axis=-1) < 0)[:, :, 0]
-
-        # checks boundaries of frequencies within each segment
-        # adjusts them if needed
-        # TODO: check
-        while self.xp.any(
-            (
-                (tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1])
-                | (tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])
-            )
-            & (run_seg)
-        ):
-            breakpoint()
-            fix_start = (
-                (tmp_freqs_base_sorted_segs[:, :, 0] > freq_check[:, :, 0])
-            ) & (run_seg)
-            start_inds[fix_start] += 1
-
-            fix_end = ((tmp_freqs_base_sorted_segs[:, :, 1] < freq_check[:, :, 1])) & (
-                run_seg
-            )
-            end_inds[fix_end] -= 1
-            print("check")
-
         # place holder for k array
         k_arr = self.xp.zeros_like(m_arr)
         data_length = len(self.frequency)
