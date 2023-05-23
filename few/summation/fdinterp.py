@@ -444,9 +444,12 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         if f_arr is not None:
             self.frequency = f_arr
         else:
-            self.frequency = self.xp.fft.fftshift(
-                self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt)
-            )
+            Len = self.num_pts + self.num_pts_pad
+            self.frequency = self.xp.hstack((self.xp.arange(-(Len // 2), 0),self.xp.arange(0, (Len - 1) // 2 + 1))) / (Len * dt)
+
+            # self.frequency = self.xp.fft.fftshift(
+            #     self.xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt)
+            # )
 
         # TODO: make check for frequency
         assert 1 == np.sum(self.frequency == 0.0)
