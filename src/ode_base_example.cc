@@ -26,6 +26,7 @@
 #include "dIdt8H_5PNe10.h"
 #include "ode.hh"
 
+#define pn5_num_add_args 1
 #define pn5_Y
 #define pn5_citation1 Pn5_citation
 __deriv__
@@ -34,24 +35,41 @@ void pn5(double* pdot, double* edot, double* Ydot,
                   double epsilon, double a, double p, double e, double Y, double* additional_args)
 {
     // evaluate ODEs
-
     // the frequency variables are pointers!
-    double x = Y_to_xI(a, p, e, Y);
-    KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);
+    if(additional_args[0] == 1.0){ // Integrate backwards
+        double x = Y_to_xI(a, p, e, Y);
+        KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);
 
-	int Nv = 10;
-    int ne = 10;
-    *pdot = epsilon * dpdt8H_5PNe10 (a, p, e, Y, Nv, ne);
+        int Nv = 10;
+        int ne = 10;
+        *pdot = -epsilon * dpdt8H_5PNe10 (a, p, e, Y, Nv, ne);
 
-    // needs adjustment for validity
-    Nv = 10;
-    ne = 8;
-	*edot = epsilon * dedt8H_5PNe10 (a, p, e, Y, Nv, ne);
+        // needs adjustment for validity
+        Nv = 10;
+        ne = 8;
+        *edot = -epsilon * dedt8H_5PNe10 (a, p, e, Y, Nv, ne);
 
-    Nv = 7;
-    ne = 10;
-    *Ydot = epsilon * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);
+        Nv = 7;
+        ne = 10;
+        *Ydot = -epsilon * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);
+    }
+    else{ // Integrate Forwards
+        double x = Y_to_xI(a, p, e, Y);
+        KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);
 
+	    int Nv = 10;
+        int ne = 10;
+        *pdot = epsilon * dpdt8H_5PNe10 (a, p, e, Y, Nv, ne);
+
+        // needs adjustment for validity
+        Nv = 10;
+        ne = 8;
+	    *edot = epsilon * dedt8H_5PNe10 (a, p, e, Y, Nv, ne);
+
+        Nv = 7;
+        ne = 10;
+        *Ydot = epsilon * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);        
+    }
 }
 
 
