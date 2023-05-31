@@ -178,7 +178,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
     params_holder->enforce_schwarz_sep;
 
     double Msec = MTSUN_SI*M;
-
     //high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
     // Compute the adimensionalized time steps and max time
