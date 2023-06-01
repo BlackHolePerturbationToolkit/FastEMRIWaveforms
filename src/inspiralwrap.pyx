@@ -31,9 +31,9 @@ cdef extern from "../include/Inspiral.hh":
                           double* additional_args) except+
 
     cdef cppclass TestCaseWrap "TestCase":
-        TestCaseWrap(ODECarrierWrap* test, string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_, string few_dir);
-        void run_test(double *t, double *p, double *e, double *x, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, double* additional_args);
-        void dealloc();
+        TestCaseWrap(ODECarrierWrap* test, string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_, string few_dir) except+
+        void run_test(double *t, double *p, double *e, double *x, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, double* additional_args) except+
+        void dealloc() except+
 
 cdef extern from "../include/ode.hh":
     cdef cppclass ODECarrierWrap "ODECarrier":
