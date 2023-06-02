@@ -704,7 +704,6 @@ class TrajectoryBase(ABC):
 
         # inspiral generator that must be added to each trajectory class
         out = self.get_inspiral(*args, **kwargs)
-
         # get time separate from the rest of the params
         t = out[0]
         params = out[1:]
@@ -813,7 +812,6 @@ class SummationBase(ABC):
             **kwargs (dict, placeholder): Added for future flexibility.
 
         """
-
         n_pts = int(T * YRSID_SI / dt)
         T = n_pts * dt
         # determine the output array setup
@@ -838,7 +836,6 @@ class SummationBase(ABC):
         self.waveform = self.xp.zeros(
             (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
         )
-
         # get the waveform summed in place
         self.sum(t, *args, dt=dt, **kwargs)
 

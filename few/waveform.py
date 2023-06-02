@@ -1185,7 +1185,6 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
             dt=dt,
             T=T,
         )
-
         return waveform
 
 

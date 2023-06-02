@@ -28,6 +28,10 @@ from few.utils.constants import *
 from few.summation.aakwave import AAKSummation
 from few.waveform import Pn5AAKWaveform, AAKWaveformBase
 
+import scipy.interpolate
+
+
+
 use_gpu = False
 
 # keyword arguments for inspiral generator (RunKerrGenericPn5Inspiral)
@@ -51,6 +55,7 @@ Ylm_kwargs = {
 sum_kwargs = {
     "use_gpu": use_gpu,  # GPU is availabel for this type of summation
     "pad_output": False,
+    "integrate_backwards":True
 }
 
 # THE FOLLOWING THREAD COMMANDS DO NOT WORK ON THE M1 CHIP, BUT CAN BE USED WITH OLDER MODELS
@@ -87,82 +92,133 @@ p_sep = get_separatrix(a, e_f, x_new)
 print("separatrix is at",p_sep)
 
 
-t, p_back, e_back, Y_back, Phi_phi_back, Phi_r_back, Phi_theta_back = traj(M, mu, a, p_f, e_f, Y_f, integrate_backwards, 
-                                             Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T )
-fig, axes = plt.subplots(2, 4)
-plt.subplots_adjust(wspace=0.5)
-fig.set_size_inches(14, 8)
-axes = axes.ravel()
-
-ylabels = [r'$e$', r'$p$', r'$e$', r'$Y$', r'$\Phi_\phi$', r'$\Phi_r$', r'$\Phi_\theta$']
-xlabels = [r'$p$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$']
-ys = [e_back, p_back, e_back, Y_back, Phi_phi_back, Phi_r_back, Phi_theta_back]
-xs = [p_back, t, t, t, t, t, t]
-
-for i, (ax, x, y, xlab, ylab) in enumerate(zip(axes, xs, ys, xlabels, ylabels)):
-    ax.plot(x, y)
-    ax.set_xlabel(xlab, fontsize=16)
-    ax.set_ylabel(ylab, fontsize=16)
-    ax.set_title("integrate backwards")
-axes[-1].set_visible(False)
-plt.tight_layout()
-plt.show()
-plt.clf()
-
-integrate_forwards = 0.0 # NEW PARAMETER : if integrate_backwards = 1.0 then we integrate backwards. 
-                          # Otherwise we integrate forwards. MUST BE A FLOAT.
-
-initial_p = p_back[-1]
-initial_e = e_back[-1]
-initial_Y = Y_back[-1]
-
-
-t, p_forward, e_forward, Y_forward, Phi_phi_forward, Phi_r_forward, Phi_theta_forward = traj(M, mu, a, initial_p, initial_e, initial_Y, integrate_forwards, 
+t_back, p_back, e_back, Y_back, Phi_phi_back, Phi_r_back, Phi_theta_back = traj(M, mu, a, p_f, e_f, Y_f, integrate_backwards, 
                                              Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T )
 
+t_back_shift = max(t_back) - t_back
 
-fig, axes = plt.subplots(2, 4)
-plt.subplots_adjust(wspace=0.5)
-fig.set_size_inches(14, 8)
-axes = axes.ravel()
+# fig, axes = plt.subplots(2, 4)
+# plt.subplots_adjust(wspace=0.5)
+# fig.set_size_inches(14, 8)
+# axes = axes.ravel()
 
-ylabels = [r'$e$', r'$p$', r'$e$', r'$Y$', r'$\Phi_\phi$', r'$\Phi_r$', r'$\Phi_\theta$']
-xlabels = [r'$p$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$']
-ys = [e_forward, p_forward, e_forward, Y_forward, Phi_phi_forward, Phi_r_forward, Phi_theta_forward]
-xs = [p_forward, t, t, t, t, t, t]
+# ylabels = [r'$e$', r'$p$', r'$e$', r'$Y$', r'$\Phi_\phi$', r'$\Phi_r$', r'$\Phi_\theta$']
+# xlabels = [r'$p$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$']
+# ys = [e_back, p_back, e_back, Y_back, Phi_phi_back, Phi_r_back, Phi_theta_back]
+# xs = [p_back, t, t, t, t, t, t]
 
-for i, (ax, x, y, xlab, ylab) in enumerate(zip(axes, xs, ys, xlabels, ylabels)):
-    ax.plot(x, y)
-    ax.set_xlabel(xlab, fontsize=16)
-    ax.set_ylabel(ylab, fontsize=16)
-    ax.set_title("integrate forwards")
-axes[-1].set_visible(False)
-plt.tight_layout()
-plt.show()
-plt.clf()
+# for i, (ax, x, y, xlab, ylab) in enumerate(zip(axes, xs, ys, xlabels, ylabels)):
+#     ax.plot(x, y)
+#     ax.set_xlabel(xlab, fontsize=16)
+#     ax.set_ylabel(ylab, fontsize=16)
+#     ax.set_title("integrate backwards")
+# axes[-1].set_visible(False)
+# plt.tight_layout()
+# plt.show()
+# plt.clf()
+
+# integrate_forwards = 0.0 # NEW PARAMETER : if integrate_backwards = 1.0 then we integrate backwards. 
+#                           # Otherwise we integrate forwards. MUST BE A FLOAT.
+
+# initial_p = p_back[-1]
+# initial_e = e_back[-1]
+# initial_Y = Y_back[-1]
+
+
+# t_forward, p_forward, e_forward, Y_forward, Phi_phi_forward, Phi_r_forward, Phi_theta_forward = traj(M, mu, a, initial_p, initial_e, initial_Y, integrate_forwards, 
+#                                              Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T )
+
+# plt.plot(t_forward,Y_forward,c = 'red', linestyle = 'dashed')
+# plt.plot(t_back_shift,Y_back,c = 'purple',alpha = 0.5)
+# plt.show()
+# plt.clf()
+
+
+# plt.plot(t_forward,Phi_phi_forward,c = 'red', linestyle = 'dashed')
+# plt.plot(t_back,Phi_phi_back,c = 'purple',alpha = 0.5)
+# plt.show()
+# plt.clf()
 quit()
-# qS = 0.2
-# phiS = 0.2
-# qK = 0.8
-# phiK = 0.8
-# dist = 1.0
-# mich = False
-# dt = 15.0
-# T = 0.5 
+#fig, axes = plt.subplots(2, 4)
+#plt.subplots_adjust(wspace=0.5)
+#fig.set_size_inches(14, 8)
+#axes = axes.ravel()
+
+#ylabels = [r'$e$', r'$p$', r'$e$', r'$Y$', r'$\Phi_\phi$', r'$\Phi_r$', r'$\Phi_\theta$']
+#xlabels = [r'$p$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$', r'$t$']
+#ys = [e_forward, p_forward, e_forward, Y_forward, Phi_phi_forward, Phi_r_forward, Phi_theta_forward]
+#xs = [p_forward, t_forward, t_forward, t_forward, t_forward, t_forward, t_forward]
+
+#for i, (ax, x, y, xlab, ylab) in enumerate(zip(axes, xs, ys, xlabels, ylabels)):
+    #ax.plot(x, y)
+    #ax.set_xlabel(xlab, fontsize=16)
+    #ax.set_ylabel(ylab, fontsize=16)
+    #ax.set_title("integrate forwards")
+#axes[-1].set_visible(False)
+#plt.tight_layout()
+#plt.show()
+#plt.clf()
+#plt.close()
+
+#Create splines
+#rom scipy.interpolate import interp1d
+#_forward_spline = interp1d(t_forward[::-1],p_forward, kind = 'cubic')
+
+
+
+qS = 0.2
+phiS = 0.2
+qK = 0.8
+phiK = 0.8
+dist = 1.0
+mich = False
+dt = 15.0
+T = 0.001
+integrate_backwards = 0.0 
+wave_generator = Pn5AAKWaveform(inspiral_kwargs=inspiral_kwargs, sum_kwargs=sum_kwargs, use_gpu=False)
 # breakpoint()
+waveform_back = wave_generator(M, mu, a, p_f, e_f, Y_f, dist, qS, phiS, qK, phiK, integrate_backwards,
+                          Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, mich=mich, dt=dt, T=T)
+
+h_p_back = waveform_back.real
+
+n_t = len(h_p_back)
+
+t = np.arange(0,n_t*dt,dt)
+
+plt.plot(t,h_p_back)
+plt.xlabel(r'Time $t$')
+plt.ylabel(r'$h_{p}$')
+plt.title(r'Integrate backwards')
+plt.show()
+plt.clf()
+
+# initial_p = p_back[-1]
+
 # wave_generator = Pn5AAKWaveform(inspiral_kwargs=inspiral_kwargs, sum_kwargs=sum_kwargs, use_gpu=False)
-# waveform = wave_generator(M, mu, a, p0, e0, Y0, dist, qS, phiS, qK, phiK,
+# waveform_forward = wave_generator(M, mu, a, initial_p, initial_e, initial_Y, dist, qS, phiS, qK, phiK, 0.0,
 #                           Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, mich=mich, dt=dt, T=T)
 
-# h_p = waveform.real
+# h_p_forward = waveform_forward.real
 
-# n_t = len(h_p)
+# n_t = len(h_p_forward)
 
 # t = np.arange(0,n_t*dt,dt)
 
-# plt.plot(t,h_p)
+# plt.plot(t,h_p_forward)
 # plt.xlabel(r'Time $t$')
 # plt.ylabel(r'$h_{p}$')
-# plt.title(r'Integrate backwards')
+# plt.title(r'Integrate forwards')
 # plt.show()
+plt.clf()
+
+
+# plt.plot(t/24/60/60,h_p_back, label = 'integrated backwards')
+# plt.plot(t/24/60/60,h_p_forward_reverse, label = 'integrated forwards [reversed]')
+# plt.xlabel(r'Time $t$ [days]')
+# plt.ylabel(r'$h_{p}$')
+# plt.title(r'Comparison')
+# # plt.xlim([0, 0.01])
+# plt.show()
+# plt.clf()
 # breakpoint()

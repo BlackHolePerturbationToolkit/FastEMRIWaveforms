@@ -185,6 +185,11 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
                 amplitude modules. It is not used.
 
         """
+        breakpoint()
+        if e[1] > e[0]:  # TESTING FOR INTEGRATING BACKWARDS
+            p = np.copy(p[::-1]) # Reverse lists (INTEGRATING BACKWARDS)
+            e = np.copy(e[::-1])
+            Y = np.copy(Y[::-1])
 
         # mass in seconds
         Msec = M * MTSUN_SI

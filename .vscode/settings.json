@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.tex": "latex",
+        "iomanip": "cpp"
+    }
+}

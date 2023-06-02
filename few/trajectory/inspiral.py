@@ -256,4 +256,5 @@ class EMRIInspiral(TrajectoryBase):
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(
             M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0, args_in, **temp_kwargs
         )
+        
         return (t, p, e, x, Phi_phi, Phi_theta, Phi_r)
