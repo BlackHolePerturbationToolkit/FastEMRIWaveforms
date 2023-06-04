@@ -22,7 +22,7 @@ from abc import ABC
 import numpy as np
 from tqdm import tqdm
 from scipy.interpolate import RectBivariateSpline
-
+from scipy.interpolate import interp1d
 # check if cupy is available / GPU is available
 try:
     import cupy as xp
@@ -1154,6 +1154,31 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
             **self.inspiral_kwargs,
         )
 
+        # INTEGRATE BACKWARDS
+
+        if args[0] == 1:  # TESTING FOR INTEGRATING BACKWARDS
+            tvec_shift = max(t) - t
+            
+            p_back_interp = interp1d(tvec_shift,p, kind = 'cubic')
+            p = p_back_interp(t)
+
+            e_back_interp = interp1d(tvec_shift,e, kind = 'cubic')
+            e = e_back_interp(t)
+            
+            Y_back_interp = interp1d(tvec_shift,Y, kind = 'cubic')
+            Y = Y_back_interp(t)
+
+            Phi_phi_back_transform = Phi_phi[0] + max(Phi_phi) - Phi_phi 
+            Phi_phi_back_interp = interp1d(tvec_shift, Phi_phi_back_transform, kind = 'cubic')
+            Phi_phi = Phi_phi_back_interp(t)            
+            
+            Phi_theta_back_transform = Phi_theta[0] + max(Phi_theta) - Phi_theta 
+            Phi_theta_back_interp = interp1d(tvec_shift, Phi_theta_back_transform, kind = 'cubic')
+            Phi_theta = Phi_theta_back_interp(t)            
+            
+            Phi_r_back_transform = Phi_r[0] + max(Phi_r) - Phi_r 
+            Phi_r_back_interp = interp1d(tvec_shift, Phi_r_back_transform, kind = 'cubic')
+            Phi_r = Phi_r_back_interp(t)  
         # makes sure p, Y, and e are generally within the model
         self.sanity_check_traj(p, e, Y)
 

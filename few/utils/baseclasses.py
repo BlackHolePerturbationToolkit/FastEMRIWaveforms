@@ -701,7 +701,6 @@ class TrajectoryBase(ABC):
 
         # convert from years to seconds
         T = T * YRSID_SI
-
         # inspiral generator that must be added to each trajectory class
         out = self.get_inspiral(*args, **kwargs)
         # get time separate from the rest of the params

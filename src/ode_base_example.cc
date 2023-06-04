@@ -38,7 +38,7 @@ void pn5(double* pdot, double* edot, double* Ydot,
     // the frequency variables are pointers!
     if(additional_args[0] == 1.0){ // Integrate backwards
         double x = Y_to_xI(a, p, e, Y);
-        KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);
+        KerrGeoCoordinateFrequencies(Omega_phi,Omega_theta, Omega_r, a, p, e, x);
 
         int Nv = 10;
         int ne = 10;

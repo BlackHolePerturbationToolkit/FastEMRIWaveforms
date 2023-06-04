@@ -171,7 +171,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
     // get flux at initial values
     // prepare containers for flux information
     InspiralHolder inspiral_out(t0, M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0);
-
 	//Set the mass ratio
 	params_holder->epsilon = mu/M;
     params_holder->a = a;
@@ -416,9 +415,8 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
             //cout << "# Separatrix reached: exiting inspiral" << endl;
             break;
         }
-
-        inspiral_out.add_point(t*Msec, y[0], y[1], y[2], y[3], y[4], y[5]); // adds time in seconds
-
+        inspiral_out.add_point(t*Msec, y[0], y[1], y[2], y[3], y[4], y[5]); // adds time in seconds INTEGRATE BACKWARDS
+        
         prev_t = t;
         prev_p_sep = p_sep;
         #pragma unroll

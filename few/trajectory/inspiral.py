@@ -222,7 +222,6 @@ class EMRIInspiral(TrajectoryBase):
             tuple: Tuple of (t, p, e, x, Phi_phi, Phi_theta, Phi_r).
 
         """
-
         fill_value = 1e-6
 
         # fix for specific requirements of different odes
