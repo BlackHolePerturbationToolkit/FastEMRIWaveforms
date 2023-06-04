@@ -23,6 +23,7 @@ import warnings
 
 import numpy as np
 from scipy.interpolate import CubicSpline
+from scipy.interpolate import interp1d
 from scipy.optimize import brentq
 
 from pyUtility import (
@@ -944,3 +945,51 @@ def get_ode_function_options():
         raise ValueError("ODE files not built yet.")
 
     return ode_options
+
+def interpolate_trajectories_backwards_integration(t,p,e,Y,Phi_phi,Phi_theta,Phi_r):
+    """
+    Performs backward interpolation of trajectories for the given variables.
+    
+    Args:
+        t (array-like): Time vector in increasing order.
+        p (array-like): Input array for variable 'p' corresponding to the time vector.
+        e (array-like): Input array for variable 'e' corresponding to the time vector.
+        Y (array-like): Input array for variable 'Y' corresponding to the time vector.
+        Phi_phi (array-like): Input array for variable 'Phi_phi' corresponding to the time vector.
+        Phi_theta (array-like): Input array for variable 'Phi_theta' corresponding to the time vector.
+        Phi_r (array-like): Input array for variable 'Phi_r' corresponding to the time vector.
+
+    Returns:
+        tuple: A tuple containing the interpolated arrays for 'p', 'e', 'Y', 'Phi_phi', 'Phi_theta', and 'Phi_r'.
+
+    Notes:
+        This function uses cubic interpolation to estimate the trajectories of the input variables
+        backward in time. It first calculates the time shift required for the backward interpolation.
+        Then, it applies cubic interpolation using the shifted time vector to obtain the interpolated
+        values of each variable at the original time points.
+        The variables 'p', 'e', 'Y', 'Phi_phi', 'Phi_theta', and 'Phi_r' are modified in-place.
+    """
+        
+    tvec_shift = max(t) - t
+        
+    p_back_interp = interp1d(tvec_shift,p, kind = 'cubic')
+    p = p_back_interp(t)
+
+    e_back_interp = interp1d(tvec_shift,e, kind = 'cubic')
+    e = e_back_interp(t)
+        
+    Y_back_interp = interp1d(tvec_shift,Y, kind = 'cubic')
+    Y = Y_back_interp(t)
+
+    Phi_phi_back_transform = Phi_phi[0] + max(Phi_phi) - Phi_phi 
+    Phi_phi_back_interp = interp1d(tvec_shift, Phi_phi_back_transform, kind = 'cubic')
+    Phi_phi = Phi_phi_back_interp(t)            
+        
+    Phi_theta_back_transform = Phi_theta[0] + max(Phi_theta) - Phi_theta 
+    Phi_theta_back_interp = interp1d(tvec_shift, Phi_theta_back_transform, kind = 'cubic')
+    Phi_theta = Phi_theta_back_interp(t)            
+        
+    Phi_r_back_transform = Phi_r[0] + max(Phi_r) - Phi_r 
+    Phi_r_back_interp = interp1d(tvec_shift, Phi_r_back_transform, kind = 'cubic')
+    Phi_r = Phi_r_back_interp(t)  
+    return p, e, Y, Phi_phi, Phi_theta, Phi_r

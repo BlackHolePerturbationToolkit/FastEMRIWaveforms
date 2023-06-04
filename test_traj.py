@@ -38,6 +38,7 @@ use_gpu = False
 inspiral_kwargs = {
     "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
     "max_init_len": int(1e3),  # all of the trajectories will be well under len = 1000
+    "integrate_backwards": True
 }
 
 # keyword arguments for inspiral generator (RomanAmplitude)
@@ -69,7 +70,7 @@ sum_kwargs = {
 # omp_set_num_threads(num_threads)
 
 
-traj = EMRIInspiral(func="pn5") 
+traj_backwards = EMRIInspiral(func="pn5", inspiral_kwargs = inspiral_kwargs) 
 
 M = 1e6
 mu = 1e1
@@ -90,9 +91,8 @@ p_sep = get_separatrix(a, e_f, x_new)
 
 print("separatrix is at",p_sep)
 
-t_back, p_back, e_back, Y_back, Phi_phi_back, Phi_r_back, Phi_theta_back = traj(M, mu, a, p_f, e_f, Y_f, integrate_backwards, 
+t_back, p_back, e_back, Y_back, Phi_phi_back, Phi_r_back, Phi_theta_back = traj_backwards(M, mu, a, p_f, e_f, Y_f, 
                                              Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T )
-
 t_back_shift = max(t_back) - t_back
 
 # fig, axes = plt.subplots(2, 4)
@@ -115,16 +115,15 @@ t_back_shift = max(t_back) - t_back
 # plt.show()
 # plt.clf()
 
-integrate_forwards = 0.0 # NEW PARAMETER : if integrate_backwards = 1.0 then we integrate backwards. 
-                          # Otherwise we integrate forwards. MUST BE A FLOAT.
+inspiral_kwargs["integrate_backwards"] = False
+traj_forwards = EMRIInspiral(func="pn5", inspiral_kwargs = inspiral_kwargs) 
 
 initial_p = p_back[-1]
 initial_e = e_back[-1]
 initial_Y = Y_back[-1]
 
-t_forward, p_forward, e_forward, Y_forward, Phi_phi_forward, Phi_r_forward, Phi_theta_forward = traj(M, mu, a, initial_p, initial_e, initial_Y, integrate_forwards, 
+t_forward, p_forward, e_forward, Y_forward, Phi_phi_forward, Phi_r_forward, Phi_theta_forward = traj_forwards(M, mu, a, initial_p, initial_e, initial_Y, 
                                              Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T )
-breakpoint()
 # plt.plot(t_forward,Y_forward,c = 'red', linestyle = 'dashed')
 # plt.plot(t_back_shift,Y_back,c = 'purple',alpha = 0.5)
 # plt.show()
@@ -218,9 +217,9 @@ dist = 1.0
 mich = False
 dt = 15.0
 T = 1
-integrate_backwards = 1.0 
-wave_generator = Pn5AAKWaveform(inspiral_kwargs=inspiral_kwargs, sum_kwargs=sum_kwargs, use_gpu=False)
-waveform_back = wave_generator(M, mu, a, p_f, e_f, Y_f, dist, qS, phiS, qK, phiK, integrate_backwards,
+inspiral_kwargs["integrate_backwards"] = True
+wave_generator_backwards = Pn5AAKWaveform(inspiral_kwargs=inspiral_kwargs, sum_kwargs=sum_kwargs, use_gpu=False)
+waveform_back = wave_generator_backwards(M, mu, a, p_f, e_f, Y_f, dist, qS, phiS, qK, phiK, 
                           Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, mich=mich, dt=dt, T=T)
 h_p_back = waveform_back.real
 
@@ -236,8 +235,9 @@ t = np.arange(0,n_t*dt,dt)
 # plt.clf()
 # initial_p = p_back[-1]
 
+inspiral_kwargs["integrate_backwards"] = False
 wave_generator = Pn5AAKWaveform(inspiral_kwargs=inspiral_kwargs, sum_kwargs=sum_kwargs, use_gpu=False)
-waveform_forward = wave_generator(M, mu, a, initial_p, initial_e, initial_Y, dist, qS, phiS, qK, phiK, integrate_forwards,
+waveform_forward = wave_generator(M, mu, a, initial_p, initial_e, initial_Y, dist, qS, phiS, qK, phiK,
                           Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, mich=mich, dt=dt, T=T)
 
 h_p_forward = waveform_forward.real

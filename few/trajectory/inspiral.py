@@ -22,14 +22,13 @@ import os
 import warnings
 
 import numpy as np
-from scipy.interpolate import CubicSpline
 
 # Cython/C++ imports
 from pyInspiral import pyInspiralGenerator
 
 # Python imports
 from few.utils.baseclasses import TrajectoryBase
-from few.utils.utility import check_for_file_download, get_ode_function_options
+from few.utils.utility import check_for_file_download, get_ode_function_options, get_separatrix
 from few.utils.constants import *
 from few.utils.citations import *
 
@@ -122,7 +121,11 @@ class EMRIInspiral(TrajectoryBase):
             )
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
-
+        try:
+            self.integrate_backwards = kwargs["inspiral_kwargs"]["integrate_backwards"] # Make the choice to integrate backwards or not
+        except KeyError:
+            self.integrate_backwards = kwargs["integrate_backwards"]  # Using waveform class has different kwargs structure
+        
         # set defaults from the ODE function specifically
         for key, item in ode_info[func].items():
             setattr(self, key, item)
@@ -152,8 +155,10 @@ class EMRIInspiral(TrajectoryBase):
             "err",
             "DENSE_STEPPING",
             "max_init_len",
-            "use_rk4",
+            "use_rk4"
         ]
+
+
 
     def attributes_EMRIInspiral(self):
         """
@@ -244,13 +249,19 @@ class EMRIInspiral(TrajectoryBase):
 
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
-
+        if self.integrate_backwards:   # If we choose to integrate backwards
+            # Check initial value of p is not within separatrix
+            p_sep = get_separatrix(a,e0,x0)
+            if p0 < p_sep:
+                raise ValueError("Initial value within separatrix")
+            args = (1.0,)
+        else:
+            args = (0.0,)
         args_in = np.asarray(args)
 
         # correct for issue in Cython pass
         if len(args_in) == 0:
             args_in = np.array([0.0])
-
         # this will return in coordinate time
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(
             M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0, args_in, **temp_kwargs

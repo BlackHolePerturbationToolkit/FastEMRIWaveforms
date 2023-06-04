@@ -33,7 +33,7 @@ except (ImportError, ModuleNotFoundError) as e:
 from few.utils.baseclasses import SchwarzschildEccentric, Pn5AAK, ParallelModuleBase
 from few.trajectory.inspiral import EMRIInspiral
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
-from few.utils.utility import get_mismatch, xI_to_Y, p_to_y, check_for_file_download
+from few.utils.utility import get_mismatch, get_separatrix, Y_to_xI, xI_to_Y, p_to_y, check_for_file_download, interpolate_trajectories_backwards_integration
 from few.amplitude.romannet import RomanAmplitude
 from few.utils.modeselector import ModeSelector
 from few.utils.ylm import GetYlms
@@ -1062,7 +1062,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
     @property
     def allow_batching(self):
         return False
-
+    
     def __call__(
         self,
         M,
@@ -1136,7 +1136,11 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         qS, phiS, qK, phiK = self.sanity_check_angles(qS, phiS, qK, phiK)
 
         self.sanity_check_init(M, mu, a, p0, e0, Y0)
-
+        breakpoint()
+        if self.inspiral_kwargs["integrate_backwards"]: 
+           args = (1.0,) # Integrate backwards
+        else:
+            args = (0.0,) # Integrate forwards
         # get trajectory
         t, p, e, Y, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(
             M,
@@ -1154,31 +1158,10 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
             **self.inspiral_kwargs,
         )
 
-        # INTEGRATE BACKWARDS
+        if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
+            p, e, Y, Phi_phi, Phi_theta, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,Y,Phi_phi,Phi_theta,Phi_r)
 
-        if args[0] == 1:  # TESTING FOR INTEGRATING BACKWARDS
-            tvec_shift = max(t) - t
-            
-            p_back_interp = interp1d(tvec_shift,p, kind = 'cubic')
-            p = p_back_interp(t)
 
-            e_back_interp = interp1d(tvec_shift,e, kind = 'cubic')
-            e = e_back_interp(t)
-            
-            Y_back_interp = interp1d(tvec_shift,Y, kind = 'cubic')
-            Y = Y_back_interp(t)
-
-            Phi_phi_back_transform = Phi_phi[0] + max(Phi_phi) - Phi_phi 
-            Phi_phi_back_interp = interp1d(tvec_shift, Phi_phi_back_transform, kind = 'cubic')
-            Phi_phi = Phi_phi_back_interp(t)            
-            
-            Phi_theta_back_transform = Phi_theta[0] + max(Phi_theta) - Phi_theta 
-            Phi_theta_back_interp = interp1d(tvec_shift, Phi_theta_back_transform, kind = 'cubic')
-            Phi_theta = Phi_theta_back_interp(t)            
-            
-            Phi_r_back_transform = Phi_r[0] + max(Phi_r) - Phi_r 
-            Phi_r_back_interp = interp1d(tvec_shift, Phi_r_back_transform, kind = 'cubic')
-            Phi_r = Phi_r_back_interp(t)  
         # makes sure p, Y, and e are generally within the model
         self.sanity_check_traj(p, e, Y)
 
