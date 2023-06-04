@@ -1136,7 +1136,6 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         qS, phiS, qK, phiK = self.sanity_check_angles(qS, phiS, qK, phiK)
 
         self.sanity_check_init(M, mu, a, p0, e0, Y0)
-        breakpoint()
         if self.inspiral_kwargs["integrate_backwards"]: 
            args = (1.0,) # Integrate backwards
         else:
