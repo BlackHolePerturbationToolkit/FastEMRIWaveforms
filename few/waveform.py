@@ -436,7 +436,6 @@ class SchwarzschildEccentricWaveformBase(
 
         # function for generating the inpsiral
         self.inspiral_generator = inspiral_module(**inspiral_kwargs)
-
         # function for generating the amplitude
         self.amplitude_generator = amplitude_module(**amplitude_kwargs)
 
@@ -553,7 +552,6 @@ class SchwarzschildEccentricWaveformBase(
         # makes sure viewing angles are allowable
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
         self.sanity_check_init(M, mu, p0, e0)
-
         # get trajectory
         (t, p, e, x, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
             M,
@@ -571,6 +569,9 @@ class SchwarzschildEccentricWaveformBase(
             **self.inspiral_kwargs,
         )
 
+        if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
+            p, e, x, Phi_phi, Phi_theta, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,x,Phi_phi,Phi_theta,Phi_r)
+        breakpoint()
         # makes sure p and e are generally within the model
         self.sanity_check_traj(p, e)
 
