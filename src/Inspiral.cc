@@ -195,10 +195,9 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
     const gsl_odeiv2_step_type *T;
     if (use_rk4) T = gsl_odeiv2_step_rk4;
     else T = gsl_odeiv2_step_rk8pd;
-    // else T = gsl_odeiv2_step_bsimp;
-
+    
     gsl_odeiv2_step *step 			= gsl_odeiv2_step_alloc (T, 6);
-    gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (err, 0);
+    gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (err, 0.0);
     gsl_odeiv2_evolve *evolve 		= gsl_odeiv2_evolve_alloc (6);
 
     // Compute the inspiral
@@ -222,7 +221,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
         // or do interpolated step
 		if(DENSE_STEPPING) status = gsl_odeiv2_evolve_apply_fixed_step (evolve, control, step, &sys, &t, h, y);
         else status = gsl_odeiv2_evolve_apply (evolve, control, step, &sys, &t, t1, &h, y);
-
       	if ((status != GSL_SUCCESS) && (status != 9)){
        		printf ("error, return value=%d\n", status);
           	break;
@@ -233,8 +231,8 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
         {
             ///printf("checkit error %.18e %.18e %.18e %.18e \n", y[0], y_prev[0], y[1], y_prev[1]);
             // reset evolver
-            gsl_odeiv2_step_reset(step);
-            gsl_odeiv2_evolve_reset(evolve);
+            //gsl_odeiv2_step_reset(step);
+            //gsl_odeiv2_evolve_reset(evolve);
 
             // go back to previous points
             #pragma unroll

@@ -946,7 +946,7 @@ def get_ode_function_options():
 
     return ode_options
 
-def interpolate_trajectories_backwards_integration(t,p,e,Y,Phi_phi,Phi_theta,Phi_r):
+def interpolate_trajectories_backwards_integration(t,p,e,Y,Phi_phi,Phi_theta,Phi_r,spline_type = 'cubic'):
     """
     Performs backward interpolation of trajectories for the given variables.
     
@@ -971,25 +971,25 @@ def interpolate_trajectories_backwards_integration(t,p,e,Y,Phi_phi,Phi_theta,Phi
     """
         
     tvec_shift = max(t) - t
-        
-    p_back_interp = interp1d(tvec_shift,p, kind = 'cubic')
+
+    p_back_interp = interp1d(tvec_shift,p, kind = spline_type)
     p = p_back_interp(t)
 
-    e_back_interp = interp1d(tvec_shift,e, kind = 'cubic')
+    e_back_interp = interp1d(tvec_shift,e, kind = spline_type)
     e = e_back_interp(t)
         
-    Y_back_interp = interp1d(tvec_shift,Y, kind = 'cubic')
+    Y_back_interp = interp1d(tvec_shift,Y, kind = spline_type)
     Y = Y_back_interp(t)
 
     Phi_phi_back_transform = Phi_phi[0] + max(Phi_phi) - Phi_phi 
-    Phi_phi_back_interp = interp1d(tvec_shift, Phi_phi_back_transform, kind = 'cubic')
+    Phi_phi_back_interp = interp1d(tvec_shift, Phi_phi_back_transform, kind = spline_type)
     Phi_phi = Phi_phi_back_interp(t)            
         
     Phi_theta_back_transform = Phi_theta[0] + max(Phi_theta) - Phi_theta 
-    Phi_theta_back_interp = interp1d(tvec_shift, Phi_theta_back_transform, kind = 'cubic')
+    Phi_theta_back_interp = interp1d(tvec_shift, Phi_theta_back_transform, kind = spline_type)
     Phi_theta = Phi_theta_back_interp(t)            
         
     Phi_r_back_transform = Phi_r[0] + max(Phi_r) - Phi_r 
-    Phi_r_back_interp = interp1d(tvec_shift, Phi_r_back_transform, kind = 'cubic')
+    Phi_r_back_interp = interp1d(tvec_shift, Phi_r_back_transform, kind = spline_type)
     Phi_r = Phi_r_back_interp(t)  
     return p, e, Y, Phi_phi, Phi_theta, Phi_r

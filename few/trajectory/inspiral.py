@@ -247,7 +247,6 @@ class EMRIInspiral(TrajectoryBase):
 
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
-        breakpoint()
         if self.integrate_backwards:   # If we choose to integrate backwards
             # Check initial value of p is not within separatrix
             p_sep = get_separatrix(a,e0,x0)

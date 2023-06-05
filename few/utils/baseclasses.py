@@ -631,7 +631,7 @@ class TrajectoryBase(ABC):
         DENSE_STEPPING=0,
         max_init_len=10000,
         upsample=False,
-        err=1e-11,
+        err=0.5*1e-11,
         use_rk4=False,
         fix_t=False,
         **kwargs,

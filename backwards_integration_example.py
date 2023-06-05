@@ -16,7 +16,8 @@ from few.utils.utility import (get_overlap,
                                get_p_at_t, 
                                get_kerr_geo_constants_of_motion,
                                xI_to_Y,
-                               Y_to_xI)
+                               Y_to_xI,
+                               interpolate_trajectories_backwards_integration)
 
 from few.utils.ylm import GetYlms
 from few.utils.modeselector import ModeSelector
@@ -27,6 +28,8 @@ from few.summation.directmodesum import DirectModeSum
 from few.utils.constants import *
 from few.summation.aakwave import AAKSummation
 from few.waveform import Pn5AAKWaveform, AAKWaveformBase
+
+from scipy.interpolate import interp1d
 
 
 
@@ -55,6 +58,19 @@ sum_kwargs = {
     "pad_output": False
     }
 
+# initial parameters
+M = 1e6
+mu = 1e1
+a = 0.85
+p_f = 6.5   # Final semi-latus rectum
+e_f = 0.1  # Final eccentricity
+iota0_f = 1  # Final inclination
+Y_f = np.cos(iota0_f)
+T = 1.0
+Phi_phi0 = 1
+Phi_theta0 = 2
+Phi_r0 = 3
+
 waveform_choice = input("Do you want Kerr inspirals? [y/n]")
 if waveform_choice == "y":
     waveform_class = 'Pn5AAKWaveform'
@@ -64,21 +80,9 @@ else:
     waveform_class = 'FastSchwarzschildEccentricFlux'
     trajectory_class = "SchwarzEccFlux"
     print("Eccentric Schwarzschild trajectory and waveform")
+
 # Set up trajectory module for backwards integration
 traj_backwards = EMRIInspiral(func = trajectory_class, integrate_backwards = True) 
-
-# initial parameters
-M = 1e6
-mu = 1e1
-a = 0.85
-p_f = 4.5   # Final semi-latus rectum
-e_f = 0.3  # Final eccentricity
-iota0_f = 1  # Final inclination
-Y_f = np.cos(iota0_f)
-T = 1.0
-Phi_phi0 = 1
-Phi_theta0 = 2
-Phi_r0 = 3
 
 if waveform_class == 'Pn5AAKWaveform':
     x_new = Y_to_xI(a, p_f, e_f, Y_f)
@@ -103,6 +107,9 @@ initial_Y = Y_back[-1]
 # Generate forwards integration
 t_forward, p_forward, e_forward, Y_forward, Phi_phi_forward, Phi_r_forward, Phi_theta_forward = traj_forwards(M, mu, a, initial_p, initial_e, initial_Y, 
                                              Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T )
+
+p_back_interp = interp1d(max(t_back) - t_back,p_back, kind = 'cubic')
+p_check_forward = p_back_interp(t_forward)
 breakpoint()
 
 # Set extrinsic parameters for waveform generation
@@ -126,7 +133,7 @@ inspiral_kwargs = {
 wave_generator_backwards = GenerateEMRIWaveform(waveform_class, inspiral_kwargs=inspiral_kwargs, sum_kwargs=sum_kwargs, use_gpu=False)
 waveform_back = wave_generator_backwards(M, mu, a, p_f, e_f, Y_f, dist, qS, phiS, qK, phiK, 
                           Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, dt=dt, T=T)
-
+print("Finished backwards integration")
 # Extract plus polarised waveform
 h_p_back_int = waveform_back.real
 
@@ -138,6 +145,7 @@ wave_generator = GenerateEMRIWaveform(waveform_class,inspiral_kwargs=inspiral_kw
 waveform_forward = wave_generator(M, mu, a, initial_p, initial_e, initial_Y, dist, qS, phiS, qK, phiK,
                           Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, dt=dt, T=T)
 
+print("Finished forwards integration")
 # Extract plus polarised waveform
 h_p_forward_int = waveform_forward.real
 

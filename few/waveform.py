@@ -567,9 +567,9 @@ class SchwarzschildEccentricWaveformBase(
             dt=dt,
             **self.inspiral_kwargs,
         )
-
+        breakpoint()
         if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
-            p, e, x, Phi_phi, Phi_theta, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,x,Phi_phi,Phi_theta,Phi_r)
+            p, e, _, Phi_phi, _, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,x,Phi_phi,Phi_theta,Phi_r, spline_type = 'cubic')
         # makes sure p and e are generally within the model
         self.sanity_check_traj(p, e)
 
@@ -1134,10 +1134,6 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         qS, phiS, qK, phiK = self.sanity_check_angles(qS, phiS, qK, phiK)
 
         self.sanity_check_init(M, mu, a, p0, e0, Y0)
-        if self.inspiral_kwargs["integrate_backwards"]: 
-           args = (1.0,) # Integrate backwards
-        else:
-            args = (0.0,) # Integrate forwards
         # get trajectory
         t, p, e, Y, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(
             M,
@@ -1161,11 +1157,10 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
 
         # makes sure p, Y, and e are generally within the model
         self.sanity_check_traj(p, e, Y)
-
         self.end_time = t[-1]
-
+        initial_e = e[0]
         # number of modes to use (from original AAK model)
-        self.num_modes_kept = self.nmodes = int(30 * e0)
+        self.num_modes_kept = self.nmodes = int(30 * initial_e)
         if self.num_modes_kept < 4:
             self.num_modes_kept = self.nmodes = 4
 
