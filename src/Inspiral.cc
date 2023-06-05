@@ -62,7 +62,7 @@ using namespace std::chrono;
 #define DIST_TO_SEPARATRIX 0.1
 #define INNER_THRESHOLD 1e-8
 #define PERCENT_STEP 0.25
-#define MAX_ITER 1000
+#define MAX_ITER 5000
 // The RHS of the ODEs
 int func_ode_wrap (double t, const double y[], double f[], void *params){
 	(void)(t); /* avoid unused parameter warning */
@@ -195,6 +195,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
     const gsl_odeiv2_step_type *T;
     if (use_rk4) T = gsl_odeiv2_step_rk4;
     else T = gsl_odeiv2_step_rk8pd;
+    // else T = gsl_odeiv2_step_bsimp;
 
     gsl_odeiv2_step *step 			= gsl_odeiv2_step_alloc (T, 6);
     gsl_odeiv2_control *control 	= gsl_odeiv2_control_y_new (err, 0);

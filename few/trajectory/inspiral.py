@@ -123,7 +123,6 @@ class EMRIInspiral(TrajectoryBase):
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
         self.integrate_backwards = integrate_backwards
-        
         # set defaults from the ODE function specifically
         for key, item in ode_info[func].items():
             setattr(self, key, item)
@@ -248,6 +247,7 @@ class EMRIInspiral(TrajectoryBase):
 
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
+        breakpoint()
         if self.integrate_backwards:   # If we choose to integrate backwards
             # Check initial value of p is not within separatrix
             p_sep = get_separatrix(a,e0,x0)

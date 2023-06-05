@@ -35,12 +35,12 @@ use_gpu = False
 # keyword arguments for inspiral generator (RunKerrGenericPn5Inspiral)
 inspiral_kwargs = {
     "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
-    "max_init_len": int(1e3)  # all of the trajectories will be well under len = 1000
+    "max_init_len": int(1e4)# all of the trajectories will be well under len = 1000
 }
 
 # keyword arguments for inspiral generator (RomanAmplitude)
 amplitude_kwargs = {
-    "max_init_len": int(1e3),  # all of the trajectories will be well under len = 1000
+    "max_init_len": int(1e4),  # all of the trajectories will be well under len = 1000
     "use_gpu": use_gpu  # GPU is available in this class
 }
 
@@ -70,20 +70,23 @@ traj_backwards = EMRIInspiral(func = trajectory_class, integrate_backwards = Tru
 # initial parameters
 M = 1e6
 mu = 1e1
-a = 0.5
-p_f = 9.0   # Final semi-latus rectum
-e_f = 0.05  # Final eccentricity
-iota0_f = 0.5  # Final inclination
+a = 0.85
+p_f = 4.5   # Final semi-latus rectum
+e_f = 0.3  # Final eccentricity
+iota0_f = 1  # Final inclination
 Y_f = np.cos(iota0_f)
 T = 1.0
 Phi_phi0 = 1
 Phi_theta0 = 2
 Phi_r0 = 3
 
-x_new = Y_to_xI(a, p_f, e_f, Y_f)
-p_sep = get_separatrix(a, e_f, x_new)
-
-print("separatrix is at",p_sep)
+if waveform_class == 'Pn5AAKWaveform':
+    x_new = Y_to_xI(a, p_f, e_f, Y_f)
+    p_sep = get_separatrix(a, e_f, x_new)
+    print("separatrix is at",p_sep)
+else:
+    p_sep = get_separatrix(0.0, e_f, 1.0)
+    print("separatrix is at",p_sep)
 
 # Generate backwards integration
 t_back, p_back, e_back, Y_back, Phi_phi_back, Phi_r_back, Phi_theta_back = traj_backwards(M, mu, a, p_f, e_f, Y_f, 
@@ -100,7 +103,7 @@ initial_Y = Y_back[-1]
 # Generate forwards integration
 t_forward, p_forward, e_forward, Y_forward, Phi_phi_forward, Phi_r_forward, Phi_theta_forward = traj_forwards(M, mu, a, initial_p, initial_e, initial_Y, 
                                              Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T )
-
+breakpoint()
 
 # Set extrinsic parameters for waveform generation
 qS = 0.2
@@ -109,13 +112,13 @@ qK = 0.8
 phiK = 0.8
 dist = 1.0
 mich = False
-dt = 15.0
+dt = 10.0
 T = 1
 
 # Set up inspiral_kwargs - note use of "integrate_backwards"
 inspiral_kwargs = {
     "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
-    "max_init_len": int(1e3),  # all of the trajectories will be well under len = 1000
+    "max_init_len": int(1e4),  # all of the trajectories will be well under len = 1000
     "integrate_backwards": True # Need integrate_backwards flag in inspiral_kwargs 
 }
 
