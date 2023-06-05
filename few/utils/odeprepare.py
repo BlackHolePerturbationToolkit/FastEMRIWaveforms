@@ -118,10 +118,10 @@ def ode_prepare():
 
                 void {0}::deriv_func(double* pdot, double* edot, double* Ydot,
                                   double* Omega_phi, double* Omega_theta, double* Omega_r,
-                                  double epsilon, double a, double p, double e, double Y, double* additional_args)
+                                  double epsilon, double a, double p, double e, double Y, bool integrate_backwards, double* additional_args)
                 {1}
                     {0}_base_func(pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r,
-                                  epsilon, a, p, e, Y, additional_args);
+                                  epsilon, a, p, e, Y, integrate_backwards, additional_args);
                 {2}
             """.format(
                 func, "{", "}"
@@ -169,7 +169,7 @@ def ode_prepare():
 
     void ODECarrier::get_derivatives(double* pdot, double* edot, double* Ydot,
                       double* Omega_phi, double* Omega_theta, double* Omega_r,
-                      double epsilon, double a, double p, double e, double Y, double* additional_args)
+                      double epsilon, double a, double p, double e, double Y, bool integrate_backwards, double* additional_args)
     {
     """
 
@@ -187,7 +187,7 @@ def ode_prepare():
                 {0}* temp = ({0}*)func;
 
                 temp->deriv_func(pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r,
-                                epsilon, a, p, e, Y, additional_args);
+                                epsilon, a, p, e, Y, integrate_backwards, additional_args);
 
             """.format(
             func
@@ -275,7 +275,7 @@ def ode_prepare():
 
                 void deriv_func(double* pdot, double* edot, double* Ydot,
                                   double* Omega_phi, double* Omega_theta, double* Omega_r,
-                                  double epsilon, double a, double p, double e, double Y, double* additional_args);
+                                  double epsilon, double a, double p, double e, double Y, bool integrate_backwards, double* additional_args);
                 ~{0}();
             {2};
 
@@ -295,7 +295,7 @@ def ode_prepare():
             ~ODECarrier();
             void get_derivatives(double* pdot, double* edot, double* Ydot,
                               double* Omega_phi, double* Omega_theta, double* Omega_r,
-                              double epsilon, double a, double p, double e, double Y, double* additional_args);
+                              double epsilon, double a, double p, double e, double Y, bool integrate_backwards, double* additional_args);
 
     };
 

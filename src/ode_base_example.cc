@@ -26,49 +26,38 @@
 #include "dIdt8H_5PNe10.h"
 #include "ode.hh"
 
-#define pn5_num_add_args 1
+#define pn5_num_add_args 0
 #define pn5_Y
 #define pn5_citation1 Pn5_citation
 __deriv__
 void pn5(double* pdot, double* edot, double* Ydot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,
-                  double epsilon, double a, double p, double e, double Y, double* additional_args)
+                  double epsilon, double a, double p, double e, double Y, bool integrate_backwards, double* additional_args)
 {
     // evaluate ODEs
     // the frequency variables are pointers!
-    if(additional_args[0] == 1.0){ // Integrate backwards
-        double x = Y_to_xI(a, p, e, Y);
-        KerrGeoCoordinateFrequencies(Omega_phi,Omega_theta, Omega_r, a, p, e, x);
 
-        int Nv = 10;
-        int ne = 10;
-        *pdot = -epsilon * dpdt8H_5PNe10 (a, p, e, Y, Nv, ne);
+    double x = Y_to_xI(a, p, e, Y);
+    KerrGeoCoordinateFrequencies(Omega_phi,Omega_theta, Omega_r, a, p, e, x);
 
-        // needs adjustment for validity
-        Nv = 10;
-        ne = 8;
-        *edot = -epsilon * dedt8H_5PNe10 (a, p, e, Y, Nv, ne);
+    int Nv = 10;
+    int ne = 10;
+    *pdot = epsilon * dpdt8H_5PNe10 (a, p, e, Y, Nv, ne); // integrate backwards
 
-        Nv = 7;
-        ne = 10;
-        *Ydot = -epsilon * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);
-    }
-    else{ // Integrate Forwards
-        double x = Y_to_xI(a, p, e, Y);
-        KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);
+    // needs adjustment for validity
+    Nv = 10;
+    ne = 8;
+    *edot = epsilon * dedt8H_5PNe10 (a, p, e, Y, Nv, ne);
 
-	    int Nv = 10;
-        int ne = 10;
-        *pdot = epsilon * dpdt8H_5PNe10 (a, p, e, Y, Nv, ne);
-
-        // needs adjustment for validity
-        Nv = 10;
-        ne = 8;
-	    *edot = epsilon * dedt8H_5PNe10 (a, p, e, Y, Nv, ne);
-
-        Nv = 7;
-        ne = 10;
-        *Ydot = epsilon * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);        
+    Nv = 7;
+    ne = 10;
+    *Ydot = epsilon * dYdt8H_5PNe10 (a, p, e, Y, Nv, ne);
+    
+    // if we wish to integrate backwards
+    if (integrate_backwards == 1.0){
+        *pdot *= -1;
+        *edot *= -1;
+        *Ydot *= -1;
     }
 }
 
@@ -131,14 +120,14 @@ SchwarzEccFlux::SchwarzEccFlux(std::string few_dir)
 	//load_and_interpolate_amp_vec_norm_data(&amp_vec_norm_interp, few_dir);
 }
 
-#define SchwarzEccFlux_num_add_args 1
+#define SchwarzEccFlux_num_add_args 0
 #define SchwarzEccFlux_spinless
 #define SchwarzEccFlux_equatorial
 #define SchwarzEccFlux_file1 FluxNewMinusPNScaled_fixed_y_order.dat
 __deriv__
 void SchwarzEccFlux::deriv_func(double* pdot, double* edot, double* xdot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,
-                  double epsilon, double a, double p, double e, double x, double* additional_args)
+                  double epsilon, double a, double p, double e, double x, bool integrate_backwards, double* additional_args)
 {
     if ((6.0 + 2. * e) > p)
     {
@@ -163,36 +152,25 @@ void SchwarzEccFlux::deriv_func(double* pdot, double* edot, double* xdot,
 	double Edot = -epsilon*(interps->Edot->eval(y1, e)*pow(yPN,6.) + EdotPN);
 
 	double Ldot = -epsilon*(interps->Ldot->eval(y1, e)*pow(yPN,9./2.) + LdotPN);
-    if (additional_args[0] == 1.0){
-	    *pdot = -(-2*(Edot*Sqrt((4*Power(e,2) - Power(-2 + p,2))/(3 + Power(e,2) - p))*(3 + Power(e,2) - p)*Power(p,1.5) + Ldot*Power(-4 + p,2)*Sqrt(-3 - Power(e,2) + p)))/(4*Power(e,2) - Power(-6 + p,2));
+	*pdot = (-2*(Edot*Sqrt((4*Power(e,2) - Power(-2 + p,2))/(3 + Power(e,2) - p))*(3 + Power(e,2) - p)*Power(p,1.5) + Ldot*Power(-4 + p,2)*Sqrt(-3 - Power(e,2) + p)))/(4*Power(e,2) - Power(-6 + p,2));
 
-        // handle e = 0.0
-	    if (e > 0.)
-        {
-            *edot = ((Edot*Sqrt((4*Power(e,2) - Power(-2 + p,2))/(3 + Power(e,2) - p))*Power(p,1.5)*
-            	    (18 + 2*Power(e,4) - 3*Power(e,2)*(-4 + p) - 9*p + Power(p,2)) +
-            	    (-1 + Power(e,2))*Ldot*Sqrt(-3 - Power(e,2) + p)*(12 + 4*Power(e,2) - 8*p + Power(p,2)))/
-            	    (e*(4*Power(e,2) - Power(-6 + p,2))*p));
-        }
-        else
-        {
-            *edot = 0.0;
-        }
+    // handle e = 0.0
+	if (e > 0.)
+    {
+        *edot = -((Edot*Sqrt((4*Power(e,2) - Power(-2 + p,2))/(3 + Power(e,2) - p))*Power(p,1.5)*
+            	(18 + 2*Power(e,4) - 3*Power(e,2)*(-4 + p) - 9*p + Power(p,2)) +
+            	(-1 + Power(e,2))*Ldot*Sqrt(-3 - Power(e,2) + p)*(12 + 4*Power(e,2) - 8*p + Power(p,2)))/
+            	(e*(4*Power(e,2) - Power(-6 + p,2))*p));
     }
-    else{
-	    *pdot = (-2*(Edot*Sqrt((4*Power(e,2) - Power(-2 + p,2))/(3 + Power(e,2) - p))*(3 + Power(e,2) - p)*Power(p,1.5) + Ldot*Power(-4 + p,2)*Sqrt(-3 - Power(e,2) + p)))/(4*Power(e,2) - Power(-6 + p,2));
-
-	    if (e > 0.)
-        {
-            *edot = -((Edot*Sqrt((4*Power(e,2) - Power(-2 + p,2))/(3 + Power(e,2) - p))*Power(p,1.5)*
-            	    (18 + 2*Power(e,4) - 3*Power(e,2)*(-4 + p) - 9*p + Power(p,2)) +
-            	    (-1 + Power(e,2))*Ldot*Sqrt(-3 - Power(e,2) + p)*(12 + 4*Power(e,2) - 8*p + Power(p,2)))/
-            	    (e*(4*Power(e,2) - Power(-6 + p,2))*p));
-        }
-        else
-        {
-            *edot = 0.0;
-        }
+    else
+    {
+        *edot = 0.0;
+    }
+    
+    // if we wish to integrate backwards
+    if(integrate_backwards == 1.0){
+        *pdot *= -1;
+        *edot *= -1;
     }
     *xdot = 0.0;
 }

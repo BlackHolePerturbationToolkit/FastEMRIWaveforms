@@ -71,7 +71,8 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
 	//double epsilon = params_in->epsilon;
     //double q = params_in->q;
     double a = params_in->a;
-    double epsilon = params_in->epsilon;
+    double epsilon = params_in->epsilon; 
+    bool integrate_backwards = params_in->integrate_backwards;
 	double p = y[0];
 	double e = y[1];
     double x = y[2];
@@ -122,7 +123,7 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
 
     params_in->func->get_derivatives(&pdot, &edot, &xdot,
                          &Omega_phi, &Omega_theta, &Omega_r,
-                         epsilon, a, p, e, x, params_in->additional_args);
+                         epsilon, a, p, e, x, integrate_backwards, params_in->additional_args);
 
     f[0] = pdot;
 	f[1] = edot;
@@ -137,12 +138,13 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
 
 // Class to carry gsl interpolants for the inspiral data
 // also executes inspiral calculations
-InspiralCarrier::InspiralCarrier(std::string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_, std::string few_dir)
+InspiralCarrier::InspiralCarrier(std::string func_name, bool enforce_schwarz_sep_, bool integrate_backwards_, int num_add_args_, bool convert_Y_, std::string few_dir)
 {
     params_holder = new ParamsHolder;
     params_holder->func_name = func_name;
     params_holder->func = new ODECarrier(func_name, few_dir);
     params_holder->enforce_schwarz_sep = enforce_schwarz_sep_;
+    params_holder->integrate_backwards = integrate_backwards_; 
     params_holder->num_add_args = num_add_args_;
     params_holder->convert_Y = convert_Y_;
 
@@ -175,6 +177,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
 	params_holder->epsilon = mu/M;
     params_holder->a = a;
     params_holder->enforce_schwarz_sep;
+    params_holder->integrate_backwards;
 
     double Msec = MTSUN_SI*M;
     //high_resolution_clock::time_point t1 = high_resolution_clock::now();
@@ -343,7 +346,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
                 // Same function in the integrator
                 params_holder->func->get_derivatives(&pdot, &edot, &xdot,
                                      &Omega_phi, &Omega_theta, &Omega_r,
-                                     params_holder->epsilon, a, p, e, x, params_holder->additional_args);
+                                     params_holder->epsilon, a, p, e, x, params_holder->integrate_backwards, params_holder->additional_args);
 
                 // estimate the step to the breaking point and multiply by PERCENT_STEP
                 double x_temp;

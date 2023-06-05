@@ -17,6 +17,6 @@ public:
 
     void deriv_func(double* pdot, double* edot, double* Ydot,
                       double* Omega_phi, double* Omega_theta, double* Omega_r,
-                      double epsilon, double a, double p, double e, double Y, double* additional_args);
+                      double epsilon, double a, double p, double e, double Y, bool integrate_backwards, double* additional_args);
     ~SchwarzEccFlux();
 };

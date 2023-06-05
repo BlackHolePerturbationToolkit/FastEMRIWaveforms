@@ -94,6 +94,7 @@ class EMRIInspiral(TrajectoryBase):
         citations (list): list of additional citations for this ODE.
         enforce_schwarz_sep (bool): Enforce the separatrix of Schwarzschild
             spacetime.
+        integrate_backwards (bool): Choose to integrate trajectories backwards in time
         inspiral_generator (func): Inspiral C/C++ wrapped function.
         func (str): ODE function name.
         specific_kwarg_keys (dict): Specific keywords that need to transferred
@@ -104,7 +105,7 @@ class EMRIInspiral(TrajectoryBase):
         ValueError: File necessary for ODE not found.
     """
 
-    def __init__(self, *args, func=None, enforce_schwarz_sep=False, **kwargs):
+    def __init__(self, *args, func=None, enforce_schwarz_sep=False, integrate_backwards = False, **kwargs):
 
         few_dir = dir_path + "/../../"
 
@@ -121,10 +122,7 @@ class EMRIInspiral(TrajectoryBase):
             )
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
-        try:
-            self.integrate_backwards = kwargs["inspiral_kwargs"]["integrate_backwards"] # Make the choice to integrate backwards or not
-        except KeyError:
-            self.integrate_backwards = kwargs["integrate_backwards"]  # Using waveform class has different kwargs structure
+        self.integrate_backwards = integrate_backwards
         
         # set defaults from the ODE function specifically
         for key, item in ode_info[func].items():
@@ -142,6 +140,7 @@ class EMRIInspiral(TrajectoryBase):
         self.inspiral_generator = pyInspiralGenerator(
             func,
             enforce_schwarz_sep,
+            integrate_backwards,
             self.num_add_args,
             self.convert_Y,
             few_dir.encode(),
@@ -254,9 +253,6 @@ class EMRIInspiral(TrajectoryBase):
             p_sep = get_separatrix(a,e0,x0)
             if p0 < p_sep:
                 raise ValueError("Initial value within separatrix")
-            args = (1.0,)
-        else:
-            args = (0.0,)
         args_in = np.asarray(args)
 
         # correct for issue in Cython pass

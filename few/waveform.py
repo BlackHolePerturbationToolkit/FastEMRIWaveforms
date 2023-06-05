@@ -79,7 +79,6 @@ class GenerateEMRIWaveform:
     def __init__(
         self, waveform_class, *args, frame="detector", return_list=False, **kwargs
     ):
-
         # instantiate the class
         if isinstance(waveform_class, str):
             try:
@@ -571,7 +570,6 @@ class SchwarzschildEccentricWaveformBase(
 
         if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
             p, e, x, Phi_phi, Phi_theta, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,x,Phi_phi,Phi_theta,Phi_r)
-        breakpoint()
         # makes sure p and e are generally within the model
         self.sanity_check_traj(p, e)
 
@@ -1017,7 +1015,6 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
 
         # kwargs that are passed to the inspiral call function
         self.inspiral_kwargs = inspiral_kwargs
-
         # function for generating the inpsiral
         self.inspiral_generator = inspiral_module(**inspiral_kwargs)
 
