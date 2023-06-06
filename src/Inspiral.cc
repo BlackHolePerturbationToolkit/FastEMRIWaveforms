@@ -63,7 +63,7 @@ using namespace std::chrono;
 #define DIST_TO_SEPARATRIX 0.1
 #define INNER_THRESHOLD 1e-8
 #define PERCENT_STEP 0.25
-#define MAX_ITER 5000
+#define MAX_ITER 3000
 // The RHS of the ODEs
 int func_ode_wrap (double t, const double y[], double f[], void *params){
 	(void)(t); /* avoid unused parameter warning */
@@ -221,10 +221,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
     int bad_num = 0;
     int bad_limit = 1000;
 
-    double x_temp = Y_to_xI(a, p0, e0, x0);
-    double p_sep = get_separatrix(a,e0,x_temp);
-
-    // If integrating backwards, do not set distance from separatrix  
 	while (t < tmax){
         // apply fixed step if dense stepping
         // or do interpolated step
@@ -233,10 +229,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
       	if ((status != GSL_SUCCESS) && (status != 9)){
        		printf ("error, return value=%d\n", status);
           	break;
-        }
-        // if status is 0 meaning integrator is a success!
-        if(status == 9){
-            cout << "status is " << status << ", within separatrix" << endl;
         }
         // if status is 9 meaning inside the separatrix
         // or if any quantity is nan, step back and take a smaller step.
@@ -295,7 +287,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
 
         // count the number of points
         ind++;
-
         // Stop the inspiral when close to the separatrix
         // convert to proper inclination for separatrix
         double x_temp;
@@ -415,7 +406,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
                 }
 
                 iter++;
-
                 // guard against diverging calculations
                 if (iter > MAX_ITER)
                 {
