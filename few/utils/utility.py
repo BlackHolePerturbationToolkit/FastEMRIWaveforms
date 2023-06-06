@@ -971,7 +971,6 @@ def interpolate_trajectories_backwards_integration(t,p,e,Y,Phi_phi,Phi_theta,Phi
     """
         
     tvec_shift = max(t) - t
-
     p_back_interp = interp1d(tvec_shift,p, kind = spline_type)
     p = p_back_interp(t)
 
