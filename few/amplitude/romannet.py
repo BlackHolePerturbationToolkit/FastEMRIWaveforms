@@ -121,7 +121,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         """
         pass
 
-    def __init__(self, max_init_len=1000, **kwargs):
+    def __init__(self, max_init_len = 3000, **kwargs):
 
         ParallelModuleBase.__init__(self, **kwargs)
         SchwarzschildEccentric.__init__(self, **kwargs)
