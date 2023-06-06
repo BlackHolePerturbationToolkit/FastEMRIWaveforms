@@ -27,6 +27,7 @@ import warnings
 import os
 
 import numpy as np
+from few.utils.utility import get_separatrix
 from scipy.interpolate import CubicSpline
 from scipy import constants as ct
 
@@ -629,9 +630,9 @@ class TrajectoryBase(ABC):
         new_t=None,
         spline_kwargs={},
         DENSE_STEPPING=0,
-        max_init_len=10000,
+        max_init_len= 1000,
         upsample=False,
-        err=0.5*1e-11,
+        err= 1e-10,   # Good error to work with. 
         use_rk4=False,
         fix_t=False,
         **kwargs,
@@ -692,12 +693,27 @@ class TrajectoryBase(ABC):
         """
 
         # add call kwargs to kwargs dictionary
-        kwargs["dt"] = dt
+        breakpoint()
+        inspiral_kwargs = self.specific_kwargs['inspiral_kwargs']
+        
+        # self.specific_kwarg_keys = [
+        #    "T",
+        #    "dt",
+        #    "err",
+        #    "DENSE_STEPPING",
+        #    "max_init_len",
+        #    "use_rk4"
+        # ]
+        
         kwargs["T"] = T
-        kwargs["max_init_len"] = max_init_len
-        kwargs["err"] = err
-        kwargs["DENSE_STEPPING"] = DENSE_STEPPING
+        kwargs["dt"] = dt
+        kwargs["DENSE_STEPPING"] = inspiral_kwargs['DENSE_STEPPING']
+        kwargs["max_init_len"] = inspiral_kwargs['max_init_len']
         kwargs["use_rk4"] = use_rk4
+        
+        # kwargs["max_init_len"] = max_init_len
+        # kwargs["err"] = err
+        # kwargs["DENSE_STEPPING"] = DENSE_STEPPING
 
         # convert from years to seconds
         T = T * YRSID_SI

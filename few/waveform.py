@@ -303,7 +303,8 @@ class GenerateEMRIWaveform:
 
         # add additional arguments to waveform interface
         args += add_args
-
+        breakpoint()
+        inspiral_kwargs = self.waveform_generator.inspiral_kwargs
         # get waveform
         h = (
             self.waveform_generator(*args, **{**initial_phases, **kwargs})
@@ -552,7 +553,7 @@ class SchwarzschildEccentricWaveformBase(
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
         self.sanity_check_init(M, mu, p0, e0)
         # get trajectory
-        (t, p, e, x, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
+        (t, p_temp, e_temp, x_temp, Phi_phi_temp, Phi_theta_temp, Phi_r_temp) = self.inspiral_generator(
             M,
             mu,
             0.0,
@@ -567,9 +568,13 @@ class SchwarzschildEccentricWaveformBase(
             dt=dt,
             **self.inspiral_kwargs,
         )
-        breakpoint()
         if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
-            p, e, _, Phi_phi, _, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,x,Phi_phi,Phi_theta,Phi_r, spline_type = 'cubic')
+            p, e, _, Phi_phi, _, Phi_r = interpolate_trajectories_backwards_integration(t,p_temp,e_temp,x_temp,Phi_phi_temp,Phi_theta_temp,Phi_r_temp, spline_type = 'cubic')
+        else:
+            p = p_temp
+            e = e_temp
+            Phi_phi = Phi_phi_temp
+            Phi_r = Phi_r_temp
         # makes sure p and e are generally within the model
         self.sanity_check_traj(p, e)
 
