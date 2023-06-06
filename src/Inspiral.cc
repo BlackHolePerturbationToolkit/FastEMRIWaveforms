@@ -59,6 +59,7 @@ using namespace std::chrono;
 
 #define  ERROR_INSIDE_SEP  21
 
+// used if we are integrating forwards
 #define DIST_TO_SEPARATRIX 0.1
 #define INNER_THRESHOLD 1e-8
 #define PERCENT_STEP 0.25
@@ -81,6 +82,11 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
     // integrator may naively step over separatrix
     double x_temp;
 
+    // If integrating backwards, no need to venture inside separatrix
+    if (integrate_backwards)
+    {
+        #define DIST_TO_SEPARATRIX 0.0
+    }
     // define a sanity check
     if(sanity_check(a, p, e, x)==1){
         return GSL_EBADFUNC;
@@ -215,8 +221,11 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
     int bad_num = 0;
     int bad_limit = 1000;
 
-	while (t < tmax){
+    double x_temp = Y_to_xI(a, p0, e0, x0);
+    double p_sep = get_separatrix(a,e0,x_temp);
 
+    // If integrating backwards, do not set distance from separatrix  
+	while (t < tmax){
         // apply fixed step if dense stepping
         // or do interpolated step
 		if(DENSE_STEPPING) status = gsl_odeiv2_evolve_apply_fixed_step (evolve, control, step, &sys, &t, h, y);
@@ -224,6 +233,10 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
       	if ((status != GSL_SUCCESS) && (status != 9)){
        		printf ("error, return value=%d\n", status);
           	break;
+        }
+        // if status is 0 meaning integrator is a success!
+        if(status == 9){
+            cout << "status is " << status << ", within separatrix" << endl;
         }
         // if status is 9 meaning inside the separatrix
         // or if any quantity is nan, step back and take a smaller step.

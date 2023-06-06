@@ -62,9 +62,9 @@ sum_kwargs = {
 M = 1e6
 mu = 1e1
 a = 0.85
-p_f = 6.5   # Final semi-latus rectum
-e_f = 0.1  # Final eccentricity
-iota0_f = 1  # Final inclination
+p_f = 4.2083   # Final semi-latus rectum
+e_f = 0.3  # Final eccentricity
+iota0_f = 1.0  # Final inclination
 Y_f = np.cos(iota0_f)
 T = 1.0
 Phi_phi0 = 1
@@ -84,13 +84,13 @@ else:
 # Set up trajectory module for backwards integration
 traj_backwards = EMRIInspiral(func = trajectory_class, integrate_backwards = True) 
 
-if waveform_class == 'Pn5AAKWaveform':
-    x_new = Y_to_xI(a, p_f, e_f, Y_f)
-    p_sep = get_separatrix(a, e_f, x_new)
-    print("separatrix is at",p_sep)
-else:
-    p_sep = get_separatrix(0.0, e_f, 1.0)
-    print("separatrix is at",p_sep)
+# if waveform_class == 'Pn5AAKWaveform':
+    # x_new = Y_to_xI(a, p_f, e_f, Y_f)
+    # p_sep = get_separatrix(a, e_f, x_new)
+    # print("approximate: separatrix is at",p_sep)
+# else:
+    # p_sep = get_separatrix(0.0, e_f, 1.0)
+    # print("separatrix is at",p_sep)
 
 # Generate backwards integration
 t_back, p_back, e_back, Y_back, Phi_phi_back, Phi_r_back, Phi_theta_back = traj_backwards(M, mu, a, p_f, e_f, Y_f, 
@@ -108,9 +108,8 @@ initial_Y = Y_back[-1]
 t_forward, p_forward, e_forward, Y_forward, Phi_phi_forward, Phi_r_forward, Phi_theta_forward = traj_forwards(M, mu, a, initial_p, initial_e, initial_Y, 
                                              Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T )
 
-p_back_interp = interp1d(max(t_back) - t_back,p_back, kind = 'cubic')
-p_check_forward = p_back_interp(t_forward)
-breakpoint()
+#p_back_interp = interp1d(max(t_back) - t_back,p_back, kind = 'cubic')
+#p_check_forward = p_back_interp(t_forward)
 
 # Set extrinsic parameters for waveform generation
 qS = 0.2
@@ -149,6 +148,9 @@ print("Finished forwards integration")
 # Extract plus polarised waveform
 h_p_forward_int = waveform_forward.real
 
+# Output non-noise_weighted mismatch
+print("Mismatch between two waveforms is", get_mismatch(waveform_forward,waveform_back))
+
 # Extract relevant times [seconds]
 n_t = len(h_p_forward_int)
 t = np.arange(0,n_t*dt,dt)
@@ -163,5 +165,3 @@ plt.legend()
 plt.show()
 plt.clf()
 
-# Output non-noise_weighted mismatch
-print("Mismatch between two waveforms is", get_mismatch(waveform_forward,waveform_back))
