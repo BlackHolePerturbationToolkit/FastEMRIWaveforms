@@ -251,7 +251,7 @@ class EMRIInspiral(TrajectoryBase):
             # Check initial value of p is not within separatrix
             p_sep = get_separatrix(a,e0,x0)
             if p0 < p_sep:
-                raise ValueError("Initial value within separatrix")
+                raise ValueError("Initial value within separatrix: p_sep = {0}".format(p_sep))
         args_in = np.asarray(args)
 
         # correct for issue in Cython pass
