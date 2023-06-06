@@ -693,27 +693,13 @@ class TrajectoryBase(ABC):
         """
 
         # add call kwargs to kwargs dictionary
-        breakpoint()
-        inspiral_kwargs = self.specific_kwargs['inspiral_kwargs']
-        
-        # self.specific_kwarg_keys = [
-        #    "T",
-        #    "dt",
-        #    "err",
-        #    "DENSE_STEPPING",
-        #    "max_init_len",
-        #    "use_rk4"
-        # ]
         
         kwargs["T"] = T
-        kwargs["dt"] = dt
-        kwargs["DENSE_STEPPING"] = inspiral_kwargs['DENSE_STEPPING']
-        kwargs["max_init_len"] = inspiral_kwargs['max_init_len']
+        kwargs["dt"] = dt 
+        kwargs["max_init_len"] = max_init_len
+        kwargs["err"] = err
+        kwargs["DENSE_STEPPING"] = DENSE_STEPPING
         kwargs["use_rk4"] = use_rk4
-        
-        # kwargs["max_init_len"] = max_init_len
-        # kwargs["err"] = err
-        # kwargs["DENSE_STEPPING"] = DENSE_STEPPING
 
         # convert from years to seconds
         T = T * YRSID_SI

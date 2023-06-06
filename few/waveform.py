@@ -79,6 +79,7 @@ class GenerateEMRIWaveform:
     def __init__(
         self, waveform_class, *args, frame="detector", return_list=False, **kwargs
     ):
+        breakpoint()
         # instantiate the class
         if isinstance(waveform_class, str):
             try:

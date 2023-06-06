@@ -146,15 +146,15 @@ class EMRIInspiral(TrajectoryBase):
 
         self.func = func
         breakpoint()
-        self.specific_kwargs = kwargs
-        # self.specific_kwarg_keys = [
-        #    "T",
-        #    "dt",
-        #    "err",
-        #    "DENSE_STEPPING",
-        #    "max_init_len",
-        #    "use_rk4"
-        # ]
+        # self.specific_kwargs = kwargs
+        self.specific_kwarg_keys = [
+           "T",
+           "dt",
+           "err",
+           "DENSE_STEPPING",
+           "max_init_len",
+           "use_rk4"
+        ]
 
 
 
@@ -248,7 +248,7 @@ class EMRIInspiral(TrajectoryBase):
         
         #breakpoint()
         # transfer kwargs from parent class
-        #temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
+        temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
         breakpoint()
         if self.integrate_backwards:   # If we choose to integrate backwards
             # Check initial value of p is not within separatrix
@@ -257,12 +257,11 @@ class EMRIInspiral(TrajectoryBase):
                 raise ValueError("Initial value within separatrix: p_sep = {0}".format(p_sep))
             elif (p0 - p_sep) < 0.25:
                 if self.background == 'Schwarzschild':
-                    kwargs['err'] = 1e-13
-                    kwargs['max_init_len'] = 3000
+                    temp_kwargs['err'] = 1e-13
+                    temp_kwargs['max_init_len'] = 3000
                 elif self.background == 'Kerr':
-                    kwargs['err'] = 1e-12
-                    kwargs['max_init_len'] = 9000
-                    # temp_kwargs['max_init_len'] = 10000
+                    temp_kwargs['err'] = 1e-12
+                    temp_kwargs['max_init_len'] = 10000
         args_in = np.asarray(args)
 
         # correct for issue in Cython pass
@@ -270,7 +269,7 @@ class EMRIInspiral(TrajectoryBase):
             args_in = np.array([0.0])
         # this will return in coordinate time
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(
-            M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0, args_in, **kwargs
+            M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0, args_in, **temp_kwargs
         )
         
         return (t, p, e, x, Phi_phi, Phi_theta, Phi_r)

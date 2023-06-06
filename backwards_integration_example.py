@@ -35,29 +35,13 @@ from scipy.interpolate import interp1d
 
 use_gpu = False
 
-# keyword arguments for inspiral generator (RunKerrGenericPn5Inspiral)
+# keyword arguments for inspiral generator (RunKerrGenericPn5Inspiral) // integrating
 inspiral_kwargs = {
     "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
-    "max_init_len": int(2e6), # all of the trajectories will be well under len = 1000
-    "err" : 1e-10
+    "max_init_len": int(2e4), # all of the trajectories will be well under len = 1000
+    "err" : 1e-11,
 }
 
-# keyword arguments for inspiral generator (RomanAmplitude)
-amplitude_kwargs = {
-    "max_init_len": int(1e5),  # all of the trajectories will be well under len = 1000
-    "use_gpu": use_gpu  # GPU is available in this class
-}
-
-# keyword arguments for Ylm generator (GetYlms)
-Ylm_kwargs = {
-    "assume_positive_m": False  # if we assume positive m, it will generate negative m for all m>0
-}
-
-# keyword arguments for summation generator (InterpolatedModeSum)
-sum_kwargs = {
-    "use_gpu": use_gpu,  # GPU is availabel for this type of summation
-    "pad_output": False
-    }
 
 # initial parameters
 M = 1e6
@@ -85,19 +69,11 @@ else:
     print("Eccentric Schwarzschild trajectory and waveform")
 
 # Set up trajectory module for backwards integration
-traj_backwards = EMRIInspiral(func = trajectory_class, inspiral_kwargs = inspiral_kwargs, integrate_backwards = True) 
-# if waveform_class == 'Pn5AAKWaveform':
-    # x_new = Y_to_xI(a, p_f, e_f, Y_f)
-    # p_sep = get_separatrix(a, e_f, x_new)
-    # print("approximate: separatrix is at",p_sep)
-# else:
-    # p_sep = get_separatrix(0.0, e_f, 1.0)
-    # print("separatrix is at",p_sep)
+traj_backwards = EMRIInspiral(func = trajectory_class, integrate_backwards = True) 
 
 # Generate backwards integration
 t_back, p_back, e_back, Y_back, Phi_phi_back, Phi_r_back, Phi_theta_back = traj_backwards(M, mu, a, p_f, e_f, Y_f, 
-                                             Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, err = 1e-12, T=T )
-quit()
+                                             Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T, **inspiral_kwargs)
 # Set up trajectory module for forwards integration
 traj_forwards = EMRIInspiral(func = trajectory_class, integrate_backwards = False) 
 
@@ -108,11 +84,13 @@ initial_Y = Y_back[-1]
 
 # Generate forwards integration
 t_forward, p_forward, e_forward, Y_forward, Phi_phi_forward, Phi_r_forward, Phi_theta_forward = traj_forwards(M, mu, a, initial_p, initial_e, initial_Y, 
-                                             Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T )
+                                             Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T, **inspiral_kwargs)
 
 print("Finished trajectories")
 p_back_interp = interp1d(max(t_back) - t_back,p_back, kind = 'cubic')
 p_check_forward = p_back_interp(t_forward)
+
+# ======================== WAVEFORM GENERATION =============================
 
 # Set extrinsic parameters for waveform generation
 qS = 0.2
@@ -124,13 +102,29 @@ mich = False
 
 # Set up inspiral_kwargs - note use of "integrate_backwards"
 inspiral_kwargs = {
-    "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
-    "max_init_len": int(1e6),  # all of the trajectories will be well under len = 1000
-    "integrate_backwards": True # Need integrate_backwards flag in inspiral_kwargs 
+    "max_init_len": int(1e4),  # all of the trajectories will be well under len = 1000
+    "err": 1e-11,
+    "integrate_backwards": True
 }
 
+# keyword arguments for inspiral generator (RomanAmplitude)
+amplitude_kwargs = {
+    "max_init_len": int(1e5),  # all of the trajectories will be well under len = 1000
+    "use_gpu": use_gpu  # GPU is available in this class
+}
+
+# keyword arguments for Ylm generator (GetYlms)
+Ylm_kwargs = {
+    "assume_positive_m": False  # if we assume positive m, it will generate negative m for all m>0
+}
+
+# keyword arguments for summation generator (InterpolatedModeSum)
+sum_kwargs = {
+    "use_gpu": use_gpu,  # GPU is availabel for this type of summation
+    "pad_output": False
+    }
 # Generate waveform using backwards integration
-wave_generator_backwards = GenerateEMRIWaveform(waveform_class, inspiral_kwargs=inspiral_kwargs, sum_kwargs=sum_kwargs, use_gpu=False)
+wave_generator_backwards = GenerateEMRIWaveform(waveform_class, inspiral_kwargs = inspiral_kwargs, use_gpu=False)
 waveform_back = wave_generator_backwards(M, mu, a, p_f, e_f, Y_f, dist, qS, phiS, qK, phiK, 
                           Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, dt=dt, T=T) 
 print("Finished backwards integration")
