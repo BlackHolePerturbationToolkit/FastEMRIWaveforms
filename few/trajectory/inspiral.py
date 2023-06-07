@@ -145,7 +145,6 @@ class EMRIInspiral(TrajectoryBase):
         )
 
         self.func = func
-        breakpoint()
         # self.specific_kwargs = kwargs
         self.specific_kwarg_keys = [
            "T",
@@ -246,16 +245,21 @@ class EMRIInspiral(TrajectoryBase):
             e0 = 0.0
 
         
-        #breakpoint()
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
-        breakpoint()
+
+        # apply fixed time step
+        if temp_kwargs['DENSE_STEPPING'] == 1 and 'dT' in kwargs:
+            temp_kwargs['dt'] = kwargs['dT'] # change the step size to user defined value dT 
+         
+
         if self.integrate_backwards:   # If we choose to integrate backwards
             # Check initial value of p is not within separatrix
             p_sep = get_separatrix(a,e0,x0)
             if p0 < p_sep:
                 raise ValueError("Initial value within separatrix: p_sep = {0}".format(p_sep))
             elif (p0 - p_sep) < 0.25:
+                # Determine accuracy of integrator if we are very strong-field
                 if self.background == 'Schwarzschild':
                     temp_kwargs['err'] = 1e-13
                     temp_kwargs['max_init_len'] = 3000

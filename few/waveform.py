@@ -79,7 +79,6 @@ class GenerateEMRIWaveform:
     def __init__(
         self, waveform_class, *args, frame="detector", return_list=False, **kwargs
     ):
-        breakpoint()
         # instantiate the class
         if isinstance(waveform_class, str):
             try:
@@ -304,7 +303,6 @@ class GenerateEMRIWaveform:
 
         # add additional arguments to waveform interface
         args += add_args
-        breakpoint()
         inspiral_kwargs = self.waveform_generator.inspiral_kwargs
         # get waveform
         h = (
@@ -1158,7 +1156,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         )
 
         if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
-            p, e, Y, Phi_phi, Phi_theta, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,Y,Phi_phi,Phi_theta,Phi_r)
+            p, e, Y, Phi_phi, Phi_theta, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,Y,Phi_phi,Phi_theta,Phi_r, spline_type = 'cubic')
 
 
         # makes sure p, Y, and e are generally within the model

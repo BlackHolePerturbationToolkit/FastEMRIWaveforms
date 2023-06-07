@@ -693,9 +693,9 @@ class TrajectoryBase(ABC):
         """
 
         # add call kwargs to kwargs dictionary
-        
+         
         kwargs["T"] = T
-        kwargs["dt"] = dt 
+        kwargs["dt"] = dt  
         kwargs["max_init_len"] = max_init_len
         kwargs["err"] = err
         kwargs["DENSE_STEPPING"] = DENSE_STEPPING
