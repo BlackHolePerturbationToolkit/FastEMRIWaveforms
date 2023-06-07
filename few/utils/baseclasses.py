@@ -632,7 +632,7 @@ class TrajectoryBase(ABC):
         DENSE_STEPPING=0,
         max_init_len= 1000,
         upsample=False,
-        err= 1e-10,   # Good error to work with. 
+        err= 1e-10,   
         use_rk4=False,
         fix_t=False,
         **kwargs,
@@ -662,8 +662,10 @@ class TrajectoryBase(ABC):
                 provides the kwargs desired for scipy.interpolate.CubicSpline.
                 Default is {}.
             DENSE_STEPPING (int, optional): If 1, the trajectory used in the
-                integrator will be densely stepped at steps of :obj:`dt`. If 0,
-                the integrator will determine its stepping. Default is 0.
+                integrator will be densely stepped at steps of :obj:`dT`given
+                by the inspiral_kwargs. If dT not provided by the inspiral_kwargs 
+                then integrator uses :obj:`dt`.  If 0, the integrator will determine 
+                its stepping. Default is 0.
             max_init_len (int, optional): Sets the allocation of memory for
                 trajectory parameters. This should be the maximum length
                 expected for a trajectory. Trajectories with default settings
