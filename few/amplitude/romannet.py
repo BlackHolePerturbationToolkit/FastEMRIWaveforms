@@ -246,22 +246,26 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
 
         # check ifn input_len is greater than the max_init_len attribute
         # if so reset the buffers and update the attribute
-        if input_len > self.max_init_len:
-            warnings.warn(
-                "Input length {} is larger than initial max_init_len ({}). Reallocating preallocated arrays for this size.".format(
-                    input_len, self.max_init_len
-                )
-            )
-            self.max_init_len = input_len
+        
+        # Is this even necessary?
+        # if input_len > self.max_init_len:
+        #     warnings.warn(
+        #         "Input length {} is larger than initial max_init_len ({}). Reallocating preallocated arrays for this size.".format(
+        #             input_len, self.max_init_len
+        #         )
+        #     )
+        
+        # reset the buffers and update the attribute
+        self.max_init_len = input_len
 
-            self.temp_mats = [
-                self.xp.zeros(
-                    (self.max_num * self.max_init_len,), dtype=self.xp.float64
-                ),
-                self.xp.zeros(
-                    (self.max_num * self.max_init_len,), dtype=self.xp.float64
-                ),
-            ]
+        self.temp_mats = [
+            self.xp.zeros(
+                (self.max_num * self.max_init_len,), dtype=self.xp.float64
+            ),
+            self.xp.zeros(
+                (self.max_num * self.max_init_len,), dtype=self.xp.float64
+            ),
+        ]
 
         # the input is (y, e)
         y = p_to_y(p, e, use_gpu=self.use_gpu)
