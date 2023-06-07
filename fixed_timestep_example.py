@@ -35,6 +35,21 @@ from scipy.interpolate import interp1d
 
 use_gpu = False
 
+sum_kwargs = {
+        "use_gpu": use_gpu,  # GPU is availabel for this type of summation
+        "pad_output": True
+        }
+
+# These kwargs used for Schwarzschild model
+amplitude_kwargs = {
+"max_init_len": int(1e2),  
+"use_gpu": use_gpu  # GPU is available in this class
+}
+# keyword arguments for Ylm generator (GetYlms)
+Ylm_kwargs = {
+    "assume_positive_m": False  # if we assume positive m, it will generate negative m for all m>0
+}
+
 # keyword arguments for inspiral 
 
 # initial parameters
@@ -49,12 +64,16 @@ if waveform_choice == "y":
     trajectory_class = 'pn5'
     
     # Parameters for AAK model
-    p0 = 6.7 
+    p0 = 8.1
     e0 = 0.2 
     iota0 = 1.0; Y0 = np.cos(iota0)   
     a = 0.85
     Phi_theta0 = 2
+    
+
+    # these kwargs not used for AAK model
     print("5PN AAK trajectory and waveform")
+
 else:
     waveform_class = 'FastSchwarzschildEccentricFlux'
     trajectory_class = "SchwarzEccFlux"
@@ -65,6 +84,9 @@ else:
     Y0 = 0.0  # Not used 
     a = 0.0   # Not used 
     Phi_theta0 = 0.0  # Not used 
+
+    # keyword arguments for summation generator (InterpolatedModeSum)
+
     print("Eccentric Schwarzschild trajectory and waveform")
 
 
@@ -86,7 +108,7 @@ t_adapt, p_adapt, e_adapt, Y_adapt, Phi_phi_adapt, Phi_r_adapt, Phi_theta_adapt 
 inspiral_kwargs_fixed = {
     "DENSE_STEPPING": 1,  # Set to 1 if we want a sparsely sampled trajectory
     "dT": 1e3,
-    "max_init_len": int(1e7), # all of the trajectories will be well under len = 1000
+    #"max_init_len": int(1e7), # all of the trajectories will be well under len = 1000
     "err" : 1e-10,
     "integrate_backwards": False
 }
@@ -97,14 +119,13 @@ t_fixed, p_fixed, e_fixed, Y_fixed, Phi_phi_fixed, Phi_r_fixed, Phi_theta_fixed 
 
 print("Finished trajectories")
 
-plt.plot(t_adapt, p_adapt, c = 'blue', alpha = 0.5, label = 'adaptive')
-plt.plot(t_fixed, p_fixed, c = 'red', alpha = 1, linestyle = 'dashed', label = 'fixed')
-plt.xlabel(r'time [days]', fontsize = 16)
-plt.ylabel(r'$p$', fontsize = 16)
-plt.title('Comparison - adaptive and fixed time steps')
-plt.legend()
-plt.show()
-breakpoint()
+# plt.plot(t_adapt, p_adapt, c = 'blue', alpha = 0.5, label = 'adaptive')
+# plt.plot(t_fixed, p_fixed, c = 'red', alpha = 1, linestyle = 'dashed', label = 'fixed')
+# plt.xlabel(r'time [days]', fontsize = 16)
+# plt.ylabel(r'$p$', fontsize = 16)
+# plt.title('Comparison - adaptive and fixed time steps')
+# plt.legend()
+# plt.show()
 # ======================== WAVEFORM GENERATION =============================
 
 # Set extrinsic parameters for waveform generation
@@ -115,24 +136,12 @@ phiK = 0.8
 dist = 1.0
 dt = 10.0
 
-# keyword arguments for inspiral generator (RomanAmplitude)
-amplitude_kwargs = {
-    "max_init_len": int(1e5),  # all of the trajectories will be well under len = 1000
-    "use_gpu": use_gpu  # GPU is available in this class
-}
-
-# keyword arguments for Ylm generator (GetYlms)
-Ylm_kwargs = {
-    "assume_positive_m": False  # if we assume positive m, it will generate negative m for all m>0
-}
-
-# keyword arguments for summation generator (InterpolatedModeSum)
-sum_kwargs = {
-    "use_gpu": use_gpu,  # GPU is availabel for this type of summation
-    "pad_output": True
-    }
 # Generate waveform using adaptive step
-wave_generator_adaptive = GenerateEMRIWaveform(waveform_class, inspiral_kwargs = inspiral_kwargs_adapt, use_gpu = False)
+
+wave_generator_adaptive = GenerateEMRIWaveform(waveform_class, inspiral_kwargs = inspiral_kwargs_adapt, 
+                                                                amplitude_kwargs = amplitude_kwargs,
+                                                                Ylm_kwargs = Ylm_kwargs,
+                                                                sum_kwargs = sum_kwargs)
 
 waveform_adaptive_time_step = wave_generator_adaptive(M, mu, a, p0, e0, Y0, dist, qS, phiS, qK, phiK, 
                           Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, dt=dt, T=1.0) 
@@ -142,17 +151,22 @@ print("Finished waveform using adapative step")
 h_p_adaptive_time_step = waveform_adaptive_time_step.real
 
 # Generate waveform using forwards integration 
-wave_generator_fixed_time_step = GenerateEMRIWaveform(waveform_class,inspiral_kwargs=inspiral_kwargs_fixed)
+print("Building waveform")
+wave_generator_fixed_time_step = GenerateEMRIWaveform(waveform_class, inspiral_kwargs = inspiral_kwargs_fixed, 
+                                                                amplitude_kwargs = amplitude_kwargs,
+                                                                Ylm_kwargs = Ylm_kwargs,
+                                                                sum_kwargs = sum_kwargs)
 
 waveform_fixed_time_step = wave_generator_fixed_time_step(M, mu, a, p0, e0, Y0, dist, qS, phiS, qK, phiK,
                           Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, dt=dt, T=1.0)
 
+# quit()
 print("Finished forwards integration")
 # Extract plus polarised waveform
 h_p_fixed_time_step = waveform_fixed_time_step.real
 
 n_t_fixed = len(h_p_fixed_time_step)
-h_p_adaptive_time_step = h_p_adaptive_time_step[0:n_t_fixed]
+# h_p_adaptive_time_step = h_p_adaptive_time_step[0:n_t_fixed]
 
 # adaptive step size will always get closer to separatrix, so truncate
 # Output non-noise_weighted mismatch
