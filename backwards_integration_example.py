@@ -35,11 +35,11 @@ from scipy.interpolate import interp1d
 
 use_gpu = False
 
-# keyword arguments for inspiral generator (RunKerrGenericPn5Inspiral) // integrating
+# keyword arguments for inspiral 
 inspiral_kwargs = {
-    "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
-    "max_init_len": int(2e4), # all of the trajectories will be well under len = 1000
-    "err" : 1e-11,
+    "DENSE_STEPPING": 0,  # Set to 1 if we want a sparsely sampled trajectory
+    "max_init_len": int(1e7), # all of the trajectories will be well under len = 1000
+    "err" : 1e-10,
 }
 
 
@@ -47,7 +47,7 @@ inspiral_kwargs = {
 M = 1e6
 mu = 1e1
 a = 0.85
-p_f = 4.05  # Final semi-latus rectum
+p_f = 6.45  # Final semi-latus rectum
 e_f = 0.1  # Final eccentricity
 iota0_f = 1.0  # Final inclination
 Y_f = np.cos(iota0_f)
@@ -57,7 +57,7 @@ Phi_theta0 = 2
 Phi_r0 = 3
 
 dt = 10.0
-T = 2
+T = 1
 waveform_choice = input("Do you want Kerr inspirals? [y/n]")
 if waveform_choice == "y":
     waveform_class = 'Pn5AAKWaveform'
@@ -73,7 +73,7 @@ traj_backwards = EMRIInspiral(func = trajectory_class, integrate_backwards = Tru
 
 # Generate backwards integration
 t_back, p_back, e_back, Y_back, Phi_phi_back, Phi_r_back, Phi_theta_back = traj_backwards(M, mu, a, p_f, e_f, Y_f, 
-                                             Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T, **inspiral_kwargs)
+                                             Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, dt = dt, T=T, **inspiral_kwargs)
 # Set up trajectory module for forwards integration
 traj_forwards = EMRIInspiral(func = trajectory_class, integrate_backwards = False) 
 
@@ -102,8 +102,9 @@ mich = False
 
 # Set up inspiral_kwargs - note use of "integrate_backwards"
 inspiral_kwargs = {
-    "max_init_len": int(1e4),  # all of the trajectories will be well under len = 1000
-    "err": 1e-11,
+    "max_init_len": int(1e8),
+    "DENSE_STEPPING": 0,
+    "err": 1e-12,
     "integrate_backwards": True
 }
 
@@ -127,7 +128,9 @@ sum_kwargs = {
 wave_generator_backwards = GenerateEMRIWaveform(waveform_class, inspiral_kwargs = inspiral_kwargs, use_gpu=False)
 waveform_back = wave_generator_backwards(M, mu, a, p_f, e_f, Y_f, dist, qS, phiS, qK, phiK, 
                           Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, dt=dt, T=T) 
+breakpoint()
 print("Finished backwards integration")
+
 # Extract plus polarised waveform
 h_p_back_int = waveform_back.real
 
