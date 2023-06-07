@@ -94,7 +94,7 @@ class EMRIInspiral(TrajectoryBase):
         citations (list): list of additional citations for this ODE.
         enforce_schwarz_sep (bool): Enforce the separatrix of Schwarzschild
             spacetime.
-        integrate_backwards (bool): Choose to integrate trajectories backwards in time
+        integrate_backwards (bool): Choose to integrate trajectories backwards in time.
         inspiral_generator (func): Inspiral C/C++ wrapped function.
         func (str): ODE function name.
         specific_kwarg_keys (dict): Specific keywords that need to transferred
@@ -248,12 +248,9 @@ class EMRIInspiral(TrajectoryBase):
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
 
-        # apply fixed time step
-        if temp_kwargs['DENSE_STEPPING'] == 1 and 'dT' in kwargs:
-            temp_kwargs['dt'] = kwargs['dT'] # change the step size to user defined value dT 
          
-
-        if self.integrate_backwards:   # If we choose to integrate backwards
+        # If we choose to integrate backwards
+        if self.integrate_backwards:   
             # Check initial value of p is not within separatrix
             p_sep = get_separatrix(a,e0,x0)
             if p0 < p_sep:
@@ -266,6 +263,14 @@ class EMRIInspiral(TrajectoryBase):
                 elif self.background == 'Kerr':
                     temp_kwargs['err'] = 1e-12
                     temp_kwargs['max_init_len'] = 10000
+        # apply fixed time step
+        if temp_kwargs['DENSE_STEPPING'] == 1 and 'dT' in kwargs:
+            temp_kwargs['dt'] = kwargs['dT'] # change the step size to user defined value dT 
+            T_year = 365*24*60*60
+            # Determine max length of trajectory
+            n_max = 2*int(temp_kwargs['T']*T_year/temp_kwargs['dt'])  
+            temp_kwargs['max_init_len'] = n_max
+        
         args_in = np.asarray(args)
 
         # correct for issue in Cython pass
