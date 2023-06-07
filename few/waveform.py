@@ -83,6 +83,10 @@ class GenerateEMRIWaveform:
         if isinstance(waveform_class, str):
             try:
                 waveform = globals()[waveform_class]
+                # Remove kwargs if using AAK waveform
+                if 'attributes_Pn5AAKWaveform' in dir(waveform):   
+                    kwargs.pop('amplitude_kwargs', None)
+                    kwargs.pop('Ylm_kwargs', None)
                 self.waveform_generator = waveform(*args, **kwargs)
             except KeyError:
                 raise ValueError(
