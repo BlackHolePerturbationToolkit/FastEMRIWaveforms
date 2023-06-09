@@ -6,7 +6,7 @@ from few.trajectory.inspiral import EMRIInspiral
 from few.amplitude.romannet import RomanAmplitude
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 from few.waveform import FastSchwarzschildEccentricFlux, SlowSchwarzschildEccentricFlux
-from few.utils.utility import get_overlap, get_mismatch
+from few.utils.utility import get_overlap, get_mismatch, interpolate_trajectories_backwards_integration
 from few.utils.ylm import GetYlms
 from few.utils.modeselector import ModeSelector
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
@@ -34,6 +34,7 @@ class WaveformTest(unittest.TestCase):
             "max_init_len": int(
                 1e3
             ),  # all of the trajectories will be well under len = 1000
+            "integrate_backwards": False
         }
 
         # keyword arguments for inspiral generator (RomanAmplitude)
@@ -65,6 +66,7 @@ class WaveformTest(unittest.TestCase):
         inspiral_kwargs = {
             "DENSE_STEPPING": 1,  # we want a sparsely sampled trajectory
             "max_init_len": int(1e7),  # dense stepping trajectories
+            "integrate_backwards": False
         }
 
         # keyword arguments for inspiral generator (RomanAmplitude)
@@ -142,19 +144,28 @@ def amplitude_test(amp_class):
 
 
 class ModuleTest(unittest.TestCase):
-    def test_trajectory(self):
+    def test_trajectory_few(self):
 
         # initialize trajectory class
-        traj = EMRIInspiral(func="SchwarzEccFlux")
+        traj_forwards = EMRIInspiral(func="SchwarzEccFlux")
+        traj_back = EMRIInspiral(func="SchwarzEccFlux",integrate_backwards=True)
 
         # set initial parameters
-        M = 1e5
+        M = 1e6
         mu = 1e1
         p0 = 10.0
         e0 = 0.7
 
         # run trajectory
-        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, 0.0, p0, e0, 1.0)
+        t_forward, *out_forward = traj_forwards(M, mu, 0.0, p0, e0, 1.0)
+        p_f = out_forward[0][-1]
+        e_f = out_forward[1][-1]
+
+        t_back, *out_back = traj_back(M, mu, 0.0, p_f, e_f, 1.0)
+        
+        self.assertAlmostEqual(p0, out_back[0][-1])
+
+
 
     def test_amplitudes(self):
 
