@@ -556,7 +556,7 @@ class SchwarzschildEccentricWaveformBase(
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
         self.sanity_check_init(M, mu, p0, e0)
         # get trajectory
-        (t, p_temp, e_temp, x_temp, Phi_phi_temp, Phi_theta_temp, Phi_r_temp) = self.inspiral_generator(
+        (t, p, e, xI, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
             M,
             mu,
             0.0,
@@ -571,13 +571,11 @@ class SchwarzschildEccentricWaveformBase(
             dt=dt,
             **self.inspiral_kwargs,
         )
-        if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
-            p, e, _, Phi_phi, _, Phi_r = interpolate_trajectories_backwards_integration(t,p_temp,e_temp,x_temp,Phi_phi_temp,Phi_theta_temp,Phi_r_temp, spline_type = 'cubic')
-        else:
-            p = p_temp
-            e = e_temp
-            Phi_phi = Phi_phi_temp
-            Phi_r = Phi_r_temp
+        try:
+            if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
+                p, e, _, Phi_phi, _, Phi_r = interpolate_trajectories_backwards_integration(t,p_temp,e_temp,xI,Phi_phi_temp,Phi_theta,Phi_r, spline_type = 'cubic')
+        except KeyError:  # If "integrate_backwards" in 
+           pass 
         # makes sure p and e are generally within the model
         self.sanity_check_traj(p, e)
 
@@ -1158,10 +1156,12 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
             dt=dt,
             **self.inspiral_kwargs,
         )
-
-        if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
-            p, e, Y, Phi_phi, Phi_theta, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,Y,Phi_phi,Phi_theta,Phi_r, spline_type = 'cubic')
-
+        try:
+            if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
+                p, e, Y, Phi_phi, Phi_theta, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,Y,Phi_phi,Phi_theta,Phi_r, spline_type = 'cubic')
+        except KeyError:
+           pass 
+            
 
         # makes sure p, Y, and e are generally within the model
         self.sanity_check_traj(p, e, Y)
