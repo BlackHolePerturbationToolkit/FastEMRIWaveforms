@@ -259,10 +259,10 @@ class EMRIInspiral(TrajectoryBase):
                 # Determine accuracy of integrator if we are very strong-field
                 if self.background == 'Schwarzschild':
                     temp_kwargs['err'] = 1e-13
-                    temp_kwargs['max_init_len'] = 3000
+                    # temp_kwargs['max_init_len'] = 3000
                 elif self.background == 'Kerr':
                     temp_kwargs['err'] = 1e-12
-                    temp_kwargs['max_init_len'] = 10000
+                    # temp_kwargs['max_init_len'] = 10000
         # apply fixed time step
         if temp_kwargs['DENSE_STEPPING'] == 1 and 'dT' in kwargs:
             temp_kwargs['dt'] = kwargs['dT'] # change the step size to user defined value dT 
@@ -270,6 +270,7 @@ class EMRIInspiral(TrajectoryBase):
             # Determine max length of trajectory
             n_max = 2*int(temp_kwargs['T']*T_year/temp_kwargs['dt'])  
             temp_kwargs['max_init_len'] = n_max
+        
         
         args_in = np.asarray(args)
 
