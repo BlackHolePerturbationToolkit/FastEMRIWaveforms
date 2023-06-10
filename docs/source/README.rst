@@ -221,7 +221,7 @@ In the main directory of the package run in the terminal:
 
 ::
 
-   python -m unittest discover
+   python -m unittest discover -v
 
 Contributing
 ------------
