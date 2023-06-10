@@ -145,7 +145,6 @@ def amplitude_test(amp_class):
 
 class ModuleTest(unittest.TestCase):
     def test_trajectory_few(self):
-
         # initialize trajectory class
         traj_forwards = EMRIInspiral(func="SchwarzEccFlux")
         traj_back = EMRIInspiral(func="SchwarzEccFlux",integrate_backwards=True)
@@ -157,11 +156,11 @@ class ModuleTest(unittest.TestCase):
         e0 = 0.7
 
         # run trajectory
-        t_forward, *out_forward = traj_forwards(M, mu, 0.0, p0, e0, 1.0)
+        _, *out_forward = traj_forwards(M, mu, 0.0, p0, e0, 1.0)
         p_f = out_forward[0][-1]
         e_f = out_forward[1][-1]
 
-        t_back, *out_back = traj_back(M, mu, 0.0, p_f, e_f, 1.0)
+        _, *out_back = traj_back(M, mu, 0.0, p_f, e_f, 1.0)
         
         self.assertAlmostEqual(p0, out_back[0][-1])
 
