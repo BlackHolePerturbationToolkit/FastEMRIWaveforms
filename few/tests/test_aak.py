@@ -174,7 +174,7 @@ class AAKWaveformTest(unittest.TestCase):
         inspiral_kwargs_fixed = {
             "DENSE_STEPPING": 1,
             "max_init_len": int(1e3),
-            "dT": 200
+            "dT": 200 
         }
         # keyword arguments for summation generator (InterpolatedModeSum)
         sum_kwargs = {"pad_output": False}
