@@ -47,17 +47,16 @@ inspiral_kwargs = {
 M = 1e6
 mu = 1e1
 a = 0.85
-p_f = 6.45  # Final semi-latus rectum
+p_f = 4.20  # Final semi-latus rectum
 e_f = 0.1  # Final eccentricity
 iota0_f = 1.0  # Final inclination
 Y_f = np.cos(iota0_f)
 T = 2.0
-Phi_phi0 = 1
-Phi_theta0 = 2
-Phi_r0 = 3
+Phi_phi0 = 1.0
+Phi_theta0 = 2.0
+Phi_r0 = 3.0
 
 dt = 10.0
-T = 1
 waveform_choice = input("Do you want Kerr inspirals? [y/n]")
 if waveform_choice == "y":
     waveform_class = 'Pn5AAKWaveform'

@@ -469,6 +469,7 @@ void InspiralCarrier::InspiralWrapper(double *t, double *p, double *e, double *x
 
         // make sure we have allocated enough memory through cython
         if (Inspiral_vals.length > init_len){
+            printf("Trajectory length = %d , you have manually set a max_init_len of %d", Inspiral_vals.length,init_len);
             throw std::invalid_argument("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
         }
 
