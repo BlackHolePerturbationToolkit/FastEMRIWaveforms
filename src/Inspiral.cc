@@ -59,7 +59,6 @@ using namespace std::chrono;
 
 #define  ERROR_INSIDE_SEP  21
 
-// used if we are integrating forwards
 #define DIST_TO_SEPARATRIX 0.1
 #define INNER_THRESHOLD 1e-8
 #define PERCENT_STEP 0.25
@@ -83,11 +82,12 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
     double x_temp;
 
     // If integrating backwards, no need to venture inside separatrix
-    if (integrate_backwards)
-    {
-        #undef DIST_TO_SEPARATRIX
-        #define DIST_TO_SEPARATRIX 0.0
-    }
+    // if (integrate_backwards)
+    // {
+    //     printf("inside integrate_backwards");
+    //     #undef DIST_TO_SEPARATRIX
+    //     #define DIST_TO_SEPARATRIX 0.0
+    // }
     // define a sanity check
     if(sanity_check(a, p, e, x)==1){
         return GSL_EBADFUNC;
@@ -228,7 +228,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
         #define MAX_ITER 200000   // Stop integrator terminating prematurely
     }
 	while (t < tmax){
-        
+          
         // apply fixed step if dense stepping
         // or do interpolated step
 		if(DENSE_STEPPING) status = gsl_odeiv2_evolve_apply_fixed_step (evolve, control, step, &sys, &t, h, y);
@@ -237,7 +237,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
        		printf ("error, return value=%d\n", status);
           	break;
         }
-        
         // if status is 9 meaning inside the separatrix
         // or if any quantity is nan, step back and take a smaller step.
         else if ((std::isnan(y[0]))||(std::isnan(y[1]))||(std::isnan(y[2])) ||(std::isnan(y[3]))||(std::isnan(y[4]))||(std::isnan(y[5])))
@@ -434,7 +433,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
         prev_p_sep = p_sep;
         #pragma unroll
         for (int jj = 0; jj < 6; jj += 1) y_prev[jj] = y[jj];
-
 	}
 
 	inspiral_out.length = ind;
