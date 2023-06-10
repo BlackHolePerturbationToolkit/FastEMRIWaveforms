@@ -573,7 +573,7 @@ class SchwarzschildEccentricWaveformBase(
         )
         try:
             if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
-                p, e, _, Phi_phi, _, Phi_r = interpolate_trajectories_backwards_integration(t,p_temp,e_temp,xI,Phi_phi_temp,Phi_theta,Phi_r, spline_type = 'cubic')
+                p, e, _, Phi_phi, _, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,xI,Phi_phi,Phi_theta,Phi_r, spline_type = 'cubic')
         except KeyError:  # If "integrate_backwards" in 
            pass 
         # makes sure p and e are generally within the model
