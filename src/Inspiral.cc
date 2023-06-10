@@ -59,10 +59,15 @@ using namespace std::chrono;
 
 #define  ERROR_INSIDE_SEP  21
 
-#define DIST_TO_SEPARATRIX 0.1
-#define INNER_THRESHOLD 1e-8
-#define PERCENT_STEP 0.25
-#define MAX_ITER 1000
+// #define DIST_TO_SEPARATRIX 0.1
+// #define INNER_THRESHOLD 1e-8
+// #define PERCENT_STEP 0.25
+// #define MAX_ITER 1000
+
+double DIST_TO_SEPARATRIX = 0.1;
+double INNER_THRESHOLD = 1e-8;
+double PERCENT_STEP = 0.25;
+double MAX_ITER = 100000;
 // The RHS of the ODEs
 int func_ode_wrap (double t, const double y[], double f[], void *params){
 	(void)(t); /* avoid unused parameter warning */
@@ -224,8 +229,7 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
 
     // If we apply fixed time step
     if (DENSE_STEPPING){
-        #undef MAX_ITER
-        #define MAX_ITER 200000   // Stop integrator terminating prematurely
+        MAX_ITER = 200000;   // Stop integrator terminating prematurely
     }
 	while (t < tmax){
           
@@ -433,6 +437,13 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
         prev_p_sep = p_sep;
         #pragma unroll
         for (int jj = 0; jj < 6; jj += 1) y_prev[jj] = y[jj];
+        // cout << y[0] << endl;
+        if (params_holder->integrate_backwards == 1.0 && log((y[0] -2.*y[1] - 2.1)) > 3.8086394259){
+            printf("Warning: Exceeded range of interpolant for large p\n stopping integration at p = %.1f and e = %.1f", y[0],y[1]);
+            // throw std::invalid_argument("Error: Outside range of interpolant");
+            break;
+   
+        } 
 	}
 
 	inspiral_out.length = ind;
@@ -459,7 +470,6 @@ void InspiralCarrier::InspiralWrapper(double *t, double *p, double *e, double *x
         // make sure we have allocated enough memory through cython
         if (Inspiral_vals.length > init_len){
             throw std::invalid_argument("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
-            // throw std::runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
         }
 
         // copy data
