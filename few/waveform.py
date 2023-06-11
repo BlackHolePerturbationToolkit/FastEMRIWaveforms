@@ -573,9 +573,13 @@ class SchwarzschildEccentricWaveformBase(
         )
         try:
             if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
-                p, e, _, Phi_phi, _, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,xI,Phi_phi,Phi_theta,Phi_r, spline_type = 'cubic')
-        except KeyError:  # If "integrate_backwards" in 
-           pass 
+                #p, e, Y, Phi_phi, Phi_theta, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,Y,Phi_phi,Phi_theta,Phi_r, spline_type = 'cubic')
+                Phi_phi = Phi_phi[0] + max(Phi_phi) - Phi_phi 
+                Phi_theta =  Phi_theta[0] + max(Phi_theta) - Phi_theta 
+                Phi_r =  Phi_r[0] + max(Phi_r) - Phi_r 
+
+        except KeyError:
+            pass
         # makes sure p and e are generally within the model
         self.sanity_check_traj(p, e)
 
@@ -1156,19 +1160,27 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
             dt=dt,
             **self.inspiral_kwargs,
         )
-        try:
-            if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
-                p, e, Y, Phi_phi, Phi_theta, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,Y,Phi_phi,Phi_theta,Phi_r, spline_type = 'cubic')
-        except KeyError:
-           pass 
-            
-
-        # makes sure p, Y, and e are generally within the model
+        
         self.sanity_check_traj(p, e, Y)
         self.end_time = t[-1]
         initial_e = e[0]
         # number of modes to use (from original AAK model)
         self.num_modes_kept = self.nmodes = int(30 * initial_e)
+            
+        # makes sure p, Y, and e are generally within the model
+        
+        try:
+            if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
+                #p, e, Y, Phi_phi, Phi_theta, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,Y,Phi_phi,Phi_theta,Phi_r, spline_type = 'cubic')
+                Phi_phi = Phi_phi[0] + max(Phi_phi) - Phi_phi 
+                Phi_theta =  Phi_theta[0] + max(Phi_theta) - Phi_theta 
+                Phi_r =  Phi_r[0] + max(Phi_r) - Phi_r 
+
+                initial_e = e[-1]
+                self.num_modes_kept = self.nmodes = int(30 * initial_e)
+        except KeyError:
+            pass
+
         if self.num_modes_kept < 4:
             self.num_modes_kept = self.nmodes = 4
 
