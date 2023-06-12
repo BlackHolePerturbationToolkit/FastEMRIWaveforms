@@ -574,9 +574,9 @@ class SchwarzschildEccentricWaveformBase(
         try:
             if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
                 #p, e, Y, Phi_phi, Phi_theta, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,Y,Phi_phi,Phi_theta,Phi_r, spline_type = 'cubic')
-                Phi_phi = Phi_phi[0] + max(Phi_phi) - Phi_phi 
-                Phi_theta =  Phi_theta[0] + max(Phi_theta) - Phi_theta 
-                Phi_r =  Phi_r[0] + max(Phi_r) - Phi_r 
+                Phi_phi = Phi_phi[0] + Phi_phi[-1] - Phi_phi 
+                Phi_theta =  Phi_theta[0] + Phi_theta[-1] - Phi_theta 
+                Phi_r =  Phi_r[0] + Phi_r[-1] - Phi_r 
 
         except KeyError:
             pass
@@ -1172,9 +1172,9 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         try:
             if self.inspiral_kwargs["integrate_backwards"]:  # If we wish to integrate backwards, build splines for trajectories  
                 #p, e, Y, Phi_phi, Phi_theta, Phi_r = interpolate_trajectories_backwards_integration(t,p,e,Y,Phi_phi,Phi_theta,Phi_r, spline_type = 'cubic')
-                Phi_phi = Phi_phi[0] + max(Phi_phi) - Phi_phi 
-                Phi_theta =  Phi_theta[0] + max(Phi_theta) - Phi_theta 
-                Phi_r =  Phi_r[0] + max(Phi_r) - Phi_r 
+                Phi_phi = Phi_phi[0] + Phi_phi[-1] - Phi_phi 
+                Phi_theta =  Phi_theta[0] + Phi_theta[-1] - Phi_theta 
+                Phi_r =  Phi_r[0] + Phi_r[-1] - Phi_r 
 
                 initial_e = e[-1]
                 self.num_modes_kept = self.nmodes = int(30 * initial_e)
