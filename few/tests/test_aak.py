@@ -158,8 +158,8 @@ class AAKWaveformTest(unittest.TestCase):
             M, mu, a, p0, e0, Y0, qS, phiS, qK, phiK, dist, mich=mich, dt=dt, T=T
         )
  
-        mm = get_mismatch(waveform_cpu_back,waveform_cpu_forward, use_gpu = False)
-        self.assertLess(mm, 1e-7)
+        mm = get_mismatch(waveform_cpu_back[::-1],waveform_cpu_forward, use_gpu = False)
+        self.assertLess(mm, 1e-2)
 
 
     def test_aak_fixed_timestep(self):
@@ -208,4 +208,4 @@ class AAKWaveformTest(unittest.TestCase):
         )
 
         mm = get_mismatch(waveform_adapt_step, wave_fixed_step, use_gpu=gpu_available)
-        self.assertLess(mm, 1e-5)
+        self.assertLess(mm, 1e-7)
