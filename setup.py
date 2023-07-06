@@ -414,17 +414,6 @@ spher_harm_ext = Extension(
     **cpu_extension,
 )
 
-tpi = Extension("TPI",
-              sources=["src/TPI.pyx", "src/TensorProductInterpolation.c"],
-              language="c",
-              libraries=["gsl", "gslcblas"],
-              include_dirs=[numpy_include, "include"],
-            library_dirs=None,
-            extra_compile_args={
-        "gcc": ["-std=c++11", "-fopenmp", "-fPIC", "-D__USE_OMP__","-std=c99", "-O3"]
-    },
-    )
-
 cpu_extensions = [
     matmul_cpu_ext,
     inspiral_ext,
@@ -434,7 +423,6 @@ cpu_extensions = [
     Interp2DAmplitude_ext,
     fund_freqs_ext,
     AAK_cpu_ext,
-    tpi
 ]
 
 if run_cuda_install:

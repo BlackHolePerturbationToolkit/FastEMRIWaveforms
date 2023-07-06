@@ -54,7 +54,7 @@ p0 = 12.0
 e0 = 0.2
 a = 0.7
 epsilon = mu/M
-second_spin = 1.0
+charge = 1.0
 
 # check fluxes
 p_all, e_all = np.asarray([temp.ravel() for temp in np.meshgrid( np.linspace(8.0, 14.0), np.linspace(0.01, 0.5))])
@@ -80,12 +80,12 @@ plt.xlabel('p')
 plt.ylabel('e')
 plt.tight_layout()
 # plt.savefig(f'edot.png')
-np.savetxt(f"p_e_pdot_edot_info_a={a}.txt", np.asarray((p_all, e_all, pdot, edot)).T )
+# np.savetxt(f"p_e_pdot_edot_info_a={a}.txt", np.asarray((p_all, e_all, pdot, edot)).T )
 
 # breakpoint()
 #################################################################
 tic = time.perf_counter()
-t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, second_spin, **insp_kw)
+t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, charge, **insp_kw)
 toc = time.perf_counter()
 print("time=",toc-tic, Phi_phi[-1], "length", len(t))
 
@@ -100,31 +100,13 @@ Omega_r = out[:,5]
 
 om1,om2,om3 = get_fundamental_frequencies(a,p,e,np.ones_like(p))
 print("check = ",np.all(Omega_phi==om1),np.all(Omega_r==om3))
-##################################################################
-# Fundamental frequencies
-# Viktor = np.loadtxt('t_p_e_OmegaPhi_OmegaTheta_OmegaR.dat')
-
-# # breakpoint()
-# # get_fundamental_frequencies(0.855, Viktor[:,1], Viktor[:,2], np.ones_like(Viktor[:,1]))
-
-# for ii in range(Viktor.shape[0]):
-#     print('-----------------------')
-#     print(Viktor[ii,1], Viktor[ii,2])
-#     print(get_fundamental_frequencies(0.855, Viktor[ii,1], Viktor[ii,2], 1.0)[0] - Viktor[ii,3] )
-#     print(get_fundamental_frequencies(0.855, Viktor[ii,1], Viktor[ii,2], 1.0)[1] - Viktor[ii,4] )
-#     print(get_fundamental_frequencies(0.855, Viktor[ii,1], Viktor[ii,2], 1.0)[2] - Viktor[ii,5] )
-
-# ii = 0
-# print(Viktor[ii,1], Viktor[ii,2])
-# print(get_fundamental_frequencies(0.855, Viktor[ii,1], Viktor[ii,2], 1.0),Viktor[ii,3:])
 #################################################################
-
 fig, axes = plt.subplots(2, 3)
 
 plt.subplots_adjust(wspace=0.3)
 fig.set_size_inches(14, 8)
 err = insp_kw["err"]
-plt.title(f"a={a},M={M:.1},mu={mu:.1}, sec. spin={second_spin:.2e}\nprecision integrator = {err:.1e}")
+plt.title(f"a={a},M={M:.1},mu={mu:.1}, sec. spin={charge:.2e}\nprecision integrator = {err:.1e}")
 
 axes = axes.ravel()
 
@@ -138,9 +120,11 @@ for i, (ax, x, y, xlab, ylab) in enumerate(zip(axes, xs, ys, xlabels, ylabels)):
     ax.set_xlabel(xlab, fontsize=16)
     ax.set_ylabel(ylab, fontsize=16)
 plt.tight_layout()
+plt.show()
 # plt.savefig(f'trajectory_evolution_info_M={M}_mu={mu}_p0={p0}_e0={e0}_a={a}.png')
-arr_out = np.asarray((t, p, e, Phi_phi, Phi_theta, Phi_r, om1, om2, om3, pdot, edot))
-np.savetxt(f"t[seconds]_p_e_PhiPhi_PhiTheta_PhiR_OmegaPhi_OmegaTheta_OmegaR_pdot_edot_info_M={M}_mu={mu}_p0={p0}_e0={e0}_a={a}.txt", arr_out.T )
+
+# arr_out = np.asarray((t, p, e, Phi_phi, Phi_theta, Phi_r, om1, om2, om3, pdot, edot))
+# np.savetxt(f"t[seconds]_p_e_PhiPhi_PhiTheta_PhiR_OmegaPhi_OmegaTheta_OmegaR_pdot_edot_info_M={M}_mu={mu}_p0={p0}_e0={e0}_a={a}.txt", arr_out.T )
 
 # plt.close('all')
 

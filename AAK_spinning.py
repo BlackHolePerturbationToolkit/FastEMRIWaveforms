@@ -53,7 +53,7 @@ wave_generator = Pn5AAKWaveform( sum_kwargs=sum_kwargs, use_gpu=gpu_available)
 M = 5e5
 mu = 2e1
 a = 0.85
-p0 = 8.0
+p0 = 20.0
 e0 = 0.33
 Y0 = 1.0
 Phi_phi0 = 0.2
@@ -70,23 +70,23 @@ dt = 10.0
 T = 0.1
 
 # new input
-secondary_spin = 0.0
+scalar_charge = 0.0
 
 if gpu_available:
     tic = time.perf_counter()
     for _ in range(10):
-        output1 = waveform_class(M,mu,a,p0,e0,Y0,dist,qS,phiS,qK,phiK,secondary_spin,
+        output1 = waveform_class(M,mu,a,p0,e0,Y0,dist,qS,phiS,qK,phiK,scalar_charge,
             Phi_phi0=0.0,Phi_theta0=0.0,Phi_r0=0.0,mich=False,dt=dt,T=T)
     toc = time.perf_counter()
     print((toc-tic)/10)
 breakpoint()
 
 # check limit
-output1 = waveform_class(M,mu,a,p0,e0,Y0,dist,qS,phiS,qK,phiK,secondary_spin,
+output1 = waveform_class(M,mu,a,p0,e0,Y0,dist,qS,phiS,qK,phiK,scalar_charge,
         Phi_phi0=0.0,Phi_theta0=0.0,Phi_r0=0.0,mich=False,dt=dt,T=T)
 
-secondary_spin = 1.0
-output2 = waveform_class(M,mu,a,p0,e0,Y0,dist,qS,phiS,qK,phiK,secondary_spin,
+scalar_charge = 1.0
+output2 = waveform_class(M,mu,a,p0,e0,Y0,dist,qS,phiS,qK,phiK,scalar_charge,
         Phi_phi0=0.0,Phi_theta0=0.0,Phi_r0=0.0,mich=False,dt=dt,T=T)
 
 print(get_mismatch(output2.real, output1.real))
@@ -94,35 +94,5 @@ print(get_mismatch(output2.real, output1.real))
 plt.figure()
 plt.plot(output1.real[:],label='new wave')
 plt.plot(output2.real[:],label='AAK wave')
-plt.legend()
-plt.show()
-
-breakpoint()
-# plot as a function of dt
-dtvec = np.linspace(1,15, num=2)
-plt.figure()
-for dt in dtvec:
-    output = waveform_class(M,
-        mu,
-        a,
-        p0,
-        e0,
-        Y0,
-        dist,
-        qS,
-        phiS,
-        qK,
-        phiK,
-        secondary_spin,
-        Phi_phi0=0.0,
-        Phi_theta0=0.0,
-        Phi_r0=0.0,
-        mich=False,
-        dt=dt,
-        T=T
-        )
-
-    time = np.arange(len(output))*dt
-    plt.plot(time[-100:], output.real[-100:],label=f'{dt}')
 plt.legend()
 plt.show()

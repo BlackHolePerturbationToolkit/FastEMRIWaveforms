@@ -7,13 +7,6 @@ struct interp_params{
 	Interpolant *Ldot;
 };
 
-struct TPI_params{
-	double epsilon;
-	TensorInterpolant *pdot;
-	TensorInterpolant *edot;
-};
-
-
 class SchwarzEccFlux{
 public:
     interp_params *interps;
@@ -30,8 +23,6 @@ public:
 
 class KerrEccentricEquatorial{
 public:
-    TensorInterpolant *pdot_interp;
-    TensorInterpolant *edot_interp;
 
     KerrEccentricEquatorial(std::string few_dir);
 
