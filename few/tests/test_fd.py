@@ -102,7 +102,6 @@ class WaveformTest(unittest.TestCase):
             M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, #mode_selection=[(2,2,0)]
         )
 
-        # N = int(T*365*3600*24/dt)+1
         f_in = xp.array(np.linspace(-1 / (2 * dt), +1 / (2 * dt), num= len(slow_wave) ))
         N = len(f_in)
         kwargs = dict(f_arr=f_in)
@@ -136,7 +135,7 @@ class WaveformTest(unittest.TestCase):
         injection_in = np.array([1.16350676e+06, 1.27978018e+02, 0.00000000e+00, 1.39313102e+01, 5.87723275e-01, 0.00000000e+00, 1.00000085e+00, 2.38505897e+00, 5.95081752e+00, 2.50714543e+00, 2.82403338e+00, 4.33433216e+00, 0.00000000e+00, 2.73356978e+00])
         data_channels_fd = few_gen(*injection_in)
         sig_fd = few_gen_list(*injection_in)
-        print("check 1 == ", xp.dot(xp.conj(sig_fd[0] - 1j * sig_fd[1]),data_channels_fd)/xp.dot(xp.conj(data_channels_fd),data_channels_fd) )
+        # print("check 1 == ", xp.dot(xp.conj(sig_fd[0] - 1j * sig_fd[1]),data_channels_fd)/xp.dot(xp.conj(data_channels_fd),data_channels_fd) )
 
         # problematic point
         # 3697957.511659888 861.3377098262883 14.418959668893407 0.6707784770461537
@@ -144,18 +143,18 @@ class WaveformTest(unittest.TestCase):
         prob_point = xp.array([1864440.3414742905, 10.690959453789679, 0.0, 12.510272236947417, 0.5495976916153483, 1.0, 57.88963690750407, 2.7464152838466274, 3.2109893163133503, 0.20280877216654694, 1.2513852793041993, 2.4942857598445087, 0.0, 3.003630047126699])
         if gpu_available:
             few_gen(*prob_point.get(),T=4.0,eps=1e-5,dt=3.0,f_arr=freq)
-            print("works, freq=",freq)
+            # print("works, freq=",freq)
             few_gen(*prob_point.get(),T=4.0,eps=1e-5,dt=3.0)
-            print("works")
+            # print("works")
             few_gen(*prob_point.get(),T=4.0,eps=1e-5,dt=3.0)
-            print("nope")
+            # print("nope")
         else:
             few_gen(*prob_point,T=1.0,eps=1e-3,dt=6.0,f_arr=freq)
-            print("works, freq=",freq)
+            # print("works, freq=",freq)
             few_gen(*prob_point,T=4.0,eps=1e-3,dt=6.0)
-            print("works")
+            # print("works")
             few_gen(*prob_point,T=1.0,eps=1e-3,dt=6.0)
-            print("nope")
+            # print("nope")
 
         # if gpu_available:
         result = ac.item().real
