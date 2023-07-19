@@ -25,7 +25,7 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 
 # Cython/C++ imports
-from pyInspiral import pyInspiralGeneratorTest, pyInspiralGenerator
+from pyInspiral import pyInspiralGenerator
 
 # Python imports
 from few.utils.baseclasses import TrajectoryBase
@@ -144,14 +144,6 @@ class EMRIInspiral(TrajectoryBase):
 
         self.test_new_version = test_new_version
         if test_new_version:
-            self.inspiral_generator = pyInspiralGeneratorTest(
-                func.encode("utf-8"),
-                enforce_schwarz_sep,
-                self.num_add_args,
-                self.convert_Y,
-                few_dir.encode("utf-8"),
-            )
-        else:
             self.inspiral_generator = pyInspiralGenerator(
                 func.encode("utf-8"),
                 enforce_schwarz_sep,
@@ -159,6 +151,8 @@ class EMRIInspiral(TrajectoryBase):
                 self.convert_Y,
                 few_dir.encode("utf-8"),
             )
+        else:
+            raise ValueError
 
         self.func = func
 
