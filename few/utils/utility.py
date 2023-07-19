@@ -30,8 +30,6 @@ from pyUtility import (
     pyGetSeparatrix,
     pyKerrGeoConstantsOfMotionVectorized,
     pyY_to_xI_vector,
-    set_threads_wrap,
-    get_threads_wrap,
 )
 
 # check to see if cupy is available for gpus
@@ -898,24 +896,6 @@ def pointer_adjust(func):
         return func(*targs, **tkwargs)
 
     return func_wrapper
-
-
-def omp_set_num_threads(num_threads=1):
-    """Globally sets OMP_NUM_THREADS
-
-    Args:
-        num_threads (int, optional):
-        Number of parallel threads to use in OpenMP.
-            Default is 1.
-
-    """
-    set_threads_wrap(num_threads)
-
-
-def omp_get_num_threads():
-    """Get global variable OMP_NUM_THREADS"""
-    num_threads = get_threads_wrap()
-    return num_threads
 
 
 def cuda_set_device(dev):

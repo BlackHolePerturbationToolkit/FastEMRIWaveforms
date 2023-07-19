@@ -120,13 +120,6 @@ except OSError:
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
-    "--no_omp",
-    help="If provided, install without OpenMP.",
-    action="store_true",
-    default=False,
-)
-
-parser.add_argument(
     "--lapack_lib",
     help="Directory of the lapack lib. If you add lapack lib, must also add lapack include.",
 )
@@ -180,9 +173,6 @@ for key1, key2 in [
         except ValueError:
             pass
 
-use_omp = not args.no_omp
-
-
 # Obtain the numpy include directory. This logic works across numpy versions.
 try:
     numpy_include = numpy.get_include()
@@ -222,13 +212,6 @@ elif args.gsl_lib is not None or args.gsl_include is not None:
 else:
     add_gsl = False
 
-if "--no_omp" in sys.argv:
-    use_omp = False
-    sys.argv.remove("--no_omp")
-
-else:
-    use_omp = True
-
 fp_out_name = "few/utils/constants.py"
 fp_in_name = "include/global.h"
 
@@ -244,15 +227,14 @@ with open(fp_out_name, "w") as fp_out:
                         string_out = line.split()[1] + " = " + line.split()[2] + "\n"
                         fp_out.write(string_out)
 
-                    except (ValueError) as e:
+                    except ValueError as e:
                         continue
 
 
 # if installing for CUDA, build Cython extensions for gpu modules
 if run_cuda_install:
-
     gpu_extension = dict(
-        libraries=["gsl", "gslcblas", "cudart", "cublas", "cusparse", "gomp"],
+        libraries=["gsl", "gslcblas", "cudart", "cublas", "cusparse"],
         library_dirs=[CUDA["lib64"]],
         runtime_library_dirs=[CUDA["lib64"]],
         language="c++",
@@ -261,7 +243,7 @@ if run_cuda_install:
         # and not with gcc the implementation of this trick is in
         # customize_compiler()
         extra_compile_args={
-            "gcc": ["-std=c++11", "-fopenmp", "-D__USE_OMP__"],  # '-g'],
+            "gcc": ["-std=c++11", "-fopenmp"],  # '-g'],
             "nvcc": [
                 "-arch=sm_70",
                 "-gencode=arch=compute_50,code=sm_50",
@@ -277,9 +259,6 @@ if run_cuda_install:
                 "-c",
                 "--compiler-options",
                 "'-fPIC'",
-                "-Xcompiler",
-                "-fopenmp",
-                "-D__USE_OMP__",
                 # "-G",
                 # "-g",
                 # "-O0",
@@ -288,13 +267,6 @@ if run_cuda_install:
         },
         include_dirs=[numpy_include, CUDA["include"], "include"],
     )
-
-    if use_omp is False:
-        gpu_extension["extra_compile_args"]["nvcc"].remove("-fopenmp")
-        gpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
-        gpu_extension["extra_compile_args"]["nvcc"].remove("-D__USE_OMP__")
-        gpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
-        gpu_extension["extra_compile_args"]["nvcc"].remove("-Xcompiler")
 
     if args.ccbin is not None:
         gpu_extension["extra_compile_args"]["nvcc"].insert(
@@ -306,21 +278,23 @@ if run_cuda_install:
     )
 
     interp_ext = Extension(
-        "pyinterp", sources=["src/Utility.cc", "src/interpolate.cu", "src/pyinterp.pyx"], **gpu_extension
+        "pyinterp",
+        sources=["src/Utility.cc", "src/interpolate.cu", "src/pyinterp.pyx"],
+        **gpu_extension,
     )
 
     gpuAAK_ext = Extension(
-        "pygpuAAK", sources=["src/Utility.cc", "src/gpuAAK.cu", "src/gpuAAKWrap.pyx"], **gpu_extension
+        "pygpuAAK",
+        sources=["src/Utility.cc", "src/gpuAAK.cu", "src/gpuAAKWrap.pyx"],
+        **gpu_extension,
     )
 
 # build all cpu modules
 cpu_extension = dict(
-    libraries=["gsl", "gslcblas", "lapack", "lapacke", "gomp", "hdf5", "hdf5_hl"],
+    libraries=["gsl", "gslcblas", "lapack", "lapacke", "hdf5", "hdf5_hl"],
     language="c++",
     runtime_library_dirs=[],
-    extra_compile_args={
-        "gcc": ["-std=c++11", "-fopenmp", "-fPIC", "-D__USE_OMP__"]
-    },  # '-g'
+    extra_compile_args={"gcc": ["-std=c++11", "-fopenmp", "-fPIC"]},  # '-g'
     include_dirs=[numpy_include, "include"],
     library_dirs=None,
     # library_dirs=["/home/ajchua/lib/"],
@@ -341,10 +315,6 @@ if add_gsl:
         else cpu_extension["library_dirs"] + gsl_lib
     )
     cpu_extension["include_dirs"] += gsl_include
-
-if use_omp is False:
-    cpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
-    cpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
 
 Interp2DAmplitude_ext = Extension(
     "pyInterp2DAmplitude",
@@ -403,7 +373,9 @@ interp_cpu_ext = Extension(
 )
 
 AAK_cpu_ext = Extension(
-    "pycpuAAK", sources=["src/Utility.cc", "src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"], **cpu_extension
+    "pycpuAAK",
+    sources=["src/Utility.cc", "src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"],
+    **cpu_extension,
 )
 
 

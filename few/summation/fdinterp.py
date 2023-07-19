@@ -230,7 +230,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             **kwargs (dict, placeholder): Added for future flexibility.
 
         """
-        # TODO: check fftshift
+
         if self.use_gpu:
             xp = cp
         else:
@@ -294,21 +294,6 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         # mode frequencies along the sparse trajectory
         seg_freqs = m_arr[:, None] * f_phi[None, :] + n_arr[:, None] * f_r[None, :]
-
-        # takes every segment and orders the frequencies at the start
-        # and end of the segment in increasing order (absolute value)
-        argsort = xp.argsort(
-            xp.abs(
-                xp.asarray([seg_freqs[:, :-1], seg_freqs[:, 1:]]).transpose(1, 2, 0)
-            ),
-            axis=-1,
-        )
-        tmp_freqs_segs = xp.sort(
-            xp.abs(
-                xp.asarray([seg_freqs[:, :-1], seg_freqs[:, 1:]]).transpose(1, 2, 0)
-            ),
-            axis=-1,
-        )
 
         # properly orders each segment without absolute value
         tmp_freqs_base_sorted_segs = xp.sort(
@@ -436,34 +421,32 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         except ValueError:
             pass
-        # import matplotlib.pyplot as plt
-        # plt.plot(new_freqs_per_mode[0])
-        # plt.savefig("check0.png")
 
         # get frequencies of interest
         if f_arr is not None:
             self.frequency = f_arr
+            if len(self.frequency) == 0:
+                raise ValueError("Input f_arr kwarg has zero length.")
         else:
             Len = self.num_pts + self.num_pts_pad
+            # we do not use fft.fftfreqs here because cupy and numpy slightly differ
             self.frequency = xp.hstack(
                 (xp.arange(-(Len // 2), 0), xp.arange(0, (Len - 1) // 2 + 1))
             ) / (Len * dt)
 
-            # self.frequency = xp.fft.fftshift(
-            #     xp.fft.fftfreq(self.num_pts + self.num_pts_pad, dt)
-            # )
-
-        # TODO: make check for frequency
+        # make sure there is one value of frequency at 0.0
         assert 1 == np.sum(self.frequency == 0.0)
 
         ind_zero = xp.where(self.frequency == 0)[0][0]
+
+        # make sure ind_zero is where it is supposed to be
+        assert ind_zero == int(len(self.frequency) / 2)
 
         # frequencies must be equally spaced for now
         # first frequency helps quickly determine which segments each
         # frequency in self.frequency falls into.
         first_frequency = self.frequency[0]
         df = self.frequency[1] - self.frequency[0]
-        # inds_check = xp.searchsorted(self.frequency, seg_freqs.flatten(), side="right").reshape(seg_freqs.shape)
 
         # figures out where in self.frequency each segment frequency falls
         inds_check = xp.abs((tmp_freqs_base_sorted_segs - first_frequency) / df).astype(
@@ -530,17 +513,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         # adjust from fourier transform across +/- frequencies
         # to h+/hx at positive frequencies
-        # TODO: check not just above
         fd_sig = -xp.flip(self.waveform)
-        fft_sig_p = (
-            xp.real(fd_sig + xp.flip(fd_sig)) / 2.0
-            + 1j * xp.imag(fd_sig - xp.flip(fd_sig)) / 2.0
-        )
-        fft_sig_c = (
-            -xp.imag(fd_sig + xp.flip(fd_sig)) / 2.0
-            + 1j * xp.real(fd_sig - xp.flip(fd_sig)) / 2.0
-        )
-        self.waveform = xp.vstack((fft_sig_p, fft_sig_c))
         fft_sig_p = (
             xp.real(fd_sig + xp.flip(fd_sig)) / 2.0
             + 1j * xp.imag(fd_sig - xp.flip(fd_sig)) / 2.0

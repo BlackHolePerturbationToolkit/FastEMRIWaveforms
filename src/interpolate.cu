@@ -140,9 +140,6 @@ void fill_B(double *t_arr, double *y_all, double *B, double *upper_diag, double 
   int end2 = length;
   int diff2 = 1;
 
-#ifdef __USE_OMP__
-  #pragma omp parallel for
-#endif  // __USE_OMP__
 #endif // __CUDACC__
 for (int interp_i = start1;
        interp_i < end1; // 2 for re and im
@@ -188,9 +185,7 @@ void set_spline_constants(double *t_arr, double *interp_array, double *B,
   int end2 = length - 1;
   int diff2 = 1;
 
-#ifdef __USE_OMP__
-  #pragma omp parallel for
-#endif  // __USE_OMP__
+
 #endif // __CUDACC__
 
   for (int interp_i = start1;
@@ -245,9 +240,7 @@ void fit_wrap(int m, int n, double *a, double *b, double *c, double *d_in)
 #else
 
 // use lapack on CPU
-#ifdef __USE_OMP__
-  #pragma omp parallel for
-#endif  // __USE_OMP__
+
   for (int j = 0;
        j < n;
        j += 1)
@@ -272,7 +265,6 @@ void fill_final_derivs(double *t_arr, double *interp_array,
     int end1 = ninterps;
     int diff1 = 1;
 
-    #pragma omp parallel for
     #endif
 
     for (int interp_i= start1;
@@ -360,7 +352,7 @@ void interp_time_for_fd(double* output, double *t_arr, double *tstar, int* ind_t
     int end1 = num_modes;
     int diff1 = 1;
 
-    #pragma omp parallel for
+    
     #endif
 
     for (int interp_i= start1;
@@ -380,7 +372,7 @@ void interp_time_for_fd(double* output, double *t_arr, double *tstar, int* ind_t
 
              #ifdef __CUDACC__
              #else
-             #pragma omp parallel for
+             
              #endif
              for (int i = 0; i < 2; i += 1)
              {
@@ -562,7 +554,7 @@ void make_waveform(cmplx *waveform,
     int end = num_teuk_here;
     int diff = 1;
 #ifdef __USE_OMP__
-    #pragma omp parallel for
+    
 #endif  // __USE_OMP__
 #endif // __CUDACC__
     for (int i = start; i < end; i += diff)
@@ -605,7 +597,7 @@ void make_waveform(cmplx *waveform,
 #ifdef __CUDACC__
 #else
 #ifdef __USE_OMP__
-    #pragma omp parallel for
+    
 #endif // __USE_OMP__
 #endif // __CUDACC__
 
@@ -728,9 +720,7 @@ void get_waveform(cmplx *d_waveform, double *interp_array,
 
 #endif
 
-#ifdef __USE_OMP__
-  #pragma omp parallel for
-#endif  // __USE_OMP__
+
   for (int i = 0; i < number_of_old_spline_points - 1; i++)
   {
 #ifdef __CUDACC__
@@ -767,9 +757,7 @@ void get_waveform(cmplx *d_waveform, double *interp_array,
   cudaDeviceSynchronize();
   gpuErrchk(cudaGetLastError());
 
-#ifdef __USE_OMP__
-  #pragma omp parallel for
-#endif  // __USE_OMP__
+
   for (int i = 0; i < number_of_old_spline_points - 1; i++)
   {
     // destroy the streams
@@ -1253,7 +1241,7 @@ void make_waveform_fd(cmplx *waveform,
     #else
     int mode_start = 0;
     int mode_increment = 1;
-    #pragma omp parallel for
+    
     #endif
     for (int mode_i = mode_start; mode_i < num_teuk_modes; mode_i += mode_increment)
     {
@@ -1270,7 +1258,7 @@ void make_waveform_fd(cmplx *waveform,
         #else
         int segment_start = 0;
         int segment_increment = 1;
-        #pragma omp parallel for
+        
         #endif
         // init_length -1 because thats the number of segments
         for (int segment_i = segment_start; segment_i < init_length - 1; segment_i += segment_increment)
@@ -1425,7 +1413,7 @@ void make_waveform_fd(cmplx *waveform,
             #ifdef __CUDACC__
             #else
             #ifdef __USE_OMP__
-            #pragma omp parallel for
+            
             #endif // __USE_OMP__
             #endif // __CUDACC__
 
@@ -1696,7 +1684,7 @@ void find_segments_fd(int *segment_out, int *start_inds_seg, int *end_inds_seg, 
     #else
     int start2 = 0;
     int increment2 = 1;
-    #pragma omp parallel for
+    
     #endif
     for (int mode_i = start2; mode_i < num_modes; mode_i += increment2)
     {
@@ -1709,7 +1697,7 @@ void find_segments_fd(int *segment_out, int *start_inds_seg, int *end_inds_seg, 
         #else
         int start1 = 0;
         int increment1 = 1;
-        #pragma omp parallel for
+        
         #endif
         for (int seg_i = start1; seg_i < num_segments; seg_i += increment1)
         {
@@ -1739,7 +1727,7 @@ void find_segments_fd(int *segment_out, int *start_inds_seg, int *end_inds_seg, 
             #else
             int start = real_seg_start;
             int increment = 1;
-            #pragma omp parallel for
+            
             #endif
             for (int i = start; i < real_seg_end; i += increment)
             {
@@ -1884,7 +1872,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
     int start2 = 0;
     int diff2 = 1;
     // #ifdef __USE_OMP__
-    // #pragma omp parallel for
+    // 
     // #endif // __USE_OMP__
     #endif
     for (int mode_i = start2; mode_i < num_teuk_modes; mode_i += diff2) 
@@ -1906,7 +1894,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
         int start3 = 0;
         int diff3 = 1;
         // #ifdef __USE_OMP__
-        // #pragma omp parallel for
+        // 
         // #endif // __USE_OMP__
         #endif
         for (int seg_i = start3; seg_i < num_segments; seg_i += diff3) 
@@ -1995,7 +1983,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
             int start = 0;
             int diff = 1;
             // #ifdef __USE_OMP__
-            // #pragma omp parallel for
+            // 
             //#endif // __USE_OMP__
             #endif
             for (int i = start + seg_start_ind_here; i <= seg_end_ind_here; i += diff)

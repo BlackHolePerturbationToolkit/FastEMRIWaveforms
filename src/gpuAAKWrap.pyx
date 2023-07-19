@@ -2,7 +2,7 @@ import numpy as np
 cimport numpy as np
 from libcpp.string cimport string
 from libcpp cimport bool
-from few.utils.utility import pointer_adjust
+from few.utils.utility import wrapper
 
 assert sizeof(int) == sizeof(np.int32_t)
 
@@ -14,13 +14,15 @@ cdef extern from "../include/gpuAAK.hh":
                   int init_len, int out_len,
                   double delta_t, double *h_t)
 
+def pyWaveform(*args, **kwargs):
 
-@pointer_adjust
-def pyWaveform(waveform, interp_array,
+    targs, tkwargs = wrapper(*args, **kwargs)
+
+    (waveform, interp_array,
               M_phys, S_phys, mu, qS, phiS, qK, phiK, dist,
               nmodes, mich,
               init_len, out_len,
-              delta_t, h_t):
+              delta_t, h_t), tmp = targs, tkwargs
 
     cdef size_t waveform_in = waveform
     cdef size_t interp_array_in = interp_array
