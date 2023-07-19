@@ -302,7 +302,7 @@ def xI_to_Y(a, p, e, x):
     # get constants of motion
     E, L, Q = get_kerr_geo_constants_of_motion(a, p, e, x)
 
-    Y = L / np.sqrt(L ** 2 + Q)
+    Y = L / np.sqrt(L**2 + Q)
     return Y
 
 
@@ -397,7 +397,12 @@ def get_separatrix(a, e, x):
     else:
         a_in = np.atleast_1d(a)
 
-    assert len(a_in) == len(e_in)
+    if isinstance(x, float):
+        x_in = np.full_like(e_in, x)
+    else:
+        x_in = np.atleast_1d(x)
+
+    assert len(a_in) == len(e_in) == len(x_in)
 
     separatrix = pyGetSeparatrix(a_in, e_in, x_in)
 
@@ -472,7 +477,6 @@ def get_mu_at_t(
     t_end = np.zeros_like(mu_new)
 
     for i, mu in enumerate(mu_new):
-
         # insert mu into args list
         args_new = traj_args.copy()
         args_new.insert(index_of_mu, mu)
@@ -654,7 +658,12 @@ def get_p_at_t(
 
 
 def get_mu_at_t(
-    traj_module, t_out, traj_args, index_of_mu=1, bounds=None, **kwargs,
+    traj_module,
+    t_out,
+    traj_args,
+    index_of_mu=1,
+    bounds=None,
+    **kwargs,
 ):
     """Find the value of mu that will give a specific length inspiral using Brent's method.
 
@@ -731,6 +740,7 @@ record_by_version = {
     "1.4.8": 3981654,
     "1.4.9": 3981654,
     "1.4.10": 3981654,
+    "1.4.11": 3981654,
 }
 
 
