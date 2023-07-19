@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trajectory Package &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
@@ -11,11 +11,11 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -31,11 +31,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search"  style="background: coral" >
-            <a href="../index.html" class="icon icon-home"> few: Fast EMRI Waveforms
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            few: Fast EMRI Waveforms
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -45,7 +49,35 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="main.html">Overall Waveform Models</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Trajectory Package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-few.trajectory.inspiral">Generic Inspiral Generator from C/C++ functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase.citation"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase.citation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase.get_inspiral"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase.get_inspiral()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase.__call__"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase.__call__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.trajectory.inspiral">Generic Inspiral Generator from C/C++ functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.num_add_args"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.num_add_args</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.background"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.background</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.equatorial"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.equatorial</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.circular"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.circular</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.convert_Y"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.convert_Y</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.files"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.files</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.citations"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.citations</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.enforce_schwarz_sep"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.enforce_schwarz_sep</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.inspiral_generator"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.inspiral_generator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.func"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.func</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.specific_kwarg_keys"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.specific_kwarg_keys</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.attributes_EMRIInspiral"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.attributes_EMRIInspiral()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.inspiral_generator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.specific_kwarg_keys</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.citation"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.citation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.__call__"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.__call__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.get_inspiral"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.get_inspiral()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="amp.html">Amplitude Package</a></li>
@@ -88,7 +120,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home"></a></li>
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Trajectory Package</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/user/traj.rst.txt" rel="nofollow"> View page source</a>
@@ -102,31 +134,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  
-<style>
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
-</style>
-<section id="module-few.trajectory">
+  <section id="module-few.trajectory">
 <span id="trajectory-package"></span><span id="trajectory-label"></span><h1>Trajectory Package<a class="headerlink" href="#module-few.trajectory" title="Permalink to this heading"></a></h1>
 <p>The trajectory package houses modules that turn initial orbital parameters into
 phase-space trajectories (orbital phases and orbital parameters). These are
@@ -152,17 +160,17 @@ each associated trajectory module discussed below.</p>
 <dd><p>Inspiral Generator</p>
 <p>&#64;classmethod that requires a child class to have a get_inspiral method.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><dl class="simple">
 <dt>t, p, e, Phi_phi, Phi_r, flux with shape:</dt><dd><p>(params, traj length).</p>
 </dd>
 </dl>
 </p>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>2D double np.ndarray</p>
 </dd>
-<dt class="field-odd">Raises</dt>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>NotImplementedError</strong> – The child class does not have this method.</p>
 </dd>
 </dl>
@@ -175,7 +183,7 @@ each associated trajectory module discussed below.</p>
 <p>This is the function for calling the creation of the
 trajectory. Inputs define the output time spacing.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>*args</strong> (<em>list</em>) – Input of variable number of arguments specific to the
 inspiral model (see the trajectory class’ <cite>get_inspiral</cite> method).
@@ -219,13 +227,13 @@ If False, use rk8. Default is False (rk8).</p></li>
 Default is {}.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Tuple of (t, p, e, Phi_phi, Phi_r, flux_norm).</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple</p>
 </dd>
-<dt class="field-even">Raises</dt>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – If input parameters are not allowed in this model.</p>
 </dd>
 </dl>
@@ -265,7 +273,7 @@ derivative functions, in case there are other auxillary functions in the file.
 The user then uses <code class="code docutils literal notranslate"><span class="pre">#define</span></code> lines to indicate to the code limitations
 or settings specific to that ODE. See the tutorial documentation for more detail.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>func</strong> (<em>str</em>) – Function name for the ode to use in the integration.
 This must be given as a keyword argument, even though it is required. To get
@@ -289,7 +297,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 <span class="sig-name descname"><span class="pre">num_add_args</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.num_add_args" title="Permalink to this definition"></a></dt>
 <dd><p>Number of additional arguments for the ODE function.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int</p>
 </dd>
 </dl>
@@ -300,7 +308,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 <span class="sig-name descname"><span class="pre">background</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.background" title="Permalink to this definition"></a></dt>
 <dd><p>“Either Schwarzschild” or “Kerr”.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
 </dd>
 </dl>
@@ -311,7 +319,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 <span class="sig-name descname"><span class="pre">equatorial</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.equatorial" title="Permalink to this definition"></a></dt>
 <dd><p>True if equatorial orbit.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
@@ -322,7 +330,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 <span class="sig-name descname"><span class="pre">circular</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.circular" title="Permalink to this definition"></a></dt>
 <dd><p>True if circular orbit.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
@@ -334,7 +342,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 <dd><p>If the ODE is integrated in <span class="math notranslate nohighlight">\(Y\)</span> rather than
 <span class="math notranslate nohighlight">\(x_I\)</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
@@ -345,7 +353,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 <span class="sig-name descname"><span class="pre">files</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.files" title="Permalink to this definition"></a></dt>
 <dd><p>List of files necessary for this ODE.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list</p>
 </dd>
 </dl>
@@ -356,7 +364,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 <span class="sig-name descname"><span class="pre">citations</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.citations" title="Permalink to this definition"></a></dt>
 <dd><p>list of additional citations for this ODE.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list</p>
 </dd>
 </dl>
@@ -368,7 +376,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 <dd><p>Enforce the separatrix of Schwarzschild
 spacetime.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
@@ -379,7 +387,7 @@ spacetime.</p>
 <span class="sig-name descname"><span class="pre">inspiral_generator</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.inspiral_generator" title="Permalink to this definition"></a></dt>
 <dd><p>Inspiral C/C++ wrapped function.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>func</p>
 </dd>
 </dl>
@@ -390,7 +398,7 @@ spacetime.</p>
 <span class="sig-name descname"><span class="pre">func</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.func" title="Permalink to this definition"></a></dt>
 <dd><p>ODE function name.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
 </dd>
 </dl>
@@ -402,14 +410,14 @@ spacetime.</p>
 <dd><p>Specific keywords that need to transferred
 to the inspiral function that can be adjusted with each call.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="field-list simple">
-<dt class="field-odd">Raises</dt>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ValueError</strong> – <code class="code docutils literal notranslate"><span class="pre">func</span></code> kwarg not given or not available.</p></li>
 <li><p><strong>ValueError</strong> – File necessary for ODE not found.</p></li>
@@ -424,7 +432,7 @@ to the inspiral function that can be adjusted with each call.</p>
 <span class="sig-name descname"><span class="pre">inspiral_generator</span></span><a class="headerlink" href="#id0" title="Permalink to this definition"></a></dt>
 <dd><p>C++ class for inspiral trajectory generation.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>obj</p>
 </dd>
 </dl>
@@ -437,7 +445,7 @@ to the inspiral function that can be adjusted with each call.</p>
 <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a> that apply to this
 inspiral generator.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list</p>
 </dd>
 </dl>
@@ -458,7 +466,7 @@ inspiral generator.</p>
 <p>This is the function for calling the creation of the
 trajectory. Inputs define the output time spacing.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>*args</strong> (<em>list</em>) – Input of variable number of arguments specific to the
 inspiral model (see the trajectory class’ <cite>get_inspiral</cite> method).
@@ -502,13 +510,13 @@ If False, use rk8. Default is False (rk8).</p></li>
 Default is {}.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Tuple of (t, p, e, Phi_phi, Phi_r, flux_norm).</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple</p>
 </dd>
-<dt class="field-even">Raises</dt>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – If input parameters are not allowed in this model.</p>
 </dd>
 </dl>
@@ -524,7 +532,7 @@ Inputs define the output time spacing.</p>
 through the __call__ method associated with its base class:
 (<a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a>).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>M</strong> (<em>double</em>) – Mass of massive black hole in solar masses.</p></li>
 <li><p><strong>mu</strong> (<em>double</em>) – Mass of compact object in solar masses.</p></li>
@@ -543,10 +551,10 @@ Default is 0.0.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – kwargs passed from parent.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Tuple of (t, p, e, x, Phi_phi, Phi_theta, Phi_r).</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
