@@ -73,6 +73,12 @@ cd FastEMRIWaveforms
     run_tests: Either true or false. Whether to run tests after install. Default is true.
   ```
 
+3) Load the environment:
+
+```
+conda activate few_env
+```
+
 Please contact the developers if the installation does not work.
 
 ### More Customized Installation (legacy)
