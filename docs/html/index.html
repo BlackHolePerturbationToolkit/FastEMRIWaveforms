@@ -206,19 +206,59 @@ version of <code class="docutils literal notranslate"><span class="pre">cupy</sp
 </div>
 <p>Options for installation can be applied by running
 <code class="docutils literal notranslate"><span class="pre">bash</span> <span class="pre">install.sh</span> <span class="pre">key=value</span></code>. These can be found with
-<code class="docutils literal notranslate"><span class="pre">bash</span> <span class="pre">install.sh</span> <span class="pre">-h</span></code>:
-<code class="docutils literal notranslate"><span class="pre">keyword</span> <span class="pre">argument</span> <span class="pre">options</span> <span class="pre">(given</span> <span class="pre">as</span> <span class="pre">key=value):</span>&#160;&#160;&#160;&#160; <span class="pre">env_name:</span>&#160; <span class="pre">Name</span> <span class="pre">of</span> <span class="pre">generated</span> <span class="pre">conda</span> <span class="pre">environment.</span> <span class="pre">Default</span> <span class="pre">is</span> <span class="pre">'few_env'.</span>&#160;&#160;&#160;&#160; <span class="pre">install_type:</span>&#160; <span class="pre">Type</span> <span class="pre">of</span> <span class="pre">install.</span> <span class="pre">'basic',</span> <span class="pre">'development',</span> <span class="pre">or</span> <span class="pre">'sampling'.</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">'development'</span> <span class="pre">adds</span> <span class="pre">packages</span> <span class="pre">needed</span> <span class="pre">for</span> <span class="pre">development</span> <span class="pre">and</span> <span class="pre">documentation.</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">'sampling'</span> <span class="pre">adds</span> <span class="pre">packages</span> <span class="pre">for</span> <span class="pre">sampling</span> <span class="pre">like</span> <span class="pre">eryn,</span> <span class="pre">lisatools,</span> <span class="pre">corner,</span> <span class="pre">chainconsumer.</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">Default</span> <span class="pre">is</span> <span class="pre">'basic'.</span>&#160;&#160;&#160;&#160;&#160; <span class="pre">run_tests:</span> <span class="pre">Either</span> <span class="pre">true</span> <span class="pre">or</span> <span class="pre">false.</span> <span class="pre">Whether</span> <span class="pre">to</span> <span class="pre">run</span> <span class="pre">tests</span> <span class="pre">after</span> <span class="pre">install.</span> <span class="pre">Default</span> <span class="pre">is</span> <span class="pre">true.</span></code></p>
-<p>If you want to set up your own installation outside of the bash file,
-install all the necessary/useful packages: wget gsl lapack=3.6.1 hdf5
-numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib. Then
-run:</p>
+<code class="docutils literal notranslate"><span class="pre">bash</span> <span class="pre">install.sh</span> <span class="pre">-h</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">keyword</span> <span class="n">argument</span> <span class="n">options</span> <span class="p">(</span><span class="n">given</span> <span class="k">as</span> <span class="n">key</span><span class="o">=</span><span class="n">value</span><span class="p">):</span>
+  <span class="n">env_name</span><span class="p">:</span>  <span class="n">Name</span> <span class="n">of</span> <span class="n">generated</span> <span class="n">conda</span> <span class="n">environment</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="s1">&#39;few_env&#39;</span><span class="o">.</span>
+  <span class="n">install_type</span><span class="p">:</span>  <span class="n">Type</span> <span class="n">of</span> <span class="n">install</span><span class="o">.</span> <span class="s1">&#39;basic&#39;</span><span class="p">,</span> <span class="s1">&#39;development&#39;</span><span class="p">,</span> <span class="ow">or</span> <span class="s1">&#39;sampling&#39;</span><span class="o">.</span>
+      <span class="s1">&#39;development&#39;</span> <span class="n">adds</span> <span class="n">packages</span> <span class="n">needed</span> <span class="k">for</span> <span class="n">development</span> <span class="ow">and</span> <span class="n">documentation</span><span class="o">.</span>
+      <span class="s1">&#39;sampling&#39;</span> <span class="n">adds</span> <span class="n">packages</span> <span class="k">for</span> <span class="n">sampling</span> <span class="n">like</span> <span class="n">eryn</span><span class="p">,</span> <span class="n">lisatools</span><span class="p">,</span> <span class="n">corner</span><span class="p">,</span> <span class="n">chainconsumer</span><span class="o">.</span>
+      <span class="n">Default</span> <span class="ow">is</span> <span class="s1">&#39;basic&#39;</span><span class="o">.</span>
+  <span class="n">run_tests</span><span class="p">:</span> <span class="n">Either</span> <span class="n">true</span> <span class="ow">or</span> <span class="n">false</span><span class="o">.</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">run</span> <span class="n">tests</span> <span class="n">after</span> <span class="n">install</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="n">true</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>Please contact the developers if the installation does not work.</p>
+</section>
+<section id="more-customized-installation-legacy">
+<h3>More Customized Installation (legacy)<a class="headerlink" href="#more-customized-installation-legacy" title="Permalink to this heading"></a></h3>
+<ol class="arabic simple" start="0">
+<li><p><a class="reference external" href="https://docs.anaconda.com/anaconda/install/">Install Anaconda</a> if
+you do not have it.</p></li>
+<li><p>Create a virtual environment.</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">gcc_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gxx_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">wget</span> <span class="n">gsl</span> <span class="n">lapack</span><span class="o">=</span><span class="mf">3.6.1</span> <span class="n">hdf5</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">matplotlib</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
+<span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
+
+If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, matplotlib) with pip.
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Clone the repository.</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">BlackHolePerturbationToolkit</span><span class="o">/</span><span class="n">FastEMRIWaveforms</span><span class="o">.</span><span class="n">git</span>
+<span class="n">cd</span> <span class="n">FastEMRIWaveforms</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>If using GPUs, use pip to <a class="reference external" href="https://docs-cupy.chainer.org/en/stable/install.html">install
+cupy</a>. If
+you have cuda version 9.2, for example:</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">cupy</span><span class="o">-</span><span class="n">cuda92</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>Run install.</p></li>
+</ol>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
 </pre></div>
 </div>
 <p>When installing lapack and gsl, the setup file will default to assuming
 lib and include for both are in installed within the conda environment.
 To provide other lib and include directories you can provide command
-line options when installing.</p>
+line options when installing. You can also remove usage of OpenMP.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">help</span>
 <span class="n">usage</span><span class="p">:</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lapack_lib</span> <span class="n">LAPACK_LIB</span><span class="p">]</span>
                 <span class="p">[</span><span class="o">--</span><span class="n">lapack_include</span> <span class="n">LAPACK_INCLUDE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lapack</span> <span class="n">LAPACK</span><span class="p">]</span>
@@ -258,7 +298,6 @@ using the flag <code class="docutils literal notranslate"><span class="pre">--cc
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">ccbin</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">anaconda3</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">few_env</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">x86_64</span><span class="o">-</span><span class="n">apple</span><span class="o">-</span><span class="n">darwin13</span><span class="mf">.4.0</span><span class="o">-</span><span class="n">clang</span>
 </pre></div>
 </div>
-<p>Please contact the developers if the installation does not work.</p>
 </section>
 </section>
 <section id="running-the-tests">

@@ -62,6 +62,7 @@ cd FastEMRIWaveforms
   ```
 
   Options for installation can be applied by running `bash install.sh key=value`. These can be found with `bash install.sh -h`:
+  
   ```
   keyword argument options (given as key=value):
     env_name:  Name of generated conda environment. Default is 'few_env'.
@@ -72,13 +73,45 @@ cd FastEMRIWaveforms
     run_tests: Either true or false. Whether to run tests after install. Default is true.
   ```
 
-If you want to set up your own installation outside of the bash file, install all the necessary/useful packages: wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib. Then run:
+Please contact the developers if the installation does not work.
+
+### More Customized Installation (legacy)
+
+0) [Install Anaconda](https://docs.anaconda.com/anaconda/install/) if you do not have it.
+
+1) Create a virtual environment.
+
+```
+conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
+conda activate few_env
+```
+
+    If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
+
+    If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, matplotlib) with pip.
+
+2) Clone the repository.
+
+```
+git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
+cd FastEMRIWaveforms
+```
+
+3) If using GPUs, use pip to [install cupy](https://docs-cupy.chainer.org/en/stable/install.html). If you have cuda version 9.2, for example:
+
+```
+pip install cupy-cuda92
+```
+
+4) Run install.
 
 ```
 python setup.py install
 ```
 
-When installing lapack and gsl, the setup file will default to assuming lib and include for both are in installed within the conda environment. To provide other lib and include directories you can provide command line options when installing.
+
+When installing lapack and gsl, the setup file will default to assuming lib and include for both are in installed within the conda environment. To provide other lib and include directories you can provide command line options when installing. You can also remove usage of OpenMP.
+
 ```
 python setup.py --help
 usage: setup.py [-h] [--lapack_lib LAPACK_LIB]
@@ -118,8 +151,6 @@ or if on MACOSX:
 ```
 python setup.py install --ccbin /path/to/anaconda3/envs/few_env/bin/x86_64-apple-darwin13.4.0-clang
 ```
-
-Please contact the developers if the installation does not work.
 
 ## Running the Tests
 
