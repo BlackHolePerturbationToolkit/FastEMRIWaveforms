@@ -11,6 +11,17 @@ except:
 
 
 def get_convolution(a, b):
+    """
+    Calculate the convolution of two arrays.
+
+    arguments:
+        a (1D xp.ndarray): First array to convolve.
+        b (1D xp.ndarray): First array to convolve.
+
+    returns:
+        1D xp.ndarray: convolution of the two arrays.
+
+    """
     # determine if using gpu or cpu based on input arrays
     try:
         if isinstance(a, cp.ndarray) or isinstance(b, cp.ndarray):
@@ -33,20 +44,73 @@ def get_convolution(a, b):
 
 
 def get_fft_td_windowed(signal, window, dt):
+    """
+    Calculate the Fast Fourier Transform of a windowed time domain signal.
+
+    arguments:
+        signal (list): A length-2 list containing the signals plus and cross polarizations.
+        window (1D xp.ndarray): Array to be applied in time domain to each signal.
+        dt (double): Time sampling interval of the signal and window.
+
+    returns:
+        list: Fast Fourier Transform of the windowed time domain signals.
+
+    """
+    try:
+        if isinstance(signal[0], cp.ndarray) or isinstance(window, cp.ndarray):
+            if isinstance(signal[0], cp.ndarray) and isinstance(window, cp.ndarray):
+                use_gpu = True
+            else:
+                raise ValueError(
+                    "One array is cupy and one array is numpy. Need to be the same."
+                )
+
+    # if cupy did not import
+    except NameError:
+        use_gpu = False
+
+    xp = cp if use_gpu else np
+
     fft_td_wave_p = xp.fft.fftshift(xp.fft.fft(signal[0] * window)) * dt
     fft_td_wave_c = xp.fft.fftshift(xp.fft.fft(signal[1] * window)) * dt
     return [fft_td_wave_p, fft_td_wave_c]
 
 
-def get_fd_windowed(signal, window, window_in_fd=False):
+def get_fd_windowed(signal, window=None, window_in_fd=False):
+    """
+    Calculate the convolution of a frequency domain signal with a window in time domain.
+
+    arguments:
+        signal (list): A length-2 list containing the signals plus and cross polarizations in frequency domain.
+        window (None or 1D xp.ndarray, optional): Array of the time domain window. If ``None``, do not apply window.
+            This is added for flexibility. Default is ``None``.
+        window_in_fd (bool, optional): If ``True``, ``window`` is given in the frequency domain.
+            If ``False``, window is given in the time domain. Default is ``False``.
+
+    returns:
+        list: convolution of a frequency domain signal with a time domain window.
+
+    """
+    try:
+        if isinstance(signal[0], cp.ndarray) or isinstance(window, cp.ndarray):
+            if isinstance(signal[0], cp.ndarray) and isinstance(window, cp.ndarray):
+                use_gpu = True
+            else:
+                raise ValueError(
+                    "One array is cupy and one array is numpy. Need to be the same."
+                )
+
+    # if cupy did not import
+    except NameError:
+        use_gpu = False
+
+    xp = cp if use_gpu else np
+
+    # apply no window
     if window is None:
         transf_fd_0 = signal[0]
         transf_fd_1 = signal[1]
     else:
-        # # fft convolution
-        # transf_fd_0 = xp.fft.fftshift(xp.fft.fft(xp.fft.ifft( xp.fft.ifftshift( signal[0] ) ) * window))
-        # transf_fd_1 = xp.fft.fftshift(xp.fft.fft(xp.fft.ifft( xp.fft.ifftshift( signal[1] ) ) * window))
-
         # standard convolution
         if window_in_fd:
             fft_window = window.copy()
@@ -55,16 +119,27 @@ def get_fd_windowed(signal, window, window_in_fd=False):
         transf_fd_0 = get_convolution(xp.conj(fft_window), signal[0])
         transf_fd_1 = get_convolution(xp.conj(fft_window), signal[1])
 
-        # # test check convolution
-        # sum_0 = xp.sum(xp.abs(transf_fd_0)**2)
-        # yo = get_convolution( xp.conj(fft_window) , signal[0] )
-        # sum_yo = xp.sum(xp.abs(yo)**2)
-        # xp.dot(xp.conj(yo) , transf_fd_0 ) /xp.sqrt(sum_0 * sum_yo)
-
     return [transf_fd_0, transf_fd_1]
 
 
 class GetFDWaveformFromFD:
+    """Generic frequency domain class
+
+    This class allows to obtain the frequency domain signal given the frequency domain waveform class
+    from the FEW package.
+
+    Args:
+        waveform_generator (obj): FEW waveform class.
+        positive_frequency_mask (1D xp.ndarray): boolean array to indicate where the frequencies are positive.
+        dt (double): time sampling interval of the signal and window.
+        non_zero_mask (1D xp.ndarray): boolean array to indicate where the waveform needs to be set to zero.
+        window (None or 1D xp.ndarray, optional): Array of the time domain window. If ``None``, do not apply window.
+            This is added for flexibility. Default is ``None``.
+        window_in_fd (bool, optional): If ``True``, ``window`` is given in the frequency domain.
+            If ``False``, window is given in the time domain. Default is ``False``.
+
+    """
+
     def __init__(
         self,
         waveform_generator,
@@ -81,6 +156,16 @@ class GetFDWaveformFromFD:
         self.window_in_fd = window_in_fd
 
     def __call__(self, *args, **kwargs):
+        """Run the waveform generator.
+
+        args:
+            *args (tuple): Arguments passed to waveform generator.
+            **kwargs (dict): Keyword arguments passed to waveform generator.
+
+        returns:
+            list: FD Waveform as [h+, hx]
+
+        """
         data_channels_td = self.waveform_generator(*args, **kwargs)
         list_p_c = get_fd_windowed(
             data_channels_td, self.window, window_in_fd=self.window_in_fd
@@ -95,6 +180,21 @@ class GetFDWaveformFromFD:
 
 # conversion
 class GetFDWaveformFromTD:
+    """Generic time domain class
+
+    This class allows to obtain the frequency domain signal given the time domain waveform class
+    from the FEW package.
+
+    Args:
+        waveform_generator (obj): FEW waveform class.
+        positive_frequency_mask (1D xp.ndarray): boolean array to indicate where the frequencies are positive.
+        dt (double): time sampling interval of the signal and window.
+        non_zero_mask (1D xp.ndarray): boolean array to indicate where the waveform needs to be set to zero.
+        window (None or 1D xp.ndarray, optional): Array of the time domain window. If ``None``, do not apply window.
+            This is added for flexibility. Default is ``None``.
+
+    """
+
     def __init__(
         self,
         waveform_generator,
@@ -113,6 +213,16 @@ class GetFDWaveformFromTD:
             self.window = window
 
     def __call__(self, *args, **kwargs):
+        """Run the waveform generator.
+
+        args:
+            *args (tuple): Arguments passed to waveform generator.
+            **kwargs (dict): Keyword arguments passed to waveform generator.
+
+        returns:
+            list: FD Waveform as [h+, hx] (fft from TD)
+
+        """
         data_channels_td = self.waveform_generator(*args, **kwargs)
         list_p_c = get_fft_td_windowed(data_channels_td, self.window, self.dt)
         fft_td_wave_p = list_p_c[0][self.positive_frequency_mask]

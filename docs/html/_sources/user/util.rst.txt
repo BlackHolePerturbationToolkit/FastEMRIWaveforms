@@ -22,6 +22,14 @@ Mode Filtering
     :members:
     :inherited-members:
 
+Frequency Domain Utilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: few.utils.fdutils
+    :show-inheritance:
+    :members:
+    :inherited-members:
+
 Analysis and Other Tools
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -50,6 +50,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Utilities</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-few.utils.modeselector">Mode Filtering</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.fdutils">Frequency Domain Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-few.utils.utility">Analysis and Other Tools</a></li>
 </ul>
 </li>
@@ -444,6 +445,157 @@ GPU capabilites.</p>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
     not have that capability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-few.utils.fdutils">
+<span id="frequency-domain-utilities"></span><h2>Frequency Domain Utilities<a class="headerlink" href="#module-few.utils.fdutils" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.fdutils.get_convolution">
+<span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">get_convolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.get_convolution" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the convolution of two arrays.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>1D xp.ndarray</em>) – First array to convolve.</p></li>
+<li><p><strong>b</strong> (<em>1D xp.ndarray</em>) – First array to convolve.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>convolution of the two arrays.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>1D xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.fdutils.get_fft_td_windowed">
+<span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">get_fft_td_windowed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.get_fft_td_windowed" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the Fast Fourier Transform of a windowed time domain signal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signal</strong> (<em>list</em>) – A length-2 list containing the signals plus and cross polarizations.</p></li>
+<li><p><strong>window</strong> (<em>1D xp.ndarray</em>) – Array to be applied in time domain to each signal.</p></li>
+<li><p><strong>dt</strong> (<em>double</em>) – Time sampling interval of the signal and window.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Fast Fourier Transform of the windowed time domain signals.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.fdutils.get_fd_windowed">
+<span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">get_fd_windowed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_in_fd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.get_fd_windowed" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the convolution of a frequency domain signal with a window in time domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signal</strong> (<em>list</em>) – A length-2 list containing the signals plus and cross polarizations in frequency domain.</p></li>
+<li><p><strong>window</strong> (<em>None</em><em> or </em><em>1D xp.ndarray</em><em>, </em><em>optional</em>) – Array of the time domain window. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, do not apply window.
+This is added for flexibility. Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>window_in_fd</strong> (<em>bool</em><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">window</span></code> is given in the frequency domain.
+If <code class="docutils literal notranslate"><span class="pre">False</span></code>, window is given in the time domain. Default is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>convolution of a frequency domain signal with a time domain window.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="few.utils.fdutils.GetFDWaveformFromFD">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">GetFDWaveformFromFD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform_generator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive_frequency_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_zero_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_in_fd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromFD" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Generic frequency domain class</p>
+<p>This class allows to obtain the frequency domain signal given the frequency domain waveform class
+from the FEW package.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>waveform_generator</strong> (<em>obj</em>) – FEW waveform class.</p></li>
+<li><p><strong>positive_frequency_mask</strong> (<em>1D xp.ndarray</em>) – boolean array to indicate where the frequencies are positive.</p></li>
+<li><p><strong>dt</strong> (<em>double</em>) – time sampling interval of the signal and window.</p></li>
+<li><p><strong>non_zero_mask</strong> (<em>1D xp.ndarray</em>) – boolean array to indicate where the waveform needs to be set to zero.</p></li>
+<li><p><strong>window</strong> (<em>None</em><em> or </em><em>1D xp.ndarray</em><em>, </em><em>optional</em>) – Array of the time domain window. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, do not apply window.
+This is added for flexibility. Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>window_in_fd</strong> (<em>bool</em><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">window</span></code> is given in the frequency domain.
+If <code class="docutils literal notranslate"><span class="pre">False</span></code>, window is given in the time domain. Default is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="few.utils.fdutils.GetFDWaveformFromFD.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromFD.__call__" title="Permalink to this definition"></a></dt>
+<dd><p>Run the waveform generator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> (<em>tuple</em>) – Arguments passed to waveform generator.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – Keyword arguments passed to waveform generator.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>FD Waveform as [h+, hx]</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="few.utils.fdutils.GetFDWaveformFromTD">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">GetFDWaveformFromTD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform_generator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive_frequency_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_zero_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromTD" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Generic time domain class</p>
+<p>This class allows to obtain the frequency domain signal given the time domain waveform class
+from the FEW package.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>waveform_generator</strong> (<em>obj</em>) – FEW waveform class.</p></li>
+<li><p><strong>positive_frequency_mask</strong> (<em>1D xp.ndarray</em>) – boolean array to indicate where the frequencies are positive.</p></li>
+<li><p><strong>dt</strong> (<em>double</em>) – time sampling interval of the signal and window.</p></li>
+<li><p><strong>non_zero_mask</strong> (<em>1D xp.ndarray</em>) – boolean array to indicate where the waveform needs to be set to zero.</p></li>
+<li><p><strong>window</strong> (<em>None</em><em> or </em><em>1D xp.ndarray</em><em>, </em><em>optional</em>) – Array of the time domain window. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, do not apply window.
+This is added for flexibility. Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="few.utils.fdutils.GetFDWaveformFromTD.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromTD.__call__" title="Permalink to this definition"></a></dt>
+<dd><p>Run the waveform generator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> (<em>tuple</em>) – Arguments passed to waveform generator.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – Keyword arguments passed to waveform generator.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>FD Waveform as [h+, hx] (fft from TD)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
 </dd>
 </dl>
 </dd></dl>
