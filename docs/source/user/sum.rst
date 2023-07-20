@@ -19,6 +19,11 @@ Interpolated Summation
     :show-inheritance:
     :inherited-members:
 
+.. automodule:: few.summation.fdinterp
+    :members:
+    :show-inheritance:
+    :inherited-members:
+
 Direct Summation
 ~~~~~~~~~~~~~~~~~~
 

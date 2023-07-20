@@ -1,4 +1,5 @@
 import unittest
+import pickle
 import numpy as np
 import warnings
 
@@ -26,8 +27,57 @@ except (ModuleNotFoundError, ImportError) as e:
 
 
 class WaveformTest(unittest.TestCase):
-    def test_fast_and_slow(self):
+    def test_pickle(self):
+        # test ability to pickle class
 
+        # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
+        inspiral_kwargs = {
+            "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
+            "max_init_len": int(
+                1e3
+            ),  # all of the trajectories will be well under len = 1000
+        }
+
+        # keyword arguments for inspiral generator (RomanAmplitude)
+        amplitude_kwargs = {
+            "max_init_len": int(
+                1e3
+            )  # all of the trajectories will be well under len = 1000
+        }
+
+        # keyword arguments for Ylm generator (GetYlms)
+        Ylm_kwargs = {
+            "assume_positive_m": False  # if we assume positive m, it will generate negative m for all m>0
+        }
+
+        # keyword arguments for summation generator (InterpolatedModeSum)
+        sum_kwargs = {}
+
+        fast = FastSchwarzschildEccentricFlux(
+            inspiral_kwargs=inspiral_kwargs,
+            amplitude_kwargs=amplitude_kwargs,
+            Ylm_kwargs=Ylm_kwargs,
+            sum_kwargs=sum_kwargs,
+            use_gpu=gpu_available,
+        )
+
+        check_pickle = pickle.dumps(fast)
+        extracted_gen = pickle.loads(check_pickle)
+
+        # parameters
+        T = 0.001  # years
+        dt = 15.0  # seconds
+        M = 1e6
+        mu = 1e1
+        p0 = 8.0
+        e0 = 0.2
+        theta = np.pi / 3  # polar viewing angle
+        phi = np.pi / 4  # azimuthal viewing angle
+        dist = 1.0  # distance
+
+        fast_wave = extracted_gen(M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
+
+    def test_fast_and_slow(self):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
         inspiral_kwargs = {
             "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
@@ -100,10 +150,10 @@ class WaveformTest(unittest.TestCase):
         batch_size = int(1e4)
 
         slow_wave = slow(
-            M, mu, p0, e0, theta, phi, dist, T=T, dt=dt, batch_size=batch_size
+            M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt, batch_size=batch_size
         )
 
-        fast_wave = fast(M, mu, p0, e0, theta, phi, dist, T=T, dt=dt)
+        fast_wave = fast(M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
 
         mm = get_mismatch(slow_wave, fast_wave, use_gpu=gpu_available)
 
@@ -111,7 +161,7 @@ class WaveformTest(unittest.TestCase):
 
         # test_rk4
         fast.inspiral_kwargs["use_rk4"] = True
-        fast_wave = fast(M, mu, p0, e0, theta, phi, dist, T=T, dt=dt)
+        fast_wave = fast(M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
 
 
 def amplitude_test(amp_class):
@@ -143,7 +193,6 @@ def amplitude_test(amp_class):
 
 class ModuleTest(unittest.TestCase):
     def test_trajectory(self):
-
         # initialize trajectory class
         traj = EMRIInspiral(func="SchwarzEccFlux")
 
@@ -157,7 +206,6 @@ class ModuleTest(unittest.TestCase):
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, 0.0, p0, e0, 1.0)
 
     def test_amplitudes(self):
-
         amp = RomanAmplitude()
 
         first_check, second_check = amplitude_test(amp)
@@ -181,7 +229,6 @@ class ModuleTest(unittest.TestCase):
         self.assertTrue(second_check)
 
     def test_mismatch(self):
-
         dt = 1.0
         t = np.arange(10000) * dt
         x0 = np.sin(t) + 1j * np.sin(t)

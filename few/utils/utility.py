@@ -30,8 +30,6 @@ from pyUtility import (
     pyGetSeparatrix,
     pyKerrGeoConstantsOfMotionVectorized,
     pyY_to_xI_vector,
-    set_threads_wrap,
-    get_threads_wrap,
 )
 
 # check to see if cupy is available for gpus
@@ -302,7 +300,7 @@ def xI_to_Y(a, p, e, x):
     # get constants of motion
     E, L, Q = get_kerr_geo_constants_of_motion(a, p, e, x)
 
-    Y = L / np.sqrt(L ** 2 + Q)
+    Y = L / np.sqrt(L**2 + Q)
     return Y
 
 
@@ -331,6 +329,7 @@ def Y_to_xI(a, p, e, Y):
 
     """
 
+    # TODO: check error for not c-contiguous
     # determines shape of input
     if isinstance(e, float):
         scalar = True
@@ -399,6 +398,11 @@ def get_separatrix(a, e, x):
         a_in = np.full_like(e_in, a)
     else:
         a_in = np.atleast_1d(a)
+
+    if isinstance(x, float):
+        x_in = np.full_like(e_in, x)
+    else:
+        x_in = np.atleast_1d(x)
 
     assert len(a_in) == len(e_in) == len(x_in)
 
@@ -475,7 +479,6 @@ def get_mu_at_t(
     t_end = np.zeros_like(mu_new)
 
     for i, mu in enumerate(mu_new):
-
         # insert mu into args list
         args_new = traj_args.copy()
         args_new.insert(index_of_mu, mu)
@@ -657,7 +660,12 @@ def get_p_at_t(
 
 
 def get_mu_at_t(
-    traj_module, t_out, traj_args, index_of_mu=1, bounds=None, **kwargs,
+    traj_module,
+    t_out,
+    traj_args,
+    index_of_mu=1,
+    bounds=None,
+    **kwargs,
 ):
     """Find the value of mu that will give a specific length inspiral using Brent's method.
 
@@ -735,6 +743,7 @@ record_by_version = {
     "1.4.9": 3981654,
     "1.4.10": 3981654,
     "1.4.11": 3981654,
+    "1.5.0": 3981654,
 }
 
 
@@ -892,24 +901,6 @@ def pointer_adjust(func):
         return func(*targs, **tkwargs)
 
     return func_wrapper
-
-
-def omp_set_num_threads(num_threads=1):
-    """Globally sets OMP_NUM_THREADS
-
-    Args:
-        num_threads (int, optional):
-        Number of parallel threads to use in OpenMP.
-            Default is 1.
-
-    """
-    set_threads_wrap(num_threads)
-
-
-def omp_get_num_threads():
-    """Get global variable OMP_NUM_THREADS"""
-    num_threads = get_threads_wrap()
-    return num_threads
 
 
 def cuda_set_device(dev):
