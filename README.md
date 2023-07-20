@@ -174,7 +174,7 @@ If you want to develop FEW and produce documentation, install `few` with
 ```
 bash install.sh install_type=development
 ```
-This will install necessary packages for building the documentation. The documentation source files are in `docs/source`. To compile the documentation, change to the `docs` directory and run `make html`. 
+This will install necessary packages for building the documentation (`sphinx`, `pypandoc`, `sphinx_rtd_theme`, `nbsphinx`). The documentation source files are in `docs/source`. To compile the documentation, change to the `docs` directory and run `make html`. 
 
 ## Versioning
 
