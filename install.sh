@@ -1,3 +1,5 @@
+#!/bin/bash
+
 usage="$(basename "$0") [-h] -- program to install FastEMRIWaveforms
 
 where:
