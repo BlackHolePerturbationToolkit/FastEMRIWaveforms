@@ -64,7 +64,7 @@ fi
 echo "use_gpu: "$use_gpu"";
 
 if [[ "$use_gpu" == true ]];
-    then export CUDA_HOME="{nvcc:0:-8}";
+    then export CUDA_HOME="${nvcc:0:-8}";
     tmp=$("$nvcc" --version | grep -i "Build cuda_");
     cuda_version="${tmp:11:4}";
     echo "CUDA_HOME: $CUDA_HOME";
@@ -103,10 +103,11 @@ else
 fi
 
 conda_base="$(conda info | grep -i 'base environment')"
-conda_base="${conda_base:26:25}"
+conda_base="${conda_base:26:-12}"
 conda_init_sh="$conda_base/etc/profile.d/conda.sh"
+echo "$conda_init_sh"
 source $conda_init_sh
-echo "trying"
+
 conda activate "$env_name"
 echo "should be done"
 conda_check="$(conda info | grep -i 'active environment')"
@@ -122,7 +123,7 @@ if [[ "$install_type" == "sampling" ]]; then
     "$pip_here" install corner eryn chainconsumer;
     "$pip_here" install git+https://github.com/mikekatz04/LISAanalysistools.git@dev;
 elif [[ "$install_type" == "development" ]]; then
-    conda install sphinx sphinx_rtd_theme pypandoc;
+    conda install sphinx sphinx_rtd_theme pypandoc --yes;
     "$pip_here" install nbsphinx;
 fi
 
