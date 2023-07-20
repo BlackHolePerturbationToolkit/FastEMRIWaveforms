@@ -27,12 +27,6 @@ except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
 
 # Cython imports
-from pyinterp_cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
-from pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
-from pyinterp_cpu import get_waveform_fd_wrap as get_waveform_fd_wrap_cpu
-from pyinterp_cpu import interp_time_for_fd as interp_time_for_fd_cpu
-from pyinterp_cpu import find_segments_fd as find_segments_fd_cpu
-from pyinterp_cpu import find_segments_fd as find_segments_fd_cpu
 from pyinterp_cpu import (
     get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_cpu,
 )
@@ -51,11 +45,6 @@ from few.summation.interpolatedmodesum import CubicSplineInterpolant
 # Attempt Cython imports of GPU functions
 try:
     from pyinterp import (
-        interpolate_arrays_wrap,
-        get_waveform_wrap,
-        get_waveform_fd_wrap,
-        interp_time_for_fd,
-        find_segments_fd,
         get_waveform_generic_fd_wrap,
     )
 
@@ -157,16 +146,10 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         # eventually the name will change to adapt for the gpu implementantion
         if self.use_gpu:
-            self.get_waveform = get_waveform_wrap
             self.get_waveform_fd = get_waveform_generic_fd_wrap
-            self.interp_time = interp_time_for_fd
-            self.find_segments = find_segments_fd
 
         else:
-            self.get_waveform = get_waveform_wrap_cpu
             self.get_waveform_fd = get_waveform_generic_fd_wrap_cpu
-            self.interp_time = interp_time_for_fd_cpu
-            self.find_segments = find_segments_fd_cpu
 
     def attributes_FDInterpolatedModeSum(self):
         """

@@ -145,9 +145,9 @@ fi
 machine=$(uname -m)
 
 if [[ "$machine" == "arm64" ]]; then
-    "$python_here" setup.py install --ccbin /usr/bin/
+    "$pip_here" install . --ccbin /usr/bin/
 else
-    "$python_here" setup.py install
+    "$pip_here" install .
 fi
 
 if [[ "$run_tests" == "true" ]]; 
