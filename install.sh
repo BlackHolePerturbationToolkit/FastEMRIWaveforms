@@ -102,8 +102,19 @@ else
     echo "Unsupported operating system."
 fi
 
-conda_base="$(conda info | grep -i 'base environment')"
-conda_base="${conda_base:26:-12}"
+# get conda base information
+IN="$(conda info | grep -i 'base environment')"
+
+tmp=$(echo $IN | tr " " "\n")
+i=0
+out=()
+for tmp_i in $tmp
+do
+    out[i]=$tmp_i
+    let "i = $i + 1"
+done
+
+conda_base="${out[3]}"
 conda_init_sh="$conda_base/etc/profile.d/conda.sh"
 echo "$conda_init_sh"
 source $conda_init_sh
