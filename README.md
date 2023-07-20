@@ -23,6 +23,15 @@ cd FastEMRIWaveforms
   ```
   bash install.sh
   ```
+
+3) Load the environment: 
+```
+conda activate few_env
+```
+4) In a python file or notebook:
+```
+import few
+```
 See [examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb).
 
 
