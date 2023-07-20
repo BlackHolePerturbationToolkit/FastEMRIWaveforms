@@ -10,11 +10,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="#" />
@@ -26,15 +26,11 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search"  style="background: coral" >
-
-          
-          
-          <a href="index.html" class="icon icon-home">
-            few: Fast EMRI Waveforms
+            <a href="index.html" class="icon icon-home"> few: Fast EMRI Waveforms
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -84,7 +80,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li><a href="index.html" class="icon icon-home"></a></li>
       <li class="breadcrumb-item active">Index</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -110,7 +106,6 @@
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
- | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
@@ -132,6 +127,8 @@
         <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.__call__">(few.summation.aakwave.AAKSummation method)</a>
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.__call__">(few.summation.directmodesum.DirectModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.__call__">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.__call__">(few.summation.interpolatedmodesum.CubicSplineInterpolant method)</a>
 </li>
@@ -182,6 +179,8 @@
         <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.adjust_gpu_usage">(few.summation.aakwave.AAKSummation method)</a>
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.adjust_gpu_usage">(few.summation.directmodesum.DirectModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.adjust_gpu_usage">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.adjust_gpu_usage">(few.summation.interpolatedmodesum.CubicSplineInterpolant method)</a>
 </li>
@@ -236,6 +235,8 @@
 </li>
       <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.attributes_FastSchwarzschildEccentricFlux">attributes_FastSchwarzschildEccentricFlux() (few.waveform.FastSchwarzschildEccentricFlux method)</a>
 </li>
+      <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.attributes_FDInterpolatedModeSum">attributes_FDInterpolatedModeSum() (few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
       <li><a href="user/util.html#few.utils.ylm.GetYlms.attributes_GetYlms">attributes_GetYlms() (few.utils.ylm.GetYlms method)</a>
 </li>
       <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_Interp2DAmplitude">attributes_Interp2DAmplitude() (few.amplitude.interp2dcubicspline.Interp2DAmplitude method)</a>
@@ -252,6 +253,8 @@
         <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.attributes_ParallelModuleBase">(few.summation.aakwave.AAKSummation method)</a>
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.attributes_ParallelModuleBase">(few.summation.directmodesum.DirectModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.attributes_ParallelModuleBase">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.attributes_ParallelModuleBase">(few.summation.interpolatedmodesum.CubicSplineInterpolant method)</a>
 </li>
@@ -299,6 +302,8 @@
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.attributes_SchwarzschildEccentric">(few.summation.directmodesum.DirectModeSum method)</a>
 </li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.attributes_SchwarzschildEccentric">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_SchwarzschildEccentric">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.attributes_SchwarzschildEccentric">(few.utils.baseclasses.SchwarzschildEccentric method)</a>
@@ -325,6 +330,8 @@
       <ul>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.attributes_SummationBase">(few.summation.directmodesum.DirectModeSum method)</a>
 </li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.attributes_SummationBase">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_SummationBase">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
 </li>
         <li><a href="user/sum.html#few.utils.baseclasses.SummationBase.attributes_SummationBase">(few.utils.baseclasses.SummationBase method)</a>
@@ -344,6 +351,8 @@
         <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.background">(few.summation.aakwave.AAKSummation attribute)</a>
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.background">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.background">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.background">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
 </li>
@@ -394,6 +403,8 @@
         <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.citation">(few.summation.aakwave.AAKSummation property)</a>
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.citation">(few.summation.directmodesum.DirectModeSum property)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.citation">(few.summation.fdinterp.FDInterpolatedModeSum property)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.citation">(few.summation.interpolatedmodesum.CubicSplineInterpolant property)</a>
 </li>
@@ -463,6 +474,8 @@
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.descriptor">(few.summation.directmodesum.DirectModeSum attribute)</a>
 </li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.descriptor">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.descriptor">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.Pn5AAK.descriptor">(few.utils.baseclasses.Pn5AAK attribute)</a>
@@ -510,6 +523,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux">FastSchwarzschildEccentricFlux (class in few.waveform)</a>
 </li>
+      <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum">FDInterpolatedModeSum (class in few.summation.fdinterp)</a>
+</li>
       <li>
     few.amplitude
 
@@ -553,12 +568,21 @@
 </li>
       </ul></li>
       <li>
+    few.summation.fdinterp
+
+      <ul>
+        <li><a href="user/sum.html#module-few.summation.fdinterp">module</a>
+</li>
+      </ul></li>
+      <li>
     few.summation.interpolatedmodesum
 
       <ul>
         <li><a href="user/sum.html#module-few.summation.interpolatedmodesum">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     few.trajectory
 
@@ -566,8 +590,6 @@
         <li><a href="user/traj.html#module-few.trajectory">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     few.trajectory.inspiral
 
@@ -654,8 +676,12 @@
 </li>
       <li><a href="user/util.html#few.utils.utility.get_separatrix">get_separatrix() (in module few.utils.utility)</a>
 </li>
-      <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.get_waveform">get_waveform (few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+      <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.get_waveform">get_waveform (few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+
+      <ul>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.get_waveform">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
 </li>
+      </ul></li>
       <li><a href="user/util.html#few.utils.ylm.GetYlms">GetYlms (class in few.utils.ylm)</a>
 </li>
   </ul></td>
@@ -668,6 +694,8 @@
         <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.gpu_capability">(few.summation.aakwave.AAKSummation property)</a>
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.gpu_capability">(few.summation.directmodesum.DirectModeSum property)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.gpu_capability">(few.summation.fdinterp.FDInterpolatedModeSum property)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.gpu_capability">(few.summation.interpolatedmodesum.CubicSplineInterpolant property)</a>
 </li>
@@ -708,6 +736,8 @@
         <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.index_map">(few.amplitude.romannet.RomanAmplitude attribute)</a>
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.index_map">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.index_map">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.index_map">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
 </li>
@@ -757,6 +787,8 @@
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.inverse_lm">(few.summation.directmodesum.DirectModeSum attribute)</a>
 </li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.inverse_lm">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.inverse_lm">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.inverse_lm">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
@@ -780,6 +812,8 @@
         <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.lmn_indices">(few.amplitude.romannet.RomanAmplitude attribute)</a>
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.lmn_indices">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.lmn_indices">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.lmn_indices">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
 </li>
@@ -805,6 +839,8 @@
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.m0mask">(few.summation.directmodesum.DirectModeSum attribute)</a>
 </li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.m0mask">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.m0mask">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.m0mask">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
@@ -823,6 +859,8 @@
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.m0sort">(few.summation.directmodesum.DirectModeSum attribute)</a>
 </li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.m0sort">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.m0sort">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.m0sort">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
@@ -840,6 +878,8 @@
         <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.m_zero_up_mask">(few.amplitude.romannet.RomanAmplitude attribute)</a>
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.m_zero_up_mask">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.m_zero_up_mask">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.m_zero_up_mask">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
 </li>
@@ -884,6 +924,8 @@
 </li>
         <li><a href="user/sum.html#module-few.summation.directmodesum">few.summation.directmodesum</a>
 </li>
+        <li><a href="user/sum.html#module-few.summation.fdinterp">few.summation.fdinterp</a>
+</li>
         <li><a href="user/sum.html#module-few.summation.interpolatedmodesum">few.summation.interpolatedmodesum</a>
 </li>
         <li><a href="user/traj.html#module-few.trajectory">few.trajectory</a>
@@ -913,6 +955,8 @@
         <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.ndim">(few.amplitude.romannet.RomanAmplitude attribute)</a>
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.ndim">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.ndim">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.ndim">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
 </li>
@@ -948,6 +992,8 @@
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.num_m0">(few.summation.directmodesum.DirectModeSum attribute)</a>
 </li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.num_m0">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.num_m0">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.num_m0">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
@@ -970,6 +1016,8 @@
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.num_m_1_up">(few.summation.directmodesum.DirectModeSum attribute)</a>
 </li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.num_m_1_up">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.num_m_1_up">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.num_m_1_up">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
@@ -989,6 +1037,8 @@
         <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.num_m_zero_up">(few.amplitude.romannet.RomanAmplitude attribute)</a>
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.num_m_zero_up">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.num_m_zero_up">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.num_m_zero_up">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
 </li>
@@ -1021,18 +1071,6 @@
         <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.num_teuk_modes">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-</tr></table>
-
-<h2 id="O">O</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/util.html#few.utils.utility.omp_get_num_threads">omp_get_num_threads() (in module few.utils.utility)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/util.html#few.utils.utility.omp_set_num_threads">omp_set_num_threads() (in module few.utils.utility)</a>
-</li>
   </ul></td>
 </tr></table>
 
@@ -1088,6 +1126,8 @@
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_gpu">(few.summation.directmodesum.DirectModeSum method)</a>
 </li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.sanity_check_gpu">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.sanity_check_gpu">(few.summation.interpolatedmodesum.CubicSplineInterpolant method)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_gpu">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
@@ -1120,6 +1160,8 @@
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_init">(few.summation.directmodesum.DirectModeSum method)</a>
 </li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.sanity_check_init">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_init">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.Pn5AAK.sanity_check_init">(few.utils.baseclasses.Pn5AAK method)</a>
@@ -1145,6 +1187,8 @@
         <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.sanity_check_traj">(few.summation.aakwave.AAKSummation method)</a>
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_traj">(few.summation.directmodesum.DirectModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.sanity_check_traj">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_traj">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
 </li>
@@ -1172,6 +1216,8 @@
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_viewing_angles">(few.summation.directmodesum.DirectModeSum method)</a>
 </li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.sanity_check_viewing_angles">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_viewing_angles">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.sanity_check_viewing_angles">(few.utils.baseclasses.SchwarzschildEccentric method)</a>
@@ -1198,6 +1244,8 @@
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.special_index_map">(few.summation.directmodesum.DirectModeSum attribute)</a>
 </li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.special_index_map">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.special_index_map">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.special_index_map">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
@@ -1217,6 +1265,8 @@
 
       <ul>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.sum">(few.summation.directmodesum.DirectModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.sum">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.sum">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
 </li>
@@ -1258,6 +1308,8 @@
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.use_gpu">(few.summation.directmodesum.DirectModeSum attribute)</a>
 </li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.use_gpu">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.use_gpu">(few.summation.interpolatedmodesum.CubicSplineInterpolant attribute)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.use_gpu">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
@@ -1292,6 +1344,8 @@
       <ul>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.waveform">(few.summation.directmodesum.DirectModeSum attribute)</a>
 </li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.waveform">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.waveform">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
 </li>
         <li><a href="user/sum.html#few.utils.baseclasses.SummationBase.waveform">(few.utils.baseclasses.SummationBase attribute)</a>
@@ -1321,6 +1375,8 @@
         <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.xp">(few.summation.aakwave.AAKSummation attribute)</a>, <a href="user/sum.html#id0">[1]</a>
 </li>
         <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.xp">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.xp">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
 </li>
         <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.xp">(few.summation.interpolatedmodesum.CubicSplineInterpolant attribute)</a>
 </li>

@@ -70,8 +70,7 @@ class GenerateEMRIWaveform:
             Default is "detector." Right now, the source frame is not implemented
             for waveforms that are built in the detector frame.
         return_list (bool, optional): If True, return :math:`h_p` and
-            :math:`h_x` as a list. If False, return :math:`hp - ihx`. If producing waveforms
-            in the frequency domain, ``return_list = True`` always. Default
+            :math:`h_x` as a list. If False, return :math:`hp - ihx`. Default
             is False.
         **kwargs (dict, optional): Dictionary with kwargs for the instantiation of
             the waveform generator.
@@ -94,10 +93,6 @@ class GenerateEMRIWaveform:
             self.waveform_generator = waveform_class(*args, **kwargs)
 
         self.frame = frame
-
-        # if in the FD, must return a list
-        if self.waveform_generator.create_waveform.output_type == "fd":
-            return_list = True
 
         self.return_list = return_list
 
@@ -1223,7 +1218,7 @@ class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase, ABC):
     `EMRI Kludge Suite <https://github.com/alvincjk/EMRI_Kludge_Suite/>`_.
     However, here the trajectory is vastly improved by employing the 5PN
     fluxes for generic Kerr orbits from
-    `Fujita & Shibata 2020<https://arxiv.org/abs/2008.13554>`_.
+    `Fujita & Shibata 2020 <https://arxiv.org/abs/2008.13554>`_.
 
     The 5PN trajectory produces orbital and phase trajectories.
     The trajectory is calculated until the orbit reaches

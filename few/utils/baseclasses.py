@@ -840,15 +840,14 @@ class SummationBase(ABC):
 
         # make sure that the FD waveform has always an odd number of points
         if self.output_type == "fd":
-            try:
-                # raise NotImplementedError
+            if "f_arr" in kwargs:
                 frequency = kwargs["f_arr"]
                 dt = float(xp.max(frequency) * 2)
                 Nf = len(frequency)
                 # total
                 self.waveform = xp.zeros(Nf, dtype=xp.complex128)
                 # print("user defined frequencies Nf=", Nf)
-            except:
+            else:
                 self.waveform = xp.zeros(
                     (self.num_pts + self.num_pts_pad,), dtype=xp.complex128
                 )

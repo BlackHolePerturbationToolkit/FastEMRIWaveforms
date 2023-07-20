@@ -204,11 +204,14 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         mask_positive=False,
         **kwargs,
     ):
-        """Interpolated summation function.
+        """Interpolated summation function in Frequency Domain.
 
         This function interpolates the amplitude and phase information, and
         creates the final waveform with the combination of ylm values for each
-        mode.
+        mode in the Frequency Domain.
+
+        This turns the waveform array into a 2D array with shape (2, number of points).
+        The 2 represents h+ and hx in that order.
 
         args:
             t (1D double xp.ndarray): Array of t values.
@@ -224,9 +227,22 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
                  (:math:`\Phi_r`).
             m_arr (1D int xp.ndarray): :math:`m` values associated with each mode.
             n_arr (1D int xp.ndarray): :math:`n` values associated with each mode.
-            *args (list, placeholder): Added for future flexibility.
+            M (double): Total mass in solar masses.
+            p (1D int xp.ndarray): Semi-latus rectum in units of M along trajectory.
+            e (1D int xp.ndarray): Eccentricity value along trajectory.
+            *args (list, placeholder): Added for flexibility.
+            include_minus_m (bool, optional): Include the values for :math:`-m`. This is
+                useful when looking at specific modes. Default is ``True``.
+            separate_modes (bool, optional): Return each harmonic mode separated from each other.
+                Default is ``False``.
             dt (double, optional): Time spacing between observations (inverse of sampling
                 rate). Default is 10.0.
+            f_arr (1D double xp.ndarray, optional): User-provided frequency array. For now,
+                it must be evenly spaced and include both positive and negative frequencies.
+                If ``None``, the frequency array is built from observation time and time step.
+                Default is ``None``.
+            mask_positive (bool, optional): Only return h+ and hx along positive frequencies.
+                Default is False.
             **kwargs (dict, placeholder): Added for future flexibility.
 
         """
