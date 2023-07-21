@@ -134,6 +134,13 @@ Options for installation can be applied by running
          Default is 'basic'. 
      run_tests: Either true or false. Whether to run tests after install. Default is true.
 
+3) Load the environment (change “few_env” to the correct environment
+   name is specified in previous step):
+
+::
+
+   conda activate few_env
+
 Please contact the developers if the installation does not work.
 
 More Customized Installation (legacy)
@@ -248,7 +255,8 @@ with
 
    bash install.sh install_type=development
 
-This will install necessary packages for building the documentation. The
+This will install necessary packages for building the documentation
+(``sphinx``, ``pypandoc``, ``sphinx_rtd_theme``, ``nbsphinx``). The
 documentation source files are in ``docs/source``. To compile the
 documentation, change to the ``docs`` directory and run ``make html``.
 

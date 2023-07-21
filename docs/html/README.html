@@ -60,6 +60,8 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Creating-modules">Creating modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Augmented-Analytic-Kludge-with-5PN-trajectory">Augmented Analytic Kludge with 5PN trajectory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/Tutorial_FD_construction_single_mode.html">Single Mode Frequency Domain Waveform Construction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/Tutorial_FrequencyDomain_Waveforms.html">EMRI Waveforms in frequency domain</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">General Information:</span></p>
 <ul>
@@ -213,6 +215,13 @@ version of <code class="docutils literal notranslate"><span class="pre">cupy</sp
   <span class="n">run_tests</span><span class="p">:</span> <span class="n">Either</span> <span class="n">true</span> <span class="ow">or</span> <span class="n">false</span><span class="o">.</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">run</span> <span class="n">tests</span> <span class="n">after</span> <span class="n">install</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="n">true</span><span class="o">.</span>
 </pre></div>
 </div>
+<ol class="arabic simple" start="3">
+<li><p>Load the environment (change “few_env” to the correct environment
+name is specified in previous step):</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
+</pre></div>
+</div>
 <p>Please contact the developers if the installation does not work.</p>
 </section>
 <section id="more-customized-installation-legacy">
@@ -314,7 +323,8 @@ with</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="n">install</span><span class="o">.</span><span class="n">sh</span> <span class="n">install_type</span><span class="o">=</span><span class="n">development</span>
 </pre></div>
 </div>
-<p>This will install necessary packages for building the documentation. The
+<p>This will install necessary packages for building the documentation
+(<code class="docutils literal notranslate"><span class="pre">sphinx</span></code>, <code class="docutils literal notranslate"><span class="pre">pypandoc</span></code>, <code class="docutils literal notranslate"><span class="pre">sphinx_rtd_theme</span></code>, <code class="docutils literal notranslate"><span class="pre">nbsphinx</span></code>). The
 documentation source files are in <code class="docutils literal notranslate"><span class="pre">docs/source</span></code>. To compile the
 documentation, change to the <code class="docutils literal notranslate"><span class="pre">docs</span></code> directory and run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span></code>.</p>
 </section>

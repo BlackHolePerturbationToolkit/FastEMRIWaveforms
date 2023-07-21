@@ -35,21 +35,25 @@ import sys, os
 dir_path = os.path.dirname(os.path.realpath(__file__)) + "/../../"
 
 sys.path.insert(0, os.path.abspath(dir_path))
-sys.path.insert(
-    0, os.path.abspath(dir_path + "few/")
-)
-sys.path.insert(
-    0, os.path.abspath( dir_path +  "few/amplitude/")
-)
-sys.path.insert(
-    0, os.path.abspath(dir_path +  "few/trajectory/")
-)
+sys.path.insert(0, os.path.abspath(dir_path + "few/"))
+sys.path.insert(0, os.path.abspath(dir_path + "few/amplitude/"))
+sys.path.insert(0, os.path.abspath(dir_path + "few/trajectory/"))
 
 import shutil
 
 shutil.copy(
-    dir_path +  "examples/FastEMRIWaveforms_tutorial.ipynb",
-    dir_path +  "docs/source/tutorial/FastEMRIWaveforms_tutorial.ipynb",
+    dir_path + "examples/FastEMRIWaveforms_tutorial.ipynb",
+    dir_path + "docs/source/tutorial/FastEMRIWaveforms_tutorial.ipynb",
+)
+
+shutil.copy(
+    dir_path + "examples/Tutorial_FD_construction_single_mode.ipynb",
+    dir_path + "docs/source/tutorial/Tutorial_FD_construction_single_mode.ipynb",
+)
+
+shutil.copy(
+    dir_path + "examples/Tutorial_FrequencyDomain_Waveforms.ipynb",
+    dir_path + "docs/source/tutorial/Tutorial_FrequencyDomain_Waveforms.ipynb",
 )
 
 

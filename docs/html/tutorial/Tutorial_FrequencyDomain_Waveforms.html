@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EMRI Waveforms in frequency domain &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/nbsphinx-code-cells.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="FastEMRIWaveforms Publications" href="../general/docs_main.html" />
+    <link rel="prev" title="Single Mode Frequency Domain Waveform Construction" href="Tutorial_FD_construction_single_mode.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: coral" >
+            <a href="../index.html" class="icon icon-home"> few: Fast EMRI Waveforms
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user/main.html">Overall Waveform Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/traj.html">Trajectory Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/amp.html">Amplitude Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/sum.html">Summation Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/util.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/cite.html">Citations</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorial:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html">Fast and Accurate EMRI Waveforms Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric">Full EMRI Waveforms in Schwarzschild Eccentric</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html#Trajectory-Module">Trajectory Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html#Amplitude-Module">Amplitude Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html#Spin-weighted-spherical-harmonics">Spin-weighted spherical harmonics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html#Mode-Selection">Mode Selection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html#Parallelized-Cubic-Spline-Interpolation">Parallelized Cubic Spline Interpolation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html#Mode-Summation">Mode Summation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html#Utility-functions">Utility functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html#Creating-modules">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html#Augmented-Analytic-Kludge-with-5PN-trajectory">Augmented Analytic Kludge with 5PN trajectory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tutorial_FD_construction_single_mode.html">Single Mode Frequency Domain Waveform Construction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">EMRI Waveforms in frequency domain</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#Comparison-against-the-Time-Domain-Waveforms">Comparison against the Time Domain Waveforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Windowing">Windowing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Mass-invariance">Mass invariance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Downsampled-FD-Waveforms">Downsampled FD Waveforms</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">General Information:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html">FastEMRIWaveforms Publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html#package-todos">Package TODOs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../general/docs_main.html#change-log">Change Log</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: coral" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">few: Fast EMRI Waveforms</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">EMRI Waveforms in frequency domain</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/tutorial/Tutorial_FrequencyDomain_Waveforms.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul><div class="rst-breadcrumbs-buttons" role="navigation" aria-label="Sequential page navigation">
+        <a href="Tutorial_FD_construction_single_mode.html" class="btn btn-neutral float-left" title="Single Mode Frequency Domain Waveform Construction" accesskey="p"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../general/docs_main.html" class="btn btn-neutral float-right" title="FastEMRIWaveforms Publications" accesskey="n">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+  </div>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="EMRI-Waveforms-in-frequency-domain">
+<h1>EMRI Waveforms in frequency domain<a class="headerlink" href="#EMRI-Waveforms-in-frequency-domain" title="Permalink to this heading"></a></h1>
+<p>By: Lorenzo Speri and Michael L. Katz</p>
+<p>We present the usage of the EMRI Waveforms in the Frequency domain and compare the spectrum to the time domain implementation. For details on the specifics of our waveforms like constructions and generally methodology, we refer you to our paper (). If you use the frequency domain waveform, please cite that paper.</p>
+<p>For full use of this tutorial, please install LISAAnalysis Tools with: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">git+https://github.com/mikekatz04/LISAanalysistools.git&#64;dev</span></code></p>
+<p>The tutorial is currently in an initial form. It will be cleaned up and commented soon…</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
+
+<span class="kn">from</span> <span class="nn">lisatools.diagnostic</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">lisatools.sensitivity</span> <span class="kn">import</span> <span class="n">get_sensitivity</span>
+
+<span class="kn">from</span> <span class="nn">few.waveform</span> <span class="kn">import</span> <span class="n">GenerateEMRIWaveform</span>
+<span class="kn">from</span> <span class="nn">few.utils.constants</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">few.utils.utility</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">few.trajectory.inspiral</span> <span class="kn">import</span> <span class="n">EMRIInspiral</span>
+<span class="n">traj_module</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="s2">&quot;SchwarzEccFlux&quot;</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">scipy.signal.windows</span> <span class="kn">import</span> <span class="n">tukey</span><span class="p">,</span> <span class="n">hann</span><span class="p">,</span> <span class="n">boxcar</span><span class="p">,</span> <span class="n">nuttall</span><span class="p">,</span> <span class="n">blackman</span>
+<span class="kn">from</span> <span class="nn">few.utils.fdutils</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<p>Initialize waveform generators.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><br/><span></span><span class="c1"># frequency domain</span>
+<span class="n">few_gen</span> <span class="o">=</span> <span class="n">GenerateEMRIWaveform</span><span class="p">(</span>
+    <span class="s2">&quot;FastSchwarzschildEccentricFlux&quot;</span><span class="p">,</span>
+    <span class="n">sum_kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">pad_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="s2">&quot;fd&quot;</span><span class="p">,</span> <span class="n">odd_len</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">return_list</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="c1"># time domain</span>
+<span class="n">td_gen</span> <span class="o">=</span> <span class="n">GenerateEMRIWaveform</span><span class="p">(</span>
+    <span class="s2">&quot;FastSchwarzschildEccentricFlux&quot;</span><span class="p">,</span>
+    <span class="n">sum_kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">pad_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">odd_len</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">return_list</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># define the injection parameters</span>
+<span class="n">M</span> <span class="o">=</span> <span class="mf">1e6</span> <span class="c1"># central object mass</span>
+<span class="n">a</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># will be ignored in Schwarzschild waveform</span>
+<span class="n">mu</span> <span class="o">=</span> <span class="mf">10.0</span> <span class="c1"># secondary object mass</span>
+<span class="n">p0</span> <span class="o">=</span> <span class="mf">12.0</span> <span class="c1"># initial semi-latus rectum</span>
+<span class="n">e0</span> <span class="o">=</span> <span class="mf">0.6</span> <span class="c1"># eccentricity</span>
+
+<span class="n">x0</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># will be ignored in Schwarzschild waveform</span>
+<span class="n">qK</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>  <span class="c1"># polar spin angle</span>
+<span class="n">phiK</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>  <span class="c1"># azimuthal viewing angle</span>
+<span class="n">qS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>  <span class="c1"># polar sky angle</span>
+<span class="n">phiS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>  <span class="c1"># azimuthal viewing angle</span>
+<span class="n">dist</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># distance</span>
+<span class="c1"># initial phases</span>
+<span class="n">Phi_phi0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>
+<span class="n">Phi_theta0</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="n">Phi_r0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>
+
+<span class="n">Tobs</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="c1"># observation time, if the inspiral is shorter, the it will be zero padded</span>
+<span class="n">dt</span> <span class="o">=</span> <span class="mf">10.0</span> <span class="c1"># time interval</span>
+<span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-2</span> <span class="c1"># mode content percentage</span>
+<span class="n">mode_selection</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">)]</span>
+
+<span class="n">waveform_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">Tobs</span><span class="p">,</span>
+    <span class="s2">&quot;dt&quot;</span><span class="p">:</span> <span class="n">dt</span><span class="p">,</span>
+<span class="c1"># you can uncomment the following lines if you want to show a specific mode or modes</span>
+<span class="c1">#     &quot;mode_selection&quot; : mode_selection,</span>
+<span class="c1">#     &quot;include_minus_m&quot;: True</span>
+    <span class="s2">&quot;eps&quot;</span><span class="p">:</span> <span class="n">eps</span><span class="p">,</span>
+
+<span class="p">}</span>
+
+<span class="c1"># get the initial p0</span>
+<span class="n">p0</span> <span class="o">=</span> <span class="n">get_p_at_t</span><span class="p">(</span>
+    <span class="n">traj_module</span><span class="p">,</span>
+    <span class="n">Tobs</span><span class="o">*</span><span class="mf">0.99</span><span class="p">,</span>
+    <span class="p">[</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+    <span class="n">index_of_p</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">index_of_a</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">index_of_e</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">index_of_x</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">traj_kwargs</span><span class="o">=</span><span class="p">{},</span>
+    <span class="n">xtol</span><span class="o">=</span><span class="mf">2e-12</span><span class="p">,</span>
+    <span class="n">rtol</span><span class="o">=</span><span class="mf">8.881784197001252e-16</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="n">emri_injection_params</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">M</span><span class="p">,</span>
+    <span class="n">mu</span><span class="p">,</span>
+    <span class="n">a</span><span class="p">,</span>
+    <span class="n">p0</span><span class="p">,</span>
+    <span class="n">e0</span><span class="p">,</span>
+    <span class="n">x0</span><span class="p">,</span>
+    <span class="n">dist</span><span class="p">,</span>
+    <span class="n">qS</span><span class="p">,</span>
+    <span class="n">phiS</span><span class="p">,</span>
+    <span class="n">qK</span><span class="p">,</span>
+    <span class="n">phiK</span><span class="p">,</span>
+    <span class="n">Phi_phi0</span><span class="p">,</span>
+    <span class="n">Phi_theta0</span><span class="p">,</span>
+    <span class="n">Phi_r0</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<section id="Comparison-against-the-Time-Domain-Waveforms">
+<h2>Comparison against the Time Domain Waveforms<a class="headerlink" href="#Comparison-against-the-Time-Domain-Waveforms" title="Permalink to this heading"></a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># create TD signal</span>
+<span class="n">data_channels_td</span> <span class="o">=</span> <span class="n">td_gen</span><span class="p">(</span><span class="o">*</span><span class="n">emri_injection_params</span><span class="p">,</span> <span class="o">**</span><span class="n">waveform_kwargs</span><span class="p">)</span>
+
+<span class="c1"># take the FFT of the plus polarization and shift it</span>
+<span class="n">fft_TD</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftshift</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">data_channels_td</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">*</span> <span class="n">dt</span>
+<span class="n">freq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftshift</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_channels_td</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="p">,</span> <span class="n">dt</span><span class="p">))</span>
+
+<span class="c1"># define the positive frequencies</span>
+<span class="n">positive_frequency_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">freq</span><span class="o">&gt;=</span><span class="mf">0.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="n">freq</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fft_TD</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="n">freq</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">],</span> <span class="n">get_sensitivity</span><span class="p">(</span><span class="n">freq</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">]))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$| {\rm DFT} [h_{+}]|^2$&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$f$ [Hz]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorial_Tutorial_FrequencyDomain_Waveforms_7_1.png" src="../_images/tutorial_Tutorial_FrequencyDomain_Waveforms_7_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># you can specify the frequencies or obtain them directly from the waveform</span>
+<span class="n">fd_kwargs</span> <span class="o">=</span> <span class="n">waveform_kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">fd_kwargs</span><span class="p">[</span><span class="s1">&#39;f_arr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">freq</span>
+<span class="n">fd_kwargs</span><span class="p">[</span><span class="s1">&#39;mask_positive&#39;</span><span class="p">]</span><span class="o">=</span><span class="kc">True</span>
+
+<span class="c1"># get FD waveform</span>
+<span class="n">hf</span> <span class="o">=</span> <span class="n">few_gen</span><span class="p">(</span><span class="o">*</span><span class="n">emri_injection_params</span><span class="p">,</span><span class="o">**</span><span class="n">fd_kwargs</span><span class="p">)</span>
+<span class="c1"># to get the frequencies:</span>
+<span class="n">freq_fd</span> <span class="o">=</span> <span class="n">few_gen</span><span class="o">.</span><span class="n">waveform_generator</span><span class="o">.</span><span class="n">create_waveform</span><span class="o">.</span><span class="n">frequency</span>
+
+<span class="c1"># mismatch</span>
+<span class="n">fd_inner_product_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span> <span class="n">PSD</span><span class="o">=</span><span class="s2">&quot;cornish_lisa_psd&quot;</span><span class="p">,</span> <span class="n">f_arr</span><span class="o">=</span><span class="n">freq</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">])</span>
+<span class="n">Mism</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">inner_product</span><span class="p">(</span><span class="n">fft_TD</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">],</span> <span class="n">hf</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">fd_inner_product_kwargs</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;mismatch&quot;</span><span class="p">,</span> <span class="n">Mism</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+mismatch 0.0008526030054986089
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># 220 mode</span>
+<span class="n">fd_kwargs2</span> <span class="o">=</span> <span class="n">fd_kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">fd_kwargs2</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;eps&quot;</span><span class="p">)</span>
+<span class="n">fd_kwargs2</span><span class="p">[</span><span class="s1">&#39;mode_selection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">)]</span>
+<span class="n">hf_220</span> <span class="o">=</span> <span class="n">few_gen</span><span class="p">(</span><span class="o">*</span><span class="n">emri_injection_params</span><span class="p">,</span><span class="o">**</span><span class="n">fd_kwargs2</span><span class="p">)</span>
+<span class="c1"># create TD signal</span>
+<span class="n">td_kwargs2</span> <span class="o">=</span> <span class="n">waveform_kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">td_kwargs2</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;eps&quot;</span><span class="p">)</span>
+<span class="n">td_kwargs2</span><span class="p">[</span><span class="s1">&#39;mode_selection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">)]</span>
+<span class="n">data_channels_td_220</span> <span class="o">=</span> <span class="n">td_gen</span><span class="p">(</span><span class="o">*</span><span class="n">emri_injection_params</span><span class="p">,</span> <span class="o">**</span><span class="n">td_kwargs2</span><span class="p">)</span>
+
+<span class="c1"># take the FFT of the plus polarization and shift it</span>
+<span class="n">fft_TD_220</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftshift</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">data_channels_td_220</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">*</span> <span class="n">dt</span>
+
+<span class="c1"># sig_fd_windowed = [el[positive_frequency_mask] for el in get_fd_windowed(hf_toconv, window)]</span>
+
+<span class="n">Mism</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">inner_product</span><span class="p">(</span><span class="n">fft_TD_220</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">],</span> <span class="n">hf_220</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">fd_inner_product_kwargs</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;mismatch&quot;</span><span class="p">,</span> <span class="n">Mism</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+mismatch 4.694064207533266e-05
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># FD plot</span>
+<span class="n">enlarge</span> <span class="o">=</span> <span class="mf">1.1</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="n">freq</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fft_TD</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;DFT of TD waveform&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="n">freq</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span><span class="s1">&#39;--&#39;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;FD waveform&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="n">freq</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">],</span> <span class="n">get_sensitivity</span><span class="p">(</span><span class="n">freq</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">]),</span><span class="s1">&#39;k:&#39;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;LISA sensitivity&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$| \tilde</span><span class="si">{h}</span><span class="s1">_{+} (f)|^2$&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$f$ [Hz]&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;lower left&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">([</span><span class="mf">0.5e-49</span><span class="p">,</span> <span class="mf">1e-32</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="c1"># plt.savefig(&#39;figures/FD_TD_frequency.pdf&#39;, bbox_inches=&#39;tight&#39;)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorial_Tutorial_FrequencyDomain_Waveforms_10_0.png" src="../_images/tutorial_Tutorial_FrequencyDomain_Waveforms_10_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># TD plot</span>
+<span class="n">time_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">data_channels_td</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="o">*</span><span class="n">dt</span>
+<span class="n">ifft_fd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">hf</span><span class="p">[</span><span class="mi">0</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span><span class="o">/</span><span class="n">dt</span><span class="p">)</span>
+<span class="n">ifft_fd_22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hf_220</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">hf_220</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span> <span class="p">))</span><span class="o">/</span><span class="n">dt</span><span class="p">)</span>
+
+
+<span class="n">enlarge</span> <span class="o">=</span> <span class="mf">1.1</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_array</span><span class="p">,</span> <span class="n">data_channels_td</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;TD waveform&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_array</span><span class="p">,</span> <span class="n">ifft_fd</span><span class="p">,</span><span class="s1">&#39;--&#39;</span> <span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;Inverse DFT FD waveform&#39;</span><span class="p">)</span>
+<span class="c1">#     plt.plot(time_array, ifft_fd_22,&#39;-.&#39; ,label=&#39;Inverse DFT FD waveform (l,m,n)=(2,2,0)&#39;)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$h_{+}(t)$&#39;</span><span class="p">)</span>
+<span class="c1"># plt.xlabel(r&#39;$t$ [s]&#39;)</span>
+
+<span class="n">t0</span> <span class="o">=</span> <span class="n">time_array</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mf">0.7</span>
+<span class="n">space_t</span> <span class="o">=</span> <span class="mf">10e3</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">([</span><span class="n">t0</span><span class="p">,</span><span class="n">t0</span><span class="o">+</span><span class="n">space_t</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">([</span><span class="o">-</span><span class="mf">4e-22</span><span class="p">,</span> <span class="mf">6e-22</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper center&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="c1"># plt.savefig(&#39;figures/FD_TD_time.pdf&#39;, bbox_inches=&#39;tight&#39;)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorial_Tutorial_FrequencyDomain_Waveforms_11_0.png" src="../_images/tutorial_Tutorial_FrequencyDomain_Waveforms_11_0.png" />
+</div>
+</div>
+</section>
+<section id="Windowing">
+<h2>Windowing<a class="headerlink" href="#Windowing" title="Permalink to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># no windowing</span>
+<span class="n">window</span> <span class="o">=</span> <span class="kc">None</span> <span class="c1"># np.asarray(hann(len(data_channels_td[0])))</span>
+<span class="n">fft_td_gen</span> <span class="o">=</span> <span class="n">GetFDWaveformFromTD</span><span class="p">(</span><span class="n">td_gen</span><span class="p">,</span> <span class="n">positive_frequency_mask</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
+<span class="n">fd_gen</span> <span class="o">=</span> <span class="n">GetFDWaveformFromFD</span><span class="p">(</span><span class="n">few_gen</span><span class="p">,</span> <span class="n">positive_frequency_mask</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
+<span class="n">fd_kwargs_nomask</span> <span class="o">=</span> <span class="n">fd_kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="k">del</span> <span class="n">fd_kwargs_nomask</span><span class="p">[</span><span class="s1">&#39;mask_positive&#39;</span><span class="p">]</span>
+<span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">fd_gen</span><span class="p">(</span><span class="o">*</span><span class="n">emri_injection_params</span><span class="p">,</span><span class="o">**</span><span class="n">fd_kwargs_nomask</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="n">hf</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="c1"># add windowing</span>
+<span class="n">window</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">hann</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_channels_td</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span><span class="c1">#np.asarray(data_channels_td[0]==0.0,dtype=float)#</span>
+<span class="n">fft_td_gen</span> <span class="o">=</span> <span class="n">GetFDWaveformFromTD</span><span class="p">(</span><span class="n">td_gen</span><span class="p">,</span> <span class="n">positive_frequency_mask</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
+<span class="n">fd_gen</span> <span class="o">=</span> <span class="n">GetFDWaveformFromFD</span><span class="p">(</span><span class="n">few_gen</span><span class="p">,</span> <span class="n">positive_frequency_mask</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
+
+<span class="n">hf</span> <span class="o">=</span> <span class="n">fd_gen</span><span class="p">(</span><span class="o">*</span><span class="n">emri_injection_params</span><span class="p">,</span><span class="o">**</span><span class="n">fd_kwargs_nomask</span><span class="p">)</span>
+<span class="n">fft_TD</span> <span class="o">=</span> <span class="n">fft_td_gen</span><span class="p">(</span><span class="o">*</span><span class="n">emri_injection_params</span><span class="p">,</span><span class="o">**</span><span class="n">fd_kwargs_nomask</span><span class="p">)</span>
+
+<span class="n">fd_inner_product_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span> <span class="n">PSD</span><span class="o">=</span><span class="s2">&quot;cornish_lisa_psd&quot;</span><span class="p">,</span> <span class="n">f_arr</span><span class="o">=</span><span class="n">freq</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">])</span>
+<span class="n">Mism</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">inner_product</span><span class="p">(</span><span class="n">fft_TD</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">hf</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">fd_inner_product_kwargs</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;mismatch&quot;</span><span class="p">,</span> <span class="n">Mism</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+mismatch 3.909195435469748e-06
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># FD plot</span>
+<span class="n">enlarge</span> <span class="o">=</span> <span class="mf">1.1</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="n">freq</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fft_TD</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;DFT of TD waveform&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="n">freq</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span><span class="s1">&#39;--&#39;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;FD waveform&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="n">freq</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">],</span> <span class="n">get_sensitivity</span><span class="p">(</span><span class="n">freq</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">]),</span><span class="s1">&#39;k:&#39;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;LISA sensitivity&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$| \tilde</span><span class="si">{h}</span><span class="s1">_{+}(f)|^2$&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$f$ [Hz]&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="c1"># plt.legend(loc=&#39;upper left&#39;)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">([</span><span class="mf">0.5e-49</span><span class="p">,</span> <span class="mf">1e-32</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="c1"># plt.savefig(&#39;figures/FD_TD_frequency_windowed.pdf&#39;, bbox_inches=&#39;tight&#39;)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorial_Tutorial_FrequencyDomain_Waveforms_14_0.png" src="../_images/tutorial_Tutorial_FrequencyDomain_Waveforms_14_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># TD plot</span>
+<span class="n">time_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">data_channels_td</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="o">*</span><span class="n">dt</span>
+<span class="n">ifft_fd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">hf</span><span class="p">[</span><span class="mi">0</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span><span class="o">/</span><span class="n">dt</span><span class="p">)</span>
+
+
+<span class="n">enlarge</span> <span class="o">=</span> <span class="mf">1.1</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_array</span><span class="p">,</span> <span class="n">data_channels_td</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">window</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;TD waveform&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_array</span><span class="p">,</span> <span class="n">ifft_fd</span><span class="p">,</span><span class="s1">&#39;--&#39;</span> <span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;FD waveform&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$h_{+}(t)$&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$t$ [s]&#39;</span><span class="p">)</span>
+
+<span class="n">t0</span> <span class="o">=</span> <span class="n">time_array</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mf">0.7</span>
+<span class="n">space_t</span> <span class="o">=</span> <span class="mf">10e3</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">([</span><span class="n">t0</span><span class="p">,</span><span class="n">t0</span><span class="o">+</span><span class="n">space_t</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">([</span><span class="o">-</span><span class="mf">4e-22</span><span class="p">,</span> <span class="mf">6e-22</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper center&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="c1"># plt.savefig(&#39;figures/FD_TD_time_windowed.pdf&#39;, bbox_inches=&#39;tight&#39;)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorial_Tutorial_FrequencyDomain_Waveforms_15_0.png" src="../_images/tutorial_Tutorial_FrequencyDomain_Waveforms_15_0.png" />
+</div>
+</div>
+</section>
+<section id="Mass-invariance">
+<h2>Mass invariance<a class="headerlink" href="#Mass-invariance" title="Permalink to this heading"></a></h2>
+<p>If we fix the mass ratio of an EMRI system the frequency domain waveform is invariant under a total mass change as long as we consider dimensionless frequencies. We show this here as a check of our frequency domain implementation.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">list_h</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">list_f</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">T</span> <span class="o">=</span> <span class="mf">4.0</span>
+<span class="n">dt</span> <span class="o">=</span> <span class="mf">10.0</span>
+<span class="c1"># array of total masses</span>
+<span class="n">Mvec</span> <span class="o">=</span> <span class="mi">10</span><span class="o">**</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">5.0</span><span class="p">,</span><span class="mf">6.5</span><span class="p">,</span><span class="n">num</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">M</span> <span class="ow">in</span> <span class="n">Mvec</span><span class="p">:</span>
+
+    <span class="c1"># fix mass ratio</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="mf">5e-5</span><span class="o">*</span><span class="n">M</span>
+
+    <span class="c1"># rescale time</span>
+    <span class="n">Tnew</span> <span class="o">=</span> <span class="n">T</span><span class="o">*</span><span class="p">(</span><span class="n">M</span><span class="o">/</span><span class="mf">1e6</span><span class="p">)</span>
+
+    <span class="c1"># generate wave</span>
+    <span class="n">list_h</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">few_gen</span><span class="p">(</span><span class="n">M</span><span class="p">,</span><span class="n">mu</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">p0</span><span class="p">,</span><span class="n">e0</span><span class="p">,</span><span class="n">x0</span><span class="p">,</span><span class="n">dist</span><span class="p">,</span><span class="n">qS</span><span class="p">,</span><span class="n">phiS</span><span class="p">,</span><span class="n">qK</span><span class="p">,</span><span class="n">phiK</span><span class="p">,</span><span class="n">Phi_phi0</span><span class="p">,</span><span class="n">Phi_theta0</span><span class="p">,</span><span class="n">Phi_r0</span><span class="p">,</span>
+                <span class="n">T</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span><span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span><span class="n">mode_selection</span><span class="o">=</span><span class="p">[(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">)],</span><span class="n">mask_positive</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># dimensionless frequency</span>
+    <span class="n">list_f</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">few_gen</span><span class="o">.</span><span class="n">waveform_generator</span><span class="o">.</span><span class="n">create_waveform</span><span class="o">.</span><span class="n">frequency</span> <span class="o">*</span> <span class="n">M</span> <span class="o">*</span> <span class="n">MTSUN_SI</span> <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Mvec</span><span class="p">)):</span>
+    <span class="n">Tnew</span> <span class="o">=</span> <span class="mf">10.0</span> <span class="o">*</span> <span class="n">Mvec</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1e6</span>
+    <span class="n">tmp_mu</span> <span class="o">=</span> <span class="mf">1e-5</span> <span class="o">*</span> <span class="n">Mvec</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+
+    <span class="n">ff</span> <span class="o">=</span> <span class="n">list_f</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+    <span class="n">ff</span> <span class="o">=</span> <span class="n">ff</span><span class="p">[</span><span class="n">ff</span><span class="o">&gt;=</span><span class="mf">0.0</span><span class="p">]</span>
+    <span class="n">h2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">list_h</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">tmp_mu</span> <span class="o">*</span> <span class="n">Tnew</span><span class="p">)</span> <span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="n">ff</span><span class="p">,</span> <span class="n">h2</span><span class="p">,</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;mu = </span><span class="si">{</span><span class="n">tmp_mu</span><span class="si">:</span><span class="s1">.2</span><span class="si">}</span><span class="s1">, T = </span><span class="si">{</span><span class="n">Tnew</span><span class="si">:</span><span class="s1">.2</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">([</span><span class="mf">1e-4</span><span class="p">,</span><span class="mf">1e-1</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorial_Tutorial_FrequencyDomain_Waveforms_18_0.png" src="../_images/tutorial_Tutorial_FrequencyDomain_Waveforms_18_0.png" />
+</div>
+</div>
+</section>
+<section id="Downsampled-FD-Waveforms">
+<h2>Downsampled FD Waveforms<a class="headerlink" href="#Downsampled-FD-Waveforms" title="Permalink to this heading"></a></h2>
+<p>One of the main advantages of the frequency domain formulation is that we can downsample the frequencies to reduce the computational cost of the waveform. This is illustrated in the following cells where we perform different levels of downsampling.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">M</span><span class="p">,</span><span class="n">mu</span><span class="p">,</span><span class="n">p0</span><span class="p">,</span><span class="n">e0</span> <span class="o">=</span> <span class="mf">3670041.7362535275</span><span class="p">,</span> <span class="mf">292.0583167470244</span><span class="p">,</span> <span class="mf">13.709101864726545</span><span class="p">,</span> <span class="mf">0.5794130830706371</span> <span class="c1"># 1e6, 10.0, 13.709101864726545, 0.5794130830706371 #</span>
+
+<span class="n">x0</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># will be ignored in Schwarzschild waveform</span>
+<span class="n">qK</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>  <span class="c1"># polar spin angle</span>
+<span class="n">phiK</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>  <span class="c1"># azimuthal viewing angle</span>
+<span class="n">qS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>  <span class="c1"># polar sky angle</span>
+<span class="n">phiS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>  <span class="c1"># azimuthal viewing angle</span>
+<span class="n">dist</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># distance</span>
+<span class="c1"># initial phases</span>
+<span class="n">Phi_phi0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>
+<span class="n">Phi_theta0</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="n">Phi_r0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>
+
+<span class="n">Tobs</span> <span class="o">=</span> <span class="mf">4.0</span> <span class="c1"># observation time, if the inspiral is shorter, the it will be zero padded</span>
+<span class="n">dt</span> <span class="o">=</span> <span class="mf">10.0</span> <span class="c1"># time interval</span>
+<span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-2</span> <span class="c1"># mode content percentage</span>
+<span class="n">mode_selection</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">)]</span>
+
+<span class="n">waveform_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">Tobs</span><span class="p">,</span>
+    <span class="s2">&quot;dt&quot;</span><span class="p">:</span> <span class="n">dt</span><span class="p">,</span>
+<span class="c1"># you can uncomment the following ling if you want to show a mode</span>
+<span class="c1">#     &quot;mode_selection&quot; : mode_selection,</span>
+<span class="c1">#     &quot;include_minus_m&quot;: True</span>
+    <span class="s2">&quot;eps&quot;</span><span class="p">:</span> <span class="n">eps</span><span class="p">,</span>
+
+<span class="p">}</span>
+
+<span class="c1"># get the initial p0</span>
+<span class="n">p0</span> <span class="o">=</span> <span class="n">get_p_at_t</span><span class="p">(</span>
+    <span class="n">traj_module</span><span class="p">,</span>
+    <span class="n">Tobs</span><span class="o">*</span><span class="mf">0.99</span><span class="p">,</span>
+    <span class="p">[</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+    <span class="n">index_of_p</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">index_of_a</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">index_of_e</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">index_of_x</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">traj_kwargs</span><span class="o">=</span><span class="p">{},</span>
+    <span class="n">xtol</span><span class="o">=</span><span class="mf">2e-12</span><span class="p">,</span>
+    <span class="n">rtol</span><span class="o">=</span><span class="mf">8.881784197001252e-16</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="n">emri_injection_params</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">M</span><span class="p">,</span>
+    <span class="n">mu</span><span class="p">,</span>
+    <span class="n">a</span><span class="p">,</span>
+    <span class="n">p0</span><span class="p">,</span>
+    <span class="n">e0</span><span class="p">,</span>
+    <span class="n">x0</span><span class="p">,</span>
+    <span class="n">dist</span><span class="p">,</span>
+    <span class="n">qS</span><span class="p">,</span>
+    <span class="n">phiS</span><span class="p">,</span>
+    <span class="n">qK</span><span class="p">,</span>
+    <span class="n">phiK</span><span class="p">,</span>
+    <span class="n">Phi_phi0</span><span class="p">,</span>
+    <span class="n">Phi_theta0</span><span class="p">,</span>
+    <span class="n">Phi_r0</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># FD plot</span>
+<span class="n">enlarge</span> <span class="o">=</span> <span class="mf">1.1</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+
+<span class="n">alpha</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">]</span>
+<span class="n">linest</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;-&#39;</span><span class="p">,</span><span class="s1">&#39;--&#39;</span><span class="p">,</span><span class="s1">&#39;-.&#39;</span><span class="p">,</span><span class="s1">&#39;:&#39;</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">upp</span><span class="p">,</span><span class="n">aa</span><span class="p">,</span><span class="n">ls</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span><span class="mi">10000</span><span class="p">],</span><span class="n">alpha</span><span class="p">,</span><span class="n">linest</span><span class="p">):</span>
+
+    <span class="c1"># you can specify the frequencies or obtain them directly from the waveform</span>
+    <span class="n">fd_kwargs</span> <span class="o">=</span> <span class="n">waveform_kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">fd_kwargs</span><span class="p">[</span><span class="s1">&#39;mask_positive&#39;</span><span class="p">]</span><span class="o">=</span><span class="kc">True</span>
+    <span class="c1"># get FD waveform</span>
+    <span class="n">hf</span> <span class="o">=</span> <span class="n">few_gen</span><span class="p">(</span><span class="o">*</span><span class="n">emri_injection_params</span><span class="p">,</span><span class="o">**</span><span class="n">fd_kwargs</span><span class="p">)</span>
+    <span class="n">freq_fd</span> <span class="o">=</span> <span class="n">few_gen</span><span class="o">.</span><span class="n">waveform_generator</span><span class="o">.</span><span class="n">create_waveform</span><span class="o">.</span><span class="n">frequency</span>
+    <span class="n">positive_frequency_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">freq_fd</span><span class="o">&gt;=</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">mask_non_zero</span> <span class="o">=</span> <span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">!=</span><span class="nb">complex</span><span class="p">(</span><span class="mf">0.0</span><span class="p">))</span>
+    <span class="n">end_f</span> <span class="o">=</span> <span class="n">few_gen</span><span class="o">.</span><span class="n">waveform_generator</span><span class="o">.</span><span class="n">create_waveform</span><span class="o">.</span><span class="n">frequency</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">][</span><span class="n">mask_non_zero</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">upp</span><span class="o">!=</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">num</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span> <span class="nb">len</span><span class="p">(</span><span class="n">freq_fd</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">][</span><span class="n">mask_non_zero</span><span class="p">])</span> <span class="o">/</span> <span class="n">upp</span> <span class="p">)</span>
+        <span class="n">p_freq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">end_f</span><span class="o">*</span><span class="mf">1.01</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">num</span> <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;max frequency&quot;</span><span class="p">,</span><span class="n">end_f</span><span class="p">)</span>
+        <span class="n">newfreq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="o">-</span><span class="n">p_freq</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                            <span class="n">p_freq</span>
+                            <span class="p">)</span> <span class="p">)</span>
+
+        <span class="c1"># you can specify the frequencies or obtain them directly from the waveform</span>
+        <span class="n">fd_kwargs</span> <span class="o">=</span> <span class="n">waveform_kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">fd_kwargs</span><span class="p">[</span><span class="s1">&#39;f_arr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">newfreq</span>
+        <span class="n">fd_kwargs</span><span class="p">[</span><span class="s1">&#39;mask_positive&#39;</span><span class="p">]</span><span class="o">=</span><span class="kc">True</span>
+
+        <span class="c1"># get FD waveform</span>
+        <span class="n">hf</span> <span class="o">=</span> <span class="n">few_gen</span><span class="p">(</span><span class="o">*</span><span class="n">emri_injection_params</span><span class="p">,</span><span class="o">**</span><span class="n">fd_kwargs</span><span class="p">)</span>
+        <span class="c1"># to get the frequencies:</span>
+        <span class="n">freq_fd</span> <span class="o">=</span> <span class="n">few_gen</span><span class="o">.</span><span class="n">waveform_generator</span><span class="o">.</span><span class="n">create_waveform</span><span class="o">.</span><span class="n">frequency</span>
+        <span class="n">positive_frequency_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">freq_fd</span><span class="o">&gt;=</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="n">Nf</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">freq_fd</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="n">freq_fd</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">],</span><span class="n">freq_fd</span><span class="p">[</span><span class="n">positive_frequency_mask</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span><span class="n">ls</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;$N_f = $ </span><span class="si">{</span><span class="n">Nf</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="n">aa</span><span class="p">)</span>
+
+
+<span class="n">ff</span> <span class="o">=</span> <span class="mi">10</span><span class="o">**</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">num</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="n">ff</span><span class="p">,</span> <span class="n">ff</span><span class="o">*</span><span class="n">get_sensitivity</span><span class="p">(</span><span class="n">ff</span><span class="p">),</span><span class="s1">&#39;k:&#39;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;LISA sensitivity&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$|f\, \tilde</span><span class="si">{h}</span><span class="s1">_{+}(f)|^2$&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$f$ [Hz]&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;lower left&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">,</span><span class="mf">3e-3</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">([</span><span class="mf">1e-49</span><span class="p">,</span> <span class="mf">1e-34</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># plt.savefig(&#39;figures/spectrum_downsampled.pdf&#39;)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+max frequency 0.002815722498330661
+max frequency 0.002815722498330661
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorial_Tutorial_FrequencyDomain_Waveforms_21_1.png" src="../_images/tutorial_Tutorial_FrequencyDomain_Waveforms_21_1.png" />
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Tutorial_FD_construction_single_mode.html" class="btn btn-neutral float-left" title="Single Mode Frequency Domain Waveform Construction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../general/docs_main.html" class="btn btn-neutral float-right" title="FastEMRIWaveforms Publications" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Michael Katz, Alvin Chua, Niels Warburton.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
