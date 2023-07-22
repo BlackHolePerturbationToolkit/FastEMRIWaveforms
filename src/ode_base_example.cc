@@ -211,6 +211,7 @@ KerrEccentricEquatorial::KerrEccentricEquatorial(std::string few_dir)
 // #define KerrEccentricEquatorial_Y
 #define KerrEccentricEquatorial_equatorial
 #define KerrEccentricEquatorial_num_add_args 1
+#define KerrEccentricEquatorial_equatorial
 __deriv__
 void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdot,
                   double* Omega_phi, double* Omega_theta, double* Omega_r,
@@ -236,10 +237,6 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     // auto end = std::chrono::steady_clock::now();
     // std::chrono::duration<double>  msec = end-start;
     // std::cout << "elapsed time fund freqs: " << msec.count() << "s\n";
-
-    // get r variable
-    // double *Omega_phi_sep_circ,*Omega_theta_sep_circ,*Omega_r_sep_circ;
-    // KerrGeoEquatorialCoordinateFrequencies(Omega_phi_sep_circ, Omega_theta_sep_circ, Omega_r_sep_circ, a, p_sep, 0.0, x);// shift to avoid problem in fundamental frequencies
     
     double r,Omega_phi_sep_circ;
     // reference frequency
@@ -252,38 +249,44 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
         throw std::exception();
         }
 
-    double pdot_out, edot_out;
+    
     double risco = get_separatrix(a, 0.0, x);
     double one_minus_e2 = 1. - pow(e,2);
 
-    // Fluxes from Susanna
-    pdot_out = pdot_Cheby_full(a, e, r) * ((8.*pow(one_minus_e2,1.5)*(8. + 7.*pow(e,2)))/(5.*p*(pow(p - risco,2) - pow(-risco + p_sep,2))));
-    edot_out = edot_Cheby_full(a, e, r) * ((pow(one_minus_e2,1.5)*(304. + 121.*pow(e,2)))/(15.*pow(p,2)*(pow(p - risco,2) - pow(-risco + p_sep,2))));
+    // Fluxes in p,e from Chebyshev
+    double pdot_cheb, edot_cheb;
+    pdot_cheb = pdot_Cheby_full(a, e, r) * ((8.*pow(one_minus_e2,1.5)*(8. + 7.*pow(e,2)))/(5.*p*(pow(p - risco,2) - pow(-risco + p_sep,2))));
+    edot_cheb = edot_Cheby_full(a, e, r) * ((pow(one_minus_e2,1.5)*(304. + 121.*pow(e,2)))/(15.*pow(p,2)*(pow(p - risco,2) - pow(-risco + p_sep,2))));
 
     double Edot, Ldot, Qdot, pdot_here, edot_here, xdot_here, E_here, L_here, Q_here;
     KerrGeoConstantsOfMotion(&E_here, &L_here, &Q_here, a, p, e, x);
     
-	int Nv = 10;
-    int ne = 10;
-    Edot = dEdt8H_5PNe10(a, p, e, x, Nv, ne);
-    Ldot = dLdt8H_5PNe10(a, p, e, x, Nv, ne);
+    // Transform to pdot, edot for the scalar fluxes
+    Edot = Edot_SC(a, e, r);
+    Ldot = Ldot_SC(a, e, r);
     Qdot = 0.0;
     Jac(a, p, e, x, E_here, L_here, Q_here, Edot, Ldot, Qdot, pdot_here, edot_here, xdot_here);
-    // consistency check
-    // cout << "transf pdot Cheb " <<  GKR->pdot << " pdot " <<  pdot_out << " PN " << dpdt8H_5PNe10(a, p, e, x, Nv, ne) << endl;
-    // cout << "transf edot Cheb " <<  GKR->edot << " edot " <<  edot_out << " PN " << dedt8H_5PNe10(a, p, e, x, Nv, ne) << endl;
-    
-    // cout << "ratio " <<  pdot_here/dpdt8H_5PNe10(a, p, e, x, Nv, ne) << endl;
-    // cout << "ratio " <<  edot_here/dedt8H_5PNe10(a, p, e, x, Nv, ne) << endl;
+    // Fluxes in E,L from Chebyshev
+    double pdot_out, edot_out, xdot_out;
 
-    // cout << "ratio pdot Cheb " <<  GKR->pdot/pdot_out << endl;
-    // cout << "ratio edot Cheb " <<  GKR->edot/edot_out << endl;
+    Jac(a, p, e, x, E_here, L_here, Q_here, -Edot_GR(a,e,r,p), -Ldot_GR(a,e,r,p), Qdot, pdot_out, edot_out, xdot_out);
+    
+    double factor = additional_args[0]*additional_args[0]/4;
+    
+    // check Jacobiam
+    // cout << "ratio " <<  pdot_cheb/pdot_out << endl;
+    // cout << "ratio " <<  edot_cheb/edot_out << endl;
+
+    // cout << "Edot, pdot " <<  Edot_GR(a,e,r,p) << "\t" << pdot_out << endl;
+    // cout << "Ldot, edot " <<  Ldot_GR(a,e,r,p) << "\t" << edot_out << endl;
 
     // needs adjustment for validity
     if (e > 1e-6)
     {
-        *pdot = epsilon * pdot_out;
-        *edot = epsilon * edot_out;
+        // the scalar flux is d^2 /4
+        
+        *pdot = epsilon * (pdot_out + factor * pdot_here);
+        *edot = epsilon * (edot_out + factor * edot_here);
     }
     else{
         *edot = 0.0;

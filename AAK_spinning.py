@@ -79,20 +79,19 @@ if gpu_available:
             Phi_phi0=0.0,Phi_theta0=0.0,Phi_r0=0.0,mich=False,dt=dt,T=T)
     toc = time.perf_counter()
     print((toc-tic)/10)
-breakpoint()
 
 # check limit
 output1 = waveform_class(M,mu,a,p0,e0,Y0,dist,qS,phiS,qK,phiK,scalar_charge,
         Phi_phi0=0.0,Phi_theta0=0.0,Phi_r0=0.0,mich=False,dt=dt,T=T)
 
-scalar_charge = 1.0
+scalar_charge = 1e-5
 output2 = waveform_class(M,mu,a,p0,e0,Y0,dist,qS,phiS,qK,phiK,scalar_charge,
         Phi_phi0=0.0,Phi_theta0=0.0,Phi_r0=0.0,mich=False,dt=dt,T=T)
 
 print(get_mismatch(output2.real, output1.real))
 
 plt.figure()
-plt.plot(output1.real[:],label='new wave')
-plt.plot(output2.real[:],label='AAK wave')
+plt.plot(output1.real[-100:],label='new wave')
+plt.plot(output2.real[-100:],label='AAK wave')
 plt.legend()
 plt.show()
