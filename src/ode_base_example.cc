@@ -207,7 +207,6 @@ KerrEccentricEquatorial::KerrEccentricEquatorial(std::string few_dir)
     std::string fp;
 }
 
-
 // #define KerrEccentricEquatorial_Y
 #define KerrEccentricEquatorial_equatorial
 #define KerrEccentricEquatorial_num_add_args 1
@@ -240,7 +239,8 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     
     double r,Omega_phi_sep_circ;
     // reference frequency
-    Omega_phi_sep_circ = 1.0/ (a + pow(p_sep/( 1.0 + e ), 1.5) );
+    
+    Omega_phi_sep_circ = 1.0/ (a*copysign(1.0,x) + pow(p_sep/( 1.0 + e ), 1.5) );
     r = pow(*Omega_phi/ Omega_phi_sep_circ, 2.0/3.0 ) * (1.0 + e);
     
     if (isnan(r)){
@@ -255,21 +255,24 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
 
     // Fluxes in p,e from Chebyshev
     double pdot_cheb, edot_cheb;
-    pdot_cheb = pdot_Cheby_full(a, e, r) * ((8.*pow(one_minus_e2,1.5)*(8. + 7.*pow(e,2)))/(5.*p*(pow(p - risco,2) - pow(-risco + p_sep,2))));
-    edot_cheb = edot_Cheby_full(a, e, r) * ((pow(one_minus_e2,1.5)*(304. + 121.*pow(e,2)))/(15.*pow(p,2)*(pow(p - risco,2) - pow(-risco + p_sep,2))));
+    pdot_cheb = pdot_Cheby_full(a*copysign(1.0,x), e, r) * ((8.*pow(one_minus_e2,1.5)*(8. + 7.*pow(e,2)))/(5.*p*(pow(p - risco,2) - pow(-risco + p_sep,2))));
+    edot_cheb = edot_Cheby_full(a*copysign(1.0,x), e, r) * ((pow(one_minus_e2,1.5)*(304. + 121.*pow(e,2)))/(15.*pow(p,2)*(pow(p - risco,2) - pow(-risco + p_sep,2))));
 
     double Edot, Ldot, Qdot, pdot_here, edot_here, xdot_here, E_here, L_here, Q_here;
     KerrGeoConstantsOfMotion(&E_here, &L_here, &Q_here, a, p, e, x);
     
     // Transform to pdot, edot for the scalar fluxes
-    Edot = Edot_SC(a, e, r);
-    Ldot = Ldot_SC(a, e, r);
+    Edot = Edot_SC(a*copysign(1.0,x), e, r);
+    Ldot = Ldot_SC(a*copysign(1.0,x), e, r)*copysign(1.0,x);
     Qdot = 0.0;
     Jac(a, p, e, x, E_here, L_here, Q_here, Edot, Ldot, Qdot, pdot_here, edot_here, xdot_here);
+    // pdot_edot_from_fluxes(pdot_here, edot_here, Edot, Ldot, a, e, p);
     // Fluxes in E,L from Chebyshev
     double pdot_out, edot_out, xdot_out;
-
-    Jac(a, p, e, x, E_here, L_here, Q_here, -Edot_GR(a,e,r,p), -Ldot_GR(a,e,r,p), Qdot, pdot_out, edot_out, xdot_out);
+    // sign of function
+    // sign =
+    Jac(a, p, e, x, E_here, L_here, Q_here, -Edot_GR(a*copysign(1.0,x),e,r,p), -Ldot_GR(a*copysign(1.0,x),e,r,p)*copysign(1.0,x), Qdot, pdot_out, edot_out, xdot_out);
+    // pdot_edot_from_fluxes(pdot_out, edot_out, -Edot_GR(a,e,r,p), -Ldot_GR(a,e,r,p), a, e, p);
     
     double factor = additional_args[0]*additional_args[0]/4;
     
@@ -277,20 +280,20 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     // cout << "ratio " <<  pdot_cheb/pdot_out << endl;
     // cout << "ratio " <<  edot_cheb/edot_out << endl;
 
-    // cout << "Edot, pdot " <<  Edot_GR(a,e,r,p) << "\t" << pdot_out << endl;
-    // cout << "Ldot, edot " <<  Ldot_GR(a,e,r,p) << "\t" << edot_out << endl;
+    // cout << "Edot, pdot " <<  Edot << "\t" << pdot_out << endl;
+    // cout << "Ldot, edot " <<  Ldot << "\t" << edot_out << endl;
 
     // needs adjustment for validity
-    if (e > 1e-6)
+    if (e > 1e-8)
     {
         // the scalar flux is d^2 /4
-        
         *pdot = epsilon * (pdot_out + factor * pdot_here);
         *edot = epsilon * (edot_out + factor * edot_here);
     }
     else{
+        
         *edot = 0.0;
-        *pdot = epsilon * pdot_out;
+        *pdot = epsilon * (pdot_out + factor * pdot_here);
         // cout << "end" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
     }
 

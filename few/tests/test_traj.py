@@ -25,7 +25,7 @@ except (ModuleNotFoundError, ImportError) as e:
     )
     gpu_available = False
 
-T = 4.0
+T = 5.0
 dt = 10.0
 
 insp_kw = {
@@ -86,28 +86,37 @@ class ModuleTest(unittest.TestCase):
 
         # set initial parameters
         M = 1e6
-        mu = 1e1
+        mu = 5e1
         p0 = 12.0
         e0 = 0.1
-        a=0.85
-
-        for i in range(100):
+        a=-0.987
+        charge = 0.0
+        import matplotlib.pyplot as plt
+        plt.figure()
+        for i in range(4):
             # print(p0,e0)
-            p0 = np.random.uniform(10.0,15)
-            e0 = np.random.uniform(0.1, 0.5)
-            a = np.random.uniform(0.0, 1.0)
+            p0 = np.random.uniform(9.0,17)
+            e0 = np.random.uniform(0.01, 0.5)
+            # for j in range(2):
+            a = np.random.uniform(-0.987, 0.987)
 
             # run trajectory
-            t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, 0.01, **insp_kw)
-            # print('run',p0,e0,a)
-        
+            t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, np.abs(a), p0, e0, np.sign(a)*1.0, charge, **insp_kw)
+            # print(e[-1])
+            plt.plot(p,e,label=f'a={a:.2e}',alpha=0.7)
+            # breakpoint()
+
+        plt.legend(); plt.xlabel('p'); plt.ylabel('e')
+
+        plt.savefig(f'a_p_e.png')
+
         # test against Schwarz
         traj_Schw = EMRIInspiral(func="SchwarzEccFlux")
         a=0.0
         charge = 0.0
 
         # check against Schwarzchild
-        for i in range(1000):
+        for i in range(100):
             p0 = np.random.uniform(10.0,15)
             e0 = np.random.uniform(0.1, 0.5)
             
