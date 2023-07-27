@@ -162,3 +162,15 @@ AK_citation = """
     year = "2004"
 }
 """
+
+fd_citation = """
+@article{Speri:2023jte,
+    author = "Speri, Lorenzo and Katz, Michael L. and Chua, Alvin J. K. and Hughes, Scott A. and Warburton, Niels and Thompson, Jonathan E. and Chapman-Bird, Christian E. A. and Gair, Jonathan R.",
+    title = "{Fast and Fourier: Extreme Mass Ratio Inspiral Waveforms in the Frequency Domain}",
+    eprint = "2307.12585",
+    archivePrefix = "arXiv",
+    primaryClass = "gr-qc",
+    month = "7",
+    year = "2023"
+}
+"""

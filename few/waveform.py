@@ -477,7 +477,9 @@ class SchwarzschildEccentricWaveformBase(
             larger_few_citation
             + few_citation
             + few_software_citation
+            + fd_citation
             + romannet_citation
+            + FD_citation
         )
 
     def __call__(
@@ -1066,6 +1068,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
             larger_few_citation
             + few_citation
             + few_software_citation
+            + fd_citation
             + AAK_citation_1
             + AAK_citation_2
             + AK_citation
@@ -1307,6 +1310,7 @@ class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase, ABC):
             larger_few_citation
             + few_citation
             + few_software_citation
+            + fd_citation
             + AAK_citation_1
             + AAK_citation_2
             + AK_citation
