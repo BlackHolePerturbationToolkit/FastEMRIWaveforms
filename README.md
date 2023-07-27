@@ -1,6 +1,6 @@
 # few: Fast EMRI Waveforms
 
-This package contains the highly modular framework for fast and accurate extreme mass ratio inspiral (EMRI) waveforms from [arxiv.org/2104.04582](https://arxiv.org/abs/2104.04582) and [arxiv.org/2008.06071](https://arxiv.org/abs/2008.06071). The waveforms in this package combine a variety of separately accessible modules to form EMRI waveforms on both CPUs and GPUs. Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the [documentation](https://bhptoolkit.org/FastEMRIWaveforms/) for further information on these modules. The code can be found on Github [here](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms). The data necessary for various modules in this package will automatically download the first time it is needed. If you would like to view the data, it can be found on [Zenodo](https://zenodo.org/record/3981654#.XzS_KRNKjlw). The current and all past code release zip files can also be found on Zenodo [here](https://zenodo.org/record/4005001). Please see the [citation](#citation) section below for information on citing FEW.
+This package contains the highly modular framework for fast and accurate extreme mass ratio inspiral (EMRI) waveforms from [arxiv.org/2104.04582](https://arxiv.org/abs/2104.04582) and [arxiv.org/2008.06071](https://arxiv.org/abs/2008.06071). The waveforms in this package combine a variety of separately accessible modules to form EMRI waveforms on both CPUs and GPUs. Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the [documentation](https://bhptoolkit.org/FastEMRIWaveforms/) for further information on these modules. The code can be found on Github [here](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms). The data necessary for various modules in this package will automatically download the first time it is needed. If you would like to view the data, it can be found on [Zenodo](https://zenodo.org/record/3981654#.XzS_KRNKjlw). The current and all past code release zip files can also be found on Zenodo [here](https://zenodo.org/record/8190418). Please see the [citation](#citation) section below for information on citing FEW.
 
 This package is a part of the [Black Hole Perturbation Toolkit](https://bhptoolkit.org/).
 
@@ -204,7 +204,7 @@ This project is licensed under the GNU License - see the [LICENSE.md](LICENSE.md
 
 ## Citation
 
-Please make sure to cite FEW papers and the FEW software on [Zenodo](https://zenodo.org/record/4005001). There are other papers that require citation based on the classes used. For most classes this applies to, you can find these by checking the `citation` attribute for that class. Below is a list of citable papers that have lead to the development of FEW. 
+Please make sure to cite FEW papers and the FEW software on [Zenodo](https://zenodo.org/record/8190418). There are other papers that require citation based on the classes used. For most classes this applies to, you can find these by checking the `citation` attribute for that class. Below is a list of citable papers that have lead to the development of FEW. 
 
 ```
 @article{Chua:2020stf,
@@ -231,19 +231,21 @@ Please make sure to cite FEW papers and the FEW software on [Zenodo](https://zen
     year = "2021"
 }
 
-@software{michael_l_katz_2020_4005001,
+@software{michael_l_katz_2023_8190418,
   author       = {Michael L. Katz and
+                  Lorenzo Speri and
                   Alvin J. K. Chua and
+                  Christian E. A. Chapman-Bird and
                   Niels Warburton and
-                  Scott A. Hughes.},
-  title        = {{BlackHolePerturbationToolkit/FastEMRIWaveforms:
-                   Official Release}},
-  month        = aug,
-  year         = 2020,
+                  Scott A. Hughes},
+  title        = {{BlackHolePerturbationToolkit/FastEMRIWaveforms: 
+                   Frequency Domain Waveform Added!}},
+  month        = jul,
+  year         = 2023,
   publisher    = {Zenodo},
-  version      = {v1.0.0},
-  doi          = {10.5281/zenodo.4005001},
-  url          = {https://doi.org/10.5281/zenodo.4005001}
+  version      = {v1.5.1},
+  doi          = {10.5281/zenodo.8190418},
+  url          = {https://doi.org/10.5281/zenodo.8190418}
 }
 
 @article{Chua:2018woh,

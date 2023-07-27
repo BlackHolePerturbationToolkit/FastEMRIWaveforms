@@ -52,19 +52,21 @@ larger_few_citation = """
 """
 
 few_software_citation = """
-@software{michael_l_katz_2020_4005001,
+@software{michael_l_katz_2023_8190418,
   author       = {Michael L. Katz and
+                  Lorenzo Speri and
                   Alvin J. K. Chua and
+                  Christian E. A. Chapman-Bird and
                   Niels Warburton and
-                  Scott A. Hughes.},
-  title        = {{BlackHolePerturbationToolkit/FastEMRIWaveforms:
-                   Official Release}},
-  month        = aug,
-  year         = 2020,
+                  Scott A. Hughes},
+  title        = {{BlackHolePerturbationToolkit/FastEMRIWaveforms: 
+                   Frequency Domain Waveform Added!}},
+  month        = jul,
+  year         = 2023,
   publisher    = {Zenodo},
-  version      = {v1.0.0},
-  doi          = {10.5281/zenodo.4005001},
-  url          = {https://doi.org/10.5281/zenodo.4005001}
+  version      = {v1.5.1},
+  doi          = {10.5281/zenodo.8190418},
+  url          = {https://doi.org/10.5281/zenodo.8190418}
 }
 """
 
