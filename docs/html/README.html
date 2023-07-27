@@ -133,7 +133,10 @@ you do not have it.</p></li>
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
-<li><p>Install FEW into a new conda environment called “few_env”.</p></li>
+<li><p>Install FEW into a new conda environment called “few_env”. (<strong>Note</strong>:
+If you already have performed installation and you are updating FEW
+after a <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">pull</span></code>, then run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code> rather than the
+following command.)</p></li>
 </ol>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="n">install</span><span class="o">.</span><span class="n">sh</span>
 </pre></div>
@@ -198,7 +201,9 @@ run tests, and install any additional packages needed for sampling or
 development. It will look for an <code class="docutils literal notranslate"><span class="pre">nvcc</span></code> binary, the <code class="docutils literal notranslate"><span class="pre">CUDA_HOME</span></code>
 variable, or the <code class="docutils literal notranslate"><span class="pre">CUDAHOME</span></code> variable. If it finds that information,
 it will install for CUDA as well (including installing the proper
-version of <code class="docutils literal notranslate"><span class="pre">cupy</span></code>).</p></li>
+version of <code class="docutils literal notranslate"><span class="pre">cupy</span></code>). <strong>Note</strong>: If you already have performed
+installation and you are updating FEW after a <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">pull</span></code>, then run
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code> rather than the following command.</p></li>
 </ol>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="n">install</span><span class="o">.</span><span class="n">sh</span>
 </pre></div>
@@ -333,7 +338,7 @@ documentation, change to the <code class="docutils literal notranslate"><span cl
 <p>We use <a class="reference external" href="http://semver.org/">SemVer</a> for versioning. For the versions
 available, see the <a class="reference external" href="https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags">tags on this
 repository</a>.</p>
-<p>Current Version: 1.5.0</p>
+<p>Current Version: 1.5.1</p>
 </section>
 <section id="authors-developers">
 <h2>Authors/Developers<a class="headerlink" href="#authors-developers" title="Permalink to this heading"></a></h2>
