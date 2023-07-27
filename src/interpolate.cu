@@ -414,14 +414,6 @@ void interp_time_for_fd_wrap(double* output, double *t_arr, double *tstar, int* 
 /////////
 /////////////////////////////////
 
-// build mode value with specific phase and amplitude values; mode indexes; and spherical harmonics
-CUDA_CALLABLE_MEMBER
-cmplx get_mode_value(cmplx teuk_mode, cmplx exp_phase, cmplx Ylm)
-{
-  cmplx out = (teuk_mode * Ylm) * exp_phase;
-  return out;
-}
-
 // Add functionality for proper summation in the kernel
 #ifdef __CUDACC__
 __device__ double atomicAddDouble(double *address, double val)
@@ -471,6 +463,8 @@ void make_waveform(cmplx *waveform,
   cmplx trans2(0.0, 0.0);
 
   cmplx complexI(0.0, 1.0);
+  cmplx minus_I(0.0, -1.0);
+
   cmplx mode_val;
   cmplx partial_mode;
   cmplx trans_plus_m(0.0, 0.0), trans_minus_m(0.0, 0.0);
@@ -621,7 +615,6 @@ void make_waveform(cmplx *waveform,
         mode_val_im = mode_im_y[j] + mode_im_c1[j] * x + mode_im_c2[j] * x2 + mode_im_c3[j] * x3;
         mode_val = mode_val_re + complexI * mode_val_im;
 
-        cmplx minus_I(0.0, -1.0);
         fod phase = m * Phi_phi_i + n * Phi_r_i;
         partial_mode = mode_val * gcmplx::exp(minus_I * phase);
 
