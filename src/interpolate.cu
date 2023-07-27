@@ -416,11 +416,9 @@ void interp_time_for_fd_wrap(double* output, double *t_arr, double *tstar, int* 
 
 // build mode value with specific phase and amplitude values; mode indexes; and spherical harmonics
 CUDA_CALLABLE_MEMBER
-cmplx get_mode_value(cmplx teuk_mode, fod Phi_phi, fod Phi_r, int m, int n, cmplx Ylm)
+cmplx get_mode_value(cmplx teuk_mode, cmplx exp_phase, cmplx Ylm)
 {
-  cmplx minus_I(0.0, -1.0);
-  fod phase = m * Phi_phi + n * Phi_r;
-  cmplx out = (teuk_mode * Ylm) * gcmplx::exp(minus_I * phase);
+  cmplx out = (teuk_mode * Ylm) * exp_phase;
   return out;
 }
 
@@ -474,6 +472,7 @@ void make_waveform(cmplx *waveform,
 
   cmplx complexI(0.0, 1.0);
   cmplx mode_val;
+  cmplx exp_phase;
   cmplx trans_plus_m(0.0, 0.0), trans_minus_m(0.0, 0.0);
   double Phi_phi_i, Phi_r_i, t, x, x2, x3, mode_val_re, mode_val_im;
   int lm_i, num_teuk_here;
@@ -622,7 +621,11 @@ void make_waveform(cmplx *waveform,
         mode_val_im = mode_im_y[j] + mode_im_c1[j] * x + mode_im_c2[j] * x2 + mode_im_c3[j] * x3;
         mode_val = mode_val_re + complexI * mode_val_im;
 
-        trans_plus_m = get_mode_value(mode_val, Phi_phi_i, Phi_r_i, m, n, Ylm_plus_m);
+        cmplx minus_I(0.0, -1.0);
+        fod phase = m * Phi_phi_i + n * Phi_r_i;
+        exp_phase = gcmplx::exp(minus_I * phase);
+
+        trans_plus_m = get_mode_value(mode_val, exp_phase, Ylm_plus_m);
 
         // minus m if m > 0
         // mode values for +/- m are taking care of when applying
@@ -631,7 +634,7 @@ void make_waveform(cmplx *waveform,
         {
 
           Ylm_minus_m = Ylms[2 * j + 1];
-          trans_minus_m = get_mode_value(gcmplx::conj(mode_val), Phi_phi_i, Phi_r_i, -m, -n, Ylm_minus_m);
+          trans_minus_m = get_mode_value(gcmplx::conj(mode_val), gcmplx::conj(exp_phase), Ylm_minus_m);
         }
         else
           trans_minus_m = 0.0 + 0.0 * complexI;
