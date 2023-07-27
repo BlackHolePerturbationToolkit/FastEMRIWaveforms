@@ -18,7 +18,7 @@ Below is a quick set of instructions to get you started with `few`.
 git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
 cd FastEMRIWaveforms
 ```
-2) Install FEW into a new conda environment called "few_env".
+2) Install FEW into a new conda environment called "few_env". (**Note**: If you already have performed installation and you are updating FEW after a `git pull`, then run `pip install .` rather than the following command.)
 
   ```
   bash install.sh
@@ -55,7 +55,7 @@ git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
 cd FastEMRIWaveforms
 ```
 
-2) Installation is made easy through [install.sh](install.sh). This is a bash script that will create a conda environment, install FEW, run tests, and install any additional packages needed for sampling or development. It will look for an `nvcc` binary, the `CUDA_HOME` variable, or the `CUDAHOME` variable. If it finds that information, it will install for CUDA as well (including installing the proper version of `cupy`). 
+2) Installation is made easy through [install.sh](install.sh). This is a bash script that will create a conda environment, install FEW, run tests, and install any additional packages needed for sampling or development. It will look for an `nvcc` binary, the `CUDA_HOME` variable, or the `CUDAHOME` variable. If it finds that information, it will install for CUDA as well (including installing the proper version of `cupy`). **Note**: If you already have performed installation and you are updating FEW after a `git pull`, then run `pip install .` rather than the following command.
 
   ```
   bash install.sh
