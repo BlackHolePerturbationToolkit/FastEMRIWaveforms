@@ -414,16 +414,6 @@ void interp_time_for_fd_wrap(double* output, double *t_arr, double *tstar, int* 
 /////////
 /////////////////////////////////
 
-// build mode value with specific phase and amplitude values; mode indexes; and spherical harmonics
-CUDA_CALLABLE_MEMBER
-cmplx get_mode_value(cmplx teuk_mode, fod Phi_phi, fod Phi_r, int m, int n, cmplx Ylm)
-{
-  cmplx minus_I(0.0, -1.0);
-  fod phase = m * Phi_phi + n * Phi_r;
-  cmplx out = (teuk_mode * Ylm) * gcmplx::exp(minus_I * phase);
-  return out;
-}
-
 // Add functionality for proper summation in the kernel
 #ifdef __CUDACC__
 __device__ double atomicAddDouble(double *address, double val)
@@ -473,7 +463,10 @@ void make_waveform(cmplx *waveform,
   cmplx trans2(0.0, 0.0);
 
   cmplx complexI(0.0, 1.0);
+  cmplx minus_I(0.0, -1.0);
+
   cmplx mode_val;
+  cmplx partial_mode;
   cmplx trans_plus_m(0.0, 0.0), trans_minus_m(0.0, 0.0);
   double Phi_phi_i, Phi_r_i, t, x, x2, x3, mode_val_re, mode_val_im;
   int lm_i, num_teuk_here;
@@ -622,7 +615,10 @@ void make_waveform(cmplx *waveform,
         mode_val_im = mode_im_y[j] + mode_im_c1[j] * x + mode_im_c2[j] * x2 + mode_im_c3[j] * x3;
         mode_val = mode_val_re + complexI * mode_val_im;
 
-        trans_plus_m = get_mode_value(mode_val, Phi_phi_i, Phi_r_i, m, n, Ylm_plus_m);
+        fod phase = m * Phi_phi_i + n * Phi_r_i;
+        partial_mode = mode_val * gcmplx::exp(minus_I * phase);
+
+        trans_plus_m = partial_mode * Ylm_plus_m;
 
         // minus m if m > 0
         // mode values for +/- m are taking care of when applying
@@ -631,7 +627,7 @@ void make_waveform(cmplx *waveform,
         {
 
           Ylm_minus_m = Ylms[2 * j + 1];
-          trans_minus_m = get_mode_value(gcmplx::conj(mode_val), Phi_phi_i, Phi_r_i, -m, -n, Ylm_minus_m);
+          trans_minus_m = gcmplx::conj(partial_mode) * Ylm_minus_m;  // conjugate is distributive, so apply to the product
         }
         else
           trans_minus_m = 0.0 + 0.0 * complexI;
@@ -1061,10 +1057,6 @@ cmplx get_mode_value_fd(double t, double f, double fdot, double fddot, cmplx amp
                 * gcmplx::exp(
                     I* (2. * PI * f * t - phase_term)
                 );
-
-    cmplx temp = gcmplx::exp(
-        I* (2. * PI * f * t - phase_term)
-    );
 
     return out;
 }

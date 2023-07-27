@@ -120,6 +120,10 @@ class Interp2DAmplitude(AmplitudeBase, SchwarzschildEccentric):
                 self.m_arr[self.m_zero_up_mask],
                 self.n_arr[self.m_zero_up_mask],
             )
+            try:  # move to CPU if needed before feeding in
+                l_arr, m_arr, n_arr = l_arr.get(), m_arr.get(), n_arr.get()
+            except AttributeError:
+                pass
 
         # prepare arrays if specific modes are requested
         else:
