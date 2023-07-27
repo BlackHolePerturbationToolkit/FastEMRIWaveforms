@@ -472,7 +472,7 @@ void make_waveform(cmplx *waveform,
 
   cmplx complexI(0.0, 1.0);
   cmplx mode_val;
-  cmplx exp_phase;
+  cmplx partial_mode;
   cmplx trans_plus_m(0.0, 0.0), trans_minus_m(0.0, 0.0);
   double Phi_phi_i, Phi_r_i, t, x, x2, x3, mode_val_re, mode_val_im;
   int lm_i, num_teuk_here;
@@ -623,9 +623,9 @@ void make_waveform(cmplx *waveform,
 
         cmplx minus_I(0.0, -1.0);
         fod phase = m * Phi_phi_i + n * Phi_r_i;
-        exp_phase = gcmplx::exp(minus_I * phase);
+        partial_mode = mode_val * gcmplx::exp(minus_I * phase);
 
-        trans_plus_m = get_mode_value(mode_val, exp_phase, Ylm_plus_m);
+        trans_plus_m = partial_mode * Ylm_plus_m;
 
         // minus m if m > 0
         // mode values for +/- m are taking care of when applying
@@ -634,7 +634,7 @@ void make_waveform(cmplx *waveform,
         {
 
           Ylm_minus_m = Ylms[2 * j + 1];
-          trans_minus_m = get_mode_value(gcmplx::conj(mode_val), gcmplx::conj(exp_phase), Ylm_minus_m);
+          trans_minus_m = gcmplx::conj(partial_mode) * Ylm_minus_m;  // conjugate is distributive, so apply to the product
         }
         else
           trans_minus_m = 0.0 + 0.0 * complexI;
