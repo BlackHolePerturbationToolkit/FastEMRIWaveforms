@@ -135,41 +135,47 @@ int func_ode_wrap (double t, const double y[], double f[], void *params){
 }
 
 
-// Class to carry gsl interpolants for the inspiral data
-// also executes inspiral calculations
-InspiralCarrier::InspiralCarrier(std::string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_, std::string few_dir)
+InspiralCarrier::InspiralCarrier(ODECarrier* testcarrier_, std::string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_, std::string few_dir)
 {
     params_holder = new ParamsHolder;
     params_holder->func_name = func_name;
-    params_holder->func = new ODECarrier(func_name, few_dir);
     params_holder->enforce_schwarz_sep = enforce_schwarz_sep_;
     params_holder->num_add_args = num_add_args_;
     params_holder->convert_Y = convert_Y_;
-
     params_holder->additional_args = new double[num_add_args_];
+    params_holder->func = testcarrier_;
 }
 
-// When interfacing with cython, it helps to have dealloc function to explicitly call
-// rather than the deconstructor
-void InspiralCarrier::dealloc()
+void InspiralCarrier::inspiral_wrapper(double *t, double *p, double *e, double *x, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, double* additional_args)
 {
-    delete params_holder->func;
-    delete params_holder->additional_args;
-    delete params_holder;
+    double t0 = 0.0;
+    std::memcpy(params_holder->additional_args, additional_args, params_holder->num_add_args * sizeof(double));
+    InspiralHolder Inspiral_vals = run_inspiral(t0, M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0, err, tmax, dt, DENSE_STEPPING, use_rk4);
+ 
+    // make sure we have allocated enough memory through cython
+    if (Inspiral_vals.length > init_len){
+        throw std::invalid_argument("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
+        // throw std::runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
+    }
+
+    // copy data
+    memcpy(t, &Inspiral_vals.t_arr[0], Inspiral_vals.length*sizeof(double));
+    memcpy(p, &Inspiral_vals.p_arr[0], Inspiral_vals.length*sizeof(double));
+    memcpy(e, &Inspiral_vals.e_arr[0], Inspiral_vals.length*sizeof(double));
+    memcpy(x, &Inspiral_vals.x_arr[0], Inspiral_vals.length*sizeof(double));
+    memcpy(Phi_phi, &Inspiral_vals.Phi_phi_arr[0], Inspiral_vals.length*sizeof(double));
+    memcpy(Phi_theta, &Inspiral_vals.Phi_theta_arr[0], Inspiral_vals.length*sizeof(double));
+    memcpy(Phi_r, &Inspiral_vals.Phi_r_arr[0], Inspiral_vals.length*sizeof(double));
+
+    // indicate how long is the trajectory
+    *length = Inspiral_vals.length;
 }
 
-
-// main function in the InspiralCarrier class
-// It takes initial parameters and evolves a trajectory
-// tmax and dt affect integration length and time steps (mostly if DENSE_STEPPING == 1)
-// use_rk4 allows the use of the rk4 integrator
-InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4)
+InspiralHolder InspiralCarrier::run_inspiral(double t0, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4)
 {
     // years to seconds
     tmax = tmax*YRSID_SI;
 
-    // get flux at initial values
-    // prepare containers for flux information
     InspiralHolder inspiral_out(t0, M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0);
 
 	//Set the mass ratio
@@ -188,6 +194,8 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
     // initial point
 	double y[6] = { p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0};
 
+
+    
     // Initialize the ODE solver
     gsl_odeiv2_system sys = {func_ode_wrap, NULL, 6, params_holder};
 
@@ -215,7 +223,6 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
     int bad_limit = 1000;
 
 	while (t < tmax){
-
         // apply fixed step if dense stepping
         // or do interpolated step
 		if(DENSE_STEPPING) status = gsl_odeiv2_evolve_apply_fixed_step (evolve, control, step, &sys, &t, h, y);
@@ -432,38 +439,20 @@ InspiralHolder InspiralCarrier::run_Inspiral(double t0, double M, double mu, dou
 
 	//	duration<double> time_span = duration_cast<duration<double> >(t2 - t1);
 
-        gsl_odeiv2_evolve_free (evolve);
-        gsl_odeiv2_control_free (control);
-        gsl_odeiv2_step_free (step);
-		//cout << "# Computing the inspiral took: " << time_span.count() << " seconds." << endl;
-		return inspiral_out;
-
+    gsl_odeiv2_evolve_free (evolve);
+    gsl_odeiv2_control_free (control);
+    gsl_odeiv2_step_free (step);
+    //cout << "# Computing the inspiral took: " << time_span.count() << " seconds." << endl;
+	return inspiral_out;
 }
 
-// wrapper for calling the Inspiral inspiral from cython/python
-void InspiralCarrier::InspiralWrapper(double *t, double *p, double *e, double *x, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, double* additional_args){
+void InspiralCarrier::dealloc()
+{
+    delete[] params_holder->additional_args;
+    delete params_holder;
+}
 
-	    double t0 = 0.0;
-        std::memcpy(params_holder->additional_args, additional_args, params_holder->num_add_args * sizeof(double));
-
-		InspiralHolder Inspiral_vals = run_Inspiral(t0, M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0, err, tmax, dt, DENSE_STEPPING, use_rk4);
-
-        // make sure we have allocated enough memory through cython
-        if (Inspiral_vals.length > init_len){
-            throw std::invalid_argument("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
-            // throw std::runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
-        }
-
-        // copy data
-		memcpy(t, &Inspiral_vals.t_arr[0], Inspiral_vals.length*sizeof(double));
-		memcpy(p, &Inspiral_vals.p_arr[0], Inspiral_vals.length*sizeof(double));
-		memcpy(e, &Inspiral_vals.e_arr[0], Inspiral_vals.length*sizeof(double));
-        memcpy(x, &Inspiral_vals.x_arr[0], Inspiral_vals.length*sizeof(double));
-		memcpy(Phi_phi, &Inspiral_vals.Phi_phi_arr[0], Inspiral_vals.length*sizeof(double));
-		memcpy(Phi_theta, &Inspiral_vals.Phi_theta_arr[0], Inspiral_vals.length*sizeof(double));
-        memcpy(Phi_r, &Inspiral_vals.Phi_r_arr[0], Inspiral_vals.length*sizeof(double));
-
-        // indicate how long is the trajectory
-		*length = Inspiral_vals.length;
-
+InspiralCarrier::~InspiralCarrier()
+{
+    return;
 }

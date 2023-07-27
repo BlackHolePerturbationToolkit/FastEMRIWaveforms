@@ -36,57 +36,30 @@ Below is a quick set of instructions to get you started with ``few``.
 0) `Install Anaconda <https://docs.anaconda.com/anaconda/install/>`__ if
    you do not have it.
 
-1) Create a virtual environment. **Note**: There is no available
-   ``conda`` compiler for Windows. If you want to install for Windows,
-   you will probably need to add libraries and include paths to the
-   ``setup.py`` file.
-
-If on linux:
-
-::
-
-   conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
-   conda activate few_env
-
-If on MACOSX, substitute ``gcc_linux-64`` and ``gxx_linus-64`` with
-``clang_osx-64`` and ``clangxx_osx-64`` as follows:
-
-::
-
-   conda create -n few_env -c conda-forge clangxx_osx-64 clang_osx-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
-   conda activate few_env
-
-If on M1 chip use the following command:
-
-::
-
-   conda create -n few_env -c conda-forge wget gsl hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.9 openblas lapack liblapacke
-   conda activate few_env
-
-2) Clone the repository.
+1) Clone the repository.
 
 ::
 
    git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
    cd FastEMRIWaveforms
 
-3) If on MACOSX or linux run install:
+2) Install FEW into a new conda environment called “few_env”.
 
 ::
 
-   python setup.py install
+   bash install.sh
 
-If on M1 chip use the following command:
-
-::
-
-   python setup.py install --no_omp --ccbin /usr/bin/
-
-4) To test few run:
+3) Load the environment:
 
 ::
 
-   python -m unittest discover
+   conda activate few_env
+
+4) In a python file or notebook:
+
+::
+
+   import few
 
 See `examples
 notebook <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb>`__.
@@ -113,17 +86,65 @@ toolkit <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>`
 and `CuPy <https://cupy.chainer.org/>`__. The CUDA toolkit must have
 cuda version >8.0. Be sure to properly install CuPy within the correct
 CUDA toolkit version. Make sure the nvcc binary is on ``$PATH`` or set
-it as the ``CUDAHOME`` environment variable.
+it as the ``CUDA_HOME`` environment variable.
 
 There are a set of files required for total use of this package. They
-will download automatically when the first time they are needed. Files
-are generally under 10MB. However, there is a 100MB file needed for the
-slow waveform and the bicubic amplitude interpolation. This larger file
-will only download if you run either of those two modules. The files are
+will download automatically the first time they are needed. Files are
+generally under 10MB. However, there is a 100MB file needed for the slow
+waveform and the bicubic amplitude interpolation. This larger file will
+only download if you run either of those two modules. The files are
 hosted on `Zenodo <https://zenodo.org/record/3981654#.XzS_KRNKjlw>`__.
 
 Installing
 ~~~~~~~~~~
+
+0) `Install Anaconda <https://docs.anaconda.com/anaconda/install/>`__ if
+   you do not have it.
+
+1) Clone the repository.
+
+::
+
+   git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
+   cd FastEMRIWaveforms
+
+2) Installation is made easy through `install.sh <install.sh>`__. This
+   is a bash script that will create a conda environment, install FEW,
+   run tests, and install any additional packages needed for sampling or
+   development. It will look for an ``nvcc`` binary, the ``CUDA_HOME``
+   variable, or the ``CUDAHOME`` variable. If it finds that information,
+   it will install for CUDA as well (including installing the proper
+   version of ``cupy``).
+
+::
+
+   bash install.sh
+
+Options for installation can be applied by running
+``bash install.sh key=value``. These can be found with
+``bash install.sh -h``:
+
+::
+
+   keyword argument options (given as key=value):
+     env_name:  Name of generated conda environment. Default is 'few_env'.
+     install_type:  Type of install. 'basic', 'development', or 'sampling'. 
+         'development' adds packages needed for development and documentation.
+         'sampling' adds packages for sampling like eryn, lisatools, corner, chainconsumer.
+         Default is 'basic'. 
+     run_tests: Either true or false. Whether to run tests after install. Default is true.
+
+3) Load the environment (change “few_env” to the correct environment
+   name is specified in previous step):
+
+::
+
+   conda activate few_env
+
+Please contact the developers if the installation does not work.
+
+More Customized Installation (legacy)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 0) `Install Anaconda <https://docs.anaconda.com/anaconda/install/>`__ if
    you do not have it.
@@ -170,14 +191,13 @@ line options when installing. You can also remove usage of OpenMP.
 ::
 
    python setup.py --help
-   usage: setup.py [-h] [--no_omp] [--lapack_lib LAPACK_LIB]
+   usage: setup.py [-h] [--lapack_lib LAPACK_LIB]
                    [--lapack_include LAPACK_INCLUDE] [--lapack LAPACK]
                    [--gsl_lib GSL_LIB] [--gsl_include GSL_INCLUDE] [--gsl GSL]
                    [--ccbin CCBIN]
 
    optional arguments:
      -h, --help            show this help message and exit
-     --no_omp              If provided, install without OpenMP.
      --lapack_lib LAPACK_LIB
                            Directory of the lapack lib. If you add lapack lib,
                            must also add lapack include.
@@ -212,12 +232,11 @@ or if on MACOSX:
 
    python setup.py install --ccbin /path/to/anaconda3/envs/few_env/bin/x86_64-apple-darwin13.4.0-clang
 
-Please contact the developers if the installation does not work.
-
 Running the Tests
 -----------------
 
-In the main directory of the package run in the terminal:
+In the main directory of the package run in the terminal (if you run
+`install.sh <install.sh>`__ with defaults, the tests will be performed):
 
 ::
 
@@ -229,6 +248,18 @@ Contributing
 Please read `CONTRIBUTING.md <CONTRIBUTING.md>`__ for details on our
 code of conduct, and the process for submitting pull requests to us.
 
+If you want to develop FEW and produce documentation, install ``few``
+with
+
+::
+
+   bash install.sh install_type=development
+
+This will install necessary packages for building the documentation
+(``sphinx``, ``pypandoc``, ``sphinx_rtd_theme``, ``nbsphinx``). The
+documentation source files are in ``docs/source``. To compile the
+documentation, change to the ``docs`` directory and run ``make html``.
+
 Versioning
 ----------
 
@@ -236,15 +267,15 @@ We use `SemVer <http://semver.org/>`__ for versioning. For the versions
 available, see the `tags on this
 repository <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags>`__.
 
-Current Version: 1.4.11
+Current Version: 1.5.0
 
-Authors
--------
+Authors/Developers
+------------------
 
 -  **Michael Katz**
+-  Lorenzo Speri
 -  Alvin J. K. Chua
 -  Niels Warburton
--  Lorenzo Speri
 -  Scott Hughes
 
 Contibutors

@@ -31,7 +31,4 @@ void KerrGeoConstantsOfMotion(double* E_out, double* L_out, double* Q_out, doubl
 double Y_to_xI(double a, double p, double e, double Y);
 void Y_to_xI_vector(double* x, double* a, double* p, double* e, double* Y, int length);
 
-void set_threads(int num_threads);
-int get_threads();
-
 #endif // __FUND_FREQS__

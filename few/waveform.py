@@ -25,7 +25,7 @@ from scipy.interpolate import RectBivariateSpline
 
 # check if cupy is available / GPU is available
 try:
-    import cupy as xp
+    import cupy as cp
 
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
@@ -42,6 +42,7 @@ from few.summation.aakwave import AAKSummation
 from few.utils.constants import *
 from few.utils.citations import *
 from few.summation.interpolatedmodesum import InterpolatedModeSum
+from few.summation.fdinterp import FDInterpolatedModeSum
 
 
 class GenerateEMRIWaveform:
@@ -79,7 +80,6 @@ class GenerateEMRIWaveform:
     def __init__(
         self, waveform_class, *args, frame="detector", return_list=False, **kwargs
     ):
-
         # instantiate the class
         if isinstance(waveform_class, str):
             try:
@@ -288,7 +288,10 @@ class GenerateEMRIWaveform:
             dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
 
             # get viewing angles in the source frame
-            (theta_source, phi_source,) = self._get_viewing_angles(qS, phiS, qK, phiK)
+            (
+                theta_source,
+                phi_source,
+            ) = self._get_viewing_angles(qS, phiS, qK, phiK)
 
             args += (theta_source, phi_source)
 
@@ -316,20 +319,23 @@ class GenerateEMRIWaveform:
             h *= -1
 
         # transform to SSB frame if desired
-        if self.frame == "detector":
-            hp = h.real
-            hc = -h.imag
+        if self.waveform_generator.create_waveform.output_type == "td":
+            if self.frame == "detector":
+                hp, hc = self._to_SSB_frame(h.real, -h.imag, qS, phiS, qK, phiK)
+            elif self.frame == "source":
+                hp, hc = h.real, -h.imag
 
-            hp, hc = self._to_SSB_frame(hp, hc, qS, phiS, qK, phiK)
-            h = hp - 1j * hc
+        # if FD, h is of length 2 rather than h+ - ihx
+        if self.waveform_generator.create_waveform.output_type == "fd":
+            if self.frame == "detector":
+                hp, hc = self._to_SSB_frame(h[0], h[1], qS, phiS, qK, phiK)
+            elif self.frame == "source":
+                hp, hc = h[0], h[1]
 
         if self.return_list is False:
-            return h
-
+            return hp - 1j * hc
         else:
-            hp = h.real
-            hx = -h.imag
-            return [hp, hx]
+            return [hp, hc]
 
 
 # get path to this file
@@ -415,7 +421,6 @@ class SchwarzschildEccentricWaveformBase(
         num_threads=None,
         normalize_amps=True,
     ):
-
         ParallelModuleBase.__init__(self, use_gpu=use_gpu, num_threads=num_threads)
         SchwarzschildEccentric.__init__(self, use_gpu=use_gpu)
 
@@ -494,6 +499,7 @@ class SchwarzschildEccentricWaveformBase(
         batch_size=-1,
         mode_selection=None,
         include_minus_m=True,
+        **kwargs,
     ):
         """Call function for SchwarzschildEccentric models.
 
@@ -550,6 +556,11 @@ class SchwarzschildEccentricWaveformBase(
 
         """
 
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
+
         # makes sure viewing angles are allowable
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
         self.sanity_check_init(M, mu, p0, e0)
@@ -579,12 +590,12 @@ class SchwarzschildEccentricWaveformBase(
 
         self.end_time = t[-1]
         # convert for gpu
-        t = self.xp.asarray(t)
-        p = self.xp.asarray(p)
-        e = self.xp.asarray(e)
-        Phi_phi = self.xp.asarray(Phi_phi)
-        Phi_r = self.xp.asarray(Phi_r)
-        amp_norm = self.xp.asarray(amp_norm)
+        t = xp.asarray(t)
+        p = xp.asarray(p)
+        e = xp.asarray(e)
+        Phi_phi = xp.asarray(Phi_phi)
+        Phi_r = xp.asarray(Phi_r)
+        amp_norm = xp.asarray(amp_norm)
 
         # get ylms only for unique (l,m) pairs
         # then expand to all (lmn with self.inverse_lm)
@@ -595,7 +606,7 @@ class SchwarzschildEccentricWaveformBase(
         # split into batches
 
         if batch_size == -1 or self.allow_batching is False:
-            inds_split_all = [self.xp.arange(len(t))]
+            inds_split_all = [xp.arange(len(t))]
         else:
             split_inds = []
             i = 0
@@ -605,7 +616,7 @@ class SchwarzschildEccentricWaveformBase(
                     break
                 split_inds.append(i)
 
-            inds_split_all = self.xp.split(self.xp.arange(len(t)), split_inds)
+            inds_split_all = xp.split(xp.arange(len(t)), split_inds)
 
         # select tqdm if user wants to see progress
         iterator = enumerate(inds_split_all)
@@ -615,7 +626,6 @@ class SchwarzschildEccentricWaveformBase(
             print("total:", len(inds_split_all))
 
         for i, inds_in in iterator:
-
             # get subsections of the arrays for each batch
             t_temp = t[inds_in]
             p_temp = p[inds_in]
@@ -629,10 +639,10 @@ class SchwarzschildEccentricWaveformBase(
 
             # normalize by flux produced in trajectory
             if self.normalize_amps:
-                amp_for_norm = self.xp.sum(
-                    self.xp.abs(
-                        self.xp.concatenate(
-                            [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
+                amp_for_norm = xp.sum(
+                    xp.abs(
+                        xp.concatenate(
+                            [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])],
                             axis=1,
                         )
                     )
@@ -647,19 +657,18 @@ class SchwarzschildEccentricWaveformBase(
             # different types of mode selection
             # sets up ylm and teuk_modes properly for summation
             if isinstance(mode_selection, str):
-
                 # use all modes
                 if mode_selection == "all":
                     self.ls = self.l_arr[: teuk_modes.shape[1]]
                     self.ms = self.m_arr[: teuk_modes.shape[1]]
                     self.ns = self.n_arr[: teuk_modes.shape[1]]
 
-                    keep_modes = self.xp.arange(teuk_modes.shape[1])
+                    keep_modes = xp.arange(teuk_modes.shape[1])
                     temp2 = keep_modes * (keep_modes < self.num_m0) + (
                         keep_modes + self.num_m_1_up
                     ) * (keep_modes >= self.num_m0)
 
-                    ylmkeep = self.xp.concatenate([keep_modes, temp2])
+                    ylmkeep = xp.concatenate([keep_modes, temp2])
                     ylms_in = ylms[ylmkeep]
                     teuk_modes_in = teuk_modes
 
@@ -671,16 +680,16 @@ class SchwarzschildEccentricWaveformBase(
                 if mode_selection == []:
                     raise ValueError("If mode selection is a list, cannot be empty.")
 
-                keep_modes = self.xp.zeros(len(mode_selection), dtype=self.xp.int32)
+                keep_modes = xp.zeros(len(mode_selection), dtype=xp.int32)
 
                 # for removing opposite m modes
-                fix_include_ms = self.xp.full(2 * len(mode_selection), False)
+                fix_include_ms = xp.full(2 * len(mode_selection), False)
                 for jj, lmn in enumerate(mode_selection):
                     l, m, n = tuple(lmn)
 
                     # keep modes only works with m>=0
                     lmn_in = (l, abs(m), n)
-                    keep_modes[jj] = self.xp.int32(self.lmn_indices[lmn_in])
+                    keep_modes[jj] = xp.int32(self.lmn_indices[lmn_in])
 
                     if not include_minus_m:
                         if m > 0:
@@ -698,7 +707,7 @@ class SchwarzschildEccentricWaveformBase(
                     keep_modes + self.num_m_1_up
                 ) * (keep_modes >= self.num_m0)
 
-                ylmkeep = self.xp.concatenate([keep_modes, temp2])
+                ylmkeep = xp.concatenate([keep_modes, temp2])
                 ylms_in = ylms[ylmkeep]
 
                 # remove modes if include_minus_m is False
@@ -713,7 +722,7 @@ class SchwarzschildEccentricWaveformBase(
                     0.0,
                     p_temp,
                     e_temp,
-                    self.xp.zeros_like(e_temp),
+                    xp.zeros_like(e_temp),
                 )
                 modeinds = [self.l_arr, self.m_arr, self.n_arr]
                 (
@@ -723,7 +732,11 @@ class SchwarzschildEccentricWaveformBase(
                     self.ms,
                     self.ns,
                 ) = self.mode_selector(
-                    teuk_modes, ylms, modeinds, fund_freq_args=fund_freq_args, eps=eps,
+                    teuk_modes,
+                    ylms,
+                    modeinds,
+                    fund_freq_args=fund_freq_args,
+                    eps=eps,
                 )
 
             # store number of modes for external information
@@ -744,11 +757,12 @@ class SchwarzschildEccentricWaveformBase(
                 dt=dt,
                 T=T,
                 include_minus_m=include_minus_m,
+                **kwargs,
             )
 
             # if batching, need to add the waveform
             if i > 0:
-                waveform = self.xp.concatenate([waveform, waveform_temp])
+                waveform = xp.concatenate([waveform, waveform_temp])
 
             # return entire waveform
             else:
@@ -814,14 +828,23 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         *args,
         **kwargs,
     ):
-
         inspiral_kwargs["func"] = "SchwarzEccFlux"
+
+        if "output_type" in sum_kwargs:
+            if sum_kwargs["output_type"] == "fd":
+                mode_summation_module = FDInterpolatedModeSum
+
+            else:
+                mode_summation_module = InterpolatedModeSum
+
+        else:
+            mode_summation_module = InterpolatedModeSum
 
         SchwarzschildEccentricWaveformBase.__init__(
             self,
             EMRIInspiral,
             RomanAmplitude,
-            InterpolatedModeSum,
+            mode_summation_module,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
@@ -921,7 +944,6 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         *args,
         **kwargs,
     ):
-
         # declare specific properties
         inspiral_kwargs["DENSE_STEPPING"] = 1
         inspiral_kwargs["func"] = "SchwarzEccFlux"
@@ -1008,7 +1030,6 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         use_gpu=False,
         num_threads=None,
     ):
-
         ParallelModuleBase.__init__(self, use_gpu=use_gpu, num_threads=num_threads)
         Pn5AAK.__init__(self)
 
@@ -1197,7 +1218,7 @@ class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase, ABC):
     `EMRI Kludge Suite <https://github.com/alvincjk/EMRI_Kludge_Suite/>`_.
     However, here the trajectory is vastly improved by employing the 5PN
     fluxes for generic Kerr orbits from
-    `Fujita & Shibata 2020<https://arxiv.org/abs/2008.13554>`_.
+    `Fujita & Shibata 2020 <https://arxiv.org/abs/2008.13554>`_.
 
     The 5PN trajectory produces orbital and phase trajectories.
     The trajectory is calculated until the orbit reaches
@@ -1251,7 +1272,6 @@ class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase, ABC):
     def __init__(
         self, inspiral_kwargs={}, sum_kwargs={}, use_gpu=False, num_threads=None
     ):
-
         inspiral_kwargs["func"] = "pn5"
 
         AAKWaveformBase.__init__(

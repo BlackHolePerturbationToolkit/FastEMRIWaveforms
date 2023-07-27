@@ -174,7 +174,6 @@ def ode_prepare():
     """
 
     for i, (func, info) in enumerate(functions_info.items()):
-
         lead = "if" if i == 0 else "else if"
 
         full += """
@@ -201,15 +200,13 @@ def ode_prepare():
     full += """
     }
     """
-    # destructor
     full += """
 
-    ODECarrier::~ODECarrier()
+    void ODECarrier::dealloc()
     {
     """
 
     for i, (func, info) in enumerate(functions_info.items()):
-
         lead = "if" if i == 0 else "else if"
 
         full += """
@@ -263,7 +260,6 @@ def ode_prepare():
 
     # putting together class info for functions that are not classes
     for i, (func, info) in enumerate(functions_info.items()):
-
         if info["type"] == "func":
             full_hh += """
 
@@ -292,7 +288,7 @@ def ode_prepare():
             std::string few_dir;
             void* func;
             ODECarrier(std::string func_name_, std::string few_dir_);
-            ~ODECarrier();
+            void dealloc();
             void get_derivatives(double* pdot, double* edot, double* Ydot,
                               double* Omega_phi, double* Omega_theta, double* Omega_r,
                               double epsilon, double a, double p, double e, double Y, double* additional_args);

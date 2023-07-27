@@ -11,11 +11,11 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -31,15 +31,11 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search"  style="background: coral" >
-
-          
-          
-          <a href="../index.html" class="icon icon-home">
-            few: Fast EMRI Waveforms
+            <a href="../index.html" class="icon icon-home"> few: Fast EMRI Waveforms
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -52,63 +48,10 @@
 <li class="toctree-l1"><a class="reference internal" href="amp.html">Amplitude Package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sum.html">Summation Package</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Utilities</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.modeselector">Mode Filtering</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.modeselector.ModeSelector"><code class="docutils literal notranslate"><span class="pre">ModeSelector</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.gpu_capability"><code class="docutils literal notranslate"><span class="pre">ModeSelector.gpu_capability</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.attributes_ModeSelector"><code class="docutils literal notranslate"><span class="pre">ModeSelector.attributes_ModeSelector()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.xp"><code class="docutils literal notranslate"><span class="pre">ModeSelector.xp</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.num_m_zero_up"><code class="docutils literal notranslate"><span class="pre">ModeSelector.num_m_zero_up</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.num_m_1_up"><code class="docutils literal notranslate"><span class="pre">ModeSelector.num_m_1_up</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.num_m0"><code class="docutils literal notranslate"><span class="pre">ModeSelector.num_m0</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.sensitivity_fn"><code class="docutils literal notranslate"><span class="pre">ModeSelector.sensitivity_fn</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.citation"><code class="docutils literal notranslate"><span class="pre">ModeSelector.citation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.__call__"><code class="docutils literal notranslate"><span class="pre">ModeSelector.__call__()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.adjust_gpu_usage"><code class="docutils literal notranslate"><span class="pre">ModeSelector.adjust_gpu_usage()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.attributes_ParallelModuleBase"><code class="docutils literal notranslate"><span class="pre">ModeSelector.attributes_ParallelModuleBase()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.use_gpu"><code class="docutils literal notranslate"><span class="pre">ModeSelector.use_gpu</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">ModeSelector.xp</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.sanity_check_gpu"><code class="docutils literal notranslate"><span class="pre">ModeSelector.sanity_check_gpu()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.ylm.GetYlms"><code class="docutils literal notranslate"><span class="pre">GetYlms</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.gpu_capability"><code class="docutils literal notranslate"><span class="pre">GetYlms.gpu_capability</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.attributes_GetYlms"><code class="docutils literal notranslate"><span class="pre">GetYlms.attributes_GetYlms()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.xp"><code class="docutils literal notranslate"><span class="pre">GetYlms.xp</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.__call__"><code class="docutils literal notranslate"><span class="pre">GetYlms.__call__()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.adjust_gpu_usage"><code class="docutils literal notranslate"><span class="pre">GetYlms.adjust_gpu_usage()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.attributes_ParallelModuleBase"><code class="docutils literal notranslate"><span class="pre">GetYlms.attributes_ParallelModuleBase()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.use_gpu"><code class="docutils literal notranslate"><span class="pre">GetYlms.use_gpu</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">GetYlms.xp</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.citation"><code class="docutils literal notranslate"><span class="pre">GetYlms.citation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.sanity_check_gpu"><code class="docutils literal notranslate"><span class="pre">GetYlms.sanity_check_gpu()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.utility">Analysis and Other Tools</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_overlap"><code class="docutils literal notranslate"><span class="pre">get_overlap()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_mismatch"><code class="docutils literal notranslate"><span class="pre">get_mismatch()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.p_to_y"><code class="docutils literal notranslate"><span class="pre">p_to_y()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_fundamental_frequencies"><code class="docutils literal notranslate"><span class="pre">get_fundamental_frequencies()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_kerr_geo_constants_of_motion"><code class="docutils literal notranslate"><span class="pre">get_kerr_geo_constants_of_motion()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.xI_to_Y"><code class="docutils literal notranslate"><span class="pre">xI_to_Y()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.Y_to_xI"><code class="docutils literal notranslate"><span class="pre">Y_to_xI()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_separatrix"><code class="docutils literal notranslate"><span class="pre">get_separatrix()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_at_t"><code class="docutils literal notranslate"><span class="pre">get_at_t()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_p_at_t"><code class="docutils literal notranslate"><span class="pre">get_p_at_t()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_mu_at_t"><code class="docutils literal notranslate"><span class="pre">get_mu_at_t()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.check_for_file_download"><code class="docutils literal notranslate"><span class="pre">check_for_file_download()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.wrapper"><code class="docutils literal notranslate"><span class="pre">wrapper()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.pointer_adjust"><code class="docutils literal notranslate"><span class="pre">pointer_adjust()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.omp_set_num_threads"><code class="docutils literal notranslate"><span class="pre">omp_set_num_threads()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.omp_get_num_threads"><code class="docutils literal notranslate"><span class="pre">omp_get_num_threads()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.cuda_set_device"><code class="docutils literal notranslate"><span class="pre">cuda_set_device()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_ode_function_options"><code class="docutils literal notranslate"><span class="pre">get_ode_function_options()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.modeselector">Mode Filtering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.fdutils">Frequency Domain Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.utils.utility">Analysis and Other Tools</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cite.html">Citations</a></li>
@@ -127,6 +70,8 @@
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/FastEMRIWaveforms_tutorial.html#Creating-modules">Creating modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/FastEMRIWaveforms_tutorial.html#Augmented-Analytic-Kludge-with-5PN-trajectory">Augmented Analytic Kludge with 5PN trajectory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/FastEMRIWaveforms_tutorial.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Tutorial_FD_construction_single_mode.html">Single Mode Frequency Domain Waveform Construction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Tutorial_FrequencyDomain_Waveforms.html">EMRI Waveforms in frequency domain</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">General Information:</span></p>
 <ul>
@@ -148,7 +93,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li><a href="../index.html" class="icon icon-home"></a></li>
       <li class="breadcrumb-item active">Utilities</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/user/util.rst.txt" rel="nofollow"> View page source</a>
@@ -283,7 +228,7 @@ Shape: (number of trajectory points, number of modes).</p></li>
 including m&lt;0. Shape is (num of m==0,) + (num of m&gt;0,)
 + (num of m&lt;0). Number of m&lt;0 and m&gt;0 is the same, but they are
 ordered as (m==0) first then m&gt;0 then m&lt;0.</p></li>
-<li><p><strong>modeinds</strong> (<em>list</em><em> of </em><em>int xp.ndarrays</em>) – List containing the mode index arrays. If in an
+<li><p><strong>modeinds</strong> (<em>list of int xp.ndarrays</em>) – List containing the mode index arrays. If in an
 equatorial model, need <span class="math notranslate nohighlight">\((l,m,n)\)</span> arrays. If generic,
 <span class="math notranslate nohighlight">\((l,m,k,n)\)</span> arrays. e.g. [l_arr, m_arr, n_arr].</p></li>
 <li><p><strong>fund_freq_args</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Args necessary to determine
@@ -314,7 +259,7 @@ so that <code class="code docutils literal notranslate"><span class="pre">use_gp
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
-<li><p><strong>kwargs</strong> (<em>list</em><em> of </em><em>dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
 single dictionary for each constituent class in the
 waveform generator.</p></li>
 </ul>
@@ -448,7 +393,7 @@ so that <code class="code docutils literal notranslate"><span class="pre">use_gp
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
-<li><p><strong>kwargs</strong> (<em>list</em><em> of </em><em>dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
 single dictionary for each constituent class in the
 waveform generator.</p></li>
 </ul>
@@ -502,6 +447,157 @@ GPU capabilites.</p>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
     not have that capability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-few.utils.fdutils">
+<span id="frequency-domain-utilities"></span><h2>Frequency Domain Utilities<a class="headerlink" href="#module-few.utils.fdutils" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.fdutils.get_convolution">
+<span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">get_convolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.get_convolution" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the convolution of two arrays.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>1D xp.ndarray</em>) – First array to convolve.</p></li>
+<li><p><strong>b</strong> (<em>1D xp.ndarray</em>) – First array to convolve.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>convolution of the two arrays.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>1D xp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.fdutils.get_fft_td_windowed">
+<span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">get_fft_td_windowed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.get_fft_td_windowed" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the Fast Fourier Transform of a windowed time domain signal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signal</strong> (<em>list</em>) – A length-2 list containing the signals plus and cross polarizations.</p></li>
+<li><p><strong>window</strong> (<em>1D xp.ndarray</em>) – Array to be applied in time domain to each signal.</p></li>
+<li><p><strong>dt</strong> (<em>double</em>) – Time sampling interval of the signal and window.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Fast Fourier Transform of the windowed time domain signals.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.fdutils.get_fd_windowed">
+<span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">get_fd_windowed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_in_fd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.get_fd_windowed" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the convolution of a frequency domain signal with a window in time domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signal</strong> (<em>list</em>) – A length-2 list containing the signals plus and cross polarizations in frequency domain.</p></li>
+<li><p><strong>window</strong> (<em>None</em><em> or </em><em>1D xp.ndarray</em><em>, </em><em>optional</em>) – Array of the time domain window. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, do not apply window.
+This is added for flexibility. Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>window_in_fd</strong> (<em>bool</em><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">window</span></code> is given in the frequency domain.
+If <code class="docutils literal notranslate"><span class="pre">False</span></code>, window is given in the time domain. Default is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>convolution of a frequency domain signal with a time domain window.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="few.utils.fdutils.GetFDWaveformFromFD">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">GetFDWaveformFromFD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform_generator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive_frequency_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_zero_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_in_fd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromFD" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Generic frequency domain class</p>
+<p>This class allows to obtain the frequency domain signal given the frequency domain waveform class
+from the FEW package.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>waveform_generator</strong> (<em>obj</em>) – FEW waveform class.</p></li>
+<li><p><strong>positive_frequency_mask</strong> (<em>1D xp.ndarray</em>) – boolean array to indicate where the frequencies are positive.</p></li>
+<li><p><strong>dt</strong> (<em>double</em>) – time sampling interval of the signal and window.</p></li>
+<li><p><strong>non_zero_mask</strong> (<em>1D xp.ndarray</em>) – boolean array to indicate where the waveform needs to be set to zero.</p></li>
+<li><p><strong>window</strong> (<em>None</em><em> or </em><em>1D xp.ndarray</em><em>, </em><em>optional</em>) – Array of the time domain window. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, do not apply window.
+This is added for flexibility. Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>window_in_fd</strong> (<em>bool</em><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">window</span></code> is given in the frequency domain.
+If <code class="docutils literal notranslate"><span class="pre">False</span></code>, window is given in the time domain. Default is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="few.utils.fdutils.GetFDWaveformFromFD.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromFD.__call__" title="Permalink to this definition"></a></dt>
+<dd><p>Run the waveform generator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> (<em>tuple</em>) – Arguments passed to waveform generator.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – Keyword arguments passed to waveform generator.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>FD Waveform as [h+, hx]</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="few.utils.fdutils.GetFDWaveformFromTD">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">GetFDWaveformFromTD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform_generator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive_frequency_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_zero_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromTD" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Generic time domain class</p>
+<p>This class allows to obtain the frequency domain signal given the time domain waveform class
+from the FEW package.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>waveform_generator</strong> (<em>obj</em>) – FEW waveform class.</p></li>
+<li><p><strong>positive_frequency_mask</strong> (<em>1D xp.ndarray</em>) – boolean array to indicate where the frequencies are positive.</p></li>
+<li><p><strong>dt</strong> (<em>double</em>) – time sampling interval of the signal and window.</p></li>
+<li><p><strong>non_zero_mask</strong> (<em>1D xp.ndarray</em>) – boolean array to indicate where the waveform needs to be set to zero.</p></li>
+<li><p><strong>window</strong> (<em>None</em><em> or </em><em>1D xp.ndarray</em><em>, </em><em>optional</em>) – Array of the time domain window. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, do not apply window.
+This is added for flexibility. Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="few.utils.fdutils.GetFDWaveformFromTD.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromTD.__call__" title="Permalink to this definition"></a></dt>
+<dd><p>Run the waveform generator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> (<em>tuple</em>) – Arguments passed to waveform generator.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em>) – Keyword arguments passed to waveform generator.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>FD Waveform as [h+, hx] (fft from TD)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
 </dd>
 </dl>
 </dd></dl>
@@ -908,26 +1004,6 @@ then properly cast the pointer as it enters the c++ function. See the
 Cython codes
 <a class="reference external" href="https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/src">here</a>
 for examples.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="few.utils.utility.omp_set_num_threads">
-<span class="sig-prename descclassname"><span class="pre">few.utils.utility.</span></span><span class="sig-name descname"><span class="pre">omp_set_num_threads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.omp_set_num_threads" title="Permalink to this definition"></a></dt>
-<dd><p>Globally sets OMP_NUM_THREADS</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>num_threads</strong> (<em>int</em><em>, </em><em>optional</em>) – </p></li>
-<li><p><strong>OpenMP.</strong> (<em>Number</em><em> of </em><em>parallel threads to use in</em>) – Default is 1.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="few.utils.utility.omp_get_num_threads">
-<span class="sig-prename descclassname"><span class="pre">few.utils.utility.</span></span><span class="sig-name descname"><span class="pre">omp_get_num_threads</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.omp_get_num_threads" title="Permalink to this definition"></a></dt>
-<dd><p>Get global variable OMP_NUM_THREADS</p>
 </dd></dl>
 
 <dl class="py function">

@@ -172,9 +172,7 @@ void KerrGeoConstantsOfMotion(double* E_out, double* L_out, double* Q_out, doubl
 
 void KerrGeoConstantsOfMotionVectorized(double* E_out, double* L_out, double* Q_out, double* a, double* p, double* e, double* x, int n)
 {
-#ifdef __USE_OMP__
-    #pragma omp parallel for
-#endif  // __USE_OMP__
+
     for (int i = 0; i < n; i += 1)
     {
         KerrGeoConstantsOfMotion(&E_out[i], &L_out[i], &Q_out[i], a[i], p[i], e[i], x[i]);
@@ -337,9 +335,7 @@ void KerrGeoCoordinateFrequenciesVectorized(double* OmegaPhi_, double* OmegaThet
                               double* a, double* p, double* e, double* x, int length)
 {
 
-#ifdef __USE_OMP__
-    #pragma omp parallel for
-#endif  // __USE_OMP__
+
     for (int i = 0; i < length; i += 1)
     {
         if (a[i] != 0.0)
@@ -561,9 +557,7 @@ double get_separatrix(double a, double e, double x)
 void get_separatrix_vector(double* separatrix, double* a, double* e, double* x, int length)
 {
 
-#ifdef __USE_OMP__
-    #pragma omp parallel for
-#endif  // __USE_OMP__
+
     for (int i = 0; i < length; i += 1)
     {
         separatrix[i] = get_separatrix(a[i], e[i], x[i]);
@@ -613,59 +607,9 @@ double Y_to_xI(double a, double p, double e, double Y)
 
 void Y_to_xI_vector(double* x, double* a, double* p, double* e, double* Y, int length)
 {
-
-#ifdef __USE_OMP__
-    #pragma omp parallel for
-#endif  // __USE_OMP__
     for (int i = 0; i < length; i += 1)
     {
         x[i] = Y_to_xI(a[i], p[i], e[i], Y[i]);
     }
 
 }
-
-
-void set_threads(int num_threads)
-{
-    #ifdef __USE_OMP__
-    omp_set_num_threads(num_threads);
-    #else
-    throw std::invalid_argument("Attempting to set threads for openMP, but FEW was not installed with openMP due to the use of the flag --no_omp used during installation.");
-    #endif
-}
-
-int get_threads()
-{
-#ifdef __USE_OMP__
-    int num_threads;
-    #pragma omp parallel for
-    for (int i = 0; i < 1; i +=1)
-    {
-        num_threads = omp_get_num_threads();
-    }
-
-    return num_threads;
-#else
-    return 0;
-#endif // __USE_OMP__
-}
-
-
-
-
-
-
-/*
-int main()
-{
-    double a = 0.5;
-    double p = 10.0;
-    double e = 0.2;
-    double iota = 0.4;
-    double x = cos(iota);
-
-    double temp = KerrGeoMinoFrequencies(a, p, e, x);
-
-    //printf("%e %e %e\n", En, L, C);
-}
-*/

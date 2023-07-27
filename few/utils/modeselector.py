@@ -25,10 +25,10 @@ from few.utils.baseclasses import ParallelModuleBase
 
 # check for cupy
 try:
-    import cupy as xp
+    import cupy as cp
 
 except (ImportError, ModuleNotFoundError) as e:
-    import numpy as xp
+    import numpy as np
 
 
 class ModeSelector(ParallelModuleBase):
@@ -64,15 +64,19 @@ class ModeSelector(ParallelModuleBase):
     """
 
     def __init__(self, m0mask, sensitivity_fn=None, **kwargs):
-
         ParallelModuleBase.__init__(self, **kwargs)
+
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
 
         # store information releated to m values
         # the order is m = 0, m > 0, m < 0
         self.m0mask = m0mask
         self.num_m_zero_up = len(m0mask)
-        self.num_m_1_up = len(self.xp.arange(len(m0mask))[m0mask])
-        self.num_m0 = len(self.xp.arange(len(m0mask))[~m0mask])
+        self.num_m_1_up = len(xp.arange(len(m0mask))[m0mask])
+        self.num_m0 = len(xp.arange(len(m0mask))[~m0mask])
 
         self.sensitivity_fn = sensitivity_fn
 
@@ -132,11 +136,16 @@ class ModeSelector(ParallelModuleBase):
 
         """
 
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
+
         # get the power contribution of each mode including m < 0
         power = (
-            self.xp.abs(
-                self.xp.concatenate(
-                    [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])], axis=1
+            xp.abs(
+                xp.concatenate(
+                    [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])], axis=1
                 )
                 * ylms
             )
@@ -160,38 +169,36 @@ class ModeSelector(ParallelModuleBase):
 
             # get frequencies in Hz
             f_Phi, f_omega, f_r = OmegaPhi, OmegaTheta, OmegaR = (
-                self.xp.asarray(OmegaPhi) / (Msec * 2 * PI),
-                self.xp.asarray(OmegaTheta) / (Msec * 2 * PI),
-                self.xp.asarray(OmegaR) / (Msec * 2 * PI),
+                xp.asarray(OmegaPhi) / (Msec * 2 * PI),
+                xp.asarray(OmegaTheta) / (Msec * 2 * PI),
+                xp.asarray(OmegaR) / (Msec * 2 * PI),
             )
 
             # TODO: update when in kerr
             freqs = (
-                modeinds[1][self.xp.newaxis, :] * f_Phi[:, self.xp.newaxis]
-                + modeinds[2][self.xp.newaxis, :] * f_r[:, self.xp.newaxis]
+                modeinds[1][xp.newaxis, :] * f_Phi[:, xp.newaxis]
+                + modeinds[2][xp.newaxis, :] * f_r[:, xp.newaxis]
             )
 
             freqs_shape = freqs.shape
 
             # make all frequencies positive
-            freqs_in = self.xp.abs(freqs)
+            freqs_in = xp.abs(freqs)
             PSD = self.sensitivity_fn(freqs_in.flatten()).reshape(freqs_shape)
 
             # weight by PSD
             power /= PSD
 
         # sort the power for a cumulative summation
-        inds_sort = self.xp.argsort(power, axis=1)[:, ::-1]
-        power = self.xp.sort(power, axis=1)[:, ::-1]
-        cumsum = self.xp.cumsum(power, axis=1)
+        inds_sort = xp.argsort(power, axis=1)[:, ::-1]
+        power = xp.sort(power, axis=1)[:, ::-1]
+        cumsum = xp.cumsum(power, axis=1)
 
         # initialize and indices array for keeping modes
-        inds_keep = self.xp.full(cumsum.shape, True)
+        inds_keep = xp.full(cumsum.shape, True)
 
         # keep modes that add to within the fractional power (1 - eps)
-        inds_keep[:, 1:] = cumsum[:, :-1] < cumsum[:, -1][:, self.xp.newaxis] * (
-            1 - eps
-        )
+        inds_keep[:, 1:] = cumsum[:, :-1] < cumsum[:, -1][:, xp.newaxis] * (1 - eps)
 
         # finds indices of each mode to be kept
         temp = inds_sort[inds_keep]
@@ -203,7 +210,7 @@ class ModeSelector(ParallelModuleBase):
         )
 
         # if +m or -m contributes, we keep both because of structure of CUDA kernel
-        keep_modes = self.xp.unique(temp)
+        keep_modes = xp.unique(temp)
 
         # set ylms
 
@@ -213,7 +220,7 @@ class ModeSelector(ParallelModuleBase):
         ) * (keep_modes >= self.num_m0)
 
         # ylm duplicates the m = 0 unlike teuk_modes
-        ylmkeep = self.xp.concatenate([keep_modes, temp2])
+        ylmkeep = xp.concatenate([keep_modes, temp2])
 
         # setup up teuk mode and ylm returns
         out1 = (teuk_modes[:, keep_modes], ylms[ylmkeep])

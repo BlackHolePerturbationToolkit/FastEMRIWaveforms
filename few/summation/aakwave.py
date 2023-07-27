@@ -24,10 +24,10 @@ import numpy as np
 
 # try to import cupy
 try:
-    import cupy as xp
+    import cupy as cp
 
 except (ImportError, ModuleNotFoundError) as e:
-    import numpy as xp
+    import numpy as np
 
 # Cython/C++ imports
 from pycpuAAK import pyWaveform as pyWaveform_cpu
@@ -71,7 +71,6 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
     """
 
     def __init__(self, **kwargs):
-
         ParallelModuleBase.__init__(self, **kwargs)
         Pn5AAK.__init__(self, **kwargs)
         SummationBase.__init__(self, **kwargs)
@@ -186,6 +185,8 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
 
         """
 
+        xp = cp if self.use_gpu else np
+
         # mass in seconds
         Msec = M * MTSUN_SI
 
@@ -256,24 +257,24 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
                 qS = np.pi - fill_val
 
         # convert to gpu if desired
-        tvec_temp = self.xp.asarray(tvec)
+        tvec_temp = xp.asarray(tvec)
         init_len = len(tvec)
 
         # setup interpolation
         ninterps = 8
-        y_all = self.xp.zeros((ninterps, init_len))
+        y_all = xp.zeros((ninterps, init_len))
 
         # do not need p anymore since we are inputing OmegaPhi
 
         # fill y_all with all arrays that need interpolation
-        y_all[0] = self.xp.asarray(e)
-        y_all[1] = self.xp.asarray(Phivec)
-        y_all[2] = self.xp.asarray(gimvec)
-        y_all[3] = self.xp.asarray(alpvec)
-        y_all[4] = self.xp.asarray(nuvec)
-        y_all[5] = self.xp.asarray(gimdotvec)
-        y_all[6] = self.xp.asarray(OmegaPhi)
-        y_all[7] = self.xp.asarray(lam)
+        y_all[0] = xp.asarray(e)
+        y_all[1] = xp.asarray(Phivec)
+        y_all[2] = xp.asarray(gimvec)
+        y_all[3] = xp.asarray(alpvec)
+        y_all[4] = xp.asarray(nuvec)
+        y_all[5] = xp.asarray(gimdotvec)
+        y_all[6] = xp.asarray(OmegaPhi)
+        y_all[7] = xp.asarray(lam)
 
         # get all cubic splines
         self.spline = CubicSplineInterpolant(tvec_temp, y_all, use_gpu=self.use_gpu)

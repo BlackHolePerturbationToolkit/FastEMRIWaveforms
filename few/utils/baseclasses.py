@@ -33,19 +33,18 @@ from scipy import constants as ct
 
 # try to import cupy
 try:
-    import cupy as xp
+    import cupy as cp
 
     gpu_available = True
 
 except:
-    import numpy as xp
+    import numpy as np
 
     gpu_available = False
 
 # Python imports
 from few.utils.constants import *
 from few.utils.citations import *
-from few.utils.utility import omp_set_num_threads
 
 
 class ParallelModuleBase(ABC):
@@ -55,9 +54,6 @@ class ParallelModuleBase(ABC):
 
     args:
         use_gpu (bool, optional): If True, use GPU resources. Default is False.
-        num_threads (int, optional): Number of parallel threads to use in OpenMP.
-            If :code:`None`, will not set the global variable :code:`OMP_NUM_THREADS`.
-            Default is None.
 
     """
 
@@ -70,20 +66,8 @@ class ParallelModuleBase(ABC):
         """
         pass
 
-    def __init__(self, *args, use_gpu=False, num_threads=None, **kwargs):
-
+    def __init__(self, *args, use_gpu=False, **kwargs):
         self.use_gpu = use_gpu
-
-        if use_gpu is True:
-            self.xp = xp
-        else:
-            self.xp = np
-
-        if num_threads is not None:
-            if not isinstance(num_threads, int):
-                raise ValueError(f"num_threads must be None or int.")
-
-            omp_set_num_threads(num_threads)
 
         # checks if gpu capability is available if requested
         self.sanity_check_gpu(use_gpu)
@@ -218,8 +202,13 @@ class SchwarzschildEccentric(ParallelModuleBase, ABC):
         pass
 
     def __init__(self, *args, use_gpu=False, **kwargs):
-
         ParallelModuleBase.__init__(self, *args, use_gpu=use_gpu, **kwargs)
+
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
+
         # some descriptive information
         self.background = "Schwarzschild"
         self.descriptor = "eccentric"
@@ -243,7 +232,7 @@ class SchwarzschildEccentric(ParallelModuleBase, ABC):
         self.num_modes = self.num_teuk_modes = len(md)
 
         # mask for m == 0
-        m0mask = self.xp.array(
+        m0mask = xp.array(
             [
                 m == 0
                 for l in range(2, 10 + 1)
@@ -253,15 +242,15 @@ class SchwarzschildEccentric(ParallelModuleBase, ABC):
         )
 
         # sorts so that order is m=0, m<0, m>0
-        self.m0sort = m0sort = self.xp.concatenate(
+        self.m0sort = m0sort = xp.concatenate(
             [
-                self.xp.arange(self.num_teuk_modes)[m0mask],
-                self.xp.arange(self.num_teuk_modes)[~m0mask],
+                xp.arange(self.num_teuk_modes)[m0mask],
+                xp.arange(self.num_teuk_modes)[~m0mask],
             ]
         )
 
         # sorts the mode indexes
-        md = self.xp.asarray(md).T[:, m0sort].astype(self.xp.int32)
+        md = xp.asarray(md).T[:, m0sort].astype(xp.int32)
 
         # store l m and n values
         self.l_arr, self.m_arr, self.n_arr = md[0], md[1], md[2]
@@ -280,15 +269,15 @@ class SchwarzschildEccentric(ParallelModuleBase, ABC):
         self.num_m_zero_up = len(self.m_arr)
 
         # number of m == 0
-        self.num_m0 = len(self.xp.arange(self.num_teuk_modes)[m0mask])
+        self.num_m0 = len(xp.arange(self.num_teuk_modes)[m0mask])
 
         # number of m > 0
         self.num_m_1_up = self.num_m_zero_up - self.num_m0
 
         # create final arrays to include -m modes
-        self.l_arr = self.xp.concatenate([self.l_arr, self.l_arr[self.m0mask]])
-        self.m_arr = self.xp.concatenate([self.m_arr, -self.m_arr[self.m0mask]])
-        self.n_arr = self.xp.concatenate([self.n_arr, self.n_arr[self.m0mask]])
+        self.l_arr = xp.concatenate([self.l_arr, self.l_arr[self.m0mask]])
+        self.m_arr = xp.concatenate([self.m_arr, -self.m_arr[self.m0mask]])
+        self.n_arr = xp.concatenate([self.n_arr, self.n_arr[self.m0mask]])
 
         # mask for m >= 0
         self.m_zero_up_mask = self.m_arr >= 0
@@ -309,7 +298,7 @@ class SchwarzschildEccentric(ParallelModuleBase, ABC):
             )
 
         # unique values of l and m
-        self.unique_l, self.unique_m = self.xp.asarray(temp).T
+        self.unique_l, self.unique_m = xp.asarray(temp).T
 
         # number of unique values
         self.num_unique_lm = len(self.unique_l)
@@ -318,7 +307,6 @@ class SchwarzschildEccentric(ParallelModuleBase, ABC):
         self.index_map = {}
         self.special_index_map = {}  # maps the minus m values to positive m
         for i, (l, m, n) in enumerate(zip(self.l_arr, self.m_arr, self.n_arr)):
-
             try:
                 l = l.item()
                 m = m.item()
@@ -474,7 +462,6 @@ class Pn5AAK(ABC):
         pass
 
     def __init__(self, use_gpu=False, **kwargs):
-
         # some descriptive information
         self.background = "Kerr"
         self.descriptor = "generic orbits"
@@ -711,7 +698,6 @@ class TrajectoryBase(ABC):
 
         # convert to dimensionless time
         if in_coordinate_time is False:
-
             # M must be the first argument
             M = args[0]
             Msec = M * MTSUN_SI
@@ -756,21 +742,28 @@ class SummationBase(ABC):
         pad_output (bool, optional): Add zero padding to the waveform for time
             between plunge and observation time. Default is False.
         output_type (str, optional): Type of domain in which to calculate the waveform.
-            Default is 'td' for time domain. Options are 'td' (time domain). In the future we hope to add 'fd' (Fourier domain), 'tf'
+            Default is 'td' for time domain. Options are 'td' (time domain) or 'fd' (Fourier domain). In the future we hope to add 'tf'
             (time-frequency) and 'wd' (wavelet domain).
+        odd_len (bool, optional): The waveform output will be padded to be an odd number if True.
+            If ``output_type == "fd"``, odd_len will be set to ``True``. Default is False.
 
     """
 
-    def __init__(self, *args, output_type="td", pad_output=False, **kwargs):
+    def __init__(
+        self, *args, output_type="td", pad_output=False, odd_len=False, **kwargs
+    ):
         self.pad_output = pad_output
+        self.odd_len = odd_len
 
-        if output_type not in ["td"]:
+        if output_type not in ["td", "fd"]:
             raise ValueError(
-                "{} waveform domain not available. Choices are 'td' (time domain) or 'tf' (time-frequency).".format(
+                "{} waveform domain not available. Choices are 'td' (time domain) or 'fd' (frequency domain).".format(
                     output_type
                 )
             )
         self.output_type = output_type
+        if self.output_type == "fd":
+            self.odd_len = True
 
     def attributes_SummationBase(self):
         """
@@ -814,6 +807,11 @@ class SummationBase(ABC):
 
         """
 
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
+
         n_pts = int(T * YRSID_SI / dt)
         T = n_pts * dt
         # determine the output array setup
@@ -834,10 +832,33 @@ class SummationBase(ABC):
         self.num_pts, self.num_pts_pad = num_pts, num_pts_pad
         self.dt = dt
 
-        # setup waveform holder for time domain
-        self.waveform = self.xp.zeros(
-            (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
-        )
+        # impose to be always odd
+        if self.odd_len:
+            if (self.num_pts + self.num_pts_pad) % 2 == 0:
+                self.num_pts_pad = self.num_pts_pad + 1
+                # print("n points",self.num_pts + self.num_pts_pad)
+
+        # make sure that the FD waveform has always an odd number of points
+        if self.output_type == "fd":
+            if "f_arr" in kwargs:
+                frequency = kwargs["f_arr"]
+                dt = float(xp.max(frequency) * 2)
+                Nf = len(frequency)
+                # total
+                self.waveform = xp.zeros(Nf, dtype=xp.complex128)
+                # print("user defined frequencies Nf=", Nf)
+            else:
+                self.waveform = xp.zeros(
+                    (self.num_pts + self.num_pts_pad,), dtype=xp.complex128
+                )
+            # if self.num_pts + self.num_pts_pad % 2:
+            #     self.num_pts_pad = self.num_pts_pad + 1
+            #     print("n points",self.num_pts + self.num_pts_pad)
+        else:
+            # setup waveform holder for time domain
+            self.waveform = xp.zeros(
+                (self.num_pts + self.num_pts_pad,), dtype=xp.complex128
+            )
 
         # get the waveform summed in place
         self.sum(t, *args, dt=dt, **kwargs)
