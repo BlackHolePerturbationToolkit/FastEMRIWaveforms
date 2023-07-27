@@ -1058,10 +1058,6 @@ cmplx get_mode_value_fd(double t, double f, double fdot, double fddot, cmplx amp
                     I* (2. * PI * f * t - phase_term)
                 );
 
-    cmplx temp = gcmplx::exp(
-        I* (2. * PI * f * t - phase_term)
-    );
-
     return out;
 }
 
