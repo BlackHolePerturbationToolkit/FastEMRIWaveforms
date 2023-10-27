@@ -18,6 +18,8 @@
 
 import numpy as np
 
+import os
+
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *
@@ -30,6 +32,7 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
 
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
 class ModeSelector(ParallelModuleBase):
     """Filter teukolsky amplitudes based on power contribution.
@@ -229,3 +232,121 @@ class ModeSelector(ParallelModuleBase):
         out2 = tuple([arr[keep_modes] for arr in modeinds])
 
         return out1 + out2
+
+class NeuralModeSelector(ParallelModuleBase):
+    """Filter teukolsky amplitudes based on power contribution.
+
+    This module uses a combination of a pre-computed mask and a feed-forward neural
+    network to predict the mode content of the waveform given its parameters. Therefore,
+    the results will vary compared to manually computing the mode selection, but it should be
+    very accurate especially for the stronger modes.
+
+    The mode filtering is a major contributing factor to the speed of these
+    waveforms as it removes large numbers of useles modes from the final
+    summation calculation.
+
+    args:
+        mode_ind_list (list): A list of all sets of mode indices, in order. The pre-computed mask
+            will be applied to this list, and the result will be further reduced for output upon
+            evaluation of the mode selector.
+        threshold (double): The network threshold value for mode retention. Decrease to keep more modes,
+            minimising missed modes but slowing down the waveform computation. Defaults to 0.5 (the optimal value for accuracy).
+
+        **kwargs (dict, optional): Keyword arguments for the base classes:
+            :class:`few.utils.baseclasses.ParallelModuleBase`.
+            Default is {}.
+    """
+
+    def __init__(self, mode_ind_list, threshold=0.5, **kwargs):
+        ParallelModuleBase.__init__(self, **kwargs)
+
+        self.precomputed_mask = np.load(dir_path+'/modeselector_files/precomputed_mode_mask.npy')
+        self.base_mode_list = [mode_ind_list[maskind] for maskind in self.precomputed_mask]
+
+        # we set the pytorch device here for use with the neural network
+        if self.use_gpu:
+            self.xp = cp
+            self.device=f"cuda:{cp.cuda.runtime.getDevice()}"
+        else:
+            self.xp = np
+            self.device="cpu"
+
+        # import torch here in case users don't want it otherwise
+        # if torch doesn't import properly, raise
+        import torch
+        self.torch = torch
+        # if torch wasn't installed with GPU capability, raise
+        if self.use_gpu and not torch.cuda.is_available():
+            raise RuntimeError("pytorch has not been installed with CUDA capability. Fix installation or set use_gpu=False.")
+        
+        try:
+            self.load_model(dir_path+"/modeselector_files/neural_mode_selector.tjm")
+        except FileNotFoundError:
+            raise FileNotFoundError("Neural mode predictor model file not found. ")
+
+        self.threshold = threshold
+        self.vector_min = np.load(dir_path+"/modeselector_files/vector_min.npy")
+        self.vector_max = np.load(dir_path+"/modeselector_files/vector_max.npy")
+
+    @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
+
+    def attributes_ModeSelector(self):
+        """
+        attributes:
+            xp: cupy or numpy depending on GPU usage.
+            torch: pytorch module.
+            device: The pytorch device currently in use: should agree with what is set by cupy.
+            threshold: network evaluation threshold for keeping/discarding modes.
+            vector_min: minimum bounds of the training data, for rescaling.
+            vector_max: maximum bounds of the training data, for rescaling.
+        """
+        pass
+
+    @property
+    def citation(self):
+        """Return citations related to this class."""
+        return larger_few_citation + few_citation + few_software_citation
+
+    def load_model(self, fp):
+        self.model = self.torch.jit.load(fp)  # assume the model has been jit compiled
+        self.model.to(self.device)
+        self.model.eval()
+    
+    def __call__(self, M, mu, p0, e0, theta, phi, T, eps):
+        """Call to predict the mode content of the waveform.
+
+        This is the call function that takes the waveform parameters, applies a 
+        precomputed mask and then evaluates the remaining mode content with a
+        neural network classifier. 
+
+        args:
+            M (double): Mass of larger black hole in solar masses.
+            mu (double): Mass of compact object in solar masses.
+            p0 (double): Initial semilatus rectum (Must be greater than
+                the separatrix at the the given e0 and x0).
+                See documentation for more information on :math:`p_0<10`.
+            e0 (double): Initial eccentricity.
+            theta (double): Polar viewing angle.
+            phi (double): Azimuthal viewing angle.
+            T (double): Duration of waveform in years.
+            eps (double): Mode selection threshold power.
+        """
+
+        #wrap angles to training bounds
+        phi = phi % (2*np.pi)
+        theta = theta % (np.pi) - np.pi
+
+        inputs = np.array([[np.log(M), mu, p0, e0, T, theta, phi, np.log10(eps)]])
+        # rescale network input from pre-computed
+        inputs = 2 * (inputs - self.vector_min) / (self.vector_max - self.vector_min) - 1
+        inputs = self.torch.as_tensor(inputs, device=self.device).float() 
+        # get network output and threshold it based on the defined value
+        with self.torch.inference_mode():
+            mode_predictions = self.model(inputs)
+            keep_inds = self.torch.where(mode_predictions > self.threshold)[0].int().cpu().numpy()
+        # return list of modes for kept indices
+        selected_modes = [self.base_mode_list[ind] for ind in keep_inds]
+        return selected_modes
