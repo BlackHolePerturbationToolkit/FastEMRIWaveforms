@@ -35,7 +35,7 @@ from few.trajectory.inspiral import EMRIInspiral
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 from few.utils.utility import get_mismatch, xI_to_Y, p_to_y, check_for_file_download
 from few.amplitude.romannet import RomanAmplitude
-from few.utils.modeselector import ModeSelector
+from few.utils.modeselector import ModeSelector, NeuralModeSelector
 from few.utils.ylm import GetYlms
 from few.summation.directmodesum import DirectModeSum
 from few.summation.aakwave import AAKSummation
@@ -124,6 +124,7 @@ class GenerateEMRIWaveform:
         print(
             """
             FastSchwarzschildEccentricFlux
+            BicubicAmplitudeSchwarzschildEccentricFlux
             SlowSchwarzschildEccentricFlux
             Pn5AAKWaveform
             """
@@ -454,6 +455,13 @@ class SchwarzschildEccentricWaveformBase(
         # selecting modes that contribute at threshold to the waveform
         self.mode_selector = ModeSelector(self.m0mask, **mode_selector_kwargs)
 
+        #neural mode selector setup
+        if use_gpu:
+            neural_mode_list = [(lh, mh, nh) for lh, mh, nh in zip(self.l_arr.get(), self.m_arr.get(), self.n_arr.get())]
+        else:
+            neural_mode_list = [(lh, mh, nh) for lh, mh, nh in zip(self.l_arr, self.m_arr, self.n_arr)]
+        self.neural_mode_selector = NeuralModeSelector(neural_mode_list, **mode_selector_kwargs)
+
         # setup amplitude normalization
         fp = "AmplitudeVectorNorm.dat"
         few_dir = dir_path + "/../"
@@ -587,23 +595,32 @@ class SchwarzschildEccentricWaveformBase(
         # makes sure p and e are generally within the model
         self.sanity_check_traj(p, e)
 
-        # get the vector norm
-        amp_norm = self.amp_norm_spline.ev(p_to_y(p, e), e)
-
         self.end_time = t[-1]
+        
+        if self.normalize_amps:
+            # get the vector norm
+            amp_norm = self.amp_norm_spline.ev(p_to_y(p, e), e)
+            amp_norm = xp.asarray(amp_norm)
+
         # convert for gpu
         t = xp.asarray(t)
         p = xp.asarray(p)
         e = xp.asarray(e)
         Phi_phi = xp.asarray(Phi_phi)
         Phi_r = xp.asarray(Phi_r)
-        amp_norm = xp.asarray(amp_norm)
+
 
         # get ylms only for unique (l,m) pairs
         # then expand to all (lmn with self.inverse_lm)
         ylms = self.ylm_gen(self.unique_l, self.unique_m, theta, phi).copy()[
             self.inverse_lm
         ]
+
+        # use the neural network mode selector
+        # we do this now so we can avoid generating amplitudes that are not required
+        if mode_selection == "neural":
+            # overwrites mode_selection so it's now a list of modes to keep, ready to feed into amplitudes
+            mode_selection = self.neural_mode_selector(M, mu, p0, e0, theta, phi, T, eps)
 
         # split into batches
 
@@ -634,28 +651,27 @@ class SchwarzschildEccentricWaveformBase(
             e_temp = e[inds_in]
             Phi_phi_temp = Phi_phi[inds_in]
             Phi_r_temp = Phi_r[inds_in]
-            amp_norm_temp = amp_norm[inds_in]
-
-            # amplitudes
-            teuk_modes = self.amplitude_generator(p_temp, e_temp)
-
-            # normalize by flux produced in trajectory
-            if self.normalize_amps:
-                amp_for_norm = xp.sum(
-                    xp.abs(
-                        xp.concatenate(
-                            [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])],
-                            axis=1,
+            
+            # if we aren't requesting a subset of modes, compute them all now
+            if not isinstance(mode_selection, list):
+                # amplitudes
+                teuk_modes = xp.asarray(self.amplitude_generator(p_temp, e_temp))
+                # normalize by flux produced in trajectory
+                if self.normalize_amps:
+                    amp_for_norm = xp.sum(
+                        xp.abs(
+                            xp.concatenate(
+                                [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])],
+                                axis=1,
+                            )
                         )
-                    )
-                    ** 2,
-                    axis=1,
-                ) ** (1 / 2)
-
-                # normalize
-                factor = amp_norm_temp / amp_for_norm
-                teuk_modes = teuk_modes * factor[:, np.newaxis]
-
+                        ** 2,
+                        axis=1,
+                    ) ** (1 / 2)
+                    # normalize
+                    factor = amp_norm[inds_in] / amp_for_norm
+                    teuk_modes = teuk_modes * factor[:, np.newaxis]
+            
             # different types of mode selection
             # sets up ylm and teuk_modes properly for summation
             if isinstance(mode_selection, str):
@@ -683,6 +699,11 @@ class SchwarzschildEccentricWaveformBase(
                     raise ValueError("If mode selection is a list, cannot be empty.")
 
                 keep_modes = xp.zeros(len(mode_selection), dtype=xp.int32)
+
+                # generate only the required modes with the amplitude module
+                teuk_modes = self.amplitude_generator(p_temp, e_temp, specific_modes=mode_selection)
+                # unpack the dictionary
+                teuk_modes_in = xp.asarray([teuk_modes[lmn] for lmn in mode_selection]).T
 
                 # for removing opposite m modes
                 fix_include_ms = xp.full(2 * len(mode_selection), False)
@@ -714,8 +735,9 @@ class SchwarzschildEccentricWaveformBase(
 
                 # remove modes if include_minus_m is False
                 ylms_in[fix_include_ms] = 0.0 + 1j * 0.0
-
-                teuk_modes_in = teuk_modes[:, keep_modes]
+                # normalize by flux produced in trajectory
+                if self.normalize_amps:
+                    raise NotImplementedError
 
             # mode selection based on input module
             else:
@@ -875,6 +897,160 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
     def allow_batching(self):
         return False
 
+
+class BicubicAmplitudeSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
+    """Prebuilt model for fast Schwarzschild eccentric flux-based waveforms.
+
+    This model combines the most efficient modules to produce the fastest
+    accurate EMRI waveforms. It leverages GPU hardware for maximal acceleration,
+    but is also available on for CPUs. Please see
+    :class:`few.utils.baseclasses.SchwarzschildEccentric` for general
+    information on this class of models.
+
+    The trajectory module used here is :class:`few.trajectory.flux` for a
+    flux-based, sparse trajectory. This returns approximately 100 points.
+
+    The amplitudes are then determined with
+    :class:`few.amplitude.interp2dcubicspline.Interp2DAmplitude` along these sparse
+    trajectories. This gives complex amplitudes for all modes in this model at
+    each point in the trajectory. These are then filtered with
+    :class:`few.utils.modeselector.ModeSelector`.
+
+    The modes that make it through the filter are then summed by
+    :class:`few.summation.interpolatedmodesum.InterpolatedModeSum`.
+
+    See :class:`few.waveform.SchwarzschildEccentricWaveformBase` for information
+    on inputs. See examples as well.
+
+    args:
+        inspiral_kwargs (dict, optional): Optional kwargs to pass to the
+            inspiral generator. **Important Note**: These kwargs are passed
+            online, not during instantiation like other kwargs here. Default is
+            {}.
+        amplitude_kwargs (dict, optional): Optional kwargs to pass to the
+            amplitude generator during instantiation. Default is {}.
+        sum_kwargs (dict, optional): Optional kwargs to pass to the
+            sum module during instantiation. Default is {}.
+        Ylm_kwargs (dict, optional): Optional kwargs to pass to the
+            Ylm generator during instantiation. Default is {}.
+        use_gpu (bool, optional): If True, use GPU resources. Default is False.
+        *args (list, placeholder): args for waveform model.
+        **kwargs (dict, placeholder): kwargs for waveform model.
+
+    """
+
+    def __init__(
+        self,
+        inspiral_kwargs={},
+        amplitude_kwargs={},
+        sum_kwargs={},
+        Ylm_kwargs={},
+        use_gpu=False,
+        *args,
+        **kwargs,
+    ):
+        inspiral_kwargs["func"] = "SchwarzEccFlux"
+
+        if "output_type" in sum_kwargs:
+            if sum_kwargs["output_type"] == "fd":
+                mode_summation_module = FDInterpolatedModeSum
+
+            else:
+                mode_summation_module = InterpolatedModeSum
+
+        else:
+            mode_summation_module = InterpolatedModeSum
+            
+        SchwarzschildEccentricWaveformBase.__init__(
+            self,
+            EMRIInspiral,
+            Interp2DAmplitude,
+            mode_summation_module,
+            inspiral_kwargs=inspiral_kwargs,
+            amplitude_kwargs=amplitude_kwargs,
+            sum_kwargs=sum_kwargs,
+            Ylm_kwargs=Ylm_kwargs,
+            use_gpu=use_gpu,
+            normalize_amps=False,  # the bicubic spline amplitudes do not require normalisation
+            *args,
+            **kwargs,
+        )
+
+    def attributes_FastSchwarzschildEccentricFlux(self):
+        """
+        Attributes:
+            gpu_capability (bool): If True, this wavefrom can leverage gpu
+                resources. For this class it is True.
+            allow_batching (bool): If True, this waveform can use the batch_size
+                kwarg. For this class it is False.
+
+        """
+        pass
+
+    @property
+    def gpu_capability(self):
+        return True
+
+    @property
+    def allow_batching(self):
+        return False
+
+    def sanity_check_init(self, M, mu, p0, e0):
+        """Sanity check initial parameters.
+
+        Make sure parameters are within allowable ranges.
+
+        Note that we have extended the ranges here as the bicubic spline amplitudes cover a wider domain than 
+        the ROMAN amplitudes.
+
+        args:
+            M (double): Massive black hole mass in solar masses.
+            mu (double): compact object mass in solar masses.
+            p0 (double): Initial semilatus rectum (dimensionless)
+                :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
+                more information on :math:`p_0 \leq 10.0`.
+            e0 (double): Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
+
+        Raises:
+            ValueError: If any of the parameters are not allowed.
+
+        """
+
+        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"]]:
+            test = val < 0.0
+            if test:
+                raise ValueError("{} is negative. It must be positive.".format(key))
+
+        if e0 > 0.75:
+            raise ValueError(
+                "Initial eccentricity above 0.75 not allowed. (e0={})".format(e0)
+            )
+
+        if e0 < 0.0:
+            raise ValueError(
+                "Initial eccentricity below 0.0 not physical. (e0={})".format(e0)
+            )
+
+        if mu / M > 1e-4:
+            warnings.warn(
+                "Mass ratio is outside of generally accepted range for an extreme mass ratio (1e-4). (q={})".format(
+                    mu / M
+                )
+            )
+
+        if p0 < 6.2 + 2 * e0:
+            raise ValueError(
+                "Initial p0 is too small (p0={}). Must be > 6.2 + 2 * e.".format(
+                    p0
+                )
+            )
+
+        if p0 > 47. + 2 * e0:
+            raise ValueError(
+                "Initial p0 is too large (p0={}). Must be < 47 + 2 * e.".format(
+                    p0
+                )
+            )
 
 class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
     """Prebuilt model for slow Schwarzschild eccentric flux-based waveforms.
