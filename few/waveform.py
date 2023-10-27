@@ -413,6 +413,7 @@ class SchwarzschildEccentricWaveformBase(
         inspiral_module,
         amplitude_module,
         sum_module,
+        mode_selector_module,
         inspiral_kwargs={},
         amplitude_kwargs={},
         sum_kwargs={},
@@ -451,16 +452,9 @@ class SchwarzschildEccentricWaveformBase(
 
         # angular harmonics generation
         self.ylm_gen = GetYlms(**Ylm_kwargs)
-
+ 
         # selecting modes that contribute at threshold to the waveform
-        self.mode_selector = ModeSelector(self.m0mask, **mode_selector_kwargs)
-
-        #neural mode selector setup
-        if use_gpu:
-            neural_mode_list = [(lh, mh, nh) for lh, mh, nh in zip(self.l_arr.get(), self.m_arr.get(), self.n_arr.get())]
-        else:
-            neural_mode_list = [(lh, mh, nh) for lh, mh, nh in zip(self.l_arr, self.m_arr, self.n_arr)]
-        self.neural_mode_selector = NeuralModeSelector(neural_mode_list, **mode_selector_kwargs)
+        self.mode_selector = mode_selector_module(self.l_arr_no_mask, self.m_arr_no_mask, self.n_arr_no_mask, **mode_selector_kwargs)
 
         # setup amplitude normalization
         fp = "AmplitudeVectorNorm.dat"
@@ -616,11 +610,10 @@ class SchwarzschildEccentricWaveformBase(
             self.inverse_lm
         ]
 
-        # use the neural network mode selector
-        # we do this now so we can avoid generating amplitudes that are not required
-        if mode_selection == "neural":
+        # if mode selector is predictive, run now to avoid generating amplitudes that are not required
+        if self.mode_selector.is_predictive:
             # overwrites mode_selection so it's now a list of modes to keep, ready to feed into amplitudes
-            mode_selection = self.neural_mode_selector(M, mu, p0, e0, theta, phi, T, eps)
+            mode_selection = self.mode_selector(M, mu, p0, e0, theta, phi, T, eps)  # TODO: update this if more arguments are required
 
         # split into batches
 
@@ -848,6 +841,7 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         amplitude_kwargs={},
         sum_kwargs={},
         Ylm_kwargs={},
+        mode_selector_kwargs={},
         use_gpu=False,
         *args,
         **kwargs,
@@ -864,11 +858,17 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         else:
             mode_summation_module = InterpolatedModeSum
 
+        mode_selection_module = ModeSelector
+        if "mode_selection_type" in mode_selector_kwargs:
+            if mode_selector_kwargs["mode_selection_type"] == "neural":
+                mode_selection_module = NeuralModeSelector
+
         SchwarzschildEccentricWaveformBase.__init__(
             self,
             EMRIInspiral,
             RomanAmplitude,
             mode_summation_module,
+            mode_selection_module,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
@@ -898,7 +898,7 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         return False
 
 
-class BicubicAmplitudeSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
+class FastSchwarzschildEccentricFluxBicubic(SchwarzschildEccentricWaveformBase):
     """Prebuilt model for fast Schwarzschild eccentric flux-based waveforms.
 
     This model combines the most efficient modules to produce the fastest
@@ -945,27 +945,29 @@ class BicubicAmplitudeSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformB
         amplitude_kwargs={},
         sum_kwargs={},
         Ylm_kwargs={},
+        mode_selector_kwargs={},
         use_gpu=False,
         *args,
         **kwargs,
     ):
         inspiral_kwargs["func"] = "SchwarzEccFlux"
 
+        mode_summation_module = InterpolatedModeSum
         if "output_type" in sum_kwargs:
             if sum_kwargs["output_type"] == "fd":
                 mode_summation_module = FDInterpolatedModeSum
+        
+        mode_selection_module = ModeSelector
+        if "mode_selection_type" in mode_selector_kwargs:
+            if mode_selector_kwargs["mode_selection_type"] == "neural":
+                mode_selection_module = NeuralModeSelector
 
-            else:
-                mode_summation_module = InterpolatedModeSum
-
-        else:
-            mode_summation_module = InterpolatedModeSum
-            
         SchwarzschildEccentricWaveformBase.__init__(
             self,
             EMRIInspiral,
             Interp2DAmplitude,
             mode_summation_module,
+            mode_selection_module,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,

@@ -51,9 +51,9 @@ class ModeSelector(ParallelModuleBase):
     will in order of :math:`m=0`, :math:`m>0`, and then :math:`m<0`.
 
     args:
-        m0mask (1D bool xp.ndarray): This mask highlights which modes have
-            :math:`m=0`. Value is False if :math:`m=0`, True if not.
-            This only includes :math:`m\geq0`.
+        l_arr (1D int xp.ndarray): The l-mode indices for each mode index.
+        m_arr (1D int xp.ndarray): The m-mode indices for each mode index.
+        n_arr (1D int xp.ndarray): The n-mode indices for each mode index.
         sensitivity_fn (object, optional): Sensitivity curve function that takes
             a frequency (Hz) array as input and returns the Power Spectral Density (PSD)
             of the sensitivity curve. Default is None. If this is not none, this
@@ -66,7 +66,7 @@ class ModeSelector(ParallelModuleBase):
 
     """
 
-    def __init__(self, m0mask, sensitivity_fn=None, **kwargs):
+    def __init__(self, l_arr, m_arr, n_arr, sensitivity_fn=None, **kwargs):
         ParallelModuleBase.__init__(self, **kwargs)
 
         if self.use_gpu:
@@ -76,6 +76,7 @@ class ModeSelector(ParallelModuleBase):
 
         # store information releated to m values
         # the order is m = 0, m > 0, m < 0
+        m0mask = m_arr != 0
         self.m0mask = m0mask
         self.num_m_zero_up = len(m0mask)
         self.num_m_1_up = len(xp.arange(len(m0mask))[m0mask])
@@ -87,7 +88,12 @@ class ModeSelector(ParallelModuleBase):
     def gpu_capability(self):
         """Confirms GPU capability"""
         return True
-
+    
+    @property
+    def is_predictive(self):
+        """Whether this mode selector should be used before or after amplitude generation"""
+        return False
+    
     def attributes_ModeSelector(self):
         """
         attributes:
@@ -246,9 +252,9 @@ class NeuralModeSelector(ParallelModuleBase):
     summation calculation.
 
     args:
-        mode_ind_list (list): A list of all sets of mode indices, in order. The pre-computed mask
-            will be applied to this list, and the result will be further reduced for output upon
-            evaluation of the mode selector.
+        l_arr (1D int xp.ndarray): The l-mode indices for each mode index.
+        m_arr (1D int xp.ndarray): The m-mode indices for each mode index.
+        n_arr (1D int xp.ndarray): The n-mode indices for each mode index.
         threshold (double): The network threshold value for mode retention. Decrease to keep more modes,
             minimising missed modes but slowing down the waveform computation. Defaults to 0.5 (the optimal value for accuracy).
 
@@ -257,21 +263,23 @@ class NeuralModeSelector(ParallelModuleBase):
             Default is {}.
     """
 
-    def __init__(self, mode_ind_list, threshold=0.5, **kwargs):
+    def __init__(self, l_arr, m_arr, n_arr, threshold=0.5, **kwargs):
         ParallelModuleBase.__init__(self, **kwargs)
-
-        few_dir = dir_path + "/../../"  # TODO proper file handling
-
-        self.precomputed_mask = np.load(few_dir+"few/files/modeselector_files/FastSchwarzschildEccentricFluxBicubic/precomputed_mode_mask.npy")
-        self.base_mode_list = [mode_ind_list[maskind] for maskind in self.precomputed_mask]
 
         # we set the pytorch device here for use with the neural network
         if self.use_gpu:
             self.xp = cp
             self.device=f"cuda:{cp.cuda.runtime.getDevice()}"
+            self.neural_mode_list = [(lh, mh, nh) for lh, mh, nh in zip(l_arr.get(), m_arr.get(), n_arr.get())]
         else:
             self.xp = np
             self.device="cpu"
+            self.neural_mode_list = [(lh, mh, nh) for lh, mh, nh in zip(l_arr, m_arr, n_arr)]
+
+        few_dir = dir_path + "/../../"  # TODO proper file handling
+        # TODO include waveform name in paths
+        self.precomputed_mask = np.load(few_dir+"few/files/modeselector_files/FastSchwarzschildEccentricFluxBicubic/precomputed_mode_mask.npy")
+        self.masked_mode_list = [self.neural_mode_list[maskind] for maskind in self.precomputed_mask]
 
         # import torch here in case users don't want it otherwise
         # if torch doesn't import properly, raise
@@ -295,6 +303,11 @@ class NeuralModeSelector(ParallelModuleBase):
         """Confirms GPU capability"""
         return True
 
+    @property
+    def is_predictive(self):
+        """Whether this mode selector should be used before or after amplitude generation"""
+        return True
+    
     def attributes_ModeSelector(self):
         """
         attributes:
@@ -350,5 +363,5 @@ class NeuralModeSelector(ParallelModuleBase):
             mode_predictions = self.model(inputs)
             keep_inds = self.torch.where(mode_predictions > self.threshold)[0].int().cpu().numpy()
         # return list of modes for kept indices
-        selected_modes = [self.base_mode_list[ind] for ind in keep_inds]
+        selected_modes = [self.masked_mode_list[ind] for ind in keep_inds]
         return selected_modes
