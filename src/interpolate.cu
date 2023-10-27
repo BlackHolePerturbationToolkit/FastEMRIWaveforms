@@ -1044,22 +1044,22 @@ cmplx SPAFunc(const double x)
 
 
 // build mode value with specific phase and amplitude values; mode indexes; and spherical harmonics
-CUDA_CALLABLE_MEMBER
-cmplx get_mode_value_fd(double t, double f, double fdot, double fddot, cmplx amp_term1, double phase_term, cmplx Ylm){
-    cmplx I(0.0, 1.0);
+// CUDA_CALLABLE_MEMBER
+// cmplx get_mode_value_fd(double t, double f, double fdot, double fddot, cmplx amp_term1, double phase_term, cmplx Ylm){
+//     cmplx I(0.0, 1.0);
 
-    // Waveform Amplitudes
-    // $x = (2\pi/3)\dot f^3/\ddot f^2$ and spafunc is $i \sqrt{x} e^{-i x} K_{1/3}(-i x)$.
-    double arg = 2.* PI * pow(fdot, 3) / (3.* pow(fddot, 2));
-    cmplx amp_term2 = -1.0 * fdot/abs(fddot) * 2./sqrt(3.) * SPAFunc(arg) / gcmplx::sqrt(cmplx(arg, 0.0));
-    //cmplx amp_term2 = 0.0;
-    cmplx out = amp_term1 * Ylm * amp_term2
-                * gcmplx::exp(
-                    I* (2. * PI * f * t - phase_term)
-                );
+//     // Waveform Amplitudes
+//     // $x = (2\pi/3)\dot f^3/\ddot f^2$ and spafunc is $i \sqrt{x} e^{-i x} K_{1/3}(-i x)$.
+//     double arg = 2.* PI * pow(fdot, 3) / (3.* pow(fddot, 2));
+//     cmplx amp_term2 = -1.0 * fdot/abs(fddot) * 2./sqrt(3.) * SPAFunc(arg) / gcmplx::sqrt(cmplx(arg, 0.0));
+//     //cmplx amp_term2 = 0.0;
+//     cmplx out = amp_term1 * Ylm * amp_term2
+//                 * gcmplx::exp(
+//                     I* (2. * PI * f * t - phase_term)
+//                 );
 
-    return out;
-}
+//     return out;
+// }
 
 
 CUDA_CALLABLE_MEMBER
@@ -1140,6 +1140,8 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
     double f_r_c3;
 
     double roots[3];
+
+    cmplx I(0.0, 1.0);
 
     // number of splines
     int num_base = (2 * num_teuk_modes + num_pars) * init_length;
@@ -1351,16 +1353,37 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                         cmplx R_amp(R_mode_re, R_mode_im);
                         // if (i == 1653451) printf("%d %d %d %.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", i, m, n, t, f, fdot, fddot, R_amp.real(), R_amp.imag(), phase_term, fddot_phi_i, fddot_r_i);
                         // if (i == 1653451) printf("%d %d %d %.12e %.12e %.12e %.12e %.12e %.12e %.12e\n", i, m, n, t, f, fdot, fddot, R_amp.real(), R_amp.imag(), phase_term);
-                    
-                        cmplx R_tmp = get_mode_value_fd(t, f, fdot, fddot, R_amp, phase_term, Ylm_plus_m);
+
+                        // store some intermediate quantities to save some function evaluations
+                        
+                        // commutativity of the negative signs:
+                        // SPAFUNC
+                        // // bessel function: ix -> -ix is conjugate
+                        // // sqrt: sqrt(-x) = i sqrt(x)
+                        // // e^-ix: x -> -x is conjugate
+                        // then i\sqrt{-x} e^{-i -x} K_{1/3}(-i -x) -> conj(i * (-i) * \sqrt{x} e^{-i x} K_{1/3}(-i x))
+
+                        // 1 / sqrt(-x) -> 1 / i sqrt(x) under x -> -x, which cancels with the i from the first sqrt
+                        // so:
+                        // amp_term2(-x) = conj(-1.0 * -fdot/abs(fddot) * 2./sqrt(3.) * i\sqrt{x} e^{-i x} K_{1/3}(-i x)) / sqrt(-x)
+                        //               = conj(-1.0 * -fdot/abs(fddot) * 2./sqrt(3.) * i * (-i) * \sqrt{x} e^{-i x} K_{1/3}(-i x)) / (i sqrt(x))
+                        //               = conj(-1.0 * fdot/abs(fddot) * 2./sqrt(3.) * i\sqrt{x} e^{-i x} K_{1/3}(-i x) / sqrt(x))
+                        //               = conj(amp_term2(x))
+
+                        double temp_arg = 2.* PI * pow(fdot, 3) / (3.* pow(fddot, 2));
+                        cmplx amp_term2 = -1.0 * fdot/abs(fddot) * 2./sqrt(3.) * SPAFunc(temp_arg) / gcmplx::sqrt(cmplx(temp_arg, 0.0)); 
+                        
+                        cmplx temp_exp = R_amp * amp_term2 * gcmplx::exp(I* (2. * PI * f * t - phase_term));
+
+                        cmplx R_tmp = Ylm_plus_m * temp_exp;  // combine with spherical harmonic
 
                         // TODO: improve for generic
                         cmplx L_tmp(0.0, 0.0);
                         if ((m != 0.0) && (include_minus_m))
                         {
-                            L_tmp = get_mode_value_fd(t, -f, -fdot, -fddot, gcmplx::conj(R_amp), -phase_term, Ylm_minus_m);
+
+                            L_tmp = Ylm_minus_m * gcmplx::conj(temp_exp);  // as above, take the conjugate and we're done
                         }
-                        
                         
                         //if (m + k + n != 0)
                         //{
