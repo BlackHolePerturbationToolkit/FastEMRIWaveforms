@@ -26,5 +26,8 @@ src/interpolate.cpp
 src/matmul.cpp
 src/pyinterp_cpu.pyx
 src/pymatmul_cpu.pyx
+src/pymatmul.cpp
+src/pyinterp.cpp
+src/gpuAAKWrap.cpp
 *.DS_Store
 *.ipynb_checkpoints
