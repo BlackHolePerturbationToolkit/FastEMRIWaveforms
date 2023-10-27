@@ -260,7 +260,9 @@ class NeuralModeSelector(ParallelModuleBase):
     def __init__(self, mode_ind_list, threshold=0.5, **kwargs):
         ParallelModuleBase.__init__(self, **kwargs)
 
-        self.precomputed_mask = np.load(dir_path+'/modeselector_files/precomputed_mode_mask.npy')
+        few_dir = dir_path + + "/../../"  # TODO proper file handling
+
+        self.precomputed_mask = np.load(few_dir+"files/modeselector_files/FastSchwarzschildEccentricFluxBicubic/precomputed_mode_mask.npy")
         self.base_mode_list = [mode_ind_list[maskind] for maskind in self.precomputed_mask]
 
         # we set the pytorch device here for use with the neural network
@@ -280,13 +282,13 @@ class NeuralModeSelector(ParallelModuleBase):
             raise RuntimeError("pytorch has not been installed with CUDA capability. Fix installation or set use_gpu=False.")
         
         try:
-            self.load_model(dir_path+"/modeselector_files/neural_mode_selector.tjm")
+            self.load_model(few_dir+"files/modeselector_files/FastSchwarzschildEccentricFluxBicubic/neural_mode_selector.tjm")
         except FileNotFoundError:
             raise FileNotFoundError("Neural mode predictor model file not found. ")
 
         self.threshold = threshold
-        self.vector_min = np.load(dir_path+"/modeselector_files/vector_min.npy")
-        self.vector_max = np.load(dir_path+"/modeselector_files/vector_max.npy")
+        self.vector_min = np.load(few_dir+"files/modeselector_files/FastSchwarzschildEccentricFluxBicubic/vector_min.npy")
+        self.vector_max = np.load(few_dir+"files/modeselector_files/FastSchwarzschildEccentricFluxBicubic/vector_max.npy")
 
     @property
     def gpu_capability(self):
