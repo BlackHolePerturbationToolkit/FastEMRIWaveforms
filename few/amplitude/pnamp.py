@@ -245,8 +245,7 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
             if len(q_in) != 1:
                 raise ValueError("Length of theta array must be same as p,e,Y if input as an array rather than a scalar.")
             q_in = xp.repeat(q_in, len(p_in))
-        for item in Almkn_out, l_all, m_all, k_all, n_all, q_in, theta_in, p_in, e_in, Y_in, OmegaR_in, OmegaTheta_in, OmegaPhi_in, num_modes, input_len, include_spheroidal_harmonics:
-            print(type(item))
+        
         self.Zlmkn8_5PNe10(Almkn_out, l_all, m_all, k_all, n_all, q_in, theta_in, p_in, e_in, Y_in, OmegaR_in, OmegaTheta_in, OmegaPhi_in, num_modes, input_len, include_spheroidal_harmonics)
 
         # reshape the teukolsky modes
