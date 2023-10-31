@@ -1,4 +1,5 @@
 # from future.utils import iteritems
+from copy import deepcopy
 import os
 import sys
 from os.path import join as pjoin
@@ -87,11 +88,17 @@ def customize_compiler_for_nvcc(self):
     # object but distutils doesn't have the ability to change compilers
     # based on source extension: we add it.
     def _compile(obj, src, ext, cc_args, extra_postargs, pp_opts):
-        if os.path.splitext(src)[1] == ".cu":
+        if src == 'zzzzzzzzzzzlink.cu':
+            self.set_executable('compiler_so', CUDA['nvcc'])
+            postargs = extra_postargs['nvcclink']
+            cc_args = self.cuda_object_files[1:]
+            src = self.cuda_object_files[0]
+        elif os.path.splitext(src)[1] == ".cu":
             # use the cuda for .cu files
             self.set_executable("compiler_so", CUDA["nvcc"])
             # use only a subset of the extra_postargs, which are 1-1
             # translated from the extra_compile_args in the Extension class
+            self.cuda_object_files.append(obj)
             postargs = extra_postargs["nvcc"]
         else:
             postargs = extra_postargs["gcc"]
@@ -118,6 +125,13 @@ except OSError:
     run_cuda_install = False
 
 parser = argparse.ArgumentParser()
+
+parser.add_argument(
+    "--no_omp",
+    help="If provided, install without OpenMP.",
+    action="store_true",
+    default=False,
+)
 
 parser.add_argument(
     "--lapack_lib",
@@ -173,6 +187,8 @@ for key1, key2 in [
         except ValueError:
             pass
 
+use_omp = not args.no_omp
+
 # Obtain the numpy include directory. This logic works across numpy versions.
 try:
     numpy_include = numpy.get_include()
@@ -212,6 +228,12 @@ elif args.gsl_lib is not None or args.gsl_include is not None:
 else:
     add_gsl = False
 
+if "--no_omp" in sys.argv:
+    use_omp = False
+    sys.argv.remove("--no_omp")
+else:
+    use_omp = True
+
 fp_out_name = "few/utils/constants.py"
 fp_in_name = "include/global.h"
 
@@ -227,14 +249,22 @@ with open(fp_out_name, "w") as fp_out:
                         string_out = line.split()[1] + " = " + line.split()[2] + "\n"
                         fp_out.write(string_out)
 
-                    except ValueError as e:
+                    except (ValueError) as e:
                         continue
 
+# gather pn amplitude files
+files_for_pn_amp = []
+lmax_pn = 4
+for l in range(2, lmax_pn + 1):
+    path = f"hat_Zlmkn8_5PNe10/ell={l}/"
+    for fp in os.listdir("src/" + path):
+        if fp[-2:] == "cu":
+            files_for_pn_amp.append("src/" + path + fp)
 
 # if installing for CUDA, build Cython extensions for gpu modules
 if run_cuda_install:
     gpu_extension = dict(
-        libraries=["gsl", "gslcblas", "cudart", "cublas", "cusparse"],
+        libraries=["gsl", "gslcblas", "cudart", "cublas", "cusparse", "gomp"],
         library_dirs=[CUDA["lib64"]],
         runtime_library_dirs=[CUDA["lib64"]],
         language="c++",
@@ -243,7 +273,7 @@ if run_cuda_install:
         # and not with gcc the implementation of this trick is in
         # customize_compiler()
         extra_compile_args={
-            "gcc": ["-std=c++11", "-fopenmp"],  # '-g'],
+            "gcc": ["-std=c++11", "-fopenmp", "-D__USE_OMP__"],  # '-g'],
             "nvcc": [
                 "-arch=sm_70",
                 "-gencode=arch=compute_50,code=sm_50",
@@ -259,14 +289,24 @@ if run_cuda_install:
                 "-c",
                 "--compiler-options",
                 "'-fPIC'",
+                "-Xcompiler",
+                "-fopenmp",
+                "-D__USE_OMP__",
                 # "-G",
                 # "-g",
                 # "-O0",
                 # "-lineinfo",
             ],  # for debugging
+            'nvcclink': ['-arch_sm70', '--device-link', '--compiler-options', "'-fPIC'"]
         },
         include_dirs=[numpy_include, CUDA["include"], "include"],
     )
+
+    if use_omp is False:
+        gpu_extension["extra_compile_args"]["nvcc"].remove("-fopenmp")
+        gpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
+        gpu_extension["extra_compile_args"]["nvcc"].remove("-D__USE_OMP__")
+        gpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__") 
 
     if args.ccbin is not None:
         gpu_extension["extra_compile_args"]["nvcc"].insert(
@@ -279,22 +319,31 @@ if run_cuda_install:
 
     interp_ext = Extension(
         "pyinterp",
-        sources=["src/Utility.cc", "src/interpolate.cu", "src/pyinterp.pyx"],
-        **gpu_extension,
+        sources=["src/Utility.cc", "src/interpolate.cu", "src/pyinterp.pyx"], **gpu_extension,
     )
 
     gpuAAK_ext = Extension(
         "pygpuAAK",
-        sources=["src/Utility.cc", "src/gpuAAK.cu", "src/gpuAAKWrap.pyx"],
-        **gpu_extension,
+        sources=["src/Utility.cc", "src/gpuAAK.cu", "src/gpuAAKWrap.pyx"], **gpu_extension,
     )
+
+    gpu_extension_device = deepcopy(gpu_extension)
+    gpu_extension_device2 = deepcopy(gpu_extension)
+
+    gpu_extension_device["extra_compile_args"]["nvcc"] += ["-rdc=true", "-c", "-Xptxas", "--disable-optimizer-constants"]
+
+    pnAmp_ext = Extension(
+        "pypnamp", sources=files_for_pn_amp + ["src/Spheroidal_PN.cu", "src/Zlmkn8_5PNe10_base.cu", "src/Utility.cc", "src/pypnampWrap.pyx", "zzzzzzzzzzzlink.cu"], **gpu_extension_device
+    )
+
 
 # build all cpu modules
 cpu_extension = dict(
-    libraries=["gsl", "gslcblas", "lapack", "lapacke", "hdf5", "hdf5_hl"],
+    libraries=["gsl", "gslcblas", "lapack", "lapacke", "gomp", "hdf5", "hdf5_hl"],
     language="c++",
     runtime_library_dirs=[],
-    extra_compile_args={"gcc": ["-std=c++11", "-fopenmp", "-fPIC"]},  # '-g'
+    extra_compile_args={
+        "gcc": ["-std=c++11", "-fopenmp", "-fPIC", "-D__USE_OMP__"]},  # '-g'
     include_dirs=[numpy_include, "include"],
     library_dirs=None,
     # library_dirs=["/home/ajchua/lib/"],
@@ -315,6 +364,10 @@ if add_gsl:
         else cpu_extension["library_dirs"] + gsl_lib
     )
     cpu_extension["include_dirs"] += gsl_include
+
+if use_omp is False:
+    cpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
+    cpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
 
 Interp2DAmplitude_ext = Extension(
     "pyInterp2DAmplitude",
@@ -353,8 +406,8 @@ fund_freqs_ext = Extension(
 # also copy pyx files to cpu version
 src = "src/"
 
-cp_cu_files = ["matmul", "interpolate", "gpuAAK"]
-cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap"]
+cp_cu_files = ["matmul", "interpolate", "gpuAAK", "Zlmkn8_5PNe10_base", "Spheroidal_PN"] + [fp[4:-3] for fp in files_for_pn_amp]
+cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap", "pyampinterp2D", "pypnampWrap"]
 
 for fp in cp_cu_files:
     shutil.copy(src + fp + ".cu", src + fp + ".cpp")
@@ -367,22 +420,21 @@ matmul_cpu_ext = Extension(
 )
 
 interp_cpu_ext = Extension(
-    "pyinterp_cpu",
-    sources=["src/Utility.cc", "src/interpolate.cpp", "src/pyinterp_cpu.pyx"],
-    **cpu_extension,
+    "pyinterp_cpu", sources=["src/Utility.cc", "src/interpolate.cpp", "src/pyinterp_cpu.pyx"], **cpu_extension,
 )
 
 AAK_cpu_ext = Extension(
-    "pycpuAAK",
-    sources=["src/Utility.cc", "src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"],
-    **cpu_extension,
+    "pycpuAAK", sources=["src/Utility.cc", "src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"], **cpu_extension,
 )
+
+cpu_files_for_pn_amp = [fp[:-3] + ".cpp" for fp in files_for_pn_amp]
+pnAmp_cpu_ext = Extension(
+        "pycpupnamp", sources=cpu_files_for_pn_amp + ["src/Spheroidal_PN.cpp", "src/Utility.cc", "src/Zlmkn8_5PNe10_base.cpp", "src/pypnampWrap_cpu.pyx"], **cpu_extension
+    )
 
 
 spher_harm_ext = Extension(
-    "pySpinWeightedSpherHarm",
-    sources=["src/SWSH.cc", "src/pySWSH.pyx"],
-    **cpu_extension,
+    "pySpinWeightedSpherHarm", sources=["src/SWSH.cc", "src/pySWSH.pyx"], **cpu_extension,
 )
 
 cpu_extensions = [
@@ -394,10 +446,11 @@ cpu_extensions = [
     Interp2DAmplitude_ext,
     fund_freqs_ext,
     AAK_cpu_ext,
+    pnAmp_cpu_ext,
 ]
 
 if run_cuda_install:
-    gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext]
+    gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext, pnAmp_ext]
     extensions = gpu_extensions + cpu_extensions
 else:
     extensions = cpu_extensions
