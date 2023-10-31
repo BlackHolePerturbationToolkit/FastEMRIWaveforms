@@ -21,6 +21,10 @@ cdef extern from "interpolate.hh":
               double *frequencies, int *mode_start_inds, int *mode_end_inds, int num_segments, cmplx *Ylm_all, int zero_index,
               bool include_minus_m, bool separate_modes);
 
+    void get_waveform_generic(cmplx *waveform,
+             double *interp_array,
+              int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
+              double delta_t, double *old_time_arr, int init_length, int data_length, int *interval_inds, bool separate_modes);
 
 def interpolate_arrays_wrap(*args, **kwargs):
 
@@ -85,3 +89,25 @@ def get_waveform_generic_fd_wrap(*args, **kwargs):
               delta_t, <double *>old_time_arr_in, init_length, data_length,
               <double *>frequencies_in, <int *>mode_start_inds_in, <int *>mode_end_inds_in, num_segments,
               <cmplx *>Ylm_all_in, zero_index, include_minus_m, separate_modes)
+
+def get_waveform_generic_wrap(*args, *kwargs)
+
+    targs, kwargs = wrapper(*args, **kwargs)
+
+    (waveform,
+             interp_array,
+              m_arr_in, k_arr_in, n_arr_in, num_teuk_modes,
+            delta_t, old_time_arr, init_length, data_length, interval_inds, separate_modes) = targs
+
+    cdef size_t waveform_in = waveform
+    cdef size_t interp_array_in = interp_array
+    cdef size_t m_arr_in_in = m_arr_in
+    cdef size_t k_arr_in_in = k_arr_in
+    cdef size_t n_arr_in_in = n_arr_in
+    cdef size_t old_time_arr_in = old_time_arr
+    cdef size_t interval_inds_in = interval_inds
+
+    get_waveform_generic(<cmplx *>waveform_in,
+             <double *>interp_array_in,
+              <int *>m_arr_in_in, <int *>k_arr_in_in, <int *>n_arr_in_in, num_teuk_modes,
+            delta_t, <double *>old_time_arr_in, init_length, data_length, <int *>interval_inds_in, separate_modes);
