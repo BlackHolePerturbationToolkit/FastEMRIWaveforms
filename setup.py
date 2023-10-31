@@ -80,6 +80,9 @@ def customize_compiler_for_nvcc(self):
     # Tell the compiler it can processes .cu
     self.src_extensions.append(".cu")
 
+    # track all the object files generated with cuda device code
+    self.cuda_object_files = []
+
     # Save references to the default compiler_so and _comple methods
     default_compiler_so = self.compiler_so
     super = self._compile
@@ -125,13 +128,6 @@ except OSError:
     run_cuda_install = False
 
 parser = argparse.ArgumentParser()
-
-parser.add_argument(
-    "--no_omp",
-    help="If provided, install without OpenMP.",
-    action="store_true",
-    default=False,
-)
 
 parser.add_argument(
     "--lapack_lib",
@@ -187,8 +183,6 @@ for key1, key2 in [
         except ValueError:
             pass
 
-use_omp = not args.no_omp
-
 # Obtain the numpy include directory. This logic works across numpy versions.
 try:
     numpy_include = numpy.get_include()
@@ -228,11 +222,6 @@ elif args.gsl_lib is not None or args.gsl_include is not None:
 else:
     add_gsl = False
 
-if "--no_omp" in sys.argv:
-    use_omp = False
-    sys.argv.remove("--no_omp")
-else:
-    use_omp = True
 
 fp_out_name = "few/utils/constants.py"
 fp_in_name = "include/global.h"
@@ -249,7 +238,7 @@ with open(fp_out_name, "w") as fp_out:
                         string_out = line.split()[1] + " = " + line.split()[2] + "\n"
                         fp_out.write(string_out)
 
-                    except (ValueError) as e:
+                    except ValueError as e:
                         continue
 
 # gather pn amplitude files
@@ -302,12 +291,6 @@ if run_cuda_install:
         include_dirs=[numpy_include, CUDA["include"], "include"],
     )
 
-    if use_omp is False:
-        gpu_extension["extra_compile_args"]["nvcc"].remove("-fopenmp")
-        gpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
-        gpu_extension["extra_compile_args"]["nvcc"].remove("-D__USE_OMP__")
-        gpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__") 
-
     if args.ccbin is not None:
         gpu_extension["extra_compile_args"]["nvcc"].insert(
             0, "-ccbin={0}".format(args.ccbin)
@@ -342,8 +325,7 @@ cpu_extension = dict(
     libraries=["gsl", "gslcblas", "lapack", "lapacke", "gomp", "hdf5", "hdf5_hl"],
     language="c++",
     runtime_library_dirs=[],
-    extra_compile_args={
-        "gcc": ["-std=c++11", "-fopenmp", "-fPIC", "-D__USE_OMP__"]},  # '-g'
+    extra_compile_args={"gcc": ["-std=c++11", "-fopenmp", "-fPIC"]},  # '-g'
     include_dirs=[numpy_include, "include"],
     library_dirs=None,
     # library_dirs=["/home/ajchua/lib/"],
@@ -364,10 +346,6 @@ if add_gsl:
         else cpu_extension["library_dirs"] + gsl_lib
     )
     cpu_extension["include_dirs"] += gsl_include
-
-if use_omp is False:
-    cpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
-    cpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
 
 Interp2DAmplitude_ext = Extension(
     "pyInterp2DAmplitude",
