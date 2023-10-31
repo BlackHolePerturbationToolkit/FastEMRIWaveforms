@@ -129,7 +129,7 @@ class GenerateEMRIWaveform:
             BicubicAmplitudeSchwarzschildEccentricFlux
             SlowSchwarzschildEccentricFlux
             Pn5AAKWaveform
-            TODO fix name
+            Pn5TrajPn5AdiabaticWaveform
             """
         )
 
@@ -1939,10 +1939,8 @@ class Pn5TrajPn5AdiabaticWaveform(Pn5AdiabaticAmp, GenericModeDecomposedWaveform
 
         if output_type == "td":
             sum_module = InterpolatedModeSumGeneric
-        elif output_type == "tf":
-            sum_module = InterpolatedModeSumGenericTF
         else:
-            raise ValueError("output_type must be td or tf.")
+            raise ValueError("output_type must be td.")
         
         GenericModeDecomposedWaveformBase.__init__(
             self,
