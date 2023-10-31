@@ -90,7 +90,7 @@ def get_waveform_generic_fd_wrap(*args, **kwargs):
               <double *>frequencies_in, <int *>mode_start_inds_in, <int *>mode_end_inds_in, num_segments,
               <cmplx *>Ylm_all_in, zero_index, include_minus_m, separate_modes)
 
-def get_waveform_generic_wrap(*args, *kwargs)
+def get_waveform_generic_wrap(*args, **kwargs):
 
     targs, kwargs = wrapper(*args, **kwargs)
 
