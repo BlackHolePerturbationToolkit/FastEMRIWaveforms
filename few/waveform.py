@@ -1694,6 +1694,11 @@ class GenericModeDecomposedWaveformBase(
 
         """
 
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
+
         # makes sure viewing angles are allowable
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
         self.sanity_check_init(M, mu, a, p0, e0, x0)
@@ -1720,18 +1725,18 @@ class GenericModeDecomposedWaveformBase(
 
         self.end_time = t[-1]
         # convert for gpu
-        t = self.xp.asarray(t)
-        p = self.xp.asarray(p)
-        e = self.xp.asarray(e)
-        x = self.xp.asarray(x)
-        Phi_phi = self.xp.asarray(Phi_phi)
-        Phi_theta = self.xp.asarray(Phi_theta)
-        Phi_r = self.xp.asarray(Phi_r)
+        t = xp.asarray(t)
+        p = xp.asarray(p)
+        e = xp.asarray(e)
+        x = xp.asarray(x)
+        Phi_phi = xp.asarray(Phi_phi)
+        Phi_theta = xp.asarray(Phi_theta)
+        Phi_r = xp.asarray(Phi_r)
 
         # split into batches
 
         if batch_size == -1 or self.allow_batching is False:
-            inds_split_all = [self.xp.arange(len(t))]
+            inds_split_all = [xp.arange(len(t))]
         else:
             split_inds = []
             i = 0
@@ -1741,7 +1746,7 @@ class GenericModeDecomposedWaveformBase(
                     break
                 split_inds.append(i)
 
-            inds_split_all = self.xp.split(self.xp.arange(len(t)), split_inds)
+            inds_split_all = xp.split(xp.arange(len(t)), split_inds)
 
         # select tqdm if user wants to see progress
         iterator = enumerate(inds_split_all)
@@ -1868,7 +1873,7 @@ class GenericModeDecomposedWaveformBase(
 
             # if batching, need to add the waveform
             if i > 0:
-                waveform = self.xp.concatenate([waveform, waveform_temp])
+                waveform = xp.concatenate([waveform, waveform_temp])
 
             # return entire waveform
             else:
