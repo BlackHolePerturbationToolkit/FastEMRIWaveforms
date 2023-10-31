@@ -29,5 +29,11 @@ src/pymatmul_cpu.pyx
 src/pymatmul.cpp
 src/pyinterp.cpp
 src/gpuAAKWrap.cpp
+src/Zlmkn8_5PNe10_base.cpp
+src/Spheroidal_PN.cpp
+src/pypnampWrap.cpp
+src/pypnampWrap_cpu.cpp
+src/pypnampWrap_cpu.pyx
+src/hat_Zlmkn8_5PNe10/*/*.cpp
 *.DS_Store
 *.ipynb_checkpoints
