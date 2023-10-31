@@ -1716,13 +1716,13 @@ void make_generic_kerr_waveform(cmplx *waveform,
             cmplx R_amp(R_mode_re, R_mode_im);
             cmplx L_amp(L_mode_re, L_mode_im);
 
-            cmplx R_tmp = get_mode_value_generic(R_amp, Phi_phi_i, Phi_r_i, Phi_theta_i, m, k, n);
+            cmplx R_tmp = get_mode_value_generic(R_amp, Phi_phi_i, Phi_theta_i, Phi_r_i,  m, k, n);
 
             
             cmplx L_tmp(0.0, 0.0);
             if (m + k + n != 0)
             {
-              L_tmp = get_mode_value_generic(L_amp, Phi_phi_i, Phi_r_i, Phi_theta_i, -m, -k, -n);
+              L_tmp = get_mode_value_generic(L_amp, Phi_phi_i, Phi_theta_i, Phi_r_i, -m, -k, -n);
             }
 
             cmplx wave_mode_out(0.0, 0.0);
