@@ -534,13 +534,18 @@ class InterpolatedModeSumGeneric(SummationBase, GenericWaveform, ParallelModuleB
 
         """
 
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
+
         init_len = len(t)
         num_teuk_modes = teuk_modes.shape[1]
         data_length = self.num_pts
 
         length = init_len
         ninterps = self.ndim + 4 * num_teuk_modes  # 4 for re and im of combinations of Slm and Zlmkn
-        y_all = self.xp.zeros((ninterps, length))
+        y_all = xp.zeros((ninterps, length))
 
         # R modes
         y_all[: num_teuk_modes] = teuk_modes[:, :, 0].real.T
@@ -555,22 +560,22 @@ class InterpolatedModeSumGeneric(SummationBase, GenericWaveform, ParallelModuleB
 
         spline = CubicSplineInterpolant(t, y_all, use_gpu=self.use_gpu)
 
-        new_time_vals = self.xp.arange(data_length) * dt
+        new_time_vals = xp.arange(data_length) * dt
 
-        interval_inds = self.xp.searchsorted(t, new_time_vals, side="right").astype(self.xp.int32) - 1
+        interval_inds = xp.searchsorted(t, new_time_vals, side="right").astype(xp.int32) - 1
 
         # scale waveform array for separating modes
         if separate_modes:
-            self.waveform = self.xp.tile(self.waveform, (2 * num_teuk_modes, 1)).flatten()
+            self.waveform = xp.tile(self.waveform, (2 * num_teuk_modes, 1)).flatten()
 
         # the base class function __call__ will return the waveform
         # TODO: make better spline interp_arry part?
         self.get_waveform(
             self.waveform,
             spline.interp_array.reshape(spline.reshape_shape).transpose((0, 2, 1)).flatten().copy(),
-            m_arr.astype(self.xp.int32),
-            k_arr.astype(self.xp.int32),
-            n_arr.astype(self.xp.int32), 
+            m_arr.astype(xp.int32),
+            k_arr.astype(xp.int32),
+            n_arr.astype(xp.int32), 
             num_teuk_modes,
             dt, 
             t, 
