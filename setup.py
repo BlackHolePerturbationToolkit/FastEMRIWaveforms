@@ -385,7 +385,7 @@ fund_freqs_ext = Extension(
 src = "src/"
 
 cp_cu_files = ["matmul", "interpolate", "gpuAAK", "Zlmkn8_5PNe10_base", "Spheroidal_PN"] + [fp[4:-3] for fp in files_for_pn_amp]
-cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap", "pyampinterp2D", "pypnampWrap"]
+cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap", "pypnampWrap"]
 
 for fp in cp_cu_files:
     shutil.copy(src + fp + ".cu", src + fp + ".cpp")
