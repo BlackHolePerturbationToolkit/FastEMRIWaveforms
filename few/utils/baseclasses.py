@@ -504,6 +504,12 @@ class GenericWaveform(ParallelModuleBase, ABC):
     def __init__(self, *args, use_gpu=False, **kwargs):
 
         ParallelModuleBase.__init__(self, *args, use_gpu=use_gpu, **kwargs)
+
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
+
         # some descriptive information
         self.background = "Kerr"
         self.descriptor = "generic orbits"
@@ -522,7 +528,7 @@ class GenericWaveform(ParallelModuleBase, ABC):
                     for n in range(0, self.nmax + 1):
                         md.append([l,m,k,n])
 
-        md = self.xp.asarray(md)
+        md = xp.asarray(md)
         self.l_arr = md[:, 0].copy()
         self.m_arr = md[:, 1].copy()
         self.k_arr = md[:, 2].copy()
@@ -635,7 +641,7 @@ class GenericWaveform(ParallelModuleBase, ABC):
             )
 
 
-class Pn5AAK(ABC):
+class Pn5AAK(ParallelModuleBase, ABC):
     """Base class for Pn5AAK waveforms.
 
     This class contains some basic checks and information for AAK waveforms
@@ -661,7 +667,8 @@ class Pn5AAK(ABC):
         """
         pass
 
-    def __init__(self, use_gpu=False, **kwargs):
+    def __init__(self, *args, use_gpu=False, **kwargs):
+        ParallelModuleBase.__init__(self, *args, use_gpu=use_gpu, **kwargs)
         # some descriptive information
         self.background = "Kerr"
         self.descriptor = "generic orbits"
@@ -773,7 +780,7 @@ class Pn5AAK(ABC):
                 "Y0 is greater than 1 or less than -1. Must be between -1 and 1."
             )
 
-class Pn5AdiabaticAmp(Pn5AAK):
+class Pn5AdiabaticAmp(ParallelModuleBase, ABC):
     """Base class for Pn5AAK waveforms.
 
     # TODO: update 
@@ -787,7 +794,7 @@ class Pn5AdiabaticAmp(Pn5AAK):
 
     """
 
-    def attributes_Pn5AAK(self):
+    def attributes_Pn5AdiabaticAmp(self):
         """
         attributes:
             xp (module): numpy or cupy based on hardware chosen.
@@ -800,7 +807,13 @@ class Pn5AdiabaticAmp(Pn5AAK):
         """
         pass
 
-    def __init__(self, use_gpu=False, **kwargs):
+    def __init__(self, *args, use_gpu=False, **kwargs):
+        ParallelModuleBase.__init__(self, *args, use_gpu=use_gpu, **kwargs)
+        
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
 
         # some descriptive information
         self.background = "Kerr"
@@ -858,7 +871,7 @@ class Pn5AdiabaticAmp(Pn5AAK):
         self.num_modes = self.num_teuk_modes = len(md)
 
         # sorts the mode indexes
-        md = self.xp.asarray(md).T.astype(self.xp.int32)
+        md = xp.asarray(md).T.astype(xp.int32)
 
         # store l m and n values
         self.l_arr, self.m_arr, self.k_arr, self.n_arr = [md[i] for i in range(4)]

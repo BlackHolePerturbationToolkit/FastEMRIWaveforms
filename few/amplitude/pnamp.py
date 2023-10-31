@@ -36,10 +36,10 @@ try:
     from pypnamp import Zlmkn8_5PNe10, Zlmkn8_5PNe10
 
     # Python imports
-    import cupy as xp
+    import cupy as cp
 
 except (ImportError, ModuleNotFoundError) as e:
-    import numpy as xp
+    import numpy as np
 
 
 # get path to this file
@@ -168,13 +168,19 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
 
 
         """
+
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
+
         input_len = len(p)
         
         if specific_modes is not None:
             if not isinstance(specific_modes, list):
                 raise ValueError("If providing specific_modes, needs to be a list of tuples.")
             
-            modes_tmp = self.xp.asarray(specific_modes)
+            modes_tmp = xp.asarray(specific_modes)
             if modes_tmp.shape[0] == 4 and modes_tmp.shape[1] != 4:
                 l_all, m_all, k_all, n_all = [modes_tmp[i].copy() for i in range(4)]
                 num_modes = modes_tmp.shape[1]
@@ -194,7 +200,7 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
             l_all, m_all, k_all, n_all = self.l_arr.copy(), self.m_arr.copy(), self.k_arr.copy(), self.n_arr.copy()
     
     
-        l_all, m_all, k_all, n_all = l_all.astype(self.xp.int32), m_all.astype(self.xp.int32), k_all.astype(self.xp.int32), n_all.astype(self.xp.int32)
+        l_all, m_all, k_all, n_all = l_all.astype(xp.int32), m_all.astype(xp.int32), k_all.astype(xp.int32), n_all.astype(xp.int32)
 
         
         # 14 ms single thread
@@ -226,20 +232,21 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
         #    OmegaTheta / Msec,
         #    OmegaR / Msec,
         #)
-        Almkn_out = self.xp.zeros((2 * num_modes * input_len,), dtype=complex)
+        Almkn_out = xp.zeros((2 * num_modes * input_len,), dtype=complex)
 
-        p_in, e_in, Y_in, q_in, theta_in, OmegaPhi_in, OmegaTheta_in, OmegaR_in = self.xp.asarray(self.xp.atleast_1d(p)), self.xp.asarray(self.xp.atleast_1d(e)), self.xp.asarray(self.xp.atleast_1d(Y)), self.xp.asarray(self.xp.atleast_1d(q)), self.xp.asarray(self.xp.atleast_1d(theta)), self.xp.asarray(self.xp.atleast_1d(OmegaPhi)), self.xp.asarray(self.xp.atleast_1d(OmegaTheta)), self.xp.asarray(self.xp.atleast_1d(OmegaR))
+        p_in, e_in, Y_in, q_in, theta_in, OmegaPhi_in, OmegaTheta_in, OmegaR_in = xp.asarray(xp.atleast_1d(p)), xp.asarray(xp.atleast_1d(e)), xp.asarray(xp.atleast_1d(Y)), xp.asarray(xp.atleast_1d(q)), xp.asarray(xp.atleast_1d(theta)), xp.asarray(xp.atleast_1d(OmegaPhi)), xp.asarray(xp.atleast_1d(OmegaTheta)), xp.asarray(xp.atleast_1d(OmegaR))
 
         if len(p_in) != len(theta_in):
             if len(theta_in) != 1:
                 raise ValueError("Length of theta array must be same as p,e,Y if input as an array rather than a scalar.")
-            theta_in = self.xp.repeat(theta_in, len(p_in))
+            theta_in = xp.repeat(theta_in, len(p_in))
 
         if len(p_in) != len(q_in):
             if len(q_in) != 1:
                 raise ValueError("Length of theta array must be same as p,e,Y if input as an array rather than a scalar.")
-            q_in = self.xp.repeat(q_in, len(p_in))
-
+            q_in = xp.repeat(q_in, len(p_in))
+        for item in Almkn_out, l_all, m_all, k_all, n_all, q_in, theta_in, p_in, e_in, Y_in, OmegaR_in, OmegaTheta_in, OmegaPhi_in, num_modes, input_len, include_spheroidal_harmonics:
+            print(type(item))
         self.Zlmkn8_5PNe10(Almkn_out, l_all, m_all, k_all, n_all, q_in, theta_in, p_in, e_in, Y_in, OmegaR_in, OmegaTheta_in, OmegaPhi_in, num_modes, input_len, include_spheroidal_harmonics)
 
         # reshape the teukolsky modes
