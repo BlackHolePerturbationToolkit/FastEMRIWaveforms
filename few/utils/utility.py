@@ -30,6 +30,7 @@ from pyUtility import (
     pyGetSeparatrix,
     pyKerrGeoConstantsOfMotionVectorized,
     pyY_to_xI_vector,
+    pyKerrEqSpinFrequenciesCorr
 )
 
 # check to see if cupy is available for gpus
@@ -164,6 +165,37 @@ def p_to_y(p, e, use_gpu=False):
         return np.log(-(21 / 10) - 2 * e + p)
 
 
+
+def kerr_p_to_u(a, p, e, xI, use_gpu=False):
+    """Convert from separation :math:`p` to :math:`y` coordinate
+
+    Conversion from the semilatus rectum or separation :math:`p` to :math:`y`.
+
+    arguments:
+        p (double scalar or 1D double xp.ndarray): Values of separation,
+            :math:`p`, to convert.
+        e (double scalar or 1D double xp.ndarray): Associated eccentricity values
+            of :math:`p` necessary for conversion.
+        use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
+
+    """
+    xp = cp if use_gpu else np
+
+    delta_p = 0.05
+    alpha = 4.0
+
+    pLSO = get_separatrix(a, e, xI)  
+    beta = alpha - delta_p
+    u = xp.log((p + beta - pLSO) / alpha)
+
+    if xp.any(u < -1e9):
+        raise ValueError("u values are too far below zero.")
+
+    # numerical errors
+    u[u < 0.0] = 0.0
+
+    return u
+
 def get_fundamental_frequencies(a, p, e, x):
     """Get dimensionless fundamental frequencies.
 
@@ -209,6 +241,61 @@ def get_fundamental_frequencies(a, p, e, x):
 
     # get frequencies
     OmegaPhi, OmegaTheta, OmegaR = pyKerrGeoCoordinateFrequencies(
+        a_in, p_in, e_in, x_in
+    )
+
+    # set output to shape of input
+    if scalar:
+        return (OmegaPhi[0], OmegaTheta[0], OmegaR[0])
+
+    else:
+        return (OmegaPhi, OmegaTheta, OmegaR)
+
+def get_fundamental_frequencies_spin_corrections(a, p, e, x):
+    """Get dimensionless fundamental frequencies.
+
+    Determines fundamental frequencies in generic Kerr from
+    `Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_.
+
+    arguments:
+        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+            black hole. If other parameters are arrays and the spin is scalar,
+            it will be cast to a 1D array.
+        p (double scalar or 1D double np.ndarray): Values of separation,
+            :math:`p`.
+        e (double scalar or 1D double np.ndarray): Values of eccentricity,
+            :math:`e`.
+        x (double scalar or 1D double np.ndarray): Values of cosine of the
+            inclination, :math:`x=\cos{I}`. Please note this is different from
+            :math:`Y=\cos{\iota}`.
+
+    returns:
+        tuple: Tuple of (OmegaPhi, OmegaTheta, OmegaR).
+            These are 1D arrays or scalar values depending on inputs.
+
+    """
+
+    # check if inputs are scalar or array
+    if isinstance(p, float):
+        scalar = True
+
+    else:
+        scalar = False
+
+    p_in = np.atleast_1d(p)
+    e_in = np.atleast_1d(e)
+    x_in = np.atleast_1d(x)
+
+    # cast the spin to the same size array as p
+    if isinstance(a, float):
+        a_in = np.full_like(p_in, a)
+    else:
+        a_in = np.atleast_1d(a)
+
+    assert len(a_in) == len(p_in)
+
+    # get frequencies
+    OmegaPhi, OmegaTheta, OmegaR = pyKerrEqSpinFrequenciesCorr(
         a_in, p_in, e_in, x_in
     )
 
