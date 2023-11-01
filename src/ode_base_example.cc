@@ -25,6 +25,7 @@
 
 #include "dIdt8H_5PNe10.h"
 #include "ode.hh"
+#include "KerrEquatorial.h"
 
 #define pn5_Y
 #define pn5_citation1 Pn5_citation
@@ -36,8 +37,14 @@ void pn5(double* pdot, double* edot, double* Ydot,
     // evaluate ODEs
 
     // the frequency variables are pointers!
-    double x = Y_to_xI(a, p, e, Y);
-    KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);
+    if (abs(Y) == 1.) {
+        double x = Y;
+        KerrGeoEquatorialCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);// shift to avoid problem in fundamental frequencies
+    }
+    else { 
+        double x = Y_to_xI(a, p, e, Y);
+        KerrGeoCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);
+    }
 
 	int Nv = 10;
     int ne = 10;
@@ -173,5 +180,138 @@ SchwarzEccFlux::~SchwarzEccFlux()
     delete interps->Ldot;
     delete interps;
 
+
+}
+
+//--------------------------------------------------------------------------------
+Vector fill_vector(std::string fp){
+	ifstream file_x(fp);
+
+    if (file_x.fail())
+    {
+        throw std::runtime_error("The file  did not open sucessfully. Make sure it is located in the proper directory.");
+    }
+    else{
+        // cout << "importing " + fp << endl;
+    }
+
+	// Load the flux data into arrays
+	string string_x;
+    Vector xs;
+	double x;
+	while(getline(file_x, string_x)){
+		stringstream ss(string_x);
+		ss >> x ;
+		xs.push_back(x);
+	}
+    return xs;
+
+}
+
+KerrEccentricEquatorial::KerrEccentricEquatorial(std::string few_dir)
+{
+    std::string fp;
+}
+
+// #define KerrEccentricEquatorial_Y
+#define KerrEccentricEquatorial_equatorial
+#define KerrEccentricEquatorial_num_add_args 1
+#define KerrEccentricEquatorial_equatorial
+__deriv__
+void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdot,
+                  double* Omega_phi, double* Omega_theta, double* Omega_r,
+                  double epsilon, double a, double p, double e, double x, double* additional_args)
+{
+
+    double p_sep = get_separatrix(a, e, x);
+    
+    // make sure we do not step into separatrix
+    if ((e < 0.0)||(p<p_sep))
+    {
+        *pdot = 0.0;
+        *edot = 0.0;
+        *xdot = 0.0;
+        return;
+    }
+    // evaluate ODEs
+    // cout << "beginning" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e << "\t" << "x=" << x << endl;
+    // auto start = std::chrono::high_resolution_clock::now();
+    // the frequency variables are pointers!
+    KerrGeoEquatorialCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);// shift to avoid problem in fundamental frequencies
+    // KerrScott(Omega_phi, Omega_theta, Omega_r, a, p, e, x);
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double>  msec = end-start;
+    // std::cout << "elapsed time fund freqs: " << msec.count() << "s\n";
+    
+    double r,Omega_phi_sep_circ;
+    // reference frequency
+    
+    Omega_phi_sep_circ = 1.0/ (a*copysign(1.0,x) + pow(p_sep/( 1.0 + e ), 1.5) );
+    r = pow(abs(*Omega_phi)/ Omega_phi_sep_circ, 2.0/3.0 ) * (1.0 + e);
+    
+    if (isnan(r)){
+        cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
+        cout << "omegaphi circ " <<  Omega_phi_sep_circ << " omegaphi " <<  *Omega_phi << " omegar " <<  *Omega_r <<endl;
+        throw std::exception();
+        *pdot = 0.0;
+        *edot = 0.0;
+        *xdot = 0.0;
+        return;
+        }
+
+    
+    double risco = get_separatrix(a, 0.0, x);
+    double one_minus_e2 = 1. - pow(e,2);
+
+    // Fluxes in p,e from Chebyshev
+    // double pdot_cheb, edot_cheb;
+    // pdot_cheb = pdot_Cheby_full(a*copysign(1.0,x), e, r) * ((8.*pow(one_minus_e2,1.5)*(8. + 7.*pow(e,2)))/(5.*p*(pow(p - risco,2) - pow(-risco + p_sep,2))));
+    // edot_cheb = edot_Cheby_full(a*copysign(1.0,x), e, r) * ((pow(one_minus_e2,1.5)*(304. + 121.*pow(e,2)))/(15.*pow(p,2)*(pow(p - risco,2) - pow(-risco + p_sep,2))));
+
+    double Edot, Ldot, Qdot, pdot_here, edot_here, xdot_here, E_here, L_here, Q_here;
+    KerrGeoConstantsOfMotion(&E_here, &L_here, &Q_here, a, p, e, x);
+    
+    // Transform to pdot, edot for the scalar fluxes
+    
+    // Jac(a, p, e, x, E_here, L_here, Q_here, Edot, Ldot, Qdot, pdot_here, edot_here, xdot_here);
+    // pdot_edot_from_fluxes(pdot_here, edot_here, Edot, Ldot, a, e, p);
+    // Fluxes in E,L from Chebyshev
+    double pdot_out, edot_out, xdot_out;
+    // sign of function
+    double factor = additional_args[0]*additional_args[0]/4;
+    // cout << factor << endl;
+    
+    Edot = factor*Edot_SC(a*copysign(1.0,x), e, r, p)+Edot_GR(a*copysign(1.0,x),e,r,p);
+    Ldot = factor*Ldot_SC(a*copysign(1.0,x), e, r, p)*copysign(1.0,x)+Ldot_GR(a*copysign(1.0,x),e,r,p)*copysign(1.0,x);
+    Qdot = 0.0;
+    // cout << 'Edot \t' << Edot << endl;
+    // cout << 'Ldot \t' << Ldot << endl;
+    Jac(a, p, e, x, E_here, L_here, Q_here, -Edot, -Ldot, Qdot, pdot_out, edot_out, xdot_out);
+    // pdot_edot_from_fluxes(pdot_out, edot_out, -Edot_GR(a,e,r,p), -Ldot_GR(a,e,r,p), a, e, p);
+
+    // check Jacobiam
+    // cout << "ratio " <<  pdot_cheb/pdot_out << endl;
+    // cout << "ratio " <<  edot_cheb/edot_out << endl;
+
+    // cout << "Edot, pdot " <<  Edot << "\t" << pdot_out << endl;
+    // cout << "Ldot, edot " <<  Ldot << "\t" << edot_out << endl;
+
+    // needs adjustment for validity
+    if (e > 1e-8)
+    {
+        // the scalar flux is d^2 /4
+        *pdot = epsilon * pdot_out;
+        *edot = epsilon * edot_out;
+    }
+    else{
+        
+        *edot = 0.0;
+        *pdot = epsilon * pdot_out;
+        // cout << "end" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
+    }
+
+    *xdot = 0.0;
+
+    return;
 
 }
