@@ -248,7 +248,8 @@ class EMRIInspiral(TrajectoryBase):
             a = fill_value
 
         if self.equatorial:
-            x0 = 1.0
+            if abs(x0) != 1:
+                raise RuntimeError("Needs to be one")
 
         if self.circular:
             e0 = 0.0

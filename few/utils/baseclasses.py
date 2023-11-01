@@ -253,7 +253,7 @@ class SchwarzschildEccentric(ParallelModuleBase, ABC):
         md = xp.asarray(md).T[:, m0sort].astype(xp.int32)
 
         # store l m and n values
-        self.l_arr, self.m_arr, self.n_arr = md[0], md[1], md[2]
+        self.l_arr_no_mask, self.m_arr_no_mask, self.n_arr_no_mask = md[0], md[1], md[2]
 
         # adjust with .get method for cupy
         try:
@@ -263,10 +263,10 @@ class SchwarzschildEccentric(ParallelModuleBase, ABC):
             self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
 
         # store the mask as m != 0 is True
-        self.m0mask = self.m_arr != 0
+        self.m0mask = self.m_arr_no_mask != 0
 
         # number of m >= 0
-        self.num_m_zero_up = len(self.m_arr)
+        self.num_m_zero_up = len(self.m_arr_no_mask)
 
         # number of m == 0
         self.num_m0 = len(xp.arange(self.num_teuk_modes)[m0mask])
@@ -275,9 +275,9 @@ class SchwarzschildEccentric(ParallelModuleBase, ABC):
         self.num_m_1_up = self.num_m_zero_up - self.num_m0
 
         # create final arrays to include -m modes
-        self.l_arr = xp.concatenate([self.l_arr, self.l_arr[self.m0mask]])
-        self.m_arr = xp.concatenate([self.m_arr, -self.m_arr[self.m0mask]])
-        self.n_arr = xp.concatenate([self.n_arr, self.n_arr[self.m0mask]])
+        self.l_arr = xp.concatenate([self.l_arr_no_mask, self.l_arr_no_mask[self.m0mask]])
+        self.m_arr = xp.concatenate([self.m_arr_no_mask, -self.m_arr_no_mask[self.m0mask]])
+        self.n_arr = xp.concatenate([self.n_arr_no_mask, self.n_arr_no_mask[self.m0mask]])
 
         # mask for m >= 0
         self.m_zero_up_mask = self.m_arr >= 0

@@ -143,6 +143,11 @@ class Interp2DAmplitude(AmplitudeBase, SchwarzschildEccentric):
 
             inds_revert = np.asarray(inds_revert)
 
+        try:  # move to CPU if needed before feeding in
+            p, e = p.get(), e.get()
+        except AttributeError:
+            pass
+        
         # interface to C++
         teuk_modes = self.amplitude_generator(
             p,

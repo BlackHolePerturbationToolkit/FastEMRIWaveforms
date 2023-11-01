@@ -20,3 +20,13 @@ public:
                       double epsilon, double a, double p, double e, double Y, double* additional_args);
     ~SchwarzEccFlux();
 };
+
+class KerrEccentricEquatorial{
+public:
+
+    KerrEccentricEquatorial(std::string few_dir);
+
+    void deriv_func(double* pdot, double* edot, double* Ydot,
+                      double* Omega_phi, double* Omega_theta, double* Omega_r,
+                      double epsilon, double a, double p, double e, double x, double* additional_args);
+};
