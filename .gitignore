@@ -29,5 +29,7 @@ src/pymatmul_cpu.pyx
 src/pymatmul.cpp
 src/pyinterp.cpp
 src/gpuAAKWrap.cpp
+src/pyampinterp2D_cpu.cpp
+src/pyampinterp2D.cpp
 *.DS_Store
 *.ipynb_checkpoints
