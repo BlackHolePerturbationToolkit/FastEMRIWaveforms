@@ -1587,7 +1587,7 @@ class GenericModeDecomposedWaveformBase(
         ) = self.adjust_gpu_usage(
             use_gpu, [amplitude_kwargs, sum_kwargs, mode_selector_kwargs]
         )
-
+        
         # kwargs that are passed to the inspiral call function
         self.inspiral_kwargs = inspiral_kwargs
 
@@ -1599,9 +1599,15 @@ class GenericModeDecomposedWaveformBase(
 
         # summation generator
         self.create_waveform = sum_module(**sum_kwargs)
-
+        
         # selecting modes that contribute at threshold to the waveform
         # self.mode_selector = ModeSelector(None, **mode_selector_kwargs)
+
+        # adjust mode indices to match amplitudes
+        self.l_arr = self.amplitude_generator.l_arr
+        self.m_arr = self.amplitude_generator.m_arr
+        self.k_arr = self.amplitude_generator.k_arr
+        self.n_arr = self.amplitude_generator.n_arr
 
     @property
     def citation(self):
@@ -1961,7 +1967,6 @@ class Pn5TrajPn5AdiabaticWaveform(Pn5AdiabaticAmp, GenericModeDecomposedWaveform
             **kwargs,
         )
 
-        Pn5AdiabaticAmp.__init__(self, *args, **kwargs)
 
     def attributes_FastSchwarzschildEccentricFlux(self):
         """
