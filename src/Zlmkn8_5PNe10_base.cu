@@ -420,8 +420,8 @@ inline void Binc(const int k, const int n, const double kappa, const double w, c
     /* Compensate the initial-phase difference between NUM and PN */
     /* One CAN SET ini_phase = 0.0 if NUM/PN compairons is not needed. */
 
-    ini_phase = M_PI * (double)(-k * 0.5); // Matches Maarten's initial orbital data
-    // ini_phase = M_PI * (double)( n - k * 0.5 );  // Matches Ryuichi's initial orbital data
+    // ini_phase = M_PI * (double)(-k * 0.5); // Matches Maarten's initial orbital data
+    ini_phase = M_PI * (double)( n - k * 0.5 );  // Matches Ryuichi's initial orbital data
 
     //:::::::::::::::::::::::::::::::::::::: END WARNING !! :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
 
