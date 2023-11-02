@@ -246,7 +246,7 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
         Almkn_out = Almkn_out.reshape(2, num_modes, input_len).T
 
         # multiply by exp(m * phi) for source frame consistency
-        fact = xp.exp(1j*m_all*)[None,:]
+        fact = xp.exp(1j*m_all*phi)[None,:]
         Almkn_out[:,:,0] *= fact
         Almkn_out[:,:,1] *= fact.conj()
 
