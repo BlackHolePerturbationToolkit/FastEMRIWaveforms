@@ -420,8 +420,8 @@ inline void Binc(const int k, const int n, const double kappa, const double w, c
     /* Compensate the initial-phase difference between NUM and PN */
     /* One CAN SET ini_phase = 0.0 if NUM/PN compairons is not needed. */
 
-    ini_phase = M_PI * (double)(-k * 0.5); // Matches Maarten's initial orbital data
-    // ini_phase = M_PI * (double)( n - k * 0.5 );  // Matches Ryuichi's initial orbital data
+    // ini_phase = M_PI * (double)(-k * 0.5); // Matches Maarten's initial orbital data
+    ini_phase = M_PI * (double)( n - k * 0.5 );  // Matches Ryuichi's initial orbital data
 
     //:::::::::::::::::::::::::::::::::::::: END WARNING !! :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
 
@@ -1149,7 +1149,7 @@ void Zlmkn8_5PNe10_kernel(cmplx *Almkn_out, int *l_all, int *m_all, int *k_all, 
             double L_ImZ = R_ImZ * pow(-1.0, (double)(l_here) + (double)(k_here) + 1.0);
 
             cmplx right(Slm_out * R_ReZ, Slm_out * R_ImZ);
-            cmplx left(anti_Slm_out * R_ReZ, anti_Slm_out * R_ImZ);
+            cmplx left(anti_Slm_out * L_ReZ, anti_Slm_out * L_ImZ);
 
             Almkn_out[mode_i * num_points + i] = right;
             // left is recorded in the second half of the array

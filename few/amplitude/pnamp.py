@@ -143,7 +143,7 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
         """Confirms GPU capability"""
         return True
 
-    def get_amplitudes(self, q, p, e, Y, theta, *args, specific_modes=None, include_spheroidal_harmonics=True, **kwargs):
+    def get_amplitudes(self, q, p, e, Y, theta, phi, *args, specific_modes=None, include_spheroidal_harmonics=True, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays
@@ -225,13 +225,6 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
         # these are dimensionless and in radians
         OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(q_in, p_in, e_in, xI)
 
-        # dimensionalize the frequencies
-        # TODO: do I need to dimensionalize
-        #OmegaPhi, OmegaTheta, OmegaR = (
-        #    OmegaPhi / Msec,
-        #    OmegaTheta / Msec,
-        #    OmegaR / Msec,
-        #)
         Almkn_out = xp.zeros((2 * num_modes * input_len,), dtype=complex)
 
         p_in, e_in, Y_in, q_in, theta_in, OmegaPhi_in, OmegaTheta_in, OmegaR_in = xp.asarray(xp.atleast_1d(p)), xp.asarray(xp.atleast_1d(e)), xp.asarray(xp.atleast_1d(Y)), xp.asarray(xp.atleast_1d(q)), xp.asarray(xp.atleast_1d(theta)), xp.asarray(xp.atleast_1d(OmegaPhi)), xp.asarray(xp.atleast_1d(OmegaTheta)), xp.asarray(xp.atleast_1d(OmegaR))
@@ -252,4 +245,12 @@ class Pn5Amplitude(AmplitudeBase, Pn5AdiabaticAmp, ParallelModuleBase):
         # len(dim0) = 2, 0 is right, 1 is left
         Almkn_out = Almkn_out.reshape(2, num_modes, input_len).T
 
+        # multiply by exp(m * phi) for source frame consistency
+        fact = xp.exp(1j*m_all*)[None,:]
+        Almkn_out[:,:,0] *= fact
+        Almkn_out[:,:,1] *= fact.conj()
+
+        # mysterious and magical factor of   # TODO why do we need this?!
+        Almkn_out *= 2
+    
         return Almkn_out
