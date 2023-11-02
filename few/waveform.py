@@ -1790,6 +1790,24 @@ class GenericModeDecomposedWaveformBase(
                     raise ValueError("If mode selection is a string, must be `all`.")
 
                 teuk_modes_in = teuk_modes
+            elif isinstance(mode_selection, list):
+                if mode_selection == []:
+                    raise ValueError("If mode selection is a list, cannot be empty.")
+
+                # TODO precompute as in SchwarzschildEccentric
+                keep_modes = []
+                for lmn_in in mode_selection:
+                    l, m, k, n = lmn_in
+
+                    this_ind = xp.where( ( ( (self.l_arr == l) & (self.m_arr == m) ) & (self.k_arr == k) ) & (self.n_arr == n) )[0].item()
+                    keep_modes.append(this_ind)
+                keep_modes = xp.asarray(keep_modes, dtype=xp.int32)
+
+                self.ls = self.l_arr[keep_modes]
+                self.ms = self.m_arr[keep_modes]
+                self.ks = self.k_arr[keep_modes]
+                self.ns = self.n_arr[keep_modes]
+                teuk_modes_in = teuk_modes[:,keep_modes,:]
             """
             # get a specific subset of modes
             elif isinstance(mode_selection, list):
