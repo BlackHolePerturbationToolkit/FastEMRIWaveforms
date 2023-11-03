@@ -36,7 +36,7 @@ from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 from few.utils.utility import get_mismatch, xI_to_Y, p_to_y, check_for_file_download
 from few.amplitude.romannet import RomanAmplitude
 from .amplitude.pnamp import Pn5Amplitude
-from few.utils.modeselector import ModeSelector, NeuralModeSelector
+from few.utils.modeselector import ModeSelector, GenericModeSelector, NeuralModeSelector
 from few.utils.ylm import GetYlms
 from few.summation.directmodesum import DirectModeSum
 from few.summation.aakwave import AAKSummation
@@ -1600,14 +1600,14 @@ class GenericModeDecomposedWaveformBase(
         # summation generator
         self.create_waveform = sum_module(**sum_kwargs)
         
-        # selecting modes that contribute at threshold to the waveform
-        # self.mode_selector = ModeSelector(None, **mode_selector_kwargs)
-
         # adjust mode indices to match amplitudes
         self.l_arr = self.amplitude_generator.l_arr
         self.m_arr = self.amplitude_generator.m_arr
         self.k_arr = self.amplitude_generator.k_arr
         self.n_arr = self.amplitude_generator.n_arr
+
+        # selecting modes that contribute at threshold to the waveform
+        self.mode_selector = GenericModeSelector(self.l_arr, self.m_arr, self.k_arr, self.n_arr, **mode_selector_kwargs)
 
     @property
     def citation(self):
@@ -1808,67 +1808,18 @@ class GenericModeDecomposedWaveformBase(
                 self.ks = self.k_arr[keep_modes]
                 self.ns = self.n_arr[keep_modes]
                 teuk_modes_in = teuk_modes[:,keep_modes,:]
-            """
-            # get a specific subset of modes
-            elif isinstance(mode_selection, list):
-                if mode_selection == []:
-                    raise ValueError("If mode selection is a list, cannot be empty.")
-
-                keep_modes = self.xp.zeros(len(mode_selection), dtype=self.xp.int32)
-
-                # for removing opposite m modes
-                fix_include_ms = self.xp.full(2 * len(mode_selection), False)
-                for jj, lmn in enumerate(mode_selection):
-                    l, m, n = tuple(lmn)
-
-                    # keep modes only works with m>=0
-                    lmn_in = (l, abs(m), n)
-                    keep_modes[jj] = self.xp.int32(self.lmn_indices[lmn_in])
-
-                    if not include_minus_m:
-                        if m > 0:
-                            # minus m modes blocked
-                            fix_include_ms[len(mode_selection) + jj] = True
-                        elif m < 0:
-                            # positive m modes blocked
-                            fix_include_ms[jj] = True
-
-                self.ls = self.l_arr[keep_modes]
-                self.ms = self.m_arr[keep_modes]
-                self.ns = self.n_arr[keep_modes]
-
-                temp2 = keep_modes * (keep_modes < self.num_m0) + (
-                    keep_modes + self.num_m_1_up
-                ) * (keep_modes >= self.num_m0)
-
-                ylmkeep = self.xp.concatenate([keep_modes, temp2])
-                ylms_in = ylms[ylmkeep]
-
-                # remove modes if include_minus_m is False
-                ylms_in[fix_include_ms] = 0.0 + 1j * 0.0
-
-                teuk_modes_in = teuk_modes[:, keep_modes]
-
-            # mode selection based on input module
             else:
-                fund_freq_args = (
-                    M,
-                    0.0,
-                    p_temp,
-                    e_temp,
-                    self.xp.zeros_like(e_temp),
-                )
-                modeinds = [self.l_arr, self.m_arr, self.n_arr]
+                modeinds = [self.l_arr, self.m_arr, self.k_arr, self.n_arr]
                 (
                     teuk_modes_in,
-                    ylms_in,
                     self.ls,
                     self.ms,
+                    self.ks,
                     self.ns,
                 ) = self.mode_selector(
-                    teuk_modes, ylms, modeinds, fund_freq_args=fund_freq_args, eps=eps,
+                    teuk_modes, modeinds, eps=eps,
                 )
-            """
+
             # store number of modes for external information
             self.num_modes_kept = teuk_modes_in.shape[1]
 
