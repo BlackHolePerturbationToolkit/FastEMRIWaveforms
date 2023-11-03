@@ -1465,13 +1465,13 @@ void get_waveform_generic_fd(cmplx *waveform,
 
 
 // build mode value with specific phase and amplitude values; mode indexes; and spherical harmonics
-CUDA_CALLABLE_MEMBER
-cmplx get_mode_value_generic(cmplx teuk_mode, fod Phi_phi, fod Phi_theta, fod Phi_r, int m, int k, int n){
-    cmplx minus_I(0.0, -1.0);
-    fod phase = m * Phi_phi + k * Phi_theta + n * Phi_r;
-    cmplx out = teuk_mode * gcmplx::exp(minus_I*phase);
-    return out;
-}
+// CUDA_CALLABLE_MEMBER
+// cmplx get_mode_value_generic(cmplx teuk_mode, fod Phi_phi, fod Phi_theta, fod Phi_r, int m, int k, int n){
+//     cmplx minus_I(0.0, -1.0);
+//     fod phase = m * Phi_phi + k * Phi_theta + n * Phi_r;
+//     cmplx out = teuk_mode * gcmplx::exp(minus_I*phase);
+//     return out;
+// }
 
 // make a waveform in parallel
 // this uses an efficient summation by loading mode information into shared memory
@@ -1487,6 +1487,9 @@ void make_generic_kerr_waveform(cmplx *waveform,
   
 
     cmplx complexI(0.0, 1.0);
+    cmplx minus_I(0.0, -1.0);
+    cmplx R_mode_phase;
+
     double re_y, re_c1, re_c2, re_c3, im_y, im_c1, im_c2, im_c3;
      CUDA_SHARED double pp_y, pp_c1, pp_c2, pp_c3, pr_y, pr_c1, pr_c2, pr_c3;
 
@@ -1716,13 +1719,16 @@ void make_generic_kerr_waveform(cmplx *waveform,
             cmplx R_amp(R_mode_re, R_mode_im);
             cmplx L_amp(L_mode_re, L_mode_im);
 
-            cmplx R_tmp = get_mode_value_generic(R_amp, Phi_phi_i, Phi_theta_i, Phi_r_i,  m, k, n);
+            // cache mode phase for R and L
+            cmplx R_mode_phase = gcmplx::exp(minus_I*(m * Phi_phi_i + k * Phi_theta_i + n * Phi_r_i));
 
+            cmplx R_tmp = R_amp * R_mode_phase;
             
             cmplx L_tmp(0.0, 0.0);
             if (m + k + n != 0)
             {
-              L_tmp = get_mode_value_generic(L_amp, Phi_phi_i, Phi_theta_i, Phi_r_i, -m, -k, -n);
+              // L_mode has opposite phasing, so take the conjugate
+              L_tmp = L_amp * gcmplx::conj(R_mode_phase);
             }
 
             cmplx wave_mode_out(0.0, 0.0);
