@@ -27,7 +27,7 @@ from scipy.interpolate import RectBivariateSpline
 # Cython/C++ imports
 
 # Python imports
-from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase, ParallelModuleBase
+from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase, ParallelModuleBase, KerrEquatorialEccentric
 from few.utils.utility import check_for_file_download
 from few.utils.citations import *
 from few.utils.utility import p_to_y, kerr_p_to_u
@@ -49,7 +49,7 @@ from pyAmpInterp2D_cpu import interp2D as interp2D_cpu
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class AmpInterp2D(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
+class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
     """Calculate Teukolsky amplitudes with a ROMAN.
 
     ROMAN stands for reduced-order models with artificial neurons. Please see
@@ -125,7 +125,7 @@ class AmpInterp2D(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
     def __init__(self, fp, max_init_len=1000, **kwargs):
 
         ParallelModuleBase.__init__(self, **kwargs)
-        SchwarzschildEccentric.__init__(self, **kwargs)
+        KerrEquatorialEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
         if self.use_gpu:
@@ -142,19 +142,16 @@ class AmpInterp2D(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         check_for_file_download(fp, self.few_dir)
 
         data = {}
-        maxs = np.zeros(1440)
         # get information about this specific model from the file
         with h5py.File(self.few_dir + "few/files/" + fp, "r") as f:
-            
-            for key1 in f:
-                if key1 == "grid":
-                    grid = f["grid"][:]
-
-                else:
+            # load attributes in the right order for correct mode sorting later
+            kerr_format_string = "l{}m{}k0n{}"
+            grid = f["grid"][:]
+            for l, m, n in zip(self.l_arr, self.m_arr, self.n_arr):
+                if m >= 0:
+                    key1 = kerr_format_string.format(l,m,n)
                     tmp = f[key1][:]
                     tmp2 = tmp[:, 0] + 1j * tmp[:, 1]
-                    inds = np.abs(tmp2)**2 > maxs
-                    maxs[inds] = np.abs(tmp2[inds]) ** 2
                     data[key1] = tmp2
 
         # adjust the grid
@@ -185,21 +182,9 @@ class AmpInterp2D(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         check_u = u.reshape(num_w, num_u)
         check_w = w.reshape(num_w, num_u)
 
-        # filter out low power modes upfront. 
-        # TODO: need to update other stuff for this?
         data_copy = deepcopy(data)
-        self.removed_moded_initial = []
-        initial_cut = 1e-5
         for mode, vals in data.items():
-            power = np.abs(vals) ** 2
-            inds_fix = power < initial_cut * maxs
-            if False: # inds_fix.sum() == power.shape[0]:
-                self.removed_moded_initial.append(mode)
-                data_copy.pop(mode)
-                # print(power.max())
-                
-            else:
-                data_copy[mode] = data_copy[mode].reshape(num_w, num_u)
+            data_copy[mode] = data_copy[mode].reshape(num_w, num_u)
             
         #data = {
         #    "l2m2n0k0": data_copy["l2m2n0k0"],
@@ -344,11 +329,11 @@ class AmpInterp2D(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         return z
 
 
-class AmpInterpKerrEqEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
+class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
     def __init__(self, **kwargs):
 
         ParallelModuleBase.__init__(self, **kwargs)
-        SchwarzschildEccentric.__init__(self, **kwargs)
+        KerrEquatorialEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
         self.few_dir = dir_path + "/../../"
@@ -370,7 +355,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBa
             base_string = f"{spin:1.2f}"
             if spin != 0.0:
                 base_string += "_p"
-            fp = f"Teuk_amps_a{base_string}_lmax_10_nmax_30_new.h5"
+            fp = f"Teuk_amps_a{base_string}_lmax_10_nmax_30_new_m+.h5"  # data files only contain +m
 
             self.spin_information_holder_prograde[i] = AmpInterp2D(fp, use_gpu=self.use_gpu)
 
@@ -410,7 +395,22 @@ class AmpInterpKerrEqEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBa
 
             z = ((z_above - z_below) / (a_above_single - a_below_single)) * (a - a_below_single) + z_below
 
-        return z
+        
+        if specific_modes is None:
+            return z
+        
+        # dict containing requested modes
+        else:
+            temp = {}
+            for i, lmn in enumerate(specific_modes):
+                temp[lmn] = z[:, i]
+                l, m, n = lmn
 
+                # apply +/- m symmetry
+                if m < 0:
+                    temp[lmn] = np.conj(temp[lmn])
+
+            return temp
+        
 
 
