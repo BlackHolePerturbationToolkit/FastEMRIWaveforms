@@ -243,7 +243,7 @@ with open(fp_out_name, "w") as fp_out:
 
 # gather pn amplitude files
 files_for_pn_amp = []
-lmax_pn = 4
+lmax_pn = 10
 for l in range(2, lmax_pn + 1):
     path = f"hat_Zlmkn8_5PNe10/ell={l}/"
     for fp in os.listdir("src/" + path):
@@ -264,12 +264,12 @@ if run_cuda_install:
         extra_compile_args={
             "gcc": ["-std=c++11", "-fopenmp", "-D__USE_OMP__"],  # '-g'],
             "nvcc": [
-                "-arch=sm_70",
+                "-arch=sm_80",
                 #"-gencode=arch=compute_50,code=sm_50",
                 #"-gencode=arch=compute_52,code=sm_52",
                 #"-gencode=arch=compute_60,code=sm_60",
                 #"-gencode=arch=compute_61,code=sm_61",
-                "-gencode=arch=compute_70,code=sm_70",
+                "-gencode=arch=compute_80,code=sm_80",
                 #"-gencode=arch=compute_75,code=sm_75",
                 #"-gencode=arch=compute_80,code=sm_80",
                 "-std=c++11",
@@ -286,7 +286,7 @@ if run_cuda_install:
                 # "-O0",
                 # "-lineinfo",
             ],  # for debugging
-            'nvcclink': ['-arch=sm_70', '--device-link', '--compiler-options', "'-fPIC'"]
+            'nvcclink': ['-arch=sm_80', '--device-link', '--compiler-options', "'-fPIC'"]
         },
         include_dirs=[numpy_include, CUDA["include"], "include"],
     )
