@@ -1161,7 +1161,7 @@ class KerrEquatorialEccentricWaveformBase(
 
         # angular harmonics generation
         self.ylm_gen = GetYlms(**Ylm_kwargs)
- 
+
         # selecting modes that contribute at threshold to the waveform
         self.mode_selector = mode_selector_module(self.l_arr_no_mask, self.m_arr_no_mask, self.n_arr_no_mask, **mode_selector_kwargs)
 
@@ -1302,7 +1302,8 @@ class KerrEquatorialEccentricWaveformBase(
         # if mode selector is predictive, run now to avoid generating amplitudes that are not required
         if self.mode_selector.is_predictive:
             # overwrites mode_selection so it's now a list of modes to keep, ready to feed into amplitudes
-            mode_selection = self.mode_selector(M, mu, a, p0, e0, xI0, theta, phi, T, eps)  # TODO: update this if more arguments are required
+            # TODO add retrograde via a *= xI0
+            mode_selection = self.mode_selector(M, mu, a, p0, e0, theta, phi, T, eps)  # TODO: update this if more arguments are required
 
         # split into batches
 
@@ -1530,6 +1531,8 @@ class KerrEccentricEquatorialFlux(KerrEquatorialEccentricWaveformBase):
         if "mode_selection_type" in mode_selector_kwargs:
             if mode_selector_kwargs["mode_selection_type"] == "neural":
                 mode_selection_module = NeuralModeSelector
+                if "mode_selector_location" not in mode_selector_kwargs:
+                    mode_selector_kwargs["mode_selector_location"] = os.path.join(dir_path,'./files/modeselector_files/KerrEccentricEquatorialFlux/')
 
         KerrEquatorialEccentricWaveformBase.__init__(
             self,
@@ -1541,6 +1544,7 @@ class KerrEccentricEquatorialFlux(KerrEquatorialEccentricWaveformBase):
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
             Ylm_kwargs=Ylm_kwargs,
+            mode_selector_kwargs=mode_selector_kwargs,
             use_gpu=use_gpu,
             *args,
             **kwargs,
