@@ -355,8 +355,6 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
         # combine prograde and retrograde here
         self.spin_values = np.unique(np.asarray(spins_tmp))
 
-        self.spin_values = self.spin_values[:3]
-
         self.spin_information_holder = [None for _ in self.spin_values]
         for i, spin in enumerate(self.spin_values):
             base_string = f"{abs(spin):1.2f}"
@@ -379,7 +377,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
         signed_spin = a * xI_in[0].item()
 
         if signed_spin in self.spin_values:
-            ind_1 = np.where(self.spin_values == signed_spin)[0][0]  # multiply by
+            ind_1 = np.where(self.spin_values == signed_spin)[0][0]
 
             a_in = np.full_like(p, signed_spin)
             
