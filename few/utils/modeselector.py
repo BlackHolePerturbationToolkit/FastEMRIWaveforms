@@ -263,7 +263,12 @@ class NeuralModeSelector(ParallelModuleBase):
             Default is {}.
     """
 
-    def __init__(self, l_arr, m_arr, n_arr, threshold=0.5, **kwargs):
+    def __init__(self, l_arr, m_arr, n_arr, threshold=0.5, mode_selector_location=None, **kwargs):
+        if mode_selector_location is None:
+            raise ValueError("mode_selector_location kwarg cannot be none.")
+        elif not os.path.isdir(mode_selector_location):
+            raise ValueError(f"mode_selector location path ({mode_selector_location}) does not point to an existing directory.")        
+
         ParallelModuleBase.__init__(self, **kwargs)
 
         # we set the pytorch device here for use with the neural network
@@ -275,10 +280,9 @@ class NeuralModeSelector(ParallelModuleBase):
             self.xp = np
             self.device="cpu"
             self.neural_mode_list = [(lh, mh, nh) for lh, mh, nh in zip(l_arr, m_arr, n_arr)]
-
-        few_dir = dir_path + "/../../"  # TODO proper file handling
+        
         # TODO include waveform name in paths
-        self.precomputed_mask = np.load(few_dir+"few/files/modeselector_files/FastSchwarzschildEccentricFluxBicubic/precomputed_mode_mask.npy")
+        self.precomputed_mask = np.load(os.path.join(mode_selector_location, "precomputed_mode_mask.npy"))
         self.masked_mode_list = [self.neural_mode_list[maskind] for maskind in self.precomputed_mask]
 
         # import torch here in case users don't want it otherwise
@@ -290,13 +294,12 @@ class NeuralModeSelector(ParallelModuleBase):
             raise RuntimeError("pytorch has not been installed with CUDA capability. Fix installation or set use_gpu=False.")
         
         try:
-            self.load_model(few_dir+"few/files/modeselector_files/FastSchwarzschildEccentricFluxBicubic/neural_mode_selector.tjm")
+            self.load_model(os.path.join(mode_selector_location, "neural_mode_selector.tjm"))
         except FileNotFoundError:
-            raise FileNotFoundError("Neural mode predictor model file not found. ")
+            raise FileNotFoundError("Neural mode predictor model file not found.")
 
         self.threshold = threshold
-        self.vector_min = np.load(few_dir+"few/files/modeselector_files/FastSchwarzschildEccentricFluxBicubic/vector_min.npy")
-        self.vector_max = np.load(few_dir+"few/files/modeselector_files/FastSchwarzschildEccentricFluxBicubic/vector_max.npy")
+        self.vector_min, self.vector_max = np.load(os.path.join(mode_selector_location, "network_norm.npy"))
 
     @property
     def gpu_capability(self):
@@ -330,7 +333,7 @@ class NeuralModeSelector(ParallelModuleBase):
         self.model.to(self.device)
         self.model.eval()
     
-    def __call__(self, M, mu, p0, e0, theta, phi, T, eps):
+    def __call__(self, M, mu, a, p0, e0, theta, phi, T, eps):
         """Call to predict the mode content of the waveform.
 
         This is the call function that takes the waveform parameters, applies a 
@@ -352,15 +355,14 @@ class NeuralModeSelector(ParallelModuleBase):
 
         #wrap angles to training bounds
         phi = phi % (2*np.pi)
-        theta = theta % (np.pi) - np.pi
 
-        inputs = np.array([[np.log(M), mu, p0, e0, T, theta, phi, np.log10(eps)]])
+        inputs = np.array([[np.log(M), mu, a, p0, e0, T, theta, phi, np.log10(eps)]])
         # rescale network input from pre-computed
         inputs = 2 * (inputs - self.vector_min) / (self.vector_max - self.vector_min) - 1
         inputs = self.torch.as_tensor(inputs, device=self.device).float() 
         # get network output and threshold it based on the defined value
         with self.torch.inference_mode():
-            mode_predictions = self.model(inputs)
+            mode_predictions = self.torch.nn.functional.sigmoid(self.model(inputs))
             keep_inds = self.torch.where(mode_predictions > self.threshold)[0].int().cpu().numpy()
         # return list of modes for kept indices
         selected_modes = [self.masked_mode_list[ind] for ind in keep_inds]

@@ -240,12 +240,13 @@ class EMRIInspiral(TrajectoryBase):
         if self.background == "Schwarzschild":
             a = 0.0
         elif a < fill_value:
-            warnings.warn(
-                "Our model with spin breaks near a = 0. Adjusting to a = 1e-6.".format(
-                    fill_value
+            if self.background == "Kerr" and not self.equatorial:
+                warnings.warn(
+                    "Our model with spin breaks near a = 0. Adjusting to a = 1e-6.".format(
+                        fill_value
+                    )
                 )
-            )
-            a = fill_value
+                a = fill_value
 
         if self.equatorial:
             if abs(x0) != 1:
