@@ -166,8 +166,9 @@ class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
         assert np.all(a == a[0])
         assert np.all(xI == xI[0])
 
+        # retrograde needs sign flip to be applied to a
+        a *= xI
         self.a_val_store = a[0]
-        self.xI_val_store = xI[0]
 
         # for checking
         # tmp = kerr_p_to_u(a, p, e, xI, use_gpu=False)
@@ -271,8 +272,7 @@ class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
         xI = xp.asarray(xI)
 
         assert xp.all(a == self.a_val_store)
-        assert xp.all(xI == self.xI_val_store)
-
+        a_cpu *= xI_cpu  # correct the sign of a now we've passed the check, for the reparameterisation
         # TODO: make this GPU accessible
         u = xp.asarray(kerr_p_to_u(a_cpu, p_cpu, e_cpu, xI_cpu, use_gpu=False))
 
@@ -305,13 +305,16 @@ class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
             mode_indexes = xp.arange(self.num_teuk_modes)
         
         else:
-            mode_indexes = xp.zeros(len(specific_modes), dtype=xp.int32)
-
-            for i, (l, m, n) in enumerate(specific_modes):
-                try:
-                    mode_indexes[i] = np.where((self.l_arr == l) & (self.m_arr == m) & (self.n_arr == n))[0]
-                except:
-                    raise Exception(f"Could not find mode index ({l},{m},{n}).")
+            if isinstance(specific_modes, xp.ndarray):
+                mode_indexes = specific_modes
+            elif isinstance(specific_modes, list):  # the following is slow and kills efficiency
+                mode_indexes = xp.zeros(len(specific_modes), dtype=xp.int32)
+                for i, (l, m, n) in enumerate(specific_modes):
+                    try:
+                        mode_indexes[i] = np.where((self.l_arr == l) & (self.m_arr == m) & (self.n_arr == n))[0]
+                    except:
+                        raise Exception(f"Could not find mode index ({l},{m},{n}).")
+        # TODO: perform this in the kernel
         c_in = c[mode_indexes].flatten()
 
         num_indiv_c = 2*len(mode_indexes)  # Re and Im
@@ -344,37 +347,46 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
             if fp[:13] == "Teuk_amps_a0.":
                 if fp[14] == "_":
                     continue
-                spins_tmp.append(float(fp[11:15]))
+                spin_h = float(fp[11:15])
+                if fp[15:18] == "_r_":
+                    spin_h *= -1  # retrograde
+                spins_tmp.append(spin_h)
 
         # combine prograde and retrograde here
         self.spin_values = np.unique(np.asarray(spins_tmp))
 
-        # TODO: add retrograde
-        self.spin_information_holder_prograde = [None for _ in self.spin_values]
+        self.spin_values = self.spin_values[:3]
+
+        self.spin_information_holder = [None for _ in self.spin_values]
         for i, spin in enumerate(self.spin_values):
-            base_string = f"{spin:1.2f}"
-            if spin != 0.0:
+            base_string = f"{abs(spin):1.2f}"
+            if spin < 0.0:
+                base_string += "_r"
+            elif spin > 0.0:
                 base_string += "_p"
             fp = f"Teuk_amps_a{base_string}_lmax_10_nmax_30_new_m+.h5"  # data files only contain +m
 
-            self.spin_information_holder_prograde[i] = AmpInterp2D(fp, use_gpu=self.use_gpu)
+            self.spin_information_holder[i] = AmpInterp2D(fp, use_gpu=self.use_gpu)
 
     def get_amplitudes(self, a, p, e, xI, specific_modes=None):
-
+        # prograde: spin pos, xI pos
+        # retrograde: spin pos, xI neg - >  spin neg, xI pos
         assert isinstance(a, float)
 
-        assert np.all(xI == 1.0)
+        assert np.all(xI == 1.0) or np.all(xI == -1.0)  # either all prograde or all retrograde
+        xI_in = np.ones_like(p)*xI
+        
+        signed_spin = a * xI_in[0].item()
 
-        if a in self.spin_values:
-            ind_1 = np.where(self.spin_values == a)[0][0]
+        if signed_spin in self.spin_values:
+            ind_1 = np.where(self.spin_values == signed_spin)[0][0]  # multiply by
 
-            a_in = np.full_like(p, a)
-            xI_in = np.ones_like(p)
+            a_in = np.full_like(p, signed_spin)
             
-            z = self.spin_information_holder_prograde[ind_1](a_in, p, e, xI_in, specific_modes=specific_modes)
+            z = self.spin_information_holder[ind_1](a_in, p, e, xI_in, specific_modes=specific_modes)
 
         else:
-            ind_above = np.where(self.spin_values > a)[0][0]
+            ind_above = np.where(self.spin_values > signed_spin)[0][0]
             ind_below = ind_above - 1
             assert ind_above < len(self.spin_values)
             assert ind_below >= 0
@@ -388,15 +400,13 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
             a_below_single = a_below[0]
             assert np.all(a_below_single == a_below[0])
 
-            xI_in = np.ones_like(p)
+            z_above = self.spin_information_holder[ind_above](a_above, p, e, xI_in, specific_modes=specific_modes)
+            z_below = self.spin_information_holder[ind_below](a_below, p, e, xI_in, specific_modes=specific_modes)
 
-            z_above = self.spin_information_holder_prograde[ind_above](a_above, p, e, xI_in, specific_modes=specific_modes)
-            z_below = self.spin_information_holder_prograde[ind_below](a_below, p, e, xI_in, specific_modes=specific_modes)
+            z = ((z_above - z_below) / (a_above_single - a_below_single)) * (signed_spin - a_below_single) + z_below
 
-            z = ((z_above - z_below) / (a_above_single - a_below_single)) * (a - a_below_single) + z_below
 
-        
-        if specific_modes is None:
+        if not isinstance(specific_modes, list):
             return z
         
         # dict containing requested modes

@@ -1336,7 +1336,7 @@ class KerrEquatorialEccentricWaveformBase(
             Phi_r_temp = Phi_r[inds_in]
             
             # if we aren't requesting a subset of modes, compute them all now
-            if not isinstance(mode_selection, list):
+            if not isinstance(mode_selection, list) and not isinstance(mode_selection, xp.ndarray):
                 # amplitudes
                 teuk_modes = xp.asarray(self.amplitude_generator(a, p_temp, e_temp, xI0))
             
@@ -1362,33 +1362,49 @@ class KerrEquatorialEccentricWaveformBase(
                     raise ValueError("If mode selection is a string, must be `all`.")
 
             # get a specific subset of modes
-            elif isinstance(mode_selection, list):
-                if mode_selection == []:
+            elif isinstance(mode_selection, list) or isinstance(mode_selection, xp.ndarray):
+                if len(mode_selection) == 0:
                     raise ValueError("If mode selection is a list, cannot be empty.")
 
-                keep_modes = xp.zeros(len(mode_selection), dtype=xp.int32)
 
                 # generate only the required modes with the amplitude module
                 teuk_modes = self.amplitude_generator(a, p_temp, e_temp, xI0, specific_modes=mode_selection)
                 # unpack the dictionary
-                teuk_modes_in = xp.asarray([teuk_modes[lmn] for lmn in mode_selection]).T
+                if isinstance(teuk_modes, dict):
+                    teuk_modes_in = xp.asarray([teuk_modes[lmn] for lmn in mode_selection]).T
+                else:
+                    teuk_modes_in = teuk_modes
 
                 # for removing opposite m modes
                 fix_include_ms = xp.full(2 * len(mode_selection), False)
-                for jj, lmn in enumerate(mode_selection):
-                    l, m, n = tuple(lmn)
+                if isinstance(mode_selection, list):
+                    keep_modes = xp.zeros(len(mode_selection), dtype=xp.int32)
+                    for jj, lmn in enumerate(mode_selection):
+                        l, m, n = tuple(lmn)
 
-                    # keep modes only works with m>=0
-                    lmn_in = (l, abs(m), n)
-                    keep_modes[jj] = xp.int32(self.lmn_indices[lmn_in])
+                        # keep modes only works with m>=0
+                        lmn_in = (l, abs(m), n)
+                        keep_modes[jj] = xp.int32(self.lmn_indices[lmn_in])
 
-                    if not include_minus_m:
-                        if m > 0:
-                            # minus m modes blocked
-                            fix_include_ms[len(mode_selection) + jj] = True
-                        elif m < 0:
-                            # positive m modes blocked
-                            fix_include_ms[jj] = True
+                        if not include_minus_m:
+                            if m > 0:
+                                # minus m modes blocked
+                                fix_include_ms[len(mode_selection) + jj] = True
+                            elif m < 0:
+                                # positive m modes blocked
+                                fix_include_ms[jj] = True
+                else:
+                    keep_modes = mode_selection
+                    m_temp = abs(self.m_arr[mode_selection])
+                    for jj, m_here in enumerate(m_temp):
+                        if not include_minus_m:
+                            if m_here > 0:
+                                # minus m modes blocked
+                                fix_include_ms[len(mode_selection) + jj] = True
+                            elif m_here < 0:
+                                # positive m modes blocked
+                                fix_include_ms[jj] = True
+                    
 
                 self.ls = self.l_arr[keep_modes]
                 self.ms = self.m_arr[keep_modes]
