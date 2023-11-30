@@ -261,7 +261,7 @@ if run_cuda_install:
         # and not with gcc the implementation of this trick is in
         # customize_compiler()
         extra_compile_args={
-            "gcc": ["-std=c++11", "-fopenmp", "-D__USE_OMP__"],  # '-g'],
+            "gcc": ["-std=c++11", "-D__USE_OMP__"],  # '-g'],
             "nvcc": [
                 "-arch=sm_70",
                 "-gencode=arch=compute_50,code=sm_50",
@@ -278,7 +278,6 @@ if run_cuda_install:
                 "--compiler-options",
                 "'-fPIC'",
                 "-Xcompiler",
-                "-fopenmp",
                 "-D__USE_OMP__",
                 # "-G",
                 # "-g",
@@ -290,8 +289,6 @@ if run_cuda_install:
     )
 
     if use_omp is False:
-        gpu_extension["extra_compile_args"]["nvcc"].remove("-fopenmp")
-        gpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
         gpu_extension["extra_compile_args"]["nvcc"].remove("-D__USE_OMP__")
         gpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
 
@@ -326,7 +323,7 @@ cpu_extension = dict(
     libraries=["gsl", "gslcblas", "lapack", "lapacke", "gomp", "hdf5", "hdf5_hl"],
     language="c++",
     runtime_library_dirs=[],
-    extra_compile_args={"gcc": ["-std=c++11", "-fopenmp", "-fPIC", "-D__USE_OMP__"]},  # '-g'
+    extra_compile_args={"gcc": ["-std=c++11", "-fPIC", "-D__USE_OMP__"]},  # '-g'
     include_dirs=[numpy_include, "include"],
     library_dirs=None,
     # library_dirs=["/home/ajchua/lib/"],
@@ -349,7 +346,6 @@ if add_gsl:
     cpu_extension["include_dirs"] += gsl_include
 
 if use_omp is False:
-    cpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
     cpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
 
 Interp2DAmplitude_ext = Extension(
