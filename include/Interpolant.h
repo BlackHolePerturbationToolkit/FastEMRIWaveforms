@@ -40,7 +40,6 @@ typedef struct array_t {
     int n;
 } array_yo;
 
-
 class Interpolant{
 	public:
 		// 1D interpolation
@@ -63,6 +62,19 @@ class Interpolant{
 		gsl_interp_accel *xacc;
 		gsl_interp_accel *yacc;
 };
+
+class TensorInterpolant{
+    public:
+    double *coeff;
+    int coeff_N;
+    gsl_bspline_workspace **bw_out;   // Output: pointer to array of pointers to
+
+    TensorInterpolant(Vector x, Vector y, Vector z, Vector flatten_coeff);
+    double eval(double x, double y, double z);
+
+    ~TensorInterpolant();
+};
+
 
 /******************************* 1D functions *********************************/
 

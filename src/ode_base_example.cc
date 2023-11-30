@@ -183,36 +183,8 @@ SchwarzEccFlux::~SchwarzEccFlux()
 
 }
 
-//--------------------------------------------------------------------------------
-Vector fill_vector(std::string fp){
-	ifstream file_x(fp);
-
-    if (file_x.fail())
-    {
-        throw std::runtime_error("The file  did not open sucessfully. Make sure it is located in the proper directory.");
-    }
-    else{
-        // cout << "importing " + fp << endl;
-    }
-
-	// Load the flux data into arrays
-	string string_x;
-    Vector xs;
-	double x;
-	while(getline(file_x, string_x)){
-		stringstream ss(string_x);
-		ss >> x ;
-		xs.push_back(x);
-	}
-    return xs;
-
-}
-
-KerrEccentricEquatorial::KerrEccentricEquatorial(std::string few_dir)
-{
-    std::string fp;
-}
-
+// old implementation
+/*
 // #define KerrEccentricEquatorial_Y
 #define KerrEccentricEquatorial_equatorial
 #define KerrEccentricEquatorial_num_add_args 1
@@ -313,5 +285,179 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     *xdot = 0.0;
 
     return;
+
+}
+
+*/
+//--------------------------------------------------------------------------------
+Vector fill_vector(std::string fp){
+	ifstream file_x(fp);
+
+    if (file_x.fail())
+    {
+        throw std::runtime_error("The file  did not open sucessfully. Make sure it is located in the proper directory.");
+    }
+    else{
+        // cout << "importing " + fp << endl;
+    }
+
+	// Load the flux data into arrays
+	string string_x;
+    Vector xs;
+	double x;
+	while(getline(file_x, string_x)){
+		stringstream ss(string_x);
+		ss >> x ;
+		xs.push_back(x);
+	}
+    return xs;
+
+}
+
+KerrEccentricEquatorial::KerrEccentricEquatorial(std::string few_dir)
+{
+
+    // interpolant()
+    std::string fp;
+    fp = few_dir + "few/files/x0.dat";
+    Vector x1 = fill_vector(fp);
+    
+    fp = few_dir + "few/files/x1.dat";
+    Vector x2 = fill_vector(fp);
+
+    fp = few_dir + "few/files/x2.dat";
+    Vector x3 = fill_vector(fp);
+
+    fp = few_dir + "few/files/coeff_edot.dat";
+    Vector coeff2 = fill_vector(fp);
+    fp = few_dir + "few/files/coeff_pdot.dat";
+    Vector coeff = fill_vector(fp);
+    
+    edot_interp = new TensorInterpolant(x1, x2, x3, coeff2);
+    pdot_interp = new TensorInterpolant(x1, x2, x3, coeff);
+
+    // cout << "pdot=" << pdot_interp<< pdot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
+    // cout << "edot=" << edot_interp<< edot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
+
+}
+
+
+// #define KerrEccentricEquatorial_Y
+#define KerrEccentricEquatorial_equatorial
+#define KerrEccentricEquatorial_num_add_args 0
+__deriv__
+void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdot,
+                  double* Omega_phi, double* Omega_theta, double* Omega_r,
+                  double epsilon, double a, double p, double e, double x, double* additional_args)
+{
+
+    double p_sep = get_separatrix(a, e, x);
+    // make sure we do not step into separatrix
+    if ((e < 0.0)||(p<p_sep))
+    {
+        *pdot = 0.0;
+        *edot = 0.0;
+        *xdot = 0.0;
+        return;
+    }
+
+    // evaluate ODEs
+    // cout << "beginning" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<endl;
+    
+    // auto start = std::chrono::steady_clock::now();
+    // the frequency variables are pointers!
+    KerrGeoEquatorialCoordinateFrequencies(Omega_phi, Omega_theta, Omega_r, a, p, e, x);// shift to avoid problem in fundamental frequencies
+    // auto end = std::chrono::steady_clock::now();
+    // std::chrono::duration<double>  msec = end-start;
+    // std::cout << "elapsed time fund freqs: " << msec.count() << "s\n";
+
+    // get r variable
+    // double *Omega_phi_sep_circ,*Omega_theta_sep_circ,*Omega_r_sep_circ;
+    // KerrGeoEquatorialCoordinateFrequencies(Omega_phi_sep_circ, Omega_theta_sep_circ, Omega_r_sep_circ, a, p_sep, 0.0, x);// shift to avoid problem in fundamental frequencies
+    
+    double r,Omega_phi_sep_circ;
+    // reference frequency
+    Omega_phi_sep_circ = 1.0/ (a + pow(p_sep/( 1.0 + e ), 1.5) );
+    r = pow(*Omega_phi/ Omega_phi_sep_circ, 2.0/3.0 ) * (1.0 + e);
+
+    if (isnan(r)){
+        cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
+        cout << "omegaphi circ " <<  Omega_phi_sep_circ << " omegaphi " <<  *Omega_phi << " omegar " <<  *Omega_r <<endl;
+        throw std::exception();
+        }
+
+    // checked values against mathematica
+    // {a -> 0.7, p -> 3.72159, e -> 0.189091 x-> 1.0}
+    // r 1.01037 p_sep 3.62159
+    // Omega_phi_sep_circ 0.166244
+    // *Omega_phi 0.13021
+    double pdot_out, edot_out;
+    double risco = get_separatrix(a, 0.0, x);
+    double one_minus_e2 = 1-pow(e,2);
+    
+    // Flux from Scott
+    double u = log((p-p_sep + 4.0 - 0.05)/4.0);
+    double w = sqrt(e);
+    pdot_out = pdot_interp->eval(a, u, w) * ((8.*pow(1. - pow(e,2),1.5)*(8. + 7.*pow(e,2)))/(5.*p*(pow(p - risco,2) - pow(-risco + p_sep,2))));
+    edot_out = edot_interp->eval(a, u, w) * ((pow(1. - pow(e,2),1.5)*(304. + 121.*pow(e,2)))/(15.*pow(p,2)*(pow(p - risco,2) - pow(-risco + p_sep,2))));
+    
+    // cout << " edot Cheb " << edot_out << " " <<edot_transf  << endl;
+    // cout << "ratio pdot Cheb " <<  (pdot_interp->eval(a, u, w) * (64/5 * pow(p,-3) * pow(one_minus_e2,0.5)))/pdot_out << endl;
+    // cout << "ratio edot Cheb " <<  (edot_interp->eval(a, u, w) * (304/15 * pow(p,-4) * pow(one_minus_e2,1.5)))/edot_out << endl;
+
+    // auto end = std::chrono::steady_clock::now();
+    // std::chrono::duration<double>  msec = end-start;
+    // std::cout << "elapsed time fund freqs: " << msec.count() << "s\n";
+
+    // cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << " risco =" <<  risco << endl;
+    // cout << "Omega:  phi =" << *Omega_phi  << "\t" << "theta=" <<  *Omega_theta << "\t" << "r=" << *Omega_r <<  "\t" << endl;
+    // cout << "pdot =" << pdot_out  << "\t" << "edot=" <<  edot_out << "\t" << endl;
+
+    // Frequency corrections
+    // *Omega_phi = *Omega_phi + additional_args[0] * dOmegaPhi_dspin(a, p, e, risco, p_sep);
+    // *Omega_theta = *Omega_theta + additional_args[0] * dOmegaPhi_dspin(a, p, e, risco, p_sep);
+    // *Omega_r = *Omega_r + additional_args[0] * dOmegaR_dspin(a, p, e, risco, p_sep);
+    // cout << "delta: Omega:  phi =" << dOmegaPhi_dspin(a, p, e, risco, p_sep)  << "\t" << "theta=" <<  dOmegaR_dspin(a, p, e, risco, p_sep) << endl;
+
+    // Fluxes from secondary spin from Viktor
+    // double pdot_dsigma = pdot_dspin_Cheby(a, p, e, risco, p_sep);
+    // double edot_dsigma = edot_dspin_Cheby(a, p, e, risco, p_sep);
+    
+    // consistency check
+    cout << "transf pdot Cheb " <<  pdot_out << " PN " << dpdt8H_5PNe10(a, p, e, x, 10, 10) << endl;
+    cout << "transf edot Cheb " <<  edot_out << " PN " << dedt8H_5PNe10(a, p, e, x, 10, 10) << endl;
+    // cout << "ratio Edot Cheb " <<  Edot/dEdt8H_5PNe10(a, p, e, x, Nv, ne) << endl;
+    // cout << "ratio Ldot Cheb " <<  Ldot/dLdt8H_5PNe10(a, p, e, x, Nv, ne) << endl;
+    // cout << "ratio pdot Cheb " <<  GKR->pdot/pdot_out << endl;
+    // cout << "ratio edot Cheb " <<  GKR->edot/edot_out << endl;
+
+
+    // needs adjustment for validity
+    if (e > 1e-6)
+    {
+        *pdot = epsilon * pdot_out;
+        *edot = epsilon * edot_out;
+    }
+    else{
+        *edot = 0.0;
+        *pdot = epsilon * pdot_out;
+        // cout << "end" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << endl;
+    }
+
+    
+    *xdot = 0.0;
+
+    // delete GKR;
+    return;
+
+}
+
+
+// destructor
+KerrEccentricEquatorial::~KerrEccentricEquatorial()
+{
+
+    delete pdot_interp;
+    delete edot_interp;
 
 }
