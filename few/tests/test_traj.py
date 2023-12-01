@@ -97,13 +97,12 @@ class ModuleTest(unittest.TestCase):
         for i in range(4):
             # print(p0,e0)
             p0 = np.random.uniform(9.0,12.0)
-            e0 = np.random.uniform(0.01, 0.5)
+            e0 = np.random.uniform(0.01, 0.4)
             # for j in range(2):
             a = np.random.uniform(0.01, 0.99)
 
             # run trajectory
             t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, np.abs(a), p0, e0, np.sign(a)*1.0, **insp_kw)
-            print(p,e)
             plt.plot(p,e,label=f'a={a:.2e}',alpha=0.7)
 
         plt.legend(); plt.xlabel('p'); plt.ylabel('e')
@@ -126,3 +125,8 @@ class ModuleTest(unittest.TestCase):
             diff =  np.abs(Phi_phi[mask] - Phi_phiS[mask])
 
             self.assertLess(np.max(diff),2.0)
+            
+        # s_t, s_p, s_e, s_x, s_omr, s_omt, s_omph, s_r, s_th, s_ph = np.loadtxt("data_for_lorenzo/scott_data/a0.99_p0_6_e0_0.5_xI0_1.0_wl.txt").T
+        # t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(1e6, 10.0, 0.9899, s_p[0], s_e[0], 1.0, **insp_kw)
+        # breakpoint()
+        
