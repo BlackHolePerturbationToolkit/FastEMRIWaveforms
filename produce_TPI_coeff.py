@@ -6,6 +6,7 @@ import TPI
 from few.trajectory.inspiral import EMRIInspiral
 from few.utils.utility import get_overlap, get_mismatch, get_separatrix, get_fundamental_frequencies, get_fundamental_frequencies_spin_corrections
 from scipy.interpolate import RegularGridInterpolator
+import glob
 
 def save_txt(my_array, fname):
     # Open the file in write mode
@@ -69,11 +70,11 @@ alpha = 4.0
 deltap = 0.05
 beta = alpha - deltap
 
-folder = 'data_for_lorenzo/fluxes'
-for aa in np.arange(0,10):
-    # breakpoint()
-    el = folder + f'/a0.{aa}0_xI1.000.flux'
-    imp = read_txt(el)
+folder = 'data_for_lorenzo/fluxes/*'
+fluxfiles = [el for el in glob.glob(folder) if 'xI1' in el]
+
+for ff in fluxfiles:
+    imp = read_txt(ff)
     a, p, e, xi, E, Lz, Q, pLSO, EdotInf_tot, EdotH_tot, LzdotInf_tot, LzdotH_tot, QdotInf_tot, QdotH_tot, pdotInf_tot, pdotH_tot, eccdotInf_tot, eccdotH_tot, xidotInf_tot, xidotH_tot = imp.T
     
     u = np.log((p-pLSO + beta)/alpha)

@@ -1,0 +1,4 @@
+# TODO:
+- check Jacobian conversion
+- ELQ trajectory in FEW in Schwarzschild: make trajectory in ELQ
+- send Scott interpolant

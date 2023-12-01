@@ -11,6 +11,8 @@ from few.utils.utility import get_overlap, get_mismatch, get_separatrix, get_fun
 from few.utils.ylm import GetYlms
 from few.utils.modeselector import ModeSelector
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
+from scipy.interpolate import CubicSpline
+from few.utils.constants import *
 
 try:
     import cupy as xp
@@ -127,8 +129,13 @@ class ModuleTest(unittest.TestCase):
             # plt.figure(); plt.plot(tS,Phi_phiS);plt.plot(t,Phi_phi);plt.show()
 
             self.assertLess(np.max(diff),2.0)
-            
-        # s_t, s_p, s_e, s_x, s_omr, s_omt, s_omph, s_r, s_th, s_ph = np.loadtxt("data_for_lorenzo/scott_data/a0.99_p0_6_e0_0.5_xI0_1.0_wl.txt").T
-        # t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(1e6, 10.0, 0.9899, s_p[0], s_e[0], 1.0, **insp_kw)
-        # breakpoint()
         
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(1e6, 100.0, 0.99, 6.0, 0.5, 1.0, T=2079375.6399400292/YRSID_SI)
+        self.assertLess(np.abs(Phi_phi[-1] - 37548.68909110543),2.0) # value from Scott
+        
+        # s_t, s_p, s_e, s_x, s_omr, s_omt, s_omph, s_r, s_th, s_ph = np.loadtxt("data_for_lorenzo/scott_data/a0.99_p0_6_e0_0.5_xI0_1.0_wl.txt").T
+        # mask = (s_p>(0.1+s_p[-1]))
+        # t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(1e6, 100.0, 0.99, s_p[0], s_e[0], 1.0, T=4.0, new_t=s_t[mask]*MTSUN_SI*M, upsample=True)
+        # # plt.figure();  plt.plot(t,p); plt.plot(s_t*MTSUN_SI*M,s_p,'--',label='Scott'); plt.show()
+        # plt.figure();  plt.plot(p,e); plt.plot(s_p[mask],s_e[mask],'--',label='Scott'); plt.show()
+        # plt.figure();  plt.semilogy(t,np.abs(Phi_phi-s_ph[mask])); plt.ylabel('phase difference phi'); plt.xlabel('time [seconds]'); plt.show()
