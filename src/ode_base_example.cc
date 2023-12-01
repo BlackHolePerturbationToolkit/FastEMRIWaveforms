@@ -401,36 +401,15 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     pdot_out = pdot_interp->eval(a, u, w) * ((8.*pow(1. - pow(e,2),1.5)*(8. + 7.*pow(e,2)))/(5.*p*(pow(p - risco,2) - pow(-risco + p_sep,2))));
     edot_out = edot_interp->eval(a, u, w) * ((pow(1. - pow(e,2),1.5)*(304. + 121.*pow(e,2)))/(15.*pow(p,2)*(pow(p - risco,2) - pow(-risco + p_sep,2))));
     
-    // cout << " edot Cheb " << edot_out << " " <<edot_transf  << endl;
-    // cout << "ratio pdot Cheb " <<  (pdot_interp->eval(a, u, w) * (64/5 * pow(p,-3) * pow(one_minus_e2,0.5)))/pdot_out << endl;
-    // cout << "ratio edot Cheb " <<  (edot_interp->eval(a, u, w) * (304/15 * pow(p,-4) * pow(one_minus_e2,1.5)))/edot_out << endl;
-
     // auto end = std::chrono::steady_clock::now();
     // std::chrono::duration<double>  msec = end-start;
     // std::cout << "elapsed time fund freqs: " << msec.count() << "s\n";
 
     // cout << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<  "\t" << "x=" << x << "\t" << r << " plso =" <<  p_sep << " risco =" <<  risco << endl;
-    // cout << "Omega:  phi =" << *Omega_phi  << "\t" << "theta=" <<  *Omega_theta << "\t" << "r=" << *Omega_r <<  "\t" << endl;
-    // cout << "pdot =" << pdot_out  << "\t" << "edot=" <<  edot_out << "\t" << endl;
-
-    // Frequency corrections
-    // *Omega_phi = *Omega_phi + additional_args[0] * dOmegaPhi_dspin(a, p, e, risco, p_sep);
-    // *Omega_theta = *Omega_theta + additional_args[0] * dOmegaPhi_dspin(a, p, e, risco, p_sep);
-    // *Omega_r = *Omega_r + additional_args[0] * dOmegaR_dspin(a, p, e, risco, p_sep);
-    // cout << "delta: Omega:  phi =" << dOmegaPhi_dspin(a, p, e, risco, p_sep)  << "\t" << "theta=" <<  dOmegaR_dspin(a, p, e, risco, p_sep) << endl;
-
-    // Fluxes from secondary spin from Viktor
-    // double pdot_dsigma = pdot_dspin_Cheby(a, p, e, risco, p_sep);
-    // double edot_dsigma = edot_dspin_Cheby(a, p, e, risco, p_sep);
     
     // consistency check
-    cout << "transf pdot Cheb " <<  pdot_out << " PN " << dpdt8H_5PNe10(a, p, e, x, 10, 10) << endl;
-    cout << "transf edot Cheb " <<  edot_out << " PN " << dedt8H_5PNe10(a, p, e, x, 10, 10) << endl;
-    // cout << "ratio Edot Cheb " <<  Edot/dEdt8H_5PNe10(a, p, e, x, Nv, ne) << endl;
-    // cout << "ratio Ldot Cheb " <<  Ldot/dLdt8H_5PNe10(a, p, e, x, Nv, ne) << endl;
-    // cout << "ratio pdot Cheb " <<  GKR->pdot/pdot_out << endl;
-    // cout << "ratio edot Cheb " <<  GKR->edot/edot_out << endl;
-
+    // cout << "transf pdot Cheb " <<  pdot_out << " PN " << dpdt8H_5PNe10(a, p, e, x, 10, 10) << endl;
+    // cout << "transf edot Cheb " <<  edot_out << " PN " << dedt8H_5PNe10(a, p, e, x, 10, 8) << endl;
 
     // needs adjustment for validity
     if (e > 1e-6)

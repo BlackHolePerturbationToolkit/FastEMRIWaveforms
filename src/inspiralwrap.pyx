@@ -22,41 +22,6 @@ cdef extern from "../include/ode.hh":
                             double* Omega_phi, double* Omega_theta, double* Omega_r,
                             double epsilon, double a, double p, double e, double Y, double* additional_args);
 
-cdef extern from "../include/ode.hh":
-    void prepare_derivatives()
-
-cdef extern from "../include/ode.hh":
-    cdef cppclass GetDeriv "ODECarrier":
-        GetDeriv(string func, string few_dir)
-        void get_derivatives(np.float64_t *pdot,np.float64_t *edot, np.float64_t *Ydot,
-                         np.float64_t *Omega_phi, np.float64_t *Omega_theta, np.float64_t *Omega_r,
-                         np.float64_t epsilon, np.float64_t a, np.float64_t p,
-                          np.float64_t e,  np.float64_t Y,
-                          double* additional_args) except+
-
-cdef class pyDerivative:
-    cdef GetDeriv *g
-
-    def __cinit__(self, func_name, few_dir):
-        self.g = new GetDeriv(func_name.encode(), few_dir)
-
-    def __dealloc__(self):
-        if self.g:
-            del self.g
-
-    def __call__(self, epsilon, a, p0, e0, Y0, np.ndarray[ndim=1, dtype=np.float64_t] additional_args, max_init_len=1):
-        
-        cdef np.ndarray[ndim=1, dtype=np.float64_t] pdot = np.zeros(max_init_len, dtype=np.float64)
-        cdef np.ndarray[ndim=1, dtype=np.float64_t] edot = np.zeros(max_init_len, dtype=np.float64)
-        cdef np.ndarray[ndim=1, dtype=np.float64_t] Ydot = np.zeros(max_init_len, dtype=np.float64)
-        cdef np.ndarray[ndim=1, dtype=np.float64_t] Omega_phi = np.zeros(max_init_len, dtype=np.float64)
-        cdef np.ndarray[ndim=1, dtype=np.float64_t] Omega_theta = np.zeros(max_init_len, dtype=np.float64)
-        cdef np.ndarray[ndim=1, dtype=np.float64_t] Omega_r = np.zeros(max_init_len, dtype=np.float64)
-
-        self.g.get_derivatives(&pdot[0], &edot[0], &Ydot[0], &Omega_phi[0], &Omega_theta[0], &Omega_r[0], epsilon, a, p0, e0, Y0, &additional_args[0])
-
-        return (pdot[0], edot[0], Ydot[0], Omega_phi[0], Omega_theta[0], Omega_r[0])
-
 
 cdef class pyInspiralGenerator:
     cdef InspiralCarrierWrap *f

@@ -7,11 +7,11 @@ struct interp_params{
 	Interpolant *Ldot;
 };
 
-struct TPI_params{
-	double epsilon;
-	TensorInterpolant *pdot;
-	TensorInterpolant *edot;
-};
+// struct TPI_params{
+// 	double epsilon;
+// 	TensorInterpolant *pdot;
+// 	TensorInterpolant *edot;
+// };
 
 
 class SchwarzEccFlux{
