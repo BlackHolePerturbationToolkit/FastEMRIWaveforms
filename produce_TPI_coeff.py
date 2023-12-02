@@ -64,6 +64,8 @@ import glob
 a_tot, u_tot, w_tot = [], [], []
 pdot = []
 edot = []
+Ldot = []
+Edot = []
 plso = []
 
 alpha = 4.0
@@ -84,13 +86,18 @@ for ff in fluxfiles:
     w_tot.append(w )
     pdot.append( (pdotInf_tot+pdotH_tot ) / pdotpn(a, p, e, pLSO) )
     edot.append( (eccdotInf_tot+eccdotH_tot) / edotpn(a, p, e, pLSO) )
+    Edot.append( (EdotInf_tot+EdotH_tot) * p**5)
+    Ldot.append( (EdotInf_tot+EdotH_tot) * p**3.5)
     plso.append(pLSO )
 
 flat_a = np.round(np.asarray(a_tot).flatten(),decimals=5)
 flat_u = np.round(np.asarray(u_tot).flatten(),decimals=5)
 flat_w = np.round(np.asarray(w_tot).flatten(),decimals=5)
+
 flat_pdot = np.asarray(pdot).flatten()
 flat_edot = np.asarray(edot).flatten()
+flat_Edot = np.asarray(Edot).flatten()
+flat_Ldot = np.asarray(Ldot).flatten()
 
 def get_pdot(aa,uu,ww):
     mask = (aa==flat_a)*(uu==flat_u)*(ww==flat_w)
@@ -100,6 +107,13 @@ def get_edot(aa,uu,ww):
     mask = (aa==flat_a)*(uu==flat_u)*(ww==flat_w)
     return flat_edot[mask][0]
 
+def get_Edot(aa,uu,ww):
+    mask = (aa==flat_a)*(uu==flat_u)*(ww==flat_w)
+    return flat_Edot[mask][0]
+
+def get_Ldot(aa,uu,ww):
+    mask = (aa==flat_a)*(uu==flat_u)*(ww==flat_w)
+    return flat_Ldot[mask][0]
 
 
 a_unique = np.unique(flat_a)
@@ -111,7 +125,7 @@ x2 = u_unique.copy()
 x3 = w_unique.copy()
 X = [x1, x2, x3]
 
-for get,lab in zip([get_pdot,get_edot], ['pdot', 'edot']):
+for get,lab in zip([get_pdot,get_edot,get_Edot,get_Ldot], ['pdot', 'edot','Endot', 'Ldot']):
     reshapedF = np.asarray([[[get(el1,el2,el3) for el3 in x3] for el2 in x2] for el1 in x1])
 
     # flux interpolation

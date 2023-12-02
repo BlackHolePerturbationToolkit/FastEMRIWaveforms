@@ -32,6 +32,8 @@ class KerrEccentricEquatorial{
 public:
     TensorInterpolant *pdot_interp;
     TensorInterpolant *edot_interp;
+    TensorInterpolant *Edot_interp;
+    TensorInterpolant *Ldot_interp;
 
     KerrEccentricEquatorial(std::string few_dir);
 
