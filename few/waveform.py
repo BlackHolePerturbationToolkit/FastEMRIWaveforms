@@ -182,7 +182,6 @@ class GenerateEMRIWaveform:
 
         if dw_ldc != 0.0:
             psi_ldc = -np.arctan2(up_ldc, dw_ldc)
-            # psi_ldc = -np.arctan2(dw_ldc, up_ldc)
 
         else:
             psi_ldc = 0.5 * np.pi

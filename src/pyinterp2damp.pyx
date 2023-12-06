@@ -16,15 +16,22 @@ cdef extern from "Amplitude.hh":
 
 cdef class pyAmplitudeGenerator:
     cdef AmplitudeCarrierWrap *g
-
+    cdef public int lmax
+    cdef public int nmax
+    cdef public bytes few_dir
     def __cinit__(self, lmax, nmax, few_dir):
-        cdef string few_dir_in = str.encode(few_dir)
-        self.g = new AmplitudeCarrierWrap(lmax, nmax, few_dir_in)
+        self.lmax = lmax
+        self.nmax = nmax
+        self.few_dir = few_dir
+        self.g = new AmplitudeCarrierWrap(lmax, nmax, few_dir)
 
     def __dealloc__(self):
         self.g.dealloc()
         if self.g:
             del self.g
+        
+    def __reduce__(self):
+        return (rebuild, (self.lmax, self.nmax, self.few_dir))
 
     def __call__(self, p, e, l_arr, m_arr, n_arr, input_len, num_modes):
 
@@ -40,3 +47,7 @@ cdef class pyAmplitudeGenerator:
         self.g.Interp2DAmplitude(&amplitude_out[0], <double *>p_in, <double *>e_in, <int *>l_arr_in, <int *>m_arr_in, <int *>n_arr_in, input_len, num_modes);
 
         return amplitude_out.reshape(input_len, num_modes)
+
+def rebuild(lmax, nmax, few_dir):
+    c = pyAmplitudeGenerator(lmax, nmax, few_dir)
+    return c

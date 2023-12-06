@@ -30,7 +30,8 @@ from pyUtility import (
     pyGetSeparatrix,
     pyKerrGeoConstantsOfMotionVectorized,
     pyY_to_xI_vector,
-    pyKerrEqSpinFrequenciesCorr
+    pyKerrEqSpinFrequenciesCorr,
+    set_threads_wrap
 )
 
 # check to see if cupy is available for gpus
@@ -180,6 +181,10 @@ def kerr_p_to_u(a, p, e, xI, use_gpu=False):
 
     """
     xp = cp if use_gpu else np
+    
+    scalar = False
+    if isinstance(a, float):
+        scalar = True
 
     delta_p = 0.05
     alpha = 4.0
@@ -192,7 +197,10 @@ def kerr_p_to_u(a, p, e, xI, use_gpu=False):
         raise ValueError("u values are too far below zero.")
 
     # numerical errors
-    u[u < 0.0] = 0.0
+    if scalar:
+        u = max(u,0)
+    else:
+        u[u < 0.0] = 0.0
 
     return u
 
@@ -1023,3 +1031,14 @@ def get_ode_function_options():
         raise ValueError("ODE files not built yet.")
 
     return ode_options
+
+def omp_set_num_threads(num_threads=1):
+    """Globally sets OMP_NUM_THREADS
+
+    Args:
+        num_threads (int, optional):
+        Number of parallel threads to use in OpenMP.
+            Default is 1.
+
+    """
+    set_threads_wrap(num_threads)
