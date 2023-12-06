@@ -45,7 +45,7 @@ except:
 # Python imports
 from few.utils.constants import *
 from few.utils.citations import *
-
+from few.utils.utility import kerr_p_to_u
 
 class ParallelModuleBase(ABC):
     """Base class for modules that can use GPUs.
@@ -733,6 +733,15 @@ class KerrEquatorialEccentric(ParallelModuleBase, ABC):
         if abs(xI) != 1.:
             raise ValueError(
                 "For equatorial orbits, xI must be either 1 or -1."
+            )
+        
+        u = kerr_p_to_u(a, p0, e0, xI)
+        if u > 1.35:
+            raise ValueError(
+                "This a ({}), p0 ({}) and e0 ({}) combination is outside of our domain of validity.".format(
+                    a, p0, e0
+                )
+
             )
 
 class Pn5AAK(ABC):

@@ -177,8 +177,10 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         m_arr,
         n_arr,
         M,
+        a,
         p,
         e,
+        xI,
         *args,
         include_minus_m=True,
         separate_modes=False,
@@ -259,7 +261,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         # get fundamental frequencies across trajectory
         Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(
-            0.0, p, e, np.zeros_like(e)
+            a, p, e, xI,
         )
 
         # convert from dimensionless frequencies
