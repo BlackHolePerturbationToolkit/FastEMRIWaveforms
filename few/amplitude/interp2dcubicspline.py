@@ -64,7 +64,7 @@ class Interp2DAmplitude(AmplitudeBase, SchwarzschildEccentric):
         fp = "Teuk_amps_a0.0_lmax_10_nmax_30_new.h5"
         check_for_file_download(fp, few_dir)
 
-        self.amplitude_generator = pyAmplitudeGenerator(self.lmax, self.nmax, few_dir)
+        self.amplitude_generator = pyAmplitudeGenerator(self.lmax, self.nmax, few_dir.encode("utf-8"))
 
     def attributes_Interp2DAmplitude(self):
         """

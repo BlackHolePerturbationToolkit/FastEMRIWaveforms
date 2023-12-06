@@ -79,3 +79,9 @@ def pyY_to_xI_vector(np.ndarray[ndim=1, dtype=np.float64_t] a,
     Y_to_xI_vector(&x[0], &a[0], &p[0], &e[0], &Y[0], len(e))
 
     return x
+
+def set_threads_wrap(num_threads):
+    set_threads(num_threads)
+
+def get_threads_wrap():
+    return get_threads()
