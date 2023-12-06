@@ -24,6 +24,7 @@ from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *
 from few.utils.baseclasses import ParallelModuleBase
+import sys
 
 # check for cupy
 try:
@@ -31,6 +32,12 @@ try:
 
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
+
+# pytorch
+try:
+    import torch
+except (ImportError, ModuleNotFoundError) as e:
+    pass #  we can catch this later
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -263,7 +270,7 @@ class NeuralModeSelector(ParallelModuleBase):
             Default is {}.
     """
 
-    def __init__(self, l_arr, m_arr, n_arr, threshold=0.5, mode_selector_location=None, **kwargs):
+    def __init__(self, l_arr, m_arr, n_arr, threshold=0.5, mode_selector_location=None, return_type="tuples", keep_inds=None, maximise_over_theta=False, **kwargs):
         if mode_selector_location is None:
             raise ValueError("mode_selector_location kwarg cannot be none.")
         elif not os.path.isdir(mode_selector_location):
@@ -273,33 +280,40 @@ class NeuralModeSelector(ParallelModuleBase):
 
         # we set the pytorch device here for use with the neural network
         if self.use_gpu:
-            self.xp = cp
+            xp = cp
             self.device=f"cuda:{cp.cuda.runtime.getDevice()}"
             self.neural_mode_list = [(lh, mh, nh) for lh, mh, nh in zip(l_arr.get(), m_arr.get(), n_arr.get())]
         else:
-            self.xp = np
+            xp = np
             self.device="cpu"
             self.neural_mode_list = [(lh, mh, nh) for lh, mh, nh in zip(l_arr, m_arr, n_arr)]
         
         # TODO include waveform name in paths
-        self.precomputed_mask = np.load(os.path.join(mode_selector_location, "precomputed_mode_mask.npy"))
+        self.precomputed_mask = np.load(os.path.join(mode_selector_location, "precomputed_mode_mask.npy")).astype(np.int32)
         self.masked_mode_list = [self.neural_mode_list[maskind] for maskind in self.precomputed_mask]
 
-        # import torch here in case users don't want it otherwise
-        # if torch doesn't import properly, raise
-        import torch
-        self.torch = torch
+        self.precomputed_mask = xp.asarray(self.precomputed_mask)  # for "array" return type compatibility
+
+        if "torch" not in sys.modules:
+            raise ModuleNotFoundError("Pytorch not installed.")
         # if torch wasn't installed with GPU capability, raise
         if self.use_gpu and not torch.cuda.is_available():
             raise RuntimeError("pytorch has not been installed with CUDA capability. Fix installation or set use_gpu=False.")
         
+        self.model_loc = os.path.join(mode_selector_location, "neural_mode_selector.tjm")
         try:
-            self.load_model(os.path.join(mode_selector_location, "neural_mode_selector.tjm"))
+            self.load_model(self.model_loc)
         except FileNotFoundError:
             raise FileNotFoundError("Neural mode predictor model file not found.")
 
         self.threshold = threshold
         self.vector_min, self.vector_max = np.load(os.path.join(mode_selector_location, "network_norm.npy"))
+
+        self.return_type = return_type
+
+        self.keep_inds = keep_inds
+
+        self.maximise_over_theta = maximise_over_theta
 
     @property
     def gpu_capability(self):
@@ -311,6 +325,17 @@ class NeuralModeSelector(ParallelModuleBase):
         """Whether this mode selector should be used before or after amplitude generation"""
         return True
     
+    def __getstate__(self):
+        # needs to be modified for pickleability
+        if hasattr(self, "model"):
+            del self.model
+        return self.__dict__
+    
+    def __setstate__(self, d):
+        self.__dict__ = d
+        # we now load the model as we've unpickled again
+        self.load_model(self.model_loc)
+
     def attributes_ModeSelector(self):
         """
         attributes:
@@ -329,11 +354,11 @@ class NeuralModeSelector(ParallelModuleBase):
         return larger_few_citation + few_citation + few_software_citation
 
     def load_model(self, fp):
-        self.model = self.torch.jit.load(fp)  # assume the model has been jit compiled
+        self.model = torch.jit.load(fp)  # assume the model has been jit compiled
         self.model.to(self.device)
         self.model.eval()
     
-    def __call__(self, M, mu, a, p0, e0, theta, phi, T, eps):
+    def __call__(self, M, mu, a, p0, e0, xI, theta, phi, T, eps):
         """Call to predict the mode content of the waveform.
 
         This is the call function that takes the waveform parameters, applies a 
@@ -352,18 +377,39 @@ class NeuralModeSelector(ParallelModuleBase):
             T (double): Duration of waveform in years.
             eps (double): Mode selection threshold power.
         """
+        
+        if not hasattr(self, "model"):
+            self.load_model(self.model_loc)
+
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
 
         #wrap angles to training bounds
         phi = phi % (2*np.pi)
 
-        inputs = np.array([[np.log(M), mu, a, p0, e0, T, theta, phi, np.log10(eps)]])
+        # maximise mode count over theta (stabilises the likelihood but often requires more modes)
+        if self.maximise_over_theta:
+            theta = 1.39
+
+        inputs = np.asarray([[np.log(M), mu, a, p0, e0, xI, T, theta, phi, np.log10(eps)]])[:,np.asarray(self.keep_inds)]  # throw away the params we dont need
         # rescale network input from pre-computed
         inputs = 2 * (inputs - self.vector_min) / (self.vector_max - self.vector_min) - 1
-        inputs = self.torch.as_tensor(inputs, device=self.device).float() 
+        inputs = torch.as_tensor(inputs, device=self.device).float() 
+        self.check_bounds(inputs)
         # get network output and threshold it based on the defined value
-        with self.torch.inference_mode():
-            mode_predictions = self.torch.nn.functional.sigmoid(self.model(inputs))
-            keep_inds = self.torch.where(mode_predictions > self.threshold)[0].int().cpu().numpy()
+        with torch.inference_mode():
+            mode_predictions = torch.nn.functional.sigmoid(self.model(inputs))
+            keep_inds = torch.where(mode_predictions > self.threshold)[0].int().cpu().numpy()  # cpu() works for cpu and gpu
         # return list of modes for kept indices
-        selected_modes = [self.masked_mode_list[ind] for ind in keep_inds]
-        return selected_modes
+        if self.return_type == "tuples":
+            return [self.masked_mode_list[ind] for ind in keep_inds]
+        elif self.return_type == "array":
+            return self.precomputed_mask[keep_inds]
+
+    def check_bounds(self, inputs):
+        # Enforce bounds. Normalising to [-1,1] so it's easy to check (space for numerical errors)
+        if torch.any(torch.abs(inputs) > 1 + 1e-3):
+            breakpoint()
+            raise ValueError(f"One of the inputs to the neural mode selector is out of bounds. Normalised inputs: {inputs}")

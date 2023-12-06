@@ -182,6 +182,7 @@ class GenerateEMRIWaveform:
 
         if dw_ldc != 0.0:
             psi_ldc = -np.arctan2(up_ldc, dw_ldc)
+            # psi_ldc = -np.arctan2(dw_ldc, up_ldc)
 
         else:
             psi_ldc = 0.5 * np.pi
@@ -572,7 +573,7 @@ class SchwarzschildEccentricWaveformBase(
         self.sanity_check_init(M, mu, p0, e0)
 
         # get trajectory
-        (t, p, e, x, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
+        (t, p, e, xI, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
             M,
             mu,
             0.0,
@@ -615,7 +616,7 @@ class SchwarzschildEccentricWaveformBase(
         # if mode selector is predictive, run now to avoid generating amplitudes that are not required
         if self.mode_selector.is_predictive:
             # overwrites mode_selection so it's now a list of modes to keep, ready to feed into amplitudes
-            mode_selection = self.mode_selector(M, mu, p0, e0, theta, phi, T, eps)  # TODO: update this if more arguments are required
+            mode_selection = self.mode_selector(M, mu, 0., p0, e0, 1., theta, phi, T, eps)
 
         # split into batches
 
@@ -771,8 +772,10 @@ class SchwarzschildEccentricWaveformBase(
                 self.ms,
                 self.ns,
                 M,
+                0.0,
                 p,
                 e,
+                xI,
                 dt=dt,
                 T=T,
                 include_minus_m=include_minus_m,
@@ -864,6 +867,9 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         if "mode_selection_type" in mode_selector_kwargs:
             if mode_selector_kwargs["mode_selection_type"] == "neural":
                 mode_selection_module = NeuralModeSelector
+                if "mode_selector_location" not in mode_selector_kwargs:
+                    mode_selector_kwargs["mode_selector_location"] = os.path.join(dir_path,'./files/modeselector_files/FastSchwarzschildEccentricFlux/')
+                mode_selector_kwargs["keep_inds"] = np.array([0,1,3,4,6,7,8,9])
 
         SchwarzschildEccentricWaveformBase.__init__(
             self,
@@ -963,6 +969,9 @@ class FastSchwarzschildEccentricFluxBicubic(SchwarzschildEccentricWaveformBase):
         if "mode_selection_type" in mode_selector_kwargs:
             if mode_selector_kwargs["mode_selection_type"] == "neural":
                 mode_selection_module = NeuralModeSelector
+                if "mode_selector_location" not in mode_selector_kwargs:
+                    mode_selector_kwargs["mode_selector_location"] = os.path.join(dir_path,'./files/modeselector_files/FastSchwarzschildEccentricFluxBicubic/')
+                mode_selector_kwargs["keep_inds"] = np.array([0,1,3,4,6,7,8,9])
 
         SchwarzschildEccentricWaveformBase.__init__(
             self,
@@ -972,6 +981,7 @@ class FastSchwarzschildEccentricFluxBicubic(SchwarzschildEccentricWaveformBase):
             mode_selection_module,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
+            mode_selector_kwargs=mode_selector_kwargs,
             sum_kwargs=sum_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             use_gpu=use_gpu,
@@ -1266,7 +1276,7 @@ class KerrEquatorialEccentricWaveformBase(
         self.sanity_check_init(M, mu, a, p0, e0, xI0)
 
         # get trajectory
-        (t, p, e, x, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
+        (t, p, e, xI, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
             M,
             mu,
             a,
@@ -1303,7 +1313,7 @@ class KerrEquatorialEccentricWaveformBase(
         if self.mode_selector.is_predictive:
             # overwrites mode_selection so it's now a list of modes to keep, ready to feed into amplitudes
             # TODO add retrograde via a *= xI0
-            mode_selection = self.mode_selector(M, mu, a, p0, e0, theta, phi, T, eps)  # TODO: update this if more arguments are required
+            mode_selection = self.mode_selector(M, mu, a*xI0, p0, e0, 1., theta, phi, T, eps)  # TODO: update this if more arguments are required
 
         # split into batches
 
@@ -1339,7 +1349,7 @@ class KerrEquatorialEccentricWaveformBase(
             if not isinstance(mode_selection, list) and not isinstance(mode_selection, xp.ndarray):
                 # amplitudes
                 teuk_modes = xp.asarray(self.amplitude_generator(a, p_temp, e_temp, xI0))
-            
+
             # different types of mode selection
             # sets up ylm and teuk_modes properly for summation
             if isinstance(mode_selection, str):
@@ -1369,6 +1379,7 @@ class KerrEquatorialEccentricWaveformBase(
 
                 # generate only the required modes with the amplitude module
                 teuk_modes = self.amplitude_generator(a, p_temp, e_temp, xI0, specific_modes=mode_selection)
+
                 # unpack the dictionary
                 if isinstance(teuk_modes, dict):
                     teuk_modes_in = xp.asarray([teuk_modes[lmn] for lmn in mode_selection]).T
@@ -1457,8 +1468,10 @@ class KerrEquatorialEccentricWaveformBase(
                 self.ms,
                 self.ns,
                 M,
+                a,
                 p,
                 e,
+                xI,
                 dt=dt,
                 T=T,
                 include_minus_m=include_minus_m,
@@ -1549,7 +1562,7 @@ class KerrEccentricEquatorialFlux(KerrEquatorialEccentricWaveformBase):
                 mode_selection_module = NeuralModeSelector
                 if "mode_selector_location" not in mode_selector_kwargs:
                     mode_selector_kwargs["mode_selector_location"] = os.path.join(dir_path,'./files/modeselector_files/KerrEccentricEquatorialFlux/')
-
+                mode_selector_kwargs["keep_inds"] = np.array([0,1,2,3,4,6,7,8,9])
         KerrEquatorialEccentricWaveformBase.__init__(
             self,
             EMRIInspiral,
