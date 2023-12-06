@@ -298,14 +298,16 @@ void KerrEccentricEquatorial::deriv_func(double* pdot, double* edot, double* xdo
     pdot_out = pdot_interp->eval(a, u, w) * ((8.*pow(1. - pow(e,2),1.5)*(8. + 7.*pow(e,2)))/(5.*p*(pow(p - risco,2) - pow(-risco + p_sep,2))));
     edot_out = edot_interp->eval(a, u, w) * ((pow(1. - pow(e,2),1.5)*(304. + 121.*pow(e,2)))/(15.*pow(p,2)*(pow(p - risco,2) - pow(-risco + p_sep,2))));
     // E, L
-    // Edot = Edot_interp->eval(a,u,w) / pow(p,5);
-    // Ldot = Ldot_interp->eval(a,u,w)/ pow(p,3.5);
+    // Edot = Edot_interp->eval(a,u,w) * (32./5. * pow(p,-5) * pow(1-e*e,1.5) * (1. + 73./24.* e*e + 37./96. * e*e*e*e));
+    // Ldot = Ldot_interp->eval(a,u,w) * (32./5. * pow(p,-7/2) * pow(1-e*e,1.5) * (1. + 7./8. * e*e) );
     // Qdot = 0.0;
+    // cout << " E =" << Edot  << endl;
     
     // Flux from Susanna
     // Edot = Edot_GR(a*copysign(1.0,x),e,r,p);
     // Ldot = Ldot_GR(a*copysign(1.0,x),e,r,p)*copysign(1.0,x);
     // Qdot = 0.0;
+    // cout << " E =" << Edot / Edot_GR(a*copysign(1.0,x),e,r,p)  << endl;
     
     // KerrGeoConstantsOfMotion(&E_here, &L_here, &Q_here, a, p, e, x);
     // Jac(a, p, e, x, E_here, L_here, Q_here, -Edot, -Ldot, Qdot, pdot_out, edot_out, xdot_out);

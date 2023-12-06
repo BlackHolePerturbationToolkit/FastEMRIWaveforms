@@ -35,7 +35,21 @@ def read_txt(fname):
     
     return np.asarray(data)
 
+def Edotpn(a, p, e, pLSO):
+    """
+    https://arxiv.org/pdf/2201.07044.pdf
+    eq 91
+    """
+    pdot_V = 32./5. * p**(-5) * (1-e**2)**1.5 * (1 + 73/24 * e**2 + 37/96 * e**4)
+    return pdot_V
 
+def Ldotpn(a, p, e, pLSO):
+    """
+    https://arxiv.org/pdf/2201.07044.pdf
+    eq 91
+    """
+    pdot_V = 32./5. * p**(-7/2) * (1-e**2)**1.5 * (1 + 7./8. * e**2)
+    return pdot_V
 
 def pdotpn(a, p, e, pLSO):
     """
@@ -86,8 +100,8 @@ for ff in fluxfiles:
     w_tot.append(w )
     pdot.append( (pdotInf_tot+pdotH_tot ) / pdotpn(a, p, e, pLSO) )
     edot.append( (eccdotInf_tot+eccdotH_tot) / edotpn(a, p, e, pLSO) )
-    Edot.append( (EdotInf_tot+EdotH_tot) * p**5)
-    Ldot.append( (EdotInf_tot+EdotH_tot) * p**3.5)
+    Edot.append( (EdotInf_tot+EdotH_tot) / Edotpn(a, p, e, pLSO) )
+    Ldot.append( (LzdotInf_tot+LzdotH_tot) / Ldotpn(a, p, e, pLSO) )
     plso.append(pLSO )
 
 flat_a = np.round(np.asarray(a_tot).flatten(),decimals=5)
