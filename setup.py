@@ -243,7 +243,7 @@ if run_cuda_install:
         # and not with gcc the implementation of this trick is in
         # customize_compiler()
         extra_compile_args={
-            "gcc": ["-std=c++11", "-fopenmp"],  # '-g'],
+            "gcc": ["-std=c++11"],  # '-g'],
             "nvcc": [
                 "-arch=sm_70",
                 "-gencode=arch=compute_50,code=sm_50",
@@ -294,10 +294,9 @@ cpu_extension = dict(
     libraries=["gsl", "gslcblas", "lapack", "lapacke", "hdf5", "hdf5_hl"],
     language="c++",
     runtime_library_dirs=[],
-    extra_compile_args={"gcc": ["-std=c++11", "-fopenmp", "-fPIC"]},  # '-g'
+    extra_compile_args={"gcc": ["-std=c++11"]},  # '-g'
     include_dirs=[numpy_include, "include"],
     library_dirs=None,
-    # library_dirs=["/home/ajchua/lib/"],
 )
 
 if add_lapack:

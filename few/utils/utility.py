@@ -712,40 +712,40 @@ def get_mu_at_t(
 
 
 # data history is saved here nased on version nunber
-record_by_version = {
-    "1.0.0": 3981654,
-    "1.1.0": 3981654,
-    "1.1.1": 3981654,
-    "1.1.2": 3981654,
-    "1.1.3": 3981654,
-    "1.1.4": 3981654,
-    "1.1.5": 3981654,
-    "1.2.0": 3981654,
-    "1.2.1": 3981654,
-    "1.2.2": 3981654,
-    "1.3.0": 3981654,
-    "1.3.1": 3981654,
-    "1.3.2": 3981654,
-    "1.3.3": 3981654,
-    "1.3.4": 3981654,
-    "1.3.5": 3981654,
-    "1.3.6": 3981654,
-    "1.3.7": 3981654,
-    "1.4.0": 3981654,
-    "1.4.1": 3981654,
-    "1.4.2": 3981654,
-    "1.4.3": 3981654,
-    "1.4.4": 3981654,
-    "1.4.5": 3981654,
-    "1.4.6": 3981654,
-    "1.4.7": 3981654,
-    "1.4.8": 3981654,
-    "1.4.9": 3981654,
-    "1.4.10": 3981654,
-    "1.4.11": 3981654,
-    "1.5.0": 3981654,
-    "1.5.1": 3981654,
-}
+# record_by_version = {
+#     "1.0.0": 3981654,
+#     "1.1.0": 3981654,
+#     "1.1.1": 3981654,
+#     "1.1.2": 3981654,
+#     "1.1.3": 3981654,
+#     "1.1.4": 3981654,
+#     "1.1.5": 3981654,
+#     "1.2.0": 3981654,
+#     "1.2.1": 3981654,
+#     "1.2.2": 3981654,
+#     "1.3.0": 3981654,
+#     "1.3.1": 3981654,
+#     "1.3.2": 3981654,
+#     "1.3.3": 3981654,
+#     "1.3.4": 3981654,
+#     "1.3.5": 3981654,
+#     "1.3.6": 3981654,
+#     "1.3.7": 3981654,
+#     "1.4.0": 3981654,
+#     "1.4.1": 3981654,
+#     "1.4.2": 3981654,
+#     "1.4.3": 3981654,
+#     "1.4.4": 3981654,
+#     "1.4.5": 3981654,
+#     "1.4.6": 3981654,
+#     "1.4.7": 3981654,
+#     "1.4.8": 3981654,
+#     "1.4.9": 3981654,
+#     "1.4.10": 3981654,
+#     "1.4.11": 3981654,
+#     "1.5.0": 3981654,
+#     "1.5.1": 3981654,
+# }
 
 
 def check_for_file_download(fp, few_dir, version_string=None):
@@ -769,23 +769,23 @@ def check_for_file_download(fp, few_dir, version_string=None):
     """
 
     # make sure version_string is available
-    if version_string is not None:
-        if version_string not in record_by_version:
-            raise ValueError(
-                "The version_string provided ({}) does not exist.".format(
-                    version_string
-                )
-            )
-    else:
-        version_string = few.__version__
+    # if version_string is not None:
+    #     if version_string not in record_by_version:
+    #         raise ValueError(
+    #             "The version_string provided ({}) does not exist.".format(
+    #                 version_string
+    #             )
+    #         )
+    # else:
+    #     version_string = few.__version__
 
-    # check if the files directory exists
-    try:
-        os.listdir(few_dir + "few/files/")
+    # # check if the files directory exists
+    # try:
+    #     os.listdir(few_dir + "few/files/")
 
-    # if not, create it
-    except OSError:
-        os.mkdir(few_dir + "few/files/")
+    # # if not, create it
+    # except OSError:
+    #     os.mkdir(few_dir + "few/files/")
 
     # check if the file is in the files filder
     # if not, download it from zenodo
@@ -797,7 +797,10 @@ def check_for_file_download(fp, few_dir, version_string=None):
         )
 
         # get record number based on version
-        record = record_by_version.get(version_string)
+        # record = record_by_version.get(version_string)
+
+        # temporary fix
+        record = 3981654
 
         # url to zenodo API
         url = "https://zenodo.org/record/" + str(record) + "/files/" + fp
