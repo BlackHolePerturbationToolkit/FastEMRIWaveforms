@@ -52,19 +52,21 @@ larger_few_citation = """
 """
 
 few_software_citation = """
-@software{michael_l_katz_2020_4005001,
+@software{michael_l_katz_2023_8190418,
   author       = {Michael L. Katz and
+                  Lorenzo Speri and
                   Alvin J. K. Chua and
+                  Christian E. A. Chapman-Bird and
                   Niels Warburton and
-                  Scott A. Hughes.},
-  title        = {{BlackHolePerturbationToolkit/FastEMRIWaveforms:
-                   Official Release}},
-  month        = aug,
-  year         = 2020,
+                  Scott A. Hughes},
+  title        = {{BlackHolePerturbationToolkit/FastEMRIWaveforms: 
+                   Frequency Domain Waveform Added!}},
+  month        = jul,
+  year         = 2023,
   publisher    = {Zenodo},
-  version      = {v1.0.0},
-  doi          = {10.5281/zenodo.4005001},
-  url          = {https://doi.org/10.5281/zenodo.4005001}
+  version      = {v1.5.1},
+  doi          = {10.5281/zenodo.8190418},
+  url          = {https://doi.org/10.5281/zenodo.8190418}
 }
 """
 
@@ -160,5 +162,17 @@ AK_citation = """
     volume = "69",
     pages = "082005",
     year = "2004"
+}
+"""
+
+fd_citation = """
+@article{Speri:2023jte,
+    author = "Speri, Lorenzo and Katz, Michael L. and Chua, Alvin J. K. and Hughes, Scott A. and Warburton, Niels and Thompson, Jonathan E. and Chapman-Bird, Christian E. A. and Gair, Jonathan R.",
+    title = "{Fast and Fourier: Extreme Mass Ratio Inspiral Waveforms in the Frequency Domain}",
+    eprint = "2307.12585",
+    archivePrefix = "arXiv",
+    primaryClass = "gr-qc",
+    month = "7",
+    year = "2023"
 }
 """

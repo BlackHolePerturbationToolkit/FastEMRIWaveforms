@@ -83,19 +83,16 @@ public:
 
 };
 
-
 class InspiralCarrier{
-public:
-    ParamsHolder *params_holder;
-
-    InspiralCarrier(std::string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_, std::string few_dir);
-
-    InspiralHolder run_Inspiral(double t0, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0,
+    public:
+        ODECarrier *testcarrier;
+        ParamsHolder *params_holder;
+        InspiralCarrier(ODECarrier* test, std::string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_, std::string few_dir);
+        void inspiral_wrapper(double *t, double *p, double *e, double *x, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, double* additional_args);
+        void dealloc();
+        InspiralHolder run_inspiral(double t0, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0,
         double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4);
-
-    void InspiralWrapper(double *t, double *p, double *e, double *x, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, double* additional_args);
-
-    void dealloc();
+        ~InspiralCarrier();
 };
 
 

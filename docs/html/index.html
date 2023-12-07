@@ -11,11 +11,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -65,6 +65,8 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Creating-modules">Creating modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Augmented-Analytic-Kludge-with-5PN-trajectory">Augmented Analytic Kludge with 5PN trajectory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Citing-waveforms-and-modules">Citing waveforms and modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/Tutorial_FD_construction_single_mode.html">Single Mode Frequency Domain Waveform Construction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/Tutorial_FrequencyDomain_Waveforms.html">EMRI Waveforms in frequency domain</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">General Information:</span></p>
 <ul>
@@ -117,7 +119,8 @@ automatically download the first time it is needed. If you would like to
 view the data, it can be found on
 <a class="reference external" href="https://zenodo.org/record/3981654#.XzS_KRNKjlw">Zenodo</a>. The current
 and all past code release zip files can also be found on Zenodo
-<a class="reference external" href="https://zenodo.org/record/4005001">here</a>.</p>
+<a class="reference external" href="https://zenodo.org/record/8190418">here</a>. Please see the
+<a class="reference internal" href="#citation"><span class="std std-ref">citation</span></a> section below for information on citing FEW.</p>
 <p>This package is a part of the <a class="reference external" href="https://bhptoolkit.org/">Black Hole Perturbation
 Toolkit</a>.</p>
 <p>If you use all or any parts of this code, please cite
@@ -131,48 +134,31 @@ properly cite specific modules.</p>
 <ol class="arabic simple" start="0">
 <li><p><a class="reference external" href="https://docs.anaconda.com/anaconda/install/">Install Anaconda</a> if
 you do not have it.</p></li>
-<li><p>Create a virtual environment. <strong>Note</strong>: There is no available
-<code class="docutils literal notranslate"><span class="pre">conda</span></code> compiler for Windows. If you want to install for Windows,
-you will probably need to add libraries and include paths to the
-<code class="docutils literal notranslate"><span class="pre">setup.py</span></code> file.</p></li>
-</ol>
-<p>If on linux:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">gcc_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gxx_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">wget</span> <span class="n">gsl</span> <span class="n">lapack</span><span class="o">=</span><span class="mf">3.6.1</span> <span class="n">hdf5</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">matplotlib</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
-<span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
-</pre></div>
-</div>
-<p>If on MACOSX, substitute <code class="docutils literal notranslate"><span class="pre">gcc_linux-64</span></code> and <code class="docutils literal notranslate"><span class="pre">gxx_linus-64</span></code> with
-<code class="docutils literal notranslate"><span class="pre">clang_osx-64</span></code> and <code class="docutils literal notranslate"><span class="pre">clangxx_osx-64</span></code> as follows:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">clangxx_osx</span><span class="o">-</span><span class="mi">64</span> <span class="n">clang_osx</span><span class="o">-</span><span class="mi">64</span> <span class="n">wget</span> <span class="n">gsl</span> <span class="n">lapack</span><span class="o">=</span><span class="mf">3.6.1</span> <span class="n">hdf5</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">matplotlib</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
-<span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
-</pre></div>
-</div>
-<p>If on M1 chip use the following command:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">wget</span> <span class="n">gsl</span> <span class="n">hdf5</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">matplotlib</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.9</span> <span class="n">openblas</span> <span class="n">lapack</span> <span class="n">liblapacke</span>
-<span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
-</pre></div>
-</div>
-<ol class="arabic simple" start="2">
 <li><p>Clone the repository.</p></li>
 </ol>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">BlackHolePerturbationToolkit</span><span class="o">/</span><span class="n">FastEMRIWaveforms</span><span class="o">.</span><span class="n">git</span>
 <span class="n">cd</span> <span class="n">FastEMRIWaveforms</span>
 </pre></div>
 </div>
-<ol class="arabic simple" start="3">
-<li><p>If on MACOSX or linux run install:</p></li>
+<ol class="arabic simple" start="2">
+<li><p>Install FEW into a new conda environment called “few_env”. (<strong>Note</strong>:
+If you already have performed installation and you are updating FEW
+after a <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">pull</span></code>, then run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code> rather than the
+following command.)</p></li>
 </ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="n">install</span><span class="o">.</span><span class="n">sh</span>
 </pre></div>
 </div>
-<p>If on M1 chip use the following command:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">no_omp</span> <span class="o">--</span><span class="n">ccbin</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span>
+<ol class="arabic simple" start="3">
+<li><p>Load the environment:</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="4">
-<li><p>To test few run:</p></li>
+<li><p>In a python file or notebook:</p></li>
 </ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">unittest</span> <span class="n">discover</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">few</span>
 </pre></div>
 </div>
 <p>See <a class="reference external" href="https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb">examples
@@ -197,16 +183,62 @@ toolkit</a>
 and <a class="reference external" href="https://cupy.chainer.org/">CuPy</a>. The CUDA toolkit must have
 cuda version &gt;8.0. Be sure to properly install CuPy within the correct
 CUDA toolkit version. Make sure the nvcc binary is on <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> or set
-it as the <code class="docutils literal notranslate"><span class="pre">CUDAHOME</span></code> environment variable.</p>
+it as the <code class="docutils literal notranslate"><span class="pre">CUDA_HOME</span></code> environment variable.</p>
 <p>There are a set of files required for total use of this package. They
-will download automatically when the first time they are needed. Files
-are generally under 10MB. However, there is a 100MB file needed for the
-slow waveform and the bicubic amplitude interpolation. This larger file
-will only download if you run either of those two modules. The files are
+will download automatically the first time they are needed. Files are
+generally under 10MB. However, there is a 100MB file needed for the slow
+waveform and the bicubic amplitude interpolation. This larger file will
+only download if you run either of those two modules. The files are
 hosted on <a class="reference external" href="https://zenodo.org/record/3981654#.XzS_KRNKjlw">Zenodo</a>.</p>
 </section>
 <section id="installing">
 <h3>Installing<a class="headerlink" href="#installing" title="Permalink to this heading"></a></h3>
+<ol class="arabic simple" start="0">
+<li><p><a class="reference external" href="https://docs.anaconda.com/anaconda/install/">Install Anaconda</a> if
+you do not have it.</p></li>
+<li><p>Clone the repository.</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">BlackHolePerturbationToolkit</span><span class="o">/</span><span class="n">FastEMRIWaveforms</span><span class="o">.</span><span class="n">git</span>
+<span class="n">cd</span> <span class="n">FastEMRIWaveforms</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Installation is made easy through <a class="reference external" href="install.sh">install.sh</a>. This
+is a bash script that will create a conda environment, install FEW,
+run tests, and install any additional packages needed for sampling or
+development. It will look for an <code class="docutils literal notranslate"><span class="pre">nvcc</span></code> binary, the <code class="docutils literal notranslate"><span class="pre">CUDA_HOME</span></code>
+variable, or the <code class="docutils literal notranslate"><span class="pre">CUDAHOME</span></code> variable. If it finds that information,
+it will install for CUDA as well (including installing the proper
+version of <code class="docutils literal notranslate"><span class="pre">cupy</span></code>). <strong>Note</strong>: If you already have performed
+installation and you are updating FEW after a <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">pull</span></code>, then run
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code> rather than the following command.</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="n">install</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>Options for installation can be applied by running
+<code class="docutils literal notranslate"><span class="pre">bash</span> <span class="pre">install.sh</span> <span class="pre">key=value</span></code>. These can be found with
+<code class="docutils literal notranslate"><span class="pre">bash</span> <span class="pre">install.sh</span> <span class="pre">-h</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">keyword</span> <span class="n">argument</span> <span class="n">options</span> <span class="p">(</span><span class="n">given</span> <span class="k">as</span> <span class="n">key</span><span class="o">=</span><span class="n">value</span><span class="p">):</span>
+  <span class="n">env_name</span><span class="p">:</span>  <span class="n">Name</span> <span class="n">of</span> <span class="n">generated</span> <span class="n">conda</span> <span class="n">environment</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="s1">&#39;few_env&#39;</span><span class="o">.</span>
+  <span class="n">install_type</span><span class="p">:</span>  <span class="n">Type</span> <span class="n">of</span> <span class="n">install</span><span class="o">.</span> <span class="s1">&#39;basic&#39;</span><span class="p">,</span> <span class="s1">&#39;development&#39;</span><span class="p">,</span> <span class="ow">or</span> <span class="s1">&#39;sampling&#39;</span><span class="o">.</span>
+      <span class="s1">&#39;development&#39;</span> <span class="n">adds</span> <span class="n">packages</span> <span class="n">needed</span> <span class="k">for</span> <span class="n">development</span> <span class="ow">and</span> <span class="n">documentation</span><span class="o">.</span>
+      <span class="s1">&#39;sampling&#39;</span> <span class="n">adds</span> <span class="n">packages</span> <span class="k">for</span> <span class="n">sampling</span> <span class="n">like</span> <span class="n">eryn</span><span class="p">,</span> <span class="n">lisatools</span><span class="p">,</span> <span class="n">corner</span><span class="p">,</span> <span class="n">chainconsumer</span><span class="o">.</span>
+      <span class="n">Default</span> <span class="ow">is</span> <span class="s1">&#39;basic&#39;</span><span class="o">.</span>
+  <span class="n">run_tests</span><span class="p">:</span> <span class="n">Either</span> <span class="n">true</span> <span class="ow">or</span> <span class="n">false</span><span class="o">.</span> <span class="n">Whether</span> <span class="n">to</span> <span class="n">run</span> <span class="n">tests</span> <span class="n">after</span> <span class="n">install</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="n">true</span><span class="o">.</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Load the environment (change “few_env” to the correct environment
+name is specified in previous step):</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
+</pre></div>
+</div>
+<p>Please contact the developers if the installation does not work.</p>
+</section>
+<section id="more-customized-installation-legacy">
+<h3>More Customized Installation (legacy)<a class="headerlink" href="#more-customized-installation-legacy" title="Permalink to this heading"></a></h3>
 <ol class="arabic simple" start="0">
 <li><p><a class="reference external" href="https://docs.anaconda.com/anaconda/install/">Install Anaconda</a> if
 you do not have it.</p></li>
@@ -247,14 +279,13 @@ lib and include for both are in installed within the conda environment.
 To provide other lib and include directories you can provide command
 line options when installing. You can also remove usage of OpenMP.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">help</span>
-<span class="n">usage</span><span class="p">:</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">no_omp</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lapack_lib</span> <span class="n">LAPACK_LIB</span><span class="p">]</span>
+<span class="n">usage</span><span class="p">:</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lapack_lib</span> <span class="n">LAPACK_LIB</span><span class="p">]</span>
                 <span class="p">[</span><span class="o">--</span><span class="n">lapack_include</span> <span class="n">LAPACK_INCLUDE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lapack</span> <span class="n">LAPACK</span><span class="p">]</span>
                 <span class="p">[</span><span class="o">--</span><span class="n">gsl_lib</span> <span class="n">GSL_LIB</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">gsl_include</span> <span class="n">GSL_INCLUDE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">gsl</span> <span class="n">GSL</span><span class="p">]</span>
                 <span class="p">[</span><span class="o">--</span><span class="n">ccbin</span> <span class="n">CCBIN</span><span class="p">]</span>
 
 <span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
   <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
-  <span class="o">--</span><span class="n">no_omp</span>              <span class="n">If</span> <span class="n">provided</span><span class="p">,</span> <span class="n">install</span> <span class="n">without</span> <span class="n">OpenMP</span><span class="o">.</span>
   <span class="o">--</span><span class="n">lapack_lib</span> <span class="n">LAPACK_LIB</span>
                         <span class="n">Directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">lapack</span> <span class="n">lib</span><span class="o">.</span> <span class="n">If</span> <span class="n">you</span> <span class="n">add</span> <span class="n">lapack</span> <span class="n">lib</span><span class="p">,</span>
                         <span class="n">must</span> <span class="n">also</span> <span class="n">add</span> <span class="n">lapack</span> <span class="n">include</span><span class="o">.</span>
@@ -286,12 +317,12 @@ using the flag <code class="docutils literal notranslate"><span class="pre">--cc
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">ccbin</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">anaconda3</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">few_env</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">x86_64</span><span class="o">-</span><span class="n">apple</span><span class="o">-</span><span class="n">darwin13</span><span class="mf">.4.0</span><span class="o">-</span><span class="n">clang</span>
 </pre></div>
 </div>
-<p>Please contact the developers if the installation does not work.</p>
 </section>
 </section>
 <section id="running-the-tests">
 <h2>Running the Tests<a class="headerlink" href="#running-the-tests" title="Permalink to this heading"></a></h2>
-<p>In the main directory of the package run in the terminal:</p>
+<p>In the main directory of the package run in the terminal (if you run
+<a class="reference external" href="install.sh">install.sh</a> with defaults, the tests will be performed):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">unittest</span> <span class="n">discover</span>
 </pre></div>
 </div>
@@ -300,28 +331,37 @@ using the flag <code class="docutils literal notranslate"><span class="pre">--cc
 <h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this heading"></a></h2>
 <p>Please read <a class="reference external" href="CONTRIBUTING.md">CONTRIBUTING.md</a> for details on our
 code of conduct, and the process for submitting pull requests to us.</p>
+<p>If you want to develop FEW and produce documentation, install <code class="docutils literal notranslate"><span class="pre">few</span></code>
+with</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="n">install</span><span class="o">.</span><span class="n">sh</span> <span class="n">install_type</span><span class="o">=</span><span class="n">development</span>
+</pre></div>
+</div>
+<p>This will install necessary packages for building the documentation
+(<code class="docutils literal notranslate"><span class="pre">sphinx</span></code>, <code class="docutils literal notranslate"><span class="pre">pypandoc</span></code>, <code class="docutils literal notranslate"><span class="pre">sphinx_rtd_theme</span></code>, <code class="docutils literal notranslate"><span class="pre">nbsphinx</span></code>). The
+documentation source files are in <code class="docutils literal notranslate"><span class="pre">docs/source</span></code>. To compile the
+documentation, change to the <code class="docutils literal notranslate"><span class="pre">docs</span></code> directory and run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span></code>.</p>
 </section>
 <section id="versioning">
 <h2>Versioning<a class="headerlink" href="#versioning" title="Permalink to this heading"></a></h2>
 <p>We use <a class="reference external" href="http://semver.org/">SemVer</a> for versioning. For the versions
 available, see the <a class="reference external" href="https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags">tags on this
 repository</a>.</p>
-<p>Current Version: 1.4.11</p>
+<p>Current Version: 1.5.3</p>
 </section>
-<section id="authors">
-<h2>Authors<a class="headerlink" href="#authors" title="Permalink to this heading"></a></h2>
+<section id="authors-developers">
+<h2>Authors/Developers<a class="headerlink" href="#authors-developers" title="Permalink to this heading"></a></h2>
 <ul class="simple">
 <li><p><strong>Michael Katz</strong></p></li>
+<li><p>Lorenzo Speri</p></li>
+<li><p>Christian Chapman-Bird</p></li>
 <li><p>Alvin J. K. Chua</p></li>
 <li><p>Niels Warburton</p></li>
-<li><p>Lorenzo Speri</p></li>
 <li><p>Scott Hughes</p></li>
 </ul>
 <section id="contibutors">
 <h3>Contibutors<a class="headerlink" href="#contibutors" title="Permalink to this heading"></a></h3>
 <ul class="simple">
 <li><p>Philip Lynch</p></li>
-<li><p>Christian Chapman-Bird</p></li>
 <li><p>Soichiro Isoyama</p></li>
 <li><p>Ryuichi Fujita</p></li>
 <li><p>Monica Rizzo</p></li>
@@ -332,6 +372,148 @@ repository</a>.</p>
 <h2>License<a class="headerlink" href="#license" title="Permalink to this heading"></a></h2>
 <p>This project is licensed under the GNU License - see the
 <a class="reference external" href="LICENSE.md">LICENSE.md</a> file for details.</p>
+</section>
+<section id="citation">
+<h2>Citation<a class="headerlink" href="#citation" title="Permalink to this heading"></a></h2>
+<p>Please make sure to cite FEW papers and the FEW software on
+<a class="reference external" href="https://zenodo.org/record/8190418">Zenodo</a>. There are other papers
+that require citation based on the classes used. For most classes this
+applies to, you can find these by checking the <code class="docutils literal notranslate"><span class="pre">citation</span></code> attribute
+for that class. Below is a list of citable papers that have lead to the
+development of FEW.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>@article{Chua:2020stf,
+    author = &quot;Chua, Alvin J. K. and Katz, Michael L. and Warburton, Niels and Hughes, Scott A.&quot;,
+    title = &quot;{Rapid generation of fully relativistic extreme-mass-ratio-inspiral waveform templates for LISA data analysis}&quot;,
+    eprint = &quot;2008.06071&quot;,
+    archivePrefix = &quot;arXiv&quot;,
+    primaryClass = &quot;gr-qc&quot;,
+    doi = &quot;10.1103/PhysRevLett.126.051102&quot;,
+    journal = &quot;Phys. Rev. Lett.&quot;,
+    volume = &quot;126&quot;,
+    number = &quot;5&quot;,
+    pages = &quot;051102&quot;,
+    year = &quot;2021&quot;
+}
+
+@article{Katz:2021yft,
+    author = &quot;Katz, Michael L. and Chua, Alvin J. K. and Speri, Lorenzo and Warburton, Niels and Hughes, Scott A.&quot;,
+    title = &quot;{FastEMRIWaveforms: New tools for millihertz gravitational-wave data analysis}&quot;,
+    eprint = &quot;2104.04582&quot;,
+    archivePrefix = &quot;arXiv&quot;,
+    primaryClass = &quot;gr-qc&quot;,
+    month = &quot;4&quot;,
+    year = &quot;2021&quot;
+}
+
+@software{michael_l_katz_2023_8190418,
+  author       = {Michael L. Katz and
+                  Lorenzo Speri and
+                  Alvin J. K. Chua and
+                  Christian E. A. Chapman-Bird and
+                  Niels Warburton and
+                  Scott A. Hughes},
+  title        = {{BlackHolePerturbationToolkit/FastEMRIWaveforms:
+                   Frequency Domain Waveform Added!}},
+  month        = jul,
+  year         = 2023,
+  publisher    = {Zenodo},
+  version      = {v1.5.1},
+  doi          = {10.5281/zenodo.8190418},
+  url          = {https://doi.org/10.5281/zenodo.8190418}
+}
+
+@article{Chua:2018woh,
+    author = &quot;Chua, Alvin J.K. and Galley, Chad R. and Vallisneri, Michele&quot;,
+    title = &quot;{Reduced-order modeling with artificial neurons for gravitational-wave inference}&quot;,
+    eprint = &quot;1811.05491&quot;,
+    archivePrefix = &quot;arXiv&quot;,
+    primaryClass = &quot;astro-ph.IM&quot;,
+    doi = &quot;10.1103/PhysRevLett.122.211101&quot;,
+    journal = &quot;Phys. Rev. Lett.&quot;,
+    volume = &quot;122&quot;,
+    number = &quot;21&quot;,
+    pages = &quot;211101&quot;,
+    year = &quot;2019&quot;
+}
+
+@article{Fujita:2020zxe,
+    author = &quot;Fujita, Ryuichi and Shibata, Masaru&quot;,
+    title = &quot;{Extreme mass ratio inspirals on the equatorial plane in the adiabatic order}&quot;,
+    eprint = &quot;2008.13554&quot;,
+    archivePrefix = &quot;arXiv&quot;,
+    primaryClass = &quot;gr-qc&quot;,
+    doi = &quot;10.1103/PhysRevD.102.064005&quot;,
+    journal = &quot;Phys. Rev. D&quot;,
+    volume = &quot;102&quot;,
+    number = &quot;6&quot;,
+    pages = &quot;064005&quot;,
+    year = &quot;2020&quot;
+}
+
+@article{Stein:2019buj,
+    author = &quot;Stein, Leo C. and Warburton, Niels&quot;,
+    title = &quot;{Location of the last stable orbit in Kerr spacetime}&quot;,
+    eprint = &quot;1912.07609&quot;,
+    archivePrefix = &quot;arXiv&quot;,
+    primaryClass = &quot;gr-qc&quot;,
+    doi = &quot;10.1103/PhysRevD.101.064007&quot;,
+    journal = &quot;Phys. Rev. D&quot;,
+    volume = &quot;101&quot;,
+    number = &quot;6&quot;,
+    pages = &quot;064007&quot;,
+    year = &quot;2020&quot;
+}
+
+@article{Chua:2015mua,
+    author = &quot;Chua, Alvin J.K. and Gair, Jonathan R.&quot;,
+    title = &quot;{Improved analytic extreme-mass-ratio inspiral model for scoping out eLISA data analysis}&quot;,
+    eprint = &quot;1510.06245&quot;,
+    archivePrefix = &quot;arXiv&quot;,
+    primaryClass = &quot;gr-qc&quot;,
+    doi = &quot;10.1088/0264-9381/32/23/232002&quot;,
+    journal = &quot;Class. Quant. Grav.&quot;,
+    volume = &quot;32&quot;,
+    pages = &quot;232002&quot;,
+    year = &quot;2015&quot;
+}
+
+@article{Chua:2017ujo,
+    author = &quot;Chua, Alvin J.K. and Moore, Christopher J. and Gair, Jonathan R.&quot;,
+    title = &quot;{Augmented kludge waveforms for detecting extreme-mass-ratio inspirals}&quot;,
+    eprint = &quot;1705.04259&quot;,
+    archivePrefix = &quot;arXiv&quot;,
+    primaryClass = &quot;gr-qc&quot;,
+    doi = &quot;10.1103/PhysRevD.96.044005&quot;,
+    journal = &quot;Phys. Rev. D&quot;,
+    volume = &quot;96&quot;,
+    number = &quot;4&quot;,
+    pages = &quot;044005&quot;,
+    year = &quot;2017&quot;
+}
+
+@article{Barack:2003fp,
+    author = &quot;Barack, Leor and Cutler, Curt&quot;,
+    title = &quot;{LISA capture sources: Approximate waveforms, signal-to-noise ratios, and parameter estimation accuracy}&quot;,
+    eprint = &quot;gr-qc/0310125&quot;,
+    archivePrefix = &quot;arXiv&quot;,
+    doi = &quot;10.1103/PhysRevD.69.082005&quot;,
+    journal = &quot;Phys. Rev. D&quot;,
+    volume = &quot;69&quot;,
+    pages = &quot;082005&quot;,
+    year = &quot;2004&quot;
+}
+
+@article{Speri:2023jte,
+    author = &quot;Speri, Lorenzo and Katz, Michael L. and Chua, Alvin J. K. and Hughes, Scott A. and Warburton, Niels and Thompson, Jonathan E. and Chapman-Bird, Christian E. A. and Gair, Jonathan R.&quot;,
+    title = &quot;{Fast and Fourier: Extreme Mass Ratio Inspiral Waveforms in the Frequency Domain}&quot;,
+    eprint = &quot;2307.12585&quot;,
+    archivePrefix = &quot;arXiv&quot;,
+    primaryClass = &quot;gr-qc&quot;,
+    month = &quot;7&quot;,
+    year = &quot;2023&quot;
+}
+</pre></div>
+</div>
 </section>
 <section id="acknowledgments">
 <h2>Acknowledgments<a class="headerlink" href="#acknowledgments" title="Permalink to this heading"></a></h2>
@@ -348,278 +530,44 @@ computing facility at Northwestern University.</p></li>
 <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="user/main.html">Overall Waveform Models</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="user/main.html#generic-waveform-generator">Generic Waveform Generator</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="user/main.html#few.waveform.GenerateEMRIWaveform"><code class="docutils literal notranslate"><span class="pre">GenerateEMRIWaveform</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/main.html#few.waveform.GenerateEMRIWaveform.__call__"><code class="docutils literal notranslate"><span class="pre">GenerateEMRIWaveform.__call__()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="user/main.html#generic-waveform-generator">Generic Waveform Generator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user/main.html#prebuilt-waveform-models">Prebuilt Waveform Models</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="user/main.html#fast-schwarzschild-eccentric-flux-based-waveform">Fast Schwarzschild Eccentric Flux-based Waveform</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux"><code class="docutils literal notranslate"><span class="pre">FastSchwarzschildEccentricFlux</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="user/main.html#slow-schwarzschild-eccentric-flux-based-waveform">Slow Schwarzschild Eccentric Flux-based Waveform</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux"><code class="docutils literal notranslate"><span class="pre">SlowSchwarzschildEccentricFlux</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="user/main.html#generic-kerr-aak-with-5pn-trajectory">Generic Kerr AAK with 5PN Trajectory</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/main.html#few.waveform.Pn5AAKWaveform"><code class="docutils literal notranslate"><span class="pre">Pn5AAKWaveform</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l3"><a class="reference internal" href="user/main.html#fast-schwarzschild-eccentric-flux-based-waveform">Fast Schwarzschild Eccentric Flux-based Waveform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user/main.html#slow-schwarzschild-eccentric-flux-based-waveform">Slow Schwarzschild Eccentric Flux-based Waveform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user/main.html#generic-kerr-aak-with-5pn-trajectory">Generic Kerr AAK with 5PN Trajectory</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="user/main.html#base-classes">Base Classes</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="user/main.html#schwarzschild-eccentric">Schwarzschild Eccentric</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric"><code class="docutils literal notranslate"><span class="pre">SchwarzschildEccentric</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase"><code class="docutils literal notranslate"><span class="pre">SchwarzschildEccentricWaveformBase</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="user/main.html#pn-aak-waveform-for-generic-kerr">5PN + AAK Waveform for Generic Kerr</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/main.html#few.utils.baseclasses.Pn5AAK"><code class="docutils literal notranslate"><span class="pre">Pn5AAK</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/main.html#few.waveform.AAKWaveformBase"><code class="docutils literal notranslate"><span class="pre">AAKWaveformBase</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="user/main.html#gpu-module-base-class">GPU Module Base Class</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/main.html#few.utils.baseclasses.ParallelModuleBase"><code class="docutils literal notranslate"><span class="pre">ParallelModuleBase</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l3"><a class="reference internal" href="user/main.html#schwarzschild-eccentric">Schwarzschild Eccentric</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user/main.html#pn-aak-waveform-for-generic-kerr">5PN + AAK Waveform for Generic Kerr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user/main.html#gpu-module-base-class">GPU Module Base Class</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="user/traj.html">Trajectory Package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="user/traj.html#few.utils.baseclasses.TrajectoryBase"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="user/traj.html#few.utils.baseclasses.TrajectoryBase.citation"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase.citation</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/traj.html#few.utils.baseclasses.TrajectoryBase.get_inspiral"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase.get_inspiral()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/traj.html#few.utils.baseclasses.TrajectoryBase.__call__"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase.__call__()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="user/traj.html#module-few.trajectory.inspiral">Generic Inspiral Generator from C/C++ functions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.num_add_args"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.num_add_args</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.background"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.background</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.equatorial"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.equatorial</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.circular"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.circular</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.convert_Y"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.convert_Y</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.files"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.files</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.citations"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.citations</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.enforce_schwarz_sep"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.enforce_schwarz_sep</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.inspiral_generator"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.inspiral_generator</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.func"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.func</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.specific_kwarg_keys"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.specific_kwarg_keys</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.attributes_EMRIInspiral"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.attributes_EMRIInspiral()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#id0"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.inspiral_generator</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#id1"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.specific_kwarg_keys</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.citation"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.citation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.__call__"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.__call__()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.get_inspiral"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.get_inspiral()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="user/traj.html#module-few.trajectory.inspiral">Generic Inspiral Generator from C/C++ functions</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="user/amp.html">Amplitude Package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="user/amp.html#schwarzschild-eccentric-amplitudes">Schwarzschild Eccentric Amplitudes</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="user/amp.html#module-few.amplitude.romannet">ROMAN Network</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/amp.html#few.amplitude.romannet.RomanAmplitude"><code class="docutils literal notranslate"><span class="pre">RomanAmplitude</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="user/amp.html#module-few.amplitude.interp2dcubicspline">2D Cubic Spline Interpolation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude"><code class="docutils literal notranslate"><span class="pre">Interp2DAmplitude</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l3"><a class="reference internal" href="user/amp.html#module-few.amplitude.romannet">ROMAN Network</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user/amp.html#module-few.amplitude.interp2dcubicspline">2D Cubic Spline Interpolation</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="user/sum.html">Summation Package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="user/sum.html#few.utils.baseclasses.SummationBase"><code class="docutils literal notranslate"><span class="pre">SummationBase</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="user/sum.html#few.utils.baseclasses.SummationBase.attributes_SummationBase"><code class="docutils literal notranslate"><span class="pre">SummationBase.attributes_SummationBase()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/sum.html#few.utils.baseclasses.SummationBase.waveform"><code class="docutils literal notranslate"><span class="pre">SummationBase.waveform</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/sum.html#few.utils.baseclasses.SummationBase.citation"><code class="docutils literal notranslate"><span class="pre">SummationBase.citation</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/sum.html#few.utils.baseclasses.SummationBase.sum"><code class="docutils literal notranslate"><span class="pre">SummationBase.sum()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/sum.html#few.utils.baseclasses.SummationBase.__call__"><code class="docutils literal notranslate"><span class="pre">SummationBase.__call__()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="user/sum.html#module-few.summation.interpolatedmodesum">Interpolated Summation</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.attributes_CubicSplineInterpolate"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant.attributes_CubicSplineInterpolate()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.interpolate_arrays"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant.interpolate_arrays</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.interp_array"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant.interp_array</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.gpu_capability"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant.gpu_capability</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.citation"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant.citation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.y"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant.y</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.c1"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant.c1</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.c2"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant.c2</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.c3"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant.c3</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.__call__"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant.__call__()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.adjust_gpu_usage"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant.adjust_gpu_usage()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.attributes_ParallelModuleBase"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant.attributes_ParallelModuleBase()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.use_gpu"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant.use_gpu</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.xp"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant.xp</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.sanity_check_gpu"><code class="docutils literal notranslate"><span class="pre">CubicSplineInterpolant.sanity_check_gpu()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.__call__"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.__call__()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.adjust_gpu_usage"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.adjust_gpu_usage()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_ParallelModuleBase"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.attributes_ParallelModuleBase()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.use_gpu"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.use_gpu</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.xp"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.xp</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_SchwarzschildEccentric"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.attributes_SchwarzschildEccentric()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.background"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.background</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.descriptor"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.descriptor</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.ndim"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.ndim</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.m0sort"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.m0sort</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.m0mask"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.m0mask</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.m_zero_up_mask"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.m_zero_up_mask</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.lmn_indices"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.lmn_indices</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.num_m_zero_up"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.num_m_zero_up</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.num_m0"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.num_m0</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.num_m_1_up"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.num_m_1_up</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.inverse_lm"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.inverse_lm</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.index_map"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.index_map</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.special_index_map"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.special_index_map</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_SummationBase"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.attributes_SummationBase()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.waveform"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.waveform</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_gpu"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.sanity_check_gpu()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_init"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.sanity_check_init()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_traj"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.sanity_check_traj()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_viewing_angles"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.sanity_check_viewing_angles()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_InterpolatedModeSum"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.attributes_InterpolatedModeSum()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.get_waveform"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.get_waveform</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.gpu_capability"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.gpu_capability</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.citation"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.citation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.sum"><code class="docutils literal notranslate"><span class="pre">InterpolatedModeSum.sum()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="user/sum.html#module-few.summation.directmodesum">Direct Summation</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum"><code class="docutils literal notranslate"><span class="pre">DirectModeSum</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.citation"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.citation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.gpu_capability"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.gpu_capability</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.sum"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.sum()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.__call__"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.__call__()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.adjust_gpu_usage"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.adjust_gpu_usage()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.attributes_ParallelModuleBase"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.attributes_ParallelModuleBase()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.use_gpu"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.use_gpu</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.xp"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.xp</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.attributes_SchwarzschildEccentric"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.attributes_SchwarzschildEccentric()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.background"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.background</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.descriptor"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.descriptor</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.ndim"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.ndim</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.m0sort"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.m0sort</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.m0mask"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.m0mask</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.m_zero_up_mask"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.m_zero_up_mask</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.lmn_indices"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.lmn_indices</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.num_m_zero_up"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.num_m_zero_up</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.num_m0"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.num_m0</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.num_m_1_up"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.num_m_1_up</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.inverse_lm"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.inverse_lm</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.index_map"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.index_map</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.special_index_map"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.special_index_map</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.attributes_SummationBase"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.attributes_SummationBase()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.waveform"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.waveform</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_gpu"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.sanity_check_gpu()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_init"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.sanity_check_init()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_traj"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.sanity_check_traj()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_viewing_angles"><code class="docutils literal notranslate"><span class="pre">DirectModeSum.sanity_check_viewing_angles()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="user/sum.html#module-few.summation.aakwave">AAK Summation / Waveform Generator</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation"><code class="docutils literal notranslate"><span class="pre">AAKSummation</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.gpu_capability"><code class="docutils literal notranslate"><span class="pre">AAKSummation.gpu_capability</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.attributes_AmplitudeAAK"><code class="docutils literal notranslate"><span class="pre">AAKSummation.attributes_AmplitudeAAK()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.waveform_generator"><code class="docutils literal notranslate"><span class="pre">AAKSummation.waveform_generator</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.spline"><code class="docutils literal notranslate"><span class="pre">AAKSummation.spline</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.__call__"><code class="docutils literal notranslate"><span class="pre">AAKSummation.__call__()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.adjust_gpu_usage"><code class="docutils literal notranslate"><span class="pre">AAKSummation.adjust_gpu_usage()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.attributes_ParallelModuleBase"><code class="docutils literal notranslate"><span class="pre">AAKSummation.attributes_ParallelModuleBase()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.use_gpu"><code class="docutils literal notranslate"><span class="pre">AAKSummation.use_gpu</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.xp"><code class="docutils literal notranslate"><span class="pre">AAKSummation.xp</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.attributes_Pn5AAK"><code class="docutils literal notranslate"><span class="pre">AAKSummation.attributes_Pn5AAK()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#id0"><code class="docutils literal notranslate"><span class="pre">AAKSummation.xp</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.background"><code class="docutils literal notranslate"><span class="pre">AAKSummation.background</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.descriptor"><code class="docutils literal notranslate"><span class="pre">AAKSummation.descriptor</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.needs_Y"><code class="docutils literal notranslate"><span class="pre">AAKSummation.needs_Y</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.attributes_SummationBase"><code class="docutils literal notranslate"><span class="pre">AAKSummation.attributes_SummationBase()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.waveform"><code class="docutils literal notranslate"><span class="pre">AAKSummation.waveform</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.citation"><code class="docutils literal notranslate"><span class="pre">AAKSummation.citation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.sanity_check_angles"><code class="docutils literal notranslate"><span class="pre">AAKSummation.sanity_check_angles()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.sanity_check_gpu"><code class="docutils literal notranslate"><span class="pre">AAKSummation.sanity_check_gpu()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.sanity_check_init"><code class="docutils literal notranslate"><span class="pre">AAKSummation.sanity_check_init()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.sanity_check_traj"><code class="docutils literal notranslate"><span class="pre">AAKSummation.sanity_check_traj()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/sum.html#few.summation.aakwave.AAKSummation.sum"><code class="docutils literal notranslate"><span class="pre">AAKSummation.sum()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="user/sum.html#module-few.summation.interpolatedmodesum">Interpolated Summation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/sum.html#module-few.summation.directmodesum">Direct Summation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/sum.html#module-few.summation.aakwave">AAK Summation / Waveform Generator</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="user/util.html">Utilities</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="user/util.html#module-few.utils.modeselector">Mode Filtering</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.modeselector.ModeSelector"><code class="docutils literal notranslate"><span class="pre">ModeSelector</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.modeselector.ModeSelector.gpu_capability"><code class="docutils literal notranslate"><span class="pre">ModeSelector.gpu_capability</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.modeselector.ModeSelector.attributes_ModeSelector"><code class="docutils literal notranslate"><span class="pre">ModeSelector.attributes_ModeSelector()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.modeselector.ModeSelector.xp"><code class="docutils literal notranslate"><span class="pre">ModeSelector.xp</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.modeselector.ModeSelector.num_m_zero_up"><code class="docutils literal notranslate"><span class="pre">ModeSelector.num_m_zero_up</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.modeselector.ModeSelector.num_m_1_up"><code class="docutils literal notranslate"><span class="pre">ModeSelector.num_m_1_up</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.modeselector.ModeSelector.num_m0"><code class="docutils literal notranslate"><span class="pre">ModeSelector.num_m0</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.modeselector.ModeSelector.sensitivity_fn"><code class="docutils literal notranslate"><span class="pre">ModeSelector.sensitivity_fn</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.modeselector.ModeSelector.citation"><code class="docutils literal notranslate"><span class="pre">ModeSelector.citation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.modeselector.ModeSelector.__call__"><code class="docutils literal notranslate"><span class="pre">ModeSelector.__call__()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.modeselector.ModeSelector.adjust_gpu_usage"><code class="docutils literal notranslate"><span class="pre">ModeSelector.adjust_gpu_usage()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.modeselector.ModeSelector.attributes_ParallelModuleBase"><code class="docutils literal notranslate"><span class="pre">ModeSelector.attributes_ParallelModuleBase()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.modeselector.ModeSelector.use_gpu"><code class="docutils literal notranslate"><span class="pre">ModeSelector.use_gpu</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#id0"><code class="docutils literal notranslate"><span class="pre">ModeSelector.xp</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.modeselector.ModeSelector.sanity_check_gpu"><code class="docutils literal notranslate"><span class="pre">ModeSelector.sanity_check_gpu()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="user/util.html#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.ylm.GetYlms"><code class="docutils literal notranslate"><span class="pre">GetYlms</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.ylm.GetYlms.gpu_capability"><code class="docutils literal notranslate"><span class="pre">GetYlms.gpu_capability</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.ylm.GetYlms.attributes_GetYlms"><code class="docutils literal notranslate"><span class="pre">GetYlms.attributes_GetYlms()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.ylm.GetYlms.xp"><code class="docutils literal notranslate"><span class="pre">GetYlms.xp</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.ylm.GetYlms.__call__"><code class="docutils literal notranslate"><span class="pre">GetYlms.__call__()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.ylm.GetYlms.adjust_gpu_usage"><code class="docutils literal notranslate"><span class="pre">GetYlms.adjust_gpu_usage()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.ylm.GetYlms.attributes_ParallelModuleBase"><code class="docutils literal notranslate"><span class="pre">GetYlms.attributes_ParallelModuleBase()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.ylm.GetYlms.use_gpu"><code class="docutils literal notranslate"><span class="pre">GetYlms.use_gpu</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#id1"><code class="docutils literal notranslate"><span class="pre">GetYlms.xp</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.ylm.GetYlms.citation"><code class="docutils literal notranslate"><span class="pre">GetYlms.citation</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="user/util.html#few.utils.ylm.GetYlms.sanity_check_gpu"><code class="docutils literal notranslate"><span class="pre">GetYlms.sanity_check_gpu()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="user/util.html#module-few.utils.utility">Analysis and Other Tools</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.get_overlap"><code class="docutils literal notranslate"><span class="pre">get_overlap()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.get_mismatch"><code class="docutils literal notranslate"><span class="pre">get_mismatch()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.p_to_y"><code class="docutils literal notranslate"><span class="pre">p_to_y()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.get_fundamental_frequencies"><code class="docutils literal notranslate"><span class="pre">get_fundamental_frequencies()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.get_kerr_geo_constants_of_motion"><code class="docutils literal notranslate"><span class="pre">get_kerr_geo_constants_of_motion()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.xI_to_Y"><code class="docutils literal notranslate"><span class="pre">xI_to_Y()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.Y_to_xI"><code class="docutils literal notranslate"><span class="pre">Y_to_xI()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.get_separatrix"><code class="docutils literal notranslate"><span class="pre">get_separatrix()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.get_at_t"><code class="docutils literal notranslate"><span class="pre">get_at_t()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.get_p_at_t"><code class="docutils literal notranslate"><span class="pre">get_p_at_t()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.get_mu_at_t"><code class="docutils literal notranslate"><span class="pre">get_mu_at_t()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.check_for_file_download"><code class="docutils literal notranslate"><span class="pre">check_for_file_download()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.wrapper"><code class="docutils literal notranslate"><span class="pre">wrapper()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.pointer_adjust"><code class="docutils literal notranslate"><span class="pre">pointer_adjust()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.omp_set_num_threads"><code class="docutils literal notranslate"><span class="pre">omp_set_num_threads()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.omp_get_num_threads"><code class="docutils literal notranslate"><span class="pre">omp_get_num_threads()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.cuda_set_device"><code class="docutils literal notranslate"><span class="pre">cuda_set_device()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="user/util.html#few.utils.utility.get_ode_function_options"><code class="docutils literal notranslate"><span class="pre">get_ode_function_options()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="user/util.html#module-few.utils.modeselector">Mode Filtering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/util.html#module-few.utils.ylm">(-2) Spin-Weighted Spherical Harmonics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/util.html#module-few.utils.fdutils">Frequency Domain Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/util.html#module-few.utils.utility">Analysis and Other Tools</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="user/cite.html">Citations</a></li>
@@ -672,7 +620,6 @@ computing facility at Northwestern University.</p></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Convert-from-x_I-to-Y">Convert from <span class="math notranslate nohighlight">\(x_I\)</span> to <span class="math notranslate nohighlight">\(Y\)</span></a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Get-\mu-based-on-desired-duration-of-waveform">Get <span class="math notranslate nohighlight">\(\mu\)</span> based on desired duration of waveform</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Get-p_0-based-on-desired-duration-of-waveform">Get <span class="math notranslate nohighlight">\(p_0\)</span> based on desired duration of waveform</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Set/get-omp_num_threads">Set/get <code class="docutils literal notranslate"><span class="pre">omp_num_threads</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Change-CUDA-device">Change CUDA device</a></li>
 </ul>
 </li>
@@ -697,6 +644,24 @@ computing facility at Northwestern University.</p></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Citing-waveforms-and-modules">Citing waveforms and modules</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Fast-Schwarzschild-Eccentric-Waveforms">Fast Schwarzschild Eccentric Waveforms</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#New-and-Improved-AAK-with-5PN-Trajectory">New and Improved AAK with 5PN Trajectory</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/Tutorial_FD_construction_single_mode.html">Single Mode Frequency Domain Waveform Construction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/Tutorial_FD_construction_single_mode.html#Trajectory-and-amplitudes">Trajectory and amplitudes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/Tutorial_FD_construction_single_mode.html#Spline-phase-evolution">Spline phase evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/Tutorial_FD_construction_single_mode.html#Spline-derivative-of-the-phase">Spline derivative of the phase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/Tutorial_FD_construction_single_mode.html#Find-the-time-frequency-correspondence-t(f)">Find the time-frequency correspondence <span class="math notranslate nohighlight">\(t(f)\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/Tutorial_FD_construction_single_mode.html#Obtain-\dot{F}(t)">Obtain <span class="math notranslate nohighlight">\(\dot{F}(t)\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/Tutorial_FD_construction_single_mode.html#Amplitude-H">Amplitude H</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/Tutorial_FD_construction_single_mode.html#Obtain-FD-waveform-for-one-harmonic-from-\Phi(t(f)),-H(t(f)),-\dot{F}(t(f))">Obtain FD waveform for one harmonic from <span class="math notranslate nohighlight">\(\Phi(t(f))\)</span>, <span class="math notranslate nohighlight">\(H(t(f))\)</span>, <span class="math notranslate nohighlight">\(\dot{F}(t(f))\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/Tutorial_FD_construction_single_mode.html#Time-vs-Frequency-Domain">Time vs Frequency Domain</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/Tutorial_FrequencyDomain_Waveforms.html">EMRI Waveforms in frequency domain</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/Tutorial_FrequencyDomain_Waveforms.html#Comparison-against-the-Time-Domain-Waveforms">Comparison against the Time Domain Waveforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/Tutorial_FrequencyDomain_Waveforms.html#Windowing">Windowing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/Tutorial_FrequencyDomain_Waveforms.html#Mass-invariance">Mass invariance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/Tutorial_FrequencyDomain_Waveforms.html#Downsampled-FD-Waveforms">Downsampled FD Waveforms</a></li>
 </ul>
 </li>
 </ul>

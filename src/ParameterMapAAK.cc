@@ -195,9 +195,6 @@ void ParMapVector(double* v_map, double* M_map, double* S_map, double* OmegaPhi,
                   double* p, double* e, double* iota, double M, double s, int length)
 {
 
-#ifdef __USE_OMP__
-    #pragma omp parallel for
-#endif  // __USE_OMP__
     for (int i = 0; i < length; i++)
     {
         double map[3];

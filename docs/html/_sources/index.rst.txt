@@ -17,6 +17,8 @@
    :caption: Tutorial:
 
    tutorial/FastEMRIWaveforms_tutorial
+   tutorial/Tutorial_FD_construction_single_mode
+   tutorial/Tutorial_FrequencyDomain_Waveforms
 
 .. toctree::
    :maxdepth: 4

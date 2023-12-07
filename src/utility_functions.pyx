@@ -16,8 +16,6 @@ cdef extern from "../include/Utility.hh":
 
     void KerrGeoConstantsOfMotionVectorized(double* E_out, double* L_out, double* Q_out, double* a, double* p, double* e, double* x, int n);
     void Y_to_xI_vector(double* x, double* a, double* p, double* e, double* Y, int length);
-    void set_threads(int num_threads);
-    int get_threads();
 
 def pyKerrGeoCoordinateFrequencies(np.ndarray[ndim=1, dtype=np.float64_t] a,
                                    np.ndarray[ndim=1, dtype=np.float64_t] p,
@@ -79,9 +77,3 @@ def pyY_to_xI_vector(np.ndarray[ndim=1, dtype=np.float64_t] a,
     Y_to_xI_vector(&x[0], &a[0], &p[0], &e[0], &Y[0], len(e))
 
     return x
-
-def set_threads_wrap(num_threads):
-    set_threads(num_threads)
-
-def get_threads_wrap():
-    return get_threads()
