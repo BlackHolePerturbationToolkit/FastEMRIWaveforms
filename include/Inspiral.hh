@@ -112,20 +112,14 @@ public:
     bool USE_RK8 = true;
     double Msec;
 
-    InspiralCarrier(ODECarrier *carrier, string func_name, double tmax_, int nparams_, int num_add_args_);
-    void inspiral_wrapper(double *t, double *output_arrs, double M, double mu, double a, double *y0_, int *length, int init_len, double *additional_args);
+    InspiralCarrier(ODECarrier *carrier, string func_name, int nparams_, int num_add_args_);
     void dealloc();
-    InspiralHolder run_inspiral(double t0, double M, double mu, double a, vector<double> y0);
     void add_parameters_to_holder(double M, double mu, double a);
     void initialize_integrator();
     void destroy_integrator_information();
-    void reset_solver(double *t, double t_prev, double *h, double dt, vector<double> y, vector<double> y_prev, int *bad_num);
-    double get_p_sep(vector<double> y);
-    bool stopping_function(vector<double> y, int status);
-    vector<double> end_stepper(double *p_sep_out, double *t_temp_out, double *temp_stop_out, double t, vector<double> y, vector<double> ydot, double factor);
-    void finishing_function(double t, vector<double> y);
-    InspiralHolder integrate(double t0, vector<double> y);
-    int take_step(double *t, double *h, vector<double> y);
+    void reset_solver();
+    int take_step(double *t, double *h, double *y);
+    void get_derivatives(double *ydot_, double *y, int nparams_);
     ~InspiralCarrier();
 };
 

@@ -77,46 +77,10 @@ int func_ode_wrap(double t, const double y[], double f[], void *params)
     return GSL_SUCCESS;
 }
 
-InspiralCarrier::InspiralCarrier(ODECarrier *carrier_, string func_name, double tmax_, int nparams_, int num_add_args_)
+InspiralCarrier::InspiralCarrier(ODECarrier *carrier_, string func_name, int nparams_, int num_add_args_)
 {
     params_holder = new ParamsHolder(carrier_, func_name, nparams_, num_add_args_);
     nparams = nparams_;
-
-    tmax_seconds = tmax_;
-}
-
-void InspiralCarrier::inspiral_wrapper(double *t, double *output_arrs, double M, double mu, double a, double *y0_, int *length, int init_len, double *additional_args)
-{
-
-    // Compute the adimensionalized time steps and max time
-    tmax = tmax_seconds / (M * MTSUN_SI);
-    dt = dt_seconds / (M * MTSUN_SI);
-
-    vector<double> y0(nparams); // convert to standard vector
-    memcpy(&y0[0], y0_, nparams * sizeof(double));
-
-    double t0 = 0.0;
-    memcpy(params_holder->additional_args, additional_args, params_holder->num_add_args * sizeof(double));
-    InspiralHolder Inspiral_vals = run_inspiral(t0, M, mu, a, y0);
-
-    // make sure we have allocated enough memory through cython
-    if (Inspiral_vals.length > init_len)
-    {
-        throw invalid_argument("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
-        // throw runtime_error("Error: Initial length is too short. Inspiral requires more points. Need to raise max_init_len parameter for inspiral.\n");
-    }
-
-    // copy data
-    memcpy(t, &Inspiral_vals.t_arr[0], Inspiral_vals.length * sizeof(double));
-
-    for (int i = 0; i < params_holder->nparams; i += 1)
-
-    {
-        memcpy(&output_arrs[i * Inspiral_vals.length], &Inspiral_vals.output_arrs[i], Inspiral_vals.length * sizeof(double));
-    }
-
-    // indicate how long is the trajectory
-    *length = Inspiral_vals.length;
 }
 
 void InspiralCarrier::add_parameters_to_holder(double M, double mu, double a)
@@ -152,245 +116,41 @@ void InspiralCarrier::destroy_integrator_information()
     gsl_odeiv2_step_free(step);
 }
 
-void InspiralCarrier::reset_solver(double *t, double t_prev, double *h, double dt, vector<double> y, vector<double> y_prev, int *bad_num)
+void InspiralCarrier::reset_solver()
 {
     // reset evolver
     gsl_odeiv2_step_reset(step);
     gsl_odeiv2_evolve_reset(evolve);
-
-    // go back to previous points
-    for (int i = 0; i < params_holder->nparams; i += 1)
-    {
-        y[i] = y_prev[i];
-    }
-    *t = t_prev;
-    *h = (*h) / 2.;
-
-    // check for number of tries to fix this
-    *bad_num = (*bad_num) + 1;
-    if (*bad_num >= bad_limit)
-    {
-        throw invalid_argument("error, reached bad limit.\n");
-    }
 }
 
-double InspiralCarrier::get_p_sep(vector<double> y)
+void InspiralCarrier::get_derivatives(double *ydot_, double *y, int nparams_)
 {
-    double a = params_holder->a;
-    double p = y[0];
-    double e = y[1];
-    double x = y[2];
+    if (nparams_ != nparams)
+        throw invalid_argument("nparams input for derivatives does not match nparams stored in the c++ class.");
 
-    double p_sep, x_temp;
-
-    if ((params_holder->a == 0.0)) // params_holder->enforce_schwarz_sep ||
-    {
-        p_sep = 6.0 + 2. * e;
-    }
-    else
-    {
-        // (params_holder->odes[params_holder->currently_running_ode_index].convert_Y)
-        // {
-        //     x_temp = Y_to_xI(a, p, e, x);
-        //     // if(sanity_check(a, p, e, x_temp)==1){
-        //     //     throw invalid_argument( "277 Wrong conversion to x_temp.");
-        //     // }
-        // }
-        // else
-        // {
-        //     x_temp = x;
-        // }
-
-        p_sep = get_separatrix(a, e, x);
-    }
-    return p_sep;
-}
-
-bool InspiralCarrier::stopping_function(vector<double> y, int status)
-{
-
-    if (status == 9)
-        return true;
-
-    // Stop the inspiral when close to the separatrix
-    // convert to proper inclination for separatrix
-    double x_temp;
-    double p_sep = get_p_sep(y);
-    double p = y[0];
-    if (p - p_sep < DIST_TO_SEPARATRIX)
-        return true;
-    else
-        return false;
-}
-
-vector<double> InspiralCarrier::end_stepper(double *p_sep_out, double *t_temp_out, double *temp_stop_out, double t, vector<double> y, vector<double> ydot, double factor)
-{
-    // estimate the step to the breaking point and multiply by PERCENT_STEP
-    double p_sep = get_p_sep(y);
-    double p = y[0];
-    double pdot = ydot[0];
-    double step_size = PERCENT_STEP / factor * ((p_sep + DIST_TO_SEPARATRIX - p) / pdot);
-
-    // copy current values
-    vector<double> temp_y = y;
-
-    // check step
-    for (int i = 0; i < y.size(); i += 1)
-        temp_y[i] += ydot[i] * step_size;
-
-    double temp_t = t + step_size;
-    double temp_p = temp_y[0];
-    double temp_stop = temp_p - p_sep;
-
-    *t_temp_out = temp_t;
-    *p_sep_out = p_sep;
-    *temp_stop_out = temp_stop;
-
-    return temp_y;
-}
-
-void InspiralCarrier::finishing_function(double t, vector<double> y)
-{
-    // Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.
-    //     // To correct for this we self-integrate from the second-to-last point in the integation to
-    //     // within the INNER_THRESHOLD with respect to separatrix +  DIST_TO_SEPARATRIX
-
-    // update p_sep (fixes part of issue #17)
-    double p_sep = get_p_sep(y);
-    double p = y[0];
     vector<double> ydot(nparams);
-    vector<double> y_temp(nparams);
-
-    // set initial values
-    double factor = 1.0;
-    int iter = 0;
-    double t_temp, temp_stop;
-
-    while ((p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD) && (iter < MAX_ITER))
-    {
-        // Same function in the integrator
-        params_holder->odes[params_holder->currently_running_ode_index].get_derivatives(&ydot[0], &y[0], params_holder->epsilon, params_holder->a, params_holder->additional_args);
-
-        y_temp = end_stepper(&p_sep, &t_temp, &temp_stop, t, y, ydot, factor);
-        if (temp_stop > DIST_TO_SEPARATRIX)
-        {
-            // update points
-            t = t_temp;
-            y = y_temp;
-        }
-        else
-        {
-            // all variables stay the same
-
-            // decrease step
-            factor *= 0.5;
-        }
-
-        iter++;
-    }
+    params_holder->odes[params_holder->currently_running_ode_index].get_derivatives(&ydot[0], y, params_holder->epsilon, params_holder->a, params_holder->additional_args);
+    memcpy(ydot_, &ydot[0], nparams * sizeof(double));
 }
 
-InspiralHolder InspiralCarrier::integrate(double t0, vector<double> y0)
-{
-
-    InspiralHolder inspiral_out(t0, y0, nparams);
-
-    double t = t0;
-    double h = dt;
-
-    // Compute the inspiral
-    int status = 0;
-
-    double t_prev = 0.0;
-    vector<double> y_prev = y0;
-    vector<double> y = y0;
-    double prev_p_sep;
-    double p_sep;
-
-    // control it if it keeps returning nans and what not
-    int bad_num = 0;
-
-    while (t < tmax)
-    {
-        status = take_step(&t, &h, y);
-
-        if ((status != GSL_SUCCESS) && (status != 9)) //  && (status != -1))
-        {
-            char str[80];
-            sprintf(str, "error, return value={}\n", status);
-            throw invalid_argument(str);
-        }
-        // if status is 9 meaning inside the separatrix
-        // or if any quantity is nan, step back and take a smaller step.
-        bool no_nans = true;
-        for (int i = 0; i < params_holder->nparams; i += 1)
-        {
-            if (isnan(y[i]))
-                no_nans = false;
-        }
-
-        if ((!no_nans))
-        {
-            reset_solver(&t, t_prev, &h, dt, y, y_prev, &bad_num);
-            continue;
-        }
-
-        // if it made it here, reset bad num
-        bad_num = 0;
-
-        // should not be needed but is safeguard against stepping past maximum allowable time
-        // the last point in the trajectory will be at t = tmax
-        if (t > tmax)
-            break;
-
-        bool stop = stopping_function(y, status);
-
-        if (stop)
-        {
-            // go back to last values
-            y = y_prev;
-            t = t_prev;
-            break;
-        }
-
-        inspiral_out.add_point(t * Msec, y); // adds time in seconds
-
-        t_prev = t;
-        y_prev = y; // vector will copy
-    }
-
-    finishing_function(t, y);
-}
-
-int InspiralCarrier::take_step(double *t, double *h, vector<double> y_)
+int InspiralCarrier::take_step(double *t, double *h, double *y)
 {
     int status;
     // apply fixed step if dense stepping
     // or do interpolated step
-
-    double *y = &y_[0];
 
     if (USE_DENSE_STEPPING)
         status = gsl_odeiv2_evolve_apply_fixed_step(evolve, control, step, &sys, t, *h, y);
     else
         status = gsl_odeiv2_evolve_apply(evolve, control, step, &sys, t, tmax, h, y);
 
+    if ((status != GSL_SUCCESS) && (status != 9)) //  && (status != -1))
+    {
+        char str[80];
+        sprintf(str, "error, return value={}\n", status);
+        throw invalid_argument(str);
+    }
     return status;
-}
-
-InspiralHolder InspiralCarrier::run_inspiral(double t0, double M, double mu, double a, vector<double> y0)
-{
-    // years to seconds
-    tmax = tmax * YRSID_SI;
-    Msec = MTSUN_SI * M;
-
-    add_parameters_to_holder(M, mu, a);
-    initialize_integrator();
-
-    InspiralHolder inspiral_out = integrate(t0, y0);
-
-    destroy_integrator_information();
-    return inspiral_out;
 }
 
 void InspiralCarrier::dealloc()

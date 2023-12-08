@@ -148,7 +148,7 @@ __deriv__ void SchwarzEccFlux::deriv_func(double ydot[], const double y[], doubl
 
     // evaluate ODEs, starting with PN contribution, then interpolating over remaining flux contribution
 
-    double yPN = pow((*Omega_phi), 2. / 3.);
+    double yPN = pow((Omega_phi), 2. / 3.);
 
     double EdotPN = (96 + 292 * Power(e, 2) + 37 * Power(e, 4)) / (15. * Power(1 - Power(e, 2), 3.5)) * pow(yPN, 5);
     double LdotPN = (4 * (8 + 7 * Power(e, 2))) / (5. * Power(-1 + Power(e, 2), 2)) * pow(yPN, 7. / 2.);
@@ -178,7 +178,7 @@ __deriv__ void SchwarzEccFlux::deriv_func(double ydot[], const double y[], doubl
 
     ydot[0] = pdot;
     ydot[1] = edot;
-    ydot[2] = Ydot;
+    ydot[2] = xdot;
     ydot[3] = Omega_phi;
     ydot[4] = Omega_theta;
     ydot[5] = Omega_r;
@@ -234,7 +234,7 @@ __deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y
 
     double p = y[0];
     double e = y[1];
-    double Y = y[2];
+    double x = y[2];
 
     double Omega_phi, Omega_theta, Omega_r;
 
@@ -262,7 +262,7 @@ __deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y
     // reference frequency
 
     Omega_phi_sep_circ = 1.0 / (a * copysign(1.0, x) + pow(p_sep / (1.0 + e), 1.5));
-    r = pow(*Omega_phi / Omega_phi_sep_circ, 2.0 / 3.0) * (1.0 + e);
+    r = pow(Omega_phi / Omega_phi_sep_circ, 2.0 / 3.0) * (1.0 + e);
 
     if (isnan(r))
     {
@@ -270,7 +270,7 @@ __deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y
              << "p=" << p << "\t"
              << "e=" << e << "\t"
              << "x=" << x << "\t" << r << " plso =" << p_sep << endl;
-        cout << "omegaphi circ " << Omega_phi_sep_circ << " omegaphi " << *Omega_phi << " omegar " << *Omega_r << endl;
+        cout << "omegaphi circ " << Omega_phi_sep_circ << " omegaphi " << Omega_phi << " omegar " << Omega_r << endl;
         throw std::exception();
     }
 
@@ -327,7 +327,7 @@ __deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y
 
     ydot[0] = pdot;
     ydot[1] = edot;
-    ydot[2] = Ydot;
+    ydot[2] = xdot;
     ydot[3] = Omega_phi;
     ydot[4] = Omega_theta;
     ydot[5] = Omega_r;

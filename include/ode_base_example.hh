@@ -17,7 +17,7 @@ public:
 
     SchwarzEccFlux(std::string few_dir);
 
-    void deriv_func(double ydot[], double y[], double epsilon, double a, double *additional_args);
+    void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
     ~SchwarzEccFlux();
 };
 
@@ -26,5 +26,5 @@ class KerrEccentricEquatorial
 public:
     KerrEccentricEquatorial(std::string few_dir);
 
-    void deriv_func(double ydot[], double y[], double epsilon, double a, double *additional_args);
+    void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
 };
