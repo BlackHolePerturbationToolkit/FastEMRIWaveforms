@@ -244,13 +244,12 @@ with open(fp_out_name, "w") as fp_out:
                         string_out = line.split()[1] + " = " + line.split()[2] + "\n"
                         fp_out.write(string_out)
 
-                    except (ValueError) as e:
+                    except ValueError as e:
                         continue
 
 
 # if installing for CUDA, build Cython extensions for gpu modules
 if run_cuda_install:
-
     gpu_extension = dict(
         libraries=["gsl", "gslcblas", "cudart", "cublas", "cusparse", "gomp"],
         library_dirs=[CUDA["lib64"]],
@@ -261,7 +260,7 @@ if run_cuda_install:
         # and not with gcc the implementation of this trick is in
         # customize_compiler()
         extra_compile_args={
-            "gcc": ["-std=c++11", "-fopenmp", "-D__USE_OMP__"],  # '-g'],
+            "gcc": ["-std=c++11"],  # '-g'],
             "nvcc": [
                 "-arch=sm_70",
                 "-gencode=arch=compute_50,code=sm_50",
@@ -310,7 +309,9 @@ if run_cuda_install:
     )
 
     gpuAAK_ext = Extension(
-        "pygpuAAK", sources=["src/Utility.cc", "src/gpuAAK.cu", "src/gpuAAKWrap.pyx"], **gpu_extension
+        "pygpuAAK",
+        sources=["src/Utility.cc", "src/gpuAAK.cu", "src/gpuAAKWrap.pyx"],
+        **gpu_extension,
     )
 
 # build all cpu modules
@@ -318,12 +319,9 @@ cpu_extension = dict(
     libraries=["gsl", "gslcblas", "lapack", "lapacke", "gomp", "hdf5", "hdf5_hl"],
     language="c++",
     runtime_library_dirs=[],
-    extra_compile_args={
-        "gcc": ["-std=c++11", "-fopenmp", "-fPIC", "-D__USE_OMP__"]
-    },  # '-g'
+    extra_compile_args={"gcc": ["-std=c++11"]},  # '-g'
     include_dirs=[numpy_include, "include"],
     library_dirs=None,
-    # library_dirs=["/home/ajchua/lib/"],
 )
 
 if add_lapack:
@@ -404,7 +402,9 @@ interp_cpu_ext = Extension(
 )
 
 AAK_cpu_ext = Extension(
-    "pycpuAAK", sources=["src/Utility.cc", "src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"], **cpu_extension
+    "pycpuAAK",
+    sources=["src/Utility.cc", "src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"],
+    **cpu_extension,
 )
 
 

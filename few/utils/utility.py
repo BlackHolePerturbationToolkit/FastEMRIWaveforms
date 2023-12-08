@@ -31,7 +31,7 @@ from pyUtility import (
     pyKerrGeoConstantsOfMotionVectorized,
     pyY_to_xI_vector,
     pyKerrEqSpinFrequenciesCorr,
-    set_threads_wrap
+    set_threads_wrap,
 )
 
 # check to see if cupy is available for gpus
@@ -166,7 +166,6 @@ def p_to_y(p, e, use_gpu=False):
         return np.log(-(21 / 10) - 2 * e + p)
 
 
-
 def kerr_p_to_u(a, p, e, xI, use_gpu=False):
     """Convert from separation :math:`p` to :math:`y` coordinate
 
@@ -181,7 +180,7 @@ def kerr_p_to_u(a, p, e, xI, use_gpu=False):
 
     """
     xp = cp if use_gpu else np
-    
+
     scalar = False
     if isinstance(a, float):
         scalar = True
@@ -189,7 +188,7 @@ def kerr_p_to_u(a, p, e, xI, use_gpu=False):
     delta_p = 0.05
     alpha = 4.0
 
-    pLSO = get_separatrix(a, e, xI)  
+    pLSO = get_separatrix(a, e, xI)
     beta = alpha - delta_p
     u = xp.log((p + beta - pLSO) / alpha)
 
@@ -198,11 +197,12 @@ def kerr_p_to_u(a, p, e, xI, use_gpu=False):
 
     # numerical errors
     if scalar:
-        u = max(u,0)
+        u = max(u, 0)
     else:
         u[u < 0.0] = 0.0
 
     return u
+
 
 def get_fundamental_frequencies(a, p, e, x):
     """Get dimensionless fundamental frequencies.
@@ -259,6 +259,7 @@ def get_fundamental_frequencies(a, p, e, x):
     else:
         return (OmegaPhi, OmegaTheta, OmegaR)
 
+
 def get_fundamental_frequencies_spin_corrections(a, p, e, x):
     """Get dimensionless fundamental frequencies.
 
@@ -303,9 +304,7 @@ def get_fundamental_frequencies_spin_corrections(a, p, e, x):
     assert len(a_in) == len(p_in)
 
     # get frequencies
-    OmegaPhi, OmegaTheta, OmegaR = pyKerrEqSpinFrequenciesCorr(
-        a_in, p_in, e_in, x_in
-    )
+    OmegaPhi, OmegaTheta, OmegaR = pyKerrEqSpinFrequenciesCorr(a_in, p_in, e_in, x_in)
 
     # set output to shape of input
     if scalar:
@@ -807,41 +806,40 @@ def get_mu_at_t(
 
 
 # data history is saved here nased on version nunber
-record_by_version = {
-    "1.0.0": 3981654,
-    "1.1.0": 3981654,
-    "1.1.1": 3981654,
-    "1.1.2": 3981654,
-    "1.1.3": 3981654,
-    "1.1.4": 3981654,
-    "1.1.5": 3981654,
-    "1.2.0": 3981654,
-    "1.2.1": 3981654,
-    "1.2.2": 3981654,
-    "1.3.0": 3981654,
-    "1.3.1": 3981654,
-    "1.3.2": 3981654,
-    "1.3.3": 3981654,
-    "1.3.4": 3981654,
-    "1.3.5": 3981654,
-    "1.3.6": 3981654,
-    "1.3.7": 3981654,
-    "1.4.0": 3981654,
-    "1.4.1": 3981654,
-    "1.4.2": 3981654,
-    "1.4.3": 3981654,
-    "1.4.4": 3981654,
-    "1.4.5": 3981654,
-    "1.4.6": 3981654,
-    "1.4.7": 3981654,
-    "1.4.8": 3981654,
-    "1.4.9": 3981654,
-    "1.4.10": 3981654,
-    "1.4.11": 3981654,
-    "1.5.0": 3981654,
-    "1.5.1": 3981654,
-    "1.5.2": 3981654
-}
+# record_by_version = {
+#     "1.0.0": 3981654,
+#     "1.1.0": 3981654,
+#     "1.1.1": 3981654,
+#     "1.1.2": 3981654,
+#     "1.1.3": 3981654,
+#     "1.1.4": 3981654,
+#     "1.1.5": 3981654,
+#     "1.2.0": 3981654,
+#     "1.2.1": 3981654,
+#     "1.2.2": 3981654,
+#     "1.3.0": 3981654,
+#     "1.3.1": 3981654,
+#     "1.3.2": 3981654,
+#     "1.3.3": 3981654,
+#     "1.3.4": 3981654,
+#     "1.3.5": 3981654,
+#     "1.3.6": 3981654,
+#     "1.3.7": 3981654,
+#     "1.4.0": 3981654,
+#     "1.4.1": 3981654,
+#     "1.4.2": 3981654,
+#     "1.4.3": 3981654,
+#     "1.4.4": 3981654,
+#     "1.4.5": 3981654,
+#     "1.4.6": 3981654,
+#     "1.4.7": 3981654,
+#     "1.4.8": 3981654,
+#     "1.4.9": 3981654,
+#     "1.4.10": 3981654,
+#     "1.4.11": 3981654,
+#     "1.5.0": 3981654,
+#     "1.5.1": 3981654,
+# }
 
 
 def check_for_file_download(fp, few_dir, version_string=None):
@@ -865,23 +863,23 @@ def check_for_file_download(fp, few_dir, version_string=None):
     """
 
     # make sure version_string is available
-    if version_string is not None:
-        if version_string not in record_by_version:
-            raise ValueError(
-                "The version_string provided ({}) does not exist.".format(
-                    version_string
-                )
-            )
-    else:
-        version_string = few.__version__
+    # if version_string is not None:
+    #     if version_string not in record_by_version:
+    #         raise ValueError(
+    #             "The version_string provided ({}) does not exist.".format(
+    #                 version_string
+    #             )
+    #         )
+    # else:
+    #     version_string = few.__version__
 
-    # check if the files directory exists
-    try:
-        os.listdir(few_dir + "few/files/")
+    # # check if the files directory exists
+    # try:
+    #     os.listdir(few_dir + "few/files/")
 
-    # if not, create it
-    except OSError:
-        os.mkdir(few_dir + "few/files/")
+    # # if not, create it
+    # except OSError:
+    #     os.mkdir(few_dir + "few/files/")
 
     # check if the file is in the files filder
     # if not, download it from zenodo
@@ -893,7 +891,10 @@ def check_for_file_download(fp, few_dir, version_string=None):
         )
 
         # get record number based on version
-        record = record_by_version.get(version_string)
+        # record = record_by_version.get(version_string)
+
+        # temporary fix
+        record = 3981654
 
         # url to zenodo API
         url = "https://zenodo.org/record/" + str(record) + "/files/" + fp
@@ -1032,6 +1033,7 @@ def get_ode_function_options():
         raise ValueError("ODE files not built yet.")
 
     return ode_options
+
 
 def omp_set_num_threads(num_threads=1):
     """Globally sets OMP_NUM_THREADS
