@@ -17,84 +17,116 @@
 #include <chrono>
 
 using namespace std;
-using namespace std::chrono;
-
+using namespace chrono;
 
 // Used to pass the interpolants to the ODE solver
-typedef struct tag_ParamsHolder{
-	double epsilon;
-	double a;
-    double q;
-    std::string func_name;
-    ODECarrier* func;
-    bool enforce_schwarz_sep;
-    double* additional_args;
-    int num_add_args;
-    bool convert_Y;
-} ParamsHolder;
-
-class InspiralHolder{
+class ParamsHolder
+{
 public:
-		int length;
-		std::vector<double> t_arr;
-		std::vector<double> p_arr;
-		std::vector<double> e_arr;
-        std::vector<double> x_arr;
-		std::vector<double> Phi_phi_arr;
-		std::vector<double> Phi_r_arr;
-        std::vector<double> Phi_theta_arr;
-        //std::vector<double> amp_norm_out_arr;
+    double epsilon;
+    double a = 0.0;
+    double q;
+    string func_name;
+    std::vector<ODECarrier> odes;
+    double *additional_args;
+    int num_add_args;
+    int nparams;
+    int currently_running_ode_index = 0;
 
-		double t0, M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0; // , init_flux;
-
-		InspiralHolder(double t0_, double M_, double mu_, double a_, double p0_, double e0_, double x0_, double Phi_phi0_, double Phi_theta0_, double Phi_r0_){
-				t0 = t0_;
-                M = M_;
-                mu = mu_;
-                a = a_;
-				p0 = p0_;
-				e0 = e0_;
-                x0 = x0_;
-                Phi_phi0 = Phi_phi0_;
-                Phi_theta0 = Phi_theta0_;
-                Phi_r0 = Phi_r0_;
-
-				t_arr.push_back(t0);
-				p_arr.push_back(p0);
-				e_arr.push_back(e0);
-                x_arr.push_back(x0);
-				Phi_phi_arr.push_back(Phi_phi0);
-                Phi_theta_arr.push_back(Phi_theta0);
-                Phi_r_arr.push_back(Phi_r0);
-                //amp_norm_out_arr.push_back(init_flux);
-		};
-
-		void add_point(double t, double p, double e, double x, double Phi_phi, double Phi_theta, double Phi_r){
-			t_arr.push_back(t);
-			p_arr.push_back(p);
-			e_arr.push_back(e);
-            x_arr.push_back(x);
-			Phi_phi_arr.push_back(Phi_phi);
-			Phi_theta_arr.push_back(Phi_theta);
-			Phi_r_arr.push_back(Phi_r);
-		}
-
-	//	~InspiralHolder();
-
+    ParamsHolder(ODECarrier *carrier_, string func_name_, int nparams_, int num_add_args_)
+    {
+        int num_odes = 2;
+        func_name = func_name_;
+        num_add_args = num_add_args_;
+        nparams = nparams_;
+        // convert_Y = convert_Y_;
+        additional_args = new double[num_add_args_];
+        odes.push_back(*carrier_);
+        odes.push_back(*carrier_);
+    };
+    ~ParamsHolder()
+    {
+        delete[] additional_args;
+    };
 };
 
-class InspiralCarrier{
-    public:
-        ODECarrier *testcarrier;
-        ParamsHolder *params_holder;
-        InspiralCarrier(ODECarrier* test, std::string func_name, bool enforce_schwarz_sep_, int num_add_args_, bool convert_Y_, std::string few_dir);
-        void inspiral_wrapper(double *t, double *p, double *e, double *x, double *Phi_phi, double *Phi_theta, double *Phi_r, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0, int *length, double tmax, double dt, double err, int DENSE_STEPPING, bool use_rk4, int init_len, double* additional_args);
-        void dealloc();
-        InspiralHolder run_inspiral(double t0, double M, double mu, double a, double p0, double e0, double x0, double Phi_phi0, double Phi_theta0, double Phi_r0,
-        double err, double tmax, double dt, int DENSE_STEPPING, bool use_rk4);
-        ~InspiralCarrier();
+class InspiralHolder
+{
+public:
+    int length;
+    vector<vector<double>> output_arrs;
+    vector<double> t_arr;
+    int nparams;
+
+    vector<double> y0;
+    // vector<double> amp_norm_out_arr;
+
+    double t0, M, mu, a; // , init_flux;
+
+    InspiralHolder(double t0_, vector<double> y0_, int nparams_)
+    {
+        t0 = t0_;
+        y0 = y0_;
+        nparams = nparams_;
+        length = 0;
+
+        t_arr.push_back(t0);
+
+        for (int i = 0; i < nparams; i += 1)
+        {
+            vector<double> tmp = {y0[i]};
+            output_arrs.push_back(tmp);
+        }
+        // amp_norm_out_arr.push_back(init_flux);
+    };
+
+    void add_point(double t, vector<double> y0)
+    {
+        t_arr.push_back(t);
+        for (int i = 0; i < nparams; i += 1)
+        {
+            output_arrs[i].push_back(y0[i]);
+        }
+        length += 1;
+    }
+
+    //	~InspiralHolder();
 };
 
+class InspiralCarrier
+{
+public:
+    ParamsHolder *params_holder;
+    gsl_odeiv2_system sys;
+    gsl_odeiv2_step *step;
+    gsl_odeiv2_evolve *evolve;
+    gsl_odeiv2_control *control;
+    int bad_limit = 1000;
+    int nparams;
+    double dt_seconds = 10.0;
+    double dt;
+    double tmax_seconds;
+    double tmax;
+    double err = 1e-10;
+    bool USE_DENSE_STEPPING = false;
+    bool USE_RK8 = true;
+    double Msec;
 
+    InspiralCarrier(ODECarrier *carrier, string func_name, double tmax_, int nparams_, int num_add_args_);
+    void inspiral_wrapper(double *t, double *output_arrs, double M, double mu, double a, double *y0_, int *length, int init_len, double *additional_args);
+    void dealloc();
+    InspiralHolder run_inspiral(double t0, double M, double mu, double a, vector<double> y0);
+    void add_parameters_to_holder(double M, double mu, double a);
+    void initialize_integrator();
+    void destroy_integrator_information();
+    void reset_solver(double *t, double t_prev, double *h, double dt, vector<double> y, vector<double> y_prev, int *bad_num);
+    double get_p_sep(vector<double> y);
+    bool stopping_function(vector<double> y, int status);
+    vector<double> end_stepper(double *p_sep_out, double *t_temp_out, double *temp_stop_out, double t, vector<double> y, vector<double> ydot, double factor);
+    void finishing_function(double t, vector<double> y);
+    InspiralHolder integrate(double t0, vector<double> y);
+    int take_step(double *t, double *h, vector<double> y);
+    ~InspiralCarrier();
+};
 
 #endif //__INSPIRAL_H__

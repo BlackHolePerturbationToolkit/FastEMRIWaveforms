@@ -25,20 +25,18 @@ def get_ode_function_lines_names():
     functions_info = {}
     for i in range(len(lines) - 1):
         if lines[i][:9] == "__deriv__":
-            if lines[i][9] != "\n":
-                line = lines[i]
-                name = line.split("(")[0].split(" ")[2]
-                func_type = "func"
-            else:
+            if lines[i][9] == "\n":
                 line = lines[i + 1]
+            else:
+                line = lines[i]
 
-                if "::" in line:
-                    name = line.split("::")[0].split(" ")[1]
-                    func_type = "class"
+            if "::deriv_func" in line:
+                name = line.split("::deriv_func")[0].split(" ")[-1]
+                func_type = "class"
 
-                else:
-                    name = line.split("(")[0].split(" ")[1]
-                    func_type = "func"
+            else:
+                name = line.split("(double ydot[]")[0].split(" ")[-1]
+                func_type = "func"
 
             functions_info[name] = {"type": func_type, "files": [], "citations": []}
 
@@ -99,10 +97,10 @@ def ode_prepare():
     # adjust function names for functions that are not classes
     for line in lines:
         for func in functions_info:
-            if "void " + func + "(double* " in line:
+            if "void " + func + "(double ydot[]" in line:
                 line = line.replace(
-                    "void " + func + "(double* ",
-                    "void " + func + "_base_func" + "(double* ",
+                    "void " + func + "(double ydot[]",
+                    "void " + func + "_base_func" + "(double ydot[]",
                 )
         full += line
 
@@ -116,12 +114,9 @@ def ode_prepare():
 
                 {0}::~{0}(){1}{2}
 
-                void {0}::deriv_func(double* pdot, double* edot, double* Ydot,
-                                  double* Omega_phi, double* Omega_theta, double* Omega_r,
-                                  double epsilon, double a, double p, double e, double Y, double* additional_args)
+                void {0}::deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args)
                 {1}
-                    {0}_base_func(pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r,
-                                  epsilon, a, p, e, Y, additional_args);
+                    {0}_base_func(ydot, y, epsilon, a, additional_args);
                 {2}
             """.format(
                 func, "{", "}"
@@ -167,9 +162,7 @@ def ode_prepare():
     # setup get_derivatives functions
     full += """
 
-    void ODECarrier::get_derivatives(double* pdot, double* edot, double* Ydot,
-                      double* Omega_phi, double* Omega_theta, double* Omega_r,
-                      double epsilon, double a, double p, double e, double Y, double* additional_args)
+    void ODECarrier::get_derivatives(double ydot[], const double y[], double epsilon, double a, double *additional_args)
     {
     """
 
@@ -185,8 +178,7 @@ def ode_prepare():
         full += """
                 {0}* temp = ({0}*)func;
 
-                temp->deriv_func(pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r,
-                                epsilon, a, p, e, Y, additional_args);
+                temp->deriv_func(ydot, y, epsilon, a, additional_args);
 
             """.format(
             func
@@ -205,7 +197,6 @@ def ode_prepare():
     void ODECarrier::dealloc()
     {
     """
-
     for i, (func, info) in enumerate(functions_info.items()):
         lead = "if" if i == 0 else "else if"
 
@@ -269,9 +260,7 @@ def ode_prepare():
 
                 {0}(std::string few_dir);
 
-                void deriv_func(double* pdot, double* edot, double* Ydot,
-                                  double* Omega_phi, double* Omega_theta, double* Omega_r,
-                                  double epsilon, double a, double p, double e, double Y, double* additional_args);
+                void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
                 ~{0}();
             {2};
 
@@ -289,10 +278,7 @@ def ode_prepare():
             void* func;
             ODECarrier(std::string func_name_, std::string few_dir_);
             void dealloc();
-            void get_derivatives(double* pdot, double* edot, double* Ydot,
-                              double* Omega_phi, double* Omega_theta, double* Omega_r,
-                              double epsilon, double a, double p, double e, double Y, double* additional_args);
-
+            void get_derivatives(double ydot[], const double y[], double epsilon, double a, double *additional_args);
     };
 
     #endif // __ODE__

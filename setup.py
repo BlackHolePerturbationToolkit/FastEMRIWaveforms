@@ -243,7 +243,7 @@ if run_cuda_install:
         # and not with gcc the implementation of this trick is in
         # customize_compiler()
         extra_compile_args={
-            "gcc": ["-std=c++11"],  # '-g'],
+            "gcc": ["-std=c++20"],  # '-g'],
             "nvcc": [
                 "-arch=sm_70",
                 "-gencode=arch=compute_50,code=sm_50",
@@ -253,7 +253,7 @@ if run_cuda_install:
                 "-gencode=arch=compute_70,code=sm_70",
                 "-gencode=arch=compute_75,code=sm_75",
                 "-gencode=arch=compute_80,code=sm_80",
-                "-std=c++11",
+                "-std=c++20",
                 "--default-stream=per-thread",
                 "--ptxas-options=-v",
                 "-c",
@@ -294,7 +294,7 @@ cpu_extension = dict(
     libraries=["gsl", "gslcblas", "lapack", "lapacke", "hdf5", "hdf5_hl"],
     language="c++",
     runtime_library_dirs=[],
-    extra_compile_args={"gcc": ["-std=c++11"]},  # '-g'
+    extra_compile_args={"gcc": ["-std=c++20"], "g++": ["-std=c++20"]},  # '-g'
     include_dirs=[numpy_include, "include"],
     library_dirs=None,
 )
