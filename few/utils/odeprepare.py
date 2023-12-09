@@ -143,7 +143,9 @@ def ode_prepare():
         )
         full += """
                 {0}* temp = new {0}(few_dir);
-
+                background = temp->background;
+                equatorial = temp->equatorial;
+                circular = temp->circular;
                 func = (void*) temp;
 
             """.format(
@@ -257,7 +259,9 @@ def ode_prepare():
             class {0}{1}
             public:
                 double test;
-
+                int background;
+                bool equatorial;
+                bool circular;
                 {0}(std::string few_dir);
 
                 void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
@@ -275,6 +279,9 @@ def ode_prepare():
         public:
             std::string func_name;
             std::string few_dir;
+            int background;
+            bool equatorial;
+            bool circular;
             void* func;
             ODECarrier(std::string func_name_, std::string few_dir_);
             void dealloc();

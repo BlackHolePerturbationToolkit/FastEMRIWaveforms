@@ -78,12 +78,21 @@ int func_ode_wrap(double t, const double y[], double f[], void *params)
     return GSL_SUCCESS;
 }
 
-InspiralCarrier::InspiralCarrier(ODECarrier *carrier_, string func_name_, int nparams_, int num_add_args_)
+InspiralCarrier::InspiralCarrier(int nparams_, int num_add_args_)
 {
-    params_holder = new ParamsHolder(carrier_, func_name_, nparams_, num_add_args_);
+    params_holder = new ParamsHolder(nparams_, num_add_args_);
     nparams = nparams_;
     num_add_args = num_add_args_;
-    func_name = func_name_;
+}
+
+void InspiralCarrier::add_ode(string func_name, string few_dir)
+{
+    params_holder->add_ode(func_name, few_dir);
+}
+
+int InspiralCarrier::get_number_of_odes()
+{
+    return params_holder->odes.size();
 }
 
 void InspiralCarrier::add_parameters_to_holder(double M, double mu, double a, double *additional_args)
@@ -137,18 +146,62 @@ void InspiralCarrier::get_derivatives(double *ydot_, double *y, int nparams_)
     memcpy(ydot_, &ydot[0], nparams * sizeof(double));
 }
 
-int InspiralCarrier::take_step(double *t_in, double *h_in, double *y, const double tmax)
+void InspiralCarrier::update_currently_running_ode_index(int currently_running_ode_index)
 {
+    if (currently_running_ode_index >= params_holder->num_odes)
+    {
+        throw invalid_argument("ODE Index is out of bounds.");
+    }
+    params_holder->currently_running_ode_index = currently_running_ode_index;
+}
+
+int InspiralCarrier::get_currently_running_ode_index()
+{
+    return params_holder->currently_running_ode_index;
+}
+
+void InspiralCarrier::get_backgrounds(int *backgrounds, int num_odes)
+{
+    if (num_odes != params_holder->num_odes)
+    {
+        throw invalid_argument("Wrong number of odes coming in.");
+    }
+    for (int i = 0; i < num_odes; i += 1)
+        backgrounds[i] = params_holder->odes[i].background;
+}
+
+void InspiralCarrier::get_equatorial(bool *equatorial, int num_odes)
+{
+    if (num_odes != params_holder->num_odes)
+    {
+        throw invalid_argument("Wrong number of odes coming in.");
+    }
+    for (int i = 0; i < num_odes; i += 1)
+        equatorial[i] = params_holder->odes[i].equatorial;
+}
+
+void InspiralCarrier::get_circular(bool *circular, int num_odes)
+{
+    if (num_odes != params_holder->num_odes)
+    {
+        throw invalid_argument("Wrong number of odes coming in.");
+    }
+    for (int i = 0; i < num_odes; i += 1)
+        circular[i] = params_holder->odes[i].circular;
+}
+
+int InspiralCarrier::take_step(double *t, double *h, double *y, const double tmax)
+{
+    if (get_number_of_odes() == 0)
+        throw invalid_argument("Trying to run integrator, but an ODE has not been added.");
     int status;
     // apply fixed step if dense stepping
     // or do interpolated step
-    double t = *t_in;
-    double h = *h_in;
 
     if (USE_DENSE_STEPPING)
-        status = gsl_odeiv2_evolve_apply_fixed_step(evolve, control, step, &sys, &t, h, y);
+        status = gsl_odeiv2_evolve_apply_fixed_step(evolve, control, step, &sys, t, *h, y);
     else
-        status = gsl_odeiv2_evolve_apply(evolve, control, step, &sys, &t, tmax, &h, y);
+        status = gsl_odeiv2_evolve_apply(evolve, control, step, &sys, t, tmax, h, y);
 
     if ((status != GSL_SUCCESS) && (status != 9)) //  && (status != -1))
     {

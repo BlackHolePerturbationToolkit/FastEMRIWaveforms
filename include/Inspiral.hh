@@ -31,19 +31,21 @@ public:
     double *additional_args;
     int num_add_args;
     int nparams;
+    int num_odes = 0;
     int currently_running_ode_index = 0;
 
-    ParamsHolder(ODECarrier *carrier_, string func_name_, int nparams_, int num_add_args_)
+    ParamsHolder(int nparams_, int num_add_args_)
     {
-        int num_odes = 2;
-        func_name = func_name_;
         num_add_args = num_add_args_;
         nparams = nparams_;
-        // convert_Y = convert_Y_;
         additional_args = new double[num_add_args_];
-        odes.push_back(*carrier_);
-        odes.push_back(*carrier_);
     };
+    void add_ode(string func_name, string few_dir)
+    {
+        ODECarrier carrier(func_name, few_dir);
+        odes.push_back(carrier);
+        num_odes += 1;
+    }
     ~ParamsHolder()
     {
         delete[] additional_args;
@@ -108,7 +110,7 @@ public:
     int num_add_args;
     string func_name;
 
-    InspiralCarrier(ODECarrier *carrier, string func_name_, int nparams_, int num_add_args_);
+    InspiralCarrier(int nparams_, int num_add_args_);
     void dealloc();
     void add_parameters_to_holder(double M, double mu, double a, double *additional_args);
     void initialize_integrator();
@@ -116,6 +118,13 @@ public:
     void reset_solver();
     int take_step(double *t, double *h, double *y, const double tmax);
     void get_derivatives(double *ydot_, double *y, int nparams_);
+    int get_currently_running_ode_index();
+    void update_currently_running_ode_index(int currently_running_ode_index);
+    int get_number_of_odes();
+    void add_ode(string func_name, string few_dir);
+    void get_backgrounds(int *backgrounds, int num_odes);
+    void get_equatorial(bool *equatorial, int num_odes);
+    void get_circular(bool *circular, int num_odes);
     ~InspiralCarrier();
 };
 

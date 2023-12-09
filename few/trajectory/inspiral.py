@@ -122,32 +122,12 @@ class EMRIInspiral(TrajectoryBase):
 
         TrajectoryBase.__init__(self, *args, **kwargs)
 
-        ode_info = get_ode_function_options()
-
-        if func not in ode_info:
-            raise ValueError(
-                f"func not available. Options are {list(ode_info.keys())}."
-            )
-
         self.enforce_schwarz_sep = enforce_schwarz_sep
-
-        # set defaults from the ODE function specifically
-        for key, item in ode_info[func].items():
-            setattr(self, key, item)
-
-        # make sure all files needed for the ode specifically are downloaded
-        for fp in self.files:
-            try:
-                check_for_file_download(fp, few_dir)
-            except FileNotFoundError:
-                raise ValueError(
-                    f"File required for this ODE ({fp}) was not found in the proper folder ({few_dir + 'few/files/'}) or on zenodo."
-                )
 
         nparams = 6
         self.inspiral_generator = APEXIntegrate(func, nparams, few_dir, num_add_args=0)
 
-        self.func = func
+        self.func = self.inspiral_generator.func
 
         self.specific_kwarg_keys = [
             "T",
@@ -158,7 +138,7 @@ class EMRIInspiral(TrajectoryBase):
             "use_rk4",
         ]
 
-        self.get_derivative = pyDerivative(self.func, few_dir.encode())
+        self.get_derivative = pyDerivative(self.func[0], few_dir.encode())
 
     def attributes_EMRIInspiral(self):
         """
@@ -231,11 +211,14 @@ class EMRIInspiral(TrajectoryBase):
         fill_value = 1e-6
 
         # fix for specific requirements of different odes
+        background = self.inspiral_generator.backgrounds[0]
+        equatorial = self.inspiral_generator.equatorial[0]
+        circular = self.inspiral_generator.circular[0]
 
-        if self.background == "Schwarzschild":
+        if background == "Schwarzschild":
             a = 0.0
         elif a < fill_value:
-            if self.background == "Kerr" and not self.equatorial:
+            if background == "Kerr" and not equatorial:
                 warnings.warn(
                     "Our model with spin breaks near a = 0. Adjusting to a = 1e-6.".format(
                         fill_value
@@ -243,11 +226,11 @@ class EMRIInspiral(TrajectoryBase):
                 )
                 a = fill_value
 
-        if self.equatorial:
+        if equatorial:
             if abs(x0) != 1:
                 raise RuntimeError("Needs to be one")
 
-        if self.circular:
+        if circular:
             e0 = 0.0
 
         # transfer kwargs from parent class
@@ -263,5 +246,4 @@ class EMRIInspiral(TrajectoryBase):
 
         # this will return in coordinate time
         out = self.inspiral_generator.run_inspiral(M, mu, a, y0, args_in, **temp_kwargs)
-        breakpoint()
-        return (t, p, e, x, Phi_phi, Phi_theta, Phi_r)
+        return tuple(out.T)

@@ -1,7 +1,7 @@
 import numpy as np
 cimport numpy as np
 from libcpp.string cimport string
-from libcpp cimport bool
+from libcpp cimport bool as bool_c
 
 from few.utils.utility import pointer_adjust
 
@@ -12,7 +12,7 @@ cdef extern from "../include/Inspiral.hh":
         int nparams;
         int num_add_args;
         string func_name;
-        InspiralCarrierWrap(ODECarrierWrap* test, string func_name, int nparams, int num_add_args_) except+
+        InspiralCarrierWrap(int nparams, int num_add_args_) except+
         void dealloc() except+
         void add_parameters_to_holder(double M, double mu, double a, double *additional_args) except+
         void initialize_integrator() except+
@@ -20,6 +20,13 @@ cdef extern from "../include/Inspiral.hh":
         void reset_solver() except+
         int take_step(double *t, double *h, double* y, const double tmax) except+
         void get_derivatives(double *ydot_, double *y, int nparams_) except+
+        int get_currently_running_ode_index() except+
+        void update_currently_running_ode_index(int currently_running_ode_index) except+
+        int get_number_of_odes() except+
+        void add_ode(string func_name, string few_dir) except+
+        void get_backgrounds(int *backgrounds, int num_odes) except+
+        void get_equatorial(bool_c *equatorial, int num_odes) except+
+        void get_circular(bool_c *circular, int num_odes) except+
 
 cdef extern from "../include/ode.hh":
     cdef cppclass ODECarrierWrap "ODECarrier":
@@ -57,20 +64,15 @@ cdef class pyDerivative:
 cdef class pyInspiralGenerator:
     cdef InspiralCarrierWrap *f
     cdef ODECarrierWrap *g
-    cdef public bytes func_name_store
-    cdef public bytes few_dir_store
     cdef public int nparams_store
     cdef public int num_add_args_store
 
-    def __cinit__(self, func_name, nparams, num_add_args, few_dir):
-        self.func_name_store = func_name
+    def __cinit__(self, nparams, num_add_args):
         self.nparams_store = nparams
         self.num_add_args_store = num_add_args
-        self.few_dir_store = few_dir
-
-        self.g = new ODECarrierWrap(func_name, few_dir)
-        self.f = new InspiralCarrierWrap(self.g, func_name, nparams, num_add_args)
-
+        
+        self.f = new InspiralCarrierWrap(nparams, num_add_args)
+    
     @property
     def nparams(self):
         cdef int nparams = self.f.nparams
@@ -81,24 +83,37 @@ cdef class pyInspiralGenerator:
         cdef int num_add_args = self.f.num_add_args
         return num_add_args
 
-    @property
-    def few_dir(self):
-        cdef string few_dir = self.g.few_dir
-        return few_dir
+    #@property
+    #def few_dir(self):
+    #    cdef string few_dir = self.few_dir_store
+    #    return few_dir
+
+    #@property
+    #def func_name(self):
+    #    cdef string func_name = self.f.func_name
+    #    return func_name
 
     @property
-    def func_name(self):
-        cdef string func_name = self.f.func_name
-        return func_name
+    def currently_running_ode_index(self):
+        return self.f.get_currently_running_ode_index()
+
+    @currently_running_ode_index.setter
+    def currently_running_ode_index(self, currently_running_ode_index: int):
+        self.f.update_currently_running_ode_index(currently_running_ode_index)
+
+    @property
+    def num_odes(self):
+        return self.f.get_number_of_odes()
+
+    def add_ode(self, func_name, few_dir):
+        self.f.add_ode(func_name, few_dir)
 
     def take_step(self, t_in, h_in, np.ndarray[ndim=1, dtype=np.float64_t] y_in, tmax):
         cdef double t = t_in
         cdef double h = h_in
         cdef int status
 
-        print("bef", status, t, h)
         status = self.f.take_step(&t, &h, &y_in[0], tmax)
-        print("af", status, t, h)
         return (status, t, h)
         
     def add_parameters_to_holder(self, M, mu, a, np.ndarray[ndim=1, dtype=np.float64_t] add_parameters_to_holder):
@@ -112,7 +127,7 @@ cdef class pyInspiralGenerator:
 
     def reset_solver(self):
         self.f.reset_solver()
-
+        
     def get_derivatives(
         self,
         np.ndarray[ndim=1, dtype=np.float64_t] y
@@ -123,19 +138,36 @@ cdef class pyInspiralGenerator:
         self.f.get_derivatives(&ydot[0], &y[0], self.nparams)
         return ydot
 
+    @property
+    def backgrounds(self):
+        cdef np.ndarray[ndim=1, dtype=np.int32_t] backgrounds = np.zeros(self.num_odes, dtype=np.int32)
+
+        self.f.get_backgrounds(<int*>&backgrounds[0], self.num_odes)
+        return backgrounds
+
+    @property
+    def equatorial(self):
+        cdef np.ndarray[ndim=1, dtype=bool_c] equatorial = np.zeros(self.num_odes, dtype=bool)
+
+        self.f.get_equatorial(&equatorial[0], self.num_odes)
+        return equatorial
+
+    @property
+    def circular(self):
+        cdef np.ndarray[ndim=1, dtype=bool_c] circular = np.zeros(self.num_odes, dtype=bool)
+
+        self.f.get_circular(&circular[0], self.num_odes)
+        return circular
+
     def __reduce__(self):
-        return (rebuild, (self.func_name, self.nparams, self.num_add_args, self.few_dir))
+        return (rebuild, (self.nparams, self.num_add_args, self.few_dir))
 
     def __dealloc__(self):
-        self.g.dealloc()
         self.f.dealloc()
         if self.f:
             del self.f
-        
-        if self.g:
-            del self.g
 
-def rebuild(func_name, nparams, num_add_args, few_dir):
-    c = pyInspiralGenerator(func_name, nparams, num_add_args, few_dir)
+def rebuild(nparams, num_add_args, few_dir):
+    c = pyInspiralGenerator(nparams, num_add_args, few_dir)
     return c
     

@@ -20,7 +20,7 @@
 
 import os
 import warnings
-from typing import Tuple
+from typing import Tuple, List, Union
 import time
 
 import numpy as np
@@ -47,6 +47,9 @@ DIST_TO_SEPARATRIX = 0.1
 INNER_THRESHOLD = 1e-8
 PERCENT_STEP = 0.25
 MAX_ITER = 1000
+
+KERR = 1
+SCHWARZSCHILD = 2
 
 
 def fun_wrap(t, y, integrator):
@@ -78,7 +81,7 @@ class Stopper:
 class Integrate:
     def __init__(
         self,
-        func: str,
+        func: Union[str, List],
         nparams: int,
         few_dir: str,
         dt: float = 10.0,
@@ -90,8 +93,34 @@ class Integrate:
         self.dt_seconds = dt
         self.buffer_length = buffer_length
         self.integrator = pyInspiralGenerator(
-            func.encode(), nparams, num_add_args, few_dir.encode()
+            nparams,
+            num_add_args,
         )
+        self.ode_info = ode_info = get_ode_function_options()
+
+        if isinstance(func, str):
+            func = [func]
+        self.func = func
+        for func_i in self.func:
+            assert isinstance(func_i, str)
+            if func_i not in ode_info:
+                raise ValueError(
+                    f"func not available. Options are {list(ode_info.keys())}."
+                )
+            self.integrator.add_ode(func_i.encode(), few_dir.encode())
+
+            # make sure all files needed for the ode specifically are downloaded
+            for fp in ode_info[func_i]["files"]:
+                try:
+                    check_for_file_download(fp, few_dir)
+                except FileNotFoundError:
+                    raise ValueError(
+                        f"File required for this ODE ({fp}) was not found in the proper folder ({few_dir + 'few/files/'}) or on zenodo."
+                    )
+
+        assert np.all(self.backgrounds == self.backgrounds[0])
+        assert np.all(self.equatorial == self.equatorial[0])
+        assert np.all(self.circular == self.circular[0])
 
     @property
     def nparams(self) -> int:
@@ -106,8 +135,20 @@ class Integrate:
         return str(self.integrator.few_dir)
 
     @property
-    def func(self) -> str:
-        return str(self.integrator.func_name)
+    def backgrounds(self):
+        return self.integrator.backgrounds
+
+    @property
+    def equatorial(self):
+        return self.integrator.equatorial
+
+    @property
+    def circular(self):
+        return self.integrator.circular
+
+    # @property
+    # def func(self) -> str:
+    #     return str(self.integrator.func_name)
 
     def take_step(
         self, t: float, h: float, y: np.ndarray
@@ -126,20 +167,21 @@ class Integrate:
         t = t0
         h = self.dt_dimensionless
 
-        for _ in range(1000):
-            st = time.perf_counter()
-            out = solve_ivp(
-                fun_wrap,
-                (0.0, self.tmax_dimensionless),
-                y0,
-                method="DOP853",
-                events=Stopper(self),
-                args=(self,),
-                first_step=self.dt_dimensionless,
-                max_step=self.Msec * 1e5,
-            )
-            et = time.perf_counter()
-            print("Init", (et - st))
+        # for _ in range(100):
+        #     st = time.perf_counter()
+        #     out = solve_ivp(
+        #         fun_wrap,
+        #         (0.0, self.tmax_dimensionless),
+        #         y0,
+        #         method="DOP853",
+        #         events=Stopper(self),
+        #         args=(self,),
+        #         first_step=self.dt_dimensionless,
+        #         max_step=self.Msec * 1e5,
+        #     )
+        #     et = time.perf_counter()
+        #     print("Init", (et - st))
+        # breakpoint()
 
         t_prev = t0
         y_prev = y0.copy()
@@ -148,8 +190,8 @@ class Integrate:
         # control it if it keeps returning nans and what not
         bad_num = 0
 
+        total = 0.0
         while t < self.tmax_dimensionless:
-            breakpoint()
             status, t, h = self.integrator.take_step(t, h, y, self.tmax_dimensionless)
 
             # or if any quantity is nan, step back and take a smaller step.
@@ -172,40 +214,45 @@ class Integrate:
             if status == 9:
                 stop = True
             else:
-                stop = self.stopping_function(y)
+                action = self.action_function(t, y)
 
-            if stop:
+            if action == "stop":
                 # go back to last values
                 y[:] = y_prev[:]
                 t = t_prev
                 break
 
-            self.save_point(t * Msec, y)  # adds time in seconds
+            self.save_point(t * self.Msec, y)  # adds time in seconds
 
             t_prev = t
             y_prev[:] = y[:]
 
-        if self.hasattr("finishing_function"):
+        if hasattr(self, "finishing_function"):
             self.finishing_function(t, y)
 
     def initialize_integrator(self):
         self.integrator.initialize_integrator()
-        self.trajectory = np.zeros((self.buffer_length, self.nparams + 1))
+        self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
         self.traj_step = 0
 
+    @property
+    def trajectory(self):
+        return self.trajectory_arr[: self.traj_step]
+
     def save_point(self, t: float, y: np.ndarray):
-        self.trajectory[self.traj_step, 0] = t
-        self.trajectory[self.traj_step, 1:] = y
+        self.trajectory_arr[self.traj_step, 0] = t
+        self.trajectory_arr[self.traj_step, 1:] = y
 
         self.traj_step += 1
         if self.traj_step >= self.buffer_length:
             # increase by 100
-            self.trajectory = np.concatenate(
-                [self.trajectory, np.zeros((100, self.nparams + 1))], axis=0
+            self.trajectory_arr = np.concatenate(
+                [self.trajectory_arr, np.zeros((100, self.nparams + 1))], axis=0
             )
-            self.buffer_length = self.trajectory.shape[0]
+            self.buffer_length = self.trajectory_arr.shape[0]
 
     def run_inspiral(self, M, mu, a, y0, additional_args, **kwargs):
+        self.moves_check = 0
         self.initialize_integrator()
 
         # Compute the adimensionalized time steps and max time
@@ -223,7 +270,8 @@ class Integrate:
         self.integrate(t0, y0)
 
         self.integrator.destroy_integrator_information()
-        assert len(y0) == nparams
+
+        return self.trajectory
 
 
 class APEXIntegrate(Integrate):
@@ -240,15 +288,22 @@ class APEXIntegrate(Integrate):
 
         return p_sep
 
-    def stopping_function(
+    def action_function(
         self, t: float, y: np.ndarray
-    ) -> bool:  # Stop the inspiral when close to the separatrix
+    ) -> str:  # Stop the inspiral when close to the separatrix
         p_sep = self.get_p_sep(y)
         p = y[0]
-        if p - p_sep < DIST_TO_SEPARATRIX:
-            return true
-        else:
-            return false
+        if p - p_sep < DIST_TO_SEPARATRIX + INNER_THRESHOLD:
+            return "stop"
+
+        if p < 10.0 and self.moves_check < 1:
+            self.integrator.currently_running_ode_index = 1
+            print(f"Switched to index: {self.integrator.currently_running_ode_index}")
+            self.moves_check += 1
+        elif p < 8.0 and self.moves_check < 2:
+            self.integrator.currently_running_ode_index = 0
+            print(f"Switched to index: {self.integrator.currently_running_ode_index}")
+            self.moves_check += 1
 
     def end_stepper(self, t: float, y: np.ndarray, ydot: np.ndarray, factor: float):
         # estimate the step to the breaking point and multiply by PERCENT_STEP
@@ -274,13 +329,12 @@ class APEXIntegrate(Integrate):
         # update p_sep (fixes part of issue #17)
         p_sep = self.get_p_sep(y)
         p = y[0]
-        ydot = np.zeros(nparams)
-        y_temp = np.zeros(nparams)
+        ydot = np.zeros(self.nparams)
+        y_temp = np.zeros(self.nparams)
 
         # set initial values
         factor = 1.0
         iteration = 0
-
         while p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD:
             # Same function in the integrator
             ydot = self.integrator.get_derivatives(y)
@@ -289,6 +343,8 @@ class APEXIntegrate(Integrate):
                 # update points
                 t = t_temp
                 y[:] = y_temp[:]
+                p_sep = self.get_p_sep(y)
+                p = y[0]
             else:
                 # all variables stay the same
 
