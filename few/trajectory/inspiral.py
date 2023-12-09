@@ -33,6 +33,8 @@ from few.utils.utility import check_for_file_download, get_ode_function_options
 from few.utils.constants import *
 from few.utils.citations import *
 
+from .integrate import APEXIntegrate
+
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -142,17 +144,8 @@ class EMRIInspiral(TrajectoryBase):
                     f"File required for this ODE ({fp}) was not found in the proper folder ({few_dir + 'few/files/'}) or on zenodo."
                 )
 
-        self.test_new_version = test_new_version
-        if test_new_version:
-            self.inspiral_generator = pyInspiralGenerator(
-                func.encode("utf-8"),
-                enforce_schwarz_sep,
-                self.num_add_args,
-                self.convert_Y,
-                few_dir.encode("utf-8"),
-            )
-        else:
-            raise ValueError
+        nparams = 6
+        self.inspiral_generator = APEXIntegrate(func, nparams, few_dir, num_add_args=0)
 
         self.func = func
 
@@ -164,7 +157,7 @@ class EMRIInspiral(TrajectoryBase):
             "max_init_len",
             "use_rk4",
         ]
-        
+
         self.get_derivative = pyDerivative(self.func, few_dir.encode())
 
     def attributes_EMRIInspiral(self):
@@ -266,8 +259,9 @@ class EMRIInspiral(TrajectoryBase):
         if len(args_in) == 0:
             args_in = np.array([0.0])
 
+        y0 = np.array([p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0])
+
         # this will return in coordinate time
-        t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(
-            M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0, args_in, **temp_kwargs
-        )
+        out = self.inspiral_generator.run_inspiral(M, mu, a, y0, args_in, **temp_kwargs)
+        breakpoint()
         return (t, p, e, x, Phi_phi, Phi_theta, Phi_r)

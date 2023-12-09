@@ -1,20 +1,15 @@
 #include "Interpolant.h"
 
 // Used to pass the interpolants to the ODE solver
-struct interp_params{
-	double epsilon;
-	Interpolant *Edot;
-	Interpolant *Ldot;
+struct interp_params
+{
+    double epsilon;
+    Interpolant *Edot;
+    Interpolant *Ldot;
 };
 
-// struct TPI_params{
-// 	double epsilon;
-// 	TensorInterpolant *pdot;
-// 	TensorInterpolant *edot;
-// };
-
-
-class SchwarzEccFlux{
+class SchwarzEccFlux
+{
 public:
     interp_params *interps;
     Interpolant *amp_vec_norm_interp;
@@ -22,25 +17,19 @@ public:
 
     SchwarzEccFlux(std::string few_dir);
 
-    void deriv_func(double* pdot, double* edot, double* Ydot,
-                      double* Omega_phi, double* Omega_theta, double* Omega_r,
-                      double epsilon, double a, double p, double e, double Y, double* additional_args);
+    void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
     ~SchwarzEccFlux();
 };
 
-class KerrEccentricEquatorial{
+class KerrEccentricEquatorial
+{
 public:
     TensorInterpolant *pdot_interp;
     TensorInterpolant *edot_interp;
     TensorInterpolant *Edot_interp;
     TensorInterpolant *Ldot_interp;
-
     KerrEccentricEquatorial(std::string few_dir);
 
-    void deriv_func(double* pdot, double* edot, double* Ydot,
-                      double* Omega_phi, double* Omega_theta, double* Omega_r,
-                      double epsilon, double a, double p, double e, double x, double* additional_args);
-
+    void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
     ~KerrEccentricEquatorial();
 };
-
