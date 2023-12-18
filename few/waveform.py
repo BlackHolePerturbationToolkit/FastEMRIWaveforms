@@ -44,7 +44,7 @@ from few.utils.constants import *
 from few.utils.citations import *
 from few.summation.interpolatedmodesum import InterpolatedModeSum
 from few.summation.fdinterp import FDInterpolatedModeSum
-
+import warnings
 
 class GenerateEMRIWaveform:
     """Generic waveform generator for data analysis
