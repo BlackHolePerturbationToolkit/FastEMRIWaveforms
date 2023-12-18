@@ -159,7 +159,7 @@ class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
         p = grid.T[1].copy()
         e = grid.T[2].copy()
         xI = grid.T[3].copy()
-        u = grid.T[4].copy()
+        u = np.round(grid.T[4].copy(),8)  # fix rounding errors in the files
         sep = grid.T[5].copy()
         w = grid.T[6].copy()
 
@@ -333,28 +333,30 @@ class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
 
 
 class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
-    def __init__(self, **kwargs):
+    def __init__(self, specific_spins=None, **kwargs):
 
         ParallelModuleBase.__init__(self, **kwargs)
         KerrEquatorialEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
         self.few_dir = dir_path + "/../../"
-        
-        
-        spins_tmp = []
-        for fp in os.listdir(self.few_dir + "few/files/"):
-            if fp[:13] == "Teuk_amps_a0.":
-                if fp[14] == "_":
-                    continue
-                spin_h = float(fp[11:15])
-                if fp[15:18] == "_r_":
-                    spin_h *= -1  # retrograde
-                spins_tmp.append(spin_h)
 
-        # combine prograde and retrograde here
-        self.spin_values = np.unique(np.asarray(spins_tmp))
+        if specific_spins is None:
+            spins_tmp = []
+            for fp in os.listdir(self.few_dir + "few/files/"):
+                if fp[:13] == "Teuk_amps_a0.":
+                    if fp[14] == "_":
+                        continue
+                    spin_h = float(fp[11:15])
+                    if fp[15:18] == "_r_":
+                        spin_h *= -1  # retrograde
+                    spins_tmp.append(spin_h)
 
+            # combine prograde and retrograde here
+            self.spin_values = np.unique(np.asarray(spins_tmp))
+        else:
+            self.spin_values = np.asarray(specific_spins)
+            
         self.spin_information_holder = [None for _ in self.spin_values]
         for i, spin in enumerate(self.spin_values):
             base_string = f"{abs(spin):1.2f}"
@@ -362,7 +364,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
                 base_string += "_r"
             elif spin > 0.0:
                 base_string += "_p"
-            fp = f"Teuk_amps_a{base_string}_lmax_10_nmax_30_new_m+.h5"  # data files only contain +m
+            fp = f"Teuk_amps_a{base_string}_lmax_10_nmax_{self.nmax}_new_m+.h5"  # data files only contain +m
 
             self.spin_information_holder[i] = AmpInterp2D(fp, use_gpu=self.use_gpu)
 
