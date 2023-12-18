@@ -516,23 +516,12 @@ class KerrEquatorialEccentric(ParallelModuleBase, ABC):
 
         # set mode index settings
         self.lmax = 10
-        self.nmax = 30
-
-        # sort alphabetically to match h5 keys
-        # l_arr = np.sort(np.arange(2,self.lmax + 1).astype(str)).astype(np.int64)
-        # n_arr = np.sort(np.arange(-self.nmax, self.nmax + 1).astype(str)).astype(np.int64)
+        self.nmax = 50
 
         self.ndim = 2
 
         # fill all lmn mode values
         md = []
-
-        # for l in  l_arr:
-        #     m_arr = np.sort(np.arange(0, l+1).astype(str)).astype(np.int64)
-        #     for m in m_arr:
-        #         for n in n_arr:
-        #             md.append([l, m, n])
-
         for l in  range(2, self.lmax+1):
             for m in range(0, l + 1):
                 for n in range(-self.nmax, self.nmax+1):
@@ -548,7 +537,7 @@ class KerrEquatorialEccentric(ParallelModuleBase, ABC):
                 m == 0
                 for l in range(2, 10 + 1)
                 for m in range(0, l + 1)
-                for n in range(-30, 30 + 1)
+                for n in range(-self.nmax, self.nmax + 1)
             ]
         )
 
@@ -736,7 +725,7 @@ class KerrEquatorialEccentric(ParallelModuleBase, ABC):
             )
         
         u = kerr_p_to_u(a, p0, e0, xI)
-        if u > 1.35:
+        if u > 1.365:
             raise ValueError(
                 "This a ({}), p0 ({}) and e0 ({}) combination is outside of our domain of validity.".format(
                     a, p0, e0
