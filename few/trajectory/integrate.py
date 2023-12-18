@@ -84,13 +84,9 @@ class Integrate:
         func: Union[str, List],
         nparams: int,
         few_dir: str,
-        dt: float = 10.0,
-        T: float = 2.0,
         buffer_length: int = 1000,
         num_add_args: int = 0,
     ):
-        self.tmax_seconds = T * YRSID_SI
-        self.dt_seconds = dt
         self.buffer_length = buffer_length
         self.integrator = pyInspiralGenerator(
             nparams,
@@ -251,13 +247,13 @@ class Integrate:
             )
             self.buffer_length = self.trajectory_arr.shape[0]
 
-    def run_inspiral(self, M, mu, a, y0, additional_args, **kwargs):
+    def run_inspiral(self, M, mu, a, y0, additional_args, T=1., dt=10., **kwargs):
         self.moves_check = 0
         self.initialize_integrator()
 
         # Compute the adimensionalized time steps and max time
-        self.tmax_dimensionless = self.tmax_seconds / (M * MTSUN_SI)
-        self.dt_dimensionless = self.dt_seconds / (M * MTSUN_SI)
+        self.tmax_dimensionless = T*YRSID_SI / (M * MTSUN_SI)
+        self.dt_dimensionless = dt / (M * MTSUN_SI)
         self.Msec = MTSUN_SI * M
         self.a = a
         assert self.nparams == len(y0)
@@ -284,7 +280,7 @@ class APEXIntegrate(Integrate):
             p_sep = 6.0 + 2.0 * e
 
         else:
-            p_sep = get_separatrix(a, e, x)
+            p_sep = get_separatrix(self.a, e, x)
 
         return p_sep
 
@@ -296,14 +292,14 @@ class APEXIntegrate(Integrate):
         if p - p_sep < DIST_TO_SEPARATRIX + INNER_THRESHOLD:
             return "stop"
 
-        if p < 10.0 and self.moves_check < 1:
-            self.integrator.currently_running_ode_index = 1
-            print(f"Switched to index: {self.integrator.currently_running_ode_index}")
-            self.moves_check += 1
-        elif p < 8.0 and self.moves_check < 2:
-            self.integrator.currently_running_ode_index = 0
-            print(f"Switched to index: {self.integrator.currently_running_ode_index}")
-            self.moves_check += 1
+        # if p < 10.0 and self.moves_check < 1:
+        #     self.integrator.currently_running_ode_index = 1
+        #     print(f"Switched to index: {self.integrator.currently_running_ode_index}")
+        #     self.moves_check += 1
+        # elif p < 8.0 and self.moves_check < 2:
+        #     self.integrator.currently_running_ode_index = 0
+        #     print(f"Switched to index: {self.integrator.currently_running_ode_index}")
+        #     self.moves_check += 1
 
     def end_stepper(self, t: float, y: np.ndarray, ydot: np.ndarray, factor: float):
         # estimate the step to the breaking point and multiply by PERCENT_STEP
