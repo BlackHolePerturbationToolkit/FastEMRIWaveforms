@@ -656,7 +656,10 @@ def get_at_t(
         inputs.insert(ind_interest, val)
         traj_kwargs["T"] = t_out * 2.0
         out = traj(*inputs, **traj_kwargs)
-        return out[0][-1] - t_out * YRSID_SI
+        try:
+            return out[0][-1] - t_out * YRSID_SI
+        except IndexError:  # trajectory must have started at p_sep
+            return - t_out * YRSID_SI
 
     root = brentq(
         get_time_root,
@@ -735,7 +738,7 @@ def get_p_at_t(
             )  # should be fairly close.
         else:
             p_sep = 6 + 2 * traj_args[index_of_e]
-        bounds = [p_sep + 0.1, 16.0 + 2 * traj_args[index_of_e]]
+        bounds = [p_sep + 0.2, 16.0 + 2 * traj_args[index_of_e]]
 
     elif bounds[0] is None:
         if not enforce_schwarz_sep:
@@ -744,7 +747,7 @@ def get_p_at_t(
             )  # should be fairly close.
         else:
             p_sep = 6 + 2 * traj_args[index_of_e]
-        bounds[0] = p_sep + 0.1
+        bounds[0] = p_sep + 0.2
 
     elif bounds[1] is None:
         bounds[1] = 16.0 + 2 * traj_args[index_of_e]
