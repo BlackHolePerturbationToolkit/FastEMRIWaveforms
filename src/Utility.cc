@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include "Utility.hh"
 #include <iostream>
+#include <chrono>
 
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_sf_ellint.h>
