@@ -87,7 +87,7 @@ deltap = 0.05
 beta = alpha - deltap
 
 folder = 'data_for_lorenzo/fluxes/*'
-fluxfiles = [el for el in glob.glob(folder) if 'xI1' in el]
+fluxfiles = [el for el in glob.glob(folder) if 'xI' in el]
 
 for ff in fluxfiles:
     imp = read_txt(ff)
@@ -95,7 +95,7 @@ for ff in fluxfiles:
     
     u = np.log((p-pLSO + beta)/alpha)
     w = np.sqrt(e)
-    a_tot.append(a )
+    a_tot.append(a*xi )
     u_tot.append(u )
     w_tot.append(w )
     pdot.append( (pdotInf_tot+pdotH_tot ) / pdotpn(a, p, e, pLSO) )
