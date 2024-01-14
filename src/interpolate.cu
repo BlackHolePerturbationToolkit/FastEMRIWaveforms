@@ -1042,6 +1042,115 @@ cmplx SPAFunc(const double x)
   return(ans);
 }
 
+CUDA_CALLABLE_MEMBER
+cmplx S_L(const double x)
+{
+  cmplx II(0.0, 1.0);
+  if (fabs(x) < 10.5) {
+    printf("Warning: This function works best for |x| >= 10.5");
+  }
+  const double y = 1./x;
+  cmplx pref = sqrt(0.5*M_PI)*exp(-0.25*II*M_PI);
+
+  cmplx cL_0 = 1.;
+  cmplx cL_1 = -0.069444444444444444444*II, cL_2 = -0.037133487654320987654;
+  cmplx cL_3 =  0.037993059127800640146*II, cL_4 =  0.057649190412669721333;
+  cmplx cL_5 = -0.11609906402551541102*II, cL_6 = -0.29159139923075051147;
+  cmplx cL_7 =  0.87766696951001691647*II, cL_8 =  3.0794530301731669934;
+  cmplx cL_9 = -12.3415733323452387064*II, cL_10 = -55.622785365917082781;
+  cmplx cL_11 =  278.46508077760256721*II, cL_12 =  1533.1694320127956160;
+  
+  cmplx sum = cL_0 + y*(cL_1 + y*(cL_2 + y*(cL_3 + y*(cL_4 + y*(cL_5 + y*(cL_6 + y*(cL_7 + y*(cL_8 + y*(cL_9 + y*(cL_10 + y*(cL_11 + y*cL_12)))))))))));
+
+  return(pref*sum);
+}
+
+CUDA_CALLABLE_MEMBER
+cmplx S_S(const double x)
+{
+  cmplx II(0.0, 1.0);
+  if (abs(x) > 10.5) {
+    printf("Warning: This function works best for |x| <= 10.5");
+  }
+  cmplx minone_to_twothirds = -0.5 + II*0.86602540378443864676; // (-1)^(2/3)
+  const double two_to_mintwothirds = 0.62996052494743658238; // 2^(-2/3)
+  //
+  const double Gamp13 = 2.67893853470774763;  // Gamma(1/3)
+  const double prefp = Gamp13;
+  //
+  const double Gamm13 = -4.06235381827920125; // Gamma(-1/3);
+  cmplx minone_to_minonethird = 0.5 - II*0.86602540378443864676; // (-1)^(-2/3)
+  cmplx prefm = pow(fabs(x), 2./3.)*minone_to_minonethird*two_to_mintwothirds*Gamm13;
+  if (x < 0.) prefm *= minone_to_twothirds;
+  //
+  const double x2 = x*x;
+  //
+  const double cp_0 = 1.0, cp_2 = -0.375, cp_4 = 0.028125;
+  const double cp_6 = -0.00087890625, cp_8 = 0.000014981356534090909091;
+  const double cp_10 = -1.6051453429383116883e-7, cp_12 = 1.1802539286311115355e-9;
+  const double cp_14 = -6.3227889033809546546e-12, cp_16 = 2.5772237377911499951e-14;
+  const double cp_18 = -8.2603324929203525483e-17, cp_20 = 2.1362928861000911763e-19;
+  const double cp_22 = -4.5517604107246260858e-22, cp_24 = 8.1281435905796894390e-25;
+  const double cp_26 = -1.2340298973552160079e-27, cp_28 = 1.6124084024676167351e-30;
+  const double cp_30 = -1.8322822755313826535e-33, cp_32 = 1.8274091843730545082e-36;
+  const double cp_34 = -1.6124198685644598602e-39, cp_36 = 1.2676256828336948586e-42;
+  const double cp_38 = -8.9353314109517964659e-46, cp_40 = 5.6792360662829214825e-49;
+  const double cp_42 = -3.2714493469371667526e-52;
+  //
+  // This is the sum denoted s_+ in the notes.
+  //
+  const double s_p = cp_0 + x2*(cp_2 + x2*(cp_4 + x2*(cp_6 + x2*(cp_8 + x2*(cp_10 + x2*(cp_12 + x2*(cp_14 + x2*(cp_16 + x2*(cp_18 + x2*(cp_20 + x2*(cp_22 + x2*(cp_24 + x2*(cp_26 + x2*(cp_28 + x2*(cp_30 + x2*(cp_32 + x2*(cp_34 + x2*(cp_36 + x2*(cp_38 + x2*(cp_40 + x2*cp_42))))))))))))))))))));
+  //  
+  const double cm_0 = 1., cm_2 = -0.1875, cm_4 = 0.010044642857142857143;
+  const double cm_6 = -0.00025111607142857142857;
+  const double cm_8 = 3.6218664148351648352e-6, cm_10 = -3.3954997639079670330e-8;
+  const double cm_12 = 2.2338814236236625217e-10, cm_14 = -1.0879292647517836956e-12;
+  const double cm_16 = 4.0797347428191888586e-15, cm_18 = -1.2142067686961871603e-17;
+  const double cm_20 = 2.9375970210391624846e-20, cm_22 = -5.8909031170571440199e-23;
+  const double cm_24 = 9.9508498598938243580e-26, cm_26 = -1.4352187297923785132e-28;
+  const double cm_28 = 1.7880632015685778819e-31, cm_30 = -1.9435469582267150890e-34;
+  const double cm_32 = 1.8592604829974953019e-37, cm_34 = -1.5774268803711781408e-40;
+  const double cm_36 = 1.1950203639175591976e-43, cm_38 = -8.1330787017982704009e-47;
+  const double cm_40 = 4.9998434642202481973e-50, cm_42 = -2.7900912188729063601e-53;
+  //
+  // This is the sum denoted s_m in the notes.
+  //
+  const double s_m = cm_0 + x2*(cm_2 + x2*(cm_4 + x2*(cm_6 + x2*(cm_8 + x2*(cm_10 + x2*(cm_12 + x2*(cm_14 + x2*(cm_16 + x2*(cm_18 + x2*(cm_20 + x2*(cm_22 + x2*(cm_24 + x2*(cm_26 + x2*(cm_28 + x2*(cm_30 + x2*(cm_32 + x2*(cm_34 + x2*(cm_36 + x2*(cm_38 + x2*(cm_40 + x2*cm_42))))))))))))))))))));
+
+  return(-minone_to_twothirds*two_to_mintwothirds*exp(-II*x)*(prefp*s_p + prefm*s_m));
+}
+
+
+CUDA_CALLABLE_MEMBER
+cmplx SPAFunc_new(double fdot, double fddot)
+{
+  //
+  // The following functions returns the approximations worked out using Mathematica
+  // for varies functions that involve the modified Bessel function; S_L is good for
+  // large |x|, S_S is good for small |x|.
+  //
+  // Best crossover point appears to be |x| = 10.5.
+  //
+  // cmplx S_L(const double x), S_S(const double x);
+  
+  cmplx II(0.0, 1.0);
+  cmplx htilde;
+  const double pref_hi_x = 0.79788456080286535588; // sqrt(2/pi)
+  const double pref_lo_x = 0.90250544427599415363; // 2^(2/3)/(3^(1/6)pi^(1/6))
+  cmplx spafunc;
+  const double x = 2.*M_PI*fdot*fdot*fdot/(3.*fddot*fddot);
+  if (fabs(x) < 10.5) {
+    spafunc = S_S(x);
+    htilde = pref_lo_x*pow(fabs(fddot), -1./3.)*spafunc;
+  } else {
+    spafunc = S_L(x);
+    htilde = pref_hi_x*spafunc/sqrt(fabs(fdot));
+    if (fdot < 0.) htilde *= (0.86602540378443864676 - II*0.5);
+  }
+  
+  return(htilde/pref_hi_x);
+}
+
 
 // build mode value with specific phase and amplitude values; mode indexes; and spherical harmonics
 // CUDA_CALLABLE_MEMBER
@@ -1371,7 +1480,16 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                         //               = conj(amp_term2(x))
 
                         double temp_arg = 2.* PI * pow(fdot, 3) / (3.* pow(fddot, 2));
+                        
+                        // the following formula is the first implementation and the one used for the Frequency Domain paper
+                        // test_fd mismatch  = 
                         cmplx amp_term2 = -1.0 * fdot/abs(fddot) * 2./sqrt(3.) * SPAFunc(temp_arg) / gcmplx::sqrt(cmplx(temp_arg, 0.0)); 
+                        printf("old %.12e \t %.12e \n ", amp_term2.real(), amp_term2.imag());
+
+                        // the following formula is the updated implementation from Scott's approximation
+                        // test_fd mismatch  = 0.008298416464516456
+                        amp_term2 = SPAFunc_new(fdot,fddot);
+                        printf("new %.12e \t %.12e \n ", amp_term2.real(), amp_term2.imag());
                         
                         cmplx temp_exp = R_amp * amp_term2 * gcmplx::exp(I* (2. * PI * f * t - phase_term));
 
