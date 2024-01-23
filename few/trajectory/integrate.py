@@ -291,10 +291,7 @@ class APEXIntegrate(Integrate):
     def action_function(
         self, t: float, y: np.ndarray
     ) -> str:  # Stop the inspiral when close to the separatrix
-        p_sep = self.get_p_sep(y)
         p = y[0]
-        if p - p_sep < DIST_TO_SEPARATRIX + INNER_THRESHOLD:
-            return "stop"
 
         if p < 10.0 and self.moves_check < 1:
             self.integrator.currently_running_ode_index = 1
@@ -304,6 +301,15 @@ class APEXIntegrate(Integrate):
             self.integrator.currently_running_ode_index = 0
             print(f"Switched to index: {self.integrator.currently_running_ode_index}")
             self.moves_check += 1
+
+        if p > 7.5:
+            return None
+
+        p_sep = self.get_p_sep(y)
+        if p - p_sep < DIST_TO_SEPARATRIX + INNER_THRESHOLD:
+            return "stop"
+
+        return None
 
     def end_stepper(self, t: float, y: np.ndarray, ydot: np.ndarray, factor: float):
         # estimate the step to the breaking point and multiply by PERCENT_STEP
