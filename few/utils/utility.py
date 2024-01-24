@@ -779,13 +779,13 @@ def check_for_file_download(fp, few_dir, version_string=None):
     # else:
     #     version_string = few.__version__
 
-    # # check if the files directory exists
-    # try:
-    #     os.listdir(few_dir + "few/files/")
+    # check if the files directory exists
+    try:
+        os.listdir(few_dir + "few/files/")
 
-    # # if not, create it
-    # except OSError:
-    #     os.mkdir(few_dir + "few/files/")
+    # if not, create it
+    except OSError:
+        os.mkdir(few_dir + "few/files/")
 
     # check if the file is in the files filder
     # if not, download it from zenodo
