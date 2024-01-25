@@ -33,7 +33,7 @@ from few.utils.utility import check_for_file_download, get_ode_function_options
 from few.utils.constants import *
 from few.utils.citations import *
 
-from .integrate import APEXIntegrate
+from .integrate import APEXIntegrate, AELQIntegrate
 
 
 # get path to this file
@@ -112,6 +112,7 @@ class EMRIInspiral(TrajectoryBase):
         *args,
         func=None,
         enforce_schwarz_sep=False,
+        integrate_constants_of_motion=False,
         test_new_version=True,
         **kwargs,
     ):
@@ -125,7 +126,11 @@ class EMRIInspiral(TrajectoryBase):
         self.enforce_schwarz_sep = enforce_schwarz_sep
 
         nparams = 6
-        self.inspiral_generator = APEXIntegrate(func, nparams, few_dir, num_add_args=0)
+
+        if integrate_constants_of_motion:
+            self.inspiral_generator = AELQIntegrate(func, nparams, few_dir, num_add_args=0)
+        else:
+            self.inspiral_generator = APEXIntegrate(func, nparams, few_dir, num_add_args=0)
 
         self.func = self.inspiral_generator.func
 
@@ -139,6 +144,9 @@ class EMRIInspiral(TrajectoryBase):
         ]
 
         self.get_derivative = pyDerivative(self.func[0], few_dir.encode())
+
+        self.integrate_constants_of_motion = integrate_constants_of_motion
+        self.integrate_phase = integrate_phase
 
     def attributes_EMRIInspiral(self):
         """
@@ -168,9 +176,9 @@ class EMRIInspiral(TrajectoryBase):
         M,
         mu,
         a,
-        p0,
-        e0,
-        x0,
+        y1,
+        y2,
+        y3,
         *args,
         Phi_phi0=0.0,
         Phi_theta0=0.0,
@@ -215,6 +223,15 @@ class EMRIInspiral(TrajectoryBase):
         equatorial = self.inspiral_generator.equatorial[0]
         circular = self.inspiral_generator.circular[0]
 
+        if self.integrate_constants_of_motion:
+            E0 = y1
+            Lz0 = y2
+            Q0 = y3
+        else:
+            p0 = y1
+            e0 = y2
+            x0 = y3
+
         if background == "Schwarzschild":
             a = 0.0
         elif a < fill_value:
@@ -227,11 +244,15 @@ class EMRIInspiral(TrajectoryBase):
                 a = fill_value
 
         if equatorial:
-            if abs(x0) != 1:
-                raise RuntimeError("Needs to be one")
+            if self.integrate_constants_of_motion:
+                if Q0 != 0:
+                    raise RuntimeError("Carter constant Q must be zero for equatorial inspiral.")
+            else:
+                if abs(x0) != 1:
+                    raise RuntimeError("Magnitude of orbital inclination cosine x0 needs to be one for equatorial inspiral.")
 
-        if circular:
-            e0 = 0.0
+        # if circular:
+        #     e0 = 0.0
 
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
@@ -242,8 +263,8 @@ class EMRIInspiral(TrajectoryBase):
         if len(args_in) == 0:
             args_in = np.array([0.0])
 
-        y0 = np.array([p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0])
-
+        y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
+   
         # this will return in coordinate time
         out = self.inspiral_generator.run_inspiral(M, mu, a, y0, args_in, **temp_kwargs)
-        return tuple(out.T)
+        return tuple(out.T.copy())

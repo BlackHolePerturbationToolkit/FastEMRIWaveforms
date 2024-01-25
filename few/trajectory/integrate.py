@@ -32,7 +32,7 @@ from pyInspiral import pyInspiralGenerator, pyDerivative
 
 # Python imports
 from ..utils.baseclasses import TrajectoryBase
-from ..utils.utility import check_for_file_download, get_ode_function_options
+from ..utils.utility import check_for_file_download, get_ode_function_options, ELQ_to_pex, get_kerr_geo_constants_of_motion
 from ..utils.constants import *
 from ..utils.citations import *
 
@@ -353,3 +353,80 @@ class APEXIntegrate(Integrate):
                 raise ValueError(
                     "Could not find workable step size in finishing function."
                 )
+
+        self.save_point(t * self.Msec, y)
+
+class AELQIntegrate(Integrate):
+    def get_p_sep(self, y: np.ndarray) -> float:
+        p, e, x = ELQ_to_pex(self.a, y[0], y[1], y[2])
+        # print(p,e,x)
+        if self.a == 0.0:
+            p_sep = 6.0 + 2.0 * e
+
+        else:
+            p_sep = get_separatrix(self.a, e, x)
+        return p_sep, (p, e, x)  # return pex for later on
+
+    def action_function(
+        self, t: float, y: np.ndarray
+    ) -> str:  # Stop the inspiral when close to the separatrix
+        p_sep, (p,e,x) = self.get_p_sep(y)
+
+        if p - p_sep < DIST_TO_SEPARATRIX + INNER_THRESHOLD:
+            return "stop"
+
+    def end_stepper(self, t: float, y: np.ndarray, ydot: np.ndarray, factor: float):
+        # estimate the step to the breaking point and multiply by PERCENT_STEP
+        p_sep, (p, e, x) = self.get_p_sep(y)
+        Edot = ydot[0]
+        E_sep = get_kerr_geo_constants_of_motion(self.a, p_sep + DIST_TO_SEPARATRIX, e, x)[0]
+        step_size = PERCENT_STEP / factor * ((E_sep - y[0]) / Edot)
+
+        # copy current values
+        temp_y = y + ydot * step_size
+
+        temp_t = t + step_size
+        temp_E = temp_y[0]
+        temp_stop = temp_E - E_sep
+
+        return (temp_t, temp_y, temp_stop)
+
+    def finishing_function(self, t: float, y: np.ndarray):
+        # Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.
+        #     // To correct for this we self-integrate from the second-to-last point in the integation to
+        #     // within the INNER_THRESHOLD with respect to separatrix +  DIST_TO_SEPARATRIX
+
+        # update p_sep (fixes part of issue #17)
+        p_sep, (p,e,x) = self.get_p_sep(y)
+
+        ydot = np.zeros(self.nparams)
+        y_temp = np.zeros(self.nparams)
+
+        # set initial values
+        factor = 1.0
+        iteration = 0
+        # breakpoint()
+
+        while p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD:
+            # Same function in the integrator
+            ydot = self.integrator.get_derivatives(y)
+            t_temp, y_temp, temp_stop = self.end_stepper(t, y, ydot, factor)
+            if temp_stop > 0:
+                # update points
+                t = t_temp
+                y[:] = y_temp[:]
+                p_sep, (p,e,x) = self.get_p_sep(y)
+            else:
+                # all variables stay the same
+
+                # decrease step
+                factor *= 0.5
+
+            iteration += 1
+
+            if iteration > MAX_ITER:
+                raise ValueError(
+                    "Could not find workable step size in finishing function."
+                )
+
+        self.save_point(t*self.Msec,y)

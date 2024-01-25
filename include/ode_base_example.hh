@@ -41,3 +41,33 @@ public:
     void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
     ~KerrEccentricEquatorial();
 };
+
+class KerrEccentricEquatorial_ELQ
+{
+public:
+    TensorInterpolant *Edot_interp;
+    TensorInterpolant *Ldot_interp;
+    KerrEccentricEquatorial_ELQ(std::string few_dir);
+    bool equatorial = true;
+    int background = KERR;
+    bool circular = false;
+
+    void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
+    ~KerrEccentricEquatorial_ELQ();
+};
+
+
+class KerrEccentricEquatorial_ELQ_nofrequencies
+{
+public:
+    TensorInterpolant *Edot_interp;
+    TensorInterpolant *Ldot_interp;
+    TensorInterpolant2d *Sep_interp;
+    KerrEccentricEquatorial_ELQ_nofrequencies(std::string few_dir);
+    bool equatorial = true;
+    int background = KERR;
+    bool circular = false;
+
+    void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
+    ~KerrEccentricEquatorial_ELQ_nofrequencies();
+};

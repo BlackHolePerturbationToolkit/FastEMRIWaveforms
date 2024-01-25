@@ -282,6 +282,9 @@ __deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y
     // auto start = std::chrono::steady_clock::now();
     // the frequency variables are pointers!
     KerrGeoEquatorialCoordinateFrequencies(&Omega_phi, &Omega_theta, &Omega_r, a, p, e, x); // shift to avoid problem in fundamental frequencies
+    // Omega_phi = pow(((1.-e*e)/p),(3./2.));
+    // Omega_theta = pow(((1.-e*e)/p),(3./2.));
+    // Omega_r = pow(((1.-e*e)/p),(3./2.));
     // auto end = std::chrono::steady_clock::now();
     // std::chrono::duration<double>  msec = end-start;
     // std::cout << "elapsed time fund freqs: " << msec.count() << "s\n";
@@ -366,4 +369,223 @@ KerrEccentricEquatorial::~KerrEccentricEquatorial()
     delete edot_interp;
     delete Edot_interp;
     delete Ldot_interp;
+}
+
+KerrEccentricEquatorial_ELQ::KerrEccentricEquatorial_ELQ(std::string few_dir)
+{
+
+    // interpolant()
+    std::string fp;
+    fp = few_dir + "few/files/x0.dat";
+    Vector x1 = fill_vector(fp);
+    fp = few_dir + "few/files/x1.dat";
+    Vector x2 = fill_vector(fp);
+    fp = few_dir + "few/files/x2.dat";
+    Vector x3 = fill_vector(fp);
+
+    fp = few_dir + "few/files/coeff_Endot.dat";
+    Vector coeffEn = fill_vector(fp);
+    fp = few_dir + "few/files/coeff_Ldot.dat";
+    Vector coeffL = fill_vector(fp);
+
+    Edot_interp = new TensorInterpolant(x1, x2, x3, coeffEn);
+    Ldot_interp = new TensorInterpolant(x1, x2, x3, coeffL);
+}
+
+// #define KerrEccentricEquatorial_Y
+#define KerrEccentricEquatorial_ELQ_equatorial
+#define KerrEccentricEquatorial_ELQ_num_add_args 0
+__deriv__ void KerrEccentricEquatorial_ELQ::deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args)
+{
+
+    double Omega_phi, Omega_theta, Omega_r;
+
+    double E = y[0];
+    double Lz = y[1];
+    double Q = y[2];
+
+    double p, e, x;
+
+    ELQ_to_pex(&p, &e, &x, a, E, Lz, Q);
+
+
+    double p_sep = get_separatrix(a, e, x);
+    // make sure we do not step into separatrix
+    if ((e < 0.0) || (p < p_sep))
+    {
+        ydot[0] = 0.0;
+        ydot[1] = 0.0;
+        ydot[2] = 0.0;
+        ydot[3] = 0.0;
+        ydot[4] = 0.0;
+        ydot[5] = 0.0;
+        return;
+    }
+
+    KerrGeoEquatorialCoordinateFrequencies(&Omega_phi, &Omega_theta, &Omega_r, a, p, e, x); // shift to avoid problem in fundamental frequencies
+    // Omega_phi = pow(((1.-e*e)/p),(3./2.));
+    // Omega_theta = pow(((1.-e*e)/p),(3./2.));
+    // Omega_r = pow(((1.-e*e)/p),(3./2.));
+    double Edot, Ldot, Qdot, E_here, L_here, Q_here;
+
+    // Flux from Scott
+    double u = log((p - p_sep + 4.0 - 0.05) / 4.0);
+    double w = sqrt(e);
+
+    double signed_a = a*x; // signed a for interpolant
+
+    // E, L
+    Edot = -epsilon * Edot_interp->eval(signed_a,u,w) * (32./5. * pow(p,-5) * pow(1-e*e,1.5) * (1. + 73./24.* e*e + 37./96. * e*e*e*e));
+    Ldot = -x * epsilon * Ldot_interp->eval(signed_a,u,w) * (32./5. * pow(p,-7./2.) * pow(1.-e*e,1.5) * (1. + 7./8. * e*e) );
+    Qdot = 0.0;
+    // cout << " a=" << a << " p=" << p << " e=" << e << " psep=" << p_sep  << " Edot=" << Edot << " Ldot=" << Ldot << endl;
+    
+    // get r variable
+    // double Omega_phi_sep_circ,*Omega_theta_sep_circ,Omega_r_sep_circ;
+    // KerrGeoEquatorialCoordinateFrequencies(Omega_phi_sep_circ, Omega_theta_sep_circ, Omega_r_sep_circ, a, p_sep, 0.0, x);// shift to avoid problem in fundamental frequencies
+
+    // double r, Omega_phi_sep_circ;
+    // reference frequency
+    // Omega_phi_sep_circ = 1.0 / (a + pow(p_sep / (1.0 + e), 1.5));
+    // r = pow(Omega_phi / Omega_phi_sep_circ, 2.0 / 3.0) * (1.0 + e);
+
+
+    // Edot = -epsilon * Edot_GR(a*copysign(1.0,x),e,r,p);
+    // Ldot = -epsilon * Ldot_GR(a*copysign(1.0,x),e,r,p)*copysign(1.0,x);
+
+    // double EdotPN = epsilon * dEdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
+    // double LdotPN = epsilon * dLdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
+    // cout << " a=" << a << " p=" << p << " e=" << e << " psep=" << p_sep  << " Edot=" << Edot << " Ldot=" << Ldot << "EdotPNratio= " << Edot/EdotPN << "LdotPNratio= " << Ldot/LdotPN << endl;
+    
+    ydot[0] = Edot;
+    ydot[1] = Ldot;
+    ydot[2] = Qdot;
+    ydot[3] = Omega_phi;
+    ydot[4] = Omega_theta;
+    ydot[5] = Omega_r;
+    // delete GKR;
+    return;
+}
+
+// destructor
+KerrEccentricEquatorial_ELQ::~KerrEccentricEquatorial_ELQ()
+{
+
+    delete Edot_interp;
+    delete Ldot_interp;
+}
+
+
+KerrEccentricEquatorial_ELQ_nofrequencies::KerrEccentricEquatorial_ELQ_nofrequencies(std::string few_dir)
+{
+
+    // interpolant()
+    std::string fp;
+    fp = few_dir + "few/files/x0.dat";
+    Vector x1 = fill_vector(fp);
+    fp = few_dir + "few/files/x1.dat";
+    Vector x2 = fill_vector(fp);
+    fp = few_dir + "few/files/x2.dat";
+    Vector x3 = fill_vector(fp);
+
+    fp = few_dir + "few/files/sep_x0.dat";
+    Vector sep_x1 = fill_vector(fp);
+    fp = few_dir + "few/files/sep_x1.dat";
+    Vector sep_x2 = fill_vector(fp);
+
+    fp = few_dir + "few/files/coeff_Endot.dat";
+    Vector coeffEn = fill_vector(fp);
+    fp = few_dir + "few/files/coeff_Ldot.dat";
+    Vector coeffL = fill_vector(fp);
+    fp = few_dir + "few/files/coeff_sep.dat";
+    Vector coeffSep = fill_vector(fp);
+
+
+    Edot_interp = new TensorInterpolant(x1, x2, x3, coeffEn);
+    Ldot_interp = new TensorInterpolant(x1, x2, x3, coeffL);
+    Sep_interp = new TensorInterpolant2d(sep_x1, sep_x2, coeffSep);    
+}
+
+// #define KerrEccentricEquatorial_Y
+#define KerrEccentricEquatorial_ELQ_nofrequencies_equatorial
+#define KerrEccentricEquatorial_ELQ_nofrequencies_num_add_args 0
+__deriv__ void KerrEccentricEquatorial_ELQ_nofrequencies::deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args)
+{
+
+    // double Omega_phi, Omega_theta, Omega_r;
+
+    double E = y[0];
+    double Lz = y[1];
+    double Q = y[2];
+
+    double p, e, x;
+
+    ELQ_to_pex(&p, &e, &x, a, E, Lz, Q);
+
+    double signed_a = a*x; // signed a for interpolants
+    double w = sqrt(e);
+    double ymin = pow(1.-0.998,1./3.);
+    double ymax = pow(1.+0.998,1./3.);
+    double chi2 = (pow(1.-signed_a,1./3.) - ymin) / (ymax - ymin);
+
+    // double p_sep = get_separatrix(a, e, x);
+    double p_sep = Sep_interp->eval(chi2, w) * (6. + 2.*e);
+    // make sure we do not step into separatrix
+    if ((e < 0.0) || (p < p_sep))
+    {
+        ydot[0] = 0.0;
+        ydot[1] = 0.0;
+        ydot[2] = 0.0;
+        return;
+    }
+
+    // KerrGeoEquatorialCoordinateFrequencies(&Omega_phi, &Omega_theta, &Omega_r, a, p, e, x); // shift to avoid problem in fundamental frequencies
+    // Omega_phi = pow(((1.-e*e)/p),(3./2.));
+    // Omega_theta = pow(((1.-e*e)/p),(3./2.));
+    // Omega_r = pow(((1.-e*e)/p),(3./2.));
+    double Edot, Ldot, Qdot, E_here, L_here, Q_here;
+
+    // Flux from Scott
+    double u = log((p - p_sep + 4.0 - 0.05) / 4.0);
+
+    // E, L
+    Edot = -epsilon * Edot_interp->eval(signed_a,u,w) * (32./5. * pow(p,-5) * pow(1-e*e,1.5) * (1. + 73./24.* e*e + 37./96. * e*e*e*e));
+    Ldot = -x * epsilon * Ldot_interp->eval(signed_a,u,w) * (32./5. * pow(p,-7./2.) * pow(1.-e*e,1.5) * (1. + 7./8. * e*e) );
+    Qdot = 0.0;
+    // cout << " a=" << a << " p=" << p << " e=" << e << " psep=" << p_sep  << " Edot=" << Edot << " Ldot=" << Ldot << endl;
+    
+    // get r variable
+    // double Omega_phi_sep_circ,*Omega_theta_sep_circ,Omega_r_sep_circ;
+    // KerrGeoEquatorialCoordinateFrequencies(Omega_phi_sep_circ, Omega_theta_sep_circ, Omega_r_sep_circ, a, p_sep, 0.0, x);// shift to avoid problem in fundamental frequencies
+
+    // double r, Omega_phi_sep_circ;
+    // reference frequency
+    // Omega_phi_sep_circ = 1.0 / (a + pow(p_sep / (1.0 + e), 1.5));
+    // r = pow(Omega_phi / Omega_phi_sep_circ, 2.0 / 3.0) * (1.0 + e);
+
+
+    // Edot = -epsilon * Edot_GR(a*copysign(1.0,x),e,r,p);
+    // Ldot = -epsilon * Ldot_GR(a*copysign(1.0,x),e,r,p)*copysign(1.0,x);
+
+    // double EdotPN = epsilon * dEdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
+    // double LdotPN = epsilon * dLdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
+    // cout << " a=" << a << " p=" << p << " e=" << e << " psep=" << p_sep  << " Edot=" << Edot << " Ldot=" << Ldot << "EdotPNratio= " << Edot/EdotPN << "LdotPNratio= " << Ldot/LdotPN << endl;
+    
+    ydot[0] = Edot;
+    ydot[1] = Ldot;
+    ydot[2] = Qdot;
+    // ydot[3] = Omega_phi;
+    // ydot[4] = Omega_theta;
+    // ydot[5] = Omega_r;
+    // delete GKR;
+    return;
+}
+
+// destructor
+KerrEccentricEquatorial_ELQ_nofrequencies::~KerrEccentricEquatorial_ELQ_nofrequencies()
+{
+
+    delete Edot_interp;
+    delete Ldot_interp;
+    delete Sep_interp;
 }
