@@ -88,6 +88,7 @@ beta = alpha - deltap
 
 folder = 'data_for_lorenzo/fluxes/*'
 fluxfiles = [el for el in glob.glob(folder) if 'xI' in el]
+# fluxfiles = [el for el in glob.glob(folder) if 'xI1' in el]
 
 for ff in fluxfiles:
     imp = read_txt(ff)
@@ -101,8 +102,17 @@ for ff in fluxfiles:
     pdot.append( (pdotInf_tot+pdotH_tot ) / pdotpn(a, p, e, pLSO) )
     edot.append( (eccdotInf_tot+eccdotH_tot) / edotpn(a, p, e, pLSO) )
     Edot.append( (EdotInf_tot+EdotH_tot) / Edotpn(a, p, e, pLSO) )
-    Ldot.append( (LzdotInf_tot+LzdotH_tot) / Ldotpn(a, p, e, pLSO) )
+    Ldot.append( np.abs(LzdotInf_tot+LzdotH_tot) / Ldotpn(a, p, e, pLSO) )
     plso.append(pLSO )
+
+    # plt.figure()
+    # plt.title('edot')
+    # cb= plt.tricontourf(u,w, Ldot[-1])
+    # plt.colorbar(cb)
+    # plt.xlabel('u')
+    # plt.ylabel('w')
+    # plt.savefig(f"flux_check/{a[0]*xi[0]}_ldot.pdf")
+    # plt.close()
 
 flat_a = np.round(np.asarray(a_tot).flatten(),decimals=5)
 flat_u = np.round(np.asarray(u_tot).flatten(),decimals=5)
@@ -155,3 +165,15 @@ for i,el in enumerate(X):
     # np.savetxt(f'few/files/x{i}.dat', el)
     save_txt(el, f'few/files/x{i}.dat')
 
+sepX = np.load("few/files/sepX.npy")
+sepVals = np.load("few/files/sepVals.npy")
+
+# flux interpolation
+InterpSep = TPI.TP_Interpolant_ND([sepX[0], sepX[1]], F=sepVals)
+
+coeff = InterpSep.GetSplineCoefficientsND().flatten()
+
+save_txt(coeff, f'few/files/coeff_sep.dat')
+
+for i,el in enumerate(sepX):
+    save_txt(el, f'few/files/sep_x{i}.dat')

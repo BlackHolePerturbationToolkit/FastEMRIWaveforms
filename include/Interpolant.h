@@ -75,6 +75,17 @@ class TensorInterpolant{
     ~TensorInterpolant();
 };
 
+class TensorInterpolant2d{
+    public:
+    double *coeff;
+    int coeff_N;
+    gsl_bspline_workspace **bw_out;   // Output: pointer to array of pointers to
+
+    TensorInterpolant2d(Vector x, Vector y, Vector flatten_coeff);
+    double eval(double x, double y);
+
+    ~TensorInterpolant2d();
+};
 
 /******************************* 1D functions *********************************/
 
