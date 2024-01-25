@@ -113,6 +113,7 @@ class EMRIInspiral(TrajectoryBase):
         func=None,
         enforce_schwarz_sep=False,
         integrate_constants_of_motion=False,
+        integrate_phase=True,
         test_new_version=True,
         **kwargs,
     ):
@@ -125,8 +126,10 @@ class EMRIInspiral(TrajectoryBase):
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
 
-        nparams = 6
-
+        if integrate_phase:
+            nparams = 6
+        else:
+            nparams = 3
         if integrate_constants_of_motion:
             self.inspiral_generator = AELQIntegrate(func, nparams, few_dir, num_add_args=0)
         else:
@@ -263,7 +266,10 @@ class EMRIInspiral(TrajectoryBase):
         if len(args_in) == 0:
             args_in = np.array([0.0])
 
-        y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
+        if self.integrate_phase:
+            y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
+        else:
+            y0 = np.array([y1, y2, y3])
    
         # this will return in coordinate time
         out = self.inspiral_generator.run_inspiral(M, mu, a, y0, args_in, **temp_kwargs)
