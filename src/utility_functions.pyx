@@ -15,6 +15,7 @@ cdef extern from "../include/Utility.hh":
     void get_separatrix_vector(double* separatrix, double* a, double* e, double* x, int length);
 
     void KerrGeoConstantsOfMotionVectorized(double* E_out, double* L_out, double* Q_out, double* a, double* p, double* e, double* x, int n);
+    void ELQ_to_pexVectorised(double *p, double *e, double *x, double *a, double *E, double *Lz, double *Q, int length)
     void Y_to_xI_vector(double* x, double* a, double* p, double* e, double* Y, int length);
     void set_threads(int num_threads);
     int get_threads();
@@ -68,6 +69,18 @@ def pyKerrGeoConstantsOfMotionVectorized(np.ndarray[ndim=1, dtype=np.float64_t] 
     KerrGeoConstantsOfMotionVectorized(&E_out[0], &L_out[0], &Q_out[0], &a[0], &p[0], &e[0], &x[0], len(e))
 
     return (E_out, L_out, Q_out)
+
+def pyELQ_to_pex(np.ndarray[ndim=1, dtype=np.float64_t] a,
+                                   np.ndarray[ndim=1, dtype=np.float64_t] E,
+                                   np.ndarray[ndim=1, dtype=np.float64_t] Lz,
+                                   np.ndarray[ndim=1, dtype=np.float64_t] Q):
+
+    cdef np.ndarray[ndim=1, dtype=np.float64_t] p = np.zeros(len(E), dtype=np.float64)
+    cdef np.ndarray[ndim=1, dtype=np.float64_t] e = np.zeros(len(E), dtype=np.float64)
+    cdef np.ndarray[ndim=1, dtype=np.float64_t] x = np.zeros(len(E), dtype=np.float64)
+
+    ELQ_to_pexVectorised(&p[0], &e[0], &x[0], &a[0], &E[0], &Lz[0], &Q[0], len(E))
+    return (p, e, x)
 
 def pyY_to_xI_vector(np.ndarray[ndim=1, dtype=np.float64_t] a,
                      np.ndarray[ndim=1, dtype=np.float64_t] p,

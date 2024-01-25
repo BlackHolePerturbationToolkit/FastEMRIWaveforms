@@ -29,6 +29,7 @@ from pyUtility import (
     pyKerrGeoCoordinateFrequencies,
     pyGetSeparatrix,
     pyKerrGeoConstantsOfMotionVectorized,
+    pyELQ_to_pex,
     pyY_to_xI_vector,
     pyKerrEqSpinFrequenciesCorr,
     set_threads_wrap,
@@ -203,6 +204,48 @@ def kerr_p_to_u(a, p, e, xI, use_gpu=False):
 
     return u
 
+def ELQ_to_pex(a, E, Lz, Q):
+    """Convert from separation :math:`p` to :math:`y` coordinate
+
+    Conversion from the semilatus rectum or separation :math:`p` to :math:`y`.
+
+    arguments:
+        p (double scalar or 1D double xp.ndarray): Values of separation,
+            :math:`p`, to convert.
+        e (double scalar or 1D double xp.ndarray): Associated eccentricity values
+            of :math:`p` necessary for conversion.
+        use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
+    """
+    # check if inputs are scalar or array
+    if isinstance(E, float):
+        scalar = True
+
+    else:
+        scalar = False
+
+    E_in = np.atleast_1d(E)
+    Lz_in = np.atleast_1d(Lz)
+    Q_in = np.atleast_1d(Q)
+
+    # cast the spin to the same size array as p
+    if isinstance(a, float):
+        a_in = np.full_like(E_in, a)
+    else:
+        a_in = np.atleast_1d(a)
+
+    assert len(a_in) == len(E_in)
+
+    # get frequencies
+    p, e, x = pyELQ_to_pex(
+        a_in, E_in, Lz_in, Q_in
+    )
+
+    # set output to shape of input
+    if scalar:
+        return (p[0], e[0], x[0])
+
+    else:
+        return (p, e, x)
 
 def get_fundamental_frequencies(a, p, e, x):
     """Get dimensionless fundamental frequencies.

@@ -433,6 +433,106 @@ void KerrGeoCoordinateFrequenciesVectorized(double *OmegaPhi_, double *OmegaThet
     }
 }
 
+void ELQ_to_pex(double *p, double *e, double *xI, double a, double E, double Lz, double Q)
+//
+// pexI_of_aELzQ.cc: implements the mapping from orbit integrals
+// (E, Lz, Q) to orbit geometry (p, e, xI).  Also provides the
+// roots r3 and r4 of the Kerr radial geodesic function.
+//
+// Scott A. Hughes (sahughes@mit.edu); code extracted from Gremlin
+// and converted to standalone form 13 Jan 2024.
+//
+{
+  if (Q < 1.e-14) { // equatorial
+    double E2m1 = (E - 1.)*(E + 1.);
+    double A2 = 2./E2m1;
+    double A1 = (a*a*E2m1 - Lz*Lz)/E2m1;
+    double A0 = 2.*(a*E - Lz)*(a*E - Lz)/E2m1;
+    //
+    double Qnr = (A2*A2 - 3.*A1)/9.;
+    double rtQnr = sqrt(Qnr);
+    double Rnr = (A2*(2.*A2*A2 - 9.*A1) + 27.*A0)/54.;
+    //
+    double theta = acos(Rnr/(rtQnr*rtQnr*rtQnr));
+    //
+    double ra = -2.*rtQnr*cos((theta + 2.*M_PI)/3.) - A2/3.;
+    double rp = -2.*rtQnr*cos((theta - 2.*M_PI)/3.) - A2/3.;
+    // r3 = -2.*rtQnr*cos(theta/3.) - A2/3.;
+    // r4 = 0.;
+    //
+    *p = 2.*ra*rp/(ra + rp);
+    *e = (ra - rp)/(ra + rp);
+    if (Lz > 0.) *xI = 1.;
+    else *xI = -1.;
+  } else { // non-equatorial
+    double a2 = a*a;
+    double E2m1= (E - 1)*(E + 1.);
+    double aEmLz = a*E - Lz;
+    //
+    // The quartic: r^4 + A3 r^3 + A2 r^2 + A1 r + A0 == 0.
+    // Kerr radial function divided by E^2 - 1.
+    //
+    double A0 = -a2*Q/E2m1;
+    double A1 = 2.*(Q + aEmLz*aEmLz)/E2m1;
+    double A2 = (a2*E2m1 - Lz*Lz - Q)/E2m1;
+    double A3 = 2./E2m1;
+    //
+    // Definitions following Wolters (https://quarticequations.com)
+    //
+    double B0 = A0 + A3*(-0.25*A1 + A3*(0.0625*A2 - 0.01171875*A3*A3));
+    double B1 = A1 + A3*(-0.5*A2 + 0.125*A3*A3);
+    double B2 = A2 - 0.375*A3*A3;
+    //
+    // Definitions needed for the resolvent cubic: z^3 + C2 z^2 + C1 z + C0 == 0;
+    //
+    double C0 = -0.015625*B1*B1;
+    double C1 = 0.0625*B2*B2 - 0.25*B0;
+    double C2 = 0.5*B2;
+    //
+    double rtQnr = sqrt(C2*C2/9. - C1/3.);
+    double Rnr = C2*(C2*C2/27. - C1/6.) + C0/2.;
+    double theta = acos(Rnr/(rtQnr*rtQnr*rtQnr));
+    //
+    // zN = cubic zero N
+    //
+    double rtz1 = sqrt(-2.*rtQnr*cos((theta + 2.*M_PI)/3.) - C2/3.);
+    double z2 = -2.*rtQnr*cos((theta - 2.*M_PI)/3.) - C2/3.;
+    double z3 = -2.*rtQnr*cos(theta/3.) - C2/3.;
+    double rtz2z3 = sqrt(z2*z3);
+    //
+    // Now assemble the roots of the quartic.  Note that M/(2(1 - E^2)) = -0.25*A3.
+    //
+    double sgnB1 = (B1 > 0 ? 1. : -1.);
+    double rttermmin = sqrt(z2 + z3 - 2.*sgnB1*rtz2z3);
+    double rttermplus = sqrt(z2 + z3 + 2.*sgnB1*rtz2z3);
+    double ra = -0.25*A3 + rtz1 + rttermmin;
+    double rp = -0.25*A3 + rtz1 - rttermmin;
+    // r3 = -0.25*A3 - rtz1 + rttermplus;
+    // r4 = -0.25*A3 - rtz1 - rttermplus;
+    //
+    *p = 2.*ra*rp/(ra + rp);
+    *e = (ra - rp)/(ra + rp);
+    //
+    // Note that omE2 = 1 - E^2 = -E2m1 = -(E^2 - 1)
+    //
+    double QpLz2ma2omE2 = Q + Lz*Lz + a2*E2m1;
+    double denomsqr = QpLz2ma2omE2 + sqrt(QpLz2ma2omE2*QpLz2ma2omE2 - 4.*Lz*Lz*a2*E2m1);
+    *xI = sqrt(2.)*Lz/sqrt(denomsqr);
+  }
+}
+
+void ELQ_to_pexVectorised(double *p, double *e, double *x, double *a, double *E, double *Lz, double *Q, int length)
+{
+#ifdef __USE_OMP__
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < length; i += 1)
+    {
+        ELQ_to_pex(&p[i], &e[i], &x[i], a[i], E[i], Lz[i], Q[i]);
+    }
+}
+
+
 struct params_holder
 {
     double a, p, e, x, Y;
