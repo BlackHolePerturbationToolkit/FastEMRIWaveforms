@@ -345,7 +345,7 @@ class APEXIntegrate(Integrate):
                 # all variables stay the same
 
                 # decrease step
-                factor *= 0.5
+                factor *= 2.0
 
             iteration += 1
 
@@ -420,7 +420,7 @@ class AELQIntegrate(Integrate):
                 # all variables stay the same
 
                 # decrease step
-                factor *= 0.5
+                factor *= 2.0
 
             iteration += 1
 
