@@ -104,7 +104,7 @@ public:
     gsl_odeiv2_evolve *evolve;
     gsl_odeiv2_control *control;
     int nparams;
-    double err = 1e-10;
+    double err = 1e-11;//1e-10;
     bool USE_DENSE_STEPPING = false;
     bool USE_RK8 = true;
     int num_add_args;
