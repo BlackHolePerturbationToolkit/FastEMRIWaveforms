@@ -322,39 +322,40 @@ class APEXIntegrate(Integrate):
         #     // To correct for this we self-integrate from the second-to-last point in the integation to
         #     // within the INNER_THRESHOLD with respect to separatrix +  DIST_TO_SEPARATRIX
 
-        # update p_sep (fixes part of issue #17)
-        p_sep = self.get_p_sep(y)
-        p = y[0]
-        ydot = np.zeros(self.nparams)
-        y_temp = np.zeros(self.nparams)
+        if t < self.tmax_dimensionless:  # don't step to the separatrix if we hit the time window
+            # update p_sep (fixes part of issue #17)
+            p_sep = self.get_p_sep(y)
+            p = y[0]
+            ydot = np.zeros(self.nparams)
+            y_temp = np.zeros(self.nparams)
 
-        # set initial values
-        factor = 1.0
-        iteration = 0
-        while p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD:
-            # Same function in the integrator
-            ydot = self.integrator.get_derivatives(y)
-            t_temp, y_temp, temp_stop = self.end_stepper(t, y, ydot, factor)
-            if temp_stop > DIST_TO_SEPARATRIX:
-                # update points
-                t = t_temp
-                y[:] = y_temp[:]
-                p_sep = self.get_p_sep(y)
-                p = y[0]
-            else:
-                # all variables stay the same
+            # set initial values
+            factor = 1.0
+            iteration = 0
+            while p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD:
+                # Same function in the integrator
+                ydot = self.integrator.get_derivatives(y)
+                t_temp, y_temp, temp_stop = self.end_stepper(t, y, ydot, factor)
+                if temp_stop > DIST_TO_SEPARATRIX:
+                    # update points
+                    t = t_temp
+                    y[:] = y_temp[:]
+                    p_sep = self.get_p_sep(y)
+                    p = y[0]
+                else:
+                    # all variables stay the same
 
-                # decrease step
-                factor *= 2.0
+                    # decrease step
+                    factor *= 2.0
 
-            iteration += 1
+                iteration += 1
 
-            if iteration > MAX_ITER:
-                raise ValueError(
-                    "Could not find workable step size in finishing function."
-                )
+                if iteration > MAX_ITER:
+                    raise ValueError(
+                        "Could not find workable step size in finishing function."
+                    )
 
-        self.save_point(t * self.Msec, y)
+            self.save_point(t * self.Msec, y)
 
 class AELQIntegrate(Integrate):
     def get_p_sep(self, y: np.ndarray) -> float:
@@ -396,37 +397,38 @@ class AELQIntegrate(Integrate):
         #     // To correct for this we self-integrate from the second-to-last point in the integation to
         #     // within the INNER_THRESHOLD with respect to separatrix +  DIST_TO_SEPARATRIX
 
-        # update p_sep (fixes part of issue #17)
-        p_sep, (p,e,x) = self.get_p_sep(y)
+        if t < self.tmax_dimensionless:  # don't step to the separatrix if we hit the time window
+            # update p_sep (fixes part of issue #17)
+            p_sep, (p,e,x) = self.get_p_sep(y)
 
-        ydot = np.zeros(self.nparams)
-        y_temp = np.zeros(self.nparams)
+            ydot = np.zeros(self.nparams)
+            y_temp = np.zeros(self.nparams)
 
-        # set initial values
-        factor = 1.0
-        iteration = 0
-        # breakpoint()
+            # set initial values
+            factor = 1.0
+            iteration = 0
+            # breakpoint()
 
-        while p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD:
-            # Same function in the integrator
-            ydot = self.integrator.get_derivatives(y)
-            t_temp, y_temp, temp_stop = self.end_stepper(t, y, ydot, factor)
-            if temp_stop > 0:
-                # update points
-                t = t_temp
-                y[:] = y_temp[:]
-                p_sep, (p,e,x) = self.get_p_sep(y)
-            else:
-                # all variables stay the same
+            while p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD:
+                # Same function in the integrator
+                ydot = self.integrator.get_derivatives(y)
+                t_temp, y_temp, temp_stop = self.end_stepper(t, y, ydot, factor)
+                if temp_stop > 0:
+                    # update points
+                    t = t_temp
+                    y[:] = y_temp[:]
+                    p_sep, (p,e,x) = self.get_p_sep(y)
+                else:
+                    # all variables stay the same
 
-                # decrease step
-                factor *= 2.0
+                    # decrease step
+                    factor *= 2.0
 
-            iteration += 1
+                iteration += 1
 
-            if iteration > MAX_ITER:
-                raise ValueError(
-                    "Could not find workable step size in finishing function."
-                )
+                if iteration > MAX_ITER:
+                    raise ValueError(
+                        "Could not find workable step size in finishing function."
+                    )
 
-        self.save_point(t*self.Msec,y)
+            self.save_point(t*self.Msec,y)
