@@ -371,6 +371,105 @@ KerrEccentricEquatorial::~KerrEccentricEquatorial()
     delete Ldot_interp;
 }
 
+
+KerrEccentricEquatorial_nofrequencies::KerrEccentricEquatorial_nofrequencies(std::string few_dir)
+{
+
+    // interpolant()
+    std::string fp;
+    fp = few_dir + "few/files/x0.dat";
+    Vector x1 = fill_vector(fp);
+    fp = few_dir + "few/files/x1.dat";
+    Vector x2 = fill_vector(fp);
+    fp = few_dir + "few/files/x2.dat";
+    Vector x3 = fill_vector(fp);
+
+    fp = few_dir + "few/files/coeff_edot.dat";
+    Vector coeff2 = fill_vector(fp);
+    fp = few_dir + "few/files/coeff_pdot.dat";
+    Vector coeff = fill_vector(fp);
+
+    fp = few_dir + "few/files/coeff_Endot.dat";
+    Vector coeffEn = fill_vector(fp);
+    fp = few_dir + "few/files/coeff_Ldot.dat";
+    Vector coeffL = fill_vector(fp);
+
+    edot_interp = new TensorInterpolant(x1, x2, x3, coeff2);
+    pdot_interp = new TensorInterpolant(x1, x2, x3, coeff);
+
+    Edot_interp = new TensorInterpolant(x1, x2, x3, coeffEn);
+    Ldot_interp = new TensorInterpolant(x1, x2, x3, coeffL);
+
+    // cout << "pdot=" << pdot_interp<< pdot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
+    // cout << "edot=" << edot_interp<< edot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
+}
+
+// #define KerrEccentricEquatorial_Y
+#define KerrEccentricEquatorial_nofrequencies_equatorial
+#define KerrEccentricEquatorial_nofrequencies_num_add_args 0
+__deriv__ void KerrEccentricEquatorial_nofrequencies::deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args)
+{
+
+    double p = y[0];
+    double e = y[1];
+    double x = y[2];
+
+    double p_sep = get_separatrix(a, e, x);
+    // make sure we do not step into separatrix
+    if ((e < 0.0) || (p < p_sep))
+    {
+        ydot[0] = 0.0;
+        ydot[1] = 0.0;
+        ydot[2] = 0.0;
+        return;
+    }
+
+    double pdot_out, edot_out, xdot_out;
+
+    // Flux from Scott
+    double risco = get_separatrix(a, 0.0, x);
+    double u = log((p - p_sep + 4.0 - 0.05) / 4.0);
+    double w = sqrt(e);
+    // p, e
+
+    double signed_a = a*x; // signed a for interpolant
+
+    pdot_out = pdot_interp->eval(signed_a, u, w) * ((8. * pow(1. - pow(e, 2), 1.5) * (8. + 7. * pow(e, 2))) / (5. * p * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
+    edot_out = edot_interp->eval(signed_a, u, w) * ((pow(1. - pow(e, 2), 1.5) * (304. + 121. * pow(e, 2))) / (15. * pow(p, 2) * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
+    double pdot, edot;
+
+    // needs adjustment for validity
+    if (e > 1e-6)
+    {
+        pdot = epsilon * pdot_out;
+        edot = epsilon * edot_out;
+    }
+    else
+    {
+        edot = 0.0;
+        pdot = epsilon * pdot_out;
+    }
+
+    double xdot = 0.0;
+
+    ydot[0] = pdot;
+    ydot[1] = edot;
+    ydot[2] = xdot;
+    // delete GKR;
+    return;
+}
+
+// destructor
+KerrEccentricEquatorial_nofrequencies::~KerrEccentricEquatorial_nofrequencies()
+{
+
+    delete pdot_interp;
+    delete edot_interp;
+    delete Edot_interp;
+    delete Ldot_interp;
+}
+
+
 KerrEccentricEquatorial_ELQ::KerrEccentricEquatorial_ELQ(std::string few_dir)
 {
 

@@ -42,6 +42,23 @@ public:
     ~KerrEccentricEquatorial();
 };
 
+
+class KerrEccentricEquatorial_nofrequencies
+{
+public:
+    TensorInterpolant *pdot_interp;
+    TensorInterpolant *edot_interp;
+    TensorInterpolant *Edot_interp;
+    TensorInterpolant *Ldot_interp;
+    KerrEccentricEquatorial_nofrequencies(std::string few_dir);
+    bool equatorial = true;
+    int background = KERR;
+    bool circular = false;
+
+    void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
+    ~KerrEccentricEquatorial_nofrequencies();
+};
+
 class KerrEccentricEquatorial_ELQ
 {
 public:
