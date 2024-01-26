@@ -22,7 +22,7 @@ import os
 import warnings
 
 import numpy as np
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import CubicSpline, make_interp_spline
 
 # Cython/C++ imports
 from pyInspiral import pyInspiralGenerator
@@ -200,6 +200,7 @@ class EMRIInspiral(TrajectoryBase):
         Phi_phi0=0.0,
         Phi_theta0=0.0,
         Phi_r0=0.0,
+        interpolation_factor=1,
         **kwargs,
     ):
         """Generate the inspiral.
@@ -226,6 +227,10 @@ class EMRIInspiral(TrajectoryBase):
                 Default is 0.0.
             Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
                 Default is 0.0.
+            interpolation_factor (int, optional): An upsampling factor to apply to the sparse trajectory before the summation step.
+                Interpolates all trajectory parameters by a 7-th order BSpline with respect to a time grid with `interpolation_factor * len(t)` time samples.
+                A factor of ~10 can ensure waveform derivatives are stable for the computation of information matrices. 
+                Default is 1 (no interpolation).
             **kwargs (dict, optional): kwargs passed from parent.
 
         Returns:
@@ -266,4 +271,16 @@ class EMRIInspiral(TrajectoryBase):
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(
             M, mu, a, p0, e0, x0, Phi_phi0, Phi_theta0, Phi_r0, args_in, **temp_kwargs
         )
-        return (t, p, e, x, Phi_phi, Phi_theta, Phi_r)
+        out = np.vstack((p, e, x, Phi_phi, Phi_theta, Phi_r))
+
+        if kwargs["interpolation_factor"] > 1:
+            interp_num = int(kwargs["interpolation_factor"])
+            t_new = np.interp(np.arange((len(t) - 1) * interp_num + 1), np.arange(0, interp_num*len(t), interp_num), t)
+
+            spl = make_interp_spline(t,out,k=7, axis=1)
+            upsampled = spl(t_new)
+
+            return (t_new,) + tuple(upsampled)
+        else:
+            return (t,) + tuple(out)
+
