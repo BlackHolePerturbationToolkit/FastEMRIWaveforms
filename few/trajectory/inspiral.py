@@ -22,14 +22,15 @@ import os
 import warnings
 
 import numpy as np
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import CubicSpline, make_interp_spline
+from scipy.integrate import cumulative_simpson
 
 # Cython/C++ imports
 from pyInspiral import pyInspiralGenerator, pyDerivative
 
 # Python imports
 from few.utils.baseclasses import TrajectoryBase
-from few.utils.utility import check_for_file_download, get_ode_function_options
+from few.utils.utility import check_for_file_download, get_ode_function_options, ELQ_to_pex, get_kerr_geo_constants_of_motion, get_fundamental_frequencies
 from few.utils.constants import *
 from few.utils.citations import *
 
@@ -113,8 +114,10 @@ class EMRIInspiral(TrajectoryBase):
         func=None,
         enforce_schwarz_sep=False,
         integrate_constants_of_motion=False,
-        integrate_phase=True,
+        integrate_ODE_phases=True,
         test_new_version=True,
+        convert_to_pex=True,
+        numerically_integrate_phases=True,
         **kwargs,
     ):
         few_dir = dir_path + "/../../"
@@ -126,7 +129,7 @@ class EMRIInspiral(TrajectoryBase):
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
 
-        if integrate_phase:
+        if integrate_ODE_phases:
             nparams = 6
         else:
             nparams = 3
@@ -149,7 +152,9 @@ class EMRIInspiral(TrajectoryBase):
         self.get_derivative = pyDerivative(self.func[0], few_dir.encode())
 
         self.integrate_constants_of_motion = integrate_constants_of_motion
-        self.integrate_phase = integrate_phase
+        self.integrate_ODE_phases = integrate_ODE_phases
+        self.convert_to_pex = convert_to_pex
+        self.numerically_integrate_phases = numerically_integrate_phases
 
     def attributes_EMRIInspiral(self):
         """
@@ -226,14 +231,9 @@ class EMRIInspiral(TrajectoryBase):
         equatorial = self.inspiral_generator.equatorial[0]
         circular = self.inspiral_generator.circular[0]
 
-        if self.integrate_constants_of_motion:
-            E0 = y1
-            Lz0 = y2
-            Q0 = y3
-        else:
-            p0 = y1
-            e0 = y2
-            x0 = y3
+        p0 = y1
+        e0 = y2
+        x0 = y3
 
         if background == "Schwarzschild":
             a = 0.0
@@ -247,15 +247,15 @@ class EMRIInspiral(TrajectoryBase):
                 a = fill_value
 
         if equatorial:
-            if self.integrate_constants_of_motion:
-                if Q0 != 0:
-                    raise RuntimeError("Carter constant Q must be zero for equatorial inspiral.")
-            else:
-                if abs(x0) != 1:
-                    raise RuntimeError("Magnitude of orbital inclination cosine x0 needs to be one for equatorial inspiral.")
+            if abs(x0) != 1:
+                raise RuntimeError("Magnitude of orbital inclination cosine x0 needs to be one for equatorial inspiral.")
 
-        # if circular:
-        #     e0 = 0.0
+        if circular:
+            e0 = 0.0
+
+        # if integrating constants of motion, convert from pex to ELQ now
+        if self.integrate_constants_of_motion:
+            y1, y2, y3 = get_kerr_geo_constants_of_motion(a, p0, e0, x0)
 
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
@@ -266,11 +266,51 @@ class EMRIInspiral(TrajectoryBase):
         if len(args_in) == 0:
             args_in = np.array([0.0])
 
-        if self.integrate_phase:
+        if self.integrate_ODE_phases:
             y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
         else:
             y0 = np.array([y1, y2, y3])
    
         # this will return in coordinate time
         out = self.inspiral_generator.run_inspiral(M, mu, a, y0, args_in, **temp_kwargs)
+        if self.integrate_constants_of_motion and self.convert_to_pex:
+            pex = ELQ_to_pex(a, out[:,1].copy(), out[:,2].copy(), out[:,3].copy())
+            out[:,1] = pex[0]
+            out[:,2] = pex[1]
+            out[:,3] = pex[2]
+
+        # handle no phase integration in ODE
+        if not self.integrate_ODE_phases:
+        # if performing phase integration numerically, perform it here
+            if self.numerically_integrate_phases:
+                # todo: make tuneable with kwargs. pass integral function?
+                if out.shape[0] > 20: # guard against short trajectories
+                    interp_num = 5
+                    k_spl=5
+                    # print("Not triggered. out shape was", out.shape[0])
+                else:
+                    # print("Triggered! out shape was", out.shape[0])
+                    interp_num = 5
+                    k_spl=3
+                t = out[:,0]
+                t_spline = np.interp(np.arange((len(t) - 1) * interp_num + 1), np.arange(0, interp_num*len(t), interp_num), t)
+
+                if self.inspiral_generator.equatorial:
+                    ups_p, ups_e = make_interp_spline(t, out[:,1:3].T, k=k_spl, axis=-1, check_finite=True)(t_spline)
+                    ups_x = np.zeros(len(ups_p)) + x0
+                else:
+                    ups_p, ups_e, ups_x = make_interp_spline(t, out[:,1:4].T, k=k_spl, axis=-1, check_finite=True)(t_spline)
+
+                frequencies = np.array(get_fundamental_frequencies(a, ups_p.copy(), ups_e.copy(), ups_x.copy()))/(M*MTSUN_SI)
+                
+                phase_array = cumulative_simpson(frequencies, x=t_spline, axis=-1, initial=0)  # initial = 0 sets the zero phase
+                # then we add on the initial phases to all phase values
+                phase_array += np.array([Phi_phi0, Phi_theta0, Phi_r0])[:,None]
+
+                out = np.vstack((t_spline, ups_p, ups_e, ups_x, phase_array)).T
+            # otherwise just return empty arrays for the phases
+            else:
+                phase_array = np.zeros((out.shape[0],3))
+                out = np.hstack((out, phase_array))
+
         return tuple(out.T.copy())
