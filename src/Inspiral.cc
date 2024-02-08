@@ -95,6 +95,11 @@ int InspiralCarrier::get_number_of_odes()
     return params_holder->odes.size();
 }
 
+void InspiralCarrier::set_error_tolerance(double err_set)
+{
+    err = err_set;
+}
+
 void InspiralCarrier::add_parameters_to_holder(double M, double mu, double a, double *additional_args)
 {
     // Set the mass ratio

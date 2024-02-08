@@ -113,6 +113,7 @@ public:
     InspiralCarrier(int nparams_, int num_add_args_);
     void dealloc();
     void add_parameters_to_holder(double M, double mu, double a, double *additional_args);
+    void set_error_tolerance(double err_set);
     void initialize_integrator();
     void destroy_integrator_information();
     void reset_solver();

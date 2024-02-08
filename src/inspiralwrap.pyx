@@ -15,6 +15,7 @@ cdef extern from "../include/Inspiral.hh":
         InspiralCarrierWrap(int nparams, int num_add_args_) except+
         void dealloc() except+
         void add_parameters_to_holder(double M, double mu, double a, double *additional_args) except+
+        void set_error_tolerance(double err_set) except+
         void initialize_integrator() except+
         void destroy_integrator_information() except+
         void reset_solver() except+
@@ -107,6 +108,9 @@ cdef class pyInspiralGenerator:
 
     def add_ode(self, func_name, few_dir):
         self.f.add_ode(func_name, few_dir)
+
+    def set_error_tolerance(self, err_set):
+        self.f.set_error_tolerance(err_set)
 
     def take_step(self, t_in, h_in, np.ndarray[ndim=1, dtype=np.float64_t] y_in, tmax):
         cdef double t = t_in
