@@ -187,9 +187,21 @@ class Integrate:
         bad_num = 0
 
         total = 0.0
-        while t < self.tmax_dimensionless:
-            status, t, h = self.integrator.take_step(t, h, y, self.tmax_dimensionless)
 
+        # add the first point
+        self.save_point(0., y)
+        
+        while t < self.tmax_dimensionless:
+            try:
+                status, t, h = self.integrator.take_step(t, h, y, self.tmax_dimensionless)
+            except ValueError:  # an Elliptic function returned a nan and it raised an exception
+                # print("We got a NAN!")
+                self.integrator.reset_solver()
+                t = t_prev
+                y[:] = y_prev[:]
+                h /= 2
+                continue
+                               
             # or if any quantity is nan, step back and take a smaller step.
             if np.any(np.isnan(y)):
                 self.integrator.reset_solver()
@@ -226,11 +238,13 @@ class Integrate:
         if hasattr(self, "finishing_function"):
             self.finishing_function(t, y)
 
-    def initialize_integrator(self):
+    def initialize_integrator(self, err):
+        self.integrator.set_error_tolerance(err)
+
         self.integrator.initialize_integrator()
         self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
         self.traj_step = 0
-
+    
     @property
     def trajectory(self):
         return self.trajectory_arr[: self.traj_step]
@@ -247,9 +261,9 @@ class Integrate:
             )
             self.buffer_length = self.trajectory_arr.shape[0]
 
-    def run_inspiral(self, M, mu, a, y0, additional_args, T=1., dt=10., **kwargs):
+    def run_inspiral(self, M, mu, a, y0, additional_args, T=1., dt=10., err=1e-11, **kwargs):
         self.moves_check = 0
-        self.initialize_integrator()
+        self.initialize_integrator(err)
 
         # Compute the adimensionalized time steps and max time
         self.tmax_dimensionless = T*YRSID_SI / (M * MTSUN_SI)
