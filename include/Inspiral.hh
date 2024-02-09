@@ -126,6 +126,8 @@ public:
     void get_backgrounds(int *backgrounds, int num_odes);
     void get_equatorial(bool *equatorial, int num_odes);
     void get_circular(bool *circular, int num_odes);
+    void get_integrate_constants_of_motion(bool *integrate_constants_of_motion, int num_odes);
+    void get_integrate_phases(bool *integrate_phases, int num_odes);
     ~InspiralCarrier();
 };
 

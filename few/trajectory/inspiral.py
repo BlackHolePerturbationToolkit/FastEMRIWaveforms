@@ -34,7 +34,7 @@ from few.utils.utility import check_for_file_download, get_ode_function_options,
 from few.utils.constants import *
 from few.utils.citations import *
 
-from .integrate import APEXIntegrate, AELQIntegrate
+from .integrate import APEXIntegrate, AELQIntegrate, get_integrator
 
 
 # get path to this file
@@ -113,8 +113,6 @@ class EMRIInspiral(TrajectoryBase):
         *args,
         func=None,
         enforce_schwarz_sep=False,
-        integrate_constants_of_motion=False,
-        integrate_ODE_phases=True,
         test_new_version=True,
         convert_to_pex=True,
         numerically_integrate_phases=True,
@@ -128,15 +126,9 @@ class EMRIInspiral(TrajectoryBase):
         TrajectoryBase.__init__(self, *args, **kwargs)
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
-
-        if integrate_ODE_phases:
-            nparams = 6
-        else:
-            nparams = 3
-        if integrate_constants_of_motion:
-            self.inspiral_generator = AELQIntegrate(func, nparams, few_dir, num_add_args=0)
-        else:
-            self.inspiral_generator = APEXIntegrate(func, nparams, few_dir, num_add_args=0)
+        
+        nparams = 6
+        self.inspiral_generator = get_integrator(func, nparams, few_dir, num_add_args=0)
 
         self.func = self.inspiral_generator.func
 
@@ -151,8 +143,8 @@ class EMRIInspiral(TrajectoryBase):
 
         self.get_derivative = pyDerivative(self.func[0], few_dir.encode())
 
-        self.integrate_constants_of_motion = integrate_constants_of_motion
-        self.integrate_ODE_phases = integrate_ODE_phases
+        self.integrate_constants_of_motion = self.inspiral_generator.integrate_constants_of_motion
+        self.integrate_ODE_phases = self.inspiral_generator.integrate_ODE_phases
         self.convert_to_pex = convert_to_pex
         self.numerically_integrate_phases = numerically_integrate_phases
 

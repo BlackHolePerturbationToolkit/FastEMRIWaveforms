@@ -20,6 +20,9 @@ public:
     bool equatorial = true;
     int background = SCHWARZSCHILD;
     bool circular = false;
+    bool integrate_constants_of_motion = false;
+    bool integrate_phases = true;
+
     SchwarzEccFlux(std::string few_dir);
 
     void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
@@ -37,6 +40,8 @@ public:
     bool equatorial = true;
     int background = KERR;
     bool circular = false;
+    bool integrate_constants_of_motion = false;
+    bool integrate_phases = true;
 
     void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
     ~KerrEccentricEquatorial();
@@ -54,6 +59,8 @@ public:
     bool equatorial = true;
     int background = KERR;
     bool circular = false;
+    bool integrate_constants_of_motion = false;
+    bool integrate_phases = false;
 
     void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
     ~KerrEccentricEquatorial_nofrequencies();
@@ -68,6 +75,8 @@ public:
     bool equatorial = true;
     int background = KERR;
     bool circular = false;
+    bool integrate_constants_of_motion = true;
+    bool integrate_phases = true;
 
     void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
     ~KerrEccentricEquatorial_ELQ();
@@ -84,6 +93,8 @@ public:
     bool equatorial = true;
     int background = KERR;
     bool circular = false;
+    bool integrate_constants_of_motion = true;
+    bool integrate_phases = false;
 
     void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
     ~KerrEccentricEquatorial_ELQ_nofrequencies();

@@ -51,6 +51,31 @@ MAX_ITER = 1000
 KERR = 1
 SCHWARZSCHILD = 2
 
+def get_integrator(func, nparams, few_dir, num_add_args=0):
+    integrator = pyInspiralGenerator(
+        nparams,
+        num_add_args,
+    )
+
+    ode_info = get_ode_function_options()
+
+    if isinstance(func, str):
+        func = [func]
+
+    for func_i in func:
+        assert isinstance(func_i, str)
+        if func_i not in ode_info:
+            raise ValueError(
+                f"func not available. Options are {list(ode_info.keys())}."
+            )
+        integrator.add_ode(func_i.encode(), few_dir.encode())
+
+    if not integrator.integrate_phases[0]:
+        nparams -= 3
+    if integrator.integrate_constants_of_motion[0]:
+        return AELQIntegrate(func, nparams, few_dir, num_add_args=num_add_args)
+    else:
+        return APEXIntegrate(func, nparams, few_dir, num_add_args=num_add_args)
 
 def fun_wrap(t, y, integrator):
     # print("YEYA", t, y)
@@ -142,6 +167,14 @@ class Integrate:
     def circular(self):
         return self.integrator.circular
 
+    @property
+    def integrate_constants_of_motion(self):
+        return self.integrator.integrate_constants_of_motion
+
+    @property
+    def integrate_ODE_phases(self):
+        return self.integrator.integrate_phases
+
     # @property
     # def func(self) -> str:
     #     return str(self.integrator.func_name)
@@ -190,7 +223,7 @@ class Integrate:
 
         # add the first point
         self.save_point(0., y)
-        
+        # breakpoint()
         while t < self.tmax_dimensionless:
             try:
                 status, t, h = self.integrator.take_step(t, h, y, self.tmax_dimensionless)

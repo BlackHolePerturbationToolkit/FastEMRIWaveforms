@@ -195,6 +195,26 @@ void InspiralCarrier::get_circular(bool *circular, int num_odes)
         circular[i] = params_holder->odes[i].circular;
 }
 
+void InspiralCarrier::get_integrate_constants_of_motion(bool *integrate_constants_of_motion, int num_odes)
+{
+    if (num_odes != params_holder->num_odes)
+    {
+        throw invalid_argument("Wrong number of odes coming in.");
+    }
+    for (int i = 0; i < num_odes; i += 1)
+        integrate_constants_of_motion[i] = params_holder->odes[i].integrate_constants_of_motion;
+}
+
+void InspiralCarrier::get_integrate_phases(bool *integrate_phases, int num_odes)
+{
+    if (num_odes != params_holder->num_odes)
+    {
+        throw invalid_argument("Wrong number of odes coming in.");
+    }
+    for (int i = 0; i < num_odes; i += 1)
+        integrate_phases[i] = params_holder->odes[i].integrate_phases;
+}
+
 int InspiralCarrier::take_step(double *t, double *h, double *y, const double tmax)
 {
     if (get_number_of_odes() == 0)

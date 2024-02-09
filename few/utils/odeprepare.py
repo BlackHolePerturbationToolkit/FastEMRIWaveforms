@@ -146,6 +146,8 @@ def ode_prepare():
                 background = temp->background;
                 equatorial = temp->equatorial;
                 circular = temp->circular;
+                integrate_constants_of_motion = temp->integrate_constants_of_motion;
+                integrate_phases = temp->integrate_phases;
                 func = (void*) temp;
 
             """.format(
@@ -262,6 +264,8 @@ def ode_prepare():
                 int background;
                 bool equatorial;
                 bool circular;
+                bool integrate_constants_of_motion;
+                bool integrate_phases;
                 {0}(std::string few_dir);
 
                 void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
@@ -282,6 +286,8 @@ def ode_prepare():
             int background;
             bool equatorial;
             bool circular;
+            bool integrate_constants_of_motion;
+            bool integrate_phases;
             void* func;
             ODECarrier(std::string func_name_, std::string few_dir_);
             void dealloc();
