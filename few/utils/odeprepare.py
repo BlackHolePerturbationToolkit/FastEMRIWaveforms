@@ -65,12 +65,15 @@ def get_ode_function_lines_names():
                 elif line.split(" ")[1][0 : 0 + len(name) + 9] == f"{name}_citation":
                     functions_info[name]["citations"].append(line.split(" ")[2][:-1])
 
+    # format defaults according to c++ setup
     defaults = {
         "num_add_args": 0,
-        "background": "Kerr",
-        "equatorial": False,
-        "circular": False,
-        "convert_Y": False,
+        "background": "KERR",
+        "equatorial": "false",
+        "circular": "false",
+        "convert_Y": "false",
+        "integrate_constants_of_motion":"false",
+        "integrate_phases":"true",
     }
     # fill anything that did not appear
     for name, info in functions_info.items():
@@ -261,11 +264,11 @@ def ode_prepare():
             class {0}{1}
             public:
                 double test;
-                int background;
-                bool equatorial;
-                bool circular;
-                bool integrate_constants_of_motion;
-                bool integrate_phases;
+                int background = {3};
+                bool equatorial = {4};
+                bool circular = {5};
+                bool integrate_constants_of_motion = {6};
+                bool integrate_phases = {7};
                 {0}(std::string few_dir);
 
                 void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
@@ -273,7 +276,8 @@ def ode_prepare():
             {2};
 
         """.format(
-                func, "{", "}"
+                func, "{", "}", info["background"], info["equatorial"], info["circular"],
+                info["integrate_constants_of_motion"], info["integrate_phases"],
             )
 
     # ode carrier hh info
