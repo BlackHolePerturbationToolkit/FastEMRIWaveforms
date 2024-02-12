@@ -1,4 +1,5 @@
 # from future.utils import iteritems
+from copy import deepcopy
 import os
 import sys
 from os.path import join as pjoin
@@ -314,6 +315,15 @@ if run_cuda_install:
         **gpu_extension,
     )
 
+    gpu_amp_interp_2d_ext = Extension(
+        "pyAmpInterp2D", sources=["src/AmpInterp2D.cu", "src/pyampinterp2D.pyx"], **gpu_extension
+    )
+
+    gpu_extension_device = deepcopy(gpu_extension)
+    gpu_extension_device2 = deepcopy(gpu_extension)
+
+    gpu_extension_device["extra_compile_args"]["nvcc"] += ["-rdc=true", "-c", "-Xptxas", "--disable-optimizer-constants"]
+
 # build all cpu modules
 cpu_extension = dict(
     libraries=["gsl", "gslcblas", "lapack", "lapacke", "gomp", "hdf5", "hdf5_hl"],
@@ -382,8 +392,8 @@ fund_freqs_ext = Extension(
 # also copy pyx files to cpu version
 src = "src/"
 
-cp_cu_files = ["matmul", "interpolate", "gpuAAK"]
-cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap"]
+cp_cu_files = ["matmul", "interpolate", "gpuAAK", "AmpInterp2D"]
+cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap", "pyampinterp2D"]
 
 for fp in cp_cu_files:
     shutil.copy(src + fp + ".cu", src + fp + ".cpp")
@@ -414,6 +424,9 @@ spher_harm_ext = Extension(
     **cpu_extension,
 )
 
+amp_interp_2d_ext = Extension(
+        "pyAmpInterp2D_cpu", sources=["src/AmpInterp2D.cpp", "src/pyampinterp2D_cpu.pyx"], **cpu_extension
+    )
 
 cpu_extensions = [
     matmul_cpu_ext,
@@ -424,10 +437,11 @@ cpu_extensions = [
     Interp2DAmplitude_ext,
     fund_freqs_ext,
     AAK_cpu_ext,
+    amp_interp_2d_ext,
 ]
 
 if run_cuda_install:
-    gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext]
+    gpu_extensions = [matmul_ext, interp_ext, gpuAAK_ext, gpu_amp_interp_2d_ext]
     extensions = gpu_extensions + cpu_extensions
 else:
     extensions = cpu_extensions
