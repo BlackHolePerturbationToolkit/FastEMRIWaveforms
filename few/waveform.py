@@ -1676,6 +1676,7 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
             EMRIInspiral,
             Interp2DAmplitude,
             DirectModeSum,
+            ModeSelector,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
