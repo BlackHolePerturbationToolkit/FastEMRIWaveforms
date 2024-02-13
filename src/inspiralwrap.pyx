@@ -180,14 +180,14 @@ cdef class pyInspiralGenerator:
         return integrate_phases
 
     def __reduce__(self):
-        return (rebuild, (self.nparams, self.num_add_args, self.few_dir))
+        return (rebuild, (self.nparams, self.num_add_args))
 
     def __dealloc__(self):
         self.f.dealloc()
         if self.f:
             del self.f
 
-def rebuild(nparams, num_add_args, few_dir):
-    c = pyInspiralGenerator(nparams, num_add_args, few_dir)
+def rebuild(nparams, num_add_args):
+    c = pyInspiralGenerator(nparams, num_add_args)
     return c
     
