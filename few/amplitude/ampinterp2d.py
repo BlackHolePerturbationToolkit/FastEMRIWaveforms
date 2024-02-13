@@ -356,7 +356,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
             self.spin_values = np.unique(np.asarray(spins_tmp))
         else:
             self.spin_values = np.asarray(specific_spins)
-            
+
         self.spin_information_holder = [None for _ in self.spin_values]
         for i, spin in enumerate(self.spin_values):
             base_string = f"{abs(spin):1.2f}"
@@ -368,7 +368,22 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
 
             self.spin_information_holder[i] = AmpInterp2D(fp, use_gpu=self.use_gpu)
 
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
+        
+        pos_neg_n_swap_inds = []
+        for l,m,n in zip(self.l_arr_no_mask,self.m_arr_no_mask,self.n_arr_no_mask):
+            pos_neg_n_swap_inds.append(self.special_index_map[(l,m,-n)])
+        self.pos_neg_n_swap_inds = xp.asarray(pos_neg_n_swap_inds)
+
     def get_amplitudes(self, a, p, e, xI, specific_modes=None):
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
+
         # prograde: spin pos, xI pos
         # retrograde: spin pos, xI neg - >  spin neg, xI pos
         assert isinstance(a, float)
@@ -400,9 +415,26 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
             a_below_single = a_below[0]
             assert np.all(a_below_single == a_below[0])
 
-            z_above = self.spin_information_holder[ind_above](a_above, p, e, xI_in, specific_modes=specific_modes)
-            z_below = self.spin_information_holder[ind_below](a_below, p, e, xI_in, specific_modes=specific_modes)
+            # handle retrograde-prograde mode discontinuities (n -> conj(-n))
+            specific_modes_below = specific_modes
+            if a_above_single == 0:  # above boundary requires flip to avoid discontinuity
+                apply_conjugate_above = True
+                if specific_modes is None:
+                    specific_modes_above = self.pos_neg_n_swap_inds
+                elif isinstance(specific_modes, xp.ndarray):
+                    specific_modes_above = self.pos_neg_n_swap_inds[specific_modes]
+                elif isinstance(specific_modes, list):
+                    specific_modes_above = []
+                    for (l, m, n) in specific_modes_below:
+                        specific_modes_above.append((l,m,-n))
+            else:
+                apply_conjugate_above = False
+                specific_modes_above = specific_modes
 
+            z_above = self.spin_information_holder[ind_above](a_above, p, e, xI_in, specific_modes=specific_modes_above)
+            z_below = self.spin_information_holder[ind_below](a_below, p, e, xI_in, specific_modes=specific_modes_below)
+            if apply_conjugate_above:
+                z_above = z_above.conj()
             z = ((z_above - z_below) / (a_above_single - a_below_single)) * (signed_spin - a_below_single) + z_below
 
 
