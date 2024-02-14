@@ -46,8 +46,13 @@ cdef extern from "../include/ode.hh":
 
 cdef class pyDerivative:
     cdef GetDeriv *g
+    cdef public bytes func_name_store
+    cdef public bytes few_dir_store
 
     def __cinit__(self, func_name, few_dir):
+        self.func_name_store = func_name.encode()
+        self.few_dir_store = few_dir
+
         self.g = new GetDeriv(func_name.encode(), few_dir)
 
     def __dealloc__(self):
@@ -62,7 +67,12 @@ cdef class pyDerivative:
 
         return ydot
 
+    def __reduce__(self):
+        return (rebuild_derivatives, (self.func_name_store.decode(), self.few_dir_store))
 
+def rebuild_derivatives(func_name, few_dir):
+    c = pyDerivative(func_name, few_dir)
+    return c
 
 cdef class pyInspiralGenerator:
     cdef InspiralCarrierWrap *f
