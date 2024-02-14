@@ -95,9 +95,11 @@ int InspiralCarrier::get_number_of_odes()
     return params_holder->odes.size();
 }
 
-void InspiralCarrier::set_error_tolerance(double err_set)
+void InspiralCarrier::set_integrator_kwargs(double err_set, bool DENSE_STEP_SET, bool RK8_SET)
 {
     err = err_set;
+    USE_DENSE_STEPPING = DENSE_STEP_SET;
+    USE_RK8 = RK8_SET;
 }
 
 void InspiralCarrier::add_parameters_to_holder(double M, double mu, double a, double *additional_args)

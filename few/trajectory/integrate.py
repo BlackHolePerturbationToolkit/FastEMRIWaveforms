@@ -295,8 +295,8 @@ class Integrate:
         if hasattr(self, "finishing_function"):
             self.finishing_function(t, y)
 
-    def initialize_integrator(self, err):
-        self.integrator.set_error_tolerance(err)
+    def initialize_integrator(self, err=1e-10, DENSE_STEPPING=False, use_rk4=False, **kwargs):
+        self.integrator.set_integrator_kwargs(err, DENSE_STEPPING, ~use_rk4)
 
         self.integrator.initialize_integrator()
         self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
@@ -318,9 +318,9 @@ class Integrate:
             )
             self.buffer_length = self.trajectory_arr.shape[0]
 
-    def run_inspiral(self, M, mu, a, y0, additional_args, T=1., dt=10., err=1e-11, **kwargs):
+    def run_inspiral(self, M, mu, a, y0, additional_args, T=1., dt=10., **kwargs):
         self.moves_check = 0
-        self.initialize_integrator(err)
+        self.initialize_integrator(**kwargs)
 
         # Compute the adimensionalized time steps and max time
         self.tmax_dimensionless = T*YRSID_SI / (M * MTSUN_SI)
