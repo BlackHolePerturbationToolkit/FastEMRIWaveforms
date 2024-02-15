@@ -15,7 +15,7 @@ cdef extern from "../include/Inspiral.hh":
         InspiralCarrierWrap(int nparams, int num_add_args_) except+
         void dealloc() except+
         void add_parameters_to_holder(double M, double mu, double a, double *additional_args) except+
-        void set_integrator_kwargs(double err_set, double DENSE_STEP_SET, double RK8_SET) except+
+        void set_integrator_kwargs(double err_set, bool_c DENSE_STEP_SET, bool_c RK8_SET) except+
         void initialize_integrator() except+
         void destroy_integrator_information() except+
         void reset_solver() except+

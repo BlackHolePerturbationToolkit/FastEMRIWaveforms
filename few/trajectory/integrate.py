@@ -299,7 +299,7 @@ class Integrate:
             self.finishing_function(t, y)
 
     def initialize_integrator(self, err=1e-10, DENSE_STEPPING=False, use_rk4=False, **kwargs):
-        self.integrator.set_integrator_kwargs(err, DENSE_STEPPING, ~use_rk4)
+        self.integrator.set_integrator_kwargs(err, DENSE_STEPPING, not use_rk4)
 
         self.integrator.initialize_integrator()
         self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
