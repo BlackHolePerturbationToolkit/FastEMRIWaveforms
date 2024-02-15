@@ -507,7 +507,17 @@ __deriv__ void KerrEccentricEquatorial_ELQ::deriv_func(double ydot[], const doub
 
     ELQ_to_pex(&p, &e, &x, a, E, Lz, Q);
 
-
+    if (isnan(e)||isnan(p))
+    {
+        ydot[0] = 0.0;
+        ydot[1] = 0.0;
+        ydot[2] = 0.0;
+        ydot[3] = 0.0;
+        ydot[4] = 0.0;
+        ydot[5] = 0.0;
+        return;
+    }
+    
     double p_sep = get_separatrix(a, e, x);
     // make sure we do not step into separatrix
     if ((e < 0.0) || (p < p_sep))
@@ -521,7 +531,16 @@ __deriv__ void KerrEccentricEquatorial_ELQ::deriv_func(double ydot[], const doub
         return;
     }
 
-    KerrGeoEquatorialCoordinateFrequencies(&Omega_phi, &Omega_theta, &Omega_r, a, p, e, x); // shift to avoid problem in fundamental frequencies
+    
+    if( e==0.0){
+        Omega_phi = 1.0/ (a*copysign(1.0,x) + pow(p, 1.5) );
+        Omega_theta = Omega_phi;
+        Omega_r = Omega_phi;
+    }
+    else{
+        KerrGeoEquatorialCoordinateFrequencies(&Omega_phi, &Omega_theta, &Omega_r, a, p, e, x); // shift to avoid problem in fundamental frequencies
+    }
+    
     // Omega_phi = pow(((1.-e*e)/p),(3./2.));
     // Omega_theta = pow(((1.-e*e)/p),(3./2.));
     // Omega_r = pow(((1.-e*e)/p),(3./2.));
@@ -620,6 +639,14 @@ __deriv__ void KerrEccentricEquatorial_ELQ_nofrequencies::deriv_func(double ydot
     double p, e, x;
 
     ELQ_to_pex(&p, &e, &x, a, E, Lz, Q);
+    
+    if (isnan(e)||isnan(p))
+    {
+        ydot[0] = 0.0;
+        ydot[1] = 0.0;
+        ydot[2] = 0.0;
+        return;
+    }
 
     double signed_a = a*x; // signed a for interpolants
     double w = sqrt(e);

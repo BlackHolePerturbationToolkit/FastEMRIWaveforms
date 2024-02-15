@@ -317,9 +317,18 @@ void KerrGeoEquatorialMinoFrequencies(double *CapitalGamma_, double *CapitalUpsi
 
     double zp = pow(a, 2) * (1 - pow(En, 2)) + pow(L, 2);
 
-    double kr = sqrt((r1 - r2) / (r1 - r3) * (r3 - r4) / (r2 - r4)); //(*Eq.(13)*)
+    double arg_kr = (r1 - r2) / (r1 - r3) * (r3 - r4) / (r2 - r4);
+
+    // double kr = sqrt(arg_kr); //(*Eq.(13)*)
     // double kTheta = 0; //(*Eq.(13)*)
-    double CapitalUpsilonr = (M_PI * sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2))) / (2 * EllipticK(pow(kr, 2))); //(*Eq.(15)*)
+    double kr2 = abs(arg_kr);
+
+    if (kr2>1.0){
+        printf("kr %e %e \n", arg_kr, (r1 - r2) / (r1 - r3) * (r3 - r4) / (r2 - r4));
+        printf("r1 r2 r3 r4 %e %e %e %e\n", r1, r2, r3, r4);
+        printf("a p e %e %e %e\n", a,p,e);
+    }
+    double CapitalUpsilonr = (M_PI * sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2))) / (2 * EllipticK(kr2)); //(*Eq.(15)*)
     double CapitalUpsilonTheta = x * pow(zp, 0.5);                                                             //(*Eq.(15)*)
 
     double rp = M + sqrt(pow(M, 2) - pow(a, 2));
@@ -336,20 +345,20 @@ void KerrGeoEquatorialMinoFrequencies(double *CapitalGamma_, double *CapitalUpsi
 
     // (*Eq. (21)*)
     // This term is zero when r3 - rp == 0.0
-    double prob1 = (2 * M * En * rp - a * L) * (EllipticK(pow(kr, 2)) - (r2 - r3) / (r2 - rp) * EllipticPi(hp, pow(kr, 2)));
+    double prob1 = (2 * M * En * rp - a * L) * (EllipticK(kr2) - (r2 - r3) / (r2 - rp) * EllipticPi(hp, kr2));
     if (abs(prob1) != 0.0)
     {
         prob1 = prob1 / (r3 - rp);
     }
-    double CapitalUpsilonPhi = (CapitalUpsilonTheta) / (sqrt(Epsilon0zp)) + (2 * a * CapitalUpsilonr) / (M_PI * (rp - rm) * sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2 - r4))) * (prob1 - (2 * M * En * rm - a * L) / (r3 - rm) * (EllipticK(pow(kr, 2)) - (r2 - r3) / (r2 - rm) * EllipticPi(hm, pow(kr, 2))));
+    double CapitalUpsilonPhi = (CapitalUpsilonTheta) / (sqrt(Epsilon0zp)) + (2 * a * CapitalUpsilonr) / (M_PI * (rp - rm) * sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2 - r4))) * (prob1 - (2 * M * En * rm - a * L) / (r3 - rm) * (EllipticK(kr2) - (r2 - r3) / (r2 - rm) * EllipticPi(hm, kr2)));
 
     // This term is zero when r3 - rp == 0.0
-    double prob2 = ((4 * pow(M, 2) * En - a * L) * rp - 2 * M * pow(a, 2) * En) * (EllipticK(pow(kr, 2)) - (r2 - r3) / (r2 - rp) * EllipticPi(hp, pow(kr, 2)));
+    double prob2 = ((4 * pow(M, 2) * En - a * L) * rp - 2 * M * pow(a, 2) * En) * (EllipticK(kr2) - (r2 - r3) / (r2 - rp) * EllipticPi(hp, kr2));
     if (abs(prob2) != 0.0)
     {
         prob2 = prob2 / (r3 - rp);
     }
-    double CapitalGamma = 4 * pow(M, 2) * En + (2 * CapitalUpsilonr) / (M_PI * sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2 - r4))) * (En / 2 * ((r3 * (r1 + r2 + r3) - r1 * r2) * EllipticK(pow(kr, 2)) + (r2 - r3) * (r1 + r2 + r3 + r4) * EllipticPi(hr, pow(kr, 2)) + (r1 - r3) * (r2 - r4) * EllipticE(pow(kr, 2))) + 2 * M * En * (r3 * EllipticK(pow(kr, 2)) + (r2 - r3) * EllipticPi(hr, pow(kr, 2))) + (2 * M) / (rp - rm) * (prob2 - ((4 * pow(M, 2) * En - a * L) * rm - 2 * M * pow(a, 2) * En) / (r3 - rm) * (EllipticK(pow(kr, 2)) - (r2 - r3) / (r2 - rm) * EllipticPi(hm, pow(kr, 2)))));
+    double CapitalGamma = 4 * pow(M, 2) * En + (2 * CapitalUpsilonr) / (M_PI * sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2 - r4))) * (En / 2 * ((r3 * (r1 + r2 + r3) - r1 * r2) * EllipticK(kr2) + (r2 - r3) * (r1 + r2 + r3 + r4) * EllipticPi(hr, kr2) + (r1 - r3) * (r2 - r4) * EllipticE(kr2)) + 2 * M * En * (r3 * EllipticK(kr2) + (r2 - r3) * EllipticPi(hr, kr2)) + (2 * M) / (rp - rm) * (prob2 - ((4 * pow(M, 2) * En - a * L) * rm - 2 * M * pow(a, 2) * En) / (r3 - rm) * (EllipticK(kr2) - (r2 - r3) / (r2 - rm) * EllipticPi(hm, kr2))));
 
     // This check makes sure that the problematic terms are zero when r3-rp is zero
     // if (r3 - rp==0.0){
@@ -433,6 +442,76 @@ void KerrGeoCoordinateFrequenciesVectorized(double *OmegaPhi_, double *OmegaThet
     }
 }
 
+double periodic_acos(double x) {
+    // Ensure x is within the range [-1, 1]
+    x = fmod(x, 2.0);
+    if (x < -1.0)
+        x += 2.0;
+    else if (x > 1.0)
+        x -= 2.0;
+
+    return acos(x);
+}
+
+void solveCubic(double A2, double A1, double A0,double *rp, double *ra, double *r3) {
+    // Coefficients
+    double a = 1.; // coefficient of r^3
+    double b = A2; // coefficient of r^2
+    double c = A1; // coefficient of r^1
+    double d = A0; // coefficient of r^0
+    
+    // Calculate p and q
+    double p = (3.*a*c - b*b) / (3.*a*a);
+    double q = (2.*b*b*b - 9.*a*b*c + 27.*a*a*d) / (27.*a*a*a);
+
+    // Calculate discriminant
+    double discriminant = q*q/4. + p*p*p/27.;
+
+    if (discriminant >= 0) {
+        // One real root and two complex conjugate roots
+        double u = cbrt(-q/2. + sqrt(discriminant));
+        double v = cbrt(-q/2. - sqrt(discriminant));
+        double root = u + v - b/(3.*a);
+        // cout << "Real Root: " << root << endl;
+
+        complex<double> imaginaryPart(-sqrt(3.0) / 2.0 * (u - v), 0.5 * (u + v));
+        complex<double> root2 = -0.5 * (u + v) - b / (3. * a) + imaginaryPart;
+        complex<double> root3 = -0.5 * (u + v) - b / (3. * a) - imaginaryPart;
+        // cout << "Complex Root 1: " << root2 << endl;
+        // cout << "Complex Root 2: " << root3 << endl;
+        *ra = -0.5 * (u + v) - b / (3. * a);
+        *rp = -0.5 * (u + v) - b / (3. * a);
+        *r3 = root;
+    // } else if (discriminant == 0) {
+    //     // All roots are real and at least two are equal
+    //     double u = cbrt(-q/2.);
+    //     double v = cbrt(-q/2.);
+    //     double root = u + v - b/(3.*a);
+    //     // cout << "Real Root: " << root << endl;
+    //     // cout << "Real Root (equal to above): " << root << endl;
+    //     // complex<double> root2 = -0.5 * (u + v) - b / (3 * a);
+    //     // cout << "Complex Root: " << root2 << endl;
+    //     *ra = -0.5 * (u + v) - b / (3. * a);
+    //     *rp = -0.5 * (u + v) - b / (3. * a);
+    //     *r3 = root;
+    } else {
+        // All three roots are real and different
+        double r = sqrt(-p/3.);
+        double theta = acos(-q/(2.*r*r*r));
+        double root1 = 2. * r * cos(theta/3.) - b / (3. * a);
+        double root2 = 2. * r * cos((theta + 2.*M_PI) / 3.) - b / (3. * a);
+        double root3 = 2. * r * cos((theta - 2.*M_PI) / 3.) - b / (3. * a);
+        // ra = -2.*rtQnr*cos((theta + 2.*M_PI)/3.) - A2/3.;
+        // rp = -2.*rtQnr*cos((theta - 2.*M_PI)/3.) - A2/3.;
+        *ra = root1;
+        *rp = root3;
+        *r3 = root2;
+    }
+    // cout << "ra: " << *ra << endl;
+    // cout << "rp: " << *rp << endl;
+    // cout << "r3: " << *r3 << endl;
+}
+
 void ELQ_to_pex(double *p, double *e, double *xI, double a, double E, double Lz, double Q)
 //
 // pexI_of_aELzQ.cc: implements the mapping from orbit integrals
@@ -444,24 +523,39 @@ void ELQ_to_pex(double *p, double *e, double *xI, double a, double E, double Lz,
 //
 {
   if (Q < 1.e-14) { // equatorial
-    double E2m1 = (E - 1.)*(E + 1.);
+    
+    double E2m1 = E*E - 1.;//(E - 1.)*(E + 1.);
     double A2 = 2./E2m1;
-    double A1 = (a*a*E2m1 - Lz*Lz)/E2m1;
+    double A1 = a*a - Lz*Lz/E2m1;//(a*a*E2m1 - Lz*Lz)/E2m1;
     double A0 = 2.*(a*E - Lz)*(a*E - Lz)/E2m1;
+    double rp,ra,r3;
+    solveCubic(A2,A1,A0,&rp,&ra,&r3);
     //
-    double Qnr = (A2*A2 - 3.*A1)/9.;
-    double rtQnr = sqrt(Qnr);
-    double Rnr = (A2*(2.*A2*A2 - 9.*A1) + 27.*A0)/54.;
-    //
-    double theta = acos(Rnr/(rtQnr*rtQnr*rtQnr));
-    //
-    double ra = -2.*rtQnr*cos((theta + 2.*M_PI)/3.) - A2/3.;
-    double rp = -2.*rtQnr*cos((theta - 2.*M_PI)/3.) - A2/3.;
+    // double Qnr = (A2*A2 - 3.*A1)/9.;
+    // double rtQnr = sqrt(Qnr);
+    // double Rnr = (A2*(2.*A2*A2 - 9.*A1) + 27.*A0)/54.;
+    // double argacos = Rnr/(rtQnr*rtQnr*rtQnr);
+    // double theta = acos(argacos);
+    // ra = -2.*rtQnr*cos((theta + 2.*M_PI)/3.) - A2/3.;
+    // rp = -2.*rtQnr*cos((theta - 2.*M_PI)/3.) - A2/3.;
+    // cout << "Scott ra: " << ra << endl;
+    // cout << "Scott rp: " << rp << endl;
+
+    *p = 2.*ra*rp/(ra + rp);
+    *e = (ra - rp)/(ra + rp);
+    // cout << " p: " << *p << endl;
+    // cout << " e: " << *e << endl;
+    
     // r3 = -2.*rtQnr*cos(theta/3.) - A2/3.;
     // r4 = 0.;
     //
-    *p = 2.*ra*rp/(ra + rp);
-    *e = (ra - rp)/(ra + rp);
+    
+    // if (isnan(*p)||isnan(*e)){
+    //     cout << "beginning" << " E =" << E  << "\t" << "L=" <<  Lz << "\t" << "Q=" << Q << endl;
+    //     cout << "beginning" << " a =" << a  << "\t" << "p=" <<  *p << "\t" << "e=" << *e << "\t" <<  "arg of acos=" <<Rnr/(rtQnr*rtQnr*rtQnr) << endl;
+    //     throw std::exception();
+    // }
+
     if (Lz > 0.) *xI = 1.;
     else *xI = -1.;
   } else { // non-equatorial
@@ -519,6 +613,7 @@ void ELQ_to_pex(double *p, double *e, double *xI, double a, double E, double Lz,
     double denomsqr = QpLz2ma2omE2 + sqrt(QpLz2ma2omE2*QpLz2ma2omE2 - 4.*Lz*Lz*a2*E2m1);
     *xI = sqrt(2.)*Lz/sqrt(denomsqr);
   }
+    
 }
 
 void ELQ_to_pexVectorised(double *p, double *e, double *x, double *a, double *E, double *Lz, double *Q, int length)
@@ -636,9 +731,12 @@ double solver(struct params_holder *params, double (*func)(double, void *), doub
         // warning if it did not converge otherwise throw error
         if (iter == max_iter)
         {
+            printf("a, p, e, Y = %e %e %e %e\n", params->a, params->p, params->e, params->Y);
+            throw std::invalid_argument("In Utility.cc Brent root solver failed");
             printf("WARNING: Maximum iteration reached in Utility.cc in Brent root solver.\n");
             printf("Result=%f, x_low=%f, x_high=%f \n", r, x_lo, x_hi);
             printf("a, p, e, Y, sep = %f %f %f %f %f\n", params->a, params->p, params->e, params->Y, get_separatrix(params->a, params->e, r));
+            
         }
         else
         {
@@ -708,7 +806,7 @@ double get_separatrix(double a, double e, double x)
         p_sep = 6.0 + 2.0 * e;
         return p_sep;
     }
-    else if ((e == 0.0) & (abs(x) == 1.0))
+    else if ((e < 0.0) & (abs(x) == 1.0))
     {
         z1 = 1. + pow((1. - pow(a, 2)), 1. / 3.) * (pow((1. + a), 1. / 3.) + pow((1. - a), 1. / 3.));
 
@@ -731,7 +829,7 @@ double get_separatrix(double a, double e, double x)
     else if (x == 1.0) // Eccentric Prograde Equatorial
     {
         // fills in p and Y with zeros
-        struct params_holder params = {a, 0.0, e, x, 0.0};
+        struct params_holder params = {a, 0.0, e, x, x};
         double x_lo, x_hi;
 
         x_lo = 1.0 + e;
@@ -743,7 +841,7 @@ double get_separatrix(double a, double e, double x)
     else if (x == -1.0) // Eccentric Retrograde Equatorial
     {
         // fills in p and Y with zeros
-        struct params_holder params = {a, 0.0, e, x, 0.0};
+        struct params_holder params = {a, 0.0, e, x, x};
         double x_lo, x_hi;
 
         x_lo = 6 + 2. * e;

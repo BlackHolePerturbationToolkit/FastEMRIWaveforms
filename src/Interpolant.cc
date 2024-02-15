@@ -566,7 +566,7 @@ double TensorInterpolant::eval(double x, double y, double z){
     int X_N=3;
     int ret = TP_Interpolation_ND(coeff, coeff_N, X, X_N, bw_out, &out);
     if (ret == TPI_FAIL){
-        cout << "shit" << endl;
+        cout << "TPI failed in src/Interpolant.cc" << endl;
     }
 
     return out;
@@ -616,7 +616,7 @@ double TensorInterpolant2d::eval(double x, double y){
     int X_N=2;
     int ret = TP_Interpolation_ND(coeff, coeff_N, X, X_N, bw_out, &out);
     if (ret == TPI_FAIL){
-        cout << "shit" << endl;
+        cout << "TPI failed in src/Interpolant.cc" << endl;
     }
 
     return out;

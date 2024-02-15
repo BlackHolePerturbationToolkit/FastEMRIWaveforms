@@ -128,7 +128,7 @@ class EMRIInspiral(TrajectoryBase):
         self.enforce_schwarz_sep = enforce_schwarz_sep
         
         nparams = 6
-        self.inspiral_generator = get_integrator(func, nparams, few_dir, num_add_args=0)
+        self.inspiral_generator = get_integrator(func, nparams, few_dir)
 
         self.func = self.inspiral_generator.func
 
@@ -287,15 +287,30 @@ class EMRIInspiral(TrajectoryBase):
                 t = out[:,0]
                 t_spline = np.interp(np.arange((len(t) - 1) * interp_num + 1), np.arange(0, interp_num*len(t), interp_num), t)
 
-                if self.inspiral_generator.equatorial:
-                    ups_p, ups_e = make_interp_spline(t, out[:,1:3].T, k=k_spl, axis=-1, check_finite=True)(t_spline)
-                    ups_x = np.zeros(len(ups_p)) + x0
-                else:
-                    ups_p, ups_e, ups_x = make_interp_spline(t, out[:,1:4].T, k=k_spl, axis=-1, check_finite=True)(t_spline)
-
-                frequencies = np.array(get_fundamental_frequencies(a, ups_p.copy(), ups_e.copy(), ups_x.copy()))/(M*MTSUN_SI)
+                ups_p, ups_e, ups_x = out[:,1:4].T
+                t_spline = t.copy()
                 
+                # INSPIRAL
+                # if self.inspiral_generator.equatorial:
+                #     ups_p, ups_e = make_interp_spline(t, out[:,1:3].T, k=k_spl, axis=-1, check_finite=True)(t_spline)
+                #     ups_x = np.zeros(len(ups_p)) + x0
+                # else:
+                #     ups_p, ups_e, ups_x = make_interp_spline(t, out[:,1:4].T, k=k_spl, axis=-1, check_finite=True)(t_spline)
+                
+                # be careful                                                                       HERE
+                frequencies = np.array(get_fundamental_frequencies(a, ups_p.copy(), ups_e.copy()+1e-10, ups_x.copy()))/(M*MTSUN_SI)
+                # CUBIC
+                # cs = CubicSpline(t_spline, frequencies.T)
+                # phase_array = cs.antiderivative()(t).T
+                
+                # CUMULATIVE SIMPS
                 phase_array = cumulative_simpson(frequencies, x=t_spline, axis=-1, initial=0)  # initial = 0 sets the zero phase
+                                
+                # import matplotlib.pyplot as plt
+                # plt.figure(); plt.plot(out[:,1],out[:,2],'.'); plt.axvline(self.inspiral_generator.get_p_sep(out[-1])[0]+0.1); plt.show()
+                # plt.figure(); plt.plot(out[:,1],out[:,2],'.'); plt.plot(ups_p, ups_e); plt.show()
+                # breakpoint()
+                
                 # then we add on the initial phases to all phase values
                 phase_array += np.array([Phi_phi0, Phi_theta0, Phi_r0])[:,None]
 
