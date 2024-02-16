@@ -453,21 +453,20 @@ class AELQIntegrate(Integrate):
     def end_stepper(self, t: float, y: np.ndarray, ydot: np.ndarray, factor: float):
         # estimate the step to the breaking point and multiply by PERCENT_STEP
         p_sep, (p, e, x) = self.get_p_sep(y)
-        Edot = ydot[0]
-        if e==0: 
-            p_shit = p_sep + DIST_TO_SEPARATRIX*0.5
-            E_sep = (1 - 2./p_shit + self.a/p_shit**(3/2))/np.sqrt(1. - 3./p_shit + 2. * self.a/p_shit**(3/2) )
-        else:
-            E_sep = get_kerr_geo_constants_of_motion(self.a, p_sep + DIST_TO_SEPARATRIX, e, x)[0]
-        
-        step_size = PERCENT_STEP / factor * ((E_sep - y[0]) / Edot)
+        Edot, Ldot = ydot[0], ydot[1]
+
+        E_sep, L_sep, _ = get_kerr_geo_constants_of_motion(self.a, p_sep + DIST_TO_SEPARATRIX, e, x)
+        step_size_E = PERCENT_STEP / factor * ((E_sep - y[0]) / Edot)
+        step_size_L = PERCENT_STEP / factor * ((L_sep - y[1]) / Ldot)
+
+        step_size = (step_size_E**2 + step_size_L**2)**0.5
 
         # copy current values
         temp_y = y + ydot * step_size
 
         temp_t = t + step_size
-        temp_E = temp_y[0]
-        temp_stop = temp_E - E_sep
+        temp_E, temp_L = temp_y[0], temp_y[1]
+        temp_stop = ((temp_E - E_sep)**2 + (temp_L - L_sep)**2)**0.5
 
         return (temp_t, temp_y, temp_stop)
 
@@ -486,7 +485,7 @@ class AELQIntegrate(Integrate):
             # set initial values
             factor = 1.0
             iteration = 0
-            # breakpoint()
+
             while (p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD):
                 # Same function in the integrator
                 ydot = self.integrator.get_derivatives(y)
