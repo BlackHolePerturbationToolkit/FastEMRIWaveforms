@@ -151,19 +151,55 @@ double d(double r, double a, double zm)
     return (pow(r, 2) + pow(a, 2) * pow(zm, 2)) * CapitalDelta(r, a);
 }
 
+double fdot(double r, double a, double zm)
+{
+    double zm2 = pow(zm, 2.);
+    return 4. * pow(r, 3.) + pow(a, 2.) * (2. * r * (1. + zm2) + 2. * (1 - zm2));
+}
+
+double gdot(double r, double a, double zm)
+{
+    return 2 * a;
+}
+
+double hdot(double r, double a, double zm)
+{   
+    double zm2 = pow(zm, 2.);
+    return 2. * (r - 1.)*(1. + zm2 / (1. - zm2));
+}
+
+double ddot(double r, double a, double zm)
+{   
+    double a2 = pow(a, 2.);
+    double zm2 = pow(zm, 2.);
+    return 4. * pow(r, 3.) - 6. * pow(r, 2.) + 2.*a2*r*(1. + zm2) - 2.*a2*zm2;
+}
+
+
 double KerrGeoEnergy(double a, double p, double e, double x)
 {
 
-    double r1 = p / (1. - e);
-    double r2 = p / (1. + e);
-
     double zm = sqrt(1. - pow(x, 2.));
+    double Kappa, Epsilon, Rho, Eta, Sigma;
+    if (e < 1e-10) {  // switch to spherical formulas A13-A17 (2102.02713) to avoid instability
+        double r = p;
 
-    double Kappa = d(r1, a, zm) * h(r2, a, zm) - h(r1, a, zm) * d(r2, a, zm);
-    double Epsilon = d(r1, a, zm) * g(r2, a, zm) - g(r1, a, zm) * d(r2, a, zm);
-    double Rho = f(r1, a, zm) * h(r2, a, zm) - h(r1, a, zm) * f(r2, a, zm);
-    double Eta = f(r1, a, zm) * g(r2, a, zm) - g(r1, a, zm) * f(r2, a, zm);
-    double Sigma = g(r1, a, zm) * h(r2, a, zm) - h(r1, a, zm) * g(r2, a, zm);
+        Kappa = d(r, a, zm) * hdot(r, a, zm) - h(r, a, zm) * ddot(r, a, zm);
+        Epsilon = d(r, a, zm) * gdot(r, a, zm) - g(r, a, zm) * ddot(r, a, zm);
+        Rho = f(r, a, zm) * hdot(r, a, zm) - h(r, a, zm) * fdot(r, a, zm);
+        Eta = f(r, a, zm) * gdot(r, a, zm) - g(r, a, zm) * fdot(r, a, zm);
+        Sigma = g(r, a, zm) * hdot(r, a, zm) - h(r, a, zm) * gdot(r, a, zm);
+    }
+    else {
+        double r1 = p / (1. - e);
+        double r2 = p / (1. + e);
+
+        Kappa = d(r1, a, zm) * h(r2, a, zm) - h(r1, a, zm) * d(r2, a, zm);
+        Epsilon = d(r1, a, zm) * g(r2, a, zm) - g(r1, a, zm) * d(r2, a, zm);
+        Rho = f(r1, a, zm) * h(r2, a, zm) - h(r1, a, zm) * f(r2, a, zm);
+        Eta = f(r1, a, zm) * g(r2, a, zm) - g(r1, a, zm) * f(r2, a, zm);
+        Sigma = g(r1, a, zm) * h(r2, a, zm) - h(r1, a, zm) * g(r2, a, zm);
+    }
 
     return sqrt((Kappa * Rho + 2 * Epsilon * Sigma - x * 2 * sqrt(Sigma * (Sigma * pow(Epsilon, 2) + Rho * Epsilon * Kappa - Eta * pow(Kappa, 2)) / pow(x, 2))) / (pow(Rho, 2) + 4 * Eta * Sigma));
 }
