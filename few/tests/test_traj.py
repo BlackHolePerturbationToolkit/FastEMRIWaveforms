@@ -95,7 +95,6 @@ class ModuleTest(unittest.TestCase):
             M = 1e6
             mu = 100.0
             
-            
             # plt.figure()
             # tic = time.perf_counter()
             for i in range(100):

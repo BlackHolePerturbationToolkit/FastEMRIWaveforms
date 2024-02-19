@@ -266,6 +266,7 @@ class EMRIInspiral(TrajectoryBase):
         # this will return in coordinate time
         out = self.inspiral_generator.run_inspiral(M, mu, a, y0, args_in, **temp_kwargs)
         if self.integrate_constants_of_motion and self.convert_to_pex:
+            out_ELQ = out.copy()
             pex = ELQ_to_pex(a, out[:,1].copy(), out[:,2].copy(), out[:,3].copy())
             out[:,1] = pex[0]
             out[:,2] = pex[1]
@@ -302,13 +303,24 @@ class EMRIInspiral(TrajectoryBase):
                 cs = CubicSpline(t_spline, frequencies.T)
                 phase_array = cs.antiderivative()(t).T
                 
+                # to check whether we are outside the interpolation range
+                if self.integrate_constants_of_motion:
+                    ELQ_dot  = np.asarray([self.inspiral_generator.integrator.get_derivatives(el) for el in out_ELQ[:,1:]])
+                # to_spline = frequencies /ELQ_dot[:,0] * MTSUN_SI
+                # cs_ELQ = CubicSpline(out_ELQ[::-1,1], -to_spline[:,::-1].T)
+                # cs_E = CubicSpline(t_spline, out_ELQ[::-1,1])
+                # phase_array = cs_ELQ.antiderivative()(cs_E(t)).T * M
+                
                 # CUMULATIVE SIMPS
                 # phase_array = cumulative_simpson(frequencies, x=t_spline, axis=-1, initial=0)  # initial = 0 sets the zero phase
-                                
+                # phase_array_ELQ = cumulative_simpson(to_spline[:,::-1], x=out_ELQ[::-1,1], axis=-1, initial=0) # initial = 0 sets the zero phase                
+                
+                # PLOTS
                 # import matplotlib.pyplot as plt
                 # plt.figure(); plt.plot(out[:,1],out[:,2],'.'); plt.axvline(self.inspiral_generator.get_p_sep(out[-1])[0]+0.1); plt.show()
                 # plt.figure(); plt.plot(out[:,1],out[:,2],'.'); plt.plot(ups_p, ups_e); plt.show()
-                # breakpoint()
+                
+                # plt.figure(); plt.semilogy(t,np.abs(1-phase_array[0] / phase_array_ELQ[0]),'.'); plt.show()
                 
                 # then we add on the initial phases to all phase values
                 phase_array += np.array([Phi_phi0, Phi_theta0, Phi_r0])[:,None]
