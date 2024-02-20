@@ -181,7 +181,7 @@ double KerrGeoEnergy(double a, double p, double e, double x)
 
     double zm = sqrt(1. - pow(x, 2.));
     double Kappa, Epsilon, Rho, Eta, Sigma;
-    if (e < 1e-10) {  // switch to spherical formulas A13-A17 (2102.02713) to avoid instability
+    if (e < 1e-5) {  // switch to spherical formulas A13-A17 (2102.02713) to avoid instability
         double r = p;
 
         Kappa = d(r, a, zm) * hdot(r, a, zm) - h(r, a, zm) * ddot(r, a, zm);
