@@ -148,12 +148,12 @@ x1 = a_unique.copy()
 x2 = u_unique.copy()
 x3 = w_unique.copy()
 X = [x1, x2, x3]
-
 for get,lab in zip([get_pdot,get_edot,get_Edot,get_Ldot], ['pdot', 'edot','Endot', 'Ldot']):
     reshapedF = np.asarray([[[get(el1,el2,el3) for el3 in x3] for el2 in x2] for el1 in x1])
 
     # flux interpolation
-    InterpFlux = TPI.TP_Interpolant_ND(X, F=reshapedF)
+    bcs = ["not-a-knot","not-a-knot","clamped"]
+    InterpFlux = TPI.TP_Interpolant_ND(X, F=reshapedF, bc_dims=bcs)
 
     coeff = InterpFlux.GetSplineCoefficientsND().flatten()
 
