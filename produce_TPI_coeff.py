@@ -152,8 +152,9 @@ for get,lab in zip([get_pdot,get_edot,get_Edot,get_Ldot], ['pdot', 'edot','Endot
     reshapedF = np.asarray([[[get(el1,el2,el3) for el3 in x3] for el2 in x2] for el1 in x1])
 
     # flux interpolation
-    bcs = ["not-a-knot","not-a-knot","clamped"]
-    InterpFlux = TPI.TP_Interpolant_ND(X, F=reshapedF, bc_dims=bcs)
+    lower_bcs = ["not-a-knot","not-a-knot","clamped"]
+    upper_bcs = ["not-a-knot","not-a-knot","not-a-knot"]
+    InterpFlux = TPI.TP_Interpolant_ND(X, F=reshapedF, lower_bcs=lower_bcs, upper_bcs=upper_bcs)
 
     coeff = InterpFlux.GetSplineCoefficientsND().flatten()
 
