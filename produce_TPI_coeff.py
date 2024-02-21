@@ -170,7 +170,7 @@ sepX = np.load("few/files/sepX.npy")
 sepVals = np.load("few/files/sepVals.npy")
 
 # flux interpolation
-InterpSep = TPI.TP_Interpolant_ND([sepX[0], sepX[1]], F=sepVals)
+InterpSep = TPI.TP_Interpolant_ND([sepX[0], sepX[1]], F=sepVals, lower_bcs=["not-a-knot","clamped"])
 
 coeff = InterpSep.GetSplineCoefficientsND().flatten()
 
