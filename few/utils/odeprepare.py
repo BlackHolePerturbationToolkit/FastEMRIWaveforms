@@ -51,13 +51,19 @@ def get_ode_function_lines_names():
                     functions_info[name]["background"] = "Schwarzschild"
 
                 elif line.split(" ")[1][0 : 0 + len(name) + 11] == f"{name}_equatorial":
-                    functions_info[name]["equatorial"] = True
+                    functions_info[name]["equatorial"] = "true"
 
                 elif line.split(" ")[1][0 : 0 + len(name) + 9] == f"{name}_circular":
-                    functions_info[name]["circular"] = True
+                    functions_info[name]["circular"] = "true"
 
                 elif line.split(" ")[1][0 : 0 + len(name) + 2] == f"{name}_Y":
-                    functions_info[name]["convert_Y"] = True
+                    functions_info[name]["convert_Y"] = "true"
+
+                elif line.split(" ")[1][0 : 0 + len(name) + 30] == f"{name}_integrate_constants_of_motion":
+                    functions_info[name]["integrate_constants_of_motion"] = "true"
+
+                elif line.split(" ")[1][0 : 0 + len(name) + 25] == f"{name}_disable_integrate_phases":
+                    functions_info[name]["integrate_phases"] = "false"
 
                 elif line.split(" ")[1][0 : 0 + len(name) + 5] == f"{name}_file":
                     functions_info[name]["files"].append(line.split(" ")[2][:-1])
@@ -146,6 +152,7 @@ def ode_prepare():
         )
         full += """
                 {0}* temp = new {0}(few_dir);
+                convert_Y = temp->convert_Y;
                 background = temp->background;
                 equatorial = temp->equatorial;
                 circular = temp->circular;
@@ -269,6 +276,7 @@ def ode_prepare():
                 bool circular = {5};
                 bool integrate_constants_of_motion = {6};
                 bool integrate_phases = {7};
+                bool convert_Y = {8};
                 {0}(std::string few_dir);
 
                 void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
@@ -277,7 +285,7 @@ def ode_prepare():
 
         """.format(
                 func, "{", "}", info["background"], info["equatorial"], info["circular"],
-                info["integrate_constants_of_motion"], info["integrate_phases"],
+                info["integrate_constants_of_motion"], info["integrate_phases"], info["convert_Y"],
             )
 
     # ode carrier hh info
@@ -292,6 +300,7 @@ def ode_prepare():
             bool circular;
             bool integrate_constants_of_motion;
             bool integrate_phases;
+            bool convert_Y;
             void* func;
             ODECarrier(std::string func_name_, std::string few_dir_);
             void dealloc();

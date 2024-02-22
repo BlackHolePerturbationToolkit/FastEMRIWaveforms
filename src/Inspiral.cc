@@ -167,6 +167,16 @@ int InspiralCarrier::get_currently_running_ode_index()
     return params_holder->currently_running_ode_index;
 }
 
+void InspiralCarrier::get_convert_Y(bool *convert_Y, int num_odes)
+{
+    if (num_odes != params_holder->num_odes)
+    {
+        throw invalid_argument("Wrong number of odes coming in.");
+    }
+    for (int i = 0; i < num_odes; i += 1)
+        convert_Y[i] = params_holder->odes[i].convert_Y;
+}
+
 void InspiralCarrier::get_backgrounds(int *backgrounds, int num_odes)
 {
     if (num_odes != params_holder->num_odes)

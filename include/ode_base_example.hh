@@ -17,6 +17,7 @@ public:
     interp_params *interps;
     Interpolant *amp_vec_norm_interp;
     double test;
+    bool convert_Y = false;
     bool equatorial = true;
     int background = SCHWARZSCHILD;
     bool circular = false;
@@ -37,6 +38,7 @@ public:
     TensorInterpolant *Edot_interp;
     TensorInterpolant *Ldot_interp;
     KerrEccentricEquatorial(std::string few_dir);
+    bool convert_Y = false;
     bool equatorial = true;
     int background = KERR;
     bool circular = false;
@@ -56,6 +58,7 @@ public:
     TensorInterpolant *Edot_interp;
     TensorInterpolant *Ldot_interp;
     KerrEccentricEquatorial_nofrequencies(std::string few_dir);
+    bool convert_Y = false;
     bool equatorial = true;
     int background = KERR;
     bool circular = false;
@@ -72,6 +75,7 @@ public:
     TensorInterpolant *Edot_interp;
     TensorInterpolant *Ldot_interp;
     KerrEccentricEquatorial_ELQ(std::string few_dir);
+    bool convert_Y = false;
     bool equatorial = true;
     int background = KERR;
     bool circular = false;
@@ -90,6 +94,7 @@ public:
     TensorInterpolant *Ldot_interp;
     TensorInterpolant2d *Sep_interp;
     KerrEccentricEquatorial_ELQ_nofrequencies(std::string few_dir);
+    bool convert_Y = false;
     bool equatorial = true;
     int background = KERR;
     bool circular = false;

@@ -160,6 +160,10 @@ class Integrate:
     #     return str(self.integrator.few_dir)
 
     @property
+    def convert_Y(self):
+        return self.integrator.convert_Y
+
+    @property
     def backgrounds(self):
         return self.integrator.backgrounds
 
