@@ -50,7 +50,7 @@ class ModeSelectorTest(unittest.TestCase):
 
     # select modes
 
-    mode_selector = ModeSelector(amp.m0mask,amp.m0mask,amp.m0mask, use_gpu=False)
+    mode_selector = ModeSelector(amp.l_arr_no_mask,amp.m_arr_no_mask,amp.n_arr_no_mask, use_gpu=False)
 
     eps = 1e-2  # tolerance on mode contribution to total power
 
@@ -75,8 +75,7 @@ class ModeSelectorTest(unittest.TestCase):
     # select modes with noise weighting
 
     # provide sensitivity function kwarg
-    mode_selector_noise_weighted = ModeSelector(amp.m0mask,amp.m0mask,amp.m0mask, use_gpu=False, sensitivity_fn=sens_fn)
-
+    mode_selector_noise_weighted = ModeSelector(amp.l_arr_no_mask,amp.m_arr_no_mask,amp.n_arr_no_mask, sensitivity_fn=sens_fn, use_gpu=False)
 
     # Schwarzschild
     a = 0.0
