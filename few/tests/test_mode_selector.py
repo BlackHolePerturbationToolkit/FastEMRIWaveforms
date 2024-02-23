@@ -107,7 +107,6 @@ class ModeSelectorTest(unittest.TestCase):
     dt = 10.0
     T = 0.001
     mode_selection = [(ll,mm,nn) for ll,mm,nn in zip(ls_orig,ms_orig,ns_orig)]
-    breakpoint()
     wave_base = few_base(M, mu, p0, e0, theta, phi, dist, dt=dt, T=0.001, mode_selection=mode_selection)
     mode_selection = [(ll,mm,nn) for ll,mm,nn in zip(ls,ms,ns)]
     wave_weighted = few_base(M, mu, p0, e0, theta, phi, dist, dt=dt, T=T, mode_selection=mode_selection)

@@ -17,6 +17,7 @@
 
 
 import numpy as np
+from scipy import special
 
 import os
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
@@ -205,10 +206,14 @@ class ModeSelector(ParallelModuleBase):
             freqs_in = xp.abs(freqs)
             PSD = self.sensitivity_fn(freqs_in.flatten()).reshape(freqs_shape)
 
-            # weight by PSD, only for non zero modes
+            # weight by PSD, only for non zero modes    
             cs = CubicSplineInterpolant(fund_freq_args[-1], freqs[:,~zero_modes_mask].T, use_gpu=self.use_gpu)
             fdot = cs(fund_freq_args[-1],deriv_order=1)
-            power[:,~zero_modes_mask] /= PSD[:,~zero_modes_mask] * np.abs(fdot).T
+            fddot = cs(fund_freq_args[-1],deriv_order=2)
+            arg_1 = -2*np.pi*1j* fdot**3 / (3*fddot**2)
+            K_1over3_1 = special.kv(1./3.,arg_1)
+            fact = fdot/np.abs(fddot) * K_1over3_1 * 2./np.sqrt(3)
+            power[:,~zero_modes_mask] /= PSD[:,~zero_modes_mask] * np.abs(fact).T
 
         # sort the power for a cumulative summation
         inds_sort = xp.argsort(power, axis=1)[:, ::-1]
