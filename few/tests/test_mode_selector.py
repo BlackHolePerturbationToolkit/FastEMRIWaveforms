@@ -31,11 +31,11 @@ class ModeSelectorTest(unittest.TestCase):
     M = 1e5
     mu = 1e1
     p0 = 10.0
-    e0 = 0.7
+    e0 = 0.3
     theta = np.pi/3.
     phi = np.pi/2.
 
-    t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, 0.0, p0, e0, 1.0)
+    t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, 0.0, p0, e0, 1.0,T=10.0)
 
     # get amplitudes along trajectory
     amp = RomanAmplitude()
@@ -55,7 +55,9 @@ class ModeSelectorTest(unittest.TestCase):
     (teuk_modes_in, ylms_in, ls, ms, ns) = mode_selector(teuk_modes, ylms, modeinds, eps=eps)
 
     print("We reduced the mode content from {} modes to {} modes.".format(teuk_modes.shape[1], teuk_modes_in.shape[1]))
-
+    ms_orig = ms
+    ns_orig = ns
+    
     # produce sensitivity function
 
     noise = np.genfromtxt("examples/files/LPA.txt", names=True)
@@ -82,3 +84,7 @@ class ModeSelectorTest(unittest.TestCase):
                                                                         fund_freq_args=fund_freq_args, eps=eps)
 
     print("We reduced the mode content from {} modes to {} modes when using noise-weighting.".format(teuk_modes.shape[1], teuk_modes_in.shape[1]))
+    # import matplotlib.pyplot as plt
+    # plt.figure(); plt.title(f'Mode selection comparison \n M={M:.1e},mu={mu:.1e},e0={e0},p0={p0},eps={eps:.2e}'); 
+    # plt.plot(ms,ns,'o',label=f'new select, N={len(ms)}', ms=10); plt.plot(ms_orig,ns_orig,'P',label=f'old select, N={len(ms_orig)}', ms=5); plt.legend(); plt.ylabel('n'); plt.xlabel('m'); plt.show()
+    

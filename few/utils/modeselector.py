@@ -73,7 +73,7 @@ class ModeSelector(ParallelModuleBase):
 
     """
 
-    def __init__(self, m_arr, sensitivity_fn=None, **kwargs):
+    def __init__(self, l_arr, m_arr, n_arr, sensitivity_fn=None, **kwargs):
         ParallelModuleBase.__init__(self, **kwargs)
 
         if self.use_gpu:

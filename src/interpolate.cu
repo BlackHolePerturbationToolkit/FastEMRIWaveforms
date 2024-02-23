@@ -611,13 +611,13 @@ void make_waveform(cmplx *waveform,
         m = m_arr[j];
         n = n_arr[j];
 
-        mode_val_re = mode_re_y[j] + mode_re_c1[j] * x + mode_re_c2[j] * x2 + mode_re_c3[j] * x3;
-        mode_val_im = mode_im_y[j] + mode_im_c1[j] * x + mode_im_c2[j] * x2 + mode_im_c3[j] * x3;
-        mode_val = mode_val_re + complexI * mode_val_im;
+        // mode_val_re = mode_re_y[j] + mode_re_c1[j] * x + mode_re_c2[j] * x2 + mode_re_c3[j] * x3;
+        // mode_val_im = mode_im_y[j] + mode_im_c1[j] * x + mode_im_c2[j] * x2 + mode_im_c3[j] * x3;
+        // mode_val = mode_val_re + complexI * mode_val_im;
 
-        fod phase = m * Phi_phi_i + n * Phi_r_i;
-        partial_mode = mode_val * gcmplx::exp(minus_I * phase);
-
+        // fod phase = m * Phi_phi_i + n * Phi_r_i;
+        // partial_mode = mode_val * gcmplx::exp(minus_I * phase);
+        partial_mode = gcmplx::exp(minus_I * (m * Phi_phi_i + n * Phi_r_i)) * (mode_re_y[j] + mode_re_c1[j] * x + mode_re_c2[j] * x2 + mode_re_c3[j] * x3 + complexI * (mode_im_y[j] + mode_im_c1[j] * x + mode_im_c2[j] * x2 + mode_im_c3[j] * x3));
         trans_plus_m = partial_mode * Ylm_plus_m;
 
         // minus m if m > 0
@@ -1002,8 +1002,9 @@ cmplx SPAFunc(const double x)
   const double Gamm13 = -4.06235381827920125; // Gamma(-1/3);
   if (abs(x) <= 7.) {
     const cmplx xx = ((cmplx)x);
-    const cmplx pref1 = gcmplx::exp(-2.*M_PI*II/3.)*pow(xx, 5./6.)*Gamm13/pow(2., 1./3.);
-    const cmplx pref2 = gcmplx::exp(-M_PI*II/3.)*pow(xx, 1./6.)*Gamp13/pow(2., 2./3.);
+    double tmp_p = pow(x,1./6.);
+    const cmplx pref1 = gcmplx::exp(-2.*M_PI*II/3.)*tmp_p*tmp_p*tmp_p*tmp_p*tmp_p*Gamm13/1.2599210498948732; //pow(2., 1./3.);
+    const cmplx pref2 = gcmplx::exp(-M_PI*II/3.)*tmp_p*Gamp13/1.5874010519681994748;//pow(2., 2./3.);
     const double x2 = x*x;
 
     const double c1_0 = 0.5, c1_2 = -0.09375, c1_4 = 0.0050223214285714285714;
@@ -1072,7 +1073,7 @@ void cube_roots(cmplx *r1o, cmplx *r2o, cmplx *r3o, double a, double b, double c
     double Delta_0 = (b2 - 3 * a * c);
     double Delta_1 = (2 * b3 - 9 * a * b * c + 27 * a2 * d);
 
-    cmplx C = pow((Delta_1 +  sqrt(cmplx(Delta_1 * Delta_1  - 4 * ( Delta_0 * Delta_0 * Delta_0), 0.0)))/ 2., 1./3.);
+    cmplx C = pow((Delta_1 +  sqrt(cmplx(Delta_1 * Delta_1  - 4 * ( Delta_0 * Delta_0 * Delta_0), 0.0)))/ 2.,1./3.);
 
     cmplx xi = (-1. + sqrt(cmplx(-3., 0.0))) / 2.;
 
@@ -1370,7 +1371,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                         //               = conj(-1.0 * fdot/abs(fddot) * 2./sqrt(3.) * i\sqrt{x} e^{-i x} K_{1/3}(-i x) / sqrt(x))
                         //               = conj(amp_term2(x))
 
-                        double temp_arg = 2.* PI * pow(fdot, 3) / (3.* pow(fddot, 2));
+                        double temp_arg = 2.* PI * fdot * fdot * fdot / (3.* fddot * fddot);
                         cmplx amp_term2 = -1.0 * fdot/abs(fddot) * 2./sqrt(3.) * SPAFunc(temp_arg) / gcmplx::sqrt(cmplx(temp_arg, 0.0)); 
                         
                         cmplx temp_exp = R_amp * amp_term2 * gcmplx::exp(I* (2. * PI * f * t - phase_term));
