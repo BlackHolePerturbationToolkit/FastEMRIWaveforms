@@ -7,6 +7,9 @@ from few.utils.ylm import GetYlms
 from few.utils.modeselector import ModeSelector
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
 from few.amplitude.romannet import RomanAmplitude
+from few.waveform import FastSchwarzschildEccentricFlux
+from few.utils.utility import get_overlap,get_mismatch
+
 try:
     import cupy as xp
 
@@ -55,6 +58,7 @@ class ModeSelectorTest(unittest.TestCase):
     (teuk_modes_in, ylms_in, ls, ms, ns) = mode_selector(teuk_modes, ylms, modeinds, eps=eps)
 
     print("We reduced the mode content from {} modes to {} modes.".format(teuk_modes.shape[1], teuk_modes_in.shape[1]))
+    ls_orig = ls
     ms_orig = ms
     ns_orig = ns
     
@@ -71,7 +75,7 @@ class ModeSelectorTest(unittest.TestCase):
     # select modes with noise weighting
 
     # provide sensitivity function kwarg
-    mode_selector_noise_weighted = ModeSelector(amp.m0mask,amp.m0mask,amp.m0mask, use_gpu=False)
+    mode_selector_noise_weighted = ModeSelector(amp.m0mask,amp.m0mask,amp.m0mask, use_gpu=False, sensitivity_fn=sens_fn)
 
 
     # Schwarzschild
@@ -88,3 +92,25 @@ class ModeSelectorTest(unittest.TestCase):
     # plt.figure(); plt.title(f'Mode selection comparison \n M={M:.1e},mu={mu:.1e},e0={e0},p0={p0},eps={eps:.2e}'); 
     # plt.plot(ms,ns,'o',label=f'new select, N={len(ms)}', ms=10); plt.plot(ms_orig,ns_orig,'P',label=f'old select, N={len(ms_orig)}', ms=5); plt.legend(); plt.ylabel('n'); plt.xlabel('m'); plt.show()
     
+    mode_selector_kwargs = {}
+
+    noise_weighted_mode_selector_kwargs = dict(sensitivity_fn=sens_fn)
+    
+    few_base = FastSchwarzschildEccentricFlux()
+
+    M = 1e6
+    mu = 1e1
+    p0 = 12.0
+    e0 = 0.3
+    theta = np.pi/3.
+    phi = np.pi/4.
+    dist = 1.0
+    dt = 10.0
+    T = 0.001
+    mode_selection = [(ll,mm,nn) for ll,mm,nn in zip(ls_orig,ms_orig,ns_orig)]
+    breakpoint()
+    wave_base = few_base(M, mu, p0, e0, theta, phi, dist, dt=dt, T=0.001, mode_selection=mode_selection)
+    mode_selection = [(ll,mm,nn) for ll,mm,nn in zip(ls,ms,ns)]
+    wave_weighted = few_base(M, mu, p0, e0, theta, phi, dist, dt=dt, T=T, mode_selection=mode_selection)
+
+    print('mismatch:', get_mismatch(wave_base, wave_weighted))

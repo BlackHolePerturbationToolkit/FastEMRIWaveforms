@@ -1002,7 +1002,7 @@ cmplx SPAFunc(const double x)
   const double Gamm13 = -4.06235381827920125; // Gamma(-1/3);
   if (abs(x) <= 7.) {
     const cmplx xx = ((cmplx)x);
-    double tmp_p = pow(x,1./6.);
+    double tmp_p = cbrt(sqrt(x));//pow(x,1./6.);
     const cmplx pref1 = gcmplx::exp(-2.*M_PI*II/3.)*tmp_p*tmp_p*tmp_p*tmp_p*tmp_p*Gamm13/1.2599210498948732; //pow(2., 1./3.);
     const cmplx pref2 = gcmplx::exp(-M_PI*II/3.)*tmp_p*Gamp13/1.5874010519681994748;//pow(2., 2./3.);
     const double x2 = x*x;
@@ -1073,7 +1073,7 @@ void cube_roots(cmplx *r1o, cmplx *r2o, cmplx *r3o, double a, double b, double c
     double Delta_0 = (b2 - 3 * a * c);
     double Delta_1 = (2 * b3 - 9 * a * b * c + 27 * a2 * d);
 
-    cmplx C = pow((Delta_1 +  sqrt(cmplx(Delta_1 * Delta_1  - 4 * ( Delta_0 * Delta_0 * Delta_0), 0.0)))/ 2.,1./3.);
+    cmplx C = cbrt((Delta_1 +  sqrt(cmplx(Delta_1 * Delta_1  - 4 * ( Delta_0 * Delta_0 * Delta_0), 0.0)))/ 2.);
 
     cmplx xi = (-1. + sqrt(cmplx(-3., 0.0))) / 2.;
 

@@ -172,6 +172,7 @@ class ModeSelector(ParallelModuleBase):
         
         # if noise weighting
         if self.sensitivity_fn is not None:
+            
             if fund_freq_args is None:
                 raise ValueError(
                     "If sensitivity weighting is desired, the fund_freq_args kwarg must be provided."
