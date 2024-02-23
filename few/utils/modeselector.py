@@ -19,7 +19,7 @@
 import numpy as np
 
 import os
-
+from few.summation.interpolatedmodesum import CubicSplineInterpolant
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *
@@ -73,7 +73,7 @@ class ModeSelector(ParallelModuleBase):
 
     """
 
-    def __init__(self, l_arr, m_arr, n_arr, sensitivity_fn=None, **kwargs):
+    def __init__(self, m_arr, sensitivity_fn=None, **kwargs):
         ParallelModuleBase.__init__(self, **kwargs)
 
         if self.use_gpu:
@@ -157,6 +157,8 @@ class ModeSelector(ParallelModuleBase):
         else:
             xp = np
 
+        zero_modes_mask = (modeinds[1]==0)*(modeinds[2]==0)
+        
         # get the power contribution of each mode including m < 0
         power = (
             xp.abs(
@@ -167,7 +169,7 @@ class ModeSelector(ParallelModuleBase):
             )
             ** 2
         )
-
+        
         # if noise weighting
         if self.sensitivity_fn is not None:
             if fund_freq_args is None:
@@ -180,7 +182,7 @@ class ModeSelector(ParallelModuleBase):
 
             # get dimensionless fundamental frequency
             OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(
-                *fund_freq_args[1:]
+                *fund_freq_args[1:-1]
             )
 
             # get frequencies in Hz
@@ -202,8 +204,10 @@ class ModeSelector(ParallelModuleBase):
             freqs_in = xp.abs(freqs)
             PSD = self.sensitivity_fn(freqs_in.flatten()).reshape(freqs_shape)
 
-            # weight by PSD
-            power /= PSD
+            # weight by PSD, only for non zero modes
+            cs = CubicSplineInterpolant(fund_freq_args[-1], freqs[:,~zero_modes_mask].T, use_gpu=self.use_gpu)
+            fdot = cs(fund_freq_args[-1],deriv_order=1)
+            power[:,~zero_modes_mask] /= PSD[:,~zero_modes_mask] * np.abs(fdot).T
 
         # sort the power for a cumulative summation
         inds_sort = xp.argsort(power, axis=1)[:, ::-1]
