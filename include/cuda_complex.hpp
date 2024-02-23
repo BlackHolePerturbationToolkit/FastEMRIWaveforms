@@ -928,24 +928,6 @@ sqrt(const complex<_Tp>& __x)
     return polar(std::sqrt(abs(__x)), arg(__x) / _Tp(2));
 }
 
-// cbrt
-
-template<class _Tp>
-CUDA_CALLABLE_MEMBER
-complex<_Tp>
-cbrt(const complex<_Tp>& __x)
-{
-    if (std::isinf(__x.imag()))
-        return complex<_Tp>(_Tp(INFINITY), __x.imag());
-    if (std::isinf(__x.real()))
-    {
-        if (__x.real() > _Tp(0))
-            return complex<_Tp>(__x.real(), isnan(__x.imag()) ? __x.imag() : copysign(_Tp(0), __x.imag()));
-        return complex<_Tp>(isnan(__x.imag()) ? __x.imag() : _Tp(0), copysign(__x.real(), __x.imag()));
-    }
-    return polar(std::cbrt(abs(__x)), arg(__x) / _Tp(3));
-}
-
 // exp
 
 template<class _Tp>
