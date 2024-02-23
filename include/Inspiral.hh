@@ -123,6 +123,7 @@ public:
     void update_currently_running_ode_index(int currently_running_ode_index);
     int get_number_of_odes();
     void add_ode(string func_name, string few_dir);
+    void get_convert_Y(bool *convert_Y, int num_odes);
     void get_backgrounds(int *backgrounds, int num_odes);
     void get_equatorial(bool *equatorial, int num_odes);
     void get_circular(bool *circular, int num_odes);

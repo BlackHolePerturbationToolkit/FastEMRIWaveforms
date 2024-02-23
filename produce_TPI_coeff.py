@@ -148,12 +148,13 @@ x1 = a_unique.copy()
 x2 = u_unique.copy()
 x3 = w_unique.copy()
 X = [x1, x2, x3]
-
 for get,lab in zip([get_pdot,get_edot,get_Edot,get_Ldot], ['pdot', 'edot','Endot', 'Ldot']):
     reshapedF = np.asarray([[[get(el1,el2,el3) for el3 in x3] for el2 in x2] for el1 in x1])
 
     # flux interpolation
-    InterpFlux = TPI.TP_Interpolant_ND(X, F=reshapedF)
+    lower_bcs = ["not-a-knot","not-a-knot","clamped"]
+    upper_bcs = ["not-a-knot","not-a-knot","not-a-knot"]
+    InterpFlux = TPI.TP_Interpolant_ND(X, F=reshapedF, lower_bcs=lower_bcs, upper_bcs=upper_bcs)
 
     coeff = InterpFlux.GetSplineCoefficientsND().flatten()
 
@@ -169,7 +170,7 @@ sepX = np.load("few/files/sepX.npy")
 sepVals = np.load("few/files/sepVals.npy")
 
 # flux interpolation
-InterpSep = TPI.TP_Interpolant_ND([sepX[0], sepX[1]], F=sepVals)
+InterpSep = TPI.TP_Interpolant_ND([sepX[0], sepX[1]], F=sepVals, lower_bcs=["not-a-knot","clamped"])
 
 coeff = InterpSep.GetSplineCoefficientsND().flatten()
 

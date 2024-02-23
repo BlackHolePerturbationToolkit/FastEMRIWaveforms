@@ -25,6 +25,7 @@ cdef extern from "../include/Inspiral.hh":
         void update_currently_running_ode_index(int currently_running_ode_index) except+
         int get_number_of_odes() except+
         void add_ode(string func_name, string few_dir) except+
+        void get_convert_Y(bool_c *convert_Y, int num_odes) except+
         void get_backgrounds(int *backgrounds, int num_odes) except+
         void get_equatorial(bool_c *equatorial, int num_odes) except+
         void get_circular(bool_c *circular, int num_odes) except+
@@ -153,6 +154,13 @@ cdef class pyInspiralGenerator:
 
         self.f.get_derivatives(&ydot[0], &y[0], self.nparams)
         return ydot
+
+    @property
+    def convert_Y(self):
+        cdef np.ndarray[ndim=1, dtype=bool_c] convert_Y = np.zeros(self.num_odes, dtype=bool)
+
+        self.f.get_convert_Y(&convert_Y[0], self.num_odes)
+        return convert_Y
 
     @property
     def backgrounds(self):

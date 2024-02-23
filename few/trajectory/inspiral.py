@@ -30,7 +30,7 @@ from pyInspiral import pyInspiralGenerator, pyDerivative
 
 # Python imports
 from few.utils.baseclasses import TrajectoryBase
-from few.utils.utility import check_for_file_download, get_ode_function_options, ELQ_to_pex, get_kerr_geo_constants_of_motion, get_fundamental_frequencies
+from few.utils.utility import check_for_file_download, get_ode_function_options, ELQ_to_pex, get_kerr_geo_constants_of_motion, get_fundamental_frequencies, Y_to_xI
 from few.utils.constants import *
 from few.utils.citations import *
 
@@ -247,6 +247,8 @@ class EMRIInspiral(TrajectoryBase):
 
         # if integrating constants of motion, convert from pex to ELQ now
         if self.integrate_constants_of_motion:
+            if self.inspiral_generator.convert_Y:
+                x0 = Y_to_xI(a, p0, e0, x0)
             y1, y2, y3 = get_kerr_geo_constants_of_motion(a, p0, e0, x0)
 
         # transfer kwargs from parent class
@@ -270,42 +272,37 @@ class EMRIInspiral(TrajectoryBase):
             pex = ELQ_to_pex(a, out[:,1].copy(), out[:,2].copy(), out[:,3].copy())
             out[:,1] = pex[0]
             out[:,2] = pex[1]
-            out[:,3] = pex[2]
+            if self.inspiral_generator.convert_Y:
+                out[:,3] = out_ELQ[:,2] / np.sqrt(out_ELQ[:,2]**2 + out_ELQ[:,3])
+            else:
+                out[:,3] = pex[2]
 
         # handle no phase integration in ODE
         if not self.integrate_ODE_phases:
         # if performing phase integration numerically, perform it here
             if self.numerically_integrate_phases:
-                # todo: make tuneable with kwargs. pass integral function?
-                if out.shape[0] > 20: # guard against short trajectories
-                    interp_num = 5
-                    k_spl=5
-                    # print("Not triggered. out shape was", out.shape[0])
-                else:
-                    # print("Triggered! out shape was", out.shape[0])
-                    interp_num = 5
-                    k_spl=3
                 t = out[:,0]
-                # t_spline = np.interp(np.arange((len(t) - 1) * interp_num + 1), np.arange(0, interp_num*len(t), interp_num), t)
-
                 ups_p, ups_e, ups_x = out[:,1:4].T
                 t_spline = t.copy()
-                
-                # INSPIRAL
-                # if self.inspiral_generator.equatorial:
-                #     ups_p, ups_e = make_interp_spline(t, out[:,1:3].T, k=k_spl, axis=-1, check_finite=True)(t_spline)
-                #     ups_x = np.zeros(len(ups_p)) + x0
-                # else:
-                #     ups_p, ups_e, ups_x = make_interp_spline(t, out[:,1:4].T, k=k_spl, axis=-1, check_finite=True)(t_spline)
-                
-                frequencies = np.array(get_fundamental_frequencies(a, ups_p.copy(), ups_e.copy(), ups_x.copy()))/(M*MTSUN_SI)
+
+                # either use cached x or map Y to x if required
+                if self.inspiral_generator.integrate_constants_of_motion:
+                    ups_x_freq = pex[2].copy()
+                else:
+                    if self.inspiral_generator.convert_Y:
+                        ups_x_freq = Y_to_xI(a, ups_p.copy(), ups_e.copy(), ups_x.copy())
+                    else:
+                        ups_x_freq = ups_x.copy()
+
+                frequencies = np.array(get_fundamental_frequencies(a, ups_p.copy(), ups_e.copy(), ups_x_freq))/(M*MTSUN_SI)
                 # CUBIC
                 cs = CubicSpline(t_spline, frequencies.T)
                 phase_array = cs.antiderivative()(t).T
                 
                 # to check whether we are outside the interpolation range
-                if self.integrate_constants_of_motion:
-                    ELQ_dot  = np.asarray([self.inspiral_generator.integrator.get_derivatives(el) for el in out_ELQ[:,1:]])
+                # if self.integrate_constants_of_motion:
+                    # print("ELQ deriv check")
+                    # ELQ_dot  = np.asarray([self.inspiral_generator.integrator.get_derivatives(el.copy()) for el in out_ELQ[:,1:]])
                 # to_spline = frequencies /ELQ_dot[:,0] * MTSUN_SI
                 # cs_ELQ = CubicSpline(out_ELQ[::-1,1], -to_spline[:,::-1].T)
                 # cs_E = CubicSpline(t_spline, out_ELQ[::-1,1])

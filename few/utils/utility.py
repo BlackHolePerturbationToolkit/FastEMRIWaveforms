@@ -1080,6 +1080,25 @@ def get_ode_function_options():
 
     return ode_options
 
+def augment_ODE_func_name(inspiral_kwargs):
+    """
+    If not integrating phases or constants of motion, augment the name of the function correctly before passing to inspiral generator
+    """
+    inspiral_kwargs_check = inspiral_kwargs.copy()
+    try:
+        kw = inspiral_kwargs_check.pop('integrate_constants_of_motion')
+        if kw:
+            inspiral_kwargs_check["func"] += "_ELQ"
+    except KeyError:
+        pass
+    try:
+        kw = inspiral_kwargs_check.pop('integrate_phases')
+        if not kw:
+            inspiral_kwargs_check["func"] += "_nofrequencies"
+    except KeyError:
+        pass
+
+    return inspiral_kwargs_check
 
 def omp_set_num_threads(num_threads=1):
     """Globally sets OMP_NUM_THREADS

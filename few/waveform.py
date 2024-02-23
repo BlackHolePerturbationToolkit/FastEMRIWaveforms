@@ -34,7 +34,7 @@ from few.utils.baseclasses import SchwarzschildEccentric, KerrEquatorialEccentri
 from few.trajectory.inspiral import EMRIInspiral
 from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 from few.amplitude.ampinterp2d import AmpInterpKerrEqEcc
-from few.utils.utility import get_mismatch, xI_to_Y, p_to_y, check_for_file_download
+from few.utils.utility import get_mismatch, xI_to_Y, p_to_y, check_for_file_download, augment_ODE_func_name
 from few.amplitude.romannet import RomanAmplitude
 from few.utils.modeselector import ModeSelector, NeuralModeSelector
 from few.utils.ylm import GetYlms
@@ -851,6 +851,7 @@ class FastSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         **kwargs,
     ):
         inspiral_kwargs["func"] = "SchwarzEccFlux"
+        inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 
         if "output_type" in sum_kwargs:
             if sum_kwargs["output_type"] == "fd":
@@ -958,6 +959,7 @@ class FastSchwarzschildEccentricFluxBicubic(SchwarzschildEccentricWaveformBase):
         **kwargs,
     ):
         inspiral_kwargs["func"] = "SchwarzEccFlux"
+        inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 
         mode_summation_module = InterpolatedModeSum
         if "output_type" in sum_kwargs:
@@ -1549,6 +1551,7 @@ class KerrEccentricEquatorialFlux(KerrEquatorialEccentricWaveformBase):
         **kwargs,
     ):
         inspiral_kwargs["func"] = "KerrEccentricEquatorial"
+        inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 
         mode_summation_module = InterpolatedModeSum
         if "output_type" in sum_kwargs:
@@ -1670,6 +1673,7 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
         # declare specific properties
         inspiral_kwargs["DENSE_STEPPING"] = 1
         inspiral_kwargs["func"] = "SchwarzEccFlux"
+        inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 
         SchwarzschildEccentricWaveformBase.__init__(
             self,
@@ -1998,6 +2002,7 @@ class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase, ABC):
         self, inspiral_kwargs={}, sum_kwargs={}, use_gpu=False, num_threads=None
     ):
         inspiral_kwargs["func"] = "pn5"
+        inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 
         AAKWaveformBase.__init__(
             self,
