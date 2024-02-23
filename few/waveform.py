@@ -741,7 +741,8 @@ class SchwarzschildEccentricWaveformBase(
                     0.0,
                     p_temp,
                     e_temp,
-                    xp.zeros_like(e_temp),
+                    np.zeros_like(e_temp),
+                    t,
                 )
                 modeinds = [self.l_arr, self.m_arr, self.n_arr]
                 (
