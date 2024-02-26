@@ -374,8 +374,13 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
             xp = np
         
         pos_neg_n_swap_inds = []
-        for l,m,n in zip(self.l_arr_no_mask,self.m_arr_no_mask,self.n_arr_no_mask):
-            pos_neg_n_swap_inds.append(self.special_index_map[(l,m,-n)])
+        if self.use_gpu:
+            for l,m,n in zip(self.l_arr_no_mask.get(),self.m_arr_no_mask.get(),self.n_arr_no_mask.get()):
+                pos_neg_n_swap_inds.append(self.special_index_map[(l,m,-n)])
+        else:
+            for l,m,n in zip(self.l_arr_no_mask,self.m_arr_no_mask,self.n_arr_no_mask):
+                pos_neg_n_swap_inds.append(self.special_index_map[(l,m,-n)])
+            
         self.pos_neg_n_swap_inds = xp.asarray(pos_neg_n_swap_inds)
 
     def get_amplitudes(self, a, p, e, xI, specific_modes=None):
