@@ -242,6 +242,9 @@ class EMRIInspiral(TrajectoryBase):
             if abs(x0) != 1:
                 raise RuntimeError("Magnitude of orbital inclination cosine x0 needs to be one for equatorial inspiral.")
 
+        if x0 == -1:
+            Phi_phi0 = -1 * Phi_phi0  # flip initial azimuthal phase for retrograde
+
         if circular:
             e0 = 0.0
 

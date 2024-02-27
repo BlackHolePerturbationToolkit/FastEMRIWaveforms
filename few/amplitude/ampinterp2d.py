@@ -400,10 +400,11 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
 
         if signed_spin in self.spin_values:
             ind_1 = np.where(self.spin_values == signed_spin)[0][0]
-
             a_in = np.full_like(p, signed_spin)
-            
+
             z = self.spin_information_holder[ind_1](a_in, p, e, xI_in, specific_modes=specific_modes)
+            if xI_in[0] == -1 and signed_spin != 0.:  # retrograde needs mode flip
+                z = xp.conj(z[:,self.pos_neg_n_swap_inds])
 
         else:
             ind_above = np.where(self.spin_values > signed_spin)[0][0]
@@ -412,7 +413,6 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
             assert ind_below >= 0
 
             a_above = np.full_like(p, self.spin_values[ind_above])
-
             a_above_single = a_above[0]
             assert np.all(a_above_single == a_above[0])
 
@@ -420,29 +420,45 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
             a_below_single = a_below[0]
             assert np.all(a_below_single == a_below[0])
 
-            # handle retrograde-prograde mode discontinuities (n -> conj(-n))
-            specific_modes_below = specific_modes
-            if a_above_single == 0:  # above boundary requires flip to avoid discontinuity
-                apply_conjugate_above = True
+            # handle retrograde mode flip (n -> conj(-n))
+
+            if a_below_single < 0:
+                apply_conjugate_below = True
                 if specific_modes is None:
-                    specific_modes_above = self.pos_neg_n_swap_inds
+                    specific_modes_below = self.pos_neg_n_swap_inds
                 elif isinstance(specific_modes, xp.ndarray):
-                    specific_modes_above = self.pos_neg_n_swap_inds[specific_modes]
+                    specific_modes_below = self.pos_neg_n_swap_inds[specific_modes]
                 elif isinstance(specific_modes, list):
-                    specific_modes_above = []
-                    for (l, m, n) in specific_modes_below:
-                        specific_modes_above.append((l,m,-n))
+                    specific_modes_below = []
+                    for (l, m, n) in specific_modes:
+                        specific_modes_below.append((l,m,-n))
+            else:
+                apply_conjugate_below = False
+                specific_modes_below = specific_modes
+
+            if a_above_single < 0:
+                apply_conjugate_above = True
+                specific_modes_above = specific_modes_below
             else:
                 apply_conjugate_above = False
                 specific_modes_above = specific_modes
+            
+            if apply_conjugate_above and apply_conjugate_below:  # combine the flags to save a conj call if both retrograde
+                apply_conjugate_total = True
+                apply_conjugate_above = False
+                apply_conjugate_below = False
+            else:
+                apply_conjugate_total = False
 
             z_above = self.spin_information_holder[ind_above](a_above, p, e, xI_in, specific_modes=specific_modes_above)
             z_below = self.spin_information_holder[ind_below](a_below, p, e, xI_in, specific_modes=specific_modes_below)
+            if apply_conjugate_below:
+                z_below = z_below.conj()
             if apply_conjugate_above:
                 z_above = z_above.conj()
             z = ((z_above - z_below) / (a_above_single - a_below_single)) * (signed_spin - a_below_single) + z_below
-
-
+            if apply_conjugate_total:
+                z = z.conj()
         if not isinstance(specific_modes, list):
             return z
         

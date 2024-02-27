@@ -1465,7 +1465,7 @@ class KerrEquatorialEccentricWaveformBase(
                 t_temp,
                 teuk_modes_in,
                 ylms_in,
-                Phi_phi_temp,
+                abs(Phi_phi_temp),  # positive phases to be consistent with amplitude generator for retrograde inspirals  # TODO get to the bottom of this!
                 Phi_r_temp,
                 self.ms,
                 self.ns,
