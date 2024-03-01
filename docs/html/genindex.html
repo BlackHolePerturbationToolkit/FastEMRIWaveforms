@@ -1,20 +1,22 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Index &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=01f34227"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="#" />
@@ -113,6 +115,7 @@
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
  | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
  | <a href="#U"><strong>U</strong></a>
@@ -124,9 +127,21 @@
 <h2 id="_">_</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.__call__">__call__() (few.summation.directmodesum.DirectModeSum method)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.__call__">__call__() (few.amplitude.interp2dcubicspline.Interp2DAmplitude method)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.__call__">(few.amplitude.romannet.RomanAmplitude method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.__call__">(few.summation.aakwave.AAKSummation method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.__call__">(few.summation.directmodesum.DirectModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.__call__">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.__call__">(few.summation.interpolatedmodesum.CubicSplineInterpolant method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.__call__">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
+</li>
         <li><a href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.__call__">(few.trajectory.inspiral.EMRIInspiral method)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.ParallelModuleBase.__call__">(few.utils.baseclasses.ParallelModuleBase class method)</a>
@@ -145,6 +160,18 @@
 </li>
         <li><a href="user/util.html#few.utils.ylm.GetYlms.__call__">(few.utils.ylm.GetYlms method)</a>
 </li>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.__call__">(few.waveform.AAKWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.__call__">(few.waveform.FastSchwarzschildEccentricFlux method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.GenerateEMRIWaveform.__call__">(few.waveform.GenerateEMRIWaveform method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.__call__">(few.waveform.Pn5AAKWaveform method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.__call__">(few.waveform.SchwarzschildEccentricWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.__call__">(few.waveform.SlowSchwarzschildEccentricFlux method)</a>
+</li>
       </ul></li>
   </ul></td>
 </tr></table>
@@ -152,9 +179,25 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.adjust_gpu_usage">adjust_gpu_usage() (few.summation.directmodesum.DirectModeSum method)</a>
+      <li><a href="user/sum.html#few.summation.aakwave.AAKSummation">AAKSummation (class in few.summation.aakwave)</a>
+</li>
+      <li><a href="user/main.html#few.waveform.AAKWaveformBase">AAKWaveformBase (class in few.waveform)</a>
+</li>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.adjust_gpu_usage">adjust_gpu_usage() (few.amplitude.interp2dcubicspline.Interp2DAmplitude method)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.adjust_gpu_usage">(few.amplitude.romannet.RomanAmplitude method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.adjust_gpu_usage">(few.summation.aakwave.AAKSummation method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.adjust_gpu_usage">(few.summation.directmodesum.DirectModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.adjust_gpu_usage">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.adjust_gpu_usage">(few.summation.interpolatedmodesum.CubicSplineInterpolant method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.adjust_gpu_usage">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.ParallelModuleBase.adjust_gpu_usage">(few.utils.baseclasses.ParallelModuleBase method)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.adjust_gpu_usage">(few.utils.baseclasses.SchwarzschildEccentric method)</a>
@@ -163,16 +206,72 @@
 </li>
         <li><a href="user/util.html#few.utils.ylm.GetYlms.adjust_gpu_usage">(few.utils.ylm.GetYlms method)</a>
 </li>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.adjust_gpu_usage">(few.waveform.AAKWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.adjust_gpu_usage">(few.waveform.FastSchwarzschildEccentricFlux method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.adjust_gpu_usage">(few.waveform.Pn5AAKWaveform method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.adjust_gpu_usage">(few.waveform.SchwarzschildEccentricWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.adjust_gpu_usage">(few.waveform.SlowSchwarzschildEccentricFlux method)</a>
+</li>
       </ul></li>
+      <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.allow_batching">allow_batching (few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+
+      <ul>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.allow_batching">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.amplitude_generator">amplitude_generator (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
+
+      <ul>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.amplitude_generator">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.amplitude_generator">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.amplitude_generator">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="user/main.html#few.waveform.AAKWaveformBase.attributes_AAKWaveform">attributes_AAKWaveform() (few.waveform.AAKWaveformBase method)</a>
+
+      <ul>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.attributes_AAKWaveform">(few.waveform.Pn5AAKWaveform method)</a>
+</li>
+      </ul></li>
+      <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.attributes_AmplitudeAAK">attributes_AmplitudeAAK() (few.summation.aakwave.AAKSummation method)</a>
+</li>
+      <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.attributes_CubicSplineInterpolate">attributes_CubicSplineInterpolate() (few.summation.interpolatedmodesum.CubicSplineInterpolant method)</a>
+</li>
       <li><a href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.attributes_EMRIInspiral">attributes_EMRIInspiral() (few.trajectory.inspiral.EMRIInspiral method)</a>
+</li>
+      <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.attributes_FastSchwarzschildEccentricFlux">attributes_FastSchwarzschildEccentricFlux() (few.waveform.FastSchwarzschildEccentricFlux method)</a>
+</li>
+      <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.attributes_FDInterpolatedModeSum">attributes_FDInterpolatedModeSum() (few.summation.fdinterp.FDInterpolatedModeSum method)</a>
 </li>
       <li><a href="user/util.html#few.utils.ylm.GetYlms.attributes_GetYlms">attributes_GetYlms() (few.utils.ylm.GetYlms method)</a>
 </li>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_Interp2DAmplitude">attributes_Interp2DAmplitude() (few.amplitude.interp2dcubicspline.Interp2DAmplitude method)</a>
+</li>
+      <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_InterpolatedModeSum">attributes_InterpolatedModeSum() (few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
+</li>
       <li><a href="user/util.html#few.utils.modeselector.ModeSelector.attributes_ModeSelector">attributes_ModeSelector() (few.utils.modeselector.ModeSelector method)</a>
 </li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.attributes_ParallelModuleBase">attributes_ParallelModuleBase() (few.summation.directmodesum.DirectModeSum method)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_ParallelModuleBase">attributes_ParallelModuleBase() (few.amplitude.interp2dcubicspline.Interp2DAmplitude method)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.attributes_ParallelModuleBase">(few.amplitude.romannet.RomanAmplitude method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.attributes_ParallelModuleBase">(few.summation.aakwave.AAKSummation method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.attributes_ParallelModuleBase">(few.summation.directmodesum.DirectModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.attributes_ParallelModuleBase">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.attributes_ParallelModuleBase">(few.summation.interpolatedmodesum.CubicSplineInterpolant method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_ParallelModuleBase">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.ParallelModuleBase.attributes_ParallelModuleBase">(few.utils.baseclasses.ParallelModuleBase method)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.attributes_ParallelModuleBase">(few.utils.baseclasses.SchwarzschildEccentric method)</a>
@@ -181,20 +280,72 @@
 </li>
         <li><a href="user/util.html#few.utils.ylm.GetYlms.attributes_ParallelModuleBase">(few.utils.ylm.GetYlms method)</a>
 </li>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.attributes_ParallelModuleBase">(few.waveform.AAKWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.attributes_ParallelModuleBase">(few.waveform.FastSchwarzschildEccentricFlux method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.attributes_ParallelModuleBase">(few.waveform.Pn5AAKWaveform method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.attributes_ParallelModuleBase">(few.waveform.SchwarzschildEccentricWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.attributes_ParallelModuleBase">(few.waveform.SlowSchwarzschildEccentricFlux method)</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/main.html#few.utils.baseclasses.Pn5AAK.attributes_Pn5AAK">attributes_Pn5AAK() (few.utils.baseclasses.Pn5AAK method)</a>
-</li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.attributes_SchwarzschildEccentric">attributes_SchwarzschildEccentric() (few.summation.directmodesum.DirectModeSum method)</a>
+      <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.attributes_Pn5AAK">attributes_Pn5AAK() (few.summation.aakwave.AAKSummation method)</a>
 
       <ul>
-        <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.attributes_SchwarzschildEccentric">(few.utils.baseclasses.SchwarzschildEccentric method)</a>
+        <li><a href="user/main.html#few.utils.baseclasses.Pn5AAK.attributes_Pn5AAK">(few.utils.baseclasses.Pn5AAK method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.attributes_Pn5AAK">(few.waveform.AAKWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.attributes_Pn5AAK">(few.waveform.Pn5AAKWaveform method)</a>
 </li>
       </ul></li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.attributes_SummationBase">attributes_SummationBase() (few.summation.directmodesum.DirectModeSum method)</a>
+      <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.attributes_Pn5AAKWaveform">attributes_Pn5AAKWaveform() (few.waveform.Pn5AAKWaveform method)</a>
+</li>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.attributes_RomanAmplitude">attributes_RomanAmplitude() (few.amplitude.romannet.RomanAmplitude method)</a>
+</li>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_SchwarzschildEccentric">attributes_SchwarzschildEccentric() (few.amplitude.interp2dcubicspline.Interp2DAmplitude method)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.attributes_SchwarzschildEccentric">(few.amplitude.romannet.RomanAmplitude method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.attributes_SchwarzschildEccentric">(few.summation.directmodesum.DirectModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.attributes_SchwarzschildEccentric">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_SchwarzschildEccentric">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
+</li>
+        <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.attributes_SchwarzschildEccentric">(few.utils.baseclasses.SchwarzschildEccentric method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.attributes_SchwarzschildEccentric">(few.waveform.FastSchwarzschildEccentricFlux method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.attributes_SchwarzschildEccentric">(few.waveform.SchwarzschildEccentricWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.attributes_SchwarzschildEccentric">(few.waveform.SlowSchwarzschildEccentricFlux method)</a>
+</li>
+      </ul></li>
+      <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.attributes_SchwarzschildEccentricWaveformBase">attributes_SchwarzschildEccentricWaveformBase() (few.waveform.FastSchwarzschildEccentricFlux method)</a>
+
+      <ul>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.attributes_SchwarzschildEccentricWaveformBase">(few.waveform.SchwarzschildEccentricWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.attributes_SchwarzschildEccentricWaveformBase">(few.waveform.SlowSchwarzschildEccentricFlux method)</a>
+</li>
+      </ul></li>
+      <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.attributes_SlowSchwarzschildEccentricFlux">attributes_SlowSchwarzschildEccentricFlux() (few.waveform.SlowSchwarzschildEccentricFlux method)</a>
+</li>
+      <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.attributes_SummationBase">attributes_SummationBase() (few.summation.aakwave.AAKSummation method)</a>
+
+      <ul>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.attributes_SummationBase">(few.summation.directmodesum.DirectModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.attributes_SummationBase">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.attributes_SummationBase">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
+</li>
         <li><a href="user/sum.html#few.utils.baseclasses.SummationBase.attributes_SummationBase">(few.utils.baseclasses.SummationBase method)</a>
 </li>
       </ul></li>
@@ -204,29 +355,73 @@
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.background">background (few.summation.directmodesum.DirectModeSum attribute)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.background">background (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.background">(few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.background">(few.summation.aakwave.AAKSummation attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.background">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.background">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.background">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.background">(few.trajectory.inspiral.EMRIInspiral attribute)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.Pn5AAK.background">(few.utils.baseclasses.Pn5AAK attribute)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.background">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
 </li>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.background">(few.waveform.AAKWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.background">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.background">(few.waveform.Pn5AAKWaveform attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.background">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.background">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
+</li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.bias">bias (few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.break_index">break_index (few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.c1">c1 (few.summation.interpolatedmodesum.CubicSplineInterpolant property)</a>
+</li>
+      <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.c2">c2 (few.summation.interpolatedmodesum.CubicSplineInterpolant property)</a>
+</li>
+      <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.c3">c3 (few.summation.interpolatedmodesum.CubicSplineInterpolant property)</a>
+</li>
       <li><a href="user/util.html#few.utils.utility.check_for_file_download">check_for_file_download() (in module few.utils.utility)</a>
 </li>
       <li><a href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.circular">circular (few.trajectory.inspiral.EMRIInspiral attribute)</a>
 </li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.citation">citation (few.summation.directmodesum.DirectModeSum property)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.citation">citation (few.amplitude.interp2dcubicspline.Interp2DAmplitude property)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.citation">(few.amplitude.romannet.RomanAmplitude property)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.citation">(few.summation.aakwave.AAKSummation property)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.citation">(few.summation.directmodesum.DirectModeSum property)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.citation">(few.summation.fdinterp.FDInterpolatedModeSum property)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.citation">(few.summation.interpolatedmodesum.CubicSplineInterpolant property)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.citation">(few.summation.interpolatedmodesum.InterpolatedModeSum property)</a>
+</li>
         <li><a href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.citation">(few.trajectory.inspiral.EMRIInspiral property)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.ParallelModuleBase.citation">(few.utils.baseclasses.ParallelModuleBase property)</a>
@@ -243,12 +438,36 @@
 </li>
         <li><a href="user/util.html#few.utils.ylm.GetYlms.citation">(few.utils.ylm.GetYlms property)</a>
 </li>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.citation">(few.waveform.AAKWaveformBase property)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.citation">(few.waveform.FastSchwarzschildEccentricFlux property)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.citation">(few.waveform.Pn5AAKWaveform property)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.citation">(few.waveform.SchwarzschildEccentricWaveformBase property)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.citation">(few.waveform.SlowSchwarzschildEccentricFlux property)</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.citations">citations (few.trajectory.inspiral.EMRIInspiral attribute)</a>
 </li>
       <li><a href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.convert_Y">convert_Y (few.trajectory.inspiral.EMRIInspiral attribute)</a>
+</li>
+      <li><a href="user/main.html#few.waveform.AAKWaveformBase.create_waveform">create_waveform (few.waveform.AAKWaveformBase attribute)</a>
+
+      <ul>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.create_waveform">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.create_waveform">(few.waveform.Pn5AAKWaveform attribute)</a>, <a href="user/main.html#id12">[1]</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.create_waveform">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.create_waveform">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant">CubicSplineInterpolant (class in few.summation.interpolatedmodesum)</a>
 </li>
       <li><a href="user/util.html#few.utils.utility.cuda_set_device">cuda_set_device() (in module few.utils.utility)</a>
 </li>
@@ -258,16 +477,40 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.descriptor">descriptor (few.summation.directmodesum.DirectModeSum attribute)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.descriptor">descriptor (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.descriptor">(few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.descriptor">(few.summation.aakwave.AAKSummation attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.descriptor">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.descriptor">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.descriptor">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.Pn5AAK.descriptor">(few.utils.baseclasses.Pn5AAK attribute)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.descriptor">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
 </li>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.descriptor">(few.waveform.AAKWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.descriptor">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.descriptor">(few.waveform.Pn5AAKWaveform attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.descriptor">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.descriptor">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.dim1">dim1 (few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.dim2">dim2 (few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
       <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum">DirectModeSum (class in few.summation.directmodesum)</a>
 </li>
   </ul></td>
@@ -290,11 +533,29 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux">FastSchwarzschildEccentricFlux (class in few.waveform)</a>
+</li>
+      <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum">FDInterpolatedModeSum (class in few.summation.fdinterp)</a>
+</li>
       <li>
     few.amplitude
 
       <ul>
         <li><a href="user/amp.html#module-few.amplitude">module</a>
+</li>
+      </ul></li>
+      <li>
+    few.amplitude.interp2dcubicspline
+
+      <ul>
+        <li><a href="user/amp.html#module-few.amplitude.interp2dcubicspline">module</a>
+</li>
+      </ul></li>
+      <li>
+    few.amplitude.romannet
+
+      <ul>
+        <li><a href="user/amp.html#module-few.amplitude.romannet">module</a>
 </li>
       </ul></li>
       <li>
@@ -305,12 +566,35 @@
 </li>
       </ul></li>
       <li>
+    few.summation.aakwave
+
+      <ul>
+        <li><a href="user/sum.html#module-few.summation.aakwave">module</a>
+</li>
+      </ul></li>
+      <li>
     few.summation.directmodesum
 
       <ul>
         <li><a href="user/sum.html#module-few.summation.directmodesum">module</a>
 </li>
       </ul></li>
+      <li>
+    few.summation.fdinterp
+
+      <ul>
+        <li><a href="user/sum.html#module-few.summation.fdinterp">module</a>
+</li>
+      </ul></li>
+      <li>
+    few.summation.interpolatedmodesum
+
+      <ul>
+        <li><a href="user/sum.html#module-few.summation.interpolatedmodesum">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     few.trajectory
 
@@ -332,8 +616,6 @@
         <li><a href="user/util.html#module-few.utils">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     few.utils.citations
 
@@ -369,6 +651,8 @@
         <li><a href="user/util.html#module-few.utils.ylm">module</a>
 </li>
       </ul></li>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.few_dir">few_dir (few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
       <li><a href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.files">files (few.trajectory.inspiral.EMRIInspiral attribute)</a>
 </li>
       <li><a href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.func">func (few.trajectory.inspiral.EMRIInspiral attribute)</a>
@@ -379,6 +663,14 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="user/main.html#few.waveform.GenerateEMRIWaveform">GenerateEMRIWaveform (class in few.waveform)</a>
+</li>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.get_amplitudes">get_amplitudes() (few.amplitude.interp2dcubicspline.Interp2DAmplitude method)</a>
+
+      <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.get_amplitudes">(few.amplitude.romannet.RomanAmplitude method)</a>
+</li>
+      </ul></li>
       <li><a href="user/util.html#few.utils.utility.get_at_t">get_at_t() (in module few.utils.utility)</a>
 </li>
       <li><a href="user/util.html#few.utils.fdutils.get_convolution">get_convolution() (in module few.utils.fdutils)</a>
@@ -403,23 +695,41 @@
 </li>
       <li><a href="user/util.html#few.utils.utility.get_ode_function_options">get_ode_function_options() (in module few.utils.utility)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="user/util.html#few.utils.utility.get_overlap">get_overlap() (in module few.utils.utility)</a>
 </li>
       <li><a href="user/util.html#few.utils.utility.get_p_at_t">get_p_at_t() (in module few.utils.utility)</a>
 </li>
       <li><a href="user/util.html#few.utils.utility.get_separatrix">get_separatrix() (in module few.utils.utility)</a>
 </li>
+      <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.get_waveform">get_waveform (few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+
+      <ul>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.get_waveform">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
+      </ul></li>
       <li><a href="user/util.html#few.utils.fdutils.GetFDWaveformFromFD">GetFDWaveformFromFD (class in few.utils.fdutils)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="user/util.html#few.utils.fdutils.GetFDWaveformFromTD">GetFDWaveformFromTD (class in few.utils.fdutils)</a>
 </li>
       <li><a href="user/util.html#few.utils.ylm.GetYlms">GetYlms (class in few.utils.ylm)</a>
 </li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.gpu_capability">gpu_capability (few.summation.directmodesum.DirectModeSum property)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.gpu_capability">gpu_capability (few.amplitude.interp2dcubicspline.Interp2DAmplitude property)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.gpu_capability">(few.amplitude.romannet.RomanAmplitude property)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.gpu_capability">(few.summation.aakwave.AAKSummation property)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.gpu_capability">(few.summation.directmodesum.DirectModeSum property)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.gpu_capability">(few.summation.fdinterp.FDInterpolatedModeSum property)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.gpu_capability">(few.summation.interpolatedmodesum.CubicSplineInterpolant property)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.gpu_capability">(few.summation.interpolatedmodesum.InterpolatedModeSum property)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.ParallelModuleBase.gpu_capability">(few.utils.baseclasses.ParallelModuleBase property)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.gpu_capability">(few.utils.baseclasses.SchwarzschildEccentric property)</a>
@@ -428,6 +738,20 @@
 </li>
         <li><a href="user/util.html#few.utils.ylm.GetYlms.gpu_capability">(few.utils.ylm.GetYlms property)</a>
 </li>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.gpu_capability">(few.waveform.AAKWaveformBase property)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.gpu_capability">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#id0">(few.waveform.FastSchwarzschildEccentricFlux property)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.gpu_capability">(few.waveform.Pn5AAKWaveform property)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.gpu_capability">(few.waveform.SchwarzschildEccentricWaveformBase property)</a>
+</li>
+        <li><a href="user/main.html#id5">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.gpu_capability">(few.waveform.SlowSchwarzschildEccentricFlux property)</a>
+</li>
       </ul></li>
   </ul></td>
 </tr></table>
@@ -435,20 +759,74 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.index_map">index_map (few.summation.directmodesum.DirectModeSum attribute)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.index_map">index_map (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.index_map">(few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.index_map">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.index_map">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.index_map">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.index_map">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.index_map">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.index_map">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.index_map">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.inspiral_generator">inspiral_generator (few.trajectory.inspiral.EMRIInspiral attribute)</a>, <a href="user/traj.html#id0">[1]</a>
+
+      <ul>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.inspiral_generator">(few.waveform.AAKWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.inspiral_generator">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.inspiral_generator">(few.waveform.Pn5AAKWaveform attribute)</a>, <a href="user/main.html#id11">[1]</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.inspiral_generator">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.inspiral_generator">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.inspiral_generator">inspiral_generator (few.trajectory.inspiral.EMRIInspiral attribute)</a>, <a href="user/traj.html#id0">[1]</a>
-</li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.inverse_lm">inverse_lm (few.summation.directmodesum.DirectModeSum attribute)</a>
+      <li><a href="user/main.html#few.waveform.AAKWaveformBase.inspiral_kwargs">inspiral_kwargs (few.waveform.AAKWaveformBase attribute)</a>
 
       <ul>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.inspiral_kwargs">(few.waveform.Pn5AAKWaveform attribute)</a>, <a href="user/main.html#id13">[1]</a>
+</li>
+      </ul></li>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude">Interp2DAmplitude (class in few.amplitude.interp2dcubicspline)</a>
+</li>
+      <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.interp_array">interp_array (few.summation.interpolatedmodesum.CubicSplineInterpolant attribute)</a>
+</li>
+      <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.interpolate_arrays">interpolate_arrays (few.summation.interpolatedmodesum.CubicSplineInterpolant attribute)</a>
+</li>
+      <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum">InterpolatedModeSum (class in few.summation.interpolatedmodesum)</a>
+</li>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.inverse_lm">inverse_lm (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
+
+      <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.inverse_lm">(few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.inverse_lm">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.inverse_lm">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.inverse_lm">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.inverse_lm">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.inverse_lm">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.inverse_lm">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.inverse_lm">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -457,10 +835,24 @@
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.lmn_indices">lmn_indices (few.summation.directmodesum.DirectModeSum attribute)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.lmn_indices">lmn_indices (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.lmn_indices">(few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.lmn_indices">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.lmn_indices">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.lmn_indices">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.lmn_indices">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.lmn_indices">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.lmn_indices">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.lmn_indices">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -469,22 +861,78 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.m0mask">m0mask (few.summation.directmodesum.DirectModeSum attribute)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.m0mask">m0mask (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.m0mask">(few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.m0mask">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.m0mask">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.m0mask">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.m0mask">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
 </li>
-      </ul></li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.m0sort">m0sort (few.summation.directmodesum.DirectModeSum attribute)</a>
-
-      <ul>
-        <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.m0sort">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.m0mask">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.m0mask">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.m0mask">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
 </li>
       </ul></li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.m_zero_up_mask">m_zero_up_mask (few.summation.directmodesum.DirectModeSum attribute)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.m0sort">m0sort (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.m0sort">(few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.m0sort">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.m0sort">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.m0sort">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.m0sort">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.m0sort">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.m0sort">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.m0sort">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.m_zero_up_mask">m_zero_up_mask (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
+
+      <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.m_zero_up_mask">(few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.m_zero_up_mask">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.m_zero_up_mask">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.m_zero_up_mask">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.m_zero_up_mask">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.m_zero_up_mask">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.m_zero_up_mask">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.m_zero_up_mask">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.max_init_len">max_init_len (few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.max_num">max_num (few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+      <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.mode_selector">mode_selector (few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+
+      <ul>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.mode_selector">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.mode_selector">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
 </li>
       </ul></li>
       <li><a href="user/util.html#few.utils.modeselector.ModeSelector">ModeSelector (class in few.utils.modeselector)</a>
@@ -495,9 +943,19 @@
       <ul>
         <li><a href="user/amp.html#module-few.amplitude">few.amplitude</a>
 </li>
+        <li><a href="user/amp.html#module-few.amplitude.interp2dcubicspline">few.amplitude.interp2dcubicspline</a>
+</li>
+        <li><a href="user/amp.html#module-few.amplitude.romannet">few.amplitude.romannet</a>
+</li>
         <li><a href="user/sum.html#module-few.summation">few.summation</a>
 </li>
+        <li><a href="user/sum.html#module-few.summation.aakwave">few.summation.aakwave</a>
+</li>
         <li><a href="user/sum.html#module-few.summation.directmodesum">few.summation.directmodesum</a>
+</li>
+        <li><a href="user/sum.html#module-few.summation.fdinterp">few.summation.fdinterp</a>
+</li>
+        <li><a href="user/sum.html#module-few.summation.interpolatedmodesum">few.summation.interpolatedmodesum</a>
 </li>
         <li><a href="user/traj.html#module-few.trajectory">few.trajectory</a>
 </li>
@@ -522,40 +980,126 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.ndim">ndim (few.summation.directmodesum.DirectModeSum attribute)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.ndim">ndim (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.ndim">(few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.ndim">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.ndim">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.ndim">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.ndim">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
 </li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.ndim">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.ndim">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.ndim">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
+</li>
       </ul></li>
-      <li><a href="user/main.html#few.utils.baseclasses.Pn5AAK.needs_Y">needs_Y (few.utils.baseclasses.Pn5AAK attribute)</a>
+      <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.needs_Y">needs_Y (few.summation.aakwave.AAKSummation attribute)</a>
+
+      <ul>
+        <li><a href="user/main.html#few.utils.baseclasses.Pn5AAK.needs_Y">(few.utils.baseclasses.Pn5AAK attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.needs_Y">(few.waveform.AAKWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.needs_Y">(few.waveform.Pn5AAKWaveform attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.neural_layer">neural_layer (few.amplitude.romannet.RomanAmplitude attribute)</a>
 </li>
       <li><a href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.num_add_args">num_add_args (few.trajectory.inspiral.EMRIInspiral attribute)</a>
 </li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.num_m0">num_m0 (few.summation.directmodesum.DirectModeSum attribute)</a>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.num_layers">num_layers (few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.num_m0">num_m0 (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.num_m0">(few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.num_m0">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.num_m0">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.num_m0">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.num_m0">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
 </li>
         <li><a href="user/util.html#few.utils.modeselector.ModeSelector.num_m0">(few.utils.modeselector.ModeSelector attribute)</a>
 </li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.num_m0">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.num_m0">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.num_m0">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.num_m_1_up">num_m_1_up (few.summation.directmodesum.DirectModeSum attribute)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.num_m_1_up">num_m_1_up (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.num_m_1_up">(few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.num_m_1_up">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.num_m_1_up">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.num_m_1_up">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.num_m_1_up">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
 </li>
         <li><a href="user/util.html#few.utils.modeselector.ModeSelector.num_m_1_up">(few.utils.modeselector.ModeSelector attribute)</a>
 </li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.num_m_1_up">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.num_m_1_up">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.num_m_1_up">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
+</li>
       </ul></li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.num_m_zero_up">num_m_zero_up (few.summation.directmodesum.DirectModeSum attribute)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.num_m_zero_up">num_m_zero_up (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.num_m_zero_up">(few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.num_m_zero_up">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.num_m_zero_up">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.num_m_zero_up">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.num_m_zero_up">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
 </li>
         <li><a href="user/util.html#few.utils.modeselector.ModeSelector.num_m_zero_up">(few.utils.modeselector.ModeSelector attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.num_m_zero_up">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.num_m_zero_up">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.num_m_zero_up">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.num_modes_kept">num_modes_kept (few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+
+      <ul>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.num_modes_kept">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.num_modes_kept">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.num_teuk_modes">num_teuk_modes (few.amplitude.romannet.RomanAmplitude attribute)</a>
+
+      <ul>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.num_teuk_modes">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.num_teuk_modes">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.num_teuk_modes">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -572,7 +1116,21 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="user/main.html#few.utils.baseclasses.Pn5AAK">Pn5AAK (class in few.utils.baseclasses)</a>
 </li>
+      <li><a href="user/main.html#few.waveform.Pn5AAKWaveform">Pn5AAKWaveform (class in few.waveform)</a>
+</li>
       <li><a href="user/util.html#few.utils.utility.pointer_adjust">pointer_adjust() (in module few.utils.utility)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude">RomanAmplitude (class in few.amplitude.romannet)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.run_relu_arr">run_relu_arr (few.amplitude.romannet.RomanAmplitude attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -580,11 +1138,31 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/main.html#few.utils.baseclasses.Pn5AAK.sanity_check_angles">sanity_check_angles() (few.utils.baseclasses.Pn5AAK method)</a>
-</li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_gpu">sanity_check_gpu() (few.summation.directmodesum.DirectModeSum method)</a>
+      <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.sanity_check_angles">sanity_check_angles() (few.summation.aakwave.AAKSummation method)</a>
 
       <ul>
+        <li><a href="user/main.html#few.utils.baseclasses.Pn5AAK.sanity_check_angles">(few.utils.baseclasses.Pn5AAK method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.sanity_check_angles">(few.waveform.AAKWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.sanity_check_angles">(few.waveform.Pn5AAKWaveform method)</a>
+</li>
+      </ul></li>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_gpu">sanity_check_gpu() (few.amplitude.interp2dcubicspline.Interp2DAmplitude method)</a>
+
+      <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.sanity_check_gpu">(few.amplitude.romannet.RomanAmplitude method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.sanity_check_gpu">(few.summation.aakwave.AAKSummation method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_gpu">(few.summation.directmodesum.DirectModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.sanity_check_gpu">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.sanity_check_gpu">(few.summation.interpolatedmodesum.CubicSplineInterpolant method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_gpu">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.ParallelModuleBase.sanity_check_gpu">(few.utils.baseclasses.ParallelModuleBase method)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.sanity_check_gpu">(few.utils.baseclasses.SchwarzschildEccentric method)</a>
@@ -593,46 +1171,136 @@
 </li>
         <li><a href="user/util.html#few.utils.ylm.GetYlms.sanity_check_gpu">(few.utils.ylm.GetYlms method)</a>
 </li>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.sanity_check_gpu">(few.waveform.AAKWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.sanity_check_gpu">(few.waveform.FastSchwarzschildEccentricFlux method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.sanity_check_gpu">(few.waveform.Pn5AAKWaveform method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_gpu">(few.waveform.SchwarzschildEccentricWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.sanity_check_gpu">(few.waveform.SlowSchwarzschildEccentricFlux method)</a>
+</li>
       </ul></li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_init">sanity_check_init() (few.summation.directmodesum.DirectModeSum method)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_init">sanity_check_init() (few.amplitude.interp2dcubicspline.Interp2DAmplitude method)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.sanity_check_init">(few.amplitude.romannet.RomanAmplitude method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.sanity_check_init">(few.summation.aakwave.AAKSummation method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_init">(few.summation.directmodesum.DirectModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.sanity_check_init">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_init">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.Pn5AAK.sanity_check_init">(few.utils.baseclasses.Pn5AAK method)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.sanity_check_init">(few.utils.baseclasses.SchwarzschildEccentric method)</a>
 </li>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.sanity_check_init">(few.waveform.AAKWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.sanity_check_init">(few.waveform.FastSchwarzschildEccentricFlux method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.sanity_check_init">(few.waveform.Pn5AAKWaveform method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_init">(few.waveform.SchwarzschildEccentricWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.sanity_check_init">(few.waveform.SlowSchwarzschildEccentricFlux method)</a>
+</li>
       </ul></li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_traj">sanity_check_traj() (few.summation.directmodesum.DirectModeSum method)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_traj">sanity_check_traj() (few.amplitude.interp2dcubicspline.Interp2DAmplitude method)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.sanity_check_traj">(few.amplitude.romannet.RomanAmplitude method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.sanity_check_traj">(few.summation.aakwave.AAKSummation method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_traj">(few.summation.directmodesum.DirectModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.sanity_check_traj">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_traj">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.Pn5AAK.sanity_check_traj">(few.utils.baseclasses.Pn5AAK method)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.sanity_check_traj">(few.utils.baseclasses.SchwarzschildEccentric method)</a>
 </li>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.sanity_check_traj">(few.waveform.AAKWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.sanity_check_traj">(few.waveform.FastSchwarzschildEccentricFlux method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.sanity_check_traj">(few.waveform.Pn5AAKWaveform method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_traj">(few.waveform.SchwarzschildEccentricWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.sanity_check_traj">(few.waveform.SlowSchwarzschildEccentricFlux method)</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_viewing_angles">sanity_check_viewing_angles() (few.summation.directmodesum.DirectModeSum method)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_viewing_angles">sanity_check_viewing_angles() (few.amplitude.interp2dcubicspline.Interp2DAmplitude method)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.sanity_check_viewing_angles">(few.amplitude.romannet.RomanAmplitude method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.sanity_check_viewing_angles">(few.summation.directmodesum.DirectModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.sanity_check_viewing_angles">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.sanity_check_viewing_angles">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.sanity_check_viewing_angles">(few.utils.baseclasses.SchwarzschildEccentric method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.sanity_check_viewing_angles">(few.waveform.FastSchwarzschildEccentricFlux method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.sanity_check_viewing_angles">(few.waveform.SchwarzschildEccentricWaveformBase method)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.sanity_check_viewing_angles">(few.waveform.SlowSchwarzschildEccentricFlux method)</a>
 </li>
       </ul></li>
       <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric">SchwarzschildEccentric (class in few.utils.baseclasses)</a>
 </li>
+      <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase">SchwarzschildEccentricWaveformBase (class in few.waveform)</a>
+</li>
       <li><a href="user/util.html#few.utils.modeselector.ModeSelector.sensitivity_fn">sensitivity_fn (few.utils.modeselector.ModeSelector attribute)</a>
 </li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.special_index_map">special_index_map (few.summation.directmodesum.DirectModeSum attribute)</a>
+      <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux">SlowSchwarzschildEccentricFlux (class in few.waveform)</a>
+</li>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.special_index_map">special_index_map (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.special_index_map">(few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.special_index_map">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.special_index_map">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.special_index_map">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.special_index_map">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.special_index_map">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.special_index_map">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.special_index_map">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
 </li>
       </ul></li>
       <li><a href="user/traj.html#few.trajectory.inspiral.EMRIInspiral.specific_kwarg_keys">specific_kwarg_keys (few.trajectory.inspiral.EMRIInspiral attribute)</a>, <a href="user/traj.html#id1">[1]</a>
 </li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.sum">sum() (few.summation.directmodesum.DirectModeSum method)</a>
+      <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.spline">spline (few.summation.aakwave.AAKSummation attribute)</a>
+</li>
+      <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.sum">sum() (few.summation.aakwave.AAKSummation method)</a>
 
       <ul>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.sum">(few.summation.directmodesum.DirectModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.sum">(few.summation.fdinterp.FDInterpolatedModeSum method)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.sum">(few.summation.interpolatedmodesum.InterpolatedModeSum method)</a>
+</li>
         <li><a href="user/sum.html#few.utils.baseclasses.SummationBase.sum">(few.utils.baseclasses.SummationBase class method)</a>
 </li>
       </ul></li>
@@ -644,7 +1312,17 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.temp_mats">temp_mats (few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
       <li><a href="user/traj.html#few.utils.baseclasses.TrajectoryBase">TrajectoryBase (class in few.utils.baseclasses)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.transform_factor_inv">transform_factor_inv (few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.transform_matrix">transform_matrix (few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.transform_output">transform_output (few.amplitude.romannet.RomanAmplitude attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -652,9 +1330,21 @@
 <h2 id="U">U</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.use_gpu">use_gpu (few.summation.directmodesum.DirectModeSum attribute)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.use_gpu">use_gpu (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.use_gpu">(few.amplitude.romannet.RomanAmplitude attribute)</a>, <a href="user/amp.html#id0">[1]</a>
+</li>
+        <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.use_gpu">(few.summation.aakwave.AAKSummation attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.use_gpu">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.use_gpu">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.use_gpu">(few.summation.interpolatedmodesum.CubicSplineInterpolant attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.use_gpu">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.ParallelModuleBase.use_gpu">(few.utils.baseclasses.ParallelModuleBase attribute)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.SchwarzschildEccentric.use_gpu">(few.utils.baseclasses.SchwarzschildEccentric attribute)</a>
@@ -663,6 +1353,16 @@
 </li>
         <li><a href="user/util.html#few.utils.ylm.GetYlms.use_gpu">(few.utils.ylm.GetYlms attribute)</a>
 </li>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.use_gpu">(few.waveform.AAKWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.use_gpu">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.use_gpu">(few.waveform.Pn5AAKWaveform attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.use_gpu">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.use_gpu">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>
+</li>
       </ul></li>
   </ul></td>
 </tr></table>
@@ -670,14 +1370,24 @@
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.waveform">waveform (few.summation.directmodesum.DirectModeSum attribute)</a>
+      <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.waveform">waveform (few.summation.aakwave.AAKSummation attribute)</a>
 
       <ul>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.waveform">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.waveform">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.waveform">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/sum.html#few.utils.baseclasses.SummationBase.waveform">(few.utils.baseclasses.SummationBase attribute)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.waveform_generator">waveform_generator (few.summation.aakwave.AAKSummation attribute)</a>
+</li>
+      <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.weights">weights (few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
       <li><a href="user/util.html#few.utils.utility.wrapper">wrapper() (in module few.utils.utility)</a>
 </li>
   </ul></td>
@@ -688,9 +1398,21 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="user/util.html#few.utils.utility.xI_to_Y">xI_to_Y() (in module few.utils.utility)</a>
 </li>
-      <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.xp">xp (few.summation.directmodesum.DirectModeSum attribute)</a>
+      <li><a href="user/amp.html#few.amplitude.interp2dcubicspline.Interp2DAmplitude.xp">xp (few.amplitude.interp2dcubicspline.Interp2DAmplitude attribute)</a>
 
       <ul>
+        <li><a href="user/amp.html#few.amplitude.romannet.RomanAmplitude.xp">(few.amplitude.romannet.RomanAmplitude attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.aakwave.AAKSummation.xp">(few.summation.aakwave.AAKSummation attribute)</a>, <a href="user/sum.html#id0">[1]</a>
+</li>
+        <li><a href="user/sum.html#few.summation.directmodesum.DirectModeSum.xp">(few.summation.directmodesum.DirectModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.fdinterp.FDInterpolatedModeSum.xp">(few.summation.fdinterp.FDInterpolatedModeSum attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.xp">(few.summation.interpolatedmodesum.CubicSplineInterpolant attribute)</a>
+</li>
+        <li><a href="user/sum.html#few.summation.interpolatedmodesum.InterpolatedModeSum.xp">(few.summation.interpolatedmodesum.InterpolatedModeSum attribute)</a>
+</li>
         <li><a href="user/main.html#few.utils.baseclasses.ParallelModuleBase.xp">(few.utils.baseclasses.ParallelModuleBase attribute)</a>
 </li>
         <li><a href="user/main.html#few.utils.baseclasses.Pn5AAK.xp">(few.utils.baseclasses.Pn5AAK attribute)</a>
@@ -701,6 +1423,16 @@
 </li>
         <li><a href="user/util.html#few.utils.ylm.GetYlms.xp">(few.utils.ylm.GetYlms attribute)</a>, <a href="user/util.html#id1">[1]</a>
 </li>
+        <li><a href="user/main.html#few.waveform.AAKWaveformBase.xp">(few.waveform.AAKWaveformBase attribute)</a>, <a href="user/main.html#id22">[1]</a>, <a href="user/main.html#id23">[2]</a>
+</li>
+        <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.xp">(few.waveform.FastSchwarzschildEccentricFlux attribute)</a>, <a href="user/main.html#id4">[1]</a>
+</li>
+        <li><a href="user/main.html#few.waveform.Pn5AAKWaveform.xp">(few.waveform.Pn5AAKWaveform attribute)</a>, <a href="user/main.html#id10">[1]</a>, <a href="user/main.html#id14">[2]</a>, <a href="user/main.html#id9">[3]</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.xp">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>, <a href="user/main.html#id17">[1]</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.xp">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>, <a href="user/main.html#id8">[1]</a>
+</li>
       </ul></li>
   </ul></td>
 </tr></table>
@@ -708,8 +1440,20 @@
 <h2 id="Y">Y</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="user/sum.html#few.summation.interpolatedmodesum.CubicSplineInterpolant.y">y (few.summation.interpolatedmodesum.CubicSplineInterpolant property)</a>
+</li>
       <li><a href="user/util.html#few.utils.utility.Y_to_xI">Y_to_xI() (in module few.utils.utility)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="user/main.html#few.waveform.FastSchwarzschildEccentricFlux.ylm_gen">ylm_gen (few.waveform.FastSchwarzschildEccentricFlux attribute)</a>, <a href="user/main.html#id3">[1]</a>
+
+      <ul>
+        <li><a href="user/main.html#few.waveform.SchwarzschildEccentricWaveformBase.ylm_gen">(few.waveform.SchwarzschildEccentricWaveformBase attribute)</a>, <a href="user/main.html#id15">[1]</a>
+</li>
+        <li><a href="user/main.html#few.waveform.SlowSchwarzschildEccentricFlux.ylm_gen">(few.waveform.SlowSchwarzschildEccentricFlux attribute)</a>, <a href="user/main.html#id7">[1]</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 

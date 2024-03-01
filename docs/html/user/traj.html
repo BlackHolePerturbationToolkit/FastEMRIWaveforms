@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trajectory Package &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=01f34227"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -49,7 +51,35 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="main.html">Overall Waveform Models</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Trajectory Package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-few.trajectory.inspiral">Generic Inspiral Generator from C/C++ functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase.citation"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase.citation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase.get_inspiral"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase.get_inspiral()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase.__call__"><code class="docutils literal notranslate"><span class="pre">TrajectoryBase.__call__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-few.trajectory.inspiral">Generic Inspiral Generator from C/C++ functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.num_add_args"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.num_add_args</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.background"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.background</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.equatorial"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.equatorial</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.circular"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.circular</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.convert_Y"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.convert_Y</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.files"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.files</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.citations"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.citations</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.enforce_schwarz_sep"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.enforce_schwarz_sep</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.inspiral_generator"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.inspiral_generator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.func"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.func</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.specific_kwarg_keys"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.specific_kwarg_keys</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.attributes_EMRIInspiral"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.attributes_EMRIInspiral()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.inspiral_generator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.specific_kwarg_keys</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.citation"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.citation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.__call__"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.__call__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.trajectory.inspiral.EMRIInspiral.get_inspiral"><code class="docutils literal notranslate"><span class="pre">EMRIInspiral.get_inspiral()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="amp.html">Amplitude Package</a></li>
@@ -109,14 +139,14 @@
            <div itemprop="articleBody">
              
   <section id="module-few.trajectory">
-<span id="trajectory-package"></span><span id="trajectory-label"></span><h1>Trajectory Package<a class="headerlink" href="#module-few.trajectory" title="Permalink to this heading"></a></h1>
+<span id="trajectory-package"></span><span id="trajectory-label"></span><h1>Trajectory Package<a class="headerlink" href="#module-few.trajectory" title="Link to this heading"></a></h1>
 <p>The trajectory package houses modules that turn initial orbital parameters into
 phase-space trajectories (orbital phases and orbital parameters). These are
 determined by numerical integrators that interpolate over the relevant
 quantities.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="few.utils.baseclasses.TrajectoryBase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.baseclasses.</span></span><span class="sig-name descname"><span class="pre">TrajectoryBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.baseclasses.</span></span><span class="sig-name descname"><span class="pre">TrajectoryBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Base class used for trajectory modules.</p>
 <p>This class provides a flexible interface to various trajectory
@@ -124,13 +154,13 @@ implementations. Specific arguments to each trajectory can be found with
 each associated trajectory module discussed below.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="few.utils.baseclasses.TrajectoryBase.citation">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">citation</span></span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase.citation" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">citation</span></span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase.citation" title="Link to this definition"></a></dt>
 <dd><p>Return citation for this class</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.utils.baseclasses.TrajectoryBase.get_inspiral">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_inspiral</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase.get_inspiral" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_inspiral</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase.get_inspiral" title="Link to this definition"></a></dt>
 <dd><p>Inspiral Generator</p>
 <p>&#64;classmethod that requires a child class to have a get_inspiral method.</p>
 <dl class="field-list simple">
@@ -152,7 +182,7 @@ each associated trajectory module discussed below.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.utils.baseclasses.TrajectoryBase.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_coordinate_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spline_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DENSE_STEPPING</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_init_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_rk4</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase.__call__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_coordinate_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spline_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DENSE_STEPPING</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_init_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_rk4</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.baseclasses.TrajectoryBase.__call__" title="Link to this definition"></a></dt>
 <dd><p>Call function for trajectory interface.</p>
 <p>This is the function for calling the creation of the
 trajectory. Inputs define the output time spacing.</p>
@@ -216,10 +246,10 @@ Default is {}.</p></li>
 </dd></dl>
 
 <section id="module-few.trajectory.inspiral">
-<span id="generic-inspiral-generator-from-c-c-functions"></span><h2>Generic Inspiral Generator from C/C++ functions<a class="headerlink" href="#module-few.trajectory.inspiral" title="Permalink to this heading"></a></h2>
+<span id="generic-inspiral-generator-from-c-c-functions"></span><h2>Generic Inspiral Generator from C/C++ functions<a class="headerlink" href="#module-few.trajectory.inspiral" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.trajectory.inspiral.</span></span><span class="sig-name descname"><span class="pre">EMRIInspiral</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enforce_schwarz_sep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_new_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.trajectory.inspiral.</span></span><span class="sig-name descname"><span class="pre">EMRIInspiral</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enforce_schwarz_sep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_new_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrajectoryBase</span></code></a></p>
 <p>EMRI trajectory module.</p>
 <p>This module implements generic trajectories by integrating with an
@@ -268,7 +298,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.num_add_args">
-<span class="sig-name descname"><span class="pre">num_add_args</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.num_add_args" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">num_add_args</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.num_add_args" title="Link to this definition"></a></dt>
 <dd><p>Number of additional arguments for the ODE function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -279,7 +309,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.background">
-<span class="sig-name descname"><span class="pre">background</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.background" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">background</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.background" title="Link to this definition"></a></dt>
 <dd><p>“Either Schwarzschild” or “Kerr”.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -290,7 +320,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.equatorial">
-<span class="sig-name descname"><span class="pre">equatorial</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.equatorial" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">equatorial</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.equatorial" title="Link to this definition"></a></dt>
 <dd><p>True if equatorial orbit.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -301,7 +331,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.circular">
-<span class="sig-name descname"><span class="pre">circular</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.circular" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">circular</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.circular" title="Link to this definition"></a></dt>
 <dd><p>True if circular orbit.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -312,7 +342,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.convert_Y">
-<span class="sig-name descname"><span class="pre">convert_Y</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.convert_Y" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">convert_Y</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.convert_Y" title="Link to this definition"></a></dt>
 <dd><p>If the ODE is integrated in <span class="math notranslate nohighlight">\(Y\)</span> rather than
 <span class="math notranslate nohighlight">\(x_I\)</span>.</p>
 <dl class="field-list simple">
@@ -324,7 +354,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.files">
-<span class="sig-name descname"><span class="pre">files</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.files" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">files</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.files" title="Link to this definition"></a></dt>
 <dd><p>List of files necessary for this ODE.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -335,7 +365,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.citations">
-<span class="sig-name descname"><span class="pre">citations</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.citations" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">citations</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.citations" title="Link to this definition"></a></dt>
 <dd><p>list of additional citations for this ODE.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -346,7 +376,7 @@ class <a class="reference internal" href="main.html#few.utils.baseclasses.Pn5AAK
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.enforce_schwarz_sep">
-<span class="sig-name descname"><span class="pre">enforce_schwarz_sep</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.enforce_schwarz_sep" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">enforce_schwarz_sep</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.enforce_schwarz_sep" title="Link to this definition"></a></dt>
 <dd><p>Enforce the separatrix of Schwarzschild
 spacetime.</p>
 <dl class="field-list simple">
@@ -358,7 +388,7 @@ spacetime.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.inspiral_generator">
-<span class="sig-name descname"><span class="pre">inspiral_generator</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.inspiral_generator" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">inspiral_generator</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.inspiral_generator" title="Link to this definition"></a></dt>
 <dd><p>Inspiral C/C++ wrapped function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -369,7 +399,7 @@ spacetime.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.func">
-<span class="sig-name descname"><span class="pre">func</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.func" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">func</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.func" title="Link to this definition"></a></dt>
 <dd><p>ODE function name.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -380,7 +410,7 @@ spacetime.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.specific_kwarg_keys">
-<span class="sig-name descname"><span class="pre">specific_kwarg_keys</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.specific_kwarg_keys" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">specific_kwarg_keys</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.specific_kwarg_keys" title="Link to this definition"></a></dt>
 <dd><p>Specific keywords that need to transferred
 to the inspiral function that can be adjusted with each call.</p>
 <dl class="field-list simple">
@@ -400,10 +430,10 @@ to the inspiral function that can be adjusted with each call.</p>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.attributes_EMRIInspiral">
-<span class="sig-name descname"><span class="pre">attributes_EMRIInspiral</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.attributes_EMRIInspiral" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">attributes_EMRIInspiral</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.attributes_EMRIInspiral" title="Link to this definition"></a></dt>
 <dd><dl class="py attribute">
 <dt class="sig sig-object py" id="id0">
-<span class="sig-name descname"><span class="pre">inspiral_generator</span></span><a class="headerlink" href="#id0" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">inspiral_generator</span></span><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
 <dd><p>C++ class for inspiral trajectory generation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -414,7 +444,7 @@ to the inspiral function that can be adjusted with each call.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="id1">
-<span class="sig-name descname"><span class="pre">specific_kwarg_keys</span></span><a class="headerlink" href="#id1" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">specific_kwarg_keys</span></span><a class="headerlink" href="#id1" title="Link to this definition"></a></dt>
 <dd><p>specific kwargs from
 <a class="reference internal" href="#few.utils.baseclasses.TrajectoryBase" title="few.utils.baseclasses.TrajectoryBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.TrajectoryBase</span></code></a> that apply to this
 inspiral generator.</p>
@@ -429,13 +459,13 @@ inspiral generator.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.citation">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">citation</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.citation" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">citation</span></span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.citation" title="Link to this definition"></a></dt>
 <dd><p>Return citation for this class</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_coordinate_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spline_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DENSE_STEPPING</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_init_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_rk4</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.__call__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_coordinate_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spline_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DENSE_STEPPING</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_init_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_rk4</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.__call__" title="Link to this definition"></a></dt>
 <dd><p>Call function for trajectory interface.</p>
 <p>This is the function for calling the creation of the
 trajectory. Inputs define the output time spacing.</p>
@@ -498,7 +528,7 @@ Default is {}.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.trajectory.inspiral.EMRIInspiral.get_inspiral">
-<span class="sig-name descname"><span class="pre">get_inspiral</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Phi_phi0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Phi_theta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Phi_r0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.get_inspiral" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_inspiral</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Phi_phi0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Phi_theta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Phi_r0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.trajectory.inspiral.EMRIInspiral.get_inspiral" title="Link to this definition"></a></dt>
 <dd><p>Generate the inspiral.</p>
 <p>This is the function for calling the creation of the trajectory.
 Inputs define the output time spacing.</p>
