@@ -194,10 +194,10 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         iota = np.arccos(Y)
 
         # convert Y to x_I for fund freqs
-        xI = Y_to_xI(a, p, e, Y)
+        xI = Y_to_xI(a, p.copy(), e.copy(), Y.copy())
 
         # these are dimensionless and in radians
-        OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p, e, xI)
+        OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p.copy(), e.copy(), xI.copy())
 
         # dimensionalize the frequencies
         OmegaPhi, OmegaTheta, OmegaR = (
