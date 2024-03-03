@@ -280,7 +280,7 @@ class EMRIInspiral(TrajectoryBase):
             else:
                 out[:,3] = pex[2]
 
-        # handle no phase integration in ODE
+        # handle no phase integration in ODE   # TODO move to the integrate class? This is an integration method...
         if not self.integrate_ODE_phases:
         # if performing phase integration numerically, perform it here
             if self.numerically_integrate_phases:
@@ -298,10 +298,14 @@ class EMRIInspiral(TrajectoryBase):
                         ups_x_freq = ups_x.copy()
 
                 frequencies = np.array(get_fundamental_frequencies(a, ups_p.copy(), ups_e.copy(), ups_x_freq))/(M*MTSUN_SI)
-                # CUBIC
-                cs = CubicSpline(t_spline, frequencies.T)
-                phase_array = cs.antiderivative()(t).T
-                
+                if temp_kwargs["use_rk4"]:
+                    cs = CubicSpline(t_spline, frequencies.T)
+                    phase_array = cs.antiderivative()(t).T
+                else:
+                    # get derivatives  TODO ELQ
+                    pdot = np.asarray([self.inspiral_generator.integrator.get_derivatives(tr_h.copy()) for tr_h in out[:,1:4]])[:,0] / (M*MTSUN_SI)
+                    cs = CubicSpline(-1*ups_p, (frequencies/pdot), axis=1)
+                    phase_array = -1*cs.antiderivative()(-1*ups_p)
                 # to check whether we are outside the interpolation range
                 # if self.integrate_constants_of_motion:
                     # print("ELQ deriv check")
