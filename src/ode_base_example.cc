@@ -256,6 +256,85 @@ SchwarzEccFlux::~SchwarzEccFlux()
     delete interps->Ldot;
     delete interps;
 }
+
+SchwarzEccFlux_nofrequencies::SchwarzEccFlux_nofrequencies(std::string few_dir)
+{
+    interps = new interp_params;
+
+    // prepare the data
+    // python will download the data if
+    // the user does not have it in the correct place
+    load_and_interpolate_flux_data(interps, few_dir);
+    // load_and_interpolate_amp_vec_norm_data(&amp_vec_norm_interp, few_dir);
+}
+#define SchwarzEccFlux_nofrequencies_num_add_args 0
+#define SchwarzEccFlux_nofrequencies_spinless
+#define SchwarzEccFlux_nofrequencies_equatorial
+#define SchwarzEccFlux_nofrequencies_file1 FluxNewMinusPNScaled_fixed_y_order.dat
+__deriv__ void SchwarzEccFlux_nofrequencies::deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args)
+{
+    double p = y[0];
+    double e = y[1];
+    double Y = y[2];
+
+    double Omega_phi, Omega_theta, Omega_r;
+
+    if ((6.0 + 2. * e) > p)
+    {
+        ydot[0] = 0.0;
+        ydot[1] = 0.0;
+        ydot[2] = 0.0;
+        return;
+    }
+
+    SchwarzschildGeoCoordinateFrequencies(&Omega_phi, &Omega_r, p, e);
+    Omega_theta = Omega_phi;
+
+    double y1 = log((p - 2. * e - 2.1));
+
+    // evaluate ODEs, starting with PN contribution, then interpolating over remaining flux contribution
+
+    double yPN = pow((Omega_phi), 2. / 3.);
+
+    double EdotPN = (96 + 292 * Power(e, 2) + 37 * Power(e, 4)) / (15. * Power(1 - Power(e, 2), 3.5)) * pow(yPN, 5);
+    double LdotPN = (4 * (8 + 7 * Power(e, 2))) / (5. * Power(-1 + Power(e, 2), 2)) * pow(yPN, 7. / 2.);
+
+    double Edot = -epsilon * (interps->Edot->eval(y1, e) * pow(yPN, 6.) + EdotPN);
+
+    double Ldot = -epsilon * (interps->Ldot->eval(y1, e) * pow(yPN, 9. / 2.) + LdotPN);
+
+    double pdot = (-2 * (Edot * Sqrt((4 * Power(e, 2) - Power(-2 + p, 2)) / (3 + Power(e, 2) - p)) * (3 + Power(e, 2) - p) * Power(p, 1.5) + Ldot * Power(-4 + p, 2) * Sqrt(-3 - Power(e, 2) + p))) / (4 * Power(e, 2) - Power(-6 + p, 2));
+
+    double edot;
+
+    // handle e = 0.0
+    if (e > 0.)
+    {
+        edot = -((Edot * Sqrt((4 * Power(e, 2) - Power(-2 + p, 2)) / (3 + Power(e, 2) - p)) * Power(p, 1.5) *
+                      (18 + 2 * Power(e, 4) - 3 * Power(e, 2) * (-4 + p) - 9 * p + Power(p, 2)) +
+                  (-1 + Power(e, 2)) * Ldot * Sqrt(-3 - Power(e, 2) + p) * (12 + 4 * Power(e, 2) - 8 * p + Power(p, 2))) /
+                 (e * (4 * Power(e, 2) - Power(-6 + p, 2)) * p));
+    }
+    else
+    {
+        edot = 0.0;
+    }
+
+    double xdot = 0.0;
+
+    ydot[0] = pdot;
+    ydot[1] = edot;
+    ydot[2] = xdot;
+}
+
+// destructor
+SchwarzEccFlux_nofrequencies::~SchwarzEccFlux_nofrequencies()
+{
+
+    delete interps->Edot;
+    delete interps->Ldot;
+    delete interps;
+}
 //--------------------------------------------------------------------------------
 Vector fill_vector(std::string fp)
 {
