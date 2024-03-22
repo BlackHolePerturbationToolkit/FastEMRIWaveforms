@@ -212,24 +212,6 @@ elif args.gsl_lib is not None or args.gsl_include is not None:
 else:
     add_gsl = False
 
-fp_out_name = "few/utils/constants.py"
-fp_in_name = "include/global.h"
-
-# develop few.utils.constants.py
-with open(fp_out_name, "w") as fp_out:
-    with open(fp_in_name, "r") as fp_in:
-        lines = fp_in.readlines()
-        for line in lines:
-            if len(line.split()) == 3:
-                if line.split()[0] == "#define":
-                    try:
-                        _ = float(line.split()[2])
-                        string_out = line.split()[1] + " = " + line.split()[2] + "\n"
-                        fp_out.write(string_out)
-
-                    except ValueError as e:
-                        continue
-
 
 # if installing for CUDA, build Cython extensions for gpu modules
 if run_cuda_install:
@@ -265,7 +247,7 @@ if run_cuda_install:
                 # "-lineinfo",
             ],  # for debugging
         },
-        include_dirs=[numpy_include, CUDA["include"], "include"],
+        include_dirs=[numpy_include, CUDA["include"], "./include"],
     )
 
     if args.ccbin is not None:
@@ -295,7 +277,7 @@ cpu_extension = dict(
     language="c++",
     runtime_library_dirs=[],
     extra_compile_args={"gcc": ["-std=c++11"]},  # '-g'
-    include_dirs=[numpy_include, "include"],
+    include_dirs=[numpy_include, "./include"],
     library_dirs=None,
 )
 
@@ -346,21 +328,6 @@ fund_freqs_ext = Extension(
     **cpu_extension,
 )
 
-# Install cpu versions of gpu modules
-
-# need to copy cuda files to cpp for this special compiler we are using
-# also copy pyx files to cpu version
-src = "src/"
-
-cp_cu_files = ["matmul", "interpolate", "gpuAAK"]
-cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap"]
-
-for fp in cp_cu_files:
-    shutil.copy(src + fp + ".cu", src + fp + ".cpp")
-
-for fp in cp_pyx_files:
-    shutil.copy(src + fp + ".pyx", src + fp + "_cpu.pyx")
-
 matmul_cpu_ext = Extension(
     "pymatmul_cpu", sources=["src/matmul.cpp", "src/pymatmul_cpu.pyx"], **cpu_extension
 )
@@ -404,30 +371,14 @@ else:
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-# setup version file
-with open("README.md", "r") as fh:
-    lines = fh.readlines()
-
-for line in lines:
-    if line.startswith("Current Version"):
-        version_string = line.split("Current Version: ")[1].split("\n")[0]
-
-with open("few/_version.py", "w") as f:
-    f.write("__version__ = '{}'".format(version_string))
-
-# prepare the ode files
-from few.utils.odeprepare import ode_prepare
-
-ode_prepare()
-
 setup(
-    name="few",
+    name="fastemriwaveforms",
     author="Michael Katz",
     author_email="mikekatz04@gmail.com",
     description="Fast and accurate EMRI Waveforms.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version=version_string,
+    version="1.5.5",
     url="https://github.com/mikekatz04/FastEMRIWaveforms",
     ext_modules=extensions,
     packages=["few", "few.utils", "few.trajectory", "few.amplitude", "few.summation"],
@@ -447,11 +398,3 @@ setup(
     zip_safe=False,
     python_requires=">=3.6",
 )
-
-
-# remove src files created in this setup (cpp, pyx cpu files for gpu modules)
-for fp in cp_cu_files:
-    os.remove(src + fp + ".cpp")
-
-for fp in cp_pyx_files:
-    os.remove(src + fp + "_cpu.pyx")
