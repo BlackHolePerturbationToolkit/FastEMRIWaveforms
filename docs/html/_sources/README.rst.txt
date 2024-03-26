@@ -32,34 +32,13 @@ properly cite specific modules.
 Getting Started
 ---------------
 
-Below is a quick set of instructions to get you started with ``few``.
-
-0) `Install Anaconda <https://docs.anaconda.com/anaconda/install/>`__ if
-   you do not have it.
-
-1) Clone the repository.
+Install with pip (CPU only for now):
 
 ::
 
-   git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
-   cd FastEMRIWaveforms
+   pip install fastemriwaveforms
 
-2) Install FEW into a new conda environment called “few_env”. (**Note**:
-   If you already have performed installation and you are updating FEW
-   after a ``git pull``, then run ``pip install .`` rather than the
-   following command.)
-
-::
-
-   bash install.sh
-
-3) Load the environment:
-
-::
-
-   conda activate few_env
-
-4) In a python file or notebook:
+In a python file or notebook:
 
 ::
 
@@ -101,6 +80,14 @@ hosted on `Zenodo <https://zenodo.org/record/3981654#.XzS_KRNKjlw>`__.
 
 Installing
 ~~~~~~~~~~
+
+Install with pip (CPU only for now):
+
+::
+
+   pip install fastemriwaveforms
+
+To install from source:
 
 0) `Install Anaconda <https://docs.anaconda.com/anaconda/install/>`__ if
    you do not have it.
