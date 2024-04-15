@@ -86,9 +86,16 @@ alpha = 4.0
 deltap = 0.05
 beta = alpha - deltap
 
-folder = 'data_for_lorenzo/fluxes/*'
-fluxfiles = [el for el in glob.glob(folder) if 'xI' in el]
-# fluxfiles = [el for el in glob.glob(folder) if 'xI1' in el]
+filepath = 'data_for_lorenzo/fluxes/a{:.2f}_xI{:.3f}.flux'
+
+avals = np.r_[np.linspace(0.,0.9,10),0.95,0.99]
+avals = np.r_[-np.flip(avals)[:-1],avals]
+
+a_in = abs(avals)
+xi_in = np.sign(avals)*1.
+xi_in[xi_in ==0] = 1
+
+fluxfiles = [filepath.format(ah, xh) for ah, xh in zip(a_in, xi_in)]
 
 for ff in fluxfiles:
     imp = read_txt(ff)
@@ -105,54 +112,24 @@ for ff in fluxfiles:
     Ldot.append( np.abs(LzdotInf_tot+LzdotH_tot) / Ldotpn(a, p, e, pLSO) )
     plso.append(pLSO )
 
-    # plt.figure()
-    # plt.title('edot')
-    # cb= plt.tricontourf(u,w, Ldot[-1])
-    # plt.colorbar(cb)
-    # plt.xlabel('u')
-    # plt.ylabel('w')
-    # plt.savefig(f"flux_check/{a[0]*xi[0]}_ldot.pdf")
-    # plt.close()
+# get grid from file and construct with meshgrid if any checking needed
+_, _, _, _, grid_u, _, grid_w = np.loadtxt("data_for_lorenzo/flux.grid").T
+unique_u_grid = np.flip(np.unique(grid_u))
+unique_w_grid = np.unique(grid_w)
+unique_a_grid = avals
 
-flat_a = np.round(np.asarray(a_tot).flatten(),decimals=5)
-flat_u = np.round(np.asarray(u_tot).flatten(),decimals=5)
-flat_w = np.round(np.asarray(w_tot).flatten(),decimals=5)
+flat_a, flat_w, flat_u = np.meshgrid(unique_a_grid,unique_w_grid, unique_u_grid, indexing='ij')
 
-flat_pdot = np.asarray(pdot).flatten()
-flat_edot = np.asarray(edot).flatten()
-flat_Edot = np.asarray(Edot).flatten()
-flat_Ldot = np.asarray(Ldot).flatten()
-
-def get_pdot(aa,uu,ww):
-    mask = (aa==flat_a)*(uu==flat_u)*(ww==flat_w)
-    return flat_pdot[mask][0]
-
-def get_edot(aa,uu,ww):
-    mask = (aa==flat_a)*(uu==flat_u)*(ww==flat_w)
-    return flat_edot[mask][0]
-
-def get_Edot(aa,uu,ww):
-    mask = (aa==flat_a)*(uu==flat_u)*(ww==flat_w)
-    return flat_Edot[mask][0]
-
-def get_Ldot(aa,uu,ww):
-    mask = (aa==flat_a)*(uu==flat_u)*(ww==flat_w)
-    return flat_Ldot[mask][0]
-
-
-a_unique = np.unique(flat_a)
-u_unique = np.unique(flat_u)
-w_unique = np.unique(flat_w)
-
-x1 = a_unique.copy()
-x2 = u_unique.copy()
-x3 = w_unique.copy()
+x1 = avals.copy()
+x2 = np.unique(flat_w)
+x3 = np.unique(flat_u)
 X = [x1, x2, x3]
-for get,lab in zip([get_pdot,get_edot,get_Edot,get_Ldot], ['pdot', 'edot','Endot', 'Ldot']):
-    reshapedF = np.asarray([[[get(el1,el2,el3) for el3 in x3] for el2 in x2] for el1 in x1])
 
+for flux, lab in zip([pdot, edot, Edot, Ldot], ['pdot', 'edot','Endot', 'Ldot']):
+    reshapedF = np.asarray(flux).reshape(flat_u.shape)
+    reshapedF = np.flip(reshapedF, axis=2)  # u must be increasing
     # flux interpolation
-    lower_bcs = ["not-a-knot","not-a-knot","clamped"]
+    lower_bcs = ["not-a-knot","clamped","not-a-knot"]
     upper_bcs = ["not-a-knot","not-a-knot","not-a-knot"]
     InterpFlux = TPI.TP_Interpolant_ND(X, F=reshapedF, lower_bcs=lower_bcs, upper_bcs=upper_bcs)
 
@@ -166,15 +143,15 @@ for i,el in enumerate(X):
     # np.savetxt(f'few/files/x{i}.dat', el)
     save_txt(el, f'few/files/x{i}.dat')
 
-sepX = np.load("few/files/sepX.npy")
-sepVals = np.load("few/files/sepVals.npy")
+# sepX = np.load("few/files/sepX.npy")
+# sepVals = np.load("few/files/sepVals.npy")
 
 # flux interpolation
-InterpSep = TPI.TP_Interpolant_ND([sepX[0], sepX[1]], F=sepVals, lower_bcs=["not-a-knot","clamped"])
+# InterpSep = TPI.TP_Interpolant_ND([sepX[0], sepX[1]], F=sepVals, lower_bcs=["not-a-knot","clamped"])
 
-coeff = InterpSep.GetSplineCoefficientsND().flatten()
+# coeff = InterpSep.GetSplineCoefficientsND().flatten()
 
-save_txt(coeff, f'few/files/coeff_sep.dat')
+# save_txt(coeff, f'few/files/coeff_sep.dat')
 
-for i,el in enumerate(sepX):
-    save_txt(el, f'few/files/sep_x{i}.dat')
+# for i,el in enumerate(sepX):
+#     save_txt(el, f'few/files/sep_x{i}.dat')
