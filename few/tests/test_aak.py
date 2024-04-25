@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import warnings
 
-from few.waveform import Pn5AAKWaveform
+from few.waveform import Pn5AAKWaveform,GenerateEMRIWaveform
 from few.utils.utility import get_overlap, get_mismatch
 
 try:
@@ -71,3 +71,13 @@ class AAKWaveformTest(unittest.TestCase):
 
             mm = get_mismatch(waveform, waveform_cpu, use_gpu=gpu_available)
             self.assertLess(mm, 1e-10)
+
+        few_gen = GenerateEMRIWaveform("Pn5AAKWaveform",use_gpu=gpu_available)
+
+        Phi_phi0 = np.pi/2
+        Phi_theta0 = 0.0
+        Phi_r0 = np.pi/2
+        h_p_c_phase = few_gen(M, mu, a, p0, e0, Y0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0, T=2.0, dt=dt)
+        h_p_c_phase2 = few_gen(M, mu, a, p0, e0, Y0, dist, qS, phiS, qK, phiK, Phi_phi0+0.5, Phi_theta0, Phi_r0, T=2.0, dt=dt)
+        
+        print(get_overlap(h_p_c_phase.get(), h_p_c_phase2.get()))
