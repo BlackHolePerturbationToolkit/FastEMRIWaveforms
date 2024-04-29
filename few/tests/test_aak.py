@@ -80,4 +80,4 @@ class AAKWaveformTest(unittest.TestCase):
         h_p_c_phase = few_gen(M, mu, a, p0, e0, Y0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0, T=2.0, dt=dt)
         h_p_c_phase2 = few_gen(M, mu, a, p0, e0, Y0, dist, qS, phiS, qK, phiK, Phi_phi0+0.5, Phi_theta0, Phi_r0, T=2.0, dt=dt)
         
-        print(get_overlap(h_p_c_phase.get(), h_p_c_phase2.get()))
+        # print(get_overlap(h_p_c_phase.get(), h_p_c_phase2.get()))

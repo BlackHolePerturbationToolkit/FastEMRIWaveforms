@@ -62,7 +62,8 @@ cdef class pyDerivative:
 
     def __call__(self, epsilon, a, np.ndarray[ndim=1, dtype=np.float64_t] y, np.ndarray[ndim=1, dtype=np.float64_t] additional_args):
         
-        cdef np.ndarray[ndim=1, dtype=np.float64_t] ydot = np.zeros(self.f.nparams, dtype=np.float64)
+        cdef int nparams = len(y)
+        cdef np.ndarray[ndim=1, dtype=np.float64_t] ydot = np.zeros(nparams, dtype=np.float64)
         
         self.g.get_derivatives(&ydot[0], &y[0], epsilon, a, &additional_args[0])
 

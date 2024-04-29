@@ -95,6 +95,11 @@ class ModuleTest(unittest.TestCase):
             M = 1e6
             mu = 100.0
             
+            if 'nofrequencies' in el:
+                insp_kw["use_rk4"] = True
+            else:
+                insp_kw["use_rk4"] = False
+            
             # plt.figure()
             # tic = time.perf_counter()
             for i in range(100):
@@ -102,7 +107,7 @@ class ModuleTest(unittest.TestCase):
                 p0 = np.random.uniform(9.0,12.0)
                 e0 = np.random.uniform(0.1, 0.5)
                 a = np.random.uniform(0.01, 0.98)
-                print(a,p0,e0)
+                # print(a,p0,e0)
                 # run trajectory        
                 t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, np.abs(a), p0, e0, np.sign(a)*1.0, **insp_kw)
                 # plt.plot(p,e,label=f'a={a:.2e}',alpha=0.7)

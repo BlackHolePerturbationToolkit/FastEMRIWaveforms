@@ -336,3 +336,103 @@ class EMRIInspiral(TrajectoryBase):
                 out = np.hstack((out, phase_array))
 
         return tuple(out.T.copy())
+
+
+    def get_rhs_ode(
+        self,
+        M,
+        mu,
+        a,
+        y1,
+        y2,
+        y3,
+        *args,
+        Phi_phi0=0.0,
+        Phi_theta0=0.0,
+        Phi_r0=0.0,
+        **kwargs,
+    ):
+        """Generate the right hand side of the ordinary differential equation.
+
+        This is the function for calling the creation of the trajectory.
+        Inputs define the output time spacing.
+
+        This class can be used on its own. However, it is generally accessed
+        through the __call__ method associated with its base class:
+        (:class:`few.utils.baseclasses.TrajectoryBase`).
+
+        args:
+            M (double): Mass of massive black hole in solar masses.
+            mu (double): Mass of compact object in solar masses.
+            a (double): Dimensionless spin of massive black hole.
+            p0 (double): Initial semi-latus rectum in terms units of M (p/M).
+            e0 (double): Initial eccentricity (dimensionless).
+            x0 (double): Initial :math:`\cos{\iota}`. **Note**: This value is different from :math:`x_I`
+            used in the relativistic waveforms.
+            *args (list, placeholder): Added for flexibility.
+            Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
+                Default is 0.0.
+            Phi_theta0 (double, optional): Initial phase for :math:`\Phi_\Theta`.
+                Default is 0.0.
+            Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
+                Default is 0.0.
+            **kwargs (dict, optional): kwargs passed from parent.
+
+        Returns:
+            tuple: Tuple of (t, p, e, x, Phi_phi, Phi_theta, Phi_r).
+
+        """
+
+        fill_value = 1e-6
+
+        # fix for specific requirements of different odes
+        background = self.inspiral_generator.backgrounds[0]
+        equatorial = self.inspiral_generator.equatorial[0]
+        circular = self.inspiral_generator.circular[0]
+
+        p0 = y1
+        e0 = y2
+        x0 = y3
+
+        if background == "Schwarzschild":
+            a = 0.0
+        elif a < fill_value:
+            if background == "Kerr" and not equatorial:
+                warnings.warn(
+                    "Our model with spin breaks near a = 0. Adjusting to a = 1e-6.".format(
+                        fill_value
+                    )
+                )
+                a = fill_value
+
+        if equatorial:
+            if abs(x0) != 1:
+                raise RuntimeError("Magnitude of orbital inclination cosine x0 needs to be one for equatorial inspiral.")
+
+        if x0 == -1:
+            Phi_phi0 = -1 * Phi_phi0  # flip initial azimuthal phase for retrograde
+
+        if circular:
+            e0 = 0.0
+
+        # if integrating constants of motion, convert from pex to ELQ now
+        if self.integrate_constants_of_motion:
+            if self.inspiral_generator.convert_Y:
+                x0 = Y_to_xI(a, p0, e0, x0)
+            y1, y2, y3 = get_kerr_geo_constants_of_motion(a, p0, e0, x0)
+
+        args_in = np.asarray(args)
+
+        # correct for issue in Cython pass
+        if len(args_in) == 0:
+            args_in = np.array([0.0])
+
+        if self.integrate_ODE_phases:
+            y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
+        else:
+            y0 = np.array([y1, y2, y3])
+   
+        # this will return the derivatives in coordinate time
+        out  = self.get_derivative(mu/M, a, y0, args_in)
+        
+        return out

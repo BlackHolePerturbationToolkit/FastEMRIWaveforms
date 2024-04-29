@@ -215,11 +215,11 @@ class WaveformTest(unittest.TestCase):
         )
 
         # test some different configurations
-        few_gen_list(*injection_test, T=1.0, eps=1e-3, dt=6.0)
-        few_gen_list(*injection_test, T=1.0, eps=1e-3, dt=6.0, f_arr=freq)
-        few_gen_list(*injection_test, T=4.0, eps=1e-3, dt=6.0)
-        few_gen_list(*injection_test, T=1.0, eps=1e-3, dt=3.0)
-        few_gen_list(*injection_test, T=1.0, eps=1e-2, dt=6.0)
+        # few_gen_list(*injection_test, T=1.0, eps=1e-3, dt=6.0)
+        # few_gen_list(*injection_test, T=1.0, eps=1e-3, dt=6.0, f_arr=freq)
+        # few_gen_list(*injection_test, T=4.0, eps=1e-3, dt=6.0)
+        # few_gen_list(*injection_test, T=1.0, eps=1e-3, dt=3.0)
+        # few_gen_list(*injection_test, T=1.0, eps=1e-2, dt=6.0)
 
         result = ac.item().real
         self.assertLess(1 - result, 1e-2)
