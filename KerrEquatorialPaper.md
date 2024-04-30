@@ -19,7 +19,7 @@ To do in terms of writing:
 To do in terms of coding:
 3) increase the dataset extend lmn boundary
 To do in terms of plots and results: 
-4) check SNR as a function of the parameter space and mode selection threshold
+4) check SNR as a function of the parameter space, mode selection threshold, and radial index n (where to place the boundary in the radial index)
 
 Waveform:
 To do in terms of plots and results: 
@@ -30,3 +30,11 @@ To do in terms of coding:
 3) compare against the AAK, resolve the SSB frame
 4) PE with mode selection and response, to investigate sky localization
 5) redo mode selection threshold analysis as in previous paper
+
+Minutes Apr. 29
+- check of flux data with respect to the old one in Schwarzschild
+- dividing the flux by the leading order is better than subtracting from Christian and Phil experience 
+- calculate $\dot \omega / \omega^2$ and see where it is of order one to understand where to stop (Phil)
+- regular grid or irregular timing (Christian)
+- ask Scott how the convergence is done
+- tricubic spline and filling memory experience from Zach https://github.com/znasipak/bhpwave/tree/tricubic
