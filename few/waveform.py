@@ -94,7 +94,6 @@ class GenerateEMRIWaveform:
             self.waveform_generator = waveform_class(*args, **kwargs)
 
         self.frame = frame
-
         self.return_list = return_list
 
         # setup arguments to remove based on the specific waveform
@@ -311,6 +310,7 @@ class GenerateEMRIWaveform:
         # add additional arguments to waveform interface
         args += add_args
 
+          
         # get waveform
         h = (
             self.waveform_generator(*args, **{**initial_phases, **kwargs})
@@ -587,7 +587,11 @@ class SchwarzschildEccentricWaveformBase(
             dt=dt,
             **self.inspiral_kwargs,
         )
-
+        # If we decide to integrate backwards, reverse the phases
+        if self.inspiral_kwargs['integrate_backwards'] == True:
+            Phi_phi = Phi_phi[0] + Phi_phi[-1] - Phi_phi 
+            Phi_theta =  Phi_theta[0] + Phi_theta[-1] - Phi_theta 
+            Phi_r =  Phi_r[0] + Phi_r[-1] - Phi_r 
         # makes sure p and e are generally within the model
         self.sanity_check_traj(p, e)
 
@@ -731,8 +735,9 @@ class SchwarzschildEccentricWaveformBase(
                 # remove modes if include_minus_m is False
                 ylms_in[fix_include_ms] = 0.0 + 1j * 0.0
                 # normalize by flux produced in trajectory
-                if self.normalize_amps:
-                    raise NotImplementedError
+                # TODO: Check the thing below. I had to uncomment it.
+                # if self.normalize_amps:
+                #     raise NotImplementedError
 
             # mode selection based on input module
             else:
@@ -1293,7 +1298,11 @@ class KerrEquatorialEccentricWaveformBase(
             dt=dt,
             **self.inspiral_kwargs,
         )
-
+        # If we decide to integrate backwards, transform phase variables
+        if self.inspiral_kwargs['integrate_backwards'] == True:
+            Phi_phi = Phi_phi[0] + Phi_phi[-1] - Phi_phi 
+            Phi_theta =  Phi_theta[0] + Phi_theta[-1] - Phi_theta 
+            Phi_r =  Phi_r[0] + Phi_r[-1] - Phi_r 
         # makes sure p and e are generally within the model
         self.sanity_check_traj(p, e)
 
@@ -1904,16 +1913,26 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
             dt=dt,
             **self.inspiral_kwargs,
         )
+        # Need to reverse the phases. 
+        if self.inspiral_kwargs['integrate_backwards'] == True:
+            Phi_phi = Phi_phi[0] + Phi_phi[-1] - Phi_phi 
+            Phi_theta =  Phi_theta[0] + Phi_theta[-1] - Phi_theta 
+            Phi_r =  Phi_r[0] + Phi_r[-1] - Phi_r 
+
+            # Need to keep the number of modes equivalent
+            initial_e = e[-1]
+            self.num_modes_kept = self.nmodes = int(30 * initial_e)
+        else:
+            # number of modes to use (from original AAK model)
+            self.num_modes_kept = self.nmodes = int(30 * e0)
+            if self.num_modes_kept < 4:
+                self.num_modes_kept = self.nmodes = 4
 
         # makes sure p, Y, and e are generally within the model
         self.sanity_check_traj(p, e, Y)
 
         self.end_time = t[-1]
 
-        # number of modes to use (from original AAK model)
-        self.num_modes_kept = self.nmodes = int(30 * e0)
-        if self.num_modes_kept < 4:
-            self.num_modes_kept = self.nmodes = 4
 
         waveform = self.create_waveform(
             t,
