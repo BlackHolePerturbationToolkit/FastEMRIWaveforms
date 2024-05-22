@@ -116,6 +116,7 @@ class EMRIInspiral(TrajectoryBase):
         test_new_version=True,
         convert_to_pex=True,
         numerically_integrate_phases=True,
+        integrate_backwards=False, 
         **kwargs,
     ):
         few_dir = dir_path + "/../../"
@@ -146,6 +147,7 @@ class EMRIInspiral(TrajectoryBase):
         self.integrate_constants_of_motion = self.inspiral_generator.integrate_constants_of_motion
         self.integrate_ODE_phases = self.inspiral_generator.integrate_ODE_phases
         self.convert_to_pex = convert_to_pex
+        self.integrate_backwards = integrate_backwards 
         self.numerically_integrate_phases = numerically_integrate_phases
 
     def attributes_EMRIInspiral(self):
@@ -257,6 +259,9 @@ class EMRIInspiral(TrajectoryBase):
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
 
+        # Integrating backwards
+        temp_kwargs.update({"integrate_backwards":self.integrate_backwards})
+
         args_in = np.asarray(args)
 
         # correct for issue in Cython pass
@@ -270,6 +275,7 @@ class EMRIInspiral(TrajectoryBase):
    
         # this will return in coordinate time
         out = self.inspiral_generator.run_inspiral(M, mu, a, y0, args_in, **temp_kwargs)
+        breakpoint()
         if self.integrate_constants_of_motion and self.convert_to_pex:
             out_ELQ = out.copy()
             pex = ELQ_to_pex(a, out[:,1].copy(), out[:,2].copy(), out[:,3].copy())
