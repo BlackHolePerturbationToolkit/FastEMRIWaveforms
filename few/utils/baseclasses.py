@@ -919,6 +919,7 @@ class TrajectoryBase(ABC):
         err=1e-10,
         use_rk4=False,
         fix_t=False,
+        integrate_backwards=False,
         **kwargs,
     ):
         """Call function for trajectory interface.
@@ -983,6 +984,7 @@ class TrajectoryBase(ABC):
         kwargs["err"] = err
         kwargs["DENSE_STEPPING"] = DENSE_STEPPING
         kwargs["use_rk4"] = use_rk4
+        kwargs["integrate_backwards"] = integrate_backwards
 
         # convert from years to seconds
         T = T * YRSID_SI
