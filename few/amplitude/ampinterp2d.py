@@ -146,7 +146,6 @@ class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
         # Create link to my files! 
 
         data_directory = "/work/scratch/data/burkeol/Kerr_data/files/"
-        breakpoint()
         data = {}
         # get information about this specific model from the file
         # with h5py.File(self.few_dir + "few/files/" + fp, "r") as f:
