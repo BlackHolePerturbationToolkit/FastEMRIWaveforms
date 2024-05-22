@@ -29,7 +29,7 @@
 
 #define pn5_Y
 #define pn5_citation1 Pn5_citation
-__deriv__ void pn5(double ydot[], const double y[], double epsilon, double a, double *additional_args)
+__deriv__ void pn5(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args)
 {
     // evaluate ODEs
     double p = y[0];
@@ -55,6 +55,14 @@ __deriv__ void pn5(double ydot[], const double y[], double epsilon, double a, do
     ne = 10;
     double Ydot = epsilon * dYdt8H_5PNe10(a, p, e, Y, Nv, ne);
 
+    // if we wish to integrate backwards
+    // work with the frequencies later
+    if (integrate_backwards == 1.0){
+        pdot *= -1;
+        edot *= -1;
+        Ydot *= -1;
+    }
+
     ydot[0] = pdot;
     ydot[1] = edot;
     ydot[2] = Ydot;
@@ -66,7 +74,7 @@ __deriv__ void pn5(double ydot[], const double y[], double epsilon, double a, do
 #define pn5_nofrequencies_Y
 #define pn5_nofrequencies_disable_integrate_phases
 #define pn5_nofrequencies_citation1 Pn5_nofrequencies_citation
-__deriv__ void pn5_nofrequencies(double ydot[], const double y[], double epsilon, double a, double *additional_args)
+__deriv__ void pn5_nofrequencies(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args)
 {
     // evaluate ODEs
     double p = y[0];
@@ -88,6 +96,14 @@ __deriv__ void pn5_nofrequencies(double ydot[], const double y[], double epsilon
     ne = 10;
     double Ydot = epsilon * dYdt8H_5PNe10(a, p, e, Y, Nv, ne);
 
+    // if we wish to integrate backwards
+    // work with the frequencies later
+    if (integrate_backwards == 1.0){
+        pdot *= -1;
+        edot *= -1;
+        Ydot *= -1;
+    }
+
     ydot[0] = pdot;
     ydot[1] = edot;
     ydot[2] = Ydot;
@@ -97,7 +113,7 @@ __deriv__ void pn5_nofrequencies(double ydot[], const double y[], double epsilon
 #define pn5_ELQ_nofrequencies_disable_integrate_phases
 #define pn5_ELQ_nofrequencies_integrate_constants_of_motion
 #define pn5_ELQ_nofrequencies_citation1 Pn5_ELQ_nofrequencies_citation
-__deriv__ void pn5_ELQ_nofrequencies(double ydot[], const double y[], double epsilon, double a, double *additional_args)
+__deriv__ void pn5_ELQ_nofrequencies(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args)
 {
     // evaluate ODEs
     double E = y[0];
@@ -121,6 +137,14 @@ __deriv__ void pn5_ELQ_nofrequencies(double ydot[], const double y[], double eps
     Nv = 7;
     ne = 10;
     double Qdot = dCdt8H_5PNe10(a, p, e, Y, Nv, ne);
+
+    // if we wish to integrate backwards
+    // work with the frequencies later
+    if (integrate_backwards == 1.0){
+        Edot *= -1;
+        Lzdot *= -1;
+        Qdot *= -1;
+    }
 
     ydot[0] = epsilon * Edot;
     ydot[1] = epsilon * Lzdot;
@@ -189,7 +213,7 @@ SchwarzEccFlux::SchwarzEccFlux(std::string few_dir)
 #define SchwarzEccFlux_spinless
 #define SchwarzEccFlux_equatorial
 #define SchwarzEccFlux_file1 FluxNewMinusPNScaled_fixed_y_order.dat
-__deriv__ void SchwarzEccFlux::deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args)
+__deriv__ void SchwarzEccFlux::deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args)
 {
     double p = y[0];
     double e = y[1];
@@ -239,6 +263,12 @@ __deriv__ void SchwarzEccFlux::deriv_func(double ydot[], const double y[], doubl
     }
 
     double xdot = 0.0;
+
+    // Integrate backwards
+    if (integrate_backwards == 1.0){
+        pdot *= -1;
+        edot *= -1;
+    }
 
     ydot[0] = pdot;
     ydot[1] = edot;
@@ -271,7 +301,7 @@ SchwarzEccFlux_nofrequencies::SchwarzEccFlux_nofrequencies(std::string few_dir)
 #define SchwarzEccFlux_nofrequencies_spinless
 #define SchwarzEccFlux_nofrequencies_equatorial
 #define SchwarzEccFlux_nofrequencies_file1 FluxNewMinusPNScaled_fixed_y_order.dat
-__deriv__ void SchwarzEccFlux_nofrequencies::deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args)
+__deriv__ void SchwarzEccFlux_nofrequencies::deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args)
 {
     double p = y[0];
     double e = y[1];
@@ -321,6 +351,12 @@ __deriv__ void SchwarzEccFlux_nofrequencies::deriv_func(double ydot[], const dou
     }
 
     double xdot = 0.0;
+
+    // Integrate backwards
+    if (integrate_backwards == 1.0){
+        pdot *= -1;
+        edot *= -1;
+    }
 
     ydot[0] = pdot;
     ydot[1] = edot;
@@ -397,7 +433,7 @@ KerrEccentricEquatorial::KerrEccentricEquatorial(std::string few_dir)
 // #define KerrEccentricEquatorial_Y
 #define KerrEccentricEquatorial_equatorial
 #define KerrEccentricEquatorial_num_add_args 0
-__deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args)
+__deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args)
 {
 
     double Omega_phi, Omega_theta, Omega_r;
@@ -494,6 +530,11 @@ __deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y
 
     double xdot = 0.0;
 
+    // Integrate backwards
+    if (integrate_backwards == 1.0){
+        pdot *= -1;
+        edot *= -1;
+    }
     ydot[0] = pdot;
     ydot[1] = edot;
     ydot[2] = xdot;
@@ -550,7 +591,7 @@ KerrEccentricEquatorial_nofrequencies::KerrEccentricEquatorial_nofrequencies(std
 // #define KerrEccentricEquatorial_Y
 #define KerrEccentricEquatorial_nofrequencies_equatorial
 #define KerrEccentricEquatorial_nofrequencies_num_add_args 0
-__deriv__ void KerrEccentricEquatorial_nofrequencies::deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args)
+__deriv__ void KerrEccentricEquatorial_nofrequencies::deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args)
 {
 
     double p = y[0];
@@ -595,6 +636,11 @@ __deriv__ void KerrEccentricEquatorial_nofrequencies::deriv_func(double ydot[], 
 
     double xdot = 0.0;
 
+    // Integrate backwards
+    if (integrate_backwards == 1.0){
+        pdot *= -1;
+        edot *= -1;
+    }
     ydot[0] = pdot;
     ydot[1] = edot;
     ydot[2] = xdot;
@@ -637,7 +683,7 @@ KerrEccentricEquatorial_ELQ::KerrEccentricEquatorial_ELQ(std::string few_dir)
 // #define KerrEccentricEquatorial_Y
 #define KerrEccentricEquatorial_ELQ_equatorial
 #define KerrEccentricEquatorial_ELQ_num_add_args 0
-__deriv__ void KerrEccentricEquatorial_ELQ::deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args)
+__deriv__ void KerrEccentricEquatorial_ELQ::deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args)
 {
 
     double Omega_phi, Omega_theta, Omega_r;
@@ -709,7 +755,13 @@ __deriv__ void KerrEccentricEquatorial_ELQ::deriv_func(double ydot[], const doub
     // double EdotPN = epsilon * dEdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
     // double LdotPN = epsilon * dLdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
     // cout << " a=" << a << " p=" << p << " e=" << e << " psep=" << p_sep  << " Edot=" << Edot << " Ldot=" << Ldot << "EdotPNratio= " << Edot/EdotPN << "LdotPNratio= " << Ldot/LdotPN << endl;
-    
+ 
+     // Integrate backwards
+    if (integrate_backwards == 1.0){
+        Edot *= -1;
+        Ldot *= -1;
+    }   
+
     ydot[0] = Edot;
     ydot[1] = Ldot;
     ydot[2] = Qdot;
@@ -762,7 +814,7 @@ KerrEccentricEquatorial_ELQ_nofrequencies::KerrEccentricEquatorial_ELQ_nofrequen
 // #define KerrEccentricEquatorial_Y
 #define KerrEccentricEquatorial_ELQ_nofrequencies_equatorial
 #define KerrEccentricEquatorial_ELQ_nofrequencies_num_add_args 0
-__deriv__ void KerrEccentricEquatorial_ELQ_nofrequencies::deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args)
+__deriv__ void KerrEccentricEquatorial_ELQ_nofrequencies::deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args)
 {
 
     // double Omega_phi, Omega_theta, Omega_r;
@@ -831,7 +883,12 @@ __deriv__ void KerrEccentricEquatorial_ELQ_nofrequencies::deriv_func(double ydot
     // double EdotPN = epsilon * dEdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
     // double LdotPN = epsilon * dLdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
     // cout << " a=" << a << " p=" << p << " e=" << e << " psep=" << p_sep  << " Edot=" << Edot << " Ldot=" << Ldot << "EdotPNratio= " << Edot/EdotPN << "LdotPNratio= " << Ldot/LdotPN << endl;
-    
+
+     // Integrate backwards
+    if (integrate_backwards == 1.0){
+        Edot *= -1;
+        Ldot *= -1;
+    }   
     ydot[0] = Edot;
     ydot[1] = Ldot;
     ydot[2] = Qdot;
