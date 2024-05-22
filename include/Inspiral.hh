@@ -26,6 +26,7 @@ public:
     double epsilon;
     double a = 0.0;
     double q;
+    bool integrate_backwards;
     string func_name;
     std::vector<ODECarrier> odes;
     double *additional_args;
@@ -112,7 +113,7 @@ public:
 
     InspiralCarrier(int nparams_, int num_add_args_);
     void dealloc();
-    void add_parameters_to_holder(double M, double mu, double a, double *additional_args);
+    void add_parameters_to_holder(double M, double mu, double a, bool integrate_backwards, double *additional_args);
     void set_integrator_kwargs(double err_set, bool DENSE_STEP_SET, bool RK8_SET);
     void initialize_integrator();
     void destroy_integrator_information();
