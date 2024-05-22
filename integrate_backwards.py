@@ -47,7 +47,7 @@ inspiral_kwargs = {
 M = 1e6
 mu = 1e1
 a = 0.85
-p_f = 8.50  # Final semi-latus rectum
+p_f = 3.5  # Final semi-latus rectum
 e_f = 0.15  # Final eccentricity
 iota0_f = 1.0  # Final inclination
 Y_f = np.cos(iota0_f)
@@ -56,7 +56,9 @@ Phi_phi0 = 1.0
 Phi_theta0 = 2.0
 Phi_r0 = 3.0
 
-dt = 10.0
+dt = 2.0
+
+p_sep = get_separatrix(a,e_f,1.0)
 # waveform_choice = input("Do you want Kerr inspirals? [y/n]")
 # if waveform_choice == "y":
 #     waveform_class = 'Pn5AAKWaveform'
@@ -105,6 +107,11 @@ traj_forwards = EMRIInspiral(func = trajectory_class)
 initial_p = p_back[-1]
 initial_e = e_back[-1]
 initial_Y = Y_back[-1]
+print("Initial parameters would be:")
+print("p = ",initial_p)
+print("e = ",initial_e)
+print("Y = ",initial_Y)
+print("")
 
 # Generate forwards integration
 t_forward, p_forward, e_forward, Y_forward, Phi_phi_forward, Phi_r_forward, Phi_theta_forward = traj_forwards(M, mu, a, initial_p, initial_e, initial_Y, 
@@ -192,15 +199,16 @@ t = np.arange(0,n_t*dt,dt)
 plot_direc = "/home/ad/burkeol/work/Current_Projects/FastEMRIWaveforms_backwards/waveform_plots"
 plt.plot(t/24/60/60,h_p_back_int[::-1], c = 'blue', alpha = 1, linestyle = 'dashed', label = 'integrated backwards')
 plt.plot(t[0:-1]/24/60/60,h_p_forward_int[1:], c = 'red', alpha = 0.5, label = 'integrated forwards')
+title_str = r'Kerr: $(M, \mu, a, p_f, e_f, T) = (1e6, {}, {}, {}, {}, {} \, \text{{year}})$'.format(mu,a, p_f, e_f, 1)
+plt.title(title_str, fontsize = 12)
 plt.xlabel(r'Time $t$ [days]')
 plt.ylabel(r'$h_{p}$')
-plt.title(r'Comparison')
 # plt.xlim([365-0.01,365])
 plt.xlim([365 - 0.01,365])
 plt.legend()
 plt.grid()
 plt.show()
-plt.savefig(plot_direc + "/waveform_back_forward_Schwarz.pdf", bbox_inches="tight")
+plt.savefig(plot_direc + "/waveform_back_forward_Kerr.pdf", bbox_inches="tight")
 plt.clf()
 
 breakpoint()
