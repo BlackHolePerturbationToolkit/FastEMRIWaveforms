@@ -993,6 +993,15 @@ class TrajectoryBase(ABC):
         out = self.get_inspiral(*args, **kwargs)
 
         # get time separate from the rest of the params
+        # t = out[0]
+        # params = out[1:]
+
+        if integrate_backwards == True:
+            out_list = list(out)
+            for i in range(4,7):
+                out_list[i] = out_list[i][0] + out_list[i][-1] - out_list[i]
+            out = tuple(out_list)
+
         t = out[0]
         params = out[1:]
 
