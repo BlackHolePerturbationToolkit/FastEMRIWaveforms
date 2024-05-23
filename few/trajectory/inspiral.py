@@ -304,8 +304,15 @@ class EMRIInspiral(TrajectoryBase):
                 else:
                     # get derivatives  TODO ELQ
                     pdot = np.asarray([self.inspiral_generator.integrator.get_derivatives(tr_h.copy()) for tr_h in out[:,1:4]])[:,0] / (M*MTSUN_SI)
-                    cs = CubicSpline(-1*ups_p, (frequencies/pdot), axis=1)
-                    phase_array = -1*cs.antiderivative()(-1*ups_p)
+                    if kwargs['integrate_backwards'] == True: 
+                        # If we decide to integrate backwards, dot(p) > 0 (p increasing) and p also increasing. 
+                        cs = CubicSpline(ups_p, (frequencies/pdot), axis=1)
+                        phase_array = cs.antiderivative()(ups_p) # Integrate directly like a savage. Nice magic Christian.  
+                    else:
+                        cs = CubicSpline(-1*ups_p, (frequencies/pdot), axis=1)
+                        phase_array = -1*cs.antiderivative()(-1*ups_p)
+                
+                
                 # to check whether we are outside the interpolation range
                 # if self.integrate_constants_of_motion:
                     # print("ELQ deriv check")
