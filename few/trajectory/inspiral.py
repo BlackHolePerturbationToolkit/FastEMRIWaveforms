@@ -308,6 +308,8 @@ class EMRIInspiral(TrajectoryBase):
                         # If we decide to integrate backwards, dot(p) > 0 (p increasing) and p also increasing. 
                         cs = CubicSpline(ups_p, (frequencies/pdot), axis=1)
                         phase_array = cs.antiderivative()(ups_p) # Integrate directly like a savage. Nice magic Christian.  
+
+                        phase_array = np.array([phase_array[i][-1] - phase_array[i] for i in range(len(phase_array))])
                     else:
                         cs = CubicSpline(-1*ups_p, (frequencies/pdot), axis=1)
                         phase_array = -1*cs.antiderivative()(-1*ups_p)
