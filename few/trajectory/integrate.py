@@ -223,6 +223,30 @@ class Integrate:
         if self.bad_num >= self.bad_limit:
             raise ValueError("error, reached bad limit.\n")
 
+    def integrate_backwards(self, t0: float, y0: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        t = t0
+        h = self.dt_dimensionless
+
+        t_prev = t0
+        y_prev = y0.copy()
+        y = y0.copy()
+
+        # add the first point
+        self.save_point(0., y)
+        
+        while t < self.tmax_dimensionless:
+            status, t, h = self.integrator.take_step(t, h, y, self.tmax_dimensionless)
+                               
+            # should not be needed but is safeguard against stepping past maximum allowable time
+            # the last point in the trajectory will be at t = tmax
+            if t > self.tmax_dimensionless:
+                break
+
+            self.save_point(t * self.Msec, y)  # adds time in seconds
+
+            t_prev = t
+            y_prev[:] = y[:]
+
     def integrate(self, t0: float, y0: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         t = t0
         h = self.dt_dimensionless
@@ -342,13 +366,18 @@ class Integrate:
         self.bool_integrate_backwards = kwargs['integrate_backwards'] 
         self.integrator.add_parameters_to_holder(M, mu, a, self.bool_integrate_backwards, additional_args)
         t0 = 0.0
-        self.integrate(t0, y0)
-
+        if self.bool_integrate_backwards == True:
+            self.integrate_backwards(t0, y0)
+        else:
+            self.integrate(t0,y0)
         self.integrator.destroy_integrator_information()
-
         # Create a warning in case we start to close to separatrix. 
-        p_sep = get_separatrix(self.a, y0[1], y0[2])
-        if (y0[0] - p_sep) < DIST_TO_SEPARATRIX + INNER_THRESHOLD and self.bool_integrate_backwards == True:
+        orb_params = [y0[0],y0[1],y0[2]]
+        if self.integrate_constants_of_motion == True:
+            orb_params = ELQ_to_pex(self.a, y0[0], y0[1], y0[2])
+        
+        p_sep = get_separatrix(self.a, orb_params[1], orb_params[2])
+        if (orb_params[0] - p_sep) < DIST_TO_SEPARATRIX + INNER_THRESHOLD and self.bool_integrate_backwards == True:
             # Raise a warning
             warnings.warn("Warning: initial p_f is too close to separatrix. May not be compatible with forwards integration.")
 
