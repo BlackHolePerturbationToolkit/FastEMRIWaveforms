@@ -339,13 +339,19 @@ class Integrate:
             self.num_add_args == 0 and len(additional_args) == 1
         )
 
-
-        bool_integrate_backwards = kwargs['integrate_backwards']
-        self.integrator.add_parameters_to_holder(M, mu, a, bool_integrate_backwards, additional_args)
+        self.bool_integrate_backwards = kwargs['integrate_backwards'] 
+        self.integrator.add_parameters_to_holder(M, mu, a, self.bool_integrate_backwards, additional_args)
         t0 = 0.0
         self.integrate(t0, y0)
 
         self.integrator.destroy_integrator_information()
+
+        # Create a warning in case we start to close to separatrix. 
+        p_sep = get_separatrix(self.a, y0[1], y0[2])
+        if (y0[0] - p_sep) < DIST_TO_SEPARATRIX + INNER_THRESHOLD and self.bool_integrate_backwards == True:
+            # Raise a warning
+            warnings.warn("Warning: initial p_f is too close to separatrix. May not be compatible with forwards integration.")
+
 
         return self.trajectory
 
@@ -369,7 +375,7 @@ class APEXIntegrate(Integrate):
     ) -> str:  # Stop the inspiral when close to the separatrix
         p_sep = self.get_p_sep(y)
         p = y[0]
-        if p - p_sep < DIST_TO_SEPARATRIX + INNER_THRESHOLD:
+        if p - p_sep < DIST_TO_SEPARATRIX + INNER_THRESHOLD and self.bool_integrate_backwards == False:
             return "stop"
 
         # if p < 10.0 and self.moves_check < 1:
@@ -416,7 +422,7 @@ class APEXIntegrate(Integrate):
                 # Same function in the integrator
                 ydot = self.integrator.get_derivatives(y)
                 t_temp, y_temp, temp_stop = self.end_stepper(t, y, ydot, factor)
-                if temp_stop > DIST_TO_SEPARATRIX:
+                if temp_stop > DIST_TO_SEPARATRIX or self.bool_integrate_backwards == True:
                     # update points
                     t = t_temp
                     y[:] = y_temp[:]
