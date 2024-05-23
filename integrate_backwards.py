@@ -47,8 +47,8 @@ inspiral_kwargs = {
 M = 1e6
 mu = 1e1
 a = 0.85
-p_f = 2.75  # Final semi-latus rectum
-e_f = 0.0001  # Final eccentricity
+p_f = 9.75  # Final semi-latus rectum
+e_f = 0.1  # Final eccentricity
 iota0_f = 0.8  # Final inclination
 Y_f = np.cos(iota0_f)
 T = 1 
@@ -71,13 +71,13 @@ print("Separatrix is", p_sep)
 #     print("Eccentric Schwarzschild trajectory and waveform")
 
 # trajectory_class = "pn5"
-# trajectory_class = "pn5_nofrequencies"
+trajectory_class = "pn5_nofrequencies"
 # trajectory_class = "SchwarzEccFlux"
-trajectory_class = "KerrEccentricEquatorial"
+# trajectory_class = "KerrEccentricEquatorial"
 # trajectory_class = "KerrEccentricEquatorial_nofrequencies"
 # trajectory_class = "KerrEccentricEquatorial_ELQ"
 
-Y_f = 1.0
+# Y_f = 1.0
 # a = 0.0
 
 inspiral_kwargs_back = {
@@ -124,8 +124,6 @@ t_forward, p_forward, e_forward, Y_forward, Phi_phi_forward, Phi_r_forward, Phi_
                                              Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, T=T, **inspiral_kwargs_forward)
 print("Integrating forwards took", time.time() - start, "seconds")
 print("Finished trajectories")
-breakpoint()
-quit()
 
 p_back_interp = interp1d(max(t_back) - t_back,p_back, kind = 'cubic')
 p_check_forward = p_back_interp(t_forward)
@@ -139,11 +137,6 @@ phiK = 0.8
 dist = 1.0
 mich = False
 
-# Set up inspiral_kwargs - note use of "integrate_backwards"
-inspiral_kwargs = {
-    "max_init_len": int(1e3),
-    "DENSE_STEPPING": 0,
-    "err": 1e-10}
 
 # keyword arguments for inspiral generator (RomanAmplitude)
 # amplitude_kwargs = {
@@ -165,11 +158,12 @@ sum_kwargs = {
     }
 # Generate waveform using backwards integration
 # waveform_class = 'Pn5AAKWaveform'
-# waveform_class = 'FastSchwarzschildEccentricFlux'
+waveform_class = 'FastSchwarzschildEccentricFlux'
+# waveform_class = 'KerrEccentricEquatorialFlux'
 wave_generator_backwards = GenerateEMRIWaveform(waveform_class, 
                                                 inspiral_kwargs = inspiral_kwargs_back,
                                                 sum_kwargs = sum_kwargs,
-                                                amplitude_kwargs = amplitude_kwargs,
+                                                # amplitude_kwargs = amplitude_kwargs,
                                                 use_gpu=True)
 
 waveform_back = wave_generator_backwards(M, mu, a, p_f, e_f, Y_f, dist, qS, phiS, qK, phiK, 
@@ -180,14 +174,16 @@ print("Finished backwards integration")
 # Extract plus polarised waveform
 h_p_back_int = cp.asnumpy(waveform_back.real)
 
-# Now change inspiral_kwargs so we integrate forwards
-inspiral_kwargs['integrate_backwards'] = False
-
+inspiral_kwargs = {
+    "DENSE_STEPPING": 0,  # Set to 1 if we want a sparsely sampled trajectory
+    "max_init_len": int(1e3), # all of the trajectories will be well under len = 1000
+    "err" : 1e-10
+}
 # Generate waveform using forwards integration 
 wave_generator_forwards = GenerateEMRIWaveform(waveform_class,
-                                               inspiral_kwargs=inspiral_kwargs_forward, 
+                                               inspiral_kwargs=inspiral_kwargs, 
                                                sum_kwargs=sum_kwargs, 
-                                               amplitude_kwargs = amplitude_kwargs,
+                                            #    amplitude_kwargs = amplitude_kwargs,
                                                use_gpu=True)
 waveform_forward = wave_generator_forwards(M, mu, a, initial_p, initial_e, initial_Y, dist, qS, phiS, qK, phiK,
                           Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, dt=dt, T=T)
