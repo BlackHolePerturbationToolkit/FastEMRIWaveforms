@@ -130,44 +130,53 @@ X = [x1, x2, x3]
 
 for flux, lab in zip([pdot, edot, Edot, Ldot], ['pdot', 'edot','Endot', 'Ldot']):
     reshapedF = np.asarray(flux).reshape(flat_u.shape)
-    # reshapedF = np.flip(reshapedF, axis=2)  # u must be increasing
-    bc = "E(3)"#"natural","not-a-knot","clamped", "E(3)", "natural-alt"
-    interpTR = TricubicSpline(x1, x2, x3, reshapedF, bc=bc)
-    interpTP = TPI.TP_Interpolant_ND(X, F=reshapedF)
-    
-    # test the interpolation against each other
-    # Ntest = 100
-    # x1_test = np.linspace(avals.min(), avals.max(), Ntest)
-    # x2_test = np.linspace(flat_w.min(), flat_w.max(), Ntest)
-    # x3_test = np.linspace(flat_u.min(), flat_u.max(), Ntest)
-    Ntest=1000
-    x1_test = np.random.uniform(avals.min(), avals.max(), Ntest)
-    x2_test = np.random.uniform(flat_w.min(), flat_w.max(), Ntest)
-    x3_test = np.random.uniform(flat_u.min(), flat_u.max(), Ntest)
-    X_test = [x1_test, x2_test, x3_test]
-    # basic check for the interpolation
-    # for ii in range(10):
-    #     print(interpTP((x1[ii], x2[ii], x3[ii]))-reshapedF[ii,ii,ii] , interpTR(x1[ii], x2[ii], x3[ii])-reshapedF[ii,ii,ii])
-    eval_TP = np.array([interpTP((x1_test[ii], x2_test[ii], x3_test[ii])) for ii in range(Ntest)])
-    eval_TR = np.array([interpTR(x1_test[ii], x2_test[ii], x3_test[ii]) for ii in range(Ntest)])
-    difference_interpolants = eval_TR - eval_TP
+    reshapedF = np.flip(reshapedF, axis=2)  # u must be increasing
+    save_txt(reshapedF.flatten(), f'../../few/files/TricubicData_' + lab +'.dat')
 
-    # make a surface plot along x2,x3 axis of the error
-    plt.figure()
-    plt.scatter(x2_test, x3_test, c=np.log10(np.abs(difference_interpolants)), s=1)
-    plt.colorbar(label='log10 error')
-    plt.title(f"{lab} normalized")
-    plt.xlabel('w=sqrt(e)')
-    plt.ylabel('u~log(p-pLSO)')
-    plt.savefig(f"./{lab}_TPvsTR"+bc+"_error.png")
-    
-    # plot the two evaluations against each other
-    # plt.figure()
-    # plt.semilogy(x2_test, np.abs(eval_TP), '.', label='TP',alpha=0.3)
-    # plt.semilogy(x2_test, np.abs(eval_TR), 'x', label='TR',alpha=0.3)
-    # plt.legend()
-    # plt.title(f"{lab} normalized")
-    # plt.xlabel('w=sqrt(e)')
-    # plt.ylabel('interpolated value')
-    # plt.savefig(f"InterpolationComparison/{lab}_eval.png")
-    
+for i,el in enumerate(X):
+    save_txt(el, f'../../few/files/TricubicData_x{i}.dat')
+
+for flux, lab in zip([pdot, edot, Edot, Ldot], ['pdot', 'edot','Endot', 'Ldot']):
+    reshapedF = np.asarray(flux).reshape(flat_u.shape)
+    reshapedF = np.flip(reshapedF, axis=2)  # u must be increasing
+
+    for bc in ["E(3)","not-a-knot"]: #"natural","not-a-knot","clamped", "E(3)", "natural-alt"
+        interpTR = TricubicSpline(x1, x2, x3, reshapedF, bc=bc)
+        interpTP = TPI.TP_Interpolant_ND(X, F=reshapedF)
+        
+        # test the interpolation against each other
+        # Ntest = 100
+        # x1_test = np.linspace(avals.min(), avals.max(), Ntest)
+        # x2_test = np.linspace(flat_w.min(), flat_w.max(), Ntest)
+        # x3_test = np.linspace(flat_u.min(), flat_u.max(), Ntest)
+        Ntest=1000
+        x1_test = np.random.uniform(avals.min(), avals.max(), Ntest)
+        x2_test = np.random.uniform(flat_w.min(), flat_w.max(), Ntest)
+        x3_test = np.random.uniform(flat_u.min(), flat_u.max(), Ntest)
+        X_test = [x1_test, x2_test, x3_test]
+        # basic check for the interpolation
+        # for ii in range(10):
+        #     print(interpTP((x1[ii], x2[ii], x3[ii]))-reshapedF[ii,ii,ii] , interpTR(x1[ii], x2[ii], x3[ii])-reshapedF[ii,ii,ii])
+        eval_TP = np.array([interpTP((x1_test[ii], x2_test[ii], x3_test[ii])) for ii in range(Ntest)])
+        eval_TR = np.array([interpTR(x1_test[ii], x2_test[ii], x3_test[ii]) for ii in range(Ntest)])
+        difference_interpolants = eval_TR - eval_TP
+
+        # make a surface plot along x2,x3 axis of the error
+        plt.figure()
+        plt.scatter(x2_test, x3_test, c=np.log10(np.abs(difference_interpolants)), s=1)
+        plt.colorbar(label='log10 error')
+        plt.title(f"{lab} normalized")
+        plt.xlabel('w=sqrt(e)')
+        plt.ylabel('u~log(p-pLSO)')
+        plt.savefig(f"./{lab}_TPvsTR"+bc+"_error.png")
+        
+        # plot the two evaluations against each other
+        # plt.figure()
+        # plt.semilogy(x2_test, np.abs(eval_TP), '.', label='TP',alpha=0.3)
+        # plt.semilogy(x2_test, np.abs(eval_TR), 'x', label='TR',alpha=0.3)
+        # plt.legend()
+        # plt.title(f"{lab} normalized")
+        # plt.xlabel('w=sqrt(e)')
+        # plt.ylabel('interpolated value')
+        # plt.savefig(f"InterpolationComparison/{lab}_eval.png")
+        

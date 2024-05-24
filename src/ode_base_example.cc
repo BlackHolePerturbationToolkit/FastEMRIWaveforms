@@ -12,6 +12,7 @@
 #include <cmath>
 
 #include "Interpolant.h"
+#include "spline.hpp"
 #include "global.h"
 #include "Utility.hh"
 
@@ -390,7 +391,23 @@ KerrEccentricEquatorial::KerrEccentricEquatorial(std::string few_dir)
     Edot_interp = new TensorInterpolant(x1, x2, x3, coeffEn);
     Ldot_interp = new TensorInterpolant(x1, x2, x3, coeffL);
 
-    // cout << "pdot=" << pdot_interp<< pdot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
+    //
+    fp = few_dir + "few/files/TricubicData_x0.dat";
+    Vector tri_x1 = fill_vector(fp);
+    fp = few_dir + "few/files/TricubicData_x1.dat";
+    Vector tri_x2 = fill_vector(fp);
+    fp = few_dir + "few/files/TricubicData_x2.dat";
+    Vector tri_x3 = fill_vector(fp);
+
+    fp = few_dir + "few/files/TricubicData_pdot.dat";
+    Vector tri_pdot = fill_vector(fp);
+    fp = few_dir + "few/files/TricubicData_edot.dat";
+    Vector tri_edot = fill_vector(fp);
+
+    tric_p_interp = new TricubicSpline(tri_x1, tri_x2, tri_x3, tri_pdot, 3);
+    tric_e_interp = new TricubicSpline(tri_x1, tri_x2, tri_x3, tri_edot, 3);
+    cout << "pdot_TP=" << pdot_interp->eval(0.9, 0.4088810015999615, 0.7700000000000000) << '\n'<< endl;
+    cout << "pdot_TR=" << tric_p_interp->evaluate(0.9, 0.4088810015999615, 0.7700000000000000) << '\n'<< endl;
     // cout << "edot=" << edot_interp<< edot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
 }
 
@@ -461,9 +478,12 @@ __deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y
     // p, e
 
     double signed_a = a*x; // signed a for interpolant
-
-    pdot_out = pdot_interp->eval(signed_a, w, u) * ((8. * pow(1. - pow(e, 2), 1.5) * (8. + 7. * pow(e, 2))) / (5. * p * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
-    edot_out = edot_interp->eval(signed_a, w, u) * ((pow(1. - pow(e, 2), 1.5) * (304. + 121. * pow(e, 2))) / (15. * pow(p, 2) * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
+    
+    
+    // pdot_out = pdot_interp->eval(signed_a, w, u) * ((8. * pow(1. - pow(e, 2), 1.5) * (8. + 7. * pow(e, 2))) / (5. * p * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
+    pdot_out = tric_p_interp->evaluate(signed_a, w, u) * ((8. * pow(1. - pow(e, 2), 1.5) * (8. + 7. * pow(e, 2))) / (5. * p * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
+    // edot_out = edot_interp->eval(signed_a, w, u) * ((pow(1. - pow(e, 2), 1.5) * (304. + 121. * pow(e, 2))) / (15. * pow(p, 2) * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
+    edot_out = tric_e_interp->evaluate(signed_a, w, u) * ((pow(1. - pow(e, 2), 1.5) * (304. + 121. * pow(e, 2))) / (15. * pow(p, 2) * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
     // E, L
     // Edot = Edot_interp->eval(a,u,w) * (32./5. * pow(p,-5) * pow(1-e*e,1.5) * (1. + 73./24.* e*e + 37./96. * e*e*e*e));
     // Ldot = Ldot_interp->eval(a,u,w) * (32./5. * pow(p,-7/2) * pow(1-e*e,1.5) * (1. + 7./8. * e*e) );
