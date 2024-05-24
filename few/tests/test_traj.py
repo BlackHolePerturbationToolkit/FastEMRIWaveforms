@@ -29,7 +29,7 @@ except (ModuleNotFoundError, ImportError) as e:
     )
     gpu_available = False
 
-T = 5.0
+T = 100.0
 dt = 10.0
 
 insp_kw = {
@@ -87,6 +87,7 @@ class ModuleTest(unittest.TestCase):
         
         # initialize trajectory class
         list_func = ['KerrEccentricEquatorial_ELQ_nofrequencies', 'KerrEccentricEquatorial', 'KerrEccentricEquatorial_nofrequencies', 'KerrEccentricEquatorial_ELQ', ]
+        # list_func = ['KerrEccentricEquatorial','KerrEccentricEquatorial_ELQ', ]
         for el in list_func:
             print("testing ", el)
             traj = EMRIInspiral(func=el)
@@ -101,22 +102,25 @@ class ModuleTest(unittest.TestCase):
                 insp_kw["use_rk4"] = False
             
             # plt.figure()
-            # tic = time.perf_counter()
+            Np = 0
+            tic = time.perf_counter()
             for i in range(100):
                 
                 p0 = np.random.uniform(9.0,12.0)
-                e0 = np.random.uniform(0.1, 0.5)
+                e0 = np.random.uniform(0.01, 0.1)
                 a = np.random.uniform(0.01, 0.98)
                 # print(a,p0,e0)
                 # run trajectory        
                 t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, np.abs(a), p0, e0, np.sign(a)*1.0, **insp_kw)
-                # plt.plot(p,e,label=f'a={a:.2e}',alpha=0.7)
-            # toc = time.perf_counter()
-            # print('timing trajectory ',(toc-tic)/100)
+                # plt.plot(p,e,'.',label=f'N={len(t)}',alpha=0.7)
+                # print(a,p0,e0,len(t))
+                Np += len(t)
+                
+            toc = time.perf_counter()
+            print('timing trajectory ',(toc-tic)/100, "Np=",Np/100)
         
-            # plt.legend(); plt.xlabel('p'); plt.ylabel('e')
-            # plt.show()
-            # plt.savefig(f'a_p_e.png')
+            # plt.legend(); plt.xlabel('p'); plt.ylabel('e'); plt.tight_layout()
+            # plt.savefig(el + f'a_p_e_1e-16.png')
 
         # test against Schwarz
         traj_Schw = EMRIInspiral(func="SchwarzEccFlux")
