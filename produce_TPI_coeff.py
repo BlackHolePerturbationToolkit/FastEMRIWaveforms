@@ -86,7 +86,7 @@ alpha = 4.0
 deltap = 0.05
 beta = alpha - deltap
 
-filepath = 'data_for_lorenzo/fluxes/a{:.2f}_xI{:.3f}.flux'
+filepath = 'data_for_FEW/fluxes/a{:.2f}_xI{:.3f}.flux'
 
 avals = np.r_[np.linspace(0.,0.9,10),0.95,0.99]
 avals = np.r_[-np.flip(avals)[:-1],avals]
@@ -113,7 +113,7 @@ for ff in fluxfiles:
     plso.append(pLSO )
 
 # get grid from file and construct with meshgrid if any checking needed
-_, _, _, _, grid_u, _, grid_w = np.loadtxt("data_for_lorenzo/flux.grid").T
+_, _, _, _, grid_u, _, grid_w = np.loadtxt("data_for_FEW/fluxes/flux.grid").T
 unique_u_grid = np.flip(np.unique(grid_u))
 unique_w_grid = np.unique(grid_w)
 unique_a_grid = avals
