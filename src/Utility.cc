@@ -20,7 +20,7 @@ using namespace std;
 using namespace std::chrono;
 
 // define GSL_PREC_DOUBLE
-#define PREC_ELL_INT 2e-16
+#define PREC_ELL_INT 1e-20
 
 int sanity_check(double a, double p, double e, double Y)
 {
@@ -367,7 +367,8 @@ void KerrGeoEquatorialMinoFrequencies(double *CapitalGamma_, double *CapitalUpsi
         printf("r1 r2 r3 r4 %e %e %e %e\n", r1, r2, r3, r4);
         printf("a p e %e %e %e\n", a,p,e);
     }
-    double CapitalUpsilonr = (M_PI * sqrt((1 - (En*En)) * (r1 - r3) * (r2))) / (2 * EllipticK(kr2)); //(*Eq.(15)*)
+    double EllK = EllipticK(kr2);
+    double CapitalUpsilonr = (M_PI * sqrt((1 - (En*En)) * (r1 - r3) * (r2))) / (2 * EllK); //(*Eq.(15)*)
     double CapitalUpsilonTheta = x * pow(zp, 0.5);                                                             //(*Eq.(15)*)
 
     double rp = M + sqrt((M*M) - (a*a));
@@ -384,20 +385,23 @@ void KerrGeoEquatorialMinoFrequencies(double *CapitalGamma_, double *CapitalUpsi
 
     // (*Eq. (21)*)
     // This term is zero when r3 - rp == 0.0
-    double prob1 = (2 * M * En * rp - a * L) * (EllipticK(kr2) - (r2 - r3) / (r2 - rp) * EllipticPi(hp, kr2));
+    double EllPihp = EllipticPi(hp, kr2);
+    double EllPihr = EllipticPi(hr, kr2);
+    double EllPihm = EllipticPi(hm, kr2);
+    double prob1 = (2 * M * En * rp - a * L) * (EllK - (r2 - r3) / (r2 - rp) * EllPihp);
     if (abs(prob1) != 0.0)
     {
         prob1 = prob1 / (r3 - rp);
     }
-    double CapitalUpsilonPhi = (CapitalUpsilonTheta) / (sqrt(Epsilon0zp)) + (2 * a * CapitalUpsilonr) / (M_PI * (rp - rm) * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) * (prob1 - (2 * M * En * rm - a * L) / (r3 - rm) * (EllipticK(kr2) - (r2 - r3) / (r2 - rm) * EllipticPi(hm, kr2)));
+    double CapitalUpsilonPhi = (CapitalUpsilonTheta) / (sqrt(Epsilon0zp)) + (2 * a * CapitalUpsilonr) / (M_PI * (rp - rm) * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) * (prob1 - (2 * M * En * rm - a * L) / (r3 - rm) * (EllK - (r2 - r3) / (r2 - rm) * EllPihm));
 
     // This term is zero when r3 - rp == 0.0
-    double prob2 = ((4 * (M*M) * En - a * L) * rp - 2 * M * (a*a) * En) * (EllipticK(kr2) - (r2 - r3) / (r2 - rp) * EllipticPi(hp, kr2));
+    double prob2 = ((4 * (M*M) * En - a * L) * rp - 2 * M * (a*a) * En) * (EllK - (r2 - r3) / (r2 - rp) * EllPihp);
     if (abs(prob2) != 0.0)
     {
         prob2 = prob2 / (r3 - rp);
     }
-    double CapitalGamma = 4 * (M*M) * En + (2 * CapitalUpsilonr) / (M_PI * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) * (En / 2 * ((r3 * (r1 + r2 + r3) - r1 * r2) * EllipticK(kr2) + (r2 - r3) * (r1 + r2 + r3 + r4) * EllipticPi(hr, kr2) + (r1 - r3) * (r2 - r4) * EllipticE(kr2)) + 2 * M * En * (r3 * EllipticK(kr2) + (r2 - r3) * EllipticPi(hr, kr2)) + (2 * M) / (rp - rm) * (prob2 - ((4 * (M*M) * En - a * L) * rm - 2 * M * (a*a) * En) / (r3 - rm) * (EllipticK(kr2) - (r2 - r3) / (r2 - rm) * EllipticPi(hm, kr2))));
+    double CapitalGamma = 4 * (M*M) * En + (2 * CapitalUpsilonr) / (M_PI * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) * (En / 2 * ((r3 * (r1 + r2 + r3) - r1 * r2) * EllK + (r2 - r3) * (r1 + r2 + r3 + r4) * EllPihr + (r1 - r3) * (r2 - r4) * EllipticE(kr2)) + 2 * M * En * (r3 * EllK + (r2 - r3) * EllPihr) + (2 * M) / (rp - rm) * (prob2 - ((4 * (M*M) * En - a * L) * rm - 2 * M * (a*a) * En) / (r3 - rm) * (EllK - (r2 - r3) / (r2 - rm) * EllPihm)));
 
     // This check makes sure that the problematic terms are zero when r3-rp is zero
     // if (r3 - rp==0.0){

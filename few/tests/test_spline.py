@@ -1,7 +1,8 @@
 import unittest
 from few.utils.spline import CubicSpline, BicubicSpline, TricubicSpline
+from few.utils.utility import get_separatrix
 import numpy as np
-
+import time
 def test_func(x, y, z):
     return np.sin(x)*np.cos(y)/(1-z**2)
 
@@ -14,6 +15,28 @@ class TestSplines(unittest.TestCase):
         fvec = test_func(*XYZ)
         trispl = TricubicSpline(x, y, z, fvec)
         self.assertTrue(np.allclose(trispl(0.51, 0.4, 2.4),test_func(0.51, 0.4, 2.4),1e-10))
+        # # create a TricubicSpline to interpolate get_separatrix
+        # a = np.linspace(0.0, 0.998, 100)
+        # e = np.linspace(0.0, 0.99, 100)
+        # x = np.linspace(-1.0, 1.0, 100)
+        # XYZ = np.meshgrid(a, e, x, indexing='ij')
+        # # time computation
+        # tic = time.perf_counter()
+        # sep = ( get_separatrix(XYZ[0].flatten(), XYZ[1].flatten(), XYZ[2].flatten())).reshape((100,100,100))
+        # toc = time.perf_counter()
+        # print("Time to compute separatrix: ", (toc-tic)/100**3)
+        # trispl = TricubicSpline(a, e, x, sep)
+        # # test precision by randomly drawing 100 points
+        # rel_prec = []
+        # for i in range(1000):
+        #     a = np.random.uniform(0.0, 0.998)
+        #     e = np.random.uniform(0.0, 0.99)
+        #     x = np.random.uniform(-1.0, 1.0)
+        #     rel_prec.append(1-trispl(a, e, x)/get_separatrix(a, e, x)) 
+        # print(np.mean(rel_prec), np.std(rel_prec), np.max(rel_prec))
+        # # self.assertTrue(np.allclose(trispl(a, e, x),get_separatrix(a, e, x),1e-10))
+        
+        
     def test_bicubic(self):
         x = np.linspace(0.5, 1, 100)
         y = np.linspace(-1, 1, 100)

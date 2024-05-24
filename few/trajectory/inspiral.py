@@ -335,7 +335,10 @@ class EMRIInspiral(TrajectoryBase):
                 phase_array = np.zeros((out.shape[0],3))
                 out = np.hstack((out, phase_array))
 
-        return tuple(out.T.copy())
+            return tuple(out.T.copy())
+        else:
+            t, p, e, x, Phi_phi, Phi_theta, Phi_r = out.T.copy()
+            return t, p, e, x, Phi_phi/(mu/M), Phi_theta/(mu/M), Phi_r/(mu/M)
 
 
     def get_rhs_ode(

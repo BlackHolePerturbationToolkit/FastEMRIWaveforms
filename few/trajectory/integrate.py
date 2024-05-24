@@ -41,7 +41,15 @@ from ..utils.citations import *
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 from ..utils.utility import get_separatrix
-
+# from ..utils.utility import get_separatrix as get_sep
+# from few.utils.spline import TricubicSpline
+# # create a TricubicSpline to interpolate get_separatrix
+# a = np.linspace(0.0, 0.998, 100)
+# e = np.linspace(0.0, 0.99, 100)
+# x = np.linspace(-1.0, 1.0, 100)
+# XYZ = np.meshgrid(a, e, x, indexing='ij')
+# sep = ( get_sep(XYZ[0].flatten(), XYZ[1].flatten(), XYZ[2].flatten())).reshape((100,100,100))
+# get_separatrix = TricubicSpline(a, e, x, sep)
 
 DIST_TO_SEPARATRIX = 0.1
 INNER_THRESHOLD = 1e-8
@@ -314,6 +322,7 @@ class Integrate:
         return self.trajectory_arr[: self.traj_step]
 
     def save_point(self, t: float, y: np.ndarray):
+        
         self.trajectory_arr[self.traj_step, 0] = t
         self.trajectory_arr[self.traj_step, 1:] = y
 
@@ -328,11 +337,11 @@ class Integrate:
     def run_inspiral(self, M, mu, a, y0, additional_args, T=1., dt=10., **kwargs):
         self.moves_check = 0
         self.initialize_integrator(**kwargs)
-
+        self.epsilon = mu/M
         # Compute the adimensionalized time steps and max time
-        self.tmax_dimensionless = T*YRSID_SI / (M * MTSUN_SI)
-        self.dt_dimensionless = dt / (M * MTSUN_SI)
-        self.Msec = MTSUN_SI * M
+        self.tmax_dimensionless = T*YRSID_SI / (M * MTSUN_SI) *self.epsilon
+        self.dt_dimensionless = dt / (M * MTSUN_SI) * self.epsilon
+        self.Msec = MTSUN_SI * M / self.epsilon
         self.a = a
         assert self.nparams == len(y0)
         assert (self.num_add_args == len(additional_args)) or (
@@ -516,4 +525,4 @@ class AELQIntegrate(Integrate):
                         "Could not find workable step size in finishing function."
                     )
             # print(p - p_sep , DIST_TO_SEPARATRIX + INNER_THRESHOLD, temp_stop)
-            self.save_point(t*self.Msec,y)
+            self.save_point(t * self.Msec, y)
