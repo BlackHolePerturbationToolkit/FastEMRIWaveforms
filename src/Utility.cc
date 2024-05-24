@@ -20,7 +20,7 @@ using namespace std;
 using namespace std::chrono;
 
 // define GSL_PREC_DOUBLE
-#define PREC_ELL_INT 1e-20
+#define PREC_ELL_INT 2e-16
 
 int sanity_check(double a, double p, double e, double Y)
 {

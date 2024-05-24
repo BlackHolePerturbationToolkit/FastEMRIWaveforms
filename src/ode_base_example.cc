@@ -480,10 +480,14 @@ __deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y
     double signed_a = a*x; // signed a for interpolant
     
     
-    // pdot_out = pdot_interp->eval(signed_a, w, u) * ((8. * pow(1. - pow(e, 2), 1.5) * (8. + 7. * pow(e, 2))) / (5. * p * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
-    pdot_out = tric_p_interp->evaluate(signed_a, w, u) * ((8. * pow(1. - pow(e, 2), 1.5) * (8. + 7. * pow(e, 2))) / (5. * p * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
-    // edot_out = edot_interp->eval(signed_a, w, u) * ((pow(1. - pow(e, 2), 1.5) * (304. + 121. * pow(e, 2))) / (15. * pow(p, 2) * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
-    edot_out = tric_e_interp->evaluate(signed_a, w, u) * ((pow(1. - pow(e, 2), 1.5) * (304. + 121. * pow(e, 2))) / (15. * pow(p, 2) * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
+    // pdot_out = pdot_interp->eval(signed_a, w, u) * ((8. * pow(1. - (e * e), 1.5) * (8. + 7. * (e * e))) / (5. * p * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
+    pdot_out = tric_p_interp->evaluate(signed_a, w, u) * ((8. * pow(1. - (e * e), 1.5) * (8. + 7. * (e * e))) / (5. * p * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
+    // edot_out = edot_interp->eval(signed_a, w, u) * ((pow(1. - (e * e), 1.5) * (304. + 121. * (e * e))) / (15. * (p*p) * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
+    edot_out = tric_e_interp->evaluate(signed_a, w, u) * ((pow(1. - (e * e), 1.5) * (304. + 121. * (e * e))) / (15. * (p*p) * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
+    
+    // compare the two interpolants
+    // cout << "pdot_TP/pdot_TR=" << pdot_interp->eval(signed_a, w, u)/tric_p_interp->evaluate(signed_a, w, u) << '\n'<< endl;
+    
     // E, L
     // Edot = Edot_interp->eval(a,u,w) * (32./5. * pow(p,-5) * pow(1-e*e,1.5) * (1. + 73./24.* e*e + 37./96. * e*e*e*e));
     // Ldot = Ldot_interp->eval(a,u,w) * (32./5. * pow(p,-7/2) * pow(1-e*e,1.5) * (1. + 7./8. * e*e) );
@@ -597,8 +601,8 @@ __deriv__ void KerrEccentricEquatorial_nofrequencies::deriv_func(double ydot[], 
 
     double signed_a = a*x; // signed a for interpolant
 
-    pdot_out = pdot_interp->eval(signed_a, w, u) * ((8. * pow(1. - pow(e, 2), 1.5) * (8. + 7. * pow(e, 2))) / (5. * p * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
-    edot_out = edot_interp->eval(signed_a, w, u) * ((pow(1. - pow(e, 2), 1.5) * (304. + 121. * pow(e, 2))) / (15. * pow(p, 2) * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
+    pdot_out = pdot_interp->eval(signed_a, w, u) * ((8. * pow(1. - (e * e), 1.5) * (8. + 7. * (e * e))) / (5. * p * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
+    edot_out = edot_interp->eval(signed_a, w, u) * ((pow(1. - (e * e), 1.5) * (304. + 121. * (e * e))) / (15. * (p*p) * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
     double pdot, edot;
 
     // needs adjustment for validity
