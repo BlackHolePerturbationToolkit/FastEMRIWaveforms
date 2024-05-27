@@ -992,7 +992,6 @@ class TrajectoryBase(ABC):
         # inspiral generator that must be added to each trajectory class
         out = self.get_inspiral(*args, **kwargs)
 
-        # get time separate from the rest of the params
         # t = out[0]
         # params = out[1:]
 
@@ -1002,6 +1001,7 @@ class TrajectoryBase(ABC):
                 out_list[i] = out_list[i][0] + out_list[i][-1] - out_list[i]
             out = tuple(out_list)
 
+        # get time separate from the rest of the params
         t = out[0]
         params = out[1:]
 
