@@ -357,11 +357,11 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
                     if fp[15:18] == "_r_":
                         spin_h *= -1  # retrograde
                     spins_tmp.append(spin_h)
-
             # combine prograde and retrograde here
             self.spin_values = np.unique(np.asarray(spins_tmp))
         else:
             self.spin_values = np.asarray(specific_spins)
+        
 
         self.spin_information_holder = [None for _ in self.spin_values]
         for i, spin in enumerate(self.spin_values):
