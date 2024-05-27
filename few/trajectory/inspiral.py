@@ -299,17 +299,20 @@ class EMRIInspiral(TrajectoryBase):
 
                 frequencies = np.array(get_fundamental_frequencies(a, ups_p.copy(), ups_e.copy(), ups_x_freq))/(M*MTSUN_SI)
                 if temp_kwargs["use_rk4"]:
+                    # breakpoint()
                     cs = CubicSpline(t_spline, frequencies.T)
                     phase_array = cs.antiderivative()(t).T
                 else:
                     # get derivatives  TODO ELQ
                     pdot = np.asarray([self.inspiral_generator.integrator.get_derivatives(tr_h.copy()) for tr_h in out[:,1:4]])[:,0] / (M*MTSUN_SI)
                     if kwargs['integrate_backwards'] == True: 
-                        # If we decide to integrate backwards, dot(p) > 0 (p increasing) and p also increasing. 
+                        # TODO: FIX THIS. DOESN'T WORK FOR BACKWARDS INTEGRATION. 
                         cs = CubicSpline(ups_p, (frequencies/pdot), axis=1)
-                        phase_array = cs.antiderivative()(ups_p) # Integrate directly like a savage. Nice magic Christian.  
+                        phase_array = cs.antiderivative()(ups_p) # Integrate directly like a savage. Nice magic Christian.   
+                        # cs = CubicSpline(ups_p, (frequencies/pdot), axis=1)
+                        # phase_array = cs.antiderivative()(ups_p) # Integrate directly like a savage. Nice magic Christian.  
 
-                        phase_array = np.array([phase_array[i][-1] - phase_array[i] for i in range(len(phase_array))])
+                        # phase_array = np.array([phase_array[i][-1] - phase_array[i] for i in range(len(phase_array))]) # Reshift frequencies
                     else:
                         cs = CubicSpline(-1*ups_p, (frequencies/pdot), axis=1)
                         phase_array = -1*cs.antiderivative()(-1*ups_p)
