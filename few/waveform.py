@@ -587,11 +587,6 @@ class SchwarzschildEccentricWaveformBase(
             dt=dt,
             **self.inspiral_kwargs,
         )
-        # If we decide to integrate backwards, reverse the phases
-        # if self.inspiral_kwargs['integrate_backwards'] == True:
-        #     Phi_phi = Phi_phi[0] + Phi_phi[-1] - Phi_phi 
-        #     Phi_theta =  Phi_theta[0] + Phi_theta[-1] - Phi_theta 
-        #     Phi_r =  Phi_r[0] + Phi_r[-1] - Phi_r 
         # makes sure p and e are generally within the model
         self.sanity_check_traj(p, e)
 
@@ -1298,11 +1293,6 @@ class KerrEquatorialEccentricWaveformBase(
             dt=dt,
             **self.inspiral_kwargs,
         )
-        # If we decide to integrate backwards, transform phase variables
-        # if self.inspiral_kwargs['integrate_backwards'] == True:
-        #     Phi_phi = Phi_phi[0] + Phi_phi[-1] - Phi_phi 
-        #     Phi_theta =  Phi_theta[0] + Phi_theta[-1] - Phi_theta 
-        #     Phi_r =  Phi_r[0] + Phi_r[-1] - Phi_r 
         # makes sure p and e are generally within the model
         self.sanity_check_traj(p, e)
 
@@ -1913,11 +1903,6 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
             dt=dt,
             **self.inspiral_kwargs,
         )
-        # Need to reverse the phases. 
-        # if self.inspiral_kwargs['integrate_backwards'] == True:
-        #     Phi_phi = Phi_phi[0] + Phi_phi[-1] - Phi_phi 
-        #     Phi_theta =  Phi_theta[0] + Phi_theta[-1] - Phi_theta 
-        #     Phi_r =  Phi_r[0] + Phi_r[-1] - Phi_r 
 
         if (p[0] - p[1]) < 0: # Integrating backwards
             # Need to keep the number of modes equivalent
