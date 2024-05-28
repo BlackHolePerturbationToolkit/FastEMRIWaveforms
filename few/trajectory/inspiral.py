@@ -116,6 +116,7 @@ class EMRIInspiral(TrajectoryBase):
         test_new_version=True,
         convert_to_pex=True,
         numerically_integrate_phases=True,
+        rootfind_separatrix=True,
         **kwargs,
     ):
         few_dir = dir_path + "/../../"
@@ -128,7 +129,7 @@ class EMRIInspiral(TrajectoryBase):
         self.enforce_schwarz_sep = enforce_schwarz_sep
         
         nparams = 6
-        self.inspiral_generator = get_integrator(func, nparams, few_dir)
+        self.inspiral_generator = get_integrator(func, nparams, few_dir, rootfind_separatrix=rootfind_separatrix)
 
         self.func = self.inspiral_generator.func
 
