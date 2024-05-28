@@ -1,5 +1,6 @@
 #include "spline.hpp"
 #include <iostream>
+#include <cmath>
 
 #define ENDPOINT_TOL 1.e-10
 

@@ -59,6 +59,7 @@ public:
     TensorInterpolant *Ldot_interp;
     TricubicSpline *tric_p_interp;
     TricubicSpline *tric_e_interp;
+    BicubicSpline *bic_psep_interp;
     KerrEccentricEquatorial(std::string few_dir);
     bool convert_Y = false;
     bool equatorial = true;
