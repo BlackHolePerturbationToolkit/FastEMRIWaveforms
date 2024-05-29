@@ -479,7 +479,7 @@ class APEXIntegrate(Integrate):
 
                 status, self.t_final_temp, self.h_final_temp = self.dense_integrator.take_step(t, final_h, y_out, self.tmax_dimensionless)
 
-                raise ValueError("We need to stop - hit the maximum time before the separatrix.")
+                raise RuntimeError("We need to stop - hit the maximum time before the separatrix.")
 
         return y_out[0] - (p_sep + DIST_TO_SEPARATRIX)  # we want this to go to zero
 
@@ -505,7 +505,7 @@ class APEXIntegrate(Integrate):
                     else:
                         raise RuntimeError("Separatrix root-finding operation did not converge within MAX_ITER.")
 
-                except ValueError as e:  # for the edge case where t -> tmax while we are tuning this
+                except RuntimeError as e:  # for the edge case where t -> tmax while we are tuning this
                     self.save_point(self.t_final_temp * self.Msec, y_out)
 
             else:
