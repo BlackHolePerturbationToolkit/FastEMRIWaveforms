@@ -1833,6 +1833,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         mich=False,
         dt=10.0,
         T=1.0,
+        nmodes=None
     ):
         """Call function for AAK + 5PN model.
 
@@ -1904,15 +1905,18 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
             **self.inspiral_kwargs,
         )
 
-        if (p[0] - p[1]) < 0: # Integrating backwards
-            # Need to keep the number of modes equivalent
-            initial_e = e[-1]
-            self.num_modes_kept = self.nmodes = int(30 * initial_e)
+        if nmodes == None:
+            if (p[0] - p[1]) < 0: # Integrating backwards
+                # Need to keep the number of modes equivalent
+                initial_e = e[-1]
+                self.num_modes_kept = self.nmodes = int(30 * initial_e)
+            else:
+                # number of modes to use (from original AAK model)
+                self.num_modes_kept = self.nmodes = int(30 * e0)
+                if self.num_modes_kept < 4:
+                    self.num_modes_kept = self.nmodes = 4
         else:
-            # number of modes to use (from original AAK model)
-            self.num_modes_kept = self.nmodes = int(30 * e0)
-            if self.num_modes_kept < 4:
-                self.num_modes_kept = self.nmodes = 4
+            self.num_modes_kept = self.nmodes = nmodes
 
         # makes sure p, Y, and e are generally within the model
         self.sanity_check_traj(p, e, Y)

@@ -145,12 +145,12 @@ class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
 
         # Create link to my files! 
 
-        # data_directory = "/work/scratch/data/burkeol/Kerr_data/files/"
+        data_directory = "/work/scratch/data/burkeol/Kerr_data/files/"
         data = {}
         # get information about this specific model from the file
 
-        # with h5py.File(data_directory + fp, "r") as f:
-        with h5py.File(self.few_dir + "few/files/" + fp, "r") as f:
+        with h5py.File(data_directory + fp, "r") as f:
+        # with h5py.File(self.few_dir + "few/files/" + fp, "r") as f:
             # load attributes in the right order for correct mode sorting later
             kerr_format_string = "l{}m{}k0n{}"
             grid = f["grid"][:]

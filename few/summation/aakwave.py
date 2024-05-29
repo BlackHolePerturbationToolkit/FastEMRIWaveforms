@@ -449,6 +449,7 @@ class KerrAAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         # these are dimensionless and in radians
         OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p.copy(), e.copy(), xI.copy())
 
+        # Set theta trajectories equal to eachother.
         OmegaTheta = OmegaPhi
         Phi_theta = Phi_phi
 
