@@ -136,7 +136,7 @@ double CapitalDelta(double r, double a)
 
 double f(double r, double a, double zm)
 {
-    return pow(r, 4) + (a*a) * (r * (r + 2) + (zm*zm) * CapitalDelta(r, a));
+    return (r*r*r*r) + (a*a) * (r * (r + 2) + (zm*zm) * CapitalDelta(r, a));
 }
 
 double g(double r, double a, double zm)
