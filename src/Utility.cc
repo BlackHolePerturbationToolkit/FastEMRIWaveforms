@@ -136,17 +136,17 @@ double CapitalDelta(double r, double a)
 
 double f(double r, double a, double zm)
 {
-    return (r*r*r*r) + (a*a) * (r * (r + 2) + (zm*zm) * CapitalDelta(r, a));
+    return (r*r*r*r) + (a*a) * (r * (r + 2.) + (zm*zm) * CapitalDelta(r, a));
 }
 
 double g(double r, double a, double zm)
 {
-    return 2 * a * r;
+    return 2. * a * r;
 }
 
 double h(double r, double a, double zm)
 {
-    return r * (r - 2) + (zm*zm) / (1 - (zm*zm)) * CapitalDelta(r, a);
+    return r * (r - 2.) + (zm*zm) / (1. - (zm*zm)) * CapitalDelta(r, a);
 }
 
 double d(double r, double a, double zm)
@@ -162,7 +162,7 @@ double fdot(double r, double a, double zm)
 
 double gdot(double r, double a, double zm)
 {
-    return 2 * a;
+    return 2. * a;
 }
 
 double hdot(double r, double a, double zm)
@@ -182,9 +182,9 @@ double ddot(double r, double a, double zm)
 double KerrGeoEnergy(double a, double p, double e, double x)
 {
 
-    double zm = sqrt(1. - (x*x));
+    double zm = sqrt(1. - x*x);
     double Kappa, Epsilon, Rho, Eta, Sigma;
-    if (e < 1e-5) {  // switch to spherical formulas A13-A17 (2102.02713) to avoid instability
+    if (e < 1e-10) {  // switch to spherical formulas A13-A17 (2102.02713) to avoid instability
         double r = p;
 
         Kappa = d(r, a, zm) * hdot(r, a, zm) - h(r, a, zm) * ddot(r, a, zm);
@@ -192,6 +192,17 @@ double KerrGeoEnergy(double a, double p, double e, double x)
         Rho = f(r, a, zm) * hdot(r, a, zm) - h(r, a, zm) * fdot(r, a, zm);
         Eta = f(r, a, zm) * gdot(r, a, zm) - g(r, a, zm) * fdot(r, a, zm);
         Sigma = g(r, a, zm) * hdot(r, a, zm) - h(r, a, zm) * gdot(r, a, zm);
+    }else if (abs(x)==1.0){
+        double denom = (-4.*(a*a)*((-1 + (e*e))*(-1 + (e*e))) + ((3 + (e*e) - p)*(3 + (e*e) - p))*p);
+        double numer = ((-1 + (e*e))*((a*a)*(1 + 3*(e*e) + p) + p*(-3 - (e*e) + p - x*2*sqrt(((a*a*a*a*a*a)*((-1 + (e*e))*(-1 + (e*e))) + (a*a)*(-4*(e*e) + ((-2 + p)*(-2 + p)))*(p*p) + 2*(a*a*a*a)*p*(-2 + p + (e*e)*(2 + p)))/(p*p*p)))));
+        double ratio;
+            if ( abs(denom)<1e-14 || abs(numer)<1e-14){
+                ratio = 0.0;
+            }
+            else{
+                ratio = numer/denom;
+            }
+        return sqrt(1. - ((1. - (e*e))*(1. + ratio))/p);
     }
     else {
         double r1 = p / (1. - e);
@@ -204,8 +215,10 @@ double KerrGeoEnergy(double a, double p, double e, double x)
         Sigma = g(r1, a, zm) * h(r2, a, zm) - h(r1, a, zm) * g(r2, a, zm);
     }
 
-    return sqrt((Kappa * Rho + 2. * Epsilon * Sigma - x * 2. * sqrt(Sigma * (Sigma * (Epsilon*Epsilon) + Rho * Epsilon * Kappa - Eta * (Kappa*Kappa)) / (x*x))) / ((Rho*Rho) + 4. * Eta * Sigma));
+    return sqrt((Kappa * Rho + 2. * Epsilon * Sigma - x * 2. * sqrt(Sigma * (Sigma * Epsilon*Epsilon+ Rho * Epsilon * Kappa - Eta * Kappa*Kappa) / (x*x))) / (Rho*Rho + 4. * Eta * Sigma));
+
 }
+
 
 double KerrGeoAngularMomentum(double a, double p, double e, double x, double En)
 {
