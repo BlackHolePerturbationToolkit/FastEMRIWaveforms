@@ -265,10 +265,10 @@ class EMRIInspiral(TrajectoryBase):
             args_in = np.array([0.0])
 
         if self.integrate_ODE_phases:
-            y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
+            y0 = np.array([y1, y2, y3, Phi_phi0*(mu/M), Phi_theta0*(mu/M), Phi_r0*(mu/M)])
         else:
             y0 = np.array([y1, y2, y3])
-   
+
         # this will return in coordinate time
         out = self.inspiral_generator.run_inspiral(M, mu, a, y0, args_in, **temp_kwargs)
         if self.integrate_constants_of_motion and self.convert_to_pex:
@@ -283,7 +283,7 @@ class EMRIInspiral(TrajectoryBase):
 
         # handle no phase integration in ODE   # TODO move to the integrate class? This is an integration method...
         if not self.integrate_ODE_phases:
-        # if performing phase integration numerically, perform it here
+            # if performing phase integration numerically, perform it here
             if self.numerically_integrate_phases:
                 t = out[:,0]
                 ups_p, ups_e, ups_x = out[:,1:4].T
@@ -305,7 +305,7 @@ class EMRIInspiral(TrajectoryBase):
                 else:
                     # get derivatives  TODO ELQ
                     pdot = np.asarray([self.inspiral_generator.integrator.get_derivatives(tr_h.copy()) for tr_h in out[:,1:4]])[:,0] / (M*MTSUN_SI)
-                    cs = CubicSpline(-1*ups_p, (frequencies/pdot), axis=1)
+                    cs = CubicSpline(-1*ups_p, (frequencies/pdot/(mu/M)), axis=1)
                     phase_array = -1*cs.antiderivative()(-1*ups_p)
                 # to check whether we are outside the interpolation range
                 # if self.integrate_constants_of_motion:
