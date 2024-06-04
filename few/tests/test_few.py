@@ -35,7 +35,7 @@ class WaveformTest(unittest.TestCase):
             "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
             "max_init_len": int(
                 1e3
-            ),  # all of the trajectories will be well under len = 1000
+            )  # all of the trajectories will be well under len = 1000
         }
 
         # keyword arguments for inspiral generator (RomanAmplitude)
@@ -83,7 +83,7 @@ class WaveformTest(unittest.TestCase):
             "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
             "max_init_len": int(
                 1e3
-            ),  # all of the trajectories will be well under len = 1000
+            )  # all of the trajectories will be well under len = 1000
         }
 
         # keyword arguments for inspiral generator (RomanAmplitude)
@@ -114,7 +114,7 @@ class WaveformTest(unittest.TestCase):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
         inspiral_kwargs = {
             "DENSE_STEPPING": 1,  # we want a sparsely sampled trajectory
-            "max_init_len": int(1e7),  # dense stepping trajectories
+            "max_init_len": int(1e7)  # dense stepping trajectories
         }
 
         # keyword arguments for inspiral generator (RomanAmplitude)
@@ -162,6 +162,12 @@ class WaveformTest(unittest.TestCase):
         # test_rk4
         fast.inspiral_kwargs["use_rk4"] = True
         fast_wave = fast(M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
+
+    def test_kerr_model(self):
+        """
+        Unit test to determine whether the Kerr models are working or not.
+        """
+        
 
 
 def amplitude_test(amp_class):

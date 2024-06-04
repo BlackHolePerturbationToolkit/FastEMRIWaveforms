@@ -72,7 +72,7 @@ int func_ode_wrap(double t, const double y[], double f[], void *params)
     // double epsilon = params_in->epsilon;
     // double q = params_in->q;
 
-    params_in->odes[params_in->currently_running_ode_index].get_derivatives(f, y, params_in->epsilon, params_in->a, params_in->additional_args);
+    params_in->odes[params_in->currently_running_ode_index].get_derivatives(f, y, params_in->epsilon, params_in->a, params_in->integrate_backwards, params_in->additional_args);
 
     // cout << "e=" << e << "\t" << "edot=" << edot <<  "\t" << "p=" << p <<  endl;
     return GSL_SUCCESS;
@@ -102,11 +102,13 @@ void InspiralCarrier::set_integrator_kwargs(double err_set, bool DENSE_STEP_SET,
     USE_RK8 = RK8_SET;
 }
 
-void InspiralCarrier::add_parameters_to_holder(double M, double mu, double a, double *additional_args)
+void InspiralCarrier::add_parameters_to_holder(double M, double mu, double a, bool integrate_backwards, double *additional_args)
 {
     // Set the mass ratio
     params_holder->epsilon = mu / M;
     params_holder->a = a;
+    params_holder->integrate_backwards = integrate_backwards;
+
     memcpy(&(params_holder->additional_args[0]), additional_args, params_holder->num_add_args * sizeof(double));
 }
 
@@ -149,7 +151,7 @@ void InspiralCarrier::get_derivatives(double *ydot_, double *y, int nparams_)
         throw invalid_argument("nparams input for derivatives does not match nparams stored in the c++ class.");
 
     vector<double> ydot(nparams);
-    params_holder->odes[params_holder->currently_running_ode_index].get_derivatives(&ydot[0], y, params_holder->epsilon, params_holder->a, params_holder->additional_args);
+    params_holder->odes[params_holder->currently_running_ode_index].get_derivatives(&ydot[0], y, params_holder->epsilon, params_holder->a, params_holder->integrate_backwards, params_holder->additional_args);
     memcpy(ydot_, &ydot[0], nparams * sizeof(double));
 }
 

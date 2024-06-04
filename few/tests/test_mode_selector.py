@@ -95,7 +95,7 @@ class ModeSelectorTest(unittest.TestCase):
 
     noise_weighted_mode_selector_kwargs = dict(sensitivity_fn=sens_fn)
     
-    few_base = FastSchwarzschildEccentricFlux()
+    few_base = FastSchwarzschildEccentricFlux(use_gpu = gpu_available)
 
     M = 1e6
     mu = 1e1
@@ -107,8 +107,8 @@ class ModeSelectorTest(unittest.TestCase):
     dt = 10.0
     T = 0.001
     mode_selection = [(ll,mm,nn) for ll,mm,nn in zip(ls_orig,ms_orig,ns_orig)]
-    wave_base = few_base(M, mu, p0, e0, theta, phi, dist, dt=dt, T=0.001, mode_selection=mode_selection)
+    wave_base = few_base(M, mu, p0, e0, theta, phi, dist, dt=dt, T=T, mode_selection=mode_selection)
     mode_selection = [(ll,mm,nn) for ll,mm,nn in zip(ls,ms,ns)]
     wave_weighted = few_base(M, mu, p0, e0, theta, phi, dist, dt=dt, T=T, mode_selection=mode_selection)
 
-    print('mismatch:', get_mismatch(wave_base, wave_weighted))
+    print('mismatch:', get_mismatch(wave_base, wave_weighted, use_gpu = gpu_available))

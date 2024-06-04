@@ -140,6 +140,7 @@ class EMRIInspiral(TrajectoryBase):
             "DENSE_STEPPING",
             "max_init_len",
             "use_rk4",
+            "integrate_backwards"
         ]
 
         self.get_derivative = pyDerivative(self.func[0], few_dir.encode())
@@ -257,7 +258,6 @@ class EMRIInspiral(TrajectoryBase):
 
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
-
         args_in = np.asarray(args)
 
         # correct for issue in Cython pass
@@ -300,13 +300,23 @@ class EMRIInspiral(TrajectoryBase):
 
                 frequencies = np.array(get_fundamental_frequencies(a, ups_p.copy(), ups_e.copy(), ups_x_freq))/(M*MTSUN_SI)
                 if temp_kwargs["use_rk4"]:
+                    # breakpoint()
                     cs = CubicSpline(t_spline, frequencies.T)
                     phase_array = cs.antiderivative()(t).T
                 else:
                     # get derivatives  TODO ELQ
                     pdot = np.asarray([self.inspiral_generator.integrator.get_derivatives(tr_h.copy()) for tr_h in out[:,1:4]])[:,0] / (M*MTSUN_SI)
-                    cs = CubicSpline(-1*ups_p, (frequencies/pdot/(mu/M)), axis=1)
-                    phase_array = -1*cs.antiderivative()(-1*ups_p)
+
+                    if kwargs['integrate_backwards'] == True: 
+                        # TODO: FIX THIS. DOESN'T WORK FOR BACKWARDS INTEGRATION. 
+                        cs = CubicSpline(ups_p, (frequencies/pdot/(mu/M)), axis=1)
+                        phase_array = cs.antiderivative()(ups_p) # Integrate directly like a savage. Nice magic Christian.    
+ 
+                        # phase_array = np.array([phase_array[i][-1] - phase_array[i] for i in range(len(phase_array))]) # Reshift frequencies
+                    else:
+                        cs = CubicSpline(-1*ups_p, (frequencies/pdot/(mu/M)), axis=1)
+                        phase_array = -1*cs.antiderivative()(-1*ups_p)
+
                 # to check whether we are outside the interpolation range
                 # if self.integrate_constants_of_motion:
                     # print("ELQ deriv check")

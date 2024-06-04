@@ -27,7 +27,7 @@ public:
 
     SchwarzEccFlux(std::string few_dir);
 
-    void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
+    void deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args);
     ~SchwarzEccFlux();
 };
 
@@ -46,7 +46,7 @@ public:
 
     SchwarzEccFlux_nofrequencies(std::string few_dir);
 
-    void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
+    void deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args);
     ~SchwarzEccFlux_nofrequencies();
 };
 
@@ -68,7 +68,7 @@ public:
     bool integrate_constants_of_motion = false;
     bool integrate_phases = true;
 
-    void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
+    void deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args);
     ~KerrEccentricEquatorial();
 };
 
@@ -88,7 +88,7 @@ public:
     bool integrate_constants_of_motion = false;
     bool integrate_phases = false;
 
-    void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
+    void deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args);
     ~KerrEccentricEquatorial_nofrequencies();
 };
 
@@ -105,7 +105,7 @@ public:
     bool integrate_constants_of_motion = true;
     bool integrate_phases = true;
 
-    void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
+    void deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args);
     ~KerrEccentricEquatorial_ELQ();
 };
 
@@ -124,6 +124,6 @@ public:
     bool integrate_constants_of_motion = true;
     bool integrate_phases = false;
 
-    void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
+    void deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args);
     ~KerrEccentricEquatorial_ELQ_nofrequencies();
 };

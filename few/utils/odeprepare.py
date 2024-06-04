@@ -123,9 +123,9 @@ def ode_prepare():
 
                 {0}::~{0}(){1}{2}
 
-                void {0}::deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args)
+                void {0}::deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args)
                 {1}
-                    {0}_base_func(ydot, y, epsilon, a, additional_args);
+                    {0}_base_func(ydot, y, epsilon, a, integrate_backwards, additional_args);
                 {2}
             """.format(
                 func, "{", "}"
@@ -176,7 +176,7 @@ def ode_prepare():
     # setup get_derivatives functions
     full += """
 
-    void ODECarrier::get_derivatives(double ydot[], const double y[], double epsilon, double a, double *additional_args)
+    void ODECarrier::get_derivatives(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args)
     {
     """
 
@@ -192,7 +192,7 @@ def ode_prepare():
         full += """
                 {0}* temp = ({0}*)func;
 
-                temp->deriv_func(ydot, y, epsilon, a, additional_args);
+                temp->deriv_func(ydot, y, epsilon, a, integrate_backwards, additional_args);
 
             """.format(
             func
@@ -279,7 +279,7 @@ def ode_prepare():
                 bool convert_Y = {8};
                 {0}(std::string few_dir);
 
-                void deriv_func(double ydot[], const double y[], double epsilon, double a, double *additional_args);
+                void deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args);
                 ~{0}();
             {2};
 
@@ -304,7 +304,7 @@ def ode_prepare():
             void* func;
             ODECarrier(std::string func_name_, std::string few_dir_);
             void dealloc();
-            void get_derivatives(double ydot[], const double y[], double epsilon, double a, double *additional_args);
+            void get_derivatives(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args);
     };
 
     #endif // __ODE__

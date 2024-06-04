@@ -14,7 +14,7 @@ cdef extern from "../include/Inspiral.hh":
         string func_name;
         InspiralCarrierWrap(int nparams, int num_add_args_) except+
         void dealloc() except+
-        void add_parameters_to_holder(double M, double mu, double a, double *additional_args) except+
+        void add_parameters_to_holder(double M, double mu, double a, bool_c integrate_backwards, double *additional_args) except+
         void set_integrator_kwargs(double err_set, bool_c DENSE_STEP_SET, bool_c RK8_SET) except+
         void initialize_integrator() except+
         void destroy_integrator_information() except+
@@ -38,12 +38,12 @@ cdef extern from "../include/ode.hh":
         ODECarrierWrap(string func_name_, string few_dir_) except+
         void* func;
         void dealloc() except+
-        void get_derivatives(double ydot[], const double y[], double epsilon, double a, double *additional_args) except+
+        void get_derivatives(double ydot[], const double y[], double epsilon, double a, bool_c integrate_backwards, double *additional_args) except+
 
 cdef extern from "../include/ode.hh":
     cdef cppclass GetDeriv "ODECarrier":
         GetDeriv(string func, string few_dir)
-        void get_derivatives(double ydot[], const double y[], double epsilon, double a, double *additional_args) except+
+        void get_derivatives(double ydot[], const double y[], double epsilon, double a, bool_c integrate_backwards, double *additional_args) except+
 
 cdef class pyDerivative:
     cdef GetDeriv *g
@@ -60,12 +60,12 @@ cdef class pyDerivative:
         if self.g:
             del self.g
 
-    def __call__(self, epsilon, a, np.ndarray[ndim=1, dtype=np.float64_t] y, np.ndarray[ndim=1, dtype=np.float64_t] additional_args):
+    def __call__(self, epsilon, a, np.ndarray[ndim=1, dtype=np.float64_t] y, integrate_backwards, np.ndarray[ndim=1, dtype=np.float64_t] additional_args):
         
         cdef int nparams = len(y)
         cdef np.ndarray[ndim=1, dtype=np.float64_t] ydot = np.zeros(nparams, dtype=np.float64)
         
-        self.g.get_derivatives(&ydot[0], &y[0], epsilon, a, &additional_args[0])
+        self.g.get_derivatives(&ydot[0], &y[0], epsilon, a, integrate_backwards, &additional_args[0])
 
         return ydot
 
@@ -134,8 +134,8 @@ cdef class pyInspiralGenerator:
         status = self.f.take_step(&t, &h, &y_in[0], tmax)
         return (status, t, h)
         
-    def add_parameters_to_holder(self, M, mu, a, np.ndarray[ndim=1, dtype=np.float64_t] add_parameters_to_holder):
-        self.f.add_parameters_to_holder(M, mu, a, &add_parameters_to_holder[0])
+    def add_parameters_to_holder(self, M, mu, a, integrate_backwards, np.ndarray[ndim=1, dtype=np.float64_t] add_parameters_to_holder):
+        self.f.add_parameters_to_holder(M, mu, a, integrate_backwards, &add_parameters_to_holder[0])
 
     def initialize_integrator(self):
         self.f.initialize_integrator()

@@ -140,9 +140,8 @@ class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
 
         # check if user has the necessary data
         # if not, the data will automatically download
-        check_for_file_download(fp, self.few_dir)
 
-        coefficients = h5py.File(self.few_dir+"few/files/" + fp)
+        coefficients = h5py.File(self.few_dir+"few/files/" + fp
 
         self.a_val_store = coefficients.attrs['signed_spin']
 
@@ -281,11 +280,11 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
                     if fp[24:27] == "_r_":
                         spin_h *= -1  # retrograde
                     spins_tmp.append(spin_h)
-
             # combine prograde and retrograde here
             self.spin_values = np.unique(np.asarray(spins_tmp))
         else:
             self.spin_values = np.asarray(specific_spins)
+        
 
         self.spin_information_holder = [None for _ in self.spin_values]
         for i, spin in enumerate(self.spin_values):

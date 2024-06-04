@@ -162,7 +162,9 @@ def p_to_y(p, e, use_gpu=False):
 
     """
     if use_gpu:
-        return cp.log(-(21 / 10) - 2 * e + p)
+        e_cp = cp.asarray(e)
+        p_cp = cp.asarray(p)
+        return cp.log(-(21 / 10) - 2 * e_cp + p_cp)
 
     else:
         return np.log(-(21 / 10) - 2 * e + p)
