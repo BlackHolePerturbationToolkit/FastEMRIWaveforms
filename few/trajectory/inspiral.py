@@ -116,6 +116,7 @@ class EMRIInspiral(TrajectoryBase):
         test_new_version=True,
         convert_to_pex=True,
         numerically_integrate_phases=True,
+        rootfind_separatrix=True,
         **kwargs,
     ):
         few_dir = dir_path + "/../../"
@@ -128,7 +129,7 @@ class EMRIInspiral(TrajectoryBase):
         self.enforce_schwarz_sep = enforce_schwarz_sep
         
         nparams = 6
-        self.inspiral_generator = get_integrator(func, nparams, few_dir)
+        self.inspiral_generator = get_integrator(func, nparams, few_dir, rootfind_separatrix=rootfind_separatrix)
 
         self.func = self.inspiral_generator.func
 
@@ -264,10 +265,10 @@ class EMRIInspiral(TrajectoryBase):
             args_in = np.array([0.0])
 
         if self.integrate_ODE_phases:
-            y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
+            y0 = np.array([y1, y2, y3, Phi_phi0*(mu/M), Phi_theta0*(mu/M), Phi_r0*(mu/M)])
         else:
             y0 = np.array([y1, y2, y3])
-   
+
         # this will return in coordinate time
         out = self.inspiral_generator.run_inspiral(M, mu, a, y0, args_in, **temp_kwargs)
         if self.integrate_constants_of_motion and self.convert_to_pex:
@@ -282,7 +283,7 @@ class EMRIInspiral(TrajectoryBase):
 
         # handle no phase integration in ODE   # TODO move to the integrate class? This is an integration method...
         if not self.integrate_ODE_phases:
-        # if performing phase integration numerically, perform it here
+            # if performing phase integration numerically, perform it here
             if self.numerically_integrate_phases:
                 t = out[:,0]
                 ups_p, ups_e, ups_x = out[:,1:4].T
@@ -305,19 +306,17 @@ class EMRIInspiral(TrajectoryBase):
                 else:
                     # get derivatives  TODO ELQ
                     pdot = np.asarray([self.inspiral_generator.integrator.get_derivatives(tr_h.copy()) for tr_h in out[:,1:4]])[:,0] / (M*MTSUN_SI)
+
                     if kwargs['integrate_backwards'] == True: 
                         # TODO: FIX THIS. DOESN'T WORK FOR BACKWARDS INTEGRATION. 
-                        cs = CubicSpline(ups_p, (frequencies/pdot), axis=1)
-                        phase_array = cs.antiderivative()(ups_p) # Integrate directly like a savage. Nice magic Christian.   
-                        # cs = CubicSpline(ups_p, (frequencies/pdot), axis=1)
-                        # phase_array = cs.antiderivative()(ups_p) # Integrate directly like a savage. Nice magic Christian.  
-
+                        cs = CubicSpline(ups_p, (frequencies/pdot/(mu/M)), axis=1)
+                        phase_array = cs.antiderivative()(ups_p) # Integrate directly like a savage. Nice magic Christian.    
+ 
                         # phase_array = np.array([phase_array[i][-1] - phase_array[i] for i in range(len(phase_array))]) # Reshift frequencies
                     else:
-                        cs = CubicSpline(-1*ups_p, (frequencies/pdot), axis=1)
+                        cs = CubicSpline(-1*ups_p, (frequencies/pdot/(mu/M)), axis=1)
                         phase_array = -1*cs.antiderivative()(-1*ups_p)
-                
-                
+
                 # to check whether we are outside the interpolation range
                 # if self.integrate_constants_of_motion:
                     # print("ELQ deriv check")
@@ -347,7 +346,10 @@ class EMRIInspiral(TrajectoryBase):
                 phase_array = np.zeros((out.shape[0],3))
                 out = np.hstack((out, phase_array))
 
-        return tuple(out.T.copy())
+            return tuple(out.T.copy())
+        else:
+            t, p, e, x, Phi_phi, Phi_theta, Phi_r = out.T.copy()
+            return t, p, e, x, Phi_phi/(mu/M), Phi_theta/(mu/M), Phi_r/(mu/M)
 
 
     def get_rhs_ode(

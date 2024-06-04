@@ -23,6 +23,7 @@ import warnings
 import numpy as np
 import h5py
 from scipy.interpolate import RectBivariateSpline
+from tqdm import tqdm
 
 # Cython/C++ imports
 
@@ -140,98 +141,18 @@ class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
         # check if user has the necessary data
         # if not, the data will automatically download
 
-        # TODO: Commented out below
-        # check_for_file_download(fp, self.few_dir)
+        coefficients = h5py.File(self.few_dir+"few/files/" + fp
 
-        # Create link to my files! 
+        self.a_val_store = coefficients.attrs['signed_spin']
 
-        data_directory = "/work/scratch/data/burkeol/Kerr_data/files/"
-        data = {}
-        # get information about this specific model from the file
-
-        with h5py.File(data_directory + fp, "r") as f:
-        # with h5py.File(self.few_dir + "few/files/" + fp, "r") as f:
-            # load attributes in the right order for correct mode sorting later
-            kerr_format_string = "l{}m{}k0n{}"
-            grid = f["grid"][:]
-            for l, m, n in zip(self.l_arr, self.m_arr, self.n_arr):
-                if m >= 0:
-                    key1 = kerr_format_string.format(l,m,n)
-                    tmp = f[key1][:]
-                    tmp2 = tmp[:, 0] + 1j * tmp[:, 1]
-                    data[key1] = tmp2
-
-        # adjust the grid
-        a = grid.T[0].copy()
-        p = grid.T[1].copy()
-        e = grid.T[2].copy()
-        xI = grid.T[3].copy()
-        u = np.round(grid.T[4].copy(),8)  # fix rounding errors in the files
-        sep = grid.T[5].copy()
-        w = grid.T[6].copy()
-
-        assert np.all(a == a[0])
-        assert np.all(xI == xI[0])
-
-        # retrograde needs sign flip to be applied to a
-        a *= xI
-        self.a_val_store = a[0]
-
-        # for checking
-        # tmp = kerr_p_to_u(a, p, e, xI, use_gpu=False)
-
-        grid_size = p.shape[0]
-        
-        unique_u = self.unique_u = np.unique(u)
-        unique_w = self.unique_w = np.unique(w)
-        num_u = len(unique_u)
-        num_w = len(unique_w)
-
-        check_u = u.reshape(num_w, num_u)
-        check_w = w.reshape(num_w, num_u)
-
-        data_copy = deepcopy(data)
-        for mode, vals in data.items():
-            data_copy[mode] = data_copy[mode].reshape(num_w, num_u)
-            
-        #data = {
-        #    "l2m2n0k0": data_copy["l2m2n0k0"],
-        #    "l2m2n1k0": data_copy["l2m2n1k0"]
-        #}  # deepcopy(data_copy)
-
-        data = deepcopy(data_copy)
-        # ::-1 to reverse y to be in ascending order
-        data = {name: val[:, ::-1] for name, val in data.items()}
-
-        self.spl2D = {name:
-            [
-                RectBivariateSpline(unique_w, unique_u, val.real, kx=3, ky=3), 
-                RectBivariateSpline(unique_w, unique_u, val.imag, kx=3, ky=3)
-            ]
-        for name, val in data.items()}
-
-        self.mode_keys = list(data.keys())
-        self.num_teuk_modes = len(self.mode_keys)
-
-        spl = self.spl2D["l2m2k0n0"]
-
-        first_key = list(self.spl2D.keys())[0]
-        example_spl = self.spl2D[first_key][0]
-        tck_last_entry = np.zeros((len(data), 2, grid_size))
-        for i, mode in enumerate(self.mode_keys):
-            tck_last_entry[i, 0] = self.spl2D[mode][0].tck[2]
-            tck_last_entry[i, 1] = self.spl2D[mode][1].tck[2]
-
-        self.tck_last_entry_shape = tck_last_entry.shape
-
+        self.num_teuk_modes = coefficients.attrs['num_teuk_modes']
         self.tck = [
-            xp.asarray(example_spl.tck[0]), 
-            xp.asarray(example_spl.tck[1]), 
-            xp.asarray(tck_last_entry.copy())
+            xp.asarray(coefficients['x1']), 
+            xp.asarray(coefficients['x2']), 
+            xp.asarray(coefficients['c'])
         ]
-        self.degrees = example_spl.degrees
-
-        self.len_indiv_c = tck_last_entry.shape[-1]
+        self.degrees = coefficients.attrs['spline_degree_x'], coefficients.attrs['spline_degree_y']
+        self.len_indiv_c = coefficients.attrs['points_per_modegrid']
 
     @property
     def citation(self):
@@ -348,14 +269,15 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
 
         self.few_dir = dir_path + "/../../"
 
+
+    # outfile = h5py.File(few_dir+"few/files/" + f"KerrEqEccAmpCoeffs_a{abs(a_val_store):.3f}{part2}.h5","w")
+
         if specific_spins is None:
             spins_tmp = []
             for fp in os.listdir(self.few_dir + "few/files/"):
-                if fp[:13] == "Teuk_amps_a0.":
-                    if fp[14] == "_":
-                        continue
-                    spin_h = float(fp[11:15])
-                    if fp[15:18] == "_r_":
+                if fp[:20] == "KerrEqEccAmpCoeffs_a":
+                    spin_h = float(fp[20:24])
+                    if fp[24:27] == "_r_":
                         spin_h *= -1  # retrograde
                     spins_tmp.append(spin_h)
             # combine prograde and retrograde here
@@ -366,12 +288,12 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
 
         self.spin_information_holder = [None for _ in self.spin_values]
         for i, spin in enumerate(self.spin_values):
-            base_string = f"{abs(spin):1.2f}"
+            base_string = f"{abs(spin):1.3f}"
             if spin < 0.0:
                 base_string += "_r"
             elif spin > 0.0:
                 base_string += "_p"
-            fp = f"Teuk_amps_a{base_string}_lmax_10_nmax_{self.nmax}_new_m+.h5"  # data files only contain +m
+            fp = f"KerrEqEccAmpCoeffs_a{base_string}.h5"  # coefficient files computed
 
             self.spin_information_holder[i] = AmpInterp2D(fp, use_gpu=self.use_gpu)
 
@@ -481,6 +403,128 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
                     temp[lmn] = np.conj(temp[lmn])
 
             return temp
-        
 
+def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr):
+    few_dir = dir_path + "/../../"
 
+    # check if user has the necessary data
+    # if not, the data will automatically download
+    check_for_file_download(fp, few_dir)
+
+    data = {}
+    # get information about this specific model from the file
+    with h5py.File(few_dir + "few/files/" + fp, "r") as f:
+        # load attributes in the right order for correct mode sorting later
+        kerr_format_string = "l{}m{}k0n{}"
+        grid = f["grid"][:]
+        for l, m, n in zip(l_arr, m_arr, n_arr):
+            if m >= 0:
+                key1 = kerr_format_string.format(l,m,n)
+                tmp = f[key1][:]
+                tmp2 = tmp[:, 0] + 1j * tmp[:, 1]
+                data[key1] = tmp2
+
+    # create the coefficients file
+
+    # adjust the grid
+    a = grid.T[0].copy()
+    p = grid.T[1].copy()
+    e = grid.T[2].copy()
+    xI = grid.T[3].copy()
+    u = np.round(grid.T[4].copy(),8)  # fix rounding errors in the files
+    sep = grid.T[5].copy()
+    w = grid.T[6].copy()
+
+    assert np.all(a == a[0])
+    assert np.all(xI == xI[0])
+
+    # retrograde needs sign flip to be applied to a
+    a *= xI
+    a_val_store = a[0]
+
+    if a_val_store < 0:
+        part2 = '_r'
+    elif a_val_store > 0:
+        part2 = '_p'
+    elif a_val_store == 0:
+        part2 = ''
+
+    outfile = h5py.File(few_dir+"few/files/" + f"KerrEqEccAmpCoeffs_a{abs(a_val_store):.3f}{part2}.h5","w")
+    outfile.attrs['signed_spin'] = a_val_store
+
+    grid_size = p.shape[0]
+    
+    unique_u = np.unique(u)
+    unique_w = np.unique(w)
+    num_u = len(unique_u)
+    num_w = len(unique_w)
+
+    data_copy = deepcopy(data)
+    for mode, vals in data.items():
+        data_copy[mode] = data_copy[mode].reshape(num_w, num_u)
+
+    data = deepcopy(data_copy)
+
+    data = {name: val[:, ::-1] for name, val in data.items()}
+
+    spl2D = {name:
+        [
+            RectBivariateSpline(unique_w, unique_u, val.real, kx=3, ky=3), 
+            RectBivariateSpline(unique_w, unique_u, val.imag, kx=3, ky=3)
+        ]
+    for name, val in data.items()}
+
+    mode_keys = list(data.keys())
+    num_teuk_modes = len(mode_keys)
+
+    outfile.attrs['num_teuk_modes'] = num_teuk_modes
+
+    first_key = list(spl2D.keys())[0]
+    example_spl = spl2D[first_key][0]
+    tck_last_entry = np.zeros((len(data), 2, grid_size))
+    for i, mode in enumerate(mode_keys):
+        tck_last_entry[i, 0] = spl2D[mode][0].tck[2]
+        tck_last_entry[i, 1] = spl2D[mode][1].tck[2]
+
+    degrees = example_spl.degrees
+
+    len_indiv_c = tck_last_entry.shape[-1]
+
+    outfile.attrs['spline_degree_x'] = degrees[0]
+    outfile.attrs['spline_degree_y'] = degrees[1]
+    outfile.attrs['points_per_modegrid'] = len_indiv_c
+
+    outfile.create_dataset('x1', data=example_spl.tck[0])
+    outfile.create_dataset('x2', data=example_spl.tck[1])
+    outfile.create_dataset('c', data=tck_last_entry.copy())
+
+    outfile.close()
+
+if __name__ == "__main__":
+    # produce spline coefficient files (will overwrite previous files if they exist!)
+    baseclass = KerrEquatorialEccentric()
+    few_dir = dir_path + "/../../"
+
+    spin_values = np.r_[np.linspace(0.,0.9,10),0.95,0.99]
+    spin_values = np.r_[-np.flip(spin_values)[:-1],spin_values]
+    # or alternatively, specify your own values
+
+    # get a list of amplitude files to compute coefficients for
+    base_path = "Teuk_amps_a{:.2f}_{}lmax_10_nmax_50_new_m+.h5"
+    filepaths = []
+    for spin in spin_values:
+        part1 = abs(spin)
+        if spin < 0:
+            part2 = 'r_'
+        elif spin > 0:
+            part2 = 'p_'
+        elif spin == 0:
+            part2 = ''
+        filepaths.append(base_path.format(part1, part2))
+
+    # for fp in tqdm(filepaths,total=len(filepaths)):
+    #     _spline_coefficients_to_file(fp, baseclass.l_arr, baseclass.m_arr, baseclass.n_arr)
+
+    # test
+    amp = AmpInterpKerrEqEcc()
+    print(amp.get_amplitudes(0.1, np.asarray([10.]), np.asarray([0.3]), np.asarray([1.])))

@@ -365,6 +365,7 @@ inspiral_ext = Extension(
     sources=[
         "src/Utility.cc",
         "src/Interpolant.cc",
+        "src/spline.cpp",
         "src/dIdt8H_5PNe10.cc",
         "src/KerrEquatorial.cc",
         "src/ode.cc",
@@ -382,7 +383,7 @@ par_map_ext = Extension(
 
 fund_freqs_ext = Extension(
     "pyUtility",
-    sources=["src/Utility.cc", "src/utility_functions.pyx"],
+    sources=["src/spline.cpp","src/Utility.cc", "src/utility_functions.pyx", ],
     **cpu_extension,
 )
 

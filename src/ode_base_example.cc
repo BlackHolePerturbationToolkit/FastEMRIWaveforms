@@ -12,6 +12,7 @@
 #include <cmath>
 
 #include "Interpolant.h"
+#include "spline.hpp"
 #include "global.h"
 #include "Utility.hh"
 
@@ -44,16 +45,16 @@ __deriv__ void pn5(double ydot[], const double y[], double epsilon, double a, bo
 
     int Nv = 10;
     int ne = 10;
-    double pdot = epsilon * dpdt8H_5PNe10(a, p, e, Y, Nv, ne);
+    double pdot = dpdt8H_5PNe10(a, p, e, Y, Nv, ne);
 
     // needs adjustment for validity
     Nv = 10;
     ne = 8;
-    double edot = epsilon * dedt8H_5PNe10(a, p, e, Y, Nv, ne);
+    double edot = dedt8H_5PNe10(a, p, e, Y, Nv, ne);
 
     Nv = 7;
     ne = 10;
-    double Ydot = epsilon * dYdt8H_5PNe10(a, p, e, Y, Nv, ne);
+    double Ydot = dYdt8H_5PNe10(a, p, e, Y, Nv, ne);
 
     // if we wish to integrate backwards
     // work with the frequencies later
@@ -85,16 +86,16 @@ __deriv__ void pn5_nofrequencies(double ydot[], const double y[], double epsilon
 
     int Nv = 10;
     int ne = 10;
-    double pdot = epsilon * dpdt8H_5PNe10(a, p, e, Y, Nv, ne);
+    double pdot = dpdt8H_5PNe10(a, p, e, Y, Nv, ne);
 
     // needs adjustment for validity
     Nv = 10;
     ne = 8;
-    double edot = epsilon * dedt8H_5PNe10(a, p, e, Y, Nv, ne);
+    double edot = dedt8H_5PNe10(a, p, e, Y, Nv, ne);
 
     Nv = 7;
     ne = 10;
-    double Ydot = epsilon * dYdt8H_5PNe10(a, p, e, Y, Nv, ne);
+    double Ydot = dYdt8H_5PNe10(a, p, e, Y, Nv, ne);
 
     // if we wish to integrate backwards
     // work with the frequencies later
@@ -146,9 +147,10 @@ __deriv__ void pn5_ELQ_nofrequencies(double ydot[], const double y[], double eps
         Qdot *= -1;
     }
 
-    ydot[0] = epsilon * Edot;
-    ydot[1] = epsilon * Lzdot;
-    ydot[2] = epsilon * Qdot;
+    ydot[0] = Edot;
+    ydot[1] = Lzdot;
+    ydot[2] = Qdot;
+
 }
 
 // Initialize flux data for inspiral calculations
@@ -241,9 +243,9 @@ __deriv__ void SchwarzEccFlux::deriv_func(double ydot[], const double y[], doubl
     double EdotPN = (96 + 292 * Power(e, 2) + 37 * Power(e, 4)) / (15. * Power(1 - Power(e, 2), 3.5)) * pow(yPN, 5);
     double LdotPN = (4 * (8 + 7 * Power(e, 2))) / (5. * Power(-1 + Power(e, 2), 2)) * pow(yPN, 7. / 2.);
 
-    double Edot = -epsilon * (interps->Edot->eval(y1, e) * pow(yPN, 6.) + EdotPN);
+    double Edot = -(interps->Edot->eval(y1, e) * pow(yPN, 6.) + EdotPN);
 
-    double Ldot = -epsilon * (interps->Ldot->eval(y1, e) * pow(yPN, 9. / 2.) + LdotPN);
+    double Ldot = -(interps->Ldot->eval(y1, e) * pow(yPN, 9. / 2.) + LdotPN);
 
     double pdot = (-2 * (Edot * Sqrt((4 * Power(e, 2) - Power(-2 + p, 2)) / (3 + Power(e, 2) - p)) * (3 + Power(e, 2) - p) * Power(p, 1.5) + Ldot * Power(-4 + p, 2) * Sqrt(-3 - Power(e, 2) + p))) / (4 * Power(e, 2) - Power(-6 + p, 2));
 
@@ -329,9 +331,9 @@ __deriv__ void SchwarzEccFlux_nofrequencies::deriv_func(double ydot[], const dou
     double EdotPN = (96 + 292 * Power(e, 2) + 37 * Power(e, 4)) / (15. * Power(1 - Power(e, 2), 3.5)) * pow(yPN, 5);
     double LdotPN = (4 * (8 + 7 * Power(e, 2))) / (5. * Power(-1 + Power(e, 2), 2)) * pow(yPN, 7. / 2.);
 
-    double Edot = -epsilon * (interps->Edot->eval(y1, e) * pow(yPN, 6.) + EdotPN);
+    double Edot = -(interps->Edot->eval(y1, e) * pow(yPN, 6.) + EdotPN);
 
-    double Ldot = -epsilon * (interps->Ldot->eval(y1, e) * pow(yPN, 9. / 2.) + LdotPN);
+    double Ldot = -(interps->Ldot->eval(y1, e) * pow(yPN, 9. / 2.) + LdotPN);
 
     double pdot = (-2 * (Edot * Sqrt((4 * Power(e, 2) - Power(-2 + p, 2)) / (3 + Power(e, 2) - p)) * (3 + Power(e, 2) - p) * Power(p, 1.5) + Ldot * Power(-4 + p, 2) * Sqrt(-3 - Power(e, 2) + p))) / (4 * Power(e, 2) - Power(-6 + p, 2));
 
@@ -426,7 +428,35 @@ KerrEccentricEquatorial::KerrEccentricEquatorial(std::string few_dir)
     Edot_interp = new TensorInterpolant(x1, x2, x3, coeffEn);
     Ldot_interp = new TensorInterpolant(x1, x2, x3, coeffL);
 
-    // cout << "pdot=" << pdot_interp<< pdot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
+    //
+    fp = few_dir + "few/files/TricubicData_x0.dat";
+    Vector tri_x1 = fill_vector(fp);
+    fp = few_dir + "few/files/TricubicData_x1.dat";
+    Vector tri_x2 = fill_vector(fp);
+    fp = few_dir + "few/files/TricubicData_x2.dat";
+    Vector tri_x3 = fill_vector(fp);
+
+    fp = few_dir + "few/files/TricubicData_pdot.dat";
+    Vector tri_pdot = fill_vector(fp);
+    fp = few_dir + "few/files/TricubicData_edot.dat";
+    Vector tri_edot = fill_vector(fp);
+
+    fp = few_dir + "few/files/TricubicData_psep_x0.dat";
+    Vector bi_psep_x1 = fill_vector(fp);
+    fp = few_dir + "few/files/TricubicData_psep_x1.dat";
+    Vector bi_psep_x2 = fill_vector(fp);
+    fp = few_dir + "few/files/TricubicData_psep.dat";
+    Vector bi_psep = fill_vector(fp);
+
+    tric_p_interp = new TricubicSpline(tri_x1, tri_x2, tri_x3, tri_pdot, 3);
+    tric_e_interp = new TricubicSpline(tri_x1, tri_x2, tri_x3, tri_edot, 3);
+    bic_psep_interp = new BicubicSpline(bi_psep_x1, bi_psep_x2, bi_psep, 3);
+
+    // cout << "pdot_TP=" << pdot_interp->eval(0.9, 0.4088810015999615, 0.7700000000000000) << '\n'<< endl;
+    // cout << "pdot_TR=" << tric_p_interp->evaluate(0.9, 0.4088810015999615, 0.7700000000000000) << '\n'<< endl;
+
+    // cout << "sep_BI" << bic_psep_interp->evaluate(1.,0.5) * 6.5 << '\n' << endl;
+    // cout << "sep_real" << get_separatrix(0.99998, 0.25, -1.) << '\n' << endl;
     // cout << "edot=" << edot_interp<< edot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
 }
 
@@ -442,7 +472,20 @@ __deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y
     double e = y[1];
     double x = y[2];
 
-    double p_sep = get_separatrix(a, e, x);
+    // double p_sep = get_separatrix(a, e, x);
+
+    double w = sqrt(e);
+    double signed_a = a*x; // signed a for interpolant
+
+    double inv_scale = 1/3.;
+    double amax = 0.99998;
+    double chi2_part = pow((1-signed_a),inv_scale);
+    double chi2_min = pow((1-amax),inv_scale);
+    double chi2_max = pow((1+amax), inv_scale);
+    double chi2 = (chi2_part-chi2_min)/(chi2_max-chi2_min);
+
+    double p_sep = bic_psep_interp->evaluate(chi2, w) * (6. + 2.*e);
+
     // make sure we do not step into separatrix
     if ((e < 0.0) || (p < p_sep))
     {
@@ -458,15 +501,18 @@ __deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y
     // evaluate ODEs
     // cout << "beginning" << " a =" << a  << "\t" << "p=" <<  p << "\t" << "e=" << e <<endl;
 
-    // auto start = std::chrono::steady_clock::now();
     // the frequency variables are pointers!
+    // StopWatch stopwatch;
+    // stopwatch.start();
     KerrGeoEquatorialCoordinateFrequencies(&Omega_phi, &Omega_theta, &Omega_r, a, p, e, x); // shift to avoid problem in fundamental frequencies
+    // stopwatch.stop();
+    // double elapsed_time = stopwatch.time();
+    // cout << "elapsed time fund freqs: " << elapsed_time << "s\n";
+    // stopwatch.print();
+
     // Omega_phi = pow(((1.-e*e)/p),(3./2.));
     // Omega_theta = pow(((1.-e*e)/p),(3./2.));
     // Omega_r = pow(((1.-e*e)/p),(3./2.));
-    // auto end = std::chrono::steady_clock::now();
-    // std::chrono::duration<double>  msec = end-start;
-    // std::cout << "elapsed time fund freqs: " << msec.count() << "s\n";
 
     // get r variable
     // double Omega_phi_sep_circ,*Omega_theta_sep_circ,Omega_r_sep_circ;
@@ -491,15 +537,29 @@ __deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y
     // double Edot, Ldot, Qdot, E_here, L_here, Q_here;
 
     // Flux from Scott
-    double risco = get_separatrix(a, 0.0, x);
+    // double risco = get_separatrix(a, 0.0, x);
+    double risco = bic_psep_interp->evaluate(chi2, 0.) * 6.;
     double u = log((p - p_sep + 4.0 - 0.05) / 4.0);
-    double w = sqrt(e);
+    // double w = sqrt(e);
     // p, e
 
-    double signed_a = a*x; // signed a for interpolant
+    // double signed_a = a*x; // signed a for interpolant
+    
+    // stopwatch.start();
 
-    pdot_out = pdot_interp->eval(signed_a, w, u) * ((8. * pow(1. - pow(e, 2), 1.5) * (8. + 7. * pow(e, 2))) / (5. * p * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
-    edot_out = edot_interp->eval(signed_a, w, u) * ((pow(1. - pow(e, 2), 1.5) * (304. + 121. * pow(e, 2))) / (15. * pow(p, 2) * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
+    // pdot_out = pdot_interp->eval(signed_a, w, u) * ((8. * pow(1. - (e * e), 1.5) * (8. + 7. * (e * e))) / (5. * p * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
+    pdot_out = tric_p_interp->evaluate(signed_a, w, u) * ((8. * pow(1. - (e * e), 1.5) * (8. + 7. * (e * e))) / (5. * p * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
+    // edot_out = edot_interp->eval(signed_a, w, u) * ((pow(1. - (e * e), 1.5) * (304. + 121. * (e * e))) / (15. * (p*p) * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
+    edot_out = tric_e_interp->evaluate(signed_a, w, u) * ((pow(1. - (e * e), 1.5) * (304. + 121. * (e * e))) / (15. * (p*p) * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
+
+    // stopwatch.stop();
+    // elapsed_time = stopwatch.time();
+    // cout << "elapsed time interp: " << elapsed_time << "s\n";
+    // stopwatch.print();
+
+    // compare the two interpolants
+    // cout << "pdot_TP/pdot_TR=" << pdot_interp->eval(signed_a, w, u)/tric_p_interp->evaluate(signed_a, w, u) << '\n'<< endl;
+    
     // E, L
     // Edot = Edot_interp->eval(a,u,w) * (32./5. * pow(p,-5) * pow(1-e*e,1.5) * (1. + 73./24.* e*e + 37./96. * e*e*e*e));
     // Ldot = Ldot_interp->eval(a,u,w) * (32./5. * pow(p,-7/2) * pow(1-e*e,1.5) * (1. + 7./8. * e*e) );
@@ -519,13 +579,13 @@ __deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y
     // needs adjustment for validity
     if (e > 1e-6)
     {
-        pdot = epsilon * pdot_out;
-        edot = epsilon * edot_out;
+        pdot = pdot_out;
+        edot = edot_out;
     }
     else
     {
         edot = 0.0;
-        pdot = epsilon * pdot_out;
+        pdot = pdot_out;
     }
 
     double xdot = 0.0;
@@ -553,6 +613,9 @@ KerrEccentricEquatorial::~KerrEccentricEquatorial()
     delete edot_interp;
     delete Edot_interp;
     delete Ldot_interp;
+    delete tric_p_interp;
+    delete tric_e_interp;
+    delete bic_psep_interp;
 }
 
 
@@ -618,20 +681,20 @@ __deriv__ void KerrEccentricEquatorial_nofrequencies::deriv_func(double ydot[], 
 
     double signed_a = a*x; // signed a for interpolant
 
-    pdot_out = pdot_interp->eval(signed_a, w, u) * ((8. * pow(1. - pow(e, 2), 1.5) * (8. + 7. * pow(e, 2))) / (5. * p * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
-    edot_out = edot_interp->eval(signed_a, w, u) * ((pow(1. - pow(e, 2), 1.5) * (304. + 121. * pow(e, 2))) / (15. * pow(p, 2) * (pow(p - risco, 2) - pow(-risco + p_sep, 2))));
+    pdot_out = pdot_interp->eval(signed_a, w, u) * ((8. * pow(1. - (e * e), 1.5) * (8. + 7. * (e * e))) / (5. * p * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
+    edot_out = edot_interp->eval(signed_a, w, u) * ((pow(1. - (e * e), 1.5) * (304. + 121. * (e * e))) / (15. * (p*p) * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
     double pdot, edot;
 
     // needs adjustment for validity
     if (e > 1e-6)
     {
-        pdot = epsilon * pdot_out;
-        edot = epsilon * edot_out;
+        pdot = pdot_out;
+        edot = edot_out;
     }
     else
     {
         edot = 0.0;
-        pdot = epsilon * pdot_out;
+        pdot = pdot_out;
     }
 
     double xdot = 0.0;
@@ -734,8 +797,8 @@ __deriv__ void KerrEccentricEquatorial_ELQ::deriv_func(double ydot[], const doub
     double signed_a = a*x; // signed a for interpolant
 
     // E, L
-    Edot = -epsilon * Edot_interp->eval(signed_a,w,u) * (32./5. * pow(p,-5) * pow(1-e*e,1.5) * (1. + 73./24.* e*e + 37./96. * e*e*e*e));
-    Ldot = -x * epsilon * Ldot_interp->eval(signed_a,w,u) * (32./5. * pow(p,-7./2.) * pow(1.-e*e,1.5) * (1. + 7./8. * e*e) );
+    Edot = -Edot_interp->eval(signed_a,w,u) * (32./5. * pow(p,-5) * pow(1-e*e,1.5) * (1. + 73./24.* e*e + 37./96. * e*e*e*e));
+    Ldot = -x * Ldot_interp->eval(signed_a,w,u) * (32./5. * pow(p,-7./2.) * pow(1.-e*e,1.5) * (1. + 7./8. * e*e) );
     Qdot = 0.0;
     // cout << " a=" << a << " p=" << p << " e=" << e << " psep=" << p_sep  << " Edot=" << Edot << " Ldot=" << Ldot << endl;
     
@@ -749,11 +812,11 @@ __deriv__ void KerrEccentricEquatorial_ELQ::deriv_func(double ydot[], const doub
     // r = pow(Omega_phi / Omega_phi_sep_circ, 2.0 / 3.0) * (1.0 + e);
 
 
-    // Edot = -epsilon * Edot_GR(a*copysign(1.0,x),e,r,p);
-    // Ldot = -epsilon * Ldot_GR(a*copysign(1.0,x),e,r,p)*copysign(1.0,x);
+    // Edot = -Edot_GR(a*copysign(1.0,x),e,r,p);
+    // Ldot = -Ldot_GR(a*copysign(1.0,x),e,r,p)*copysign(1.0,x);
 
-    // double EdotPN = epsilon * dEdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
-    // double LdotPN = epsilon * dLdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
+    // double EdotPN = dEdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
+    // double LdotPN = dLdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
     // cout << " a=" << a << " p=" << p << " e=" << e << " psep=" << p_sep  << " Edot=" << Edot << " Ldot=" << Ldot << "EdotPNratio= " << Edot/EdotPN << "LdotPNratio= " << Ldot/LdotPN << endl;
  
      // Integrate backwards
@@ -862,8 +925,8 @@ __deriv__ void KerrEccentricEquatorial_ELQ_nofrequencies::deriv_func(double ydot
     double u = log((p - p_sep + 4.0 - 0.05) / 4.0);
 
     // E, L
-    Edot = -epsilon * Edot_interp->eval(signed_a,w,u) * (32./5. * pow(p,-5) * pow(1-e*e,1.5) * (1. + 73./24.* e*e + 37./96. * e*e*e*e));
-    Ldot = -x * epsilon * Ldot_interp->eval(signed_a,w,u) * (32./5. * pow(p,-7./2.) * pow(1.-e*e,1.5) * (1. + 7./8. * e*e) );
+    Edot = -Edot_interp->eval(signed_a,w,u) * (32./5. * pow(p,-5) * pow(1-e*e,1.5) * (1. + 73./24.* e*e + 37./96. * e*e*e*e));
+    Ldot = -x * Ldot_interp->eval(signed_a,w,u) * (32./5. * pow(p,-7./2.) * pow(1.-e*e,1.5) * (1. + 7./8. * e*e) );
     Qdot = 0.0;
     // cout << " a=" << a << " p=" << p << " e=" << e << " psep=" << p_sep  << " Edot=" << Edot << " Ldot=" << Ldot << endl;
     
@@ -877,11 +940,11 @@ __deriv__ void KerrEccentricEquatorial_ELQ_nofrequencies::deriv_func(double ydot
     // r = pow(Omega_phi / Omega_phi_sep_circ, 2.0 / 3.0) * (1.0 + e);
 
 
-    // Edot = -epsilon * Edot_GR(a*copysign(1.0,x),e,r,p);
-    // Ldot = -epsilon * Ldot_GR(a*copysign(1.0,x),e,r,p)*copysign(1.0,x);
+    // Edot = -Edot_GR(a*copysign(1.0,x),e,r,p);
+    // Ldot = -Ldot_GR(a*copysign(1.0,x),e,r,p)*copysign(1.0,x);
 
-    // double EdotPN = epsilon * dEdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
-    // double LdotPN = epsilon * dLdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
+    // double EdotPN = dEdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
+    // double LdotPN = dLdt8H_5PNe10(a, p, e, 0.999*x, 5, 5);
     // cout << " a=" << a << " p=" << p << " e=" << e << " psep=" << p_sep  << " Edot=" << Edot << " Ldot=" << Ldot << "EdotPNratio= " << Edot/EdotPN << "LdotPNratio= " << Ldot/LdotPN << endl;
 
      // Integrate backwards

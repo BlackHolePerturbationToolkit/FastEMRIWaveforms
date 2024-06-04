@@ -19,6 +19,9 @@
 using namespace std;
 using namespace std::chrono;
 
+// define GSL_PREC_DOUBLE
+#define PREC_ELL_INT 1e-20
+
 int sanity_check(double a, double p, double e, double Y)
 {
     int res = 0;
@@ -45,7 +48,7 @@ double EllipticK(double k)
 {
     gsl_sf_result result;
     // cout << "CHECK1" << endl;
-    int status = gsl_sf_ellint_Kcomp_e(sqrt(k), GSL_PREC_DOUBLE, &result);
+    int status = gsl_sf_ellint_Kcomp_e(sqrt(k), PREC_ELL_INT, &result);
     if (status != GSL_SUCCESS)
     {
         char str[1000];
@@ -59,7 +62,7 @@ double EllipticF(double phi, double k)
 {
     gsl_sf_result result;
     // cout << "CHECK2" << endl;
-    int status = gsl_sf_ellint_F_e(phi, sqrt(k), GSL_PREC_DOUBLE, &result);
+    int status = gsl_sf_ellint_F_e(phi, sqrt(k), PREC_ELL_INT, &result);
     if (status != GSL_SUCCESS)
     {
         char str[1000];
@@ -73,7 +76,7 @@ double EllipticE(double k)
 {
     gsl_sf_result result;
     // cout << "CHECK3 " << k << endl;
-    int status = gsl_sf_ellint_Ecomp_e(sqrt(k), GSL_PREC_DOUBLE, &result);
+    int status = gsl_sf_ellint_Ecomp_e(sqrt(k), PREC_ELL_INT, &result);
     if (status != GSL_SUCCESS)
     {
         char str[1000];
@@ -87,7 +90,7 @@ double EllipticEIncomp(double phi, double k)
 {
     gsl_sf_result result;
     // cout << "CHECK4" << endl;
-    int status = gsl_sf_ellint_E_e(phi, sqrt(k), GSL_PREC_DOUBLE, &result);
+    int status = gsl_sf_ellint_E_e(phi, sqrt(k), PREC_ELL_INT, &result);
     if (status != GSL_SUCCESS)
     {
         char str[1000];
@@ -101,7 +104,7 @@ double EllipticPi(double n, double k)
 {
     // cout << "CHECK6" << endl;
     gsl_sf_result result;
-    int status = gsl_sf_ellint_Pcomp_e(sqrt(k), -n, GSL_PREC_DOUBLE, &result);
+    int status = gsl_sf_ellint_Pcomp_e(sqrt(k), -n, PREC_ELL_INT, &result);
     if (status != GSL_SUCCESS)
     {
         char str[1000];
@@ -116,7 +119,7 @@ double EllipticPiIncomp(double n, double phi, double k)
 {
     // cout << "CHECK7" << endl;
     gsl_sf_result result;
-    int status = gsl_sf_ellint_P_e(phi, sqrt(k), -n, GSL_PREC_DOUBLE, &result);
+    int status = gsl_sf_ellint_P_e(phi, sqrt(k), -n, PREC_ELL_INT, &result);
     if (status != GSL_SUCCESS)
     {
         char str[1000];
@@ -128,60 +131,60 @@ double EllipticPiIncomp(double n, double phi, double k)
 
 double CapitalDelta(double r, double a)
 {
-    return pow(r, 2.) - 2. * r + pow(a, 2.);
+    return (r*r) - 2. * r + (a*a);
 }
 
 double f(double r, double a, double zm)
 {
-    return pow(r, 4) + pow(a, 2) * (r * (r + 2) + pow(zm, 2) * CapitalDelta(r, a));
+    return (r*r*r*r) + (a*a) * (r * (r + 2.) + (zm*zm) * CapitalDelta(r, a));
 }
 
 double g(double r, double a, double zm)
 {
-    return 2 * a * r;
+    return 2. * a * r;
 }
 
 double h(double r, double a, double zm)
 {
-    return r * (r - 2) + pow(zm, 2) / (1 - pow(zm, 2)) * CapitalDelta(r, a);
+    return r * (r - 2.) + (zm*zm) / (1. - (zm*zm)) * CapitalDelta(r, a);
 }
 
 double d(double r, double a, double zm)
 {
-    return (pow(r, 2) + pow(a, 2) * pow(zm, 2)) * CapitalDelta(r, a);
+    return ((r*r) + (a*a) * (zm*zm)) * CapitalDelta(r, a);
 }
 
 double fdot(double r, double a, double zm)
 {
-    double zm2 = pow(zm, 2.);
-    return 4. * pow(r, 3.) + pow(a, 2.) * (2. * r * (1. + zm2) + 2. * (1 - zm2));
+    double zm2 = (zm*zm);
+    return 4. * (r*r*r) + (a*a) * (2. * r * (1. + zm2) + 2. * (1 - zm2));
 }
 
 double gdot(double r, double a, double zm)
 {
-    return 2 * a;
+    return 2. * a;
 }
 
 double hdot(double r, double a, double zm)
 {   
-    double zm2 = pow(zm, 2.);
+    double zm2 = (zm*zm);
     return 2. * (r - 1.)*(1. + zm2 / (1. - zm2));
 }
 
 double ddot(double r, double a, double zm)
 {   
-    double a2 = pow(a, 2.);
-    double zm2 = pow(zm, 2.);
-    return 4. * pow(r, 3.) - 6. * pow(r, 2.) + 2.*a2*r*(1. + zm2) - 2.*a2*zm2;
+    double a2 = (a*a);
+    double zm2 = (zm*zm);
+    return 4. * (r*r*r) - 6. * (r*r) + 2.*a2*r*(1. + zm2) - 2.*a2*zm2;
 }
 
 
 double KerrGeoEnergy(double a, double p, double e, double x)
 {
 
-    double zm = sqrt(1. - pow(x, 2.));
+    double zm = sqrt(1. - x*x);
     double Kappa, Epsilon, Rho, Eta, Sigma;
-    if (e < 1e-5) {  // switch to spherical formulas A13-A17 (2102.02713) to avoid instability
+    if (e < 1e-10) {  // switch to spherical formulas A13-A17 (2102.02713) to avoid instability
         double r = p;
 
         Kappa = d(r, a, zm) * hdot(r, a, zm) - h(r, a, zm) * ddot(r, a, zm);
@@ -189,6 +192,17 @@ double KerrGeoEnergy(double a, double p, double e, double x)
         Rho = f(r, a, zm) * hdot(r, a, zm) - h(r, a, zm) * fdot(r, a, zm);
         Eta = f(r, a, zm) * gdot(r, a, zm) - g(r, a, zm) * fdot(r, a, zm);
         Sigma = g(r, a, zm) * hdot(r, a, zm) - h(r, a, zm) * gdot(r, a, zm);
+    }else if (abs(x)==1.0){
+        double denom = (-4.*(a*a)*((-1 + (e*e))*(-1 + (e*e))) + ((3 + (e*e) - p)*(3 + (e*e) - p))*p);
+        double numer = ((-1 + (e*e))*((a*a)*(1 + 3*(e*e) + p) + p*(-3 - (e*e) + p - x*2*sqrt(((a*a*a*a*a*a)*((-1 + (e*e))*(-1 + (e*e))) + (a*a)*(-4*(e*e) + ((-2 + p)*(-2 + p)))*(p*p) + 2*(a*a*a*a)*p*(-2 + p + (e*e)*(2 + p)))/(p*p*p)))));
+        double ratio;
+            if ( abs(denom)<1e-14 || abs(numer)<1e-14){
+                ratio = 0.0;
+            }
+            else{
+                ratio = numer/denom;
+            }
+        return sqrt(1. - ((1. - (e*e))*(1. + ratio))/p);
     }
     else {
         double r1 = p / (1. - e);
@@ -201,23 +215,25 @@ double KerrGeoEnergy(double a, double p, double e, double x)
         Sigma = g(r1, a, zm) * h(r2, a, zm) - h(r1, a, zm) * g(r2, a, zm);
     }
 
-    return sqrt((Kappa * Rho + 2 * Epsilon * Sigma - x * 2 * sqrt(Sigma * (Sigma * pow(Epsilon, 2) + Rho * Epsilon * Kappa - Eta * pow(Kappa, 2)) / pow(x, 2))) / (pow(Rho, 2) + 4 * Eta * Sigma));
+    return sqrt((Kappa * Rho + 2. * Epsilon * Sigma - x * 2. * sqrt(Sigma * (Sigma * Epsilon*Epsilon+ Rho * Epsilon * Kappa - Eta * Kappa*Kappa) / (x*x))) / (Rho*Rho + 4. * Eta * Sigma));
+
 }
+
 
 double KerrGeoAngularMomentum(double a, double p, double e, double x, double En)
 {
     double r1 = p / (1 - e);
 
-    double zm = sqrt(1 - pow(x, 2));
+    double zm = sqrt(1 - (x*x));
 
-    return (-En * g(r1, a, zm) + x * sqrt((-d(r1, a, zm) * h(r1, a, zm) + pow(En, 2) * (pow(g(r1, a, zm), 2) + f(r1, a, zm) * h(r1, a, zm))) / pow(x, 2))) / h(r1, a, zm);
+    return (-En * g(r1, a, zm) + x * sqrt((-d(r1, a, zm) * h(r1, a, zm) + (En*En) * (pow(g(r1, a, zm), 2) + f(r1, a, zm) * h(r1, a, zm))) / (x*x))) / h(r1, a, zm);
 }
 
 double KerrGeoCarterConstant(double a, double p, double e, double x, double En, double L)
 {
-    double zm = sqrt(1 - pow(x, 2));
+    double zm = sqrt(1 - (x*x));
 
-    return pow(zm, 2) * (pow(a, 2) * (1 - pow(En, 2)) + pow(L, 2) / (1 - pow(zm, 2)));
+    return (zm*zm) * ((a*a) * (1 - (En*En)) + (L*L) / (1 - (zm*zm)));
 }
 
 void KerrGeoConstantsOfMotion(double *E_out, double *L_out, double *Q_out, double a, double p, double e, double x)
@@ -243,9 +259,9 @@ void KerrGeoRadialRoots(double *r1_, double *r2_, double *r3_, double *r4_, doub
     double M = 1.0;
     double r1 = p / (1 - e);
     double r2 = p / (1 + e);
-    double AplusB = (2 * M) / (1 - pow(En, 2)) - (r1 + r2);
-    double AB = (pow(a, 2) * Q) / ((1 - pow(En, 2)) * r1 * r2);
-    double r3 = (AplusB + sqrt(pow(AplusB, 2) - 4 * AB)) / 2;
+    double AplusB = (2 * M) / (1 - (En*En)) - (r1 + r2);
+    double AB = ((a*a) * Q) / ((1 - (En*En)) * r1 * r2);
+    double r3 = (AplusB + sqrt((AplusB*AplusB) - 4 * AB)) / 2;
     double r4 = AB / r3;
 
     *r1_ = r1;
@@ -267,30 +283,30 @@ void KerrGeoMinoFrequencies(double *CapitalGamma_, double *CapitalUpsilonPhi_, d
     double r1, r2, r3, r4;
     KerrGeoRadialRoots(&r1, &r2, &r3, &r4, a, p, e, x, En, Q);
 
-    double Epsilon0 = pow(a, 2) * (1 - pow(En, 2)) / pow(L, 2);
-    double zm = 1 - pow(x, 2);
-    double a2zp = (pow(L, 2) + pow(a, 2) * (-1 + pow(En, 2)) * (-1 + zm)) / ((-1 + pow(En, 2)) * (-1 + zm));
+    double Epsilon0 = (a*a) * (1 - (En*En)) / (L*L);
+    double zm = 1 - (x*x);
+    double a2zp = ((L*L) + (a*a) * (-1 + (En*En)) * (-1 + zm)) / ((-1 + (En*En)) * (-1 + zm));
 
-    double Epsilon0zp = -((pow(L, 2) + pow(a, 2) * (-1 + pow(En, 2)) * (-1 + zm)) / (pow(L, 2) * (-1 + zm)));
+    double Epsilon0zp = -(((L*L) + (a*a) * (-1 + (En*En)) * (-1 + zm)) / ((L*L) * (-1 + zm)));
 
-    double zmOverZp = zm / ((pow(L, 2) + pow(a, 2) * (-1 + pow(En, 2)) * (-1 + zm)) / (pow(a, 2) * (-1 + pow(En, 2)) * (-1 + zm)));
+    double zmOverZp = zm / (((L*L) + (a*a) * (-1 + (En*En)) * (-1 + zm)) / ((a*a) * (-1 + (En*En)) * (-1 + zm)));
 
     double kr = sqrt((r1 - r2) / (r1 - r3) * (r3 - r4) / (r2 - r4));                                                //(*Eq.(13)*)
     double kTheta = sqrt(zmOverZp);                                                                                 //(*Eq.(13)*)
-    double CapitalUpsilonr = (M_PI * sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2 - r4))) / (2 * EllipticK(pow(kr, 2))); //(*Eq.(15)*)
-    double CapitalUpsilonTheta = (M_PI * L * sqrt(Epsilon0zp)) / (2 * EllipticK(pow(kTheta, 2)));                   //(*Eq.(15)*)
+    double CapitalUpsilonr = (M_PI * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) / (2 * EllipticK((kr*kr))); //(*Eq.(15)*)
+    double CapitalUpsilonTheta = (M_PI * L * sqrt(Epsilon0zp)) / (2 * EllipticK((kTheta*kTheta)));                   //(*Eq.(15)*)
 
-    double rp = M + sqrt(pow(M, 2) - pow(a, 2));
-    double rm = M - sqrt(pow(M, 2) - pow(a, 2));
+    double rp = M + sqrt(1.0 - (a*a));
+    double rm = M - sqrt(1.0 - (a*a));
 
     double hr = (r1 - r2) / (r1 - r3);
     double hp = ((r1 - r2) * (r3 - rp)) / ((r1 - r3) * (r2 - rp));
     double hm = ((r1 - r2) * (r3 - rm)) / ((r1 - r3) * (r2 - rm));
 
     // (*Eq. (21)*)
-    double CapitalUpsilonPhi = (2 * CapitalUpsilonTheta) / (M_PI * sqrt(Epsilon0zp)) * EllipticPi(zm, pow(kTheta, 2)) + (2 * a * CapitalUpsilonr) / (M_PI * (rp - rm) * sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2 - r4))) * ((2 * M * En * rp - a * L) / (r3 - rp) * (EllipticK(pow(kr, 2)) - (r2 - r3) / (r2 - rp) * EllipticPi(hp, pow(kr, 2))) - (2 * M * En * rm - a * L) / (r3 - rm) * (EllipticK(pow(kr, 2)) - (r2 - r3) / (r2 - rm) * EllipticPi(hm, pow(kr, 2))));
+    double CapitalUpsilonPhi = (2 * CapitalUpsilonTheta) / (M_PI * sqrt(Epsilon0zp)) * EllipticPi(zm, (kTheta*kTheta)) + (2 * a * CapitalUpsilonr) / (M_PI * (rp - rm) * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) * ((2 * M * En * rp - a * L) / (r3 - rp) * (EllipticK((kr*kr)) - (r2 - r3) / (r2 - rp) * EllipticPi(hp, (kr*kr))) - (2 * M * En * rm - a * L) / (r3 - rm) * (EllipticK((kr*kr)) - (r2 - r3) / (r2 - rm) * EllipticPi(hm, (kr*kr))));
 
-    double CapitalGamma = 4 * pow(M, 2) * En + (2 * a2zp * En * CapitalUpsilonTheta) / (M_PI * L * sqrt(Epsilon0zp)) * (EllipticK(pow(kTheta, 2)) - EllipticE(pow(kTheta, 2))) + (2 * CapitalUpsilonr) / (M_PI * sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2 - r4))) * (En / 2 * ((r3 * (r1 + r2 + r3) - r1 * r2) * EllipticK(pow(kr, 2)) + (r2 - r3) * (r1 + r2 + r3 + r4) * EllipticPi(hr, pow(kr, 2)) + (r1 - r3) * (r2 - r4) * EllipticE(pow(kr, 2))) + 2 * M * En * (r3 * EllipticK(pow(kr, 2)) + (r2 - r3) * EllipticPi(hr, pow(kr, 2))) + (2 * M) / (rp - rm) * (((4 * pow(M, 2) * En - a * L) * rp - 2 * M * pow(a, 2) * En) / (r3 - rp) * (EllipticK(pow(kr, 2)) - (r2 - r3) / (r2 - rp) * EllipticPi(hp, pow(kr, 2))) - ((4 * pow(M, 2) * En - a * L) * rm - 2 * M * pow(a, 2) * En) / (r3 - rm) * (EllipticK(pow(kr, 2)) - (r2 - r3) / (r2 - rm) * EllipticPi(hm, pow(kr, 2)))));
+    double CapitalGamma = 4 * 1.0 * En + (2 * a2zp * En * CapitalUpsilonTheta) / (M_PI * L * sqrt(Epsilon0zp)) * (EllipticK((kTheta*kTheta)) - EllipticE((kTheta*kTheta))) + (2 * CapitalUpsilonr) / (M_PI * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) * (En / 2 * ((r3 * (r1 + r2 + r3) - r1 * r2) * EllipticK((kr*kr)) + (r2 - r3) * (r1 + r2 + r3 + r4) * EllipticPi(hr, (kr*kr)) + (r1 - r3) * (r2 - r4) * EllipticE((kr*kr))) + 2 * M * En * (r3 * EllipticK((kr*kr)) + (r2 - r3) * EllipticPi(hr, (kr*kr))) + (2 * M) / (rp - rm) * (((4 * 1.0 * En - a * L) * rp - 2 * M * (a*a) * En) / (r3 - rp) * (EllipticK((kr*kr)) - (r2 - r3) / (r2 - rp) * EllipticPi(hp, (kr*kr))) - ((4 * 1.0 * En - a * L) * rm - 2 * M * (a*a) * En) / (r3 - rm) * (EllipticK((kr*kr)) - (r2 - r3) / (r2 - rm) * EllipticPi(hm, (kr*kr)))));
 
     *CapitalGamma_ = CapitalGamma;
     *CapitalUpsilonPhi_ = CapitalUpsilonPhi;
@@ -301,8 +317,8 @@ void KerrGeoMinoFrequencies(double *CapitalGamma_, double *CapitalUpsilonPhi_, d
 void KerrCircularMinoFrequencies(double *CapitalGamma_, double *CapitalUpsilonPhi_, double *CapitalUpsilonTheta_, double *CapitalUpsilonr_,
                                  double a, double p, double e, double x)
 {
-    double CapitalUpsilonr = sqrt((p * (-2 * pow(a, 2) + 6 * a * sqrt(p) + (-5 + p) * p + (pow(a - sqrt(p), 2) * (pow(a, 2) - 4 * a * sqrt(p) - (-4 + p) * p)) / abs(pow(a, 2) - 4 * a * sqrt(p) - (-4 + p) * p))) / (2 * a * sqrt(p) + (-3 + p) * p));
-    double CapitalUpsilonTheta = abs((pow(p, 0.25) * sqrt(3 * pow(a, 2) - 4 * a * sqrt(p) + pow(p, 2))) / sqrt(2 * a + (-3 + p) * sqrt(p)));
+    double CapitalUpsilonr = sqrt((p * (-2 * (a*a) + 6 * a * sqrt(p) + (-5 + p) * p + (pow(a - sqrt(p), 2) * ((a*a) - 4 * a * sqrt(p) - (-4 + p) * p)) / abs((a*a) - 4 * a * sqrt(p) - (-4 + p) * p))) / (2 * a * sqrt(p) + (-3 + p) * p));
+    double CapitalUpsilonTheta = abs((pow(p, 0.25) * sqrt(3 * (a*a) - 4 * a * sqrt(p) + (p*p))) / sqrt(2 * a + (-3 + p) * sqrt(p)));
     double CapitalUpsilonPhi = pow(p, 1.25) / sqrt(2 * a + (-3 + p) * sqrt(p));
     double CapitalGamma = (pow(p, 1.25) * (a + pow(p, 1.5))) / sqrt(2 * a + (-3 + p) * sqrt(p));
 
@@ -345,13 +361,13 @@ void KerrGeoEquatorialMinoFrequencies(double *CapitalGamma_, double *CapitalUpsi
     double r1, r2, r3, r4;
     KerrGeoRadialRoots(&r1, &r2, &r3, &r4, a, p, e, x, En, Q);
 
-    double Epsilon0 = pow(a, 2) * (1 - pow(En, 2)) / pow(L, 2);
+    double Epsilon0 = (a*a) * (1 - (En*En)) / (L*L);
     // double zm = 0;
-    double a2zp = (pow(L, 2) + pow(a, 2) * (-1 + pow(En, 2)) * (-1)) / ((-1 + pow(En, 2)) * (-1));
+    double a2zp = ((L*L) + (a*a) * (-1 + (En*En)) * (-1)) / ((-1 + (En*En)) * (-1));
 
-    double Epsilon0zp = -((pow(L, 2) + pow(a, 2) * (-1 + pow(En, 2)) * (-1)) / (pow(L, 2) * (-1)));
+    double Epsilon0zp = -(((L*L) + (a*a) * (-1 + (En*En)) * (-1)) / ((L*L) * (-1)));
 
-    double zp = pow(a, 2) * (1 - pow(En, 2)) + pow(L, 2);
+    double zp = (a*a) * (1 - (En*En)) + (L*L);
 
     double arg_kr = (r1 - r2) / (r1 - r3) * (r3 - r4) / (r2 - r4);
 
@@ -364,11 +380,12 @@ void KerrGeoEquatorialMinoFrequencies(double *CapitalGamma_, double *CapitalUpsi
         printf("r1 r2 r3 r4 %e %e %e %e\n", r1, r2, r3, r4);
         printf("a p e %e %e %e\n", a,p,e);
     }
-    double CapitalUpsilonr = (M_PI * sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2))) / (2 * EllipticK(kr2)); //(*Eq.(15)*)
+    double EllK = EllipticK(kr2);
+    double CapitalUpsilonr = (M_PI * sqrt((1 - (En*En)) * (r1 - r3) * (r2))) / (2 * EllK); //(*Eq.(15)*)
     double CapitalUpsilonTheta = x * pow(zp, 0.5);                                                             //(*Eq.(15)*)
 
-    double rp = M + sqrt(pow(M, 2) - pow(a, 2));
-    double rm = M - sqrt(pow(M, 2) - pow(a, 2));
+    double rp = M + sqrt(1.0 - (a*a));
+    double rm = M - sqrt(1.0 - (a*a));
 
     // this check was introduced to avoid round off errors
     // if (r3 - rp==0.0){
@@ -381,20 +398,23 @@ void KerrGeoEquatorialMinoFrequencies(double *CapitalGamma_, double *CapitalUpsi
 
     // (*Eq. (21)*)
     // This term is zero when r3 - rp == 0.0
-    double prob1 = (2 * M * En * rp - a * L) * (EllipticK(kr2) - (r2 - r3) / (r2 - rp) * EllipticPi(hp, kr2));
+    double EllPihp = EllipticPi(hp, kr2);
+    double EllPihr = EllipticPi(hr, kr2);
+    double EllPihm = EllipticPi(hm, kr2);
+    double prob1 = (2 * M * En * rp - a * L) * (EllK - (r2 - r3) / (r2 - rp) * EllPihp);
     if (abs(prob1) != 0.0)
     {
         prob1 = prob1 / (r3 - rp);
     }
-    double CapitalUpsilonPhi = (CapitalUpsilonTheta) / (sqrt(Epsilon0zp)) + (2 * a * CapitalUpsilonr) / (M_PI * (rp - rm) * sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2 - r4))) * (prob1 - (2 * M * En * rm - a * L) / (r3 - rm) * (EllipticK(kr2) - (r2 - r3) / (r2 - rm) * EllipticPi(hm, kr2)));
+    double CapitalUpsilonPhi = (CapitalUpsilonTheta) / (sqrt(Epsilon0zp)) + (2 * a * CapitalUpsilonr) / (M_PI * (rp - rm) * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) * (prob1 - (2 * M * En * rm - a * L) / (r3 - rm) * (EllK - (r2 - r3) / (r2 - rm) * EllPihm));
 
     // This term is zero when r3 - rp == 0.0
-    double prob2 = ((4 * pow(M, 2) * En - a * L) * rp - 2 * M * pow(a, 2) * En) * (EllipticK(kr2) - (r2 - r3) / (r2 - rp) * EllipticPi(hp, kr2));
+    double prob2 = ((4 * 1.0 * En - a * L) * rp - 2 * M * (a*a) * En) * (EllK - (r2 - r3) / (r2 - rp) * EllPihp);
     if (abs(prob2) != 0.0)
     {
         prob2 = prob2 / (r3 - rp);
     }
-    double CapitalGamma = 4 * pow(M, 2) * En + (2 * CapitalUpsilonr) / (M_PI * sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2 - r4))) * (En / 2 * ((r3 * (r1 + r2 + r3) - r1 * r2) * EllipticK(kr2) + (r2 - r3) * (r1 + r2 + r3 + r4) * EllipticPi(hr, kr2) + (r1 - r3) * (r2 - r4) * EllipticE(kr2)) + 2 * M * En * (r3 * EllipticK(kr2) + (r2 - r3) * EllipticPi(hr, kr2)) + (2 * M) / (rp - rm) * (prob2 - ((4 * pow(M, 2) * En - a * L) * rm - 2 * M * pow(a, 2) * En) / (r3 - rm) * (EllipticK(kr2) - (r2 - r3) / (r2 - rm) * EllipticPi(hm, kr2))));
+    double CapitalGamma = 4 * 1.0 * En + (2 * CapitalUpsilonr) / (M_PI * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) * (En / 2 * ((r3 * (r1 + r2 + r3) - r1 * r2) * EllK + (r2 - r3) * (r1 + r2 + r3 + r4) * EllPihr + (r1 - r3) * (r2 - r4) * EllipticE(kr2)) + 2 * M * En * (r3 * EllK + (r2 - r3) * EllPihr) + (2 * M) / (rp - rm) * (prob2 - ((4 * 1.0 * En - a * L) * rm - 2 * M * (a*a) * En) / (r3 - rm) * (EllK - (r2 - r3) / (r2 - rm) * EllPihm)));
 
     // This check makes sure that the problematic terms are zero when r3-rp is zero
     // if (r3 - rp==0.0){
@@ -438,13 +458,13 @@ void SchwarzschildGeoCoordinateFrequencies(double *OmegaPhi, double *OmegaR, dou
     double EllipPi1 = EllipticPi(16 * e / (12.0 + 8 * e - 4 * e * e - 8 * p + p * p), 4 * e / (p - 6.0 + 2 * e));
     double EllipPi2 = EllipticPi(2 * e * (p - 4) / ((1.0 + e) * (p - 6.0 + 2 * e)), 4 * e / (p - 6.0 + 2 * e));
 
-    *OmegaPhi = (2 * Power(p, 1.5)) / (Sqrt(-4 * Power(e, 2) + Power(-2 + p, 2)) * (8 + ((-2 * EllipPi2 * (6 + 2 * e - p) * (3 + Power(e, 2) - p) * Power(p, 2)) / ((-1 + e) * Power(1 + e, 2)) - (EllipE * (-4 + p) * Power(p, 2) * (-6 + 2 * e + p)) / (-1 + Power(e, 2)) +
-                                                                                         (EllipK * Power(p, 2) * (28 + 4 * Power(e, 2) - 12 * p + Power(p, 2))) / (-1 + Power(e, 2)) + (4 * (-4 + p) * p * (2 * (1 + e) * EllipK + EllipPi2 * (-6 - 2 * e + p))) / (1 + e) + 2 * Power(-4 + p, 2) * (EllipK * (-4 + p) + (EllipPi1 * p * (-6 - 2 * e + p)) / (2 + 2 * e - p))) /
+    *OmegaPhi = (2 * Power(p, 1.5)) / (Sqrt(-4 * (e*e) + Power(-2 + p, 2)) * (8 + ((-2 * EllipPi2 * (6 + 2 * e - p) * (3 + (e*e) - p) * (p*p)) / ((-1 + e) * ((1.+e)*(1.+e))) - (EllipE * (-4 + p) * (p*p) * (-6 + 2 * e + p)) / (-1 + (e*e)) +
+                                                                                         (EllipK * (p*p) * (28 + 4 * (e*e) - 12 * p + (p*p))) / (-1 + (e*e)) + (4 * (-4 + p) * p * (2 * (1 + e) * EllipK + EllipPi2 * (-6 - 2 * e + p))) / (1 + e) + 2 * Power(-4 + p, 2) * (EllipK * (-4 + p) + (EllipPi1 * p * (-6 - 2 * e + p)) / (2 + 2 * e - p))) /
                                                                                             (EllipK * Power(-4 + p, 2))));
 
-    *OmegaR = (p * Sqrt((-6 + 2 * e + p) / (-4 * Power(e, 2) + Power(-2 + p, 2))) * Pi) /
-              (8 * EllipK + ((-2 * EllipPi2 * (6 + 2 * e - p) * (3 + Power(e, 2) - p) * Power(p, 2)) / ((-1 + e) * Power(1 + e, 2)) - (EllipE * (-4 + p) * Power(p, 2) * (-6 + 2 * e + p)) / (-1 + Power(e, 2)) +
-                             (EllipK * Power(p, 2) * (28 + 4 * Power(e, 2) - 12 * p + Power(p, 2))) / (-1 + Power(e, 2)) + (4 * (-4 + p) * p * (2 * (1 + e) * EllipK + EllipPi2 * (-6 - 2 * e + p))) / (1 + e) + 2 * Power(-4 + p, 2) * (EllipK * (-4 + p) + (EllipPi1 * p * (-6 - 2 * e + p)) / (2 + 2 * e - p))) /
+    *OmegaR = (p * Sqrt((-6 + 2 * e + p) / (-4 * (e*e) + Power(-2 + p, 2))) * Pi) /
+              (8 * EllipK + ((-2 * EllipPi2 * (6 + 2 * e - p) * (3 + (e*e) - p) * (p*p)) / ((-1 + e) * ((1.+e)*(1.+e))) - (EllipE * (-4 + p) * (p*p) * (-6 + 2 * e + p)) / (-1 + (e*e)) +
+                             (EllipK * (p*p) * (28 + 4 * (e*e) - 12 * p + (p*p))) / (-1 + (e*e)) + (4 * (-4 + p) * p * (2 * (1 + e) * EllipK + EllipPi2 * (-6 - 2 * e + p))) / (1 + e) + 2 * Power(-4 + p, 2) * (EllipK * (-4 + p) + (EllipPi1 * p * (-6 - 2 * e + p)) / (2 + 2 * e - p))) /
                                 Power(-4 + p, 2));
 }
 
@@ -678,7 +698,22 @@ double separatrix_polynomial_full(double p, void *params_in)
     double e = params->e;
     double x = params->x;
 
-    return (-4 * (3 + e) * Power(p, 11) + Power(p, 12) + Power(a, 12) * Power(-1 + e, 4) * Power(1 + e, 8) * Power(-1 + x, 4) * Power(1 + x, 4) - 4 * Power(a, 10) * (-3 + e) * Power(-1 + e, 3) * Power(1 + e, 7) * p * Power(-1 + Power(x, 2), 4) - 4 * Power(a, 8) * (-1 + e) * Power(1 + e, 5) * Power(p, 3) * Power(-1 + x, 3) * Power(1 + x, 3) * (7 - 7 * Power(x, 2) - Power(e, 2) * (-13 + Power(x, 2)) + Power(e, 3) * (-5 + Power(x, 2)) + 7 * e * (-1 + Power(x, 2))) + 8 * Power(a, 6) * (-1 + e) * Power(1 + e, 3) * Power(p, 5) * Power(-1 + Power(x, 2), 2) * (3 + e + 12 * Power(x, 2) + 4 * e * Power(x, 2) + Power(e, 3) * (-5 + 2 * Power(x, 2)) + Power(e, 2) * (1 + 2 * Power(x, 2))) - 8 * Power(a, 4) * Power(1 + e, 2) * Power(p, 7) * (-1 + x) * (1 + x) * (-3 + e + 15 * Power(x, 2) - 5 * e * Power(x, 2) + Power(e, 3) * (-5 + 3 * Power(x, 2)) + Power(e, 2) * (-1 + 3 * Power(x, 2))) + 4 * Power(a, 2) * Power(p, 9) * (-7 - 7 * e + Power(e, 3) * (-5 + 4 * Power(x, 2)) + Power(e, 2) * (-13 + 12 * Power(x, 2))) + 2 * Power(a, 8) * Power(-1 + e, 2) * Power(1 + e, 6) * Power(p, 2) * Power(-1 + Power(x, 2), 3) * (2 * Power(-3 + e, 2) * (-1 + Power(x, 2)) + Power(a, 2) * (Power(e, 2) * (-3 + Power(x, 2)) - 3 * (1 + Power(x, 2)) + 2 * e * (1 + Power(x, 2)))) - 2 * Power(p, 10) * (-2 * Power(3 + e, 2) + Power(a, 2) * (-3 + 6 * Power(x, 2) + Power(e, 2) * (-3 + 2 * Power(x, 2)) + e * (-2 + 4 * Power(x, 2)))) + Power(a, 6) * Power(1 + e, 4) * Power(p, 4) * Power(-1 + Power(x, 2), 2) * (-16 * Power(-1 + e, 2) * (-3 - 2 * e + Power(e, 2)) * (-1 + Power(x, 2)) + Power(a, 2) * (15 + 6 * Power(x, 2) + 9 * Power(x, 4) + Power(e, 2) * (26 + 20 * Power(x, 2) - 2 * Power(x, 4)) + Power(e, 4) * (15 - 10 * Power(x, 2) + Power(x, 4)) + 4 * Power(e, 3) * (-5 - 2 * Power(x, 2) + Power(x, 4)) - 4 * e * (5 + 2 * Power(x, 2) + 3 * Power(x, 4)))) - 4 * Power(a, 4) * Power(1 + e, 2) * Power(p, 6) * (-1 + x) * (1 + x) * (-2 * (11 - 14 * Power(e, 2) + 3 * Power(e, 4)) * (-1 + Power(x, 2)) + Power(a, 2) * (5 - 5 * Power(x, 2) - 9 * Power(x, 4) + 4 * Power(e, 3) * Power(x, 2) * (-2 + Power(x, 2)) + Power(e, 4) * (5 - 5 * Power(x, 2) + Power(x, 4)) + Power(e, 2) * (6 - 6 * Power(x, 2) + 4 * Power(x, 4)))) + Power(a, 2) * Power(p, 8) * (-16 * Power(1 + e, 2) * (-3 + 2 * e + Power(e, 2)) * (-1 + Power(x, 2)) + Power(a, 2) * (15 - 36 * Power(x, 2) + 30 * Power(x, 4) + Power(e, 4) * (15 - 20 * Power(x, 2) + 6 * Power(x, 4)) + 4 * Power(e, 3) * (5 - 12 * Power(x, 2) + 6 * Power(x, 4)) + 4 * e * (5 - 12 * Power(x, 2) + 10 * Power(x, 4)) + Power(e, 2) * (26 - 72 * Power(x, 2) + 44 * Power(x, 4)))));
+    // return (-4 * (3 + e) * Power(p, 11) + Power(p, 12) + Power(a, 12) * Power(-1 + e, 4) * Power(1 + e, 8) * Power(-1 + x, 4) * Power(1 + x, 4) - 4 * Power(a, 10) * (-3 + e) * Power(-1 + e, 3) * Power(1 + e, 7) * p * Power(-1 + Power(x, 2), 4) - 4 * Power(a, 8) * (-1 + e) * Power(1 + e, 5) * Power(p, 3) * Power(-1 + x, 3) * Power(1 + x, 3) * (7 - 7 * Power(x, 2) - (e*e) * (-13 + Power(x, 2)) + Power(e, 3) * (-5 + Power(x, 2)) + 7 * e * (-1 + Power(x, 2))) + 8 * Power(a, 6) * (-1 + e) * Power(1 + e, 3) * Power(p, 5) * Power(-1 + Power(x, 2), 2) * (3 + e + 12 * Power(x, 2) + 4 * e * Power(x, 2) + Power(e, 3) * (-5 + 2 * Power(x, 2)) + (e*e) * (1 + 2 * Power(x, 2))) - 8 * (a*a*a*a) * ((1.+e)*(1.+e)) * Power(p, 7) * (-1 + x) * (1 + x) * (-3 + e + 15 * Power(x, 2) - 5 * e * Power(x, 2) + Power(e, 3) * (-5 + 3 * Power(x, 2)) + (e*e) * (-1 + 3 * Power(x, 2))) + 4 * (a*a) * Power(p, 9) * (-7 - 7 * e + Power(e, 3) * (-5 + 4 * Power(x, 2)) + (e*e) * (-13 + 12 * Power(x, 2))) + 2 * Power(a, 8) * Power(-1 + e, 2) * Power(1 + e, 6) * (p*p) * Power(-1 + Power(x, 2), 3) * (2 * Power(-3 + e, 2) * (-1 + Power(x, 2)) + (a*a) * ((e*e) * (-3 + Power(x, 2)) - 3 * (1 + Power(x, 2)) + 2 * e * (1 + Power(x, 2)))) - 2 * Power(p, 10) * (-2 * Power(3 + e, 2) + (a*a) * (-3 + 6 * Power(x, 2) + (e*e) * (-3 + 2 * Power(x, 2)) + e * (-2 + 4 * Power(x, 2)))) + Power(a, 6) * Power(1 + e, 4) * Power(p, 4) * Power(-1 + Power(x, 2), 2) * (-16 * Power(-1 + e, 2) * (-3 - 2 * e + (e*e)) * (-1 + Power(x, 2)) + (a*a) * (15 + 6 * Power(x, 2) + 9 * Power(x, 4) + (e*e) * (26 + 20 * Power(x, 2) - 2 * Power(x, 4)) + Power(e, 4) * (15 - 10 * Power(x, 2) + Power(x, 4)) + 4 * Power(e, 3) * (-5 - 2 * Power(x, 2) + Power(x, 4)) - 4 * e * (5 + 2 * Power(x, 2) + 3 * Power(x, 4)))) - 4 * (a*a*a*a) * ((1.+e)*(1.+e)) * Power(p, 6) * (-1 + x) * (1 + x) * (-2 * (11 - 14 * (e*e) + 3 * Power(e, 4)) * (-1 + Power(x, 2)) + (a*a) * (5 - 5 * Power(x, 2) - 9 * Power(x, 4) + 4 * Power(e, 3) * Power(x, 2) * (-2 + Power(x, 2)) + Power(e, 4) * (5 - 5 * Power(x, 2) + Power(x, 4)) + (e*e) * (6 - 6 * Power(x, 2) + 4 * Power(x, 4)))) + (a*a) * Power(p, 8) * (-16 * ((1.+e)*(1.+e)) * (-3 + 2 * e + (e*e)) * (-1 + Power(x, 2)) + (a*a) * (15 - 36 * Power(x, 2) + 30 * Power(x, 4) + Power(e, 4) * (15 - 20 * Power(x, 2) + 6 * Power(x, 4)) + 4 * Power(e, 3) * (5 - 12 * Power(x, 2) + 6 * Power(x, 4)) + 4 * e * (5 - 12 * Power(x, 2) + 10 * Power(x, 4)) + (e*e) * (26 - 72 * Power(x, 2) + 44 * Power(x, 4)))));
+    // new code substitute all powers by multiplication for efficiency
+    return (-4. * (3. + e) * p * p * p * p * p * p * p * p * p * p * p * p * p + 
+ p * p * p * p * p * p * p * p * p * p * p * p * p + 
+ a * a * a * a * a * a * a * a * a * a * a * a * (-1. + e) * (-1. + e) * (-1. + e) * (-1. + e) * (1. + e) * (1. + e) * (1. + e) * (1. + e) * (1. + e) * (1. + e) * (1. + e) * (1. + e) * (-1. + x) * (-1. + x) * (-1. + x) * (-1. + x) * (1. + x) * (1. + x) * (1. + x) * (1. + x) - 
+ 4. * a * a * a * a * a * a * a * a * a * a * (-3. + e) * (-1. + e) * (-1. + e) * (-1. + e) * (1. + e) * (1. + e) * (1. + e) * (1. + e) * (1. + e) * (1. + e) * (1. + e) * p * (-1. + x * x) * (-1. + x * x) * (-1. + x * x) * (-1. + x * x) - 
+ 4. * a * a * a * a * a * a * a * a * (-1. + e) * (1. + e) * (1. + e) * (1. + e) * (1. + e) * (1. + e) * p * p * p * (-1. + x) * (-1. + x) * (-1. + x) * (1. + x) * (1. + x) * (1. + x) * (7. - 7. * x * x - e * e * (-13. + x * x) + e * e * e * (-5. + x * x) + 7. * e * (-1. + x * x)) + 
+ 8. * a * a * a * a * a * a * (-1. + e) * (1. + e) * (1. + e) * (1. + e) * p * p * p * p * p * (-1. + x * x) * (-1. + x * x) * (3. + e + 12. * x * x + 4. * e * x * x + e * e * e * (-5. + 2. * x * x) + e * e * (1. + 2. * x * x)) - 
+ 8. * a * a * a * a * ((1. + e) * (1. + e)) * p * p * p * p * p * p * p * (-1. + x) * (1. + x) * (-3. + e + 15. * x * x - 5. * e * x * x + e * e * e * (-5. + 3. * x * x) + e * e * (-1. + 3. * x * x)) + 
+ 4. * a * a * p * p * p * p * p * p * p * p * p * (-7. - 7. * e + e * e * e * (-5. + 4. * x * x) + e * e * (-13. + 12. * x * x)) + 
+ 2. * a * a * a * a * a * a * a * a * (-1. + e) * (-1. + e) * (1. + e) * (1. + e) * (1. + e) * (1. + e) * p * p * (-1. + x * x) * (-1. + x * x) * (-1. + x * x) * (2. * (-3. + e) * (-3. + e) * (-1. + x * x) + a * a * (e * e * (-3. + x * x) - 3. * (1. + x * x) + 2. * e * (1. + x * x))) - 
+ 2. * p * p * p * p * p * p * p * p * p * p * (-2. * (3. + e) * (3. + e) + a * a * (-3. + 6. * x * x + e * e * (-3. + 2. * x * x) + e * (-2. + 4. * x * x))) + 
+ a * a * a * a * a * a * (1. + e) * (1. + e) * (1. + e) * (1. + e) * p * p * p * p * (-1. + x * x) * (-1. + x * x) * (-16. * (-1. + e) * (-1. + e) * (-3. - 2. * e + e * e) * (-1. + x * x) + a * a * (15. + 6. * x * x + 9. * x * x * x * x + e * e * (26. + 20. * x * x - 2. * x * x * x * x) + e * e * e * e * (15. - 10. * x * x + x * x * x * x) + 4. * e * e * e * (-5. - 2. * x * x + x * x * x * x) - 4. * e * (5. + 2. * x * x + 3. * x * x * x * x))) - 
+ 4. * a * a * a * a * ((1. + e) * (1. + e)) * p * p * p * p * p * p * (-1. + x) * (1. + x) * (-2. * (11. - 14. * e * e + 3. * e * e * e * e) * (-1. + x * x) + a * a * (5. - 5. * x * x - 9. * x * x * x * x + 4. * e * e * e * x * x * (-2. + x * x) + e * e * e * e * (5. - 5. * x * x + x * x * x * x) + e * e * (6. - 6. * x * x + 4. * x * x * x * x))) + 
+ a * a * p * p * p * p * p * p * p * p * (-16. * ((1. + e) * (1. + e)) * (-3. + 2. * e + e * e) * (-1. + x * x) + a * a * (15. - 36. * x * x + 30. * x * x * x * x + e * e * e * e * (15. - 20. * x * x + 6. * x * x * x * x) + 4. * e * e * e * (5. - 12. * x * x + 6. * x * x * x * x) + 4. * e * (5. - 12. * x * x + 10. * x * x * x * x) + e * e * (26. - 72. * x * x + 44. * x * x * x * x))));
+
 }
 
 double separatrix_polynomial_polar(double p, void *params_in)
@@ -689,7 +724,7 @@ double separatrix_polynomial_polar(double p, void *params_in)
     double e = params->e;
     double x = params->x;
 
-    return (Power(a, 6) * Power(-1 + e, 2) * Power(1 + e, 4) + Power(p, 5) * (-6 - 2 * e + p) + Power(a, 2) * Power(p, 3) * (-4 * (-1 + e) * Power(1 + e, 2) + (3 + e * (2 + 3 * e)) * p) - Power(a, 4) * Power(1 + e, 2) * p * (6 + 2 * Power(e, 3) + 2 * e * (-1 + p) - 3 * p - 3 * Power(e, 2) * (2 + p)));
+    return (Power(a, 6) * Power(-1 + e, 2) * Power(1 + e, 4) + Power(p, 5) * (-6 - 2 * e + p) + (a*a) * Power(p, 3) * (-4 * (-1 + e) * ((1.+e)*(1.+e)) + (3 + e * (2 + 3 * e)) * p) - (a*a*a*a) * ((1.+e)*(1.+e)) * p * (6 + 2 * Power(e, 3) + 2 * e * (-1 + p) - 3 * p - 3 * (e*e) * (2 + p)));
 }
 
 double separatrix_polynomial_equat(double p, void *params_in)
@@ -700,7 +735,7 @@ double separatrix_polynomial_equat(double p, void *params_in)
     double e = params->e;
     double x = params->x;
 
-    return (Power(a, 4) * Power(-3 - 2 * e + Power(e, 2), 2) + Power(p, 2) * Power(-6 - 2 * e + p, 2) - 2 * Power(a, 2) * (1 + e) * p * (14 + 2 * Power(e, 2) + 3 * p - e * p));
+    return ((a*a*a*a) * ((-3. - 2. * e + (e*e))*(-3. - 2. * e + (e*e))) + (p*p) * ((-6. - 2. * e + p)*(-6. - 2. * e + p)) - 2. * (a*a) * (1. + e) * p * (14. + 2. * (e*e) + 3. * p - e * p));
 }
 
 double derivative_polynomial_equat(double p, void *params_in)
@@ -710,7 +745,7 @@ double derivative_polynomial_equat(double p, void *params_in)
     double a = params->a;
     double e = params->e;
     double x = params->x;
-    return -2 * Power(a, 2) * (1 + e) * (14 + 2 * Power(e, 2) - e * p + 6 * p) + 4 * p * (18 + 2 * Power(e, 2) - 3 * e * (-4 + p) - 9 * p + Power(p, 2));
+    return -2 * (a*a) * (1 + e) * (14 + 2 * (e*e) - e * p + 6 * p) + 4 * p * (18 + 2 * (e*e) - 3 * e * (-4 + p) - 9 * p + (p*p));
 }
 
 void eq_pol_fdf(double p, void *params_in, double *y, double *dy)
@@ -720,8 +755,8 @@ void eq_pol_fdf(double p, void *params_in, double *y, double *dy)
     double a = params->a;
     double e = params->e;
     double x = params->x;
-    *y = (Power(a, 4) * Power(-3 - 2 * e + Power(e, 2), 2) + Power(p, 2) * Power(-6 - 2 * e + p, 2) - 2 * Power(a, 2) * (1 + e) * p * (14 + 2 * Power(e, 2) + 3 * p - e * p));
-    *dy = -2 * Power(a, 2) * (1 + e) * (14 + 2 * Power(e, 2) - e * p + 6 * p) + 4 * p * (18 + 2 * Power(e, 2) - 3 * e * (-4 + p) - 9 * p + Power(p, 2));
+    *y = ((a*a*a*a) * ((-3. - 2. * e + (e*e))*(-3. - 2. * e + (e*e))) + (p*p) * ((-6. - 2. * e + p)*(-6. - 2. * e + p)) - 2 * (a*a) * (1 + e) * p * (14 + 2 * (e*e) + 3 * p - e * p));
+    *dy = -2 * (a*a) * (1 + e) * (14 + 2 * (e*e) - e * p + 6 * p) + 4 * p * (18 + 2 * (e*e) - 3 * e * (-4 + p) - 9 * p + (p*p));
 }
 
 double solver(struct params_holder *params, double (*func)(double, void *), double x_lo, double x_hi)
@@ -844,9 +879,9 @@ double get_separatrix(double a, double e, double x)
     }
     else if ((e < 0.0) & (abs(x) == 1.0))
     {
-        z1 = 1. + pow((1. - pow(a, 2)), 1. / 3.) * (pow((1. + a), 1. / 3.) + pow((1. - a), 1. / 3.));
+        z1 = 1. + pow((1. - (a*a)), 1. / 3.) * (pow((1. + a), 1. / 3.) + pow((1. - a), 1. / 3.));
 
-        z2 = sqrt(3. * pow(a, 2) + pow(z1, 2));
+        z2 = sqrt(3. * (a*a) + (z1*z1));
 
         // prograde
         if (x > 0.0)
@@ -869,7 +904,7 @@ double get_separatrix(double a, double e, double x)
         double x_lo, x_hi;
 
         x_lo = 1.0 + e;
-        x_hi = 6 + 2. * e;
+        x_hi = 6. + 2. * e;
 
         p_sep = solver(&params, &separatrix_polynomial_equat, x_lo, x_hi); // separatrix_KerrEquatorial(a, e);//
         return p_sep;
@@ -948,7 +983,7 @@ double Y_to_xI_eq(double x, void *params_in)
 
     // get constants of motion
     KerrGeoConstantsOfMotion(&E, &L, &Q, a, p, e, x);
-    double Y_ = L / sqrt(pow(L, 2) + Q);
+    double Y_ = L / sqrt((L*L) + Q);
 
     return Y - Y_;
 }
@@ -1228,24 +1263,24 @@ void KerrEqSpinFrequenciesCorrection(double *deltaOmegaR_, double *deltaOmegaPhi
 
     double deltaEn, deltaxi;
 
-    deltaEn = (xi * (-(a * pow(En, 2) * pow(r1, 2) * pow(r2, 2)) - En * pow(r1, 2) * pow(r2, 2) * xi + pow(a, 2) * En * (pow(r1, 2) + r1 * r2 + pow(r2, 2)) * xi +
-                     a * (pow(r1, 2) + r1 * (-2 + r2) + (-2 + r2) * r2) * pow(xi, 2))) /
-              (pow(r1, 2) * pow(r2, 2) * (a * pow(En, 2) * r1 * r2 * (r1 + r2) + En * (pow(r1, 2) * (-2 + r2) + r1 * (-2 + r2) * r2 - 2 * pow(r2, 2)) * xi + 2 * a * pow(xi, 2)));
+    deltaEn = (xi * (-(a * (En*En) * (r1*r1) * (r2*r2)) - En * (r1*r1) * (r2*r2) * xi + (a*a) * En * ((r1*r1) + r1 * r2 + (r2*r2)) * xi +
+                     a * ((r1*r1) + r1 * (-2 + r2) + (-2 + r2) * r2) * (xi*xi))) /
+              ((r1*r1) * (r2*r2) * (a * (En*En) * r1 * r2 * (r1 + r2) + En * ((r1*r1) * (-2 + r2) + r1 * (-2 + r2) * r2 - 2 * (r2*r2)) * xi + 2 * a * (xi*xi)));
 
-    deltaxi = ((pow(r1, 2) + r1 * r2 + pow(r2, 2)) * xi * (En * pow(r2, 2) - a * xi) * (-(En * pow(r1, 2)) + a * xi)) /
-              (pow(r1, 2) * pow(r2, 2) * (a * pow(En, 2) * r1 * r2 * (r1 + r2) + En * (pow(r1, 2) * (-2 + r2) + r1 * (-2 + r2) * r2 - 2 * pow(r2, 2)) * xi + 2 * a * pow(xi, 2)));
+    deltaxi = (((r1*r1) + r1 * r2 + (r2*r2)) * xi * (En * (r2*r2) - a * xi) * (-(En * (r1*r1)) + a * xi)) /
+              ((r1*r1) * (r2*r2) * (a * (En*En) * r1 * r2 * (r1 + r2) + En * ((r1*r1) * (-2 + r2) + r1 * (-2 + r2) * r2 - 2 * (r2*r2)) * xi + 2 * a * (xi*xi)));
 
     double am1, a0, a1, a2;
-    am1 = (-2 * a * pow(xi, 2)) / (r1 * r2);
-    a0 = -2 * En * (-(a * deltaxi) + deltaEn * pow(r1, 2) + deltaEn * r1 * r2 + deltaEn * pow(r2, 2)) + 2 * (a * deltaEn + deltaxi) * xi;
+    am1 = (-2 * a * (xi*xi)) / (r1 * r2);
+    a0 = -2 * En * (-(a * deltaxi) + deltaEn * (r1*r1) + deltaEn * r1 * r2 + deltaEn * (r2*r2)) + 2 * (a * deltaEn + deltaxi) * xi;
     a1 = -2 * deltaEn * En * (r1 + r2);
     a2 = -2 * deltaEn * En;
 
     double kr = (r1 - r2) / (r1 - r3) * (r3 - r4) / (r2 - r4); // convention without the sqrt
     double hr = (r1 - r2) / (r1 - r3);
 
-    double rp = M + sqrt(pow(M, 2) - pow(a, 2));
-    double rm = M - sqrt(pow(M, 2) - pow(a, 2));
+    double rp = M + sqrt(1.0 - (a*a));
+    double rm = M - sqrt(1.0 - (a*a));
 
     double hp = ((r1 - r2) * (r3 - rp)) / ((r1 - r3) * (r2 - rp));
     double hm = ((r1 - r2) * (r3 - rm)) / ((r1 - r3) * (r2 - rm));
@@ -1256,58 +1291,58 @@ void KerrEqSpinFrequenciesCorrection(double *deltaOmegaR_, double *deltaOmegaPhi
     double Pihmkr = EllipticPi(hm, kr);
     double Pihpkr = EllipticPi(hp, kr);
 
-    double Vtr3 = a * xi + ((pow(a, 2) + pow(r3, 2)) * P(r3, a, En, xi)) / CapitalDelta(r3, a);
+    double Vtr3 = a * xi + (((a*a) + (r3*r3)) * P(r3, a, En, xi)) / CapitalDelta(r3, a);
     double deltaVtr3 = a * deltaxi + (r3 * r3 + a * a) / CapitalDelta(r3, a) * deltaP(r3, a, En, xi, deltaEn, deltaxi);
 
     double deltaIt1 = (2 * ((deltaEn * Pihrkr * (r2 - r3) * (4 + r1 + r2 + r3)) / 2. + (Ekr * (r1 - r3) * (deltaEn * r1 * r2 * r3 + 2 * xi)) / (2. * r1 * r3) +
-                            ((r2 - r3) * ((Pihmkr * (pow(a, 2) + pow(rm, 2)) * deltaP(rm, a, En, xi, deltaEn, deltaxi)) / ((r2 - rm) * (r3 - rm)) -
-                                          (Pihpkr * (pow(a, 2) + pow(rp, 2)) * deltaP(rp, a, En, xi, deltaEn, deltaxi)) / ((r2 - rp) * (r3 - rp)))) /
+                            ((r2 - r3) * ((Pihmkr * ((a*a) + (rm*rm)) * deltaP(rm, a, En, xi, deltaEn, deltaxi)) / ((r2 - rm) * (r3 - rm)) -
+                                          (Pihpkr * ((a*a) + (rp*rp)) * deltaP(rp, a, En, xi, deltaEn, deltaxi)) / ((r2 - rp) * (r3 - rp)))) /
                                 (-rm + rp) +
                             Kkr * (-0.5 * (deltaEn * (r1 - r3) * (r2 - r3)) + deltaVtr3))) /
-                      sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2 - r4));
+                      sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4));
 
-    double cK = Kkr * (-0.5 * (a2 * En * (r1 - r3) * (r2 - r3)) + (pow(a, 4) * En * r3 * (-am1 + pow(r3, 2) * (a1 + 2 * a2 * r3)) +
-                                                                   2 * pow(a, 2) * En * pow(r3, 2) * (-(am1 * (-2 + r3)) + a0 * r3 + pow(r3, 3) * (a1 - a2 + 2 * a2 * r3)) +
+    double cK = Kkr * (-0.5 * (a2 * En * (r1 - r3) * (r2 - r3)) + (pow(a, 4) * En * r3 * (-am1 + (r3*r3) * (a1 + 2 * a2 * r3)) +
+                                                                   2 * (a*a) * En * (r3*r3) * (-(am1 * (-2 + r3)) + a0 * r3 + pow(r3, 3) * (a1 - a2 + 2 * a2 * r3)) +
                                                                    En * pow(r3, 5) * (-2 * a0 - am1 + r3 * (a1 * (-4 + r3) + 2 * a2 * (-3 + r3) * r3)) + 2 * pow(a, 3) * (2 * am1 + a0 * r3 - a2 * pow(r3, 3)) * xi +
                                                                    2 * a * r3 * (am1 * (-6 + 4 * r3) + r3 * (2 * a1 * (-1 + r3) * r3 + a2 * pow(r3, 3) + a0 * (-4 + 3 * r3))) * xi) /
-                                                                      (pow(r3, 2) * pow(r3 - rm, 2) * pow(r3 - rp, 2)));
+                                                                      ((r3*r3) * pow(r3 - rm, 2) * pow(r3 - rp, 2)));
     double cEPi = (En * (a2 * Ekr * r2 * (r1 - r3) + Pihrkr * (r2 - r3) * (2 * a1 + a2 * (4 + r1 + r2 + 3 * r3)))) / 2.;
-    double cPi = ((-r2 + r3) * ((Pihmkr * (pow(a, 2) + pow(rm, 2)) * P(rm, a, En, xi) * deltaRt(rm, am1, a0, a1, a2)) / ((r2 - rm) * pow(r3 - rm, 2) * rm) -
-                                (Pihpkr * (pow(a, 2) + pow(rp, 2)) * P(rp, a, En, xi) * deltaRt(rp, am1, a0, a1, a2)) / ((r2 - rp) * pow(r3 - rp, 2) * rp))) /
+    double cPi = ((-r2 + r3) * ((Pihmkr * ((a*a) + (rm*rm)) * P(rm, a, En, xi) * deltaRt(rm, am1, a0, a1, a2)) / ((r2 - rm) * pow(r3 - rm, 2) * rm) -
+                                (Pihpkr * ((a*a) + (rp*rp)) * P(rp, a, En, xi) * deltaRt(rp, am1, a0, a1, a2)) / ((r2 - rp) * pow(r3 - rp, 2) * rp))) /
                  (-rm + rp);
 
-    double cE = (Ekr * ((2 * am1 * (-r1 + r3) * xi) / (a * r1) + (r2 * Vtr3 * deltaRt(r3, am1, a0, a1, a2)) / (r2 - r3))) / pow(r3, 2);
+    double cE = (Ekr * ((2 * am1 * (-r1 + r3) * xi) / (a * r1) + (r2 * Vtr3 * deltaRt(r3, am1, a0, a1, a2)) / (r2 - r3))) / (r3*r3);
 
-    double deltaIt2 = -((cE + cEPi + cK + cPi) / (pow(1 - pow(En, 2), 1.5) * sqrt((r1 - r3) * (r2 - r4))));
+    double deltaIt2 = -((cE + cEPi + cK + cPi) / (pow(1 - (En*En), 1.5) * sqrt((r1 - r3) * (r2 - r4))));
     double deltaIt = deltaIt1 + deltaIt2;
 
     double It = (2 * ((En * (Ekr * r2 * (r1 - r3) + Pihrkr * (r2 - r3) * (4 + r1 + r2 + r3))) / 2. +
-                      ((r2 - r3) * ((Pihmkr * (pow(a, 2) + pow(rm, 2)) * P(rm, a, En, xi)) / ((r2 - rm) * (r3 - rm)) - (Pihpkr * (pow(a, 2) + pow(rp, 2)) * P(rp, a, En, xi)) / ((r2 - rp) * (r3 - rp)))) /
+                      ((r2 - r3) * ((Pihmkr * ((a*a) + (rm*rm)) * P(rm, a, En, xi)) / ((r2 - rm) * (r3 - rm)) - (Pihpkr * ((a*a) + (rp*rp)) * P(rp, a, En, xi)) / ((r2 - rp) * (r3 - rp)))) /
                           (-rm + rp) +
                       Kkr * (-0.5 * (En * (r1 - r3) * (r2 - r3)) + Vtr3))) /
-                sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2 - r4));
+                sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4));
 
     double VPhir3 = xi + a / CapitalDelta(r3, a) * P(r3, a, En, xi);
     double deltaVPhir3 = deltaxi + a / CapitalDelta(r3, a) * deltaP(r3, a, En, xi, deltaEn, deltaxi);
 
     double deltaIPhi1 = (2 * ((Ekr * (r1 - r3) * xi) / (a * r1 * r3) + (a * (r2 - r3) * ((Pihmkr * deltaP(rm, a, En, xi, deltaEn, deltaxi)) / ((r2 - rm) * (r3 - rm)) - (Pihpkr * deltaP(rp, a, En, xi, deltaEn, deltaxi)) / ((r2 - rp) * (r3 - rp)))) / (-rm + rp) + Kkr * deltaVPhir3)) /
-                        sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2 - r4));
+                        sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4));
 
-    double dK = (Kkr * (-(a * En * pow(r3, 2) * (2 * a0 * (-1 + r3) * r3 + (a1 + 2 * a2) * pow(r3, 3) + am1 * (-4 + 3 * r3))) - pow(a, 3) * En * r3 * (am1 - pow(r3, 2) * (a1 + 2 * a2 * r3)) -
-                        pow(a, 2) * (am1 * (-4 + r3) - 2 * a0 * r3 - (a1 + 2 * a2 * (-1 + r3)) * pow(r3, 3)) * xi - pow(-2 + r3, 2) * r3 * (3 * am1 + r3 * (2 * a0 + a1 * r3)) * xi)) /
-                (pow(r3, 2) * pow(r3 - rm, 2) * pow(r3 - rp, 2));
+    double dK = (Kkr * (-(a * En * (r3*r3) * (2 * a0 * (-1 + r3) * r3 + (a1 + 2 * a2) * pow(r3, 3) + am1 * (-4 + 3 * r3))) - pow(a, 3) * En * r3 * (am1 - (r3*r3) * (a1 + 2 * a2 * r3)) -
+                        (a*a) * (am1 * (-4 + r3) - 2 * a0 * r3 - (a1 + 2 * a2 * (-1 + r3)) * pow(r3, 3)) * xi - pow(-2 + r3, 2) * r3 * (3 * am1 + r3 * (2 * a0 + a1 * r3)) * xi)) /
+                ((r3*r3) * pow(r3 - rm, 2) * pow(r3 - rp, 2));
 
     double dPi = -((a * (r2 - r3) * ((Pihmkr * P(rm, a, En, xi) * deltaRt(rm, am1, a0, a1, a2)) / ((r2 - rm) * pow(r3 - rm, 2) * rm) - (Pihpkr * P(rp, a, En, xi) * deltaRt(rp, am1, a0, a1, a2)) / ((r2 - rp) * pow(r3 - rp, 2) * rp))) / (-rm + rp));
-    double dE = (Ekr * ((-2 * am1 * (r1 - r3) * xi) / (pow(a, 2) * r1) + (r2 * VPhir3 * deltaRt(r3, am1, a0, a1, a2)) / (r2 - r3))) / pow(r3, 2);
+    double dE = (Ekr * ((-2 * am1 * (r1 - r3) * xi) / ((a*a) * r1) + (r2 * VPhir3 * deltaRt(r3, am1, a0, a1, a2)) / (r2 - r3))) / (r3*r3);
 
-    double deltaIPhi2 = -((dE + dK + dPi) / (pow(1 - pow(En, 2), 1.5) * sqrt((r1 - r3) * (r2 - r4))));
+    double deltaIPhi2 = -((dE + dK + dPi) / (pow(1 - (En*En), 1.5) * sqrt((r1 - r3) * (r2 - r4))));
     double deltaIPhi = deltaIPhi1 + deltaIPhi2;
 
     double IPhi = (2 * ((a * (r2 - r3) * ((Pihmkr * P(rm, a, En, xi)) / ((r2 - rm) * (r3 - rm)) - (Pihpkr * P(rp, a, En, xi)) / ((r2 - rp) * (r3 - rp)))) / (-rm + rp) + Kkr * VPhir3)) /
-                  sqrt((1 - pow(En, 2)) * (r1 - r3) * (r2 - r4));
+                  sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4));
 
-    double deltaOmegaR = -M_PI / pow(It, 2) * deltaIt;
-    double deltaOmegaPhi = deltaIPhi / It - IPhi / pow(It, 2) * deltaIt;
+    double deltaOmegaR = -M_PI / (It*It) * deltaIt;
+    double deltaOmegaPhi = deltaIPhi / It - IPhi / (It*It) * deltaIt;
 
     //                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     cE,                deltaIt2,           It,                deltaIt,            deltaIPhi1, dK, dPi, dE, deltaIPhi2, deltaIPhi, IPhi
     // 0.952696869207406, 2.601147313747245, 11.11111111111111, 9.09090909090909, 1.450341827498306, 0, -0.001534290476164244, -0.1322435748015139, -0.1205695381380546, -0.02411390762761123, 0.0590591407311683, 0.002923427466192832, 0.5641101056459328, 1.435889894354067, 0.03336154445124933, 0.2091139909146586, 0.0217342349165277, 0.0003947869154376093, 1.584149072588183, 1.55761216767624, 1.782193864035892, 1.601724642759611, 1.58446319264442, -112.2728614607676, 1.498105017522236, 111.1816561327114, 1.459858647716873, -7.095639020498573, 133.1766110081966, -7.640013106344259, -0.1508069013343114, -34.72953487758193, 34.00126350567278, 0.7853682931498268, -0.2170281681543273, -0.3678350694886387, 4.044867174992484

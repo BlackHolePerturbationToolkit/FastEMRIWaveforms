@@ -119,7 +119,7 @@ void InspiralCarrier::initialize_integrator()
     if (USE_RK8)
         T = gsl_odeiv2_step_rk8pd;
     else
-        T = gsl_odeiv2_step_rk4;
+        T = gsl_odeiv2_step_rkf45;
 
     // Initialize the ODE solver
     // gsl_odeiv2_system sys_temp = {func_ode_wrap, NULL, static_cast<size_t>(nparams), params_holder};
@@ -127,7 +127,7 @@ void InspiralCarrier::initialize_integrator()
     sys = {func_ode_wrap, NULL, static_cast<size_t>(nparams), params_holder};
     ;
     step = gsl_odeiv2_step_alloc(T, params_holder->nparams);
-    control = gsl_odeiv2_control_y_new(err, 0);
+    control = gsl_odeiv2_control_y_new(0, err);
     evolve = gsl_odeiv2_evolve_alloc(params_holder->nparams);
 }
 
