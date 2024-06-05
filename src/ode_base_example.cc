@@ -647,8 +647,32 @@ KerrEccentricEquatorial_nofrequencies::KerrEccentricEquatorial_nofrequencies(std
     Edot_interp = new TensorInterpolant(x1, x2, x3, coeffEn);
     Ldot_interp = new TensorInterpolant(x1, x2, x3, coeffL);
 
+
     // cout << "pdot=" << pdot_interp<< pdot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
     // cout << "edot=" << edot_interp<< edot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
+
+    fp = few_dir + "few/files/TricubicData_x0.dat";
+    Vector tri_x1 = fill_vector(fp);
+    fp = few_dir + "few/files/TricubicData_x1.dat";
+    Vector tri_x2 = fill_vector(fp);
+    fp = few_dir + "few/files/TricubicData_x2.dat";
+    Vector tri_x3 = fill_vector(fp);
+
+    fp = few_dir + "few/files/TricubicData_pdot.dat";
+    Vector tri_pdot = fill_vector(fp);
+    fp = few_dir + "few/files/TricubicData_edot.dat";
+    Vector tri_edot = fill_vector(fp);
+
+    fp = few_dir + "few/files/TricubicData_psep_x0.dat";
+    Vector bi_psep_x1 = fill_vector(fp);
+    fp = few_dir + "few/files/TricubicData_psep_x1.dat";
+    Vector bi_psep_x2 = fill_vector(fp);
+    fp = few_dir + "few/files/TricubicData_psep.dat";
+    Vector bi_psep = fill_vector(fp);
+
+    tric_p_interp = new TricubicSpline(tri_x1, tri_x2, tri_x3, tri_pdot, 3);
+    tric_e_interp = new TricubicSpline(tri_x1, tri_x2, tri_x3, tri_edot, 3);
+    bic_psep_interp = new BicubicSpline(bi_psep_x1, bi_psep_x2, bi_psep, 3);
 }
 
 // #define KerrEccentricEquatorial_Y
@@ -661,7 +685,20 @@ __deriv__ void KerrEccentricEquatorial_nofrequencies::deriv_func(double ydot[], 
     double e = y[1];
     double x = y[2];
 
-    double p_sep = get_separatrix(a, e, x);
+    // double p_sep = get_separatrix(a, e, x);
+
+    double w = sqrt(e);
+    double signed_a = a*x; // signed a for interpolant
+
+    double inv_scale = 1/3.;
+    double amax = 0.99998;
+    double chi2_part = pow((1-signed_a),inv_scale);
+    double chi2_min = pow((1-amax),inv_scale);
+    double chi2_max = pow((1+amax), inv_scale);
+    double chi2 = (chi2_part-chi2_min)/(chi2_max-chi2_min);
+
+    double p_sep = bic_psep_interp->evaluate(chi2, w) * (6. + 2.*e);
+
     // make sure we do not step into separatrix
     if ((e < 0.0) || (p < p_sep))
     {
@@ -674,16 +711,19 @@ __deriv__ void KerrEccentricEquatorial_nofrequencies::deriv_func(double ydot[], 
     double pdot_out, edot_out, xdot_out;
 
     // Flux from Scott
-    double risco = get_separatrix(a, 0.0, x);
+    double risco = bic_psep_interp->evaluate(chi2, 0.) * 6.;
     double u = log((p - p_sep + 4.0 - 0.05) / 4.0);
-    double w = sqrt(e);
+    // double w = sqrt(e);
     // p, e
 
-    double signed_a = a*x; // signed a for interpolant
+    // double signed_a = a*x; // signed a for interpolant
 
-    pdot_out = pdot_interp->eval(signed_a, w, u) * ((8. * pow(1. - (e * e), 1.5) * (8. + 7. * (e * e))) / (5. * p * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
-    edot_out = edot_interp->eval(signed_a, w, u) * ((pow(1. - (e * e), 1.5) * (304. + 121. * (e * e))) / (15. * (p*p) * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
+    // pdot_out = pdot_interp->eval(signed_a, w, u) * ((8. * pow(1. - (e * e), 1.5) * (8. + 7. * (e * e))) / (5. * p * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
+    pdot_out = tric_p_interp->evaluate(signed_a, w, u) * ((8. * pow(1. - (e * e), 1.5) * (8. + 7. * (e * e))) / (5. * p * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
+    // edot_out = edot_interp->eval(signed_a, w, u) * ((pow(1. - (e * e), 1.5) * (304. + 121. * (e * e))) / (15. * (p*p) * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
+    edot_out = tric_e_interp->evaluate(signed_a, w, u) * ((pow(1. - (e * e), 1.5) * (304. + 121. * (e * e))) / (15. * (p*p) * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))));
     double pdot, edot;
+
 
     // needs adjustment for validity
     if (e > 1e-6)
@@ -719,6 +759,10 @@ KerrEccentricEquatorial_nofrequencies::~KerrEccentricEquatorial_nofrequencies()
     delete edot_interp;
     delete Edot_interp;
     delete Ldot_interp;
+    delete tric_p_interp;
+    delete tric_e_interp;
+    delete bic_psep_interp;
+
 }
 
 
