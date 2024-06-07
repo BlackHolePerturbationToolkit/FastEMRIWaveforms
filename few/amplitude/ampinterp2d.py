@@ -141,7 +141,7 @@ class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
         # check if user has the necessary data
         # if not, the data will automatically download
 
-        coefficients = h5py.File(self.few_dir+"few/files/" + fp
+        coefficients = h5py.File(self.few_dir+"few/files/" + fp)
 
         self.a_val_store = coefficients.attrs['signed_spin']
 
