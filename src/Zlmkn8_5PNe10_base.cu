@@ -145,7 +145,6 @@ ell = 12 ONLY includes (m + k) = 0 (mod 2): NEEDS SEPARATE TREATMENT
 #include "hat_Zlmkn8_5PNe10/ell=4/hZ_4mkM6_5PNe10.h"
 #include "hat_Zlmkn8_5PNe10/ell=4/hZ_4mkM7_5PNe10.h"
 
-/*
 // Teukolsky amplitudes hat_Z_5PNe10 (ell = 5)
 #include "hat_Zlmkn8_5PNe10/ell=5/hZ_5mkP10_5PNe10.h"
 #include "hat_Zlmkn8_5PNe10/ell=5/hZ_5mkP9_5PNe10.h"
@@ -272,6 +271,7 @@ ell = 12 ONLY includes (m + k) = 0 (mod 2): NEEDS SEPARATE TREATMENT
 #include "hat_Zlmkn8_5PNe10/ell=10/hZ_10mkM8_5PNe10.h"
 #include "hat_Zlmkn8_5PNe10/ell=10/hZ_10mkM9_5PNe10.h"
 
+/*
 // Teukolsky amplitudes hat_Z_5PNe10 (ell = 11)
 #include "hat_Zlmkn8_5PNe10/ell=11/hZ_11mkP10_5PNe10.h"
 #include "hat_Zlmkn8_5PNe10/ell=11/hZ_11mkP9_5PNe10.h"
@@ -716,6 +716,565 @@ cmplx hZ_4mkn(const int m, const int k, const int n, inspiral_orb_PNvar *PN_orb)
     return hZ;
 }
 
+CUDA_CALLABLE_MEMBER
+cmplx hZ_5mkn(const int m, const int k, const int n, inspiral_orb_PNvar *PN_orb)
+{ //
+
+    cmplx hZ = {0.0};
+    // printf("hZ_2mkn[%d, %d, %d, %d] \n", 2, m, k, n);
+
+    /* For ell = 5, all the zero modes are irrelevant within  5PNe10*/
+    if ((m + k + n) == 0)
+    {
+
+        hZ = cmplx(0.0, 0.0);
+        // printf("zero mkn[%d, %d, %d] \n", m, k, n);
+    }
+    else
+    {
+        switch (n)
+        {
+        case 0:
+            hZ = hZ_5mkP0(m, k, PN_orb);
+            break;
+        case 1:
+            hZ = hZ_5mkP1(m, k, PN_orb);
+            break;
+        case 2:
+            hZ = hZ_5mkP2(m, k, PN_orb);
+            break;
+        case 3:
+            hZ = hZ_5mkP3(m, k, PN_orb);
+            break;
+        case 4:
+            hZ = hZ_5mkP4(m, k, PN_orb);
+            break;
+        case 5:
+            hZ = hZ_5mkP5(m, k, PN_orb);
+            break;
+        case 6:
+            hZ = hZ_5mkP6(m, k, PN_orb);
+            break;
+        case 7:
+            hZ = hZ_5mkP7(m, k, PN_orb);
+            break;
+        case 8:
+            hZ = hZ_5mkP8(m, k, PN_orb);
+            break;
+        case 9:
+            hZ = hZ_5mkP9(m, k, PN_orb);
+            break;
+        case 10:
+            hZ = hZ_5mkP10(m, k, PN_orb);
+            break;
+            /// <summary>
+            /// ////
+            /// </summary>
+            /// <param name="m"></param>
+            /// <param name="k"></param>
+            /// <param name="n"></param>
+            /// <param name="PN_orb"></param>
+            /// <returns></returns>
+        case -1:
+            hZ = hZ_5mkM1(m, k, PN_orb);
+            break;
+        case -2:
+            hZ = hZ_5mkM2(m, k, PN_orb);
+            break;
+        case -3:
+            hZ = hZ_5mkM3(m, k, PN_orb);
+            break;
+        case -4:
+            hZ = hZ_5mkM4(m, k, PN_orb);
+            break;
+        case -5:
+            hZ = hZ_5mkM5(m, k, PN_orb);
+            break;
+        case -6:
+            hZ = hZ_5mkM6(m, k, PN_orb);
+            break;
+        default:
+            ////perror("Parameter errors: hZ_4mkn");
+            ////exit(1);
+            break;
+        }
+    }
+
+    return hZ;
+}
+
+CUDA_CALLABLE_MEMBER
+cmplx hZ_6mkn(const int m, const int k, const int n, inspiral_orb_PNvar *PN_orb)
+{ //
+
+    cmplx hZ = {0.0};
+    // printf("hZ_2mkn[%d, %d, %d, %d] \n", 2, m, k, n);
+
+    /* For ell = 6, all the zero modes are irrelevant within  5PNe10*/
+    if ((m + k + n) == 0)
+    {
+
+        hZ = cmplx(0.0, 0.0);
+        // printf("zero mkn[%d, %d, %d] \n", m, k, n);
+    }
+    else
+    {
+        switch (n)
+        {
+        case 0:
+            hZ = hZ_6mkP0(m, k, PN_orb);
+            break;
+        case 1:
+            hZ = hZ_6mkP1(m, k, PN_orb);
+            break;
+        case 2:
+            hZ = hZ_6mkP2(m, k, PN_orb);
+            break;
+        case 3:
+            hZ = hZ_6mkP3(m, k, PN_orb);
+            break;
+        case 4:
+            hZ = hZ_6mkP4(m, k, PN_orb);
+            break;
+        case 5:
+            hZ = hZ_6mkP5(m, k, PN_orb);
+            break;
+        case 6:
+            hZ = hZ_6mkP6(m, k, PN_orb);
+            break;
+        case 7:
+            hZ = hZ_6mkP7(m, k, PN_orb);
+            break;
+        case 8:
+            hZ = hZ_6mkP8(m, k, PN_orb);
+            break;
+        case 9:
+            hZ = hZ_6mkP9(m, k, PN_orb);
+            break;
+        case 10:
+            hZ = hZ_6mkP10(m, k, PN_orb);
+            break;
+            /// <summary>
+            /// ////
+            /// </summary>
+            /// <param name="m"></param>
+            /// <param name="k"></param>
+            /// <param name="n"></param>
+            /// <param name="PN_orb"></param>
+            /// <returns></returns>
+        case -1:
+            hZ = hZ_6mkM1(m, k, PN_orb);
+            break;
+        case -2:
+            hZ = hZ_6mkM2(m, k, PN_orb);
+            break;
+        case -3:
+            hZ = hZ_6mkM3(m, k, PN_orb);
+            break;
+        case -4:
+            hZ = hZ_6mkM4(m, k, PN_orb);
+            break;
+        case -5:
+            hZ = hZ_6mkM5(m, k, PN_orb);
+            break;
+        case -6:
+            hZ = hZ_6mkM6(m, k, PN_orb);
+            break;
+        case -7:
+            hZ = hZ_6mkM7(m, k, PN_orb);
+            break;
+        default:
+            ////perror("Parameter errors: hZ_4mkn");
+            ////exit(1);
+            break;
+        }
+    }
+
+    return hZ;
+}
+
+CUDA_CALLABLE_MEMBER
+cmplx hZ_7mkn(const int m, const int k, const int n, inspiral_orb_PNvar *PN_orb)
+{ //
+
+    cmplx hZ = {0.0};
+    // printf("hZ_2mkn[%d, %d, %d, %d] \n", 2, m, k, n);
+
+    /* For ell = 7, all the zero modes are irrelevant within  5PNe10*/
+    if ((m + k + n) == 0)
+    {
+
+        hZ = cmplx(0.0, 0.0);
+        // printf("zero mkn[%d, %d, %d] \n", m, k, n);
+    }
+    else
+    {
+        switch (n)
+        {
+        case 0:
+            hZ = hZ_7mkP0(m, k, PN_orb);
+            break;
+        case 1:
+            hZ = hZ_7mkP1(m, k, PN_orb);
+            break;
+        case 2:
+            hZ = hZ_7mkP2(m, k, PN_orb);
+            break;
+        case 3:
+            hZ = hZ_7mkP3(m, k, PN_orb);
+            break;
+        case 4:
+            hZ = hZ_7mkP4(m, k, PN_orb);
+            break;
+        case 5:
+            hZ = hZ_7mkP5(m, k, PN_orb);
+            break;
+        case 6:
+            hZ = hZ_7mkP6(m, k, PN_orb);
+            break;
+        case 7:
+            hZ = hZ_7mkP7(m, k, PN_orb);
+            break;
+        case 8:
+            hZ = hZ_7mkP8(m, k, PN_orb);
+            break;
+        case 9:
+            hZ = hZ_7mkP9(m, k, PN_orb);
+            break;
+        case 10:
+            hZ = hZ_7mkP10(m, k, PN_orb);
+            break;
+            /// <summary>
+            /// ////
+            /// </summary>
+            /// <param name="m"></param>
+            /// <param name="k"></param>
+            /// <param name="n"></param>
+            /// <param name="PN_orb"></param>
+            /// <returns></returns>
+        case -1:
+            hZ = hZ_7mkM1(m, k, PN_orb);
+            break;
+        case -2:
+            hZ = hZ_7mkM2(m, k, PN_orb);
+            break;
+        case -3:
+            hZ = hZ_7mkM3(m, k, PN_orb);
+            break;
+        case -4:
+            hZ = hZ_7mkM4(m, k, PN_orb);
+            break;
+        case -5:
+            hZ = hZ_7mkM5(m, k, PN_orb);
+            break;
+        case -6:
+            hZ = hZ_7mkM6(m, k, PN_orb);
+            break;
+        case -7:
+            hZ = hZ_7mkM7(m, k, PN_orb);
+            break;
+        case -8:
+            hZ = hZ_7mkM8(m, k, PN_orb);
+            break;
+        default:
+            ////perror("Parameter errors: hZ_4mkn");
+            ////exit(1);
+            break;
+        }
+    }
+
+    return hZ;
+}
+
+CUDA_CALLABLE_MEMBER
+cmplx hZ_8mkn(const int m, const int k, const int n, inspiral_orb_PNvar *PN_orb)
+{ //
+
+    cmplx hZ = {0.0};
+    // printf("hZ_2mkn[%d, %d, %d, %d] \n", 2, m, k, n);
+
+    /* For ell = 8, all the zero modes are irrelevant within  5PNe10*/
+    if ((m + k + n) == 0)
+    {
+
+        hZ = cmplx(0.0, 0.0);
+        // printf("zero mkn[%d, %d, %d] \n", m, k, n);
+    }
+    else
+    {
+        switch (n)
+        {
+        case 0:
+            hZ = hZ_8mkP0(m, k, PN_orb);
+            break;
+        case 1:
+            hZ = hZ_8mkP1(m, k, PN_orb);
+            break;
+        case 2:
+            hZ = hZ_8mkP2(m, k, PN_orb);
+            break;
+        case 3:
+            hZ = hZ_8mkP3(m, k, PN_orb);
+            break;
+        case 4:
+            hZ = hZ_8mkP4(m, k, PN_orb);
+            break;
+        case 5:
+            hZ = hZ_8mkP5(m, k, PN_orb);
+            break;
+        case 6:
+            hZ = hZ_8mkP6(m, k, PN_orb);
+            break;
+        case 7:
+            hZ = hZ_8mkP7(m, k, PN_orb);
+            break;
+        case 8:
+            hZ = hZ_8mkP8(m, k, PN_orb);
+            break;
+        case 9:
+            hZ = hZ_8mkP9(m, k, PN_orb);
+            break;
+        case 10:
+            hZ = hZ_8mkP10(m, k, PN_orb);
+            break;
+            /// <summary>
+            /// ////
+            /// </summary>
+            /// <param name="m"></param>
+            /// <param name="k"></param>
+            /// <param name="n"></param>
+            /// <param name="PN_orb"></param>
+            /// <returns></returns>
+        case -1:
+            hZ = hZ_8mkM1(m, k, PN_orb);
+            break;
+        case -2:
+            hZ = hZ_8mkM2(m, k, PN_orb);
+            break;
+        case -3:
+            hZ = hZ_8mkM3(m, k, PN_orb);
+            break;
+        case -4:
+            hZ = hZ_8mkM4(m, k, PN_orb);
+            break;
+        case -5:
+            hZ = hZ_8mkM5(m, k, PN_orb);
+            break;
+        case -6:
+            hZ = hZ_8mkM6(m, k, PN_orb);
+            break;
+        case -7:
+            hZ = hZ_8mkM7(m, k, PN_orb);
+            break;
+        case -8:
+            hZ = hZ_8mkM8(m, k, PN_orb);
+            break;
+        case -9:
+            hZ = hZ_8mkM9(m, k, PN_orb);
+            break;
+        default:
+            ////perror("Parameter errors: hZ_4mkn");
+            ////exit(1);
+            break;
+        }
+    }
+
+    return hZ;
+}
+
+CUDA_CALLABLE_MEMBER
+cmplx hZ_9mkn(const int m, const int k, const int n, inspiral_orb_PNvar *PN_orb)
+{ //
+
+    cmplx hZ = {0.0};
+    // printf("hZ_2mkn[%d, %d, %d, %d] \n", 2, m, k, n);
+
+    /* For ell = 9, all the zero modes are irrelevant within  5PNe10*/
+    if ((m + k + n) == 0)
+    {
+
+        hZ = cmplx(0.0, 0.0);
+        // printf("zero mkn[%d, %d, %d] \n", m, k, n);
+    }
+    else
+    {
+        switch (n)
+        {
+        case 0:
+            hZ = hZ_9mkP0(m, k, PN_orb);
+            break;
+        case 1:
+            hZ = hZ_9mkP1(m, k, PN_orb);
+            break;
+        case 2:
+            hZ = hZ_9mkP2(m, k, PN_orb);
+            break;
+        case 3:
+            hZ = hZ_9mkP3(m, k, PN_orb);
+            break;
+        case 4:
+            hZ = hZ_9mkP4(m, k, PN_orb);
+            break;
+        case 5:
+            hZ = hZ_9mkP5(m, k, PN_orb);
+            break;
+        case 6:
+            hZ = hZ_9mkP6(m, k, PN_orb);
+            break;
+        case 7:
+            hZ = hZ_9mkP7(m, k, PN_orb);
+            break;
+        case 8:
+            hZ = hZ_9mkP8(m, k, PN_orb);
+            break;
+        case 9:
+            hZ = hZ_9mkP9(m, k, PN_orb);
+            break;
+        case 10:
+            hZ = hZ_9mkP10(m, k, PN_orb);
+            break;
+            /// <summary>
+            /// ////
+            /// </summary>
+            /// <param name="m"></param>
+            /// <param name="k"></param>
+            /// <param name="n"></param>
+            /// <param name="PN_orb"></param>
+            /// <returns></returns>
+        case -1:
+            hZ = hZ_9mkM1(m, k, PN_orb);
+            break;
+        case -2:
+            hZ = hZ_9mkM2(m, k, PN_orb);
+            break;
+        case -3:
+            hZ = hZ_9mkM3(m, k, PN_orb);
+            break;
+        case -4:
+            hZ = hZ_9mkM4(m, k, PN_orb);
+            break;
+        case -5:
+            hZ = hZ_9mkM5(m, k, PN_orb);
+            break;
+        case -6:
+            hZ = hZ_9mkM6(m, k, PN_orb);
+            break;
+        case -7:
+            hZ = hZ_9mkM7(m, k, PN_orb);
+            break;
+        case -8:
+            hZ = hZ_9mkM8(m, k, PN_orb);
+            break;
+        case -9:
+            hZ = hZ_9mkM9(m, k, PN_orb);
+            break;
+        default:
+            ////perror("Parameter errors: hZ_4mkn");
+            ////exit(1);
+            break;
+        }
+    }
+
+    return hZ;
+}
+
+CUDA_CALLABLE_MEMBER
+cmplx hZ_10mkn(const int m, const int k, const int n, inspiral_orb_PNvar *PN_orb)
+{ //
+
+    cmplx hZ = {0.0};
+    // printf("hZ_2mkn[%d, %d, %d, %d] \n", 2, m, k, n);
+
+    /* For ell = 10, all the zero modes are irrelevant within  5PNe10*/
+    if ((m + k + n) == 0)
+    {
+
+        hZ = cmplx(0.0, 0.0);
+        // printf("zero mkn[%d, %d, %d] \n", m, k, n);
+    }
+    else
+    {
+        switch (n)
+        {
+        case 0:
+            hZ = hZ_10mkP0(m, k, PN_orb);
+            break;
+        case 1:
+            hZ = hZ_10mkP1(m, k, PN_orb);
+            break;
+        case 2:
+            hZ = hZ_10mkP2(m, k, PN_orb);
+            break;
+        case 3:
+            hZ = hZ_10mkP3(m, k, PN_orb);
+            break;
+        case 4:
+            hZ = hZ_10mkP4(m, k, PN_orb);
+            break;
+        case 5:
+            hZ = hZ_10mkP5(m, k, PN_orb);
+            break;
+        case 6:
+            hZ = hZ_10mkP6(m, k, PN_orb);
+            break;
+        case 7:
+            hZ = hZ_10mkP7(m, k, PN_orb);
+            break;
+        case 8:
+            hZ = hZ_10mkP8(m, k, PN_orb);
+            break;
+        case 9:
+            hZ = hZ_10mkP9(m, k, PN_orb);
+            break;
+        case 10:
+            hZ = hZ_10mkP10(m, k, PN_orb);
+            break;
+            /// <summary>
+            /// ////
+            /// </summary>
+            /// <param name="m"></param>
+            /// <param name="k"></param>
+            /// <param name="n"></param>
+            /// <param name="PN_orb"></param>
+            /// <returns></returns>
+        case -1:
+            hZ = hZ_10mkM1(m, k, PN_orb);
+            break;
+        case -2:
+            hZ = hZ_10mkM2(m, k, PN_orb);
+            break;
+        case -3:
+            hZ = hZ_10mkM3(m, k, PN_orb);
+            break;
+        case -4:
+            hZ = hZ_10mkM4(m, k, PN_orb);
+            break;
+        case -5:
+            hZ = hZ_10mkM5(m, k, PN_orb);
+            break;
+        case -6:
+            hZ = hZ_10mkM6(m, k, PN_orb);
+            break;
+        case -7:
+            hZ = hZ_10mkM7(m, k, PN_orb);
+            break;
+        case -8:
+            hZ = hZ_10mkM8(m, k, PN_orb);
+            break;
+        case -9:
+            hZ = hZ_10mkM9(m, k, PN_orb);
+            break;
+        default:
+            ////perror("Parameter errors: hZ_4mkn");
+            ////exit(1);
+            break;
+        }
+    }
+
+    return hZ;
+}
+
+
 /*-*-*-*-*-*-*-*-*-*-*-* External functions (can be refered by other source files) *-*-*-*-*-*-*-*-*-*-*-*/
 CUDA_CALLABLE_MEMBER
 void init_orb_PNvar(const double q, inspiral_orb_data *orb, inspiral_orb_PNvar *PN_orb)
@@ -807,7 +1366,7 @@ cmplx hZ_lmkn(const int l, const int m, const int k, const int n, inspiral_orb_P
     case 4:
         return hZ_4mkn(m, k, n, PN_orb);
         break;
-    /*case 5:
+    case 5:
         return hZ_5mkn(m, k, n, PN_orb);
         break;
     case 6:
@@ -825,7 +1384,7 @@ cmplx hZ_lmkn(const int l, const int m, const int k, const int n, inspiral_orb_P
     case 10:
         return hZ_10mkn(m, k, n, PN_orb);
         break;
-    case 11:
+    /*case 11:
         return hZ_11mkn(m, k, n, PN_orb);
         break;
     case 12:

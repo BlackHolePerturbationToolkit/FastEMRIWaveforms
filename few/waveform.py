@@ -36,7 +36,7 @@ from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 from few.utils.utility import get_mismatch, xI_to_Y, p_to_y, check_for_file_download
 from few.amplitude.romannet import RomanAmplitude
 from .amplitude.pnamp import Pn5Amplitude
-from few.utils.modeselector import ModeSelector, NeuralModeSelector
+from few.utils.modeselector import ModeSelector, GenericModeSelector, NeuralModeSelector, GenericNeuralModeSelector
 from few.utils.ylm import GetYlms
 from few.summation.directmodesum import DirectModeSum
 from few.summation.aakwave import AAKSummation
@@ -1569,6 +1569,7 @@ class GenericModeDecomposedWaveformBase(
         inspiral_module,
         amplitude_module,
         sum_module,
+        mode_selector_module,
         inspiral_kwargs={},
         amplitude_kwargs={},
         sum_kwargs={},
@@ -1600,14 +1601,14 @@ class GenericModeDecomposedWaveformBase(
         # summation generator
         self.create_waveform = sum_module(**sum_kwargs)
         
-        # selecting modes that contribute at threshold to the waveform
-        # self.mode_selector = ModeSelector(None, **mode_selector_kwargs)
-
         # adjust mode indices to match amplitudes
         self.l_arr = self.amplitude_generator.l_arr
         self.m_arr = self.amplitude_generator.m_arr
         self.k_arr = self.amplitude_generator.k_arr
         self.n_arr = self.amplitude_generator.n_arr
+
+        # selecting modes that contribute at threshold to the waveform
+        self.mode_selector = mode_selector_module(self.l_arr, self.m_arr, self.k_arr, self.n_arr, **mode_selector_kwargs)
 
     @property
     def citation(self):
@@ -1725,7 +1726,7 @@ class GenericModeDecomposedWaveformBase(
             dt=dt,
             **self.inspiral_kwargs,
         )
-
+        # breakpoint()
         # makes sure p and e are generally within the model
         self.sanity_check_traj(p, e, x)
 
@@ -1738,6 +1739,11 @@ class GenericModeDecomposedWaveformBase(
         Phi_phi = xp.asarray(Phi_phi)
         Phi_theta = xp.asarray(Phi_theta)
         Phi_r = xp.asarray(Phi_r)
+
+        # if mode selector is predictive, run now to avoid generating amplitudes that are not required
+        if self.mode_selector.is_predictive:
+            # overwrites mode_selection so it's now a list of modes to keep, ready to feed into amplitudes
+            mode_selection = self.mode_selector(M, mu, a, p0, e0, x0, theta, phi, T, eps)  # TODO: update this if more arguments are required
 
         # split into batches
 
@@ -1772,8 +1778,9 @@ class GenericModeDecomposedWaveformBase(
             Phi_theta_temp = Phi_theta[inds_in]
             Phi_r_temp = Phi_r[inds_in]
 
-            # amplitudes
-            teuk_modes = self.amplitude_generator(a, p_temp, e_temp, x_temp, theta, phi, self.l_arr, self.m_arr, self.k_arr, self.n_arr)
+            # if we aren't requesting a subset of modes, compute them all now
+            if not isinstance(mode_selection, list):
+                teuk_modes = self.amplitude_generator(a, p_temp, e_temp, x_temp, theta, phi, self.l_arr, self.m_arr, self.k_arr, self.n_arr)
             
             # different types of mode selection
             # sets up ylm and teuk_modes properly for summation
@@ -1794,81 +1801,21 @@ class GenericModeDecomposedWaveformBase(
                 if mode_selection == []:
                     raise ValueError("If mode selection is a list, cannot be empty.")
 
-                # TODO precompute as in SchwarzschildEccentric
-                keep_modes = []
-                for lmn_in in mode_selection:
-                    l, m, k, n = lmn_in
-
-                    this_ind = xp.where( ( ( (self.l_arr == l) & (self.m_arr == m) ) & (self.k_arr == k) ) & (self.n_arr == n) )[0].item()
-                    keep_modes.append(this_ind)
-                keep_modes = xp.asarray(keep_modes, dtype=xp.int32)
-
-                self.ls = self.l_arr[keep_modes]
-                self.ms = self.m_arr[keep_modes]
-                self.ks = self.k_arr[keep_modes]
-                self.ns = self.n_arr[keep_modes]
-                teuk_modes_in = teuk_modes[:,keep_modes,:]
-            """
-            # get a specific subset of modes
-            elif isinstance(mode_selection, list):
-                if mode_selection == []:
-                    raise ValueError("If mode selection is a list, cannot be empty.")
-
-                keep_modes = self.xp.zeros(len(mode_selection), dtype=self.xp.int32)
-
-                # for removing opposite m modes
-                fix_include_ms = self.xp.full(2 * len(mode_selection), False)
-                for jj, lmn in enumerate(mode_selection):
-                    l, m, n = tuple(lmn)
-
-                    # keep modes only works with m>=0
-                    lmn_in = (l, abs(m), n)
-                    keep_modes[jj] = self.xp.int32(self.lmn_indices[lmn_in])
-
-                    if not include_minus_m:
-                        if m > 0:
-                            # minus m modes blocked
-                            fix_include_ms[len(mode_selection) + jj] = True
-                        elif m < 0:
-                            # positive m modes blocked
-                            fix_include_ms[jj] = True
-
-                self.ls = self.l_arr[keep_modes]
-                self.ms = self.m_arr[keep_modes]
-                self.ns = self.n_arr[keep_modes]
-
-                temp2 = keep_modes * (keep_modes < self.num_m0) + (
-                    keep_modes + self.num_m_1_up
-                ) * (keep_modes >= self.num_m0)
-
-                ylmkeep = self.xp.concatenate([keep_modes, temp2])
-                ylms_in = ylms[ylmkeep]
-
-                # remove modes if include_minus_m is False
-                ylms_in[fix_include_ms] = 0.0 + 1j * 0.0
-
-                teuk_modes_in = teuk_modes[:, keep_modes]
-
-            # mode selection based on input module
+                mode_ind_arr = xp.array(mode_selection)
+                self.ls, self.ms, self.ks, self.ns = mode_ind_arr.T
+                teuk_modes_in = self.amplitude_generator(a, p_temp, e_temp, x_temp, theta, phi, specific_modes=mode_selection)
             else:
-                fund_freq_args = (
-                    M,
-                    0.0,
-                    p_temp,
-                    e_temp,
-                    self.xp.zeros_like(e_temp),
-                )
-                modeinds = [self.l_arr, self.m_arr, self.n_arr]
+                modeinds = [self.l_arr, self.m_arr, self.k_arr, self.n_arr]
                 (
                     teuk_modes_in,
-                    ylms_in,
                     self.ls,
                     self.ms,
+                    self.ks,
                     self.ns,
                 ) = self.mode_selector(
-                    teuk_modes, ylms, modeinds, fund_freq_args=fund_freq_args, eps=eps,
+                    teuk_modes, modeinds, eps=eps,
                 )
-            """
+
             # store number of modes for external information
             self.num_modes_kept = teuk_modes_in.shape[1]
 
@@ -1958,6 +1905,7 @@ class Pn5TrajPn5AdiabaticWaveform(Pn5AdiabaticAmp, GenericModeDecomposedWaveform
         inspiral_kwargs={},
         amplitude_kwargs={},
         sum_kwargs={},
+        mode_selector_kwargs={},
         use_gpu=False,
         output_type="td",
         *args,
@@ -1971,15 +1919,21 @@ class Pn5TrajPn5AdiabaticWaveform(Pn5AdiabaticAmp, GenericModeDecomposedWaveform
             sum_module = InterpolatedModeSumGeneric
         else:
             raise ValueError("output_type must be td.")
-        
+
+        mode_selection_module = GenericModeSelector
+        if "mode_selection_type" in mode_selector_kwargs:
+            if mode_selector_kwargs["mode_selection_type"] == "neural":
+                mode_selection_module = GenericNeuralModeSelector
         GenericModeDecomposedWaveformBase.__init__(
             self,
             EMRIInspiral,
             Pn5Amplitude,
             sum_module,
+            mode_selection_module,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
+            mode_selector_kwargs=mode_selector_kwargs,
             use_gpu=use_gpu,
             *args,
             **kwargs,

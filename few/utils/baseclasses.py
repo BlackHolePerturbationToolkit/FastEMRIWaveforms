@@ -822,7 +822,7 @@ class Pn5AdiabaticAmp(ParallelModuleBase, ABC):
         self.needs_Y = True
 
         # set mode index settings
-        self.lmax = 4  #  10
+        self.lmax = 10  #  10
         self.nmax = 10  
 
         self.ndim = 3
