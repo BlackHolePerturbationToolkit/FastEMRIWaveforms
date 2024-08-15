@@ -39,7 +39,7 @@ insp_kw = {
 "DENSE_STEPPING": 0,
 "max_init_len": int(1e4),
 "use_rk4": False,
-"upsample": False,
+"upsample": False
 }
 
 np.random.seed(42)
@@ -67,6 +67,20 @@ class ModuleTest(unittest.TestCase):
             # run trajectory
             #print("start", a, p0, e0, Y0)
             t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, Y0, **insp_kw)
+
+            # Now test backwards integration
+            final_p = p[-1]
+            final_e = e[-1]
+            final_x = x[-1]
+
+            insp_kw_back = insp_kw.copy()
+            insp_kw_back.update({"integrate_backwards":True})
+
+            t, p_back, e_back, x_back, _, _, _ = traj(M, mu, a, p0, e0, Y0, **insp_kw_back)            
+
+            self.assertTrue(p_back[-1],p[0])
+
+
 
     def test_trajectory_SchwarzEccFlux(self):
         # initialize trajectory class
@@ -178,13 +192,77 @@ class ModuleTest(unittest.TestCase):
             # plt.figure(); plt.plot(t[mask],np.abs(Phi_phi[mask] - Phi_phiS[mask])); plt.show()
             # breakpoint()
 
-        # the next works only with TPI
-        # t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(1e6, 100.0, 0.99, 6.0, 0.5, 1.0, T=2079375.6399400292/YRSID_SI)
-        # self.assertLess(np.abs(Phi_phi[-1] - 37548.68909110543),2.0) # value from Scott
+        # check against Schwarzchild
+        for i in range(100):
+            p0 = np.random.uniform(10.0,15)
+            e0 = np.random.uniform(0.1, 0.5)
+            
+            t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, T=2.0, max_init_len=int(1e5))
+            tS, pS, eS, xS, Phi_phiS, Phi_thetaS, Phi_rS = traj_Schw(M, mu, 0.0, p0, e0, 1.0, T=2.0, new_t=t, upsample=True, max_init_len=int(1e5))
+            mask = (Phi_rS!=0.0)
+            diff =  np.abs(Phi_phi[mask] - Phi_phiS[mask])
+            # plt.figure(); plt.plot(tS,pS);plt.plot(t,p);plt.show()
+            # plt.figure(); plt.plot(tS,Phi_phiS);plt.plot(t,Phi_phi);plt.show()
+
+            self.assertLess(np.max(diff),2.0)
         
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(1e6, 100.0, 0.99, 6.0, 0.5, 1.0, T=2079375.6399400292/YRSID_SI)
+        self.assertLess(np.abs(Phi_phi[-1] - 37548.68909110543),2.0) # value from Scott
+  
         # s_t, s_p, s_e, s_x, s_omr, s_omt, s_omph, s_r, s_th, s_ph = np.loadtxt("data_for_lorenzo/scott_data/a0.99_p0_6_e0_0.5_xI0_1.0_wl.txt").T
         # mask = (s_p>(0.1+s_p[-1]))
         # t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(1e6, 100.0, 0.99, s_p[0], s_e[0], 1.0, T=4.0, new_t=s_t[mask]*MTSUN_SI*M, upsample=True)
         # # plt.figure();  plt.plot(t,p); plt.plot(s_t*MTSUN_SI*M,s_p,'--',label='Scott'); plt.show()
         # plt.figure();  plt.plot(p,e); plt.plot(s_p[mask],s_e[mask],'--',label='Scott'); plt.show()
         # plt.figure();  plt.semilogy(t,np.abs(Phi_phi-s_ph[mask])); plt.ylabel('phase difference phi'); plt.xlabel('time [seconds]'); plt.show()
+  
+    def test_backwards_trajectory(self):
+    # initialize trajectory class
+        list_func = ['pn5', 'SchwarzEccFlux', 'pn5_nofrequencies', 'KerrEccentricEquatorial_ELQ_nofrequencies', 'KerrEccentricEquatorial', 'KerrEccentricEquatorial_nofrequencies', 'KerrEccentricEquatorial_ELQ' ]
+        for el in list_func:
+            print("testing ", el)
+            traj = EMRIInspiral(func=el)
+
+            # set initial parameters
+            M = 1e6
+            mu = 10.0
+                
+            if 'nofrequencies' in el:
+                insp_kw["use_rk4"] = True
+            else:
+                insp_kw["use_rk4"] = False
+                
+            # plt.figure()
+            # tic = time.perf_counter()
+            for i in range(100):
+                    
+                p0 = np.random.uniform(9.0,12.0)
+                e0 = np.random.uniform(0.1, 0.5)
+                a = np.random.uniform(0.01, 0.98)
+
+                if el == 'SchwarzEccFlux':
+                    a = 0.0
+                    Y0 = 1.0
+                elif 'Kerr' in el:
+                    Y0 = 1.0
+                else:
+                    Y0 = np.random.uniform(0.2, 0.8)
+                    
+                # print(a,p0,e0)
+                # run trajectory forwards
+                insp_kw["T"] = 0.1
+                t, p_forward, e_forward, x_forward, _, _, _ = traj(M, mu, np.abs(a), p0, e0, Y0, **insp_kw)
+                    
+                p_final = p_forward[-1]
+                e_final = e_forward[-1]
+                x_final = x_forward[-1]
+
+                # run trajectory backwards
+                insp_kw_back = insp_kw.copy()
+                insp_kw_back.update({"integrate_backwards":True})
+                    
+                t, p_back, e_back, x_back, _, _, _ = traj(M, mu, np.abs(a), p_final, e_final, x_final, **insp_kw_back)
+
+                self.assertAlmostEqual(p_back[-1],p_forward[0], places = 10)
+                self.assertAlmostEqual(e_back[-1],e_forward[0], places = 10)
+                self.assertAlmostEqual(x_back[-1],x_forward[0], places = 10)

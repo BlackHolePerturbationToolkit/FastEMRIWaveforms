@@ -1,0 +1,1 @@
+cp -r /work/scratch/data/burkeol/Kerr_data/files/ /work/scratch/env/burkeol/.conda/envs/few_test/lib/python3.10/site-packages/few-1.5.3-py3.10-linux-x86_64.egg/few/
