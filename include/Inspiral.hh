@@ -26,6 +26,7 @@ public:
     double epsilon;
     double a = 0.0;
     double q;
+    bool integrate_backwards;
     string func_name;
     std::vector<ODECarrier> odes;
     double *additional_args;
@@ -104,7 +105,7 @@ public:
     gsl_odeiv2_evolve *evolve;
     gsl_odeiv2_control *control;
     int nparams;
-    double err = 1e-10;
+    double err = 1e-11;//1e-10;
     bool USE_DENSE_STEPPING = false;
     bool USE_RK8 = true;
     int num_add_args;
@@ -112,7 +113,8 @@ public:
 
     InspiralCarrier(int nparams_, int num_add_args_);
     void dealloc();
-    void add_parameters_to_holder(double M, double mu, double a, double *additional_args);
+    void add_parameters_to_holder(double M, double mu, double a, bool integrate_backwards, double *additional_args);
+    void set_integrator_kwargs(double err_set, bool DENSE_STEP_SET, bool RK8_SET);
     void initialize_integrator();
     void destroy_integrator_information();
     void reset_solver();
@@ -122,9 +124,12 @@ public:
     void update_currently_running_ode_index(int currently_running_ode_index);
     int get_number_of_odes();
     void add_ode(string func_name, string few_dir);
+    void get_convert_Y(bool *convert_Y, int num_odes);
     void get_backgrounds(int *backgrounds, int num_odes);
     void get_equatorial(bool *equatorial, int num_odes);
     void get_circular(bool *circular, int num_odes);
+    void get_integrate_constants_of_motion(bool *integrate_constants_of_motion, int num_odes);
+    void get_integrate_phases(bool *integrate_phases, int num_odes);
     ~InspiralCarrier();
 };
 

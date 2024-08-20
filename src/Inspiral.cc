@@ -72,7 +72,7 @@ int func_ode_wrap(double t, const double y[], double f[], void *params)
     // double epsilon = params_in->epsilon;
     // double q = params_in->q;
 
-    params_in->odes[params_in->currently_running_ode_index].get_derivatives(f, y, params_in->epsilon, params_in->a, params_in->additional_args);
+    params_in->odes[params_in->currently_running_ode_index].get_derivatives(f, y, params_in->epsilon, params_in->a, params_in->integrate_backwards, params_in->additional_args);
 
     // cout << "e=" << e << "\t" << "edot=" << edot <<  "\t" << "p=" << p <<  endl;
     return GSL_SUCCESS;
@@ -95,11 +95,20 @@ int InspiralCarrier::get_number_of_odes()
     return params_holder->odes.size();
 }
 
-void InspiralCarrier::add_parameters_to_holder(double M, double mu, double a, double *additional_args)
+void InspiralCarrier::set_integrator_kwargs(double err_set, bool DENSE_STEP_SET, bool RK8_SET)
+{
+    err = err_set;
+    USE_DENSE_STEPPING = DENSE_STEP_SET;
+    USE_RK8 = RK8_SET;
+}
+
+void InspiralCarrier::add_parameters_to_holder(double M, double mu, double a, bool integrate_backwards, double *additional_args)
 {
     // Set the mass ratio
     params_holder->epsilon = mu / M;
     params_holder->a = a;
+    params_holder->integrate_backwards = integrate_backwards;
+
     memcpy(&(params_holder->additional_args[0]), additional_args, params_holder->num_add_args * sizeof(double));
 }
 
@@ -110,7 +119,7 @@ void InspiralCarrier::initialize_integrator()
     if (USE_RK8)
         T = gsl_odeiv2_step_rk8pd;
     else
-        T = gsl_odeiv2_step_rk4;
+        T = gsl_odeiv2_step_rkf45;
 
     // Initialize the ODE solver
     // gsl_odeiv2_system sys_temp = {func_ode_wrap, NULL, static_cast<size_t>(nparams), params_holder};
@@ -118,7 +127,7 @@ void InspiralCarrier::initialize_integrator()
     sys = {func_ode_wrap, NULL, static_cast<size_t>(nparams), params_holder};
     ;
     step = gsl_odeiv2_step_alloc(T, params_holder->nparams);
-    control = gsl_odeiv2_control_y_new(err, 0);
+    control = gsl_odeiv2_control_y_new(0, err);
     evolve = gsl_odeiv2_evolve_alloc(params_holder->nparams);
 }
 
@@ -142,7 +151,7 @@ void InspiralCarrier::get_derivatives(double *ydot_, double *y, int nparams_)
         throw invalid_argument("nparams input for derivatives does not match nparams stored in the c++ class.");
 
     vector<double> ydot(nparams);
-    params_holder->odes[params_holder->currently_running_ode_index].get_derivatives(&ydot[0], y, params_holder->epsilon, params_holder->a, params_holder->additional_args);
+    params_holder->odes[params_holder->currently_running_ode_index].get_derivatives(&ydot[0], y, params_holder->epsilon, params_holder->a, params_holder->integrate_backwards, params_holder->additional_args);
     memcpy(ydot_, &ydot[0], nparams * sizeof(double));
 }
 
@@ -158,6 +167,16 @@ void InspiralCarrier::update_currently_running_ode_index(int currently_running_o
 int InspiralCarrier::get_currently_running_ode_index()
 {
     return params_holder->currently_running_ode_index;
+}
+
+void InspiralCarrier::get_convert_Y(bool *convert_Y, int num_odes)
+{
+    if (num_odes != params_holder->num_odes)
+    {
+        throw invalid_argument("Wrong number of odes coming in.");
+    }
+    for (int i = 0; i < num_odes; i += 1)
+        convert_Y[i] = params_holder->odes[i].convert_Y;
 }
 
 void InspiralCarrier::get_backgrounds(int *backgrounds, int num_odes)
@@ -188,6 +207,26 @@ void InspiralCarrier::get_circular(bool *circular, int num_odes)
     }
     for (int i = 0; i < num_odes; i += 1)
         circular[i] = params_holder->odes[i].circular;
+}
+
+void InspiralCarrier::get_integrate_constants_of_motion(bool *integrate_constants_of_motion, int num_odes)
+{
+    if (num_odes != params_holder->num_odes)
+    {
+        throw invalid_argument("Wrong number of odes coming in.");
+    }
+    for (int i = 0; i < num_odes; i += 1)
+        integrate_constants_of_motion[i] = params_holder->odes[i].integrate_constants_of_motion;
+}
+
+void InspiralCarrier::get_integrate_phases(bool *integrate_phases, int num_odes)
+{
+    if (num_odes != params_holder->num_odes)
+    {
+        throw invalid_argument("Wrong number of odes coming in.");
+    }
+    for (int i = 0; i < num_odes; i += 1)
+        integrate_phases[i] = params_holder->odes[i].integrate_phases;
 }
 
 int InspiralCarrier::take_step(double *t, double *h, double *y, const double tmax)

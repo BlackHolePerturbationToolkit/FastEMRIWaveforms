@@ -17,9 +17,10 @@
 
 
 import numpy as np
+from scipy import special
 
 import os
-
+from few.summation.interpolatedmodesum import CubicSplineInterpolant
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *
@@ -40,6 +41,53 @@ except (ImportError, ModuleNotFoundError) as e:
     pass #  we can catch this later
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
+
+@np.vectorize
+def SPAFunc(x, th=7.0):
+    II = 0.0 + 1.0j
+    Gamp13 = 2.67893853470774763  # Gamma(1/3)
+    Gamm13 = -4.06235381827920125  # Gamma(-1/3)
+
+    if np.abs(x) <= th:
+        xx = complex(x)
+        pref1 = np.exp(-2. * np.pi * II / 3.) * pow(xx, 5. / 6.) * Gamm13 / pow(2., 1. / 3.)
+        pref2 = np.exp(-np.pi * II / 3.) * pow(xx, 1. / 6.) * Gamp13 / pow(2., 2. / 3.)
+        x2 = x * x
+
+        c1_0, c1_2, c1_4, c1_6, c1_8, c1_10, c1_12, c1_14, c1_16, c1_18, c1_20, c1_22, c1_24, c1_26 = (
+            0.5, -0.09375, 0.0050223214285714285714, -0.00012555803571428571429, 1.8109332074175824176e-6,
+            -1.6977498819539835165e-8, 1.1169407118118312608e-10, -5.4396463237589184781e-13,
+            2.0398673714095944293e-15, -6.0710338434809358015e-18, 1.4687985105195812423e-20,
+            -2.9454515585285720100e-23, 4.9754249299469121790e-26, -7.1760936489618925658e-29
+        )
+
+        ser1 = c1_0 + x2*(c1_2 + x2*(c1_4 + x2*(c1_6 + x2*(c1_8 + x2*(c1_10 + x2*(c1_12 + x2*(c1_14 + x2*(c1_16 + x2*(c1_18 + x2*(c1_20 + x2*(c1_22 + x2*(c1_24 + x2*c1_26))))))))))))
+
+        c2_0, c2_2, c2_4, c2_6, c2_8, c2_10, c2_12, c2_14, c2_16, c2_18, c2_20, c2_22, c2_24, c2_26 = (
+            1., -0.375, 0.028125, -0.00087890625, 0.000014981356534090909091, -1.6051453429383116883e-7,
+            1.1802539286311115355e-9, -6.3227889033809546546e-12, 2.5772237377911499951e-14,
+            -8.2603324929203525483e-17, 2.1362928861000911763e-19, -4.5517604107246260858e-22,
+            8.1281435905796894390e-25, -1.2340298973552160079e-27
+        )
+
+        ser2 = c2_0 + x2*(c2_2 + x2*(c2_4 + x2*(c2_6 + x2*(c2_8 + x2*(c2_10 + x2*(c2_12 + x2*(c2_14 + x2*(c2_16 + x2*(c2_18 + x2*(c2_20 + x2*(c2_22 + x2*(c2_24 + x2*c2_26))))))))))))
+
+        ans = np.exp(-II * x) * (pref1 * ser1 + pref2 * ser2)
+    else:
+        y = 1. / x
+        pref = np.exp(-0.75 * II * np.pi) * np.sqrt(0.5 * np.pi)
+
+        c_0, c_1, c_2, c_3, c_4, c_5, c_6, c_7, c_8 = (
+            II, 0.069444444444444444444, -0.037133487654320987654 * II, -0.037993059127800640146,
+            0.057649190412669721333 * II, 0.11609906402551541102, -0.29159139923075051147 * II,
+            -0.87766696951001691647, 3.0794530301731669934 * II
+        )
+
+        ser = c_0 + y * (c_1 + y * (c_2 + y * (c_3 + y * (c_4 + y * (c_5 + y * (c_6 + y * (c_7 + y * c_8)))))))
+
+        ans = pref * ser
+
+    return ans
 
 class ModeSelector(ParallelModuleBase):
     """Filter teukolsky amplitudes based on power contribution.
@@ -157,19 +205,23 @@ class ModeSelector(ParallelModuleBase):
         else:
             xp = np
 
+        zero_modes_mask = (modeinds[1]==0)*(modeinds[2]==0)
+        
         # get the power contribution of each mode including m < 0
-        power = (
-            xp.abs(
-                xp.concatenate(
-                    [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])], axis=1
+        if self.sensitivity_fn is None:
+            power = (
+                xp.abs(
+                    xp.concatenate(
+                        [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])], axis=1
+                    )
+                    * ylms
                 )
-                * ylms
+                ** 2
             )
-            ** 2
-        )
-
+        
         # if noise weighting
-        if self.sensitivity_fn is not None:
+        elif self.sensitivity_fn is not None:
+            
             if fund_freq_args is None:
                 raise ValueError(
                     "If sensitivity weighting is desired, the fund_freq_args kwarg must be provided."
@@ -178,9 +230,15 @@ class ModeSelector(ParallelModuleBase):
             M = fund_freq_args[0]
             Msec = M * MTSUN_SI
 
+            a_fr, p_fr, e_fr, x_fr = fund_freq_args[1:-1]
+
+            if self.use_gpu:  # fundamental frequencies only defined on CPU
+                p_fr = p_fr.get()
+                e_fr = e_fr.get()
+                x_fr = x_fr.get()
             # get dimensionless fundamental frequency
             OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(
-                *fund_freq_args[1:]
+                a_fr, p_fr, e_fr, x_fr
             )
 
             # get frequencies in Hz
@@ -202,8 +260,39 @@ class ModeSelector(ParallelModuleBase):
             freqs_in = xp.abs(freqs)
             PSD = self.sensitivity_fn(freqs_in.flatten()).reshape(freqs_shape)
 
-            # weight by PSD
-            power /= PSD
+            # weight by PSD, only for non zero modes    
+            cs = CubicSplineInterpolant(fund_freq_args[-1], freqs[:,~zero_modes_mask].T, use_gpu=self.use_gpu)
+            fdot = cs(fund_freq_args[-1],deriv_order=1)
+            fddot = cs(fund_freq_args[-1],deriv_order=2)
+            arg_1 = 2*np.pi*fdot**3 / (3*fddot**2)
+            try:
+                arg_1_cpu = arg_1.get()
+            except:
+                arg_1_cpu = arg_1
+            spa_func = xp.asarray(SPAFunc(arg_1_cpu))
+            fact = -1*fdot/xp.abs(fddot) * spa_func * 2./np.sqrt(3) / xp.sqrt(arg_1+0j)
+ 
+
+            ### after square
+            power = (
+                xp.abs(
+                    xp.concatenate(
+                        [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])], axis=1
+                    )
+                    * ylms)
+                **2
+            )
+            power[:,~zero_modes_mask] /= PSD[:,~zero_modes_mask] / xp.abs(fact).T
+
+            ### before square
+            # amplitudes = (
+            #     xp.concatenate(
+            #         [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])], axis=1
+            #     )
+            #     * ylms
+            # )
+            # power = xp.abs(amplitudes[:,~zero_modes_mask] / fact.T)**2
+            # power /= PSD[:,~zero_modes_mask]
 
         # sort the power for a cumulative summation
         inds_sort = xp.argsort(power, axis=1)[:, ::-1]

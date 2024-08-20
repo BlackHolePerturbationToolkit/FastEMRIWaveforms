@@ -240,15 +240,18 @@ void make_waveform(cmplx *waveform,
           double Ldotn2=Ldotn*Ldotn;
           double Sdotn=cosqK*cosqS+sinqK*sinqS*cos(phiK-phiS);
           double beta;
-          if (S_phys == 0.0)
+          if (S_phys == 0.0 || alp == 0.0 || lam == 0.0)
           {
-              beta = 0.0;
+              beta = 0.0; // This seems to work nicely 
           }
           else
           {
+              // Be careful. I set beta = 0 due to division by zero in betadown. 
               double betaup=-Sdotn+coslam*Ldotn;
               double betadown=sinqS*sin(phiK-phiS)*sinlam*cosalp+(cosqK*Sdotn-cosqS)/sinqK*sinlam*sinalp;
               beta=atan2(betaup,betadown);
+              
+              // beta=0.0;
           }
           double gam=2.*(gim+beta);
           double cos2gam=cos(gam);

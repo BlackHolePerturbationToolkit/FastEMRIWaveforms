@@ -566,13 +566,63 @@ double TensorInterpolant::eval(double x, double y, double z){
     int X_N=3;
     int ret = TP_Interpolation_ND(coeff, coeff_N, X, X_N, bw_out, &out);
     if (ret == TPI_FAIL){
-        cout << "shit" << endl;
+        cout << "TPI failed in src/Interpolant.cc" << endl;
     }
 
     return out;
 }
 
 TensorInterpolant::~TensorInterpolant(){
+    free(bw_out);
+}
+
+// TODO: One code for any dimensionality
+TensorInterpolant2d::TensorInterpolant2d(Vector x, Vector y, Vector flatten_coeff){
+    int n=2;                            // Input: Dimensionality of parameter space
+    array_yo *nodes = new array_yo[n];                     // Input: array of arrys containing the nodes for each parameter space dimension
+    
+    // cout << x.size() << "\t" << y.size() << "\t" << z.size() <<  "\t" << flatten_coeff.size() << endl;
+
+    nodes[0].n = x.size();
+    nodes[1].n = y.size();
+    // cout << "2" << endl;
+
+    nodes[0].vec = x.data();
+    nodes[1].vec = y.data();
+    // cout << "3  " << nodes[1].vec[5] << endl;
+    bw_out = (gsl_bspline_workspace **) malloc(n * sizeof(gsl_bspline_workspace*));
+    // cout << "bw" << bw_out[0] << endl;
+    TP_Interpolation_Setup_ND(nodes, n, &bw_out);
+    // cout << "4" << endl;
+    coeff_N = flatten_coeff.size();
+    coeff = new double[coeff_N];
+    for (int i=0;i<coeff_N;i+=1) coeff[i] = flatten_coeff[i];
+    
+    // cout << "5" << endl;
+    // cout << "coeff " << coeff <<endl;
+    delete[] nodes;
+}
+
+// Function that is called to evaluate the 1D interpolant in two dimensions
+double TensorInterpolant2d::eval(double x, double y){
+    double out;
+
+    //double *X = new double[3]; delete[] X;
+    double X[2] = {0.};
+    //double* X;
+    X[0] = x;
+    X[1] = y;
+
+    int X_N=2;
+    int ret = TP_Interpolation_ND(coeff, coeff_N, X, X_N, bw_out, &out);
+    if (ret == TPI_FAIL){
+        cout << "TPI failed in src/Interpolant.cc" << endl;
+    }
+
+    return out;
+}
+
+TensorInterpolant2d::~TensorInterpolant2d(){
     free(bw_out);
 }
 
