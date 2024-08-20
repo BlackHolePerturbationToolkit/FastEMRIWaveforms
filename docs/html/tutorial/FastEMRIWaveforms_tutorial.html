@@ -1,22 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fast and Accurate EMRI Waveforms Tutorial &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/nbsphinx-code-cells.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=01f34227"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -165,7 +167,7 @@
            <div itemprop="articleBody">
              
   <section id="Fast-and-Accurate-EMRI-Waveforms-Tutorial">
-<h1>Fast and Accurate EMRI Waveforms Tutorial<a class="headerlink" href="#Fast-and-Accurate-EMRI-Waveforms-Tutorial" title="Permalink to this heading"></a></h1>
+<h1>Fast and Accurate EMRI Waveforms Tutorial<a class="headerlink" href="#Fast-and-Accurate-EMRI-Waveforms-Tutorial" title="Link to this heading"></a></h1>
 <p>Here we provide a set of examples for creating EMRI waveforms as a whole; looking at separate creation pieces (trajectory, amplitude, summation, etc.); and creating your own module to build directly into this framework. For details on the specifics of our waveforms like constructions used and generally methodology, we refer you to our papers <a class="reference external" href="https://arxiv.org/abs/2104.04582">arxiv.org/2104.04582</a> and <a class="reference external" href="https://arxiv.org/abs/2008.06071">arxiv.org/2008.06071</a> and the <a class="reference external" href="https://bhptoolkit.org/FastEMRIWaveforms/">package
 documentation</a>.</p>
 <div class="nbinput nblast docutils container">
@@ -207,12 +209,12 @@ documentation</a>.</p>
 </div>
 </section>
 <section id="Full-EMRI-Waveforms-in-Schwarzschild-Eccentric">
-<h1>Full EMRI Waveforms in Schwarzschild Eccentric<a class="headerlink" href="#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric" title="Permalink to this heading"></a></h1>
+<h1>Full EMRI Waveforms in Schwarzschild Eccentric<a class="headerlink" href="#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric" title="Link to this heading"></a></h1>
 <p>In the section, we will describe how to create EMRI waveforms with both our fast and slow EMRI waveform model. The current full models include <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.waveform.FastSchwarzschildEccentricFlux">FastSchwarzschildEccentricFlux</a> and <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.waveform.SlowSchwarzschildEccentricFlux">SlowSchwarzschildEccentricFlux</a>. These are fast and slow versions of models that evolve eccentric
 flux-based trajectories in a Schwarzschild background. The fast model can be run exactly as shown here on CPUs or GPUs by providing the correct initialization arguments.</p>
 <p>The waveform model produces <span class="math notranslate nohighlight">\(h(t) = h_p - ih_c(t)\)</span>. It takes as arguments <span class="math notranslate nohighlight">\(\{M, \mu, p_0, e_0, \Phi_{\phi,0}, \Phi_{r, 0}\}\)</span>. <span class="math notranslate nohighlight">\(M\)</span> is the larger mass (<span class="math notranslate nohighlight">\(M_\odot\)</span>), <span class="math notranslate nohighlight">\(\mu\)</span> is the compact object mass (<span class="math notranslate nohighlight">\(M_\odot\)</span>), <span class="math notranslate nohighlight">\(p_0\)</span> is the initial semi-latus rectum (dimensionless), <span class="math notranslate nohighlight">\(e_0\)</span> is the initial eccentricity, and the final two are the initial phases in <span class="math notranslate nohighlight">\(\phi, r\)</span>.</p>
 <section id="FastSchwarzschildEccentricFlux">
-<h2><a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.waveform.FastSchwarzschildEccentricFlux">FastSchwarzschildEccentricFlux</a><a class="headerlink" href="#FastSchwarzschildEccentricFlux" title="Permalink to this heading"></a></h2>
+<h2><a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.waveform.FastSchwarzschildEccentricFlux">FastSchwarzschildEccentricFlux</a><a class="headerlink" href="#FastSchwarzschildEccentricFlux" title="Link to this heading"></a></h2>
 <p>The fast waveform generates sparse trajectories with ~100 points. Amplitudes for all modes are then determined with ROMAN network. From these amplitudes, we perform mode selection to remove modes that do not contribute significantly to the waveform. The remaining modes and phases are then interpolated with cubic splines. In one final step, the amplitude, phase, and angular harmonic information is then combined with an interpolated summation.</p>
 <ul class="simple">
 <li><p>Trajectory Module: <a class="reference external" href="https://bhptoolkit.org/FastEMRIWaveforms/html/user/traj.html#few.trajectory.flux.RunSchwarzEccFluxInspiral">RunSchwarzEccFluxInspiral</a></p></li>
@@ -419,7 +421,7 @@ wave1 used 451 modes. wave2 used 25 modes. The mismatch was 0.001212066171740189
 </div>
 </section>
 <section id="Waveform-scaled-by-distance-(generated-in-source-frame)">
-<h2>Waveform scaled by distance (generated in source frame)<a class="headerlink" href="#Waveform-scaled-by-distance-(generated-in-source-frame)" title="Permalink to this heading"></a></h2>
+<h2>Waveform scaled by distance (generated in source frame)<a class="headerlink" href="#Waveform-scaled-by-distance-(generated-in-source-frame)" title="Link to this heading"></a></h2>
 <p>The FastSchwarzschildEccentricFlux waveform is generated with source frame viewing angles. For all previous examples, the <code class="docutils literal notranslate"><span class="pre">dist</span></code> kwarg was left blank. To scale the waveform by the distance, you can add the distance in Gpc as a kwarg in the waveform generation class.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
@@ -464,7 +466,7 @@ wave1 used 451 modes. wave2 used 25 modes. The mismatch was 0.001212066171740189
 </div>
 </section>
 <section id="Producing-waveforms-with-the-generic-interface">
-<h2>Producing waveforms with the generic interface<a class="headerlink" href="#Producing-waveforms-with-the-generic-interface" title="Permalink to this heading"></a></h2>
+<h2>Producing waveforms with the generic interface<a class="headerlink" href="#Producing-waveforms-with-the-generic-interface" title="Link to this heading"></a></h2>
 <p>Waveforms can also be generated through a generic interface (<a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.waveform.GenerateEMRIWaveform">GenerateEMRIWaveform</a>) where the specific waveform model is chosen with an argument. This can also be used to produce waveforms in the detector frame used for data analysis. This interface includes all EMRI parameters, including spin and inclination, as well as sky and orientation parameters. When a specific waveform model does not
 require certain parameters, the parameters will not affect the waveform generation. A detector-frame waveform in this case means <span class="math notranslate nohighlight">\(h_+,h_x\)</span> in the SSB-frame.</p>
 <div class="nbinput docutils container">
@@ -532,7 +534,7 @@ require certain parameters, the parameters will not affect the waveform generati
 </div>
 </section>
 <section id="SlowSchwarzschildEccentricFlux">
-<h2><a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.waveform.SlowSchwarzschildEccentricFlux">SlowSchwarzschildEccentricFlux</a><a class="headerlink" href="#SlowSchwarzschildEccentricFlux" title="Permalink to this heading"></a></h2>
+<h2><a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html#few.waveform.SlowSchwarzschildEccentricFlux">SlowSchwarzschildEccentricFlux</a><a class="headerlink" href="#SlowSchwarzschildEccentricFlux" title="Link to this heading"></a></h2>
 <p>The slow waveform generates dense trajectories with at every <code class="docutils literal notranslate"><span class="pre">dt</span></code> seconds within <code class="docutils literal notranslate"><span class="pre">T</span></code> years. Amplitudes for all modes are then determined with a 2d bicubic spline over semi-latus rectum and eccentricity for each mode. This is done at each dense time step. We do not perform mode selection because this is the slow and most accurate model against which we compare the fast model. The final summation is a direct combination of phase, amplitude, and Ylm information at each dense timestep.</p>
 <p><strong>Note</strong>: One thing to pay attention to with the slow waveform is batch size. This is determined by memory limits. Usually anything under ~10000 is fine.</p>
 <ul class="simple">
@@ -625,7 +627,7 @@ Mismatch: 2.308998239208826e-05
 </section>
 </section>
 <section id="Trajectory-Module">
-<h1>Trajectory Module<a class="headerlink" href="#Trajectory-Module" title="Permalink to this heading"></a></h1>
+<h1>Trajectory Module<a class="headerlink" href="#Trajectory-Module" title="Link to this heading"></a></h1>
 <p>The trajectory module generates orbital and phase trajectories, <span class="math notranslate nohighlight">\(G(t)\)</span>, for an EMRI orbit:</p>
 <p><span class="math">\begin{equation}
 G(t) = \{p(t), e(t), \iota(t), \Phi_\phi(t), \Phi_\theta(t), \Phi_r(t)\}
@@ -633,7 +635,7 @@ G(t) = \{p(t), e(t), \iota(t), \Phi_\phi(t), \Phi_\theta(t), \Phi_r(t)\}
 <p>with inputs <span class="math notranslate nohighlight">\(M, \mu, p_0, e_0, \iota_0, \Phi_{\phi,0}, \Phi_{\theta,0}, \Phi_{r, 0}\)</span>. <span class="math notranslate nohighlight">\(M\)</span> is the larger mass (<span class="math notranslate nohighlight">\(M_\odot\)</span>), <span class="math notranslate nohighlight">\(\mu\)</span> is the compact object mass (<span class="math notranslate nohighlight">\(M_\odot\)</span>), <span class="math notranslate nohighlight">\(p_0\)</span> is the initial semi-latus rectum (dimensionless), <span class="math notranslate nohighlight">\(e_0\)</span> is the initial eccentricity, and the final three are the initial phases in <span class="math notranslate nohighlight">\(\phi, \theta, r\)</span>. When working in equatorial orbits, <span class="math notranslate nohighlight">\(\iota(t)\)</span> and <span class="math notranslate nohighlight">\(\Phi_\theta(t)\)</span> are zero. The trajectory module also produces the
 gravitational wave flux for normalization information.</p>
 <section id="Run-a-basic-trajectory">
-<h2>Run a basic trajectory<a class="headerlink" href="#Run-a-basic-trajectory" title="Permalink to this heading"></a></h2>
+<h2>Run a basic trajectory<a class="headerlink" href="#Run-a-basic-trajectory" title="Link to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
@@ -689,7 +691,7 @@ gravitational wave flux for normalization information.</p>
 </div>
 </section>
 <section id="Defining-a-new-t-vector">
-<h2>Defining a new t vector<a class="headerlink" href="#Defining-a-new-t-vector" title="Permalink to this heading"></a></h2>
+<h2>Defining a new t vector<a class="headerlink" href="#Defining-a-new-t-vector" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
@@ -741,7 +743,7 @@ t1 max: 999999.0 t2 max: 464363.0
 </div>
 </section>
 <section id="Defining-dt-and-T">
-<h2>Defining dt and T<a class="headerlink" href="#Defining-dt-and-T" title="Permalink to this heading"></a></h2>
+<h2>Defining dt and T<a class="headerlink" href="#Defining-dt-and-T" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
@@ -798,7 +800,7 @@ t1 max: 999999.0 t2 max: 464363.0
 </div>
 </section>
 <section id="Getting-dimensionless-time-(t/M)">
-<h2>Getting dimensionless time (<span class="math notranslate nohighlight">\(t/M\)</span>)<a class="headerlink" href="#Getting-dimensionless-time-(t/M)" title="Permalink to this heading"></a></h2>
+<h2>Getting dimensionless time (<span class="math notranslate nohighlight">\(t/M\)</span>)<a class="headerlink" href="#Getting-dimensionless-time-(t/M)" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
@@ -835,7 +837,7 @@ Dimensionless time step: 20.30254435033953
 </div>
 </section>
 <section id="Dense-Stepping">
-<h2>Dense Stepping<a class="headerlink" href="#Dense-Stepping" title="Permalink to this heading"></a></h2>
+<h2>Dense Stepping<a class="headerlink" href="#Dense-Stepping" title="Link to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
@@ -883,10 +885,10 @@ Dimensionless time step: 20.30254435033953
 </section>
 </section>
 <section id="Amplitude-Module">
-<h1>Amplitude Module<a class="headerlink" href="#Amplitude-Module" title="Permalink to this heading"></a></h1>
+<h1>Amplitude Module<a class="headerlink" href="#Amplitude-Module" title="Link to this heading"></a></h1>
 <p>The amplitude module generates the complex mode amplitudes for each harmonic mode requested, <span class="math notranslate nohighlight">\(A_{lmkn}(t)\)</span> (<span class="math notranslate nohighlight">\(k=0\)</span> for equatorial orbits). With Schwarzschild eccentric amplitudes, the user provides <span class="math notranslate nohighlight">\(p\)</span> and <span class="math notranslate nohighlight">\(e\)</span> as arrays and is returned the requested Teukolsky modes in a 2D array of shape (trajectory length, number of modes).</p>
 <section id="ROMAN-amplitude-generation">
-<h2>ROMAN amplitude generation<a class="headerlink" href="#ROMAN-amplitude-generation" title="Permalink to this heading"></a></h2>
+<h2>ROMAN amplitude generation<a class="headerlink" href="#ROMAN-amplitude-generation" title="Link to this heading"></a></h2>
 <p>ROMAN uses a reduced order model representing the mode amplitude space. It then trains a neural network on this reduced model. The neural network is evaluated and the resulting matrix is transformed from the reduced basis back to the full mode space.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
@@ -998,7 +1000,7 @@ Text(0, 0.5, &#39;e&#39;)
 </div>
 </section>
 <section id="Interpolate-modes-with-bicubic-spline">
-<h2>Interpolate modes with bicubic spline<a class="headerlink" href="#Interpolate-modes-with-bicubic-spline" title="Permalink to this heading"></a></h2>
+<h2>Interpolate modes with bicubic spline<a class="headerlink" href="#Interpolate-modes-with-bicubic-spline" title="Link to this heading"></a></h2>
 <p>For this amplitude generator, amplitudes are interpolated in 2D (<span class="math notranslate nohighlight">\(p\)</span> and <span class="math notranslate nohighlight">\(e\)</span>) using bicubic splines. They are then evaluated for the desired modes. This is used to produce our slow waveform. This will also not scale well with dimensionality. <strong>Note</strong>: Specific modes can be selected in the same way as above.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
@@ -1058,7 +1060,7 @@ Text(0, 0.5, &#39;e&#39;)
 </section>
 </section>
 <section id="Spin-weighted-spherical-harmonics">
-<h1>Spin-weighted spherical harmonics<a class="headerlink" href="#Spin-weighted-spherical-harmonics" title="Permalink to this heading"></a></h1>
+<h1>Spin-weighted spherical harmonics<a class="headerlink" href="#Spin-weighted-spherical-harmonics" title="Link to this heading"></a></h1>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
 </pre></div>
@@ -1130,10 +1132,10 @@ Text(0, 0.5, &#39;e&#39;)
 </div>
 </section>
 <section id="Mode-Selection">
-<h1>Mode Selection<a class="headerlink" href="#Mode-Selection" title="Permalink to this heading"></a></h1>
+<h1>Mode Selection<a class="headerlink" href="#Mode-Selection" title="Link to this heading"></a></h1>
 <p>The mode selection module is paramount to the computational efficiency of this model. Below we show how we perform this selection operation by moving from a set of amplitudes to only those that contribute.</p>
 <section id="Mode-selection-by-power-contribution">
-<h2>Mode selection by power contribution<a class="headerlink" href="#Mode-selection-by-power-contribution" title="Permalink to this heading"></a></h2>
+<h2>Mode selection by power contribution<a class="headerlink" href="#Mode-selection-by-power-contribution" title="Link to this heading"></a></h2>
 <p>Modes can also be weighted by a Power Spectral Density (PSD) function from your favorite sensitivity curve.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
@@ -1183,7 +1185,7 @@ We reduced the mode content from 3843 modes to 874 modes.
 </div>
 </section>
 <section id="Mode-selection-by-noise-weighted-power-contribution">
-<h2>Mode selection by noise-weighted power contribution<a class="headerlink" href="#Mode-selection-by-noise-weighted-power-contribution" title="Permalink to this heading"></a></h2>
+<h2>Mode selection by noise-weighted power contribution<a class="headerlink" href="#Mode-selection-by-noise-weighted-power-contribution" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
 </pre></div>
@@ -1237,7 +1239,7 @@ We reduced the mode content from 3843 modes to 783 modes when using noise-weight
 </div>
 </section>
 <section id="Compare-the-two-waves-with-and-without-noise-weighting">
-<h2>Compare the two waves with and without noise-weighting<a class="headerlink" href="#Compare-the-two-waves-with-and-without-noise-weighting" title="Permalink to this heading"></a></h2>
+<h2>Compare the two waves with and without noise-weighting<a class="headerlink" href="#Compare-the-two-waves-with-and-without-noise-weighting" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
 </pre></div>
@@ -1304,7 +1306,7 @@ noise-weighted modes: 447
 </div>
 </section>
 <section id="Specific-mode-selection">
-<h2>Specific mode selection<a class="headerlink" href="#Specific-mode-selection" title="Permalink to this heading"></a></h2>
+<h2>Specific mode selection<a class="headerlink" href="#Specific-mode-selection" title="Link to this heading"></a></h2>
 <p>The user can also select a specific set of modes to use in the waveform.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
@@ -1338,7 +1340,7 @@ mismatch with full wave: 0.04836198716639917
 </div>
 </section>
 <section id="Turn-off-(-m)">
-<h2>Turn off (<span class="math notranslate nohighlight">\(-m\)</span>)<a class="headerlink" href="#Turn-off-(-m)" title="Permalink to this heading"></a></h2>
+<h2>Turn off (<span class="math notranslate nohighlight">\(-m\)</span>)<a class="headerlink" href="#Turn-off-(-m)" title="Link to this heading"></a></h2>
 <p>By default, symmetry is used to generate <span class="math notranslate nohighlight">\(-m\)</span> modes. To turn this off and only use modes with (<span class="math notranslate nohighlight">\(m\)</span>), provide <code class="docutils literal notranslate"><span class="pre">False</span></code> to the <code class="docutils literal notranslate"><span class="pre">include_minus_m</span></code> kwarg. This only affects the waveform when <code class="docutils literal notranslate"><span class="pre">mode_selection</span></code> is a list of specific modes.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[33]:
@@ -1386,7 +1388,7 @@ mismatch with 22 original wave with adding + and - m 0.0
 </section>
 </section>
 <section id="Parallelized-Cubic-Spline-Interpolation">
-<h1>Parallelized Cubic Spline Interpolation<a class="headerlink" href="#Parallelized-Cubic-Spline-Interpolation" title="Permalink to this heading"></a></h1>
+<h1>Parallelized Cubic Spline Interpolation<a class="headerlink" href="#Parallelized-Cubic-Spline-Interpolation" title="Link to this heading"></a></h1>
 <p>A part of the Fast EMRI waveforms package is parallelized cubic spline interpolation. This generally means fitting and evaluating many splines in parallel with the same input x array. This is available for GPUs and CPUs (not parallelized for CPU). The user can perform this operation entirely in Python while leveraging <a class="reference external" href="https://cupy.dev/">CuPy</a> for GPUs. However, the evaluation will not be as efficient as when it is implemented properly in a customized kernel. The spline class
 (<a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/index.html?highlight=modeselector#few.summation.interpolatedmodesum.CubicSplineInterpolant">CubicSplineInterpolant</a>) can provide an 1D flattened array of all spline coefficients for use in a custom CUDA kernel.</p>
 <div class="nbinput nblast docutils container">
@@ -1462,10 +1464,10 @@ array([ 6.23856751e-06,  3.56609646e-06, -1.26237401e-06, ...,
 </div>
 </section>
 <section id="Mode-Summation">
-<h1>Mode Summation<a class="headerlink" href="#Mode-Summation" title="Permalink to this heading"></a></h1>
+<h1>Mode Summation<a class="headerlink" href="#Mode-Summation" title="Link to this heading"></a></h1>
 <p>Mode summation is the bottleneck of this calculation. We handle this in two ways: interpolation for fast waveforms and direct summation for slow waveforms. They both have the same interface and produce the same product. They take Teukolsky modes and phases and combine that information to create the waveform.</p>
 <section id="Interpolated-summation">
-<h2>Interpolated summation<a class="headerlink" href="#Interpolated-summation" title="Permalink to this heading"></a></h2>
+<h2>Interpolated summation<a class="headerlink" href="#Interpolated-summation" title="Link to this heading"></a></h2>
 <p>To maximize efficiency we use the cubic spline discussed above to accelerate the computation with interpolation and parallelized summation (on the GPU or OpenMP). This class is <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/sum.html?highlight=interpolated%20mode%20sum#few.summation.interpolatedmodesum.InterpolatedModeSum">InterpolatedModeSum</a>.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
@@ -1538,7 +1540,7 @@ array([ 6.23856751e-06,  3.56609646e-06, -1.26237401e-06, ...,
 </div>
 </section>
 <section id="Direct-summation">
-<h2>Direct summation<a class="headerlink" href="#Direct-summation" title="Permalink to this heading"></a></h2>
+<h2>Direct summation<a class="headerlink" href="#Direct-summation" title="Link to this heading"></a></h2>
 <p>For the direct mode summation, <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/sum.html?highlight=interpolated%20mode%20sum#few.summation.directmodesum.DirectModeSum">DirectModeSum</a>, we are summing up all modes at each time step directly. So, no interpolation. However, in this example, we will use interpolation up front because we need amplitude and phase arrays at all time steps for the direct mode sum because the direct mode sum will not fill in time steps like the interpolated
 mode sum.</p>
 <div class="nbinput docutils container">
@@ -1597,9 +1599,9 @@ Mismatch: 0.0
 </section>
 </section>
 <section id="Utility-functions">
-<h1>Utility functions<a class="headerlink" href="#Utility-functions" title="Permalink to this heading"></a></h1>
+<h1>Utility functions<a class="headerlink" href="#Utility-functions" title="Link to this heading"></a></h1>
 <section id="Get-options-for-installed-ODE-functions">
-<h2>Get options for installed ODE functions<a class="headerlink" href="#Get-options-for-installed-ODE-functions" title="Permalink to this heading"></a></h2>
+<h2>Get options for installed ODE functions<a class="headerlink" href="#Get-options-for-installed-ODE-functions" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[39]:
 </pre></div>
@@ -1625,7 +1627,7 @@ Info: {&#39;pn5&#39;: {&#39;type&#39;: &#39;func&#39;, &#39;files&#39;: [], &#39
 </div>
 </section>
 <section id="Fundamental-Frequencies">
-<h2>Fundamental Frequencies<a class="headerlink" href="#Fundamental-Frequencies" title="Permalink to this heading"></a></h2>
+<h2>Fundamental Frequencies<a class="headerlink" href="#Fundamental-Frequencies" title="Link to this heading"></a></h2>
 <p>Get dimensionless fundamental frequencies from <a class="reference external" href="https://arxiv.org/abs/gr-qc/0202090">Schmidt 2002</a>:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[40]:
@@ -1666,7 +1668,7 @@ p               e               x       OmegaPhi        OmegaTheta      OmegaR
 </div>
 </section>
 <section id="Separatrix-in-Generic-Kerr">
-<h2>Separatrix in Generic Kerr<a class="headerlink" href="#Separatrix-in-Generic-Kerr" title="Permalink to this heading"></a></h2>
+<h2>Separatrix in Generic Kerr<a class="headerlink" href="#Separatrix-in-Generic-Kerr" title="Link to this heading"></a></h2>
 <p>Get the separatrix in generic Kerr from <a class="reference external" href="https://arxiv.org/abs/1912.07609">Stein &amp; Warburton 2020</a>:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[41]:
@@ -1706,7 +1708,7 @@ e               x       separatrix
 </div>
 </section>
 <section id="Get-Kerr-Constants-of-Motion-(E,-L,-Q)">
-<h2>Get Kerr Constants of Motion <span class="math notranslate nohighlight">\((E, L, Q)\)</span><a class="headerlink" href="#Get-Kerr-Constants-of-Motion-(E,-L,-Q)" title="Permalink to this heading"></a></h2>
+<h2>Get Kerr Constants of Motion <span class="math notranslate nohighlight">\((E, L, Q)\)</span><a class="headerlink" href="#Get-Kerr-Constants-of-Motion-(E,-L,-Q)" title="Link to this heading"></a></h2>
 <p>Get the three constants of motion <span class="math notranslate nohighlight">\((E,L,Q)\)</span> in generic Kerr spacetime.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[42]:
@@ -1747,7 +1749,7 @@ p               e               x       E       L       Q
 </div>
 </section>
 <section id="Convert-from-x_I-to-Y">
-<h2>Convert from <span class="math notranslate nohighlight">\(x_I\)</span> to <span class="math notranslate nohighlight">\(Y\)</span><a class="headerlink" href="#Convert-from-x_I-to-Y" title="Permalink to this heading"></a></h2>
+<h2>Convert from <span class="math notranslate nohighlight">\(x_I\)</span> to <span class="math notranslate nohighlight">\(Y\)</span><a class="headerlink" href="#Convert-from-x_I-to-Y" title="Link to this heading"></a></h2>
 <p><span class="math notranslate nohighlight">\(Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}\)</span> is different than <span class="math notranslate nohighlight">\(x_I\equiv \cos{I}\)</span>, which is accepted for relativistic waveforms and in the generic waveform interface discussed above. <span class="math notranslate nohighlight">\(I\)</span> is the inclination angle of the orbital plane to the to equatorial plane.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[43]:
@@ -1806,7 +1808,7 @@ p               e               x       Y
 </div>
 </section>
 <section id="Get-\mu-based-on-desired-duration-of-waveform">
-<h2>Get <span class="math notranslate nohighlight">\(\mu\)</span> based on desired duration of waveform<a class="headerlink" href="#Get-\mu-based-on-desired-duration-of-waveform" title="Permalink to this heading"></a></h2>
+<h2>Get <span class="math notranslate nohighlight">\(\mu\)</span> based on desired duration of waveform<a class="headerlink" href="#Get-\mu-based-on-desired-duration-of-waveform" title="Link to this heading"></a></h2>
 <p>If you have a desired length of waveform to analyze, this function will give you the value of <span class="math notranslate nohighlight">\(\mu\)</span> that corresponds to the proper evolution time.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[44]:
@@ -1850,7 +1852,7 @@ mu = 18.804088097128368 will create a waveform that is 1.5 years long, given the
 </div>
 </section>
 <section id="Get-p_0-based-on-desired-duration-of-waveform">
-<h2>Get <span class="math notranslate nohighlight">\(p_0\)</span> based on desired duration of waveform<a class="headerlink" href="#Get-p_0-based-on-desired-duration-of-waveform" title="Permalink to this heading"></a></h2>
+<h2>Get <span class="math notranslate nohighlight">\(p_0\)</span> based on desired duration of waveform<a class="headerlink" href="#Get-p_0-based-on-desired-duration-of-waveform" title="Link to this heading"></a></h2>
 <p>If you have a desired length of waveform to analyze, this function will give you the value of <span class="math notranslate nohighlight">\(p_0\)</span> that corresponds to the proper evolution time.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[45]:
@@ -1897,7 +1899,7 @@ p0 = 13.059790165171117 will create a waveform that is 1.5 years long, given the
 </div>
 </section>
 <section id="Change-CUDA-device">
-<h2>Change CUDA device<a class="headerlink" href="#Change-CUDA-device" title="Permalink to this heading"></a></h2>
+<h2>Change CUDA device<a class="headerlink" href="#Change-CUDA-device" title="Link to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[46]:
 </pre></div>
@@ -1909,11 +1911,11 @@ p0 = 13.059790165171117 will create a waveform that is 1.5 years long, given the
 </section>
 </section>
 <section id="Creating-modules">
-<h1>Creating modules<a class="headerlink" href="#Creating-modules" title="Permalink to this heading"></a></h1>
+<h1>Creating modules<a class="headerlink" href="#Creating-modules" title="Link to this heading"></a></h1>
 <p>In addition to using our built-in modules and waveforms, you can easily create your own module or waveform. Below is an example of creating your own trajectory module and using it in a custom waveform. If you can get a reasonably fast trajectory from your specific brand of EMRI physics, you can be generating waveforms in no time! Please see the <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/">documentation</a> on this for more details on the constructions behind this.</p>
 <p><strong>Important Note</strong>: If you do use this package to examine EMRI analysis problems, please contact the authors of this code (see docs) about possible collaboration and/or contribution.</p>
 <section id="Post-Newtonian-trajectory">
-<h2>Post-Newtonian trajectory<a class="headerlink" href="#Post-Newtonian-trajectory" title="Permalink to this heading"></a></h2>
+<h2>Post-Newtonian trajectory<a class="headerlink" href="#Post-Newtonian-trajectory" title="Link to this heading"></a></h2>
 <p>The example will be to implement a Post-Newtonian trajectory in a Schwarzschild eccentric waveform. This will be done purely in Python. However, most of our modules have backends in C/C++/CUDA for maximum efficiency. If you have a trajectory in python and want to see if it can be ported for speed, please contact the authors.</p>
 <p>To get started, we will import an integrator (<a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.DOP853.html#scipy.integrate.DOP853">DOP853</a>) and a library for elliptical integrals that mirrors the mathematica format <code class="docutils literal notranslate"><span class="pre">mpmath</span></code>. You can run:</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install mpmath
@@ -2068,7 +2070,7 @@ interfaces, but ensures the strict interface will be the same for all trajectory
 </div>
 </section>
 <section id="Test-your-trajectory">
-<h2>Test your trajectory<a class="headerlink" href="#Test-your-trajectory" title="Permalink to this heading"></a></h2>
+<h2>Test your trajectory<a class="headerlink" href="#Test-your-trajectory" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[48]:
 </pre></div>
@@ -2164,7 +2166,7 @@ Text(0, 0.5, &#39;e&#39;)
 </div>
 </section>
 <section id="Implement-ODE-in-C/C++">
-<h2>Implement ODE in C/C++<a class="headerlink" href="#Implement-ODE-in-C/C++" title="Permalink to this heading"></a></h2>
+<h2>Implement ODE in C/C++<a class="headerlink" href="#Implement-ODE-in-C/C++" title="Link to this heading"></a></h2>
 <p>If you want to implement a set of ODE equations in C/C++, you can add your function to <code class="docutils literal notranslate"><span class="pre">src/ode_base.cc</span></code>. You have to create the file if you have not already. Make sure it is in the <code class="docutils literal notranslate"><span class="pre">src/</span></code> directory. When you run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup</span> <span class="pre">install</span></code>, the installer will build a full file of ODEs and take care of all of the backend aspects to the integration. <strong>You only have to implement the ODE</strong>. You identify the ODE functions with <code class="docutils literal notranslate"><span class="pre">__deriv__</span></code> decorator. <code class="docutils literal notranslate"><span class="pre">#define</span></code> is then used to give extra
 necessary information on the function. Options are:</p>
 <ul class="simple">
@@ -2184,7 +2186,7 @@ necessary information on the function. Options are:</p>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">double*</span></code> args, except <code class="docutils literal notranslate"><span class="pre">additional_args</span></code>, represent pointers to doubles representing the output derivative values. <code class="docutils literal notranslate"><span class="pre">double</span></code> args are input values. <code class="docutils literal notranslate"><span class="pre">additional_args</span></code> is a pointer to a double array that holds any extra arguments to be included.</p>
 <section id="Analytic-functions-that-do-not-need-storage">
-<h3>Analytic functions that do not need storage<a class="headerlink" href="#Analytic-functions-that-do-not-need-storage" title="Permalink to this heading"></a></h3>
+<h3>Analytic functions that do not need storage<a class="headerlink" href="#Analytic-functions-that-do-not-need-storage" title="Link to this heading"></a></h3>
 <p>If the ODE is purely analytic, a function will work. Here is an example with the 5PN trajectory (see<code class="docutils literal notranslate"><span class="pre">include/ode_base_example.cc</span></code>):</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#define pn5_Y
 #define pn5_citation1 pn5_citation
@@ -2218,7 +2220,7 @@ void pn5(double* pdot, double* edot, double* Ydot,
 <p><code class="docutils literal notranslate"><span class="pre">#define</span> <span class="pre">pn5_y</span></code> indicates the function integrates in <span class="math notranslate nohighlight">\(Y\)</span> rather than <span class="math notranslate nohighlight">\(x_I\)</span>.</p>
 </section>
 <section id="Functions-that-require-storage">
-<h3>Functions that require storage<a class="headerlink" href="#Functions-that-require-storage" title="Permalink to this heading"></a></h3>
+<h3>Functions that require storage<a class="headerlink" href="#Functions-that-require-storage" title="Link to this heading"></a></h3>
 <p>If your function requires the storage of files or interpolants, you can also build your ODE as a class. In this case, it must have a constructor, destructor, and method called <code class="docutils literal notranslate"><span class="pre">deriv_func</span></code> with the ODEs.</p>
 <p>Here is the implementation for the flux driven trajectory (see<code class="docutils literal notranslate"><span class="pre">include/ode_base_example.cc</span></code>):</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>// Class to carry gsl interpolants for the inspiral data
@@ -2326,7 +2328,7 @@ public:
 </section>
 </section>
 <section id="Make-a-waveform-model">
-<h2>Make a waveform model<a class="headerlink" href="#Make-a-waveform-model" title="Permalink to this heading"></a></h2>
+<h2>Make a waveform model<a class="headerlink" href="#Make-a-waveform-model" title="Link to this heading"></a></h2>
 <p>Now we will create a waveform with our new trajectory model. To do this, we will start with <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/main.html#few.waveform.SchwarzschildEccentricWaveformBase">SchwarzschildEccentricWaveformBase</a>. This base class has already inherited from <a class="reference external" href="https://mikekatz04.github.io/FastEMRIWaveforms/html/user/main.html#few.utils.baseclasses.SchwarzschildEccentric">SchwarzschildEccentric</a>. It creates the common interface for all waveform modules (and how
 they interface with there constituent modules). A requirement when creating a module is to have properties describing the GPU capability of the waveform, as well as whether or not it allows for batching the waveform creation (after trajectory).</p>
 <div class="nbinput nblast docutils container">
@@ -2371,7 +2373,7 @@ they interface with there constituent modules). A requirement when creating a mo
 </div>
 </section>
 <section id="Test-your-waveform">
-<h2>Test your waveform<a class="headerlink" href="#Test-your-waveform" title="Permalink to this heading"></a></h2>
+<h2>Test your waveform<a class="headerlink" href="#Test-your-waveform" title="Link to this heading"></a></h2>
 <p>It will have the same interface as the other waveforms.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[52]:
@@ -2427,7 +2429,7 @@ mismatch: 0.932708770517177
 </section>
 </section>
 <section id="Augmented-Analytic-Kludge-with-5PN-trajectory">
-<h1>Augmented Analytic Kludge with 5PN trajectory<a class="headerlink" href="#Augmented-Analytic-Kludge-with-5PN-trajectory" title="Permalink to this heading"></a></h1>
+<h1>Augmented Analytic Kludge with 5PN trajectory<a class="headerlink" href="#Augmented-Analytic-Kludge-with-5PN-trajectory" title="Link to this heading"></a></h1>
 <p>We have now implemented a new version of the Augmented Analytic Kludge with 5PN trajectories.</p>
 <p>Waveforms are generated based on the Augmented Analytic Kludge given in the <a class="reference external" href="https://github.com/alvincjk/EMRI_Kludge_Suite/">EMRI Kludge Suite</a>. However, here the trajectory is vastly improved by employing the 5PN fluxes for generic Kerr orbits from <a class="reference external" href="https://arxiv.org/abs/2008.13554">Fujita &amp; Shibata (2020)</a>.</p>
 <p>The 5PN trajectory produces orbital and phase trajectories. The trajectory is calculated until the orbit reaches within 0.2 of the separatrix, determined from <a class="reference external" href="https://arxiv.org/abs/1912.07609/">Stein and Warburton (2020)</a>. The fundamental frequencies along the trajectory at each point are then calculated from the orbital parameters and the spin value given by <a class="reference external" href="https://arxiv.org/abs/gr-qc/0202090%3E">Schmidt (2002)</a>.</p>
@@ -2549,7 +2551,7 @@ mismatch: 0.932708770517177
 </div>
 </div>
 <section id="5PN-Trajectory">
-<h2>5PN Trajectory<a class="headerlink" href="#5PN-Trajectory" title="Permalink to this heading"></a></h2>
+<h2>5PN Trajectory<a class="headerlink" href="#5PN-Trajectory" title="Link to this heading"></a></h2>
 <p>This new waveform includes 5PN trajectories from <a class="reference external" href="https://arxiv.org/abs/2008.13554">Fujita &amp; Shibata 2020</a>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[58]:
@@ -2698,7 +2700,7 @@ mismatch: 0.932708770517177
 </div>
 </section>
 <section id="Building-an-AAK-waveform-from-a-given-trajectory-(in-this-case-the-5PN-trajectory)">
-<h2>Building an AAK waveform from a given trajectory (in this case the 5PN trajectory)<a class="headerlink" href="#Building-an-AAK-waveform-from-a-given-trajectory-(in-this-case-the-5PN-trajectory)" title="Permalink to this heading"></a></h2>
+<h2>Building an AAK waveform from a given trajectory (in this case the 5PN trajectory)<a class="headerlink" href="#Building-an-AAK-waveform-from-a-given-trajectory-(in-this-case-the-5PN-trajectory)" title="Link to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[64]:
 </pre></div>
@@ -2807,7 +2809,7 @@ mismatch: 0.932708770517177
 </div>
 </section>
 <section id="Generating-the-new-AAK-with-the-generic-waveform-generator">
-<h2>Generating the new AAK with the generic waveform generator<a class="headerlink" href="#Generating-the-new-AAK-with-the-generic-waveform-generator" title="Permalink to this heading"></a></h2>
+<h2>Generating the new AAK with the generic waveform generator<a class="headerlink" href="#Generating-the-new-AAK-with-the-generic-waveform-generator" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[68]:
 </pre></div>
@@ -2874,10 +2876,10 @@ mismatch: 0.932708770517177
 </section>
 </section>
 <section id="Citing-waveforms-and-modules">
-<h1>Citing waveforms and modules<a class="headerlink" href="#Citing-waveforms-and-modules" title="Permalink to this heading"></a></h1>
+<h1>Citing waveforms and modules<a class="headerlink" href="#Citing-waveforms-and-modules" title="Link to this heading"></a></h1>
 <p>If you use any work from this package please cite our papers <a class="reference external" href="https://arxiv.org/abs/2104.04582">arxiv.org/2104.04582</a> and <a class="reference external" href="https://arxiv.org/abs/2008.06071">arxiv.org/2008.06071</a>. Additionally please cite any additional work for each module used by calling the <code class="docutils literal notranslate"><span class="pre">citation</span></code> attribute on the module class:</p>
 <section id="Fast-Schwarzschild-Eccentric-Waveforms">
-<h2>Fast Schwarzschild Eccentric Waveforms<a class="headerlink" href="#Fast-Schwarzschild-Eccentric-Waveforms" title="Permalink to this heading"></a></h2>
+<h2>Fast Schwarzschild Eccentric Waveforms<a class="headerlink" href="#Fast-Schwarzschild-Eccentric-Waveforms" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[69]:
 </pre></div>
@@ -2950,7 +2952,7 @@ mismatch: 0.932708770517177
 </div>
 </section>
 <section id="New-and-Improved-AAK-with-5PN-Trajectory">
-<h2>New and Improved AAK with 5PN Trajectory<a class="headerlink" href="#New-and-Improved-AAK-with-5PN-Trajectory" title="Permalink to this heading"></a></h2>
+<h2>New and Improved AAK with 5PN Trajectory<a class="headerlink" href="#New-and-Improved-AAK-with-5PN-Trajectory" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[70]:
 </pre></div>

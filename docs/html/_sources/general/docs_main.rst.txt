@@ -34,6 +34,8 @@ Package TODOs
 Change Log
 ===========
 
+- 1.5.5: pip installable.
+- 1.5.4: Slight bug fix on creating ``few`` file directory.
 - 1.5.3: openmp removed from change file. Temporary removal of zenodo record dictionary. 
 - 1.5.1: Added FD waveform. Removed an ``exp`` computation. Made module pickeable. Updated install. 
 - 1.4.10: M1 installation and small bug fixes. 

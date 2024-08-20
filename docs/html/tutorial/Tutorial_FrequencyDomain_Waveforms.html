@@ -1,22 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EMRI Waveforms in frequency domain &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/nbsphinx-code-cells.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=01f34227"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -113,7 +115,7 @@
            <div itemprop="articleBody">
              
   <section id="EMRI-Waveforms-in-frequency-domain">
-<h1>EMRI Waveforms in frequency domain<a class="headerlink" href="#EMRI-Waveforms-in-frequency-domain" title="Permalink to this heading"></a></h1>
+<h1>EMRI Waveforms in frequency domain<a class="headerlink" href="#EMRI-Waveforms-in-frequency-domain" title="Link to this heading"></a></h1>
 <p>By: Lorenzo Speri and Michael L. Katz</p>
 <p>We present the usage of the EMRI Waveforms in the Frequency domain and compare the spectrum to the time domain implementation. For details on the specifics of our waveforms like constructions and generally methodology, we refer you to our paper (). If you use the frequency domain waveform, please cite that paper.</p>
 <p>For full use of this tutorial, please install LISAAnalysis Tools with: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">git+https://github.com/mikekatz04/LISAanalysistools.git&#64;dev</span></code></p>
@@ -238,7 +240,7 @@
 </div>
 </div>
 <section id="Comparison-against-the-Time-Domain-Waveforms">
-<h2>Comparison against the Time Domain Waveforms<a class="headerlink" href="#Comparison-against-the-Time-Domain-Waveforms" title="Permalink to this heading"></a></h2>
+<h2>Comparison against the Time Domain Waveforms<a class="headerlink" href="#Comparison-against-the-Time-Domain-Waveforms" title="Link to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
@@ -411,7 +413,7 @@ mismatch 4.694064207533266e-05
 </div>
 </section>
 <section id="Windowing">
-<h2>Windowing<a class="headerlink" href="#Windowing" title="Permalink to this heading"></a></h2>
+<h2>Windowing<a class="headerlink" href="#Windowing" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
@@ -509,7 +511,7 @@ mismatch 3.909195435469748e-06
 </div>
 </section>
 <section id="Mass-invariance">
-<h2>Mass invariance<a class="headerlink" href="#Mass-invariance" title="Permalink to this heading"></a></h2>
+<h2>Mass invariance<a class="headerlink" href="#Mass-invariance" title="Link to this heading"></a></h2>
 <p>If we fix the mass ratio of an EMRI system the frequency domain waveform is invariant under a total mass change as long as we consider dimensionless frequencies. We show this here as a check of our frequency domain implementation.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
@@ -570,7 +572,7 @@ mismatch 3.909195435469748e-06
 </div>
 </section>
 <section id="Downsampled-FD-Waveforms">
-<h2>Downsampled FD Waveforms<a class="headerlink" href="#Downsampled-FD-Waveforms" title="Permalink to this heading"></a></h2>
+<h2>Downsampled FD Waveforms<a class="headerlink" href="#Downsampled-FD-Waveforms" title="Link to this heading"></a></h2>
 <p>One of the main advantages of the frequency domain formulation is that we can downsample the frequencies to reduce the computational cost of the waveform. This is illustrated in the following cells where we perform different levels of downsampling.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:

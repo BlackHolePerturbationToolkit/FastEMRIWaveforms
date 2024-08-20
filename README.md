@@ -8,27 +8,12 @@ If you use all or any parts of this code, please cite [arxiv.org/2104.04582](htt
 
 ## Getting Started
 
-Below is a quick set of instructions to get you started with `few`.
-
-0) [Install Anaconda](https://docs.anaconda.com/anaconda/install/) if you do not have it.
-
-1) Clone the repository.
-
+Install with pip (CPU only for now):
 ```
-git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
-cd FastEMRIWaveforms
+pip install fastemriwaveforms
 ```
-2) Install FEW into a new conda environment called "few_env". (**Note**: If you already have performed installation and you are updating FEW after a `git pull`, then run `pip install .` rather than the following command.)
 
-  ```
-  bash install.sh
-  ```
-
-3) Load the environment: 
-```
-conda activate few_env
-```
-4) In a python file or notebook:
+In a python file or notebook:
 ```
 import few
 ```
@@ -45,6 +30,13 @@ There are a set of files required for total use of this package. They will downl
 
 ### Installing
 
+
+Install with pip (CPU only for now):
+```
+pip install fastemriwaveforms
+```
+
+To install from source:
 
 0) [Install Anaconda](https://docs.anaconda.com/anaconda/install/) if you do not have it.
 
@@ -180,7 +172,7 @@ This will install necessary packages for building the documentation (`sphinx`, `
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags).
 
-Current Version: 1.5.3
+Current Version: 1.5.5
 
 ## Authors/Developers
 

@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>few: Fast EMRI Waveforms &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=01f34227"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -99,7 +101,7 @@
            <div itemprop="articleBody">
              
   <section id="few-fast-emri-waveforms">
-<h1>few: Fast EMRI Waveforms<a class="headerlink" href="#few-fast-emri-waveforms" title="Permalink to this heading"></a></h1>
+<h1>few: Fast EMRI Waveforms<a class="headerlink" href="#few-fast-emri-waveforms" title="Link to this heading"></a></h1>
 <p>This package contains the highly modular framework for fast and accurate
 extreme mass ratio inspiral (EMRI) waveforms from
 <a class="reference external" href="https://arxiv.org/abs/2104.04582">arxiv.org/2104.04582</a> and
@@ -126,42 +128,19 @@ Toolkit</a>.</p>
 <a class="reference external" href="https://bhptoolkit.org/FastEMRIWaveforms/">documentation</a> to
 properly cite specific modules.</p>
 <section id="getting-started">
-<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this heading"></a></h2>
-<p>Below is a quick set of instructions to get you started with <code class="docutils literal notranslate"><span class="pre">few</span></code>.</p>
-<ol class="arabic simple" start="0">
-<li><p><a class="reference external" href="https://docs.anaconda.com/anaconda/install/">Install Anaconda</a> if
-you do not have it.</p></li>
-<li><p>Clone the repository.</p></li>
-</ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">BlackHolePerturbationToolkit</span><span class="o">/</span><span class="n">FastEMRIWaveforms</span><span class="o">.</span><span class="n">git</span>
-<span class="n">cd</span> <span class="n">FastEMRIWaveforms</span>
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
+<p>Install with pip (CPU only for now):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">fastemriwaveforms</span>
 </pre></div>
 </div>
-<ol class="arabic simple" start="2">
-<li><p>Install FEW into a new conda environment called “few_env”. (<strong>Note</strong>:
-If you already have performed installation and you are updating FEW
-after a <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">pull</span></code>, then run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code> rather than the
-following command.)</p></li>
-</ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="n">install</span><span class="o">.</span><span class="n">sh</span>
-</pre></div>
-</div>
-<ol class="arabic simple" start="3">
-<li><p>Load the environment:</p></li>
-</ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
-</pre></div>
-</div>
-<ol class="arabic simple" start="4">
-<li><p>In a python file or notebook:</p></li>
-</ol>
+<p>In a python file or notebook:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">few</span>
 </pre></div>
 </div>
 <p>See <a class="reference external" href="https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb">examples
 notebook</a>.</p>
 <section id="prerequisites">
-<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this heading"></a></h3>
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h3>
 <p>To install this software for CPU usage, you need <a class="reference external" href="https://www.gnu.org/software/gsl/">gsl
 &gt;2.0</a> , <a class="reference external" href="https://www.netlib.org/lapack/lug/node14.html">lapack
 (3.6.1)</a>, Python &gt;3.4,
@@ -189,7 +168,12 @@ only download if you run either of those two modules. The files are
 hosted on <a class="reference external" href="https://zenodo.org/record/3981654#.XzS_KRNKjlw">Zenodo</a>.</p>
 </section>
 <section id="installing">
-<h3>Installing<a class="headerlink" href="#installing" title="Permalink to this heading"></a></h3>
+<h3>Installing<a class="headerlink" href="#installing" title="Link to this heading"></a></h3>
+<p>Install with pip (CPU only for now):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">fastemriwaveforms</span>
+</pre></div>
+</div>
+<p>To install from source:</p>
 <ol class="arabic simple" start="0">
 <li><p><a class="reference external" href="https://docs.anaconda.com/anaconda/install/">Install Anaconda</a> if
 you do not have it.</p></li>
@@ -235,7 +219,7 @@ name is specified in previous step):</p></li>
 <p>Please contact the developers if the installation does not work.</p>
 </section>
 <section id="more-customized-installation-legacy">
-<h3>More Customized Installation (legacy)<a class="headerlink" href="#more-customized-installation-legacy" title="Permalink to this heading"></a></h3>
+<h3>More Customized Installation (legacy)<a class="headerlink" href="#more-customized-installation-legacy" title="Link to this heading"></a></h3>
 <ol class="arabic simple" start="0">
 <li><p><a class="reference external" href="https://docs.anaconda.com/anaconda/install/">Install Anaconda</a> if
 you do not have it.</p></li>
@@ -317,7 +301,7 @@ using the flag <code class="docutils literal notranslate"><span class="pre">--cc
 </section>
 </section>
 <section id="running-the-tests">
-<h2>Running the Tests<a class="headerlink" href="#running-the-tests" title="Permalink to this heading"></a></h2>
+<h2>Running the Tests<a class="headerlink" href="#running-the-tests" title="Link to this heading"></a></h2>
 <p>In the main directory of the package run in the terminal (if you run
 <a class="reference external" href="install.sh">install.sh</a> with defaults, the tests will be performed):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">unittest</span> <span class="n">discover</span>
@@ -325,7 +309,7 @@ using the flag <code class="docutils literal notranslate"><span class="pre">--cc
 </div>
 </section>
 <section id="contributing">
-<h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this heading"></a></h2>
+<h2>Contributing<a class="headerlink" href="#contributing" title="Link to this heading"></a></h2>
 <p>Please read <a class="reference external" href="CONTRIBUTING.md">CONTRIBUTING.md</a> for details on our
 code of conduct, and the process for submitting pull requests to us.</p>
 <p>If you want to develop FEW and produce documentation, install <code class="docutils literal notranslate"><span class="pre">few</span></code>
@@ -339,14 +323,14 @@ documentation source files are in <code class="docutils literal notranslate"><sp
 documentation, change to the <code class="docutils literal notranslate"><span class="pre">docs</span></code> directory and run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span></code>.</p>
 </section>
 <section id="versioning">
-<h2>Versioning<a class="headerlink" href="#versioning" title="Permalink to this heading"></a></h2>
+<h2>Versioning<a class="headerlink" href="#versioning" title="Link to this heading"></a></h2>
 <p>We use <a class="reference external" href="http://semver.org/">SemVer</a> for versioning. For the versions
 available, see the <a class="reference external" href="https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags">tags on this
 repository</a>.</p>
-<p>Current Version: 1.5.3</p>
+<p>Current Version: 1.5.5</p>
 </section>
 <section id="authors-developers">
-<h2>Authors/Developers<a class="headerlink" href="#authors-developers" title="Permalink to this heading"></a></h2>
+<h2>Authors/Developers<a class="headerlink" href="#authors-developers" title="Link to this heading"></a></h2>
 <ul class="simple">
 <li><p><strong>Michael Katz</strong></p></li>
 <li><p>Lorenzo Speri</p></li>
@@ -356,7 +340,7 @@ repository</a>.</p>
 <li><p>Scott Hughes</p></li>
 </ul>
 <section id="contibutors">
-<h3>Contibutors<a class="headerlink" href="#contibutors" title="Permalink to this heading"></a></h3>
+<h3>Contibutors<a class="headerlink" href="#contibutors" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>Philip Lynch</p></li>
 <li><p>Soichiro Isoyama</p></li>
@@ -366,12 +350,12 @@ repository</a>.</p>
 </section>
 </section>
 <section id="license">
-<h2>License<a class="headerlink" href="#license" title="Permalink to this heading"></a></h2>
+<h2>License<a class="headerlink" href="#license" title="Link to this heading"></a></h2>
 <p>This project is licensed under the GNU License - see the
 <a class="reference external" href="LICENSE.md">LICENSE.md</a> file for details.</p>
 </section>
 <section id="citation">
-<h2>Citation<a class="headerlink" href="#citation" title="Permalink to this heading"></a></h2>
+<h2>Citation<a class="headerlink" href="#citation" title="Link to this heading"></a></h2>
 <p>Please make sure to cite FEW papers and the FEW software on
 <a class="reference external" href="https://zenodo.org/record/8190418">Zenodo</a>. There are other papers
 that require citation based on the classes used. For most classes this
@@ -513,7 +497,7 @@ development of FEW.</p>
 </div>
 </section>
 <section id="acknowledgments">
-<h2>Acknowledgments<a class="headerlink" href="#acknowledgments" title="Permalink to this heading"></a></h2>
+<h2>Acknowledgments<a class="headerlink" href="#acknowledgments" title="Link to this heading"></a></h2>
 <ul class="simple">
 <li><p>This research resulting in this code was supported by National
 Science Foundation under grant DGE-0948017 and the Chateaubriand

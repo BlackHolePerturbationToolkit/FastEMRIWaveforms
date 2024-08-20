@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Amplitude Package &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=01f34227"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -51,8 +53,14 @@
 <li class="toctree-l1"><a class="reference internal" href="traj.html">Trajectory Package</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Amplitude Package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#schwarzschild-eccentric-amplitudes">Schwarzschild Eccentric Amplitudes</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#module-few.amplitude.romannet">ROMAN Network</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-few.amplitude.interp2dcubicspline">2D Cubic Spline Interpolation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-few.amplitude.romannet">ROMAN Network</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#few.amplitude.romannet.RomanAmplitude"><code class="docutils literal notranslate"><span class="pre">RomanAmplitude</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-few.amplitude.interp2dcubicspline">2D Cubic Spline Interpolation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude"><code class="docutils literal notranslate"><span class="pre">Interp2DAmplitude</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -113,18 +121,18 @@
            <div itemprop="articleBody">
              
   <section id="module-few.amplitude">
-<span id="amplitude-package"></span><span id="amplitude-label"></span><h1>Amplitude Package<a class="headerlink" href="#module-few.amplitude" title="Permalink to this heading"></a></h1>
+<span id="amplitude-package"></span><span id="amplitude-label"></span><h1>Amplitude Package<a class="headerlink" href="#module-few.amplitude" title="Link to this heading"></a></h1>
 <p>The amplitude package houses modules for calculating Tuekolsky amplitudes from
 orbital parameter trajectories. The complex amplitudes are determined with
 various methods documented below. Some amplitude modules have gpu capabilities.
 It deals with <span class="math notranslate nohighlight">\(A_{lmkn}\)</span> in <a class="reference internal" href="../general/docs_main.html#equation-emri-wave-eq">(1)</a>.</p>
 <section id="schwarzschild-eccentric-amplitudes">
-<h2>Schwarzschild Eccentric Amplitudes<a class="headerlink" href="#schwarzschild-eccentric-amplitudes" title="Permalink to this heading"></a></h2>
+<h2>Schwarzschild Eccentric Amplitudes<a class="headerlink" href="#schwarzschild-eccentric-amplitudes" title="Link to this heading"></a></h2>
 <section id="module-few.amplitude.romannet">
-<span id="roman-network"></span><h3>ROMAN Network<a class="headerlink" href="#module-few.amplitude.romannet" title="Permalink to this heading"></a></h3>
+<span id="roman-network"></span><h3>ROMAN Network<a class="headerlink" href="#module-few.amplitude.romannet" title="Link to this heading"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.amplitude.romannet.</span></span><span class="sig-name descname"><span class="pre">RomanAmplitude</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_init_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.amplitude.romannet.</span></span><span class="sig-name descname"><span class="pre">RomanAmplitude</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_init_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AmplitudeBase</span></code>, <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchwarzschildEccentric</span></code></a>, <a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParallelModuleBase</span></code></a></p>
 <p>Calculate Teukolsky amplitudes with a ROMAN.</p>
 <p>ROMAN stands for reduced-order models with artificial neurons. Please see
@@ -157,10 +165,10 @@ Default is {}.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.attributes_RomanAmplitude">
-<span class="sig-name descname"><span class="pre">attributes_RomanAmplitude</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.attributes_RomanAmplitude" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">attributes_RomanAmplitude</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.attributes_RomanAmplitude" title="Link to this definition"></a></dt>
 <dd><dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.few_dir">
-<span class="sig-name descname"><span class="pre">few_dir</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.few_dir" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">few_dir</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.few_dir" title="Link to this definition"></a></dt>
 <dd><p>absolute path to the FastEMRIWaveforms directory</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -171,7 +179,7 @@ Default is {}.</p></li>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.break_index">
-<span class="sig-name descname"><span class="pre">break_index</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.break_index" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">break_index</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.break_index" title="Link to this definition"></a></dt>
 <dd><p>length of output vector from network divded by 2.
 It is really the number of pairs of real and imaginary numbers.</p>
 <dl class="field-list simple">
@@ -183,7 +191,7 @@ It is really the number of pairs of real and imaginary numbers.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.use_gpu">
-<span class="sig-name descname"><span class="pre">use_gpu</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.use_gpu" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">use_gpu</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.use_gpu" title="Link to this definition"></a></dt>
 <dd><p>If True, use the GPU.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -194,7 +202,7 @@ It is really the number of pairs of real and imaginary numbers.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.neural_layer">
-<span class="sig-name descname"><span class="pre">neural_layer</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.neural_layer" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">neural_layer</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.neural_layer" title="Link to this definition"></a></dt>
 <dd><p>C++ class for computing neural network operations</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -205,7 +213,7 @@ It is really the number of pairs of real and imaginary numbers.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.transform_output">
-<span class="sig-name descname"><span class="pre">transform_output</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.transform_output" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">transform_output</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.transform_output" title="Link to this definition"></a></dt>
 <dd><p>C++ class for transforming output from
 neural network in the reduced basis to the full amplitude basis.</p>
 <dl class="field-list simple">
@@ -217,7 +225,7 @@ neural network in the reduced basis to the full amplitude basis.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.num_teuk_modes">
-<span class="sig-name descname"><span class="pre">num_teuk_modes</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.num_teuk_modes" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">num_teuk_modes</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.num_teuk_modes" title="Link to this definition"></a></dt>
 <dd><p>number of teukolsky modes in the data file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -228,7 +236,7 @@ neural network in the reduced basis to the full amplitude basis.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.transform_factor_inv">
-<span class="sig-name descname"><span class="pre">transform_factor_inv</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.transform_factor_inv" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">transform_factor_inv</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.transform_factor_inv" title="Link to this definition"></a></dt>
 <dd><p>Inverse of the scalar transform factor.
 For this model, that is 1000.0.</p>
 <dl class="field-list simple">
@@ -240,7 +248,7 @@ For this model, that is 1000.0.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.max_init_len">
-<span class="sig-name descname"><span class="pre">max_init_len</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.max_init_len" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">max_init_len</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.max_init_len" title="Link to this definition"></a></dt>
 <dd><p>This class uses buffers. This is the maximum length
 the user expects for the input arrays.</p>
 <dl class="field-list simple">
@@ -252,7 +260,7 @@ the user expects for the input arrays.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.weights">
-<span class="sig-name descname"><span class="pre">weights</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.weights" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">weights</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.weights" title="Link to this definition"></a></dt>
 <dd><p>List of the weight matrices for each
 layer of the neural network. They are flattened for entry into
 C++ in column-major order. They have shape (dim1, dim2).</p>
@@ -265,7 +273,7 @@ C++ in column-major order. They have shape (dim1, dim2).</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.bias">
-<span class="sig-name descname"><span class="pre">bias</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.bias" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">bias</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.bias" title="Link to this definition"></a></dt>
 <dd><p>List of the bias arrays for each layer
 of the neural network. They have shape (dim2,).</p>
 <dl class="field-list simple">
@@ -277,7 +285,7 @@ of the neural network. They have shape (dim2,).</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.dim1">
-<span class="sig-name descname"><span class="pre">dim1</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.dim1" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">dim1</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.dim1" title="Link to this definition"></a></dt>
 <dd><p>List of 1st dimension length in each layer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -288,7 +296,7 @@ of the neural network. They have shape (dim2,).</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.dim2">
-<span class="sig-name descname"><span class="pre">dim2</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.dim2" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">dim2</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.dim2" title="Link to this definition"></a></dt>
 <dd><p>List of 2nd dimension length in each layer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -299,7 +307,7 @@ of the neural network. They have shape (dim2,).</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.num_layers">
-<span class="sig-name descname"><span class="pre">num_layers</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.num_layers" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">num_layers</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.num_layers" title="Link to this definition"></a></dt>
 <dd><p>Number of layers in the neural network.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -310,7 +318,7 @@ of the neural network. They have shape (dim2,).</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.transform_matrix">
-<span class="sig-name descname"><span class="pre">transform_matrix</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.transform_matrix" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">transform_matrix</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.transform_matrix" title="Link to this definition"></a></dt>
 <dd><p>Matrix for tranforming
 output of neural network onto original amplitude basis.</p>
 <dl class="field-list simple">
@@ -322,7 +330,7 @@ output of neural network onto original amplitude basis.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.max_num">
-<span class="sig-name descname"><span class="pre">max_num</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.max_num" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">max_num</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.max_num" title="Link to this definition"></a></dt>
 <dd><p>Figures out the maximum dimension of all weight matrices
 for buffers.</p>
 <dl class="field-list simple">
@@ -334,7 +342,7 @@ for buffers.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.temp_mats">
-<span class="sig-name descname"><span class="pre">temp_mats</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.temp_mats" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">temp_mats</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.temp_mats" title="Link to this definition"></a></dt>
 <dd><p>List that holds
 temporary matrices for neural network evaluation. Each layer switches
 between which is the input and output to properly interface with
@@ -348,7 +356,7 @@ cBLAS/cuBLAS.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.run_relu_arr">
-<span class="sig-name descname"><span class="pre">run_relu_arr</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.run_relu_arr" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">run_relu_arr</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.run_relu_arr" title="Link to this definition"></a></dt>
 <dd><p>Array holding information about
 whether each layer will run the relu activation. All layers have
 value 1, except for the last layer with value 0.</p>
@@ -363,19 +371,19 @@ value 1, except for the last layer with value 0.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.citation">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">citation</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.citation" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">citation</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.citation" title="Link to this definition"></a></dt>
 <dd><p>Return citations for this module</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.gpu_capability">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gpu_capability</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.gpu_capability" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gpu_capability</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.gpu_capability" title="Link to this definition"></a></dt>
 <dd><p>Confirms GPU capability</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.__call__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.__call__" title="Link to this definition"></a></dt>
 <dd><p>Common call for Teukolsky amplitudes</p>
 <p>This function takes the inputs the trajectory in <span class="math notranslate nohighlight">\((p,e)\)</span> as arrays
 and returns the complex amplitude of all modes to adiabatic order at
@@ -403,7 +411,7 @@ dict: Dictionary with requested modes.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.adjust_gpu_usage">
-<span class="sig-name descname"><span class="pre">adjust_gpu_usage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.adjust_gpu_usage" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">adjust_gpu_usage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.adjust_gpu_usage" title="Link to this definition"></a></dt>
 <dd><p>Adjust all inputs for gpu usage</p>
 <p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
 so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
@@ -411,7 +419,7 @@ so that <code class="code docutils literal notranslate"><span class="pre">use_gp
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
-<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+<li><p><strong>kwargs</strong> (<em>list</em><em> of </em><em>dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
 single dictionary for each constituent class in the
 waveform generator.</p></li>
 </ul>
@@ -421,10 +429,10 @@ waveform generator.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.attributes_ParallelModuleBase">
-<span class="sig-name descname"><span class="pre">attributes_ParallelModuleBase</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.attributes_ParallelModuleBase" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">attributes_ParallelModuleBase</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.attributes_ParallelModuleBase" title="Link to this definition"></a></dt>
 <dd><dl class="py attribute">
 <dt class="sig sig-object py" id="id0">
-<span class="sig-name descname"><span class="pre">use_gpu</span></span><a class="headerlink" href="#id0" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">use_gpu</span></span><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
 <dd><p>If True, use GPU.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -435,7 +443,7 @@ waveform generator.</p></li>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.xp">
-<span class="sig-name descname"><span class="pre">xp</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.xp" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">xp</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.xp" title="Link to this definition"></a></dt>
 <dd><p>Either numpy or CuPy based on gpu preference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -448,10 +456,10 @@ waveform generator.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.attributes_SchwarzschildEccentric">
-<span class="sig-name descname"><span class="pre">attributes_SchwarzschildEccentric</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.attributes_SchwarzschildEccentric" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">attributes_SchwarzschildEccentric</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.attributes_SchwarzschildEccentric" title="Link to this definition"></a></dt>
 <dd><dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.background">
-<span class="sig-name descname"><span class="pre">background</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.background" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">background</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.background" title="Link to this definition"></a></dt>
 <dd><p>Spacetime background for this model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -462,7 +470,7 @@ waveform generator.</p></li>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.descriptor">
-<span class="sig-name descname"><span class="pre">descriptor</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.descriptor" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">descriptor</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.descriptor" title="Link to this definition"></a></dt>
 <dd><p>Short description for model validity.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -496,7 +504,7 @@ in the model.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.ndim">
-<span class="sig-name descname"><span class="pre">ndim</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.ndim" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">ndim</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.ndim" title="Link to this definition"></a></dt>
 <dd><p>Dimensionality in terms of orbital parameters and phases.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -507,7 +515,7 @@ in the model.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.m0sort">
-<span class="sig-name descname"><span class="pre">m0sort</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.m0sort" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">m0sort</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.m0sort" title="Link to this definition"></a></dt>
 <dd><p>array of indices to sort accoring to
 <span class="math notranslate nohighlight">\((m=0)\)</span> parts first and then <span class="math notranslate nohighlight">\(m&gt;0\)</span> parts.</p>
 <dl class="field-list simple">
@@ -519,7 +527,7 @@ in the model.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.m0mask">
-<span class="sig-name descname"><span class="pre">m0mask</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.m0mask" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">m0mask</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.m0mask" title="Link to this definition"></a></dt>
 <dd><p>Masks values with <span class="math notranslate nohighlight">\(m==0\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -530,7 +538,7 @@ in the model.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.m_zero_up_mask">
-<span class="sig-name descname"><span class="pre">m_zero_up_mask</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.m_zero_up_mask" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">m_zero_up_mask</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.m_zero_up_mask" title="Link to this definition"></a></dt>
 <dd><p>Masks values with <span class="math notranslate nohighlight">\(m&lt;1\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -553,7 +561,7 @@ containing indices for each mode.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.lmn_indices">
-<span class="sig-name descname"><span class="pre">lmn_indices</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.lmn_indices" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">lmn_indices</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.lmn_indices" title="Link to this definition"></a></dt>
 <dd><p>Dictionary mapping a tuple of <span class="math notranslate nohighlight">\((l,m,n)\)</span> to
 the respective index in l_arr, m_arr, and n_arr.</p>
 <dl class="field-list simple">
@@ -565,7 +573,7 @@ the respective index in l_arr, m_arr, and n_arr.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.num_m_zero_up">
-<span class="sig-name descname"><span class="pre">num_m_zero_up</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.num_m_zero_up" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">num_m_zero_up</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.num_m_zero_up" title="Link to this definition"></a></dt>
 <dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq0\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -576,7 +584,7 @@ the respective index in l_arr, m_arr, and n_arr.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.num_m0">
-<span class="sig-name descname"><span class="pre">num_m0</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.num_m0" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">num_m0</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.num_m0" title="Link to this definition"></a></dt>
 <dd><p>Number of modes with <span class="math notranslate nohighlight">\(m=0\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -587,7 +595,7 @@ the respective index in l_arr, m_arr, and n_arr.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.num_m_1_up">
-<span class="sig-name descname"><span class="pre">num_m_1_up</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.num_m_1_up" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">num_m_1_up</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.num_m_1_up" title="Link to this definition"></a></dt>
 <dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq1\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -610,7 +618,7 @@ the respective index in l_arr, m_arr, and n_arr.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.inverse_lm">
-<span class="sig-name descname"><span class="pre">inverse_lm</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.inverse_lm" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">inverse_lm</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.inverse_lm" title="Link to this definition"></a></dt>
 <dd><p>Array of indices that expands unique
 <span class="math notranslate nohighlight">\((l, m)\)</span> values to the full array of <span class="math notranslate nohighlight">\((l,m,n)\)</span> values.</p>
 <dl class="field-list simple">
@@ -622,7 +630,7 @@ the respective index in l_arr, m_arr, and n_arr.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.index_map">
-<span class="sig-name descname"><span class="pre">index_map</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.index_map" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">index_map</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.index_map" title="Link to this definition"></a></dt>
 <dd><p>Dictionary mapping the location of the <cite>(l,m,n)</cite>
 indices back to there spot in l_arr, m_arr, n_arr.</p>
 <dl class="field-list simple">
@@ -634,7 +642,7 @@ indices back to there spot in l_arr, m_arr, n_arr.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.special_index_map">
-<span class="sig-name descname"><span class="pre">special_index_map</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.special_index_map" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">special_index_map</span></span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.special_index_map" title="Link to this definition"></a></dt>
 <dd><p>Dictionary mapping the location of the <cite>(l,m,n)</cite>
 indices back to there spot in l_arr, m_arr, n_arr. However, this
 maps locations of -m values to +m values.</p>
@@ -649,7 +657,7 @@ maps locations of -m values to +m values.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.sanity_check_gpu">
-<span class="sig-name descname"><span class="pre">sanity_check_gpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.sanity_check_gpu" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">sanity_check_gpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.sanity_check_gpu" title="Link to this definition"></a></dt>
 <dd><p>Check if this class has GPU capability</p>
 <p>If the user is requesting GPU usage, this will confirm the class has
 GPU capabilites.</p>
@@ -666,7 +674,7 @@ GPU capabilites.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.sanity_check_init">
-<span class="sig-name descname"><span class="pre">sanity_check_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.sanity_check_init" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">sanity_check_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.sanity_check_init" title="Link to this definition"></a></dt>
 <dd><p>Sanity check initial parameters.</p>
 <p>Make sure parameters are within allowable ranges.</p>
 <dl class="field-list simple">
@@ -688,7 +696,7 @@ more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.sanity_check_traj">
-<span class="sig-name descname"><span class="pre">sanity_check_traj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.sanity_check_traj" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">sanity_check_traj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.sanity_check_traj" title="Link to this definition"></a></dt>
 <dd><p>Sanity check on parameters output from thte trajectory module.</p>
 <p>Make sure parameters are within allowable ranges.</p>
 <dl class="field-list simple">
@@ -712,7 +720,7 @@ the trajectory module.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.sanity_check_viewing_angles">
-<span class="sig-name descname"><span class="pre">sanity_check_viewing_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.sanity_check_viewing_angles" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">sanity_check_viewing_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.sanity_check_viewing_angles" title="Link to this definition"></a></dt>
 <dd><p>Sanity check on viewing angles.</p>
 <p>Make sure parameters are within allowable ranges.</p>
 <dl class="field-list simple">
@@ -736,7 +744,7 @@ the trajectory module.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.romannet.RomanAmplitude.get_amplitudes">
-<span class="sig-name descname"><span class="pre">get_amplitudes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.get_amplitudes" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_amplitudes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.romannet.RomanAmplitude.get_amplitudes" title="Link to this definition"></a></dt>
 <dd><p>Calculate Teukolsky amplitudes for Schwarzschild eccentric.</p>
 <p>This function takes the inputs the trajectory in <span class="math notranslate nohighlight">\((p,e)\)</span> as arrays
 and returns the complex amplitude of all modes to adiabatic order at
@@ -770,10 +778,10 @@ dict: Dictionary with requested modes.</p>
 
 </section>
 <section id="module-few.amplitude.interp2dcubicspline">
-<span id="d-cubic-spline-interpolation"></span><h3>2D Cubic Spline Interpolation<a class="headerlink" href="#module-few.amplitude.interp2dcubicspline" title="Permalink to this heading"></a></h3>
+<span id="d-cubic-spline-interpolation"></span><h3>2D Cubic Spline Interpolation<a class="headerlink" href="#module-few.amplitude.interp2dcubicspline" title="Link to this heading"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.amplitude.interp2dcubicspline.</span></span><span class="sig-name descname"><span class="pre">Interp2DAmplitude</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.amplitude.interp2dcubicspline.</span></span><span class="sig-name descname"><span class="pre">Interp2DAmplitude</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AmplitudeBase</span></code>, <a class="reference internal" href="main.html#few.utils.baseclasses.SchwarzschildEccentric" title="few.utils.baseclasses.SchwarzschildEccentric"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchwarzschildEccentric</span></code></a></p>
 <p>Calculate Teukolsky amplitudes by 2D Cubic Spline interpolation.</p>
 <p>Please see the documentations for
@@ -791,10 +799,10 @@ amplitudes for each mode in the model.</p>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_Interp2DAmplitude">
-<span class="sig-name descname"><span class="pre">attributes_Interp2DAmplitude</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_Interp2DAmplitude" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">attributes_Interp2DAmplitude</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_Interp2DAmplitude" title="Link to this definition"></a></dt>
 <dd><dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.amplitude_generator">
-<span class="sig-name descname"><span class="pre">amplitude_generator</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.amplitude_generator" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">amplitude_generator</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.amplitude_generator" title="Link to this definition"></a></dt>
 <dd><p>C++ class that performs the bicubic
 interpolation. It stores all of the splines during initialization
 steps.</p>
@@ -809,13 +817,13 @@ steps.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.citation">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">citation</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.citation" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">citation</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.citation" title="Link to this definition"></a></dt>
 <dd><p>Return citations for this class</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.get_amplitudes">
-<span class="sig-name descname"><span class="pre">get_amplitudes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.get_amplitudes" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_amplitudes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.get_amplitudes" title="Link to this definition"></a></dt>
 <dd><p>Calculate Teukolsky amplitudes for Schwarzschild eccentric.</p>
 <p>This function takes the inputs the trajectory in <span class="math notranslate nohighlight">\((p,e)\)</span> as arrays
 and returns the complex amplitude of all modes to adiabatic order at
@@ -850,7 +858,7 @@ dict: Dictionary with requested modes.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.__call__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.__call__" title="Link to this definition"></a></dt>
 <dd><p>Common call for Teukolsky amplitudes</p>
 <p>This function takes the inputs the trajectory in <span class="math notranslate nohighlight">\((p,e)\)</span> as arrays
 and returns the complex amplitude of all modes to adiabatic order at
@@ -878,7 +886,7 @@ dict: Dictionary with requested modes.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.adjust_gpu_usage">
-<span class="sig-name descname"><span class="pre">adjust_gpu_usage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.adjust_gpu_usage" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">adjust_gpu_usage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.adjust_gpu_usage" title="Link to this definition"></a></dt>
 <dd><p>Adjust all inputs for gpu usage</p>
 <p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
 so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
@@ -886,7 +894,7 @@ so that <code class="code docutils literal notranslate"><span class="pre">use_gp
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
-<li><p><strong>kwargs</strong> (<em>list of dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+<li><p><strong>kwargs</strong> (<em>list</em><em> of </em><em>dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
 single dictionary for each constituent class in the
 waveform generator.</p></li>
 </ul>
@@ -896,10 +904,10 @@ waveform generator.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_ParallelModuleBase">
-<span class="sig-name descname"><span class="pre">attributes_ParallelModuleBase</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_ParallelModuleBase" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">attributes_ParallelModuleBase</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_ParallelModuleBase" title="Link to this definition"></a></dt>
 <dd><dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.use_gpu">
-<span class="sig-name descname"><span class="pre">use_gpu</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.use_gpu" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">use_gpu</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.use_gpu" title="Link to this definition"></a></dt>
 <dd><p>If True, use GPU.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -910,7 +918,7 @@ waveform generator.</p></li>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.xp">
-<span class="sig-name descname"><span class="pre">xp</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.xp" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">xp</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.xp" title="Link to this definition"></a></dt>
 <dd><p>Either numpy or CuPy based on gpu preference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -923,10 +931,10 @@ waveform generator.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_SchwarzschildEccentric">
-<span class="sig-name descname"><span class="pre">attributes_SchwarzschildEccentric</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_SchwarzschildEccentric" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">attributes_SchwarzschildEccentric</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.attributes_SchwarzschildEccentric" title="Link to this definition"></a></dt>
 <dd><dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.background">
-<span class="sig-name descname"><span class="pre">background</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.background" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">background</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.background" title="Link to this definition"></a></dt>
 <dd><p>Spacetime background for this model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -937,7 +945,7 @@ waveform generator.</p></li>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.descriptor">
-<span class="sig-name descname"><span class="pre">descriptor</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.descriptor" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">descriptor</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.descriptor" title="Link to this definition"></a></dt>
 <dd><p>Short description for model validity.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -971,7 +979,7 @@ in the model.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.ndim">
-<span class="sig-name descname"><span class="pre">ndim</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.ndim" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">ndim</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.ndim" title="Link to this definition"></a></dt>
 <dd><p>Dimensionality in terms of orbital parameters and phases.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -982,7 +990,7 @@ in the model.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.m0sort">
-<span class="sig-name descname"><span class="pre">m0sort</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.m0sort" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">m0sort</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.m0sort" title="Link to this definition"></a></dt>
 <dd><p>array of indices to sort accoring to
 <span class="math notranslate nohighlight">\((m=0)\)</span> parts first and then <span class="math notranslate nohighlight">\(m&gt;0\)</span> parts.</p>
 <dl class="field-list simple">
@@ -994,7 +1002,7 @@ in the model.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.m0mask">
-<span class="sig-name descname"><span class="pre">m0mask</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.m0mask" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">m0mask</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.m0mask" title="Link to this definition"></a></dt>
 <dd><p>Masks values with <span class="math notranslate nohighlight">\(m==0\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -1005,7 +1013,7 @@ in the model.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.m_zero_up_mask">
-<span class="sig-name descname"><span class="pre">m_zero_up_mask</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.m_zero_up_mask" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">m_zero_up_mask</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.m_zero_up_mask" title="Link to this definition"></a></dt>
 <dd><p>Masks values with <span class="math notranslate nohighlight">\(m&lt;1\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -1028,7 +1036,7 @@ containing indices for each mode.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.lmn_indices">
-<span class="sig-name descname"><span class="pre">lmn_indices</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.lmn_indices" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">lmn_indices</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.lmn_indices" title="Link to this definition"></a></dt>
 <dd><p>Dictionary mapping a tuple of <span class="math notranslate nohighlight">\((l,m,n)\)</span> to
 the respective index in l_arr, m_arr, and n_arr.</p>
 <dl class="field-list simple">
@@ -1040,7 +1048,7 @@ the respective index in l_arr, m_arr, and n_arr.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.num_m_zero_up">
-<span class="sig-name descname"><span class="pre">num_m_zero_up</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.num_m_zero_up" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">num_m_zero_up</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.num_m_zero_up" title="Link to this definition"></a></dt>
 <dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq0\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -1051,7 +1059,7 @@ the respective index in l_arr, m_arr, and n_arr.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.num_m0">
-<span class="sig-name descname"><span class="pre">num_m0</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.num_m0" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">num_m0</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.num_m0" title="Link to this definition"></a></dt>
 <dd><p>Number of modes with <span class="math notranslate nohighlight">\(m=0\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -1062,7 +1070,7 @@ the respective index in l_arr, m_arr, and n_arr.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.num_m_1_up">
-<span class="sig-name descname"><span class="pre">num_m_1_up</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.num_m_1_up" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">num_m_1_up</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.num_m_1_up" title="Link to this definition"></a></dt>
 <dd><p>Number of modes with <span class="math notranslate nohighlight">\(m\geq1\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -1085,7 +1093,7 @@ the respective index in l_arr, m_arr, and n_arr.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.inverse_lm">
-<span class="sig-name descname"><span class="pre">inverse_lm</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.inverse_lm" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">inverse_lm</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.inverse_lm" title="Link to this definition"></a></dt>
 <dd><p>Array of indices that expands unique
 <span class="math notranslate nohighlight">\((l, m)\)</span> values to the full array of <span class="math notranslate nohighlight">\((l,m,n)\)</span> values.</p>
 <dl class="field-list simple">
@@ -1097,7 +1105,7 @@ the respective index in l_arr, m_arr, and n_arr.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.index_map">
-<span class="sig-name descname"><span class="pre">index_map</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.index_map" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">index_map</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.index_map" title="Link to this definition"></a></dt>
 <dd><p>Dictionary mapping the location of the <cite>(l,m,n)</cite>
 indices back to there spot in l_arr, m_arr, n_arr.</p>
 <dl class="field-list simple">
@@ -1109,7 +1117,7 @@ indices back to there spot in l_arr, m_arr, n_arr.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.special_index_map">
-<span class="sig-name descname"><span class="pre">special_index_map</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.special_index_map" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">special_index_map</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.special_index_map" title="Link to this definition"></a></dt>
 <dd><p>Dictionary mapping the location of the <cite>(l,m,n)</cite>
 indices back to there spot in l_arr, m_arr, n_arr. However, this
 maps locations of -m values to +m values.</p>
@@ -1124,13 +1132,13 @@ maps locations of -m values to +m values.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.gpu_capability">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gpu_capability</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.gpu_capability" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gpu_capability</span></span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.gpu_capability" title="Link to this definition"></a></dt>
 <dd><p>Confirms GPU capability</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_gpu">
-<span class="sig-name descname"><span class="pre">sanity_check_gpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_gpu" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">sanity_check_gpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_gpu" title="Link to this definition"></a></dt>
 <dd><p>Check if this class has GPU capability</p>
 <p>If the user is requesting GPU usage, this will confirm the class has
 GPU capabilites.</p>
@@ -1147,7 +1155,7 @@ GPU capabilites.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_init">
-<span class="sig-name descname"><span class="pre">sanity_check_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_init" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">sanity_check_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_init" title="Link to this definition"></a></dt>
 <dd><p>Sanity check initial parameters.</p>
 <p>Make sure parameters are within allowable ranges.</p>
 <dl class="field-list simple">
@@ -1169,7 +1177,7 @@ more information on <span class="math notranslate nohighlight">\(p_0 \leq 10.0\)
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_traj">
-<span class="sig-name descname"><span class="pre">sanity_check_traj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_traj" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">sanity_check_traj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_traj" title="Link to this definition"></a></dt>
 <dd><p>Sanity check on parameters output from thte trajectory module.</p>
 <p>Make sure parameters are within allowable ranges.</p>
 <dl class="field-list simple">
@@ -1193,7 +1201,7 @@ the trajectory module.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_viewing_angles">
-<span class="sig-name descname"><span class="pre">sanity_check_viewing_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_viewing_angles" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">sanity_check_viewing_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.amplitude.interp2dcubicspline.Interp2DAmplitude.sanity_check_viewing_angles" title="Link to this definition"></a></dt>
 <dd><p>Sanity check on viewing angles.</p>
 <p>Make sure parameters are within allowable ranges.</p>
 <dl class="field-list simple">
