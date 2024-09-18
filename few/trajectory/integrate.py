@@ -405,7 +405,7 @@ class Integrate:
             self.num_add_args == 0 and len(additional_args) == 1
         )
 
-        self.bool_integrate_backwards = kwargs["integrate_backwards"]
+        self.bool_integrate_backwards = kwargs.get("integrate_backwards", False)
         self.integrator.add_parameters_to_holder(
             M, mu, a, self.bool_integrate_backwards, additional_args
         )

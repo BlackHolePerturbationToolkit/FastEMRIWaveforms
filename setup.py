@@ -120,12 +120,6 @@ except OSError:
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument(
-    "--no_omp",
-    help="If provided, install without OpenMP.",
-    action="store_true",
-    default=False,
-)
 
 parser.add_argument(
     "--lapack_lib",
@@ -181,9 +175,6 @@ for key1, key2 in [
         except ValueError:
             pass
 
-use_omp = not args.no_omp
-
-
 # Obtain the numpy include directory. This logic works across numpy versions.
 try:
     numpy_include = numpy.get_include()
@@ -227,7 +218,7 @@ else:
 # if installing for CUDA, build Cython extensions for gpu modules
 if run_cuda_install:
     gpu_extension = dict(
-        libraries=["gsl", "gslcblas", "cudart", "cublas", "cusparse", "gomp"],
+        libraries=["gsl", "gslcblas", "cudart", "cublas", "cusparse"],
         library_dirs=[CUDA["lib64"]],
         runtime_library_dirs=[CUDA["lib64"]],
         language="c++",
@@ -252,9 +243,6 @@ if run_cuda_install:
                 "-c",
                 "--compiler-options",
                 "'-fPIC'",
-                "-Xcompiler",
-                "-fopenmp",
-                "-D__USE_OMP__",
                 # "-G",
                 # "-g",
                 # "-O0",
@@ -263,13 +251,6 @@ if run_cuda_install:
         },
         include_dirs=[numpy_include, CUDA["include"], "./include"],
     )
-
-    if use_omp is False:
-        gpu_extension["extra_compile_args"]["nvcc"].remove("-fopenmp")
-        gpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
-        gpu_extension["extra_compile_args"]["nvcc"].remove("-D__USE_OMP__")
-        gpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
-        gpu_extension["extra_compile_args"]["nvcc"].remove("-Xcompiler")
 
     if args.ccbin is not None:
         gpu_extension["extra_compile_args"]["nvcc"].insert(
@@ -308,7 +289,7 @@ if run_cuda_install:
 
 # build all cpu modules
 cpu_extension = dict(
-    libraries=["gsl", "gslcblas", "lapack", "lapacke", "gomp", "hdf5", "hdf5_hl"],
+    libraries=["gsl", "gslcblas", "lapack", "lapacke", "hdf5", "hdf5_hl"],
     language="c++",
     runtime_library_dirs=[],
     extra_compile_args={"gcc": ["-std=c++11"]},  # '-g'
@@ -331,10 +312,6 @@ if add_gsl:
         else cpu_extension["library_dirs"] + gsl_lib
     )
     cpu_extension["include_dirs"] += gsl_include
-
-if use_omp is False:
-    cpu_extension["extra_compile_args"]["gcc"].remove("-fopenmp")
-    cpu_extension["extra_compile_args"]["gcc"].remove("-D__USE_OMP__")
 
 Interp2DAmplitude_ext = Extension(
     "pyInterp2DAmplitude",
