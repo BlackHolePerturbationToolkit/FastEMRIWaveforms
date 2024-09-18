@@ -182,6 +182,7 @@ Current Version: 1.5.5
 * Alvin J. K. Chua
 * Niels Warburton
 * Scott Hughes
+* Hassan Khalvati
 
 ### Contibutors
 
