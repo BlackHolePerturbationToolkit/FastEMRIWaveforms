@@ -30,9 +30,14 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
 
-from few.utils.baseclasses import SchwarzschildEccentric, Pn5AAK, ParallelModuleBase
+from few.utils.baseclasses import (
+    SchwarzschildEccentric,
+    Pn5AAK,
+    ParallelModuleBase,
+    KerrCircular,
+)
 from few.trajectory.inspiral import EMRIInspiral
-from few.amplitude.interp2dcubicspline import Interp2DAmplitude
+from few.amplitude.interp2dcubicspline import Interp2DAmplitude, Interp2DAmplitudeKerr
 from few.utils.utility import get_mismatch, xI_to_Y, p_to_y, check_for_file_download
 from few.amplitude.romannet import RomanAmplitude
 from few.utils.modeselector import ModeSelector
@@ -41,7 +46,10 @@ from few.summation.directmodesum import DirectModeSum
 from few.summation.aakwave import AAKSummation
 from few.utils.constants import *
 from few.utils.citations import *
-from few.summation.interpolatedmodesum import InterpolatedModeSum
+from few.summation.interpolatedmodesum import (
+    InterpolatedModeSum,
+    InterpolatedModeSumKerr,
+)
 from few.summation.fdinterp import FDInterpolatedModeSum
 
 
@@ -955,6 +963,415 @@ class SlowSchwarzschildEccentricFlux(SchwarzschildEccentricWaveformBase):
             EMRIInspiral,
             Interp2DAmplitude,
             DirectModeSum,
+            inspiral_kwargs=inspiral_kwargs,
+            amplitude_kwargs=amplitude_kwargs,
+            sum_kwargs=sum_kwargs,
+            Ylm_kwargs=Ylm_kwargs,
+            use_gpu=use_gpu,
+            *args,
+            **kwargs,
+        )
+
+
+# ******************* Kerr base class here
+class KerrRelativisticWaveformBase(KerrCircular, ParallelModuleBase, ABC):
+
+    def attributes_KerrRelativisticWaveformBase(self):
+        """
+        attributes:
+            inspiral_generator (obj): instantiated trajectory module.
+            amplitude_generator (obj): instantiated amplitude module.
+            ylm_gen (obj): instantiated ylm module.
+            create_waveform (obj): instantiated summation module.
+            ylm_gen (obj): instantiated Ylm module.
+            mode_selector (obj): instantiated mode selection module.
+            num_teuk_modes (int): number of Teukolsky modes in the model.
+            ls, ms, ns (1D int xp.ndarray): Arrays of mode indices :math:`(l,m,n)`
+                after filtering operation. If no filtering, these are equivalent
+                to l_arr, m_arr, n_arr.
+            xp (obj): numpy or cupy based on gpu usage.
+            num_modes_kept (int): Number of modes for final waveform after mode
+                selection.
+
+        """
+        pass
+
+    def __init__(
+        self,
+        inspiral_module,
+        amplitude_module,
+        sum_module,
+        inspiral_kwargs={},
+        amplitude_kwargs={},
+        sum_kwargs={},
+        Ylm_kwargs={},
+        mode_selector_kwargs={},
+        use_gpu=False,
+        num_threads=None,
+        normalize_amps=False,
+    ):
+        ParallelModuleBase.__init__(self, use_gpu=use_gpu, num_threads=num_threads)
+        KerrCircular.__init__(self, use_gpu=use_gpu)
+
+        (
+            amplitude_kwargs,
+            sum_kwargs,
+            Ylm_kwargs,
+            mode_selector_kwargs,
+        ) = self.adjust_gpu_usage(
+            use_gpu, [amplitude_kwargs, sum_kwargs, Ylm_kwargs, mode_selector_kwargs]
+        )
+        # normalize amplitudes to flux at each step from trajectory
+        self.normalize_amps = normalize_amps
+
+        # kwargs that are passed to the inspiral call function
+        self.inspiral_kwargs = inspiral_kwargs
+
+        # function for generating the inpsiral
+        self.inspiral_generator = inspiral_module(**inspiral_kwargs)
+
+        # function for generating the amplitude
+        self.amplitude_generator = amplitude_module(**amplitude_kwargs)
+
+        # summation generator
+        self.create_waveform = sum_module(**sum_kwargs)
+
+        # angular harmonics generation
+        self.ylm_gen = GetYlms(**Ylm_kwargs)
+
+        # selecting modes that contribute at threshold to the waveform
+        self.mode_selector = ModeSelector(self.m0mask, **mode_selector_kwargs)
+
+        # setup amplitude normalization
+        # fp = "AmplitudeVectorNorm.dat"
+        # few_dir = dir_path + "/../"
+        # check_for_file_download(fp, few_dir)
+
+        # y_in, e_in, norm = np.genfromtxt(
+        #     few_dir + "/few/files/AmplitudeVectorNorm.dat"
+        # ).T
+
+        # num_y = len(np.unique(y_in))
+        # num_e = len(np.unique(e_in))
+
+        # self.amp_norm_spline = RectBivariateSpline(
+        #     np.unique(y_in), np.unique(e_in), norm.reshape(num_e, num_y).T
+        # )
+
+    @property
+    def citation(self):
+        """Return citations related to this module"""
+        return (
+            larger_few_citation
+            + few_citation
+            + few_software_citation
+            + romannet_citation
+        )
+
+    def __call__(
+        self,
+        M,
+        mu,
+        a0,
+        p0,
+        e0,
+        # x0,
+        theta,
+        phi,
+        *args,
+        dist=None,
+        Phi_phi0=0.0,
+        Phi_theta0=0.0,
+        Phi_r0=0.0,
+        dt=10.0,
+        T=1.0,
+        eps=1e-5,
+        show_progress=False,
+        batch_size=-1,
+        mode_selection=None,
+        include_minus_m=True,
+    ):
+
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
+
+        # makes sure viewing angles are allowable
+        theta, phi = self.sanity_check_viewing_angles(theta, phi)
+        self.sanity_check_init(M, mu, a0, p0, e0)
+
+        x0 = 1.0
+        Y0 = x0  # This is limitted to the equatorial orbit
+        # get trajectory
+        breakpoint()
+        (t, p, e, Y, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
+            M,
+            mu,
+            a0,
+            p0,
+            e0,
+            Y0,
+            *args,
+            Phi_phi0=Phi_phi0,
+            Phi_theta0=Phi_theta0,
+            Phi_r0=Phi_r0,
+            T=T,
+            dt=dt,
+            **self.inspiral_kwargs,
+        )
+        a = np.full(len(p), a0)
+        Phi_theta = np.full(
+            len(Phi_phi), 0.0
+        )  # addded this line to make the phi_theta 0 for the equatorial orbit of Kerr
+
+        # makes sure p and e are generally within the model
+        self.sanity_check_traj(a, p, e)
+
+        # get the vector norm
+        # amp_norm = self.amp_norm_spline.ev(p_to_y(p, e), e)
+
+        self.end_time = t[-1]
+        # convert for gpu
+        t = self.xp.asarray(t)
+        a = self.xp.asarray(a)
+        p = self.xp.asarray(p)
+        e = self.xp.asarray(e)
+        Phi_phi = self.xp.asarray(Phi_phi)
+
+        Phi_theta = self.xp.asarray(Phi_theta)
+
+        Phi_r = self.xp.asarray(Phi_r)
+        # amp_norm = self.xp.asarray(amp_norm)
+
+        # get ylms only for unique (l,m) pairs
+        # then expand to all (lmn with self.inverse_lm)
+        ylms = self.ylm_gen(self.unique_l, self.unique_m, theta, phi).copy()[
+            self.inverse_lm
+        ]
+
+        # split into batches
+
+        if batch_size == -1 or self.allow_batching is False:
+            inds_split_all = [self.xp.arange(len(t))]
+        else:
+            split_inds = []
+            i = 0
+            while i < len(t):
+                i += batch_size
+                if i >= len(t):
+                    break
+                split_inds.append(i)
+
+            inds_split_all = self.xp.split(self.xp.arange(len(t)), split_inds)
+
+        # select tqdm if user wants to see progress
+        iterator = enumerate(inds_split_all)
+        iterator = tqdm(iterator, desc="time batch") if show_progress else iterator
+
+        if show_progress:
+            print("total:", len(inds_split_all))
+
+        for i, inds_in in iterator:
+
+            # get subsections of the arrays for each batch
+            t_temp = t[inds_in]
+            a_temp = a[inds_in]
+            p_temp = p[inds_in]
+            e_temp = e[inds_in]
+            Phi_phi_temp = Phi_phi[inds_in]
+            Phi_theta_temp = Phi_theta[inds_in]
+            Phi_r_temp = Phi_r[inds_in]
+            # amp_norm_temp = amp_norm[inds_in]
+
+            # amplitudes
+            teuk_modes = self.amplitude_generator(a_temp, p_temp, e_temp)
+
+            # this line was added by Has, this modes had to be c array for the gpu
+            teuk_modes = xp.asarray(teuk_modes)
+
+            # normalize by flux produced in trajectory
+            # if self.normalize_amps:
+            #     amp_for_norm = self.xp.sum(
+            #         self.xp.abs(
+            #             self.xp.concatenate(
+            #                 [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
+            #                 axis=1,
+            #             )
+            #         )
+            #         ** 2,
+            #         axis=1,
+            #     ) ** (1 / 2)
+
+            # normalize
+            # factor = amp_norm_temp / amp_for_norm
+            # teuk_modes = teuk_modes * factor[:, np.newaxis]
+
+            # different types of mode selection
+            # sets up ylm and teuk_modes properly for summation
+            if isinstance(mode_selection, str):
+
+                # use all modes
+                if mode_selection == "all":
+                    self.ls = self.l_arr[: teuk_modes.shape[1]]
+                    self.ms = self.m_arr[: teuk_modes.shape[1]]
+                    self.ns = self.n_arr[: teuk_modes.shape[1]]
+
+                    keep_modes = self.xp.arange(teuk_modes.shape[1])
+                    temp2 = keep_modes * (keep_modes < self.num_m0) + (
+                        keep_modes + self.num_m_1_up
+                    ) * (keep_modes >= self.num_m0)
+
+                    ylmkeep = self.xp.concatenate([keep_modes, temp2])
+                    ylms_in = ylms[ylmkeep]
+                    teuk_modes_in = teuk_modes
+
+                else:
+                    raise ValueError("If mode selection is a string, must be `all`.")
+
+            # get a specific subset of modes
+            elif isinstance(mode_selection, list):
+                if mode_selection == []:
+                    raise ValueError("If mode selection is a list, cannot be empty.")
+
+                keep_modes = self.xp.zeros(len(mode_selection), dtype=self.xp.int32)
+
+                # for removing opposite m modes
+                fix_include_ms = self.xp.full(2 * len(mode_selection), False)
+                for jj, lmn in enumerate(mode_selection):
+                    l, m, n = tuple(lmn)
+
+                    # keep modes only works with m>=0
+                    lmn_in = (l, abs(m), n)
+                    keep_modes[jj] = self.xp.int32(self.lmn_indices[lmn_in])
+
+                    if not include_minus_m:
+                        if m > 0:
+                            # minus m modes blocked
+                            fix_include_ms[len(mode_selection) + jj] = True
+                        elif m < 0:
+                            # positive m modes blocked
+                            fix_include_ms[jj] = True
+
+                self.ls = self.l_arr[keep_modes]
+                self.ms = self.m_arr[keep_modes]
+                self.ns = self.n_arr[keep_modes]
+
+                temp2 = keep_modes * (keep_modes < self.num_m0) + (
+                    keep_modes + self.num_m_1_up
+                ) * (keep_modes >= self.num_m0)
+
+                ylmkeep = self.xp.concatenate([keep_modes, temp2])
+                ylms_in = ylms[ylmkeep]
+
+                # remove modes if include_minus_m is False
+                ylms_in[fix_include_ms] = 0.0 + 1j * 0.0
+
+                teuk_modes_in = teuk_modes[:, keep_modes]
+
+            # mode selection based on input module
+            else:
+                fund_freq_args = (
+                    M,
+                    a_temp,
+                    p_temp,
+                    e_temp,
+                    self.xp.zeros_like(e_temp),
+                )
+                modeinds = [self.l_arr, self.m_arr, self.n_arr]
+                (
+                    teuk_modes_in,
+                    ylms_in,
+                    self.ls,
+                    self.ms,
+                    self.ns,
+                ) = self.mode_selector(
+                    teuk_modes,
+                    ylms,
+                    modeinds,
+                    fund_freq_args=fund_freq_args,
+                    eps=eps,
+                )
+
+            # store number of modes for external information
+            self.num_modes_kept = teuk_modes_in.shape[1]
+
+            # create waveform
+            waveform_temp = self.create_waveform(
+                t_temp,
+                teuk_modes_in,
+                ylms_in,
+                Phi_phi_temp,
+                Phi_theta_temp,
+                Phi_r_temp,
+                self.ms,
+                self.ns,
+                M,
+                a,
+                p,
+                e,
+                dt=dt,
+                T=T,
+                include_minus_m=include_minus_m,
+            )
+
+            # if batching, need to add the waveform
+            if i > 0:
+                waveform = self.xp.concatenate([waveform, waveform_temp])
+
+            # return entire waveform
+            else:
+                waveform = waveform_temp
+
+        if dist is not None:
+            dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
+
+        else:
+            dist_dimensionless = 1.0
+
+        return waveform / dist_dimensionless
+
+
+class RelativisticKerrCircularFlux(KerrRelativisticWaveformBase):
+
+    @property
+    def gpu_capability(self):
+        return True
+
+    @property
+    def allow_batching(self):
+        return False
+
+    def attributes_RelativisticKerrCircularFlux(self):
+        """
+        attributes:
+            gpu_capability (bool): If True, this wavefrom can leverage gpu
+                resources. For this class it is False.
+            allow_batching (bool): If True, this waveform can use the batch_size
+                kwarg. For this class it is True.
+        """
+        pass
+
+    def __init__(
+        self,
+        inspiral_kwargs={},
+        amplitude_kwargs={},
+        sum_kwargs={},
+        Ylm_kwargs={},
+        use_gpu=False,
+        *args,
+        **kwargs,
+    ):
+
+        # declare specific properties
+        # inspiral_kwargs["DENSE_STEPPING"] = 0
+        inspiral_kwargs["func"] = "Relativistic_Kerr_Circ_Flux"
+
+        KerrRelativisticWaveformBase.__init__(
+            self,
+            EMRIInspiral,
+            Interp2DAmplitudeKerr,
+            InterpolatedModeSumKerr,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,

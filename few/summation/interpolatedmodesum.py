@@ -35,6 +35,7 @@ from few.utils.baseclasses import (
     SummationBase,
     SchwarzschildEccentric,
     ParallelModuleBase,
+    KerrCircular,
 )
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
@@ -432,6 +433,131 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleB
             dev = 0
         else:
             dev = int(xp.cuda.runtime.getDevice())
+
+        # the base class function __call__ will return the waveform
+        self.get_waveform(
+            self.waveform,
+            spline.interp_array,
+            m_arr,
+            n_arr,
+            init_len,
+            num_pts,
+            num_teuk_modes,
+            ylms,
+            dt,
+            h_t,
+            dev,
+        )
+
+
+class InterpolatedModeSumKerr(SummationBase, KerrCircular, ParallelModuleBase):
+    """Create waveform by interpolating sparse trajectory.
+
+    It interpolates all of the modes of interest and phases at sparse
+    trajectories. Within the summation phase, the values are calculated using
+    the interpolants and summed.
+
+    This class can be run on GPUs and CPUs.
+
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        ParallelModuleBase.__init__(self, *args, **kwargs)
+        KerrCircular.__init__(self, *args, **kwargs)
+        SummationBase.__init__(self, *args, **kwargs)
+
+        self.kwargs = kwargs
+
+        if self.use_gpu:
+            self.get_waveform = get_waveform_wrap
+
+        else:
+            self.get_waveform = get_waveform_wrap_cpu
+
+    def attributes_InterpolatedModeSumKerr(self):
+        """
+        attributes:
+            get_waveform (func): CPU or GPU function for waveform creation.
+
+        """
+
+    @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
+
+    @property
+    def citation(self):
+        return larger_few_citation + few_citation + few_software_citation
+
+    def sum(
+        self,
+        t,
+        teuk_modes,
+        ylms,
+        Phi_phi,
+        Phi_theta,
+        Phi_r,
+        m_arr,
+        n_arr,
+        *args,
+        dt=10.0,
+        **kwargs,
+    ):
+        """Interpolated summation function.
+
+        This function interpolates the amplitude and phase information, and
+        creates the final waveform with the combination of ylm values for each
+        mode.
+
+        args:
+            t (1D double xp.ndarray): Array of t values.
+            teuk_modes (2D double xp.array): Array of complex amplitudes.
+                Shape: (len(t), num_teuk_modes).
+            ylms (1D complex128 xp.ndarray): Array of ylm values for each mode,
+                including m<0. Shape is (num of m==0,) + (num of m>0,)
+                + (num of m<0). Number of m<0 and m>0 is the same, but they are
+                ordered as (m==0 first then) m>0 then m<0.
+            Phi_phi (1D double xp.ndarray): Array of azimuthal phase values
+                (:math:`\Phi_\phi`).
+            Phi_r (1D double xp.ndarray): Array of radial phase values
+                 (:math:`\Phi_r`).
+            m_arr (1D int xp.ndarray): :math:`m` values associated with each mode.
+            n_arr (1D int xp.ndarray): :math:`n` values associated with each mode.
+            *args (list, placeholder): Added for future flexibility.
+            dt (double, optional): Time spacing between observations (inverse of sampling
+                rate). Default is 10.0.
+            **kwargs (dict, placeholder): Added for future flexibility.
+
+        """
+
+        init_len = len(t)
+        num_teuk_modes = teuk_modes.shape[1]
+        num_pts = self.num_pts
+
+        length = init_len
+        ninterps = self.ndim + 2 * num_teuk_modes  # 2 for re and im
+        y_all = self.xp.zeros((ninterps, length))
+
+        y_all[:num_teuk_modes] = teuk_modes.T.real
+        y_all[num_teuk_modes : 2 * num_teuk_modes] = teuk_modes.T.imag
+
+        y_all[-2] = Phi_phi
+        # y_all[-2] = Phi_theta
+        y_all[-1] = Phi_r
+
+        spline = CubicSplineInterpolant(t, y_all, use_gpu=self.use_gpu)
+
+        try:
+            h_t = t.get()
+        except:
+            h_t = t
+
+        if not self.use_gpu:
+            dev = 0
+        else:
+            dev = int(self.xp.cuda.runtime.getDevice())
 
         # the base class function __call__ will return the waveform
         self.get_waveform(
