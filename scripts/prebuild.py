@@ -1,6 +1,6 @@
 import shutil
 
-fp_loc = __file__.split("prebuild.py")[0]
+fp_loc = __file__.split("scripts/prebuild.py")[0]
 fp_out_name = fp_loc + "few/utils/constants.py"
 fp_in_name = fp_loc + "include/global.h"
 
