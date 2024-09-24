@@ -95,15 +95,16 @@ git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
 cd FastEMRIWaveforms
 ```
 
-3) If using GPUs, use pip to [install cupy](https://docs-cupy.chainer.org/en/stable/install.html). If you have cuda version 9.2, for example:
+3) If using GPUs, use pip to [install cupy](https://docs-cupy.chainer.org/en/stable/install.html). If you have cuda version 12.1, for example:
 
 ```
-pip install cupy-cuda92
+pip install cupy-cuda12x
 ```
 
 4) Run install.
 
 ```
+python scripts/prebuild.py
 python setup.py install
 ```
 
