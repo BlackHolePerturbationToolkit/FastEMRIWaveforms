@@ -749,10 +749,10 @@ def get_mu_at_t(
 
 
 def check_for_file_download(fp, few_dir, version_string=None):
-    """Download files direct from zenodo.
+    """Download files direct from download.bhptoolkit.org.
 
-    This function downloads the files from zenodo as they are needed. They are
-    downloaded based on the associated record for each version (`record_by_version`).
+    This function downloads the files from download.bhptoolkit.org as they are needed. They are
+    downloaded based on the associated Zenodo record for each version (`record_by_version`).
 
     The version is determined from the `__version__` attribute of `few` unless
     a version string is provided.
@@ -788,7 +788,7 @@ def check_for_file_download(fp, few_dir, version_string=None):
         os.mkdir(few_dir + "few/files/")
 
     # check if the file is in the files filder
-    # if not, download it from zenodo
+    # if not, download it from download.bhptoolkit.org
     if fp not in os.listdir(few_dir + "few/files/"):
         warnings.warn(
             "The file {} did not open sucessfully. It will now be downloaded to the proper location.".format(
@@ -802,8 +802,8 @@ def check_for_file_download(fp, few_dir, version_string=None):
         # temporary fix
         record = 3981654
 
-        # url to zenodo API
-        url = "https://zenodo.org/record/" + str(record) + "/files/" + fp
+        # url to download from
+        url = "https://download.bhptoolkit.org/few/data/" + str(record) + "/" + fp
 
         # run wget from terminal to get the folder
         # download to proper location

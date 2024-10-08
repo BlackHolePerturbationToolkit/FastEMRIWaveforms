@@ -76,7 +76,7 @@ will download automatically the first time they are needed. Files are
 generally under 10MB. However, there is a 100MB file needed for the slow
 waveform and the bicubic amplitude interpolation. This larger file will
 only download if you run either of those two modules. The files are
-hosted on `Zenodo <https://zenodo.org/record/3981654#.XzS_KRNKjlw>`__.
+hosted on the `Black Hole Perturbation Toolkit Download Server <https://download.bhptoolkit.org/few/data>`__.
 
 Installing
 ~~~~~~~~~~
