@@ -450,3 +450,9 @@ setup(
     zip_safe=False,
     python_requires=">=3.6",
 )
+
+
+# prepare the ode files
+from few.utils.odeprepare import ode_prepare
+
+ode_prepare()
