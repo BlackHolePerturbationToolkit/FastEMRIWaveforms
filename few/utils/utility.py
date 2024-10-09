@@ -791,7 +791,7 @@ def check_for_file_download(fp, few_dir, version_string=None):
     # if not, download it from download.bhptoolkit.org
     if fp not in os.listdir(few_dir + "few/files/"):
         warnings.warn(
-            "The file {} did not open sucessfully. It will now be downloaded to the proper location.".format(
+            "The file {} did not open successfully. It will now be downloaded to the proper location.".format(
                 fp
             )
         )
@@ -802,15 +802,19 @@ def check_for_file_download(fp, few_dir, version_string=None):
         # temporary fix
         record = 3981654
 
-        # url to download from
+        # url to download from with Zenodo fallback in case of failure
         url = "https://download.bhptoolkit.org/few/data/" + str(record) + "/" + fp
+        zenodourl = "https://zenodo.org/record/" + str(record) + "/files/" + fp
 
-        # run wget from terminal to get the folder
-        # download to proper location
-        subprocess.run(["wget", "--no-check-certificate", url])
+        # download the file
+        response = requests.get(url, stream=True)
+        if response.ok != True:
+          response = requests.get(zenodourl, stream=True)
 
-        # move it into the files folder
-        os.rename(fp, few_dir + "few/files/" + fp)
+        # Save the file to the files folder, downloading 8KB at a time
+        with open(few_dir + "few/files/" + fp, mode="wb") as file:
+          for chunk in response.iter_content(chunk_size = 2**15):
+            file.write(chunk)
 
 
 def wrapper(*args, **kwargs):
