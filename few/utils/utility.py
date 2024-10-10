@@ -20,6 +20,7 @@ import requests
 import os
 import subprocess
 import warnings
+from rich.progress import track
 
 import numpy as np
 from scipy.interpolate import CubicSpline
@@ -790,11 +791,7 @@ def check_for_file_download(fp, few_dir, version_string=None):
     # check if the file is in the files filder
     # if not, download it from download.bhptoolkit.org
     if fp not in os.listdir(few_dir + "few/files/"):
-        warnings.warn(
-            "The file {} did not open successfully. It will now be downloaded to the proper location.".format(
-                fp
-            )
-        )
+        print("Data file " + fp + " not found. Downloading now.")
 
         # get record number based on version
         # record = record_by_version.get(version_string)
@@ -813,7 +810,9 @@ def check_for_file_download(fp, few_dir, version_string=None):
 
         # Save the file to the files folder, downloading 8KB at a time
         with open(few_dir + "few/files/" + fp, mode="wb") as file:
-          for chunk in response.iter_content(chunk_size = 2**15):
+          filesize = int(response.headers.get('content-length'))
+          csize = 2**15
+          for chunk in track(response.iter_content(chunk_size = csize), description="Downloading "+fp, total=filesize/csize):
             file.write(chunk)
 
 
