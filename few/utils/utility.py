@@ -20,6 +20,7 @@ import requests
 import os
 import subprocess
 import warnings
+from rich.progress import track
 
 import numpy as np
 from scipy.interpolate import CubicSpline
@@ -749,10 +750,10 @@ def get_mu_at_t(
 
 
 def check_for_file_download(fp, few_dir, version_string=None):
-    """Download files direct from zenodo.
+    """Download files direct from download.bhptoolkit.org.
 
-    This function downloads the files from zenodo as they are needed. They are
-    downloaded based on the associated record for each version (`record_by_version`).
+    This function downloads the files from download.bhptoolkit.org as they are needed. They are
+    downloaded based on the associated Zenodo record for each version (`record_by_version`).
 
     The version is determined from the `__version__` attribute of `few` unless
     a version string is provided.
@@ -788,13 +789,9 @@ def check_for_file_download(fp, few_dir, version_string=None):
         os.mkdir(few_dir + "few/files/")
 
     # check if the file is in the files filder
-    # if not, download it from zenodo
+    # if not, download it from download.bhptoolkit.org
     if fp not in os.listdir(few_dir + "few/files/"):
-        warnings.warn(
-            "The file {} did not open sucessfully. It will now be downloaded to the proper location.".format(
-                fp
-            )
-        )
+        print("Data file " + fp + " not found. Downloading now.")
 
         # get record number based on version
         # record = record_by_version.get(version_string)
@@ -802,15 +799,21 @@ def check_for_file_download(fp, few_dir, version_string=None):
         # temporary fix
         record = 3981654
 
-        # url to zenodo API
-        url = "https://zenodo.org/record/" + str(record) + "/files/" + fp
+        # url to download from with Zenodo fallback in case of failure
+        url = "https://download.bhptoolkit.org/few/data/" + str(record) + "/" + fp
+        zenodourl = "https://zenodo.org/record/" + str(record) + "/files/" + fp
 
-        # run wget from terminal to get the folder
-        # download to proper location
-        subprocess.run(["wget", "--no-check-certificate", url])
+        # download the file
+        response = requests.get(url, stream=True)
+        if response.ok != True:
+          response = requests.get(zenodourl, stream=True)
 
-        # move it into the files folder
-        os.rename(fp, few_dir + "few/files/" + fp)
+        # Save the file to the files folder, downloading 8KB at a time
+        with open(few_dir + "few/files/" + fp, mode="wb") as file:
+          filesize = int(response.headers.get('content-length'))
+          csize = 2**15
+          for chunk in track(response.iter_content(chunk_size = csize), description="Downloading "+fp, total=filesize/csize):
+            file.write(chunk)
 
 
 def wrapper(*args, **kwargs):
