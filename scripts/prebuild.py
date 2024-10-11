@@ -355,7 +355,9 @@ with open(fp_out_name, "w") as fp_out:
 
 # need to copy cuda files to cpp for this special compiler we are using
 # also copy pyx files to cpu version
-src = "src/"
+
+print("Changing .cu and .pyx files to cpu compatible codes")
+src = fp_loc + "/src/"
 
 cp_cu_files = ["matmul", "interpolate", "gpuAAK", "AmpInterp2D"]
 cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap", "pyampinterp2D"]
@@ -367,15 +369,17 @@ for fp in cp_pyx_files:
     shutil.copy(src + fp + ".pyx", src + fp + "_cpu.pyx")
 
 # setup version file
-with open("README.md", "r") as fh:
+
+with open(fp_loc + "/README.md", "r") as fh:
     lines = fh.readlines()
 
 for line in lines:
     if line.startswith("Current Version"):
         version_string = line.split("Current Version: ")[1].split("\n")[0]
 
-with open("few/_version.py", "w") as f:
+with open(fp_loc + "/few/_version.py", "w") as f:
     f.write("__version__ = '{}'".format(version_string))
+
 
 # prepare the ode files
 ode_prepare()
