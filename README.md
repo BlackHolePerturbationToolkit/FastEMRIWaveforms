@@ -84,7 +84,7 @@ conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack
 conda activate few_env
 ```
 
-    If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
+    If on MACOSX with an Intel CPU, substitute `gcc_linux-64` and `gxx_linux-64` with `clang_osx-64` and `clangxx_osx-64`. For an ARM CPU (Apple Silicon) substitute these arguments with `clang_osx-arm64` and `clangxx_osx-arm64` instead.
 
     If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, matplotlib) with pip.
 
@@ -101,7 +101,14 @@ cd FastEMRIWaveforms
 pip install cupy-cuda92
 ```
 
-4) Run install.
+4) Copy the prebuild script to the top-level directory of the repository and run it (simply running it will not work!):
+
+```
+cp scripts/prebuild.py ./
+python prebuild.py
+```
+
+5) Run install.
 
 ```
 python setup.py install
