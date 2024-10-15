@@ -133,8 +133,334 @@ class ParallelModuleBase(ABC):
 
         return kwargs
 
+class SphericalHarmonic(ParallelModuleBase, ABC):
+    """Base class for waveforms constructed in a spherical harmonic basis.
 
-class SchwarzschildEccentric(ParallelModuleBase, ABC):
+    This class creates shared traits between different implementations of the
+    same model. Particularly, this class includes descriptive traits as well as
+    the sanity check class method that should be used in all implementations of
+    this model. This method can be overwritten if necessary. Here we describe
+    the overall qualities of this base class.
+
+    Currently, Eq. :eq:`emri_wave_eq` is reduced to the equatorial plane. 
+    Therefore, we only concerned with :math:`(l,m,n)` indices and
+    the parameters :math:`(a, p,e)` because :math:`k=|\iota|=0`. Therefore, in this
+    model we calculate :math:`A_{lmn}` and :math:`\Phi_{mn}=m\Phi_\phi+n\Phi_r`.
+    As we assume the amplitudes have been remapped to a spherical harmonic basis, 
+    we use -2 spin-weighted spherical harmonics (:math:`(s=-2)Y_{l,m}`) in place 
+    of the more generic angular function from Eq. :eq:`emri_wave_eq`.
+
+    args:
+        use_gpu (bool, optional): If True, will allocate arrays on the GPU.
+            Default is False.
+
+    """
+    def __init__(self, *args, use_gpu=False, **kwargs):
+        ParallelModuleBase.__init__(self, *args, use_gpu=use_gpu, **kwargs)
+
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
+
+        # fill all lmn mode values
+        md = []
+        for l in  range(2, self.lmax+1):
+            for m in range(0, l + 1):
+                for n in range(-self.nmax, self.nmax+1):
+                    md.append([l, m, n])
+
+        # total number of modes in the model
+        self.num_modes = self.num_teuk_modes = len(md)
+
+        # mask for m == 0
+        m0mask = xp.array(
+            [
+                m == 0
+                for l in range(2, 10 + 1)
+                for m in range(0, l + 1)
+                for n in range(-self.nmax, self.nmax + 1)
+            ]
+        )
+
+        # sorts so that order is m=0, m<0, m>0
+        self.m0sort = m0sort = xp.concatenate(
+            [
+                xp.arange(self.num_teuk_modes)[m0mask],
+                xp.arange(self.num_teuk_modes)[~m0mask],
+            ]
+        )
+
+        # sorts the mode indexes
+        md = xp.asarray(md).T[:, m0sort].astype(xp.int32)
+
+        # store l m and n values
+        self.l_arr_no_mask, self.m_arr_no_mask, self.n_arr_no_mask = md[0], md[1], md[2]
+
+        # adjust with .get method for cupy
+        try:
+            self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T.get())}
+
+        except AttributeError:
+            self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
+
+        # store the mask as m != 0 is True
+        self.m0mask = self.m_arr_no_mask != 0
+
+        # number of m >= 0
+        self.num_m_zero_up = len(self.m_arr_no_mask)
+
+        # number of m == 0
+        self.num_m0 = len(xp.arange(self.num_teuk_modes)[m0mask])
+
+        # number of m > 0
+        self.num_m_1_up = self.num_m_zero_up - self.num_m0
+
+        # create final arrays to include -m modes
+        self.l_arr = xp.concatenate([self.l_arr_no_mask, self.l_arr_no_mask[self.m0mask]])
+        self.m_arr = xp.concatenate([self.m_arr_no_mask, -self.m_arr_no_mask[self.m0mask]])
+        self.n_arr = xp.concatenate([self.n_arr_no_mask, self.n_arr_no_mask[self.m0mask]])
+
+        # mask for m >= 0
+        self.m_zero_up_mask = self.m_arr >= 0
+
+        # find unique sets of (l,m)
+        # create inverse array to build full (l,m,n) from unique l and m
+        # also adjust for cupy
+        try:
+            temp, self.inverse_lm = np.unique(
+                np.asarray([self.l_arr.get(), self.m_arr.get()]).T,
+                axis=0,
+                return_inverse=True,
+            )
+
+        except AttributeError:
+            temp, self.inverse_lm = np.unique(
+                np.asarray([self.l_arr, self.m_arr]).T, axis=0, return_inverse=True
+            )
+
+        # unique values of l and m
+        self.unique_l, self.unique_m = xp.asarray(temp).T
+
+        # number of unique values
+        self.num_unique_lm = len(self.unique_l)
+
+        # creates special maps to the modes
+        self.index_map = {}
+        self.special_index_map = {}  # maps the minus m values to positive m
+        for i, (l, m, n) in enumerate(zip(self.l_arr, self.m_arr, self.n_arr)):
+            try:
+                l = l.item()
+                m = m.item()
+                n = n.item()
+
+            except AttributeError:
+                pass
+
+            # regular index to mode tuple
+            self.index_map[(l, m, n)] = i
+
+            # special map that gives m < 0 indices as m > 0 indices
+            self.special_index_map[(l, m, n)] = (
+                i if i < self.num_modes else i - self.num_m_1_up
+            )
+
+    def sanity_check_viewing_angles(self, theta, phi):
+        """Sanity check on viewing angles.
+
+        Make sure parameters are within allowable ranges.
+
+        args:
+            theta (double): Polar viewing angle.
+            phi (double): Azimuthal viewing angle.
+
+        Returns:
+            tuple: (theta, phi). Phi is wrapped.
+
+        Raises:
+            ValueError: If any of the angular values are not allowed.
+
+        """
+        # if theta < 0.0 or theta > np.pi:
+        #    raise ValueError("theta must be between 0 and pi.")
+
+        phi = phi % (2 * np.pi)
+        return (theta, phi)
+
+    def sanity_check_traj(self, a, p, e, xI):
+        """Sanity check on parameters output from the trajectory module.
+
+        Make sure parameters are within allowable ranges.
+
+        args:
+            p (1D np.ndarray): Array of semi-latus rectum values produced by
+                the trajectory module.
+            e (1D np.ndarray): Array of eccentricity values produced by
+                the trajectory module.
+
+        Raises:
+            ValueError: If any of the trajectory points are not allowed.
+            warn: If any points in the trajectory are allowable,
+                but outside calibration region.
+
+        """
+
+        if np.any(e < 0.0):
+            raise ValueError("Members of e array are less than zero.")
+
+        if np.any(p < 0.0):
+            raise ValueError("Members of p array are less than zero.")
+        
+        if np.any((a < 0.0) | (a > 1.0)):
+            raise ValueError("Members of a array are not within the range [0, 1].")
+
+        if np.any(abs(xI) > 1.0):
+            raise ValueError("Members of xI array have a magnitude greater than one.")
+
+class SchwarzschildEccentric(SphericalHarmonic):
+    def __init__(self, *args, use_gpu=False, **kwargs):
+        # some descriptive information
+        self.background = "Schwarzschild"
+        self.descriptor = "eccentric"
+        self.frame = "source"
+
+        # set mode index settings
+        self.lmax = 10
+        self.nmax = 50
+
+        self.ndim = 2
+
+        SphericalHarmonic.__init__(self, *args, use_gpu=use_gpu, **kwargs)
+
+    @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
+
+    @property
+    def citation(self):
+        """Return citations of this class"""
+        return larger_few_citation + few_citation + few_software_citation
+
+    def sanity_check_init(self, M, mu, a, p0, e0, xI):
+        """Sanity check initial parameters.
+
+        Make sure parameters are within allowable ranges.
+
+        args:
+            M (double): Massive black hole mass in solar masses.
+            mu (double): compact object mass in solar masses.
+            p0 (double): Initial semilatus rectum (dimensionless)
+                :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
+                more information on :math:`p_0 \leq 10.0`.
+            e0 (double): Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
+
+        Raises:
+            ValueError: If any of the parameters are not allowed.
+
+        """
+        
+        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"]]:
+            test = val < 0.0
+            if test:
+                raise ValueError("{} is negative. It must be positive.".format(key))
+
+        if e0 > 0.75:
+            raise ValueError(
+                "Initial eccentricity above 0.75 not allowed. (e0={})".format(e0)
+            )
+
+        if e0 < 0.0:
+            raise ValueError(
+                "Initial eccentricity below 0.0 not physical. (e0={})".format(e0)
+            )
+
+        if p0 < 10.0:
+            if p0 < 7 * (6.0 + 2 * e0) - 41.9:
+                raise ValueError(
+                    "This p0 ({}) and e0 ({}) combination is outside of our domain of validity.".format(
+                        p0, e0
+                    )
+                )
+
+        if p0 > 16.0 + 2 * e0:
+            raise ValueError(
+                "Initial p0 is too large (p0={}). Must be 10 <= p0 <= 16 + 2 * e.".format(
+                    p0
+                )
+            )
+
+
+class KerrEccentricEquatorial(SphericalHarmonic):
+    def __init__(self, *args, use_gpu=False, **kwargs):
+        # some descriptive information
+        self.background = "Kerr"
+        self.descriptor = "eccentric"
+        self.frame = "source"
+
+        # set mode index settings
+        self.lmax = 10
+        self.nmax = 50
+
+        self.ndim = 2
+
+        SphericalHarmonic.__init__(self, *args, use_gpu=use_gpu, **kwargs)
+
+    @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
+
+    @property
+    def citation(self):
+        """Return citations of this class"""
+        return larger_few_citation + few_citation + few_software_citation
+
+    def sanity_check_init(self, M, mu, a, p0, e0, xI):
+        """Sanity check initial parameters.
+
+        Make sure parameters are within allowable ranges.
+
+        args:
+            M (double): Massive black hole mass in solar masses.
+            mu (double): compact object mass in solar masses.
+            p0 (double): Initial semilatus rectum (dimensionless)
+                :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
+                more information on :math:`p_0 \leq 10.0`.
+            e0 (double): Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
+
+        Raises:
+            ValueError: If any of the parameters are not allowed.
+
+        """
+
+        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"], [a, "a"]]:
+            test = val < 0.0
+            if test:
+                raise ValueError("{} is negative. It must be positive.".format(key))
+
+        if a > 0.99:
+            raise ValueError(
+                "Larger black hole spin above 0.99 is outside of our domain of validity."
+            )
+
+        if abs(xI) != 1.:
+            raise ValueError(
+                "For equatorial orbits, xI must be either 1 or -1."
+            )
+        
+        #  TODO: implement the transforms we end up with here and apply them to perform bounds checking.
+
+        # u = kerr_p_to_u(a, p0, e0, xI)
+        # if u > 1.365:
+        #     raise ValueError(
+        #         "This a ({}), p0 ({}) and e0 ({}) combination is outside of our domain of validity.".format(
+        #             a, p0, e0
+        #         )
+
+        #     )
+
+class Old_SchwarzschildEccentric(ParallelModuleBase, ABC):
     """Base class for Schwarzschild eccentric waveforms.
 
     This class creates shared traits between different implementations of the
@@ -434,7 +760,7 @@ class SchwarzschildEccentric(ParallelModuleBase, ABC):
                 )
             )
 
-class KerrEquatorialEccentric(ParallelModuleBase, ABC):
+class Old_KerrEquatorialEccentric(ParallelModuleBase, ABC):
     """Base class for Schwarzschild eccentric waveforms.
 
     This class creates shared traits between different implementations of the

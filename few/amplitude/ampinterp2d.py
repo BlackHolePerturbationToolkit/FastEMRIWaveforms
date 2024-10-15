@@ -28,7 +28,7 @@ from tqdm import tqdm
 # Cython/C++ imports
 
 # Python imports
-from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase, ParallelModuleBase, KerrEquatorialEccentric
+from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase, ParallelModuleBase, KerrEccentricEquatorial
 from few.utils.utility import check_for_file_download
 from few.utils.citations import *
 from few.utils.utility import p_to_y, kerr_p_to_u
@@ -80,7 +80,7 @@ _DEFAULT_AMPLITUDE_FILENAMES = [
     f"KerrEqEccAmpCoeffs_a{spin:.3f}.h5" for spin in _DEFAULT_SPINS
 ]
 
-class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
+class AmpInterp2D(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleBase):
     """Calculate Teukolsky amplitudes with a ROMAN.
 
     ROMAN stands for reduced-order models with artificial neurons. Please see
@@ -156,7 +156,7 @@ class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
     def __init__(self, fp, max_init_len=1000, file_directory=None, **kwargs):
 
         ParallelModuleBase.__init__(self, **kwargs)
-        KerrEquatorialEccentric.__init__(self, **kwargs)
+        KerrEccentricEquatorial.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
         if self.use_gpu:
@@ -305,11 +305,11 @@ class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
         return z
 
 
-class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
+class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleBase):
     def __init__(self, file_directory=None, filenames=None, **kwargs):
 
         ParallelModuleBase.__init__(self, **kwargs)
-        KerrEquatorialEccentric.__init__(self, **kwargs)
+        KerrEccentricEquatorial.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
         if file_directory is None:
