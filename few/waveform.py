@@ -366,6 +366,7 @@ class SphericalHarmonicWaveformBase(
         mode_selector_kwargs={},
         use_gpu=False,
         num_threads=None,
+        normalize_amps=False,
     ):
         ParallelModuleBase.__init__(self, use_gpu=use_gpu, num_threads=num_threads)
 
@@ -377,6 +378,9 @@ class SphericalHarmonicWaveformBase(
         ) = self.adjust_gpu_usage(
             use_gpu, [amplitude_kwargs, sum_kwargs, Ylm_kwargs, mode_selector_kwargs]
         )
+
+        # normalize amplitudes to flux at each step from trajectory
+        self.normalize_amps = normalize_amps
 
         # kwargs that are passed to the inspiral call function
         self.inspiral_kwargs = inspiral_kwargs
@@ -502,6 +506,11 @@ class SphericalHarmonicWaveformBase(
         # makes sure p and e are generally within the model
         self.sanity_check_traj(a, p, e, xI)
 
+        if self.normalize_amps:
+            # get the vector norm
+            amp_norm = self.amplitude_generator.amp_norm_spline.ev(p_to_y(p, e), e)  # TODO: handle this grid parameter change, fix to Schwarzschild for now
+            amp_norm = xp.asarray(amp_norm)
+
         self.end_time = t[-1]
         
         # convert for gpu
@@ -519,7 +528,6 @@ class SphericalHarmonicWaveformBase(
         # if mode selector is predictive, run now to avoid generating amplitudes that are not required
         if self.mode_selector.is_predictive:
             # overwrites mode_selection so it's now a list of modes to keep, ready to feed into amplitudes
-            # TODO add retrograde via a *= xI0
             mode_selection = self.mode_selector(M, mu, a*xI0, p0, e0, 1., theta, phi, T, eps)  # TODO: update this if more arguments are required
 
         # split into batches
@@ -551,11 +559,30 @@ class SphericalHarmonicWaveformBase(
             e_temp = e[inds_in]
             Phi_phi_temp = Phi_phi[inds_in]
             Phi_r_temp = Phi_r[inds_in]
-            
+            if self.normalize_amps:
+                amp_norm_temp = amp_norm[inds_in]
+
             # if we aren't requesting a subset of modes, compute them all now
             if not isinstance(mode_selection, list) and not isinstance(mode_selection, xp.ndarray):
                 # amplitudes
                 teuk_modes = xp.asarray(self.amplitude_generator(a, p_temp, e_temp, xI0))
+
+                # normalize by flux produced in trajectory
+                if self.normalize_amps:
+                    amp_for_norm = xp.sum(
+                        xp.abs(
+                            xp.concatenate(
+                                [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])],
+                                axis=1,
+                            )
+                        )
+                        ** 2,
+                        axis=1,
+                    ) ** (1 / 2)
+
+                    # normalize
+                    factor = amp_norm_temp / amp_for_norm
+                    teuk_modes = teuk_modes * factor[:, np.newaxis]
 
             # different types of mode selection
             # sets up ylm and teuk_modes properly for summation
@@ -580,9 +607,11 @@ class SphericalHarmonicWaveformBase(
 
             # get a specific subset of modes
             elif isinstance(mode_selection, list) or isinstance(mode_selection, xp.ndarray):
+                if self.normalize_amps:
+                    raise NotImplementedError("Selecting a subset of modes with amplitude normalization is not currently supported.")
+
                 if len(mode_selection) == 0:
                     raise ValueError("If mode selection is a list, cannot be empty.")
-
 
                 # generate only the required modes with the amplitude module
                 teuk_modes = self.amplitude_generator(a, p_temp, e_temp, xI0, specific_modes=mode_selection)
@@ -816,7 +845,99 @@ class FastKerrEccentricEquatorialFlux(SphericalHarmonicWaveformBase, KerrEccentr
             **kwargs,
         )
 
+
 class FastSchwarzschildEccentricFlux(SphericalHarmonicWaveformBase, SchwarzschildEccentric, ABC):
+    def __init__(
+        self,
+        inspiral_kwargs={},
+        amplitude_kwargs={},
+        sum_kwargs={},
+        Ylm_kwargs={},
+        mode_selector_kwargs={},
+        use_gpu=False,
+        *args,
+        **kwargs,
+    ):
+        SchwarzschildEccentric.__init__(self, use_gpu=use_gpu, nmax=30)
+
+        inspiral_kwargs["func"] = "SchwarzEccFlux"
+        inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
+
+        mode_summation_module = InterpolatedModeSum
+        if "output_type" in sum_kwargs:
+            if sum_kwargs["output_type"] == "fd":
+                mode_summation_module = FDInterpolatedModeSum
+        
+        mode_selection_module = ModeSelector
+        if "mode_selection_type" in mode_selector_kwargs:
+            if mode_selector_kwargs["mode_selection_type"] == "neural":
+                mode_selection_module = NeuralModeSelector
+                if "mode_selector_location" not in mode_selector_kwargs:
+                    mode_selector_kwargs["mode_selector_location"] = os.path.join(dir_path,'./files/modeselector_files/KerrEccentricEquatorialFlux/')
+                mode_selector_kwargs["keep_inds"] = np.array([0,1,3,4,6,7,8,9])
+        
+        SphericalHarmonicWaveformBase.__init__(
+            self,
+            EMRIInspiral,
+            RomanAmplitude,
+            mode_summation_module,
+            mode_selection_module,
+            inspiral_kwargs=inspiral_kwargs,
+            amplitude_kwargs=amplitude_kwargs,
+            sum_kwargs=sum_kwargs,
+            Ylm_kwargs=Ylm_kwargs,
+            mode_selector_kwargs=mode_selector_kwargs,
+            use_gpu=use_gpu,
+            normalize_amps=True,
+            *args,
+            **kwargs,
+        )
+
+    def attributes(self):
+        """
+        Attributes:
+            gpu_capability (bool): If True, this wavefrom can leverage gpu
+                resources. For this class it is True.
+            allow_batching (bool): If True, this waveform can use the batch_size
+                kwarg. For this class it is False.
+
+        """
+        pass
+
+    @property
+    def gpu_capability(self):
+        return True
+
+    @property
+    def allow_batching(self):
+        return False
+
+    def __call__(
+        self,
+        M,
+        mu,
+        p0,
+        e0,
+        theta,
+        phi,
+        *args,
+        **kwargs,
+    ):
+        # insert missing arguments for this waveform class
+        return self._generate_waveform(
+            M,
+            mu,
+            0.,
+            p0,
+            e0,
+            1.,
+            theta,
+            phi,
+            *args,
+            **kwargs,
+        )
+
+class FastSchwarzschildEccentricFluxBicubic(SphericalHarmonicWaveformBase, SchwarzschildEccentric, ABC):
     def __init__(
         self,
         inspiral_kwargs={},
@@ -1210,7 +1331,7 @@ class Old_SchwarzschildEccentricWaveformBase(
             # if we aren't requesting a subset of modes, compute them all now
             if not isinstance(mode_selection, list):
                 # amplitudes
-                teuk_modes = xp.asarray(self.amplitude_generator(p_temp, e_temp))
+                teuk_modes = xp.asarray(self.amplitude_generator(0., p_temp, e_temp, 1.))
                 # normalize by flux produced in trajectory
                 if self.normalize_amps:
                     amp_for_norm = xp.sum(

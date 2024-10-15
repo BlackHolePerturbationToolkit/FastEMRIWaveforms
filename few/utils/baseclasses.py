@@ -318,17 +318,25 @@ class SphericalHarmonic(ParallelModuleBase, ABC):
             raise ValueError("Members of xI array have a magnitude greater than one.")
 
 class SchwarzschildEccentric(SphericalHarmonic):
-    def __init__(self, *args, use_gpu=False, **kwargs):
+    def __init__(
+            self, 
+            *args, 
+            use_gpu=False, 
+            lmax = 10,
+            nmax = 50,
+            ndim = 2,
+            **kwargs
+        ):
         # some descriptive information
         self.background = "Schwarzschild"
         self.descriptor = "eccentric"
         self.frame = "source"
 
         # set mode index settings
-        self.lmax = 10
-        self.nmax = 50
+        self.lmax = lmax
+        self.nmax = nmax
 
-        self.ndim = 2
+        self.ndim = ndim
 
         SphericalHarmonic.__init__(self, *args, use_gpu=use_gpu, **kwargs)
 
@@ -392,17 +400,25 @@ class SchwarzschildEccentric(SphericalHarmonic):
 
 
 class KerrEccentricEquatorial(SphericalHarmonic):
-    def __init__(self, *args, use_gpu=False, **kwargs):
+    def __init__(
+            self, 
+            *args, 
+            use_gpu=False, 
+            lmax = 10,
+            nmax = 50,
+            ndim = 2,
+            **kwargs
+        ):
         # some descriptive information
         self.background = "Kerr"
         self.descriptor = "eccentric"
         self.frame = "source"
 
         # set mode index settings
-        self.lmax = 10
-        self.nmax = 50
+        self.lmax = lmax
+        self.nmax = nmax
 
-        self.ndim = 2
+        self.ndim = ndim
 
         SphericalHarmonic.__init__(self, *args, use_gpu=use_gpu, **kwargs)
 
