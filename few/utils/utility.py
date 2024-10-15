@@ -1010,18 +1010,18 @@ def check_for_file_download(fp, file_dir, version_string=None):
         url = "https://download.bhptoolkit.org/few/data/" + str(record) + "/" + fp
         zenodourl = "https://zenodo.org/record/" + str(record) + "/files/" + fp
 
-        # run wget from terminal to get the folder
-        # download to proper location
-        subprocess.run(["wget", "--no-check-certificate", url])
         # download the file
         response = requests.get(url, stream=True)
+
+        if response.ok != True:
+          #TODO: remove this temporary fix that is implemented for development.
+          url = "https://download.bhptoolkit.org/few/data/KerrEq/" + fp
+          response = requests.get(url, stream=True)
+
         if response.ok != True:
           response = requests.get(zenodourl, stream=True)
 
-        # move it into the files folder
-        os.rename(fp, os.path.join(file_dir,fp))
         # Save the file to the files folder, downloading 8KB at a time
-
         with open(os.path.join(file_dir, fp), mode="wb") as file:
           filesize = int(response.headers.get('content-length'))
           csize = 2**15
