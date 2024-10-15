@@ -26,7 +26,7 @@ import numpy as np
 from pyInterp2DAmplitude import pyAmplitudeGenerator
 
 # Python imports
-from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase
+from few.utils.baseclasses import Old_SchwarzschildEccentric, AmplitudeBase
 from few.utils.utility import check_for_file_download
 from few.utils.citations import *
 
@@ -34,7 +34,7 @@ from few.utils.citations import *
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class Interp2DAmplitude(AmplitudeBase, SchwarzschildEccentric):
+class Interp2DAmplitude(AmplitudeBase, Old_SchwarzschildEccentric):
     """Calculate Teukolsky amplitudes by 2D Cubic Spline interpolation.
 
     Please see the documentations for
@@ -54,7 +54,7 @@ class Interp2DAmplitude(AmplitudeBase, SchwarzschildEccentric):
 
     def __init__(self, **kwargs):
 
-        SchwarzschildEccentric.__init__(self, **kwargs)
+        Old_SchwarzschildEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
         # check if you have the necessary file
