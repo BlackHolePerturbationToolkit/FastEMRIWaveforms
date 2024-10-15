@@ -98,8 +98,10 @@ public:
 class KerrEccentricEquatorial_ELQ
 {
 public:
-    TensorInterpolant *Edot_interp;
-    TensorInterpolant *Ldot_interp;
+    TricubicSpline *Edot_interp;
+    TricubicSpline *Ldot_interp;
+    BicubicSpline *bic_psep_interp;
+
     KerrEccentricEquatorial_ELQ(std::string few_dir);
     bool convert_Y = false;
     bool equatorial = true;

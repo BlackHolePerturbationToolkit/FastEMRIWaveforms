@@ -951,7 +951,7 @@ def get_mu_at_t(
 # }
 
 
-def check_for_file_download(fp, few_dir, version_string=None):
+def check_for_file_download(fp, file_dir, version_string=None):
     """Download files direct from download.bhptoolkit.org.
 
     This function downloads the files from download.bhptoolkit.org as they are needed. They are
@@ -984,15 +984,15 @@ def check_for_file_download(fp, few_dir, version_string=None):
 
     # check if the files directory exists
     try:
-        os.listdir(few_dir + "few/files/")
+        os.listdir(file_dir)
 
     # if not, create it
     except OSError:
-        os.mkdir(few_dir + "few/files/")
+        os.mkdir(file_dir)
 
     # check if the file is in the files filder
     # if not, download it from download.bhptoolkit.org
-    if fp not in os.listdir(few_dir + "few/files/"):
+    if fp not in os.listdir(file_dir):
         warnings.warn(
             "The file {} did not open successfully. It will now be downloaded to the proper location.".format(
                 fp
@@ -1019,9 +1019,10 @@ def check_for_file_download(fp, few_dir, version_string=None):
           response = requests.get(zenodourl, stream=True)
 
         # move it into the files folder
-        os.rename(fp, few_dir + "few/files/" + fp)
+        os.rename(fp, os.path.join(file_dir,fp))
         # Save the file to the files folder, downloading 8KB at a time
-        with open(few_dir + "few/files/" + fp, mode="wb") as file:
+
+        with open(os.path.join(file_dir, fp), mode="wb") as file:
           filesize = int(response.headers.get('content-length'))
           csize = 2**15
           for chunk in track(response.iter_content(chunk_size = csize), description="Downloading "+fp, total=filesize/csize):            file.write(chunk)

@@ -154,12 +154,12 @@ __deriv__ void pn5_ELQ_nofrequencies(double ydot[], const double y[], double eps
 }
 
 // Initialize flux data for inspiral calculations
-void load_and_interpolate_flux_data(struct interp_params *interps, const std::string &few_dir)
+void load_and_interpolate_flux_data(struct interp_params *interps, const std::string &file_dir)
 {
 
     // Load and interpolate the flux data
-    std::string fp = "few/files/FluxNewMinusPNScaled_fixed_y_order.dat";
-    fp = few_dir + fp;
+    std::string fp = "FluxNewMinusPNScaled_fixed_y_order.dat";
+    fp = file_dir + fp;
     ifstream Flux_file(fp);
 
     if (Flux_file.fail())
@@ -200,15 +200,15 @@ void load_and_interpolate_flux_data(struct interp_params *interps, const std::st
 
 // Class to carry gsl interpolants for the inspiral data
 // also executes inspiral calculations
-SchwarzEccFlux::SchwarzEccFlux(std::string few_dir)
+SchwarzEccFlux::SchwarzEccFlux(std::string file_dir)
 {
     interps = new interp_params;
 
     // prepare the data
     // python will download the data if
     // the user does not have it in the correct place
-    load_and_interpolate_flux_data(interps, few_dir);
-    // load_and_interpolate_amp_vec_norm_data(&amp_vec_norm_interp, few_dir);
+    load_and_interpolate_flux_data(interps, file_dir);
+    // load_and_interpolate_amp_vec_norm_data(&amp_vec_norm_interp, file_dir);
 }
 
 #define SchwarzEccFlux_num_add_args 0
@@ -289,15 +289,15 @@ SchwarzEccFlux::~SchwarzEccFlux()
     delete interps;
 }
 
-SchwarzEccFlux_nofrequencies::SchwarzEccFlux_nofrequencies(std::string few_dir)
+SchwarzEccFlux_nofrequencies::SchwarzEccFlux_nofrequencies(std::string file_dir)
 {
     interps = new interp_params;
 
     // prepare the data
     // python will download the data if
     // the user does not have it in the correct place
-    load_and_interpolate_flux_data(interps, few_dir);
-    // load_and_interpolate_amp_vec_norm_data(&amp_vec_norm_interp, few_dir);
+    load_and_interpolate_flux_data(interps, file_dir);
+    // load_and_interpolate_amp_vec_norm_data(&amp_vec_norm_interp, file_dir);
 }
 #define SchwarzEccFlux_nofrequencies_num_add_args 0
 #define SchwarzEccFlux_nofrequencies_spinless
@@ -400,69 +400,45 @@ Vector fill_vector(std::string fp)
     return xs;
 }
 
-KerrEccentricEquatorial::KerrEccentricEquatorial(std::string few_dir)
+KerrEccentricEquatorial::KerrEccentricEquatorial(std::string file_dir)
 {
-
-    // interpolant()
     std::string fp;
-    fp = few_dir + "few/files/x0.dat";
-    Vector x1 = fill_vector(fp);
-    fp = few_dir + "few/files/x1.dat";
-    Vector x2 = fill_vector(fp);
-    fp = few_dir + "few/files/x2.dat";
-    Vector x3 = fill_vector(fp);
 
-    fp = few_dir + "few/files/coeff_edot.dat";
-    Vector coeff2 = fill_vector(fp);
-    fp = few_dir + "few/files/coeff_pdot.dat";
-    Vector coeff = fill_vector(fp);
-
-    fp = few_dir + "few/files/coeff_Endot.dat";
-    Vector coeffEn = fill_vector(fp);
-    fp = few_dir + "few/files/coeff_Ldot.dat";
-    Vector coeffL = fill_vector(fp);
-
-    edot_interp = new TensorInterpolant(x1, x2, x3, coeff2);
-    pdot_interp = new TensorInterpolant(x1, x2, x3, coeff);
-
-    Edot_interp = new TensorInterpolant(x1, x2, x3, coeffEn);
-    Ldot_interp = new TensorInterpolant(x1, x2, x3, coeffL);
-
-    //
-    fp = few_dir + "few/files/TricubicData_x0.dat";
+    fp = file_dir + "KerrEqEcc_x0.dat";
     Vector tri_x1 = fill_vector(fp);
-    fp = few_dir + "few/files/TricubicData_x1.dat";
+    fp = file_dir + "KerrEqEcc_x1.dat";
     Vector tri_x2 = fill_vector(fp);
-    fp = few_dir + "few/files/TricubicData_x2.dat";
+    fp = file_dir + "KerrEqEcc_x2.dat";
     Vector tri_x3 = fill_vector(fp);
 
-    fp = few_dir + "few/files/TricubicData_pdot.dat";
+    fp = file_dir + "KerrEqEcc_pdot.dat";
     Vector tri_pdot = fill_vector(fp);
-    fp = few_dir + "few/files/TricubicData_edot.dat";
+    fp = file_dir + "KerrEqEcc_edot.dat";
     Vector tri_edot = fill_vector(fp);
 
-    fp = few_dir + "few/files/TricubicData_psep_x0.dat";
+    fp = file_dir + "Separatrix_x0.dat";
     Vector bi_psep_x1 = fill_vector(fp);
-    fp = few_dir + "few/files/TricubicData_psep_x1.dat";
+    fp = file_dir + "Separatrix_x1.dat";
     Vector bi_psep_x2 = fill_vector(fp);
-    fp = few_dir + "few/files/TricubicData_psep.dat";
+    fp = file_dir + "Separatrix_psep.dat";
     Vector bi_psep = fill_vector(fp);
 
     tric_p_interp = new TricubicSpline(tri_x1, tri_x2, tri_x3, tri_pdot, 3);
     tric_e_interp = new TricubicSpline(tri_x1, tri_x2, tri_x3, tri_edot, 3);
     bic_psep_interp = new BicubicSpline(bi_psep_x1, bi_psep_x2, bi_psep, 3);
 
-    // cout << "pdot_TP=" << pdot_interp->eval(0.9, 0.4088810015999615, 0.7700000000000000) << '\n'<< endl;
-    // cout << "pdot_TR=" << tric_p_interp->evaluate(0.9, 0.4088810015999615, 0.7700000000000000) << '\n'<< endl;
-
-    // cout << "sep_BI" << bic_psep_interp->evaluate(1.,0.5) * 6.5 << '\n' << endl;
-    // cout << "sep_real" << get_separatrix(0.99998, 0.25, -1.) << '\n' << endl;
-    // cout << "edot=" << edot_interp<< edot_interp->eval(2.000000000000000111e-01, 1.260000000000000009e+00, 4.599900000000000100e-01) << '\n'<< endl;
 }
 
-// #define KerrEccentricEquatorial_Y
 #define KerrEccentricEquatorial_equatorial
 #define KerrEccentricEquatorial_num_add_args 0
+#define KerrEccentricEquatorial_file1 KerrEqEcc_x0.dat
+#define KerrEccentricEquatorial_file2 KerrEqEcc_x1.dat
+#define KerrEccentricEquatorial_file3 KerrEqEcc_x2.dat
+#define KerrEccentricEquatorial_file4 KerrEqEcc_pdot.dat
+#define KerrEccentricEquatorial_file5 KerrEqEcc_edot.dat
+#define KerrEccentricEquatorial_file6 Separatrix_x0.dat
+#define KerrEccentricEquatorial_file7 Separatrix_x1.dat
+#define KerrEccentricEquatorial_file8 Separatrix_psep.dat
 __deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args)
 {
 
@@ -766,30 +742,45 @@ KerrEccentricEquatorial_nofrequencies::~KerrEccentricEquatorial_nofrequencies()
 }
 
 
-KerrEccentricEquatorial_ELQ::KerrEccentricEquatorial_ELQ(std::string few_dir)
+KerrEccentricEquatorial_ELQ::KerrEccentricEquatorial_ELQ(std::string file_dir)
 {
-
-    // interpolant()
     std::string fp;
-    fp = few_dir + "few/files/x0.dat";
-    Vector x1 = fill_vector(fp);
-    fp = few_dir + "few/files/x1.dat";
-    Vector x2 = fill_vector(fp);
-    fp = few_dir + "few/files/x2.dat";
-    Vector x3 = fill_vector(fp);
 
-    fp = few_dir + "few/files/coeff_Endot.dat";
-    Vector coeffEn = fill_vector(fp);
-    fp = few_dir + "few/files/coeff_Ldot.dat";
-    Vector coeffL = fill_vector(fp);
+    fp = file_dir + "KerrEqEcc_x0.dat";
+    Vector tri_x1 = fill_vector(fp);
+    fp = file_dir + "KerrEqEcc_x1.dat";
+    Vector tri_x2 = fill_vector(fp);
+    fp = file_dir + "KerrEqEcc_x2.dat";
+    Vector tri_x3 = fill_vector(fp);
 
-    Edot_interp = new TensorInterpolant(x1, x2, x3, coeffEn);
-    Ldot_interp = new TensorInterpolant(x1, x2, x3, coeffL);
+    fp = file_dir + "KerrEqEcc_pdot.dat";
+    Vector tri_pdot = fill_vector(fp);
+    fp = file_dir + "KerrEqEcc_edot.dat";
+    Vector tri_edot = fill_vector(fp);
+
+    fp = file_dir + "Separatrix_x0.dat";
+    Vector bi_psep_x1 = fill_vector(fp);
+    fp = file_dir + "Separatrix_x1.dat";
+    Vector bi_psep_x2 = fill_vector(fp);
+    fp = file_dir + "Separatrix_psep.dat";
+    Vector bi_psep = fill_vector(fp);
+
+    Edot_interp = new TricubicSpline(tri_x1, tri_x2, tri_x3, tri_pdot, 3);
+    Ldot_interp = new TricubicSpline(tri_x1, tri_x2, tri_x3, tri_edot, 3);
+    bic_psep_interp = new BicubicSpline(bi_psep_x1, bi_psep_x2, bi_psep, 3);
 }
 
 // #define KerrEccentricEquatorial_Y
 #define KerrEccentricEquatorial_ELQ_equatorial
 #define KerrEccentricEquatorial_ELQ_num_add_args 0
+#define KerrEccentricEquatorial_ELQ_file1 KerrEqEcc_x0.dat
+#define KerrEccentricEquatorial_ELQ_file2 KerrEqEcc_x1.dat
+#define KerrEccentricEquatorial_ELQ_file3 KerrEqEcc_x2.dat
+#define KerrEccentricEquatorial_ELQ_file4 KerrEqEcc_Endot.dat
+#define KerrEccentricEquatorial_ELQ_file5 KerrEqEcc_Ldot.dat
+#define KerrEccentricEquatorial_ELQ_file6 Separatrix_x0.dat
+#define KerrEccentricEquatorial_ELQ_file7 Separatrix_x1.dat
+#define KerrEccentricEquatorial_ELQ_file8 Separatrix_psep.dat
 __deriv__ void KerrEccentricEquatorial_ELQ::deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args)
 {
 
@@ -841,8 +832,8 @@ __deriv__ void KerrEccentricEquatorial_ELQ::deriv_func(double ydot[], const doub
     double signed_a = a*x; // signed a for interpolant
 
     // E, L
-    Edot = -Edot_interp->eval(signed_a,w,u) * (32./5. * pow(p,-5) * pow(1-e*e,1.5) * (1. + 73./24.* e*e + 37./96. * e*e*e*e));
-    Ldot = -x * Ldot_interp->eval(signed_a,w,u) * (32./5. * pow(p,-7./2.) * pow(1.-e*e,1.5) * (1. + 7./8. * e*e) );
+    Edot = -Edot_interp->evaluate(signed_a,w,u) * (32./5. * pow(p,-5) * pow(1-e*e,1.5) * (1. + 73./24.* e*e + 37./96. * e*e*e*e));
+    Ldot = -x * Ldot_interp->evaluate(signed_a,w,u) * (32./5. * pow(p,-7./2.) * pow(1.-e*e,1.5) * (1. + 7./8. * e*e) );
     Qdot = 0.0;
     // cout << " a=" << a << " p=" << p << " e=" << e << " psep=" << p_sep  << " Edot=" << Edot << " Ldot=" << Ldot << endl;
     

@@ -24,7 +24,7 @@ cdef extern from "../include/Inspiral.hh":
         int get_currently_running_ode_index() except+
         void update_currently_running_ode_index(int currently_running_ode_index) except+
         int get_number_of_odes() except+
-        void add_ode(string func_name, string few_dir) except+
+        void add_ode(string func_name, string file_dir) except+
         void get_convert_Y(bool_c *convert_Y, int num_odes) except+
         void get_backgrounds(int *backgrounds, int num_odes) except+
         void get_equatorial(bool_c *equatorial, int num_odes) except+
@@ -34,27 +34,27 @@ cdef extern from "../include/Inspiral.hh":
 
 cdef extern from "../include/ode.hh":
     cdef cppclass ODECarrierWrap "ODECarrier":
-        string few_dir;
-        ODECarrierWrap(string func_name_, string few_dir_) except+
+        string file_dir;
+        ODECarrierWrap(string func_name_, string file_dir_) except+
         void* func;
         void dealloc() except+
         void get_derivatives(double ydot[], const double y[], double epsilon, double a, bool_c integrate_backwards, double *additional_args) except+
 
 cdef extern from "../include/ode.hh":
     cdef cppclass GetDeriv "ODECarrier":
-        GetDeriv(string func, string few_dir)
+        GetDeriv(string func, string file_dir)
         void get_derivatives(double ydot[], const double y[], double epsilon, double a, bool_c integrate_backwards, double *additional_args) except+
 
 cdef class pyDerivative:
     cdef GetDeriv *g
     cdef public bytes func_name_store
-    cdef public bytes few_dir_store
+    cdef public bytes file_dir_store
 
-    def __cinit__(self, func_name, few_dir):
+    def __cinit__(self, func_name, file_dir):
         self.func_name_store = func_name.encode()
-        self.few_dir_store = few_dir
+        self.file_dir_store = file_dir
 
-        self.g = new GetDeriv(func_name.encode(), few_dir)
+        self.g = new GetDeriv(func_name.encode(), file_dir)
 
     def __dealloc__(self):
         if self.g:
@@ -70,10 +70,10 @@ cdef class pyDerivative:
         return ydot
 
     def __reduce__(self):
-        return (rebuild_derivatives, (self.func_name_store.decode(), self.few_dir_store))
+        return (rebuild_derivatives, (self.func_name_store.decode(), self.file_dir_store))
 
-def rebuild_derivatives(func_name, few_dir):
-    c = pyDerivative(func_name, few_dir)
+def rebuild_derivatives(func_name, file_dir):
+    c = pyDerivative(func_name, file_dir)
     return c
 
 cdef class pyInspiralGenerator:
@@ -99,9 +99,9 @@ cdef class pyInspiralGenerator:
         return num_add_args
 
     #@property
-    #def few_dir(self):
-    #    cdef string few_dir = self.few_dir_store
-    #    return few_dir
+    #def file_dir(self):
+    #    cdef string file_dir = self.file_dir_store
+    #    return file_dir
 
     #@property
     #def func_name(self):
@@ -120,8 +120,8 @@ cdef class pyInspiralGenerator:
     def num_odes(self):
         return self.f.get_number_of_odes()
 
-    def add_ode(self, func_name, few_dir):
-        self.f.add_ode(func_name, few_dir)
+    def add_ode(self, func_name, file_dir):
+        self.f.add_ode(func_name, file_dir)
 
     def set_integrator_kwargs(self, err_set, DENSE_STEP_SET, RK8_SET):
         self.f.set_integrator_kwargs(err_set, DENSE_STEP_SET, RK8_SET)

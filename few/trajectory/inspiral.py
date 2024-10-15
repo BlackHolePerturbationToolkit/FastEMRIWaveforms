@@ -117,10 +117,9 @@ class EMRIInspiral(TrajectoryBase):
         convert_to_pex=True,
         numerically_integrate_phases=True,
         rootfind_separatrix=True,
+        file_directory=None,
         **kwargs,
     ):
-        few_dir = dir_path + "/../../"
-
         if func is None:
             raise ValueError("Must provide func kwarg.")
 
@@ -129,7 +128,7 @@ class EMRIInspiral(TrajectoryBase):
         self.enforce_schwarz_sep = enforce_schwarz_sep
         
         nparams = 6
-        self.inspiral_generator = get_integrator(func, nparams, few_dir, rootfind_separatrix=rootfind_separatrix)
+        self.inspiral_generator = get_integrator(func, nparams, file_directory, rootfind_separatrix=rootfind_separatrix)
 
         self.func = self.inspiral_generator.func
 
@@ -143,7 +142,7 @@ class EMRIInspiral(TrajectoryBase):
             "integrate_backwards"
         ]
 
-        self.get_derivative = pyDerivative(self.func[0], few_dir.encode())
+        self.get_derivative = pyDerivative(self.func[0], self.inspiral_generator.file_dir.encode())
 
         self.integrate_constants_of_motion = self.inspiral_generator.integrate_constants_of_motion
         self.integrate_ODE_phases = self.inspiral_generator.integrate_ODE_phases

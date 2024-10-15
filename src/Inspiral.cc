@@ -85,9 +85,9 @@ InspiralCarrier::InspiralCarrier(int nparams_, int num_add_args_)
     num_add_args = num_add_args_;
 }
 
-void InspiralCarrier::add_ode(string func_name, string few_dir)
+void InspiralCarrier::add_ode(string func_name, string file_dir)
 {
-    params_holder->add_ode(func_name, few_dir);
+    params_holder->add_ode(func_name, file_dir);
 }
 
 int InspiralCarrier::get_number_of_odes()

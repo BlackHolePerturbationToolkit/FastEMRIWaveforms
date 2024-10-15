@@ -130,7 +130,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         SchwarzschildEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
-        self.few_dir = dir_path + "/../../"
+        self.few_dir = dir_path + "/../../few/files/"
 
         # check if user has the necessary data
         # if not, the data will automatically download
@@ -138,7 +138,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         check_for_file_download(fp, self.few_dir)
 
         # get information about this specific model from the file
-        with h5py.File(self.few_dir + "few/files/" + self.data_file, "r") as fp:
+        with h5py.File(self.few_dir + self.data_file, "r") as fp:
             num_teuk_modes = fp.attrs["num_teuk_modes"]
             transform_factor = fp.attrs["transform_factor"]
             self.break_index = fp.attrs["break_index"]
@@ -190,7 +190,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         self.num_layers = 0
 
         # extract all necessary information from the file
-        with h5py.File(self.few_dir + "few/files/" + self.data_file, "r") as fp:
+        with h5py.File(self.few_dir + self.data_file, "r") as fp:
             for key, value in fp.items():
                 if key == "reduced_basis":
                     continue
