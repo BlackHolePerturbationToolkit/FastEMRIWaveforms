@@ -30,7 +30,6 @@ cdef extern from "../include/Inspiral.hh":
         void get_equatorial(bool_c *equatorial, int num_odes) except+
         void get_circular(bool_c *circular, int num_odes) except+
         void get_integrate_constants_of_motion(bool_c *integrate_constants_of_motion, int num_odes) except+
-        void get_integrate_phases(bool_c *integrate_phases, int num_odes) except+
 
 cdef extern from "../include/ode.hh":
     cdef cppclass ODECarrierWrap "ODECarrier":
@@ -190,13 +189,6 @@ cdef class pyInspiralGenerator:
 
         self.f.get_integrate_constants_of_motion(&integrate_constants_of_motion[0], self.num_odes)
         return integrate_constants_of_motion
-
-    @property
-    def integrate_phases(self):
-        cdef np.ndarray[ndim=1, dtype=bool_c] integrate_phases = np.zeros(self.num_odes, dtype=bool)
-
-        self.f.get_integrate_phases(&integrate_phases[0], self.num_odes)
-        return integrate_phases
 
     def __reduce__(self):
         return (rebuild, (self.nparams, self.num_add_args))

@@ -99,8 +99,6 @@ def get_integrator(func, nparams, file_directory, **kwargs):
 
         integrator.add_ode(func_i.encode(), file_directory.encode())
 
-    if not integrator.integrate_phases[0]:
-        nparams -= 3
     if integrator.integrate_constants_of_motion[0]:
         return AELQIntegrate(
             func, nparams, file_directory=file_directory, num_add_args=num_add_args, **kwargs
@@ -221,10 +219,6 @@ class Integrate:
     @property
     def integrate_constants_of_motion(self):
         return self.integrator.integrate_constants_of_motion
-
-    @property
-    def integrate_ODE_phases(self):
-        return self.integrator.integrate_phases
 
     # @property
     # def func(self) -> str:
