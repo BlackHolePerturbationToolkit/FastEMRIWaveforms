@@ -266,7 +266,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         # convert from dimensionless frequencies
         f_phi, f_r = (
-            xp.asarray(Omega_phi / (2 * np.pi * M * MTSUN_SI)),
+            abs(xp.asarray(Omega_phi / (2 * np.pi * M * MTSUN_SI))),   # positive frequency to be consistent with amplitude generator for retrograde inspirals  # TODO get to the bottom of this!
             xp.asarray(Omega_r / (2 * np.pi * M * MTSUN_SI)),
         )
 
