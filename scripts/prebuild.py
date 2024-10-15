@@ -112,9 +112,6 @@ def get_ode_function_lines_names():
                 elif line.split(" ")[1][0 : 0 + len(name) + 30] == f"{name}_integrate_constants_of_motion":
                     functions_info[name]["integrate_constants_of_motion"] = "true"
 
-                elif line.split(" ")[1][0 : 0 + len(name) + 25] == f"{name}_disable_integrate_phases":
-                    functions_info[name]["integrate_phases"] = "false"
-
                 elif line.split(" ")[1][0 : 0 + len(name) + 5] == f"{name}_file":
                     functions_info[name]["files"].append(line.split(" ")[2][:-1])
 
@@ -129,7 +126,6 @@ def get_ode_function_lines_names():
         "circular": "false",
         "convert_Y": "false",
         "integrate_constants_of_motion":"false",
-        "integrate_phases":"true",
     }
     # fill anything that did not appear
     for name, info in functions_info.items():
@@ -207,7 +203,6 @@ def ode_prepare():
                 equatorial = temp->equatorial;
                 circular = temp->circular;
                 integrate_constants_of_motion = temp->integrate_constants_of_motion;
-                integrate_phases = temp->integrate_phases;
                 func = (void*) temp;
 
             """.format(
@@ -325,8 +320,7 @@ def ode_prepare():
                 bool equatorial = {4};
                 bool circular = {5};
                 bool integrate_constants_of_motion = {6};
-                bool integrate_phases = {7};
-                bool convert_Y = {8};
+                bool convert_Y = {7};
                 {0}(std::string few_dir);
 
                 void deriv_func(double ydot[], const double y[], double epsilon, double a, bool integrate_backwards, double *additional_args);
@@ -335,7 +329,7 @@ def ode_prepare():
 
         """.format(
                 func, "{", "}", info["background"], info["equatorial"], info["circular"],
-                info["integrate_constants_of_motion"], info["integrate_phases"], info["convert_Y"],
+                info["integrate_constants_of_motion"], info["convert_Y"],
             )
 
     # ode carrier hh info
@@ -349,7 +343,6 @@ def ode_prepare():
             bool equatorial;
             bool circular;
             bool integrate_constants_of_motion;
-            bool integrate_phases;
             bool convert_Y;
             void* func;
             ODECarrier(std::string func_name_, std::string few_dir_);

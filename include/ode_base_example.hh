@@ -23,7 +23,6 @@ public:
     int background = SCHWARZSCHILD;
     bool circular = false;
     bool integrate_constants_of_motion = false;
-    bool integrate_phases = true;
 
     SchwarzEccFlux(std::string few_dir);
 
