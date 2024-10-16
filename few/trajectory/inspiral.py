@@ -28,7 +28,14 @@ from pyInspiral import pyInspiralGenerator, pyDerivative
 
 # Python imports
 from few.utils.baseclasses import TrajectoryBase
-from few.utils.utility import check_for_file_download, get_ode_function_options, ELQ_to_pex, get_kerr_geo_constants_of_motion, get_fundamental_frequencies, Y_to_xI
+from few.utils.utility import (
+    check_for_file_download,
+    get_ode_function_options,
+    ELQ_to_pex,
+    get_kerr_geo_constants_of_motion,
+    get_fundamental_frequencies,
+    Y_to_xI,
+)
 from few.utils.constants import *
 from few.utils.citations import *
 
@@ -123,9 +130,11 @@ class EMRIInspiral(TrajectoryBase):
         TrajectoryBase.__init__(self, *args, **kwargs)
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
-        
+
         nparams = 6
-        self.inspiral_generator = get_integrator(func, nparams, file_directory, rootfind_separatrix=rootfind_separatrix)
+        self.inspiral_generator = get_integrator(
+            func, nparams, few_dir, rootfind_separatrix=rootfind_separatrix
+        )
 
         self.func = self.inspiral_generator.func
 
@@ -136,12 +145,16 @@ class EMRIInspiral(TrajectoryBase):
             "DENSE_STEPPING",
             "max_init_len",
             "use_rk4",
-            "integrate_backwards"
+            "integrate_backwards",
         ]
 
-        self.get_derivative = pyDerivative(self.func[0], self.inspiral_generator.file_dir.encode())
+        self.get_derivative = pyDerivative(
+            self.func[0], self.inspiral_generator.file_dir.encode()
+        )
 
-        self.integrate_constants_of_motion = self.inspiral_generator.integrate_constants_of_motion
+        self.integrate_constants_of_motion = (
+            self.inspiral_generator.integrate_constants_of_motion
+        )
         self.convert_to_pex = convert_to_pex
 
     def attributes_EMRIInspiral(self):
@@ -236,7 +249,9 @@ class EMRIInspiral(TrajectoryBase):
 
         if equatorial:
             if abs(x0) != 1:
-                raise RuntimeError("Magnitude of orbital inclination cosine x0 needs to be one for equatorial inspiral.")
+                raise RuntimeError(
+                    "Magnitude of orbital inclination cosine x0 needs to be one for equatorial inspiral."
+                )
 
         if x0 == -1:
             Phi_phi0 = -1 * Phi_phi0  # flip initial azimuthal phase for retrograde
@@ -258,23 +273,24 @@ class EMRIInspiral(TrajectoryBase):
         if len(args_in) == 0:
             args_in = np.array([0.0])
 
-        y0 = np.array([y1, y2, y3, Phi_phi0*(mu/M), Phi_theta0*(mu/M), Phi_r0*(mu/M)])
+        y0 = np.array(
+            [y1, y2, y3, Phi_phi0 * (mu / M), Phi_theta0 * (mu / M), Phi_r0 * (mu / M)]
+        )
 
         # this will return in coordinate time
         out = self.inspiral_generator.run_inspiral(M, mu, a, y0, args_in, **temp_kwargs)
         if self.integrate_constants_of_motion and self.convert_to_pex:
             out_ELQ = out.copy()
-            pex = ELQ_to_pex(a, out[:,1].copy(), out[:,2].copy(), out[:,3].copy())
-            out[:,1] = pex[0]
-            out[:,2] = pex[1]
+            pex = ELQ_to_pex(a, out[:, 1].copy(), out[:, 2].copy(), out[:, 3].copy())
+            out[:, 1] = pex[0]
+            out[:, 2] = pex[1]
             if self.inspiral_generator.convert_Y:
-                out[:,3] = out_ELQ[:,2] / np.sqrt(out_ELQ[:,2]**2 + out_ELQ[:,3])
+                out[:, 3] = out_ELQ[:, 2] / np.sqrt(out_ELQ[:, 2] ** 2 + out_ELQ[:, 3])
             else:
-                out[:,3] = pex[2]
+                out[:, 3] = pex[2]
 
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = out.T.copy()
-        return t, p, e, x, Phi_phi/(mu/M), Phi_theta/(mu/M), Phi_r/(mu/M)
-
+        return t, p, e, x, Phi_phi / (mu / M), Phi_theta / (mu / M), Phi_r / (mu / M)
 
     def get_rhs_ode(
         self,
@@ -345,7 +361,9 @@ class EMRIInspiral(TrajectoryBase):
 
         if equatorial:
             if abs(x0) != 1:
-                raise RuntimeError("Magnitude of orbital inclination cosine x0 needs to be one for equatorial inspiral.")
+                raise RuntimeError(
+                    "Magnitude of orbital inclination cosine x0 needs to be one for equatorial inspiral."
+                )
 
         if x0 == -1:
             Phi_phi0 = -1 * Phi_phi0  # flip initial azimuthal phase for retrograde
@@ -366,8 +384,8 @@ class EMRIInspiral(TrajectoryBase):
             args_in = np.array([0.0])
 
         y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
-   
+
         # this will return the derivatives in coordinate time
-        out  = self.get_derivative(mu/M, a, y0, args_in)
-        
+        out = self.get_derivative(mu / M, a, y0, args_in)
+
         return out

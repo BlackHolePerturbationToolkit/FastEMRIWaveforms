@@ -151,6 +151,7 @@ void InspiralCarrier::get_derivatives(double *ydot_, double *y, int nparams_)
         throw invalid_argument("nparams input for derivatives does not match nparams stored in the c++ class.");
 
     vector<double> ydot(nparams);
+
     params_holder->odes[params_holder->currently_running_ode_index].get_derivatives(&ydot[0], y, params_holder->epsilon, params_holder->a, params_holder->integrate_backwards, params_holder->additional_args);
     memcpy(ydot_, &ydot[0], nparams * sizeof(double));
 }
