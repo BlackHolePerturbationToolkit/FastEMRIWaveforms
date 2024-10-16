@@ -67,6 +67,8 @@ MAX_ITER = 1000
 KERR = 1
 SCHWARZSCHILD = 2
 
+from .dopr853 import DOPR853
+
 
 def get_integrator(func, nparams, few_dir, **kwargs):
 
@@ -150,6 +152,18 @@ class Integrate:
         self.few_dir = few_dir
 
         self.rootfind_separatrix = rootfind_separatrix
+
+        def ode_wrap(t, y, ydot, additionalArgs):
+            ytmp = y.flatten().copy()
+            ydot_tmp = self.integrator.get_derivatives(ytmp)
+            ydot[:, 0] = ydot_tmp
+
+        self.dopr = DOPR853(
+            ode_wrap,
+            stopping_criterion=None,  # stopping_criterion,
+            tmax=1e9,
+            max_step=1e6,
+        )
 
         if isinstance(func, str):
             func = [func]
@@ -242,7 +256,7 @@ class Integrate:
     def take_step(
         self, t: float, h: float, y: np.ndarray
     ) -> Tuple[float, float, np.ndarray]:
-        return self.integrator.take_step(t, h, y)
+        return self.dopr.take_step_single(t, h, y, self.tmax_dimensionless, None)
 
     def reset_solver(self):
         self.integrator.reset_solver()
@@ -266,14 +280,31 @@ class Integrate:
         self.save_point(0.0, y)
 
         while t < self.tmax_dimensionless:
-            status, t, h = self.integrator.take_step(t, h, y, self.tmax_dimensionless)
+
+            t_old = t
+            h_old = h
+            y_old = y.copy()
+            status, t, h = self.dopr.take_step_single(
+                t_old, h_old, y, self.tmax_dimensionless, None
+            )
+
+            # print(t, h, status)
+
+            if not status:
+                continue
 
             # should not be needed but is safeguard against stepping past maximum allowable time
             # the last point in the trajectory will be at t = tmax
             if t > self.tmax_dimensionless:
                 break
 
-            self.save_point(t * self.Msec, y)  # adds time in seconds
+            spline_info = self.dopr.prep_evaluate_single(
+                t_old, y_old, h_old, t, y, None
+            )
+
+            self.save_point(
+                t * self.Msec, y, spline_output=spline_info
+            )  # adds time in seconds
 
             t_prev = t
             y_prev[:] = y[:]
@@ -311,12 +342,13 @@ class Integrate:
         self.save_point(0.0, y)
         # breakpoint()
         while t < self.tmax_dimensionless:
-            try:
-                status, t, h = self.integrator.take_step(
-                    t, h, y, self.tmax_dimensionless
-                )
-            except (
-                ValueError
+
+            status, t, h = self.dopr.take_step_single(
+                t, h, y, self.tmax_dimensionless, None
+            )
+
+            if (
+                not status
             ):  # an Elliptic function returned a nan and it raised an exception
                 # print("We got a NAN!")
                 self.integrator.reset_solver()
@@ -372,16 +404,29 @@ class Integrate:
         self.integrator.initialize_integrator()
         self.dense_integrator.initialize_integrator()
         self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
+        self.dopr_spline_output = np.zeros(
+            (self.buffer_length, 3, 8)
+        )  # 3 phases, 8 coefficients
         self.traj_step = 0
 
     @property
     def trajectory(self):
         return self.trajectory_arr[: self.traj_step]
 
-    def save_point(self, t: float, y: np.ndarray):
+    @property
+    def integrator_spline_coeff(self):
+        return self.dopr_spline_output[: self.traj_step - 1]
+
+    def save_point(
+        self, t: float, y: np.ndarray, spline_output: List[np.ndarray] = None
+    ):
 
         self.trajectory_arr[self.traj_step, 0] = t
         self.trajectory_arr[self.traj_step, 1:] = y
+
+        if spline_output is not None:
+            assert self.traj_step >= 0
+            self.dopr_spline_output[self.traj_step - 1, :] = spline_output[3:]
 
         self.traj_step += 1
         if self.traj_step >= self.buffer_length:
@@ -390,6 +435,10 @@ class Integrate:
                 [self.trajectory_arr, np.zeros((100, self.nparams + 1))], axis=0
             )
             self.buffer_length = self.trajectory_arr.shape[0]
+
+    def eval_phase_integrator_spline(self, t_new: np.ndarray):
+        t_old = self.trajectory[:, 0]
+        return self.dopr.eval(t_new, t_old, self.integrator_spline_coeff)
 
     def run_inspiral(self, M, mu, a, y0, additional_args, T=1.0, dt=10.0, **kwargs):
         self.moves_check = 0
