@@ -133,6 +133,8 @@ class RomanAmplitude(AmplitudeBase, Old_SchwarzschildEccentric, ParallelModuleBa
 
         if file_directory is None:
             self.file_dir = dir_path + "/../../few/files/"
+        else:
+            self.file_dir = file_directory
 
         # check if user has the necessary data
         # if not, the data will automatically download
