@@ -133,7 +133,7 @@ class EMRIInspiral(TrajectoryBase):
 
         nparams = 6
         self.inspiral_generator = get_integrator(
-            func, nparams, few_dir, rootfind_separatrix=rootfind_separatrix
+            func, nparams, file_directory, rootfind_separatrix=rootfind_separatrix
         )
 
         self.func = self.inspiral_generator.func

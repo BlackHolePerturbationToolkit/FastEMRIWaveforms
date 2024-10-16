@@ -11,8 +11,8 @@ from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 from few.amplitude.ampinterp2d import AmpInterpKerrEqEcc
 from few.waveform import (
     GenerateEMRIWaveform,
-    SchwarzschildEccentricWaveformBase,
-    KerrEquatorialEccentricWaveformBase,
+    Old_SchwarzschildEccentricWaveformBase,
+    Old_KerrEquatorialEccentricWaveformBase,
 )
 from few.utils.ylm import GetYlms
 from few.utils.modeselector import ModeSelector, NeuralModeSelector
@@ -114,9 +114,9 @@ print("Integrating backwards took", time.time() - start, "seconds")
 
 t_new = np.linspace(t_back.min(), t_back.max(), 5000)
 phases = traj_backwards.inspiral_generator.eval_phase_integrator_spline(t_new)
-plt.plot(t_new, phases)
-plt.show()
-breakpoint()
+# plt.plot(t_new, phases)
+# plt.show()
+# breakpoint()
 # Set up trajectory module for forwards integration
 traj_forwards = EMRIInspiral(func=trajectory_class)
 
@@ -153,16 +153,18 @@ start = time.time()
     Phi_phi0=Phi_phi0,
     Phi_theta0=Phi_theta0,
     Phi_r0=Phi_r0,
-    T=T,
+    T=t_back.max() / YRSID_SI,  ## CHECK THIS !!!!!!!!!!!
     **inspiral_kwargs_forward
 )
 print("Integrating forwards took", time.time() - start, "seconds")
 print("Finished trajectories")
 
 p_back_interp = interp1d((max(t_back) - t_back)[::-1], p_back[::-1], kind="cubic")
-p_check_forward = p_back_interp(t_forward)
+p_check_forward = p_back_interp(t_forward[t_forward < t_back.max()])
 # p_check_forward should be near identical to p_forward up to mass-ratio corrections.
 
+# TODO: turn this into a test!!!!
+assert np.all(np.abs(p_check_forward - p_check_forward) < 1e-3)
 breakpoint()
 # ======================== WAVEFORM GENERATION =============================
 # Set extrinsic parameters for waveform generation
@@ -193,7 +195,7 @@ sum_kwargs = {
 }
 
 wave_generator_backwards = GenerateEMRIWaveform(
-    KerrEquatorialEccentricWaveformBase,
+    Old_KerrEquatorialEccentricWaveformBase,
     EMRIInspiral,
     AmpInterpKerrEqEcc,
     InterpolatedModeSum,
@@ -237,7 +239,7 @@ inspiral_kwargs_waveform_forwards = {
 }
 # Generate waveform using forwards integration
 wave_generator_forwards = GenerateEMRIWaveform(
-    KerrEquatorialEccentricWaveformBase,
+    Old_KerrEquatorialEccentricWaveformBase,
     EMRIInspiral,
     AmpInterpKerrEqEcc,
     InterpolatedModeSum,

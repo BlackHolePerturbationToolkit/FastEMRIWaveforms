@@ -166,7 +166,6 @@ def ode_prepare():
                 equatorial = temp->equatorial;
                 circular = temp->circular;
                 integrate_constants_of_motion = temp->integrate_constants_of_motion;
-                integrate_phases = temp->integrate_phases;
                 func = (void*) temp;
 
             """.format(

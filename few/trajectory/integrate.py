@@ -359,18 +359,21 @@ class Integrate:
         # breakpoint()
         while t < self.tmax_dimensionless:
 
-            status, t, h = self.dopr.take_step_single(
-                t, h, y, self.tmax_dimensionless, None
-            )
-
-            if (
-                not status
+            try:
+                status, t, h = self.dopr.take_step_single(
+                    t, h, y, self.tmax_dimensionless, None
+                )
+            except (
+                ValueError
             ):  # an Elliptic function returned a nan and it raised an exception
                 # print("We got a NAN!")
                 self.integrator.reset_solver()
                 t = t_prev
                 y[:] = y_prev[:]
                 h /= 2
+                continue
+
+            if not status:
                 continue
 
             # or if any quantity is nan, step back and take a smaller step.
