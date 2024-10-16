@@ -165,7 +165,7 @@ p_check_forward = p_back_interp(t_forward[t_forward < t_back.max()])
 
 # TODO: turn this into a test!!!!
 assert np.all(np.abs(p_check_forward - p_check_forward) < 1e-3)
-breakpoint()
+
 # ======================== WAVEFORM GENERATION =============================
 # Set extrinsic parameters for waveform generation
 
@@ -228,7 +228,7 @@ waveform_back = wave_generator_backwards(
 print("Finished backwards integration")
 
 # Extract plus polarised waveform
-h_p_back_int = cp.asnumpy(waveform_back.real)
+h_p_back_int = np.asarray(waveform_back.real)
 
 inspiral_kwargs_waveform_forwards = {
     "DENSE_STEPPING": 0,  # Set to 1 if we want a sparsely sampled trajectory
@@ -250,6 +250,8 @@ wave_generator_forwards = GenerateEMRIWaveform(
     use_gpu=False,
 )
 
+T_in_forward = waveform_back.shape[0] * dt / YRSID_SI
+
 waveform_forward = wave_generator_forwards(
     M,
     mu,
@@ -266,13 +268,13 @@ waveform_forward = wave_generator_forwards(
     Phi_theta0=Phi_theta0,
     Phi_r0=Phi_r0,
     dt=dt,
-    T=T,
+    T=T_in_forward,
 )
 
 
 print("Finished forwards integration")
 # Extract plus polarised waveform
-h_p_forward_int = cp.asnumpy(waveform_forward.real)
+h_p_forward_int = waveform_forward.real  # cp.asnumpy(waveform_forward.real)
 
 # Extract relevant times [seconds]
 n_t = len(h_p_forward_int)
@@ -280,10 +282,10 @@ t = np.arange(0, n_t * dt, dt)
 
 # Compute mismatches between waveforms
 
-h_p_forward_fft = cp.fft.rfft(
-    cp.roll(waveform_forward.real, -1)
+h_p_forward_fft = np.fft.rfft(
+    np.roll(waveform_forward.real, -1)
 )  # Roll array because numerical integrator not saving last point
-h_p_back_reversed_fft = cp.fft.rfft(
+h_p_back_reversed_fft = np.fft.rfft(
     waveform_back.real[::-1]
 )  # Reverse backwards integrated waveform
 
@@ -292,11 +294,11 @@ def inner_prod(sig1_f, sig2_f):
     """
     Filthy overlap. No noise weighting. Just RAAAW signal.
     """
-    ab = cp.sum(sig1_f * sig2_f.conj())
-    aa = cp.sum(cp.abs(sig1_f) ** 2)
-    bb = cp.sum(cp.abs(sig2_f) ** 2)
+    ab = np.sum(sig1_f * sig2_f.conj())
+    aa = np.sum(np.abs(sig1_f) ** 2)
+    bb = np.sum(np.abs(sig2_f) ** 2)
 
-    return np.real(ab / cp.sqrt(aa * bb))
+    return np.real(ab / np.sqrt(aa * bb))
 
 
 overlap = inner_prod(h_p_forward_fft, h_p_back_reversed_fft)
