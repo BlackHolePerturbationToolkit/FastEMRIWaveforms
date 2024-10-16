@@ -429,7 +429,3 @@ setup(
 )
 
 
-# prepare the ode files
-from few.utils.odeprepare import ode_prepare
-
-ode_prepare()

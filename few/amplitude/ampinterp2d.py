@@ -28,7 +28,7 @@ from tqdm import tqdm
 # Cython/C++ imports
 
 # Python imports
-from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase, ParallelModuleBase, KerrEquatorialEccentric
+from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase, ParallelModuleBase, KerrEccentricEquatorial
 from few.utils.utility import check_for_file_download
 from few.utils.citations import *
 from few.utils.utility import p_to_y, kerr_p_to_u
@@ -49,8 +49,38 @@ from pyAmpInterp2D_cpu import interp2D as interp2D_cpu
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+#TODO: handle multiple waveform models
+_DEFAULT_SPINS = [
+    -0.99,
+    -0.95,
+    -0.9,
+    -0.8,
+    -0.7,
+    -0.6,
+    -0.5,
+    -0.4,
+    -0.3,
+    -0.2,
+    -0.1,
+    0.,
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    0.95,
+    0.99
+]
 
-class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
+_DEFAULT_AMPLITUDE_FILENAMES = [
+    f"KerrEqEccAmpCoeffs_a{spin:.3f}.h5" for spin in _DEFAULT_SPINS
+]
+
+class AmpInterp2D(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleBase):
     """Calculate Teukolsky amplitudes with a ROMAN.
 
     ROMAN stands for reduced-order models with artificial neurons. Please see
@@ -123,10 +153,10 @@ class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
         """
         pass
 
-    def __init__(self, fp, max_init_len=1000, **kwargs):
+    def __init__(self, fp, max_init_len=1000, file_directory=None, **kwargs):
 
         ParallelModuleBase.__init__(self, **kwargs)
-        KerrEquatorialEccentric.__init__(self, **kwargs)
+        KerrEccentricEquatorial.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
         if self.use_gpu:
@@ -136,12 +166,27 @@ class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
             self.interp2D = interp2D_cpu
             xp = np
 
-        self.few_dir = dir_path + "/../../"
-
+        if file_directory is None:
+            self.file_dir = dir_path + "/../../few/files/"
+        else:
+            self.file_dir = file_directory
+        
         # check if user has the necessary data
         # if not, the data will automatically download
+        check_for_file_download(fp, self.file_dir)
+        
+        mystery_file = h5py.File(os.path.join(self.file_dir, fp))
+        try:
+            is_coeffs = mystery_file.attrs['is_coefficients']
+        except KeyError:
+            is_coeffs = False
 
-        coefficients = h5py.File(self.few_dir+"few/files/" + fp)
+        if is_coeffs:
+            coefficients = mystery_file
+        else:
+            print(fp, "is not a spline coefficients file. Attempting to convert...")
+            spline_fp = _spline_coefficients_to_file(fp, self.l_arr, self.m_arr, self.n_arr, file_directory=self.file_dir)
+            coefficients = h5py.File(os.path.join(self.file_dir, spline_fp))
 
         self.a_val_store = coefficients.attrs['signed_spin']
 
@@ -260,42 +305,32 @@ class AmpInterp2D(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
         return z
 
 
-class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleBase):
-    def __init__(self, specific_spins=None, **kwargs):
+class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleBase):
+    def __init__(self, file_directory=None, filenames=None, **kwargs):
 
         ParallelModuleBase.__init__(self, **kwargs)
-        KerrEquatorialEccentric.__init__(self, **kwargs)
+        KerrEccentricEquatorial.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
-        self.few_dir = dir_path + "/../../"
-
-
-    # outfile = h5py.File(few_dir+"few/files/" + f"KerrEqEccAmpCoeffs_a{abs(a_val_store):.3f}{part2}.h5","w")
-
-        if specific_spins is None:
-            spins_tmp = []
-            for fp in os.listdir(self.few_dir + "few/files/"):
-                if fp[:20] == "KerrEqEccAmpCoeffs_a":
-                    spin_h = float(fp[20:24])
-                    if fp[24:27] == "_r_":
-                        spin_h *= -1  # retrograde
-                    spins_tmp.append(spin_h)
-            # combine prograde and retrograde here
-            self.spin_values = np.unique(np.asarray(spins_tmp))
+        if file_directory is None:
+            self.file_dir = dir_path + "/../../few/files/"
         else:
-            self.spin_values = np.asarray(specific_spins)
-        
+            self.file_dir = file_directory
 
-        self.spin_information_holder = [None for _ in self.spin_values]
-        for i, spin in enumerate(self.spin_values):
-            base_string = f"{abs(spin):1.3f}"
-            if spin < 0.0:
-                base_string += "_r"
-            elif spin > 0.0:
-                base_string += "_p"
-            fp = f"KerrEqEccAmpCoeffs_a{base_string}.h5"  # coefficient files computed
+        if filenames is None:
+            self.filenames = _DEFAULT_AMPLITUDE_FILENAMES
+        else:
+            self.filenames = filenames
 
-            self.spin_information_holder[i] = AmpInterp2D(fp, use_gpu=self.use_gpu)
+        self.spin_information_holder_unsorted = [None for _ in range(len(self.filenames))]
+        for i, fp in enumerate(self.filenames):
+            self.spin_information_holder_unsorted[i] = AmpInterp2D(fp, file_directory=self.file_dir, use_gpu=self.use_gpu)
+
+        spin_values_unsorted = [sh.a_val_store for sh in self.spin_information_holder_unsorted]
+        rearrange_inds = np.argsort(spin_values_unsorted)
+
+        self.spin_values = np.asarray(spin_values_unsorted)[rearrange_inds]
+        self.spin_information_holder = [self.spin_information_holder_unsorted[i] for i in rearrange_inds]
 
         if self.use_gpu:
             xp = cp
@@ -388,6 +423,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
             z = ((z_above - z_below) / (a_above_single - a_below_single)) * (signed_spin - a_below_single) + z_below
             if apply_conjugate_total:
                 z = z.conj()
+
         if not isinstance(specific_modes, list):
             return z
         
@@ -404,16 +440,10 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEquatorialEccentric, ParallelModuleB
 
             return temp
 
-def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr):
-    few_dir = dir_path + "/../../"
-
-    # check if user has the necessary data
-    # if not, the data will automatically download
-    check_for_file_download(fp, few_dir)
-
+def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr, file_directory=None):
     data = {}
     # get information about this specific model from the file
-    with h5py.File(few_dir + "few/files/" + fp, "r") as f:
+    with h5py.File(os.path.join(file_directory, fp), "r") as f:
         # load attributes in the right order for correct mode sorting later
         kerr_format_string = "l{}m{}k0n{}"
         grid = f["grid"][:]
@@ -441,16 +471,11 @@ def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr):
     # retrograde needs sign flip to be applied to a
     a *= xI
     a_val_store = a[0]
-
-    if a_val_store < 0:
-        part2 = '_r'
-    elif a_val_store > 0:
-        part2 = '_p'
-    elif a_val_store == 0:
-        part2 = ''
-
-    outfile = h5py.File(few_dir+"few/files/" + f"KerrEqEccAmpCoeffs_a{abs(a_val_store):.3f}{part2}.h5","w")
+    
+    out_fp = f"KerrEqEccAmpCoeffs_a{a_val_store:.3f}.h5"
+    outfile = h5py.File(os.path.join(file_directory, out_fp),"w")
     outfile.attrs['signed_spin'] = a_val_store
+    outfile.attrs['is_coefficients'] = True
 
     grid_size = p.shape[0]
     
@@ -500,16 +525,13 @@ def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr):
 
     outfile.close()
 
-if __name__ == "__main__":
-    # produce spline coefficient files (will overwrite previous files if they exist!)
-    baseclass = KerrEquatorialEccentric()
-    few_dir = dir_path + "/../../"
+    return out_fp
 
+if __name__ == "__main__":
+    # try and instantiate the amplitude class
     spin_values = np.r_[np.linspace(0.,0.9,10),0.95,0.99]
     spin_values = np.r_[-np.flip(spin_values)[:-1],spin_values]
-    # or alternatively, specify your own values
 
-    # get a list of amplitude files to compute coefficients for
     base_path = "Teuk_amps_a{:.2f}_{}lmax_10_nmax_50_new_m+.h5"
     filepaths = []
     for spin in spin_values:
@@ -522,9 +544,8 @@ if __name__ == "__main__":
             part2 = ''
         filepaths.append(base_path.format(part1, part2))
 
-    # for fp in tqdm(filepaths,total=len(filepaths)):
-    #     _spline_coefficients_to_file(fp, baseclass.l_arr, baseclass.m_arr, baseclass.n_arr)
+    #running this should auto-produce coefficients files
+    AmpInterpKerrEqEcc(filenames=filepaths, file_directory="../../processed_amplitudes")
 
-    # test
     amp = AmpInterpKerrEqEcc()
-    print(amp.get_amplitudes(0.1, np.asarray([10.]), np.asarray([0.3]), np.asarray([1.])))
+    print(amp(0., np.array([10.]), np.array([0.3]), np.array([1.])))

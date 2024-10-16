@@ -28,13 +28,14 @@ from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 
 # Python imports
 from few.utils.baseclasses import (
-    SchwarzschildEccentric,
+    Old_SchwarzschildEccentric,
     AmplitudeBase,
     ParallelModuleBase,
 )
 from few.utils.utility import check_for_file_download
 from few.utils.citations import *
 from few.utils.utility import p_to_y
+from scipy.interpolate import RectBivariateSpline
 
 # check for cupy and GPU version of pymatmul
 try:
@@ -52,7 +53,7 @@ except (ImportError, ModuleNotFoundError) as e:
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
+class RomanAmplitude(AmplitudeBase, Old_SchwarzschildEccentric, ParallelModuleBase):
     """Calculate Teukolsky amplitudes with a ROMAN.
 
     ROMAN stands for reduced-order models with artificial neurons. Please see
@@ -125,20 +126,21 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         """
         pass
 
-    def __init__(self, max_init_len=1000, **kwargs):
+    def __init__(self, max_init_len=1000, file_directory=None, **kwargs):
         ParallelModuleBase.__init__(self, **kwargs)
-        SchwarzschildEccentric.__init__(self, **kwargs)
+        Old_SchwarzschildEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
-        self.few_dir = dir_path + "/../../"
+        if file_directory is None:
+            self.file_dir = dir_path + "/../../few/files/"
 
         # check if user has the necessary data
         # if not, the data will automatically download
         self.data_file = fp = "SchwarzschildEccentricInput.hdf5"
-        check_for_file_download(fp, self.few_dir)
+        check_for_file_download(fp, self.file_dir)
 
         # get information about this specific model from the file
-        with h5py.File(self.few_dir + "few/files/" + self.data_file, "r") as fp:
+        with h5py.File(os.path.join(self.file_dir, self.data_file), "r") as fp:
             num_teuk_modes = fp.attrs["num_teuk_modes"]
             transform_factor = fp.attrs["transform_factor"]
             self.break_index = fp.attrs["break_index"]
@@ -158,6 +160,21 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         self.max_init_len = max_init_len
 
         self._initialize_weights()
+
+        # setup amplitude normalization
+        fp = "AmplitudeVectorNorm.dat"
+        check_for_file_download(fp, self.file_dir)
+
+        y_in, e_in, norm = np.genfromtxt(
+            os.path.join(self.file_dir, "AmplitudeVectorNorm.dat")
+        ).T
+
+        num_y = len(np.unique(y_in))
+        num_e = len(np.unique(e_in))
+
+        self.amp_norm_spline = RectBivariateSpline(
+            np.unique(y_in), np.unique(e_in), norm.reshape(num_e, num_y).T
+        )
 
     @property
     def citation(self):
@@ -190,7 +207,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         self.num_layers = 0
 
         # extract all necessary information from the file
-        with h5py.File(self.few_dir + "few/files/" + self.data_file, "r") as fp:
+        with h5py.File(os.path.join(self.file_dir,self.data_file), "r") as fp:
             for key, value in fp.items():
                 if key == "reduced_basis":
                     continue
@@ -229,7 +246,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         self.run_relu_arr = np.ones(self.num_layers, dtype=int)
         self.run_relu_arr[-1] = 0
 
-    def get_amplitudes(self, p, e, *args, specific_modes=None, **kwargs):
+    def get_amplitudes(self, a, p, e, xI, *args, specific_modes=None, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays

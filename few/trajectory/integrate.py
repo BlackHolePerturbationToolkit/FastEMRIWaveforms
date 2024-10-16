@@ -68,8 +68,9 @@ KERR = 1
 SCHWARZSCHILD = 2
 
 
-def get_integrator(func, nparams, few_dir, **kwargs):
-
+def get_integrator(func, nparams, file_directory, **kwargs):
+    if file_directory is None:
+        file_directory = dir_path + "/../../few/files/"
     ode_info = get_ode_function_options()
 
     if isinstance(func, str):
@@ -87,17 +88,24 @@ def get_integrator(func, nparams, few_dir, **kwargs):
             raise ValueError(
                 f"func not available. Options are {list(ode_info.keys())}."
             )
-        integrator.add_ode(func_i.encode(), few_dir.encode())
+                    # make sure all files needed for the ode specifically are downloaded
+        for fp in ode_info[func_i]["files"]:
+            try:
+                check_for_file_download(fp, file_directory)
+            except FileNotFoundError:
+                raise ValueError(
+                    f"File required for the ODE ({fp}) was not found in the proper folder ({file_directory}) and could not be downloaded."
+                )
 
-    if not integrator.integrate_phases[0]:
-        nparams -= 3
+        integrator.add_ode(func_i.encode(), file_directory.encode())
+
     if integrator.integrate_constants_of_motion[0]:
         return AELQIntegrate(
-            func, nparams, few_dir, num_add_args=num_add_args, **kwargs
+            func, nparams, file_directory=file_directory, num_add_args=num_add_args, **kwargs
         )
     else:
         return APEXIntegrate(
-            func, nparams, few_dir, num_add_args=num_add_args, **kwargs
+            func, nparams, file_directory=file_directory, num_add_args=num_add_args, **kwargs
         )
 
 
@@ -132,10 +140,10 @@ class Integrate:
         self,
         func: Union[str, List],
         nparams: int,
-        few_dir: str,
         buffer_length: int = 1000,
         num_add_args: int = 0,
         rootfind_separatrix=True,
+        file_directory=None,
     ):
         self.buffer_length = buffer_length
         self.integrator = pyInspiralGenerator(
@@ -147,7 +155,11 @@ class Integrate:
             num_add_args,
         )
         self.ode_info = ode_info = get_ode_function_options()
-        self.few_dir = few_dir
+
+        if file_directory is None:
+            self.file_dir = dir_path + "/../../few/files/"
+        else:
+            self.file_dir = file_directory
 
         self.rootfind_separatrix = rootfind_separatrix
 
@@ -160,16 +172,16 @@ class Integrate:
                 raise ValueError(
                     f"func not available. Options are {list(ode_info.keys())}."
                 )
-            self.integrator.add_ode(func_i.encode(), few_dir.encode())
-            self.dense_integrator.add_ode(func_i.encode(), few_dir.encode())
+            self.integrator.add_ode(func_i.encode(), self.file_dir.encode())
+            self.dense_integrator.add_ode(func_i.encode(), self.file_dir.encode())
 
             # make sure all files needed for the ode specifically are downloaded
             for fp in ode_info[func_i]["files"]:
                 try:
-                    check_for_file_download(fp, few_dir)
+                    check_for_file_download(fp, self.file_dir)
                 except FileNotFoundError:
                     raise ValueError(
-                        f"File required for this ODE ({fp}) was not found in the proper folder ({few_dir + 'few/files/'}) or on zenodo."
+                        f"File required for the ODE ({fp}) was not found in the proper folder ({self.file_dir}) and could not be downloaded."
                     )
 
         assert np.all(self.backgrounds == self.backgrounds[0])
@@ -185,8 +197,8 @@ class Integrate:
         return self.integrator.num_add_args
 
     # @property
-    # def few_dir(self) -> str:
-    #     return str(self.integrator.few_dir)
+    # def file_dir(self) -> str:
+    #     return str(self.integrator.file_dir)
 
     @property
     def convert_Y(self):
@@ -208,10 +220,6 @@ class Integrate:
     def integrate_constants_of_motion(self):
         return self.integrator.integrate_constants_of_motion
 
-    @property
-    def integrate_ODE_phases(self):
-        return self.integrator.integrate_phases
-
     # @property
     # def func(self) -> str:
     #     return str(self.integrator.func_name)
@@ -227,16 +235,16 @@ class Integrate:
                 raise ValueError(
                     f"func not available. Options are {list(ode_info.keys())}."
                 )
-            self.integrator.add_ode(func_i.encode(), self.few_dir.encode())
-            self.dense_integrator.add_ode(func_i.encode(), self.few_dir.encode())
+            self.integrator.add_ode(func_i.encode(), self.file_dir.encode())
+            self.dense_integrator.add_ode(func_i.encode(), self.file_dir.encode())
 
             # make sure all files needed for the ode specifically are downloaded
             for fp in ode_info[func_i]["files"]:
                 try:
-                    check_for_file_download(fp, self.few_dir)
+                    check_for_file_download(fp, self.file_dir)
                 except FileNotFoundError:
                     raise ValueError(
-                        f"File required for this ODE ({fp}) was not found in the proper folder ({self.few_dir + 'few/files/'}) or on zenodo."
+                        f"File required for this ODE ({fp}) was not found in the proper folder ({self.file_dir}) and could not be downloaded."
                     )
 
     def take_step(

@@ -361,6 +361,8 @@ src = fp_loc + "/src/"
 
 cp_cu_files = ["matmul", "interpolate", "gpuAAK", "AmpInterp2D"]
 cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap", "pyampinterp2D"]
+cp_cu_files = ["matmul", "interpolate", "gpuAAK", "AmpInterp2D"]
+cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap", "pyampinterp2D"]
 
 for fp in cp_cu_files:
     shutil.copy(src + fp + ".cu", src + fp + ".cpp")

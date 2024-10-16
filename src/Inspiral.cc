@@ -85,9 +85,9 @@ InspiralCarrier::InspiralCarrier(int nparams_, int num_add_args_)
     num_add_args = num_add_args_;
 }
 
-void InspiralCarrier::add_ode(string func_name, string few_dir)
+void InspiralCarrier::add_ode(string func_name, string file_dir)
 {
-    params_holder->add_ode(func_name, few_dir);
+    params_holder->add_ode(func_name, file_dir);
 }
 
 int InspiralCarrier::get_number_of_odes()
@@ -217,16 +217,6 @@ void InspiralCarrier::get_integrate_constants_of_motion(bool *integrate_constant
     }
     for (int i = 0; i < num_odes; i += 1)
         integrate_constants_of_motion[i] = params_holder->odes[i].integrate_constants_of_motion;
-}
-
-void InspiralCarrier::get_integrate_phases(bool *integrate_phases, int num_odes)
-{
-    if (num_odes != params_holder->num_odes)
-    {
-        throw invalid_argument("Wrong number of odes coming in.");
-    }
-    for (int i = 0; i < num_odes; i += 1)
-        integrate_phases[i] = params_holder->odes[i].integrate_phases;
 }
 
 int InspiralCarrier::take_step(double *t, double *h, double *y, const double tmax)

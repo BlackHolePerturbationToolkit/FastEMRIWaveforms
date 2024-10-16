@@ -26,7 +26,7 @@ To install this software for CPU usage, you need [gsl >2.0](https://www.gnu.org/
 
 To install this software for use with NVIDIA GPUs (compute capability >2.0), you need the [CUDA toolkit](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and [CuPy](https://cupy.chainer.org/). The CUDA toolkit must have cuda version >8.0. Be sure to properly install CuPy within the correct CUDA toolkit version. Make sure the nvcc binary is on `$PATH` or set it as the `CUDA_HOME` environment variable.
 
-There are a set of files required for total use of this package. They will download automatically the first time they are needed. Files are generally under 10MB. However, there is a 100MB file needed for the slow waveform and the bicubic amplitude interpolation. This larger file will only download if you run either of those two modules. The files are hosted on [Zenodo](https://zenodo.org/record/3981654#.XzS_KRNKjlw).
+There are a set of files required for total use of this package. They will download automatically the first time they are needed. Files are generally under 10MB. However, there is a 100MB file needed for the slow waveform and the bicubic amplitude interpolation. This larger file will only download if you run either of those two modules. The files are hosted on the [Black Hole Perturbation Toolkit Download Server](https://download.bhptoolkit.org/few/data).
 
 ### Installing
 
@@ -80,13 +80,13 @@ Please contact the developers if the installation does not work.
 1) Create a virtual environment.
 
 ```
-conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
+conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests rich matplotlib python=3.7
 conda activate few_env
 ```
 
-    If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
-
-    If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, matplotlib) with pip.
+* If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, rich matplotlib) with pip.
+* If on MACOSX with an Intel CPU, substitute `gcc_linux-64` and `gxx_linux-64` with `clang_osx-64` and `clangxx_osx-64`.
+* For an ARM CPU (Apple Silicon) substitute these arguments with `clang_osx-arm64` and `clangxx_osx-arm64` instead, and replace `lapack=3.6.1` with `liblapacke`, `lapack` and `openblas`.
 
 2) Clone the repository.
 
@@ -101,7 +101,14 @@ cd FastEMRIWaveforms
 pip install cupy-cuda92
 ```
 
-4) Run install.
+4) Copy the prebuild script to the top-level directory of the repository and run it (simply running it will not work!):
+
+```
+cp scripts/prebuild.py ./
+python prebuild.py
+```
+
+5) Run install.
 
 ```
 python setup.py install
