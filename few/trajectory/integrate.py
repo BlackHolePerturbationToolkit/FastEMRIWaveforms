@@ -312,6 +312,7 @@ class Integrate:
             # should not be needed but is safeguard against stepping past maximum allowable time
             # the last point in the trajectory will be at t = tmax
             if t > self.tmax_dimensionless:
+                # TODO: use finishing function here to place a point at t = tmax
                 break
 
             spline_info = self.dopr.prep_evaluate_single(
@@ -457,7 +458,12 @@ class Integrate:
 
     def eval_phase_integrator_spline(self, t_new: np.ndarray):
         t_old = self.trajectory[:, 0]
-        return self.dopr.eval(t_new, t_old, self.integrator_spline_coeff)
+        result = self.dopr.eval(t_new, t_old, self.integrator_spline_coeff) / self.epsilon
+
+        # backwards integration requires an additional adjustment to match phase conventions
+        if self.bool_integrate_backwards:
+            result += (self.trajectory[0,4:7] + self.trajectory[-1,4:7])
+        return result
 
     def run_inspiral(self, M, mu, a, y0, additional_args, T=1.0, dt=10.0, **kwargs):
         self.moves_check = 0
@@ -502,6 +508,13 @@ class Integrate:
             warnings.warn(
                 "Warning: initial p_f is too close to separatrix. May not be compatible with forwards integration."
             )
+
+        # scale phases here by the mass ratio so the cache is accurate
+        self.trajectory_arr[:, 4:7] /= self.epsilon
+
+        # backwards integration requires an additional manipulation to match forwards phase convention
+        if self.bool_integrate_backwards:
+            self.trajectory_arr[:, 4:7] -= (self.trajectory_arr[0,4:7] + self.trajectory_arr[self.traj_step - 1, 4:7])
 
         return self.trajectory
 

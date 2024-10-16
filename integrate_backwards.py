@@ -111,9 +111,13 @@ t_back, p_back, e_back, Y_back, Phi_phi_back, Phi_r_back, Phi_theta_back = (
     )
 )
 print("Integrating backwards took", time.time() - start, "seconds")
-
 t_new = np.linspace(t_back.min(), t_back.max(), 5000)
 phases = traj_backwards.inspiral_generator.eval_phase_integrator_spline(t_new)
+
+phases_at_old_points = traj_backwards.inspiral_generator.eval_phase_integrator_spline(t_back)[:,0]
+
+print("Phase differences:" , phases_at_old_points - Phi_phi_back)
+assert np.allclose(phases_at_old_points, Phi_phi_back)
 # plt.plot(t_new, phases)
 # plt.show()
 # breakpoint()

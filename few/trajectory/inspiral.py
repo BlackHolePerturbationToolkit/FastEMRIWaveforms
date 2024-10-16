@@ -273,6 +273,12 @@ class EMRIInspiral(TrajectoryBase):
         if len(args_in) == 0:
             args_in = np.array([0.0])
 
+        # flip initial phases if integrating backwards
+        if temp_kwargs["integrate_backwards"]:
+            Phi_phi0 = -1 * Phi_phi0
+            Phi_theta0 = -1 * Phi_theta0
+            Phi_r0 = -1 * Phi_r0
+
         y0 = np.array(
             [y1, y2, y3, Phi_phi0 * (mu / M), Phi_theta0 * (mu / M), Phi_r0 * (mu / M)]
         )
@@ -290,7 +296,7 @@ class EMRIInspiral(TrajectoryBase):
                 out[:, 3] = pex[2]
 
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = out.T.copy()
-        return t, p, e, x, Phi_phi / (mu / M), Phi_theta / (mu / M), Phi_r / (mu / M)
+        return t, p, e, x, Phi_phi, Phi_theta, Phi_r
 
     def get_rhs_ode(
         self,
