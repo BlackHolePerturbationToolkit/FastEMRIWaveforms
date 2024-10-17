@@ -733,6 +733,9 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
             # scale coefficients here by the mass ratio
             phase_spline_coeff_in = phase_spline_coeff[:,[3,5],:] / (mu / M)
 
+            if self.inspiral_generator.inspiral_generator.bool_integrate_backwards:
+                phase_spline_coeff_in[:,:,0] += np.array([Phi_phi[-1] + Phi_phi[0], Phi_r[-1] + Phi_r[0]])
+
             # create waveform
             waveform_temp = self.create_waveform(
                 t_temp,
