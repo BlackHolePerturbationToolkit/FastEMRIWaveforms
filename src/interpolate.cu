@@ -453,12 +453,13 @@ __device__ void atomicAddComplex(cmplx *a, cmplx b)
 // shared memory is leveraged heavily
 CUDA_KERNEL
 void make_waveform(cmplx *waveform,
-                   double *interp_array,
+                   double *interp_array, double *phase_interp_coeffs,
                    int *m_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
-                   double delta_t, double start_t, int old_ind, int start_ind, int end_ind, int init_length)
+                   double delta_t, double start_t, int old_ind, int start_ind, int end_ind, int init_length,
+                   double phase_interp_t_here, double phase_interp_segwidth)
 {
 
-  int num_pars = 2;
+  // int num_pars = 2;
   cmplx trans(0.0, 0.0);
   cmplx trans2(0.0, 0.0);
 
@@ -468,10 +469,11 @@ void make_waveform(cmplx *waveform,
   cmplx mode_val;
   cmplx partial_mode;
   cmplx trans_plus_m(0.0, 0.0), trans_minus_m(0.0, 0.0);
-  double Phi_phi_i, Phi_r_i, t, x, x2, x3, mode_val_re, mode_val_im;
+  double Phi_phi_i, Phi_r_i, t, x, x2, x3, mode_val_re, mode_val_im, s, s1;
   int lm_i, num_teuk_here;
   double re_y, re_c1, re_c2, re_c3, im_y, im_c1, im_c2, im_c3;
-  CUDA_SHARED double pp_y, pp_c1, pp_c2, pp_c3, pr_y, pr_c1, pr_c2, pr_c3;
+  CUDA_SHARED double pp_y, pp_c1, pp_c2, pp_c3, pp_c4, pp_c5, pp_c6, pp_c7;
+  CUDA_SHARED double pr_y, pr_c1, pr_c2, pr_c3, pr_c4, pr_c5, pr_c6, pr_c7;
 
   // declare all the shared memory
   // MAX_MODES_BLOCK is fixed based on shared memory
@@ -490,7 +492,9 @@ void make_waveform(cmplx *waveform,
   CUDA_SHARED int n_arr[MAX_MODES_BLOCK];
 
   // number of splines
-  int num_base = init_length * (2 * num_teuk_modes + num_pars);
+  // int num_base = init_length * (2 * num_teuk_modes + num_pars);
+  int num_base = init_length * (2 * num_teuk_modes);
+  int num_phase_spline = (init_length - 1) * 2;
 
   CUDA_SYNC_THREADS;
 
@@ -504,18 +508,40 @@ void make_waveform(cmplx *waveform,
 #endif
 
     // fill phase values. These will be same for all modes
-    int ind_Phi_phi = old_ind * (2 * num_teuk_modes + num_pars) + num_teuk_modes * 2 + 0;
-    int ind_Phi_r = old_ind * (2 * num_teuk_modes + num_pars) + num_teuk_modes * 2 + 1;
+  //   int ind_Phi_phi = old_ind * (2 * num_teuk_modes + num_pars) + num_teuk_modes * 2 + 0;
+  //   int ind_Phi_r = old_ind * (2 * num_teuk_modes + num_pars) + num_teuk_modes * 2 + 1;
 
-    pp_y = interp_array[0 * num_base + ind_Phi_phi];
-    pp_c1 = interp_array[1 * num_base + ind_Phi_phi];
-    pp_c2 = interp_array[2 * num_base + ind_Phi_phi];
-    pp_c3 = interp_array[3 * num_base + ind_Phi_phi];
+  //   pp_y = interp_array[0 * num_base + ind_Phi_phi];
+  //   pp_c1 = interp_array[1 * num_base + ind_Phi_phi];
+  //   pp_c2 = interp_array[2 * num_base + ind_Phi_phi];
+  //   pp_c3 = interp_array[3 * num_base + ind_Phi_phi];
 
-    pr_y = interp_array[0 * num_base + ind_Phi_r];
-    pr_c1 = interp_array[1 * num_base + ind_Phi_r];
-    pr_c2 = interp_array[2 * num_base + ind_Phi_r];
-    pr_c3 = interp_array[3 * num_base + ind_Phi_r];
+  //   pr_y = interp_array[0 * num_base + ind_Phi_r];
+  //   pr_c1 = interp_array[1 * num_base + ind_Phi_r];
+  //   pr_c2 = interp_array[2 * num_base + ind_Phi_r];
+  //   pr_c3 = interp_array[3 * num_base + ind_Phi_r];
+    
+    int ind_Phi_phi = old_ind * 2 + 0;
+    int ind_Phi_r = old_ind * 2 + 1;
+
+    pp_y = phase_interp_coeffs[0 * num_phase_spline + ind_Phi_phi];
+    pp_c1 = phase_interp_coeffs[1 * num_phase_spline + ind_Phi_phi];
+    pp_c2 = phase_interp_coeffs[2 * num_phase_spline + ind_Phi_phi];
+    pp_c3 = phase_interp_coeffs[3 * num_phase_spline + ind_Phi_phi];
+    pp_c4 = phase_interp_coeffs[4 * num_phase_spline + ind_Phi_phi];
+    pp_c5 = phase_interp_coeffs[5 * num_phase_spline + ind_Phi_phi];
+    pp_c6 = phase_interp_coeffs[6 * num_phase_spline + ind_Phi_phi];
+    pp_c7 = phase_interp_coeffs[7 * num_phase_spline + ind_Phi_phi];
+
+    pr_y = phase_interp_coeffs[0 * num_phase_spline + ind_Phi_r];
+    pr_c1 = phase_interp_coeffs[1 * num_phase_spline + ind_Phi_r];
+    pr_c2 = phase_interp_coeffs[2 * num_phase_spline + ind_Phi_r];
+    pr_c3 = phase_interp_coeffs[3 * num_phase_spline + ind_Phi_r];
+    pr_c4 = phase_interp_coeffs[4 * num_phase_spline + ind_Phi_r];
+    pr_c5 = phase_interp_coeffs[5 * num_phase_spline + ind_Phi_r];
+    pr_c6 = phase_interp_coeffs[6 * num_phase_spline + ind_Phi_r];
+    pr_c7 = phase_interp_coeffs[7 * num_phase_spline + ind_Phi_r];
+
   }
 
   CUDA_SYNC_THREADS;
@@ -548,8 +574,11 @@ void make_waveform(cmplx *waveform,
     {
 
       // fill mode values and Ylms
-      int ind_re = old_ind * (2 * num_teuk_modes + num_pars) + (init_ind + i);
-      int ind_im = old_ind * (2 * num_teuk_modes + num_pars) + num_teuk_modes + (init_ind + i);
+      // int ind_re = old_ind * (2 * num_teuk_modes + num_pars) + (init_ind + i);
+      // int ind_im = old_ind * (2 * num_teuk_modes + num_pars) + num_teuk_modes + (init_ind + i);
+      int ind_re = old_ind * (2 * num_teuk_modes) + (init_ind + i);
+      int ind_im = old_ind * (2 * num_teuk_modes) + num_teuk_modes + (init_ind + i);
+
       mode_re_y[i] = interp_array[0 * num_base + ind_re];
       mode_re_c1[i] = interp_array[1 * num_base + ind_re];
       mode_re_c2[i] = interp_array[2 * num_base + ind_re];
@@ -599,8 +628,16 @@ void make_waveform(cmplx *waveform,
       x3 = x * x2;
 
       // get phases at this timestep
-      Phi_phi_i = pp_y + pp_c1 * x + pp_c2 * x2 + pp_c3 * x3;
-      Phi_r_i = pr_y + pr_c1 * x + pr_c2 * x2 + pr_c3 * x3;
+      // Phi_phi_i = pp_y + pp_c1 * x + pp_c2 * x2 + pp_c3 * x3;
+      // Phi_r_i = pr_y + pr_c1 * x + pr_c2 * x2 + pr_c3 * x3;
+
+      s = (t - phase_interp_t_here) / phase_interp_segwidth;
+      s1 = 1.0 - s;
+
+      // printf("%d %f %f %f %f %f %f %f %f \n", old_ind, s, pp_y, pp_c1, pp_c2, pp_c3, pp_c4, pp_c5, pp_c6, pp_c7);
+
+      Phi_phi_i = pp_y + s * (pp_c1 + s1 * ( pp_c2 + s * (pp_c3 + s1 * (pp_c4 + s * (pp_c5 + s1 * (pp_c6 + s * pp_c7))))));
+      Phi_r_i = pr_y + s * (pr_c1 + s1 * ( pr_c2 + s * (pr_c3 + s1 * (pr_c4 + s * (pr_c5 + s1 * (pr_c6 + s * pr_c7))))));
 
       // calculate all modes at this timestep
       for (int j = 0; j < num_teuk_here; j += 1)
@@ -681,7 +718,7 @@ void find_start_inds(int start_inds[], int unit_length[], double *t_arr, double 
 }
 
 // function for building interpolated EMRI waveform from python
-void get_waveform(cmplx *d_waveform, double *interp_array,
+void get_waveform(cmplx *d_waveform, double *interp_array, double *phase_interp_t, double *phase_interp_coeffs,
                   int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cmplx *d_Ylms,
                   double delta_t, double *h_t, int dev)
 {
@@ -720,9 +757,10 @@ void get_waveform(cmplx *d_waveform, double *interp_array,
     dim3 gridDim(num_blocks, 1);
     // launch one worker kernel per stream
     make_waveform<<<gridDim, NUM_THREADS, 0, streams[i]>>>(d_waveform,
-                                                           interp_array,
+                                                           interp_array, phase_interp_coeffs,
                                                            d_m, d_n, num_teuk_modes, d_Ylms,
-                                                           delta_t, h_t[i], i, start_inds[i], start_inds[i + 1], init_len);
+                                                           delta_t, h_t[i], i, start_inds[i], start_inds[i + 1], init_len, 
+                                                           phase_interp_t[i], phase_interp_t[i+1] - phase_interp_t[i]);
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());
     cudaDeviceSynchronize();
@@ -730,9 +768,10 @@ void get_waveform(cmplx *d_waveform, double *interp_array,
 
     // CPU waveform generation
     make_waveform(d_waveform,
-                  interp_array,
+                  interp_array, phase_interp_coeffs,
                   d_m, d_n, num_teuk_modes, d_Ylms,
-                  delta_t, h_t[i], i, start_inds[i], start_inds[i + 1], init_len);
+                  delta_t, h_t[i], i, start_inds[i], start_inds[i + 1], init_len,
+                  phase_interp_t[i], phase_interp_t[i+1] - phase_interp_t[i]);
 #endif
   }
 

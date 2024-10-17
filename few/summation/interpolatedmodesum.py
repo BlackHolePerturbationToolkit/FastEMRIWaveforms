@@ -367,8 +367,8 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleB
         t,
         teuk_modes,
         ylms,
-        Phi_phi,
-        Phi_r,
+        phase_interp_t,
+        phase_interp_coeffs,
         m_arr,
         n_arr,
         *args,
@@ -412,14 +412,11 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleB
         num_pts = self.num_pts
 
         length = init_len
-        ninterps = self.ndim + 2 * num_teuk_modes  # 2 for re and im
+        ninterps = 2 * num_teuk_modes  # 2 for re and im
         y_all = xp.zeros((ninterps, length))
 
         y_all[:num_teuk_modes] = teuk_modes.T.real
         y_all[num_teuk_modes : 2 * num_teuk_modes] = teuk_modes.T.imag
-
-        y_all[-2] = Phi_phi
-        y_all[-1] = Phi_r
 
         spline = CubicSplineInterpolant(t, y_all, use_gpu=self.use_gpu)
 
@@ -433,10 +430,17 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleB
         else:
             dev = int(xp.cuda.runtime.getDevice())
 
-        # the base class function __call__ will return the waveform
+        phase_interp_t_in = xp.asarray(phase_interp_t)
+
+        phase_interp_coeffs_in = xp.transpose(
+            xp.asarray(phase_interp_coeffs), [2, 0, 1]
+            ).flatten()
+
         self.get_waveform(
             self.waveform,
             spline.interp_array,
+            phase_interp_t_in,
+            phase_interp_coeffs_in,
             m_arr,
             n_arr,
             init_len,

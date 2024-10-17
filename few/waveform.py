@@ -727,15 +727,19 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
             # store number of modes for external information
             self.num_modes_kept = teuk_modes_in.shape[1]
 
+            # prepare phase spline coefficients
+            phase_spline_coeff = self.inspiral_generator.inspiral_generator.integrator_spline_coeff  # TODO make these accessible from EMRIInspiral
+            
+            # scale coefficients here by the mass ratio
+            phase_spline_coeff_in = phase_spline_coeff[:,[3,5],:] / (mu / M)
+
             # create waveform
             waveform_temp = self.create_waveform(
                 t_temp,
                 teuk_modes_in,
                 ylms_in,
-                abs(
-                    Phi_phi_temp
-                ),  # positive phases to be consistent with amplitude generator for retrograde inspirals  # TODO get to the bottom of this!
-                Phi_r_temp,
+                self.inspiral_generator.inspiral_generator.integrator_t_cache,
+                phase_spline_coeff_in,
                 self.ms,
                 self.ns,
                 M,

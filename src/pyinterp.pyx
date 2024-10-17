@@ -10,7 +10,7 @@ cdef extern from "interpolate.hh":
     ctypedef void* cmplx 'cmplx'
     void interpolate_arrays(double *t_arr, double *interp_array, int ninterps, int length, double *B, double *upper_diag, double *diag, double *lower_diag)
 
-    void get_waveform(cmplx *d_waveform, double *interp_array,
+    void get_waveform(cmplx *d_waveform, double *interp_array, double *phase_interp_t, double *phase_interp_coeffs,
                   int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cmplx *d_Ylms,
                   double delta_t, double *h_t, int dev)
    
@@ -42,18 +42,20 @@ def get_waveform_wrap(*args, **kwargs):
 
     targs, kwargs = wrapper(*args, **kwargs)
 
-    (d_waveform, interp_array,
+    (d_waveform, interp_array, phase_interp_t, phase_interp_coeffs,
               d_m, d_n, init_len, out_len, num_teuk_modes, d_Ylms,
               delta_t, h_t, dev) = targs
 
     cdef size_t d_waveform_in = d_waveform
     cdef size_t interp_array_in = interp_array
+    cdef size_t phase_interp_t_in = phase_interp_t
+    cdef size_t phase_interp_coeffs_in = phase_interp_coeffs
     cdef size_t d_m_in = d_m
     cdef size_t d_n_in = d_n
     cdef size_t d_Ylms_in = d_Ylms
     cdef size_t h_t_in = h_t
 
-    get_waveform(<cmplx *>d_waveform_in, <double *>interp_array_in,
+    get_waveform(<cmplx *>d_waveform_in, <double *>interp_array_in, <double *>phase_interp_t_in, <double *>phase_interp_coeffs_in,
                 <int *>d_m_in, <int *>d_n_in, init_len, out_len, num_teuk_modes, <cmplx *>d_Ylms_in,
                 delta_t, <double *>h_t_in, dev)
 
