@@ -1351,9 +1351,6 @@ class TrajectoryBase(ABC):
         if not upsample:
             return (t,) + params
 
-        # create splines for upsampling
-        splines = [CubicSpline(t, temp, **spline_kwargs) for temp in list(params)]
-
         if new_t is not None:
             if isinstance(new_t, np.ndarray) is False:
                 raise ValueError("new_t parameter, if provided, must be numpy array.")
@@ -1362,18 +1359,10 @@ class TrajectoryBase(ABC):
             # new time array for upsampling
             new_t = np.arange(0.0, T + dt, dt)
 
-        # check if new time ends before or after output array from the trajectory
-        if new_t[-1] > t[-1]:
-            if fix_t:
-                new_t = new_t[new_t <= t[-1]]
-            else:
-                warnings.warn(
-                    "new_t array goes beyond generated t array. If you want to cut the t array at the end of the trajectory, set fix_t to True."
-                )
+            # upsample everything
+            out = tuple(self.inspiral_generator.eval_integrator_spline(new_t).T)
 
-        # upsample everything
-        out = tuple([spl(new_t) * (new_t < t[-1]) for spl in splines])
-        return (new_t,) + out
+            return (new_t,) + out
 
 
 class SummationBase(ABC):

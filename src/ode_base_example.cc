@@ -62,6 +62,9 @@ __deriv__ void pn5(double ydot[], const double y[], double epsilon, double a, bo
         pdot *= -1;
         edot *= -1;
         Ydot *= -1;
+        Omega_phi *= -1;
+        Omega_theta *= -1;
+        Omega_r *= -1;
     }
 
     ydot[0] = pdot;
@@ -189,6 +192,9 @@ __deriv__ void SchwarzEccFlux::deriv_func(double ydot[], const double y[], doubl
     if (integrate_backwards == 1.0){
         pdot *= -1;
         edot *= -1;
+        Omega_phi *= -1;
+        Omega_theta *= -1;
+        Omega_r *= -1;
     }
 
     ydot[0] = pdot;
@@ -404,6 +410,9 @@ __deriv__ void KerrEccentricEquatorial::deriv_func(double ydot[], const double y
     if (integrate_backwards == 1.0){
         pdot *= -1;
         edot *= -1;
+        Omega_phi *= -1;
+        Omega_theta *= -1;
+        Omega_r *= -1;
     }
     ydot[0] = pdot;
     ydot[1] = edot;
@@ -545,6 +554,9 @@ __deriv__ void KerrEccentricEquatorial_ELQ::deriv_func(double ydot[], const doub
     if (integrate_backwards == 1.0){
         Edot *= -1;
         Ldot *= -1;
+        Omega_phi *= -1;
+        Omega_theta *= -1;
+        Omega_r *= -1;
     }   
 
     ydot[0] = Edot;
