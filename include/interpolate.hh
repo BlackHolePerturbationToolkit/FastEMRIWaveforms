@@ -31,7 +31,7 @@ void get_waveform(cmplx *d_waveform, double *interp_array, double *phase_spline_
                   double delta_t, double *h_t, int dev);
 
 void get_waveform_generic_fd(cmplx *waveform,
-             double *interp_array,
+             double *interp_array, double *phase_spline_t, double *phase_spline_coeffs,
               int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
               double delta_t, double *old_time_arr, int init_length, int data_length,
               double *frequencies, int *mode_start_inds, int *mode_end_inds, int num_segments,

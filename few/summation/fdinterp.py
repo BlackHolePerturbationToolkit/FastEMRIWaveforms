@@ -172,8 +172,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         t,
         teuk_modes,
         ylms,
-        Phi_phi,
-        Phi_r,
+        phase_interp_t,
+        phase_interp_coeffs,        
         m_arr,
         n_arr,
         M,
@@ -187,6 +187,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         dt=10.0,
         f_arr=None,
         mask_positive=False,
+        integrate_backwards=False,
         **kwargs,
     ):
         """Interpolated summation function in Frequency Domain.
@@ -243,7 +244,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         length = init_len
         # number of quantities to be interp in time domain
-        ninterps = (2 * self.ndim) + 2 * num_teuk_modes  # 2 for re and im
+        ninterps = (self.ndim) + 2 * num_teuk_modes  # 2 for re and im
         y_all = xp.zeros((ninterps, length))
 
         # fill interpolant information in y
@@ -251,8 +252,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         y_all[:num_teuk_modes] = teuk_modes.T.real
         y_all[num_teuk_modes : 2 * num_teuk_modes] = teuk_modes.T.imag
 
-        y_all[-2] = Phi_phi
-        y_all[-1] = Phi_r
+
 
         try:
             p, e = p.get(), e.get()
@@ -271,8 +271,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         )
 
         # add them for splines
-        y_all[-4] = f_phi
-        y_all[-3] = f_r
+        y_all[-2] = f_phi
+        y_all[-1] = f_r
 
         # for a frequency-only spline because you
         # have to evaluate all splines when you evaluate the spline class
@@ -490,10 +490,24 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         if separate_modes:
             include_minus_m = False
 
+        if integrate_backwards:
+            # For consistency with forward integration, we slightly shift the knots so that they line up at t=0
+            offset = h_t[-1] - int(h_t[-1] / dt) * dt
+            h_t = h_t - offset
+            phase_interp_t = phase_interp_t - offset
+
+        phase_interp_t_in = xp.asarray(phase_interp_t)
+
+        phase_interp_coeffs_in = xp.transpose(
+            xp.asarray(phase_interp_coeffs), [2, 1, 0]
+            ).flatten()
+        
         # run GPU kernel
         self.get_waveform_fd(
             self.waveform,
             spline_in,
+            phase_interp_t_in,
+            phase_interp_coeffs_in,
             m_arr,
             k_arr,
             n_arr,

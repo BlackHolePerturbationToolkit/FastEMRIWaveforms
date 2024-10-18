@@ -436,13 +436,13 @@ class Integrate:
             self.finishing_function(t, y)
 
     def initialize_integrator(
-        self, err=1e-10, DENSE_STEPPING=False, use_rk4=False, **kwargs
+        self, err=1e-12, DENSE_STEPPING=False, use_rk4=False, **kwargs
     ):
         self.integrator.set_integrator_kwargs(err, DENSE_STEPPING, not use_rk4)
         # self.dense_integrator.set_integrator_kwargs(
         #     err, True, not use_rk4
         # )  # always dense step for final stage
-
+        self.dopr.abstol = err
         # self.integrator.initialize_integrator()
         # self.dense_integrator.initialize_integrator()
         self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
@@ -500,6 +500,15 @@ class Integrate:
         # backwards integration requires an additional adjustment to match forwards phase conventions
         if self.bool_integrate_backwards and not self.generating_trajectory:
             result[:,3:6] += (self.trajectory[0,4:7] + self.trajectory[-1,4:7])
+        return result
+    
+    def eval_integrator_derivative_spline(self, t_new: np.ndarray):
+        t_old = self.integrator_t_cache
+        result = self.dopr.eval_derivative(t_new, t_old, self.integrator_spline_coeff)
+
+        if not self.generating_trajectory:
+            result[:,3:6] /= self.epsilon
+
         return result
 
     def run_inspiral(self, M, mu, a, y0, additional_args, T=1.0, dt=10.0, **kwargs):

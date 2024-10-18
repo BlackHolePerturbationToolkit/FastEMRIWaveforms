@@ -1133,15 +1133,14 @@ void cube_roots(cmplx *r1o, cmplx *r2o, cmplx *r3o, double a, double b, double c
 #define MAX_SPLINE_POINTS 210
 CUDA_KERNEL
 void make_generic_kerr_waveform_fd(cmplx *waveform,
-             double *interp_array,
+             double *interp_array,  double *phase_interp_coeffs, double *phase_interp_t,
               int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
               double delta_t, double *old_time_arr, int init_length, int data_length,
               double *frequencies, int *seg_start_inds, int *seg_end_inds, int num_segments,
-              cmplx *Ylm_all, int zero_index, bool include_minus_m, bool separate_modes
-              )
+              cmplx *Ylm_all, int zero_index, bool include_minus_m, bool separate_modes)
 {
 
-    int num_pars = 4;
+    int num_pars = 2;
 
     cmplx complexI(0.0, 1.0);
 
@@ -1163,11 +1162,19 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
     double Phi_phi_c1;
     double Phi_phi_c2;
     double Phi_phi_c3;
+    double Phi_phi_c4;
+    double Phi_phi_c5;
+    double Phi_phi_c6;
+    double Phi_phi_c7;
 
     double Phi_r_y;
     double Phi_r_c1;
     double Phi_r_c2;
     double Phi_r_c3;
+    double Phi_r_c4;
+    double Phi_r_c5;
+    double Phi_r_c6;
+    double Phi_r_c7;
 
     double f_phi_y;
     double f_phi_c1;
@@ -1185,6 +1192,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
 
     // number of splines
     int num_base = (2 * num_teuk_modes + num_pars) * init_length;
+    int num_phase_spline = (init_length - 1) * 2;
 
     #ifdef __CUDACC__
 
@@ -1244,25 +1252,25 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
             R_mode_im_c2 = interp_array[c2_ind];
             R_mode_im_c3 = interp_array[c3_ind];
 
-            y_ind = 0 * num_base + (2 + 2 * num_teuk_modes) * init_length + seg_i;
-            c1_ind = 1 * num_base + (2 + 2 * num_teuk_modes) * init_length + seg_i;
-            c2_ind = 2 * num_base + (2 + 2 * num_teuk_modes) * init_length + seg_i;
-            c3_ind = 3 * num_base + (2 + 2 * num_teuk_modes) * init_length + seg_i;
+            Phi_phi_y = phase_interp_coeffs[0 * num_phase_spline + seg_i];
+            Phi_phi_c1 = phase_interp_coeffs[1 * num_phase_spline + seg_i];
+            Phi_phi_c2 = phase_interp_coeffs[2 * num_phase_spline + seg_i];
+            Phi_phi_c3 = phase_interp_coeffs[3 * num_phase_spline + seg_i];
+            Phi_phi_c4 = phase_interp_coeffs[4 * num_phase_spline + seg_i];
+            Phi_phi_c5 = phase_interp_coeffs[5 * num_phase_spline + seg_i];
+            Phi_phi_c6 = phase_interp_coeffs[6 * num_phase_spline + seg_i];
+            Phi_phi_c7 = phase_interp_coeffs[7 * num_phase_spline + seg_i];
 
-            Phi_phi_y = interp_array[y_ind];
-            Phi_phi_c1 = interp_array[c1_ind];
-            Phi_phi_c2 = interp_array[c2_ind];
-            Phi_phi_c3 = interp_array[c3_ind];
+            Phi_r_y = phase_interp_coeffs[0 * num_phase_spline + init_length - 1 + seg_i];
+            Phi_r_c1 = phase_interp_coeffs[1 * num_phase_spline + init_length - 1  + seg_i];
+            Phi_r_c2 = phase_interp_coeffs[2 * num_phase_spline + init_length - 1 + seg_i];
+            Phi_r_c3 = phase_interp_coeffs[3 * num_phase_spline + init_length - 1 + seg_i];
+            Phi_r_c4 = phase_interp_coeffs[4 * num_phase_spline + init_length - 1 + seg_i];
+            Phi_r_c5 = phase_interp_coeffs[5 * num_phase_spline + init_length - 1 + seg_i];
+            Phi_r_c6 = phase_interp_coeffs[6 * num_phase_spline + init_length - 1 + seg_i];
+            Phi_r_c7 = phase_interp_coeffs[7 * num_phase_spline + init_length - 1 + seg_i];
 
-            y_ind = 0 * num_base + (3 + 2 * num_teuk_modes) * init_length + seg_i;
-            c1_ind = 1 * num_base + (3 + 2 * num_teuk_modes) * init_length + seg_i;
-            c2_ind = 2 * num_base + (3 + 2 * num_teuk_modes) * init_length + seg_i;
-            c3_ind = 3 * num_base + (3 + 2 * num_teuk_modes) * init_length + seg_i;
-
-            Phi_r_y = interp_array[y_ind];
-            Phi_r_c1 = interp_array[c1_ind];
-            Phi_r_c2 = interp_array[c2_ind];
-            Phi_r_c3 = interp_array[c3_ind];
+            double seg_width_here = phase_interp_t[seg_i + 1] - phase_interp_t[seg_i];
 
             y_ind = 0 * num_base + (0 + 2 * num_teuk_modes) * init_length + seg_i;
             c1_ind = 1 * num_base + (0 + 2 * num_teuk_modes) * init_length + seg_i;
@@ -1371,11 +1379,21 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                         //double L_mode_im = L_mode_im_y + L_mode_im_c1 * x + L_mode_im_c2 * x2  + L_mode_im_c3 * x3;
 
                         // get phases at this timestep
-                        double Phi_phi_i =  Phi_phi_y +  Phi_phi_c1 * x +  Phi_phi_c2 * x2  +  Phi_phi_c3 * x3;
+                        double s = (t - phase_interp_t[seg_i]) / seg_width_here;
+                        double s1 = 1.0 - s;
+                        
+                        // if ((m == 2) && (n == 0))
+                        //   printf("seg_i: %d %f \n", seg_i, s);
+
+                        // if ((m == 2) && (n == 0))
+                        //   printf("seg_i: %d %f \n", seg_i, s);
+
+                        double Phi_phi_i = Phi_phi_y + s * (Phi_phi_c1 + s1 * ( Phi_phi_c2 + s * (Phi_phi_c3 + s1 * (Phi_phi_c4 + s * (Phi_phi_c5 + s1 * (Phi_phi_c6 + s * Phi_phi_c7))))));
                         //double Phi_theta_i = pt_y + pt_c1 * x + pt_c2 * x2 + pt_c3 * x3;
                         double Phi_theta_i = 0.0;
-                        double Phi_r_i =  Phi_r_y +  Phi_r_c1 * x +  Phi_r_c2 * x2  +  Phi_r_c3 * x3;
+                        double Phi_r_i = Phi_r_y + s * (Phi_r_c1 + s1 * ( Phi_r_c2 + s * (Phi_r_c3 + s1 * (Phi_r_c4 + s * (Phi_r_c5 + s1 * (Phi_r_c6 + s * Phi_r_c7))))));
 
+                        // TODO: replace these fdot/fddot lines with the above coefficients?
                         double fdot_phi_i = f_phi_c1 + 2 * f_phi_c2 * x  + 3 * f_phi_c3 * x2;
                         //double Phi_theta_i = pt_y + pt_c1 * x + pt_c2 * x2 + pt_c3 * x3;
                         double fdot_theta_i = 0.0;  // ft_c1 + 2 * ft_c2 * x  + 3 * ft_c3 * x2;
@@ -1465,7 +1483,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
 
 // function for building interpolated EMRI waveform from python
 void get_waveform_generic_fd(cmplx *waveform,
-             double *interp_array,
+             double *interp_array, double *phase_interp_t, double *phase_interp_coeffs,
               int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes,
               double delta_t, double *old_time_arr, int init_length, int data_length,
               double *frequencies, int *seg_start_inds, int *seg_end_inds, int num_segments,
@@ -1481,7 +1499,7 @@ void get_waveform_generic_fd(cmplx *waveform,
 
       // launch one worker kernel per stream
       make_generic_kerr_waveform_fd<<<gridDim, NUM_THREADS_FD>>>(waveform,
-             interp_array,
+             interp_array, phase_interp_coeffs, phase_interp_t,
               m_arr_in, k_arr_in, n_arr_in, num_teuk_modes,
               delta_t, old_time_arr, init_length, data_length,
               frequencies, seg_start_inds, seg_end_inds, num_segments,
@@ -1493,7 +1511,7 @@ void get_waveform_generic_fd(cmplx *waveform,
 
          // CPU waveform generation
          make_generic_kerr_waveform_fd(waveform,
-             interp_array,
+             interp_array, phase_interp_coeffs, phase_interp_t,
               m_arr_in, k_arr_in, n_arr_in, num_teuk_modes,
               delta_t, old_time_arr, init_length, data_length,
               frequencies, seg_start_inds, seg_end_inds, num_segments,
