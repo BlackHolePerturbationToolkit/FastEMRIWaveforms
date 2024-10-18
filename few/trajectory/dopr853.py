@@ -22,8 +22,8 @@ import matplotlib.pyplot as plt
 np.random.seed(5)
 
 # Tolerances
-rtol = 1e-12
-abstol = 1e-12
+# rtol = 0#1e-17
+# abstol = 1e-12
 
 # Coefficients for using in Dormand Prince Solver
 c2 = 0.526001519587677318785587544488e-01
@@ -413,8 +413,12 @@ class DOPR853:
 
         solNew[:] = solOld + h * temp
 
+        # sk = 1.0 / (
+        #     abstol + rtol * self.xp.max(self.xp.array([solOld, solNew]), axis=0)
+        # )
+
         sk = 1.0 / (
-            abstol + rtol * self.xp.max(self.xp.array([solOld, solNew]), axis=0)
+            self.abstol + self.abstol * self.xp.max(self.xp.array([solOld, solNew]), axis=0)
         )
 
         err2 = (((temp - bhh1 * k1 - bhh2 * k9 - bhh3 * k3) * sk) ** n).sum(axis=0)
@@ -820,9 +824,51 @@ class DOPR853:
                 * (rcont4 + s1 * (rcont5 + s * (rcont6 + s1 * (rcont7 + s * rcont8))))
             )
         )
+        # output = rcont1 + s*rcont2 + rcont3 * (s - s**2)  + rcont4 * (s**2 - s**3) + rcont5 * (s**4 - s**5) + rcont6 * (s**5 - s**6) + rcont7 * (s**6 - s**7) + rcont8 * (s**7 - s**8)
+        
 
         return output
 
+    def eval_derivative(self, t_new: np.ndarray, t_old: np.ndarray, spline_coeffs: np.ndarray):
+
+        t_min = t_old.min()
+        t_max = t_old.max()
+        if not np.all((t_min <= t_new) & (t_new <= t_max)):
+            raise ValueError(
+                f"All t_new values must be between t_min ({t_min}) and t_max ({t_max})."
+            )
+        
+        segments = np.searchsorted(t_old, t_new, side="right") - 1
+        segments[t_new == t_max] = t_old.shape[0] - 2
+        
+        tmp_coeffs = spline_coeffs[segments]
+        tmp_t_old = t_old[segments]
+        diffs = np.diff(t_old)[segments]
+        
+        assert spline_coeffs.ndim == 3 and spline_coeffs.shape[-1] == 8
+        
+        rcont1 = tmp_coeffs[:, :, 0]
+        rcont2 = tmp_coeffs[:, :, 1]
+        rcont3 = tmp_coeffs[:, :, 2]
+        rcont4 = tmp_coeffs[:, :, 3]
+        rcont5 = tmp_coeffs[:, :, 4]
+        rcont6 = tmp_coeffs[:, :, 5]
+        rcont7 = tmp_coeffs[:, :, 6]
+        rcont8 = tmp_coeffs[:, :, 7]
+        
+        s = ((t_new - tmp_t_old) / diffs)[:, None]  # add axes to match rcont shape
+        s2 = s**2
+        s3 = s**3
+        s4 = s**4
+        s5 = s**5
+        s6 = s**6
+
+        d_by_ds = rcont2 + rcont3 * (1 - 2*s)  + rcont4 * (2*s - 3*s2) + rcont5 * (3*s2 - 4*s3) + rcont6 * (4*s3 - 5*s4) + rcont7 * (5*s4 - 6*s5) + rcont8 * (6*s5 - 7*s6)
+        
+        # Scale by dt/ds = diffs to get derivative with respect to t
+        derivative = d_by_ds / diffs[:, None]
+        
+        return derivative
     #                         denseOutput[indexOut] = rcont1 + s * (rcont2 + s1 * (rcont3 + s * (rcont4 + s1 * (rcont5 + s * (rcont6 + s1 * (rcont7 + s * rcont8))))))
 
     #                             denseDerivOutput[indexOut] = (rcont2 + rcont3 - 2*rcont3*s + rcont4*(2 - 3*s)*s - (-1 + s)*s*(rcont5*(2 - 4*s) + rcont6*(3 - 5*s)*s + (-1 + s)*s*(rcont7*(-3 + 6*s) + rcont8*s*(-4 + 7*s))))/h
