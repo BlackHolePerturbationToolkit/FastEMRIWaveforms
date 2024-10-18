@@ -753,6 +753,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
                 dt=dt,
                 T=T,
                 include_minus_m=include_minus_m,
+                integrate_backwards=self.inspiral_generator.inspiral_generator.bool_integrate_backwards,
                 **kwargs,
             )
 
@@ -2720,6 +2721,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
             mich=mich,
             dt=dt,
             T=T,
+            integrate_backwards=self.inspiral_generator.inspiral_generator.bool_integrate_backwards,
         )
 
         return waveform

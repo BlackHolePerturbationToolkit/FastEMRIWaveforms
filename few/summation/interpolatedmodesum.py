@@ -373,6 +373,7 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleB
         n_arr,
         *args,
         dt=10.0,
+        integrate_backwards=False,
         **kwargs,
     ):
         """Interpolated summation function.
@@ -424,6 +425,12 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleB
             h_t = t.get()
         except:
             h_t = t
+
+        if integrate_backwards:
+            # For consistency with forward integration, we slightly shift the knots so that they line up at t=0
+            offset = h_t[-1] - int(h_t[-1] / dt) * dt
+            h_t = h_t - offset
+            phase_interp_t = phase_interp_t - offset
 
         if not self.use_gpu:
             dev = 0

@@ -129,6 +129,7 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         *args,
         mich=False,
         dt=10.0,
+        integrate_backwards=False,
         **kwargs
     ):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
@@ -197,6 +198,7 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         xI = Y_to_xI(a, p.copy(), e.copy(), Y.copy())
 
         # these are dimensionless and in radians
+        # TODO: get these from the spline
         OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p.copy(), e.copy(), xI.copy())
 
         # dimensionalize the frequencies
@@ -279,6 +281,12 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         # get all cubic splines
         self.spline = CubicSplineInterpolant(tvec_temp, y_all, use_gpu=self.use_gpu)
 
+        if integrate_backwards:
+            # For consistency with forward integration, we slightly shift the knots so that they line up at t=0
+            offset = tvec[-1] - int(tvec[-1] / dt) * dt
+            tvec = tvec - offset
+
+        ## TODO: pass phase spline coefficients to aak summation kernel
         # generator the waveform
         self.waveform_generator(
             self.waveform,
