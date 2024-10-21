@@ -11,8 +11,8 @@ from few.amplitude.interp2dcubicspline import Interp2DAmplitude
 from few.amplitude.ampinterp2d import AmpInterpKerrEqEcc
 from few.waveform import (
     GenerateEMRIWaveform,
-    Old_SchwarzschildEccentricWaveformBase,
-    Old_KerrEquatorialEccentricWaveformBase,
+    FastSchwarzschildEccentricFlux,
+    FastKerrEccentricEquatorialFlux,
 )
 from few.utils.ylm import GetYlms
 from few.utils.modeselector import ModeSelector, NeuralModeSelector
@@ -114,9 +114,11 @@ print("Integrating backwards took", time.time() - start, "seconds")
 t_new = np.linspace(t_back.min(), t_back.max(), 5000)
 phases = traj_backwards.inspiral_generator.eval_integrator_spline(t_new)
 
-phases_at_old_points = traj_backwards.inspiral_generator.eval_integrator_spline(t_back)[:,3]
+phases_at_old_points = traj_backwards.inspiral_generator.eval_integrator_spline(t_back)[
+    :, 3
+]
 
-print("Phase differences:" , phases_at_old_points - Phi_phi_back)
+print("Phase differences:", phases_at_old_points - Phi_phi_back)
 assert np.allclose(phases_at_old_points, Phi_phi_back)
 # plt.plot(t_new, phases)
 # plt.show()
@@ -199,11 +201,11 @@ sum_kwargs = {
 }
 
 wave_generator_backwards = GenerateEMRIWaveform(
-    Old_KerrEquatorialEccentricWaveformBase,
-    EMRIInspiral,
-    AmpInterpKerrEqEcc,
-    InterpolatedModeSum,
-    ModeSelector,
+    FastKerrEccentricEquatorialFlux,
+    # EMRIInspiral,
+    # AmpInterpKerrEqEcc,
+    # InterpolatedModeSum,
+    # ModeSelector,
     inspiral_kwargs=inspiral_kwargs_waveform_backwards,
     amplitude_kwargs=amplitude_kwargs_kerr,
     sum_kwargs=sum_kwargs,
@@ -243,11 +245,11 @@ inspiral_kwargs_waveform_forwards = {
 }
 # Generate waveform using forwards integration
 wave_generator_forwards = GenerateEMRIWaveform(
-    Old_KerrEquatorialEccentricWaveformBase,
-    EMRIInspiral,
-    AmpInterpKerrEqEcc,
-    InterpolatedModeSum,
-    ModeSelector,
+    FastKerrEccentricEquatorialFlux,
+    # EMRIInspiral,
+    # AmpInterpKerrEqEcc,
+    # InterpolatedModeSum,
+    # ModeSelector,
     inspiral_kwargs=inspiral_kwargs_waveform_forwards,
     amplitude_kwargs=amplitude_kwargs_kerr,
     sum_kwargs=sum_kwargs,
