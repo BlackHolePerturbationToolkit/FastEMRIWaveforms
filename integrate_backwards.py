@@ -42,10 +42,10 @@ use_gpu = False
 # initial parameters
 M = 1e6
 mu = 1e1
-a = 0.85
-p_f = 5.0  # Final semi-latus rectum
+a = 0.
+p_f = 8.8 # Final semi-latus rectum
 e_f = 0.1  # Final eccentricity
-iota0_f = 0.8  # Final inclination
+iota0_f = 0.9  # Final inclination
 Y_f = np.cos(iota0_f)
 
 Phi_phi0 = 1.0
@@ -60,29 +60,29 @@ print("Separatrix is", p_sep)
 
 # trajectory_class = "pn5"
 # trajectory_class = "pn5_nofrequencies"
-# trajectory_class = "SchwarzEccFlux"
-trajectory_class = "KerrEccentricEquatorial"
+trajectory_class = "SchwarzEccFlux"
+# trajectory_class = "KerrEccentricEquatorial"
 # trajectory_class = "KerrEccentricEquatorial_nofrequencies"
 # trajectory_class = "KerrEccentricEquatorial_ELQ"
 # trajectory_class = "KerrEccentricEquatorial_ELQ_nofrequencies"
 
 if "Kerr" in trajectory_class:
     Y_f = 1.0
-elif "Schwarz":
+elif "Schwarz" in trajectory_class:
     Y_f = 1.0
     a = 0.0
 
 inspiral_kwargs_back = {
     "DENSE_STEPPING": 0,  # Set to 1 if we want a sparsely sampled trajectory
     "max_init_len": int(1e3),  # All of the trajectories will be well under len = 1000
-    "err": 1e-10,  # Set error tolerance on integrator -- RK8
+    "err": 1e-12,  # Set error tolerance on integrator -- RK8
     "integrate_backwards": True,  # Integrate trajectories backwards
 }
 
 inspiral_kwargs_forward = {
     "DENSE_STEPPING": 0,  # Set to 1 if we want a sparsely sampled trajectory
     "max_init_len": int(1e3),  # all of the trajectories will be well under len = 1000
-    "err": 1e-10,  # Set error tolerance on integrator -- RK8
+    "err": 1e-12,  # Set error tolerance on integrator -- RK8
     "integrate_backwards": False,  # Integrate trajectories forwards
 }
 
@@ -184,7 +184,7 @@ mich = False
 inspiral_kwargs_waveform_backwards = {
     "DENSE_STEPPING": 0,  # Set to 1 if we want a sparsely sampled trajectory
     "max_init_len": int(1e3),  # all of the trajectories will be well under len = 1000
-    "err": 1e-10,
+    "err": 1e-12,
     "integrate_backwards": True,  # Integrate backwards
     "func": trajectory_class,  # Use predetermined trajectory class abvoe
 }
@@ -199,13 +199,9 @@ sum_kwargs = {
 }
 
 wave_generator_backwards = GenerateEMRIWaveform(
-    Old_KerrEquatorialEccentricWaveformBase,
-    EMRIInspiral,
-    AmpInterpKerrEqEcc,
-    InterpolatedModeSum,
-    ModeSelector,
+    "FastSchwarzschildEccentricFlux",
     inspiral_kwargs=inspiral_kwargs_waveform_backwards,
-    amplitude_kwargs=amplitude_kwargs_kerr,
+    # amplitude_kwargs=amplitude_kwargs_kerr,
     sum_kwargs=sum_kwargs,
     use_gpu=False,
 )
@@ -232,24 +228,22 @@ waveform_back = wave_generator_backwards(
 print("Finished backwards integration")
 
 # Extract plus polarised waveform
+waveform_back = waveform_back
+
 h_p_back_int = np.asarray(waveform_back.real)
 
 inspiral_kwargs_waveform_forwards = {
     "DENSE_STEPPING": 0,  # Set to 1 if we want a sparsely sampled trajectory
     "max_init_len": int(1e3),  # all of the trajectories will be well under len = 1000
-    "err": 1e-10,
+    "err": 1e-12,
     "integrate_backwards": False,
     "func": trajectory_class,
 }
 # Generate waveform using forwards integration
 wave_generator_forwards = GenerateEMRIWaveform(
-    Old_KerrEquatorialEccentricWaveformBase,
-    EMRIInspiral,
-    AmpInterpKerrEqEcc,
-    InterpolatedModeSum,
-    ModeSelector,
+    "FastSchwarzschildEccentricFlux",
     inspiral_kwargs=inspiral_kwargs_waveform_forwards,
-    amplitude_kwargs=amplitude_kwargs_kerr,
+    # amplitude_kwargs=amplitude_kwargs_kerr,
     sum_kwargs=sum_kwargs,
     use_gpu=False,
 )
@@ -272,11 +266,11 @@ waveform_forward = wave_generator_forwards(
     Phi_theta0=Phi_theta0,
     Phi_r0=Phi_r0,
     dt=dt,
-    T=T_in_forward,
+    T=T,
 )
 
-# sometimes a off-by-one error?
-waveform_forward = waveform_forward[:-1]
+waveform_forward = waveform_forward
+
 
 print("Finished forwards integration")
 # Extract plus polarised waveform
@@ -289,7 +283,8 @@ t = np.arange(0, n_t * dt, dt)
 # Compute mismatches between waveforms
 
 h_p_forward_fft = np.fft.rfft(
-    np.roll(waveform_forward.real, -1)
+    # waveform_forward.real
+    waveform_forward.real
 )  # Roll array because numerical integrator not saving last point
 h_p_back_reversed_fft = np.fft.rfft(
     waveform_back.real[::-1]
@@ -313,16 +308,18 @@ print("Mismatch is", 1 - overlap)
 
 # Plot the two waveforms against eachother
 # plot_direc = "/home/ad/burkeol/work/Current_Projects/FastEMRIWaveforms_backwards/waveform_plots"
-# plt.plot(t/24/60/60,h_p_back_int[::-1], c = 'blue', alpha = 1, linestyle = 'dashed', label = 'integrated backwards')
-# plt.plot(t[0:-1]/24/60/60,h_p_forward_int[1:], c = 'red', alpha = 0.5, label = 'integrated forwards')
-# title_str = r'Kerr: $(M, \mu, a, p_f, e_f, T) = (1e6, {}, {}, {}, {}, {} \, \text{{year}})$'.format(mu,a, np.round(p_f,3), e_f, 1)
-# plt.title(title_str, fontsize = 12)
-# plt.xlabel(r'Time $t$ [days]')
-# plt.ylabel(r'$h_{p}$')
-# # plt.xlim([365-0.01,365])
-# plt.xlim([365 - 0.01,365])
-# plt.legend()
-# plt.grid()
-# plt.show()
+plt.plot(t,h_p_back_int[::-1], c = 'blue', alpha = 1, linestyle = 'dashed', label = 'integrated backwards')
+plt.plot(t,h_p_forward_int, c = 'red', alpha = 0.5, label = 'integrated forwards')
+plt.plot(t,h_p_back_int[::-1] - h_p_forward_int, c = 'green', alpha = 0.5, label = 'diff')
+
+title_str = r'Kerr: $(M, \mu, a, p_f, e_f, T) = (1e6, {}, {}, {}, {}, {} \, \text{{year}})$'.format(mu,a, np.round(p_f,3), e_f, 1)
+plt.title(title_str, fontsize = 12)
+plt.xlabel(r'Time $t$')
+plt.ylabel(r'$h_{p}$')
+# plt.xlim([365-0.01,365])
+plt.xlim([t[-1] - 500, t[-1] + 5])
+plt.legend()
+plt.grid()
+plt.show()
 # plt.savefig(plot_direc + "/waveform_back_forward_Kerr.pdf", bbox_inches="tight")
 # plt.clf()
