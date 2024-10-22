@@ -104,8 +104,7 @@ pip install cupy-cuda92
 4) Copy the prebuild script to the top-level directory of the repository and run it (simply running it will not work!):
 
 ```
-cp scripts/prebuild.py ./
-python prebuild.py
+python scripts/prebuild.py
 ```
 
 5) Run install.
