@@ -537,6 +537,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
         t = xp.asarray(t)
         p = xp.asarray(p)
         e = xp.asarray(e)
+        xI = xp.asarray(xI)
         Phi_phi = xp.asarray(Phi_phi)
         Phi_r = xp.asarray(Phi_r)
 
@@ -728,20 +729,22 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
             self.num_modes_kept = teuk_modes_in.shape[1]
 
             # prepare phase spline coefficients
-            phase_spline_coeff = self.inspiral_generator.inspiral_generator.integrator_spline_coeff  # TODO make these accessible from EMRIInspiral
+            phase_spline_coeff = xp.asarray(self.inspiral_generator.inspiral_generator.integrator_spline_coeff)  # TODO make these accessible from EMRIInspiral
             
             # scale coefficients here by the mass ratio
             phase_spline_coeff_in = phase_spline_coeff[:,[3,5],:] / (mu / M)
 
             if self.inspiral_generator.inspiral_generator.bool_integrate_backwards:
-                phase_spline_coeff_in[:,:,0] += np.array([Phi_phi[-1] + Phi_phi[0], Phi_r[-1] + Phi_r[0]])
+                phase_spline_coeff_in[:,:,0] += xp.array([Phi_phi[-1] + Phi_phi[0], Phi_r[-1] + Phi_r[0]])
+
+            integrator_t_cache_in = xp.asarray(self.inspiral_generator.inspiral_generator.integrator_t_cache)
 
             # create waveform
             waveform_temp = self.create_waveform(
                 t_temp,
                 teuk_modes_in,
                 ylms_in,
-                self.inspiral_generator.inspiral_generator.integrator_t_cache,
+                integrator_t_cache_in,
                 phase_spline_coeff_in,
                 self.ms,
                 self.ns,

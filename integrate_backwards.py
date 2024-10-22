@@ -37,7 +37,7 @@ from few.utils.utility import (
 
 from scipy.interpolate import interp1d
 
-use_gpu = False
+use_gpu = True
 
 # initial parameters
 M = 1e6
@@ -53,7 +53,7 @@ Phi_theta0 = 2.0
 Phi_r0 = 3.0
 
 dt = 10.0
-T = 1
+T = 1.0
 
 p_sep = get_separatrix(a, e_f, 1.0)
 print("Separatrix is", p_sep)
@@ -194,12 +194,13 @@ amplitude_kwargs_kerr = {
 
 # keyword arguments for summation generator (InterpolatedModeSum)
 sum_kwargs = {
-    "use_gpu": use_gpu,  # GPU is availabel for this type of summation
+    "use_gpu": False,  # GPU is availabel for this type of summation
     "pad_output": False,
 }
+model_name = "FastSchwarzschildEccentricFlux"
 
 wave_generator_backwards = GenerateEMRIWaveform(
-    "FastSchwarzschildEccentricFlux",
+    model_name,
     inspiral_kwargs=inspiral_kwargs_waveform_backwards,
     # amplitude_kwargs=amplitude_kwargs_kerr,
     sum_kwargs=sum_kwargs,
@@ -240,12 +241,16 @@ inspiral_kwargs_waveform_forwards = {
     "func": trajectory_class,
 }
 # Generate waveform using forwards integration
+sum_kwargs = {
+    "use_gpu": use_gpu,  # GPU is availabel for this type of summation
+    "pad_output": False,
+}
 wave_generator_forwards = GenerateEMRIWaveform(
-    "FastSchwarzschildEccentricFlux",
+    model_name,
     inspiral_kwargs=inspiral_kwargs_waveform_forwards,
     # amplitude_kwargs=amplitude_kwargs_kerr,
-    sum_kwargs=sum_kwargs,
-    use_gpu=False,
+    # sum_kwargs=sum_kwargs,
+    use_gpu=use_gpu,
 )
 
 T_in_forward = waveform_back.shape[0] * dt / YRSID_SI
@@ -254,9 +259,9 @@ waveform_forward = wave_generator_forwards(
     M,
     mu,
     a,
-    initial_p,
-    initial_e,
-    initial_Y,
+    float(initial_p),
+    float(initial_e),
+    float(initial_Y),
     dist,
     qS,
     phiS,
