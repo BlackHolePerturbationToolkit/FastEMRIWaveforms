@@ -63,7 +63,7 @@ class Interp2DAmplitude(AmplitudeBase, SchwarzschildEccentric):
         AmplitudeBase.__init__(self, **kwargs)
 
         # check if you have the necessary file
-        # it will download from Zenodo if the user does not have it.
+        # it will download from download.bhptoolkit.org if the user does not have it.
         few_dir = dir_path + "/../../"
 
         fp = "Teuk_amps_a0.0_lmax_10_nmax_30_new.h5"
