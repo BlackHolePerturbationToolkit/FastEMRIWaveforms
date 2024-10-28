@@ -52,37 +52,6 @@ using namespace std::chrono;
 const int Ne = 33;
 const int Ny = 50;
 
-// Define elliptic integrals that use Mathematica's conventions
-double EllipticK(double k)
-{
-    return gsl_sf_ellint_Kcomp(sqrt(k), GSL_PREC_DOUBLE);
-}
-
-double EllipticF(double phi, double k)
-{
-    return gsl_sf_ellint_F(phi, sqrt(k), GSL_PREC_DOUBLE);
-}
-
-double EllipticE(double k)
-{
-    return gsl_sf_ellint_Ecomp(sqrt(k), GSL_PREC_DOUBLE);
-}
-
-double EllipticEIncomp(double phi, double k)
-{
-    return gsl_sf_ellint_E(phi, sqrt(k), GSL_PREC_DOUBLE);
-}
-
-double EllipticPi(double n, double k)
-{
-    return gsl_sf_ellint_Pcomp(sqrt(k), -n, GSL_PREC_DOUBLE);
-}
-
-double EllipticPiIncomp(double n, double phi, double k)
-{
-    return gsl_sf_ellint_P(phi, sqrt(k), -n, GSL_PREC_DOUBLE);
-}
-
 // initialize amplitude interpolants for each mode
 void create_amplitude_interpolant(hid_t file_id, int l, int m, int n, int Ne, int Ny, vector<double> &ys, vector<double> &es, Interpolant **re, Interpolant **im)
 {

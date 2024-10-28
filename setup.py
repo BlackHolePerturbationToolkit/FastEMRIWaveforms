@@ -299,7 +299,7 @@ if add_gsl:
 
 Interp2DAmplitude_ext = Extension(
     "pyInterp2DAmplitude",
-    sources=["src/Interpolant.cc", "src/Amplitude.cc", "src/pyinterp2damp.pyx"],
+    sources=["src/Utility.cc", "src/Interpolant.cc", "src/Amplitude.cc", "src/pyinterp2damp.pyx"],
     **cpu_extension,
 )
 
