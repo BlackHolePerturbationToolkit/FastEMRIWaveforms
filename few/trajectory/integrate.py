@@ -542,7 +542,7 @@ class Integrate:
             self.integrate_backwards(t0, y0)
         else:
             self.integrate(t0, y0)
-        # TODO: the next line is commented out because it causes a segfault on GPUs and not on CPUs
+        
         # self.integrator.destroy_integrator_information()
         # self.dense_integrator.destroy_integrator_information()
 

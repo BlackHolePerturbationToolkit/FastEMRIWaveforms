@@ -437,8 +437,6 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleB
         else:
             dev = int(xp.cuda.runtime.getDevice())
 
-        phase_interp_t_in = xp.asarray(phase_interp_t)
-
         phase_interp_coeffs_in = xp.transpose(
             xp.asarray(phase_interp_coeffs), [2, 0, 1]
             ).flatten()
@@ -446,7 +444,7 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleB
         self.get_waveform(
             self.waveform,
             spline.interp_array,
-            phase_interp_t_in,
+            phase_interp_t,
             phase_interp_coeffs_in,
             m_arr,
             n_arr,
