@@ -381,9 +381,15 @@ class Integrate:
                 # self.integrator.reset_solver()
                 t = t_prev
                 y[:] = y_prev[:]
-                h /= 2
+                h = h_old / 2
                 continue
             
+            if np.isnan(h):
+                t = t_prev
+                y[:] = y_prev[:]
+                h = h_old / 2
+                continue
+
             if not status:  # what does this do?
                 continue
 

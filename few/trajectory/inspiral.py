@@ -392,6 +392,6 @@ class EMRIInspiral(TrajectoryBase):
         y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
 
         # this will return the derivatives in coordinate time
-        out = self.get_derivative(mu / M, a, y0, args_in)
+        out = self.get_derivative(mu / M, a, y0, False, args_in)
 
         return out
