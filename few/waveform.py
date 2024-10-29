@@ -57,7 +57,8 @@ from few.utils.constants import *
 from few.utils.citations import *
 from few.summation.interpolatedmodesum import InterpolatedModeSum
 from few.summation.fdinterp import FDInterpolatedModeSum
-import warnings
+
+from typing import Union, Optional
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -96,7 +97,7 @@ class GenerateEMRIWaveform:
     """
 
     def __init__(
-        self, waveform_class, *args, frame="detector", return_list=False, **kwargs
+        self, waveform_class: Union[str, object], *args: Optional[Union[list, tuple]], frame:str="detector", return_list:bool=False, flip_output:bool=False, **kwargs: Optional[dict]
     ):
         # instantiate the class
         if isinstance(waveform_class, str):
@@ -112,6 +113,7 @@ class GenerateEMRIWaveform:
 
         self.frame = frame
         self.return_list = return_list
+        self.flip_output = flip_output
 
         # setup arguments to remove based on the specific waveform
         # also get proper phases
@@ -218,23 +220,23 @@ class GenerateEMRIWaveform:
 
     def __call__(
         self,
-        M,
-        mu,
-        a,
-        p0,
-        e0,
-        x0,
-        dist,
-        qS,
-        phiS,
-        qK,
-        phiK,
-        Phi_phi0,
-        Phi_theta0,
-        Phi_r0,
-        *add_args,
-        **kwargs,
-    ):
+        M: float,
+        mu: float,
+        a: float,
+        p0: float,
+        e0: float,
+        x0: float,
+        dist: float,
+        qS: float,
+        phiS: float,
+        qK: float,
+        phiK: float,
+        Phi_phi0: float,
+        Phi_theta0: float,
+        Phi_r0: float,
+        *add_args: Optional[tuple],
+        **kwargs: Optional[dict],
+    ) -> Union[xp.ndarray, list]:
         """Generate the waveform with the given parameters.
 
         Args:
@@ -344,6 +346,10 @@ class GenerateEMRIWaveform:
             elif self.frame == "source":
                 hp, hc = h.real, -h.imag
 
+            if self.flip_output:
+                hp = hp[::-1]
+                hc = hc[::-1]
+
         # if FD, h is of length 2 rather than h+ - ihx
         if self.waveform_generator.create_waveform.output_type == "fd":
             if self.frame == "detector":
@@ -420,26 +426,26 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
 
     def _generate_waveform(
         self,
-        M,
-        mu,
-        a,
-        p0,
-        e0,
-        xI0,
-        theta,
-        phi,
-        *args,
-        dist=None,
-        Phi_phi0=0.0,
-        Phi_r0=0.0,
-        dt=10.0,
-        T=1.0,
-        eps=1e-5,
-        show_progress=False,
-        batch_size=-1,
-        mode_selection=None,
-        include_minus_m=True,
-        **kwargs,
+        M: float,
+        mu: float,
+        a: float,
+        p0: float,
+        e0: float,
+        xI0: float,
+        theta: float,
+        phi: float,
+        *args: Optional[tuple],
+        dist: Optional[float]=None,
+        Phi_phi0: float=0.0,
+        Phi_r0: float=0.0,
+        dt: float=10.0,
+        T: float=1.0,
+        eps: float=1e-5,
+        show_progress: bool=False,
+        batch_size: int=-1,
+        mode_selection: Optional[Union[str, list]]=None,
+        include_minus_m: bool=True,
+        **kwargs: Optional[dict],
     ):
         """Call function for waveform models built in the spherical harmonic basis.
 
@@ -818,15 +824,26 @@ class FastKerrEccentricEquatorialFlux(
 
     def __init__(
         self,
-        inspiral_kwargs={},
-        amplitude_kwargs={},
-        sum_kwargs={},
-        Ylm_kwargs={},
-        mode_selector_kwargs={},
-        use_gpu=False,
-        *args,
-        **kwargs,
-    ):
+        inspiral_kwargs: Optional[dict]=None,
+        amplitude_kwargs: Optional[dict]=None,
+        sum_kwargs: Optional[dict]=None,
+        Ylm_kwargs: Optional[dict]=None,
+        mode_selector_kwargs: Optional[dict]=None,
+        use_gpu: bool=False,
+        *args: Optional[tuple],
+        **kwargs: Optional[dict],
+    ):  
+        if inspiral_kwargs is None:
+            inspiral_kwargs = {}
+        if amplitude_kwargs is None:
+            amplitude_kwargs = {}
+        if sum_kwargs is None:
+            sum_kwargs = {}
+        if Ylm_kwargs is None:
+            Ylm_kwargs = {}
+        if mode_selector_kwargs is None:
+            mode_selector_kwargs = {}
+
         KerrEccentricEquatorial.__init__(self, use_gpu=use_gpu)
 
         inspiral_kwargs["func"] = "KerrEccentricEquatorial"
@@ -889,7 +906,7 @@ class FastKerrEccentricEquatorialFlux(
         self,
         *args,
         **kwargs,
-    ):
+    ) -> xp.ndarray:
         # as this is the most general waveform class we support, just pass everything in as-is.
         return self._generate_waveform(
             *args,
@@ -902,15 +919,26 @@ class FastSchwarzschildEccentricFlux(
 ):
     def __init__(
         self,
-        inspiral_kwargs={},
-        amplitude_kwargs={},
-        sum_kwargs={},
-        Ylm_kwargs={},
-        mode_selector_kwargs={},
-        use_gpu=False,
-        *args,
-        **kwargs,
+        inspiral_kwargs: Optional[dict]=None,
+        amplitude_kwargs: Optional[dict]=None,
+        sum_kwargs: Optional[dict]=None,
+        Ylm_kwargs: Optional[dict]=None,
+        mode_selector_kwargs: Optional[dict]=None,
+        use_gpu: bool=False,
+        *args: Optional[tuple],
+        **kwargs: Optional[dict],
     ):
+        if inspiral_kwargs is None:
+            inspiral_kwargs = {}
+        if amplitude_kwargs is None:
+            amplitude_kwargs = {}
+        if sum_kwargs is None:
+            sum_kwargs = {}
+        if Ylm_kwargs is None:
+            Ylm_kwargs = {}
+        if mode_selector_kwargs is None:
+            mode_selector_kwargs = {}
+
         SchwarzschildEccentric.__init__(self, use_gpu=use_gpu, nmax=30)
 
         inspiral_kwargs["func"] = "SchwarzEccFlux"
@@ -970,15 +998,15 @@ class FastSchwarzschildEccentricFlux(
 
     def __call__(
         self,
-        M,
-        mu,
-        p0,
-        e0,
-        theta,
-        phi,
-        *args,
-        **kwargs,
-    ):
+        M: float,
+        mu: float,
+        p0: float,
+        e0: float,
+        theta: float,
+        phi: float,
+        *args: Optional[tuple],
+        **kwargs: Optional[dict],
+    ) -> xp.ndarray:
         # insert missing arguments for this waveform class
         return self._generate_waveform(
             M,
@@ -999,15 +1027,27 @@ class FastSchwarzschildEccentricFluxBicubic(
 ):
     def __init__(
         self,
-        inspiral_kwargs={},
-        amplitude_kwargs={},
-        sum_kwargs={},
-        Ylm_kwargs={},
-        mode_selector_kwargs={},
-        use_gpu=False,
-        *args,
-        **kwargs,
+        inspiral_kwargs: Optional[dict]=None,
+        amplitude_kwargs: Optional[dict]=None,
+        sum_kwargs: Optional[dict]=None,
+        Ylm_kwargs: Optional[dict]=None,
+        mode_selector_kwargs: Optional[dict]=None,
+        use_gpu: bool=False,
+        *args: Optional[tuple],
+        **kwargs: Optional[dict],
+
     ):
+        if inspiral_kwargs is None:
+            inspiral_kwargs = {}
+        if amplitude_kwargs is None:
+            amplitude_kwargs = {}
+        if sum_kwargs is None:
+            sum_kwargs = {}
+        if Ylm_kwargs is None:
+            Ylm_kwargs = {}
+        if mode_selector_kwargs is None:
+            mode_selector_kwargs = {}
+
         SchwarzschildEccentric.__init__(self, use_gpu=use_gpu)
 
         inspiral_kwargs["func"] = "SchwarzEccFlux"
@@ -1066,15 +1106,15 @@ class FastSchwarzschildEccentricFluxBicubic(
 
     def __call__(
         self,
-        M,
-        mu,
-        p0,
-        e0,
-        theta,
-        phi,
-        *args,
-        **kwargs,
-    ):
+        M: float,
+        mu: float,
+        p0: float,
+        e0: float,
+        theta: float,
+        phi: float,
+        *args: Optional[tuple],
+        **kwargs: Optional[dict],
+    ) -> xp.ndarray:
         # insert missing arguments for this waveform class
         return self._generate_waveform(
             M,
@@ -1808,12 +1848,12 @@ class Old_FastSchwarzschildEccentricFluxBicubic(Old_SchwarzschildEccentricWavefo
                 "Initial eccentricity below 0.0 not physical. (e0={})".format(e0)
             )
 
-        if mu / M > 1e-4:
-            warnings.warn(
-                "Mass ratio is outside of generally accepted range for an extreme mass ratio (1e-4). (q={})".format(
-                    mu / M
-                )
-            )
+        # if mu / M > 1e-4:
+        #     warnings.warn(
+        #         "Mass ratio is outside of generally accepted range for an extreme mass ratio (1e-4). (q={})".format(
+        #             mu / M
+        #         )
+        #     )
 
         if p0 < 6.2 + 2 * e0:
             raise ValueError(
@@ -2530,13 +2570,18 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
 
     def __init__(
         self,
-        inspiral_module,
-        sum_module,
-        inspiral_kwargs={},
-        sum_kwargs={},
-        use_gpu=False,
-        num_threads=None,
+        inspiral_module: object,
+        sum_module: object,
+        inspiral_kwargs: Optional[dict]=None,
+        sum_kwargs: Optional[dict]=None,
+        use_gpu: bool=False,
+        num_threads: Optional[int]=None,
     ):
+        if inspiral_kwargs is None:
+            inspiral_kwargs = {}
+        if sum_kwargs is None:
+            sum_kwargs = {}
+
         ParallelModuleBase.__init__(self, use_gpu=use_gpu, num_threads=num_threads)
         Pn5AAK.__init__(self)
 
@@ -2594,26 +2639,26 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
 
     def __call__(
         self,
-        M,
-        mu,
-        a,
-        p0,
-        e0,
-        Y0,
-        dist,
-        qS,
-        phiS,
-        qK,
-        phiK,
-        *args,
-        Phi_phi0=0.0,
-        Phi_theta0=0.0,
-        Phi_r0=0.0,
-        mich=False,
-        dt=10.0,
-        T=1.0,
-        nmodes=None,
-    ):
+        M: float,
+        mu: float,
+        a: float,
+        p0: float,
+        e0: float,
+        Y0: float,
+        dist: float,
+        qS: float,
+        phiS: float,
+        qK: float,
+        phiK: float,
+        *args: Optional[tuple],
+        Phi_phi0: float=0.0,
+        Phi_theta0: float=0.0,
+        Phi_r0: float=0.0,
+        mich: bool=False,
+        dt: float=10.0,
+        T: float=1.0,
+        nmodes: Optional[int]=None,
+    ) -> xp.ndarray:
         """Call function for AAK + 5PN model.
 
         This function will take input parameters and produce AAK waveforms with 5PN trajectories in generic Kerr.
@@ -2788,8 +2833,13 @@ class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase, ABC):
     """
 
     def __init__(
-        self, inspiral_kwargs={}, sum_kwargs={}, use_gpu=False, num_threads=None
+        self, inspiral_kwargs: Optional[dict]=None, sum_kwargs:Optional[dict]=None, use_gpu:bool=False, num_threads:Optional[int]=None
     ):
+        if inspiral_kwargs is None:
+            inspiral_kwargs = {}
+        if sum_kwargs is None:
+            sum_kwargs = {}
+
         inspiral_kwargs["func"] = "pn5"
         inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 

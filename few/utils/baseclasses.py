@@ -397,7 +397,16 @@ class SchwarzschildEccentric(SphericalHarmonic):
                     p0
                 )
             )
+        
+        if a != 0.:
+            raise ValueError(
+                "Spin must be zero for Schwarzschild inspirals."
+            )
 
+        if abs(xI) != 1.:
+            raise ValueError(
+                "For equatorial orbits, xI must be either 1 or -1."
+            )
 
 class KerrEccentricEquatorial(SphericalHarmonic):
     def __init__(
@@ -698,7 +707,7 @@ class Old_SchwarzschildEccentric(ParallelModuleBase, ABC):
         return (theta, phi)
 
     def sanity_check_traj(self, p, e):
-        """Sanity check on parameters output from thte trajectory module.
+        """Sanity check on parameters output from the trajectory module.
 
         Make sure parameters are within allowable ranges.
 
