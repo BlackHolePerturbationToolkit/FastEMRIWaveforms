@@ -870,7 +870,7 @@ class DOPR853:
         if order == 2:
             d_by_ds = -2*rcont3 + rcont4 * (2 - 6*s) + rcont5 * (2 - 12*s + 12*s2) + rcont6 * (6*s - 24*s2 + 20*s3) + rcont7*(6*s - 36*s2 + 60*s3 - 30*s4) + rcont8 * (12*s2 - 60*s3 + 90*s4 - 42*s5)
         if order == 3:
-            d_by_ds = -6*rcont4 + rcont5 * (-12 + 24*s) + rcont6 * (6 - 48*s + 60*s2) + rcont7 * (6 - 72*s + 180*s - 120*s3) + rcont8 * (24*s - 180 * s2 + 360*s3 - 210*s4)
+            d_by_ds = -6*rcont4 + rcont5 * (-12 + 24*s) + rcont6 * (6 - 48*s + 60*s2) + rcont7 * (6 - 72*s + 180*s2 - 120*s3) + rcont8 * (24*s - 180 * s2 + 360*s3 - 210*s4)
 
         # Scale by dt/ds = diffs to get derivative with respect to t
         derivative = d_by_ds / diffs[:, None]**order
