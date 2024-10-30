@@ -25,7 +25,8 @@ from scipy.interpolate import RectBivariateSpline
 
 # check if cupy is available / GPU is available
 try:
-    import cupy as xp
+    import cupy as cp
+    import numpy as xp
 
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as xp
