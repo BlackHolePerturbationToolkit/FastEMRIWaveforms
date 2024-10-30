@@ -1381,6 +1381,12 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                         // get phases at this timestep
                         double s = (t - phase_interp_t[seg_i]) / seg_width_here;
                         double s1 = 1.0 - s;
+                        double s2 = s*s;
+                        double s3 = s*s2;
+                        double s4 = s*s3;
+                        double s5 = s*s4;
+                        double segwidth2 = seg_width_here * seg_width_here;
+                        double segwidth3 = seg_width_here * segwidth2;
                         
                         // if ((m == 2) && (n == 0))
                         //   printf("seg_i: %d %f \n", seg_i, s);
@@ -1393,16 +1399,15 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                         double Phi_theta_i = 0.0;
                         double Phi_r_i = Phi_r_y + s * (Phi_r_c1 + s1 * ( Phi_r_c2 + s * (Phi_r_c3 + s1 * (Phi_r_c4 + s * (Phi_r_c5 + s1 * (Phi_r_c6 + s * Phi_r_c7))))));
 
-                        // TODO: replace these fdot/fddot lines with the above coefficients?
-                        double fdot_phi_i = f_phi_c1 + 2 * f_phi_c2 * x  + 3 * f_phi_c3 * x2;
+                        double fdot_phi_i = (-2. * Phi_phi_c2 + Phi_phi_c3 * (2. - 6.*s) + Phi_phi_c4 * (2. - 12.*s + 12.*s2) + Phi_phi_c5 * (6.*s - 24.*s2 + 20.*s3) + Phi_phi_c6*(6.*s - 36.*s2 + 60.*s3 - 30.*s4) + Phi_phi_c7 * (12.*s2 - 60.*s3 + 90.*s4 - 42.*s5)) / (2. * M_PI * segwidth2);
                         //double Phi_theta_i = pt_y + pt_c1 * x + pt_c2 * x2 + pt_c3 * x3;
                         double fdot_theta_i = 0.0;  // ft_c1 + 2 * ft_c2 * x  + 3 * ft_c3 * x2;
-                        double fdot_r_i = f_r_c1 + 2 * f_r_c2 * x  + 3 * f_r_c3 * x2;
+                        double fdot_r_i = (-2. * Phi_r_c2 + Phi_r_c3 * (2. - 6.*s) + Phi_r_c4 * (2. - 12.*s + 12.*s2) + Phi_r_c5 * (6.*s - 24.*s2 + 20.*s3) + Phi_r_c6*(6.*s - 36.*s2 + 60.*s3 - 30.*s4) + Phi_r_c7 * (12.*s2 - 60.*s3 + 90.*s4 - 42.*s5)) / (2. * M_PI * segwidth2);
 
-                        double fddot_phi_i = 2 * f_phi_c2 + 6 * f_phi_c3 * x;
+                        double fddot_phi_i = (-6. * Phi_phi_c3 +  Phi_phi_c4 * (-12. + 24.*s) + Phi_phi_c5 * (6. - 48.*s + 60.*s2) + Phi_phi_c6 * (6. - 72.*s + 180.*s2 - 120.*s3) + Phi_phi_c7 * (24.*s - 180.*s2 + 360.*s3 - 210.*s4)) / (2. * M_PI * segwidth3);
                         //double Phi_theta_i = pt_y + pt_c1 * x + pt_c2 * x2 + pt_c3 * x3;
                         double fddot_theta_i = 0.0;  // 2 * ft_c2 * x  + 6 * ft_c3 * x;
-                        double fddot_r_i = 2 * f_r_c2 + 6 * f_r_c3 * x;
+                        double fddot_r_i = (-6. * Phi_r_c3 +  Phi_r_c4 * (-12. + 24.*s) + Phi_r_c5 * (6. - 48.*s + 60.*s2) + Phi_r_c6 * (6. - 72.*s + 180.*s2 - 120.*s3) + Phi_r_c7 * (24.*s - 180.*s2 + 360.*s3 - 210.*s4)) / (2. * M_PI * segwidth3);
 
                         double phase_term = m * Phi_phi_i + k * Phi_theta_i + n * Phi_r_i;
                         double fdot = m * fdot_phi_i + k * fdot_theta_i + n * fdot_r_i;
