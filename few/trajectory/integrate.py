@@ -508,9 +508,9 @@ class Integrate:
             result[:,3:6] += (self.trajectory[0,4:7] + self.trajectory[-1,4:7])
         return result
     
-    def eval_integrator_derivative_spline(self, t_new: np.ndarray):
+    def eval_integrator_derivative_spline(self, t_new: np.ndarray, order: int=1):
         t_old = self.integrator_t_cache
-        result = self.dopr.eval_derivative(t_new, t_old, self.integrator_spline_coeff)
+        result = self.dopr.eval_derivative(t_new, t_old, self.integrator_spline_coeff, order=order)
 
         if not self.generating_trajectory:
             result[:,3:6] /= self.epsilon

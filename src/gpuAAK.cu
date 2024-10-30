@@ -65,13 +65,13 @@ void d_RotCoeff(double* rot, double* n, double* L, double* S, double* nxL, doubl
   rot[3]=rot[0];
 }
 
-#define  NUM_PARS 8
+#define  NUM_PARS 6
 CUDA_KERNEL
 void make_waveform(cmplx *waveform,
               double* interp_array,
               double M_phys, double S_phys, double mu, double qS, double phiS, double qK, double phiK, double dist,
               int nmodes, bool mich,
-              double delta_t, double start_t, int old_ind, int start_ind, int end_ind, int init_length)
+              double delta_t, double start_t, int old_ind, int start_ind, int end_ind, int init_length, double segwidth)
 {
 
       cmplx I(0.0, 1.0);
@@ -94,29 +94,29 @@ void make_waveform(cmplx *waveform,
 
       #endif
 
-      CUDA_SHARED double spline_coeffs[NUM_PARS * 4];
+      CUDA_SHARED double spline_coeffs[NUM_PARS * 8];
 
       int start, end, increment;
       #ifdef __CUDACC__
       start = threadIdx.x;
-      end = 4 * NUM_PARS;
+      end = 8 * NUM_PARS;
       increment = blockDim.x;
       #else
       start = 0;
-      end = 4 * NUM_PARS;
+      end = 8 * NUM_PARS;
       increment = 1;
       #endif // __CUDACC__
 
        // prepare interpolants
-      // 8 parameters, 4 coefficient values for each parameter
+      // 6 parameters, 8 coefficient values for each parameter
       for (int i = start; i < end; i += increment)
       {
           int coeff_num = (int) (i / NUM_PARS);
           int par_num = i % NUM_PARS;
 
-          int index = (coeff_num * init_length + old_ind) * NUM_PARS + par_num;
+          int index = (coeff_num * (init_length-1) + old_ind) * NUM_PARS + par_num;
 
-          spline_coeffs[par_num * 4 + coeff_num] = interp_array[index];
+          spline_coeffs[par_num * 8 + coeff_num] = interp_array[index];
 
       }
 
@@ -124,14 +124,11 @@ void make_waveform(cmplx *waveform,
 
       // unroll coefficients
 
-      CUDA_SHARED double e_y, e_c1, e_c2, e_c3;
-      CUDA_SHARED double Phi_y, Phi_c1, Phi_c2, Phi_c3;
-      CUDA_SHARED double gim_y, gim_c1, gim_c2, gim_c3;
-      CUDA_SHARED double alp_y, alp_c1, alp_c2, alp_c3;
-      CUDA_SHARED double nu_y, nu_c1, nu_c2, nu_c3;
-      CUDA_SHARED double gimdot_y, gimdot_c1, gimdot_c2, gimdot_c3;
-      CUDA_SHARED double OmegaPhi_y, OmegaPhi_c1, OmegaPhi_c2, OmegaPhi_c3;
-      CUDA_SHARED double lam_y, lam_c1, lam_c2, lam_c3;
+      CUDA_SHARED double e_y, e_c1, e_c2, e_c3, e_c4, e_c5, e_c6, e_c7;
+      CUDA_SHARED double Y_y, Y_c1, Y_c2, Y_c3, Y_c4, Y_c5, Y_c6, Y_c7;
+      CUDA_SHARED double Phi_phi_y, Phi_phi_c1, Phi_phi_c2, Phi_phi_c3, Phi_phi_c4, Phi_phi_c5, Phi_phi_c6, Phi_phi_c7;
+      CUDA_SHARED double Phi_theta_y, Phi_theta_c1, Phi_theta_c2, Phi_theta_c3, Phi_theta_c4, Phi_theta_c5, Phi_theta_c6, Phi_theta_c7;
+      CUDA_SHARED double Phi_r_y, Phi_r_c1, Phi_r_c2, Phi_r_c3, Phi_r_c4, Phi_r_c5, Phi_r_c6, Phi_r_c7;
 
       #ifdef __CUDACC__
       if (threadIdx.x == 0)
@@ -139,18 +136,11 @@ void make_waveform(cmplx *waveform,
       if (true)
       #endif
       {
-          // p_y = spline_coeffs[0 * 4 + 0]; p_c1 = spline_coeffs[0 * 4 + 1]; p_c2 = spline_coeffs[0 * 4 + 2]; p_c3 = spline_coeffs[0 * 4 + 3];
-          e_y = spline_coeffs[0 * 4 + 0]; e_c1 = spline_coeffs[0 * 4 + 1]; e_c2 = spline_coeffs[0 * 4 + 2]; e_c3 = spline_coeffs[0 * 4 + 3];
-
-          Phi_y = spline_coeffs[1 * 4 + 0]; Phi_c1 = spline_coeffs[1 * 4 + 1]; Phi_c2 = spline_coeffs[1 * 4 + 2]; Phi_c3 = spline_coeffs[1 * 4 + 3];
-          gim_y = spline_coeffs[2 * 4 + 0]; gim_c1 = spline_coeffs[2 * 4 + 1]; gim_c2 = spline_coeffs[2 * 4 + 2]; gim_c3 = spline_coeffs[2 * 4 + 3];
-          alp_y = spline_coeffs[3 * 4 + 0]; alp_c1 = spline_coeffs[3 * 4 + 1]; alp_c2 = spline_coeffs[3 * 4 + 2]; alp_c3 = spline_coeffs[3 * 4 + 3];
-
-          nu_y = spline_coeffs[4 * 4 + 0]; nu_c1 = spline_coeffs[4 * 4 + 1]; nu_c2 = spline_coeffs[4 * 4 + 2]; nu_c3 = spline_coeffs[4 * 4 + 3];
-
-          gimdot_y = spline_coeffs[5 * 4 + 0]; gimdot_c1 = spline_coeffs[5 * 4 + 1]; gimdot_c2 = spline_coeffs[5 * 4 + 2]; gimdot_c3 = spline_coeffs[5 * 4 + 3];
-          OmegaPhi_y = spline_coeffs[6 * 4 + 0]; OmegaPhi_c1 = spline_coeffs[6 * 4 + 1]; OmegaPhi_c2 = spline_coeffs[6 * 4 + 2]; OmegaPhi_c3 = spline_coeffs[6 * 4 + 3];
-          lam_y = spline_coeffs[7 * 4 + 0]; lam_c1 = spline_coeffs[7 * 4 + 1]; lam_c2 = spline_coeffs[7 * 4 + 2]; lam_c3 = spline_coeffs[7 * 4 + 3];
+          e_y = spline_coeffs[1 * 8 + 0]; e_c1 = spline_coeffs[1 * 8 + 1]; e_c2 = spline_coeffs[1 * 8 + 2]; e_c3 = spline_coeffs[1 * 8 + 3]; e_c4 = spline_coeffs[1 * 8 + 4]; e_c5 = spline_coeffs[1 * 8 + 5]; e_c6 = spline_coeffs[1 * 8 + 6]; e_c7 = spline_coeffs[1 * 8 + 7];
+          Y_y = spline_coeffs[2 * 8 + 0]; Y_c1 = spline_coeffs[2 * 8 + 1]; Y_c2 = spline_coeffs[2 * 8 + 2]; Y_c3 = spline_coeffs[2 * 8 + 3]; Y_c4 = spline_coeffs[2 * 8 + 4]; Y_c5 = spline_coeffs[2 * 8 + 5]; Y_c6 = spline_coeffs[2 * 8 + 6]; Y_c7 = spline_coeffs[2 * 8 + 7];
+          Phi_phi_y = spline_coeffs[3 * 8 + 0]; Phi_phi_c1 = spline_coeffs[3 * 8 + 1]; Phi_phi_c2 = spline_coeffs[3 * 8 + 2]; Phi_phi_c3 = spline_coeffs[3 * 8 + 3]; Phi_phi_c4 = spline_coeffs[3 * 8 + 4]; Phi_phi_c5 = spline_coeffs[3 * 8 + 5]; Phi_phi_c6 = spline_coeffs[3 * 8 + 6]; Phi_phi_c7 = spline_coeffs[3 * 8 + 7]; 
+          Phi_theta_y = spline_coeffs[4 * 8 + 0]; Phi_theta_c1 = spline_coeffs[4 * 8 + 1]; Phi_theta_c2 = spline_coeffs[4 * 8 + 2]; Phi_theta_c3 = spline_coeffs[4 * 8 + 3]; Phi_theta_c4 = spline_coeffs[4 * 8 + 4]; Phi_theta_c5 = spline_coeffs[4 * 8 + 5]; Phi_theta_c6 = spline_coeffs[4 * 8 + 6]; Phi_theta_c7 = spline_coeffs[4 * 8 + 7]; 
+          Phi_r_y = spline_coeffs[5 * 8 + 0]; Phi_r_c1 = spline_coeffs[5 * 8 + 1]; Phi_r_c2 = spline_coeffs[5 * 8 + 2]; Phi_r_c3 = spline_coeffs[5 * 8 + 3]; Phi_r_c4 = spline_coeffs[5 * 8 + 4]; Phi_r_c5 = spline_coeffs[5 * 8 + 5]; Phi_r_c6 = spline_coeffs[5 * 8 + 6]; Phi_r_c7 = spline_coeffs[5 * 8 + 7]; 
       }
 
       CUDA_SYNC_THREADS;
@@ -210,19 +200,32 @@ void make_waveform(cmplx *waveform,
 
           double t=delta_t * i;
 
-          double x = t - start_t;
-          double x2 = x * x;
-          double x3 = x * x2;
+          double s = (t - start_t) / segwidth;
+          double s1 = (1.0 - s);
+          double s2 = s * s;
+          double s3 = s * s2;
+          double s4 = s * s3;
+          double s5 = s * s4;
+          double s6 = s * s5;
+          double s7 = s * s6;
 
-          // double v = p_y + p_c1 * x + p_c2 * x2 + p_c3 * x3;
-          double e = e_y + e_c1 * x + e_c2 * x2 + e_c3 * x3;
-          double Phi = Phi_y + Phi_c1 * x + Phi_c2 * x2 + Phi_c3 * x3;
-          double gim = gim_y + gim_c1 * x + gim_c2 * x2 + gim_c3 * x3;
-          double alp = alp_y + alp_c1 * x + alp_c2 * x2 + alp_c3 * x3;
-          double nu = nu_y + nu_c1 * x + nu_c2 * x2 + nu_c3 * x3;
-          double gimdot = gimdot_y + gimdot_c1 * x + gimdot_c2 * x2 + gimdot_c3 * x3;
-          double OmegaPhi = OmegaPhi_y + OmegaPhi_c1 * x + OmegaPhi_c2 * x2 + OmegaPhi_c3 * x3;
-          double lam = lam_y + lam_c1 * x + lam_c2 * x2 + lam_c3 * x3;
+          double e = e_y + s * (e_c1 + s1 * (e_c2 + s * (e_c3 + s1 * (e_c4 + s * (e_c5 + s1 * (e_c6 + s * e_c7))))));
+          double Y = Y_y + s * (Y_c1 + s1 * (Y_c2 + s * (Y_c3 + s1 * (Y_c4 + s * (Y_c5 + s1 * (Y_c6 + s * Y_c7))))));
+
+          double Phi_phi = Phi_phi_y + s * (Phi_phi_c1 + s1 * ( Phi_phi_c2 + s * (Phi_phi_c3 + s1 * (Phi_phi_c4 + s * (Phi_phi_c5 + s1 * (Phi_phi_c6 + s * Phi_phi_c7))))));
+          double Phi_theta = Phi_theta_y + s * (Phi_theta_c1 + s1 * ( Phi_theta_c2 + s * (Phi_theta_c3 + s1 * (Phi_theta_c4 + s * (Phi_theta_c5 + s1 * (Phi_theta_c6 + s * Phi_theta_c7))))));
+          double Phi_r = Phi_r_y + s * (Phi_r_c1 + s1 * ( Phi_r_c2 + s * (Phi_r_c3 + s1 * (Phi_r_c4 + s * (Phi_r_c5 + s1 * (Phi_r_c6 + s * Phi_r_c7))))));
+
+          double OmegaPhi = (Phi_phi_c1 + Phi_phi_c2 * (1. - 2.*s) + Phi_phi_c3 * (2.*s - 3.*s2) + Phi_phi_c4 * (2.*s - 6.*s2 + 4.*s3) + Phi_phi_c5 * (3.*s2 - 8.*s3 + 5.*s4) + Phi_phi_c6 * (3.*s2 - 12.*s3 + 15*s4 - 6.*s5) + Phi_phi_c7 * (4.*s3 - 15.*s4 + 18.*s5 - 7.*s6)) / segwidth;
+          double OmegaTheta = (Phi_theta_c1 + Phi_theta_c2 * (1. - 2.*s) + Phi_theta_c3 * (2.*s - 3.*s2) + Phi_theta_c4 * (2.*s - 6.*s2 + 4.*s3) + Phi_theta_c5 * (3.*s2 - 8.*s3 + 5.*s4) + Phi_theta_c6 * (3.*s2 - 12.*s3 + 15*s4 - 6.*s5) + Phi_theta_c7 * (4.*s3 - 15.*s4 + 18.*s5 - 7.*s6)) / segwidth;
+          double OmegaR = (Phi_r_c1 + Phi_r_c2 * (1. - 2.*s) + Phi_r_c3 * (2.*s - 3.*s2) + Phi_r_c4 * (2.*s - 6.*s2 + 4.*s3) + Phi_r_c5 * (3.*s2 - 8.*s3 + 5.*s4) + Phi_r_c6 * (3.*s2 - 12.*s3 + 15*s4 - 6.*s5) + Phi_r_c7 * (4.*s3 - 15.*s4 + 18.*s5 - 7.*s6)) / segwidth;
+
+          double Phi = Phi_r;
+          double gim = Phi_theta - Phi_r;
+          double alp = Phi_phi - Phi_theta;
+          double nu = OmegaR / (2. * M_PI);
+          double gimdot = OmegaTheta - OmegaR;
+          double lam = acos(Y);
 
           if (lam > M_PI - fill_val) lam = M_PI - fill_val;
           if (lam < fill_val) lam = fill_val;
@@ -449,7 +452,8 @@ void get_waveform(cmplx *waveform, double* interp_array,
                         interp_array,
                         M_phys, S_phys, mu, qS, phiS, qK, phiK, dist,
                         nmodes, mich,
-                        delta_t, h_t[i], i, start_inds[i], start_inds[i+1], init_len);
+                        delta_t, h_t[i], i, start_inds[i], start_inds[i+1], init_len,
+                        h_t[i+1] - h_t[i]);
          #else
 
          // CPU waveform generation
@@ -457,7 +461,8 @@ void get_waveform(cmplx *waveform, double* interp_array,
                        interp_array,
                        M_phys, S_phys, mu, qS, phiS, qK, phiK, dist,
                        nmodes, mich,
-                       delta_t, h_t[i], i, start_inds[i], start_inds[i+1], init_len);
+                       delta_t, h_t[i], i, start_inds[i], start_inds[i+1], init_len,
+                       h_t[i+1] - h_t[i]);
          #endif
 
       }

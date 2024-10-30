@@ -126,6 +126,8 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         qK,
         phiK,
         nmodes,
+        interp_t,
+        interp_coeffs,
         *args,
         mich=False,
         dt=10.0,
@@ -188,58 +190,9 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
 
         xp = cp if self.use_gpu else np
 
-        # mass in seconds
-        Msec = M * MTSUN_SI
-
-        # get inclination for mapping
-        iota = np.arccos(Y)
-
-        # convert Y to x_I for fund freqs
-        xI = Y_to_xI(a, p.copy(), e.copy(), Y.copy())
-
-        # these are dimensionless and in radians
-        # TODO: get these from the spline
-        OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p.copy(), e.copy(), xI.copy())
-
-        # dimensionalize the frequencies
-        OmegaPhi, OmegaTheta, OmegaR = (
-            OmegaPhi / Msec,
-            OmegaTheta / Msec,
-            OmegaR / Msec,
-        )
-
-        # convert phases to AK basis
-        Phivec = Phi_r
-        gimvec = Phi_theta - Phi_r
-        alpvec = Phi_phi - Phi_theta
-
-        nuvec = OmegaR / (2 * PI)
-        gimdotvec = OmegaTheta - OmegaR
-
-        # lam in the code is iota
-        lam = iota
+        # TODO: move check of Y0 to initial conditions enforcement?
 
         fill_val = 1e-6
-        if np.any(
-            (lam > np.pi - fill_val)
-            | (lam < fill_val)
-            | (np.abs(lam - (np.pi / 2.0)) < fill_val)
-        ):
-            warnings.warn(
-                "Inclination trajectory includes values within 1e-6 of the poles. We shift these values automatically away from poles by 1e-6."
-            )
-            inds_fix_up = lam > np.pi - fill_val
-            lam[inds_fix_up] = np.pi - fill_val
-
-            inds_fix_up = lam < fill_val
-            lam[inds_fix_up] = fill_val
-
-            inds_fix = (np.abs(lam - (np.pi / 2.0)) < fill_val) & (lam > np.pi / 2.0)
-            lam[inds_fix] = np.pi / 2.0 + fill_val
-
-            inds_fix = (np.abs(lam - (np.pi / 2.0)) < fill_val) & (lam < np.pi / 2.0)
-            lam[inds_fix] = np.pi / 2.0 - fill_val
-
         if qK < fill_val or qK > np.pi - fill_val:
             warnings.warn(
                 "qK is within 1e-6 of the poles. We shift this value automatically away from poles by 1e-6."
@@ -258,39 +211,22 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
             else:
                 qS = np.pi - fill_val
 
-        # convert to gpu if desired
-        tvec_temp = xp.asarray(tvec)
-        init_len = len(tvec)
-
-        # setup interpolation
-        ninterps = 8
-        y_all = xp.zeros((ninterps, init_len))
-
-        # do not need p anymore since we are inputing OmegaPhi
-
-        # fill y_all with all arrays that need interpolation
-        y_all[0] = xp.asarray(e)
-        y_all[1] = xp.asarray(Phivec)
-        y_all[2] = xp.asarray(gimvec)
-        y_all[3] = xp.asarray(alpvec)
-        y_all[4] = xp.asarray(nuvec)
-        y_all[5] = xp.asarray(gimdotvec)
-        y_all[6] = xp.asarray(OmegaPhi)
-        y_all[7] = xp.asarray(lam)
-
-        # get all cubic splines
-        self.spline = CubicSplineInterpolant(tvec_temp, y_all, use_gpu=self.use_gpu)
+        init_len = len(interp_t)
 
         if integrate_backwards:
             # For consistency with forward integration, we slightly shift the knots so that they line up at t=0
             offset = tvec[-1] - int(tvec[-1] / dt) * dt
-            tvec = tvec - offset
+            interp_t = interp_t - offset
 
-        ## TODO: pass phase spline coefficients to aak summation kernel
+        # convert to gpu if desired
+        interp_coeffs_in = xp.transpose(
+            xp.asarray(interp_coeffs), [2, 0, 1]
+            ).flatten()
+
         # generator the waveform
         self.waveform_generator(
             self.waveform,
-            self.spline.interp_array,
+            interp_coeffs_in,
             M,
             a,
             mu,
@@ -304,7 +240,7 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
             init_len,
             self.num_pts,
             dt,
-            tvec,
+            interp_t,
         )
 
         return
