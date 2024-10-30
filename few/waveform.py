@@ -2738,8 +2738,9 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
             else:
                 # number of modes to use (from original AAK model)
                 self.num_modes_kept = self.nmodes = int(30 * e0)
-                if self.num_modes_kept < 4:
-                    self.num_modes_kept = self.nmodes = 4
+
+            if self.num_modes_kept < 4:
+                self.num_modes_kept = self.nmodes = 4
         else:
             self.num_modes_kept = self.nmodes = nmodes
 
@@ -2747,6 +2748,16 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         self.sanity_check_traj(p, e, Y)
 
         self.end_time = t[-1]
+
+        # prepare phase spline coefficients
+        traj_spline_coeff = self.inspiral_generator.inspiral_generator.integrator_spline_coeff  # TODO make these accessible from EMRIInspiral
+        
+        # scale coefficients here by the mass ratio
+        traj_spline_coeff_in = traj_spline_coeff.copy()
+        traj_spline_coeff_in[:,3:,:] /= (mu / M)
+
+        if self.inspiral_generator.inspiral_generator.bool_integrate_backwards:
+            traj_spline_coeff_in[:,3:,0] += xp.array([Phi_phi[-1] + Phi_phi[0], Phi_theta[-1] + Phi_theta[0], Phi_r[-1] + Phi_r[0]])
 
         waveform = self.create_waveform(
             t,
@@ -2765,6 +2776,8 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
             qK,
             phiK,
             self.nmodes,
+            self.inspiral_generator.inspiral_generator.integrator_t_cache,
+            traj_spline_coeff_in,
             mich=mich,
             dt=dt,
             T=T,
