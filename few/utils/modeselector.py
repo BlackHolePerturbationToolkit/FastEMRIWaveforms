@@ -168,7 +168,7 @@ class ModeSelector(ParallelModuleBase):
         """Return citations related to this class."""
         return larger_few_citation + few_citation + few_software_citation
 
-    def __call__(self, teuk_modes: np.ndarray, ylms: np.ndarray, modeinds: list[np.ndarray], fund_freq_args: Optional[tuple], eps: float=1e-5) -> np.ndarray:
+    def __call__(self, teuk_modes: np.ndarray, ylms: np.ndarray, modeinds: list[np.ndarray], fund_freq_args: Optional[tuple] = None, eps: float=1e-5) -> np.ndarray:
         """Call to sort and filer teukolsky modes.
 
         This is the call function that takes the teukolsky modes, ylms,
