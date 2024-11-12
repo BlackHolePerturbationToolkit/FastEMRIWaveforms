@@ -10,6 +10,7 @@ few/tests/__pycache__/
 few/trajectory/__pycache__/*
 few/utils/__pycache__/*
 few/utils/odeoptions.py
+few/waveform/__pycache__/*
 include/ode.hh
 src/ParMap.cpp
 src/gpuAAKWrap_cpu.cpp
