@@ -410,8 +410,7 @@ setup(
     version="1.5.5",
     url="https://github.com/mikekatz04/FastEMRIWaveforms",
     ext_modules=extensions,
-    packages=["few", "few.utils", "few.trajectory", "few.amplitude", "few.summation"],
-    py_modules=["few.waveform"],
+    packages=["few", "few.utils", "few.trajectory", "few.amplitude", "few.summation", "few.waveform"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License (GPL)",
