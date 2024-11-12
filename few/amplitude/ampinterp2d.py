@@ -288,7 +288,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
                 mode_indexes = xp.zeros(len(specific_modes), dtype=xp.int32)
                 for i, (l, m, n) in enumerate(specific_modes):
                     try:
-                        mode_indexes[i] = np.where((self.l_arr == l) & (self.m_arr == m) & (self.n_arr == n))[0]
+                        mode_indexes[i] = np.where((self.l_arr == l) & (self.m_arr == abs(m)) & (self.n_arr == n))[0]
                     except:
                         raise Exception(f"Could not find mode index ({l},{m},{n}).")
         # TODO: perform this in the kernel
@@ -600,7 +600,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
                 mode_indexes = xp.zeros(len(specific_modes), dtype=xp.int32)
                 for i, (l, m, n) in enumerate(specific_modes):
                     try:
-                        mode_indexes[i] = np.where((self.l_arr == l) & (self.m_arr == m) & (self.n_arr == n))[0]
+                        mode_indexes[i] = np.where((self.l_arr == l) & (self.m_arr == abs(m)) & (self.n_arr == n))[0]
                     except:
                         raise Exception(f"Could not find mode index ({l},{m},{n}).")
 
