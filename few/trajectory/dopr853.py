@@ -418,7 +418,7 @@ class DOPR853:
         # )
 
         sk = 1.0 / (
-            self.abstol + self.abstol * self.xp.max(self.xp.array([solOld, solNew]), axis=0)
+            self.abstol + 0. * self.xp.max(self.xp.array([solOld, solNew]), axis=0)
         )
 
         err2 = (((temp - bhh1 * k1 - bhh2 * k9 - bhh3 * k3) * sk) ** n).sum(axis=0)
