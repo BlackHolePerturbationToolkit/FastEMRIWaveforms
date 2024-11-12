@@ -53,5 +53,5 @@ jobs:
 
       - name: Run module tests
         run: |
-          cd ./few/tests/module_tests
+          cd ./few/tests/
           python -m unittest discover
