@@ -49,9 +49,8 @@ jobs:
 
       - name: Install package
         run: |
-          python setup.py install
+          python -m pip install .
 
       - name: Run module tests
         run: |
-          cd ./few/tests/
           python -m unittest discover
