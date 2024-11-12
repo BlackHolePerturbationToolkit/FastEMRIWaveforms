@@ -5,7 +5,7 @@ import warnings
 
 from few.trajectory.inspiral import EMRIInspiral
 from few.amplitude.romannet import RomanAmplitude
-from few.amplitude.interp2dcubicspline import Interp2DAmplitude
+from few.amplitude.ampinterp2d import AmpInterpSchwarzEcc
 from few.waveform import FastSchwarzschildEccentricFlux, SlowSchwarzschildEccentricFlux
 from few.utils.utility import get_overlap, get_mismatch
 from few.utils.ylm import GetYlms
@@ -127,13 +127,11 @@ class WaveformTest(unittest.TestCase):
 
         # keyword arguments for summation generator (InterpolatedModeSum)
         sum_kwargs = {"use_gpu": False}  # GPU is availabel for this type of summation
-        mode_selector_kwargs = {}
         slow = SlowSchwarzschildEccentricFlux(
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             sum_kwargs=sum_kwargs,
-            mode_selector_kwargs=mode_selector_kwargs,
             use_gpu=False,
         )
 
@@ -159,10 +157,6 @@ class WaveformTest(unittest.TestCase):
 
         self.assertLess(mm, 1e-4)
 
-        # test_rk4
-        fast.inspiral_kwargs["use_rk4"] = True
-        fast_wave = fast(M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
-
     def test_kerr_model(self):
         """
         Unit test to determine whether the Kerr models are working or not.
@@ -179,13 +173,13 @@ def amplitude_test(amp_class):
 
     p_all, e_all = np.asarray([temp.ravel() for temp in np.meshgrid(p, e)])
 
-    teuk_modes = amp_class(p_all, e_all)
+    teuk_modes = amp_class(0., p_all, e_all, np.ones_like(p_all)*1.)
 
     # (2, 2, 0) and (7, -3, 1) modes
     specific_modes = [(2, 2, 0), (7, -3, 1)]
 
     # notice this returns a dictionary with keys as the mode tuple and values as the mode values at all trajectory points
-    specific_teuk_modes = amp_class(p_all, e_all, specific_modes=specific_modes)
+    specific_teuk_modes = amp_class(0., p_all, e_all, np.ones_like(p_all)*1., specific_modes=specific_modes)
 
     # we can find the index to these modes to check
     inds = np.array([amp.special_index_map[lmn] for lmn in specific_modes])
@@ -224,7 +218,7 @@ class ModuleTest(unittest.TestCase):
 
     def test_amplitudes_bicubic(self):
         # initialize class
-        amp2 = Interp2DAmplitude()
+        amp2 = AmpInterpSchwarzEcc()
 
         first_check, second_check = amplitude_test(amp2)
 

@@ -1,0 +1,20 @@
+name: test_install_env
+channels:
+  - conda-forge
+
+dependencies:
+  - python
+  - lapack=3.6.1
+  - wget
+  - gsl
+  - hdf5
+  - numpy=1.*
+  - scipy
+  - Cython
+  - tqdm
+  - jupyter
+  - ipython
+  - h5py
+  - requests
+  - matplotlib
+  - rich

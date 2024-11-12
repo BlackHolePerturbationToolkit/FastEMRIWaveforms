@@ -3,14 +3,7 @@ import pickle
 import numpy as np
 import warnings
 
-from few.trajectory.inspiral import EMRIInspiral
-from few.amplitude.romannet import RomanAmplitude
-from few.amplitude.interp2dcubicspline import Interp2DAmplitude
-from few.waveform import FastSchwarzschildEccentricFlux, SlowSchwarzschildEccentricFlux
-from few.utils.utility import get_overlap, get_mismatch
-from few.utils.ylm import GetYlms
-from few.utils.modeselector import ModeSelector
-from few.summation.interpolatedmodesum import CubicSplineInterpolant
+from few.waveform import FastSchwarzschildEccentricFlux
 from few.waveform import GenerateEMRIWaveform
 from few.utils.constants import *
 

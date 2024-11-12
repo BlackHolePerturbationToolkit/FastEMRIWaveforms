@@ -136,6 +136,6 @@ class AAKWaveformTest(unittest.TestCase):
             M, mu, a, p_f, e_f, Y_f, qS, phiS, qK, phiK, dist, mich=mich, dt=dt, T=T
         )
 
-        mm = get_mismatch(waveform_cpu_forward[1:], waveform_cpu_backward[::-1][0:-1], use_gpu=gpu_available)
+        mm = get_mismatch(waveform_cpu_forward, waveform_cpu_backward[::-1], use_gpu=gpu_available)
         self.assertLess(mm, 1e-3)
 

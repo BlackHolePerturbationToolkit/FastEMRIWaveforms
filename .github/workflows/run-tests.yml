@@ -1,0 +1,57 @@
+name: Run tests on push
+
+on:
+  push:
+    branches:
+      - Kerr_Equatorial_Eccentric
+
+jobs:
+  install_and_run_tests:
+    name: Install and run non-GPU tests
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -el {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "macos-13"] #, "windows-latest"]
+        python-version: ["3.12"] #["3.9", "3.10", "3.11", "3.12"]
+        # cuda-version: ["12.4.0"]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Intel env setup
+        uses: conda-incubator/setup-miniconda@v3
+        if: ${{matrix.os != 'macos-latest'}}
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          mamba-version: "*"
+          channels: conda-forge
+          environment-file: ./ci-environments/environment.yml
+          activate-environment: test_install_env
+      
+      - name: ARM env setup
+        uses: conda-incubator/setup-miniconda@v3
+        if: ${{matrix.os == 'macos-latest'}}
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          mamba-version: "*"
+          channels: conda-forge
+          environment-file: ./ci-environments/macos-arm-environment.yml
+          activate-environment: test_install_env
+
+      - name: Run Prebuild
+        run: |
+          python scripts/prebuild.py
+
+      - name: Install package
+        run: |
+          python setup.py install
+
+      - name: Run module tests
+        run: |
+          cd ./few/tests/module_tests
+          python -m unittest discover

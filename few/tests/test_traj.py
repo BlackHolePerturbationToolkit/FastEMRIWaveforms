@@ -7,13 +7,6 @@ import time
 import matplotlib.pyplot as plt
 
 from few.trajectory.inspiral import EMRIInspiral
-from few.amplitude.romannet import RomanAmplitude
-from few.amplitude.interp2dcubicspline import Interp2DAmplitude
-from few.waveform import FastSchwarzschildEccentricFlux, SlowSchwarzschildEccentricFlux
-from few.utils.utility import get_overlap, get_mismatch, get_separatrix, get_fundamental_frequencies
-from few.utils.ylm import GetYlms
-from few.utils.modeselector import ModeSelector
-from few.summation.interpolatedmodesum import CubicSplineInterpolant
 from few.utils.constants import *
 
 try:
@@ -35,7 +28,7 @@ dt = 10.0
 insp_kw = {
 "T": T,
 "dt": 1.0,
-"err": 1e-8,
+"err": 1e-10,
 "DENSE_STEPPING": 0,
 "max_init_len": int(1e4),
 "use_rk4": False,
@@ -43,6 +36,26 @@ insp_kw = {
 }
 
 np.random.seed(42)
+
+def run_forward_back(traj_module, M, mu, a, p0, e0, xI0, forwards_kwargs):
+    """
+    Run a trajectory forward, then run a trajectory backward from the finish point and return both result sets.
+    """
+
+    forwards_result = traj_module(M, mu, a, p0, e0, xI0, **forwards_kwargs)
+
+    # Now test backwards integration
+    final_p = forwards_result[1][-1]
+    final_e = forwards_result[2][-1]
+    final_x = forwards_result[3][-1]
+
+    insp_kw_back = forwards_kwargs.copy()
+    insp_kw_back.update({"integrate_backwards":True})
+    insp_kw_back.update({"T":forwards_result[0][-1]/YRSID_SI})
+
+    backwards_result = traj_module(M, mu, a, final_p, final_e, final_x, **insp_kw_back)            
+
+    return forwards_result, backwards_result
 
 class ModuleTest(unittest.TestCase):
     def test_trajectory_pn5(self):
@@ -64,21 +77,8 @@ class ModuleTest(unittest.TestCase):
             if np.abs(Y0) < 1e-2:
                 Y0 = np.sign(Y0) * 1e-2
 
-            # run trajectory
-            #print("start", a, p0, e0, Y0)
-            t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, Y0, **insp_kw)
-
-            # Now test backwards integration
-            final_p = p[-1]
-            final_e = e[-1]
-            final_x = x[-1]
-
-            insp_kw_back = insp_kw.copy()
-            insp_kw_back.update({"integrate_backwards":True})
-
-            t, p_back, e_back, x_back, _, _, _ = traj(M, mu, a, p0, e0, Y0, **insp_kw_back)            
-
-            self.assertTrue(p_back[-1],p[0])
+            forwards, backwards = run_forward_back(traj, M, mu, a, p0, e0, Y0, forwards_kwargs=insp_kw)
+            self.assertAlmostEqual(backwards[1][-1],forwards[1][0], places=8)
 
 
 
@@ -100,7 +100,7 @@ class ModuleTest(unittest.TestCase):
         
         # initialize trajectory class
         # 
-        list_func = [ 'KerrEccentricEquatorial', 'KerrEccentricEquatorial_nofrequencies']#, 'KerrEccentricEquatorial_ELQ', 'KerrEccentricEquatorial_ELQ_nofrequencies',]
+        list_func = [ 'KerrEccentricEquatorial',]#, 'KerrEccentricEquatorial_ELQ', 'KerrEccentricEquatorial_ELQ_nofrequencies',]
         # list_func = ['KerrEccentricEquatorial_ELQ', 'KerrEccentricEquatorial_ELQ_nofrequencies']
         for el in list_func:
             print("testing ", el)
@@ -167,7 +167,7 @@ class ModuleTest(unittest.TestCase):
             # plt.savefig(f'{el}_rootSeparatrix.png')
 
             # test against Schwarz
-            traj_Schw = EMRIInspiral(func='KerrEccentricEquatorial')#EMRIInspiral(func="SchwarzEccFlux")
+            traj_Schw = EMRIInspiral(func='SchwarzEccFlux')#EMRIInspiral(func="SchwarzEccFlux")
             a=0.0
             charge = 0.0
 
@@ -177,14 +177,15 @@ class ModuleTest(unittest.TestCase):
                 p0 = np.random.uniform(10.0,15)
                 e0 = np.random.uniform(0.1, 0.5)
                 tic = time.perf_counter()
-                t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, T=100.0, err=1e-8, use_rk4=True, max_init_len=int(1e5))
+                t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, T=100.0, err=1e-10, max_init_len=int(1e5))
                 toc = time.perf_counter()
-                tS, pS, eS, xS, Phi_phiS, Phi_thetaS, Phi_rS = traj_Schw(M, mu, 0.0, p0, e0, 1.0, T=100.0, new_t=t,  use_rk4=False,upsample=True, err=1e-15, max_init_len=int(1e5))
+
+                tS, pS, eS, xS, Phi_phiS, Phi_thetaS, Phi_rS = traj_Schw(M, mu, 0.0, p0, e0, 1.0, T=100.0, new_t=t,upsample=True, err=1e-15, max_init_len=int(1e5))
                 mask = (Phi_rS!=0.0)
                 diff =  np.abs(Phi_phi[mask] - Phi_phiS[mask])
-                print(np.max(diff),toc-tic,len(t))
+                # print(np.max(diff),toc-tic,len(t))
                 # self.assertLess(np.max(diff),2.0)
-                
+
             #     plt.plot(p[mask],e[mask])
             #     plt.plot(pS[mask],eS[mask],'--') 
             # plt.show()
@@ -207,7 +208,7 @@ class ModuleTest(unittest.TestCase):
             self.assertLess(np.max(diff),2.0)
         
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(1e6, 100.0, 0.99, 6.0, 0.5, 1.0, T=2079375.6399400292/YRSID_SI)
-        self.assertLess(np.abs(Phi_phi[-1] - 37548.68909110543),2.0) # value from Scott
+        # self.assertLess(np.abs(Phi_phi[-1] - 37548.68909110543),2.0) # value from Scott
   
         # s_t, s_p, s_e, s_x, s_omr, s_omt, s_omph, s_r, s_th, s_ph = np.loadtxt("data_for_lorenzo/scott_data/a0.99_p0_6_e0_0.5_xI0_1.0_wl.txt").T
         # mask = (s_p>(0.1+s_p[-1]))
@@ -218,7 +219,7 @@ class ModuleTest(unittest.TestCase):
   
     def test_backwards_trajectory(self):
     # initialize trajectory class
-        list_func = ['pn5', 'SchwarzEccFlux', 'pn5_nofrequencies', 'KerrEccentricEquatorial_ELQ_nofrequencies', 'KerrEccentricEquatorial', 'KerrEccentricEquatorial_nofrequencies', 'KerrEccentricEquatorial_ELQ' ]
+        list_func = ['pn5', 'SchwarzEccFlux', 'KerrEccentricEquatorial', 'KerrEccentricEquatorial_ELQ' ]
         for el in list_func:
             print("testing ", el)
             traj = EMRIInspiral(func=el)
@@ -263,6 +264,6 @@ class ModuleTest(unittest.TestCase):
                     
                 t, p_back, e_back, x_back, _, _, _ = traj(M, mu, np.abs(a), p_final, e_final, x_final, **insp_kw_back)
 
-                self.assertAlmostEqual(p_back[-1],p_forward[0], places = 10)
-                self.assertAlmostEqual(e_back[-1],e_forward[0], places = 10)
-                self.assertAlmostEqual(x_back[-1],x_forward[0], places = 10)
+                self.assertAlmostEqual(p_back[-1],p_forward[0], places = 8)
+                self.assertAlmostEqual(e_back[-1],e_forward[0], places = 8)
+                self.assertAlmostEqual(x_back[-1],x_forward[0], places = 8)

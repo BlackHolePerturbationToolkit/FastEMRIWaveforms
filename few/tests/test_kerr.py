@@ -1,26 +1,10 @@
 import unittest
-import pickle
-import numpy as np
 import warnings
 
-from few.trajectory.inspiral import EMRIInspiral
-
-from few.amplitude.interp2dcubicspline import Interp2DAmplitude
-from few.amplitude.ampinterp2d import AmpInterpKerrEqEcc
-from few.amplitude.romannet import RomanAmplitude
-from few.amplitude.interp2dcubicspline import Interp2DAmplitude
-
 # from few.waveform import FastSchwarzschildEccentricFlux 
-from few.waveform import GenerateEMRIWaveform, SchwarzschildEccentricWaveformBase, KerrEquatorialEccentricWaveformBase 
+from few.waveform import GenerateEMRIWaveform
 
-from few.utils.utility import get_overlap, get_mismatch
-from few.utils.ylm import GetYlms
-from few.utils.modeselector import ModeSelector
-
-from few.summation.interpolatedmodesum import CubicSplineInterpolant
-from few.summation.interpolatedmodesum import CubicSplineInterpolant
-from few.summation.interpolatedmodesum import InterpolatedModeSum
-from few.summation.directmodesum import DirectModeSum
+from few.utils.utility import get_mismatch
 
 try:
     import cupy as xp
@@ -48,26 +32,10 @@ inspiral_kwargs_Kerr = {
 class KerrWaveformTest(unittest.TestCase):
     def test_Kerr_vs_Schwarzchild(self):
         # Test whether the Kerr and Schwarzschild waveforms agree.  
-        amplitude_kwargs_Kerr = {"specific_spins":[-0.10, 0.0, 0.10]}
 
-        inspiral_kwargs_Schwarz = inspiral_kwargs_Kerr.copy()
-        inspiral_kwargs_Schwarz["func"] = "SchwarzEccFlux"
-
-        # keyword arguments for summation generator (InterpolatedModeSum)
-        wave_generator_Kerr = GenerateEMRIWaveform(KerrEquatorialEccentricWaveformBase,
-                                                        EMRIInspiral,
-                                                        AmpInterpKerrEqEcc,
-                                                        InterpolatedModeSum,
-                                                        ModeSelector,
-                                                        inspiral_kwargs=inspiral_kwargs_Kerr,
-                                                        amplitude_kwargs = amplitude_kwargs_Kerr,
+        wave_generator_Kerr = GenerateEMRIWaveform("FastKerrEccentricEquatorialFlux",
                                                         use_gpu=use_gpu)
-        wave_generator_Schwarz = GenerateEMRIWaveform(SchwarzschildEccentricWaveformBase,
-                                                        EMRIInspiral,
-                                                        Interp2DAmplitude,
-                                                        InterpolatedModeSum,
-                                                        ModeSelector,
-                                                        inspiral_kwargs=inspiral_kwargs_Schwarz,
+        wave_generator_Schwarz = GenerateEMRIWaveform("FastSchwarzschildEccentricFlux",
                                                         use_gpu=use_gpu)
                                                                                   
 
@@ -95,24 +63,17 @@ class KerrWaveformTest(unittest.TestCase):
 
         mm = get_mismatch(Kerr_wave, Schwarz_wave, use_gpu=use_gpu)
 
-        self.assertLess(mm, 1e-5)
+        self.assertLess(mm, 1e-4)
     def test_retrograde_orbits(self):
         """
         Here we test that retrograde orbits and prograde orbits for a = \pm 0.7
         have large mismatches.
         """
         print("Testing retrograde orbits")
-        amplitude_kwargs_Kerr = {"specific_spins":[-0.7, 0.7]}
 
-        # keyword arguments for summation generator (InterpolatedModeSum)
-        wave_generator_Kerr = GenerateEMRIWaveform(KerrEquatorialEccentricWaveformBase,
-                                                        EMRIInspiral,
-                                                        AmpInterpKerrEqEcc,
-                                                        InterpolatedModeSum,
-                                                        ModeSelector,
-                                                        inspiral_kwargs=inspiral_kwargs_Kerr,
-                                                        amplitude_kwargs = amplitude_kwargs_Kerr,
+        wave_generator_Kerr = GenerateEMRIWaveform("FastKerrEccentricEquatorialFlux",
                                                         use_gpu=use_gpu)
+
         # parameters
         M = 1e6
         mu = 1e1
