@@ -30,12 +30,14 @@ from ..utils.spline import BicubicSpline
 from pyUtility import (
     pyKerrGeoCoordinateFrequencies,
     pyGetSeparatrix,
-    pyKerrGeoConstantsOfMotionVectorized,
     pyELQ_to_pex,
     pyY_to_xI_vector,
     pyKerrEqSpinFrequenciesCorr,
     set_threads_wrap,
 )
+
+from numba import njit
+from math import sqrt, exp, pow, cos, acos
 
 # check to see if cupy is available for gpus
 try:
@@ -207,6 +209,160 @@ def kerr_p_to_u(a, p, e, xI, use_gpu=False):
 
     return u
 
+@njit(fastmath=True)
+def _solveCubic(A2, A1, A0):
+    # Coefficients
+    a = 1. # coefficient of r^3
+    b = A2 # coefficient of r^2
+    c = A1 # coefficient of r^1
+    d = A0 # coefficient of r^0
+    
+    # Calculate p and q
+    p = (3.*a*c - b*b) / (3.*a*a)
+    q = (2.*b*b*b - 9.*a*b*c + 27.*a*a*d) / (27.*a*a*a)
+
+    # Calculate discriminant
+    discriminant = q*q/4. + p*p*p/27.
+
+    if discriminant >= 0:
+        # One real root and two complex conjugate roots
+        u = (-q/2. + sqrt(discriminant))**(1/3)
+        v = (-q/2. - sqrt(discriminant))**(1/3)
+        root = u + v - b/(3.*a)
+        # cout << "Real Root: " << root << endl
+
+        # imaginaryPart(-sqrt(3.0) / 2.0 * (u - v), 0.5 * (u + v))
+        imaginaryPart = 0.5 * (u + v)
+        root2 = -0.5 * (u + v) - b / (3. * a) + imaginaryPart
+        root3 = -0.5 * (u + v) - b / (3. * a) - imaginaryPart
+        # cout << "Complex Root 1: " << root2 << endl
+        # cout << "Complex Root 2: " << root3 << endl
+        ra = -0.5 * (u + v) - b / (3. * a)
+        rp = -0.5 * (u + v) - b / (3. * a)
+        r3 = root
+    # } else if (discriminant == 0) {
+    #     # All roots are real and at least two are equal
+    #     u = cbrt(-q/2.)
+    #     v = cbrt(-q/2.)
+    #     root = u + v - b/(3.*a)
+    #     # cout << "Real Root: " << root << endl
+    #     # cout << "Real Root (equal to above): " << root << endl
+    #     # complex<double> root2 = -0.5 * (u + v) - b / (3 * a)
+    #     # cout << "Complex Root: " << root2 << endl
+    #     *ra = -0.5 * (u + v) - b / (3. * a)
+    #     *rp = -0.5 * (u + v) - b / (3. * a)
+    #     *r3 = root
+    else:
+        # All three roots are real and different
+        r = sqrt(-p/3.)
+        theta = acos(-q/(2.*r*r*r))
+        root1 = 2. * r * cos(theta/3.) - b / (3. * a)
+        root2 = 2. * r * cos((theta + 2.*PI) / 3.) - b / (3. * a)
+        root3 = 2. * r * cos((theta - 2.*PI) / 3.) - b / (3. * a)
+        # ra = -2.*rtQnr*cos((theta + 2.*M_PI)/3.) - A2/3.
+        # rp = -2.*rtQnr*cos((theta - 2.*M_PI)/3.) - A2/3.
+        ra = root1
+        rp = root3
+        r3 = root2
+    
+    return rp, ra, r3
+    # cout << "ra: " << *ra << endl
+    # cout << "rp: " << *rp << endl
+    # cout << "r3: " << *r3 << endl
+
+
+@njit(fastmath=True)
+def _ELQ_to_pex_kernel_inner(a, E, Lz, Q):
+# implements the mapping from orbit integrals
+# (E, Lz, Q) to orbit geometry (p, e, xI).  Also provides the
+# roots r3 and r4 of the Kerr radial geodesic function.
+
+# Scott A. Hughes (sahughes@mit.edu) code extracted from Gremlin
+# and converted to standalone form 13 Jan 2024.
+
+    if Q < 1.e-14: #  equatorial
+        E2m1 = E*E - 1.
+        A2 = 2./E2m1
+        A1 = a*a - Lz*Lz/E2m1
+        A0 = 2.*(a*E - Lz)*(a*E - Lz)/E2m1
+
+        rp, ra, r3 = _solveCubic(A2,A1,A0)
+
+        p = 2.*ra*rp/(ra + rp)
+        e = (ra - rp)/(ra + rp)
+
+        if Lz > 0.: 
+            xI = 1.
+        else:
+            xI = -1.
+
+    else: # non-equatorial
+        a2 = a*a
+        E2m1= (E - 1)*(E + 1.)
+        aEmLz = a*E - Lz
+        #
+        # The quartic: r^4 + A3 r^3 + A2 r^2 + A1 r + A0 == 0.
+        # Kerr radial function divided by E^2 - 1.
+        #
+        A0 = -a2*Q/E2m1
+        A1 = 2.*(Q + aEmLz*aEmLz)/E2m1
+        A2 = (a2*E2m1 - Lz*Lz - Q)/E2m1
+        A3 = 2./E2m1
+        #
+        # Definitions following Wolters (https:#quarticequations.com)
+        #
+        B0 = A0 + A3*(-0.25*A1 + A3*(0.0625*A2 - 0.01171875*A3*A3))
+        B1 = A1 + A3*(-0.5*A2 + 0.125*A3*A3)
+        B2 = A2 - 0.375*A3*A3
+        #
+        # Definitions needed for the resolvent cubic: z^3 + C2 z^2 + C1 z + C0 == 0
+        #
+        C0 = -0.015625*B1*B1
+        C1 = 0.0625*B2*B2 - 0.25*B0
+        C2 = 0.5*B2
+        #
+        rtQnr = sqrt(C2*C2/9. - C1/3.)
+        Rnr = C2*(C2*C2/27. - C1/6.) + C0/2.
+        theta = acos(Rnr/(rtQnr*rtQnr*rtQnr))
+        #
+        # zN = cubic zero N
+        #
+        rtz1 = sqrt(-2.*rtQnr*cos((theta + 2.*PI)/3.) - C2/3.)
+        z2 = -2.*rtQnr*cos((theta - 2.*PI)/3.) - C2/3.
+        z3 = -2.*rtQnr*cos(theta/3.) - C2/3.
+        rtz2z3 = sqrt(z2*z3)
+        #
+        # Now assemble the roots of the quartic.  Note that M/(2(1 - E^2)) = -0.25*A3.
+        #
+        if B1 > 0:
+            sgnB1 = 1.
+        else:
+            sgnB1 = -1.
+
+        rttermmin = sqrt(z2 + z3 - 2.*sgnB1*rtz2z3)
+        rttermplus = sqrt(z2 + z3 + 2.*sgnB1*rtz2z3)
+        ra = -0.25*A3 + rtz1 + rttermmin
+        rp = -0.25*A3 + rtz1 - rttermmin
+        # r3 = -0.25*A3 - rtz1 + rttermplus
+        # r4 = -0.25*A3 - rtz1 - rttermplus
+        #
+        p = 2.*ra*rp/(ra + rp)
+        e = (ra - rp)/(ra + rp)
+        #
+        # Note that omE2 = 1 - E^2 = -E2m1 = -(E^2 - 1)
+        #
+        QpLz2ma2omE2 = Q + Lz*Lz + a2*E2m1
+        denomsqr = QpLz2ma2omE2 + sqrt(QpLz2ma2omE2*QpLz2ma2omE2 - 4.*Lz*Lz*a2*E2m1)
+        xI = sqrt(2.)*Lz/sqrt(denomsqr)
+
+    return p, e, xI
+
+@njit(fastmath=True)
+def _ELQ_to_pex_kernel(p, e, xI, a, E, Lz, Q):
+    for i in range(len(p)):
+        p[i], e[i], xI[i] = _ELQ_to_pex_kernel_inner(a[i], E[i], Lz[i], Q[i])
+
+    
 def ELQ_to_pex(a, E, Lz, Q):
     """Convert from separation :math:`p` to :math:`y` coordinate
 
@@ -238,9 +394,13 @@ def ELQ_to_pex(a, E, Lz, Q):
 
     assert len(a_in) == len(E_in)
 
+    p = np.empty_like(E_in)
+    e = np.empty_like(E_in)
+    x = np.empty_like(E_in)
+
     # get frequencies
-    p, e, x = pyELQ_to_pex(
-        a_in, E_in, Lz_in, Q_in
+    _ELQ_to_pex_kernel(
+        p, e, x, a_in, E_in, Lz_in, Q_in
     )
 
     # set output to shape of input
@@ -359,6 +519,107 @@ def get_fundamental_frequencies_spin_corrections(a, p, e, x):
     else:
         return (OmegaPhi, OmegaTheta, OmegaR)
 
+@njit(fastmath=True)
+def _CapitalDelta(r, a):
+    return (r*r) - 2. * r + (a*a)
+
+@njit(fastmath=True)
+def _f(r, a, zm):
+    return (r*r*r*r) + (a*a) * (r * (r + 2.) + (zm*zm) * _CapitalDelta(r, a))
+
+@njit(fastmath=True)
+def _g(r, a, zm):
+    return 2. * a * r
+
+@njit(fastmath=True)
+def _h(r, a, zm):
+    return r * (r - 2.) + (zm*zm) / (1. - (zm*zm)) * _CapitalDelta(r, a)
+
+@njit(fastmath=True)
+def _d(r, a, zm):
+    return ((r*r) + (a*a) * (zm*zm)) * _CapitalDelta(r, a)
+
+@njit(fastmath=True)
+def _fdot(r, a, zm):
+    zm2 = (zm*zm)
+    return 4. * (r*r*r) + (a*a) * (2. * r * (1. + zm2) + 2. * (1 - zm2))
+
+@njit(fastmath=True)
+def _gdot(r, a, zm):
+    return 2. * a
+
+@njit(fastmath=True)
+def _hdot(r, a, zm):   
+    zm2 = (zm*zm)
+    return 2. * (r - 1.)*(1. + zm2 / (1. - zm2))
+
+@njit(fastmath=True)
+def _ddot(r, a, zm):   
+    a2 = (a*a)
+    zm2 = (zm*zm)
+    return 4. * (r*r*r) - 6. * (r*r) + 2.*a2*r*(1. + zm2) - 2.*a2*zm2
+
+@njit(fastmath=True)
+def _KerrGeoEnergy(a, p, e, x):
+    zm = sqrt(1. - x*x)
+    if (e < 1e-10):  # switch to spherical formulas A13-A17 (2102.02713) to avoid instability
+        r = p
+
+        Kappa = _d(r, a, zm) * _hdot(r, a, zm) - _h(r, a, zm) * _ddot(r, a, zm)
+        Epsilon = _d(r, a, zm) * _gdot(r, a, zm) - _g(r, a, zm) * _ddot(r, a, zm)
+        Rho = _f(r, a, zm) * _hdot(r, a, zm) - _h(r, a, zm) * _fdot(r, a, zm)
+        Eta = _f(r, a, zm) * _gdot(r, a, zm) - _g(r, a, zm) * _fdot(r, a, zm)
+        Sigma = _g(r, a, zm) * _hdot(r, a, zm) - _h(r, a, zm) * _gdot(r, a, zm)
+
+    elif abs(x)==1.0:
+        denom = (-4.*(a*a)*((-1 + (e*e))*(-1 + (e*e))) + ((3 + (e*e) - p)*(3 + (e*e) - p))*p)
+        numer = ((-1 + (e*e))*((a*a)*(1 + 3*(e*e) + p) + p*(-3 - (e*e) + p - x*2*sqrt(((a*a*a*a*a*a)*((-1 + (e*e))*(-1 + (e*e))) + (a*a)*(-4*(e*e) + ((-2 + p)*(-2 + p)))*(p*p) + 2*(a*a*a*a)*p*(-2 + p + (e*e)*(2 + p)))/(p*p*p)))))
+        
+        if abs(denom)<1e-14 or abs(numer)<1e-14:
+            ratio = 0.0
+        else:
+            ratio = numer/denom
+
+        return sqrt(1. - ((1. - (e*e))*(1. + ratio))/p)
+    
+    else:
+        r1 = p / (1. - e)
+        r2 = p / (1. + e)
+
+        Kappa = _d(r1, a, zm) * _h(r2, a, zm) - _h(r1, a, zm) * _d(r2, a, zm)
+        Epsilon = _d(r1, a, zm) * _g(r2, a, zm) - _g(r1, a, zm) * _d(r2, a, zm)
+        Rho = _f(r1, a, zm) * _h(r2, a, zm) - _h(r1, a, zm) * _f(r2, a, zm)
+        Eta = _f(r1, a, zm) * _g(r2, a, zm) - _g(r1, a, zm) * _f(r2, a, zm)
+        Sigma = _g(r1, a, zm) * _h(r2, a, zm) - _h(r1, a, zm) * _g(r2, a, zm)
+
+    return sqrt((Kappa * Rho + 2. * Epsilon * Sigma - x * 2. * sqrt(Sigma * (Sigma * Epsilon*Epsilon+ Rho * Epsilon * Kappa - Eta * Kappa*Kappa) / (x*x))) / (Rho*Rho + 4. * Eta * Sigma))
+
+@njit(fastmath=True)
+def _KerrGeoAngularMomentum(a, p, e, x, En):
+    r1 = p / (1 - e)
+
+    zm = sqrt(1 - (x*x))
+
+    return (-En * _g(r1, a, zm) + x * sqrt((-_d(r1, a, zm) * _h(r1, a, zm) + (En*En) * (pow(_g(r1, a, zm), 2) + _f(r1, a, zm) * _h(r1, a, zm))) / (x*x))) / _h(r1, a, zm)
+
+@njit(fastmath=True)
+def _KerrGeoCarterConstant(a, p, e, x, En, L):
+    zm = sqrt(1 - (x*x))
+
+    return (zm*zm) * ((a*a) * (1 - (En*En)) + (L*L) / (1 - (zm*zm)))
+
+@njit(fastmath=True)
+def _KerrGeoConstantsOfMotion_kernel_inner(a, p, e, x):
+    E_out = _KerrGeoEnergy(a, p, e, x)
+    L_out = _KerrGeoAngularMomentum(a, p, e, x, E_out)
+    Q_out = _KerrGeoCarterConstant(a, p, e, x, E_out, L_out)
+    return E_out, L_out, Q_out
+
+@njit(fastmath=True)
+def _KerrGeoConstantsOfMotion_kernel(E_out, L_out, Q_out, a, p, e, x):
+    for i in range(len(p)):
+        E_out[i], L_out[i], Q_out[i] = _KerrGeoConstantsOfMotion_kernel_inner(a[i], p[i], e[i], x[i])
+
 
 def get_kerr_geo_constants_of_motion(a, p, e, x):
     """Get Kerr constants of motion.
@@ -403,8 +664,12 @@ def get_kerr_geo_constants_of_motion(a, p, e, x):
 
     assert len(a_in) == len(p_in)
 
+    E = np.empty_like(p_in)
+    L = np.empty_like(p_in)
+    Q = np.empty_like(p_in)
+
     # get constants of motion
-    E, L, Q = pyKerrGeoConstantsOfMotionVectorized(a_in, p_in, e_in, x_in)
+    _KerrGeoConstantsOfMotion_kernel(E, L, Q, a_in, p_in, e_in, x_in)
 
     # set output to shape of input
     if scalar:

@@ -80,11 +80,11 @@ Please contact the developers if the installation does not work.
 1) Create a virtual environment.
 
 ```
-conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests rich matplotlib python=3.7
+conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests rich matplotlib numba python=3.7
 conda activate few_env
 ```
 
-* If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, rich matplotlib) with pip.
+* If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, rich, numba, matplotlib) with pip.
 * If on MACOSX with an Intel CPU, substitute `gcc_linux-64` and `gxx_linux-64` with `clang_osx-64` and `clangxx_osx-64`.
 * For an ARM CPU (Apple Silicon) substitute these arguments with `clang_osx-arm64` and `clangxx_osx-arm64` instead, and replace `lapack=3.6.1` with `liblapacke`, `lapack` and `openblas`.
 

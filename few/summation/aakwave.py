@@ -31,7 +31,6 @@ except (ImportError, ModuleNotFoundError) as e:
 
 # Cython/C++ imports
 from pycpuAAK import pyWaveform as pyWaveform_cpu
-from pyParameterMap import pyParMap
 
 # Attempt Cython imports of GPU functions
 try:

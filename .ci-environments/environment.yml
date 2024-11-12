@@ -17,4 +17,5 @@ dependencies:
   - h5py
   - requests
   - matplotlib
+  - numba
   - rich

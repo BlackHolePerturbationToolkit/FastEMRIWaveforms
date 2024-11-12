@@ -12,6 +12,7 @@ few/utils/__pycache__/*
 few/utils/odeoptions.py
 few/waveform/__pycache__/*
 include/ode.hh
+src/AmpInterp2d.cpp
 src/ParMap.cpp
 src/gpuAAKWrap_cpu.cpp
 src/inspiralwrap.cpp
@@ -31,6 +32,7 @@ src/pymatmul.cpp
 src/pyinterp.cpp
 src/gpuAAKWrap.cpp
 src/pyampinterp2D_cpu.cpp
+src/pyampinterp2D_cpu.pyx
 src/pyampinterp2D.cpp
 *.DS_Store
 *.ipynb_checkpoints

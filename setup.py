@@ -334,16 +334,9 @@ inspiral_ext = Extension(
     **cpu_extension,
 )
 
-par_map_ext = Extension(
-    "pyParameterMap",
-    sources=["src/ParameterMapAAK.cc", "src/ParMap.pyx"],
-    **cpu_extension,
-)
-
 fund_freqs_ext = Extension(
     "pyUtility",
     sources=[
-        "src/spline.cpp",
         "src/Utility.cc",
         "src/utility_functions.pyx",
     ],
@@ -366,13 +359,6 @@ AAK_cpu_ext = Extension(
     **cpu_extension,
 )
 
-
-spher_harm_ext = Extension(
-    "pySpinWeightedSpherHarm",
-    sources=["src/SWSH.cc", "src/pySWSH.pyx"],
-    **cpu_extension,
-)
-
 amp_interp_2d_ext = Extension(
     "pyAmpInterp2D_cpu",
     sources=["src/AmpInterp2D.cpp", "src/pyampinterp2D_cpu.pyx"],
@@ -382,9 +368,7 @@ amp_interp_2d_ext = Extension(
 cpu_extensions = [
     matmul_cpu_ext,
     inspiral_ext,
-    par_map_ext,
     interp_cpu_ext,
-    spher_harm_ext,
     Interp2DAmplitude_ext,
     fund_freqs_ext,
     AAK_cpu_ext,

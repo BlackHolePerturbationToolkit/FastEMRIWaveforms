@@ -19,6 +19,7 @@ dependencies:
   - h5py
   - requests
   - matplotlib
+  - numba
   - rich
   - clang_osx-arm64
   - clangxx_osx-arm64
