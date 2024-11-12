@@ -32,7 +32,6 @@ from scipy.optimize import brentq
 from pyInspiral import pyInspiralGenerator, pyDerivative
 
 # Python imports
-from ..utils.baseclasses import TrajectoryBase
 from ..utils.utility import (
     check_for_file_download,
     get_ode_function_options,
@@ -498,7 +497,11 @@ class Integrate:
 
     def eval_integrator_spline(self, t_new: np.ndarray):
         t_old = self.integrator_t_cache
-        result = self.dopr.eval(t_new, t_old, self.integrator_spline_coeff)
+
+        result = np.zeros((t_new.size, 6))
+        t_in_mask = (t_new > 0.) & (t_new < t_old.max())
+        
+        result[t_in_mask,:] = self.dopr.eval(t_new[t_in_mask], t_old, self.integrator_spline_coeff)
 
         if not self.generating_trajectory:
             result[:,3:6] /= self.epsilon
