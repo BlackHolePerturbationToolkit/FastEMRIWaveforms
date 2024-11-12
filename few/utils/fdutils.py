@@ -26,8 +26,9 @@ except:
     from scipy.signal import convolve as numpy_convolve
     import numpy as np
 
+from typing import Optional
 
-def get_convolution(a, b):
+def get_convolution(a: np.ndarray, b: np.ndarray):
     """
     Calculate the convolution of two arrays.
 
@@ -60,7 +61,7 @@ def get_convolution(a, b):
     return convolve(xp.hstack((a[1:], a)), b, mode="valid") / len(b)
 
 
-def get_fft_td_windowed(signal, window, dt):
+def get_fft_td_windowed(signal: list, window: np.ndarray, dt: float):
     """
     Calculate the Fast Fourier Transform of a windowed time domain signal.
 
@@ -93,7 +94,7 @@ def get_fft_td_windowed(signal, window, dt):
     return [fft_td_wave_p, fft_td_wave_c]
 
 
-def get_fd_windowed(signal, window=None, window_in_fd=False):
+def get_fd_windowed(signal: list, window: Optional[bool]=None, window_in_fd: bool=False):
     """
     Calculate the convolution of a frequency domain signal with a window in time domain.
 
@@ -159,12 +160,12 @@ class GetFDWaveformFromFD:
 
     def __init__(
         self,
-        waveform_generator,
-        positive_frequency_mask,
-        dt,
-        non_zero_mask=None,
-        window=None,
-        window_in_fd=False,
+        waveform_generator: object,
+        positive_frequency_mask: np.ndarray,
+        dt: float,
+        non_zero_mask: Optional[np.ndarray]=None,
+        window: Optional[np.ndarray]=None,
+        window_in_fd: Optional[bool]=False,
     ):
         self.waveform_generator = waveform_generator
         self.positive_frequency_mask = positive_frequency_mask
@@ -172,7 +173,7 @@ class GetFDWaveformFromFD:
         self.window = window
         self.window_in_fd = window_in_fd
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Optional[list], **kwargs: Optional[dict]):
         """Run the waveform generator.
 
         args:
@@ -214,11 +215,11 @@ class GetFDWaveformFromTD:
 
     def __init__(
         self,
-        waveform_generator,
-        positive_frequency_mask,
-        dt,
-        non_zero_mask=None,
-        window=None,
+        waveform_generator: object,
+        positive_frequency_mask: np.ndarray,
+        dt: float,
+        non_zero_mask: Optional[np.ndarray]=None,
+        window: Optional[np.ndarray]=None,
     ):
         self.waveform_generator = waveform_generator
         self.positive_frequency_mask = positive_frequency_mask
@@ -229,7 +230,7 @@ class GetFDWaveformFromTD:
         else:
             self.window = window
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Optional[list], **kwargs: Optional[dict]):
         """Run the waveform generator.
 
         args:
