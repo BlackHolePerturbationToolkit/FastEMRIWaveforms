@@ -33,10 +33,10 @@ from pyinterp_cpu import (
 
 # Python imports
 from few.utils.baseclasses import (
-    SummationBase,
     SchwarzschildEccentric,
     ParallelModuleBase,
 )
+from .base import SummationBase
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies
 from few.utils.constants import *

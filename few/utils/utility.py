@@ -25,7 +25,7 @@ from rich.progress import track
 import numpy as np
 from scipy.interpolate import CubicSpline
 from scipy.optimize import brentq
-from few.utils.spline import BicubicSpline
+from ..utils.spline import BicubicSpline
 
 from pyUtility import (
     pyKerrGeoCoordinateFrequencies,
@@ -50,7 +50,6 @@ except (ImportError, ModuleNotFoundError) as e:
     setDevice = None
     gpu = False
 
-import few
 from few.utils.constants import *
 
 # get path to this file

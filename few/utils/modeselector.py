@@ -20,11 +20,11 @@ import numpy as np
 from scipy import special
 
 import os
-from few.summation.interpolatedmodesum import CubicSplineInterpolant
-from few.utils.citations import *
-from few.utils.utility import get_fundamental_frequencies
-from few.utils.constants import *
-from few.utils.baseclasses import ParallelModuleBase
+from ..summation.interpolatedmodesum import CubicSplineInterpolant
+from ..utils.citations import *
+from ..utils.utility import get_fundamental_frequencies
+from ..utils.constants import *
+from ..utils.baseclasses import ParallelModuleBase
 import sys
 
 # check for cupy
@@ -39,6 +39,8 @@ try:
     import torch
 except (ImportError, ModuleNotFoundError) as e:
     pass #  we can catch this later
+
+from typing import Optional
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -121,7 +123,7 @@ class ModeSelector(ParallelModuleBase):
 
     """
 
-    def __init__(self, l_arr, m_arr, n_arr, sensitivity_fn=None, **kwargs):
+    def __init__(self, l_arr: np.ndarray, m_arr: np.ndarray, n_arr: np.ndarray, sensitivity_fn: Optional[object]=None, **kwargs: Optional[dict]):
         ParallelModuleBase.__init__(self, **kwargs)
 
         if self.use_gpu:
@@ -166,7 +168,7 @@ class ModeSelector(ParallelModuleBase):
         """Return citations related to this class."""
         return larger_few_citation + few_citation + few_software_citation
 
-    def __call__(self, teuk_modes, ylms, modeinds, fund_freq_args=None, eps=1e-5):
+    def __call__(self, teuk_modes: np.ndarray, ylms: np.ndarray, modeinds: list[np.ndarray], fund_freq_args: Optional[tuple], eps: float=1e-5) -> np.ndarray:
         """Call to sort and filer teukolsky modes.
 
         This is the call function that takes the teukolsky modes, ylms,

@@ -28,10 +28,10 @@ from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 
 # Python imports
 from few.utils.baseclasses import (
-    Old_SchwarzschildEccentric,
-    AmplitudeBase,
+    SchwarzschildEccentric,
     ParallelModuleBase,
 )
+from .base import AmplitudeBase
 from few.utils.utility import check_for_file_download
 from few.utils.citations import *
 from few.utils.utility import p_to_y
@@ -53,7 +53,7 @@ except (ImportError, ModuleNotFoundError) as e:
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class RomanAmplitude(AmplitudeBase, Old_SchwarzschildEccentric, ParallelModuleBase):
+class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
     """Calculate Teukolsky amplitudes with a ROMAN.
 
     ROMAN stands for reduced-order models with artificial neurons. Please see
@@ -128,7 +128,7 @@ class RomanAmplitude(AmplitudeBase, Old_SchwarzschildEccentric, ParallelModuleBa
 
     def __init__(self, max_init_len=1000, file_directory=None, **kwargs):
         ParallelModuleBase.__init__(self, **kwargs)
-        Old_SchwarzschildEccentric.__init__(self, **kwargs)
+        SchwarzschildEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
         if file_directory is None:

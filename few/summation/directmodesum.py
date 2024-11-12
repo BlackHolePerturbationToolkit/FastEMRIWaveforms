@@ -26,10 +26,10 @@ except (ImportError, ModuleNotFoundError) as e:
 
 # Necessary base classes
 from few.utils.baseclasses import (
-    SummationBase,
     SchwarzschildEccentric,
     ParallelModuleBase,
 )
+from .base import SummationBase
 from few.utils.citations import *
 
 

@@ -41,7 +41,8 @@ except (ImportError, ModuleNotFoundError) as e:
     pass
 
 # Python imports
-from few.utils.baseclasses import Pn5AAK, SummationBase, ParallelModuleBase
+from few.utils.baseclasses import Pn5AAK, ParallelModuleBase
+from .base import SummationBase
 from few.utils.citations import *
 from few.utils.utility import get_fundamental_frequencies, Y_to_xI
 from few.utils.constants import *
@@ -113,13 +114,7 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         tvec,
         M,
         a,
-        p,
-        e,
-        Y,
         dist,
-        Phi_phi,
-        Phi_theta,
-        Phi_r,
         mu,
         qS,
         phiS,

@@ -28,7 +28,8 @@ from tqdm import tqdm
 # Cython/C++ imports
 
 # Python imports
-from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase, ParallelModuleBase, KerrEccentricEquatorial
+from few.utils.baseclasses import SchwarzschildEccentric, ParallelModuleBase, KerrEccentricEquatorial
+from .base import AmplitudeBase
 from few.utils.utility import check_for_file_download
 from few.utils.citations import *
 from few.utils.utility import p_to_y, kerr_p_to_u
@@ -80,7 +81,7 @@ _DEFAULT_AMPLITUDE_FILENAMES = [
     f"KerrEqEccAmpCoeffs_a{spin:.3f}.h5" for spin in _DEFAULT_SPINS
 ]
 
-class AmpInterp2D(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleBase):
+class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
     """Calculate Teukolsky amplitudes with a ROMAN.
 
     ROMAN stands for reduced-order models with artificial neurons. Please see
@@ -153,11 +154,14 @@ class AmpInterp2D(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleBase):
         """
         pass
 
-    def __init__(self, fp, max_init_len=1000, file_directory=None, **kwargs):
+    def __init__(self, fp, l_arr, m_arr, n_arr, max_init_len=1000, file_directory=None, **kwargs):
 
         ParallelModuleBase.__init__(self, **kwargs)
-        KerrEccentricEquatorial.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
+
+        self.l_arr = l_arr
+        self.m_arr = m_arr
+        self.n_arr = n_arr
 
         if self.use_gpu:
             self.interp2D = interp2D
@@ -324,7 +328,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleB
 
         self.spin_information_holder_unsorted = [None for _ in range(len(self.filenames))]
         for i, fp in enumerate(self.filenames):
-            self.spin_information_holder_unsorted[i] = AmpInterp2D(fp, file_directory=self.file_dir, use_gpu=self.use_gpu)
+            self.spin_information_holder_unsorted[i] = AmpInterp2D(fp, self.l_arr, self.m_arr, self.n_arr, file_directory=self.file_dir, use_gpu=self.use_gpu)
 
         spin_values_unsorted = [sh.a_val_store for sh in self.spin_information_holder_unsorted]
         rearrange_inds = np.argsort(spin_values_unsorted)
@@ -439,6 +443,197 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleB
                     temp[lmn] = np.conj(temp[lmn])
 
             return temp
+
+
+class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
+    """
+    A legacy class for compatibility with the old Schwarzschild waveform structure. 
+    """
+    def __init__(self, file_directory=None, filenames=None, **kwargs):
+
+        ParallelModuleBase.__init__(self, **kwargs)
+        SchwarzschildEccentric.__init__(self, **kwargs)
+        AmplitudeBase.__init__(self, **kwargs)
+
+        if file_directory is None:
+            self.file_dir = dir_path + "/../../few/files/"
+        else:
+            self.file_dir = file_directory
+
+        if filenames is None:
+            self.filename = "Teuk_amps_a0.0_lmax_10_nmax_30_new.h5"
+        else:
+            if isinstance(filenames, list):
+                assert (len(filenames) == 1)
+            self.filename = filenames
+
+        if self.use_gpu:
+            self.interp2D = interp2D
+            xp = cp
+        else:
+            self.interp2D = interp2D_cpu
+            xp = np
+        
+        # check if user has the necessary data
+        # if not, the data will automatically download
+        check_for_file_download(self.filename, self.file_dir)
+        
+        data = {}
+        with h5py.File(os.path.join(self.file_dir, self.filename), "r") as f:
+            # load attributes in the right order for correct mode sorting later
+            format_string1 = "l{}m{}"
+            format_string2 = "n{}k0"
+            savestring = "l{}m{}k0n{}"
+            grid = f["grid"][:]
+            for l, m, n in zip(self.l_arr, self.m_arr, self.n_arr):
+                if m >= 0:
+                    key1 = format_string1.format(l,m)
+                    key2 = format_string2.format(n)
+                    tmp = f[key1+'/'+key2][:]
+                    tmp2 = tmp[:, 0] + 1j * tmp[:, 1]
+                    data[savestring.format(l,m,n)] = tmp2.T
+
+            # create the coefficients file
+
+            # adjust the grid
+            p = grid.T[1].copy()
+            e = grid.T[2].copy()
+            u = np.round(p_to_y(p, e, use_gpu=False),8)
+            w = e.copy()
+
+            grid_size = p.shape[0]
+            
+            unique_u = np.unique(u)
+            unique_w = np.unique(w)
+            num_u = len(unique_u)
+            num_w = len(unique_w)
+
+            data_copy = deepcopy(data)
+            for mode, vals in data.items():
+                data_copy[mode] = data_copy[mode].reshape(num_w, num_u)
+
+            data = deepcopy(data_copy)
+
+            data = {name: val[:, ::-1] for name, val in data.items()}
+
+            spl2D = {name:
+                [
+                    RectBivariateSpline(unique_w, unique_u, val.real, kx=3, ky=3), 
+                    RectBivariateSpline(unique_w, unique_u, val.imag, kx=3, ky=3)
+                ]
+            for name, val in data.items()}
+
+            mode_keys = list(data.keys())
+            num_teuk_modes = len(mode_keys)
+
+            first_key = list(spl2D.keys())[0]
+            example_spl = spl2D[first_key][0]
+            tck_last_entry = np.zeros((len(data), 2, grid_size))
+            for i, mode in enumerate(mode_keys):
+                tck_last_entry[i, 0] = spl2D[mode][0].tck[2]
+                tck_last_entry[i, 1] = spl2D[mode][1].tck[2]
+            
+            self.tck = [
+                xp.asarray(example_spl.tck[0]),
+                xp.asarray(example_spl.tck[1]),
+                xp.asarray(tck_last_entry.copy())
+            ]
+        
+        self.num_teuk_modes = num_teuk_modes
+
+        self.degrees = example_spl.degrees
+        self.len_indiv_c = tck_last_entry.shape[-1]
+
+    def get_amplitudes(self, a, p, e, xI, specific_modes=None):
+        if self.use_gpu:
+            xp = cp
+        else:
+            xp = np
+
+        assert (a == 0.)
+
+        assert np.all(xI == 1.0)
+        
+        try:
+            p_cpu, e_cpu = p.get().copy(), e.get().copy()
+        except AttributeError:
+            p_cpu, e_cpu = p.copy(), e.copy()
+
+        p = xp.asarray(p)
+        e = xp.asarray(e)
+
+        # TODO: make this GPU accessible
+        u = xp.asarray(p_to_y(p_cpu, e_cpu, use_gpu=False))
+
+        w = e.copy()
+
+        tw, tu, c = self.tck[:3]
+        kw, ku = self.degrees
+        
+        # standard Numpy broadcasting
+        if w.shape != u.shape:
+            w, u = np.broadcast_arrays(w, u)
+
+        shape = w.shape
+        w = w.ravel()
+        u = u.ravel()
+
+        if w.size == 0 or u.size == 0:
+            return np.zeros(shape, dtype=self.tck[2].dtype)
+
+        nw = tw.shape[0]
+        nu = tu.shape[0]
+        mw = w.shape[0]
+        mu = u.shape[0]
+
+        assert mw == mu
+
+        # TODO: adjustable
+
+        if specific_modes is None:
+            mode_indexes = xp.arange(self.num_teuk_modes)
+        
+        else:
+            if isinstance(specific_modes, xp.ndarray):
+                mode_indexes = specific_modes
+            elif isinstance(specific_modes, list):  # the following is slow and kills efficiency
+                mode_indexes = xp.zeros(len(specific_modes), dtype=xp.int32)
+                for i, (l, m, n) in enumerate(specific_modes):
+                    try:
+                        mode_indexes[i] = np.where((self.l_arr == l) & (self.m_arr == m) & (self.n_arr == n))[0]
+                    except:
+                        raise Exception(f"Could not find mode index ({l},{m},{n}).")
+
+        # TODO: perform this in the kernel
+        c_in = c[mode_indexes].flatten()
+
+        num_indiv_c = 2*len(mode_indexes)  # Re and Im
+        len_indiv_c = self.len_indiv_c
+
+        z = xp.zeros((num_indiv_c * mw))
+        
+        self.interp2D(z, tw, nw, tu, nu, c_in, kw, ku, w, mw, u, mu, num_indiv_c, len_indiv_c)
+
+        z = z.reshape(num_indiv_c//2, 2, mw).transpose(2, 1, 0)
+
+        z = z[:, 0] + 1j * z[:, 1]
+
+        if not isinstance(specific_modes, list):
+            return z
+        
+        # dict containing requested modes
+        else:
+            temp = {}
+            for i, lmn in enumerate(specific_modes):
+                temp[lmn] = z[:, i]
+                l, m, n = lmn
+
+                # apply +/- m symmetry
+                if m < 0:
+                    temp[lmn] = np.conj(temp[lmn])
+
+            return temp
+
 
 def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr, file_directory=None):
     data = {}

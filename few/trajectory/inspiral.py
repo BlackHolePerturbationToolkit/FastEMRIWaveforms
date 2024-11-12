@@ -27,8 +27,8 @@ import numpy as np
 from pyInspiral import pyInspiralGenerator, pyDerivative
 
 # Python imports
-from few.utils.baseclasses import TrajectoryBase
-from few.utils.utility import (
+from .base import TrajectoryBase
+from ..utils.utility import (
     check_for_file_download,
     get_ode_function_options,
     ELQ_to_pex,
@@ -36,8 +36,8 @@ from few.utils.utility import (
     get_fundamental_frequencies,
     Y_to_xI,
 )
-from few.utils.constants import *
-from few.utils.citations import *
+from ..utils.constants import *
+from ..utils.citations import *
 
 from .integrate import APEXIntegrate, AELQIntegrate, get_integrator
 

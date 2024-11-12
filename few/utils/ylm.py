@@ -27,7 +27,9 @@ import numpy as np
 from pySpinWeightedSpherHarm import get_spin_weighted_spher_harm_wrap
 
 # base classes
-from few.utils.baseclasses import ParallelModuleBase
+from ..utils.baseclasses import ParallelModuleBase
+
+from typing import Optional
 
 
 class GetYlms(ParallelModuleBase):
@@ -48,7 +50,7 @@ class GetYlms(ParallelModuleBase):
 
     """
 
-    def __init__(self, assume_positive_m=False, **kwargs):
+    def __init__(self, assume_positive_m: bool=False, **kwargs: Optional[dict]):
         ParallelModuleBase.__init__(self, **kwargs)
         # see args in docstring
         self.assume_positive_m = assume_positive_m
@@ -66,7 +68,13 @@ class GetYlms(ParallelModuleBase):
         pass
 
     # These are the spin-weighted spherical harmonics with s=2
-    def __call__(self, l_in, m_in, theta, phi):
+    def __call__(
+            self, 
+            l_in: np.ndarray, 
+            m_in: np.ndarray, 
+            theta: float, 
+            phi: float
+        ) -> np.ndarray:
         """Call method for Ylms.
 
         This returns ylms based on requested :math:`(l,m)` values and viewing
