@@ -8,5 +8,6 @@ from .waveform import (
     FastKerrEccentricEquatorialFlux, 
     FastSchwarzschildEccentricFlux, 
     FastSchwarzschildEccentricFluxBicubic,
+    SlowSchwarzschildEccentricFlux,
     Pn5AAKWaveform
 )

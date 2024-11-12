@@ -368,7 +368,7 @@ class GenerateEMRIWaveform:
 class FastKerrEccentricEquatorialFlux(
     SphericalHarmonicWaveformBase, KerrEccentricEquatorial, ABC
 ):
-    """Prebuilt model for fast Kerr equatorial eccentric flux-based waveforms.
+    """Prebuilt model for fast Kerr eccentric equatorial flux-based waveforms.
 
     This model combines the most efficient modules to produce the fastest
     accurate EMRI waveforms. It leverages GPU hardware for maximal acceleration,
@@ -378,7 +378,7 @@ class FastKerrEccentricEquatorialFlux(
     flux-based, sparse trajectory. This returns approximately 100 points.
 
     The amplitudes are then determined with
-    :class:`few.amplitude.interp2dcubicspline.Interp2DAmplitude` along these sparse
+    :class:`few.amplitude.interp2dcubicspline.AmpInterp2D` along these sparse
     trajectories. This gives complex amplitudes for all modes in this model at
     each point in the trajectory. These are then filtered with
     :class:`few.utils.modeselector.ModeSelector`.
@@ -386,7 +386,7 @@ class FastKerrEccentricEquatorialFlux(
     The modes that make it through the filter are then summed by
     :class:`few.summation.interpolatedmodesum.InterpolatedModeSum`.
 
-    See :class:`few.waveform.SphericalHarmonicWaveformBase` for information
+    See :class:`few.waveform.base.SphericalHarmonicWaveformBase` for information
     on inputs. See examples as well.
 
     args:
@@ -405,7 +405,6 @@ class FastKerrEccentricEquatorialFlux(
         **kwargs (dict, placeholder): kwargs for waveform model.
 
     """
-
     def __init__(
         self,
         inspiral_kwargs: Optional[dict]=None,
@@ -501,6 +500,43 @@ class FastKerrEccentricEquatorialFlux(
 class FastSchwarzschildEccentricFlux(
     SphericalHarmonicWaveformBase, SchwarzschildEccentric, ABC
 ):
+    """Prebuilt model for fast Schwarzschild eccentric flux-based waveforms.
+
+    This model combines the most efficient modules to produce the fastest
+    accurate EMRI waveforms. It leverages GPU hardware for maximal acceleration,
+    but is also available on for CPUs.
+
+    The trajectory module used here is :class:`few.trajectory.inspiral` for a
+    flux-based, sparse trajectory. This returns approximately 100 points.
+
+    The amplitudes are then determined with
+    :class:`few.amplitude.interp2dcubicspline.romannet` along these sparse
+    trajectories. This gives complex amplitudes for all modes in this model at
+    each point in the trajectory. These are then filtered with
+    :class:`few.utils.modeselector.ModeSelector`.
+
+    The modes that make it through the filter are then summed by
+    :class:`few.summation.interpolatedmodesum.InterpolatedModeSum`.
+
+    See :class:`few.waveform.base.SphericalHarmonicWaveformBase` for information
+    on inputs. See examples as well.
+
+    args:
+        inspiral_kwargs (dict, optional): Optional kwargs to pass to the
+            inspiral generator. **Important Note**: These kwargs are passed
+            online, not during instantiation like other kwargs here. Default is
+            {}.
+        amplitude_kwargs (dict, optional): Optional kwargs to pass to the
+            amplitude generator during instantiation. Default is {}.
+        sum_kwargs (dict, optional): Optional kwargs to pass to the
+            sum module during instantiation. Default is {}.
+        Ylm_kwargs (dict, optional): Optional kwargs to pass to the
+            Ylm generator during instantiation. Default is {}.
+        use_gpu (bool, optional): If True, use GPU resources. Default is False.
+        *args (list, placeholder): args for waveform model.
+        **kwargs (dict, placeholder): kwargs for waveform model.
+
+    """
     def __init__(
         self,
         inspiral_kwargs: Optional[dict]=None,
@@ -609,6 +645,43 @@ class FastSchwarzschildEccentricFlux(
 class FastSchwarzschildEccentricFluxBicubic(
     SphericalHarmonicWaveformBase, SchwarzschildEccentric, ABC
 ):
+    """Prebuilt model for fast Schwarzschild eccentric flux-based waveforms.
+
+    This model combines the most efficient modules to produce the fastest
+    accurate EMRI waveforms. It leverages GPU hardware for maximal acceleration,
+    but is also available on for CPUs.
+
+    The trajectory module used here is :class:`few.trajectory.inspiral` for a
+    flux-based, sparse trajectory. This returns approximately 100 points.
+
+    The amplitudes are then determined with
+    :class:`few.amplitude.interp2dcubicspline.AmpInterp2D` along these sparse
+    trajectories. This gives complex amplitudes for all modes in this model at
+    each point in the trajectory. These are then filtered with
+    :class:`few.utils.modeselector.ModeSelector`.
+
+    The modes that make it through the filter are then summed by
+    :class:`few.summation.interpolatedmodesum.InterpolatedModeSum`.
+
+    See :class:`few.waveform.base.SphericalHarmonicWaveformBase` for information
+    on inputs. See examples as well.
+
+    args:
+        inspiral_kwargs (dict, optional): Optional kwargs to pass to the
+            inspiral generator. **Important Note**: These kwargs are passed
+            online, not during instantiation like other kwargs here. Default is
+            {}.
+        amplitude_kwargs (dict, optional): Optional kwargs to pass to the
+            amplitude generator during instantiation. Default is {}.
+        sum_kwargs (dict, optional): Optional kwargs to pass to the
+            sum module during instantiation. Default is {}.
+        Ylm_kwargs (dict, optional): Optional kwargs to pass to the
+            Ylm generator during instantiation. Default is {}.
+        use_gpu (bool, optional): If True, use GPU resources. Default is False.
+        *args (list, placeholder): args for waveform model.
+        **kwargs (dict, placeholder): kwargs for waveform model.
+
+    """
     def __init__(
         self,
         inspiral_kwargs: Optional[dict]=None,
@@ -713,7 +786,132 @@ class FastSchwarzschildEccentricFluxBicubic(
             **kwargs,
         )
 
+class SlowSchwarzschildEccentricFlux(SphericalHarmonicWaveformBase, SchwarzschildEccentric, ABC):
+    """Prebuilt model for slow Schwarzschild eccentric flux-based waveforms.
 
+    This model combines the various modules to produce the a reference waveform
+    against which we test our fast models. Please see
+    :class:`few.utils.baseclasses.SchwarzschildEccentric` for general
+    information on this class of models.
+
+    The trajectory module used here is :class:`few.trajectory.inspiral` for a
+    flux-based trajectory. For this slow waveform, the DENSE_STEPPING parameter
+    from :class:`few.trajectory.base.TrajectoryBase` is fixed to 1 to create
+    a densely sampled trajectory.
+
+    The amplitudes are then determined with
+    :class:`few.amplitude.interp2dcubicspline.AmpInterp2D`
+    along a densely sampled trajectory. This gives complex amplitudes
+    for all modes in this model at each point in the trajectory. 
+    
+    As this class is meant to be a reference waveform class, all waveform mode amplitudes 
+    are used. The modes are summed by :class:`few.summation.directmodesum.DirectModeSum`.
+
+    See :class:`few.waveform.base.SphericalHarmonicWaveformBase` for information
+    on inputs. See examples as well.
+
+    args:
+        inspiral_kwargs (dict, optional): Optional kwargs to pass to the
+            inspiral generator. **Important Note**: These kwargs are passed
+            online, not during instantiation like other kwargs here. Default is
+            {}.
+        amplitude_kwargs (dict, optional): Optional kwargs to pass to the
+            amplitude generator during instantiation. Default is {}.
+        sum_kwargs (dict, optional): Optional kwargs to pass to the
+            sum module during instantiation. Default is {}.
+        Ylm_kwargs (dict, optional): Optional kwargs to pass to the
+            Ylm generator during instantiation. Default is {}.
+        use_gpu (bool, optional): If True, use GPU resources. Default is False.
+        *args (list, placeholder): args for waveform model.
+        **kwargs (dict, placeholder): kwargs for waveform model.
+
+    """
+
+    @property
+    def gpu_capability(self):
+        return False
+
+    @property
+    def allow_batching(self):
+        return True
+
+    def attributes(self):
+        """
+        attributes:
+            gpu_capability (bool): If True, this wavefrom can leverage gpu
+                resources. For this class it is False.
+            allow_batching (bool): If True, this waveform can use the batch_size
+                kwarg. For this class it is True.
+        """
+        pass
+
+    def __init__(
+        self,
+        inspiral_kwargs: Optional[dict]=None,
+        amplitude_kwargs: Optional[dict]=None,
+        sum_kwargs: Optional[dict]=None,
+        Ylm_kwargs: Optional[dict]=None,
+        use_gpu: bool=False,
+        *args: Optional[tuple],
+        **kwargs: Optional[dict],
+    ):
+        if inspiral_kwargs is None:
+            inspiral_kwargs = {}
+        if amplitude_kwargs is None:
+            amplitude_kwargs = {}
+        if sum_kwargs is None:
+            sum_kwargs = {}
+        if Ylm_kwargs is None:
+            Ylm_kwargs = {}
+
+        SchwarzschildEccentric.__init__(self, use_gpu=use_gpu)
+
+        # declare specific properties
+        inspiral_kwargs["DENSE_STEPPING"] = 1
+        inspiral_kwargs["func"] = "SchwarzEccFlux"
+
+        SphericalHarmonicWaveformBase.__init__(
+            self,
+            EMRIInspiral,
+            AmpInterpSchwarzEcc,
+            DirectModeSum,
+            ModeSelector,
+            inspiral_kwargs=inspiral_kwargs,
+            amplitude_kwargs=amplitude_kwargs,
+            sum_kwargs=sum_kwargs,
+            Ylm_kwargs=Ylm_kwargs,
+            use_gpu=use_gpu,
+            *args,
+            **kwargs,
+        )
+
+    def __call__(
+        self,
+        M: float,
+        mu: float,
+        p0: float,
+        e0: float,
+        theta: float,
+        phi: float,
+        *args: Optional[tuple],
+        **kwargs: Optional[dict],
+    ) -> xp.ndarray:
+        # insert missing arguments for this waveform class
+        if kwargs is None:
+            kwargs = {}
+        kwargs.update(dict(mode_selection="all"))
+        return self._generate_waveform(
+            M,
+            mu,
+            0.0,
+            p0,
+            e0,
+            1.0,
+            theta,
+            phi,
+            *args,
+            **kwargs,
+        )
 
 class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase, ABC):
     """Waveform generation class for AAK with 5PN trajectory.
@@ -751,7 +949,7 @@ class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase, ABC):
     methodoligy with cubic spine interpolation of the smoothly varying
     waveform quantities. This waveform does not have the freedom in terms
     of user-chosen quantitites that
-    :class:`few.waveform.SchwarzschildEccentricWaveformBase` contains.
+    :class:`few.waveform.base.SphericalHarmonicWaveformBase` contains.
     This is mainly due to the specific waveform constructions particular
     to the AAK/AK.
 

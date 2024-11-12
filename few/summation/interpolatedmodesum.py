@@ -408,6 +408,7 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleB
         else:
             xp = np
 
+
         init_len = len(t)
         num_teuk_modes = teuk_modes.shape[1]
         num_pts = self.num_pts

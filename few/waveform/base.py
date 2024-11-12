@@ -399,23 +399,36 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
 
             # store number of modes for external information
             self.num_modes_kept = teuk_modes_in.shape[1]
-
-            # prepare phase spline coefficients
-            phase_spline_coeff = self.inspiral_generator.inspiral_generator.integrator_spline_coeff  # TODO make these accessible from EMRIInspiral
             
-            # scale coefficients here by the mass ratio
-            phase_spline_coeff_in = phase_spline_coeff[:,[3,5],:] / (mu / M)
 
-            if self.inspiral_generator.inspiral_generator.bool_integrate_backwards:
-                phase_spline_coeff_in[:,:,0] += xp.array([Phi_phi[-1] + Phi_phi[0], Phi_r[-1] + Phi_r[0]])
+            # prepare phases for summation modules
+            if not self.inspiral_generator.inspiral_generator.dopr.fix_step:
+                # prepare phase spline coefficients
+                phase_spline_coeff = self.inspiral_generator.inspiral_generator.integrator_spline_coeff  # TODO make these accessible from EMRIInspiral
+                
+                # scale coefficients here by the mass ratio
+                phase_information_in = phase_spline_coeff[:,[3,5],:] / (mu / M)
 
+                if self.inspiral_generator.inspiral_generator.bool_integrate_backwards:
+                    phase_information_in[:,:,0] += xp.array([Phi_phi[-1] + Phi_phi[0], Phi_r[-1] + Phi_r[0]])
+
+                phase_t_in = self.inspiral_generator.inspiral_generator.integrator_t_cache
+            else:
+                phase_information_in = [Phi_phi, Phi_theta, Phi_r]
+                if self.inspiral_generator.inspiral_generator.bool_integrate_backwards:
+                    phase_information_in[0] += xp.array([Phi_phi[-1] + Phi_phi[0]])
+                    phase_information_in[1] += xp.array([Phi_theta[-1] + Phi_theta[0]])
+                    phase_information_in[2] += xp.array([Phi_r[-1] + Phi_r[0]])
+
+                phase_t_in = None
+                
             # create waveform
             waveform_temp = self.create_waveform(
                 t_temp,
                 teuk_modes_in,
                 ylms_in,
-                self.inspiral_generator.inspiral_generator.integrator_t_cache,
-                phase_spline_coeff_in,
+                phase_t_in, 
+                phase_information_in,
                 self.ms,
                 self.ns,
                 M,

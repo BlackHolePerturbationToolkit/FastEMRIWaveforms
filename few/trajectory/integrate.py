@@ -307,17 +307,21 @@ class Integrate:
 
             if not status:
                 continue
-
-            spline_info = self.dopr.prep_evaluate_single(
-                t_old, y_old, h_old, t, y, None
-            )
+            
+            if not self.dopr.fix_step:
+                spline_info = self.dopr.prep_evaluate_single(
+                    t_old, y_old, h_old, t, y, None
+                )
+            else:
+                spline_info = None
 
             # should not be needed but is safeguard against stepping past maximum allowable time
             # the last point in the trajectory will be at t = tmax
             if t > self.tmax_dimensionless:
-                # place the spline coefficients for the finishing function (and to provide spline coverage up to t=tmax)
-                self.dopr_spline_output[self.traj_step - 1, :] = spline_info
-                self._integrator_t_cache[self.traj_step] = t * self.Msec
+                if not self.dopr.fix_step:
+                    # place the spline coefficients for the finishing function (and to provide spline coverage up to t=tmax)
+                    self.dopr_spline_output[self.traj_step - 1, :] = spline_info
+                    self._integrator_t_cache[self.traj_step] = t * self.Msec
                 break
 
             self.save_point(
@@ -334,30 +338,9 @@ class Integrate:
         t = t0
         h = self.dt_dimensionless
 
-        # for _ in range(100):
-        #     st = time.perf_counter()
-        #     out = solve_ivp(
-        #         fun_wrap,
-        #         (0.0, self.tmax_dimensionless),
-        #         y0,
-        #         method="DOP853",
-        #         events=Stopper(self),
-        #         args=(self,),
-        #         first_step=self.dt_dimensionless,
-        #         max_step=self.Msec * 1e5,
-        #     )
-        #     et = time.perf_counter()
-        #     print("Init", (et - st))
-        # breakpoint()
-
         t_prev = t0
         y_prev = y0.copy()
         y = y0.copy()
-
-        # control it if it keeps returning nans and what not
-        bad_num = 0
-
-        total = 0.0
 
         # add the first point
         self.save_point(0.0, y)
@@ -392,9 +375,12 @@ class Integrate:
             if not status:  # what does this do?
                 continue
 
-            spline_info = self.dopr.prep_evaluate_single(
-                t_old, y_old, h_old, t, y, None
-            )
+            if not self.dopr.fix_step:
+                spline_info = self.dopr.prep_evaluate_single(
+                    t_old, y_old, h_old, t, y, None
+                )
+            else:
+                spline_info = None
 
             # or if any quantity is nan, step back and take a smaller step.
             if np.any(np.isnan(y)):  # an Elliptic function returned a nan and it raised an exception
@@ -411,8 +397,9 @@ class Integrate:
             # should not be needed but is safeguard against stepping past maximum allowable time
             # the last point in the trajectory will be at t = tmax
             if t > self.tmax_dimensionless:
-                self.dopr_spline_output[self.traj_step - 1, :] = spline_info
-                self._integrator_t_cache[self.traj_step] = t * self.Msec
+                if not self.dopr.fix_step:
+                    self.dopr_spline_output[self.traj_step - 1, :] = spline_info
+                    self._integrator_t_cache[self.traj_step] = t * self.Msec
                 break
 
             # if status is 9 meaning inside the separatrix
@@ -422,8 +409,9 @@ class Integrate:
                 action = self.action_function(t, y)
 
             if action == "stop":
-                self.dopr_spline_output[self.traj_step - 1, :] = spline_info
-                self._integrator_t_cache[self.traj_step] = t * self.Msec
+                if not self.dopr.fix_step:
+                    self.dopr_spline_output[self.traj_step - 1, :] = spline_info
+                    self._integrator_t_cache[self.traj_step] = t * self.Msec
 
                 # go back to last values
                 y[:] = y_prev[:]
@@ -448,6 +436,8 @@ class Integrate:
         #     err, True, not use_rk4
         # )  # always dense step for final stage
         self.dopr.abstol = err
+        self.dopr.fix_step = DENSE_STEPPING
+
         # self.integrator.initialize_integrator()
         # self.dense_integrator.initialize_integrator()
         self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
@@ -489,10 +479,11 @@ class Integrate:
             self.trajectory_arr = np.concatenate(
                 [self.trajectory_arr, np.zeros((buffer_increment, self.nparams + 1))], axis=0
             )
-            self.dopr_spline_output = np.concatenate(
-                [self.dopr_spline_output, np.zeros((buffer_increment, self.nparams))], axis=0
-            )
-            self._integrator_t_cache = np.concatenate([self._integrator_t_cache, np.zeros(buffer_increment,)])
+            if not self.dopr.fix_step:
+                self.dopr_spline_output = np.concatenate(
+                    [self.dopr_spline_output, np.zeros((buffer_increment, self.nparams))], axis=0
+                )
+                self._integrator_t_cache = np.concatenate([self._integrator_t_cache, np.zeros(buffer_increment,)])
             self.buffer_length += buffer_increment
 
     def eval_integrator_spline(self, t_new: np.ndarray):
@@ -636,6 +627,9 @@ class APEXIntegrate(Integrate):
         return (temp_t, temp_y, temp_stop)
 
     def finishing_function_euler_step(self, t: float, y: np.ndarray):
+        """
+        We use this stepper for DENSE_STEPPING=1 because no trajectory spline is available.
+        """
         # Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.
         #     // To correct for this we self-integrate from the second-to-last point in the integation to
         #     // within the INNER_THRESHOLD with respect to separatrix +  DIST_TO_SEPARATRIX
@@ -693,12 +687,13 @@ class APEXIntegrate(Integrate):
         # Tune the step-size of a dense integration step such that the trajectory terminates within INNER_THRESHOLD of p_sep + DIST_TO_SEPARATRIX
 
         # advance the step counter by one temporarily to read the last spline value
-        self.traj_step += 1
+        if not self.dopr.fix_step:
+            self.traj_step += 1
         if (
             t < self.tmax_dimensionless
         ):  # don't step to the separatrix if we already hit the time window
             if (
-                self.rootfind_separatrix
+                self.rootfind_separatrix and not self.dopr.fix_step
             ):  # use a root-finder and the full integration routine to tune the finish
 
                 # first, check if t=tmax passes the separatrix, otherwise stop at t=tmax
@@ -743,13 +738,23 @@ class APEXIntegrate(Integrate):
                 )  # weird step-halving Euler thing
 
         else:  # If integrator walked past tmax during main loop, place a point at tmax and finish integration
-            y_finish = self.eval_integrator_spline(np.array([self.tmax_dimensionless * self.Msec,]))[0]
-            
-            self.traj_step -= 1  # revert the step counter to place the last (t, y) in the right place (spline info not overwritten)
-            # we do not pass any spline information here as it has already been computed in the main integrator loop
-            self.save_point(
-                self.tmax_dimensionless * self.Msec, y_finish, spline_output=None
-            )  # adds time in seconds
+            if not self.dopr.fix_step:
+                y_finish = self.eval_integrator_spline(np.array([self.tmax_dimensionless * self.Msec,]))[0]
+                
+                self.traj_step -= 1  # revert the step counter to place the last (t, y) in the right place (spline info not overwritten)
+                # we do not pass any spline information here as it has already been computed in the main integrator loop
+                self.save_point(
+                    self.tmax_dimensionless * self.Msec, y_finish, spline_output=None
+                )  # adds time in seconds
+            else:
+                # Just take a fixed step to tmax and finish integration
+                status, t, h = self.dopr.take_step_single(
+                    t, self.tmax_dimensionless - t, y, self.tmax_dimensionless, None
+                )
+
+                self.save_point(
+                    self.tmax_dimensionless * self.Msec, y, spline_output=None
+                )  # adds time in seconds
 
 
 class AELQIntegrate(Integrate):

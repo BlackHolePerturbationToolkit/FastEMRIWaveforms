@@ -252,6 +252,9 @@ class DOPR853:
         else:
             self.xp_read_out = xp
 
+        self.fix_step = False
+        self.abstol = 1e-10
+
     def dormandPrinceSteps(
         self,
         x,
@@ -270,7 +273,7 @@ class DOPR853:
         k10,
     ):
 
-        # Create temportary index for use in loops
+        # Create temporary index for use in loops
 
         # Step 1
         arg = solOld.copy()
@@ -517,7 +520,6 @@ class DOPR853:
             solOldTemp,
             tmax_dimensionless,
             additionalArgsTemp,
-            fix_step=False,
             inds=None,
         )
 
@@ -532,7 +534,6 @@ class DOPR853:
         solOldTemp,
         tmax_dimensionless,
         additionalArgsTemp,
-        fix_step=False,
         inds=None,
     ):
 
@@ -573,65 +574,85 @@ class DOPR853:
             k10,
         )
 
-        err = np.zeros_like(xTemp)
-        solNewTemp = np.zeros_like(solOldTemp)
+        if not self.fix_step:
+            err = np.zeros_like(xTemp)
+            solNewTemp = np.zeros_like(solOldTemp)
 
-        self.error(
-            err,
-            solOldTemp,
-            solNewTemp,
-            hTemp,
-            k1,
-            k2,
-            k3,
-            k6,
-            k7,
-            k8,
-            k9,
-            k10,
-            # numEq,
-            # nargs,
-        )
+            self.error(
+                err,
+                solOldTemp,
+                solNewTemp,
+                hTemp,
+                k1,
+                k2,
+                k3,
+                k6,
+                k7,
+                k8,
+                k9,
+                k10,
+                # numEq,
+                # nargs,
+            )
 
-        # hOldTemp[:] = hTemp
-        # xOldTemp[:] = xTemp
+            # hOldTemp[:] = hTemp
+            # xOldTemp[:] = xTemp
 
-        flagSuccess = np.zeros_like(xTemp, dtype=bool)
+            flagSuccess = np.zeros_like(xTemp, dtype=bool)
 
-        if not hasattr(self, "errOldTemp"):
-            self.errOldTemp = np.full_like(err, 1e-4)
+            if not hasattr(self, "errOldTemp"):
+                self.errOldTemp = np.full_like(err, 1e-4)
 
-        if not hasattr(self, "previousRejectTemp"):
-            self.previousRejectTemp = np.zeros_like(err, dtype=bool)
+            if not hasattr(self, "previousRejectTemp"):
+                self.previousRejectTemp = np.zeros_like(err, dtype=bool)
 
-        errOldTemp = self.errOldTemp[inds].copy()
-        previousRejectTemp = self.previousRejectTemp[inds].copy()
+            errOldTemp = self.errOldTemp[inds].copy()
+            previousRejectTemp = self.previousRejectTemp[inds].copy()
 
-        self.controllerSuccess(
-            flagSuccess,
-            err,
-            errOldTemp,
-            previousRejectTemp,
-            hTemp,
-            xTemp,
-            # numEq,
-            # nargs,
-        )
+            self.controllerSuccess(
+                flagSuccess,
+                err,
+                errOldTemp,
+                previousRejectTemp,
+                hTemp,
+                xTemp,
+                # numEq,
+                # nargs,
+            )
 
-        solOldTemp = solOldTemp.reshape(nODE, numSysTemp)
-        solOldTemp[:, flagSuccess] = solNewTemp.reshape(nODE, numSysTemp)[
-            :, flagSuccess
-        ]
+            solOldTemp = solOldTemp.reshape(nODE, numSysTemp)
+            solOldTemp[:, flagSuccess] = solNewTemp.reshape(nODE, numSysTemp)[
+                :, flagSuccess
+            ]
 
-        xTemp[flagSuccess] = xTemp[flagSuccess] + hOldTemp[flagSuccess]
-        self.errOldTemp[inds[flagSuccess]] = err[flagSuccess]
-        self.previousRejectTemp[inds] = ~flagSuccess
+            xTemp[flagSuccess] = xTemp[flagSuccess] + hOldTemp[flagSuccess]
+            self.errOldTemp[inds[flagSuccess]] = err[flagSuccess]
+            self.previousRejectTemp[inds] = ~flagSuccess
 
-        self.k_coefficient_storage = [k1, k2, k3, k4, k5, k6, k7, k8, k9, k10]
+            self.k_coefficient_storage = [k1, k2, k3, k4, k5, k6, k7, k8, k9, k10]
+        
+        else:  # Not controlling for error so return successes and advance xTemp for all
+            flagSuccess = np.ones_like(xTemp, dtype=bool)
+            xTemp[flagSuccess] = xTemp + hOldTemp
+
+            temp = (
+                b1 * k1
+                + b6 * k6
+                + b7 * k7
+                + b8 * k8
+                + b9 * k9
+                + b10 * k10
+                + b11 * k2
+                + b12 * k3
+            )
+
+            solOldTemp += hOldTemp * temp
+            solOldTemp = solOldTemp.reshape(nODE, numSysTemp)
 
         return flagSuccess
 
     def prep_evaluate_single(self, x0, y0, h0, x1, y1, additionalArgs):
+        assert not self.fix_step
 
         x0_tmp = np.array([x0])
         y0_tmp = y0[:, None].copy()
@@ -646,6 +667,7 @@ class DOPR853:
         return spline_output[0]
 
     def prep_evaluate(self, x0, y0, h0, x1, y1, additionalArgs):
+        assert not self.fix_step
 
         newDer = np.zeros_like(y0)
         (k1, k2, k3, k4, k5, k6, k7, k8, k9, k10) = self.k_coefficient_storage
@@ -784,6 +806,7 @@ class DOPR853:
         ).T
 
     def eval(self, t_new: np.ndarray, t_old: np.ndarray, spline_coeffs: np.ndarray):
+        assert not self.fix_step
 
         t_min = t_old.min()
         t_max = t_old.max()

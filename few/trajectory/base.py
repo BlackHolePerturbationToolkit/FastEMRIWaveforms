@@ -139,6 +139,9 @@ class TrajectoryBase(ABC):
 
         if not upsample:
             return (t,) + params
+        else:
+            if DENSE_STEPPING:
+                raise NotImplementedError  # TODO: support cubic spline for dense
 
         if new_t is not None:
             if isinstance(new_t, np.ndarray) is False:

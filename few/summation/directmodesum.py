@@ -59,7 +59,7 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
         """Confirms GPU capability"""
         return True
 
-    def sum(self, t, teuk_modes, ylms, Phi_phi, Phi_r, m_arr, n_arr, *args, **kwargs):
+    def sum(self, t, teuk_modes, ylms, phase_interp_t, phases_in, m_arr, n_arr, *args, dt=10., integrate_backwards=False, **kwargs):
         """Direct summation function.
 
         This function directly sums the amplitude and phase information, as well
@@ -85,6 +85,10 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
         """
 
         xp = cp if self.use_gpu else np
+        Phi_phi, Phi_theta, Phi_r = phases_in
+
+        if phase_interp_t is None:
+            phase_interp_t = t.copy()         
 
         # numpy -> cupy if requested
         # it will never go the other way
@@ -94,6 +98,13 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
         Phi_r = xp.asarray(Phi_r)
         m_arr = xp.asarray(m_arr)
         n_arr = xp.asarray(n_arr)
+
+        if integrate_backwards:
+            # For consistency with forward integration, we slightly shift the knots so that they line up at t=0
+            offset = h_t[-1] - int(h_t[-1] / dt) * dt
+            h_t = h_t - offset
+            phase_interp_t = phase_interp_t - offset
+            raise NotImplementedError  # TODO: spline the above quantities to shift them onto phase_interp_t
 
         # waveform with M >= 0
         w1 = xp.sum(
