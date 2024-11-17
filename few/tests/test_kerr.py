@@ -5,6 +5,7 @@ import warnings
 from few.waveform import GenerateEMRIWaveform
 
 from few.utils.utility import get_mismatch
+from few.trajectory.ode import KerrEccEqFlux
 
 try:
     import cupy as xp
@@ -26,7 +27,7 @@ inspiral_kwargs_Kerr = {
                 "max_init_len": int(
                     1e3
                 ),  # all of the trajectories will be well under len = 1000
-            "func": "KerrEccentricEquatorial"
+            "func": KerrEccEqFlux
                         }
 
 class KerrWaveformTest(unittest.TestCase):

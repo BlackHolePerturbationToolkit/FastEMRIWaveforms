@@ -267,7 +267,7 @@ if run_cuda_install:
 
     gpuAAK_ext = Extension(
         "pygpuAAK",
-        sources=["src/Utility.cc", "src/gpuAAK.cu", "src/gpuAAKWrap.pyx"],
+        sources=["src/gpuAAK.cu", "src/gpuAAKWrap.pyx"],
         **gpu_extension,
     )
 
@@ -319,30 +319,6 @@ Interp2DAmplitude_ext = Extension(
     **cpu_extension,
 )
 
-inspiral_ext = Extension(
-    "pyInspiral",
-    sources=[
-        "src/Utility.cc",
-        "src/Interpolant.cc",
-        "src/spline.cpp",
-        "src/dIdt8H_5PNe10.cc",
-        "src/KerrEquatorial.cc",
-        "src/ode.cc",
-        "src/Inspiral.cc",
-        "src/inspiralwrap.pyx",
-    ],
-    **cpu_extension,
-)
-
-fund_freqs_ext = Extension(
-    "pyUtility",
-    sources=[
-        "src/Utility.cc",
-        "src/utility_functions.pyx",
-    ],
-    **cpu_extension,
-)
-
 matmul_cpu_ext = Extension(
     "pymatmul_cpu", sources=["src/matmul.cpp", "src/pymatmul_cpu.pyx"], **cpu_extension
 )
@@ -355,7 +331,7 @@ interp_cpu_ext = Extension(
 
 AAK_cpu_ext = Extension(
     "pycpuAAK",
-    sources=["src/Utility.cc", "src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"],
+    sources=["src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"],
     **cpu_extension,
 )
 
@@ -367,10 +343,8 @@ amp_interp_2d_ext = Extension(
 
 cpu_extensions = [
     matmul_cpu_ext,
-    inspiral_ext,
     interp_cpu_ext,
     Interp2DAmplitude_ext,
-    fund_freqs_ext,
     AAK_cpu_ext,
     amp_interp_2d_ext,
 ]
@@ -394,7 +368,7 @@ setup(
     version="1.5.5",
     url="https://github.com/mikekatz04/FastEMRIWaveforms",
     ext_modules=extensions,
-    packages=["few", "few.utils", "few.trajectory", "few.amplitude", "few.summation", "few.waveform"],
+    packages=["few", "few.utils", "few.trajectory", "few.trajectory.ode", "few.amplitude", "few.summation", "few.waveform"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License (GPL)",

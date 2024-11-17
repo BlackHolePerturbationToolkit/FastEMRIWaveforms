@@ -8,6 +8,7 @@ few/files/*
 few/summation/__pycache__/*
 few/tests/__pycache__/
 few/trajectory/__pycache__/*
+few/trajectory/ode/__pycache__/*
 few/utils/__pycache__/*
 few/utils/odeoptions.py
 few/waveform/__pycache__/*

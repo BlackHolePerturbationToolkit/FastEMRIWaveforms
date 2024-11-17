@@ -20,7 +20,7 @@
 
 import os
 import warnings
-from typing import Tuple, List, Union
+from typing import Tuple, List, Union, Type, Optional
 import time
 
 import numpy as np
@@ -34,7 +34,6 @@ from pyInspiral import pyInspiralGenerator, pyDerivative
 # Python imports
 from ..utils.utility import (
     check_for_file_download,
-    get_ode_function_options,
     ELQ_to_pex,
     get_kerr_geo_constants_of_motion,
     get_separatrix_interpolant,
@@ -42,6 +41,7 @@ from ..utils.utility import (
 from ..utils.constants import *
 from ..utils.citations import *
 
+from .ode.base import ODEBase, get_ode_properties
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -58,215 +58,131 @@ from ..utils.utility import get_separatrix
 # sep = ( get_sep(XYZ[0].flatten(), XYZ[1].flatten(), XYZ[2].flatten())).reshape((100,100,100))
 # get_separatrix = TricubicSpline(a, e, x, sep)
 
-DIST_TO_SEPARATRIX = 0.05
 INNER_THRESHOLD = 1e-8
 PERCENT_STEP = 0.25
 MAX_ITER = 1000
 
-KERR = 1
-SCHWARZSCHILD = 2
-
 from .dopr853 import DOPR853
 
-
-def get_integrator(func, nparams, file_directory, **kwargs):
+def get_integrator(func, file_directory=None, **kwargs):
     if file_directory is None:
         file_directory = dir_path + "/../../few/files/"
-    ode_info = get_ode_function_options()
+    # ode_info = get_ode_function_options()
 
-    if isinstance(func, str):
-        num_add_args = ode_info[func]["num_add_args"]
-        func = [func]
+    # if isinstance(func, str):
+    #     num_add_args = ode_info[func]["num_add_args"]
+    #     func = [func]
 
-    integrator = pyInspiralGenerator(
-        nparams,
-        num_add_args,
-    )
+    # integrator = pyInspiralGenerator(
+    #     nparams,
+    #     num_add_args,
+    # )
 
-    for func_i in func:
-        assert isinstance(func_i, str)
-        if func_i not in ode_info:
-            raise ValueError(
-                f"func not available. Options are {list(ode_info.keys())}."
-            )
-            # make sure all files needed for the ode specifically are downloaded
-        for fp in ode_info[func_i]["files"]:
-            try:
-                check_for_file_download(fp, file_directory)
-            except FileNotFoundError:
-                raise ValueError(
-                    f"File required for the ODE ({fp}) was not found in the proper folder ({file_directory}) and could not be downloaded."
-                )
+    # for func_i in func:
+    #     assert isinstance(func_i, str)
+    #     if func_i not in ode_info:
+    #         raise ValueError(
+    #             f"func not available. Options are {list(ode_info.keys())}."
+    #         )
+    #         # make sure all files needed for the ode specifically are downloaded
+    #     for fp in ode_info[func_i]["files"]:
+    #         try:
+    #             check_for_file_download(fp, file_directory)
+    #         except FileNotFoundError:
+    #             raise ValueError(
+    #                 f"File required for the ODE ({fp}) was not found in the proper folder ({file_directory}) and could not be downloaded."
+    #             )
 
-        integrator.add_ode(func_i.encode(), file_directory.encode())
+    #     integrator.add_ode(func_i.encode(), file_directory.encode())
 
-    if integrator.integrate_constants_of_motion[0]:
+    func_inst = func(file_directory=file_directory)
+
+    if func_inst.integrate_constants_of_motion:
         return AELQIntegrate(
             func,
-            nparams,
             file_directory=file_directory,
-            num_add_args=num_add_args,
             **kwargs,
         )
     else:
         return APEXIntegrate(
             func,
-            nparams,
             file_directory=file_directory,
-            num_add_args=num_add_args,
             **kwargs,
         )
-
-
-def fun_wrap(t, y, integrator):
-    # print("YEYA", t, y)
-    p = y[0]
-    p_sep = integrator.get_p_sep(y)
-
-    # print("UGH", p - p_sep - DIST_TO_SEPARATRIX)
-    if y[1] < 0.0 or p - p_sep - DIST_TO_SEPARATRIX < 0:
-        ydot = np.zeros_like(y)
-        return ydot
-
-    ydot = integrator.integrator.get_derivatives(y)
-    return ydot
-
-
-class Stopper:
-    def __init__(self, integrator):
-        self.integrator = integrator
-        self.terminal = True
-
-    def __call__(self, t, y, *args):
-        p_sep = self.integrator.get_p_sep(y)
-        p = y[0]
-        # print("SEP", p - p_sep - DIST_TO_SEPARATRIX)
-        return p - p_sep - DIST_TO_SEPARATRIX
-
 
 class Integrate:
     def __init__(
         self,
-        func: Union[str, List],
-        nparams: int,
+        func: Type[ODEBase],
         buffer_length: int = 1000,
-        num_add_args: int = 0,
-        rootfind_separatrix=True,
-        file_directory=None,
+        rootfind_separatrix: bool=True,
+        enforce_schwarz_sep: bool=False,
+        file_directory: Optional[str]=None,
     ):
         self.buffer_length = buffer_length
-        self.integrator = pyInspiralGenerator(
-            nparams,
-            num_add_args,
-        )
-        # self.dense_integrator = pyInspiralGenerator(
-        #     nparams,
-        #     num_add_args,
-        # )
-        self.ode_info = ode_info = get_ode_function_options()
+        self.file_directory = file_directory
 
-        if file_directory is None:
-            self.file_dir = dir_path + "/../../few/files/"
-        else:
-            self.file_dir = file_directory
+        self.base_func = func
+        self.func = func(file_directory=file_directory)
+
+        self.ode_info = get_ode_properties(self.func)
 
         self.rootfind_separatrix = rootfind_separatrix
-
-        def ode_wrap(t, y, ydot, additionalArgs):
-            ytmp = y.flatten().copy()
-            ydot_tmp = self.integrator.get_derivatives(ytmp)
-            ydot[:, 0] = ydot_tmp
+        self.enforce_schwarz_sep = enforce_schwarz_sep
 
         self.dopr = DOPR853(
-            ode_wrap,
+            self._dopr_ode_wrap,
             stopping_criterion=None,  # stopping_criterion,
             tmax=1e9,
             max_step=1e6,
         )
 
-        if isinstance(func, str):
-            func = [func]
-        self.func = func
-        for func_i in self.func:
-            assert isinstance(func_i, str)
-            if func_i not in ode_info:
-                raise ValueError(
-                    f"func not available. Options are {list(ode_info.keys())}."
-                )
-            self.integrator.add_ode(func_i.encode(), self.file_dir.encode())
-            # self.dense_integrator.add_ode(func_i.encode(), self.file_dir.encode())
+        # assert np.all(self.backgrounds == self.backgrounds[0])
+        # assert np.all(self.equatorial == self.equatorial[0])
+        # assert np.all(self.circular == self.circular[0])
 
-            # make sure all files needed for the ode specifically are downloaded
-            for fp in ode_info[func_i]["files"]:
-                try:
-                    check_for_file_download(fp, self.file_dir)
-                except FileNotFoundError:
-                    raise ValueError(
-                        f"File required for the ODE ({fp}) was not found in the proper folder ({self.file_dir}) and could not be downloaded."
-                    )
-
-        assert np.all(self.backgrounds == self.backgrounds[0])
-        assert np.all(self.equatorial == self.equatorial[0])
-        assert np.all(self.circular == self.circular[0])
+    def __reduce__(self):
+        return (self.__class__, (self.base_func, self.buffer_length, self.rootfind_separatrix, self.enforce_schwarz_sep, self.file_dir))
 
     @property
     def nparams(self) -> int:
-        return self.integrator.nparams
+        return self.func.nparams
 
     @property
     def num_add_args(self) -> int:
-        return self.integrator.num_add_args
+        return self.func.num_add_args
 
-    # @property
-    # def file_dir(self) -> str:
-    #     return str(self.integrator.file_dir)
+    @property
+    def file_dir(self) -> str:
+        return str(self.func.file_dir)
 
     @property
     def convert_Y(self):
-        return self.integrator.convert_Y
+        return self.func.convert_Y
 
     @property
-    def backgrounds(self):
-        return self.integrator.backgrounds
+    def background(self):
+        return self.func.background
 
     @property
     def equatorial(self):
-        return self.integrator.equatorial
+        return self.func.equatorial
 
     @property
     def circular(self):
-        return self.integrator.circular
+        return self.func.circular
 
     @property
     def integrate_constants_of_motion(self):
-        return self.integrator.integrate_constants_of_motion
+        return self.func.integrate_constants_of_motion
 
-    # @property
-    # def func(self) -> str:
-    #     return str(self.integrator.func_name)
+    @property
+    def separatrix_buffer_dist(self):
+        return self.func.separatrix_buffer_dist
 
-    def __setstate__(self, d):
-        self.__dict__ = d
-
-        ode_info = get_ode_function_options()
-
-        for func_i in self.func:
-            assert isinstance(func_i, str)
-            if func_i not in ode_info:
-                raise ValueError(
-                    f"func not available. Options are {list(ode_info.keys())}."
-                )
-            self.integrator.add_ode(func_i.encode(), self.file_dir.encode())
-            # self.dense_integrator.add_ode(func_i.encode(), self.file_dir.encode())
-
-            # make sure all files needed for the ode specifically are downloaded
-            for fp in ode_info[func_i]["files"]:
-                try:
-                    check_for_file_download(fp, self.file_dir)
-                except FileNotFoundError:
-                    raise ValueError(
-                        f"File required for this ODE ({fp}) was not found in the proper folder ({self.file_dir}) and could not be downloaded."
-                    )
+    def _dopr_ode_wrap(self, t, y, ydot, additionalArgs):
+        self.func(y[:,0], out=ydot[:,0])
+        return ydot
 
     def take_step(
         self, t: float, h: float, y: np.ndarray
@@ -295,7 +211,6 @@ class Integrate:
         self.save_point(0.0, y)
 
         while t < self.tmax_dimensionless:
-
             t_old = t
             h_old = h
             y_old = y.copy()
@@ -403,10 +318,7 @@ class Integrate:
                 break
 
             # if status is 9 meaning inside the separatrix
-            if status == 9:
-                stop = True
-            else:
-                action = self.action_function(t, y)
+            action = self.action_function(t, y)
 
             if action == "stop":
                 if not self.dopr.fix_step:
@@ -429,17 +341,11 @@ class Integrate:
             self.finishing_function(t, y)
 
     def initialize_integrator(
-        self, err=1e-12, DENSE_STEPPING=False, use_rk4=False, **kwargs
+        self, err=1e-12, DENSE_STEPPING=False, **kwargs
     ):
-        self.integrator.set_integrator_kwargs(err, DENSE_STEPPING, not use_rk4)
-        # self.dense_integrator.set_integrator_kwargs(
-        #     err, True, not use_rk4
-        # )  # always dense step for final stage
         self.dopr.abstol = err
         self.dopr.fix_step = DENSE_STEPPING
 
-        # self.integrator.initialize_integrator()
-        # self.dense_integrator.initialize_integrator()
         self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
         self._integrator_t_cache = np.zeros((self.buffer_length, ))
         self.dopr_spline_output = np.zeros(
@@ -481,7 +387,7 @@ class Integrate:
             )
             if not self.dopr.fix_step:
                 self.dopr_spline_output = np.concatenate(
-                    [self.dopr_spline_output, np.zeros((buffer_increment, self.nparams))], axis=0
+                    [self.dopr_spline_output, np.zeros((buffer_increment, self.nparams, 8))], axis=0
                 )
                 self._integrator_t_cache = np.concatenate([self._integrator_t_cache, np.zeros(buffer_increment,)])
             self.buffer_length += buffer_increment
@@ -530,21 +436,15 @@ class Integrate:
         )
 
         self.bool_integrate_backwards = kwargs.get("integrate_backwards", False)
-        self.integrator.add_parameters_to_holder(
-            M, mu, a, self.bool_integrate_backwards, additional_args
+        self.func.add_fixed_parameters(
+            M, mu, a, integrate_backwards=self.bool_integrate_backwards, additional_args=additional_args
         )
-        # self.dense_integrator.add_parameters_to_holder(
-        #     M, mu, a, self.bool_integrate_backwards, additional_args
-        # )
 
         t0 = 0.0
         if self.bool_integrate_backwards:
             self.integrate_backwards(t0, y0)
         else:
             self.integrate(t0, y0)
-        
-        # self.integrator.destroy_integrator_information()
-        # self.dense_integrator.destroy_integrator_information()
 
         orb_params = [y0[0], y0[1], y0[2]]
         if self.integrate_constants_of_motion:
@@ -552,10 +452,13 @@ class Integrate:
 
         # Create a warning in case we start too close to separatrix.
         if self.bool_integrate_backwards:
-            p_sep = get_separatrix_interpolant(self.a, orb_params[1], orb_params[2])
+            if not self.enforce_schwarz_sep:
+                p_sep = get_separatrix_interpolant(self.a, orb_params[1], orb_params[2])
+            else:
+                p_sep = 6 + 2 * orb_params[1]
             if (
                 orb_params[0] - p_sep
-            ) < DIST_TO_SEPARATRIX + INNER_THRESHOLD:
+            ) < self.separatrix_buffer_dist + INNER_THRESHOLD:
                 # Raise a warning
                 warnings.warn(
                     "Warning: initial p_f is too close to separatrix. May not be compatible with forwards integration."
@@ -583,7 +486,6 @@ class APEXIntegrate(Integrate):
             p_sep = 6.0 + 2.0 * e
 
         else:
-            # p_sep = get_separatrix(self.a, e, x)
             p_sep = get_separatrix_interpolant(self.a, e, x)
         return p_sep
 
@@ -592,9 +494,14 @@ class APEXIntegrate(Integrate):
     ) -> str:  # Stop the inspiral when close to the separatrix
         # TODO: implement a function for checking the outer grid bounds for backwards integration.
         p = y[0]
-        p_sep = self.get_p_sep(y)
+
+        if not self.enforce_schwarz_sep:
+            p_sep = self.get_p_sep(y)
+        else:
+            p_sep = 6 + 2*y[1]
+
         if (
-            p - p_sep < DIST_TO_SEPARATRIX + INNER_THRESHOLD
+            p - p_sep < self.separatrix_buffer_dist + INNER_THRESHOLD
             and self.bool_integrate_backwards == False
         ):
             return "stop"
@@ -612,10 +519,13 @@ class APEXIntegrate(Integrate):
 
     def end_stepper(self, t: float, y: np.ndarray, ydot: np.ndarray, factor: float):
         # estimate the step to the breaking point and multiply by PERCENT_STEP
-        p_sep = self.get_p_sep(y)
+        if not self.enforce_schwarz_sep:
+            p_sep = self.get_p_sep(y)
+        else:
+            p_sep = 6 + 2*y[1]
         p = y[0]
         pdot = ydot[0]
-        step_size = PERCENT_STEP / factor * ((p_sep + DIST_TO_SEPARATRIX - p) / pdot)
+        step_size = PERCENT_STEP / factor * ((p_sep + self.separatrix_buffer_dist - p) / pdot)
 
         # copy current values
         temp_y = y + ydot * step_size
@@ -638,7 +548,11 @@ class APEXIntegrate(Integrate):
             t < self.tmax_dimensionless
         ):  # don't step to the separatrix if we hit the time window
             # update p_sep (fixes part of issue #17)
-            p_sep = self.get_p_sep(y)
+            if not self.enforce_schwarz_sep:
+                p_sep = self.get_p_sep(y)
+            else:
+                p_sep = 6 + 2*y[1]
+
             p = y[0]
             ydot = np.zeros(self.nparams)
             y_temp = np.zeros(self.nparams)
@@ -646,18 +560,21 @@ class APEXIntegrate(Integrate):
             # set initial values
             factor = 1.0
             iteration = 0
-            while p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD:
+            while p - p_sep > self.separatrix_buffer_dist + INNER_THRESHOLD:
                 # Same function in the integrator
                 ydot = self.integrator.get_derivatives(y)
                 t_temp, y_temp, temp_stop = self.end_stepper(t, y, ydot, factor)
                 if (
-                    temp_stop > DIST_TO_SEPARATRIX
+                    temp_stop > self.separatrix_buffer_dist
                     or self.bool_integrate_backwards == True
                 ):
                     # update points
                     t = t_temp
                     y[:] = y_temp[:]
-                    p_sep = self.get_p_sep(y)
+                    if not self.enforce_schwarz_sep:
+                        p_sep = self.get_p_sep(y)
+                    else:
+                        p_sep = 6 + 2*y[1]
                     p = y[0]
                 else:
                     # all variables stay the same
@@ -679,9 +596,12 @@ class APEXIntegrate(Integrate):
         y_step = self.eval_integrator_spline(np.array([t_step,]))[0]
 
         # get the separatrix value at this new step
-        p_sep = self.get_p_sep(y_step)
+        if not self.enforce_schwarz_sep:
+            p_sep = self.get_p_sep(y_step)
+        else:
+            p_sep = 6 + 2 * y_step[1]
 
-        return y_step[0] - (p_sep + DIST_TO_SEPARATRIX)  # we want this to go to zero
+        return y_step[0] - (p_sep + self.separatrix_buffer_dist)  # we want this to go to zero
 
     def finishing_function(self, t: float, y: np.ndarray):
         # Tune the step-size of a dense integration step such that the trajectory terminates within INNER_THRESHOLD of p_sep + DIST_TO_SEPARATRIX
@@ -698,9 +618,13 @@ class APEXIntegrate(Integrate):
 
                 # first, check if t=tmax passes the separatrix, otherwise stop at t=tmax
                 y_at_tmax = self.eval_integrator_spline(np.array([self.tmax_dimensionless,]))[0]
-                p_sep_at_tmax = self.get_p_sep(y_at_tmax)
 
-                if (y_at_tmax[0] - (p_sep_at_tmax + DIST_TO_SEPARATRIX)) < 0:
+                if not self.enforce_schwarz_sep:
+                    p_sep_at_tmax = self.get_p_sep(y_at_tmax)
+                else:
+                    p_sep_at_tmax = 6 + 2*y_at_tmax[1]
+
+                if (y_at_tmax[0] - (p_sep_at_tmax + self.separatrix_buffer_dist)) < 0:
                     # we do not pass any spline information here as it has already been computed in the main integrator loop
                     self.traj_step -= 1  # revert the step counter to place the last (t, y) in the right place (spline info not overwritten)
                     self.save_point(
@@ -773,7 +697,7 @@ class AELQIntegrate(Integrate):
     ) -> str:  # Stop the inspiral when close to the separatrix
         p_sep, (p, e, x) = self.get_p_sep(y)
 
-        if p - p_sep < DIST_TO_SEPARATRIX + INNER_THRESHOLD:
+        if p - p_sep < self.separatrix_buffer_dist + INNER_THRESHOLD:
             return "stop"
 
     def end_stepper(self, t: float, y: np.ndarray, ydot: np.ndarray, factor: float):
@@ -782,7 +706,7 @@ class AELQIntegrate(Integrate):
         Edot, Ldot = ydot[0], ydot[1]
 
         E_sep, L_sep, _ = get_kerr_geo_constants_of_motion(
-            self.a, p_sep + DIST_TO_SEPARATRIX, e, x
+            self.a, p_sep + self.separatrix_buffer_dist, e, x
         )
         step_size_E = PERCENT_STEP / factor * ((E_sep - y[0]) / Edot)
         step_size_L = PERCENT_STEP / factor * ((L_sep - y[1]) / Ldot)
@@ -816,7 +740,7 @@ class AELQIntegrate(Integrate):
             factor = 1.0
             iteration = 0
 
-            while p - p_sep > DIST_TO_SEPARATRIX + INNER_THRESHOLD:
+            while p - p_sep > self.separatrix_buffer_dist + INNER_THRESHOLD:
                 # Same function in the integrator
                 ydot = self.integrator.get_derivatives(y)
                 t_temp, y_temp, temp_stop = self.end_stepper(t, y, ydot, factor)
@@ -824,7 +748,7 @@ class AELQIntegrate(Integrate):
                 if temp_stop > 0:
                     # update points
                     p_sep_temp, (p_temp, etemp, xtemp) = self.get_p_sep(y_temp)
-                    if p_temp - p_sep_temp < DIST_TO_SEPARATRIX:
+                    if p_temp - p_sep_temp < self.separatrix_buffer_dist:
                         factor *= 2
                     else:
                         t = t_temp

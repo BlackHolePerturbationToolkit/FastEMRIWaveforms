@@ -25,19 +25,11 @@ from rich.progress import track
 import numpy as np
 from scipy.interpolate import CubicSpline
 from scipy.optimize import brentq
-from ..utils.spline import BicubicSpline
-
-from pyUtility import (
-    pyKerrGeoCoordinateFrequencies,
-    pyGetSeparatrix,
-    pyELQ_to_pex,
-    pyY_to_xI_vector,
-    pyKerrEqSpinFrequenciesCorr,
-    set_threads_wrap,
-)
+from multispline.spline import BicubicSpline
+from .elliptic import EllipK, EllipE, EllipPi
 
 from numba import njit
-from math import sqrt, exp, pow, cos, acos
+from math import sqrt, pow, cos, acos
 
 # check to see if cupy is available for gpus
 try:
@@ -362,7 +354,6 @@ def _ELQ_to_pex_kernel(p, e, xI, a, E, Lz, Q):
     for i in range(len(p)):
         p[i], e[i], xI[i] = _ELQ_to_pex_kernel_inner(a[i], E[i], Lz[i], Q[i])
 
-    
 def ELQ_to_pex(a, E, Lz, Q):
     """Convert from separation :math:`p` to :math:`y` coordinate
 
@@ -410,6 +401,105 @@ def ELQ_to_pex(a, E, Lz, Q):
     else:
         return (p, e, x)
 
+
+@njit(fastmath=True)
+def _KerrGeoRadialRoots(a, p, e, En, Q):
+    r1 = p / (1 - e)
+    r2 = p / (1 + e)
+    AplusB = (2) / (1 - (En*En)) - (r1 + r2)
+    AB = ((a*a) * Q) / ((1 - (En*En)) * r1 * r2)
+    r3 = (AplusB + sqrt((AplusB*AplusB) - 4 * AB)) / 2
+    r4 = AB / r3
+
+    return r1, r2, r3, r4
+
+@njit(fastmath=True)
+def _KerrGeoMinoFrequencies_kernel(a, p, e, x):
+    M = 1.0
+
+    En = _KerrGeoEnergy(a, p, e, x)
+    L = _KerrGeoAngularMomentum(a, p, e, x, En)
+    Q = _KerrGeoCarterConstant(a, p, e, x, En, L)
+
+    r1, r2, r3, r4 = _KerrGeoRadialRoots(a, p, e, En, Q)
+
+    zm = 1 - (x*x)
+    a2zp = ((L*L) + (a*a) * (-1 + (En*En)) * (-1 + zm)) / ((-1 + (En*En)) * (-1 + zm))
+
+    Epsilon0zp = -(((L*L) + (a*a) * (-1 + (En*En)) * (-1 + zm)) / ((L*L) * (-1 + zm)))
+
+    zmOverZp = zm / (((L*L) + (a*a) * (-1 + (En*En)) * (-1 + zm)) / ((a*a) * (-1 + (En*En)) * (-1 + zm)))
+
+    kr = sqrt((r1 - r2) / (r1 - r3) * (r3 - r4) / (r2 - r4))                                                 #(*Eq.(13)*)
+    kTheta = sqrt(zmOverZp)                                                                                 #(*Eq.(13)*)
+
+    EllipK_kr = EllipK(kr)
+    EllipK_ktheta = EllipK(kTheta)
+
+    CapitalUpsilonTheta = (PI * L * sqrt(Epsilon0zp)) / (2 * EllipK_ktheta)                  #(*Eq.(15)*)
+    CapitalUpsilonR = (PI * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) / (2 * EllipK_kr) #(*Eq.(15)*)
+
+    rp = M + sqrt(1.0 - (a*a))
+    rm = M - sqrt(1.0 - (a*a))
+
+    hr = (r1 - r2) / (r1 - r3)
+    hp = ((r1 - r2) * (r3 - rp)) / ((r1 - r3) * (r2 - rp))
+    hm = ((r1 - r2) * (r3 - rm)) / ((r1 - r3) * (r2 - rm))
+
+    # (*Eq. (21)*)
+    EllipPi_hr_kr = EllipPi(hr, kr)
+    EllipPi_hp_kr = EllipPi(hp, kr)
+    EllipPi_hm_kr = EllipPi(hm, kr)
+
+    CapitalUpsilonPhi = (2 * CapitalUpsilonTheta) / (PI * sqrt(Epsilon0zp)) * EllipPi(zm, kTheta) + (2 * a * CapitalUpsilonR) / (PI * (rp - rm) * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) * ((2 * M * En * rp - a * L) / (r3 - rp) * (EllipK_kr - (r2 - r3) / (r2 - rp) * EllipPi_hp_kr) - (2 * M * En * rm - a * L) / (r3 - rm) * (EllipK_kr - (r2 - r3) / (r2 - rm) * EllipPi_hm_kr))
+
+    CapitalGamma = 4 * 1.0 * En + (2 * a2zp * En * CapitalUpsilonTheta) / (PI * L * sqrt(Epsilon0zp)) * (EllipK_ktheta - EllipE(kTheta)) + (2 * CapitalUpsilonR) / (PI * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) * (En / 2 * ((r3 * (r1 + r2 + r3) - r1 * r2) * EllipK_kr + (r2 - r3) * (r1 + r2 + r3 + r4) * EllipPi_hr_kr + (r1 - r3) * (r2 - r4) * EllipE(kr)) + 2 * M * En * (r3 * EllipK_kr + (r2 - r3) * EllipPi_hr_kr) + (2 * M) / (rp - rm) * (((4 * 1.0 * En - a * L) * rp - 2 * M * (a*a) * En) / (r3 - rp) * (EllipK_kr - (r2 - r3) / (r2 - rp) * EllipPi_hp_kr) - ((4 * 1.0 * En - a * L) * rm - 2 * M * (a*a) * En) / (r3 - rm) * (EllipK_kr - (r2 - r3) / (r2 - rm) * EllipPi_hm_kr)))
+
+    return CapitalGamma, CapitalUpsilonPhi, CapitalUpsilonTheta, CapitalUpsilonR
+
+@njit(fastmath=True)
+def _KerrCircularMinoFrequencies_kernel(a, p):
+    CapitalUpsilonR = sqrt((p * (-2 * (a*a) + 6 * a * sqrt(p) + (-5 + p) * p + (pow(a - sqrt(p), 2) * ((a*a) - 4 * a * sqrt(p) - (-4 + p) * p)) / abs((a*a) - 4 * a * sqrt(p) - (-4 + p) * p))) / (2 * a * sqrt(p) + (-3 + p) * p))
+    CapitalUpsilonTheta = abs((pow(p, 0.25) * sqrt(3 * (a*a) - 4 * a * sqrt(p) + (p*p))) / sqrt(2 * a + (-3 + p) * sqrt(p)))
+    CapitalUpsilonPhi = pow(p, 1.25) / sqrt(2 * a + (-3 + p) * sqrt(p))
+    CapitalGamma = (pow(p, 1.25) * (a + pow(p, 1.5))) / sqrt(2 * a + (-3 + p) * sqrt(p))
+    return CapitalGamma, CapitalUpsilonPhi, CapitalUpsilonTheta, CapitalUpsilonR
+
+@njit(fastmath=True)
+def _SchwarzschildGeoCoordinateFrequencies_kernel(p, e):
+    qty = sqrt(4 * e / (p - 6.0 + 2 * e))
+    EllipE_eval = EllipE(qty)
+    EllipK_eval = EllipK(qty)
+
+    EllipPi1 = EllipPi(16 * e / (12.0 + 8 * e - 4 * e * e - 8 * p + p * p), qty)
+    EllipPi2 = EllipPi(2 * e * (p - 4) / ((1.0 + e) * (p - 6.0 + 2 * e)), qty)
+
+    OmegaPhi = (2 * pow(p, 1.5)) / (sqrt(-4 * (e*e) + pow(-2 + p, 2)) * (8 + ((-2 * EllipPi2 * (6 + 2 * e - p) * (3 + (e*e) - p) * (p*p)) / ((-1 + e) * ((1.+e)*(1.+e))) - (EllipE_eval * (-4 + p) * (p*p) * (-6 + 2 * e + p)) / (-1 + (e*e)) +
+                                                                                         (EllipK_eval * (p*p) * (28 + 4 * (e*e) - 12 * p + (p*p))) / (-1 + (e*e)) + (4 * (-4 + p) * p * (2 * (1 + e) * EllipK_eval + EllipPi2 * (-6 - 2 * e + p))) / (1 + e) + 2 * pow(-4 + p, 2) * (EllipK_eval * (-4 + p) + (EllipPi1 * p * (-6 - 2 * e + p)) / (2 + 2 * e - p))) /
+                                                                                            (EllipK_eval * pow(-4 + p, 2))))
+
+    OmegaR = (p * sqrt((-6 + 2 * e + p) / (-4 * (e*e) + pow(-2 + p, 2))) * PI) / (8 * EllipK_eval + ((-2 * EllipPi2 * (6 + 2 * e - p) * (3 + (e*e) - p) * (p*p)) / ((-1 + e) * ((1.+e)*(1.+e))) - (EllipE_eval * (-4 + p) * (p*p) * (-6 + 2 * e + p)) / (-1 + (e*e)) +
+                             (EllipK_eval * (p*p) * (28 + 4 * (e*e) - 12 * p + (p*p))) / (-1 + (e*e)) + (4 * (-4 + p) * p * (2 * (1 + e) * EllipK_eval + EllipPi2 * (-6 - 2 * e + p))) / (1 + e) + 2 * pow(-4 + p, 2) * (EllipK_eval * (-4 + p) + (EllipPi1 * p * (-6 - 2 * e + p)) / (2 + 2 * e - p))) /
+                                pow(-4 + p, 2))
+
+    return OmegaPhi, OmegaPhi, OmegaR
+
+@njit(fastmath=True)
+def _KerrGeoCoordinateFrequencies_kernel_inner(a, p, e, x):
+    if a > 0:
+        if e > 0 or abs(x) < 1:
+            Gamma, UpsilonPhi, UpsilonTheta, UpsilonR = _KerrGeoMinoFrequencies_kernel(a, p, e, x)
+        else:
+            Gamma, UpsilonPhi, UpsilonTheta, UpsilonR = _KerrCircularMinoFrequencies_kernel(a, p)
+        return UpsilonPhi / Gamma, UpsilonTheta / Gamma, UpsilonR / Gamma
+    else:
+        return _SchwarzschildGeoCoordinateFrequencies_kernel(p, e)
+
+@njit(fastmath=True)
+def _KerrGeoCoordinateFrequencies_kernel(OmegaPhi, OmegaTheta, OmegaR, a, p, e, x):
+    for i in range(len(OmegaPhi)):
+        OmegaPhi[i], OmegaTheta[i], OmegaR[i] = _KerrGeoCoordinateFrequencies_kernel_inner(a[i], p[i], e[i], x[i])
+
 def get_fundamental_frequencies(a, p, e, x):
     """Get dimensionless fundamental frequencies.
 
@@ -453,9 +543,12 @@ def get_fundamental_frequencies(a, p, e, x):
 
     assert len(a_in) == len(p_in)
 
+    OmegaPhi = np.empty_like(p_in)
+    OmegaTheta = np.empty_like(p_in)
+    OmegaR = np.empty_like(p_in)
     # get frequencies
-    OmegaPhi, OmegaTheta, OmegaR = pyKerrGeoCoordinateFrequencies(
-        a_in, p_in, e_in, x_in
+    _KerrGeoCoordinateFrequencies_kernel(
+        OmegaPhi, OmegaTheta, OmegaR, a_in, p_in, e_in, x_in
     )
 
     # set output to shape of input
@@ -465,6 +558,106 @@ def get_fundamental_frequencies(a, p, e, x):
     else:
         return (OmegaPhi, OmegaTheta, OmegaR)
 
+
+@njit(fastmath=True)
+def _P(r, a, En, xi):
+    return En * r * r - a * xi
+
+@njit(fastmath=True)
+def _deltaP(r, a, En, xi, deltaEn, deltaxi):
+    return deltaEn * r * r - xi / r - a * deltaxi
+
+@njit(fastmath=True)
+def _deltaRt(r, am1, a0, a1, a2):
+    return am1 / r + a0 + r * (a1 + r * a2)
+
+@njit(fastmath=True)
+def _KerrEqSpinFrequenciesCorrections_kernel_inner(a, p, e, x):
+    M = 1.0
+    En = _KerrGeoEnergy(a, p, e, x)
+    xi = _KerrGeoAngularMomentum(a, p, e, x, En) - a * En
+
+    # get radial roots
+    r1, r2, r3, r4 = _KerrGeoRadialRoots(a, p, e, En, 0.)
+
+    deltaEn = (xi * (-(a * (En*En) * (r1*r1) * (r2*r2)) - En * (r1*r1) * (r2*r2) * xi + (a*a) * En * ((r1*r1) + r1 * r2 + (r2*r2)) * xi +
+                     a * ((r1*r1) + r1 * (-2 + r2) + (-2 + r2) * r2) * (xi*xi))) / ((r1*r1) * (r2*r2) * (a * (En*En) * r1 * r2 * (r1 + r2) + En * ((r1*r1) * (-2 + r2) + r1 * (-2 + r2) * r2 - 2 * (r2*r2)) * xi + 2 * a * (xi*xi)))
+
+    deltaxi = (((r1*r1) + r1 * r2 + (r2*r2)) * xi * (En * (r2*r2) - a * xi) * (-(En * (r1*r1)) + a * xi)) / ((r1*r1) * (r2*r2) * (a * (En*En) * r1 * r2 * (r1 + r2) + En * ((r1*r1) * (-2 + r2) + r1 * (-2 + r2) * r2 - 2 * (r2*r2)) * xi + 2 * a * (xi*xi)))
+
+    am1 = (-2 * a * (xi*xi)) / (r1 * r2)
+    a0 = -2 * En * (-(a * deltaxi) + deltaEn * (r1*r1) + deltaEn * r1 * r2 + deltaEn * (r2*r2)) + 2 * (a * deltaEn + deltaxi) * xi
+    a1 = -2 * deltaEn * En * (r1 + r2)
+    a2 = -2 * deltaEn * En
+
+    kr = sqrt((r1 - r2) / (r1 - r3) * (r3 - r4) / (r2 - r4))
+    hr = (r1 - r2) / (r1 - r3)
+
+    rp = M + sqrt(1.0 - (a*a))
+    rm = M - sqrt(1.0 - (a*a))
+
+    hp = ((r1 - r2) * (r3 - rp)) / ((r1 - r3) * (r2 - rp))
+    hm = ((r1 - r2) * (r3 - rm)) / ((r1 - r3) * (r2 - rm))
+
+    Kkr = EllipK(kr)         #(* Elliptic integral of the first kind *)
+    Ekr = EllipE(kr)         #(* Elliptic integral of the second kind *)
+    Pihrkr = EllipPi(hr, kr) #(* Elliptic integral of the third kind *)
+    Pihmkr = EllipPi(hm, kr)
+    Pihpkr = EllipPi(hp, kr)
+
+    Vtr3 = a * xi + (((a*a) + (r3*r3)) * _P(r3, a, En, xi)) / _CapitalDelta(r3, a)
+    deltaVtr3 = a * deltaxi + (r3 * r3 + a * a) / _CapitalDelta(r3, a) * _deltaP(r3, a, En, xi, deltaEn, deltaxi)
+
+    deltaIt1 = (2 * ((deltaEn * Pihrkr * (r2 - r3) * (4 + r1 + r2 + r3)) / 2. + (Ekr * (r1 - r3) * (deltaEn * r1 * r2 * r3 + 2 * xi)) / (2. * r1 * r3) +
+                            ((r2 - r3) * ((Pihmkr * ((a*a) + (rm*rm)) * _deltaP(rm, a, En, xi, deltaEn, deltaxi)) / ((r2 - rm) * (r3 - rm)) -
+                                          (Pihpkr * ((a*a) + (rp*rp)) * _deltaP(rp, a, En, xi, deltaEn, deltaxi)) / ((r2 - rp) * (r3 - rp)))) /
+                                (-rm + rp) +
+                            Kkr * (-0.5 * (deltaEn * (r1 - r3) * (r2 - r3)) + deltaVtr3))) / sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))
+
+    cK = Kkr * (-0.5 * (a2 * En * (r1 - r3) * (r2 - r3)) + (pow(a, 4) * En * r3 * (-am1 + (r3*r3) * (a1 + 2 * a2 * r3)) +
+                                                                   2 * (a*a) * En * (r3*r3) * (-(am1 * (-2 + r3)) + a0 * r3 + pow(r3, 3) * (a1 - a2 + 2 * a2 * r3)) +
+                                                                   En * pow(r3, 5) * (-2 * a0 - am1 + r3 * (a1 * (-4 + r3) + 2 * a2 * (-3 + r3) * r3)) + 2 * pow(a, 3) * (2 * am1 + a0 * r3 - a2 * pow(r3, 3)) * xi +
+                                                                   2 * a * r3 * (am1 * (-6 + 4 * r3) + r3 * (2 * a1 * (-1 + r3) * r3 + a2 * pow(r3, 3) + a0 * (-4 + 3 * r3))) * xi) /
+                                                                      ((r3*r3) * pow(r3 - rm, 2) * pow(r3 - rp, 2)))
+    cEPi = (En * (a2 * Ekr * r2 * (r1 - r3) + Pihrkr * (r2 - r3) * (2 * a1 + a2 * (4 + r1 + r2 + 3 * r3)))) / 2.
+    cPi = ((-r2 + r3) * ((Pihmkr * ((a*a) + (rm*rm)) * _P(rm, a, En, xi) * _deltaRt(rm, am1, a0, a1, a2)) / ((r2 - rm) * pow(r3 - rm, 2) * rm) -
+                                (Pihpkr * ((a*a) + (rp*rp)) * _P(rp, a, En, xi) * _deltaRt(rp, am1, a0, a1, a2)) / ((r2 - rp) * pow(r3 - rp, 2) * rp))) / (-rm + rp)
+
+    cE = (Ekr * ((2 * am1 * (-r1 + r3) * xi) / (a * r1) + (r2 * Vtr3 * _deltaRt(r3, am1, a0, a1, a2)) / (r2 - r3))) / (r3*r3)
+
+    deltaIt2 = -((cE + cEPi + cK + cPi) / (pow(1 - (En*En), 1.5) * sqrt((r1 - r3) * (r2 - r4))))
+    deltaIt = deltaIt1 + deltaIt2
+
+    It = (2 * ((En * (Ekr * r2 * (r1 - r3) + Pihrkr * (r2 - r3) * (4 + r1 + r2 + r3))) / 2. +
+                      ((r2 - r3) * ((Pihmkr * ((a*a) + (rm*rm)) * _P(rm, a, En, xi)) / ((r2 - rm) * (r3 - rm)) - (Pihpkr * ((a*a) + (rp*rp)) * _P(rp, a, En, xi)) / ((r2 - rp) * (r3 - rp)))) /
+                          (-rm + rp) +
+                      Kkr * (-0.5 * (En * (r1 - r3) * (r2 - r3)) + Vtr3))) / sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))
+
+    VPhir3 = xi + a / _CapitalDelta(r3, a) * _P(r3, a, En, xi)
+    deltaVPhir3 = deltaxi + a / _CapitalDelta(r3, a) * _deltaP(r3, a, En, xi, deltaEn, deltaxi)
+
+    deltaIPhi1 = (2 * ((Ekr * (r1 - r3) * xi) / (a * r1 * r3) + (a * (r2 - r3) * ((Pihmkr * _deltaP(rm, a, En, xi, deltaEn, deltaxi)) / ((r2 - rm) * (r3 - rm)) - (Pihpkr * _deltaP(rp, a, En, xi, deltaEn, deltaxi)) / ((r2 - rp) * (r3 - rp)))) / (-rm + rp) + Kkr * deltaVPhir3)) / sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))
+
+    dK = (Kkr * (-(a * En * (r3*r3) * (2 * a0 * (-1 + r3) * r3 + (a1 + 2 * a2) * pow(r3, 3) + am1 * (-4 + 3 * r3))) - pow(a, 3) * En * r3 * (am1 - (r3*r3) * (a1 + 2 * a2 * r3)) -
+                        (a*a) * (am1 * (-4 + r3) - 2 * a0 * r3 - (a1 + 2 * a2 * (-1 + r3)) * pow(r3, 3)) * xi - pow(-2 + r3, 2) * r3 * (3 * am1 + r3 * (2 * a0 + a1 * r3)) * xi)) / ((r3*r3) * pow(r3 - rm, 2) * pow(r3 - rp, 2))
+
+    dPi = -((a * (r2 - r3) * ((Pihmkr * _P(rm, a, En, xi) * _deltaRt(rm, am1, a0, a1, a2)) / ((r2 - rm) * pow(r3 - rm, 2) * rm) - (Pihpkr * _P(rp, a, En, xi) * _deltaRt(rp, am1, a0, a1, a2)) / ((r2 - rp) * pow(r3 - rp, 2) * rp))) / (-rm + rp))
+    dE = (Ekr * ((-2 * am1 * (r1 - r3) * xi) / ((a*a) * r1) + (r2 * VPhir3 * _deltaRt(r3, am1, a0, a1, a2)) / (r2 - r3))) / (r3*r3)
+
+    deltaIPhi2 = -((dE + dK + dPi) / (pow(1 - (En*En), 1.5) * sqrt((r1 - r3) * (r2 - r4))))
+    deltaIPhi = deltaIPhi1 + deltaIPhi2
+
+    IPhi = (2 * ((a * (r2 - r3) * ((Pihmkr * _P(rm, a, En, xi)) / ((r2 - rm) * (r3 - rm)) - (Pihpkr * _P(rp, a, En, xi)) / ((r2 - rp) * (r3 - rp)))) / (-rm + rp) + Kkr * VPhir3)) / sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))
+
+    deltaOmegaR = -PI / (It*It) * deltaIt
+    deltaOmegaPhi = deltaIPhi / It - IPhi / (It*It) * deltaIt
+
+    return deltaOmegaPhi, deltaOmegaR
+
+@njit(fastmath=True)
+def _KerrEqSpinFrequenciesCorrections_kernel(OmegaPhi, OmegaTheta, OmegaR, a, p, e, x):
+    for i in range(len(OmegaPhi)):
+        OmegaPhi[i], OmegaR[i] = _KerrEqSpinFrequenciesCorrections_kernel_inner(a[i], p[i], e[i], x[i])
 
 def get_fundamental_frequencies_spin_corrections(a, p, e, x):
     """Get dimensionless fundamental frequencies.
@@ -509,8 +702,11 @@ def get_fundamental_frequencies_spin_corrections(a, p, e, x):
 
     assert len(a_in) == len(p_in)
 
+    OmegaPhi = np.empty_like(p_in)
+    OmegaTheta = np.zeros_like(p_in)
+    OmegaR = np.empty_like(p_in)
     # get frequencies
-    OmegaPhi, OmegaTheta, OmegaR = pyKerrEqSpinFrequenciesCorr(a_in, p_in, e_in, x_in)
+    _KerrEqSpinFrequenciesCorrections_kernel(OmegaPhi, OmegaTheta, OmegaR, a_in, p_in, e_in, x_in)
 
     # set output to shape of input
     if scalar:
@@ -620,7 +816,6 @@ def _KerrGeoConstantsOfMotion_kernel(E_out, L_out, Q_out, a, p, e, x):
     for i in range(len(p)):
         E_out[i], L_out[i], Q_out[i] = _KerrGeoConstantsOfMotion_kernel_inner(a[i], p[i], e[i], x[i])
 
-
 def get_kerr_geo_constants_of_motion(a, p, e, x):
     """Get Kerr constants of motion.
 
@@ -678,93 +873,172 @@ def get_kerr_geo_constants_of_motion(a, p, e, x):
     else:
         return (E, L, Q)
 
+@njit(fastmath=True)
+def _brentq_jit(f, a, b, args, tol):
+    # Machine epsilon for double precision
+    eps = 2.220446049250313e-16
 
-def xI_to_Y(a, p, e, x):
-    """Convert from :math:`x_I=\cos{I}` to :math:`Y=\cos{\iota}`.
+    fa = f(a, args)
+    fb = f(b, args)
 
-    Converts between the two different inclination parameters. :math:`\cos{I}\equiv x_I`,
-    where :math:`I` describes the orbit's inclination from the equatorial plane.
-    :math:`\cos{\iota}\equiv Y`, where :math:`\cos{\iota}=L/\sqrt{L^2 + Q}`.
+    # Check that f(a) and f(b) have different signs
+    if fa == 0.0 or fb == 0.0:
+        return a if fa == 0.0 else b
 
-    arguments:
-        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
-            black hole. If other parameters are arrays and the spin is scalar,
-            it will be cast to a 1D array.
-        p (double scalar or 1D double np.ndarray): Values of separation,
-            :math:`p`.
-        e (double scalar or 1D double np.ndarray): Values of eccentricity,
-            :math:`e`.
-        x (double scalar or 1D double np.ndarray): Values of cosine of the
-            inclination, :math:`x=\cos{I}`.
+    if fa * fb > 0.0:
+        raise ValueError("f(a) and f(b) must have different signs.")
 
-    returns:
-        1D array or scalar: :math:`Y=\cos{\iota}` value with shape based on input shapes.
+    c = a
+    fc = fa
+    d = b - a
+    e = d
 
-    """
+    while True:
+        if abs(fc) < abs(fb):
+            a=b
+            b=c
+            c=a
+            fa=fb
+            fb=fc
+            fc=fa
 
-    # get constants of motion
-    E, L, Q = get_kerr_geo_constants_of_motion(a, p, e, x)
+        tol1 = 2.0 * eps * abs(b) + 0.5 * tol
+        xm = 0.5 * (c - b)
 
-    Y = L / np.sqrt(L**2 + Q)
-    return Y
+        if abs(xm) <= tol1 or fb == 0.0:
+            # within tolerance -> return root
+            return b
+
+        # Check if bisection is forced
+        if abs(e) >= tol1 and abs(fa) > abs(fb):
+            s = fb / fa
+            if a == c:
+                # Linear interpolation
+                p = 2.0 * xm * s
+                q = 1.0 - s
+            else:
+                # Inverse quadratic interpolation
+                q = fa / fc
+                r = fb / fc
+                p = s * (2.0 * xm * q * (q - r) - (b - a) * (r - 1.0))
+                q = (q - 1.0) * (r - 1.0) * (s - 1.0)
+
+            if p > 0.0:
+                q = -q
+            else:
+                p = -p
+
+            if (2.0 * p < 3.0 * xm * q - abs(tol1 * q)) and (p < abs(0.5 * e * q)):
+                # Accept interpolation
+                d = p / q
+            else:
+                # Bisection step
+                d = xm
+                e = d
+        else:
+            # Bisection step
+            d = xm
+            e = d
+
+        a = b
+        fa = fb
+        if abs(d) > tol1:
+            b += d
+        else:
+            b += tol1 if xm > 0 else -tol1
+
+        fb = f(b, args)
+        if fb * fc > 0.0:
+            c = a
+            fc = fa
+            d = b - a
+            e = d
+
+@njit(fastmath=True)
+def _separatrix_polynomial_full(p, args):
+    a = args[0]
+    e = args[1]
+    x = args[2]
+    return (-4*(3 + e)*pow(p,11) + pow(p,12) + pow(a,12)*pow(-1 + e,4)*pow(1 + e,8)*pow(-1 + x,4)*pow(1 + x,4) - 4*pow(a,10)*(-3 + e)*pow(-1 + e,3)*pow(1 + e,7)*p*pow(-1 + pow(x,2),4) - 
+            4*pow(a,8)*(-1 + e)*pow(1 + e,5)*pow(p,3)*pow(-1 + x,3)*pow(1 + x,3)*(7 - 7*pow(x,2) - pow(e,2)*(-13 + pow(x,2)) + pow(e,3)*(-5 + pow(x,2)) + 7*e*(-1 + pow(x,2))) + 
+            8*pow(a,6)*(-1 + e)*pow(1 + e,3)*pow(p,5)*pow(-1 + pow(x,2),2)*(3 + e + 12*pow(x,2) + 4*e*pow(x,2) + pow(e,3)*(-5 + 2*pow(x,2)) + pow(e,2)*(1 + 2*pow(x,2))) - 
+            8*pow(a,4)*pow(1 + e,2)*pow(p,7)*(-1 + x)*(1 + x)*(-3 + e + 15*pow(x,2) - 5*e*pow(x,2) + pow(e,3)*(-5 + 3*pow(x,2)) + pow(e,2)*(-1 + 3*pow(x,2))) + 
+            4*pow(a,2)*pow(p,9)*(-7 - 7*e + pow(e,3)*(-5 + 4*pow(x,2)) + pow(e,2)*(-13 + 12*pow(x,2))) + 
+            2*pow(a,8)*pow(-1 + e,2)*pow(1 + e,6)*pow(p,2)*pow(-1 + pow(x,2),3)*(2*pow(-3 + e,2)*(-1 + pow(x,2)) + pow(a,2)*(pow(e,2)*(-3 + pow(x,2)) - 3*(1 + pow(x,2)) + 2*e*(1 + pow(x,2)))) - 
+            2*pow(p,10)*(-2*pow(3 + e,2) + pow(a,2)*(-3 + 6*pow(x,2) + pow(e,2)*(-3 + 2*pow(x,2)) + e*(-2 + 4*pow(x,2)))) + 
+            pow(a,6)*pow(1 + e,4)*pow(p,4)*pow(-1 + pow(x,2),2)*(-16*pow(-1 + e,2)*(-3 - 2*e + pow(e,2))*(-1 + pow(x,2)) + pow(a,2)*(15 + 6*pow(x,2) + 9*pow(x,4) + pow(e,2)*(26 + 20*pow(x,2) - 2*pow(x,4)) + pow(e,4)*(15 - 10*pow(x,2) + pow(x,4)) + 4*pow(e,3)*(-5 - 2*pow(x,2) + pow(x,4)) - 4*e*(5 + 2*pow(x,2) + 3*pow(x,4)))) - 
+            4*pow(a,4)*pow(1 + e,2)*pow(p,6)*(-1 + x)*(1 + x)*(-2*(11 - 14*pow(e,2) + 3*pow(e,4))*(-1 + pow(x,2)) + pow(a,2)*(5 - 5*pow(x,2) - 9*pow(x,4) + 4*pow(e,3)*pow(x,2)*(-2 + pow(x,2)) + pow(e,4)*(5 - 5*pow(x,2) + pow(x,4)) + pow(e,2)*(6 - 6*pow(x,2) + 4*pow(x,4)))) + 
+            pow(a,2)*pow(p,8)*(-16*pow(1 + e,2)*(-3 + 2*e + pow(e,2))*(-1 + pow(x,2)) + pow(a,2)*(15 - 36*pow(x,2) + 30*pow(x,4) + pow(e,4)*(15 - 20*pow(x,2) + 6*pow(x,4)) + 4*pow(e,3)*(5 - 12*pow(x,2) + 6*pow(x,4)) + 4*e*(5 - 12*pow(x,2) + 10*pow(x,4)) + pow(e,2)*(26 - 72*pow(x,2) + 44*pow(x,4)))));
 
 
-def Y_to_xI(a, p, e, Y):
-    """Convert from :math:`Y=\cos{\iota}` to :math:`x_I=\cos{I}`.
+@njit(fastmath=True)
+def _separatrix_polynomial_polar(p, args):
+    a = args[0]
+    e = args[1]
+    return (pow(a,6)*pow(-1 + e,2)*pow(1 + e,4) + pow(p,5)*(-6 - 2*e + p) + pow(a,2)*pow(p,3)*(-4*(-1 + e)*pow(1 + e,2) + (3 + e*(2 + 3*e))*p) - pow(a,4)*pow(1 + e,2)*p*(6 + 2*pow(e,3) + 2*e*(-1 + p) - 3*p - 3*pow(e,2)*(2 + p)))
 
-    Converts between the two different inclination parameters. :math:`\cos{I}\equiv x_I`,
-    where :math:`I` describes the orbit's inclination from the equatorial plane.
-    :math:`\cos{\iota}\equiv Y`, where :math:`\cos{\iota}=L/\sqrt{L^2 + Q}`.
+@njit(fastmath=True)
+def _separatrix_polynomial_equat(p, args):
+    a = args[0]
+    e = args[1]
+    return (pow(a,4)*pow(-3 - 2*e + pow(e,2),2) + pow(p,2)*pow(-6 - 2*e + p,2) - 2*pow(a,2)*(1 + e)*p*(14 + 2*pow(e,2) + 3*p - e*p))
 
-    This computation may have issues near edge cases.
+_POLAR_PSEP_X_LO = 1.0 + sqrt(3.0) + sqrt(3.0 + 2.0 * sqrt(3.0))
 
-    arguments:
-        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
-            black hole. If other parameters are arrays and the spin is scalar,
-            it will be cast to a 1D array.
-        p (double scalar or 1D double np.ndarray): Values of separation,
-            :math:`p`.
-        e (double scalar or 1D double np.ndarray): Values of eccentricity,
-            :math:`e`.
-        Y (double scalar or 1D double np.ndarray): Values of cosine of the
-            :math:`\iota`.
+@njit(fastmath=True)
+def _get_separatrix_kernel_inner(a: float, e: float, x: float, tol: float=1e-13):
+    if a == 0:
+        # Schwarzschild
+        return 6 + 2*e
 
-    returns:
-        1D array or scalar: :math:`x=\cos{I}` value with shape based on input shapes.
+    elif x == 1.0:  # Eccentric Prograde Equatorial
+        x_lo = 1.0 + e
+        x_hi = 6. + 2. * e
 
-    """
+        p_sep = _brentq_jit(_separatrix_polynomial_equat, x_lo, x_hi, (a, e), tol)
+        return p_sep
+    
+    elif x == -1.0:  # Eccentric Retrograde Equatorial
+        x_lo = 6 + 2. * e
+        x_hi = 5 + e + 4 * sqrt(1 + e)
 
-    # TODO: check error for not c-contiguous
-    # determines shape of input
-    if isinstance(e, float):
-        scalar = True
+        p_sep = _brentq_jit(_separatrix_polynomial_equat, x_lo, x_hi, (a, e), tol)
+        return p_sep
 
     else:
-        scalar = False
+        # solve for polar p_sep
+        x_lo = _POLAR_PSEP_X_LO
+        x_hi = 8.0
 
-    p_in = np.atleast_1d(p)
-    e_in = np.atleast_1d(e)
-    Y_in = np.atleast_1d(Y)
+        polar_p_sep = _brentq_jit(_separatrix_polynomial_polar, x_lo, x_hi, (a, e), tol)
+        
+        if x == 0.0:
+            return polar_p_sep
 
-    # cast spin values if necessary
-    if isinstance(a, float):
-        a_in = np.full_like(e_in, a)
-    else:
-        a_in = np.atleast_1d(a)
+        elif x > 0.0:
+            x_lo = 1.0 + e
+            x_hi = 6 + 2. * e
 
-    assert len(a_in) == len(e_in)
+            equat_p_sep = _brentq_jit(_separatrix_polynomial_equat, x_lo, x_hi, (a, e), tol)
 
-    x = pyY_to_xI_vector(a_in, p_in, e_in, Y_in)
+            x_lo = equat_p_sep
+            x_hi = polar_p_sep
 
-    # output in same shape as input
-    if scalar:
-        return x[0]
+        else:
+            x_lo = polar_p_sep
+            x_hi = 12.0
 
-    else:
-        return x
+        p_sep = _brentq_jit(_separatrix_polynomial_full, x_lo, x_hi, (a, e, x), tol)
+        return p_sep
 
 
-def get_separatrix(a, e, x):
+@njit(fastmath=True)
+def _get_separatrix_kernel(p_sep: np.ndarray, a: np.ndarray, e: np.ndarray, x: np.ndarray, tol: float=1e-13):
+    for i in range(len(a)):
+        p_sep[i] = _get_separatrix_kernel_inner(a[i], e[i], x[i], tol=tol)
+
+
+def get_separatrix(a, e, x, tol=1e-13):
     """Get separatrix in generic Kerr.
 
     Determines separatrix in generic Kerr from
@@ -810,8 +1084,9 @@ def get_separatrix(a, e, x):
         x_in = np.atleast_1d(x)
 
     assert len(a_in) == len(e_in) == len(x_in)
-
-    separatrix = pyGetSeparatrix(a_in, e_in, x_in)
+    
+    separatrix = np.empty_like(e_in)
+    _get_separatrix_kernel(separatrix, a_in, e_in, x_in, tol=tol)
 
     # output in same shape as input
     if scalar:
@@ -820,25 +1095,6 @@ def get_separatrix(a, e, x):
     else:
         return separatrix
 
-def read_spline_datafile(fname):
-    # Open the file in read mode
-    with open(fname, "r") as file:
-        # Read the contents of the file into a list
-        lines = file.readlines()
-
-    # Initialize an empty two-dimensional list
-    data = []
-
-    # Loop through each line in the file
-    for line in lines:
-        # Split the line into a list of values using a comma delimiter
-        values = line.strip().split(" ")
-
-        # Convert each value to a float and append to the two-dimensional list
-        # data.append([np.float128(value) for value in values])
-        data.append([np.float64(value) for value in values])
-    
-    return np.asarray(data)
 
 # TODO: initialise this properly from the coefficients files, rather than all this stuff getting run every time
 
@@ -851,14 +1107,15 @@ def chi2_to_a(chi2):
     ymax = (1+CHI2_AMAX)**(1/CHI2_SCALE)
     return 1-(chi2*(ymax-ymin)+ymin)**CHI2_SCALE
 
+@njit(fastmath=True)
 def a_to_chi2(a):
     y = (1-a)**(1/CHI2_SCALE)
     ymin = (1-CHI2_AMAX)**(1/CHI2_SCALE)
     ymax = (1+CHI2_AMAX)**(1/CHI2_SCALE)
     return (y-ymin)/(ymax-ymin)
 
-Nx1 = 128
-Nx2 = 128
+Nx1 = 256
+Nx2 = 256
 
 x1 = np.linspace(0,1,num=Nx1)
 x2 = np.linspace(CHI2_EMIN**0.5,CHI2_EMAX**0.5,num=Nx2)
@@ -929,6 +1186,8 @@ def get_mu_at_t(
         double: Value of mu that creates the proper length trajectory.
 
     """
+
+    # TODO: fix this function to use the get_p_at_t interface
 
     # setup search array
     array_creator = np.logspace if logspace else np.linspace
@@ -1397,54 +1656,3 @@ def cuda_set_device(dev):
     else:
         warnings.warn("Setting cuda device, but cupy/cuda not detected.")
 
-
-def get_ode_function_options():
-    """Get ode options.
-
-    This includes all the subinfo for each ODE derivative
-    function that is available.
-
-    Returns:
-        dict: Dictionary with all the information on available functions.
-
-    Raises:
-        ValueError: ODE files have not been built.
-
-    """
-    try:
-        from few.utils.odeoptions import ode_options
-    except (ImportError, ModuleNotFoundError) as e:
-        raise ValueError("ODE files not built yet.")
-
-    return ode_options
-
-def augment_ODE_func_name(inspiral_kwargs):
-    """
-    If not integrating phases or constants of motion, augment the name of the function correctly before passing to inspiral generator
-    """
-    inspiral_kwargs_check = inspiral_kwargs.copy()
-    try:
-        kw = inspiral_kwargs_check.pop('integrate_constants_of_motion')
-        if kw:
-            inspiral_kwargs_check["func"] += "_ELQ"
-    except KeyError:
-        pass
-    try:
-        kw = inspiral_kwargs_check.pop('integrate_phases')
-        if not kw:
-            inspiral_kwargs_check["func"] += "_nofrequencies"
-    except KeyError:
-        pass
-
-    return inspiral_kwargs_check
-
-def omp_set_num_threads(num_threads=1):
-    """Globally sets OMP_NUM_THREADS
-
-    Args:
-        num_threads (int, optional):
-        Number of parallel threads to use in OpenMP.
-            Default is 1.
-
-    """
-    set_threads_wrap(num_threads)

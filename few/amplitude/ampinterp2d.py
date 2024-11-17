@@ -154,11 +154,12 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         """
         pass
 
-    def __init__(self, fp, l_arr, m_arr, n_arr, max_init_len=1000, file_directory=None, **kwargs):
+    def __init__(self, fp, l_arr, m_arr, n_arr, file_directory=None, **kwargs):
 
         ParallelModuleBase.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
+        self.fp = fp
         self.l_arr = l_arr
         self.m_arr = m_arr
         self.n_arr = n_arr
@@ -307,6 +308,9 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
 
         z = z[:, 0] + 1j * z[:, 1]
         return z
+    
+    def __reduce__(self):
+        return (self.__class__, (self.fp, self.l_arr, self.m_arr, self.n_arr, self.file_dir))
 
 
 class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleBase):
@@ -634,6 +638,8 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
 
             return temp
 
+    def __reduce__(self):
+        return (self.__class__, (self.file_dir, self.filename))
 
 def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr, file_directory=None):
     data = {}

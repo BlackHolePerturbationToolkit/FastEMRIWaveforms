@@ -4,6 +4,7 @@ import warnings
 
 from few.waveform import Pn5AAKWaveform,GenerateEMRIWaveform
 from few.trajectory.inspiral import EMRIInspiral
+from few.trajectory.ode import PN5
 from few.utils.utility import get_overlap, get_mismatch
 
 try:
@@ -97,7 +98,7 @@ class AAKWaveformTest(unittest.TestCase):
         # keyword arguments for summation generator (InterpolatedModeSum)
         sum_kwargs = {"pad_output": False}
 
-        traj_module = EMRIInspiral(func = "pn5")
+        traj_module = EMRIInspiral(func = PN5)
         # set initial parameters
         M = 1e6
         mu = 1e1

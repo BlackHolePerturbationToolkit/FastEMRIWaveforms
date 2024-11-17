@@ -7,42 +7,23 @@ import numpy as np
 # import cupy as cp
 
 from few.trajectory.inspiral import EMRIInspiral
-from few.amplitude.interp2dcubicspline import Interp2DAmplitude
-from few.amplitude.ampinterp2d import AmpInterpKerrEqEcc
 from few.waveform import (
     GenerateEMRIWaveform,
-    Old_SchwarzschildEccentricWaveformBase,
-    Old_KerrEquatorialEccentricWaveformBase,
 )
-from few.utils.ylm import GetYlms
-from few.utils.modeselector import ModeSelector, NeuralModeSelector
-from few.summation.interpolatedmodesum import CubicSplineInterpolant
-from few.summation.interpolatedmodesum import InterpolatedModeSum
-from few.summation.directmodesum import DirectModeSum
 from few.utils.constants import *
-from few.summation.aakwave import AAKSummation
-from few.waveform import Pn5AAKWaveform, AAKWaveformBase
 
 from few.utils.utility import (
-    get_overlap,
-    get_mismatch,
-    get_fundamental_frequencies,
     get_separatrix,
-    get_mu_at_t,
-    get_p_at_t,
-    get_kerr_geo_constants_of_motion,
-    xI_to_Y,
-    Y_to_xI,
 )
-
+from few.trajectory.ode import *
 from scipy.interpolate import interp1d
 
-use_gpu = True
+use_gpu = False
 
 # initial parameters
 M = 1e6
 mu = 1e1
-a = 0.
+a = 0.1
 p_f = 8.8 # Final semi-latus rectum
 e_f = 0.1  # Final eccentricity
 iota0_f = 0.9  # Final inclination
@@ -58,17 +39,17 @@ T = 1.0
 p_sep = get_separatrix(a, e_f, 1.0)
 print("Separatrix is", p_sep)
 
-# trajectory_class = "pn5"
+trajectory_class = PN5
 # trajectory_class = "pn5_nofrequencies"
-trajectory_class = "SchwarzEccFlux"
+# trajectory_class = "SchwarzEccFlux"
 # trajectory_class = "KerrEccentricEquatorial"
 # trajectory_class = "KerrEccentricEquatorial_nofrequencies"
 # trajectory_class = "KerrEccentricEquatorial_ELQ"
 # trajectory_class = "KerrEccentricEquatorial_ELQ_nofrequencies"
 
-if "Kerr" in trajectory_class:
+if trajectory_class is KerrEccEqFlux:
     Y_f = 1.0
-elif "Schwarz" in trajectory_class:
+elif trajectory_class is SchwarzEccFlux:
     Y_f = 1.0
     a = 0.0
 
@@ -197,7 +178,7 @@ sum_kwargs = {
     "use_gpu": False,  # GPU is availabel for this type of summation
     "pad_output": False,
 }
-model_name = "FastSchwarzschildEccentricFlux"
+model_name = "Pn5AAKWaveform"
 
 wave_generator_backwards = GenerateEMRIWaveform(
     model_name,
@@ -316,13 +297,14 @@ print("Mismatch is", 1 - overlap)
 plt.plot(t,h_p_back_int[::-1], c = 'blue', alpha = 1, linestyle = 'dashed', label = 'integrated backwards')
 plt.plot(t,h_p_forward_int, c = 'red', alpha = 0.5, label = 'integrated forwards')
 plt.plot(t,h_p_back_int[::-1] - h_p_forward_int, c = 'green', alpha = 0.5, label = 'diff')
-
+breakpoint()
 title_str = r'Kerr: $(M, \mu, a, p_f, e_f, T) = (1e6, {}, {}, {}, {}, {} \, \text{{year}})$'.format(mu,a, np.round(p_f,3), e_f, 1)
 plt.title(title_str, fontsize = 12)
 plt.xlabel(r'Time $t$')
 plt.ylabel(r'$h_{p}$')
 # plt.xlim([365-0.01,365])
 plt.xlim([t[-1] - 500, t[-1] + 5])
+# plt.xlim(0, 500)
 plt.legend()
 plt.grid()
 plt.show()

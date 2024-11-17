@@ -41,13 +41,7 @@ from .base import AAKWaveformBase, SphericalHarmonicWaveformBase
 
 from ..trajectory.inspiral import EMRIInspiral
 from ..amplitude.ampinterp2d import AmpInterpKerrEqEcc, AmpInterpSchwarzEcc
-from ..utils.utility import (
-    get_mismatch,
-    xI_to_Y,
-    p_to_y,
-    check_for_file_download,
-    augment_ODE_func_name,
-)
+from ..utils.pn_map import xI_to_Y
 from ..amplitude.romannet import RomanAmplitude
 from ..utils.modeselector import ModeSelector, NeuralModeSelector
 from ..utils.ylm import GetYlms
@@ -57,6 +51,8 @@ from ..utils.constants import *
 from ..utils.citations import *
 from ..summation.interpolatedmodesum import InterpolatedModeSum
 from ..summation.fdinterp import FDInterpolatedModeSum
+
+from ..trajectory.ode import KerrEccEqFlux, PN5, SchwarzEccFlux
 
 from typing import Union, Optional
 
@@ -429,8 +425,8 @@ class FastKerrEccentricEquatorialFlux(
 
         KerrEccentricEquatorial.__init__(self, use_gpu=use_gpu)
 
-        inspiral_kwargs["func"] = "KerrEccentricEquatorial"
-        inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
+        inspiral_kwargs["func"] = KerrEccEqFlux
+        # inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 
         mode_summation_module = InterpolatedModeSum
         if "output_type" in sum_kwargs:
@@ -561,8 +557,8 @@ class FastSchwarzschildEccentricFlux(
 
         SchwarzschildEccentric.__init__(self, use_gpu=use_gpu, nmax=30)
 
-        inspiral_kwargs["func"] = "SchwarzEccFlux"
-        inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
+        inspiral_kwargs["func"] = SchwarzEccFlux
+        # inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 
         mode_summation_module = InterpolatedModeSum
         if "output_type" in sum_kwargs:
@@ -707,8 +703,8 @@ class FastSchwarzschildEccentricFluxBicubic(
 
         SchwarzschildEccentric.__init__(self, use_gpu=use_gpu)
 
-        inspiral_kwargs["func"] = "SchwarzEccFlux"
-        inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
+        inspiral_kwargs["func"] = SchwarzEccFlux
+        # inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 
         mode_summation_module = InterpolatedModeSum
         if "output_type" in sum_kwargs:
@@ -868,7 +864,7 @@ class SlowSchwarzschildEccentricFlux(SphericalHarmonicWaveformBase, Schwarzschil
 
         # declare specific properties
         inspiral_kwargs["DENSE_STEPPING"] = 1
-        inspiral_kwargs["func"] = "SchwarzEccFlux"
+        inspiral_kwargs["func"] = SchwarzEccFlux
 
         SphericalHarmonicWaveformBase.__init__(
             self,
@@ -980,8 +976,8 @@ class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase, ABC):
         if sum_kwargs is None:
             sum_kwargs = {}
 
-        inspiral_kwargs["func"] = "pn5"
-        inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
+        inspiral_kwargs["func"] = PN5
+        # inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 
         AAKWaveformBase.__init__(
             self,

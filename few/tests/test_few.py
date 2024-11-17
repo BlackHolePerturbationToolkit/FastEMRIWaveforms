@@ -4,6 +4,7 @@ import numpy as np
 import warnings
 
 from few.trajectory.inspiral import EMRIInspiral
+from few.trajectory.ode import SchwarzEccFlux
 from few.amplitude.romannet import RomanAmplitude
 from few.amplitude.ampinterp2d import AmpInterpSchwarzEcc
 from few.waveform import FastSchwarzschildEccentricFlux, SlowSchwarzschildEccentricFlux
@@ -194,7 +195,7 @@ def amplitude_test(amp_class):
 class ModuleTest(unittest.TestCase):
     def test_trajectory(self):
         # initialize trajectory class
-        traj = EMRIInspiral(func="SchwarzEccFlux")
+        traj = EMRIInspiral(func=SchwarzEccFlux)
 
         # set initial parameters
         M = 1e5

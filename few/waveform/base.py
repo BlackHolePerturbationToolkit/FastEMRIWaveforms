@@ -17,6 +17,7 @@ except (ImportError, ModuleNotFoundError) as e:
 from ..utils.baseclasses import (
     Pn5AAK,
     ParallelModuleBase,
+    SphericalHarmonic
 )
 
 from ..utils.utility import (

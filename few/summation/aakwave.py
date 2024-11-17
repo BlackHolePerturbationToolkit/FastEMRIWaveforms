@@ -40,12 +40,13 @@ except (ImportError, ModuleNotFoundError) as e:
     pass
 
 # Python imports
-from few.utils.baseclasses import Pn5AAK, ParallelModuleBase
+from ..utils.baseclasses import Pn5AAK, ParallelModuleBase
 from .base import SummationBase
-from few.utils.citations import *
-from few.utils.utility import get_fundamental_frequencies, Y_to_xI
-from few.utils.constants import *
-from few.summation.interpolatedmodesum import CubicSplineInterpolant
+from ..utils.citations import *
+from ..utils.utility import get_fundamental_frequencies
+from ..utils.pn_map import Y_to_xI
+from ..utils.constants import *
+from ..summation.interpolatedmodesum import CubicSplineInterpolant
 
 # get path to file
 dir_path = os.path.dirname(os.path.realpath(__file__))

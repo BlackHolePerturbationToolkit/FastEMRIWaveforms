@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 from few.trajectory.inspiral import EMRIInspiral
 from few.utils.constants import *
+from few.trajectory.ode import KerrEccEqFlux, PN5, SchwarzEccFlux
 
 try:
     import cupy as xp
@@ -31,7 +32,6 @@ insp_kw = {
 "err": 1e-10,
 "DENSE_STEPPING": 0,
 "max_init_len": int(1e4),
-"use_rk4": False,
 "upsample": False
 }
 
@@ -59,9 +59,9 @@ def run_forward_back(traj_module, M, mu, a, p0, e0, xI0, forwards_kwargs):
 
 class ModuleTest(unittest.TestCase):
     def test_trajectory_pn5(self):
-
+        print("Testing pn5")
         # initialize trajectory class
-        traj = EMRIInspiral(func="pn5")
+        traj = EMRIInspiral(func=PN5)
 
         # set initial parameters
         M = 1e5
@@ -76,15 +76,17 @@ class ModuleTest(unittest.TestCase):
             # do not want to be too close to polar
             if np.abs(Y0) < 1e-2:
                 Y0 = np.sign(Y0) * 1e-2
-
+            print(i)
             forwards, backwards = run_forward_back(traj, M, mu, a, p0, e0, Y0, forwards_kwargs=insp_kw)
             self.assertAlmostEqual(backwards[1][-1],forwards[1][0], places=8)
 
 
 
     def test_trajectory_SchwarzEccFlux(self):
+        print("Testing Schwarz traj")
+
         # initialize trajectory class
-        traj = EMRIInspiral(func="SchwarzEccFlux")
+        traj = EMRIInspiral(func=SchwarzEccFlux)
 
         # set initial parameters
         M = 1e5
@@ -100,21 +102,16 @@ class ModuleTest(unittest.TestCase):
         
         # initialize trajectory class
         # 
-        list_func = [ 'KerrEccentricEquatorial',]#, 'KerrEccentricEquatorial_ELQ', 'KerrEccentricEquatorial_ELQ_nofrequencies',]
+        list_func = [ KerrEccEqFlux]#, 'KerrEccentricEquatorial_ELQ', 'KerrEccentricEquatorial_ELQ_nofrequencies',]
         # list_func = ['KerrEccentricEquatorial_ELQ', 'KerrEccentricEquatorial_ELQ_nofrequencies']
         for el in list_func:
-            print("testing ", el)
+            print("testing kerr ", el)
             traj = EMRIInspiral(func=el)
 
             # set initial parameters
             M = 1e6
             mu = 1.0
-            
-            # if 'nofrequencies' in el:
-            #     insp_kw["use_rk4"] = True
-            # else:
-            insp_kw["use_rk4"] = False
-            
+                        
             Np = 0
             eval_time = []
             N_points = []
@@ -124,7 +121,6 @@ class ModuleTest(unittest.TestCase):
             pvec = np.random.uniform(9.0,15.0,Ntest)
             evec = np.random.uniform(0.01, 0.6,Ntest)
             avec = np.random.uniform(0.01, 0.90,Ntest)
-            
             # define a function that for a given error and initial conditions return the number of points, the last phase and the time to evaluate the trajectory
             def get_N_Phif_evalT(M, mu, a, p0, e0, err):
                 insp_kw['err'] = err
@@ -167,7 +163,7 @@ class ModuleTest(unittest.TestCase):
             # plt.savefig(f'{el}_rootSeparatrix.png')
 
             # test against Schwarz
-            traj_Schw = EMRIInspiral(func='SchwarzEccFlux')#EMRIInspiral(func="SchwarzEccFlux")
+            traj_Schw = EMRIInspiral(func=SchwarzEccFlux)#EMRIInspiral(func="SchwarzEccFlux")
             a=0.0
             charge = 0.0
 
@@ -176,11 +172,12 @@ class ModuleTest(unittest.TestCase):
             for i in range(100):
                 p0 = np.random.uniform(10.0,15)
                 e0 = np.random.uniform(0.1, 0.5)
+
                 tic = time.perf_counter()
                 t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, T=100.0, err=1e-10, max_init_len=int(1e5))
                 toc = time.perf_counter()
 
-                tS, pS, eS, xS, Phi_phiS, Phi_thetaS, Phi_rS = traj_Schw(M, mu, 0.0, p0, e0, 1.0, T=100.0, new_t=t,upsample=True, err=1e-15, max_init_len=int(1e5))
+                tS, pS, eS, xS, Phi_phiS, Phi_thetaS, Phi_rS = traj_Schw(M, mu, 0.0, p0, e0, 1.0, T=100.0, new_t=t,upsample=True, err=1e-14, max_init_len=int(1e5))
                 mask = (Phi_rS!=0.0)
                 diff =  np.abs(Phi_phi[mask] - Phi_phiS[mask])
                 # print(np.max(diff),toc-tic,len(t))
@@ -197,7 +194,7 @@ class ModuleTest(unittest.TestCase):
         for i in range(100):
             p0 = np.random.uniform(10.0,15)
             e0 = np.random.uniform(0.1, 0.5)
-            
+
             t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, T=2.0, max_init_len=int(1e5))
             tS, pS, eS, xS, Phi_phiS, Phi_thetaS, Phi_rS = traj_Schw(M, mu, 0.0, p0, e0, 1.0, T=2.0, new_t=t, upsample=True, max_init_len=int(1e5))
             mask = (Phi_rS!=0.0)
@@ -206,8 +203,8 @@ class ModuleTest(unittest.TestCase):
             # plt.figure(); plt.plot(tS,Phi_phiS);plt.plot(t,Phi_phi);plt.show()
 
             self.assertLess(np.max(diff),2.0)
-        
-        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(1e6, 100.0, 0.99, 6.0, 0.5, 1.0, T=2079375.6399400292/YRSID_SI)
+
+        # t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(1e6, 100.0, 0.99, 6.0, 0.5, 1.0, T=2079375.6399400292/YRSID_SI)
         # self.assertLess(np.abs(Phi_phi[-1] - 37548.68909110543),2.0) # value from Scott
   
         # s_t, s_p, s_e, s_x, s_omr, s_omt, s_omph, s_r, s_th, s_ph = np.loadtxt("data_for_lorenzo/scott_data/a0.99_p0_6_e0_0.5_xI0_1.0_wl.txt").T
@@ -219,32 +216,27 @@ class ModuleTest(unittest.TestCase):
   
     def test_backwards_trajectory(self):
     # initialize trajectory class
-        list_func = ['pn5', 'SchwarzEccFlux', 'KerrEccentricEquatorial', 'KerrEccentricEquatorial_ELQ' ]
+        list_func = [PN5, SchwarzEccFlux, KerrEccEqFlux,]
         for el in list_func:
-            print("testing ", el)
+            print("testing backwards ", el)
             traj = EMRIInspiral(func=el)
 
             # set initial parameters
             M = 1e6
             mu = 10.0
                 
-            if 'nofrequencies' in el:
-                insp_kw["use_rk4"] = True
-            else:
-                insp_kw["use_rk4"] = False
-                
             # plt.figure()
             # tic = time.perf_counter()
             for i in range(100):
-                    
+
                 p0 = np.random.uniform(9.0,12.0)
                 e0 = np.random.uniform(0.1, 0.5)
                 a = np.random.uniform(0.01, 0.98)
 
-                if el == 'SchwarzEccFlux':
+                if el is SchwarzEccFlux:
                     a = 0.0
                     Y0 = 1.0
-                elif 'Kerr' in el:
+                elif el is KerrEccEqFlux:
                     Y0 = 1.0
                 else:
                     Y0 = np.random.uniform(0.2, 0.8)

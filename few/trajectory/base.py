@@ -47,8 +47,7 @@ class TrajectoryBase(ABC):
         DENSE_STEPPING=0,
         max_init_len=1000,
         upsample=False,
-        err=1e-10,
-        use_rk4=False,
+        err=1e-14,
         fix_t=False,
         integrate_backwards=False,
         **kwargs,
@@ -95,8 +94,6 @@ class TrajectoryBase(ABC):
                 points in the t array. If True, it will shave any excess on the
                 trajectories arrays where the time is greater than the overall
                 time of the trajectory requested.
-            use_rk4 (bool, optional): If True, use rk4 integrator from gsl.
-                If False, use rk8. Default is False (rk8).
             **kwargs (dict, optional): kwargs passed to trajectory module.
                 Default is {}.
 
@@ -114,7 +111,6 @@ class TrajectoryBase(ABC):
         kwargs["max_init_len"] = max_init_len
         kwargs["err"] = err
         kwargs["DENSE_STEPPING"] = DENSE_STEPPING
-        kwargs["use_rk4"] = use_rk4
         kwargs["integrate_backwards"] = integrate_backwards
 
         # convert from years to seconds

@@ -23,24 +23,22 @@ import warnings
 
 import numpy as np
 
-# Cython/C++ imports
-from pyInspiral import pyInspiralGenerator, pyDerivative
-
 # Python imports
 from .base import TrajectoryBase
 from ..utils.utility import (
     check_for_file_download,
-    get_ode_function_options,
     ELQ_to_pex,
     get_kerr_geo_constants_of_motion,
     get_fundamental_frequencies,
-    Y_to_xI,
 )
+from ..utils.pn_map import Y_to_xI
 from ..utils.constants import *
 from ..utils.citations import *
 
 from .integrate import APEXIntegrate, AELQIntegrate, get_integrator
 
+from typing import Type
+from .ode.base import ODEBase
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -116,24 +114,19 @@ class EMRIInspiral(TrajectoryBase):
     def __init__(
         self,
         *args,
-        func=None,
+        func: Type[ODEBase],
         enforce_schwarz_sep=False,
-        test_new_version=True,
         convert_to_pex=True,
         rootfind_separatrix=True,
         file_directory=None,
         **kwargs,
     ):
-        if func is None:
-            raise ValueError("Must provide func kwarg.")
 
         TrajectoryBase.__init__(self, *args, **kwargs)
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
-
-        nparams = 6
         self.inspiral_generator = get_integrator(
-            func, nparams, file_directory, rootfind_separatrix=rootfind_separatrix
+            func, file_directory=file_directory, enforce_schwarz_sep=enforce_schwarz_sep, rootfind_separatrix=rootfind_separatrix
         )
 
         self.func = self.inspiral_generator.func
@@ -144,13 +137,8 @@ class EMRIInspiral(TrajectoryBase):
             "err",
             "DENSE_STEPPING",
             "max_init_len",
-            "use_rk4",
             "integrate_backwards",
         ]
-
-        self.get_derivative = pyDerivative(
-            self.func[0], self.inspiral_generator.file_dir.encode()
-        )
 
         self.integrate_constants_of_motion = (
             self.inspiral_generator.integrate_constants_of_motion
@@ -228,9 +216,9 @@ class EMRIInspiral(TrajectoryBase):
         fill_value = 1e-6
 
         # fix for specific requirements of different odes
-        background = self.inspiral_generator.backgrounds[0]
-        equatorial = self.inspiral_generator.equatorial[0]
-        circular = self.inspiral_generator.circular[0]
+        background = self.inspiral_generator.background
+        equatorial = self.inspiral_generator.equatorial
+        circular = self.inspiral_generator.circular
 
         p0 = y1
         e0 = y2
@@ -346,9 +334,11 @@ class EMRIInspiral(TrajectoryBase):
         fill_value = 1e-6
 
         # fix for specific requirements of different odes
-        background = self.inspiral_generator.backgrounds[0]
-        equatorial = self.inspiral_generator.equatorial[0]
-        circular = self.inspiral_generator.circular[0]
+        background = self.inspiral_generator.background
+        equatorial = self.inspiral_generator.equatorial
+        circular = self.inspiral_generator.circular
+
+        self.inspiral_generator.func.add_fixed_parameters(M, mu, a, False)
 
         p0 = y1
         e0 = y2
@@ -383,15 +373,8 @@ class EMRIInspiral(TrajectoryBase):
                 x0 = Y_to_xI(a, p0, e0, x0)
             y1, y2, y3 = get_kerr_geo_constants_of_motion(a, p0, e0, x0)
 
-        args_in = np.asarray(args)
-
-        # correct for issue in Cython pass
-        if len(args_in) == 0:
-            args_in = np.array([0.0])
-
         y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
 
-        # this will return the derivatives in coordinate time
-        out = self.get_derivative(mu / M, a, y0, False, args_in)
+        out = self.inspiral_generator.func(np.r_[y0, *args])
 
         return out

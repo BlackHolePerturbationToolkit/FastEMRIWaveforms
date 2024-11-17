@@ -9,6 +9,7 @@ from few.summation.interpolatedmodesum import CubicSplineInterpolant
 from few.amplitude.romannet import RomanAmplitude
 from few.waveform import FastSchwarzschildEccentricFluxBicubic
 from few.utils.utility import get_overlap,get_mismatch
+from few.trajectory.ode import SchwarzEccFlux
 
 try:
     import cupy as xp
@@ -28,7 +29,7 @@ class ModeSelectorTest(unittest.TestCase):
 
     def test_mode_selector(self):        
         # first, lets get amplitudes for a trajectory
-        traj = EMRIInspiral(func="SchwarzEccFlux")
+        traj = EMRIInspiral(func=SchwarzEccFlux)
         ylm_gen = GetYlms(assume_positive_m=True, use_gpu=False)
 
         # parameters
