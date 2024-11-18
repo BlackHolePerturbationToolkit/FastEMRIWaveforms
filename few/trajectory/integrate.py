@@ -28,9 +28,6 @@ from scipy.interpolate import CubicSpline
 from scipy.integrate import solve_ivp
 from scipy.optimize import brentq
 
-# Cython/C++ imports
-from pyInspiral import pyInspiralGenerator, pyDerivative
-
 # Python imports
 from ..utils.utility import (
     check_for_file_download,
