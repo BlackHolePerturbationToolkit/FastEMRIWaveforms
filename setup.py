@@ -313,12 +313,6 @@ if add_gsl:
     )
     cpu_extension["include_dirs"] += gsl_include
 
-Interp2DAmplitude_ext = Extension(
-    "pyInterp2DAmplitude",
-    sources=["src/Interpolant.cc", "src/Amplitude.cc", "src/pyinterp2damp.pyx"],
-    **cpu_extension,
-)
-
 matmul_cpu_ext = Extension(
     "pymatmul_cpu", sources=["src/matmul.cpp", "src/pymatmul_cpu.pyx"], **cpu_extension
 )
@@ -344,7 +338,6 @@ amp_interp_2d_ext = Extension(
 cpu_extensions = [
     matmul_cpu_ext,
     interp_cpu_ext,
-    Interp2DAmplitude_ext,
     AAK_cpu_ext,
     amp_interp_2d_ext,
 ]
