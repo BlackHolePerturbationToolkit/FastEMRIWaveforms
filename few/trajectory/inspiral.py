@@ -375,6 +375,8 @@ class EMRIInspiral(TrajectoryBase):
 
         y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
 
-        out = self.inspiral_generator.func(np.r_[y0, *args])
+        y0_and_args = np.concatenate(([y0], args))
+        out = self.inspiral_generator.func(y0_and_args)
+        # out = self.inspiral_generator.func(np.r_[y0, *args])
 
         return out
