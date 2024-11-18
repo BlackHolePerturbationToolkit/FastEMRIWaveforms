@@ -34,7 +34,7 @@ from math import pi as PI
 
 I = 1j
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def _ylm_kernel_inner(
     l: int,
     m: int, 
@@ -283,7 +283,7 @@ def _ylm_kernel_inner(
         temp = -1**l * temp
     return temp
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def _ylm_kernel(out: np.ndarray, l: np.ndarray, m:np.ndarray, theta:float, phi: float):
     for k in range(len(out)):
         out[k] = _ylm_kernel_inner(l[k], m[k], theta, phi)

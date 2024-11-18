@@ -3,7 +3,7 @@ from numba import njit
 from .utility import get_kerr_geo_constants_of_motion
 import numpy as np
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def _d1(q, p, e, Y):
     p2 = p * p
     q2 = q * q
@@ -16,7 +16,7 @@ def _d1(q, p, e, Y):
     else:
         return p2 * ((q2 * e * e) + (2.0 * q2 - 2.0 * p) * e + p2 + q2 - 2.0 * p) * inv_ep4
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def _f1(q, p, e, Y):
     p2 = p * p
     q2 = q * q
@@ -29,7 +29,7 @@ def _f1(q, p, e, Y):
     else:
         return 2.0 * p * ((1.0 + e)**2 * (e + p / 2.0 + 1.0) * q2 + (p2 * p) / 2.0) * inv_ep4
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def _g1(q, p, e, Y):
     if abs(q) >= 1.0 or abs(e) >= 1.0 or p <= 1.0 or abs(Y) > 1.0:
         raise ValueError("Parameter errors: _g1")
@@ -38,7 +38,7 @@ def _g1(q, p, e, Y):
     else:
         return 2.0 * q * p / (1.0 + e)
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def _h1(q, p, e, Y):
     q2 = q * q
     p2 = p * p
@@ -57,7 +57,7 @@ def _h1(q, p, e, Y):
     else:
         return (y2 * q2 * e * e + (2.0 * y2 * q2 - 2.0 * p) * e + y2 * q2 + p2 - 2.0 * p) * inv_ep2 / Y2
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def _d2(q, p, e, Y):
     q2 = q * q
     p2 = p * p
@@ -70,7 +70,7 @@ def _d2(q, p, e, Y):
     else:
         return p2 * ((q2 * e * e) + (-2.0 * q2 + 2.0 * p) * e + p2 + q2 - 2.0 * p) * inv_em4
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def _f2(q, p, e, Y):
     q2 = q * q
     p2 = p * p
@@ -83,7 +83,7 @@ def _f2(q, p, e, Y):
     else:
         return -2.0 * ((e - p / 2.0 - 1.0) * (-1.0 + e)**2 * q2 - (p2 * p) / 2.0) * p * inv_em4
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def _g2(q, p, e, Y):
     if abs(q) >= 1.0 or abs(e) >= 1.0 or p <= 1.0 or abs(Y) > 1.0:
         raise ValueError("Parameter errors: _g2")
@@ -92,7 +92,7 @@ def _g2(q, p, e, Y):
     else:
         return -2.0 * q * p / (-1.0 + e)
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def _h2(q, p, e, Y):
     q2 = q * q
     p2 = p * p
@@ -111,7 +111,7 @@ def _h2(q, p, e, Y):
     else:
         return (y2 * q2 * e * e + (-2.0 * y2 * q2 + 2.0 * p) * e + y2 * q2 + p2 - 2.0 * p) * inv_em2 / Y2
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def _PN_E(q, p, e, Y):
     d1, f1, g1, h1 = _d1(q, p, e, Y), _f1(q, p, e, Y), _g1(q, p, e, Y), _h1(q, p, e, Y)
     d2, f2, g2, h2 = _d2(q, p, e, Y), _f2(q, p, e, Y), _g2(q, p, e, Y), _h2(q, p, e, Y)
@@ -129,7 +129,7 @@ def _PN_E(q, p, e, Y):
     E_square = (rhs_numer - 2.0 * sqrt(rhs_sqrt)) / rhs_denom
     return sqrt(E_square)
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def _PN_L(q, p, e, Y):
     E = _PN_E(q, p, e, Y)
     h2 = _h2(q, p, e, Y)
@@ -138,7 +138,7 @@ def _PN_L(q, p, e, Y):
 
     return rhs_first_term + sqrt(rhs_sqrt)
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def _PN_C(q, p, e, Y):
     L = _PN_L(q, p, e, Y)
     if Y == 1.0:
@@ -146,7 +146,7 @@ def _PN_C(q, p, e, Y):
     else:
         return L * L * ((1.0 / (Y * Y)) - 1.0)
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def _Y_to_xI_kernel_inner(a, p, e, Y):
     if abs(Y) == 1:
         return Y

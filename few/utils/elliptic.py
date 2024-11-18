@@ -7,7 +7,7 @@ Derived from Carlson's algorithms in the SLATEC library.
 from math import sqrt, acosh, acos, log
 from numba import njit
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def RF(x: float, y: float, z: float, tol: float=5e-4) -> float:
     r"""
     Computes the Carlson symmetric form of the
@@ -53,7 +53,7 @@ def RF(x: float, y: float, z: float, tol: float=5e-4) -> float:
     return drf
 
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def RC(x: float, y: float) -> float:
     r"""
     Computes the reduced Carlson symmetric form of the
@@ -79,7 +79,7 @@ def RC(x: float, y: float) -> float:
     else:
         return 1 / sqrt(y)
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def RJ(x: float, y: float, z: float, p: float, tol: float=5e-4):
     r"""
     Computes the Carlson symmetric form of the
@@ -144,7 +144,7 @@ def RJ(x: float, y: float, z: float, p: float, tol: float=5e-4):
 
     return drj
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def RD(x: float, y: float, z: float, tol: float=5e-4):
     r"""
     Computes the reduced Carlson symmetric form of the
@@ -205,7 +205,7 @@ def RD(x: float, y: float, z: float, tol: float=5e-4):
 
     return drd
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def EllipK(k: float, tol: float=5e-4) -> float:
     r"""
     Computes the complete elliptic integral of the first kind, :math:`K(k)`.
@@ -228,7 +228,7 @@ def EllipK(k: float, tol: float=5e-4) -> float:
     else:
         return RF(0, 1 - k*k, 1, tol=tol)
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def EllipE(k: float, tol: float=5e-4):
     r"""
     Computes the complete elliptic integral of the second kind, :math:`E(k)`.
@@ -252,7 +252,7 @@ def EllipE(k: float, tol: float=5e-4):
         y = 1 - k*k
         return RF(0, y, 1, tol=tol) - 1/3 * k**2 * RD(0, y, 1, tol=tol)
 
-@njit(fastmath=True)
+@njit(fastmath=False)
 def EllipPi(n: float, k: float, tol: float=5e-4):
     r"""
     Computes the complete elliptic integral of the third kind, :math:`\Pi(n, k)`.
