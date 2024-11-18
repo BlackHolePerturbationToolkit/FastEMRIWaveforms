@@ -112,8 +112,8 @@ class KerrEccEqFlux(ODEBase):
             "KerrEqEcc_x0.dat",
             "KerrEqEcc_x1.dat",
             "KerrEqEcc_x2.dat",
-            "KerrEqEcc_pdot_grid.dat",
-            "KerrEqEcc_edot_grid.dat"
+            "KerrEqEcc_pdot.dat",
+            "KerrEqEcc_edot.dat"
         ]
         for fp in self.files:
             check_for_file_download(fp, self.file_dir)
