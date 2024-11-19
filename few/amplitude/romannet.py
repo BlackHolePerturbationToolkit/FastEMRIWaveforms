@@ -23,8 +23,8 @@ import numpy as np
 import h5py
 
 # Cython/C++ imports
-from pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
-from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
+from ..cutils.pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
+from ..cutils.pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 
 # Python imports
 from ..utils.baseclasses import (
@@ -40,7 +40,7 @@ from scipy.interpolate import RectBivariateSpline
 # check for cupy and GPU version of pymatmul
 try:
     # Cython/C++ imports
-    from pymatmul import neural_layer_wrap, transform_output_wrap
+    from ..cutils.pymatmul import neural_layer_wrap, transform_output_wrap
 
     # Python imports
     import cupy as cp
@@ -205,7 +205,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         self.num_layers = 0
 
         # extract all necessary information from the file
-        with h5py.File(os.path.join(self.file_dir,self.data_file), "r") as fp:
+        with h5py.File(os.path.join(self.file_dir, self.data_file), "r") as fp:
             for key, value in fp.items():
                 if key == "reduced_basis":
                     continue
@@ -283,8 +283,12 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
             self.max_init_len = input_len
 
             self.temp_mats = [
-                self.xp.zeros((self.max_num * self.max_init_len,), dtype=self.xp.float64),
-                self.xp.zeros((self.max_num * self.max_init_len,), dtype=self.xp.float64),
+                self.xp.zeros(
+                    (self.max_num * self.max_init_len,), dtype=self.xp.float64
+                ),
+                self.xp.zeros(
+                    (self.max_num * self.max_init_len,), dtype=self.xp.float64
+                ),
             ]
 
         # the input is (y, e)
@@ -298,10 +302,14 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
 
         # setup arrays
         # teukolsky mode (final output)
-        teuk_modes = self.xp.zeros((input_len * self.num_teuk_modes,), dtype=self.xp.complex128)
+        teuk_modes = self.xp.zeros(
+            (input_len * self.num_teuk_modes,), dtype=self.xp.complex128
+        )
 
         # neural network output
-        nn_out_mat = self.xp.zeros((input_len * self.break_index,), dtype=self.xp.complex128)
+        nn_out_mat = self.xp.zeros(
+            (input_len * self.break_index,), dtype=self.xp.complex128
+        )
 
         # run the neural network
         for i, (weight, bias, run_relu) in enumerate(

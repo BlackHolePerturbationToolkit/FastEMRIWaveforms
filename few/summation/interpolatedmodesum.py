@@ -27,8 +27,8 @@ except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
 
 # Cython imports
-from pyinterp_cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
-from pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
+from ..cutils.pyinterp_cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
+from ..cutils.pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
 
 # Python imports
 from ..utils.baseclasses import (
@@ -42,8 +42,8 @@ from ..utils.constants import *
 
 # Attempt Cython imports of GPU functions
 try:
-    from pyinterp import interpolate_arrays_wrap as interpolate_arrays_wrap_gpu
-    from pyinterp import get_waveform_wrap as get_waveform_wrap_gpu
+    from ..cutils.pyinterp import interpolate_arrays_wrap as interpolate_arrays_wrap_gpu
+    from ..cutils.pyinterp import get_waveform_wrap as get_waveform_wrap_gpu
 
 except (ImportError, ModuleNotFoundError) as e:
     pass
@@ -151,11 +151,15 @@ class CubicSplineInterpolant(ParallelModuleBase):
                 (4, length, ninterps). The 4 is the 4 spline coefficients.
 
         """
+
     @property
     def interpolate_arrays(self) -> callable:
         """GPU or CPU waveform generation."""
-        return interpolate_arrays_wrap_cpu if not self.use_gpu else interpolate_arrays_wrap_gpu
-
+        return (
+            interpolate_arrays_wrap_cpu
+            if not self.use_gpu
+            else interpolate_arrays_wrap_gpu
+        )
 
     @property
     def gpu_capability(self):
@@ -419,7 +423,7 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleB
 
         phase_interp_coeffs_in = self.xp.transpose(
             self.xp.asarray(phase_interp_coeffs), [2, 0, 1]
-            ).flatten()
+        ).flatten()
 
         self.get_waveform(
             self.waveform,

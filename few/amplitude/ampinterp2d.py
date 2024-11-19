@@ -28,7 +28,11 @@ from tqdm import tqdm
 # Cython/C++ imports
 
 # Python imports
-from ..utils.baseclasses import SchwarzschildEccentric, ParallelModuleBase, KerrEccentricEquatorial
+from ..utils.baseclasses import (
+    SchwarzschildEccentric,
+    ParallelModuleBase,
+    KerrEccentricEquatorial,
+)
 from .base import AmplitudeBase
 from ..utils.utility import check_for_file_download
 from ..utils.citations import *
@@ -37,20 +41,21 @@ from ..utils.utility import p_to_y, kerr_p_to_u
 # check for cupy and GPU version of pymatmul
 try:
     # Cython/C++ imports
-    from pyAmpInterp2D import interp2D as interp2D_gpu
+    from ..cutils.pyAmpInterp2D import interp2D as interp2D_gpu
+
     # Python imports
     import cupy as cp
 
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
 
-from pyAmpInterp2D_cpu import interp2D as interp2D_cpu
+from ..cutils.pyAmpInterp2D_cpu import interp2D as interp2D_cpu
 
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-#TODO: handle multiple waveform models
+# TODO: handle multiple waveform models
 _DEFAULT_SPINS = [
     -0.99,
     -0.95,
@@ -63,7 +68,7 @@ _DEFAULT_SPINS = [
     -0.3,
     -0.2,
     -0.1,
-    0.,
+    0.0,
     0.1,
     0.2,
     0.3,
@@ -74,12 +79,13 @@ _DEFAULT_SPINS = [
     0.8,
     0.9,
     0.95,
-    0.99
+    0.99,
 ]
 
 _DEFAULT_AMPLITUDE_FILENAMES = [
     f"KerrEqEccAmpCoeffs_a{spin:.3f}.h5" for spin in _DEFAULT_SPINS
 ]
+
 
 class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
     """Calculate Teukolsky amplitudes with a ROMAN.
@@ -168,14 +174,14 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
             self.file_dir = dir_path + "/../../few/files/"
         else:
             self.file_dir = file_directory
-        
+
         # check if user has the necessary data
         # if not, the data will automatically download
         check_for_file_download(fp, self.file_dir)
-        
+
         mystery_file = h5py.File(os.path.join(self.file_dir, fp))
         try:
-            is_coeffs = mystery_file.attrs['is_coefficients']
+            is_coeffs = mystery_file.attrs["is_coefficients"]
         except KeyError:
             is_coeffs = False
 
@@ -183,30 +189,40 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
             coefficients = mystery_file
         else:
             print(fp, "is not a spline coefficients file. Attempting to convert...")
-            spline_fp = _spline_coefficients_to_file(fp, self.l_arr, self.m_arr, self.n_arr, file_directory=self.file_dir)
+            spline_fp = _spline_coefficients_to_file(
+                fp, self.l_arr, self.m_arr, self.n_arr, file_directory=self.file_dir
+            )
             coefficients = h5py.File(os.path.join(self.file_dir, spline_fp))
 
-        self.a_val_store = coefficients.attrs['signed_spin']
+        self.a_val_store = coefficients.attrs["signed_spin"]
 
-        self.num_teuk_modes = coefficients.attrs['num_teuk_modes']
+        self.num_teuk_modes = coefficients.attrs["num_teuk_modes"]
         self.tck = [
-            self.xp.asarray(coefficients['x1']), 
-            self.xp.asarray(coefficients['x2']), 
-            self.xp.asarray(coefficients['c'])
+            self.xp.asarray(coefficients["x1"]),
+            self.xp.asarray(coefficients["x2"]),
+            self.xp.asarray(coefficients["c"]),
         ]
-        self.degrees = coefficients.attrs['spline_degree_x'], coefficients.attrs['spline_degree_y']
-        self.len_indiv_c = coefficients.attrs['points_per_modegrid']
+        self.degrees = (
+            coefficients.attrs["spline_degree_x"],
+            coefficients.attrs["spline_degree_y"],
+        )
+        self.len_indiv_c = coefficients.attrs["points_per_modegrid"]
 
     @property
     def interp2D(self) -> callable:
         """GPU or CPU interp2D"""
         interp2D = interp2D_cpu if not self.use_gpu else interp2D_gpu
         return interp2D
-        
+
     @property
     def citation(self):
         """Return citations for this module"""
-        return romannet_citation + larger_few_citation + few_citation + few_software_citation
+        return (
+            romannet_citation
+            + larger_few_citation
+            + few_citation
+            + few_software_citation
+        )
 
     @property
     def gpu_capability(self):
@@ -228,13 +244,18 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
             sorted to increasing order.
             Note that the axis ordering is inverted relative to
             the output of meshgrid.
-        
+
         """
 
         grid = False
 
         try:
-            a_cpu, p_cpu, e_cpu, xI_cpu = a.get().copy(), p.get().copy(), e.get().copy(), xI.get().copy()
+            a_cpu, p_cpu, e_cpu, xI_cpu = (
+                a.get().copy(),
+                p.get().copy(),
+                e.get().copy(),
+                xI.get().copy(),
+            )
         except AttributeError:
             a_cpu, p_cpu, e_cpu, xI_cpu = a.copy(), p.copy(), e.copy(), xI.copy()
 
@@ -252,7 +273,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
 
         tw, tu, c = self.tck[:3]
         kw, ku = self.degrees
-        
+
         # standard Numpy broadcasting
         if w.shape != u.shape:
             w, u = np.broadcast_arrays(w, u)
@@ -275,36 +296,47 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
 
         if specific_modes is None:
             mode_indexes = self.xp.arange(self.num_teuk_modes)
-        
+
         else:
             if isinstance(specific_modes, self.xp.ndarray):
                 mode_indexes = specific_modes
-            elif isinstance(specific_modes, list):  # the following is slow and kills efficiency
+            elif isinstance(
+                specific_modes, list
+            ):  # the following is slow and kills efficiency
                 mode_indexes = self.xp.zeros(len(specific_modes), dtype=self.xp.int32)
                 for i, (l, m, n) in enumerate(specific_modes):
                     try:
-                        mode_indexes[i] = np.where((self.l_arr == l) & (self.m_arr == abs(m)) & (self.n_arr == n))[0]
+                        mode_indexes[i] = np.where(
+                            (self.l_arr == l)
+                            & (self.m_arr == abs(m))
+                            & (self.n_arr == n)
+                        )[0]
                     except:
                         raise Exception(f"Could not find mode index ({l},{m},{n}).")
         # TODO: perform this in the kernel
         c_in = c[mode_indexes].flatten()
 
-        num_indiv_c = 2*len(mode_indexes)  # Re and Im
+        num_indiv_c = 2 * len(mode_indexes)  # Re and Im
         len_indiv_c = self.len_indiv_c
 
         z = self.xp.zeros((num_indiv_c * mw))
-        
-        self.interp2D(z, tw, nw, tu, nu, c_in, kw, ku, w, mw, u, mu, num_indiv_c, len_indiv_c)
 
-        #check = np.asarray([[spl.ev(e.get(), y.get()) for spl in spl1] for spl1 in self.spl2D.values()]).transpose(2, 1, 0)
+        self.interp2D(
+            z, tw, nw, tu, nu, c_in, kw, ku, w, mw, u, mu, num_indiv_c, len_indiv_c
+        )
 
-        z = z.reshape(num_indiv_c//2, 2, mw).transpose(2, 1, 0)
+        # check = np.asarray([[spl.ev(e.get(), y.get()) for spl in spl1] for spl1 in self.spl2D.values()]).transpose(2, 1, 0)
+
+        z = z.reshape(num_indiv_c // 2, 2, mw).transpose(2, 1, 0)
 
         z = z[:, 0] + 1j * z[:, 1]
         return z
-    
+
     def __reduce__(self):
-        return (self.__class__, (self.fp, self.l_arr, self.m_arr, self.n_arr, self.file_dir))
+        return (
+            self.__class__,
+            (self.fp, self.l_arr, self.m_arr, self.n_arr, self.file_dir),
+        )
 
 
 class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleBase):
@@ -324,24 +356,43 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleB
         else:
             self.filenames = filenames
 
-        self.spin_information_holder_unsorted = [None for _ in range(len(self.filenames))]
+        self.spin_information_holder_unsorted = [
+            None for _ in range(len(self.filenames))
+        ]
         for i, fp in enumerate(self.filenames):
-            self.spin_information_holder_unsorted[i] = AmpInterp2D(fp, self.l_arr, self.m_arr, self.n_arr, file_directory=self.file_dir, use_gpu=self.use_gpu)
+            self.spin_information_holder_unsorted[i] = AmpInterp2D(
+                fp,
+                self.l_arr,
+                self.m_arr,
+                self.n_arr,
+                file_directory=self.file_dir,
+                use_gpu=self.use_gpu,
+            )
 
-        spin_values_unsorted = [sh.a_val_store for sh in self.spin_information_holder_unsorted]
+        spin_values_unsorted = [
+            sh.a_val_store for sh in self.spin_information_holder_unsorted
+        ]
         rearrange_inds = np.argsort(spin_values_unsorted)
 
         self.spin_values = np.asarray(spin_values_unsorted)[rearrange_inds]
-        self.spin_information_holder = [self.spin_information_holder_unsorted[i] for i in rearrange_inds]
-        
+        self.spin_information_holder = [
+            self.spin_information_holder_unsorted[i] for i in rearrange_inds
+        ]
+
         pos_neg_n_swap_inds = []
         if self.use_gpu:
-            for l,m,n in zip(self.l_arr_no_mask.get(),self.m_arr_no_mask.get(),self.n_arr_no_mask.get()):
-                pos_neg_n_swap_inds.append(self.special_index_map[(l,m,-n)])
+            for l, m, n in zip(
+                self.l_arr_no_mask.get(),
+                self.m_arr_no_mask.get(),
+                self.n_arr_no_mask.get(),
+            ):
+                pos_neg_n_swap_inds.append(self.special_index_map[(l, m, -n)])
         else:
-            for l,m,n in zip(self.l_arr_no_mask,self.m_arr_no_mask,self.n_arr_no_mask):
-                pos_neg_n_swap_inds.append(self.special_index_map[(l,m,-n)])
-            
+            for l, m, n in zip(
+                self.l_arr_no_mask, self.m_arr_no_mask, self.n_arr_no_mask
+            ):
+                pos_neg_n_swap_inds.append(self.special_index_map[(l, m, -n)])
+
         self.pos_neg_n_swap_inds = self.xp.asarray(pos_neg_n_swap_inds)
 
     def get_amplitudes(self, a, p, e, xI, specific_modes=None):
@@ -350,18 +401,22 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleB
         # retrograde: spin pos, xI neg - >  spin neg, xI pos
         assert isinstance(a, float)
 
-        assert np.all(xI == 1.0) or np.all(xI == -1.0)  # either all prograde or all retrograde
-        xI_in = np.ones_like(p)*xI
-        
+        assert np.all(xI == 1.0) or np.all(
+            xI == -1.0
+        )  # either all prograde or all retrograde
+        xI_in = np.ones_like(p) * xI
+
         signed_spin = a * xI_in[0].item()
 
         if signed_spin in self.spin_values:
             ind_1 = np.where(self.spin_values == signed_spin)[0][0]
             a_in = np.full_like(p, signed_spin)
 
-            z = self.spin_information_holder[ind_1](a_in, p, e, xI_in, specific_modes=specific_modes)
-            if xI_in[0] == -1 and signed_spin != 0.:  # retrograde needs mode flip
-                z = self.xp.conj(z[:,self.pos_neg_n_swap_inds])
+            z = self.spin_information_holder[ind_1](
+                a_in, p, e, xI_in, specific_modes=specific_modes
+            )
+            if xI_in[0] == -1 and signed_spin != 0.0:  # retrograde needs mode flip
+                z = self.xp.conj(z[:, self.pos_neg_n_swap_inds])
 
         else:
             ind_above = np.where(self.spin_values > signed_spin)[0][0]
@@ -387,8 +442,8 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleB
                     specific_modes_below = self.pos_neg_n_swap_inds[specific_modes]
                 elif isinstance(specific_modes, list):
                     specific_modes_below = []
-                    for (l, m, n) in specific_modes:
-                        specific_modes_below.append((l,m,-n))
+                    for l, m, n in specific_modes:
+                        specific_modes_below.append((l, m, -n))
             else:
                 apply_conjugate_below = False
                 specific_modes_below = specific_modes
@@ -399,27 +454,35 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleB
             else:
                 apply_conjugate_above = False
                 specific_modes_above = specific_modes
-            
-            if apply_conjugate_above and apply_conjugate_below:  # combine the flags to save a conj call if both retrograde
+
+            if (
+                apply_conjugate_above and apply_conjugate_below
+            ):  # combine the flags to save a conj call if both retrograde
                 apply_conjugate_total = True
                 apply_conjugate_above = False
                 apply_conjugate_below = False
             else:
                 apply_conjugate_total = False
 
-            z_above = self.spin_information_holder[ind_above](a_above, p, e, xI_in, specific_modes=specific_modes_above)
-            z_below = self.spin_information_holder[ind_below](a_below, p, e, xI_in, specific_modes=specific_modes_below)
+            z_above = self.spin_information_holder[ind_above](
+                a_above, p, e, xI_in, specific_modes=specific_modes_above
+            )
+            z_below = self.spin_information_holder[ind_below](
+                a_below, p, e, xI_in, specific_modes=specific_modes_below
+            )
             if apply_conjugate_below:
                 z_below = z_below.conj()
             if apply_conjugate_above:
                 z_above = z_above.conj()
-            z = ((z_above - z_below) / (a_above_single - a_below_single)) * (signed_spin - a_below_single) + z_below
+            z = ((z_above - z_below) / (a_above_single - a_below_single)) * (
+                signed_spin - a_below_single
+            ) + z_below
             if apply_conjugate_total:
                 z = z.conj()
 
         if not isinstance(specific_modes, list):
             return z
-        
+
         # dict containing requested modes
         else:
             temp = {}
@@ -436,8 +499,9 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleB
 
 class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
     """
-    A legacy class for compatibility with the old Schwarzschild waveform structure. 
+    A legacy class for compatibility with the old Schwarzschild waveform structure.
     """
+
     def __init__(self, file_directory=None, filenames=None, **kwargs):
 
         ParallelModuleBase.__init__(self, **kwargs)
@@ -453,13 +517,13 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
             self.filename = "Teuk_amps_a0.0_lmax_10_nmax_30_new.h5"
         else:
             if isinstance(filenames, list):
-                assert (len(filenames) == 1)
+                assert len(filenames) == 1
             self.filename = filenames
-        
+
         # check if user has the necessary data
         # if not, the data will automatically download
         check_for_file_download(self.filename, self.file_dir)
-        
+
         data = {}
         with h5py.File(os.path.join(self.file_dir, self.filename), "r") as f:
             # load attributes in the right order for correct mode sorting later
@@ -469,22 +533,22 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
             grid = f["grid"][:]
             for l, m, n in zip(self.l_arr, self.m_arr, self.n_arr):
                 if m >= 0:
-                    key1 = format_string1.format(l,m)
+                    key1 = format_string1.format(l, m)
                     key2 = format_string2.format(n)
-                    tmp = f[key1+'/'+key2][:]
+                    tmp = f[key1 + "/" + key2][:]
                     tmp2 = tmp[:, 0] + 1j * tmp[:, 1]
-                    data[savestring.format(l,m,n)] = tmp2.T
+                    data[savestring.format(l, m, n)] = tmp2.T
 
             # create the coefficients file
 
             # adjust the grid
             p = grid.T[1].copy()
             e = grid.T[2].copy()
-            u = np.round(p_to_y(p, e, use_gpu=False),8)
+            u = np.round(p_to_y(p, e, use_gpu=False), 8)
             w = e.copy()
 
             grid_size = p.shape[0]
-            
+
             unique_u = np.unique(u)
             unique_w = np.unique(w)
             num_u = len(unique_u)
@@ -498,12 +562,13 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
 
             data = {name: val[:, ::-1] for name, val in data.items()}
 
-            spl2D = {name:
-                [
-                    RectBivariateSpline(unique_w, unique_u, val.real, kx=3, ky=3), 
-                    RectBivariateSpline(unique_w, unique_u, val.imag, kx=3, ky=3)
+            spl2D = {
+                name: [
+                    RectBivariateSpline(unique_w, unique_u, val.real, kx=3, ky=3),
+                    RectBivariateSpline(unique_w, unique_u, val.imag, kx=3, ky=3),
                 ]
-            for name, val in data.items()}
+                for name, val in data.items()
+            }
 
             mode_keys = list(data.keys())
             num_teuk_modes = len(mode_keys)
@@ -514,18 +579,18 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
             for i, mode in enumerate(mode_keys):
                 tck_last_entry[i, 0] = spl2D[mode][0].tck[2]
                 tck_last_entry[i, 1] = spl2D[mode][1].tck[2]
-            
+
             self.tck = [
                 self.xp.asarray(example_spl.tck[0]),
                 self.xp.asarray(example_spl.tck[1]),
-                self.xp.asarray(tck_last_entry.copy())
+                self.xp.asarray(tck_last_entry.copy()),
             ]
-        
+
         self.num_teuk_modes = num_teuk_modes
 
         self.degrees = example_spl.degrees
         self.len_indiv_c = tck_last_entry.shape[-1]
-    
+
     @property
     def interp2D(self) -> callable:
         """GPU or CPU interp2D"""
@@ -534,10 +599,10 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
 
     def get_amplitudes(self, a, p, e, xI, specific_modes=None):
 
-        assert (a == 0.)
+        assert a == 0.0
 
         assert np.all(xI == 1.0)
-        
+
         try:
             p_cpu, e_cpu = p.get().copy(), e.get().copy()
         except AttributeError:
@@ -553,7 +618,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
 
         tw, tu, c = self.tck[:3]
         kw, ku = self.degrees
-        
+
         # standard Numpy broadcasting
         if w.shape != u.shape:
             w, u = np.broadcast_arrays(w, u)
@@ -576,35 +641,43 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
 
         if specific_modes is None:
             mode_indexes = self.xp.arange(self.num_teuk_modes)
-        
+
         else:
             if isinstance(specific_modes, self.xp.ndarray):
                 mode_indexes = specific_modes
-            elif isinstance(specific_modes, list):  # the following is slow and kills efficiency
+            elif isinstance(
+                specific_modes, list
+            ):  # the following is slow and kills efficiency
                 mode_indexes = self.xp.zeros(len(specific_modes), dtype=self.xp.int32)
                 for i, (l, m, n) in enumerate(specific_modes):
                     try:
-                        mode_indexes[i] = np.where((self.l_arr == l) & (self.m_arr == abs(m)) & (self.n_arr == n))[0]
+                        mode_indexes[i] = np.where(
+                            (self.l_arr == l)
+                            & (self.m_arr == abs(m))
+                            & (self.n_arr == n)
+                        )[0]
                     except:
                         raise Exception(f"Could not find mode index ({l},{m},{n}).")
 
         # TODO: perform this in the kernel
         c_in = c[mode_indexes].flatten()
 
-        num_indiv_c = 2*len(mode_indexes)  # Re and Im
+        num_indiv_c = 2 * len(mode_indexes)  # Re and Im
         len_indiv_c = self.len_indiv_c
 
         z = self.xp.zeros((num_indiv_c * mw))
-        
-        self.interp2D(z, tw, nw, tu, nu, c_in, kw, ku, w, mw, u, mu, num_indiv_c, len_indiv_c)
 
-        z = z.reshape(num_indiv_c//2, 2, mw).transpose(2, 1, 0)
+        self.interp2D(
+            z, tw, nw, tu, nu, c_in, kw, ku, w, mw, u, mu, num_indiv_c, len_indiv_c
+        )
+
+        z = z.reshape(num_indiv_c // 2, 2, mw).transpose(2, 1, 0)
 
         z = z[:, 0] + 1j * z[:, 1]
 
         if not isinstance(specific_modes, list):
             return z
-        
+
         # dict containing requested modes
         else:
             temp = {}
@@ -621,6 +694,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
     def __reduce__(self):
         return (self.__class__, (self.file_dir, self.filename))
 
+
 def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr, file_directory=None):
     data = {}
     # get information about this specific model from the file
@@ -630,7 +704,7 @@ def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr, file_directory=None):
         grid = f["grid"][:]
         for l, m, n in zip(l_arr, m_arr, n_arr):
             if m >= 0:
-                key1 = kerr_format_string.format(l,m,n)
+                key1 = kerr_format_string.format(l, m, n)
                 tmp = f[key1][:]
                 tmp2 = tmp[:, 0] + 1j * tmp[:, 1]
                 data[key1] = tmp2
@@ -642,7 +716,7 @@ def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr, file_directory=None):
     p = grid.T[1].copy()
     e = grid.T[2].copy()
     xI = grid.T[3].copy()
-    u = np.round(grid.T[4].copy(),8)  # fix rounding errors in the files
+    u = np.round(grid.T[4].copy(), 8)  # fix rounding errors in the files
     sep = grid.T[5].copy()
     w = grid.T[6].copy()
 
@@ -652,14 +726,14 @@ def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr, file_directory=None):
     # retrograde needs sign flip to be applied to a
     a *= xI
     a_val_store = a[0]
-    
+
     out_fp = f"KerrEqEccAmpCoeffs_a{a_val_store:.3f}.h5"
-    outfile = h5py.File(os.path.join(file_directory, out_fp),"w")
-    outfile.attrs['signed_spin'] = a_val_store
-    outfile.attrs['is_coefficients'] = True
+    outfile = h5py.File(os.path.join(file_directory, out_fp), "w")
+    outfile.attrs["signed_spin"] = a_val_store
+    outfile.attrs["is_coefficients"] = True
 
     grid_size = p.shape[0]
-    
+
     unique_u = np.unique(u)
     unique_w = np.unique(w)
     num_u = len(unique_u)
@@ -673,17 +747,18 @@ def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr, file_directory=None):
 
     data = {name: val[:, ::-1] for name, val in data.items()}
 
-    spl2D = {name:
-        [
-            RectBivariateSpline(unique_w, unique_u, val.real, kx=3, ky=3), 
-            RectBivariateSpline(unique_w, unique_u, val.imag, kx=3, ky=3)
+    spl2D = {
+        name: [
+            RectBivariateSpline(unique_w, unique_u, val.real, kx=3, ky=3),
+            RectBivariateSpline(unique_w, unique_u, val.imag, kx=3, ky=3),
         ]
-    for name, val in data.items()}
+        for name, val in data.items()
+    }
 
     mode_keys = list(data.keys())
     num_teuk_modes = len(mode_keys)
 
-    outfile.attrs['num_teuk_modes'] = num_teuk_modes
+    outfile.attrs["num_teuk_modes"] = num_teuk_modes
 
     first_key = list(spl2D.keys())[0]
     example_spl = spl2D[first_key][0]
@@ -696,37 +771,38 @@ def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr, file_directory=None):
 
     len_indiv_c = tck_last_entry.shape[-1]
 
-    outfile.attrs['spline_degree_x'] = degrees[0]
-    outfile.attrs['spline_degree_y'] = degrees[1]
-    outfile.attrs['points_per_modegrid'] = len_indiv_c
+    outfile.attrs["spline_degree_x"] = degrees[0]
+    outfile.attrs["spline_degree_y"] = degrees[1]
+    outfile.attrs["points_per_modegrid"] = len_indiv_c
 
-    outfile.create_dataset('x1', data=example_spl.tck[0])
-    outfile.create_dataset('x2', data=example_spl.tck[1])
-    outfile.create_dataset('c', data=tck_last_entry.copy())
+    outfile.create_dataset("x1", data=example_spl.tck[0])
+    outfile.create_dataset("x2", data=example_spl.tck[1])
+    outfile.create_dataset("c", data=tck_last_entry.copy())
 
     outfile.close()
 
     return out_fp
 
+
 if __name__ == "__main__":
     # try and instantiate the amplitude class
-    spin_values = np.r_[np.linspace(0.,0.9,10),0.95,0.99]
-    spin_values = np.r_[-np.flip(spin_values)[:-1],spin_values]
+    spin_values = np.r_[np.linspace(0.0, 0.9, 10), 0.95, 0.99]
+    spin_values = np.r_[-np.flip(spin_values)[:-1], spin_values]
 
     base_path = "Teuk_amps_a{:.2f}_{}lmax_10_nmax_50_new_m+.h5"
     filepaths = []
     for spin in spin_values:
         part1 = abs(spin)
         if spin < 0:
-            part2 = 'r_'
+            part2 = "r_"
         elif spin > 0:
-            part2 = 'p_'
+            part2 = "p_"
         elif spin == 0:
-            part2 = ''
+            part2 = ""
         filepaths.append(base_path.format(part1, part2))
 
-    #running this should auto-produce coefficients files
+    # running this should auto-produce coefficients files
     AmpInterpKerrEqEcc(filenames=filepaths, file_directory="../../processed_amplitudes")
 
     amp = AmpInterpKerrEqEcc()
-    print(amp(0., np.array([10.]), np.array([0.3]), np.array([1.])))
+    print(amp(0.0, np.array([10.0]), np.array([0.3]), np.array([1.0])))

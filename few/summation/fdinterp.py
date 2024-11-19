@@ -27,7 +27,7 @@ except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
 
 # Cython imports
-from pyinterp_cpu import (
+from ..cutils.pyinterp_cpu import (
     get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_cpu,
 )
 
@@ -44,7 +44,9 @@ from ..summation.interpolatedmodesum import CubicSplineInterpolant
 
 # Attempt Cython imports of GPU functions
 try:
-    from pyinterp import get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_gpu
+    from ..cutils.pyinterp import (
+        get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_gpu,
+    )
 
 except (ImportError, ModuleNotFoundError) as e:
     pass
@@ -114,7 +116,8 @@ def searchsorted2d_vec(a, b, batch_size=-1, xp=None, **kwargs):
 
         m, n = a_temp.shape
         max_num = (
-            self.xp.maximum(a_temp.max() - a_temp.min(), b_temp.max() - b_temp.min()) + 1
+            self.xp.maximum(a_temp.max() - a_temp.min(), b_temp.max() - b_temp.min())
+            + 1
         )
         r = max_num * self.xp.arange(a_temp.shape[0])[:, None]
         p = self.xp.searchsorted(
@@ -146,7 +149,11 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
     @property
     def get_waveform_fd(self) -> callable:
         """GPU or CPU waveform generation."""
-        return get_waveform_generic_fd_wrap_cpu if not self.use_gpu else get_waveform_generic_fd_wrap_gpu
+        return (
+            get_waveform_generic_fd_wrap_cpu
+            if not self.use_gpu
+            else get_waveform_generic_fd_wrap_gpu
+        )
 
     def attributes_FDInterpolatedModeSum(self):
         """
@@ -170,7 +177,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         teuk_modes,
         ylms,
         phase_interp_t,
-        phase_interp_coeffs,        
+        phase_interp_coeffs,
         m_arr,
         n_arr,
         M,
@@ -251,12 +258,17 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         # get fundamental frequencies across trajectory
         Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(
-            a, p, e, xI,
+            a,
+            p,
+            e,
+            xI,
         )
 
         # convert from dimensionless frequencies
         f_phi, f_r = (
-            abs(self.xp.asarray(Omega_phi / (2 * np.pi * M * MTSUN_SI))),   # positive frequency to be consistent with amplitude generator for retrograde inspirals  # TODO get to the bottom of this!
+            abs(
+                self.xp.asarray(Omega_phi / (2 * np.pi * M * MTSUN_SI))
+            ),  # positive frequency to be consistent with amplitude generator for retrograde inspirals  # TODO get to the bottom of this!
             self.xp.asarray(Omega_r / (2 * np.pi * M * MTSUN_SI)),
         )
 
@@ -406,9 +418,9 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
                     axis=-1,
                 )
 
-                tmp_freqs_base_sorted_segs[
-                    check_turnover, fix_turnover_seg_ind
-                ] = tmp_segs_sorted_turnover[:, np.array([0, 2])]
+                tmp_freqs_base_sorted_segs[check_turnover, fix_turnover_seg_ind] = (
+                    tmp_segs_sorted_turnover[:, np.array([0, 2])]
+                )
 
         except ValueError:
             pass
@@ -440,9 +452,9 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         df = self.frequency[1] - self.frequency[0]
 
         # figures out where in self.frequency each segment frequency falls
-        inds_check = self.xp.abs((tmp_freqs_base_sorted_segs - first_frequency) / df).astype(
-            int
-        )
+        inds_check = self.xp.abs(
+            (tmp_freqs_base_sorted_segs - first_frequency) / df
+        ).astype(int)
 
         # start frequency index of each segment
         start_inds = (inds_check[:, :, 0].copy() + 1).astype(int)
@@ -490,8 +502,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         phase_interp_coeffs_in = self.xp.transpose(
             self.xp.asarray(phase_interp_coeffs), [2, 1, 0]
-            ).flatten()
-        
+        ).flatten()
+
         # run GPU kernel
         self.get_waveform_fd(
             self.waveform,

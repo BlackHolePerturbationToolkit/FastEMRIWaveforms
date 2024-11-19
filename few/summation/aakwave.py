@@ -30,11 +30,11 @@ except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
 
 # Cython/C++ imports
-from pycpuAAK import pyWaveform as pyWaveform_cpu
+from ..cutils.pycpuAAK import pyWaveform as pyWaveform_cpu
 
 # Attempt Cython imports of GPU functions
 try:
-    from pygpuAAK import pyWaveform as pyWaveform_gpu
+    from ..cutils.pygpuAAK import pyWaveform as pyWaveform_gpu
 
 except (ImportError, ModuleNotFoundError) as e:
     pass
@@ -214,7 +214,7 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         # convert to gpu if desired
         interp_coeffs_in = self.xp.transpose(
             self.xp.asarray(interp_coeffs), [2, 0, 1]
-            ).flatten()
+        ).flatten()
 
         # generator the waveform
         self.waveform_generator(
@@ -237,6 +237,7 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         )
 
         return
+
 
 class KerrAAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
     """Calculate an AAK waveform from an input trajectory.
@@ -382,7 +383,9 @@ class KerrAAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         xI = Y_to_xI(a, p.copy(), e.copy(), Y.copy())
 
         # these are dimensionless and in radians
-        OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p.copy(), e.copy(), xI.copy())
+        OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(
+            a, p.copy(), e.copy(), xI.copy()
+        )
 
         # Set theta trajectories equal to eachother.
         OmegaTheta = OmegaPhi
@@ -450,4 +453,3 @@ class KerrAAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         )
 
         return
-

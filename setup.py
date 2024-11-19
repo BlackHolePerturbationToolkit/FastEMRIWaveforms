@@ -258,21 +258,25 @@ if run_cuda_install:
         )
 
     matmul_ext = Extension(
-        "pymatmul", sources=["src/matmul.cu", "src/pymatmul.pyx"], **gpu_extension
+        "few.cutils.pymatmul",
+        sources=["src/matmul.cu", "src/pymatmul.pyx"],
+        **gpu_extension,
     )
 
     interp_ext = Extension(
-        "pyinterp", sources=["src/interpolate.cu", "src/pyinterp.pyx"], **gpu_extension
+        "few.cutils.pyinterp",
+        sources=["src/interpolate.cu", "src/pyinterp.pyx"],
+        **gpu_extension,
     )
 
     gpuAAK_ext = Extension(
-        "pygpuAAK",
+        "few.cutils.pygpuAAK",
         sources=["src/gpuAAK.cu", "src/gpuAAKWrap.pyx"],
         **gpu_extension,
     )
 
     gpu_amp_interp_2d_ext = Extension(
-        "pyAmpInterp2D",
+        "few.cutils.pyAmpInterp2D",
         sources=["src/AmpInterp2D.cu", "src/pyampinterp2D.pyx"],
         **gpu_extension,
     )
@@ -314,23 +318,25 @@ if add_gsl:
     cpu_extension["include_dirs"] += gsl_include
 
 matmul_cpu_ext = Extension(
-    "pymatmul_cpu", sources=["src/matmul.cpp", "src/pymatmul_cpu.pyx"], **cpu_extension
+    "few.cutils.pymatmul_cpu",
+    sources=["src/matmul.cpp", "src/pymatmul_cpu.pyx"],
+    **cpu_extension,
 )
 
 interp_cpu_ext = Extension(
-    "pyinterp_cpu",
+    "few.cutils.pyinterp_cpu",
     sources=["src/interpolate.cpp", "src/pyinterp_cpu.pyx"],
     **cpu_extension,
 )
 
 AAK_cpu_ext = Extension(
-    "pycpuAAK",
+    "few.cutils.pycpuAAK",
     sources=["src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"],
     **cpu_extension,
 )
 
 amp_interp_2d_ext = Extension(
-    "pyAmpInterp2D_cpu",
+    "few.cutils.pyAmpInterp2D_cpu",
     sources=["src/AmpInterp2D.cpp", "src/pyampinterp2D_cpu.pyx"],
     **cpu_extension,
 )
@@ -361,7 +367,16 @@ setup(
     version="1.5.5",
     url="https://github.com/mikekatz04/FastEMRIWaveforms",
     ext_modules=extensions,
-    packages=["few", "few.utils", "few.trajectory", "few.trajectory.ode", "few.amplitude", "few.summation", "few.waveform"],
+    packages=[
+        "few",
+        "few.utils",
+        "few.cutils",
+        "few.trajectory",
+        "few.trajectory.ode",
+        "few.amplitude",
+        "few.summation",
+        "few.waveform",
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License (GPL)",
@@ -377,5 +392,3 @@ setup(
     zip_safe=False,
     python_requires=">=3.6",
 )
-
-
