@@ -27,14 +27,14 @@ from pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
 from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 
 # Python imports
-from few.utils.baseclasses import (
+from ..utils.baseclasses import (
     SchwarzschildEccentric,
     ParallelModuleBase,
 )
 from .base import AmplitudeBase
-from few.utils.utility import check_for_file_download
-from few.utils.citations import *
-from few.utils.utility import p_to_y
+from ..utils.utility import check_for_file_download
+from ..utils.citations import *
+from ..utils.utility import p_to_y
 from scipy.interpolate import RectBivariateSpline
 
 # check for cupy and GPU version of pymatmul
@@ -195,10 +195,6 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
 
     def _initialize_weights(self):
         # initalize weights/bias/dimensions for the neural network
-        if self.use_gpu:
-            xp = cp
-        else:
-            xp = np
 
         self.weights = []
         self.bias = []
@@ -223,7 +219,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
                 temp = {}
                 for let in ["w", "b"]:
                     mat = fp.get(let + str(i))[:]
-                    temp[let] = xp.asarray(mat)
+                    temp[let] = self.xp.asarray(mat)
 
                 self.weights.append(temp["w"])
                 self.bias.append(temp["b"])
@@ -231,7 +227,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
                 self.dim2.append(temp["w"].shape[1])
 
             # get the post network transform matrix
-            self.transform_matrix = xp.asarray(fp["reduced_basis"])
+            self.transform_matrix = self.xp.asarray(fp["reduced_basis"])
 
         # longest length in any dimension for buffers
         self.max_num = np.max([self.dim1, self.dim2])
@@ -240,8 +236,8 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         # each layer will alternate between these arrays as the input and output
         # of the layer. The input is multiplied by the layer weight.
         self.temp_mats = [
-            xp.zeros((self.max_num * self.max_init_len,), dtype=xp.float64),
-            xp.zeros((self.max_num * self.max_init_len,), dtype=xp.float64),
+            self.xp.zeros((self.max_num * self.max_init_len,), dtype=self.xp.float64),
+            self.xp.zeros((self.max_num * self.max_init_len,), dtype=self.xp.float64),
         ]
 
         # array for letting C++ know if the layer is activated
@@ -273,10 +269,6 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
 
 
         """
-        if self.use_gpu:
-            xp = cp
-        else:
-            xp = np
 
         input_len = len(p)
 
@@ -291,25 +283,25 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
             self.max_init_len = input_len
 
             self.temp_mats = [
-                xp.zeros((self.max_num * self.max_init_len,), dtype=xp.float64),
-                xp.zeros((self.max_num * self.max_init_len,), dtype=xp.float64),
+                self.xp.zeros((self.max_num * self.max_init_len,), dtype=self.xp.float64),
+                self.xp.zeros((self.max_num * self.max_init_len,), dtype=self.xp.float64),
             ]
 
         # the input is (y, e)
         y = p_to_y(p, e, use_gpu=self.use_gpu)
 
         # column-major single dimensional array input
-        input = xp.concatenate([y, e])
+        input = self.xp.concatenate([y, e])
 
         # fill first temporary matrix
         self.temp_mats[0][: 2 * input_len] = input
 
         # setup arrays
         # teukolsky mode (final output)
-        teuk_modes = xp.zeros((input_len * self.num_teuk_modes,), dtype=xp.complex128)
+        teuk_modes = self.xp.zeros((input_len * self.num_teuk_modes,), dtype=self.xp.complex128)
 
         # neural network output
-        nn_out_mat = xp.zeros((input_len * self.break_index,), dtype=xp.complex128)
+        nn_out_mat = self.xp.zeros((input_len * self.break_index,), dtype=self.xp.complex128)
 
         # run the neural network
         for i, (weight, bias, run_relu) in enumerate(
@@ -354,6 +346,6 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
                 temp[lmn] = teuk_modes[:, self.special_index_map[lmn]]
                 l, m, n = lmn
                 if m < 0:
-                    temp[lmn] = xp.conj(temp[lmn])
+                    temp[lmn] = self.xp.conj(temp[lmn])
 
             return temp

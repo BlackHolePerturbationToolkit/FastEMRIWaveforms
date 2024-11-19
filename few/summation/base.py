@@ -3,17 +3,20 @@ from ..utils.citations import *
 from ..utils.constants import *
 
 # try to import cupy
+import numpy as np
+
 try:
     import cupy as cp
-
     gpu_available = True
 
 except:
-    import numpy as np
-
     gpu_available = False
 
-class SummationBase(ABC):
+
+from ..utils.baseclasses import ParallelModuleBase
+
+
+class SummationBase(ParallelModuleBase, ABC):
     """Base class used for summation modules.
 
     This class provides a common flexible interface to various summation
@@ -79,7 +82,7 @@ class SummationBase(ABC):
         more dimensions in a model.
 
         args:
-            t (1D double xp.ndarray): Array of t values.
+            t (1D double self.xp.ndarray): Array of t values.
             *args (list): Added for flexibility with summation modules. `args`
                 tranfers directly into sum function.
             dt (double, optional): Time spacing between observations in seconds (inverse of sampling
@@ -88,11 +91,6 @@ class SummationBase(ABC):
             **kwargs (dict, placeholder): Added for future flexibility.
 
         """
-
-        if self.use_gpu:
-            xp = cp
-        else:
-            xp = np
 
         n_pts = int(T * YRSID_SI / dt)
         T = n_pts * dt
@@ -124,22 +122,22 @@ class SummationBase(ABC):
         if self.output_type == "fd":
             if "f_arr" in kwargs:
                 frequency = kwargs["f_arr"]
-                dt = float(xp.max(frequency) * 2)
+                dt = float(self.xp.max(frequency) * 2)
                 Nf = len(frequency)
                 # total
-                self.waveform = xp.zeros(Nf, dtype=xp.complex128)
+                self.waveform = self.xp.zeros(Nf, dtype=self.xp.complex128)
                 # print("user defined frequencies Nf=", Nf)
             else:
-                self.waveform = xp.zeros(
-                    (self.num_pts + self.num_pts_pad,), dtype=xp.complex128
+                self.waveform = self.xp.zeros(
+                    (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
                 )
             # if self.num_pts + self.num_pts_pad % 2:
             #     self.num_pts_pad = self.num_pts_pad + 1
             #     print("n points",self.num_pts + self.num_pts_pad)
         else:
             # setup waveform holder for time domain
-            self.waveform = xp.zeros(
-                (self.num_pts + self.num_pts_pad,), dtype=xp.complex128
+            self.waveform = self.xp.zeros(
+                (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
             )
 
         # get the waveform summed in place

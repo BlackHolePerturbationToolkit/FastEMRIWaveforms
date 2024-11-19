@@ -1,5 +1,5 @@
 from abc import ABC
-from few.utils.citations import *
+from ..utils.citations import *
 
 class AmplitudeBase(ABC):
     """Base class used for amplitude modules.

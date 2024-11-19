@@ -161,17 +161,12 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
                 is a list of specific modes. Default is True.
 
         Returns:
-            1D complex128 xp.ndarray: The output waveform.
+            1D complex128 self.xp.ndarray: The output waveform.
 
         Raises:
             ValueError: user selections are not allowed.
 
         """
-
-        if self.use_gpu:
-            xp = cp
-        else:
-            xp = np
 
         # makes sure viewing angles are allowable
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
@@ -202,17 +197,17 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
             amp_norm = self.amplitude_generator.amp_norm_spline.ev(
                 p_to_y(p, e), e
             )  # TODO: handle this grid parameter change, fix to Schwarzschild for now
-            amp_norm = xp.asarray(amp_norm)
+            amp_norm = self.xp.asarray(amp_norm)
 
         self.end_time = t[-1]
 
         # convert for gpu
-        t = xp.asarray(t)
-        p = xp.asarray(p)
-        e = xp.asarray(e)
-        xI = xp.asarray(xI)
-        Phi_phi = xp.asarray(Phi_phi)
-        Phi_r = xp.asarray(Phi_r)
+        t = self.xp.asarray(t)
+        p = self.xp.asarray(p)
+        e = self.xp.asarray(e)
+        xI = self.xp.asarray(xI)
+        Phi_phi = self.xp.asarray(Phi_phi)
+        Phi_r = self.xp.asarray(Phi_r)
 
         # get ylms only for unique (l,m) pairs
         # then expand to all (lmn with self.inverse_lm)
@@ -229,7 +224,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
         # split into batches
 
         if batch_size == -1 or self.allow_batching is False:
-            inds_split_all = [xp.arange(len(t))]
+            inds_split_all = [self.xp.arange(len(t))]
         else:
             split_inds = []
             i = 0
@@ -239,7 +234,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
                     break
                 split_inds.append(i)
 
-            inds_split_all = xp.split(xp.arange(len(t)), split_inds)
+            inds_split_all = self.xp.split(self.xp.arange(len(t)), split_inds)
 
         # select tqdm if user wants to see progress
         iterator = enumerate(inds_split_all)
@@ -260,19 +255,19 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
 
             # if we aren't requesting a subset of modes, compute them all now
             if not isinstance(mode_selection, list) and not isinstance(
-                mode_selection, xp.ndarray
+                mode_selection, self.xp.ndarray
             ):
                 # amplitudes
-                teuk_modes = xp.asarray(
+                teuk_modes = self.xp.asarray(
                     self.amplitude_generator(a, p_temp, e_temp, xI0)
                 )
 
                 # normalize by flux produced in trajectory
                 if self.normalize_amps:
-                    amp_for_norm = xp.sum(
-                        xp.abs(
-                            xp.concatenate(
-                                [teuk_modes, xp.conj(teuk_modes[:, self.m0mask])],
+                    amp_for_norm = self.xp.sum(
+                        self.xp.abs(
+                            self.xp.concatenate(
+                                [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
                                 axis=1,
                             )
                         )
@@ -293,12 +288,12 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
                     self.ms = self.m_arr[: teuk_modes.shape[1]]
                     self.ns = self.n_arr[: teuk_modes.shape[1]]
 
-                    keep_modes = xp.arange(teuk_modes.shape[1])
+                    keep_modes = self.xp.arange(teuk_modes.shape[1])
                     temp2 = keep_modes * (keep_modes < self.num_m0) + (
                         keep_modes + self.num_m_1_up
                     ) * (keep_modes >= self.num_m0)
 
-                    ylmkeep = xp.concatenate([keep_modes, temp2])
+                    ylmkeep = self.xp.concatenate([keep_modes, temp2])
                     ylms_in = ylms[ylmkeep]
                     teuk_modes_in = teuk_modes
 
@@ -307,7 +302,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
 
             # get a specific subset of modes
             elif isinstance(mode_selection, list) or isinstance(
-                mode_selection, xp.ndarray
+                mode_selection, self.xp.ndarray
             ):
                 if self.normalize_amps:
                     raise NotImplementedError(
@@ -324,22 +319,22 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
 
                 # unpack the dictionary
                 if isinstance(teuk_modes, dict):
-                    teuk_modes_in = xp.asarray(
+                    teuk_modes_in = self.xp.asarray(
                         [teuk_modes[lmn] for lmn in mode_selection]
                     ).T
                 else:
                     teuk_modes_in = teuk_modes
 
                 # for removing opposite m modes
-                fix_include_ms = xp.full(2 * len(mode_selection), False)
+                fix_include_ms = self.xp.full(2 * len(mode_selection), False)
                 if isinstance(mode_selection, list):
-                    keep_modes = xp.zeros(len(mode_selection), dtype=xp.int32)
+                    keep_modes = self.xp.zeros(len(mode_selection), dtype=self.xp.int32)
                     for jj, lmn in enumerate(mode_selection):
                         l, m, n = tuple(lmn)
 
                         # keep modes only works with m>=0
                         lmn_in = (l, abs(m), n)
-                        keep_modes[jj] = xp.int32(self.lmn_indices[lmn_in])
+                        keep_modes[jj] = self.xp.int32(self.lmn_indices[lmn_in])
 
                         if not include_minus_m:
                             if m > 0:
@@ -368,7 +363,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
                     keep_modes + self.num_m_1_up
                 ) * (keep_modes >= self.num_m0)
 
-                ylmkeep = xp.concatenate([keep_modes, temp2])
+                ylmkeep = self.xp.concatenate([keep_modes, temp2])
                 ylms_in = ylms[ylmkeep]
 
                 # remove modes if include_minus_m is False
@@ -381,7 +376,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
                     0.0,
                     p_temp,
                     e_temp,
-                    xp.zeros_like(e_temp),
+                    self.xp.zeros_like(e_temp),
                 )
                 modeinds = [self.l_arr, self.m_arr, self.n_arr]
                 (
@@ -411,15 +406,15 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
                 phase_information_in = phase_spline_coeff[:,[3,5],:] / (mu / M)
 
                 if self.inspiral_generator.inspiral_generator.bool_integrate_backwards:
-                    phase_information_in[:,:,0] += xp.array([Phi_phi[-1] + Phi_phi[0], Phi_r[-1] + Phi_r[0]])
+                    phase_information_in[:,:,0] += self.xp.array([Phi_phi[-1] + Phi_phi[0], Phi_r[-1] + Phi_r[0]])
 
                 phase_t_in = self.inspiral_generator.inspiral_generator.integrator_t_cache
             else:
                 phase_information_in = [Phi_phi, Phi_theta, Phi_r]
                 if self.inspiral_generator.inspiral_generator.bool_integrate_backwards:
-                    phase_information_in[0] += xp.array([Phi_phi[-1] + Phi_phi[0]])
-                    phase_information_in[1] += xp.array([Phi_theta[-1] + Phi_theta[0]])
-                    phase_information_in[2] += xp.array([Phi_r[-1] + Phi_r[0]])
+                    phase_information_in[0] += self.xp.array([Phi_phi[-1] + Phi_phi[0]])
+                    phase_information_in[1] += self.xp.array([Phi_theta[-1] + Phi_theta[0]])
+                    phase_information_in[2] += self.xp.array([Phi_r[-1] + Phi_r[0]])
 
                 phase_t_in = None
                 
@@ -446,7 +441,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
 
             # if batching, need to add the waveform
             if i > 0:
-                waveform = xp.concatenate([waveform, waveform_temp])
+                waveform = self.xp.concatenate([waveform, waveform_temp])
 
             # return entire waveform
             else:
@@ -652,7 +647,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
                 Default is 1.0.
 
         Returns:
-            1D complex128 xp.ndarray: The output waveform.
+            1D complex128 self.xp.ndarray: The output waveform.
 
         Raises:
             ValueError: user selections are not allowed.
@@ -708,7 +703,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         traj_spline_coeff_in[:,3:,:] /= (mu / M)
 
         if self.inspiral_generator.inspiral_generator.bool_integrate_backwards:
-            traj_spline_coeff_in[:,3:,0] += xp.array([Phi_phi[-1] + Phi_phi[0], Phi_theta[-1] + Phi_theta[0], Phi_r[-1] + Phi_r[0]])
+            traj_spline_coeff_in[:,3:,0] += self.xp.array([Phi_phi[-1] + Phi_phi[0], Phi_theta[-1] + Phi_theta[0], Phi_r[-1] + Phi_r[0]])
 
         waveform = self.create_waveform(
             t,

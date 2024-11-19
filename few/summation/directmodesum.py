@@ -25,12 +25,12 @@ except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
 
 # Necessary base classes
-from few.utils.baseclasses import (
+from ..utils.baseclasses import (
     SchwarzschildEccentric,
     ParallelModuleBase,
 )
 from .base import SummationBase
-from few.utils.citations import *
+from ..utils.citations import *
 
 
 class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
@@ -69,7 +69,7 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
             t (1D double np.ndarray): Array of t values.
             teuk_modes (2D double np.array): Array of complex amplitudes.
                 Shape: (len(t), num_teuk_modes).
-            ylms (1D complex128 xp.ndarray): Array of ylm values for each mode,
+            ylms (1D complex128 self.xp.ndarray): Array of ylm values for each mode,
                 including m<0. Shape is (num of m==0,) + (num of m>0,)
                 + (num of m<0). Number of m<0 and m>0 is the same, but they are
                 ordered as (m==0 first then) m>0 then m<0.
@@ -84,7 +84,6 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
 
         """
 
-        xp = cp if self.use_gpu else np
         Phi_phi, Phi_theta, Phi_r = phases_in
 
         if phase_interp_t is None:
@@ -92,12 +91,12 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
 
         # numpy -> cupy if requested
         # it will never go the other way
-        teuk_modes = xp.asarray(teuk_modes)
-        ylms = xp.asarray(ylms)
-        Phi_phi = xp.asarray(Phi_phi)
-        Phi_r = xp.asarray(Phi_r)
-        m_arr = xp.asarray(m_arr)
-        n_arr = xp.asarray(n_arr)
+        teuk_modes = self.xp.asarray(teuk_modes)
+        ylms = self.xp.asarray(ylms)
+        Phi_phi = self.xp.asarray(Phi_phi)
+        Phi_r = self.xp.asarray(Phi_r)
+        m_arr = self.xp.asarray(m_arr)
+        n_arr = self.xp.asarray(n_arr)
 
         if integrate_backwards:
             # For consistency with forward integration, we slightly shift the knots so that they line up at t=0
@@ -107,31 +106,31 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
             raise NotImplementedError  # TODO: spline the above quantities to shift them onto phase_interp_t
 
         # waveform with M >= 0
-        w1 = xp.sum(
-            ylms[xp.newaxis, : teuk_modes.shape[1]]
+        w1 = self.xp.sum(
+            ylms[self.xp.newaxis, : teuk_modes.shape[1]]
             * teuk_modes
-            * xp.exp(
+            * self.xp.exp(
                 -1j
                 * (
-                    m_arr[xp.newaxis, :] * Phi_phi[:, xp.newaxis]
-                    + n_arr[xp.newaxis, :] * Phi_r[:, xp.newaxis]
+                    m_arr[self.xp.newaxis, :] * Phi_phi[:, self.xp.newaxis]
+                    + n_arr[self.xp.newaxis, :] * Phi_r[:, self.xp.newaxis]
                 )
             ),
             axis=1,
         )
 
-        inds = xp.where(m_arr > 0)[0]
+        inds = self.xp.where(m_arr > 0)[0]
 
         # waveform sum where m < 0
-        w2 = xp.sum(
-            (m_arr[xp.newaxis, inds] > 0)
-            * ylms[xp.newaxis, teuk_modes.shape[1] :][:, inds]
-            * xp.conj(teuk_modes[:, inds])
-            * xp.exp(
+        w2 = self.xp.sum(
+            (m_arr[self.xp.newaxis, inds] > 0)
+            * ylms[self.xp.newaxis, teuk_modes.shape[1] :][:, inds]
+            * self.xp.conj(teuk_modes[:, inds])
+            * self.xp.exp(
                 -1j
                 * (
-                    -m_arr[xp.newaxis, inds] * Phi_phi[:, xp.newaxis]
-                    - n_arr[xp.newaxis, inds] * Phi_r[:, xp.newaxis]
+                    -m_arr[self.xp.newaxis, inds] * Phi_phi[:, self.xp.newaxis]
+                    - n_arr[self.xp.newaxis, inds] * Phi_r[:, self.xp.newaxis]
                 )
             ),
             axis=1,

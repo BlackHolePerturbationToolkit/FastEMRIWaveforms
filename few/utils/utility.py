@@ -44,7 +44,7 @@ except (ImportError, ModuleNotFoundError) as e:
     setDevice = None
     gpu = False
 
-from few.utils.constants import *
+from .constants import *
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))

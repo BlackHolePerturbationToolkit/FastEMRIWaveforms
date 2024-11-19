@@ -49,9 +49,9 @@ from ..utils.citations import *
 from ..utils.utility import kerr_p_to_u
 
 # Import module-specific baseclasses for backwards compatibility
-from ..amplitude.base import AmplitudeBase
-from ..trajectory.base import TrajectoryBase
-from ..summation.base import SummationBase
+# from ..amplitude.base import AmplitudeBase
+# from ..trajectory.base import TrajectoryBase
+# from ..summation.base import SummationBase
 
 class ParallelModuleBase(ABC):
     """Base class for modules that can use GPUs.
@@ -77,6 +77,12 @@ class ParallelModuleBase(ABC):
 
         # checks if gpu capability is available if requested
         self.sanity_check_gpu(use_gpu)
+
+    @property
+    def xp(self) -> object:
+        """Cupy or Numpy"""
+        xp = np if not self.use_gpu else cp
+        return xp
 
     @classmethod
     @property
@@ -164,11 +170,6 @@ class SphericalHarmonic(ParallelModuleBase, ABC):
     def __init__(self, *args:Optional[list], use_gpu: bool=False, **kwargs:Optional[dict]):
         ParallelModuleBase.__init__(self, *args, use_gpu=use_gpu, **kwargs)
 
-        if self.use_gpu:
-            xp = cp
-        else:
-            xp = np
-
         # fill all lmn mode values
         md = []
         for l in  range(2, self.lmax+1):
@@ -180,7 +181,7 @@ class SphericalHarmonic(ParallelModuleBase, ABC):
         self.num_modes = self.num_teuk_modes = len(md)
 
         # mask for m == 0
-        m0mask = xp.array(
+        m0mask = self.xp.array(
             [
                 m == 0
                 for l in range(2, 10 + 1)
@@ -190,15 +191,15 @@ class SphericalHarmonic(ParallelModuleBase, ABC):
         )
 
         # sorts so that order is m=0, m<0, m>0
-        self.m0sort = m0sort = xp.concatenate(
+        self.m0sort = m0sort = self.xp.concatenate(
             [
-                xp.arange(self.num_teuk_modes)[m0mask],
-                xp.arange(self.num_teuk_modes)[~m0mask],
+                self.xp.arange(self.num_teuk_modes)[m0mask],
+                self.xp.arange(self.num_teuk_modes)[~m0mask],
             ]
         )
 
         # sorts the mode indexes
-        md = xp.asarray(md).T[:, m0sort].astype(xp.int32)
+        md = self.xp.asarray(md).T[:, m0sort].astype(self.xp.int32)
 
         # store l m and n values
         self.l_arr_no_mask, self.m_arr_no_mask, self.n_arr_no_mask = md[0], md[1], md[2]
@@ -217,15 +218,15 @@ class SphericalHarmonic(ParallelModuleBase, ABC):
         self.num_m_zero_up = len(self.m_arr_no_mask)
 
         # number of m == 0
-        self.num_m0 = len(xp.arange(self.num_teuk_modes)[m0mask])
+        self.num_m0 = len(self.xp.arange(self.num_teuk_modes)[m0mask])
 
         # number of m > 0
         self.num_m_1_up = self.num_m_zero_up - self.num_m0
 
         # create final arrays to include -m modes
-        self.l_arr = xp.concatenate([self.l_arr_no_mask, self.l_arr_no_mask[self.m0mask]])
-        self.m_arr = xp.concatenate([self.m_arr_no_mask, -self.m_arr_no_mask[self.m0mask]])
-        self.n_arr = xp.concatenate([self.n_arr_no_mask, self.n_arr_no_mask[self.m0mask]])
+        self.l_arr = self.xp.concatenate([self.l_arr_no_mask, self.l_arr_no_mask[self.m0mask]])
+        self.m_arr = self.xp.concatenate([self.m_arr_no_mask, -self.m_arr_no_mask[self.m0mask]])
+        self.n_arr = self.xp.concatenate([self.n_arr_no_mask, self.n_arr_no_mask[self.m0mask]])
 
         # mask for m >= 0
         self.m_zero_up_mask = self.m_arr >= 0
@@ -246,7 +247,7 @@ class SphericalHarmonic(ParallelModuleBase, ABC):
             )
 
         # unique values of l and m
-        self.unique_l, self.unique_m = xp.asarray(temp).T
+        self.unique_l, self.unique_m = self.xp.asarray(temp).T
 
         # number of unique values
         self.num_unique_lm = len(self.unique_l)

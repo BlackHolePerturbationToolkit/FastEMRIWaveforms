@@ -28,16 +28,16 @@ from tqdm import tqdm
 # Cython/C++ imports
 
 # Python imports
-from few.utils.baseclasses import SchwarzschildEccentric, ParallelModuleBase, KerrEccentricEquatorial
+from ..utils.baseclasses import SchwarzschildEccentric, ParallelModuleBase, KerrEccentricEquatorial
 from .base import AmplitudeBase
-from few.utils.utility import check_for_file_download
-from few.utils.citations import *
-from few.utils.utility import p_to_y, kerr_p_to_u
+from ..utils.utility import check_for_file_download
+from ..utils.citations import *
+from ..utils.utility import p_to_y, kerr_p_to_u
 
 # check for cupy and GPU version of pymatmul
 try:
     # Cython/C++ imports
-    from pyAmpInterp2D import interp2D
+    from pyAmpInterp2D import interp2D as interp2D_gpu
     # Python imports
     import cupy as cp
 
@@ -164,13 +164,6 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         self.m_arr = m_arr
         self.n_arr = n_arr
 
-        if self.use_gpu:
-            self.interp2D = interp2D
-            xp = cp
-        else:
-            self.interp2D = interp2D_cpu
-            xp = np
-
         if file_directory is None:
             self.file_dir = dir_path + "/../../few/files/"
         else:
@@ -197,13 +190,19 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
 
         self.num_teuk_modes = coefficients.attrs['num_teuk_modes']
         self.tck = [
-            xp.asarray(coefficients['x1']), 
-            xp.asarray(coefficients['x2']), 
-            xp.asarray(coefficients['c'])
+            self.xp.asarray(coefficients['x1']), 
+            self.xp.asarray(coefficients['x2']), 
+            self.xp.asarray(coefficients['c'])
         ]
         self.degrees = coefficients.attrs['spline_degree_x'], coefficients.attrs['spline_degree_y']
         self.len_indiv_c = coefficients.attrs['points_per_modegrid']
 
+    @property
+    def interp2D(self) -> callable:
+        """GPU or CPU interp2D"""
+        interp2D = interp2D_cpu if not self.use_gpu else interp2D_gpu
+        return interp2D
+        
     @property
     def citation(self):
         """Return citations for this module"""
@@ -231,11 +230,6 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
             the output of meshgrid.
         
         """
-        
-        if self.use_gpu:
-            xp = cp
-        else:
-            xp = np
 
         grid = False
 
@@ -244,17 +238,17 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         except AttributeError:
             a_cpu, p_cpu, e_cpu, xI_cpu = a.copy(), p.copy(), e.copy(), xI.copy()
 
-        a = xp.asarray(a)
-        p = xp.asarray(p)
-        e = xp.asarray(e)
-        xI = xp.asarray(xI)
+        a = self.xp.asarray(a)
+        p = self.xp.asarray(p)
+        e = self.xp.asarray(e)
+        xI = self.xp.asarray(xI)
 
-        assert xp.all(a == self.a_val_store)
+        assert self.xp.all(a == self.a_val_store)
         a_cpu *= xI_cpu  # correct the sign of a now we've passed the check, for the reparameterisation
         # TODO: make this GPU accessible
-        u = xp.asarray(kerr_p_to_u(a_cpu, p_cpu, e_cpu, xI_cpu, use_gpu=False))
+        u = self.xp.asarray(kerr_p_to_u(a_cpu, p_cpu, e_cpu, xI_cpu, use_gpu=False))
 
-        w = xp.sqrt(e)
+        w = self.xp.sqrt(e)
 
         tw, tu, c = self.tck[:3]
         kw, ku = self.degrees
@@ -280,13 +274,13 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         # TODO: adjustable
 
         if specific_modes is None:
-            mode_indexes = xp.arange(self.num_teuk_modes)
+            mode_indexes = self.xp.arange(self.num_teuk_modes)
         
         else:
-            if isinstance(specific_modes, xp.ndarray):
+            if isinstance(specific_modes, self.xp.ndarray):
                 mode_indexes = specific_modes
             elif isinstance(specific_modes, list):  # the following is slow and kills efficiency
-                mode_indexes = xp.zeros(len(specific_modes), dtype=xp.int32)
+                mode_indexes = self.xp.zeros(len(specific_modes), dtype=self.xp.int32)
                 for i, (l, m, n) in enumerate(specific_modes):
                     try:
                         mode_indexes[i] = np.where((self.l_arr == l) & (self.m_arr == abs(m)) & (self.n_arr == n))[0]
@@ -298,7 +292,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         num_indiv_c = 2*len(mode_indexes)  # Re and Im
         len_indiv_c = self.len_indiv_c
 
-        z = xp.zeros((num_indiv_c * mw))
+        z = self.xp.zeros((num_indiv_c * mw))
         
         self.interp2D(z, tw, nw, tu, nu, c_in, kw, ku, w, mw, u, mu, num_indiv_c, len_indiv_c)
 
@@ -339,11 +333,6 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleB
 
         self.spin_values = np.asarray(spin_values_unsorted)[rearrange_inds]
         self.spin_information_holder = [self.spin_information_holder_unsorted[i] for i in rearrange_inds]
-
-        if self.use_gpu:
-            xp = cp
-        else:
-            xp = np
         
         pos_neg_n_swap_inds = []
         if self.use_gpu:
@@ -353,13 +342,9 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleB
             for l,m,n in zip(self.l_arr_no_mask,self.m_arr_no_mask,self.n_arr_no_mask):
                 pos_neg_n_swap_inds.append(self.special_index_map[(l,m,-n)])
             
-        self.pos_neg_n_swap_inds = xp.asarray(pos_neg_n_swap_inds)
+        self.pos_neg_n_swap_inds = self.xp.asarray(pos_neg_n_swap_inds)
 
     def get_amplitudes(self, a, p, e, xI, specific_modes=None):
-        if self.use_gpu:
-            xp = cp
-        else:
-            xp = np
 
         # prograde: spin pos, xI pos
         # retrograde: spin pos, xI neg - >  spin neg, xI pos
@@ -376,7 +361,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleB
 
             z = self.spin_information_holder[ind_1](a_in, p, e, xI_in, specific_modes=specific_modes)
             if xI_in[0] == -1 and signed_spin != 0.:  # retrograde needs mode flip
-                z = xp.conj(z[:,self.pos_neg_n_swap_inds])
+                z = self.xp.conj(z[:,self.pos_neg_n_swap_inds])
 
         else:
             ind_above = np.where(self.spin_values > signed_spin)[0][0]
@@ -398,7 +383,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleB
                 apply_conjugate_below = True
                 if specific_modes is None:
                     specific_modes_below = self.pos_neg_n_swap_inds
-                elif isinstance(specific_modes, xp.ndarray):
+                elif isinstance(specific_modes, self.xp.ndarray):
                     specific_modes_below = self.pos_neg_n_swap_inds[specific_modes]
                 elif isinstance(specific_modes, list):
                     specific_modes_below = []
@@ -470,13 +455,6 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
             if isinstance(filenames, list):
                 assert (len(filenames) == 1)
             self.filename = filenames
-
-        if self.use_gpu:
-            self.interp2D = interp2D
-            xp = cp
-        else:
-            self.interp2D = interp2D_cpu
-            xp = np
         
         # check if user has the necessary data
         # if not, the data will automatically download
@@ -538,21 +516,23 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
                 tck_last_entry[i, 1] = spl2D[mode][1].tck[2]
             
             self.tck = [
-                xp.asarray(example_spl.tck[0]),
-                xp.asarray(example_spl.tck[1]),
-                xp.asarray(tck_last_entry.copy())
+                self.xp.asarray(example_spl.tck[0]),
+                self.xp.asarray(example_spl.tck[1]),
+                self.xp.asarray(tck_last_entry.copy())
             ]
         
         self.num_teuk_modes = num_teuk_modes
 
         self.degrees = example_spl.degrees
         self.len_indiv_c = tck_last_entry.shape[-1]
+    
+    @property
+    def interp2D(self) -> callable:
+        """GPU or CPU interp2D"""
+        interp2D = interp2D_cpu if not self.use_gpu else interp2D_gpu
+        return interp2D
 
     def get_amplitudes(self, a, p, e, xI, specific_modes=None):
-        if self.use_gpu:
-            xp = cp
-        else:
-            xp = np
 
         assert (a == 0.)
 
@@ -563,11 +543,11 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
         except AttributeError:
             p_cpu, e_cpu = p.copy(), e.copy()
 
-        p = xp.asarray(p)
-        e = xp.asarray(e)
+        p = self.xp.asarray(p)
+        e = self.xp.asarray(e)
 
         # TODO: make this GPU accessible
-        u = xp.asarray(p_to_y(p_cpu, e_cpu, use_gpu=False))
+        u = self.xp.asarray(p_to_y(p_cpu, e_cpu, use_gpu=False))
 
         w = e.copy()
 
@@ -595,13 +575,13 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
         # TODO: adjustable
 
         if specific_modes is None:
-            mode_indexes = xp.arange(self.num_teuk_modes)
+            mode_indexes = self.xp.arange(self.num_teuk_modes)
         
         else:
-            if isinstance(specific_modes, xp.ndarray):
+            if isinstance(specific_modes, self.xp.ndarray):
                 mode_indexes = specific_modes
             elif isinstance(specific_modes, list):  # the following is slow and kills efficiency
-                mode_indexes = xp.zeros(len(specific_modes), dtype=xp.int32)
+                mode_indexes = self.xp.zeros(len(specific_modes), dtype=self.xp.int32)
                 for i, (l, m, n) in enumerate(specific_modes):
                     try:
                         mode_indexes[i] = np.where((self.l_arr == l) & (self.m_arr == abs(m)) & (self.n_arr == n))[0]
@@ -614,7 +594,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
         num_indiv_c = 2*len(mode_indexes)  # Re and Im
         len_indiv_c = self.len_indiv_c
 
-        z = xp.zeros((num_indiv_c * mw))
+        z = self.xp.zeros((num_indiv_c * mw))
         
         self.interp2D(z, tw, nw, tu, nu, c_in, kw, ku, w, mw, u, mu, num_indiv_c, len_indiv_c)
 

@@ -340,26 +340,21 @@ class GetYlms(ParallelModuleBase):
         angles.
 
         args:
-            l_in (1D int xp.ndarray): :math:`l` values requested.
-            m_in (1D int xp.ndarray): :math:`m` values requested.
+            l_in (1D int self.xp.ndarray): :math:`l` values requested.
+            m_in (1D int self.xp.ndarray): :math:`m` values requested.
             theta (double): Polar viewing angle.
             phi (double): Azimuthal viewing angle.
 
         Returns:
-            1D complex128 xp.ndarray: Ylm values.
+            1D complex128 self.xp.ndarray: Ylm values.
 
         """
-
-        if self.use_gpu:
-            xp = cp
-        else:
-            xp = np
 
         # if assuming positive m, repeat entries for negative m
         # this will duplicate m = 0
         if self.assume_positive_m:
-            l = xp.zeros(2 * l_in.shape[0], dtype=int)
-            m = xp.zeros(2 * l_in.shape[0], dtype=int)
+            l = self.xp.zeros(2 * l_in.shape[0], dtype=int)
+            m = self.xp.zeros(2 * l_in.shape[0], dtype=int)
 
             l[: l_in.shape[0]] = l_in
             l[l_in.shape[0] :] = l_in
@@ -383,7 +378,7 @@ class GetYlms(ParallelModuleBase):
         
         out = np.zeros(len(l), dtype=np.complex128)
         # get ylm arrays and cast back to cupy if using cupy/GPUs
-        return xp.asarray(
+        return self.xp.asarray(
             _ylm_kernel(
                 out, l.astype(np.int32), m.astype(np.int32), theta, phi
             )

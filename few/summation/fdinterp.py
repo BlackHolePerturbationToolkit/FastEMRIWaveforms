@@ -32,21 +32,19 @@ from pyinterp_cpu import (
 )
 
 # Python imports
-from few.utils.baseclasses import (
+from ..utils.baseclasses import (
     SchwarzschildEccentric,
     ParallelModuleBase,
 )
 from .base import SummationBase
-from few.utils.citations import *
-from few.utils.utility import get_fundamental_frequencies
-from few.utils.constants import *
-from few.summation.interpolatedmodesum import CubicSplineInterpolant
+from ..utils.citations import *
+from ..utils.utility import get_fundamental_frequencies
+from ..utils.constants import *
+from ..summation.interpolatedmodesum import CubicSplineInterpolant
 
 # Attempt Cython imports of GPU functions
 try:
-    from pyinterp import (
-        get_waveform_generic_fd_wrap,
-    )
+    from pyinterp import get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_gpu
 
 except (ImportError, ModuleNotFoundError) as e:
     pass
@@ -76,7 +74,7 @@ def searchsorted2d_vec(a, b, batch_size=-1, xp=None, **kwargs):
             b = b.flatten()
         else:
             reshape = None
-        out = xp.searchsorted(a, b, **kwargs)
+        out = self.xp.searchsorted(a, b, **kwargs)
 
         if reshape is not None:
             out = out.reshape(reshape)
@@ -86,10 +84,10 @@ def searchsorted2d_vec(a, b, batch_size=-1, xp=None, **kwargs):
         raise ValueError("Input arrays must not be more than 2 dimensions.")
 
     if b.ndim == 1:
-        b = xp.expand_dims(b, (0,))
+        b = self.xp.expand_dims(b, (0,))
 
     if batch_size < 0:
-        inds_split_all = [xp.arange(a.shape[0])]
+        inds_split_all = [self.xp.arange(a.shape[0])]
     else:
         split_inds = []
         i = 0
@@ -99,13 +97,13 @@ def searchsorted2d_vec(a, b, batch_size=-1, xp=None, **kwargs):
                 break
             split_inds.append(i)
 
-        inds_split_all = xp.split(xp.arange(a.shape[0]), split_inds)
+        inds_split_all = self.xp.split(self.xp.arange(a.shape[0]), split_inds)
 
     # select tqdm if user wants to see progress
     iterator = enumerate(inds_split_all)
     # iterator = tqdm(iterator, desc="time batch") if show_progress else iterator
 
-    out = xp.zeros((a.shape[0], b.shape[1]))
+    out = self.xp.zeros((a.shape[0], b.shape[1]))
     for i, inds_in in iterator:
         # get subsections of the arrays for each batch
         a_temp = a[inds_in]
@@ -116,13 +114,13 @@ def searchsorted2d_vec(a, b, batch_size=-1, xp=None, **kwargs):
 
         m, n = a_temp.shape
         max_num = (
-            xp.maximum(a_temp.max() - a_temp.min(), b_temp.max() - b_temp.min()) + 1
+            self.xp.maximum(a_temp.max() - a_temp.min(), b_temp.max() - b_temp.min()) + 1
         )
-        r = max_num * xp.arange(a_temp.shape[0])[:, None]
-        p = xp.searchsorted(
+        r = max_num * self.xp.arange(a_temp.shape[0])[:, None]
+        p = self.xp.searchsorted(
             (a_temp + r).ravel(), (b_temp + r).ravel(), **kwargs
         ).reshape(m, -1)
-        out[inds_in] = p - n * (xp.arange(m)[:, None])
+        out[inds_in] = p - n * (self.xp.arange(m)[:, None])
 
     return out
 
@@ -144,12 +142,11 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         self.kwargs = kwargs
 
-        # eventually the name will change to adapt for the gpu implementantion
-        if self.use_gpu:
-            self.get_waveform_fd = get_waveform_generic_fd_wrap
-
-        else:
-            self.get_waveform_fd = get_waveform_generic_fd_wrap_cpu
+    # eventually the name will change to adapt for the gpu implementantion
+    @property
+    def get_waveform_fd(self) -> callable:
+        """GPU or CPU waveform generation."""
+        return get_waveform_generic_fd_wrap_cpu if not self.use_gpu else get_waveform_generic_fd_wrap_gpu
 
     def attributes_FDInterpolatedModeSum(self):
         """
@@ -200,22 +197,22 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         The 2 represents h+ and hx in that order.
 
         args:
-            t (1D double xp.ndarray): Array of t values.
-            teuk_modes (2D double xp.array): Array of complex amplitudes.
+            t (1D double self.xp.ndarray): Array of t values.
+            teuk_modes (2D double self.xp.array): Array of complex amplitudes.
                 Shape: (len(t), num_teuk_modes).
-            ylms (1D complex128 xp.ndarray): Array of ylm values for each mode,
+            ylms (1D complex128 self.xp.ndarray): Array of ylm values for each mode,
                 including m<0. Shape is (num of m==0,) + (num of m>0,)
                 + (num of m<0). Number of m<0 and m>0 is the same, but they are
                 ordered as (m==0 first then) m>0 then m<0.
-            Phi_phi (1D double xp.ndarray): Array of azimuthal phase values
+            Phi_phi (1D double self.xp.ndarray): Array of azimuthal phase values
                 (:math:`\Phi_\phi`).
-            Phi_r (1D double xp.ndarray): Array of radial phase values
+            Phi_r (1D double self.xp.ndarray): Array of radial phase values
                  (:math:`\Phi_r`).
-            m_arr (1D int xp.ndarray): :math:`m` values associated with each mode.
-            n_arr (1D int xp.ndarray): :math:`n` values associated with each mode.
+            m_arr (1D int self.xp.ndarray): :math:`m` values associated with each mode.
+            n_arr (1D int self.xp.ndarray): :math:`n` values associated with each mode.
             M (double): Total mass in solar masses.
-            p (1D int xp.ndarray): Semi-latus rectum in units of M along trajectory.
-            e (1D int xp.ndarray): Eccentricity value along trajectory.
+            p (1D int self.xp.ndarray): Semi-latus rectum in units of M along trajectory.
+            e (1D int self.xp.ndarray): Eccentricity value along trajectory.
             *args (list, placeholder): Added for flexibility.
             include_minus_m (bool, optional): Include the values for :math:`-m`. This is
                 useful when looking at specific modes. Default is ``True``.
@@ -223,7 +220,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
                 Default is ``False``.
             dt (double, optional): Time spacing between observations (inverse of sampling
                 rate). Default is 10.0.
-            f_arr (1D double xp.ndarray, optional): User-provided frequency array. For now,
+            f_arr (1D double self.xp.ndarray, optional): User-provided frequency array. For now,
                 it must be evenly spaced and include both positive and negative frequencies.
                 If ``None``, the frequency array is built from observation time and time step.
                 Default is ``None``.
@@ -233,11 +230,6 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         """
 
-        if self.use_gpu:
-            xp = cp
-        else:
-            xp = np
-
         init_len = len(t)  # length of sparse traj
         num_teuk_modes = teuk_modes.shape[1]
         num_pts = self.num_pts  # from the base clase, adjust in the baseclass
@@ -245,17 +237,15 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         length = init_len
         # number of quantities to be interp in time domain
         ninterps = (self.ndim) + 2 * num_teuk_modes  # 2 for re and im
-        y_all = xp.zeros((ninterps, length))
+        y_all = self.xp.zeros((ninterps, length))
 
         # fill interpolant information in y
         # all interpolants
         y_all[:num_teuk_modes] = teuk_modes.T.real
         y_all[num_teuk_modes : 2 * num_teuk_modes] = teuk_modes.T.imag
 
-
-
         try:
-            p, e = p.get(), e.get()
+            p, e, xI = p.get(), e.get(), xI.get()
         except AttributeError:
             pass
 
@@ -266,8 +256,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         # convert from dimensionless frequencies
         f_phi, f_r = (
-            abs(xp.asarray(Omega_phi / (2 * np.pi * M * MTSUN_SI))),   # positive frequency to be consistent with amplitude generator for retrograde inspirals  # TODO get to the bottom of this!
-            xp.asarray(Omega_r / (2 * np.pi * M * MTSUN_SI)),
+            abs(self.xp.asarray(Omega_phi / (2 * np.pi * M * MTSUN_SI))),   # positive frequency to be consistent with amplitude generator for retrograde inspirals  # TODO get to the bottom of this!
+            self.xp.asarray(Omega_r / (2 * np.pi * M * MTSUN_SI)),
         )
 
         # add them for splines
@@ -276,7 +266,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         # for a frequency-only spline because you
         # have to evaluate all splines when you evaluate the spline class
-        y_all_freqs = xp.asarray([f_phi, f_r])
+        y_all_freqs = self.xp.asarray([f_phi, f_r])
 
         # create two splines
         # spline: freqs, phases, and amplitudes for the summation kernel
@@ -288,7 +278,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         # of time values to help estimate where/when turnovers occur
         # the denser it is the more likely you will not miss a turnover
         # but it is a tradeoff with speed (not exactly checked, just thought about)
-        t_new = xp.linspace(t.min(), t.max(), 5000)
+        t_new = self.xp.linspace(t.min(), t.max(), 5000)
 
         # denser frequencies
         new_freqs = freqs_spline(t_new)
@@ -297,8 +287,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         seg_freqs = m_arr[:, None] * f_phi[None, :] + n_arr[:, None] * f_r[None, :]
 
         # properly orders each segment without absolute value
-        tmp_freqs_base_sorted_segs = xp.sort(
-            xp.asarray([seg_freqs[:, :-1], seg_freqs[:, 1:]]).transpose(1, 2, 0),
+        tmp_freqs_base_sorted_segs = self.xp.sort(
+            self.xp.asarray([seg_freqs[:, :-1], seg_freqs[:, 1:]]).transpose(1, 2, 0),
             axis=-1,
         )
 
@@ -319,8 +309,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         # if it is at the initial time or end time (i.e. there is no turnover)
         # it is not included (hence >/< not <=/>=)
         check_turnover_list = [
-            xp.where((t_of_max_freq > 0.0) & (t_of_max_freq < t[-1]))[0],
-            xp.where((t_of_min_freq > 0.0) & (t_of_min_freq < t[-1]))[0],
+            self.xp.where((t_of_max_freq > 0.0) & (t_of_max_freq < t[-1]))[0],
+            self.xp.where((t_of_min_freq > 0.0) & (t_of_min_freq < t[-1]))[0],
         ]
 
         # figure out which segment the turnover occurs in
@@ -329,18 +319,18 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         fix_turnover_seg_ind_list = []
         if len(check_turnover_list[0]) > 0:
             fix_turnover_seg_ind_list.append(
-                xp.searchsorted(t, t_of_max_freq[check_turnover_list[0]]) - 1,
+                self.xp.searchsorted(t, t_of_max_freq[check_turnover_list[0]]) - 1,
             )
         if len(check_turnover_list[1]) > 0:
             fix_turnover_seg_ind_list.append(
-                xp.searchsorted(t, t_of_min_freq[check_turnover_list[1]]) - 1
+                self.xp.searchsorted(t, t_of_min_freq[check_turnover_list[1]]) - 1
             )
 
         # determine the true maximum/minimum frequency and associated quantities
         # by solving for roots in the derivative of the cubic
         try:
-            fix_turnover_seg_ind = xp.concatenate(fix_turnover_seg_ind_list)
-            check_turnover = xp.concatenate(check_turnover_list)
+            fix_turnover_seg_ind = self.xp.concatenate(fix_turnover_seg_ind_list)
+            check_turnover = self.xp.concatenate(check_turnover_list)
 
             a = (
                 m_arr[check_turnover] * (freqs_spline.c3[(0, fix_turnover_seg_ind)])
@@ -360,12 +350,12 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             )
 
             inner_part = (2 * b) ** 2 - 4 * (3 * a) * c
-            if xp.any(inner_part < -1e10):
+            if self.xp.any(inner_part < -1e10):
                 breakpoint()
             inner_part[(inner_part < 0.0)] = 0.0
 
-            roots_upper_1 = (-(2 * b) + xp.sqrt(inner_part)) / (2 * (3 * a))
-            roots_upper_2 = (-(2 * b) - xp.sqrt(inner_part)) / (2 * (3 * a))
+            roots_upper_1 = (-(2 * b) + self.xp.sqrt(inner_part)) / (2 * (3 * a))
+            roots_upper_2 = (-(2 * b) - self.xp.sqrt(inner_part)) / (2 * (3 * a))
 
             # t roots of potential minimum/maximum
             t_new_roots_upper_1 = t[fix_turnover_seg_ind] + roots_upper_1
@@ -380,11 +370,11 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             )
 
             # should only be one root at maximum
-            if xp.any(keep_root_1 & keep_root_2):
+            if self.xp.any(keep_root_1 & keep_root_2):
                 breakpoint()
 
             # sometimes (I think?) neither root is kept
-            elif not xp.any(keep_root_1 | keep_root_2):
+            elif not self.xp.any(keep_root_1 | keep_root_2):
                 pass
             else:
                 # new time of minimum / maximum frequencies
@@ -403,13 +393,13 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
                 # this array holds the edge frequencies that occur in each
                 # segment, so we need to make sure when the segment edges do not include
                 # up to the turnover, they are added here
-                tmp_segs_sorted_turnover = xp.sort(
-                    xp.concatenate(
+                tmp_segs_sorted_turnover = self.xp.sort(
+                    self.xp.concatenate(
                         [
                             tmp_freqs_base_sorted_segs[
                                 check_turnover, fix_turnover_seg_ind
                             ],
-                            xp.array([max_or_min_f]),
+                            self.xp.array([max_or_min_f]),
                         ],
                         axis=-1,
                     ),
@@ -431,14 +421,14 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         else:
             Len = self.num_pts + self.num_pts_pad
             # we do not use fft.fftfreqs here because cupy and numpy slightly differ
-            self.frequency = xp.hstack(
-                (xp.arange(-(Len // 2), 0), xp.arange(0, (Len - 1) // 2 + 1))
+            self.frequency = self.xp.hstack(
+                (self.xp.arange(-(Len // 2), 0), self.xp.arange(0, (Len - 1) // 2 + 1))
             ) / (Len * dt)
 
         # make sure there is one value of frequency at 0.0
         assert 1 == np.sum(self.frequency == 0.0)
 
-        ind_zero = xp.where(self.frequency == 0)[0][0]
+        ind_zero = self.xp.where(self.frequency == 0)[0][0]
 
         # make sure ind_zero is where it is supposed to be
         assert ind_zero == int(len(self.frequency) / 2)
@@ -450,7 +440,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         df = self.frequency[1] - self.frequency[0]
 
         # figures out where in self.frequency each segment frequency falls
-        inds_check = xp.abs((tmp_freqs_base_sorted_segs - first_frequency) / df).astype(
+        inds_check = self.xp.abs((tmp_freqs_base_sorted_segs - first_frequency) / df).astype(
             int
         )
 
@@ -461,7 +451,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         end_inds = (inds_check[:, :, 1].copy()).astype(int)
 
         # final inds array
-        inds_fin = xp.array([start_inds, end_inds]).transpose((1, 2, 0))
+        inds_fin = self.xp.array([start_inds, end_inds]).transpose((1, 2, 0))
 
         # just for checking
         # inside the code it does not evaluate outside the bounds
@@ -472,7 +462,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         freq_check = self.frequency[inds_fin]
 
         # place holder for k array
-        k_arr = xp.zeros_like(m_arr)
+        k_arr = self.xp.zeros_like(m_arr)
         data_length = len(self.frequency)
 
         # prepare spline for GPU evaluation
@@ -485,7 +475,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         # where is the zero index
         # for +/- m type of thing
-        zero_index = xp.where(self.frequency == 0.0)[0][0].item()
+        zero_index = self.xp.where(self.frequency == 0.0)[0][0].item()
 
         if separate_modes:
             include_minus_m = False
@@ -496,10 +486,10 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             h_t = h_t - offset
             phase_interp_t = phase_interp_t - offset
 
-        phase_interp_t_in = xp.asarray(phase_interp_t)
+        phase_interp_t_in = self.xp.asarray(phase_interp_t)
 
-        phase_interp_coeffs_in = xp.transpose(
-            xp.asarray(phase_interp_coeffs), [2, 1, 0]
+        phase_interp_coeffs_in = self.xp.transpose(
+            self.xp.asarray(phase_interp_coeffs), [2, 1, 0]
             ).flatten()
         
         # run GPU kernel
@@ -517,8 +507,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
             init_len,
             data_length,
             self.frequency,
-            start_inds.flatten().copy().astype(xp.int32),
-            end_inds.flatten().copy().astype(xp.int32),
+            start_inds.flatten().copy().astype(self.xp.int32),
+            end_inds.flatten().copy().astype(self.xp.int32),
             init_len - 1,
             ylms,
             zero_index,
@@ -528,21 +518,21 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         # adjust from fourier transform across +/- frequencies
         # to h+/hx at positive frequencies
-        fd_sig = -xp.flip(self.waveform)
+        fd_sig = -self.xp.flip(self.waveform)
         fft_sig_p = (
-            xp.real(fd_sig + xp.flip(fd_sig)) / 2.0
-            + 1j * xp.imag(fd_sig - xp.flip(fd_sig)) / 2.0
+            self.xp.real(fd_sig + self.xp.flip(fd_sig)) / 2.0
+            + 1j * self.xp.imag(fd_sig - self.xp.flip(fd_sig)) / 2.0
         )
         fft_sig_c = (
-            -xp.imag(fd_sig + xp.flip(fd_sig)) / 2.0
-            + 1j * xp.real(fd_sig - xp.flip(fd_sig)) / 2.0
+            -self.xp.imag(fd_sig + self.xp.flip(fd_sig)) / 2.0
+            + 1j * self.xp.real(fd_sig - self.xp.flip(fd_sig)) / 2.0
         )
 
         # mask to only have positive frequency values
         if mask_positive:
             mask = self.frequency >= 0.0
-            self.waveform = xp.vstack((fft_sig_p[mask], fft_sig_c[mask]))
+            self.waveform = self.xp.vstack((fft_sig_p[mask], fft_sig_c[mask]))
         else:
-            self.waveform = xp.vstack((fft_sig_p, fft_sig_c))
+            self.waveform = self.xp.vstack((fft_sig_p, fft_sig_c))
 
         return

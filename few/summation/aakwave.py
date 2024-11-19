@@ -183,8 +183,6 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
 
         """
 
-        xp = cp if self.use_gpu else np
-
         # TODO: move check of Y0 to initial conditions enforcement?
 
         fill_val = 1e-6
@@ -214,8 +212,8 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
             interp_t = interp_t - offset
 
         # convert to gpu if desired
-        interp_coeffs_in = xp.transpose(
-            xp.asarray(interp_coeffs), [2, 0, 1]
+        interp_coeffs_in = self.xp.transpose(
+            self.xp.asarray(interp_coeffs), [2, 0, 1]
             ).flatten()
 
         # generator the waveform
@@ -374,8 +372,6 @@ class KerrAAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
 
         """
 
-        xp = cp if self.use_gpu else np
-
         # mass in seconds
         Msec = M * MTSUN_SI
 
@@ -411,24 +407,24 @@ class KerrAAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         lam = iota
 
         # convert to gpu if desired
-        tvec_temp = xp.asarray(tvec)
+        tvec_temp = self.xp.asarray(tvec)
         init_len = len(tvec)
 
         # setup interpolation
         ninterps = 8
-        y_all = xp.zeros((ninterps, init_len))
+        y_all = self.xp.zeros((ninterps, init_len))
 
         # do not need p anymore since we are inputing OmegaPhi
 
         # fill y_all with all arrays that need interpolation
-        y_all[0] = xp.asarray(e)
-        y_all[1] = xp.asarray(Phivec)
-        y_all[2] = xp.asarray(gimvec)
-        y_all[3] = xp.asarray(alpvec)
-        y_all[4] = xp.asarray(nuvec)
-        y_all[5] = xp.asarray(gimdotvec)
-        y_all[6] = xp.asarray(OmegaPhi)
-        y_all[7] = xp.asarray(lam)
+        y_all[0] = self.xp.asarray(e)
+        y_all[1] = self.xp.asarray(Phivec)
+        y_all[2] = self.xp.asarray(gimvec)
+        y_all[3] = self.xp.asarray(alpvec)
+        y_all[4] = self.xp.asarray(nuvec)
+        y_all[5] = self.xp.asarray(gimdotvec)
+        y_all[6] = self.xp.asarray(OmegaPhi)
+        y_all[7] = self.xp.asarray(lam)
 
         # get all cubic splines
         self.spline = CubicSplineInterpolant(tvec_temp, y_all, use_gpu=self.use_gpu)
