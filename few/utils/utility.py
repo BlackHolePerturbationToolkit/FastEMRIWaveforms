@@ -8,7 +8,7 @@
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# but WITHOUT ANY WARRANTY without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
@@ -148,9 +148,9 @@ def p_to_y(p, e, use_gpu=False):
     Conversion from the semilatus rectum or separation :math:`p` to :math:`y`.
 
     arguments:
-        p (double scalar or 1D double xp.ndarray): Values of separation,
+        p (scalar or 1D xp.ndarray): Values of separation,
             :math:`p`, to convert.
-        e (double scalar or 1D double xp.ndarray): Associated eccentricity values
+        e (scalar or 1D xp.ndarray): Associated eccentricity values
             of :math:`p` necessary for conversion.
         use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
 
@@ -170,9 +170,9 @@ def kerr_p_to_u(a, p, e, xI, use_gpu=False):
     Conversion from the semilatus rectum or separation :math:`p` to :math:`y`.
 
     arguments:
-        p (double scalar or 1D double xp.ndarray): Values of separation,
+        p (scalar or 1D xp.ndarray): Values of separation,
             :math:`p`, to convert.
-        e (double scalar or 1D double xp.ndarray): Associated eccentricity values
+        e (scalar or 1D xp.ndarray): Associated eccentricity values
             of :math:`p` necessary for conversion.
         use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
 
@@ -360,9 +360,9 @@ def ELQ_to_pex(a, E, Lz, Q):
     Conversion from the semilatus rectum or separation :math:`p` to :math:`y`.
 
     arguments:
-        p (double scalar or 1D double xp.ndarray): Values of separation,
+        p (scalar or 1D xp.ndarray): Values of separation,
             :math:`p`, to convert.
-        e (double scalar or 1D double xp.ndarray): Associated eccentricity values
+        e (scalar or 1D xp.ndarray): Associated eccentricity values
             of :math:`p` necessary for conversion.
         use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
     """
@@ -504,10 +504,62 @@ def _SchwarzschildGeoCoordinateFrequencies_kernel(p, e):
     return OmegaPhi, OmegaPhi, OmegaR
 
 @njit(fastmath=False)
+def _KerrGeoEquatorialMinoFrequencies_kernel(a, p, e, x):
+    M = 1.0
+
+    En = _KerrGeoEnergy(a, p, e, x)
+    L = _KerrGeoAngularMomentum(a, p, e, x, En)
+    Q = _KerrGeoCarterConstant(a, p, e, x, En, L)
+
+    r1, r2, r3, r4 = _KerrGeoRadialRoots(a, p, e, En, Q)
+
+    Epsilon0 = (a*a) * (1 - (En*En)) / (L*L)
+    a2zp = ((L*L) + (a*a) * (-1 + (En*En)) * (-1)) / ((-1 + (En*En)) * (-1))
+    Epsilon0zp = -(((L*L) + (a*a) * (-1 + (En*En)) * (-1)) / ((L*L) * (-1)))
+
+    zp = (a*a) * (1 - (En*En)) + (L*L)
+
+    kr= sqrt((r1 - r2) / (r1 - r3) * (r3 - r4) / (r2 - r4))                                                 #(*Eq.(13)*)
+
+    EllK = EllipK(kr)
+    CapitalUpsilonr = (PI * sqrt((1 - (En*En)) * (r1 - r3) * (r2))) / (2 * EllK)  # (*Eq.(15)*)
+    CapitalUpsilonTheta = x * pow(zp, 0.5)                                                             # (*Eq.(15)*)
+
+    rp = M + sqrt(1.0 - (a*a))
+    rm = M - sqrt(1.0 - (a*a))
+
+    hr = (r1 - r2) / (r1 - r3)
+    hp = ((r1 - r2) * (r3 - rp)) / ((r1 - r3) * (r2 - rp))
+    hm = ((r1 - r2) * (r3 - rm)) / ((r1 - r3) * (r2 - rm))
+
+    EllipPi_hr_kr = EllipPi(hr, kr)
+    EllipPi_hp_kr = EllipPi(hp, kr)
+    EllipPi_hm_kr = EllipPi(hm, kr)
+
+    prob1 = (2 * M * En * rp - a * L) * (EllK - (r2 - r3) / (r2 - rp) * EllipPi_hp_kr)
+
+    # This term is zero when r3 - rp == 0.0
+    if abs(prob1) != 0.0:
+        prob1 = prob1 / (r3 - rp)
+    CapitalUpsilonPhi = (CapitalUpsilonTheta) / (sqrt(Epsilon0zp)) + (2 * a * CapitalUpsilonr) / (PI * (rp - rm) * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) * (prob1 - (2 * M * En * rm - a * L) / (r3 - rm) * (EllK - (r2 - r3) / (r2 - rm) * EllipPi_hm_kr))
+
+    # This term is zero when r3 - rp == 0.0
+    prob2 = ((4 * 1.0 * En - a * L) * rp - 2 * M * (a*a) * En) * (EllK - (r2 - r3) / (r2 - rp) * EllipPi_hp_kr)
+    if abs(prob2) != 0.0:
+        prob2 = prob2 / (r3 - rp)
+
+    CapitalGamma = 4 * 1.0 * En + (2 * CapitalUpsilonr) / (PI * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) * (En / 2 * ((r3 * (r1 + r2 + r3) - r1 * r2) * EllK + (r2 - r3) * (r1 + r2 + r3 + r4) * EllipPi_hr_kr + (r1 - r3) * (r2 - r4) * EllipE(kr)) + 2 * M * En * (r3 * EllK + (r2 - r3) * EllipPi_hr_kr) + (2 * M) / (rp - rm) * (prob2 - ((4 * 1.0 * En - a * L) * rm - 2 * M * (a*a) * En) / (r3 - rm) * (EllK - (r2 - r3) / (r2 - rm) * EllipPi_hm_kr)))
+
+    return CapitalGamma, CapitalUpsilonPhi, abs(CapitalUpsilonTheta), CapitalUpsilonr
+
+@njit(fastmath=False)
 def _KerrGeoCoordinateFrequencies_kernel_inner(a, p, e, x):
     if a > 0:
         if e > 0 or abs(x) < 1:
-            Gamma, UpsilonPhi, UpsilonTheta, UpsilonR = _KerrGeoMinoFrequencies_kernel(a, p, e, x)
+            if abs(x) < 1:
+                Gamma, UpsilonPhi, UpsilonTheta, UpsilonR = _KerrGeoMinoFrequencies_kernel(a, p, e, x)
+            else:
+                Gamma, UpsilonPhi, UpsilonTheta, UpsilonR = _KerrGeoEquatorialMinoFrequencies_kernel(a, p, e, x)
         else:
             Gamma, UpsilonPhi, UpsilonTheta, UpsilonR = _KerrCircularMinoFrequencies_kernel(a, p)
         return UpsilonPhi / Gamma, UpsilonTheta / Gamma, UpsilonR / Gamma
@@ -526,14 +578,14 @@ def get_fundamental_frequencies(a, p, e, x):
     `Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_.
 
     arguments:
-        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+        a (scalar or 1D np.ndarray): Dimensionless spin of massive
             black hole. If other parameters are arrays and the spin is scalar,
             it will be cast to a 1D array.
-        p (double scalar or 1D double np.ndarray): Values of separation,
+        p (scalar or 1D np.ndarray): Values of separation,
             :math:`p`.
-        e (double scalar or 1D double np.ndarray): Values of eccentricity,
+        e (scalar or 1D np.ndarray): Values of eccentricity,
             :math:`e`.
-        x (double scalar or 1D double np.ndarray): Values of cosine of the
+        x (scalar or 1D np.ndarray): Values of cosine of the
             inclination, :math:`x=\cos{I}`. Please note this is different from
             :math:`Y=\cos{\iota}`.
 
@@ -685,14 +737,14 @@ def get_fundamental_frequencies_spin_corrections(a, p, e, x):
     `Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_.
 
     arguments:
-        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+        a (scalar or 1D np.ndarray): Dimensionless spin of massive
             black hole. If other parameters are arrays and the spin is scalar,
             it will be cast to a 1D array.
-        p (double scalar or 1D double np.ndarray): Values of separation,
+        p (scalar or 1D np.ndarray): Values of separation,
             :math:`p`.
-        e (double scalar or 1D double np.ndarray): Values of eccentricity,
+        e (scalar or 1D np.ndarray): Values of eccentricity,
             :math:`e`.
-        x (double scalar or 1D double np.ndarray): Values of cosine of the
+        x (scalar or 1D np.ndarray): Values of cosine of the
             inclination, :math:`x=\cos{I}`. Please note this is different from
             :math:`Y=\cos{\iota}`.
 
@@ -842,14 +894,14 @@ def get_kerr_geo_constants_of_motion(a, p, e, x):
     geodesic orbit in the generic Kerr spacetime.
 
     arguments:
-        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+        a (scalar or 1D np.ndarray): Dimensionless spin of massive
             black hole. If other parameters are arrays and the spin is scalar,
             it will be cast to a 1D array.
-        p (double scalar or 1D double np.ndarray): Values of separation,
+        p (scalar or 1D np.ndarray): Values of separation,
             :math:`p`.
-        e (double scalar or 1D double np.ndarray): Values of eccentricity,
+        e (scalar or 1D np.ndarray): Values of eccentricity,
             :math:`e`.
-        x (double scalar or 1D double np.ndarray): Values of cosine of the
+        x (scalar or 1D np.ndarray): Values of cosine of the
             inclination, :math:`x=\cos{I}`. Please note this is different from
             :math:`Y=\cos{\iota}`.
 
@@ -894,7 +946,7 @@ def get_kerr_geo_constants_of_motion(a, p, e, x):
 
 @njit(fastmath=False)
 def _brentq_jit(f, a, b, args, tol):
-    # Machine epsilon for double precision
+    # Machine epsilon for precision
     eps = 2.220446049250313e-16
 
     fa = f(a, args)
@@ -987,7 +1039,7 @@ def _separatrix_polynomial_full(p, args):
             2*pow(p,10)*(-2*pow(3 + e,2) + pow(a,2)*(-3 + 6*pow(x,2) + pow(e,2)*(-3 + 2*pow(x,2)) + e*(-2 + 4*pow(x,2)))) + 
             pow(a,6)*pow(1 + e,4)*pow(p,4)*pow(-1 + pow(x,2),2)*(-16*pow(-1 + e,2)*(-3 - 2*e + pow(e,2))*(-1 + pow(x,2)) + pow(a,2)*(15 + 6*pow(x,2) + 9*pow(x,4) + pow(e,2)*(26 + 20*pow(x,2) - 2*pow(x,4)) + pow(e,4)*(15 - 10*pow(x,2) + pow(x,4)) + 4*pow(e,3)*(-5 - 2*pow(x,2) + pow(x,4)) - 4*e*(5 + 2*pow(x,2) + 3*pow(x,4)))) - 
             4*pow(a,4)*pow(1 + e,2)*pow(p,6)*(-1 + x)*(1 + x)*(-2*(11 - 14*pow(e,2) + 3*pow(e,4))*(-1 + pow(x,2)) + pow(a,2)*(5 - 5*pow(x,2) - 9*pow(x,4) + 4*pow(e,3)*pow(x,2)*(-2 + pow(x,2)) + pow(e,4)*(5 - 5*pow(x,2) + pow(x,4)) + pow(e,2)*(6 - 6*pow(x,2) + 4*pow(x,4)))) + 
-            pow(a,2)*pow(p,8)*(-16*pow(1 + e,2)*(-3 + 2*e + pow(e,2))*(-1 + pow(x,2)) + pow(a,2)*(15 - 36*pow(x,2) + 30*pow(x,4) + pow(e,4)*(15 - 20*pow(x,2) + 6*pow(x,4)) + 4*pow(e,3)*(5 - 12*pow(x,2) + 6*pow(x,4)) + 4*e*(5 - 12*pow(x,2) + 10*pow(x,4)) + pow(e,2)*(26 - 72*pow(x,2) + 44*pow(x,4)))));
+            pow(a,2)*pow(p,8)*(-16*pow(1 + e,2)*(-3 + 2*e + pow(e,2))*(-1 + pow(x,2)) + pow(a,2)*(15 - 36*pow(x,2) + 30*pow(x,4) + pow(e,4)*(15 - 20*pow(x,2) + 6*pow(x,4)) + 4*pow(e,3)*(5 - 12*pow(x,2) + 6*pow(x,4)) + 4*e*(5 - 12*pow(x,2) + 10*pow(x,4)) + pow(e,2)*(26 - 72*pow(x,2) + 44*pow(x,4)))))
 
 
 @njit(fastmath=False)
@@ -1064,12 +1116,12 @@ def get_separatrix(a, e, x, tol=1e-13):
     `Stein & Warburton 2020 <https://arxiv.org/abs/1912.07609>`_.
 
     arguments:
-        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+        a (scalar or 1D np.ndarray): Dimensionless spin of massive
             black hole. If other parameters are arrays and the spin is scalar,
             it will be cast to a 1D array.
-        e (double scalar or 1D double np.ndarray): Values of eccentricity,
+        e (scalar or 1D np.ndarray): Values of eccentricity,
             :math:`e`.
-        x (double scalar or 1D double np.ndarray): Values of cosine of the
+        x (scalar or 1D np.ndarray): Values of cosine of the
             inclination, :math:`x=\cos{I}`. Please note this is different from
             :math:`Y=\cos{\iota}`.
 
