@@ -8,7 +8,7 @@
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY without even the implied warranty of
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
@@ -148,9 +148,9 @@ def p_to_y(p, e, use_gpu=False):
     Conversion from the semilatus rectum or separation :math:`p` to :math:`y`.
 
     arguments:
-        p (scalar or 1D xp.ndarray): Values of separation,
+        p (double scalar or 1D xp.ndarray): Values of separation,
             :math:`p`, to convert.
-        e (scalar or 1D xp.ndarray): Associated eccentricity values
+        e (double scalar or 1D xp.ndarray): Associated eccentricity values
             of :math:`p` necessary for conversion.
         use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
 
@@ -170,9 +170,9 @@ def kerr_p_to_u(a, p, e, xI, use_gpu=False):
     Conversion from the semilatus rectum or separation :math:`p` to :math:`y`.
 
     arguments:
-        p (scalar or 1D xp.ndarray): Values of separation,
+        p (double scalar or 1D xp.ndarray): Values of separation,
             :math:`p`, to convert.
-        e (scalar or 1D xp.ndarray): Associated eccentricity values
+        e (double scalar or 1D xp.ndarray): Associated eccentricity values
             of :math:`p` necessary for conversion.
         use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
 
@@ -360,9 +360,9 @@ def ELQ_to_pex(a, E, Lz, Q):
     Conversion from the semilatus rectum or separation :math:`p` to :math:`y`.
 
     arguments:
-        p (scalar or 1D xp.ndarray): Values of separation,
+        p (double scalar or 1D xp.ndarray): Values of separation,
             :math:`p`, to convert.
-        e (scalar or 1D xp.ndarray): Associated eccentricity values
+        e (double scalar or 1D xp.ndarray): Associated eccentricity values
             of :math:`p` necessary for conversion.
         use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
     """
@@ -509,9 +509,8 @@ def _KerrGeoEquatorialMinoFrequencies_kernel(a, p, e, x):
 
     En = _KerrGeoEnergy(a, p, e, x)
     L = _KerrGeoAngularMomentum(a, p, e, x, En)
-    Q = _KerrGeoCarterConstant(a, p, e, x, En, L)
 
-    r1, r2, r3, r4 = _KerrGeoRadialRoots(a, p, e, En, Q)
+    r1, r2, r3, r4 = _KerrGeoRadialRoots(a, p, e, En, 0.)
 
     Epsilon0 = (a*a) * (1 - (En*En)) / (L*L)
     a2zp = ((L*L) + (a*a) * (-1 + (En*En)) * (-1)) / ((-1 + (En*En)) * (-1))
@@ -578,14 +577,14 @@ def get_fundamental_frequencies(a, p, e, x):
     `Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_.
 
     arguments:
-        a (scalar or 1D np.ndarray): Dimensionless spin of massive
+        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
             black hole. If other parameters are arrays and the spin is scalar,
             it will be cast to a 1D array.
-        p (scalar or 1D np.ndarray): Values of separation,
+        p (double scalar or 1D np.ndarray): Values of separation,
             :math:`p`.
-        e (scalar or 1D np.ndarray): Values of eccentricity,
+        e (double scalar or 1D np.ndarray): Values of eccentricity,
             :math:`e`.
-        x (scalar or 1D np.ndarray): Values of cosine of the
+        x (double scalar or 1D np.ndarray): Values of cosine of the
             inclination, :math:`x=\cos{I}`. Please note this is different from
             :math:`Y=\cos{\iota}`.
 
@@ -737,14 +736,14 @@ def get_fundamental_frequencies_spin_corrections(a, p, e, x):
     `Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_.
 
     arguments:
-        a (scalar or 1D np.ndarray): Dimensionless spin of massive
+        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
             black hole. If other parameters are arrays and the spin is scalar,
             it will be cast to a 1D array.
-        p (scalar or 1D np.ndarray): Values of separation,
+        p (double scalar or 1D np.ndarray): Values of separation,
             :math:`p`.
-        e (scalar or 1D np.ndarray): Values of eccentricity,
+        e (double scalar or 1D np.ndarray): Values of eccentricity,
             :math:`e`.
-        x (scalar or 1D np.ndarray): Values of cosine of the
+        x (double scalar or 1D np.ndarray): Values of cosine of the
             inclination, :math:`x=\cos{I}`. Please note this is different from
             :math:`Y=\cos{\iota}`.
 
@@ -894,14 +893,14 @@ def get_kerr_geo_constants_of_motion(a, p, e, x):
     geodesic orbit in the generic Kerr spacetime.
 
     arguments:
-        a (scalar or 1D np.ndarray): Dimensionless spin of massive
+        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
             black hole. If other parameters are arrays and the spin is scalar,
             it will be cast to a 1D array.
-        p (scalar or 1D np.ndarray): Values of separation,
+        p (double scalar or 1D np.ndarray): Values of separation,
             :math:`p`.
-        e (scalar or 1D np.ndarray): Values of eccentricity,
+        e (double scalar or 1D np.ndarray): Values of eccentricity,
             :math:`e`.
-        x (scalar or 1D np.ndarray): Values of cosine of the
+        x (double scalar or 1D np.ndarray): Values of cosine of the
             inclination, :math:`x=\cos{I}`. Please note this is different from
             :math:`Y=\cos{\iota}`.
 
@@ -946,7 +945,7 @@ def get_kerr_geo_constants_of_motion(a, p, e, x):
 
 @njit(fastmath=False)
 def _brentq_jit(f, a, b, args, tol):
-    # Machine epsilon for precision
+    # Machine epsilon for double precision
     eps = 2.220446049250313e-16
 
     fa = f(a, args)
@@ -1116,12 +1115,12 @@ def get_separatrix(a, e, x, tol=1e-13):
     `Stein & Warburton 2020 <https://arxiv.org/abs/1912.07609>`_.
 
     arguments:
-        a (scalar or 1D np.ndarray): Dimensionless spin of massive
+        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
             black hole. If other parameters are arrays and the spin is scalar,
             it will be cast to a 1D array.
-        e (scalar or 1D np.ndarray): Values of eccentricity,
+        e (double scalar or 1D np.ndarray): Values of eccentricity,
             :math:`e`.
-        x (scalar or 1D np.ndarray): Values of cosine of the
+        x (double scalar or 1D np.ndarray): Values of cosine of the
             inclination, :math:`x=\cos{I}`. Please note this is different from
             :math:`Y=\cos{\iota}`.
 
