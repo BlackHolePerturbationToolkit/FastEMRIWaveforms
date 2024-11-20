@@ -47,7 +47,7 @@ class TrajectoryBase(ABC):
         DENSE_STEPPING=0,
         max_init_len=1000,
         upsample=False,
-        err=1e-14,
+        err=1e-11,
         fix_t=False,
         integrate_backwards=False,
         **kwargs,
