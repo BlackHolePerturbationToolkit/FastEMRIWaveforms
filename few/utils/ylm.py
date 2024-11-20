@@ -277,7 +277,7 @@ def _ylm_kernel_inner(
         temp = 3.*exp(10.*I*phi)*sqrt(146965./(2.*PI))*pow(cos(theta/2.),12)*pow(sin(theta/2.),8)
 
     else:
-        raise ValueError(f"Not implemented l={l} m={m}.")
+        raise ValueError(f"(l, m) > 10 are not supported.")
 
     if m < 0:
         temp = -1**l * temp
