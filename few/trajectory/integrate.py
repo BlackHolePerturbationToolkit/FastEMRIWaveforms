@@ -393,7 +393,7 @@ class Integrate:
         t_old = self.integrator_t_cache
 
         result = np.zeros((t_new.size, 6))
-        t_in_mask = (t_new > 0.) & (t_new < t_old.max())
+        t_in_mask = (t_new >= 0.) & (t_new <= t_old.max())
         
         result[t_in_mask,:] = self.dopr.eval(t_new[t_in_mask], t_old, self.integrator_spline_coeff)
 
