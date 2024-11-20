@@ -612,31 +612,36 @@ class APEXIntegrate(Integrate):
             if (
                 self.rootfind_separatrix and not self.dopr.fix_step
             ):  # use a root-finder and the full integration routine to tune the finish
+                
+                # if tmax occurs before the last point, we need to determine if the crossing is before t=tmax
+                if self.integrator_t_cache[-1] > self.tmax_dimensionless * self.Msec:
 
-                # first, check if t=tmax passes the separatrix, otherwise stop at t=tmax
-                y_at_tmax = self.eval_integrator_spline(np.array([self.tmax_dimensionless,]))[0]
+                    # first, check if the crossing has happened by t=tmax (this is unlikely but can happen)
+                    y_at_tmax = self.eval_integrator_spline(np.array([self.tmax_dimensionless * self.Msec]))[0]
 
-                if not self.enforce_schwarz_sep:
-                    p_sep_at_tmax = self.get_p_sep(y_at_tmax)
+                    if not self.enforce_schwarz_sep:
+                        p_sep_at_tmax = self.get_p_sep(y_at_tmax)
+                    else:
+                        p_sep_at_tmax = 6 + 2*y_at_tmax[1]
+
+                    if (y_at_tmax[0] - (p_sep_at_tmax + self.separatrix_buffer_dist)) > 0:
+                        # the trajectory didnt cross the boundary before t=tmax, so stop at t=tmax.
+                        # just place the point at y_at_tmax above.
+                        # we do not pass any spline information here as it has already been computed in the main integrator loop
+                        self.traj_step -= 1  # revert the step counter to place the last (t, y) in the right place (spline info not overwritten)
+                        self.save_point(
+                            self.tmax_dimensionless * self.Msec, y_at_tmax, spline_output=None
+                        )
                 else:
-                    p_sep_at_tmax = 6 + 2*y_at_tmax[1]
-
-                if (y_at_tmax[0] - (p_sep_at_tmax + self.separatrix_buffer_dist)) < 0:
-                    # we do not pass any spline information here as it has already been computed in the main integrator loop
-                    self.traj_step -= 1  # revert the step counter to place the last (t, y) in the right place (spline info not overwritten)
-                    self.save_point(
-                        self.tmax_dimensionless * self.Msec, y_finish, spline_output=None
-                    )  # adds time in seconds
-
-                else:
+                    # the trajectory crosses the boundary before t=tmax. Root-find to get the crossing time.
                     result = brentq(
                         self.inner_func,
-                        t * self.Msec,
-                        self.integrator_t_cache[-1],
+                        t * self.Msec,  # lower bound: the current point
+                        self.integrator_t_cache[-1],  # upper bound: the knot that passed the boundary
                         # args=(y_out,),
                         maxiter=MAX_ITER,
                         xtol=INNER_THRESHOLD,
-                        rtol=1e-8,
+                        rtol=1e-10,
                         full_output=True,
                     )
 
