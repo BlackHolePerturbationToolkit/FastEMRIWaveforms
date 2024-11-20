@@ -154,5 +154,6 @@ fi
 
 if [[ "$run_tests" == "true" ]]; 
  then echo "Running tests...";
+ cd tests
  "$python_here" -m unittest discover;
 fi

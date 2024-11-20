@@ -7,6 +7,8 @@ few/amplitude/__pycache__/*
 few/files/*
 few/summation/__pycache__/*
 few/tests/__pycache__/
+tests/__pycache__/
+few/cutils/__pycache__/*
 few/trajectory/__pycache__/*
 few/trajectory/ode/__pycache__/*
 few/utils/__pycache__/*
