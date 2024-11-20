@@ -160,6 +160,7 @@ python setup.py install --ccbin /path/to/anaconda3/envs/few_env/bin/x86_64-apple
 
 In the main directory of the package run in the terminal (if you run [install.sh](install.sh) with defaults, the tests will be performed):
 ```
+cd tests/
 python -m unittest discover
 ```
 
