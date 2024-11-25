@@ -64,9 +64,8 @@ class SchwarzEccFlux(ODEBase):
         return 0.1
 
     def evaluate_rhs(self, p: float, e: float, x: float, *args) -> list[float]:
-        if 6 + 2*e > p:
-            return np.zeros(3)
-
+        if e < 0 or p < 6 + 2*e:
+            return [0., 0., 0., 0., 0., 0.,]
 
         # directly evaluate the numba kernel for speed
         Omega_phi, Omega_theta, Omega_r = _KerrGeoCoordinateFrequencies_kernel_inner(0., p, e, x)
@@ -138,13 +137,16 @@ class KerrEccEqFlux(ODEBase):
 
 
     def evaluate_rhs(self, p: float, e: float, x: float, *args) -> list[float]:
+        if e < 0:
+             return [0., 0., 0., 0., 0., 0.,]
+         
+        p_sep = _get_separatrix_kernel_inner(self.a, e, x)
+
+        if p < p_sep:
+             return [0., 0., 0., 0., 0., 0.,]
 
         # directly evaluate the numba kernel for speed
         Omega_phi, Omega_theta, Omega_r = _KerrGeoCoordinateFrequencies_kernel_inner(self.a, p, e, x)
-
-        p_sep = _get_separatrix_kernel_inner(self.a, e, x)
-        if e < 0 or p < p_sep:
-             return [0., 0., 0., 0., 0., 0.,]
 
         risco = _get_separatrix_kernel_inner(self.a, 0., x)
         u = _p_to_u(p, p_sep)
