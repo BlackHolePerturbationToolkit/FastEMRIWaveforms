@@ -124,7 +124,7 @@ class KerrEccEqFlux(ODEBase):
         pdot = np.loadtxt(os.path.join(self.file_dir, self.files[3])).reshape(x.size, y.size, z.size)
         edot = np.loadtxt(os.path.join(self.file_dir, self.files[4])).reshape(x.size, y.size, z.size)
 
-        self.pdot_interp = TricubicSpline(x, y, z, pdot)
+        self.pdot_interp = TricubicSpline(x, y, z, np.log(-pdot))
         self.edot_interp = TricubicSpline(x, y, z, edot)
 
     @property
@@ -153,7 +153,7 @@ class KerrEccEqFlux(ODEBase):
         w = e**0.5
         a_sign = self.a * x
 
-        pdot = self.pdot_interp(a_sign, w, u) * _pdot_PN(p, e, risco, p_sep)
+        pdot = -np.exp(self.pdot_interp(a_sign, w, u)) * _pdot_PN(p, e, risco, p_sep)
         edot = self.edot_interp(a_sign, w, u) * _edot_PN(p, e, risco, p_sep)
 
         if e < 1e-6:
