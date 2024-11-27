@@ -126,7 +126,7 @@ class EMRIInspiral(TrajectoryBase):
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
         self.inspiral_generator = get_integrator(
-            func, file_directory=file_directory, enforce_schwarz_sep=enforce_schwarz_sep, rootfind_separatrix=rootfind_separatrix
+            func, file_directory=file_directory, enforce_schwarz_sep=enforce_schwarz_sep, rootfind_separatrix=rootfind_separatrix, **kwargs
         )
 
         self.func = self.inspiral_generator.func

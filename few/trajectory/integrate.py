@@ -92,20 +92,19 @@ def get_integrator(func, file_directory=None, **kwargs):
 
     #     integrator.add_ode(func_i.encode(), file_directory.encode())
 
-    func_inst = func(file_directory=file_directory)
 
-    if func_inst.integrate_constants_of_motion:
-        return AELQIntegrate(
-            func,
-            file_directory=file_directory,
-            **kwargs,
-        )
-    else:
-        return APEXIntegrate(
-            func,
-            file_directory=file_directory,
-            **kwargs,
-        )
+    # if func_inst.integrate_constants_of_motion:
+    #     return AELQIntegrate(
+    #         func,
+    #         file_directory=file_directory,
+    #         **kwargs,
+    #     )
+    # else:
+    return APEXIntegrate(
+        func,
+        file_directory=file_directory,
+        **kwargs,
+    )
 
 class Integrate:
     def __init__(
@@ -115,12 +114,13 @@ class Integrate:
         rootfind_separatrix: bool=True,
         enforce_schwarz_sep: bool=False,
         file_directory: Optional[str]=None,
+        **kwargs
     ):
         self.buffer_length = buffer_length
         self.file_directory = file_directory
 
         self.base_func = func
-        self.func = func(file_directory=file_directory)
+        self.func = func(file_directory=file_directory, **kwargs)
 
         self.ode_info = get_ode_properties(self.func)
 

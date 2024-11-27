@@ -148,6 +148,13 @@ class TrajectoryBase(ABC):
             new_t = np.arange(int(T/dt)) * dt
 
         # upsample everything
-        out = tuple(self.inspiral_generator.eval_integrator_spline(new_t).T)
+        upsamp_traj = self.inspiral_generator.eval_integrator_spline(new_t).T
+        if fix_t:
+            if np.any(upsamp_traj[1] == 0):
+
+                trunc_ind = np.where(upsamp_traj[1] == 0)[0][0]
+                upsamp_traj = upsamp_traj[:,:trunc_ind]
+                new_t = new_t[:trunc_ind]
+        out = tuple(upsamp_traj)
         
         return (new_t,) + out
