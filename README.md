@@ -223,6 +223,17 @@ Please make sure to cite FEW papers and the FEW software on [Zenodo](https://zen
     year = "2021"
 }
 
+@article{Speri:2023jte,
+    author = "Speri, Lorenzo and Katz, Michael L. and Chua, Alvin J. K. and Hughes, Scott A. and Warburton, Niels and Thompson, Jonathan E. and Chapman-Bird, Christian E. A. and Gair, Jonathan R.",
+    title = "{Fast and Fourier: Extreme Mass Ratio Inspiral Waveforms in the Frequency Domain}",
+    eprint = "2307.12585",
+    archivePrefix = "arXiv",
+    primaryClass = "gr-qc",
+    doi = "10.3389/fams.2023.1266739",
+    month = "7",
+    year = "2023"
+}
+
 @software{michael_l_katz_2023_8190418,
   author       = {Michael L. Katz and
                   Lorenzo Speri and
@@ -321,15 +332,6 @@ Please make sure to cite FEW papers and the FEW software on [Zenodo](https://zen
     year = "2004"
 }
 
-@article{Speri:2023jte,
-    author = "Speri, Lorenzo and Katz, Michael L. and Chua, Alvin J. K. and Hughes, Scott A. and Warburton, Niels and Thompson, Jonathan E. and Chapman-Bird, Christian E. A. and Gair, Jonathan R.",
-    title = "{Fast and Fourier: Extreme Mass Ratio Inspiral Waveforms in the Frequency Domain}",
-    eprint = "2307.12585",
-    archivePrefix = "arXiv",
-    primaryClass = "gr-qc",
-    month = "7",
-    year = "2023"
-}
 ```
 
 ## Acknowledgments
