@@ -178,7 +178,7 @@ Current Version: 1.5.5
 
 * **Michael Katz**
 * **Lorenzo Speri**
-* Christian Chapman-Bird
+* **Christian Chapman-Bird**
 * Alvin J. K. Chua
 * Niels Warburton
 * Scott Hughes
