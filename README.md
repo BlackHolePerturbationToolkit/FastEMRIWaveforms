@@ -1,24 +1,10 @@
 # few: Fast EMRI Waveforms
 
-This package contains the highly modular framework for fast and accurate extreme mass ratio inspiral (EMRI) waveforms from [arxiv.org/2104.04582](https://arxiv.org/abs/2104.04582) and [arxiv.org/2008.06071](https://arxiv.org/abs/2008.06071). The waveforms in this package combine a variety of separately accessible modules to form EMRI waveforms on both CPUs and GPUs. Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the [documentation](https://bhptoolkit.org/FastEMRIWaveforms/) for further information on these modules. The code can be found on Github [here](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms). The data necessary for various modules in this package will automatically download the first time it is needed. If you would like to view the data, it can be found on [Zenodo](https://zenodo.org/record/3981654#.XzS_KRNKjlw). The current and all past code release zip files can also be found on Zenodo [here](https://zenodo.org/record/8190418). Please see the [citation](#citation) section below for information on citing FEW.
+This package contains the highly modular framework for fast and accurate extreme mass ratio inspiral (EMRI) waveforms from [arxiv.org/2104.04582](https://arxiv.org/abs/2104.04582), [arxiv.org/2008.06071](https://arxiv.org/abs/2008.06071) and [arxiv.org/2307.12585](https://arxiv.org/abs/2307.12585). The waveforms in this package combine a variety of separately accessible modules to form EMRI waveforms on both CPUs and GPUs. Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the [documentation](https://bhptoolkit.org/FastEMRIWaveforms/) for further information on these modules. The code can be found on Github [here](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms). The data necessary for various modules in this package will automatically download the first time it is needed. If you would like to view the data, it can be found on [Zenodo](https://zenodo.org/record/3981654#.XzS_KRNKjlw). The current and all past code release zip files can also be found on Zenodo [here](https://zenodo.org/record/8190418). Please see the [citation](#citation) section below for information on citing FEW.
 
 This package is a part of the [Black Hole Perturbation Toolkit](https://bhptoolkit.org/).
 
-If you use all or any parts of this code, please cite [arxiv.org/2104.04582](https://arxiv.org/abs/2104.04582) and [arxiv.org/2008.06071](https://arxiv.org/abs/2008.06071). See the [documentation](https://bhptoolkit.org/FastEMRIWaveforms/) to properly cite specific modules.
-
-## Getting Started
-
-Install with pip (CPU only for now):
-```
-pip install fastemriwaveforms
-```
-
-In a python file or notebook:
-```
-import few
-```
-See [examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb).
-
+If you use all or any parts of this code, please cite [arxiv.org/2104.04582](https://arxiv.org/abs/2104.04582), [arxiv.org/2008.06071](https://arxiv.org/abs/2008.06071) and [arxiv.org/2307.12585](https://arxiv.org/abs/2307.12585). See the [documentation](https://bhptoolkit.org/FastEMRIWaveforms/) to properly cite specific modules.
 
 ### Prerequisites
 
@@ -28,65 +14,34 @@ To install this software for use with NVIDIA GPUs (compute capability >2.0), you
 
 There are a set of files required for total use of this package. They will download automatically the first time they are needed. Files are generally under 10MB. However, there is a 100MB file needed for the slow waveform and the bicubic amplitude interpolation. This larger file will only download if you run either of those two modules. The files are hosted on the [Black Hole Perturbation Toolkit Download Server](https://download.bhptoolkit.org/few/data).
 
-### Installing
+### Installation
 
+[Install Anaconda](https://docs.anaconda.com/anaconda/install/) if you do not have it.
 
-Install with pip (CPU only for now):
+Create a virtual environment.
+
+For the `arm64` architechture of new Macs such as the M1 chip:
 ```
+conda create -n few_env -c conda-forge -y clangxx_osx-arm64 clangxx_osx-64 wget gsl hdf5 python=3.12 openblas lapack liblapacke
+```
+For the intel chipts of MACOSX:
+```
+conda create -n few_env -c conda-forge -y clangxx_osx-64 clang_osx-64 wget gsl lapack=3.6.1 hdf5 python=3.12
+```
+For Unix/Linux:
+```
+conda create -n few_env -c conda-forge -y gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 python=3.10
+```
+
+#### Installation with pip
+
+```
+conda activate few_env
+pip install numpy Cython scipy tqdm jupyter ipython h5py requests rich matplotlib
 pip install fastemriwaveforms
 ```
+#### Installation with setup.py
 
-To install from source:
-
-0) [Install Anaconda](https://docs.anaconda.com/anaconda/install/) if you do not have it.
-
-1) Clone the repository.
-
-```
-git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
-cd FastEMRIWaveforms
-```
-
-2) Installation is made easy through [install.sh](install.sh). This is a bash script that will create a conda environment, install FEW, run tests, and install any additional packages needed for sampling or development. It will look for an `nvcc` binary, the `CUDA_HOME` variable, or the `CUDAHOME` variable. If it finds that information, it will install for CUDA as well (including installing the proper version of `cupy`). **Note**: If you already have performed installation and you are updating FEW after a `git pull`, then run `pip install .` rather than the following command.
-
-  ```
-  bash install.sh
-  ```
-
-  Options for installation can be applied by running `bash install.sh key=value`. These can be found with `bash install.sh -h`:
-  
-  ```
-  keyword argument options (given as key=value):
-    env_name:  Name of generated conda environment. Default is 'few_env'.
-    install_type:  Type of install. 'basic', 'development', or 'sampling'. 
-        'development' adds packages needed for development and documentation.
-        'sampling' adds packages for sampling like eryn, lisatools, corner, chainconsumer.
-        Default is 'basic'. 
-    run_tests: Either true or false. Whether to run tests after install. Default is true.
-  ```
-
-3) Load the environment (change "few_env" to the correct environment name is specified in previous step):
-
-```
-conda activate few_env
-```
-
-Please contact the developers if the installation does not work.
-
-### More Customized Installation (legacy)
-
-0) [Install Anaconda](https://docs.anaconda.com/anaconda/install/) if you do not have it.
-
-1) Create a virtual environment.
-
-```
-conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests rich matplotlib python=3.7
-conda activate few_env
-```
-
-    If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
-
-    If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, rich, matplotlib) with pip.
 
 2) Clone the repository.
 
@@ -107,6 +62,8 @@ pip install cupy-cuda12x
 python scripts/prebuild.py
 python setup.py install
 ```
+
+See [examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb) to play with the code.
 
 
 When installing lapack and gsl, the setup file will default to assuming lib and include for both are in installed within the conda environment. To provide other lib and include directories you can provide command line options when installing. You can also remove usage of OpenMP.
@@ -150,6 +107,45 @@ or if on MACOSX:
 ```
 python setup.py install --ccbin /path/to/anaconda3/envs/few_env/bin/x86_64-apple-darwin13.4.0-clang
 ```
+
+### Installing with bash
+
+To install from source:
+
+0) [Install Anaconda](https://docs.anaconda.com/anaconda/install/) if you do not have it.
+
+1) Clone the repository.
+
+```
+git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
+cd FastEMRIWaveforms
+```
+
+2) Installation is made easy through [install.sh](install.sh). This is a bash script that will create a conda environment, install FEW, run tests, and install any additional packages needed for sampling or development. It will look for an `nvcc` binary, the `CUDA_HOME` variable, or the `CUDAHOME` variable. If it finds that information, it will install for CUDA as well (including installing the proper version of `cupy`). **Note**: If you already have performed installation and you are updating FEW after a `git pull`, then run `pip install .` rather than the following command.
+
+  ```
+  bash install.sh
+  ```
+
+  Options for installation can be applied by running `bash install.sh key=value`. These can be found with `bash install.sh -h`:
+  
+  ```
+  keyword argument options (given as key=value):
+    env_name:  Name of generated conda environment. Default is 'few_env'.
+    install_type:  Type of install. 'basic', 'development', or 'sampling'. 
+        'development' adds packages needed for development and documentation.
+        'sampling' adds packages for sampling like eryn, lisatools, corner, chainconsumer.
+        Default is 'basic'. 
+    run_tests: Either true or false. Whether to run tests after install. Default is true.
+  ```
+
+3) Load the environment (change "few_env" to the correct environment name is specified in previous step):
+
+```
+conda activate few_env
+```
+
+Please contact the developers if the installation does not work.
 
 ## Running the Tests
 
