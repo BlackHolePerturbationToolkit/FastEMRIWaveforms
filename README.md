@@ -20,11 +20,11 @@ There are a set of files required for total use of this package. They will downl
 
 Create a virtual environment.
 
-For the `arm64` architechture of new Macs such as the M1 chip:
+For an `arm64` architecture of new Macs such as the M1 chip:
 ```
 conda create -n few_env -c conda-forge -y clangxx_osx-arm64 clangxx_osx-64 wget gsl hdf5 python=3.12 openblas lapack liblapacke
 ```
-For the intel chipts of MACOSX:
+For an intel chip of MACOSX:
 ```
 conda create -n few_env -c conda-forge -y clangxx_osx-64 clang_osx-64 wget gsl lapack=3.6.1 hdf5 python=3.12
 ```
@@ -35,36 +35,39 @@ conda create -n few_env -c conda-forge -y gcc_linux-64 gxx_linux-64 wget gsl lap
 
 #### Installation with pip
 
+Activate the environment
 ```
 conda activate few_env
 pip install numpy Cython scipy tqdm jupyter ipython h5py requests rich matplotlib
 pip install fastemriwaveforms
 ```
-#### Installation with setup.py
+You are good to go! Check out the [example notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb) to play with the code!
 
+#### Installation with setup.py and on GPU
 
-2) Clone the repository.
+If you prefer to install with `setup.py`, clone the repository.
 
 ```
 git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
 cd FastEMRIWaveforms
 ```
 
-3) If using GPUs, use pip to [install cupy](https://docs-cupy.chainer.org/en/stable/install.html). If you have cuda version 12.1, for example:
+If using GPUs, use pip to [install cupy](https://docs-cupy.chainer.org/en/stable/install.html). If you have cuda version 12.1, for example:
 
 ```
 pip install cupy-cuda12x
 ```
 
-4) Run install.
+Run install.
 
 ```
 python scripts/prebuild.py
 python setup.py install
 ```
 
-See [examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb) to play with the code.
+You are good to go! Check out the [example notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb) to play with the code!
 
+#### Additional info for installing
 
 When installing lapack and gsl, the setup file will default to assuming lib and include for both are in installed within the conda environment. To provide other lib and include directories you can provide command line options when installing. You can also remove usage of OpenMP.
 
@@ -174,7 +177,7 @@ Current Version: 1.5.5
 ## Authors/Developers
 
 * **Michael Katz**
-* Lorenzo Speri
+* **Lorenzo Speri**
 * Christian Chapman-Bird
 * Alvin J. K. Chua
 * Niels Warburton
