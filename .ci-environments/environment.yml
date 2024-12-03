@@ -6,7 +6,6 @@ dependencies:
   - python
   - lapack=3.6.1
   - wget
-  - gsl
   - hdf5
   - numpy=1.*
   - scipy

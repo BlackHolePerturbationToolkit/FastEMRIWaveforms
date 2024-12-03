@@ -116,6 +116,17 @@ CUDA_KERNEL
 void interp2D(double* z, const double* tx, int nx, const double* ty, int ny,
              double* c, int kx, int ky, const double* x, int mx,
              const double* y, int my, int num_indiv_c, int len_indiv_c)
+    
+    // x, y input coordinates
+    // mx, my number of input coordinates
+    // kx, ky = 3
+    // c coefficients
+    //  tx, ty positions of xknots, yknots
+    //  nx, ny number of xknots, yknots
+    //  z output array
+    // num_indiv_c is number of modes
+    // len_indiv_c is number of coefficients per xy grid
+     
 {
     #ifdef __CUDACC__
     extern __shared__  unsigned char shared_mem[];

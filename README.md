@@ -22,7 +22,7 @@ See [examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRI
 
 ### Prerequisites
 
-To install this software for CPU usage, you need [gsl >2.0](https://www.gnu.org/software/gsl/) , [lapack (3.6.1)](https://www.netlib.org/lapack/lug/node14.html), Python >3.4, wget, and NumPy. If you install lapack with conda, the new version (3.9) seems to not install the correct header files. Therefore, the lapack version must be 3.6.1. To run the examples, you will also need jupyter and matplotlib. We generally recommend installing everything, including gcc and g++ compilers, in the conda environment as is shown in the examples here. This generally helps avoid compilation and linking issues. If you use your own chosen compiler, you will need to make sure all necessary information is passed to the setup command (see below). You also may need to add information to the `setup.py` file.
+To install this software for CPU usage, you need [lapack (3.6.1)](https://www.netlib.org/lapack/lug/node14.html), Python >3.4, wget, and NumPy. If you install lapack with conda, the new version (3.9) seems to not install the correct header files. Therefore, the lapack version must be 3.6.1. To run the examples, you will also need jupyter and matplotlib. We generally recommend installing everything, including gcc and g++ compilers, in the conda environment as is shown in the examples here. This generally helps avoid compilation and linking issues. If you use your own chosen compiler, you will need to make sure all necessary information is passed to the setup command (see below). You also may need to add information to the `setup.py` file.
 
 To install this software for use with NVIDIA GPUs (compute capability >2.0), you need the [CUDA toolkit](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and [CuPy](https://cupy.chainer.org/). The CUDA toolkit must have cuda version >8.0. Be sure to properly install CuPy within the correct CUDA toolkit version. Make sure the nvcc binary is on `$PATH` or set it as the `CUDA_HOME` environment variable.
 
@@ -80,7 +80,7 @@ Please contact the developers if the installation does not work.
 1) Create a virtual environment.
 
 ```
-conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests rich matplotlib numba python=3.7
+conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests rich matplotlib numba python=3.7
 conda activate few_env
 ```
 
@@ -114,13 +114,12 @@ python setup.py install
 ```
 
 
-When installing lapack and gsl, the setup file will default to assuming lib and include for both are in installed within the conda environment. To provide other lib and include directories you can provide command line options when installing. You can also remove usage of OpenMP.
+When installing lapack, the setup file will default to assuming lib and include for both are in installed within the conda environment. To provide other lib and include directories you can provide command line options when installing. You can also remove usage of OpenMP.
 
 ```
 python setup.py --help
 usage: setup.py [-h] [--lapack_lib LAPACK_LIB]
                 [--lapack_include LAPACK_INCLUDE] [--lapack LAPACK]
-                [--gsl_lib GSL_LIB] [--gsl_include GSL_INCLUDE] [--gsl GSL]
                 [--ccbin CCBIN]
 
 optional arguments:
@@ -133,13 +132,6 @@ optional arguments:
                         includ, must also add lapack lib.
   --lapack LAPACK       Directory of both lapack lib and include. '/include'
                         and '/lib' will be added to the end of this string.
-  --gsl_lib GSL_LIB     Directory of the gsl lib. If you add gsl lib, must
-                        also add gsl include.
-  --gsl_include GSL_INCLUDE
-                        Directory of the gsl include. If you add gsl include,
-                        must also add gsl lib.
-  --gsl GSL             Directory of both gsl lib and include. '/include' and
-                        '/lib' will be added to the end of this string.
   --ccbin CCBIN         path/to/compiler to link with nvcc when installing
                         with CUDA.
 ```

@@ -8,7 +8,6 @@ dependencies:
   - lapack 
   - liblapacke
   - wget
-  - gsl
   - hdf5
   - numpy
   - scipy

@@ -137,30 +137,12 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--gsl_lib",
-    help="Directory of the gsl lib. If you add gsl lib, must also add gsl include.",
-)
-
-parser.add_argument(
-    "--gsl_include",
-    help="Directory of the gsl include. If you add gsl include, must also add gsl lib.",
-)
-
-parser.add_argument(
-    "--gsl",
-    help="Directory of both gsl lib and include. '/include' and '/lib' will be added to the end of this string.",
-)
-
-parser.add_argument(
     "--ccbin", help="path/to/compiler to link with nvcc when installing with CUDA."
 )
 
 args, unknown = parser.parse_known_args()
 
 for key1, key2 in [
-    ["--gsl_include", args.gsl_include],
-    ["--gsl_lib", args.gsl_lib],
-    ["--gsl", args.gsl],
     ["--lapack_include", args.lapack_include],
     ["--lapack_lib", args.lapack_lib],
     ["--lapack", args.lapack],
@@ -198,27 +180,11 @@ elif args.lapack_lib is not None or args.lapack_include is not None:
 else:
     add_lapack = False
 
-if args.gsl is not None:
-    add_gsl = True
-    gsl_include = [args.gsl + "/include"]
-    gsl_lib = [args.gsl + "/lib"]
-
-elif args.gsl_lib is not None or args.gsl_include is not None:
-    if None in [args.gsl_lib, args.gsl_include]:
-        raise ValueError("If you add the gsl lib or include, you must add both.")
-
-    add_gsl = True
-    gsl_include = [args.gsl_include]
-    gsl_lib = [args.gsl_lib]
-
-else:
-    add_gsl = False
-
 
 # if installing for CUDA, build Cython extensions for gpu modules
 if run_cuda_install:
     gpu_extension = dict(
-        libraries=["gsl", "gslcblas", "cudart", "cublas", "cusparse"],
+        libraries=["cudart", "cublas", "cusparse"],
         library_dirs=[CUDA["lib64"]],
         runtime_library_dirs=[CUDA["lib64"]],
         language="c++",
@@ -293,7 +259,7 @@ if run_cuda_install:
 
 # build all cpu modules
 cpu_extension = dict(
-    libraries=["gsl", "gslcblas", "lapack", "lapacke", "hdf5", "hdf5_hl"],
+    libraries=["lapack", "lapacke", "hdf5", "hdf5_hl"],
     language="c++",
     runtime_library_dirs=[],
     extra_compile_args={"gcc": ["-std=c++11"]},  # '-g'
@@ -308,14 +274,6 @@ if add_lapack:
         else cpu_extension["library_dirs"] + lapack_lib
     )
     cpu_extension["include_dirs"] += lapack_include
-
-if add_gsl:
-    cpu_extension["library_dirs"] = (
-        gsl_lib
-        if cpu_extension["library_dirs"] is None
-        else cpu_extension["library_dirs"] + gsl_lib
-    )
-    cpu_extension["include_dirs"] += gsl_include
 
 matmul_cpu_ext = Extension(
     "few.cutils.pymatmul_cpu",

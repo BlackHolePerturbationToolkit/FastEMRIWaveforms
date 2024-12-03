@@ -18,7 +18,7 @@
 #include "global.h"
 #include "interpolate.hh"
 #include <stdio.h>
-#include "Utility.hh"
+
 // adjust imports based on CUDA or not
 #ifdef __CUDACC__
 #include "cusparse.h"
