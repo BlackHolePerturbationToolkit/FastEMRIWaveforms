@@ -39,8 +39,20 @@ Activate the environment
 ```
 conda activate few_env
 pip install numpy Cython scipy tqdm jupyter ipython h5py requests rich matplotlib
+```
+
+Clone the repository and run the prebuild script:
+```
+git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
+cd FastEMRIWaveforms
+python scripts/prebuild.py
+```
+
+Then install:
+```
 pip install fastemriwaveforms
 ```
+
 You are good to go! Check out the [example notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb) to play with the code!
 
 #### Installation with setup.py and on GPU
