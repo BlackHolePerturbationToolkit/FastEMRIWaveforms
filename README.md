@@ -33,13 +33,13 @@ For Unix/Linux:
 conda create -n few_env -c conda-forge -y gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 python=3.10
 ```
 
-#### Installation with pip (only for CPU)
-
-Activate the environment
+Activate the environment and install other packages
 ```
 conda activate few_env
 pip install numpy Cython scipy tqdm jupyter ipython h5py requests rich matplotlib
 ```
+
+#### Installation with pip (only for CPU)
 
 Clone the repository and run the prebuild script:
 ```
