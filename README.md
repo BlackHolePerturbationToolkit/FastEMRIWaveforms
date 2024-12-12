@@ -22,7 +22,7 @@ Create a virtual environment.
 
 For an `arm64` architecture of new Macs such as the M1 chip:
 ```
-conda create -n few_env -c conda-forge -y clangxx_osx-arm64 clangxx_osx-64 wget gsl hdf5 python=3.12 openblas lapack liblapacke
+conda create -n few_env -c conda-forge -y clangxx_osx-arm64 clangxx_osx-arm64 wget gsl hdf5 python=3.12 openblas lapack liblapacke
 ```
 For an intel chip of MACOSX:
 ```
@@ -70,7 +70,9 @@ If using GPUs, use pip to [install cupy](https://docs-cupy.chainer.org/en/stable
 pip install cupy-cuda12x
 ```
 
-Run install.
+If installing on GPUs, you can check your cuda version with the command `nvcc --version`. Make sure that `nvcc` is on your path.
+
+Then run install.
 
 ```
 python scripts/prebuild.py
