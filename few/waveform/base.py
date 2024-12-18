@@ -249,7 +249,9 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
             p_temp = p[inds_in]
             e_temp = e[inds_in]
             Phi_phi_temp = Phi_phi[inds_in]
+            Phi_theta_temp = Phi_theta[inds_in]
             Phi_r_temp = Phi_r[inds_in]
+
             if self.normalize_amps:
                 amp_norm_temp = amp_norm[inds_in]
 
@@ -304,18 +306,40 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
             elif isinstance(mode_selection, list) or isinstance(
                 mode_selection, self.xp.ndarray
             ):
-                if self.normalize_amps:
-                    raise NotImplementedError(
-                        "Selecting a subset of modes with amplitude normalization is not currently supported."
-                    )
-
                 if len(mode_selection) == 0:
                     raise ValueError("If mode selection is a list, cannot be empty.")
 
-                # generate only the required modes with the amplitude module
-                teuk_modes = self.amplitude_generator(
-                    a, p_temp, e_temp, xI0, specific_modes=mode_selection
-                )
+                if self.normalize_amps:
+                    assert isinstance(mode_selection, list)
+
+                    # compute all amplitudes
+                    teuk_modes = self.xp.asarray(
+                        self.amplitude_generator(a, p_temp, e_temp, xI0)
+                    )
+
+                    amp_for_norm = self.xp.sum(
+                        self.xp.abs(
+                            self.xp.concatenate(
+                                [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
+                                axis=1,
+                            )
+                        )
+                        ** 2,
+                        axis=1,
+                    ) ** (1 / 2)
+
+                    keep_inds = self.xp.asarray([self.amplitude_generator.special_index_map[md] for md in mode_selection])
+
+                    # filter modes and normalize
+                    factor = amp_norm_temp / amp_for_norm
+                    teuk_modes = teuk_modes[:, keep_inds] * factor[:, np.newaxis]
+
+
+                else:
+                    # generate only the required modes with the amplitude module
+                    teuk_modes = self.amplitude_generator(
+                        a, p_temp, e_temp, xI0, specific_modes=mode_selection
+                    )
 
                 # unpack the dictionary
                 if isinstance(teuk_modes, dict):
@@ -410,7 +434,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
 
                 phase_t_in = self.inspiral_generator.inspiral_generator.integrator_t_cache
             else:
-                phase_information_in = [Phi_phi, Phi_theta, Phi_r]
+                phase_information_in = [Phi_phi_temp, Phi_theta_temp, Phi_r_temp]
                 if self.inspiral_generator.inspiral_generator.bool_integrate_backwards:
                     phase_information_in[0] += self.xp.array([Phi_phi[-1] + Phi_phi[0]])
                     phase_information_in[1] += self.xp.array([Phi_theta[-1] + Phi_theta[0]])

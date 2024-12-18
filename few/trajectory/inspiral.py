@@ -168,6 +168,23 @@ class EMRIInspiral(TrajectoryBase):
             citations_out += globals()[citation]
         return citations_out
 
+    @property
+    def trajectory(self):
+        return self.inspiral_generator.trajectory
+    
+    @property
+    def integrator_spline_t(self):
+        return self.inspiral_generator.integrator_t_cache
+
+    @property
+    def integrator_spline_coeff(self):
+        return self.inspiral_generator.integrator_spline_coeff
+
+    @property
+    def integrator_spline_phase_coeff(self):
+        return self.inspiral_generator.integrator_spline_coeff[:, 3:6] / self.inspiral_generator.epsilon
+
+
     def get_inspiral(
         self,
         M,

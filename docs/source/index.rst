@@ -16,6 +16,7 @@
    :maxdepth: 4
    :caption: Tutorial:
 
+   tutorial/Trajectory_tutorial
    tutorial/FastEMRIWaveforms_tutorial
    tutorial/Tutorial_FD_construction_single_mode
    tutorial/Tutorial_FrequencyDomain_Waveforms

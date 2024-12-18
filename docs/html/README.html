@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
@@ -6,19 +8,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>few: Fast EMRI Waveforms &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=01f34227"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -54,6 +52,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tutorial:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/Trajectory_tutorial.html">Fast self-forced trajectories</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html">Fast and Accurate EMRI Waveforms Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric">Full EMRI Waveforms in Schwarzschild Eccentric</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial/FastEMRIWaveforms_tutorial.html#Trajectory-Module">Trajectory Module</a></li>
@@ -141,8 +140,7 @@ properly cite specific modules.</p>
 notebook</a>.</p>
 <section id="prerequisites">
 <h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h3>
-<p>To install this software for CPU usage, you need <a class="reference external" href="https://www.gnu.org/software/gsl/">gsl
-&gt;2.0</a> , <a class="reference external" href="https://www.netlib.org/lapack/lug/node14.html">lapack
+<p>To install this software for CPU usage, you need <a class="reference external" href="https://www.netlib.org/lapack/lug/node14.html">lapack
 (3.6.1)</a>, Python &gt;3.4,
 wget, and NumPy. If you install lapack with conda, the new version (3.9)
 seems to not install the correct header files. Therefore, the lapack
@@ -165,7 +163,8 @@ will download automatically the first time they are needed. Files are
 generally under 10MB. However, there is a 100MB file needed for the slow
 waveform and the bicubic amplitude interpolation. This larger file will
 only download if you run either of those two modules. The files are
-hosted on <a class="reference external" href="https://zenodo.org/record/3981654#.XzS_KRNKjlw">Zenodo</a>.</p>
+hosted on the <a class="reference external" href="https://download.bhptoolkit.org/few/data">Black Hole Perturbation Toolkit Download
+Server</a>.</p>
 </section>
 <section id="installing">
 <h3>Installing<a class="headerlink" href="#installing" title="Link to this heading"></a></h3>
@@ -225,15 +224,20 @@ name is specified in previous step):</p></li>
 you do not have it.</p></li>
 <li><p>Create a virtual environment.</p></li>
 </ol>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">gcc_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gxx_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">wget</span> <span class="n">gsl</span> <span class="n">lapack</span><span class="o">=</span><span class="mf">3.6.1</span> <span class="n">hdf5</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">matplotlib</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">few_env</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">gcc_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">gxx_linux</span><span class="o">-</span><span class="mi">64</span> <span class="n">wget</span> <span class="n">lapack</span><span class="o">=</span><span class="mf">3.6.1</span> <span class="n">hdf5</span> <span class="n">numpy</span> <span class="n">Cython</span> <span class="n">scipy</span> <span class="n">tqdm</span> <span class="n">jupyter</span> <span class="n">ipython</span> <span class="n">h5py</span> <span class="n">requests</span> <span class="n">rich</span> <span class="n">matplotlib</span> <span class="n">numba</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
 <span class="n">conda</span> <span class="n">activate</span> <span class="n">few_env</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
-
-If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, matplotlib) with pip.
-</pre></div>
-</div>
+<ul class="simple">
+<li><p>If you want a faster install, you can install the python packages
+(numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, rich,
+numba, matplotlib) with pip.</p></li>
+<li><p>If on MACOSX with an Intel CPU, substitute <code class="docutils literal notranslate"><span class="pre">gcc_linux-64</span></code> and
+<code class="docutils literal notranslate"><span class="pre">gxx_linux-64</span></code> with <code class="docutils literal notranslate"><span class="pre">clang_osx-64</span></code> and <code class="docutils literal notranslate"><span class="pre">clangxx_osx-64</span></code>.</p></li>
+<li><p>For an ARM CPU (Apple Silicon) substitute these arguments with
+<code class="docutils literal notranslate"><span class="pre">clang_osx-arm64</span></code> and <code class="docutils literal notranslate"><span class="pre">clangxx_osx-arm64</span></code> instead, and replace
+<code class="docutils literal notranslate"><span class="pre">lapack=3.6.1</span></code> with <code class="docutils literal notranslate"><span class="pre">liblapacke</span></code>, <code class="docutils literal notranslate"><span class="pre">lapack</span></code> and <code class="docutils literal notranslate"><span class="pre">openblas</span></code>.</p></li>
+</ul>
 <ol class="arabic simple" start="2">
 <li><p>Clone the repository.</p></li>
 </ol>
@@ -250,19 +254,25 @@ you have cuda version 9.2, for example:</p></li>
 </pre></div>
 </div>
 <ol class="arabic simple" start="4">
+<li><p>Copy the prebuild script to the top-level directory of the repository
+and run it (simply running it will not work!):</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">scripts</span><span class="o">/</span><span class="n">prebuild</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="5">
 <li><p>Run install.</p></li>
 </ol>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
 </pre></div>
 </div>
-<p>When installing lapack and gsl, the setup file will default to assuming
-lib and include for both are in installed within the conda environment.
-To provide other lib and include directories you can provide command
-line options when installing. You can also remove usage of OpenMP.</p>
+<p>When installing lapack, the setup file will default to assuming lib and
+include for both are in installed within the conda environment. To
+provide other lib and include directories you can provide command line
+options when installing. You can also remove usage of OpenMP.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">help</span>
 <span class="n">usage</span><span class="p">:</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lapack_lib</span> <span class="n">LAPACK_LIB</span><span class="p">]</span>
                 <span class="p">[</span><span class="o">--</span><span class="n">lapack_include</span> <span class="n">LAPACK_INCLUDE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lapack</span> <span class="n">LAPACK</span><span class="p">]</span>
-                <span class="p">[</span><span class="o">--</span><span class="n">gsl_lib</span> <span class="n">GSL_LIB</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">gsl_include</span> <span class="n">GSL_INCLUDE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">gsl</span> <span class="n">GSL</span><span class="p">]</span>
                 <span class="p">[</span><span class="o">--</span><span class="n">ccbin</span> <span class="n">CCBIN</span><span class="p">]</span>
 
 <span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
@@ -275,13 +285,6 @@ line options when installing. You can also remove usage of OpenMP.</p>
                         <span class="n">includ</span><span class="p">,</span> <span class="n">must</span> <span class="n">also</span> <span class="n">add</span> <span class="n">lapack</span> <span class="n">lib</span><span class="o">.</span>
   <span class="o">--</span><span class="n">lapack</span> <span class="n">LAPACK</span>       <span class="n">Directory</span> <span class="n">of</span> <span class="n">both</span> <span class="n">lapack</span> <span class="n">lib</span> <span class="ow">and</span> <span class="n">include</span><span class="o">.</span> <span class="s1">&#39;/include&#39;</span>
                         <span class="ow">and</span> <span class="s1">&#39;/lib&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">added</span> <span class="n">to</span> <span class="n">the</span> <span class="n">end</span> <span class="n">of</span> <span class="n">this</span> <span class="n">string</span><span class="o">.</span>
-  <span class="o">--</span><span class="n">gsl_lib</span> <span class="n">GSL_LIB</span>     <span class="n">Directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">gsl</span> <span class="n">lib</span><span class="o">.</span> <span class="n">If</span> <span class="n">you</span> <span class="n">add</span> <span class="n">gsl</span> <span class="n">lib</span><span class="p">,</span> <span class="n">must</span>
-                        <span class="n">also</span> <span class="n">add</span> <span class="n">gsl</span> <span class="n">include</span><span class="o">.</span>
-  <span class="o">--</span><span class="n">gsl_include</span> <span class="n">GSL_INCLUDE</span>
-                        <span class="n">Directory</span> <span class="n">of</span> <span class="n">the</span> <span class="n">gsl</span> <span class="n">include</span><span class="o">.</span> <span class="n">If</span> <span class="n">you</span> <span class="n">add</span> <span class="n">gsl</span> <span class="n">include</span><span class="p">,</span>
-                        <span class="n">must</span> <span class="n">also</span> <span class="n">add</span> <span class="n">gsl</span> <span class="n">lib</span><span class="o">.</span>
-  <span class="o">--</span><span class="n">gsl</span> <span class="n">GSL</span>             <span class="n">Directory</span> <span class="n">of</span> <span class="n">both</span> <span class="n">gsl</span> <span class="n">lib</span> <span class="ow">and</span> <span class="n">include</span><span class="o">.</span> <span class="s1">&#39;/include&#39;</span> <span class="ow">and</span>
-                        <span class="s1">&#39;/lib&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">added</span> <span class="n">to</span> <span class="n">the</span> <span class="n">end</span> <span class="n">of</span> <span class="n">this</span> <span class="n">string</span><span class="o">.</span>
   <span class="o">--</span><span class="n">ccbin</span> <span class="n">CCBIN</span>         <span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">compiler</span> <span class="n">to</span> <span class="n">link</span> <span class="k">with</span> <span class="n">nvcc</span> <span class="n">when</span> <span class="n">installing</span>
                         <span class="k">with</span> <span class="n">CUDA</span><span class="o">.</span>
 </pre></div>
@@ -304,7 +307,8 @@ using the flag <code class="docutils literal notranslate"><span class="pre">--cc
 <h2>Running the Tests<a class="headerlink" href="#running-the-tests" title="Link to this heading"></a></h2>
 <p>In the main directory of the package run in the terminal (if you run
 <a class="reference external" href="install.sh">install.sh</a> with defaults, the tests will be performed):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">unittest</span> <span class="n">discover</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">tests</span><span class="o">/</span>
+<span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">unittest</span> <span class="n">discover</span>
 </pre></div>
 </div>
 </section>
@@ -499,10 +503,10 @@ development of FEW.</p>
 <section id="acknowledgments">
 <h2>Acknowledgments<a class="headerlink" href="#acknowledgments" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p>This research resulting in this code was supported by National
-Science Foundation under grant DGE-0948017 and the Chateaubriand
-Fellowship from the Office for Science &amp; Technology of the Embassy of
-France in the United States.</p></li>
+<li><p>This research resulting in this code was supported by National Science
+Foundation under grant DGE-0948017 and the Chateaubriand Fellowship
+from the Office for Science &amp; Technology of the Embassy of France in
+the United States.</p></li>
 <li><p>It was also supported in part through the computational resources and
 staff contributions provided for the Quest/Grail high performance
 computing facility at Northwestern University.</p></li>

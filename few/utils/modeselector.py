@@ -199,19 +199,19 @@ class ModeSelector(ParallelModuleBase):
         zero_modes_mask = (modeinds[1]==0)*(modeinds[2]==0)
         
         # get the power contribution of each mode including m < 0
-        if self.sensitivity_fn is None:
-            power = (
-                self.xp.abs(
-                    self.xp.concatenate(
-                        [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])], axis=1
-                    )
-                    * ylms
+        # if self.sensitivity_fn is None:
+        power = (
+            self.xp.abs(
+                self.xp.concatenate(
+                    [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])], axis=1
                 )
-                ** 2
+                * ylms
             )
-        
+            ** 2
+        )
+    
         # if noise weighting
-        elif self.sensitivity_fn is not None:
+        if self.sensitivity_fn is not None:
             
             if fund_freq_args is None:
                 raise ValueError(
@@ -221,7 +221,7 @@ class ModeSelector(ParallelModuleBase):
             M = fund_freq_args[0]
             Msec = M * MTSUN_SI
 
-            a_fr, p_fr, e_fr, x_fr = fund_freq_args[1:-1]
+            a_fr, p_fr, e_fr, x_fr = fund_freq_args[1:]
 
             if self.use_gpu:  # fundamental frequencies only defined on CPU
                 p_fr = p_fr.get()
@@ -251,39 +251,7 @@ class ModeSelector(ParallelModuleBase):
             freqs_in = self.xp.abs(freqs)
             PSD = self.sensitivity_fn(freqs_in.flatten()).reshape(freqs_shape)
 
-            # weight by PSD, only for non zero modes    
-            cs = CubicSplineInterpolant(fund_freq_args[-1], freqs[:,~zero_modes_mask].T, use_gpu=self.use_gpu)
-            fdot = cs(fund_freq_args[-1],deriv_order=1)
-            fddot = cs(fund_freq_args[-1],deriv_order=2)
-            arg_1 = 2*np.pi*fdot**3 / (3*fddot**2)
-            try:
-                arg_1_cpu = arg_1.get()
-            except:
-                arg_1_cpu = arg_1
-            spa_func = self.xp.asarray(SPAFunc(arg_1_cpu))
-            fact = -1*fdot/self.xp.abs(fddot) * spa_func * 2./np.sqrt(3) / self.xp.sqrt(arg_1+0j)
- 
-
-            ### after square
-            power = (
-                self.xp.abs(
-                    self.xp.concatenate(
-                        [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])], axis=1
-                    )
-                    * ylms)
-                **2
-            )
-            power[:,~zero_modes_mask] /= PSD[:,~zero_modes_mask] / self.xp.abs(fact).T
-
-            ### before square
-            # amplitudes = (
-            #     self.xp.concatenate(
-            #         [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])], axis=1
-            #     )
-            #     * ylms
-            # )
-            # power = self.xp.abs(amplitudes[:,~zero_modes_mask] / fact.T)**2
-            # power /= PSD[:,~zero_modes_mask]
+            power /= PSD
 
         # sort the power for a cumulative summation
         inds_sort = self.xp.argsort(power, axis=1)[:, ::-1]

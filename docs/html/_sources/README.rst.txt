@@ -50,8 +50,7 @@ notebook <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob
 Prerequisites
 ~~~~~~~~~~~~~
 
-To install this software for CPU usage, you need `gsl
->2.0 <https://www.gnu.org/software/gsl/>`__ , `lapack
+To install this software for CPU usage, you need `lapack
 (3.6.1) <https://www.netlib.org/lapack/lug/node14.html>`__, Python >3.4,
 wget, and NumPy. If you install lapack with conda, the new version (3.9)
 seems to not install the correct header files. Therefore, the lapack
@@ -76,7 +75,8 @@ will download automatically the first time they are needed. Files are
 generally under 10MB. However, there is a 100MB file needed for the slow
 waveform and the bicubic amplitude interpolation. This larger file will
 only download if you run either of those two modules. The files are
-hosted on `Zenodo <https://zenodo.org/record/3981654#.XzS_KRNKjlw>`__.
+hosted on the `Black Hole Perturbation Toolkit Download
+Server <https://download.bhptoolkit.org/few/data>`__.
 
 Installing
 ~~~~~~~~~~
@@ -146,14 +146,17 @@ More Customized Installation (legacy)
 
 ::
 
-   conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
+   conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests rich matplotlib numba python=3.7
    conda activate few_env
 
-::
-
-   If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
-
-   If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, matplotlib) with pip.
+- If you want a faster install, you can install the python packages
+  (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, rich,
+  numba, matplotlib) with pip.
+- If on MACOSX with an Intel CPU, substitute ``gcc_linux-64`` and
+  ``gxx_linux-64`` with ``clang_osx-64`` and ``clangxx_osx-64``.
+- For an ARM CPU (Apple Silicon) substitute these arguments with
+  ``clang_osx-arm64`` and ``clangxx_osx-arm64`` instead, and replace
+  ``lapack=3.6.1`` with ``liblapacke``, ``lapack`` and ``openblas``.
 
 2) Clone the repository.
 
@@ -170,23 +173,29 @@ More Customized Installation (legacy)
 
    pip install cupy-cuda92
 
-4) Run install.
+4) Copy the prebuild script to the top-level directory of the repository
+   and run it (simply running it will not work!):
+
+::
+
+   python scripts/prebuild.py
+
+5) Run install.
 
 ::
 
    python setup.py install
 
-When installing lapack and gsl, the setup file will default to assuming
-lib and include for both are in installed within the conda environment.
-To provide other lib and include directories you can provide command
-line options when installing. You can also remove usage of OpenMP.
+When installing lapack, the setup file will default to assuming lib and
+include for both are in installed within the conda environment. To
+provide other lib and include directories you can provide command line
+options when installing. You can also remove usage of OpenMP.
 
 ::
 
    python setup.py --help
    usage: setup.py [-h] [--lapack_lib LAPACK_LIB]
                    [--lapack_include LAPACK_INCLUDE] [--lapack LAPACK]
-                   [--gsl_lib GSL_LIB] [--gsl_include GSL_INCLUDE] [--gsl GSL]
                    [--ccbin CCBIN]
 
    optional arguments:
@@ -199,13 +208,6 @@ line options when installing. You can also remove usage of OpenMP.
                            includ, must also add lapack lib.
      --lapack LAPACK       Directory of both lapack lib and include. '/include'
                            and '/lib' will be added to the end of this string.
-     --gsl_lib GSL_LIB     Directory of the gsl lib. If you add gsl lib, must
-                           also add gsl include.
-     --gsl_include GSL_INCLUDE
-                           Directory of the gsl include. If you add gsl include,
-                           must also add gsl lib.
-     --gsl GSL             Directory of both gsl lib and include. '/include' and
-                           '/lib' will be added to the end of this string.
      --ccbin CCBIN         path/to/compiler to link with nvcc when installing
                            with CUDA.
 
@@ -233,6 +235,7 @@ In the main directory of the package run in the terminal (if you run
 
 ::
 
+   cd tests/
    python -m unittest discover
 
 Contributing
@@ -265,20 +268,20 @@ Current Version: 1.5.5
 Authors/Developers
 ------------------
 
--  **Michael Katz**
--  Lorenzo Speri
--  Christian Chapman-Bird
--  Alvin J. K. Chua
--  Niels Warburton
--  Scott Hughes
+- **Michael Katz**
+- Lorenzo Speri
+- Christian Chapman-Bird
+- Alvin J. K. Chua
+- Niels Warburton
+- Scott Hughes
 
 Contibutors
 ~~~~~~~~~~~
 
--  Philip Lynch
--  Soichiro Isoyama
--  Ryuichi Fujita
--  Monica Rizzo
+- Philip Lynch
+- Soichiro Isoyama
+- Ryuichi Fujita
+- Monica Rizzo
 
 License
 -------
@@ -433,10 +436,10 @@ development of FEW.
 Acknowledgments
 ---------------
 
--  This research resulting in this code was supported by National
-   Science Foundation under grant DGE-0948017 and the Chateaubriand
-   Fellowship from the Office for Science & Technology of the Embassy of
-   France in the United States.
--  It was also supported in part through the computational resources and
-   staff contributions provided for the Quest/Grail high performance
-   computing facility at Northwestern University.
+- This research resulting in this code was supported by National Science
+  Foundation under grant DGE-0948017 and the Chateaubriand Fellowship
+  from the Office for Science & Technology of the Embassy of France in
+  the United States.
+- It was also supported in part through the computational resources and
+  staff contributions provided for the Quest/Grail high performance
+  computing facility at Northwestern University.

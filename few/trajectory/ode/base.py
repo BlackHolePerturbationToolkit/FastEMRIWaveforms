@@ -19,6 +19,7 @@ class ODEBase:
     """
     def __init__(self, *args, **kwargs):
         self.file_dir = None
+        self.num_add_args = 0
 
     @property
     def convert_Y(self):
@@ -79,20 +80,15 @@ class ODEBase:
         """
         return 6
 
-    @property
-    def num_add_args(self):
-        """
-        An integer describing the number of additional arguments supplied to the ODE.
-        These quantities are assumed to be constant during integration.
-        Defaults to 0.
-        """
-        return 0
-
-    def add_fixed_parameters(self, M: float, mu: float, a: float, integrate_backwards: bool = False, additional_args=None):
+    def add_fixed_parameters(self, M: float, mu: float, a: float, additional_args=None):
         self.epsilon = mu / M
         self.a = a
-        self.integrate_backwards = integrate_backwards
         self.additional_args = additional_args
+
+        if additional_args is None:
+            self.num_add_args = 0
+        else:
+            self.num_add_args = len(additional_args)
 
     def evaluate_rhs_arr(self, y, **kwargs):
         return self.evaluate_rhs(*y, **kwargs)
@@ -100,17 +96,17 @@ class ODEBase:
     def evaluate_rhs(self, *args, **kwargs) -> NotImplementedError:
         raise NotImplementedError
 
-    def __call__(self, *args: list[float], out: Optional[np.ndarray] = None, **kwargs: Optional[dict]) -> np.ndarray:
+    def __call__(self, *args: list[float], out: Optional[np.ndarray] = None, scale_by_eps=False, **kwargs: Optional[dict]) -> np.ndarray:
         derivs = self.evaluate_rhs_arr(*args, **kwargs)
         if out is None:
             out = np.asarray(derivs)
         else:
             out[:] = derivs
 
-        if self.integrate_backwards:
-            out *= -1
+        if scale_by_eps:
+            out[:3] *= self.epsilon
 
-        return derivs
+        return out
 
     def __reduce__(self):
         #  to ensure pickleability of the trajectory & waveform modules

@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="../">
 <head>
@@ -6,22 +8,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Single Mode Frequency Domain Waveform Construction &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../_static/jquery.js?v=5d32c60e"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../_static/documentation_options.js?v=01f34227"></script>
-        <script src="../_static/doctools.js?v=888ff710"></script>
-        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -59,6 +57,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tutorial:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Trajectory_tutorial.html">Fast self-forced trajectories</a></li>
 <li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html">Fast and Accurate EMRI Waveforms Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric">Full EMRI Waveforms in Schwarzschild Eccentric</a></li>
 <li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html#Trajectory-Module">Trajectory Module</a></li>
@@ -121,15 +120,12 @@
   <section id="Single-Mode-Frequency-Domain-Waveform-Construction">
 <h1>Single Mode Frequency Domain Waveform Construction<a class="headerlink" href="#Single-Mode-Frequency-Domain-Waveform-Construction" title="Link to this heading"></a></h1>
 <p>By: Lorenzo Speri and Michael L. Katz</p>
-<p>Here we provide the basic ideas of how to construct a Frequency Domain EMRI Waveform for a single harmonic. Note that in this noteboook only the monotonic modes can be calculated. The full frequency domain waveform is build from performing a method similar to what is presented here for each harmonic with some adjustments for harmonics with turnover in the time-frequency relation.</p>
+<p>Here we provide the basic ideas of how to construct a Frequency Domain EMRI Waveform for a single harmonic. Note that in this notebook, only the monotonic modes can be calculated. The full frequency domain waveform is built by performing a method similar to what is presented here for each harmonic, with some adjustments for harmonics that experience a change in the sign of their frequency derivative during the interval (which we refer to as “turn-over modes”).</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">os</span>
-
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="o">%</span><span class="k">matplotlib</span> inline
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
@@ -137,12 +133,12 @@
 <span class="kn">from</span> <span class="nn">few.waveform</span> <span class="kn">import</span> <span class="n">FastSchwarzschildEccentricFlux</span>
 <span class="kn">from</span> <span class="nn">few.utils.utility</span> <span class="kn">import</span> <span class="n">get_fundamental_frequencies</span>
 <span class="kn">from</span> <span class="nn">few.utils.ylm</span> <span class="kn">import</span> <span class="n">GetYlms</span>
-<span class="kn">from</span> <span class="nn">few.summation.interpolatedmodesum</span> <span class="kn">import</span> <span class="n">CubicSplineInterpolant</span>
-<span class="kn">from</span> <span class="nn">few.summation.interpolatedmodesum</span> <span class="kn">import</span> <span class="n">InterpolatedModeSum</span>
+<span class="kn">from</span> <span class="nn">few.summation.interpolatedmodesum</span> <span class="kn">import</span> <span class="n">CubicSplineInterpolant</span><span class="p">,</span> <span class="n">InterpolatedModeSum</span>
 <span class="kn">from</span> <span class="nn">few.utils.constants</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">few.trajectory.inspiral</span> <span class="kn">import</span> <span class="n">EMRIInspiral</span>
+<span class="kn">from</span> <span class="nn">few.trajectory.ode.flux</span> <span class="kn">import</span> <span class="n">SchwarzEccFlux</span>
 
-<span class="n">traj</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="s2">&quot;SchwarzEccFlux&quot;</span><span class="p">)</span>
+<span class="n">traj</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">SchwarzEccFlux</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -217,7 +213,7 @@
 <span class="c1"># get amplitudes along trajectory</span>
 <span class="n">amp</span> <span class="o">=</span> <span class="n">RomanAmplitude</span><span class="p">()</span>
 
-<span class="n">teuk_modes</span> <span class="o">=</span> <span class="n">amp</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">specific_modes</span><span class="o">=</span><span class="n">specific_modes</span><span class="p">)</span>
+<span class="n">teuk_modes</span> <span class="o">=</span> <span class="n">amp</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">specific_modes</span><span class="o">=</span><span class="n">specific_modes</span><span class="p">)</span>
 
 <span class="c1"># get ylms</span>
 <span class="n">ylms</span> <span class="o">=</span> <span class="n">ylm_gen</span><span class="p">(</span><span class="n">amp</span><span class="o">.</span><span class="n">unique_l</span><span class="p">,</span> <span class="n">amp</span><span class="o">.</span><span class="n">unique_m</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()[</span><span class="n">amp</span><span class="o">.</span><span class="n">inverse_lm</span><span class="p">]</span>
@@ -362,7 +358,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-frequency range 0.0016982910091182908 0.003941734545312092
+frequency range 0.001698291009120767 0.003941805114247161
 </pre></div></div>
 </div>
 </section>
@@ -407,7 +403,7 @@ frequency range 0.0016982910091182908 0.003941734545312092
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-(86,)
+(49,)
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
@@ -453,7 +449,7 @@ frequency range 0.0016982910091182908 0.003941734545312092
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0x184eb8dc0&gt;
+&lt;matplotlib.legend.Legend at 0x16325fcd0&gt;
 </pre></div></div>
 </div>
 <div class="nboutput docutils container">
@@ -510,7 +506,7 @@ frequency range 0.0016982910091182908 0.003941734545312092
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-(0.0016982910091182908, 0.003941734545312092)
+(np.float64(0.001698291009120767), np.float64(0.003941805114247161))
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -525,7 +521,7 @@ frequency range 0.0016982910091182908 0.003941734545312092
 <h2>Time vs Frequency Domain<a class="headerlink" href="#Time-vs-Frequency-Domain" title="Link to this heading"></a></h2>
 <p>Here we compare the Frequency Domain waveform and compare it against the FFT of the time domain waveform. The agreement is quite good but we need to change some signs due to the FFT conventions. Try out different parameters and modes :)</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">special</span>
@@ -570,7 +566,7 @@ frequency range 0.0016982910091182908 0.003941734545312092
 <span class="k">def</span> <span class="nf">FD_waveform</span><span class="p">(</span><span class="n">freq</span><span class="p">):</span>
 
     <span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">Phi_phi</span><span class="p">,</span> <span class="n">Phi_theta</span><span class="p">,</span> <span class="n">Phi_r</span> <span class="o">=</span> <span class="n">traj</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">)</span>
-    <span class="n">teuk_modes</span> <span class="o">=</span> <span class="n">amp</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span><span class="n">specific_modes</span><span class="o">=</span><span class="n">specific_modes</span><span class="p">)</span>
+    <span class="n">teuk_modes</span> <span class="o">=</span> <span class="n">amp</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">specific_modes</span><span class="o">=</span><span class="n">specific_modes</span><span class="p">)</span>
 
     <span class="c1"># Phi_mn (t)</span>
     <span class="n">phase_evolution</span> <span class="o">=</span> <span class="n">m_sel</span><span class="o">*</span><span class="n">Phi_phi</span> <span class="o">+</span> <span class="n">n_sel</span><span class="o">*</span><span class="n">Phi_r</span>
@@ -646,7 +642,7 @@ frequency range 0.0016982910091182908 0.003941734545312092
 </div>
 <p>Compare amplitudes</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot</span>
@@ -673,7 +669,7 @@ frequency range 0.0016982910091182908 0.003941734545312092
 </div>
 <p>Real part</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Nhalf</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">freq_fft</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
@@ -700,7 +696,7 @@ frequency range 0.0016982910091182908 0.003941734545312092
 </div>
 <p>Imaginary part</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot</span>
@@ -723,6 +719,14 @@ frequency range 0.0016982910091182908 0.003941734545312092
 </div>
 <div class="output_area docutils container">
 <img alt="../_images/tutorial_Tutorial_FD_construction_single_mode_32_0.png" src="../_images/tutorial_Tutorial_FD_construction_single_mode_32_0.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
 </div>
 </div>
 </section>

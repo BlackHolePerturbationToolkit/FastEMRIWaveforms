@@ -37,3 +37,11 @@ Analysis and Other Tools
     :members:
     :show-inheritance:
     :inherited-members:
+
+PN Parameter Mapping Utilities
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: few.utils.pn_map
+    :members:
+    :show-inheritance:
+    :inherited-members:

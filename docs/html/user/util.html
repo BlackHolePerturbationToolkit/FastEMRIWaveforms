@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="../">
 <head>
@@ -6,21 +8,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Utilities &mdash; few: Fast EMRI Waveforms 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="../_static/jquery.js?v=5d32c60e"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../_static/documentation_options.js?v=01f34227"></script>
-        <script src="../_static/doctools.js?v=888ff710"></script>
-        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -57,19 +55,26 @@
 <li class="toctree-l2"><a class="reference internal" href="#module-few.utils.modeselector">Mode Filtering</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.modeselector.ModeSelector"><code class="docutils literal notranslate"><span class="pre">ModeSelector</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.gpu_capability"><code class="docutils literal notranslate"><span class="pre">ModeSelector.gpu_capability</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.is_predictive"><code class="docutils literal notranslate"><span class="pre">ModeSelector.is_predictive</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.attributes_ModeSelector"><code class="docutils literal notranslate"><span class="pre">ModeSelector.attributes_ModeSelector()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.xp"><code class="docutils literal notranslate"><span class="pre">ModeSelector.xp</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.num_m_zero_up"><code class="docutils literal notranslate"><span class="pre">ModeSelector.num_m_zero_up</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.num_m_1_up"><code class="docutils literal notranslate"><span class="pre">ModeSelector.num_m_1_up</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.num_m0"><code class="docutils literal notranslate"><span class="pre">ModeSelector.num_m0</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.sensitivity_fn"><code class="docutils literal notranslate"><span class="pre">ModeSelector.sensitivity_fn</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.citation"><code class="docutils literal notranslate"><span class="pre">ModeSelector.citation</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.__call__"><code class="docutils literal notranslate"><span class="pre">ModeSelector.__call__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.adjust_gpu_usage"><code class="docutils literal notranslate"><span class="pre">ModeSelector.adjust_gpu_usage()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.attributes_ParallelModuleBase"><code class="docutils literal notranslate"><span class="pre">ModeSelector.attributes_ParallelModuleBase()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.use_gpu"><code class="docutils literal notranslate"><span class="pre">ModeSelector.use_gpu</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">ModeSelector.xp</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.ModeSelector.sanity_check_gpu"><code class="docutils literal notranslate"><span class="pre">ModeSelector.sanity_check_gpu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">ModeSelector.xp</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.modeselector.NeuralModeSelector"><code class="docutils literal notranslate"><span class="pre">NeuralModeSelector</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.NeuralModeSelector.gpu_capability"><code class="docutils literal notranslate"><span class="pre">NeuralModeSelector.gpu_capability</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.NeuralModeSelector.is_predictive"><code class="docutils literal notranslate"><span class="pre">NeuralModeSelector.is_predictive</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.NeuralModeSelector.attributes_ModeSelector"><code class="docutils literal notranslate"><span class="pre">NeuralModeSelector.attributes_ModeSelector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.NeuralModeSelector.adjust_gpu_usage"><code class="docutils literal notranslate"><span class="pre">NeuralModeSelector.adjust_gpu_usage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.NeuralModeSelector.attributes_ParallelModuleBase"><code class="docutils literal notranslate"><span class="pre">NeuralModeSelector.attributes_ParallelModuleBase()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.NeuralModeSelector.citation"><code class="docutils literal notranslate"><span class="pre">NeuralModeSelector.citation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.NeuralModeSelector.sanity_check_gpu"><code class="docutils literal notranslate"><span class="pre">NeuralModeSelector.sanity_check_gpu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">NeuralModeSelector.xp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few.utils.modeselector.NeuralModeSelector.__call__"><code class="docutils literal notranslate"><span class="pre">NeuralModeSelector.__call__()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -78,14 +83,12 @@
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.ylm.GetYlms"><code class="docutils literal notranslate"><span class="pre">GetYlms</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.gpu_capability"><code class="docutils literal notranslate"><span class="pre">GetYlms.gpu_capability</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.attributes_GetYlms"><code class="docutils literal notranslate"><span class="pre">GetYlms.attributes_GetYlms()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.xp"><code class="docutils literal notranslate"><span class="pre">GetYlms.xp</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.__call__"><code class="docutils literal notranslate"><span class="pre">GetYlms.__call__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.adjust_gpu_usage"><code class="docutils literal notranslate"><span class="pre">GetYlms.adjust_gpu_usage()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.attributes_ParallelModuleBase"><code class="docutils literal notranslate"><span class="pre">GetYlms.attributes_ParallelModuleBase()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.use_gpu"><code class="docutils literal notranslate"><span class="pre">GetYlms.use_gpu</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">GetYlms.xp</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.citation"><code class="docutils literal notranslate"><span class="pre">GetYlms.citation</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#few.utils.ylm.GetYlms.sanity_check_gpu"><code class="docutils literal notranslate"><span class="pre">GetYlms.sanity_check_gpu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5"><code class="docutils literal notranslate"><span class="pre">GetYlms.xp</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -108,10 +111,11 @@
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_overlap"><code class="docutils literal notranslate"><span class="pre">get_overlap()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_mismatch"><code class="docutils literal notranslate"><span class="pre">get_mismatch()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.p_to_y"><code class="docutils literal notranslate"><span class="pre">p_to_y()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.kerr_p_to_u"><code class="docutils literal notranslate"><span class="pre">kerr_p_to_u()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.ELQ_to_pex"><code class="docutils literal notranslate"><span class="pre">ELQ_to_pex()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_fundamental_frequencies"><code class="docutils literal notranslate"><span class="pre">get_fundamental_frequencies()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_fundamental_frequencies_spin_corrections"><code class="docutils literal notranslate"><span class="pre">get_fundamental_frequencies_spin_corrections()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_kerr_geo_constants_of_motion"><code class="docutils literal notranslate"><span class="pre">get_kerr_geo_constants_of_motion()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.xI_to_Y"><code class="docutils literal notranslate"><span class="pre">xI_to_Y()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.Y_to_xI"><code class="docutils literal notranslate"><span class="pre">Y_to_xI()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_separatrix"><code class="docutils literal notranslate"><span class="pre">get_separatrix()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_at_t"><code class="docutils literal notranslate"><span class="pre">get_at_t()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_p_at_t"><code class="docutils literal notranslate"><span class="pre">get_p_at_t()</span></code></a></li>
@@ -120,7 +124,11 @@
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.wrapper"><code class="docutils literal notranslate"><span class="pre">wrapper()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.pointer_adjust"><code class="docutils literal notranslate"><span class="pre">pointer_adjust()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.cuda_set_device"><code class="docutils literal notranslate"><span class="pre">cuda_set_device()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.get_ode_function_options"><code class="docutils literal notranslate"><span class="pre">get_ode_function_options()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pn-parameter-mapping-utilities">PN Parameter Mapping Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.pn_map.Y_to_xI"><code class="docutils literal notranslate"><span class="pre">Y_to_xI()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.pn_map.xI_to_Y"><code class="docutils literal notranslate"><span class="pre">xI_to_Y()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -129,6 +137,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tutorial:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/Trajectory_tutorial.html">Fast self-forced trajectories</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/FastEMRIWaveforms_tutorial.html">Fast and Accurate EMRI Waveforms Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/FastEMRIWaveforms_tutorial.html#Full-EMRI-Waveforms-in-Schwarzschild-Eccentric">Full EMRI Waveforms in Schwarzschild Eccentric</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial/FastEMRIWaveforms_tutorial.html#Trajectory-Module">Trajectory Module</a></li>
@@ -184,7 +193,7 @@
 <span id="mode-filtering"></span><h2>Mode Filtering<a class="headerlink" href="#module-few.utils.modeselector" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="few.utils.modeselector.ModeSelector">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.modeselector.</span></span><span class="sig-name descname"><span class="pre">ModeSelector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m0mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensitivity_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.modeselector.</span></span><span class="sig-name descname"><span class="pre">ModeSelector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_arr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_arr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_arr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensitivity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParallelModuleBase</span></code></a></p>
 <p>Filter teukolsky amplitudes based on power contribution.</p>
 <p>This module takes teukolsky modes, combines them with their associated ylms,
@@ -200,9 +209,9 @@ will in order of <span class="math notranslate nohighlight">\(m=0\)</span>, <spa
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>m0mask</strong> (<em>1D bool xp.ndarray</em>) – This mask highlights which modes have
-<span class="math notranslate nohighlight">\(m=0\)</span>. Value is False if <span class="math notranslate nohighlight">\(m=0\)</span>, True if not.
-This only includes <span class="math notranslate nohighlight">\(m\geq0\)</span>.</p></li>
+<li><p><strong>l_arr</strong> (<em>1D int self.xp.ndarray</em>) – The l-mode indices for each mode index.</p></li>
+<li><p><strong>m_arr</strong> (<em>1D int self.xp.ndarray</em>) – The m-mode indices for each mode index.</p></li>
+<li><p><strong>n_arr</strong> (<em>1D int self.xp.ndarray</em>) – The n-mode indices for each mode index.</p></li>
 <li><p><strong>sensitivity_fn</strong> (<em>object</em><em>, </em><em>optional</em>) – Sensitivity curve function that takes
 a frequency (Hz) array as input and returns the Power Spectral Density (PSD)
 of the sensitivity curve. Default is None. If this is not none, this
@@ -219,6 +228,12 @@ Default is {}.</p></li>
 <dt class="sig sig-object py" id="few.utils.modeselector.ModeSelector.gpu_capability">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gpu_capability</span></span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.gpu_capability" title="Link to this definition"></a></dt>
 <dd><p>Confirms GPU capability</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="few.utils.modeselector.ModeSelector.is_predictive">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_predictive</span></span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.is_predictive" title="Link to this definition"></a></dt>
+<dd><p>Whether this mode selector should be used before or after amplitude generation</p>
 </dd></dl>
 
 <dl class="py method">
@@ -284,7 +299,7 @@ Default is {}.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.utils.modeselector.ModeSelector.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">teuk_modes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modeinds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fund_freq_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.__call__" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">teuk_modes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modeinds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fund_freq_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.__call__" title="Link to this definition"></a></dt>
 <dd><p>Call to sort and filer teukolsky modes.</p>
 <p>This is the call function that takes the teukolsky modes, ylms,
 mode indices and fractional accuracy of the total power and returns
@@ -292,20 +307,20 @@ filtered teukolsky modes and ylms.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>teuk_modes</strong> (<em>2D complex128 xp.ndarray</em>) – Complex teukolsky amplitudes
+<li><p><strong>teuk_modes</strong> (<em>2D complex128 self.xp.ndarray</em>) – Complex teukolsky amplitudes
 from the amplitude modules.
 Shape: (number of trajectory points, number of modes).</p></li>
-<li><p><strong>ylms</strong> (<em>1D complex128 xp.ndarray</em>) – Array of ylm values for each mode,
+<li><p><strong>ylms</strong> (<em>1D complex128 self.xp.ndarray</em>) – Array of ylm values for each mode,
 including m&lt;0. Shape is (num of m==0,) + (num of m&gt;0,)
 + (num of m&lt;0). Number of m&lt;0 and m&gt;0 is the same, but they are
 ordered as (m==0) first then m&gt;0 then m&lt;0.</p></li>
-<li><p><strong>modeinds</strong> (<em>list</em><em> of </em><em>int xp.ndarrays</em>) – List containing the mode index arrays. If in an
+<li><p><strong>modeinds</strong> (<em>list</em><em> of </em><em>int self.xp.ndarrays</em>) – List containing the mode index arrays. If in an
 equatorial model, need <span class="math notranslate nohighlight">\((l,m,n)\)</span> arrays. If generic,
 <span class="math notranslate nohighlight">\((l,m,k,n)\)</span> arrays. e.g. [l_arr, m_arr, n_arr].</p></li>
 <li><p><strong>fund_freq_args</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Args necessary to determine
 fundamental frequencies along trajectory. The tuple will represent
 <span class="math notranslate nohighlight">\((M, a, e, p, \cos\iota)\)</span> where the large black hole mass (<span class="math notranslate nohighlight">\(M\)</span>)
-and spin (<span class="math notranslate nohighlight">\(a\)</span>) are scalar and the other three quantities are xp.ndarrays.
+and spin (<span class="math notranslate nohighlight">\(a\)</span>) are scalar and the other three quantities are self.xp.ndarrays.
 This must be provided if sensitivity weighting is used. Default is None.</p></li>
 <li><p><strong>eps</strong> (<em>double</em><em>, </em><em>optional</em>) – Fractional accuracy of the total power used
 to determine the contributing modes. Lowering this value will
@@ -322,7 +337,7 @@ acceptable loss). Default that gives good mismatch qualities is
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.utils.modeselector.ModeSelector.adjust_gpu_usage">
-<span class="sig-name descname"><span class="pre">adjust_gpu_usage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.adjust_gpu_usage" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">adjust_gpu_usage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.adjust_gpu_usage" title="Link to this definition"></a></dt>
 <dd><p>Adjust all inputs for gpu usage</p>
 <p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
 so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
@@ -367,7 +382,7 @@ waveform generator.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.utils.modeselector.ModeSelector.sanity_check_gpu">
-<span class="sig-name descname"><span class="pre">sanity_check_gpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.sanity_check_gpu" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">sanity_check_gpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.ModeSelector.sanity_check_gpu" title="Link to this definition"></a></dt>
 <dd><p>Check if this class has GPU capability</p>
 <p>If the user is requesting GPU usage, this will confirm the class has
 GPU capabilites.</p>
@@ -382,6 +397,192 @@ GPU capabilites.</p>
 </dl>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="id1">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">xp</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">object</span></em><a class="headerlink" href="#id1" title="Link to this definition"></a></dt>
+<dd><p>Cupy or Numpy</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.modeselector.</span></span><span class="sig-name descname"><span class="pre">NeuralModeSelector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode_selector_location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tuples'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_inds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximise_over_theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParallelModuleBase</span></code></a></p>
+<p>Filter teukolsky amplitudes based on power contribution.</p>
+<p>This module uses a combination of a pre-computed mask and a feed-forward neural
+network to predict the mode content of the waveform given its parameters. Therefore,
+the results will vary compared to manually computing the mode selection, but it should be
+very accurate especially for the stronger modes.</p>
+<p>The mode filtering is a major contributing factor to the speed of these
+waveforms as it removes large numbers of useles modes from the final
+summation calculation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l_arr</strong> (<em>1D int self.xp.ndarray</em>) – The l-mode indices for each mode index.</p></li>
+<li><p><strong>m_arr</strong> (<em>1D int self.xp.ndarray</em>) – The m-mode indices for each mode index.</p></li>
+<li><p><strong>n_arr</strong> (<em>1D int self.xp.ndarray</em>) – The n-mode indices for each mode index.</p></li>
+<li><p><strong>threshold</strong> (<em>double</em>) – The network threshold value for mode retention. Decrease to keep more modes,
+minimising missed modes but slowing down the waveform computation. Defaults to 0.5 (the optimal value for accuracy).</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments for the base classes:
+<a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">few.utils.baseclasses.ParallelModuleBase</span></code></a>.
+Default is {}.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector.gpu_capability">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gpu_capability</span></span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector.gpu_capability" title="Link to this definition"></a></dt>
+<dd><p>Confirms GPU capability</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector.is_predictive">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_predictive</span></span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector.is_predictive" title="Link to this definition"></a></dt>
+<dd><p>Whether this mode selector should be used before or after amplitude generation</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector.attributes_ModeSelector">
+<span class="sig-name descname"><span class="pre">attributes_ModeSelector</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector.attributes_ModeSelector" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector.xp">
+<span class="sig-name descname"><span class="pre">xp</span></span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector.xp" title="Link to this definition"></a></dt>
+<dd><p>cupy or numpy depending on GPU usage.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector.torch">
+<span class="sig-name descname"><span class="pre">torch</span></span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector.torch" title="Link to this definition"></a></dt>
+<dd><p>pytorch module.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector.device">
+<span class="sig-name descname"><span class="pre">device</span></span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector.device" title="Link to this definition"></a></dt>
+<dd><p>The pytorch device currently in use: should agree with what is set by cupy.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector.threshold">
+<span class="sig-name descname"><span class="pre">threshold</span></span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector.threshold" title="Link to this definition"></a></dt>
+<dd><p>network evaluation threshold for keeping/discarding modes.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector.vector_min">
+<span class="sig-name descname"><span class="pre">vector_min</span></span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector.vector_min" title="Link to this definition"></a></dt>
+<dd><p>minimum bounds of the training data, for rescaling.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector.vector_max">
+<span class="sig-name descname"><span class="pre">vector_max</span></span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector.vector_max" title="Link to this definition"></a></dt>
+<dd><p>maximum bounds of the training data, for rescaling.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector.adjust_gpu_usage">
+<span class="sig-name descname"><span class="pre">adjust_gpu_usage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector.adjust_gpu_usage" title="Link to this definition"></a></dt>
+<dd><p>Adjust all inputs for gpu usage</p>
+<p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
+so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_gpu</strong> (<em>bool</em>) – If True, use gpu resources.</p></li>
+<li><p><strong>kwargs</strong> (<em>list</em><em> of </em><em>dicts</em><em> or </em><em>dict</em>) – List of kwargs dictionaries or
+single dictionary for each constituent class in the
+waveform generator.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector.attributes_ParallelModuleBase">
+<span class="sig-name descname"><span class="pre">attributes_ParallelModuleBase</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector.attributes_ParallelModuleBase" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector.use_gpu">
+<span class="sig-name descname"><span class="pre">use_gpu</span></span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector.use_gpu" title="Link to this definition"></a></dt>
+<dd><p>If True, use GPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">xp</span></span><a class="headerlink" href="#id2" title="Link to this definition"></a></dt>
+<dd><p>Either numpy or CuPy based on gpu preference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector.citation">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">citation</span></span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector.citation" title="Link to this definition"></a></dt>
+<dd><p>Return citations related to this class.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector.sanity_check_gpu">
+<span class="sig-name descname"><span class="pre">sanity_check_gpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector.sanity_check_gpu" title="Link to this definition"></a></dt>
+<dd><p>Check if this class has GPU capability</p>
+<p>If the user is requesting GPU usage, this will confirm the class has
+GPU capabilites.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>use_gpu</strong> (<em>bool</em>) – If True, the user is requesting GPU usage.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – The user is requesting GPU usage, but this class does
+    not have that capability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id3">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">xp</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">object</span></em><a class="headerlink" href="#id3" title="Link to this definition"></a></dt>
+<dd><p>Cupy or Numpy</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="few.utils.modeselector.NeuralModeSelector.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xI</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.modeselector.NeuralModeSelector.__call__" title="Link to this definition"></a></dt>
+<dd><p>Call to predict the mode content of the waveform.</p>
+<p>This is the call function that takes the waveform parameters, applies a
+precomputed mask and then evaluates the remaining mode content with a
+neural network classifier.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>double</em>) – Mass of larger black hole in solar masses.</p></li>
+<li><p><strong>mu</strong> (<em>double</em>) – Mass of compact object in solar masses.</p></li>
+<li><p><strong>p0</strong> (<em>double</em>) – Initial semilatus rectum (Must be greater than
+the separatrix at the the given e0 and x0).
+See documentation for more information on <span class="math notranslate nohighlight">\(p_0&lt;10\)</span>.</p></li>
+<li><p><strong>e0</strong> (<em>double</em>) – Initial eccentricity.</p></li>
+<li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle.</p></li>
+<li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
+<li><p><strong>T</strong> (<em>double</em>) – Duration of waveform in years.</p></li>
+<li><p><strong>eps</strong> (<em>double</em>) – Mode selection threshold power.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -389,10 +590,10 @@ GPU capabilites.</p>
 <span id="spin-weighted-spherical-harmonics"></span><h2>(-2) Spin-Weighted Spherical Harmonics<a class="headerlink" href="#module-few.utils.ylm" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="few.utils.ylm.GetYlms">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.ylm.</span></span><span class="sig-name descname"><span class="pre">GetYlms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assume_positive_m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.ylm.</span></span><span class="sig-name descname"><span class="pre">GetYlms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assume_positive_m</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="main.html#few.utils.baseclasses.ParallelModuleBase" title="few.utils.baseclasses.ParallelModuleBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParallelModuleBase</span></code></a></p>
 <p>(-2) Spin-weighted Spherical Harmonics</p>
-<p>The class generates (-2) spin-weighted spherical hackarmonics,
+<p>The class generates (-2) spin-weighted spherical harmonics,
 <span class="math notranslate nohighlight">\(Y_{lm}(\Theta,\phi)\)</span>. <strong>Important Note</strong>: this class also applies
 the parity operator (<span class="math notranslate nohighlight">\(-1^l\)</span>) to modes with <span class="math notranslate nohighlight">\(m&lt;0\)</span>.</p>
 <dl class="field-list simple">
@@ -432,15 +633,15 @@ Default is {}.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.utils.ylm.GetYlms.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.__call__" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_in</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_in</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#few.utils.ylm.GetYlms.__call__" title="Link to this definition"></a></dt>
 <dd><p>Call method for Ylms.</p>
 <p>This returns ylms based on requested <span class="math notranslate nohighlight">\((l,m)\)</span> values and viewing
 angles.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>l_in</strong> (<em>1D int xp.ndarray</em>) – <span class="math notranslate nohighlight">\(l\)</span> values requested.</p></li>
-<li><p><strong>m_in</strong> (<em>1D int xp.ndarray</em>) – <span class="math notranslate nohighlight">\(m\)</span> values requested.</p></li>
+<li><p><strong>l_in</strong> (<em>1D int self.xp.ndarray</em>) – <span class="math notranslate nohighlight">\(l\)</span> values requested.</p></li>
+<li><p><strong>m_in</strong> (<em>1D int self.xp.ndarray</em>) – <span class="math notranslate nohighlight">\(m\)</span> values requested.</p></li>
 <li><p><strong>theta</strong> (<em>double</em>) – Polar viewing angle.</p></li>
 <li><p><strong>phi</strong> (<em>double</em>) – Azimuthal viewing angle.</p></li>
 </ul>
@@ -449,14 +650,14 @@ angles.</p>
 <dd class="field-even"><p>Ylm values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>1D complex128 xp.ndarray</p>
+<dd class="field-odd"><p>1D complex128 self.xp.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.utils.ylm.GetYlms.adjust_gpu_usage">
-<span class="sig-name descname"><span class="pre">adjust_gpu_usage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.adjust_gpu_usage" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">adjust_gpu_usage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.adjust_gpu_usage" title="Link to this definition"></a></dt>
 <dd><p>Adjust all inputs for gpu usage</p>
 <p>If user wants to use gpu, it will change all <code class="code docutils literal notranslate"><span class="pre">kwargs</span></code> in
 so that <code class="code docutils literal notranslate"><span class="pre">use_gpu=True</span></code>.</p>
@@ -487,8 +688,8 @@ waveform generator.</p></li>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="id1">
-<span class="sig-name descname"><span class="pre">xp</span></span><a class="headerlink" href="#id1" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">xp</span></span><a class="headerlink" href="#id4" title="Link to this definition"></a></dt>
 <dd><p>Either numpy or CuPy based on gpu preference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -507,7 +708,7 @@ waveform generator.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="few.utils.ylm.GetYlms.sanity_check_gpu">
-<span class="sig-name descname"><span class="pre">sanity_check_gpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.sanity_check_gpu" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">sanity_check_gpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.ylm.GetYlms.sanity_check_gpu" title="Link to this definition"></a></dt>
 <dd><p>Check if this class has GPU capability</p>
 <p>If the user is requesting GPU usage, this will confirm the class has
 GPU capabilites.</p>
@@ -522,6 +723,12 @@ GPU capabilites.</p>
 </dl>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="id5">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">xp</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">object</span></em><a class="headerlink" href="#id5" title="Link to this definition"></a></dt>
+<dd><p>Cupy or Numpy</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -529,7 +736,7 @@ GPU capabilites.</p>
 <span id="frequency-domain-utilities"></span><h2>Frequency Domain Utilities<a class="headerlink" href="#module-few.utils.fdutils" title="Link to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="few.utils.fdutils.get_convolution">
-<span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">get_convolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.get_convolution" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">get_convolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.get_convolution" title="Link to this definition"></a></dt>
 <dd><p>Calculate the convolution of two arrays.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -549,7 +756,7 @@ GPU capabilites.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="few.utils.fdutils.get_fft_td_windowed">
-<span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">get_fft_td_windowed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.get_fft_td_windowed" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">get_fft_td_windowed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.get_fft_td_windowed" title="Link to this definition"></a></dt>
 <dd><p>Calculate the Fast Fourier Transform of a windowed time domain signal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -570,7 +777,7 @@ GPU capabilites.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="few.utils.fdutils.get_fd_windowed">
-<span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">get_fd_windowed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_in_fd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.get_fd_windowed" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">get_fd_windowed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_in_fd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.get_fd_windowed" title="Link to this definition"></a></dt>
 <dd><p>Calculate the convolution of a frequency domain signal with a window in time domain.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -593,7 +800,7 @@ If <code class="docutils literal notranslate"><span class="pre">False</span></co
 
 <dl class="py class">
 <dt class="sig sig-object py" id="few.utils.fdutils.GetFDWaveformFromFD">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">GetFDWaveformFromFD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform_generator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive_frequency_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_zero_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_in_fd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromFD" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">GetFDWaveformFromFD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform_generator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive_frequency_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_zero_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_in_fd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromFD" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Generic frequency domain class</p>
 <p>This class allows to obtain the frequency domain signal given the frequency domain waveform class
@@ -614,7 +821,7 @@ If <code class="docutils literal notranslate"><span class="pre">False</span></co
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="few.utils.fdutils.GetFDWaveformFromFD.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromFD.__call__" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromFD.__call__" title="Link to this definition"></a></dt>
 <dd><p>Run the waveform generator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -636,7 +843,7 @@ If <code class="docutils literal notranslate"><span class="pre">False</span></co
 
 <dl class="py class">
 <dt class="sig sig-object py" id="few.utils.fdutils.GetFDWaveformFromTD">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">GetFDWaveformFromTD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform_generator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive_frequency_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_zero_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromTD" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">few.utils.fdutils.</span></span><span class="sig-name descname"><span class="pre">GetFDWaveformFromTD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveform_generator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive_frequency_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_zero_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromTD" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Generic time domain class</p>
 <p>This class allows to obtain the frequency domain signal given the time domain waveform class
@@ -655,7 +862,7 @@ This is added for flexibility. Default is <code class="docutils literal notransl
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="few.utils.fdutils.GetFDWaveformFromTD.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromTD.__call__" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.fdutils.GetFDWaveformFromTD.__call__" title="Link to this definition"></a></dt>
 <dd><p>Run the waveform generator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -729,9 +936,45 @@ is False.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D double xp.ndarray</em>) – Values of separation,
+<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D xp.ndarray</em>) – Values of separation,
 <span class="math notranslate nohighlight">\(p\)</span>, to convert.</p></li>
-<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D double xp.ndarray</em>) – Associated eccentricity values
+<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D xp.ndarray</em>) – Associated eccentricity values
+of <span class="math notranslate nohighlight">\(p\)</span> necessary for conversion.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, use Cupy/GPUs. Default is False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.utility.kerr_p_to_u">
+<span class="sig-prename descclassname"><span class="pre">few.utils.utility.</span></span><span class="sig-name descname"><span class="pre">kerr_p_to_u</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xI</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_gpu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.kerr_p_to_u" title="Link to this definition"></a></dt>
+<dd><p>Convert from separation <span class="math notranslate nohighlight">\(p\)</span> to <span class="math notranslate nohighlight">\(y\)</span> coordinate</p>
+<p>Conversion from the semilatus rectum or separation <span class="math notranslate nohighlight">\(p\)</span> to <span class="math notranslate nohighlight">\(y\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D xp.ndarray</em>) – Values of separation,
+<span class="math notranslate nohighlight">\(p\)</span>, to convert.</p></li>
+<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D xp.ndarray</em>) – Associated eccentricity values
+of <span class="math notranslate nohighlight">\(p\)</span> necessary for conversion.</p></li>
+<li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, use Cupy/GPUs. Default is False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.utility.ELQ_to_pex">
+<span class="sig-prename descclassname"><span class="pre">few.utils.utility.</span></span><span class="sig-name descname"><span class="pre">ELQ_to_pex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Q</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.ELQ_to_pex" title="Link to this definition"></a></dt>
+<dd><p>Convert from separation <span class="math notranslate nohighlight">\(p\)</span> to <span class="math notranslate nohighlight">\(y\)</span> coordinate</p>
+<p>Conversion from the semilatus rectum or separation <span class="math notranslate nohighlight">\(p\)</span> to <span class="math notranslate nohighlight">\(y\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D xp.ndarray</em>) – Values of separation,
+<span class="math notranslate nohighlight">\(p\)</span>, to convert.</p></li>
+<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D xp.ndarray</em>) – Associated eccentricity values
 of <span class="math notranslate nohighlight">\(p\)</span> necessary for conversion.</p></li>
 <li><p><strong>use_gpu</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, use Cupy/GPUs. Default is False.</p></li>
 </ul>
@@ -751,11 +994,45 @@ of <span class="math notranslate nohighlight">\(p\)</span> necessary for convers
 <li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
 black hole. If other parameters are arrays and the spin is scalar,
 it will be cast to a 1D array.</p></li>
-<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of separation,
+<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Values of separation,
 <span class="math notranslate nohighlight">\(p\)</span>.</p></li>
-<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of eccentricity,
+<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Values of eccentricity,
 <span class="math notranslate nohighlight">\(e\)</span>.</p></li>
-<li><p><strong>x</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of cosine of the
+<li><p><strong>x</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Values of cosine of the
+inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>. Please note this is different from
+<span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Tuple of (OmegaPhi, OmegaTheta, OmegaR).</dt><dd><p>These are 1D arrays or scalar values depending on inputs.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.utility.get_fundamental_frequencies_spin_corrections">
+<span class="sig-prename descclassname"><span class="pre">few.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_fundamental_frequencies_spin_corrections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.get_fundamental_frequencies_spin_corrections" title="Link to this definition"></a></dt>
+<dd><p>Get dimensionless fundamental frequencies.</p>
+<p>Determines fundamental frequencies in generic Kerr from
+<a class="reference external" href="https://arxiv.org/abs/gr-qc/0202090">Schmidt 2002</a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
+black hole. If other parameters are arrays and the spin is scalar,
+it will be cast to a 1D array.</p></li>
+<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Values of separation,
+<span class="math notranslate nohighlight">\(p\)</span>.</p></li>
+<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Values of eccentricity,
+<span class="math notranslate nohighlight">\(e\)</span>.</p></li>
+<li><p><strong>x</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Values of cosine of the
 inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>. Please note this is different from
 <span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span>.</p></li>
 </ul>
@@ -785,11 +1062,11 @@ geodesic orbit in the generic Kerr spacetime.</p>
 <li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
 black hole. If other parameters are arrays and the spin is scalar,
 it will be cast to a 1D array.</p></li>
-<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of separation,
+<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Values of separation,
 <span class="math notranslate nohighlight">\(p\)</span>.</p></li>
-<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of eccentricity,
+<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Values of eccentricity,
 <span class="math notranslate nohighlight">\(e\)</span>.</p></li>
-<li><p><strong>x</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of cosine of the
+<li><p><strong>x</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Values of cosine of the
 inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>. Please note this is different from
 <span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span>.</p></li>
 </ul>
@@ -808,69 +1085,8 @@ inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>. Pl
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="few.utils.utility.xI_to_Y">
-<span class="sig-prename descclassname"><span class="pre">few.utils.utility.</span></span><span class="sig-name descname"><span class="pre">xI_to_Y</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.xI_to_Y" title="Link to this definition"></a></dt>
-<dd><p>Convert from <span class="math notranslate nohighlight">\(x_I=\cos{I}\)</span> to <span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span>.</p>
-<p>Converts between the two different inclination parameters. <span class="math notranslate nohighlight">\(\cos{I}\equiv x_I\)</span>,
-where <span class="math notranslate nohighlight">\(I\)</span> describes the orbit’s inclination from the equatorial plane.
-<span class="math notranslate nohighlight">\(\cos{\iota}\equiv Y\)</span>, where <span class="math notranslate nohighlight">\(\cos{\iota}=L/\sqrt{L^2 + Q}\)</span>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
-black hole. If other parameters are arrays and the spin is scalar,
-it will be cast to a 1D array.</p></li>
-<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of separation,
-<span class="math notranslate nohighlight">\(p\)</span>.</p></li>
-<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of eccentricity,
-<span class="math notranslate nohighlight">\(e\)</span>.</p></li>
-<li><p><strong>x</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of cosine of the
-inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span> value with shape based on input shapes.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>1D array or scalar</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="few.utils.utility.Y_to_xI">
-<span class="sig-prename descclassname"><span class="pre">few.utils.utility.</span></span><span class="sig-name descname"><span class="pre">Y_to_xI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.Y_to_xI" title="Link to this definition"></a></dt>
-<dd><p>Convert from <span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span> to <span class="math notranslate nohighlight">\(x_I=\cos{I}\)</span>.</p>
-<p>Converts between the two different inclination parameters. <span class="math notranslate nohighlight">\(\cos{I}\equiv x_I\)</span>,
-where <span class="math notranslate nohighlight">\(I\)</span> describes the orbit’s inclination from the equatorial plane.
-<span class="math notranslate nohighlight">\(\cos{\iota}\equiv Y\)</span>, where <span class="math notranslate nohighlight">\(\cos{\iota}=L/\sqrt{L^2 + Q}\)</span>.</p>
-<p>This computation may have issues near edge cases.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
-black hole. If other parameters are arrays and the spin is scalar,
-it will be cast to a 1D array.</p></li>
-<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of separation,
-<span class="math notranslate nohighlight">\(p\)</span>.</p></li>
-<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of eccentricity,
-<span class="math notranslate nohighlight">\(e\)</span>.</p></li>
-<li><p><strong>Y</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of cosine of the
-<span class="math notranslate nohighlight">\(\iota\)</span>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="math notranslate nohighlight">\(x=\cos{I}\)</span> value with shape based on input shapes.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>1D array or scalar</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="few.utils.utility.get_separatrix">
-<span class="sig-prename descclassname"><span class="pre">few.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_separatrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.get_separatrix" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">few.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_separatrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-13</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.get_separatrix" title="Link to this definition"></a></dt>
 <dd><p>Get separatrix in generic Kerr.</p>
 <p>Determines separatrix in generic Kerr from
 <a class="reference external" href="https://arxiv.org/abs/1912.07609">Stein &amp; Warburton 2020</a>.</p>
@@ -880,9 +1096,9 @@ it will be cast to a 1D array.</p></li>
 <li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
 black hole. If other parameters are arrays and the spin is scalar,
 it will be cast to a 1D array.</p></li>
-<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of eccentricity,
+<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Values of eccentricity,
 <span class="math notranslate nohighlight">\(e\)</span>.</p></li>
-<li><p><strong>x</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of cosine of the
+<li><p><strong>x</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Values of cosine of the
 inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>. Please note this is different from
 <span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span>.</p></li>
 </ul>
@@ -1010,10 +1226,10 @@ other limit to None.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="few.utils.utility.check_for_file_download">
-<span class="sig-prename descclassname"><span class="pre">few.utils.utility.</span></span><span class="sig-name descname"><span class="pre">check_for_file_download</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">few_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version_string</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.check_for_file_download" title="Link to this definition"></a></dt>
-<dd><p>Download files direct from zenodo.</p>
-<p>This function downloads the files from zenodo as they are needed. They are
-downloaded based on the associated record for each version (<cite>record_by_version</cite>).</p>
+<span class="sig-prename descclassname"><span class="pre">few.utils.utility.</span></span><span class="sig-name descname"><span class="pre">check_for_file_download</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version_string</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.check_for_file_download" title="Link to this definition"></a></dt>
+<dd><p>Download files direct from download.bhptoolkit.org.</p>
+<p>This function downloads the files from download.bhptoolkit.org as they are needed. They are
+downloaded based on the associated Zenodo record for each version (<cite>record_by_version</cite>).</p>
 <p>The version is determined from the <cite>__version__</cite> attribute of <cite>few</cite> unless
 a version string is provided.</p>
 <dl class="field-list simple">
@@ -1088,21 +1304,65 @@ for examples.</p>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="few.utils.utility.get_ode_function_options">
-<span class="sig-prename descclassname"><span class="pre">few.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_ode_function_options</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.utility.get_ode_function_options" title="Link to this definition"></a></dt>
-<dd><p>Get ode options.</p>
-<p>This includes all the subinfo for each ODE derivative
-function that is available.</p>
+</section>
+<section id="pn-parameter-mapping-utilities">
+<h2>PN Parameter Mapping Utilities<a class="headerlink" href="#pn-parameter-mapping-utilities" title="Link to this heading"></a></h2>
+<dl class="py function" id="module-few.utils.pn_map">
+<dt class="sig sig-object py" id="few.utils.pn_map.Y_to_xI">
+<span class="sig-prename descclassname"><span class="pre">few.utils.pn_map.</span></span><span class="sig-name descname"><span class="pre">Y_to_xI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.pn_map.Y_to_xI" title="Link to this definition"></a></dt>
+<dd><p>Convert from <span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span> to <span class="math notranslate nohighlight">\(x_I=\cos{I}\)</span>.</p>
+<p>Converts between the two different inclination parameters. <span class="math notranslate nohighlight">\(\cos{I}\equiv x_I\)</span>,
+where <span class="math notranslate nohighlight">\(I\)</span> describes the orbit’s inclination from the equatorial plane.
+<span class="math notranslate nohighlight">\(\cos{\iota}\equiv Y\)</span>, where <span class="math notranslate nohighlight">\(\cos{\iota}=L/\sqrt{L^2 + Q}\)</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Dictionary with all the information on available functions.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
+black hole. If other parameters are arrays and the spin is scalar,
+it will be cast to a 1D array.</p></li>
+<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of separation,
+<span class="math notranslate nohighlight">\(p\)</span>.</p></li>
+<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of eccentricity,
+<span class="math notranslate nohighlight">\(e\)</span>.</p></li>
+<li><p><strong>Y</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of cosine of the
+<span class="math notranslate nohighlight">\(\iota\)</span>.</p></li>
+</ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="math notranslate nohighlight">\(x=\cos{I}\)</span> value with shape based on input shapes.</p>
 </dd>
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ValueError</strong> – ODE files have not been built.</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>1D array or scalar</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.pn_map.xI_to_Y">
+<span class="sig-prename descclassname"><span class="pre">few.utils.pn_map.</span></span><span class="sig-name descname"><span class="pre">xI_to_Y</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.pn_map.xI_to_Y" title="Link to this definition"></a></dt>
+<dd><p>Convert from <span class="math notranslate nohighlight">\(x_I=\cos{I}\)</span> to <span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span>.</p>
+<p>Converts between the two different inclination parameters. <span class="math notranslate nohighlight">\(\cos{I}\equiv x_I\)</span>,
+where <span class="math notranslate nohighlight">\(I\)</span> describes the orbit’s inclination from the equatorial plane.
+<span class="math notranslate nohighlight">\(\cos{\iota}\equiv Y\)</span>, where <span class="math notranslate nohighlight">\(\cos{\iota}=L/\sqrt{L^2 + Q}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>double scalar</em><em> or </em><em>1D np.ndarray</em>) – Dimensionless spin of massive
+black hole. If other parameters are arrays and the spin is scalar,
+it will be cast to a 1D array.</p></li>
+<li><p><strong>p</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of separation,
+<span class="math notranslate nohighlight">\(p\)</span>.</p></li>
+<li><p><strong>e</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of eccentricity,
+<span class="math notranslate nohighlight">\(e\)</span>.</p></li>
+<li><p><strong>x</strong> (<em>double scalar</em><em> or </em><em>1D double np.ndarray</em>) – Values of cosine of the
+inclination, <span class="math notranslate nohighlight">\(x=\cos{I}\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span> value with shape based on input shapes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>1D array or scalar</p>
 </dd>
 </dl>
 </dd></dl>

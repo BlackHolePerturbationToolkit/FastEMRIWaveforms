@@ -39,6 +39,7 @@ from ..utils.constants import *
 from ..utils.citations import *
 
 from .ode.base import ODEBase, get_ode_properties
+from .ode import _STOCK_TRAJECTORY_OPTIONS
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -119,6 +120,12 @@ class Integrate:
         self.buffer_length = buffer_length
         self.file_directory = file_directory
 
+        if isinstance(func, str):
+            try:
+                func = _STOCK_TRAJECTORY_OPTIONS[func]
+            except KeyError:
+                raise ValueError(f"The trajectory function {func} could not be found.")
+
         self.base_func = func
         self.func = func(file_directory=file_directory, **kwargs)
 
@@ -179,6 +186,8 @@ class Integrate:
 
     def _dopr_ode_wrap(self, t, y, ydot, additionalArgs):
         self.func(y[:,0], out=ydot[:,0])
+        if self.integrate_backwards:
+            ydot *= -1
         return ydot
 
     def take_step(
@@ -194,57 +203,57 @@ class Integrate:
         if self.bad_num >= self.bad_limit:
             raise ValueError("error, reached bad limit.\n")
 
-    def integrate_backwards(
-        self, t0: float, y0: np.ndarray
-    ) -> Tuple[np.ndarray, np.ndarray]:
-        t = t0
-        h = self.dt_dimensionless
+    # def integrate_backwards(
+    #     self, t0: float, y0: np.ndarray
+    # ) -> Tuple[np.ndarray, np.ndarray]:
+    #     t = t0
+    #     h = self.dt_dimensionless
 
-        t_prev = t0
-        y_prev = y0.copy()
-        y = y0.copy()
+    #     t_prev = t0
+    #     y_prev = y0.copy()
+    #     y = y0.copy()
 
-        # add the first point
-        self.save_point(0.0, y)
+    #     # add the first point
+    #     self.save_point(0.0, y)
 
-        while t < self.tmax_dimensionless:
-            t_old = t
-            h_old = h
-            y_old = y.copy()
-            status, t, h = self.dopr.take_step_single(
-                t_old, h_old, y, self.tmax_dimensionless, None
-            )
+    #     while t < self.tmax_dimensionless:
+    #         t_old = t
+    #         h_old = h
+    #         y_old = y.copy()
+    #         status, t, h = self.dopr.take_step_single(
+    #             t_old, h_old, y, self.tmax_dimensionless, None
+    #         )
 
-            # print(t, h, status)
+    #         # print(t, h, status)
 
-            if not status:
-                continue
+    #         if not status:
+    #             continue
             
-            if not self.dopr.fix_step:
-                spline_info = self.dopr.prep_evaluate_single(
-                    t_old, y_old, h_old, t, y, None
-                )
-            else:
-                spline_info = None
+    #         if not self.dopr.fix_step:
+    #             spline_info = self.dopr.prep_evaluate_single(
+    #                 t_old, y_old, h_old, t, y, None
+    #             )
+    #         else:
+    #             spline_info = None
 
-            # should not be needed but is safeguard against stepping past maximum allowable time
-            # the last point in the trajectory will be at t = tmax
-            if t > self.tmax_dimensionless:
-                if not self.dopr.fix_step:
-                    # place the spline coefficients for the finishing function (and to provide spline coverage up to t=tmax)
-                    self.dopr_spline_output[self.traj_step - 1, :] = spline_info
-                    self._integrator_t_cache[self.traj_step] = t * self.Msec
-                break
+    #         # should not be needed but is safeguard against stepping past maximum allowable time
+    #         # the last point in the trajectory will be at t = tmax
+    #         if t > self.tmax_dimensionless:
+    #             if not self.dopr.fix_step:
+    #                 # place the spline coefficients for the finishing function (and to provide spline coverage up to t=tmax)
+    #                 self.dopr_spline_output[self.traj_step - 1, :] = spline_info
+    #                 self._integrator_t_cache[self.traj_step] = t * self.Msec
+    #             break
 
-            self.save_point(
-                t * self.Msec, y, spline_output=spline_info
-            )  # adds time in seconds
+    #         self.save_point(
+    #             t * self.Msec, y, spline_output=spline_info
+    #         )  # adds time in seconds
 
-            t_prev = t
-            y_prev[:] = y[:]
+    #         t_prev = t
+    #         y_prev[:] = y[:]
 
-        if hasattr(self, "finishing_function"):
-            self.finishing_function(t, y)
+    #     if hasattr(self, "finishing_function"):
+    #         self.finishing_function(t, y)
 
     def integrate(self, t0: float, y0: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         t = t0
@@ -338,10 +347,11 @@ class Integrate:
             self.finishing_function(t, y)
 
     def initialize_integrator(
-        self, err=1e-12, DENSE_STEPPING=False, **kwargs
+        self, err=1e-12, DENSE_STEPPING=False, integrate_backwards=False, **kwargs
     ):
         self.dopr.abstol = err
         self.dopr.fix_step = DENSE_STEPPING
+        self.integrate_backwards = integrate_backwards
 
         self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
         self._integrator_t_cache = np.zeros((self.buffer_length, ))
@@ -401,7 +411,7 @@ class Integrate:
             result[:,3:6] /= self.epsilon
 
         # backwards integration requires an additional adjustment to match forwards phase conventions
-        if self.bool_integrate_backwards and not self.generating_trajectory:
+        if self.integrate_backwards and not self.generating_trajectory:
             result[:,3:6] += (self.trajectory[0,4:7] + self.trajectory[-1,4:7])
         return result
     
@@ -418,7 +428,6 @@ class Integrate:
         # Indicate we are generating a trajectory (alters behaviour of integrator spline) 
         self.generating_trajectory = True
 
-
         self.moves_check = 0
         self.initialize_integrator(**kwargs)
         self.epsilon = mu / M
@@ -428,44 +437,36 @@ class Integrate:
         self.Msec = MTSUN_SI * M / self.epsilon
         self.a = a
         assert self.nparams == len(y0)
-        assert (self.num_add_args == len(additional_args)) or (
-            self.num_add_args == 0 and len(additional_args) == 1
-        )
 
-        self.bool_integrate_backwards = kwargs.get("integrate_backwards", False)
         self.func.add_fixed_parameters(
-            M, mu, a, integrate_backwards=self.bool_integrate_backwards, additional_args=additional_args
+            M, mu, a, additional_args=additional_args
         )
 
-        t0 = 0.0
-        if self.bool_integrate_backwards:
-            self.integrate_backwards(t0, y0)
-        else:
-            self.integrate(t0, y0)
+        self.integrate(0.0, y0)
 
         orb_params = [y0[0], y0[1], y0[2]]
         if self.integrate_constants_of_motion:
             orb_params = ELQ_to_pex(self.a, y0[0], y0[1], y0[2])
 
         # Create a warning in case we start too close to separatrix.
-        if self.bool_integrate_backwards:
+        if self.integrate_backwards:
             if not self.enforce_schwarz_sep:
                 p_sep = get_separatrix_interpolant(self.a, orb_params[1], orb_params[2])
             else:
                 p_sep = 6 + 2 * orb_params[1]
             if (
                 orb_params[0] - p_sep
-            ) < self.separatrix_buffer_dist + INNER_THRESHOLD:
+            ) < self.separatrix_buffer_dist - INNER_THRESHOLD:
                 # Raise a warning
-                warnings.warn(
-                    "Warning: initial p_f is too close to separatrix. May not be compatible with forwards integration."
+                raise ValueError(
+                    f"Warning: p_f is too close to separatrix. It must start above p_sep + {self.separatrix_buffer_dist}."
                 )
 
         # scale phases here by the mass ratio so the cache is accurate
         self.trajectory_arr[:, 4:7] /= self.epsilon
 
         # backwards integration requires an additional manipulation to match forwards phase convention
-        if self.bool_integrate_backwards:
+        if self.integrate_backwards:
             self.trajectory_arr[:, 4:7] -= (self.trajectory_arr[0,4:7] + self.trajectory_arr[self.traj_step - 1, 4:7])
 
         # Restore normal spline behaviour
@@ -490,6 +491,7 @@ class APEXIntegrate(Integrate):
         self, t: float, y: np.ndarray
     ) -> str:  # Stop the inspiral when close to the separatrix
         # TODO: implement a function for checking the outer grid bounds for backwards integration.
+        
         p = y[0]
 
         if not self.enforce_schwarz_sep:
@@ -497,10 +499,7 @@ class APEXIntegrate(Integrate):
         else:
             p_sep = 6 + 2*y[1]
 
-        if (
-            p - p_sep < self.separatrix_buffer_dist + INNER_THRESHOLD
-            and self.bool_integrate_backwards == False
-        ):
+        if p - p_sep < self.separatrix_buffer_dist + INNER_THRESHOLD:
             return "stop"
 
         # if p < 10.0 and self.moves_check < 1:
@@ -563,7 +562,7 @@ class APEXIntegrate(Integrate):
                 t_temp, y_temp, temp_stop = self.end_stepper(t, y, ydot, factor)
                 if (
                     temp_stop > self.separatrix_buffer_dist
-                    or self.bool_integrate_backwards == True
+                    or self.integrate_backwards == True
                 ):
                     # update points
                     t = t_temp
@@ -673,14 +672,8 @@ class APEXIntegrate(Integrate):
                     self.tmax_dimensionless * self.Msec, y_finish, spline_output=None
                 )  # adds time in seconds
             else:
-                # Just take a fixed step to tmax and finish integration
-                status, t, h = self.dopr.take_step_single(
-                    t, self.tmax_dimensionless - t, y, self.tmax_dimensionless, None
-                )
-
-                self.save_point(
-                    self.tmax_dimensionless * self.Msec, y, spline_output=None
-                )  # adds time in seconds
+                # if another fixed step does not fit in the time window, just finish integration
+                pass
 
 
 class AELQIntegrate(Integrate):

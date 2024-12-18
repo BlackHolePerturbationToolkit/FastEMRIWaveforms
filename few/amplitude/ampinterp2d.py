@@ -88,25 +88,16 @@ _DEFAULT_AMPLITUDE_FILENAMES = [
 
 
 class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
-    """Calculate Teukolsky amplitudes with a ROMAN.
+    """Calculate Teukolsky amplitudes with a bicubic spline interpolation.
 
-    ROMAN stands for reduced-order models with artificial neurons. Please see
-    the documentations for
-    :class:`few.utils.baseclasses.SchwarzschildEccentric`
-    for overall aspects of these models.
+    This class is initialised by providing mode index arrays and a corresponding spline coefficients array.
+    These coefficients can be computed for user-supplied data with the TODO METHOD method of this class.
 
-    A reduced order model is computed for :math:`A_{lmn}`. The data sets that
-    are provided over a grid of :math:`(p,e)` were provided by Scott Hughes.
-
-    A feed-foward neural network is then trained on the ROM. Its weights are
-    used in this module.
-
-    When the user inputs :math:`(p,e)`, the neural network determines
-    coefficients for the modes in the reduced basic and transforms it back to
-    amplitude space.
+    When called with arguments :math:`(a, p, e, xI)`, these parameters are transformed into a set of
+    interpolation coordinates and the bicubic spline interpolant is evaluated at these coordinates for
+    all sets of coefficients.
 
     This module is available for GPU and CPU.
-
 
     args:
         max_init_len (int, optional): Number of points to initialize for

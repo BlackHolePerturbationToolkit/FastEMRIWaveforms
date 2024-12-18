@@ -42,6 +42,11 @@ sys.path.insert(0, os.path.abspath(dir_path + "few/trajectory/"))
 import shutil
 
 shutil.copy(
+    dir_path + "examples/Trajectory_tutorial.ipynb",
+    dir_path + "docs/source/tutorial/Trajectory_tutorial.ipynb",
+)
+
+shutil.copy(
     dir_path + "examples/FastEMRIWaveforms_tutorial.ipynb",
     dir_path + "docs/source/tutorial/FastEMRIWaveforms_tutorial.ipynb",
 )

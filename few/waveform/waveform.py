@@ -98,7 +98,7 @@ class GenerateEMRIWaveform:
         # instantiate the class
         if isinstance(waveform_class, str):
             try:
-                waveform = globals()[waveform_class]
+                waveform = self._stock_waveform_definitions[waveform_class]
                 self.waveform_generator = waveform(*args, **kwargs)
             except KeyError:
                 raise ValueError(
@@ -136,14 +136,21 @@ class GenerateEMRIWaveform:
         self.args_keep = np.delete(np.arange(11), self.args_remove)
 
     @property
+    def _stock_waveform_definitions(self):
+        return {
+        "FastSchwarzschildEccentricFlux" : FastSchwarzschildEccentricFlux,
+        "FastSchwarzschildEccentricFluxBicubic": FastSchwarzschildEccentricFluxBicubic,
+        "SlowSchwarzschildEccentricFlux": SlowSchwarzschildEccentricFlux,
+        "FastKerrEccentricEquatorialFlux": FastKerrEccentricEquatorialFlux,
+        "Pn5AAKWaveform" : Pn5AAKWaveform,
+    }
+
+    @property
     def stock_waveform_options(self):
         print(
-            """
-            FastSchwarzschildEccentricFlux
-            BicubicAmplitudeSchwarzschildEccentricFlux
-            SlowSchwarzschildEccentricFlux
-            Pn5AAKWaveform
-            """
+            list(
+                self._stock_waveform_definitions.keys()
+            )
         )
 
     def _get_viewing_angles(self, qS, phiS, qK, phiK):
@@ -357,8 +364,6 @@ class GenerateEMRIWaveform:
             return hp - 1j * hc
         else:
             return [hp, hc]
-
-
 
 
 class FastKerrEccentricEquatorialFlux(

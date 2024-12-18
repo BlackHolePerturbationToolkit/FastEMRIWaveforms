@@ -5,19 +5,55 @@ import matplotlib.pyplot as plt
 # import all FEW stuff needed
 
 from few.trajectory.inspiral import EMRIInspiral
+from few.trajectory.ode.pn5 import dpdt8H_5PNe10, dedt8H_5PNe10, dYdt8H_5PNe10
+from few.trajectory.ode.base import ODEBase
 
-from few.waveform import AAKWaveformBase
+from few.waveform.base import AAKWaveformBase
 
 from few.utils.baseclasses import *
 from few.trajectory.inspiral import EMRIInspiral
 from few.summation.aakwave import AAKSummation
-from few.utils.utility import get_mismatch
+from few.utils.utility import get_mismatch, get_separatrix, _get_separatrix_kernel_inner, get_fundamental_frequencies, _KerrGeoCoordinateFrequencies_kernel_inner
+from few.utils.pn_map import Y_to_xI, _Y_to_xI_kernel_inner
+
+# define trajectory RHS class
+
+class PN5AddPhys(ODEBase):
+    def evaluate_rhs(self, p, e, Y, Phi_phi, Phi_theta, Phi_r):
+        # unpack additional arguments
+        phys_factor1, phys_factor2 = self.additional_args
+
+        # guard against bad integration steps
+        if e < 0 or (p - 6 - 2* e) < 0:
+            return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        
+        xI = Y_to_xI(self.a, p, e, Y)
+        p_sep = get_separatrix(self.a, e, xI)
+
+        # or we can directly evaluate the numba kernels for speed (indicated below, not vectorised)
+        # xI = _Y_to_xI_kernel_inner(self.a, p, e, Y)
+        # p_sep = _get_separatrix_kernel_inner(self.a, e, xI)
+
+        if p < p_sep:
+             return [0., 0., 0., 0., 0., 0.,]
+
+        pdot = dpdt8H_5PNe10(self.a, p, e, Y, 10, 10) * (1. + phys_factor1)
+        edot = dedt8H_5PNe10(self.a, p, e, Y, 10, 8) * (1. + phys_factor1)
+        Ydot = dYdt8H_5PNe10(self.a, p, e, Y, 7, 10)
+        
+        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(self.a, p, e, xI)
+        # or we can directly evaluate the numba kernel for speed
+        # frequencies = _KerrGeoCoordinateFrequencies_kernel_inner(self.a, p, e, xI)
+        
+        Omega_phi *= (1. + phys_factor2)
+
+        return [pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r]
 
 # buld waveform class
 class pn5_add_phys_AAK(AAKWaveformBase, Pn5AAK, ParallelModuleBase):
     def __init__(self, *args, inspiral_kwargs={}, **kwargs):
 
-        inspiral_kwargs["func"] = "pn5_add_phys"
+        inspiral_kwargs["func"] = PN5AddPhys
 
         AAKWaveformBase.__init__(
             self,
@@ -56,7 +92,7 @@ dt=10.0
 T=2.0
 
 # initialize trajectory
-add_phys_traj = EMRIInspiral(func="pn5_add_phys")
+add_phys_traj = EMRIInspiral(func=PN5AddPhys)
 
 # run without effect
 phys_factor1 = 0.0
@@ -75,7 +111,7 @@ plt.savefig("plot1.png")
 plt.close()
 
 # initialize waveform generator
-wave = pn5_add_phys_AAK(num_threads=1)
+wave = pn5_add_phys_AAK()
 
 # run original wave
 phys_factor1 = 0.0
@@ -104,15 +140,15 @@ et = time.perf_counter()
 print((et - st)/num)
 
 
-# time GPU
-import cupy as xp
-xp.cuda.runtime.setDevice(1)
+# uncomment to time GPU
+# import cupy as xp
+# xp.cuda.runtime.setDevice(1)
 
-wave_gpu = pn5_add_phys_AAK(use_gpu=True)
-num = 50
-st = time.perf_counter()
-for _ in range(num):
-    h2 = wave_gpu(M, mu, a, p0, e0, Y0, dist, qS, phiS, qK, phiK, Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, dt=dt, T=T)
-et = time.perf_counter()
-print((et - st)/num)
-breakpoint()
+# wave_gpu = pn5_add_phys_AAK(use_gpu=True)
+# num = 50
+# st = time.perf_counter()
+# for _ in range(num):
+#     h2 = wave_gpu(M, mu, a, p0, e0, Y0, dist, qS, phiS, qK, phiK, Phi_phi0=Phi_phi0, Phi_theta0=Phi_theta0, Phi_r0=Phi_r0, dt=dt, T=T)
+# et = time.perf_counter()
+# print((et - st)/num)
+# breakpoint()
