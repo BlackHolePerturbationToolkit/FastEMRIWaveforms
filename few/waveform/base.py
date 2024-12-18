@@ -429,13 +429,13 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
                 # scale coefficients here by the mass ratio
                 phase_information_in = phase_spline_coeff[:,[3,5],:] / (mu / M)
 
-                if self.inspiral_generator.inspiral_generator.bool_integrate_backwards:
+                if self.inspiral_generator.inspiral_generator.integrate_backwards:
                     phase_information_in[:,:,0] += self.xp.array([Phi_phi[-1] + Phi_phi[0], Phi_r[-1] + Phi_r[0]])
 
                 phase_t_in = self.inspiral_generator.inspiral_generator.integrator_t_cache
             else:
                 phase_information_in = [Phi_phi_temp, Phi_theta_temp, Phi_r_temp]
-                if self.inspiral_generator.inspiral_generator.bool_integrate_backwards:
+                if self.inspiral_generator.inspiral_generator.integrate_backwards:
                     phase_information_in[0] += self.xp.array([Phi_phi[-1] + Phi_phi[0]])
                     phase_information_in[1] += self.xp.array([Phi_theta[-1] + Phi_theta[0]])
                     phase_information_in[2] += self.xp.array([Phi_r[-1] + Phi_r[0]])
@@ -459,7 +459,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
                 dt=dt,
                 T=T,
                 include_minus_m=include_minus_m,
-                integrate_backwards=self.inspiral_generator.inspiral_generator.bool_integrate_backwards,
+                integrate_backwards=self.inspiral_generator.inspiral_generator.integrate_backwards,
                 **kwargs,
             )
 
@@ -726,7 +726,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         traj_spline_coeff_in = traj_spline_coeff.copy()
         traj_spline_coeff_in[:,3:,:] /= (mu / M)
 
-        if self.inspiral_generator.inspiral_generator.bool_integrate_backwards:
+        if self.inspiral_generator.inspiral_generator.integrate_backwards:
             traj_spline_coeff_in[:,3:,0] += self.xp.array([Phi_phi[-1] + Phi_phi[0], Phi_theta[-1] + Phi_theta[0], Phi_r[-1] + Phi_r[0]])
 
         waveform = self.create_waveform(
@@ -745,7 +745,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
             mich=mich,
             dt=dt,
             T=T,
-            integrate_backwards=self.inspiral_generator.inspiral_generator.bool_integrate_backwards,
+            integrate_backwards=self.inspiral_generator.inspiral_generator.integrate_backwards,
         )
 
         return waveform
