@@ -2,6 +2,7 @@ from math import sqrt
 from numba import njit
 from .utility import get_kerr_geo_constants_of_motion
 import numpy as np
+from typing import Union
 
 @njit(fastmath=False)
 def _d1(q, p, e, Y):
@@ -168,7 +169,7 @@ def _Y_to_xI_kernel(xI, a, p, e, Y):
     for i in range(len(xI)):
         xI[i] = _Y_to_xI_kernel_inner(a[i], p[i], e[i], Y[i])
 
-def Y_to_xI(a, p, e, Y):
+def Y_to_xI(a: Union[float, np.ndarray], p: Union[float, np.ndarray], e: Union[float, np.ndarray], Y: Union[float, np.ndarray]) ->  Union[float, np.ndarray]:
     """Convert from :math:`Y=\cos{\iota}` to :math:`x_I=\cos{I}`.
 
     Converts between the two different inclination parameters. :math:`\cos{I}\equiv x_I`,
@@ -220,7 +221,7 @@ def Y_to_xI(a, p, e, Y):
     else:
         return x
 
-def xI_to_Y(a, p, e, x):
+def xI_to_Y(a: Union[float, np.ndarray], p: Union[float, np.ndarray], e: Union[float, np.ndarray], x: Union[float, np.ndarray]) ->  Union[float, np.ndarray]:
     """Convert from :math:`x_I=\cos{I}` to :math:`Y=\cos{\iota}`.
 
     Converts between the two different inclination parameters. :math:`\cos{I}\equiv x_I`,

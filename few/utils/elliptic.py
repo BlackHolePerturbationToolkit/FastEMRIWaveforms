@@ -20,7 +20,7 @@ def RF(x: float, y: float, z: float, tol: float=5e-4) -> float:
         tol: Numerical tolerance parameter (defaults to 5e-4)
 
     Returns:
-        R_F: The Carlson symmetric form :math:`R_F`.
+        The Carlson symmetric form :math:`R_F`.
     """
     # Taylor expansion coefficients
     c1 = 1.0 / 24.0
@@ -67,7 +67,7 @@ def RC(x: float, y: float) -> float:
         y: Second argument, :math:`y >= 0`.
 
     Returns:
-        R_J: The Carlson symmetric form :math:`R_J`.
+        The Carlson symmetric form :math:`R_J`.
     """
 
     diff = x - y
@@ -80,7 +80,7 @@ def RC(x: float, y: float) -> float:
         return 1 / sqrt(y)
 
 @njit(fastmath=False)
-def RJ(x: float, y: float, z: float, p: float, tol: float=5e-4):
+def RJ(x: float, y: float, z: float, p: float, tol: float=5e-4) -> float:
     r"""
     Computes the Carlson symmetric form of the
     elliptic integral of the second kind, :math:`R_J`.
@@ -95,7 +95,7 @@ def RJ(x: float, y: float, z: float, p: float, tol: float=5e-4):
         tol: Numerical tolerance parameter (defaults to 5e-4)
 
     Returns:
-        R_J: The Carlson symmetric form :math:`R_J`.
+        The Carlson symmetric form :math:`R_J`.
     """
     # Taylor expansion coefficients
     c1 = 3.0 / 14.0
@@ -145,7 +145,7 @@ def RJ(x: float, y: float, z: float, p: float, tol: float=5e-4):
     return drj
 
 @njit(fastmath=False)
-def RD(x: float, y: float, z: float, tol: float=5e-4):
+def RD(x: float, y: float, z: float, tol: float=5e-4) -> float:
     r"""
     Computes the reduced Carlson symmetric form of the
     elliptic integral of the second kind, :math:`R_D`.
@@ -159,7 +159,7 @@ def RD(x: float, y: float, z: float, tol: float=5e-4):
         tol: Numerical tolerance parameter (defaults to 5e-4)
 
     Returns:
-        R_D: The Carlson symmetric form :math:`R_D`.
+        The Carlson symmetric form :math:`R_D`.
     """
 
     # Taylor expansion coefficients
@@ -218,7 +218,7 @@ def EllipK(k: float, tol: float=5e-4) -> float:
         tol: Numerical tolerance parameter (defaults to 5e-4)
     
     Returns:
-        EllipK: The complete elliptic integral :math:`K(k)`.
+        The complete elliptic integral :math:`K(k)`.
     """
     if k < 0 or k > 1:
         raise ValueError("Elliptic integral K(k) valid only for k in [0, 1].")
@@ -229,7 +229,7 @@ def EllipK(k: float, tol: float=5e-4) -> float:
         return RF(0, 1 - k*k, 1, tol=tol)
 
 @njit(fastmath=False)
-def EllipE(k: float, tol: float=5e-4):
+def EllipE(k: float, tol: float=5e-4) -> float:
     r"""
     Computes the complete elliptic integral of the second kind, :math:`E(k)`.
     
@@ -241,7 +241,7 @@ def EllipE(k: float, tol: float=5e-4):
         tol: Numerical tolerance parameter (defaults to 5e-4)
 
     Returns:
-        EllipE: The complete elliptic integral :math:`E(k)`.
+        The complete elliptic integral :math:`E(k)`.
     """
     if k < 0 or k > 1:
         raise ValueError("Elliptic integral E(k) valid only for k in [0, 1].")
@@ -253,7 +253,7 @@ def EllipE(k: float, tol: float=5e-4):
         return RF(0, y, 1, tol=tol) - 1/3 * k**2 * RD(0, y, 1, tol=tol)
 
 @njit(fastmath=False)
-def EllipPi(n: float, k: float, tol: float=5e-4):
+def EllipPi(n: float, k: float, tol: float=5e-4) -> float:
     r"""
     Computes the complete elliptic integral of the third kind, :math:`\Pi(n, k)`.
 
@@ -263,7 +263,7 @@ def EllipPi(n: float, k: float, tol: float=5e-4):
         tol: Numerical tolerance parameter (defaults to 5e-4)
 
     Returns:
-        EllipPi: The complete elliptic integral :math:`\Pi(n, k)`.
+        The complete elliptic integral :math:`\Pi(n, k)`.
     """
     if k < 0 or k > 1:
         raise ValueError("Elliptic integral Pi(n, k) valid only for k in [0, 1].")

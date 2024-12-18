@@ -38,6 +38,14 @@ Analysis and Other Tools
     :show-inheritance:
     :inherited-members:
 
+Elliptic integrals (Legendre and Carlson symmetric forms)
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: few.utils.elliptic
+    :members:
+    :show-inheritance:
+    :inherited-members:
+
 PN Parameter Mapping Utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

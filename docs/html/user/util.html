@@ -126,6 +126,16 @@
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.utility.cuda_set_device"><code class="docutils literal notranslate"><span class="pre">cuda_set_device()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#elliptic-integrals-legendre-and-carlson-symmetric-forms">Elliptic integrals (Legendre and Carlson symmetric forms)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.elliptic.RF"><code class="docutils literal notranslate"><span class="pre">RF()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.elliptic.RC"><code class="docutils literal notranslate"><span class="pre">RC()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.elliptic.RJ"><code class="docutils literal notranslate"><span class="pre">RJ()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.elliptic.RD"><code class="docutils literal notranslate"><span class="pre">RD()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.elliptic.EllipK"><code class="docutils literal notranslate"><span class="pre">EllipK()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.elliptic.EllipE"><code class="docutils literal notranslate"><span class="pre">EllipE()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#few.utils.elliptic.EllipPi"><code class="docutils literal notranslate"><span class="pre">EllipPi()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#pn-parameter-mapping-utilities">PN Parameter Mapping Utilities</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.pn_map.Y_to_xI"><code class="docutils literal notranslate"><span class="pre">Y_to_xI()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#few.utils.pn_map.xI_to_Y"><code class="docutils literal notranslate"><span class="pre">xI_to_Y()</span></code></a></li>
@@ -1305,11 +1315,156 @@ for examples.</p>
 </dd></dl>
 
 </section>
+<section id="elliptic-integrals-legendre-and-carlson-symmetric-forms">
+<h2>Elliptic integrals (Legendre and Carlson symmetric forms)<a class="headerlink" href="#elliptic-integrals-legendre-and-carlson-symmetric-forms" title="Link to this heading"></a></h2>
+<p id="module-few.utils.elliptic">Efficient implementations of complete elliptic integrals, obtained by applying
+the duplication theorem to compute Carlson’s symmetric forms.</p>
+<p>Derived from Carlson’s algorithms in the SLATEC library.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.elliptic.RF">
+<span class="sig-prename descclassname"><span class="pre">few.utils.elliptic.</span></span><span class="sig-name descname"><span class="pre">RF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0005</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#few.utils.elliptic.RF" title="Link to this definition"></a></dt>
+<dd><p>Computes the Carlson symmetric form of the
+elliptic integral of the first kind, <span class="math notranslate nohighlight">\(R_F\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – First argument, <span class="math notranslate nohighlight">\(x &gt;= 0\)</span>.</p></li>
+<li><p><strong>y</strong> – Second argument, <span class="math notranslate nohighlight">\(y &gt;= 0\)</span>.</p></li>
+<li><p><strong>z</strong> – Third argument, <span class="math notranslate nohighlight">\(z &gt;= 0\)</span>.</p></li>
+<li><p><strong>tol</strong> – Numerical tolerance parameter (defaults to 5e-4)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Carlson symmetric form <span class="math notranslate nohighlight">\(R_F\)</span>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.elliptic.RC">
+<span class="sig-prename descclassname"><span class="pre">few.utils.elliptic.</span></span><span class="sig-name descname"><span class="pre">RC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#few.utils.elliptic.RC" title="Link to this definition"></a></dt>
+<dd><p>Computes the reduced Carlson symmetric form of the
+elliptic integral of the first kind, <span class="math notranslate nohighlight">\(R_C\)</span>.</p>
+<p>Unlike the other Carlson symmetric forms provided, this one
+can be computed analytically in terms of transcendental functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – First argument, <span class="math notranslate nohighlight">\(x &gt;= 0\)</span>.</p></li>
+<li><p><strong>y</strong> – Second argument, <span class="math notranslate nohighlight">\(y &gt;= 0\)</span>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Carlson symmetric form <span class="math notranslate nohighlight">\(R_J\)</span>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.elliptic.RJ">
+<span class="sig-prename descclassname"><span class="pre">few.utils.elliptic.</span></span><span class="sig-name descname"><span class="pre">RJ</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0005</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#few.utils.elliptic.RJ" title="Link to this definition"></a></dt>
+<dd><p>Computes the Carlson symmetric form of the
+elliptic integral of the second kind, <span class="math notranslate nohighlight">\(R_J\)</span>.</p>
+<p>No more than one of <span class="math notranslate nohighlight">\((x, y, z)\)</span> may be equal to zero.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – First argument, <span class="math notranslate nohighlight">\(x &gt;= 0\)</span>.</p></li>
+<li><p><strong>y</strong> – Second argument, <span class="math notranslate nohighlight">\(y &gt;= 0\)</span>.</p></li>
+<li><p><strong>z</strong> – Third argument, <span class="math notranslate nohighlight">\(z &gt;= 0\)</span>.</p></li>
+<li><p><strong>p</strong> – Fourth argument, <span class="math notranslate nohighlight">\(p &gt; 0\)</span>.</p></li>
+<li><p><strong>tol</strong> – Numerical tolerance parameter (defaults to 5e-4)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Carlson symmetric form <span class="math notranslate nohighlight">\(R_J\)</span>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.elliptic.RD">
+<span class="sig-prename descclassname"><span class="pre">few.utils.elliptic.</span></span><span class="sig-name descname"><span class="pre">RD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0005</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#few.utils.elliptic.RD" title="Link to this definition"></a></dt>
+<dd><p>Computes the reduced Carlson symmetric form of the
+elliptic integral of the second kind, <span class="math notranslate nohighlight">\(R_D\)</span>.</p>
+<p>It is a requirement that <span class="math notranslate nohighlight">\(x+y &gt; 0\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – First argument, <span class="math notranslate nohighlight">\(x &gt;= 0\)</span>.</p></li>
+<li><p><strong>y</strong> – Second argument, <span class="math notranslate nohighlight">\(y &gt;= 0\)</span>.</p></li>
+<li><p><strong>z</strong> – Third argument, <span class="math notranslate nohighlight">\(z &gt; 0\)</span>.</p></li>
+<li><p><strong>tol</strong> – Numerical tolerance parameter (defaults to 5e-4)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Carlson symmetric form <span class="math notranslate nohighlight">\(R_D\)</span>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.elliptic.EllipK">
+<span class="sig-prename descclassname"><span class="pre">few.utils.elliptic.</span></span><span class="sig-name descname"><span class="pre">EllipK</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0005</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#few.utils.elliptic.EllipK" title="Link to this definition"></a></dt>
+<dd><p>Computes the complete elliptic integral of the first kind, <span class="math notranslate nohighlight">\(K(k)\)</span>.</p>
+<p>Switches to a polynomial approximation from Abramowitz &amp; Stegun
+for <span class="math notranslate nohighlight">\(k &gt; 1 - 10^{-10}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>k</strong> – The elliptic modulus, where <cite>k in [0, 1]</cite>.</p></li>
+<li><p><strong>tol</strong> – Numerical tolerance parameter (defaults to 5e-4)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The complete elliptic integral <span class="math notranslate nohighlight">\(K(k)\)</span>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.elliptic.EllipE">
+<span class="sig-prename descclassname"><span class="pre">few.utils.elliptic.</span></span><span class="sig-name descname"><span class="pre">EllipE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0005</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#few.utils.elliptic.EllipE" title="Link to this definition"></a></dt>
+<dd><p>Computes the complete elliptic integral of the second kind, <span class="math notranslate nohighlight">\(E(k)\)</span>.</p>
+<p>Switches to a polynomial approximation from Abramowitz &amp; Stegun
+for <span class="math notranslate nohighlight">\(k &gt; 1 - 10^{-10}\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>k</strong> – The elliptic modulus, where <cite>k in [0, 1]</cite>.</p></li>
+<li><p><strong>tol</strong> – Numerical tolerance parameter (defaults to 5e-4)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The complete elliptic integral <span class="math notranslate nohighlight">\(E(k)\)</span>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="few.utils.elliptic.EllipPi">
+<span class="sig-prename descclassname"><span class="pre">few.utils.elliptic.</span></span><span class="sig-name descname"><span class="pre">EllipPi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0005</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#few.utils.elliptic.EllipPi" title="Link to this definition"></a></dt>
+<dd><p>Computes the complete elliptic integral of the third kind, <span class="math notranslate nohighlight">\(\Pi(n, k)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> – The characteristic.</p></li>
+<li><p><strong>k</strong> – The elliptic modulus, where <cite>k in [0, 1]</cite>.</p></li>
+<li><p><strong>tol</strong> – Numerical tolerance parameter (defaults to 5e-4)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The complete elliptic integral <span class="math notranslate nohighlight">\(\Pi(n, k)\)</span>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 <section id="pn-parameter-mapping-utilities">
 <h2>PN Parameter Mapping Utilities<a class="headerlink" href="#pn-parameter-mapping-utilities" title="Link to this heading"></a></h2>
 <dl class="py function" id="module-few.utils.pn_map">
 <dt class="sig sig-object py" id="few.utils.pn_map.Y_to_xI">
-<span class="sig-prename descclassname"><span class="pre">few.utils.pn_map.</span></span><span class="sig-name descname"><span class="pre">Y_to_xI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.pn_map.Y_to_xI" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">few.utils.pn_map.</span></span><span class="sig-name descname"><span class="pre">Y_to_xI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></span><a class="headerlink" href="#few.utils.pn_map.Y_to_xI" title="Link to this definition"></a></dt>
 <dd><p>Convert from <span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span> to <span class="math notranslate nohighlight">\(x_I=\cos{I}\)</span>.</p>
 <p>Converts between the two different inclination parameters. <span class="math notranslate nohighlight">\(\cos{I}\equiv x_I\)</span>,
 where <span class="math notranslate nohighlight">\(I\)</span> describes the orbit’s inclination from the equatorial plane.
@@ -1339,7 +1494,7 @@ it will be cast to a 1D array.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="few.utils.pn_map.xI_to_Y">
-<span class="sig-prename descclassname"><span class="pre">few.utils.pn_map.</span></span><span class="sig-name descname"><span class="pre">xI_to_Y</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#few.utils.pn_map.xI_to_Y" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">few.utils.pn_map.</span></span><span class="sig-name descname"><span class="pre">xI_to_Y</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></span><a class="headerlink" href="#few.utils.pn_map.xI_to_Y" title="Link to this definition"></a></dt>
 <dd><p>Convert from <span class="math notranslate nohighlight">\(x_I=\cos{I}\)</span> to <span class="math notranslate nohighlight">\(Y=\cos{\iota}\)</span>.</p>
 <p>Converts between the two different inclination parameters. <span class="math notranslate nohighlight">\(\cos{I}\equiv x_I\)</span>,
 where <span class="math notranslate nohighlight">\(I\)</span> describes the orbit’s inclination from the equatorial plane.
