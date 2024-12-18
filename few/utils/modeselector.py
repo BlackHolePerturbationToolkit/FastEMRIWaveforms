@@ -221,7 +221,7 @@ class ModeSelector(ParallelModuleBase):
             M = fund_freq_args[0]
             Msec = M * MTSUN_SI
 
-            a_fr, p_fr, e_fr, x_fr = fund_freq_args[1:]
+            a_fr, p_fr, e_fr, x_fr = fund_freq_args[1:-1]
 
             if self.use_gpu:  # fundamental frequencies only defined on CPU
                 p_fr = p_fr.get()
