@@ -40,7 +40,7 @@ def _ylm_kernel_inner(
     m: int, 
     theta: float, 
     phi: float
-    ):
+    ) -> complex:
     if (l==2) and (m==-2):
         temp = (sqrt(5./PI)*pow(sin(theta/2.),4))/(2.*exp(2.*I*phi))
     elif (l==2 and m==-1):
@@ -290,7 +290,6 @@ def _ylm_kernel(out: np.ndarray, l: np.ndarray, m:np.ndarray, theta:float, phi: 
 
     return out
 
-
 class GetYlms(ParallelModuleBase):
     """(-2) Spin-weighted Spherical Harmonics
 
@@ -299,32 +298,22 @@ class GetYlms(ParallelModuleBase):
     the parity operator (:math:`-1^l`) to modes with :math:`m<0`.
 
     args:
-        assume_positive_m (bool, optional): Set true if only providing :math:`m\geq0`,
+        assume_positive_m: Set true if only providing :math:`m\geq0`,
             it will return twice the number of requested modes with the seconds
             half as modes with :math:`m<0`. **Warning**: It will also duplicate
             the :math:`m=0` modes. Default is False.
-        **kwargs (dict, optional): Keyword arguments for the base classes:
+        **kwargs: Optional keyword arguments for the base class:
             :class:`few.utils.baseclasses.ParallelModuleBase`.
-            Default is {}.
-
     """
 
     def __init__(self, assume_positive_m: bool=False, **kwargs: Optional[dict]):
         ParallelModuleBase.__init__(self, **kwargs)
-        # see args in docstring
         self.assume_positive_m = assume_positive_m
 
     @property
     def gpu_capability(self):
         """Confirms GPU capability"""
         return True
-
-    def attributes_GetYlms(self):
-        """
-        attributes:
-            xp (obj): cupy or numpy based on GPU usage.
-        """
-        pass
 
     # These are the spin-weighted spherical harmonics with s=2
     def __call__(
@@ -340,14 +329,13 @@ class GetYlms(ParallelModuleBase):
         angles.
 
         args:
-            l_in (1D int self.xp.ndarray): :math:`l` values requested.
-            m_in (1D int self.xp.ndarray): :math:`m` values requested.
-            theta (double): Polar viewing angle.
-            phi (double): Azimuthal viewing angle.
+            l_in: :math:`l` values requested.
+            m_in: :math:`m` values requested.
+            theta: Polar viewing angle.
+            phi: Azimuthal viewing angle.
 
         Returns:
-            1D complex128 self.xp.ndarray: Ylm values.
-
+            Complex array of Ylm values.
         """
 
         # if assuming positive m, repeat entries for negative m

@@ -108,18 +108,17 @@ class ModeSelector(ParallelModuleBase):
     will in order of :math:`m=0`, :math:`m>0`, and then :math:`m<0`.
 
     args:
-        l_arr (1D int self.xp.ndarray): The l-mode indices for each mode index.
-        m_arr (1D int self.xp.ndarray): The m-mode indices for each mode index.
-        n_arr (1D int self.xp.ndarray): The n-mode indices for each mode index.
-        sensitivity_fn (object, optional): Sensitivity curve function that takes
+        l_arr: The l-mode indices for each mode index.
+        m_arr: The m-mode indices for each mode index.
+        n_arr: The n-mode indices for each mode index.
+        sensitivity_fn: Sensitivity curve function that takes
             a frequency (Hz) array as input and returns the Power Spectral Density (PSD)
             of the sensitivity curve. Default is None. If this is not none, this
             sennsitivity is used to weight the mode values when determining which
             modes to keep. **Note**: if the sensitivity function is provided,
             and GPUs are used, then this function must accept CuPy arrays as input.
-        **kwargs (dict, optional): Keyword arguments for the base classes:
+        **kwargs: Optional keyword arguments for the base class:
             :class:`few.utils.baseclasses.ParallelModuleBase`.
-            Default is {}.
 
     """
 
@@ -130,12 +129,17 @@ class ModeSelector(ParallelModuleBase):
         # the order is m = 0, m > 0, m < 0
         m0mask = m_arr != 0
         self.m0mask = m0mask
+        """array: Mask for m=0 modes."""
         self.num_m_zero_up = len(m0mask)
+        """int: Number of modes with :math:`m\geq0`."""
         self.num_m_1_up = len(self.xp.arange(len(m0mask))[m0mask])
+        """int: Number of modes with :math:`m\geq1`."""
         self.num_m0 = len(self.xp.arange(len(m0mask))[~m0mask])
+        """int: Number of modes with :math:`m=0`."""
 
         self.sensitivity_fn = sensitivity_fn
-
+        """object: sensitivity generating function for power-weighting."""
+        
     @property
     def gpu_capability(self):
         """Confirms GPU capability"""
@@ -145,18 +149,6 @@ class ModeSelector(ParallelModuleBase):
     def is_predictive(self):
         """Whether this mode selector should be used before or after amplitude generation"""
         return False
-    
-    def attributes_ModeSelector(self):
-        """
-        attributes:
-            xp: cupy or numpy depending on GPU usage.
-            num_m_zero_up (int): Number of modes with :math:`m\geq0`.
-            num_m_1_up (int): Number of modes with :math:`m\geq1`.
-            num_m0 (int): Number of modes with :math:`m=0`.
-            sensitivity_fn (object): sensitivity generating function for power-weighting.
-
-        """
-        pass
 
     @property
     def citation(self):
@@ -171,22 +163,22 @@ class ModeSelector(ParallelModuleBase):
         filtered teukolsky modes and ylms.
 
         args:
-            teuk_modes (2D complex128 self.xp.ndarray): Complex teukolsky amplitudes
+            teuk_modes: Complex teukolsky amplitudes
                 from the amplitude modules.
                 Shape: (number of trajectory points, number of modes).
-            ylms (1D complex128 self.xp.ndarray): Array of ylm values for each mode,
+            ylms: Array of ylm values for each mode,
                 including m<0. Shape is (num of m==0,) + (num of m>0,)
                 + (num of m<0). Number of m<0 and m>0 is the same, but they are
                 ordered as (m==0) first then m>0 then m<0.
-            modeinds (list of int self.xp.ndarrays): List containing the mode index arrays. If in an
+            modeinds: List containing the mode index arrays. If in an
                 equatorial model, need :math:`(l,m,n)` arrays. If generic,
                 :math:`(l,m,k,n)` arrays. e.g. [l_arr, m_arr, n_arr].
-            fund_freq_args (tuple, optional): Args necessary to determine
+            fund_freq_args: Args necessary to determine
                 fundamental frequencies along trajectory. The tuple will represent
                 :math:`(M, a, e, p, \cos\iota)` where the large black hole mass (:math:`M`)
                 and spin (:math:`a`) are scalar and the other three quantities are self.xp.ndarrays.
                 This must be provided if sensitivity weighting is used. Default is None.
-            eps (double, optional): Fractional accuracy of the total power used
+            eps: Fractional accuracy of the total power used
                 to determine the contributing modes. Lowering this value will
                 calculate more modes slower the waveform down, but generally
                 improving accuracy. Increasing this value removes modes from
@@ -381,18 +373,6 @@ class NeuralModeSelector(ParallelModuleBase):
         self.__dict__ = d
         # we now load the model as we've unpickled again
         self.load_model(self.model_loc)
-
-    def attributes_ModeSelector(self):
-        """
-        attributes:
-            xp: cupy or numpy depending on GPU usage.
-            torch: pytorch module.
-            device: The pytorch device currently in use: should agree with what is set by cupy.
-            threshold: network evaluation threshold for keeping/discarding modes.
-            vector_min: minimum bounds of the training data, for rescaling.
-            vector_max: maximum bounds of the training data, for rescaling.
-        """
-        pass
 
     @property
     def citation(self):

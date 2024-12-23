@@ -34,14 +34,14 @@ class WaveformTest(unittest.TestCase):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
         inspiral_kwargs = {
             "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
-            "max_init_len": int(
+            "buffer_length": int(
                 1e3
             )  # all of the trajectories will be well under len = 1000
         }
 
         # keyword arguments for inspiral generator (RomanAmplitude)
         amplitude_kwargs = {
-            "max_init_len": int(
+            "buffer_length": int(
                 1e3
             )  # all of the trajectories will be well under len = 1000
         }
@@ -82,14 +82,14 @@ class WaveformTest(unittest.TestCase):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
         inspiral_kwargs = {
             "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
-            "max_init_len": int(
+            "buffer_length": int(
                 1e3
             )  # all of the trajectories will be well under len = 1000
         }
 
         # keyword arguments for inspiral generator (RomanAmplitude)
         amplitude_kwargs = {
-            "max_init_len": int(
+            "buffer_length": int(
                 1e3
             )  # all of the trajectories will be well under len = 1000
         }
@@ -115,11 +115,11 @@ class WaveformTest(unittest.TestCase):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
         inspiral_kwargs = {
             "DENSE_STEPPING": 1,  # we want a sparsely sampled trajectory
-            "max_init_len": int(1e7)  # dense stepping trajectories
+            "buffer_length": int(1e7)  # dense stepping trajectories
         }
 
         # keyword arguments for inspiral generator (RomanAmplitude)
-        amplitude_kwargs = {"max_init_len": int(1e4)}  # this must be >= batch_size
+        amplitude_kwargs = {"buffer_length": int(1e4)}  # this must be >= batch_size
 
         # keyword arguments for Ylm generator (GetYlms)
         Ylm_kwargs = {
@@ -167,7 +167,7 @@ class WaveformTest(unittest.TestCase):
 
 def amplitude_test(amp_class):
     # initialize ROMAN class
-    amp = RomanAmplitude(max_init_len=5000)  # max_init_len creates memory buffers
+    amp = RomanAmplitude(buffer_length=5000)  # buffer_length creates memory buffers
 
     p = np.linspace(10.0, 14.0, 10)
     e = np.linspace(0.1, 0.7, 10)

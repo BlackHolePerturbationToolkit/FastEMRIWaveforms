@@ -1,6 +1,9 @@
 from abc import ABC
 from ..utils.citations import *
 
+import numpy as np
+from typing import Optional, Union
+
 class AmplitudeBase(ABC):
     """Base class used for amplitude modules.
 
@@ -34,25 +37,23 @@ class AmplitudeBase(ABC):
         """Return citation for this class"""
         return larger_few_citation + few_citation + few_software_citation
 
-    def __call__(self, *args, specific_modes=None, **kwargs):
+    def __call__(self, *args, specific_modes:Optional[Union[list, np.ndarray]]=None, **kwargs) -> Union[dict, np.ndarray]:
         """Common call for Teukolsky amplitudes
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays
         and returns the complex amplitude of all modes to adiabatic order at
         each step of the trajectory.
 
-        args:
-            *args (tuple, placeholder): Added to create future flexibility when calling different
+        Args:
+            *args: Added to create future flexibility when calling different
                 amplitude modules. Transfers directly into get_amplitudes function.
-            specific_modes (list, optional): List of tuples for (l, m, n) values
-                desired modes. Default is None. This is not available for all waveforms.
+            specific_modes: Either indices or mode index tuples of modes to be generated (optional; defaults to all modes). This is not available for all waveforms.
             **kwargs (dict, placeholder): Added to create flexibility when calling different
                 amplitude modules. It is not used.
 
-        returns:
-            2D array (double): If specific_modes is None, Teukolsky modes in shape (number of trajectory points, number of modes)
-            dict: Dictionary with requested modes.
-
+        Returns:
+            If specific_modes is a list of tuples, returns a dictionary of complex mode amplitudes.
+            Else, returns an array of complex mode amplitudes.
 
         """
 

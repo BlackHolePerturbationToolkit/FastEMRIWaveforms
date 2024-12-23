@@ -24,11 +24,7 @@ a common interface and pass information related to each model.
 
 from abc import ABC
 import warnings
-import os
-
 import numpy as np
-from scipy.interpolate import CubicSpline
-from scipy import constants as ct
 
 from typing import Union, Optional
 
@@ -48,31 +44,17 @@ from ..utils.constants import *
 from ..utils.citations import *
 from ..utils.utility import kerr_p_to_u
 
-# Import module-specific baseclasses for backwards compatibility
-# from ..amplitude.base import AmplitudeBase
-# from ..trajectory.base import TrajectoryBase
-# from ..summation.base import SummationBase
-
 class ParallelModuleBase(ABC):
     """Base class for modules that can use GPUs.
 
     This class mainly handles setting GPU usage.
 
     args:
-        use_gpu (bool, optional): If True, use GPU resources. Default is False.
+        use_gpu: If True, use GPU resources. Default is False.
 
     """
 
-    def attributes_ParallelModuleBase(self):
-        """
-        attributes:
-            use_gpu (bool): If True, use GPU.
-            xp (obj): Either numpy or CuPy based on gpu preference.
-
-        """
-        pass
-
-    def __init__(self, *args, use_gpu=False, **kwargs):
+    def __init__(self, *args, use_gpu:bool=False, **kwargs):
         self.use_gpu = use_gpu
 
         # checks if gpu capability is available if requested
@@ -107,7 +89,7 @@ class ParallelModuleBase(ABC):
         GPU capabilites.
 
         Args:
-            use_gpu (bool): If True, the user is requesting GPU usage.
+            use_gpu: If True, the user is requesting GPU usage.
 
         Raises:
             ValueError: The user is requesting GPU usage, but this class does
@@ -178,7 +160,9 @@ class SphericalHarmonic(ParallelModuleBase, ABC):
                     md.append([l, m, n])
 
         # total number of modes in the model
-        self.num_modes = self.num_teuk_modes = len(md)
+        self.num_modes = len(md)
+        self.num_teuk_modes = self.num_modes
+        """int: Number of Teukolsky modes in the model."""
 
         # mask for m == 0
         m0mask = self.xp.array(
@@ -197,40 +181,53 @@ class SphericalHarmonic(ParallelModuleBase, ABC):
                 self.xp.arange(self.num_teuk_modes)[~m0mask],
             ]
         )
+        """1D np.ndarray: Sorted mode indices with m=0 first, then m<0, then m>0."""
 
         # sorts the mode indexes
         md = self.xp.asarray(md).T[:, m0sort].astype(self.xp.int32)
 
         # store l m and n values
-        self.l_arr_no_mask, self.m_arr_no_mask, self.n_arr_no_mask = md[0], md[1], md[2]
+        self.l_arr_no_mask = md[0]
+        """1D np.ndarray: Array of l values for each mode before masking."""
+        self.m_arr_no_mask = md[1]
+        """1D np.ndarray: Array of m values for each mode before masking."""
+        self.n_arr_no_mask = md[2]
+        """1D np.ndarray: Array of n values for each mode before masking."""
 
         # adjust with .get method for cupy
         try:
-            self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T.get())}
+            lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T.get())}
 
         except AttributeError:
-            self.lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
+            lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
+
+        self.lmn_indices = lmn_indices
+        """dict: Dictionary of mode indices to mode number."""
 
         # store the mask as m != 0 is True
         self.m0mask = self.m_arr_no_mask != 0
-
+        """1D np.ndarray: Mask for m != 0."""
         # number of m >= 0
         self.num_m_zero_up = len(self.m_arr_no_mask)
-
+        """int: Number of modes with m >= 0."""
         # number of m == 0
         self.num_m0 = len(self.xp.arange(self.num_teuk_modes)[m0mask])
-
+        """int: Number of modes with m == 0."""
         # number of m > 0
         self.num_m_1_up = self.num_m_zero_up - self.num_m0
-
+        """int: Number of modes with m > 0."""
         # create final arrays to include -m modes
         self.l_arr = self.xp.concatenate([self.l_arr_no_mask, self.l_arr_no_mask[self.m0mask]])
+        """1D np.ndarray: Array of l values for each mode."""
         self.m_arr = self.xp.concatenate([self.m_arr_no_mask, -self.m_arr_no_mask[self.m0mask]])
+        """1D np.ndarray: Array of m values for each mode."""
         self.n_arr = self.xp.concatenate([self.n_arr_no_mask, self.n_arr_no_mask[self.m0mask]])
+        """1D np.ndarray: Array of n values for each mode."""
 
         # mask for m >= 0
         self.m_zero_up_mask = self.m_arr >= 0
-
+        """1D np.ndarray: Mask for m >= 0."""
+        
         # find unique sets of (l,m)
         # create inverse array to build full (l,m,n) from unique l and m
         # also adjust for cupy
@@ -247,14 +244,21 @@ class SphericalHarmonic(ParallelModuleBase, ABC):
             )
 
         # unique values of l and m
-        self.unique_l, self.unique_m = self.xp.asarray(temp).T
+        unique_l, unique_m = self.xp.asarray(temp).T
+        self.unique_l = unique_l
+        """1D np.ndarray: Array of unique l values."""
+        self.unique_m = unique_m
+        """1D np.ndarray: Array of unique m values."""
 
         # number of unique values
         self.num_unique_lm = len(self.unique_l)
+        """int: Number of unique (l,m) values."""
 
         # creates special maps to the modes
         self.index_map = {}
+        """dict: Maps mode index to mode tuple."""
         self.special_index_map = {}  # maps the minus m values to positive m
+        """dict: Maps mode index to mode tuple with m > 0."""
         for i, (l, m, n) in enumerate(zip(self.l_arr, self.m_arr, self.n_arr)):
             try:
                 l = l.item()
@@ -300,10 +304,12 @@ class SphericalHarmonic(ParallelModuleBase, ABC):
         Make sure parameters are within allowable ranges.
 
         args:
-            p (1D np.ndarray): Array of semi-latus rectum values produced by
+            a: Dimensionless spin of massive black hole.
+            p: Array of semi-latus rectum values produced by
                 the trajectory module.
-            e (1D np.ndarray): Array of eccentricity values produced by
+            e: Array of eccentricity values produced by
                 the trajectory module.
+            xI: Array of cosine(inclination) values produced by the trajectory module.
 
         Raises:
             ValueError: If any of the trajectory points are not allowed.
@@ -325,6 +331,15 @@ class SphericalHarmonic(ParallelModuleBase, ABC):
             raise ValueError("Members of xI array have a magnitude greater than one.")
 
 class SchwarzschildEccentric(SphericalHarmonic):
+    """
+    Schwarzschild eccentric base class.
+
+    Args:
+        use_gpu: If True, will allocate arrays on the GPU. Default is False.
+        lmax: Maximum l value for the model. Default is 10.
+        nmax: Maximum n value for the model. Default is 30.
+        ndim: Number of phases in the model. Default is 2.
+    """
     def __init__(
             self, 
             *args:Optional[list], 
@@ -336,8 +351,13 @@ class SchwarzschildEccentric(SphericalHarmonic):
         ):
         # some descriptive information
         self.background = "Schwarzschild"
+        """str: The spacetime background for this model. Is Schwarzschild."""
         self.descriptor = "eccentric"
+        """str: Description of the inspiral trajectory properties for this model. Is eccentric."""
         self.frame = "source"
+        """str: Frame in which source is generated. Is source frame."""
+        self.needs_Y = False
+        """bool: If True, model expects inclination parameter Y (rather than xI). Is False."""
 
         # set mode index settings
         self.lmax = lmax
@@ -363,12 +383,14 @@ class SchwarzschildEccentric(SphericalHarmonic):
         Make sure parameters are within allowable ranges.
 
         args:
-            M (double): Massive black hole mass in solar masses.
-            mu (double): compact object mass in solar masses.
-            p0 (double): Initial semilatus rectum (dimensionless)
+            M: Massive black hole mass in solar masses.
+            mu: compact object mass in solar masses.
+            a: Dimensionless spin of massive black hole :math:`(a = 0)`.
+            p0: Initial semilatus rectum (dimensionless)
                 :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
                 more information on :math:`p_0 \leq 10.0`.
-            e0 (double): Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
+            e0: Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
+            xI: Initial cosine(inclination) :math:`(x_I = 1)`.
 
         Raises:
             ValueError: If any of the parameters are not allowed.
@@ -416,6 +438,16 @@ class SchwarzschildEccentric(SphericalHarmonic):
             )
 
 class KerrEccentricEquatorial(SphericalHarmonic):
+    """
+    Kerr eccentric equatorial base class.
+
+    Args:
+        use_gpu: If True, will allocate arrays on the GPU. Default is False.
+        lmax: Maximum l value for the model. Default is 10.
+        nmax: Maximum n value for the model. Default is 50.
+        ndim: Number of phases in the model. Default is 2.
+    """
+
     def __init__(
             self, 
             *args: Optional[list], 
@@ -427,8 +459,13 @@ class KerrEccentricEquatorial(SphericalHarmonic):
         ):
         # some descriptive information
         self.background = "Kerr"
-        self.descriptor = "eccentric"
+        """str: The spacetime background for this model. Is Kerr."""
+        self.descriptor = "eccentric equatorial"
+        """str: Description of the inspiral trajectory properties for this model. Is eccentric equatorial."""
         self.frame = "source"
+        """str: Frame in which source is generated. Is source frame."""
+        self.needs_Y = False
+        """bool: If True, model expects inclination parameter Y (rather than xI). Is False."""
 
         # set mode index settings
         self.lmax = lmax
@@ -454,17 +491,21 @@ class KerrEccentricEquatorial(SphericalHarmonic):
         Make sure parameters are within allowable ranges.
 
         args:
-            M (double): Massive black hole mass in solar masses.
-            mu (double): compact object mass in solar masses.
-            p0 (double): Initial semilatus rectum (dimensionless)
+            M: Massive black hole mass in solar masses.
+            mu: compact object mass in solar masses.
+            a: Dimensionless spin of massive black hole.
+            p0: Initial semilatus rectum (dimensionless)
                 :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
                 more information on :math:`p_0 \leq 10.0`.
-            e0 (double): Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
+            e0: Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
+            xI: Initial cosine(inclination) :math:`(|x_I| = 1)`.
 
         Raises:
             ValueError: If any of the parameters are not allowed.
 
         """
+        
+        # TODO: update function when grids replaced
 
         for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"], [a, "a"]]:
             test = val < 0.0
@@ -501,32 +542,23 @@ class Pn5AAK(ParallelModuleBase, ABC):
     for more details.
 
     args:
-        use_gpu (bool, optional): If True, will allocate arrays on the GPU.
+        use_gpu: If True, will allocate arrays on the GPU.
             Default is False.
 
     """
-
-    def attributes_Pn5AAK(self):
-        """
-        attributes:
-            xp (module): numpy or cupy based on hardware chosen.
-            background (str): Spacetime background for this model.
-            descriptor (str): Short description for model validity.
-            needs_Y (bool): If True, indicates modules that inherit this class
-                requires the inclination definition of :math:`Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}`
-                rather than :math:`x_I`.
-
-        """
-        pass
 
     def __init__(self, *args:Optional[list], use_gpu: bool=False, **kwargs:Optional[dict]):
         ParallelModuleBase.__init__(self, *args, use_gpu=use_gpu, **kwargs)
 
         # some descriptive information
         self.background = "Kerr"
-        self.descriptor = "generic orbits"
+        """str: The spacetime background for this model. Is Kerr."""
+        self.descriptor = "eccentric inclined"
+        """str: Description of the inspiral trajectory properties for this model. Is eccentric inclined."""
         self.frame = "detector"
+        """str: Frame in which source is generated. Is detector frame."""
         self.needs_Y = True
+        """bool: If True, model expects inclination parameter Y (rather than xI). Is True."""
 
     @property
     def citation(self):
@@ -602,14 +634,14 @@ class Pn5AAK(ParallelModuleBase, ABC):
         Make sure parameters are within allowable ranges.
 
         args:
-            M (double): Massive black hole mass in solar masses.
-            mu (double): compact object mass in solar masses.
-            a (double): Dimensionless spin of massive black hole.
-            p0 (double): Initial semilatus rectum (dimensionless)
+            M: Massive black hole mass in solar masses.
+            m: compact object mass in solar masses.
+            a: Dimensionless spin of massive black hole :math:`(0 \leq a \leq 1)`.
+            p0: Initial semilatus rectum (dimensionless)
                 :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
                 more information on :math:`p_0 \leq 10.0`.
-            e0 (double): Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
-            Y0 (double): Initial cos:math:`\iota` :math:`(-1.0\leq Y_0\leq1.0)`.
+            e0: Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
+            Y0: Initial cos:math:`\iota` :math:`(-1.0\leq Y_0\leq1.0)`.
 
         Raises:
             ValueError: If any of the parameters are not allowed.

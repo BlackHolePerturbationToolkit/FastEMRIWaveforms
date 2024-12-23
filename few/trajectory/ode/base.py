@@ -1,12 +1,14 @@
 """
 Contains the ODEBase baseclass that handles evaluating the ODE
 """
-from typing import Optional, Type
+from typing import Optional, Type, Union
 import numpy as np
+import os
 
-def get_ode_function_options():
-    pass
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
+# def get_ode_function_options():
+#     return _STOCK_TRAJECTORY_OPTIONS
 
 class ODEBase:
     """
@@ -17,9 +19,23 @@ class ODEBase:
     See the documentation for examples on how to do this.
 
     """
-    def __init__(self, *args, **kwargs):
-        self.file_dir = None
+    def __init__(self, *args, file_directory=None, use_ELQ=False, **kwargs):
+        if file_directory is None:
+            self.file_dir = os.path.join(dir_path,"../../../few/files/")
+        else:
+            self.file_dir = file_directory
+        
+        self.file_dir
+        """str: The directory where the ODE data files are stored. Defaults to the FEW installation directory."""
+        if use_ELQ:
+            assert self.supports_ELQ, "This ODE does not support ELQ evaluation."
+        self.use_ELQ = use_ELQ
+        """
+        bool: If True, the ODE will take as input (and output derivatives of) the integrals of motion (E, L, Q). Defaults to False.
+        """
         self.num_add_args = 0
+        """int: Number of additional arguments being passed to the ODE function."""
+
 
     @property
     def convert_Y(self):
@@ -46,10 +62,10 @@ class ODEBase:
         return False
 
     @property
-    def integrate_constants_of_motion(self):
+    def supports_ELQ(self):
         """
-        If True, the orbital element coordinates are assumed to be (E, L, Q).
-        If False, they are assumed to be (p, e, xI).
+        If True, this ODE can take as input (and output derivatives of) 
+        the integrals of motion (E, L, Q) if initialised with `use_ELQ=True`.
         Defaults to False.
         """
         return False
@@ -90,18 +106,20 @@ class ODEBase:
         else:
             self.num_add_args = len(additional_args)
 
-    def evaluate_rhs_arr(self, y, **kwargs):
-        return self.evaluate_rhs(*y, **kwargs)
-
-    def evaluate_rhs(self, *args, **kwargs) -> NotImplementedError:
+    def evaluate_rhs(self, y, **kwargs) -> NotImplementedError:
         raise NotImplementedError
 
-    def __call__(self, *args: list[float], out: Optional[np.ndarray] = None, scale_by_eps=False, **kwargs: Optional[dict]) -> np.ndarray:
-        derivs = self.evaluate_rhs_arr(*args, **kwargs)
+    def modify_rhs(self, ydot: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
+        return ydot
+
+    def __call__(self, y: Union[list, np.ndarray], out: Optional[np.ndarray] = None, scale_by_eps=False, **kwargs: Optional[dict]) -> np.ndarray:
+        derivs = self.evaluate_rhs(y, **kwargs)
         if out is None:
             out = np.asarray(derivs)
         else:
             out[:] = derivs
+        
+        self.modify_rhs(out, y, **kwargs)
 
         if scale_by_eps:
             out[:3] *= self.epsilon
@@ -113,7 +131,7 @@ class ODEBase:
         #  TODO: re-examine this in future, this is a band-aid fix that breaks
         #  if the user adds their own args/kwargs to their class
         #  Or optionally, we can ask the user to define this as well (not ideal)
-        return (self.__class__, (self.file_dir, ))
+        return (self.__class__, (self.file_dir, self.use_ELQ ))
 
 
 def _properties(cls: type) -> list[str]:

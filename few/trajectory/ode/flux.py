@@ -1,10 +1,10 @@
 from .base import ODEBase
-from ...utils.utility import _KerrGeoCoordinateFrequencies_kernel_inner, _get_separatrix_kernel_inner, check_for_file_download
+from ...utils.utility import get_fundamental_frequencies, get_separatrix, check_for_file_download, ELQ_to_pex
 from numba import njit
 
 from multispline.spline import BicubicSpline, TricubicSpline
 import os
-from typing import Optional
+from typing import Optional, Union
 import numpy as np
 from numba import njit
 from math import pow, sqrt, log
@@ -32,14 +32,16 @@ def _schwarz_jac_kernel(p, e, Edot, Ldot):
     return pdot, edot
 
 class SchwarzEccFlux(ODEBase):
-    def __init__(self, *args, file_directory: Optional[str]=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        # construct the BicubicSpline object from the expected file
-        if file_directory is None:
-            self.file_dir = os.path.join(dir_path,"../../../few/files/")
-        else:
-            self.file_dir = file_directory
+    """
+    Schwarzschild eccentric flux ODE.
 
+    Args:
+        file_directory: The directory where the ODE data files are stored. Defaults to the FEW installation directory.
+        use_ELQ: If True, the ODE will output derivatives of the orbital elements of (E, L, Q). Defaults to False.
+    """
+    def __init__(self, *args, file_directory: Optional[str]=None, use_ELQ: bool=False, **kwargs):
+        super().__init__(*args, file_directory=file_directory, use_ELQ=use_ELQ, **kwargs)
+        # construct the BicubicSpline object from the expected file
         fp = "FluxNewMinusPNScaled_fixed_y_order.dat"
         
         check_for_file_download(fp, self.file_dir)
@@ -63,12 +65,22 @@ class SchwarzEccFlux(ODEBase):
     def separatrix_buffer_dist(self):
         return 0.1
 
-    def evaluate_rhs(self, p: float, e: float, x: float, *args) -> list[float]:
+    @property
+    def supports_ELQ(self):
+        return True
+
+    def evaluate_rhs(self, y: Union[list[float], np.ndarray]) -> list[Union[float, np.ndarray]]:
+        if self.use_ELQ:
+            E, L, Q = y[:3]
+            p, e, x= ELQ_to_pex(self.a, E, L, Q)
+
+        else:
+            p, e, x = y[:3]
+
         if e < 0 or p < 6 + 2*e:
             return [0., 0., 0., 0., 0., 0.,]
 
-        # directly evaluate the numba kernel for speed
-        Omega_phi, Omega_theta, Omega_r = _KerrGeoCoordinateFrequencies_kernel_inner(0., p, e, x)
+        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(0., p, e, x)
         yPN = Omega_phi**(2/3)
 
         y1 = np.log((p - 2. * e - 2.1))
@@ -79,10 +91,14 @@ class SchwarzEccFlux(ODEBase):
         Edot = -(self.Edot_interp(y1, e)* yPN**6 + Edot_PN)
         Ldot = -(self.Ldot_interp(y1, e)* yPN**(9/2) + Ldot_PN)
         
-        pdot, edot = _schwarz_jac_kernel(p, e, Edot, Ldot)
-        return [pdot, edot, 0., Omega_phi, Omega_theta, Omega_r]
+        if self.use_ELQ:
+            y1dot, y2dot = Edot, Ldot
+        else:
+            y1dot, y2dot = _schwarz_jac_kernel(p, e, Edot, Ldot)
+        
+        y3dot = 0.
 
-# TODO add ELQ
+        return [y1dot, y2dot, y3dot, Omega_phi, Omega_theta, Omega_r]
 
 
 @njit(fastmath=True)
@@ -99,14 +115,15 @@ def _p_to_u(p, p_sep):
 
 
 class KerrEccEqFlux(ODEBase):
-    def __init__(self, *args, file_directory: Optional[str]=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        # construct the BicubicSpline object from the expected file
-        if file_directory is None:
-            self.file_dir = os.path.join(dir_path,"../../../few/files/")
-        else:
-            self.file_dir = file_directory
+    """
+    Kerr eccentric equatorial flux ODE.
 
+    Args:
+        file_directory: The directory where the ODE data files are stored. Defaults to the FEW installation directory.
+        use_ELQ: If True, the ODE will output derivatives of the orbital elements of (E, L, Q). Defaults to False.
+    """
+    def __init__(self, *args, file_directory: Optional[str]=None, use_ELQ: bool=False, **kwargs):
+        super().__init__(*args,file_directory=file_directory, use_ELQ=use_ELQ, **kwargs)
         self.files = [
             "KerrEqEcc_x0.dat",
             "KerrEqEcc_x1.dat",
@@ -134,21 +151,28 @@ class KerrEccEqFlux(ODEBase):
     @property
     def separatrix_buffer_dist(self):
         return 0.05
+    
+    @property
+    def supports_ELQ(self):
+        return False
 
+    def evaluate_rhs(self, y: Union[list[float], np.ndarray]) -> list[Union[float, np.ndarray]]:
+        if self.use_ELQ:
+            raise NotImplementedError
+        else:
+            p, e, x = y[:3]
 
-    def evaluate_rhs(self, p: float, e: float, x: float, *args) -> list[float]:
         if e < 0:
              return [0., 0., 0., 0., 0., 0.,]
          
-        p_sep = _get_separatrix_kernel_inner(self.a, e, x)
+        p_sep = get_separatrix(self.a, e, x)
 
         if p < p_sep:
              return [0., 0., 0., 0., 0., 0.,]
 
-        # directly evaluate the numba kernel for speed
-        Omega_phi, Omega_theta, Omega_r = _KerrGeoCoordinateFrequencies_kernel_inner(self.a, p, e, x)
+        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(self.a, p, e, x)
 
-        risco = _get_separatrix_kernel_inner(self.a, 0., x)
+        risco = get_separatrix(self.a, 0., x)
         u = _p_to_u(p, p_sep)
         w = e**0.5
         a_sign = self.a * x
@@ -160,5 +184,3 @@ class KerrEccEqFlux(ODEBase):
             edot = 0.
 
         return [pdot, edot, 0., Omega_phi, Omega_theta, Omega_r]
-    
-# TODO add ELQ

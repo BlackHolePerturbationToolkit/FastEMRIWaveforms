@@ -27,3 +27,20 @@ ODE Integrators
     :members:
     :show-inheritance:
     :inherited-members:
+
+ODE Classes
+~~~~~~~~~~~~~~~
+.. automodule:: few.trajectory.ode.base
+    :members:
+    :show-inheritance:
+    :inherited-members:
+  
+.. automodule:: few.trajectory.ode.flux
+    :members:
+    :show-inheritance:
+    :exclude-members: equatorial, background, separatrix_buffer_dist, convert_Y, supports_ELQ_integration
+
+.. automodule:: few.trajectory.ode.pn5
+    :members:
+    :show-inheritance:
+    :exclude-members: equatorial, background, separatrix_buffer_dist, convert_Y, supports_ELQ_integration

@@ -58,10 +58,34 @@
 <p class="caption" role="heading"><span class="caption-text">Tutorial:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Fast self-forced trajectories</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#ODE-classes">ODE classes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#Trajectory-evaluation">Trajectory evaluation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#User-defined-trajectory-models">User-defined trajectory models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#Trajectory-related-utilities">Trajectory-related utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ODE-classes">ODE classes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Parameter-conventions">Parameter conventions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Stock-trajectory-models">Stock trajectory models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Obtaining-the-right-hand-side-of-the-trajectory-ODE">Obtaining the right-hand side of the trajectory ODE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Checking-the-properties-of-an-ODE-system">Checking the properties of an ODE system</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#Trajectory-evaluation">Trajectory evaluation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#The-EMRIInspiral-class">The EMRIInspiral class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Trajectory-stopping-conditions">Trajectory stopping conditions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Output-on-a-requested-time-grid">Output on a requested time grid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Return-trajectory-in-dimensionless-time-coordinates">Return trajectory in dimensionless time coordinates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Integrating-trajectories-with-a-fixed-time-step">Integrating trajectories with a fixed time-step</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Evolving-trajectories-backwards-in-time">Evolving trajectories backwards in time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Setting-the-integrator-error-tolerance">Setting the integrator error tolerance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Integrating-trajectories-in-(E,-L,-Q)-coordinates">Integrating trajectories in <span class="math notranslate nohighlight">\((E, L, Q)\)</span> coordinates</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#User-defined-trajectory-models">User-defined trajectory models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Modifying-an-existing-trajectory-model">Modifying an existing trajectory model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Passing-additional-arguments-to-a-modified-trajectory-model">Passing additional arguments to a modified trajectory model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#Trajectory-related-utilities">Trajectory-related utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Get-p_0-based-on-desired-duration-of-trajectory">Get <span class="math notranslate nohighlight">\(p_0\)</span> based on desired duration of trajectory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Get-\mu-based-on-desired-duration-of-trajectory">Get <span class="math notranslate nohighlight">\(\mu\)</span> based on desired duration of trajectory</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="FastEMRIWaveforms_tutorial.html">Fast and Accurate EMRI Waveforms Tutorial</a></li>
@@ -118,6 +142,8 @@
 <p>An essential component of the FastEMRIWaveforms (FEW) framework is the rapid evaluation of the inspiral trajectory of the secondary compact object. FEW provides the tools required for users to generate and visualiase these trajectories. Users can also implement their own trajectory models to incorporate additional physics (such as environmental effects or modifications to gravity). We will demonstrate these capabilities in this tutorial.</p>
 <section id="ODE-classes">
 <h2>ODE classes<a class="headerlink" href="#ODE-classes" title="Link to this heading"></a></h2>
+<section id="Parameter-conventions">
+<h3>Parameter conventions<a class="headerlink" href="#Parameter-conventions" title="Link to this heading"></a></h3>
 <p>FEW constructs trajectories by integrating the equations of motion of the compact binary; these are a system of ordinary differential equations (ODEs) that describe the evolution of the following parameters:</p>
 <table class="docutils align-default">
 <thead>
@@ -147,6 +173,9 @@
 </tbody>
 </table>
 <p>The ODE system can be integrated efficiently with adaptive Runge-Kutta techniques. These solvers obtain trajectories by integrating the right-hand side (RHS) of the ODE with respect to a time parameter.</p>
+</section>
+<section id="Stock-trajectory-models">
+<h3>Stock trajectory models<a class="headerlink" href="#Stock-trajectory-models" title="Link to this heading"></a></h3>
 <p>In order to handle the necessary information for evaluating the RHS of the ODE, FEW defines ODE classes. The following stock options are available:</p>
 <table class="docutils align-default">
 <thead>
@@ -170,6 +199,9 @@
 </tr>
 </tbody>
 </table>
+</section>
+<section id="Obtaining-the-right-hand-side-of-the-trajectory-ODE">
+<h3>Obtaining the right-hand side of the trajectory ODE<a class="headerlink" href="#Obtaining-the-right-hand-side-of-the-trajectory-ODE" title="Link to this heading"></a></h3>
 <p>As an example, let’s examine the SchwarzEccFlux model:</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -245,6 +277,9 @@
  np.float64(0.018040932375307846))
 </pre></div></div>
 </div>
+</section>
+<section id="Checking-the-properties-of-an-ODE-system">
+<h3>Checking the properties of an ODE system<a class="headerlink" href="#Checking-the-properties-of-an-ODE-system" title="Link to this heading"></a></h3>
 <p>The ODE class also defines a number of properties that describe the physical and systematic assumptions of the model:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
@@ -264,15 +299,18 @@
 {&#39;convert_Y&#39;: False,
  &#39;equatorial&#39;: True,
  &#39;circular&#39;: False,
- &#39;integrate_constants_of_motion&#39;: False,
+ &#39;supports_ELQ&#39;: True,
  &#39;background&#39;: &#39;Schwarzschild&#39;,
  &#39;separatrix_buffer_dist&#39;: 0.1,
  &#39;nparams&#39;: 6}
 </pre></div></div>
 </div>
 </section>
+</section>
 <section id="Trajectory-evaluation">
 <h2>Trajectory evaluation<a class="headerlink" href="#Trajectory-evaluation" title="Link to this heading"></a></h2>
+<section id="The-EMRIInspiral-class">
+<h3>The EMRIInspiral class<a class="headerlink" href="#The-EMRIInspiral-class" title="Link to this heading"></a></h3>
 <p>Trajectories are evaluated using the <code class="docutils literal notranslate"><span class="pre">EMRIInspiral</span></code> class, which interfaces with the underlying integrator classes and methods in order to integrate the trajectory from its initial conditions until either the maximum alloted duration elapses or pre-determined stopping conditions are satisfied.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">EMRIInspiral</span></code> class offers a number of features that can be adjusted according to the desired output. We will demonstrate these below, working with the <code class="docutils literal notranslate"><span class="pre">KerrEccEqFlux</span></code> trajectory model as an example.</p>
 <div class="nbinput nblast docutils container">
@@ -340,9 +378,12 @@
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorial_Trajectory_tutorial_19_0.png" src="../_images/tutorial_Trajectory_tutorial_19_0.png" />
+<img alt="../_images/tutorial_Trajectory_tutorial_24_0.png" src="../_images/tutorial_Trajectory_tutorial_24_0.png" />
 </div>
 </div>
+</section>
+<section id="Trajectory-stopping-conditions">
+<h3>Trajectory stopping conditions<a class="headerlink" href="#Trajectory-stopping-conditions" title="Link to this heading"></a></h3>
 <p>In principle, the inspiral trajectory continues until <span class="math notranslate nohighlight">\(p\)</span> intersects with the separatrix, <span class="math notranslate nohighlight">\(p_\mathrm{sep}(a, e, x_I)\)</span>. However, FEW truncates the inspiral at the buffer point <span class="math notranslate nohighlight">\(p_\mathrm{stop} = p_\mathrm{sep} + \Delta p\)</span> for numerical stability, performing a root-finding operation to place the last trajectory point within <span class="math notranslate nohighlight">\(\sim 10^{-8}\)</span> of <span class="math notranslate nohighlight">\(p_\mathrm{stop}\)</span>.</p>
 <p>The size of <span class="math notranslate nohighlight">\(\Delta p\)</span> can vary based on the trajectory model, and can be obtained directly from the ODE object:</p>
 <div class="nbinput docutils container">
@@ -374,7 +415,10 @@ Delta_p: 0.05
 np.float64(4.97021979128931e-10)
 </pre></div></div>
 </div>
-<p>The user can also construct trajectories on pre-defined time grids. For uniform grids, the sampling cadence <span class="math notranslate nohighlight">\(\mathrm{d}t\)</span> can be supplied and the grid will be constructed automatically. Non-uniform grids can be supplied via the <code class="docutils literal notranslate"><span class="pre">new_t</span></code> keyword argument. In either case, the <code class="docutils literal notranslate"><span class="pre">fix_t</span></code> keyword argument can be used to truncate the returned trajectory at its end-point.</p>
+</section>
+<section id="Output-on-a-requested-time-grid">
+<h3>Output on a requested time grid<a class="headerlink" href="#Output-on-a-requested-time-grid" title="Link to this heading"></a></h3>
+<p>In addition to the sparse output of the adaptive solver, the user can also construct trajectories on pre-defined time grids. For uniform grids, the sampling cadence <span class="math notranslate nohighlight">\(\mathrm{d}t\)</span> can be supplied and the grid will be constructed automatically. Non-uniform grids can be supplied via the <code class="docutils literal notranslate"><span class="pre">new_t</span></code> keyword argument. In either case, the <code class="docutils literal notranslate"><span class="pre">fix_t</span></code> keyword argument can be used to truncate the returned trajectory at its end-point.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
@@ -407,9 +451,12 @@ t1 max: 19999900.0 t2 max: 17361000.0
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorial_Trajectory_tutorial_23_1.png" src="../_images/tutorial_Trajectory_tutorial_23_1.png" />
+<img alt="../_images/tutorial_Trajectory_tutorial_30_1.png" src="../_images/tutorial_Trajectory_tutorial_30_1.png" />
 </div>
 </div>
+</section>
+<section id="Return-trajectory-in-dimensionless-time-coordinates">
+<h3>Return trajectory in dimensionless time coordinates<a class="headerlink" href="#Return-trajectory-in-dimensionless-time-coordinates" title="Link to this heading"></a></h3>
 <p>Trajectories are returned in coordinate time by default, but may be obtained in dimensionless time units by passing <code class="docutils literal notranslate"><span class="pre">is_coordinate_time=False</span></code>:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
@@ -436,9 +483,12 @@ Dimensionless time step: 2.030254435033953
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorial_Trajectory_tutorial_25_1.png" src="../_images/tutorial_Trajectory_tutorial_25_1.png" />
+<img alt="../_images/tutorial_Trajectory_tutorial_33_1.png" src="../_images/tutorial_Trajectory_tutorial_33_1.png" />
 </div>
 </div>
+</section>
+<section id="Integrating-trajectories-with-a-fixed-time-step">
+<h3>Integrating trajectories with a fixed time-step<a class="headerlink" href="#Integrating-trajectories-with-a-fixed-time-step" title="Link to this heading"></a></h3>
 <p>The adaptive stepping of the solver can be disabled with the <code class="docutils literal notranslate"><span class="pre">DENSE_STEPPING</span></code> keyword argument, which switches to taking uniform steps of size <code class="docutils literal notranslate"><span class="pre">dt</span></code>. This is more expensive and memory-intensive than adaptive stepping.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
@@ -461,9 +511,42 @@ Dimensionless time step: 2.030254435033953
 ((15780,), (8,))
 </pre></div></div>
 </div>
-<p>Trajectories can also be evolved in reverse via the <code class="docutils literal notranslate"><span class="pre">integrate_backwards</span></code> keyword argument. Trajectories evolved in either direction will agree up to the numerical tolerance of the integrator:</p>
+<p>We can directly verify the accuracy of the adaptive solution by evaluating its output on the densely-stepped trajectory’s time grid. The phase errors will be larger than the error in the orbital elements by a factor of <span class="math notranslate nohighlight">\(M / mu\)</span> due to conventions chosen during integration:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">t_dense</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">Phi_phi</span><span class="p">,</span> <span class="n">Phi_theta</span><span class="p">,</span> <span class="n">Phi_r</span> <span class="o">=</span> <span class="n">traj_model</span><span class="p">(</span><span class="o">*</span><span class="n">traj_pars</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T_dense</span><span class="p">,</span> <span class="n">DENSE_STEPPING</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">t_adaptive</span><span class="p">,</span> <span class="n">p_adaptive</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">Phi_phi_adaptive</span><span class="p">,</span> <span class="n">Phi_theta</span><span class="p">,</span> <span class="n">Phi_r</span> <span class="o">=</span> <span class="n">traj_model</span><span class="p">(</span><span class="o">*</span><span class="n">traj_pars</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T_dense</span><span class="p">,</span> <span class="n">new_t</span><span class="o">=</span><span class="n">t_dense</span><span class="p">,</span> <span class="n">upsample</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">t_dense</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">Phi_phi_adaptive</span> <span class="o">-</span> <span class="n">Phi_phi</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Phase error&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">t_dense</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">p_adaptive</span> <span class="o">-</span> <span class="n">p</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;p error&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.legend.Legend at 0x1565a2f50&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorial_Trajectory_tutorial_38_1.png" src="../_images/tutorial_Trajectory_tutorial_38_1.png" />
+</div>
+</div>
+</section>
+<section id="Evolving-trajectories-backwards-in-time">
+<h3>Evolving trajectories backwards in time<a class="headerlink" href="#Evolving-trajectories-backwards-in-time" title="Link to this heading"></a></h3>
+<p>Trajectories can also be evolved in reverse via the <code class="docutils literal notranslate"><span class="pre">integrate_backwards</span></code> keyword argument. Trajectories evolved in either direction will agree up to the numerical tolerance of the integrator:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">traj_pars_back</span> <span class="o">=</span> <span class="n">traj_pars</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -475,6 +558,7 @@ Dimensionless time step: 2.030254435033953
 
 <span class="n">traj_pars_back</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 <span class="n">traj_pars_back</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">traj_pars_back</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="n">xI</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
 <span class="c1"># backward</span>
 <span class="n">t_back</span><span class="p">,</span> <span class="n">p_back</span><span class="p">,</span> <span class="n">e_back</span><span class="p">,</span> <span class="n">xI_back</span><span class="p">,</span> <span class="n">Phi_phi_back</span><span class="p">,</span> <span class="n">Phi_theta_back</span><span class="p">,</span> <span class="n">Phi_r_back</span> <span class="o">=</span> <span class="n">traj_model</span><span class="p">(</span><span class="o">*</span><span class="n">traj_pars_back</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">integrate_backwards</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -486,7 +570,7 @@ Dimensionless time step: 2.030254435033953
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -498,12 +582,16 @@ np.float64(6.0975224869253e-11)
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorial_Trajectory_tutorial_29_1.png" src="../_images/tutorial_Trajectory_tutorial_29_1.png" />
+<img alt="../_images/tutorial_Trajectory_tutorial_41_1.png" src="../_images/tutorial_Trajectory_tutorial_41_1.png" />
 </div>
 </div>
-<p>The integrator tolerance (which is an absolute tolerance) can be adjusted by setting the <code class="docutils literal notranslate"><span class="pre">err</span></code> keyword argument. Higher error tolerances reduce the number of points in the trajectory, but at the cost of numerical accuracy. The default setting of <span class="math notranslate nohighlight">\(10^{-11}\)</span> is a reasonable value and should not need to be changed for typical scenarios.</p>
+</section>
+<section id="Setting-the-integrator-error-tolerance">
+<h3>Setting the integrator error tolerance<a class="headerlink" href="#Setting-the-integrator-error-tolerance" title="Link to this heading"></a></h3>
+<p>The integrator tolerance (which is an absolute tolerance) can be adjusted by setting the <code class="docutils literal notranslate"><span class="pre">err</span></code> keyword argument. Higher error tolerances reduce the number of points in the trajectory, but at the cost of numerical accuracy. Note that <code class="docutils literal notranslate"><span class="pre">err</span></code> is a <em>local</em> error tolerance, not a global one, and must therefore be set conservatively with respect to the desired global error tolerance. The default setting of <span class="math notranslate nohighlight">\(10^{-11}\)</span> is a reasonable value and should not need to be changed for typical
+scenarios.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">traj_model</span><span class="p">(</span><span class="o">*</span><span class="n">traj_pars</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">err</span><span class="o">=</span><span class="mf">1e-11</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
@@ -514,7 +602,7 @@ np.float64(6.0975224869253e-11)
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -523,12 +611,86 @@ np.float64(6.0975224869253e-11)
 </pre></div></div>
 </div>
 </section>
+<section id="Integrating-trajectories-in-(E,-L,-Q)-coordinates">
+<h3>Integrating trajectories in <span class="math notranslate nohighlight">\((E, L, Q)\)</span> coordinates<a class="headerlink" href="#Integrating-trajectories-in-(E,-L,-Q)-coordinates" title="Link to this heading"></a></h3>
+<p>Trajectories can also be solved in the constants of motion parameterisation <span class="math notranslate nohighlight">\((E, L, Q)\)</span>. This is supported for all stock trajectory models. Given input <span class="math notranslate nohighlight">\((p_0, e_0, x_{I,0})\)</span>, the integrator converts these initial conditions to <span class="math notranslate nohighlight">\((E, L, Q)\)</span> and integrates these quantities alongside the inspiral phases. The output trajectory is converted back to <span class="math notranslate nohighlight">\((p, e, x_I)\)</span> coordinates if the keyword argument <code class="docutils literal notranslate"><span class="pre">convert_pex=True</span></code> (which it is by default).</p>
+<p>Integrating in <span class="math notranslate nohighlight">\((E, L, Q)\)</span> can offer some advantages, especially near the separatrix (see <a class="reference external" href="https://arxiv.org/abs/2401.09577">Hughes 2024</a> for more information). Typically the trajectory also consists of fewer points than its <span class="math notranslate nohighlight">\((p, e, x_I)\)</span> counterpart, and is therefore faster to compute. However, it can also be numerically unstable for very small eccentricities, where small errors in the constants of motion can be amplified when transformed back to <span class="math notranslate nohighlight">\((p, e, x_I)\)</span>. Usage of
+this method should be considered somewhat experimental, especially for eccentric and inclined (generic) inspirals.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="mf">1e6</span>
+<span class="n">mu</span> <span class="o">=</span> <span class="mf">1e2</span>
+<span class="n">a</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="n">p0</span> <span class="o">=</span> <span class="mf">10.0</span>
+<span class="n">e0</span> <span class="o">=</span> <span class="mf">0.7</span>
+<span class="n">xI0</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">T</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+<span class="n">traj_model_ELQ</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">SchwarzEccFlux</span><span class="p">,</span> <span class="n">integrate_constants_of_motion</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">traj_model_pex</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">SchwarzEccFlux</span><span class="p">,</span> <span class="n">integrate_constants_of_motion</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">wspace</span><span class="o">=</span><span class="mf">0.35</span><span class="p">)</span>
+<span class="n">axes</span> <span class="o">=</span> <span class="n">axes</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+<span class="n">ylabels</span> <span class="o">=</span> <span class="p">[</span><span class="sa">r</span><span class="s1">&#39;$e$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$p$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$e$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$\Phi_\phi$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$\Phi_\theta$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$\Phi_r$&#39;</span><span class="p">]</span>
+<span class="n">xlabels</span> <span class="o">=</span> <span class="p">[</span><span class="sa">r</span><span class="s1">&#39;$p$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$t$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$t$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$t$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$t$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$t$&#39;</span><span class="p">]</span>
+
+<span class="n">lens</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">phase_ends</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">traj_model</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">ls</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="n">traj_model_ELQ</span><span class="p">,</span> <span class="n">traj_model_pex</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;ELQ&#39;</span><span class="p">,</span> <span class="s1">&#39;pex&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;--&#39;</span><span class="p">]):</span>
+    <span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">xI</span><span class="p">,</span> <span class="n">Phi_phi</span><span class="p">,</span> <span class="n">Phi_theta</span><span class="p">,</span> <span class="n">Phi_r</span> <span class="o">=</span> <span class="n">traj_model</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">e0</span><span class="p">,</span> <span class="n">xI0</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">)</span>
+
+    <span class="c1"># Plot the results for comparison</span>
+    <span class="n">ys</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">Phi_phi</span><span class="p">,</span> <span class="n">Phi_theta</span><span class="p">,</span> <span class="n">Phi_r</span><span class="p">]</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">t</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xlab</span><span class="p">,</span> <span class="n">ylab</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">xlabels</span><span class="p">,</span> <span class="n">ylabels</span><span class="p">)):</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="n">ls</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">xlab</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">ylab</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+
+    <span class="n">lens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+    <span class="n">phase_ends</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Phi_phi</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;(ELQ, pex) trajectory lengths:&quot;</span><span class="p">,</span> <span class="n">lens</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;(ELQ, pex) phase difference:&quot;</span><span class="p">,</span> <span class="n">phase_ends</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">phase_ends</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorial_Trajectory_tutorial_47_0.png" src="../_images/tutorial_Trajectory_tutorial_47_0.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(ELQ, pex) trajectory lengths: [36, 48]
+(ELQ, pex) phase difference: 0.0005533642797672655
+</pre></div></div>
+</div>
+</section>
+</section>
 <section id="User-defined-trajectory-models">
 <h2>User-defined trajectory models<a class="headerlink" href="#User-defined-trajectory-models" title="Link to this heading"></a></h2>
-<p>In addition to FEW’s built-in trajectory models, users can readily implement their own models in the same framework. They can achieve this by: * Subclassing the <code class="docutils literal notranslate"><span class="pre">ODEBase</span></code> base class, * Defining the <code class="docutils literal notranslate"><span class="pre">evaluate_rhs</span></code> method, and * Updating any relevant properties of the model (by default, they are set for generic Kerr inspirals).</p>
+<p>In addition to FEW’s built-in trajectory models, users can readily implement their own models in the same framework. They can achieve this by:</p>
+<ul class="simple">
+<li><p>Subclassing the <code class="docutils literal notranslate"><span class="pre">ODEBase</span></code> base class,</p></li>
+<li><p>Defining the <code class="docutils literal notranslate"><span class="pre">evaluate_rhs</span></code> method, and</p></li>
+<li><p>Updating any relevant properties of the model (by default, they are set for generic Kerr inspirals).</p></li>
+</ul>
 <p>Let’s implement a Post-Newtonian trajectory in Schwarzschild eccentric as an example:</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Some elliptic functions for evaluating geodesic frequencies</span>
@@ -556,8 +718,9 @@ np.float64(6.0975224869253e-11)
     <span class="k">def</span> <span class="nf">background</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;Schwarzschild&quot;</span>
 
-    <span class="k">def</span> <span class="nf">evaluate_rhs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">Phi_phi</span><span class="p">,</span> <span class="n">Phi_theta</span><span class="p">,</span> <span class="n">Phi_r</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">evaluate_rhs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
         <span class="c1"># guard against bad integration steps</span>
+        <span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">xI</span><span class="o">=</span> <span class="n">y</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">e</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mi">6</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span> <span class="n">e</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
 
@@ -605,7 +768,7 @@ np.float64(6.0975224869253e-11)
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="mf">1e6</span>
@@ -635,36 +798,122 @@ np.float64(6.0975224869253e-11)
 </div>
 </div>
 <div class="nboutput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;matplotlib.legend.Legend at 0x153d49890&gt;
+&lt;matplotlib.legend.Legend at 0x169592550&gt;
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorial_Trajectory_tutorial_35_1.png" src="../_images/tutorial_Trajectory_tutorial_35_1.png" />
+<img alt="../_images/tutorial_Trajectory_tutorial_51_1.png" src="../_images/tutorial_Trajectory_tutorial_51_1.png" />
+</div>
+</div>
+<section id="Modifying-an-existing-trajectory-model">
+<h3>Modifying an existing trajectory model<a class="headerlink" href="#Modifying-an-existing-trajectory-model" title="Link to this heading"></a></h3>
+<p>In cases where the desired trajectory model can be expressed as a function of one that is supported out-of-the-box, the inbuilt model can be subclassed and supplemented as required by defining the <code class="docutils literal notranslate"><span class="pre">modify_rhs</span></code> method. This method does not support a return argument for efficiency; the content of the first argument <code class="docutils literal notranslate"><span class="pre">derivs</span></code> should be modified in-place.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">few.trajectory.ode.flux</span> <span class="kn">import</span> <span class="n">KerrEccEqFlux</span>
+
+<span class="k">class</span> <span class="nc">ModifiedKerrEccEqFlux</span><span class="p">(</span><span class="n">KerrEccEqFlux</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">modify_rhs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ydot</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="c1">#in-place modification of the derivatives</span>
+        <span class="n">ydot</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">additional_args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">ydot</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">additional_args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="n">M</span> <span class="o">=</span> <span class="mf">1e6</span>
+<span class="n">mu</span> <span class="o">=</span> <span class="mf">1e2</span>
+<span class="n">a</span> <span class="o">=</span> <span class="mf">0.7</span>
+<span class="n">p</span> <span class="o">=</span> <span class="mf">10.</span>
+<span class="n">e</span> <span class="o">=</span> <span class="mf">0.3</span>
+<span class="n">x</span> <span class="o">=</span> <span class="mf">1.</span>
+
+<span class="n">additional_args</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.01</span><span class="p">,</span> <span class="p">]</span>
+
+<span class="c1"># Example usage</span>
+<span class="n">modified_ode</span> <span class="o">=</span> <span class="n">ModifiedKerrEccEqFlux</span><span class="p">()</span>
+<span class="n">modified_ode</span><span class="o">.</span><span class="n">add_fixed_parameters</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">additional_args</span><span class="p">)</span>
+
+<span class="n">modified_ode</span><span class="p">([</span><span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">x</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([-0.01162928, -0.00058962,  0.        ,  0.02761918,  0.02656476,
+        0.02068311])
+</pre></div></div>
+</div>
+</section>
+<section id="Passing-additional-arguments-to-a-modified-trajectory-model">
+<h3>Passing additional arguments to a modified trajectory model<a class="headerlink" href="#Passing-additional-arguments-to-a-modified-trajectory-model" title="Link to this heading"></a></h3>
+<p>When calling a trajectory, the <code class="docutils literal notranslate"><span class="pre">additional_args</span></code> attribute of the ODE class will be populated with any positional arguments following <span class="math notranslate nohighlight">\(x_I\)</span>:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">traj</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">ModifiedKerrEccEqFlux</span><span class="p">)</span>
+
+<span class="n">test</span> <span class="o">=</span> <span class="n">traj</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
+
+<span class="n">traj2</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">KerrEccEqFlux</span><span class="p">)</span>
+
+<span class="n">flux</span> <span class="o">=</span> <span class="n">traj2</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">flux</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">flux</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;flux&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">test</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">test</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;flux + mod&#39;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;e&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;p&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.legend.Legend at 0x1695d1450&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorial_Trajectory_tutorial_57_1.png" src="../_images/tutorial_Trajectory_tutorial_57_1.png" />
 </div>
 </div>
 <p>User-defined trajectories can be readily implemented in waveform models in the FEW framework - see TODO.</p>
 </section>
+</section>
 <section id="Trajectory-related-utilities">
 <h2>Trajectory-related utilities<a class="headerlink" href="#Trajectory-related-utilities" title="Link to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">few.utils.utility</span> <span class="kn">import</span> <span class="n">get_p_at_t</span><span class="p">,</span> <span class="n">get_mu_at_t</span>
 </pre></div>
 </div>
 </div>
-<p>Get <span class="math notranslate nohighlight">\(p_0\)</span> based on desired duration of waveform:</p>
+<section id="Get-p_0-based-on-desired-duration-of-trajectory">
+<h3>Get <span class="math notranslate nohighlight">\(p_0\)</span> based on desired duration of trajectory<a class="headerlink" href="#Get-p_0-based-on-desired-duration-of-trajectory" title="Link to this heading"></a></h3>
+<p>If you have a desired length of trajectory to analyze, this function will give you the value of <span class="math notranslate nohighlight">\(p_0\)</span> that corresponds to the proper evolution time.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">traj_module</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">SchwarzEccFlux</span><span class="p">)</span>
@@ -706,9 +955,12 @@ np.float64(6.0975224869253e-11)
 p0 = 13.059789979167254 will create a waveform that is 1.5 years long, given the other input parameters.
 </pre></div></div>
 </div>
-<p>Get <span class="math notranslate nohighlight">\(\mu\)</span> based on desired duration of waveform:</p>
+</section>
+<section id="Get-\mu-based-on-desired-duration-of-trajectory">
+<h3>Get <span class="math notranslate nohighlight">\(\mu\)</span> based on desired duration of trajectory<a class="headerlink" href="#Get-\mu-based-on-desired-duration-of-trajectory" title="Link to this heading"></a></h3>
+<p>If you have a desired length of trajectory to analyze, this function will give you the value of <span class="math notranslate nohighlight">\(\mu\)</span> that corresponds to the proper evolution time.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">traj_module</span> <span class="o">=</span> <span class="n">EMRIInspiral</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">SchwarzEccFlux</span><span class="p">)</span>
@@ -747,6 +999,7 @@ p0 = 13.059789979167254 will create a waveform that is 1.5 years long, given the
 mu = 18.804307108664766 will create a waveform that is 1.5 years long, given the other input parameters.
 </pre></div></div>
 </div>
+</section>
 </section>
 </section>
 

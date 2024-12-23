@@ -53,7 +53,7 @@ except (ImportError, ModuleNotFoundError) as e:
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
+class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
     """Calculate Teukolsky amplitudes with a ROMAN.
 
     ROMAN stands for reduced-order models with artificial neurons. Please see
@@ -75,10 +75,10 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
 
 
     args:
-        max_init_len (int, optional): Number of points to initialize for
+        buffer_length (int, optional): Number of points to initialize for
             buffers. This allows the user to limit memory usage. However, if the
             user requests more length, a warning will be thrown and the
-            max_init_len will be increased accordingly and arrays reallocated.
+            buffer_length will be increased accordingly and arrays reallocated.
             Default is 1000.
         **kwargs (dict, optional): Keyword arguments for the base classes:
             :class:`few.utils.baseclasses.SchwarzschildEccentric`,
@@ -101,7 +101,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
             num_teuk_modes (int): number of teukolsky modes in the data file.
             transform_factor_inv (double): Inverse of the scalar transform factor.
                 For this model, that is 1000.0.
-            max_init_len (int): This class uses buffers. This is the maximum length
+            buffer_length (int): This class uses buffers. This is the maximum length
                 the user expects for the input arrays.
             weights (list of xp.ndarrays): List of the weight matrices for each
                 layer of the neural network. They are flattened for entry into
@@ -126,7 +126,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         """
         pass
 
-    def __init__(self, max_init_len=1000, file_directory=None, **kwargs):
+    def __init__(self, buffer_length=1000, file_directory=None, **kwargs):
         ParallelModuleBase.__init__(self, **kwargs)
         SchwarzschildEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
@@ -159,7 +159,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         self.num_teuk_modes = num_teuk_modes
         self.transform_factor_inv = 1 / transform_factor
 
-        self.max_init_len = max_init_len
+        self.buffer_length = buffer_length
 
         self._initialize_weights()
 
@@ -236,8 +236,8 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
         # each layer will alternate between these arrays as the input and output
         # of the layer. The input is multiplied by the layer weight.
         self.temp_mats = [
-            self.xp.zeros((self.max_num * self.max_init_len,), dtype=self.xp.float64),
-            self.xp.zeros((self.max_num * self.max_init_len,), dtype=self.xp.float64),
+            self.xp.zeros((self.max_num * self.buffer_length,), dtype=self.xp.float64),
+            self.xp.zeros((self.max_num * self.buffer_length,), dtype=self.xp.float64),
         ]
 
         # array for letting C++ know if the layer is activated
@@ -272,22 +272,22 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
 
         input_len = len(p)
 
-        # check ifn input_len is greater than the max_init_len attribute
+        # check ifn input_len is greater than the buffer_length attribute
         # if so reset the buffers and update the attribute
-        if input_len > self.max_init_len:
+        if input_len > self.buffer_length:
             warnings.warn(
-                "Input length {} is larger than initial max_init_len ({}). Reallocating preallocated arrays for this size.".format(
-                    input_len, self.max_init_len
+                "Input length {} is larger than initial buffer_length ({}). Reallocating preallocated arrays for this size.".format(
+                    input_len, self.buffer_length
                 )
             )
-            self.max_init_len = input_len
+            self.buffer_length = input_len
 
             self.temp_mats = [
                 self.xp.zeros(
-                    (self.max_num * self.max_init_len,), dtype=self.xp.float64
+                    (self.max_num * self.buffer_length,), dtype=self.xp.float64
                 ),
                 self.xp.zeros(
-                    (self.max_num * self.max_init_len,), dtype=self.xp.float64
+                    (self.max_num * self.buffer_length,), dtype=self.xp.float64
                 ),
             ]
 

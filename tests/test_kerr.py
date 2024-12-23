@@ -24,7 +24,7 @@ except (ModuleNotFoundError, ImportError) as e:
 # keyword arguments for inspiral generator (Kerr Waveform)
 inspiral_kwargs_Kerr = {
                 "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
-                "max_init_len": int(
+                "buffer_length": int(
                     1e3
                 ),  # all of the trajectories will be well under len = 1000
             "func": KerrEccEqFlux

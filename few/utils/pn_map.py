@@ -177,49 +177,40 @@ def Y_to_xI(a: Union[float, np.ndarray], p: Union[float, np.ndarray], e: Union[f
     :math:`\cos{\iota}\equiv Y`, where :math:`\cos{\iota}=L/\sqrt{L^2 + Q}`.
 
     arguments:
-        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+        a: Dimensionless spin of massive
             black hole. If other parameters are arrays and the spin is scalar,
             it will be cast to a 1D array.
-        p (double scalar or 1D double np.ndarray): Values of separation,
+        p: Values of separation,
             :math:`p`.
-        e (double scalar or 1D double np.ndarray): Values of eccentricity,
+        e: Values of eccentricity,
             :math:`e`.
-        Y (double scalar or 1D double np.ndarray): Values of cosine of the
-            :math:`\iota`.
+        Y: Values of PN cosine of inclination :math:`Y`.
 
     returns:
-        1D array or scalar: :math:`x=\cos{I}` value with shape based on input shapes.
+    :math:`x=\cos{I}` values with shape based on input shapes.
 
     """
 
     # determines shape of input
     if isinstance(e, float):
-        scalar = True
-
+        x = _Y_to_xI_kernel_inner(a, p, e, Y)
     else:
-        scalar = False
+        p_in = np.atleast_1d(p)
+        e_in = np.atleast_1d(e)
+        Y_in = np.atleast_1d(Y)
 
-    p_in = np.atleast_1d(p)
-    e_in = np.atleast_1d(e)
-    Y_in = np.atleast_1d(Y)
+        # cast spin values if necessary
+        if isinstance(a, float):
+            a_in = np.full_like(e_in, a)
+        else:
+            a_in = np.atleast_1d(a)
 
-    # cast spin values if necessary
-    if isinstance(a, float):
-        a_in = np.full_like(e_in, a)
-    else:
-        a_in = np.atleast_1d(a)
+        assert len(a_in) == len(e_in)
 
-    assert len(a_in) == len(e_in)
+        x = np.empty_like(e_in)
+        _Y_to_xI_kernel(x, a_in, p_in, e_in, Y_in)
 
-    x = np.empty_like(e_in)
-    _Y_to_xI_kernel(x, a_in, p_in, e_in, Y_in)
-
-    # output in same shape as input
-    if scalar:
-        return x[0]
-
-    else:
-        return x
+    return x
 
 def xI_to_Y(a: Union[float, np.ndarray], p: Union[float, np.ndarray], e: Union[float, np.ndarray], x: Union[float, np.ndarray]) ->  Union[float, np.ndarray]:
     """Convert from :math:`x_I=\cos{I}` to :math:`Y=\cos{\iota}`.
@@ -229,18 +220,18 @@ def xI_to_Y(a: Union[float, np.ndarray], p: Union[float, np.ndarray], e: Union[f
     :math:`\cos{\iota}\equiv Y`, where :math:`\cos{\iota}=L/\sqrt{L^2 + Q}`.
 
     arguments:
-        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+        a: Dimensionless spin of massive
             black hole. If other parameters are arrays and the spin is scalar,
             it will be cast to a 1D array.
-        p (double scalar or 1D double np.ndarray): Values of separation,
+        p: Values of separation,
             :math:`p`.
-        e (double scalar or 1D double np.ndarray): Values of eccentricity,
+        e: Values of eccentricity,
             :math:`e`.
-        x (double scalar or 1D double np.ndarray): Values of cosine of the
+        x: Values of cosine of the
             inclination, :math:`x=\cos{I}`.
 
     returns:
-        1D array or scalar: :math:`Y=\cos{\iota}` value with shape based on input shapes.
+        :math:`Y` values with shape based on input shapes.
 
     """
 

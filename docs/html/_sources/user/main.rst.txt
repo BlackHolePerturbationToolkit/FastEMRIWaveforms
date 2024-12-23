@@ -30,10 +30,7 @@ Fast Schwarzschild Eccentric Flux-based Waveform
     :show-inheritance:
     :inherited-members:
 
-Fast Schwarzschild Eccentric Flux-based Waveform with Spline-interpolated Mode Amplitudes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: few.waveform.waveform.FastSchwarzschildEccentricFlux
+.. autoclass:: few.waveform.waveform.FastSchwarzschildEccentricFluxBicubic
     :members:
     :show-inheritance:
     :inherited-members:

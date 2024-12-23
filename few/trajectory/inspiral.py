@@ -26,18 +26,16 @@ import numpy as np
 # Python imports
 from .base import TrajectoryBase
 from ..utils.utility import (
-    check_for_file_download,
     ELQ_to_pex,
     get_kerr_geo_constants_of_motion,
-    get_fundamental_frequencies,
 )
 from ..utils.pn_map import Y_to_xI
 from ..utils.constants import *
 from ..utils.citations import *
 
-from .integrate import APEXIntegrate, AELQIntegrate, get_integrator
+from .integrate import get_integrator
 
-from typing import Type
+from typing import Type, Optional, Union
 from .ode.base import ODEBase
 
 # get path to this file
@@ -47,64 +45,39 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 class EMRIInspiral(TrajectoryBase):
     """EMRI trajectory module.
 
-    This module implements generic trajectories by integrating with an
-    RK8 integrator. It can also adjust the output time-spacing using
-    cubic spline interpolation. Additionally, it gives the option for
-    a dense trajectory, which integrates the trajectory at the user-defined
-    timestep.
+    This module implements generic trajectories by integrating with a
+    DOP853 Runge-Kutta integrator (see :mod:`few.trajectory.integrate`).
+    Both adaptive (default) and fixed timesteps are supported. For an adaptive
+    integration, a continuous solution is generated that can be evaluated
+    at any point in time.
 
     The trajectory operates on generic ODE functions that are defined in
-    :code:`src/ode_base.cc` and :code:`include/ode_base.hh`. The ODE can be either
-    a function or a C++ class that has constructor function, destructor function,
-    and function for get the derivatives called :code:`deriv_func`. Implemented examples
-    for the Schwarzchild eccentric flux-based trajectory (ODE class) and
-    the 5PN trajecotry (ODE function) can be found in the :code:`ode_base` files.
-    The ODE as a function or the :code:`deriv_func` method must take an exact
-    set of arguments::
-
-        __deriv__
-        func(double* pdot, double* edot, double* xdot,
-             double* Omega_phi, double* Omega_theta, double* Omega_r,
-             double epsilon, double a, double p, double e, double Y, double* additional_args)
-
-    :code:`pdot, edot, xdot, Omega_phi, Omega_theta`
-    The :code:`__deriv__` decorator let's the installer know which functions are actually the
-    derivative functions, in case there are other auxillary functions in the file.
-    The user then uses :code:`#define` lines to indicate to the code limitations
-    or settings specific to that ODE. See the tutorial documentation for more detail.
-
+    :mod:`few.trajectory.ode`. Flux-based trajectories (which interpolate data grids)
+    can be found in :mod:`few.trajectory.ode.flux`. A generic Post-Newtonian trajectory
+    is also provided in :mod:`few.trajectory.ode.pn5`. Users can subclass 
+    :class:`few.trajectory.ode.base.ODEBase` to define their own ODE functions.
+    See the documentation for examples on how to do this.
 
     args:
-        func (str): Function name for the ode to use in the integration.
-            This must be given as a keyword argument, even though it is required. To get
-            the options for this argument, use :func:`few.utils.utility.get_ode_function_options`.
-            Stock options include :code:`"SchwarzEccFlux"` and :code:`"pn5"`.
-        enforce_schwarz_sep (bool, optional): Enforce the separatrix of Schwarzschild
-            spacetime. This helps to midigate issues at higher spin and/or higher
-            eccentricity where the PN approximations are more likely to fail.
-            Default is ``False``.
-        *args (list): Any arguments for parent
-            class :class:`few.utils.baseclasses.TrajectoryBase` or
-            class :class:`few.utils.baseclasses.Pn5AAK`.
-        **kwargs (dict): Any keyword arguments for parent
-            class :class:`few.utils.baseclasses.TrajectoryBase` or
-            class :class:`few.utils.baseclasses.Pn5AAK`.
-
-    attributes:
-        num_add_args (int): Number of additional arguments for the ODE function.
-        background (str): "Either Schwarzschild" or "Kerr".
-        equatorial (bool): True if equatorial orbit.
-        circular (bool): True if circular orbit.
-        convert_Y (bool): If the ODE is integrated in :math:`Y` rather than
-            :math:`x_I`.
-        files (list): List of files necessary for this ODE.
-        citations (list): list of additional citations for this ODE.
-        enforce_schwarz_sep (bool): Enforce the separatrix of Schwarzschild
-            spacetime.
-        inspiral_generator (func): Inspiral C/C++ wrapped function.
-        func (str): ODE function name.
-        specific_kwarg_keys (dict): Specific keywords that need to transferred
-            to the inspiral function that can be adjusted with each call.
+        func: Function name for the ode to use in the integration.
+            This must be given as a keyword argument, even though it is required. To get inbuilt
+            stock options for this argument, check :const:`few.trajectory.ode._STOCK_TRAJECTORY_OPTIONS`.
+        integrate_constants_of_motion: If True, the trajectory will integrate the constants of motion (E, L, Q).
+            Default is False.
+        enforce_schwarz_sep: Enforce the separatrix of Schwarzschild
+            spacetime. This can mitigate issues at higher spin and/or higher
+            eccentricity where (e.g.) PN approximations become increasingly inaccurate.
+            Default is False.
+        convert_to_pex: Convert the output from ELQ to pex coordinates (only used if integrating constants of motion).
+            Default is True.
+        rootfind_separatrix: Finish trajectory by performing a numerical root-finding operation to place the final point
+            of the trajectory. If False, performs Euler integration to the final point. Default is True.
+        file_directory: Directory where ODE data files are stored. Defaults to the files directory of the FEW install.
+        *args: Any arguments for parent
+            class :class:`few.trajectory.base.TrajectoryBase`
+        **kwargs: Any keyword arguments for the integrator and ODE classes
+            :class:`few.trajectory.integrate.Integrate` and
+            :class:`few.trajectory.ode.ODEBase`.
 
     Raises:
         ValueError: :code:`func` kwarg not given or not available.
@@ -114,11 +87,12 @@ class EMRIInspiral(TrajectoryBase):
     def __init__(
         self,
         *args,
-        func: Type[ODEBase],
-        enforce_schwarz_sep=False,
-        convert_to_pex=True,
-        rootfind_separatrix=True,
-        file_directory=None,
+        func: Union[str,Type[ODEBase]],
+        integrate_constants_of_motion: bool=False,
+        enforce_schwarz_sep: bool=False,
+        convert_to_pex: bool=True,
+        rootfind_separatrix: bool=True,
+        file_directory: Optional[str]=None,
         **kwargs,
     ):
 
@@ -126,8 +100,14 @@ class EMRIInspiral(TrajectoryBase):
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
         self.inspiral_generator = get_integrator(
-            func, file_directory=file_directory, enforce_schwarz_sep=enforce_schwarz_sep, rootfind_separatrix=rootfind_separatrix, **kwargs
+            func, 
+            integrate_constants_of_motion=integrate_constants_of_motion, 
+            file_directory=file_directory, 
+            enforce_schwarz_sep=enforce_schwarz_sep, 
+            rootfind_separatrix=rootfind_separatrix, 
+            **kwargs
         )
+        """class: Integrator class for the trajectory."""
 
         self.func = self.inspiral_generator.func
 
@@ -136,23 +116,16 @@ class EMRIInspiral(TrajectoryBase):
             "dt",
             "err",
             "DENSE_STEPPING",
-            "max_init_len",
+            "buffer_length",
             "integrate_backwards",
         ]
+        """dict: Specific keywords that need to transferred to the inspiral function that can be adjusted with each call."""
 
         self.integrate_constants_of_motion = (
             self.inspiral_generator.integrate_constants_of_motion
         )
-        self.convert_to_pex = convert_to_pex
 
-    def attributes_EMRIInspiral(self):
-        """
-        attributes:
-            inspiral_generator (obj): C++ class for inspiral trajectory generation.
-            specific_kwarg_keys (list): specific kwargs from
-                :class:`few.utils.baseclasses.TrajectoryBase` that apply to this
-                inspiral generator.
-        """
+        self.convert_to_pex = convert_to_pex
 
     @property
     def citation(self):
@@ -164,8 +137,6 @@ class EMRIInspiral(TrajectoryBase):
             + kerr_separatrix_citation
         )
 
-        for citation in self.citations:
-            citations_out += globals()[citation]
         return citations_out
 
     @property
@@ -184,49 +155,44 @@ class EMRIInspiral(TrajectoryBase):
     def integrator_spline_phase_coeff(self):
         return self.inspiral_generator.integrator_spline_coeff[:, 3:6] / self.inspiral_generator.epsilon
 
-
     def get_inspiral(
         self,
-        M,
-        mu,
-        a,
-        y1,
-        y2,
-        y3,
+        M: float,
+        mu: float,
+        a: float,
+        y1: float,
+        y2: float,
+        y3: float,
         *args,
-        Phi_phi0=0.0,
-        Phi_theta0=0.0,
-        Phi_r0=0.0,
+        Phi_phi0:float=0.0,
+        Phi_theta0:float=0.0,
+        Phi_r0:float=0.0,
         **kwargs,
-    ):
+    ) -> tuple[np.ndarray]:
         """Generate the inspiral.
 
         This is the function for calling the creation of the trajectory.
         Inputs define the output time spacing.
 
-        This class can be used on its own. However, it is generally accessed
-        through the __call__ method associated with its base class:
-        (:class:`few.utils.baseclasses.TrajectoryBase`).
-
         args:
-            M (double): Mass of massive black hole in solar masses.
-            mu (double): Mass of compact object in solar masses.
-            a (double): Dimensionless spin of massive black hole.
-            p0 (double): Initial semi-latus rectum in terms units of M (p/M).
-            e0 (double): Initial eccentricity (dimensionless).
-            x0 (double): Initial :math:`\cos{\iota}`. **Note**: This value is different from :math:`x_I`
+            M: Mass of massive black hole in solar masses.
+            mu: Mass of compact object in solar masses.
+            a: Dimensionless spin of massive black hole.
+            p0: Initial semi-latus rectum in terms units of M (p/M).
+            e0: Initial eccentricity (dimensionless).
+            x0: Initial :math:`\cos{\iota}`. **Note**: This value is different from :math:`x_I`
             used in the relativistic waveforms.
-            *args (list, placeholder): Added for flexibility.
-            Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
+            *args: Added for flexibility.
+            Phi_phi0: Initial phase for :math:`\Phi_\phi`.
                 Default is 0.0.
-            Phi_theta0 (double, optional): Initial phase for :math:`\Phi_\Theta`.
+            Phi_theta0: Initial phase for :math:`\Phi_\Theta`.
                 Default is 0.0.
-            Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
+            Phi_r0: Initial phase for :math:`\Phi_r`.
                 Default is 0.0.
-            **kwargs (dict, optional): kwargs passed from parent.
+            **kwargs: kwargs passed from parent.
 
         Returns:
-            tuple: Tuple of (t, p, e, x, Phi_phi, Phi_theta, Phi_r).
+            Tuple of (t, p, e, x, Phi_phi, Phi_theta, Phi_r).
 
         """
 
@@ -305,47 +271,41 @@ class EMRIInspiral(TrajectoryBase):
 
     def get_rhs_ode(
         self,
-        M,
-        mu,
-        a,
-        y1,
-        y2,
-        y3,
+        M: float,
+        mu: float,
+        a: float,
+        y1: float,
+        y2: float,
+        y3: float,
         *args,
-        Phi_phi0=0.0,
-        Phi_theta0=0.0,
-        Phi_r0=0.0,
+        Phi_phi0: float=0.0,
+        Phi_theta0: float=0.0,
+        Phi_r0: float=0.0,
         **kwargs,
-    ):
-        """Generate the right hand side of the ordinary differential equation.
+    ) -> tuple[np.ndarray]:
+        """Compute the right hand side of the ordinary differential equation.
 
-        This is the function for calling the creation of the trajectory.
-        Inputs define the output time spacing.
-
-        This class can be used on its own. However, it is generally accessed
-        through the __call__ method associated with its base class:
-        (:class:`few.utils.baseclasses.TrajectoryBase`).
+        This is a convenience function for interfacing with the call method of the ODE class.
 
         args:
-            M (double): Mass of massive black hole in solar masses.
-            mu (double): Mass of compact object in solar masses.
-            a (double): Dimensionless spin of massive black hole.
-            p0 (double): Initial semi-latus rectum in terms units of M (p/M).
-            e0 (double): Initial eccentricity (dimensionless).
-            x0 (double): Initial :math:`\cos{\iota}`. **Note**: This value is different from :math:`x_I`
+            M: Mass of massive black hole in solar masses.
+            mu: Mass of compact object in solar masses.
+            a: Dimensionless spin of massive black hole.
+            p0: Initial semi-latus rectum in terms units of M (p/M).
+            e0: Initial eccentricity (dimensionless).
+            x0: Initial :math:`\cos{\iota}`. **Note**: This value is different from :math:`x_I`
             used in the relativistic waveforms.
-            *args (list, placeholder): Added for flexibility.
-            Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
+            *args: Added for flexibility.
+            Phi_phi0: Initial phase for :math:`\Phi_\phi`.
                 Default is 0.0.
-            Phi_theta0 (double, optional): Initial phase for :math:`\Phi_\Theta`.
+            Phi_theta0: Initial phase for :math:`\Phi_\Theta`.
                 Default is 0.0.
-            Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
+            Phi_r0: Initial phase for :math:`\Phi_r`.
                 Default is 0.0.
-            **kwargs (dict, optional): kwargs passed from parent.
+            **kwargs: kwargs passed from parent.
 
         Returns:
-            tuple: Tuple of (t, p, e, x, Phi_phi, Phi_theta, Phi_r).
-
+            Tuple of (t, p, e, x, Phi_phi, Phi_theta, Phi_r).
         """
 
         fill_value = 1e-6

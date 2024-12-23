@@ -60,35 +60,37 @@ class CubicSplineInterpolant(ParallelModuleBase):
     `scipy.interpolate.CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html#scipy-interpolate-cubicspline>`_.
     However, the most efficient way to use this method is in a customized
     cuda kernel. See the
-    `source code for the interpolated summation<https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/src/interpolate.cu>`_
+    `source code for the interpolated summation <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/src/interpolate.cu>`_
     in cuda for an example of this.
 
     This class can be run on GPUs and CPUs.
 
     args:
-        t (1D or 2D double self.xp.ndarray): t values as input for the spline. If 2D, must have shape (ninterps, length).
-        y_all (1D or 2D double self.xp.ndarray): y values for the spline.
-            Shape: (length,) or (ninterps, length).
-        **kwargs (dict, optional): Keyword arguments for the base classes:
+        t: t values as input for the spline. If 2D, must have shape (ninterps, length).
+        y_all: y values for the spline; shape is (length,) or (ninterps, length).
+        **kwargs: Optional keyword arguments for the base class:
             :class:`few.utils.baseclasses.ParallelModuleBase`.
-            Default is {}.
-
     """
 
-    def __init__(self, t, y_all, **kwargs):
+    def __init__(self, t: np.ndarray, y_all: np.ndarray, **kwargs):
         ParallelModuleBase.__init__(self, **kwargs)
 
         y_all = self.xp.atleast_2d(y_all)
 
         # hardcoded,only cubic spline is available
         self.degree = 3
+        """int: Degree of the spline. Only cubic splines are available."""
 
         # get quantities related to how many interpolations
         ninterps, length = y_all.shape
-        self.ninterps, self.length = ninterps, length
+        self.ninterps= ninterps
+        """int: Number of interpolants."""
+        self.length = length
+        """int: Length of the input t array."""
 
         # store this for reshaping flattened arrays
         self.reshape_shape = (self.degree + 1, ninterps, length)
+        """tuple: Shape of the spline coefficients array."""
 
         # interp array is (y, c1, c2, c3)
         interp_array = self.xp.zeros(self.reshape_shape)
@@ -138,19 +140,12 @@ class CubicSplineInterpolant(ParallelModuleBase):
             interp_array.reshape(self.reshape_shape), [0, 2, 1]
         ).flatten()
 
+        self.interp_array
+        """Flattened array containing all spline coefficients."""
+
         # update reshape_shape
         self.reshape_shape = (self.degree + 1, length, ninterps)
         self.t = self.t.reshape((ninterps, length))
-
-    def attributes_CubicSplineInterpolate(self):
-        """
-        attributes:
-            interpolate_arrays (func): CPU or GPU function for mode interpolation.
-            interp_array (1D double self.xp.ndarray): Array containing all spline
-                coefficients. It is flattened after fitting from shape
-                (4, length, ninterps). The 4 is the 4 spline coefficients.
-
-        """
 
     @property
     def interpolate_arrays(self) -> callable:
@@ -172,27 +167,27 @@ class CubicSplineInterpolant(ParallelModuleBase):
         return larger_few_citation + few_citation + few_software_citation
 
     @property
-    def y(self):
+    def y(self) -> np.ndarray:
         """y values associated with the spline"""
         return self.interp_array.reshape(self.reshape_shape)[0].T
 
     @property
-    def c1(self):
+    def c1(self) -> np.ndarray:
         """constants for the linear term"""
         return self.interp_array.reshape(self.reshape_shape)[1].T
 
     @property
-    def c2(self):
+    def c2(self) -> np.ndarray:
         """constants for the quadratic term"""
         return self.interp_array.reshape(self.reshape_shape)[2].T
 
     @property
-    def c3(self):
+    def c3(self) -> np.ndarray:
         """constants for the cubic term"""
         return self.interp_array.reshape(self.reshape_shape)[3].T
 
-    def _get_inds(self, tnew):
-        # find were in the old t array the new t values split
+    def _get_inds(self, tnew: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        # find where in the old t array the new t values split
 
         inds = self.xp.zeros((self.ninterps, tnew.shape[1]), dtype=int)
 
@@ -213,7 +208,7 @@ class CubicSplineInterpolant(ParallelModuleBase):
             )
         return inds, inds_bad_left, inds_bad_right
 
-    def __call__(self, tnew, deriv_order=0):
+    def __call__(self, tnew: np.ndarray, deriv_order:int=0) -> np.ndarray:
         """Evaluation function for the spline
 
         Put in an array of new t values at which all interpolants will be
@@ -221,11 +216,11 @@ class CubicSplineInterpolant(ParallelModuleBase):
         are used to fill the new array at these points.
 
         args:
-            tnew (1D or 2D double self.xp.ndarray): Array of new t values. All of these new
+            tnew: Array of new t values. All of these new
                 t values must be within the bounds of the input t values,
                 including the beginning t and **excluding** the ending t. If tnew is 1D
                 and :code:`self.t` is 2D, tnew will be cast to 2D.
-            deriv_order (int, optional): Order of the derivative to evaluate. Default
+            deriv_order: Order of the derivative to evaluate. Default
                 is 0 meaning the basic spline is evaluated. deriv_order of 1, 2, and 3
                 correspond to their respective derivatives of the spline. Unlike :code:`scipy`,
                 this is purely an evaluation of the derivative values, not a new class to evaluate
@@ -235,7 +230,7 @@ class CubicSplineInterpolant(ParallelModuleBase):
             ValueError: a new t value is not in the bounds of the input t array.
 
         returns:
-            self.xp.ndarray: 1D or 2D array of evaluated spline values (or derivatives).
+            1D or 2D array of evaluated spline values (or derivatives).
 
         """
 
@@ -312,8 +307,8 @@ class CubicSplineInterpolant(ParallelModuleBase):
         return out.squeeze()
 
 
-class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
-    """Create waveform by interpolating sparse trajectory.
+class InterpolatedModeSum(SummationBase, ParallelModuleBase):
+    """Create waveform by interpolating a sparse trajectory.
 
     It interpolates all of the modes of interest and phases at sparse
     trajectories. Within the summation phase, the values are calculated using
@@ -325,22 +320,12 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleB
 
     def __init__(self, *args, **kwargs):
         ParallelModuleBase.__init__(self, *args, **kwargs)
-        SchwarzschildEccentric.__init__(self, *args, **kwargs)
         SummationBase.__init__(self, *args, **kwargs)
-
-        self.kwargs = kwargs
 
     @property
     def get_waveform(self) -> callable:
         """GPU or CPU waveform generation."""
         return get_waveform_wrap_cpu if not self.use_gpu else get_waveform_wrap_gpu
-
-    def attributes_InterpolatedModeSum(self):
-        """
-        attributes:
-            get_waveform (func): CPU or GPU function for waveform creation.
-
-        """
 
     @property
     def gpu_capability(self):
@@ -353,16 +338,16 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleB
 
     def sum(
         self,
-        t,
-        teuk_modes,
-        ylms,
-        phase_interp_t,
-        phase_interp_coeffs,
-        m_arr,
-        n_arr,
+        t: np.ndarray,
+        teuk_modes: np.ndarray,
+        ylms: np.ndarray,
+        phase_interp_t: np.ndarray,
+        phase_interp_coeffs: np.ndarray,
+        m_arr: np.ndarray,
+        n_arr: np.ndarray,
         *args,
-        dt=10.0,
-        integrate_backwards=False,
+        dt: float=10.0,
+        integrate_backwards: bool=False,
         **kwargs,
     ):
         """Interpolated summation function.
@@ -372,24 +357,22 @@ class InterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleB
         mode.
 
         args:
-            t (1D double self.xp.ndarray): Array of t values.
-            teuk_modes (2D double self.xp.array): Array of complex amplitudes.
-                Shape: (len(t), num_teuk_modes).
-            ylms (1D complex128 self.xp.ndarray): Array of ylm values for each mode,
+            t: Array of t values.
+            teuk_modes: Array of complex amplitudes; shape is (len(t), num_teuk_modes).
+            ylms: Array of ylm values for each mode,
                 including m<0. Shape is (num of m==0,) + (num of m>0,)
                 + (num of m<0). Number of m<0 and m>0 is the same, but they are
                 ordered as (m==0 first then) m>0 then m<0.
-            Phi_phi (1D double self.xp.ndarray): Array of azimuthal phase values
+            Phi_phi: Array of azimuthal phase values
                 (:math:`\Phi_\phi`).
-            Phi_r (1D double self.xp.ndarray): Array of radial phase values
+            Phi_r: Array of radial phase values
                  (:math:`\Phi_r`).
-            m_arr (1D int self.xp.ndarray): :math:`m` values associated with each mode.
-            n_arr (1D int self.xp.ndarray): :math:`n` values associated with each mode.
-            *args (list, placeholder): Added for future flexibility.
-            dt (double, optional): Time spacing between observations (inverse of sampling
+            m_arr: :math:`m` values associated with each mode.
+            n_arr: :math:`n` values associated with each mode.
+            *args: Added for future flexibility.
+            dt: Time spacing between observations (inverse of sampling
                 rate). Default is 10.0.
-            **kwargs (dict, placeholder): Added for future flexibility.
-
+            **kwargs: Added for future flexibility.
         """
 
         init_len = len(t)

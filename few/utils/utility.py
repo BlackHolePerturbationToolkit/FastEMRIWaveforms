@@ -46,11 +46,13 @@ except (ImportError, ModuleNotFoundError) as e:
 
 from .constants import *
 
+from typing import Union, Optional
+
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-def get_overlap(time_series_1, time_series_2, use_gpu=False):
+def get_overlap(time_series_1: np.ndarray, time_series_2: np.ndarray, use_gpu: bool=False) -> float:
     """Calculate the overlap.
 
     Takes two time series and finds which one is shorter in length. It then
@@ -64,9 +66,9 @@ def get_overlap(time_series_1, time_series_2, use_gpu=False):
     where :math:`<a,b>` is the inner product of the two time series.
 
     args:
-        time_series_1 (1D complex128 xp.ndarray): Strain time series 1.
-        time_series_2 (1D complex128 xp.ndarray): Strain time series 2.
-        use_gpu (bool, optional): If True use cupy. If False, use numpy. Default
+        time_series_1: Strain time series 1.
+        time_series_2: Strain time series 2.
+        use_gpu: If True use cupy. If False, use numpy. Default
             is False.
 
     """
@@ -124,7 +126,7 @@ def get_overlap(time_series_1, time_series_2, use_gpu=False):
     return ac.real
 
 
-def get_mismatch(time_series_1, time_series_2, use_gpu=False):
+def get_mismatch(time_series_1: np.ndarray, time_series_2: np.ndarray, use_gpu: bool=False) -> float:
     """Calculate the mismatch.
 
     The mismatch is 1 - overlap. Therefore, see documentation for
@@ -132,9 +134,9 @@ def get_mismatch(time_series_1, time_series_2, use_gpu=False):
     calculation.
 
     args:
-        time_series_1 (1D complex128 xp.ndarray): Strain time series 1.
-        time_series_2 (1D complex128 xp.ndarray): Strain time series 2.
-        use_gpu (bool, optional): If True use cupy. If False, use numpy. Default
+        time_series_1: Strain time series 1.
+        time_series_2: Strain time series 2.
+        use_gpu: If True use cupy. If False, use numpy. Default
             is False.
 
     """
@@ -354,52 +356,54 @@ def _ELQ_to_pex_kernel(p, e, xI, a, E, Lz, Q):
     for i in range(len(p)):
         p[i], e[i], xI[i] = _ELQ_to_pex_kernel_inner(a[i], E[i], Lz[i], Q[i])
 
-def ELQ_to_pex(a, E, Lz, Q):
-    """Convert from separation :math:`p` to :math:`y` coordinate
-
-    Conversion from the semilatus rectum or separation :math:`p` to :math:`y`.
+def ELQ_to_pex(a: Union[float, np.ndarray], E: Union[float, np.ndarray], Lz: Union[float, np.ndarray], Q: Union[float, np.ndarray]) -> tuple[Union[float, np.ndarray]]:
+    """Convert from Kerr constants of motion to orbital elements.
 
     arguments:
-        p (double scalar or 1D xp.ndarray): Values of separation,
-            :math:`p`, to convert.
-        e (double scalar or 1D xp.ndarray): Associated eccentricity values
-            of :math:`p` necessary for conversion.
-        use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
+        a: Dimensionless spin of massive
+            black hole. If other parameters are arrays and the spin is scalar,
+            it will be cast to a 1D array.
+        E: Values of energy,
+            :math:`E`.
+        Lz: Values of angular momentum,
+            :math:`L_z`.
+        Q: Values of the Carter constant,
+            :math:`Q`.
+
+    returns:
+        Tuple of (OmegaPhi, OmegaTheta, OmegaR). These are 1D arrays or scalar values depending on inputs.
     """
     # check if inputs are scalar or array
     if isinstance(E, float):
-        scalar = True
+        # get frequencies
+        p, e, x = _ELQ_to_pex_kernel_inner(
+            a, E, Lz, Q
+        )
 
     else:
-        scalar = False
 
-    E_in = np.atleast_1d(E)
-    Lz_in = np.atleast_1d(Lz)
-    Q_in = np.atleast_1d(Q)
+        E_in = np.atleast_1d(E)
+        Lz_in = np.atleast_1d(Lz)
+        Q_in = np.atleast_1d(Q)
 
-    # cast the spin to the same size array as p
-    if isinstance(a, float):
-        a_in = np.full_like(E_in, a)
-    else:
-        a_in = np.atleast_1d(a)
+        # cast the spin to the same size array as p
+        if isinstance(a, float):
+            a_in = np.full_like(E_in, a)
+        else:
+            a_in = np.atleast_1d(a)
 
-    assert len(a_in) == len(E_in)
+        assert len(a_in) == len(E_in)
 
-    p = np.empty_like(E_in)
-    e = np.empty_like(E_in)
-    x = np.empty_like(E_in)
+        p = np.empty_like(E_in)
+        e = np.empty_like(E_in)
+        x = np.empty_like(E_in)
 
-    # get frequencies
-    _ELQ_to_pex_kernel(
-        p, e, x, a_in, E_in, Lz_in, Q_in
-    )
+        # get frequencies
+        _ELQ_to_pex_kernel(
+            p, e, x, a_in, E_in, Lz_in, Q_in
+        )
 
-    # set output to shape of input
-    if scalar:
-        return (p[0], e[0], x[0])
-
-    else:
-        return (p, e, x)
+    return (p, e, x)
 
 
 @njit(fastmath=False)
@@ -451,30 +455,9 @@ def _KerrGeoMinoFrequencies_kernel(a, p, e, x):
     EllipPi_hp_kr = EllipPi(hp, kr)
     EllipPi_hm_kr = EllipPi(hm, kr)
 
-    ########################
-    # previous implementation
     CapitalUpsilonPhi = (2 * CapitalUpsilonTheta) / (PI * sqrt(Epsilon0zp)) * EllipPi(zm, kTheta) + (2 * a * CapitalUpsilonR) / (PI * (rp - rm) * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) * ((2 * M * En * rp - a * L) / (r3 - rp) * (EllipK_kr - (r2 - r3) / (r2 - rp) * EllipPi_hp_kr) - (2 * M * En * rm - a * L) / (r3 - rm) * (EllipK_kr - (r2 - r3) / (r2 - rm) * EllipPi_hm_kr))
     CapitalGamma = 4 * 1.0 * En + (2 * a2zp * En * CapitalUpsilonTheta) / (PI * L * sqrt(Epsilon0zp)) * (EllipK_ktheta - EllipE(kTheta)) + (2 * CapitalUpsilonR) / (PI * sqrt((1 - (En*En)) * (r1 - r3) * (r2 - r4))) * (En / 2 * ((r3 * (r1 + r2 + r3) - r1 * r2) * EllipK_kr + (r2 - r3) * (r1 + r2 + r3 + r4) * EllipPi_hr_kr + (r1 - r3) * (r2 - r4) * EllipE(kr)) + 2 * M * En * (r3 * EllipK_kr + (r2 - r3) * EllipPi_hr_kr) + (2 * M) / (rp - rm) * (((4 * 1.0 * En - a * L) * rp - 2 * M * (a*a) * En) / (r3 - rp) * (EllipK_kr - (r2 - r3) / (r2 - rp) * EllipPi_hp_kr) - ((4 * 1.0 * En - a * L) * rm - 2 * M * (a*a) * En) / (r3 - rm) * (EllipK_kr - (r2 - r3) / (r2 - rm) * EllipPi_hm_kr)))
     return CapitalGamma, CapitalUpsilonPhi, CapitalUpsilonTheta, CapitalUpsilonR
-    ########################
-    # fix round off errors
-    # Calculate Elliptic integrals
-    # elPi = EllipPi_hr_kr
-    # elPi_hm = EllipPi_hp_kr
-    # elPi_hr = EllipPi_hm_kr
-    # # Calculate prob1
-    # prob1 = (2 * M * En * rp - a * L) * (EllipK_kr - (r2 - r3) / (r2 - rp) * elPi)
-    # if abs(prob1) != 0.0:
-    #     prob1 = prob1 / (r3 - rp)
-    # # Update CapitalUpsilonPhi
-    # CapitalUpsilonPhi = (CapitalUpsilonTheta) / (np.sqrt(Epsilon0zp)) + (2 * a * CapitalUpsilonR) / (np.pi * (rp - rm) * np.sqrt((1 - En**2) * (r1 - r3) * (r2 - r4))) * (prob1 - (2 * M * En * rm - a * L) / (r3 - rm) * (EllipK_kr - (r2 - r3) / (r2 - rm) * elPi_hm))
-    # # Calculate prob2
-    # prob2 = ((4 * 1.0 * En - a * L) * rp - 2 * M * a**2 * En) * (EllipK_kr - (r2 - r3) / (r2 - rp) * elPi)
-    # if abs(prob2) != 0.0:
-    #     prob2 = prob2 / (r3 - rp)
-    # # Update CapitalGamma
-    # CapitalGamma = 4 * 1.0 * En + (2 * a2zp * En * CapitalUpsilonTheta) / (np.pi * L * np.sqrt(Epsilon0zp)) * (EllipK_ktheta - EllipE(kTheta)) + (2 * CapitalUpsilonR) / (np.pi * np.sqrt((1 - En**2) * (r1 - r3) * (r2 - r4))) * (En / 2 * ((r3 * (r1 + r2 + r3) - r1 * r2) * EllipK_kr + (r2 - r3) * (r1 + r2 + r3 + r4) * elPi_hr + (r1 - r3) * (r2 - r4) * EllipE(kr)) + 2 * M * En * (r3 * EllipK_kr + (r2 - r3) * elPi_hr) + (2 * M) / (rp - rm) * (prob2 - ((4 * 1.0 * En - a * L) * rm - 2 * M * a**2 * En) / (r3 - rm) * (EllipK_kr - (r2 - r3) / (r2 - rm) * elPi_hm)))
-    # return CapitalGamma, CapitalUpsilonPhi, CapitalUpsilonTheta, CapitalUpsilonR
 
 @njit(fastmath=False)
 def _KerrCircularMinoFrequencies_kernel(a, p):
@@ -570,63 +553,55 @@ def _KerrGeoCoordinateFrequencies_kernel(OmegaPhi, OmegaTheta, OmegaR, a, p, e, 
     for i in range(len(OmegaPhi)):
         OmegaPhi[i], OmegaTheta[i], OmegaR[i] = _KerrGeoCoordinateFrequencies_kernel_inner(a[i], p[i], e[i], x[i])
 
-def get_fundamental_frequencies(a, p, e, x):
+def get_fundamental_frequencies(a: Union[float, np.ndarray], p:Union[float, np.ndarray], e:Union[float, np.ndarray], x:Union[float, np.ndarray]) -> tuple[Union[float, np.ndarray]]:
     """Get dimensionless fundamental frequencies.
 
     Determines fundamental frequencies in generic Kerr from
     `Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_.
 
     arguments:
-        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+        a: Dimensionless spin of massive
             black hole. If other parameters are arrays and the spin is scalar,
             it will be cast to a 1D array.
-        p (double scalar or 1D np.ndarray): Values of separation,
+        p: Values of separation,
             :math:`p`.
-        e (double scalar or 1D np.ndarray): Values of eccentricity,
+        e: Values of eccentricity,
             :math:`e`.
-        x (double scalar or 1D np.ndarray): Values of cosine of the
+        x: Values of cosine of the
             inclination, :math:`x=\cos{I}`. Please note this is different from
             :math:`Y=\cos{\iota}`.
 
     returns:
-        tuple: Tuple of (OmegaPhi, OmegaTheta, OmegaR).
-            These are 1D arrays or scalar values depending on inputs.
+        Tuple of (OmegaPhi, OmegaTheta, OmegaR). These are 1D arrays or scalar values depending on inputs.
 
     """
 
     # check if inputs are scalar or array
     if isinstance(p, float):
-        scalar = True
-
+        OmegaPhi, OmegaTheta, OmegaR = _KerrGeoCoordinateFrequencies_kernel_inner(
+            a, p, e, x
+        )
     else:
-        scalar = False
+        p_in = np.atleast_1d(p)
+        e_in = np.atleast_1d(e)
+        x_in = np.atleast_1d(x)
 
-    p_in = np.atleast_1d(p)
-    e_in = np.atleast_1d(e)
-    x_in = np.atleast_1d(x)
+        # cast the spin to the same size array as p
+        if isinstance(a, float):
+            a_in = np.full_like(p_in, a)
+        else:
+            a_in = np.atleast_1d(a)
 
-    # cast the spin to the same size array as p
-    if isinstance(a, float):
-        a_in = np.full_like(p_in, a)
-    else:
-        a_in = np.atleast_1d(a)
+        assert len(a_in) == len(p_in)
 
-    assert len(a_in) == len(p_in)
+        OmegaPhi = np.empty_like(p_in)
+        OmegaTheta = np.empty_like(p_in)
+        OmegaR = np.empty_like(p_in)
+        _KerrGeoCoordinateFrequencies_kernel(
+            OmegaPhi, OmegaTheta, OmegaR, a_in, p_in, e_in, x_in
+        )
 
-    OmegaPhi = np.empty_like(p_in)
-    OmegaTheta = np.empty_like(p_in)
-    OmegaR = np.empty_like(p_in)
-    # get frequencies
-    _KerrGeoCoordinateFrequencies_kernel(
-        OmegaPhi, OmegaTheta, OmegaR, a_in, p_in, e_in, x_in
-    )
-
-    # set output to shape of input
-    if scalar:
-        return (OmegaPhi[0], OmegaTheta[0], OmegaR[0])
-
-    else:
-        return (OmegaPhi, OmegaTheta, OmegaR)
+    return (OmegaPhi, OmegaTheta, OmegaR)
 
 
 @njit(fastmath=False)
@@ -729,61 +704,58 @@ def _KerrEqSpinFrequenciesCorrections_kernel(OmegaPhi, OmegaTheta, OmegaR, a, p,
     for i in range(len(OmegaPhi)):
         OmegaPhi[i], OmegaR[i] = _KerrEqSpinFrequenciesCorrections_kernel_inner(a[i], p[i], e[i], x[i])
 
-def get_fundamental_frequencies_spin_corrections(a, p, e, x):
-    """Get dimensionless fundamental frequencies.
+def get_fundamental_frequencies_spin_corrections(a: Union[float, np.ndarray], p:Union[float, np.ndarray], e:Union[float, np.ndarray], x:Union[float, np.ndarray]) -> tuple[Union[float, np.ndarray]]:
+    """Get the leading-order correction term to the fundamental frequencies due to the spin of the secondary compact object.
 
-    Determines fundamental frequencies in generic Kerr from
-    `Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_.
+    Currently only supported for equatorial orbits.
 
     arguments:
-        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+        a: Dimensionless spin of massive
             black hole. If other parameters are arrays and the spin is scalar,
             it will be cast to a 1D array.
-        p (double scalar or 1D np.ndarray): Values of separation,
+        p: Values of separation,
             :math:`p`.
-        e (double scalar or 1D np.ndarray): Values of eccentricity,
+        e: Values of eccentricity,
             :math:`e`.
-        x (double scalar or 1D np.ndarray): Values of cosine of the
+        x: Values of cosine of the
             inclination, :math:`x=\cos{I}`. Please note this is different from
             :math:`Y=\cos{\iota}`.
 
     returns:
-        tuple: Tuple of (OmegaPhi, OmegaTheta, OmegaR).
-            These are 1D arrays or scalar values depending on inputs.
+        Tuple of (OmegaPhi, OmegaTheta, OmegaR). These are 1D arrays or scalar values depending on inputs.
 
     """
+    
+    assert np.all(np.abs(x) == 1.0), "Currently only supported for equatorial orbits."
 
     # check if inputs are scalar or array
     if isinstance(p, float):
-        scalar = True
-
+        OmegaPhi, OmegaTheta, OmegaR = _KerrEqSpinFrequenciesCorrections_kernel_inner(
+            a, p, e, x
+        )
     else:
-        scalar = False
 
-    p_in = np.atleast_1d(p)
-    e_in = np.atleast_1d(e)
-    x_in = np.atleast_1d(x)
+        p_in = np.atleast_1d(p)
+        e_in = np.atleast_1d(e)
+        x_in = np.atleast_1d(x)
 
-    # cast the spin to the same size array as p
-    if isinstance(a, float):
-        a_in = np.full_like(p_in, a)
-    else:
-        a_in = np.atleast_1d(a)
+        # cast the spin to the same size array as p
+        if isinstance(a, float):
+            a_in = np.full_like(p_in, a)
+        else:
+            a_in = np.atleast_1d(a)
 
-    assert len(a_in) == len(p_in)
+        assert len(a_in) == len(p_in)
 
-    OmegaPhi = np.empty_like(p_in)
-    OmegaTheta = np.zeros_like(p_in)
-    OmegaR = np.empty_like(p_in)
-    # get frequencies
-    _KerrEqSpinFrequenciesCorrections_kernel(OmegaPhi, OmegaTheta, OmegaR, a_in, p_in, e_in, x_in)
+        OmegaPhi = np.empty_like(p_in)
+        OmegaTheta = np.zeros_like(p_in)
+        OmegaR = np.empty_like(p_in)
+        # get frequencies
+        _KerrEqSpinFrequenciesCorrections_kernel(
+            OmegaPhi, OmegaTheta, OmegaR, a_in, p_in, e_in, x_in
+        )
 
-    # set output to shape of input
-    if scalar:
-        return (OmegaPhi[0], OmegaTheta[0], OmegaR[0])
-
-    else:
-        return (OmegaPhi, OmegaTheta, OmegaR)
+    return (OmegaPhi, OmegaTheta, OmegaR)
 
 @njit(fastmath=False)
 def _CapitalDelta(r, a):
@@ -886,62 +858,55 @@ def _KerrGeoConstantsOfMotion_kernel(E_out, L_out, Q_out, a, p, e, x):
     for i in range(len(p)):
         E_out[i], L_out[i], Q_out[i] = _KerrGeoConstantsOfMotion_kernel_inner(a[i], p[i], e[i], x[i])
 
-def get_kerr_geo_constants_of_motion(a, p, e, x):
+def get_kerr_geo_constants_of_motion(a: Union[float, np.ndarray], p:Union[float, np.ndarray], e:Union[float, np.ndarray], x:Union[float, np.ndarray]) -> tuple[Union[float, np.ndarray]]:
     """Get Kerr constants of motion.
 
     Determines the constants of motion: :math:`(E, L, Q)` associated with a
     geodesic orbit in the generic Kerr spacetime.
 
     arguments:
-        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+        a: Dimensionless spin of massive
             black hole. If other parameters are arrays and the spin is scalar,
             it will be cast to a 1D array.
-        p (double scalar or 1D np.ndarray): Values of separation,
+        p: Values of separation,
             :math:`p`.
-        e (double scalar or 1D np.ndarray): Values of eccentricity,
+        e: Values of eccentricity,
             :math:`e`.
-        x (double scalar or 1D np.ndarray): Values of cosine of the
+        x: Values of cosine of the
             inclination, :math:`x=\cos{I}`. Please note this is different from
             :math:`Y=\cos{\iota}`.
 
     returns:
-        tuple: Tuple of (E, L, Q).
-            These are 1D arrays or scalar values depending on inputs.
-
+        tuple: Tuple of (E, L, Q). These are 1D arrays or scalar values depending on inputs.
     """
 
     # check if inputs are scalar or array
     if isinstance(p, float):
-        scalar = True
-
+        E, L, Q = _KerrGeoConstantsOfMotion_kernel_inner(
+            a, p, e, x
+        )
     else:
-        scalar = False
 
-    p_in = np.atleast_1d(p)
-    e_in = np.atleast_1d(e)
-    x_in = np.atleast_1d(x)
+        p_in = np.atleast_1d(p)
+        e_in = np.atleast_1d(e)
+        x_in = np.atleast_1d(x)
 
-    # cast the spin to the same size array as p
-    if isinstance(a, float):
-        a_in = np.full_like(p_in, a)
-    else:
-        a_in = np.atleast_1d(a)
+        # cast the spin to the same size array as p
+        if isinstance(a, float):
+            a_in = np.full_like(p_in, a)
+        else:
+            a_in = np.atleast_1d(a)
 
-    assert len(a_in) == len(p_in)
+        assert len(a_in) == len(p_in)
 
-    E = np.empty_like(p_in)
-    L = np.empty_like(p_in)
-    Q = np.empty_like(p_in)
+        E = np.empty_like(p_in)
+        L = np.empty_like(p_in)
+        Q = np.empty_like(p_in)
 
-    # get constants of motion
-    _KerrGeoConstantsOfMotion_kernel(E, L, Q, a_in, p_in, e_in, x_in)
+        # get constants of motion
+        _KerrGeoConstantsOfMotion_kernel(E, L, Q, a_in, p_in, e_in, x_in)
 
-    # set output to shape of input
-    if scalar:
-        return (E[0], L[0], Q[0])
-
-    else:
-        return (E, L, Q)
+    return (E, L, Q)
 
 @njit(fastmath=False)
 def _brentq_jit(f, a, b, args, tol):
@@ -1108,62 +1073,56 @@ def _get_separatrix_kernel(p_sep: np.ndarray, a: np.ndarray, e: np.ndarray, x: n
         p_sep[i] = _get_separatrix_kernel_inner(a[i], e[i], x[i], tol=tol)
 
 
-def get_separatrix(a, e, x, tol=1e-13):
+def get_separatrix(a: Union[float, np.ndarray], e: Union[float, np.ndarray], x: Union[float, np.ndarray], tol:float=1e-13) -> Union[float, np.ndarray]:
     """Get separatrix in generic Kerr.
 
     Determines separatrix in generic Kerr from
     `Stein & Warburton 2020 <https://arxiv.org/abs/1912.07609>`_.
 
     arguments:
-        a (double scalar or 1D np.ndarray): Dimensionless spin of massive
+        a: Dimensionless spin of massive
             black hole. If other parameters are arrays and the spin is scalar,
             it will be cast to a 1D array.
-        e (double scalar or 1D np.ndarray): Values of eccentricity,
+        e: Values of eccentricity,
             :math:`e`.
-        x (double scalar or 1D np.ndarray): Values of cosine of the
+        x: Values of cosine of the
             inclination, :math:`x=\cos{I}`. Please note this is different from
             :math:`Y=\cos{\iota}`.
+        tol: Tolerance for root-finding. Default is 1e-13.
 
     returns:
-        1D array or scalar: Separatrix value with shape based on input shapes.
+        Separatrix value with shape based on input shapes.
 
     """
     # determines shape of input
     if isinstance(e, float):
-        scalar = True
+        separatrix = _get_separatrix_kernel_inner(a, e, x, tol=tol)
 
     else:
-        scalar = False
+        e_in = np.atleast_1d(e)
 
-    e_in = np.atleast_1d(e)
+        if isinstance(x, float):
+            x_in = np.full_like(e_in, x)
+        else:
+            x_in = np.atleast_1d(x)
 
-    if isinstance(x, float):
-        x_in = np.full_like(e_in, x)
-    else:
-        x_in = np.atleast_1d(x)
+        # cast spin values if necessary
+        if isinstance(a, float):
+            a_in = np.full_like(e_in, a)
+        else:
+            a_in = np.atleast_1d(a)
 
-    # cast spin values if necessary
-    if isinstance(a, float):
-        a_in = np.full_like(e_in, a)
-    else:
-        a_in = np.atleast_1d(a)
+        if isinstance(x, float):
+            x_in = np.full_like(e_in, x)
+        else:
+            x_in = np.atleast_1d(x)
 
-    if isinstance(x, float):
-        x_in = np.full_like(e_in, x)
-    else:
-        x_in = np.atleast_1d(x)
+        assert len(a_in) == len(e_in) == len(x_in)
+        
+        separatrix = np.empty_like(e_in)
+        _get_separatrix_kernel(separatrix, a_in, e_in, x_in, tol=tol)
 
-    assert len(a_in) == len(e_in) == len(x_in)
-    
-    separatrix = np.empty_like(e_in)
-    _get_separatrix_kernel(separatrix, a_in, e_in, x_in, tol=tol)
-
-    # output in same shape as input
-    if scalar:
-        return separatrix[0]
-
-    else:
-        return separatrix
+    return separatrix
 
 
 # TODO: initialise this properly from the coefficients files, rather than all this stuff getting run every time
@@ -1208,42 +1167,44 @@ def get_separatrix_interpolant(a, e, x):
 
 
 def get_at_t(
-    traj_module,
-    traj_args,
-    bounds,
-    t_out,
-    index_of_interest,
-    traj_kwargs={},
-    xtol=2e-12,
-    rtol=8.881784197001252e-16,
-):
+    traj_module: object,
+    traj_args: list[float],
+    bounds: list[float],
+    t_out: float,
+    index_of_interest: int,
+    traj_kwargs: Optional[dict]=None,
+    xtol: float=2e-12,
+    rtol: float=8.881784197001252e-16,
+) -> float:
     """Root finding wrapper using Brent's method.
 
     This function uses scipy's brentq routine to find root.
 
     arguments:
-        traj_module (obj): Instantiated trajectory module. It must output
+        traj_module: Instantiated trajectory module. It must output
             the time array of the trajectory sparse trajectory as the first
             output value in the tuple.
-        traj_args (list): List of arguments for the trajectory function.
+        traj_args: List of arguments for the trajectory function.
             p is removed. **Note**: It must be a list, not a tuple because the
             new p values are inserted into the argument list.
-        bounds (list): Minimum and maximum values over which brentq will search for a root.
-        t_out (double): The desired length of time for the waveform.
-        index_of_interest (int): Index where to insert the new values in
+        bounds: Minimum and maximum values over which brentq will search for a root.
+        t_out: The desired length of time for the waveform.
+        index_of_interest: Index where to insert the new values in
             the :code:`traj_args` list.
-        traj_kwargs (dict, optional): Keyword arguments for :code:`traj_module`.
+        traj_kwargs: Keyword arguments for :code:`traj_module`.
             Default is an empty dict.
-        xtol (float, optional): Absolute tolerance of the brentq root-finding - see :code: `np.allclose()` for details.
+        xtol: Absolute tolerance of the brentq root-finding - see :code: `np.allclose()` for details.
             Defaults to 2e-12 (scipy default).
-        rtol (float, optional): Relative tolerance of the brentq root-finding - see :code: `np.allclose()` for details.
+        rtol: Relative tolerance of the brentq root-finding - see :code: `np.allclose()` for details.
             Defaults to ~8.8e-16 (scipy default).
 
     returns:
-        double: Root value.
+        Root value.
 
     """
-
+    if traj_kwargs is None:
+        traj_kwargs = {}
+    
     def get_time_root(val, traj, inj_args, traj_kwargs, t_out, ind_interest):
         """
         Function with one p root at T = t_outp, for brentq input.
@@ -1269,16 +1230,16 @@ def get_at_t(
 
 
 def get_p_at_t(
-    traj_module,
-    t_out,
-    traj_args,
-    index_of_p=3,
-    index_of_a=2,
-    index_of_e=4,
-    index_of_x=5,
-    bounds=None,
+    traj_module: object,
+    t_out: float,
+    traj_args: list[float],
+    index_of_p: int=3,
+    index_of_a: int=2,
+    index_of_e: int=4,
+    index_of_x: int=5,
+    bounds: list[Optional[float]]=None,
     **kwargs,
-):
+) -> float:
     """Find the value of p that will give a specific length inspiral using Brent's method.
 
     If you want to generate an inspiral that is a specific length, you
@@ -1290,25 +1251,25 @@ def get_p_at_t(
     value of p that gives a trajectory of duration t_out.
 
     arguments:
-        traj_module (obj): Instantiated trajectory module. It must output
+        traj_module: Instantiated trajectory module. It must output
             the time array of the trajectory sparse trajectory as the first
             output value in the tuple.
-        t_out (double): The desired length of time for the waveform.
-        traj_args (list): List of arguments for the trajectory function.
+        t_out: The desired length of time for the waveform.
+        traj_args: List of arguments for the trajectory function.
             p is removed. **Note**: It must be a list, not a tuple because the
             new p values are inserted into the argument list.
-        index_of_p (int, optional): Index where to insert the new p values in
+        index_of_p: Index where to insert the new p values in
             the :code:`traj_args` list. Default is 3.
-        index_of_a (int, optional): Index of a in provided :code:`traj_module` arguments. Default is 2.
-        index_of_e (int, optional): Index of e0 in provided :code:`traj_module` arguments. Default is 4.
-        index_of_x (int, optional): Index of x0 in provided :code:`traj_module` arguments. Default is 5.
-        bounds (list, optional): Minimum and maximum values of p over which brentq will search for a root.
+        index_of_a: Index of a in provided :code:`traj_module` arguments. Default is 2.
+        index_of_e: Index of e0 in provided :code:`traj_module` arguments. Default is 4.
+        index_of_x: Index of x0 in provided :code:`traj_module` arguments. Default is 5.
+        bounds: Minimum and maximum values of p over which brentq will search for a root.
             If not given, will be set to [separatrix + 0.101, 50]. To supply only one of these two limits, set the
             other limit to None.
-        **kwargs (dict, optional): Keyword arguments for :func:`get_at_t`.
+        **kwargs: Keyword arguments for :func:`get_at_t`.
 
     returns:
-        double: Value of p that creates the proper length trajectory.
+        Value of p that creates the proper length trajectory.
 
     """
 
@@ -1353,13 +1314,13 @@ def get_p_at_t(
 
 
 def get_mu_at_t(
-    traj_module,
-    t_out,
-    traj_args,
-    index_of_mu=1,
-    bounds=None,
+    traj_module: object,
+    t_out: float,
+    traj_args: list[float],
+    index_of_mu: int=1,
+    bounds: list[Optional[float]]=None,
     **kwargs,
-):
+) -> float:
     """Find the value of mu that will give a specific length inspiral using Brent's method.
 
     If you want to generate an inspiral that is a specific length, you
@@ -1371,22 +1332,22 @@ def get_mu_at_t(
     value of mu that gives a trajectory of duration t_out.
 
     arguments:
-        traj_module (obj): Instantiated trajectory module. It must output
+        traj_module: Instantiated trajectory module. It must output
             the time array of the trajectory sparse trajectory as the first
             output value in the tuple.
-        t_out (double): The desired length of time for the waveform.
-        traj_args (list): List of arguments for the trajectory function.
+        t_out: The desired length of time for the waveform.
+        traj_args: List of arguments for the trajectory function.
             p is removed. **Note**: It must be a list, not a tuple because the
             new p values are inserted into the argument list.
-        index_of_mu (int, optional): Index where to insert the new p values in
+        index_of_mu: Index where to insert the new p values in
             the :code:`traj_args` list. Default is 1.
-        bounds (list, optional): Minimum and maximum values of p over which brentq will search for a root.
+        bounds: Minimum and maximum values of p over which brentq will search for a root.
             If not given, will be set to [1e-1, 1e3]. To supply only one of these two limits, set the
             other limit to None.
-        **kwargs (dict, optional): Keyword arguments for :func:`get_at_t`.
+        **kwargs: Keyword arguments for :func:`get_at_t`.
 
     returns:
-        double: Value of mu that creates the proper length trajectory.
+        Value of mu that creates the proper length trajectory.
 
     """
 
@@ -1441,7 +1402,7 @@ def get_mu_at_t(
 # }
 
 
-def check_for_file_download(fp, file_dir, version_string=None):
+def check_for_file_download(fp: str, file_dir: str, version_string: Optional[str]=None):
     """Download files direct from download.bhptoolkit.org.
 
     This function downloads the files from download.bhptoolkit.org as they are needed. They are
@@ -1451,9 +1412,9 @@ def check_for_file_download(fp, file_dir, version_string=None):
     a version string is provided.
 
     arguments:
-        fp (string): File name.
-        few_dir (string): absolute path to FastEMRIWaveforms directory.
-        version_string (string, optional): Provide a specific version string to
+        fp: File name.
+        few_dir: absolute path to FastEMRIWaveforms directory.
+        version_string: Provide a specific version string to
             get a specific dataset. Default is None.
 
     raises:
@@ -1611,11 +1572,11 @@ def pointer_adjust(func):
     return func_wrapper
 
 
-def cuda_set_device(dev):
+def cuda_set_device(dev: int):
     """Globally sets CUDA device
 
     Args:
-        dev (int): CUDA device number.
+        dev: CUDA device number.
 
     """
     if setDevice is not None:

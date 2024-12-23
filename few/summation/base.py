@@ -15,7 +15,6 @@ except:
 
 from ..utils.baseclasses import ParallelModuleBase
 
-
 class SummationBase(ParallelModuleBase, ABC):
     """Base class used for summation modules.
 
@@ -24,18 +23,17 @@ class SummationBase(ParallelModuleBase, ABC):
     with each associated module discussed below.
 
     args:
-        pad_output (bool, optional): Add zero padding to the waveform for time
+        pad_output: Add zero padding to the waveform for time
             between plunge and observation time. Default is False.
-        output_type (str, optional): Type of domain in which to calculate the waveform.
+        output_type: Type of domain in which to calculate the waveform.
             Default is 'td' for time domain. Options are 'td' (time domain) or 'fd' (Fourier domain). In the future we hope to add 'tf'
             (time-frequency) and 'wd' (wavelet domain).
-        odd_len (bool, optional): The waveform output will be padded to be an odd number if True.
+        odd_len: The waveform output will be padded to be an odd number if True.
             If ``output_type == "fd"``, odd_len will be set to ``True``. Default is False.
-
     """
 
     def __init__(
-        self, *args, output_type="td", pad_output=False, odd_len=False, **kwargs
+        self, *args, output_type:str="td", pad_output:bool=False, odd_len:bool=False, **kwargs
     ):
         self.pad_output = pad_output
         self.odd_len = odd_len
@@ -49,14 +47,16 @@ class SummationBase(ParallelModuleBase, ABC):
         self.output_type = output_type
         if self.output_type == "fd":
             self.odd_len = True
+        
+        self.num_pts = None
+        """int: Number of points in the output waveform."""
 
-    def attributes_SummationBase(self):
-        """
-        attributes:
-            waveform (1D complex128 np.ndarray): Complex waveform given by
-                :math:`h_+ + i*h_x`.
-        """
-        pass
+        self.num_pts_pad = None
+        """int: Number of points the output waveform has been padded by."""
+
+        self.waveform = None
+        """Complex waveform given by :math:`h_+ + i*h_x`."""
+
 
     @property
     def citation(self):
@@ -75,20 +75,20 @@ class SummationBase(ParallelModuleBase, ABC):
         """
         raise NotImplementedError
 
-    def __call__(self, t, *args, T=1.0, dt=10.0, t_window=None, **kwargs):
+    def __call__(self, t: float, *args, T:float=1.0, dt:float=10.0, **kwargs):
         """Common call function for summation modules.
 
         Provides a common interface for summation modules. It can adjust for
         more dimensions in a model.
 
         args:
-            t (1D double self.xp.ndarray): Array of t values.
-            *args (list): Added for flexibility with summation modules. `args`
+            t: Array of t values.
+            *args: Added for flexibility with summation modules. `args`
                 tranfers directly into sum function.
-            dt (double, optional): Time spacing between observations in seconds (inverse of sampling
+            dt: Time spacing between observations in seconds (inverse of sampling
                 rate). Default is 10.0.
-            T (double, optional): Maximum observing time in years. Default is 1.0.
-            **kwargs (dict, placeholder): Added for future flexibility.
+            T: Maximum observing time in years. Default is 1.0.
+            **kwargs: Added for future flexibility.
 
         """
 
@@ -109,7 +109,10 @@ class SummationBase(ParallelModuleBase, ABC):
             else:
                 num_pts_pad = 0
 
-        self.num_pts, self.num_pts_pad = num_pts, num_pts_pad
+        self.num_pts = num_pts
+
+        self.num_pts_pad = num_pts_pad
+
         self.dt = dt
 
         # impose to be always odd
@@ -125,10 +128,10 @@ class SummationBase(ParallelModuleBase, ABC):
                 dt = float(self.xp.max(frequency) * 2)
                 Nf = len(frequency)
                 # total
-                self.waveform = self.xp.zeros(Nf, dtype=self.xp.complex128)
+                waveform = self.xp.zeros(Nf, dtype=self.xp.complex128)
                 # print("user defined frequencies Nf=", Nf)
             else:
-                self.waveform = self.xp.zeros(
+                waveform = self.xp.zeros(
                     (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
                 )
             # if self.num_pts + self.num_pts_pad % 2:
@@ -136,9 +139,11 @@ class SummationBase(ParallelModuleBase, ABC):
             #     print("n points",self.num_pts + self.num_pts_pad)
         else:
             # setup waveform holder for time domain
-            self.waveform = self.xp.zeros(
+            waveform = self.xp.zeros(
                 (self.num_pts + self.num_pts_pad,), dtype=self.xp.complex128
             )
+
+        self.waveform = waveform
 
         # get the waveform summed in place
         self.sum(t, *args, dt=dt, **kwargs)

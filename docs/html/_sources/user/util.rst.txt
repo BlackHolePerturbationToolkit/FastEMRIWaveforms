@@ -39,7 +39,7 @@ Analysis and Other Tools
     :inherited-members:
 
 Elliptic integrals (Legendre and Carlson symmetric forms)
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: few.utils.elliptic
     :members:
@@ -47,7 +47,7 @@ Elliptic integrals (Legendre and Carlson symmetric forms)
     :inherited-members:
 
 PN Parameter Mapping Utilities
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: few.utils.pn_map
     :members:

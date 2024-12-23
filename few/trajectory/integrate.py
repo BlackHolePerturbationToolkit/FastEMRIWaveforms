@@ -19,13 +19,9 @@
 
 
 import os
-import warnings
 from typing import Tuple, List, Union, Type, Optional
-import time
 
 import numpy as np
-from scipy.interpolate import CubicSpline
-from scipy.integrate import solve_ivp
 from scipy.optimize import brentq
 
 # Python imports
@@ -46,23 +42,13 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 from ..utils.utility import get_separatrix
 
-# from ..utils.utility import get_separatrix as get_sep
-# from few.utils.spline import TricubicSpline
-# # create a TricubicSpline to interpolate get_separatrix
-# a = np.linspace(0.0, 0.998, 100)
-# e = np.linspace(0.0, 0.99, 100)
-# x = np.linspace(-1.0, 1.0, 100)
-# XYZ = np.meshgrid(a, e, x, indexing='ij')
-# sep = ( get_sep(XYZ[0].flatten(), XYZ[1].flatten(), XYZ[2].flatten())).reshape((100,100,100))
-# get_separatrix = TricubicSpline(a, e, x, sep)
-
 INNER_THRESHOLD = 1e-8
 PERCENT_STEP = 0.25
 MAX_ITER = 1000
 
 from .dopr853 import DOPR853
 
-def get_integrator(func, file_directory=None, **kwargs):
+def get_integrator(func, file_directory=None, integrate_constants_of_motion=False, **kwargs):
     if file_directory is None:
         file_directory = dir_path + "/../../few/files/"
     # ode_info = get_ode_function_options()
@@ -93,30 +79,34 @@ def get_integrator(func, file_directory=None, **kwargs):
 
     #     integrator.add_ode(func_i.encode(), file_directory.encode())
 
-
-    # if func_inst.integrate_constants_of_motion:
-    #     return AELQIntegrate(
-    #         func,
-    #         file_directory=file_directory,
-    #         **kwargs,
-    #     )
-    # else:
-    return APEXIntegrate(
-        func,
-        file_directory=file_directory,
-        **kwargs,
-    )
+    if integrate_constants_of_motion:
+        return AELQIntegrate(
+            func=func,
+            file_directory=file_directory,
+            integrate_constants_of_motion=integrate_constants_of_motion,
+            **kwargs,
+        )
+    else:
+        return APEXIntegrate(
+            func=func,
+            file_directory=file_directory,
+            integrate_constants_of_motion=integrate_constants_of_motion,
+            **kwargs,
+        )
 
 class Integrate:
     def __init__(
         self,
         func: Type[ODEBase],
+        integrate_constants_of_motion: bool=False,
         buffer_length: int = 1000,
         rootfind_separatrix: bool=True,
         enforce_schwarz_sep: bool=False,
         file_directory: Optional[str]=None,
         **kwargs
-    ):
+    ):  
+        if buffer_length is True:
+            breakpoint()
         self.buffer_length = buffer_length
         self.file_directory = file_directory
 
@@ -127,7 +117,7 @@ class Integrate:
                 raise ValueError(f"The trajectory function {func} could not be found.")
 
         self.base_func = func
-        self.func = func(file_directory=file_directory, **kwargs)
+        self.func = func(file_directory=file_directory, use_ELQ=integrate_constants_of_motion, **kwargs)
 
         self.ode_info = get_ode_properties(self.func)
 
@@ -146,7 +136,7 @@ class Integrate:
         # assert np.all(self.circular == self.circular[0])
 
     def __reduce__(self):
-        return (self.__class__, (self.base_func, self.buffer_length, self.rootfind_separatrix, self.enforce_schwarz_sep, self.file_dir))
+        return (self.__class__, (self.base_func, self.integrate_constants_of_motion, self.buffer_length, self.rootfind_separatrix, self.enforce_schwarz_sep, self.file_directory))
 
     @property
     def nparams(self) -> int:
@@ -178,7 +168,7 @@ class Integrate:
 
     @property
     def integrate_constants_of_motion(self):
-        return self.func.integrate_constants_of_motion
+        return self.func.use_ELQ
 
     @property
     def separatrix_buffer_dist(self):
@@ -195,65 +185,11 @@ class Integrate:
     ) -> Tuple[float, float, np.ndarray]:
         return self.dopr.take_step_single(t, h, y, self.tmax_dimensionless, None)
 
-    def reset_solver(self):
-        self.integrator.reset_solver()
-
+    def log_failed_step(self):
         # check for number of tries to fix this
         self.bad_num += 1
-        if self.bad_num >= self.bad_limit:
+        if self.bad_num >= 100:
             raise ValueError("error, reached bad limit.\n")
-
-    # def integrate_backwards(
-    #     self, t0: float, y0: np.ndarray
-    # ) -> Tuple[np.ndarray, np.ndarray]:
-    #     t = t0
-    #     h = self.dt_dimensionless
-
-    #     t_prev = t0
-    #     y_prev = y0.copy()
-    #     y = y0.copy()
-
-    #     # add the first point
-    #     self.save_point(0.0, y)
-
-    #     while t < self.tmax_dimensionless:
-    #         t_old = t
-    #         h_old = h
-    #         y_old = y.copy()
-    #         status, t, h = self.dopr.take_step_single(
-    #             t_old, h_old, y, self.tmax_dimensionless, None
-    #         )
-
-    #         # print(t, h, status)
-
-    #         if not status:
-    #             continue
-            
-    #         if not self.dopr.fix_step:
-    #             spline_info = self.dopr.prep_evaluate_single(
-    #                 t_old, y_old, h_old, t, y, None
-    #             )
-    #         else:
-    #             spline_info = None
-
-    #         # should not be needed but is safeguard against stepping past maximum allowable time
-    #         # the last point in the trajectory will be at t = tmax
-    #         if t > self.tmax_dimensionless:
-    #             if not self.dopr.fix_step:
-    #                 # place the spline coefficients for the finishing function (and to provide spline coverage up to t=tmax)
-    #                 self.dopr_spline_output[self.traj_step - 1, :] = spline_info
-    #                 self._integrator_t_cache[self.traj_step] = t * self.Msec
-    #             break
-
-    #         self.save_point(
-    #             t * self.Msec, y, spline_output=spline_info
-    #         )  # adds time in seconds
-
-    #         t_prev = t
-    #         y_prev[:] = y[:]
-
-    #     if hasattr(self, "finishing_function"):
-    #         self.finishing_function(t, y)
 
     def integrate(self, t0: float, y0: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         t = t0
@@ -263,6 +199,7 @@ class Integrate:
         y_prev = y0.copy()
         y = y0.copy()
 
+        self.bad_num = 0
         # add the first point
         self.save_point(0.0, y)
         self._integrator_t_cache[0] = 0.0
@@ -285,15 +222,19 @@ class Integrate:
                 t = t_prev
                 y[:] = y_prev[:]
                 h = h_old / 2
+                self.log_failed_step()
                 continue
             
             if np.isnan(h):
                 t = t_prev
                 y[:] = y_prev[:]
                 h = h_old / 2
+                self.log_failed_step()
                 continue
 
             if not status:  # what does this do?
+                self.bad_num += 1
+                self.log_failed_step()
                 continue
 
             if not self.dopr.fix_step:
@@ -310,6 +251,8 @@ class Integrate:
                 t = t_prev
                 y[:] = y_prev[:]
                 h /= 2
+                
+                self.log_failed_step()
                 continue
 
             # if it made it here, reset bad num
@@ -347,13 +290,15 @@ class Integrate:
             self.finishing_function(t, y)
 
     def initialize_integrator(
-        self, err=1e-12, DENSE_STEPPING=False, integrate_backwards=False, **kwargs
+        self, err=1e-11, DENSE_STEPPING=False, integrate_backwards=False, **kwargs
     ):
         self.dopr.abstol = err
         self.dopr.fix_step = DENSE_STEPPING
         self.integrate_backwards = integrate_backwards
-
-        self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
+        try:
+            self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
+        except TypeError:
+            breakpoint()
         self._integrator_t_cache = np.zeros((self.buffer_length, ))
         self.dopr_spline_output = np.zeros(
             (self.buffer_length, 6, 8)
@@ -491,27 +436,29 @@ class APEXIntegrate(Integrate):
         self, t: float, y: np.ndarray
     ) -> str:  # Stop the inspiral when close to the separatrix
         # TODO: implement a function for checking the outer grid bounds for backwards integration.
-        
         p = y[0]
 
-        if not self.enforce_schwarz_sep:
-            p_sep = self.get_p_sep(y)
+        if self.integrate_backwards:
+            pass
         else:
-            p_sep = 6 + 2*y[1]
+            if not self.enforce_schwarz_sep:
+                p_sep = self.get_p_sep(y)
+            else:
+                p_sep = 6 + 2*y[1]
 
-        if p - p_sep < self.separatrix_buffer_dist + INNER_THRESHOLD:
-            return "stop"
+            if p - p_sep < self.separatrix_buffer_dist + INNER_THRESHOLD:
+                return "stop"
 
-        # if p < 10.0 and self.moves_check < 1:
-        #     self.integrator.currently_running_ode_index = 1
-        #     print(f"Switched to index: {self.integrator.currently_running_ode_index}")
-        #     self.moves_check += 1
-        # elif p < 8.0 and self.moves_check < 2:
-        #     self.integrator.currently_running_ode_index = 0
-        #     print(f"Switched to index: {self.integrator.currently_running_ode_index}")
-        #     self.moves_check += 1
+            # if p < 10.0 and self.moves_check < 1:
+            #     self.integrator.currently_running_ode_index = 1
+            #     print(f"Switched to index: {self.integrator.currently_running_ode_index}")
+            #     self.moves_check += 1
+            # elif p < 8.0 and self.moves_check < 2:
+            #     self.integrator.currently_running_ode_index = 0
+            #     print(f"Switched to index: {self.integrator.currently_running_ode_index}")
+            #     self.moves_check += 1
 
-        return None
+            return None
 
     def end_stepper(self, t: float, y: np.ndarray, ydot: np.ndarray, factor: float):
         # estimate the step to the breaking point and multiply by PERCENT_STEP
@@ -675,29 +622,49 @@ class APEXIntegrate(Integrate):
                 # if another fixed step does not fit in the time window, just finish integration
                 pass
 
-
 class AELQIntegrate(Integrate):
     def get_p_sep(self, y: np.ndarray) -> float:
-        p, e, x = ELQ_to_pex(self.a, y[0], y[1], y[2])
+        e = y[0]
+        x = y[1]
 
         if self.a == 0.0:
             p_sep = 6.0 + 2.0 * e
 
         else:
-            p_sep = get_separatrix(self.a, e, x)
-        return p_sep, (p, e, x)  # return pex for later on
+            p_sep = get_separatrix_interpolant(self.a, e, x)
+        return p_sep
 
     def action_function(
         self, t: float, y: np.ndarray
     ) -> str:  # Stop the inspiral when close to the separatrix
-        p_sep, (p, e, x) = self.get_p_sep(y)
+        # TODO: implement a function for checking the outer grid bounds for backwards integration.
+        E = y[0]
+        L = y[1]
+        Q = y[2]
 
-        if p - p_sep < self.separatrix_buffer_dist + INNER_THRESHOLD:
-            return "stop"
+        p, e, x = ELQ_to_pex(self.a, E, L, Q)
+
+        if self.integrate_backwards:
+            pass
+        else:
+            if not self.enforce_schwarz_sep:
+                p_sep = self.get_p_sep([e, x])
+            else:
+                p_sep = 6 + 2*e
+
+            if p - p_sep < self.separatrix_buffer_dist + INNER_THRESHOLD:
+                return "stop"
+
+            return None
 
     def end_stepper(self, t: float, y: np.ndarray, ydot: np.ndarray, factor: float):
         # estimate the step to the breaking point and multiply by PERCENT_STEP
-        p_sep, (p, e, x) = self.get_p_sep(y)
+        p, e, x = ELQ_to_pex(self.a, y[0], y[1], y[2])
+        if not self.enforce_schwarz_sep:
+            p_sep = self.get_p_sep([e, x])
+        else:
+            p_sep = 6 + 2*e
+            
         Edot, Ldot = ydot[0], ydot[1]
 
         E_sep, L_sep, _ = get_kerr_geo_constants_of_motion(
@@ -717,16 +684,21 @@ class AELQIntegrate(Integrate):
 
         return (temp_t, temp_y, temp_stop)
 
-    def finishing_function(self, t: float, y: np.ndarray):
-        # Issue with likelihood computation if this step ends at an arbitrary value inside separatrix + DIST_TO_SEPARATRIX.
-        #     // To correct for this we self-integrate from the second-to-last point in the integation to
-        #     // within the INNER_THRESHOLD with respect to separatrix +  DIST_TO_SEPARATRIX
+    def finishing_function_euler_step(self, t: float, y: np.ndarray):
+        """
+        We use this stepper for DENSE_STEPPING=1 because no trajectory spline is available.
+        """
 
         if (
             t < self.tmax_dimensionless
         ):  # don't step to the separatrix if we hit the time window
             # update p_sep (fixes part of issue #17)
-            p_sep, (p, e, x) = self.get_p_sep(y)
+            p, e, x = ELQ_to_pex(self.a, y[0], y[1], y[2])
+
+            if not self.enforce_schwarz_sep:
+                p_sep = self.get_p_sep([e, x])
+            else:
+                p_sep = 6 + 2*e
 
             ydot = np.zeros(self.nparams)
             y_temp = np.zeros(self.nparams)
@@ -734,23 +706,27 @@ class AELQIntegrate(Integrate):
             # set initial values
             factor = 1.0
             iteration = 0
-
             while p - p_sep > self.separatrix_buffer_dist + INNER_THRESHOLD:
                 # Same function in the integrator
                 ydot = self.integrator.get_derivatives(y)
                 t_temp, y_temp, temp_stop = self.end_stepper(t, y, ydot, factor)
-
-                if temp_stop > 0:
+                if (
+                    temp_stop > self.separatrix_buffer_dist
+                    or self.integrate_backwards == True
+                ):
                     # update points
-                    p_sep_temp, (p_temp, etemp, xtemp) = self.get_p_sep(y_temp)
-                    if p_temp - p_sep_temp < self.separatrix_buffer_dist:
-                        factor *= 2
+                    t = t_temp
+                    y[:] = y_temp[:]
+                    p, e, x = ELQ_to_pex(self.a, y[0], y[1], y[2])
+
+                    if not self.enforce_schwarz_sep:
+                        p_sep = self.get_p_sep([e, x])
                     else:
-                        t = t_temp
-                        y[:] = y_temp[:]
-                        p_sep, (p, e, x) = p_sep_temp, (p_temp, etemp, xtemp)
+                        p_sep = 6 + 2*e
+
                 else:
                     # all variables stay the same
+
                     # decrease step
                     factor *= 2.0
 
@@ -760,5 +736,94 @@ class AELQIntegrate(Integrate):
                     raise ValueError(
                         "Could not find workable step size in finishing function."
                     )
-            # print(p - p_sep , DIST_TO_SEPARATRIX + INNER_THRESHOLD, temp_stop)
+
             self.save_point(t * self.Msec, y)
+
+    def inner_func(self, t_step):
+        # evaluate the dense output at y_step
+        y_step = self.eval_integrator_spline(np.array([t_step,]))[0]
+        p, e, x = ELQ_to_pex(self.a, y_step[0], y_step[1], y_step[2])
+
+        # get the separatrix value at this new step
+        if not self.enforce_schwarz_sep:
+            p_sep = self.get_p_sep([e, x])
+        else:
+            p_sep = 6 + 2 * e
+
+        return p - (p_sep + self.separatrix_buffer_dist)  # we want this to go to zero
+
+    def finishing_function(self, t: float, y: np.ndarray):
+        # Tune the step-size of a dense integration step such that the trajectory terminates within INNER_THRESHOLD of p_sep + DIST_TO_SEPARATRIX
+
+        # advance the step counter by one temporarily to read the last spline value
+        if not self.dopr.fix_step:
+            self.traj_step += 1
+        if (
+            t < self.tmax_dimensionless
+        ):  # don't step to the separatrix if we already hit the time window
+            if (
+                self.rootfind_separatrix and not self.dopr.fix_step
+            ):  # use a root-finder and the full integration routine to tune the finish
+                
+                # if tmax occurs before the last point, we need to determine if the crossing is before t=tmax
+                if self.integrator_t_cache[-1] > self.tmax_dimensionless * self.Msec:
+
+                    # first, check if the crossing has happened by t=tmax (this is unlikely but can happen)
+                    y_at_tmax = self.eval_integrator_spline(np.array([self.tmax_dimensionless * self.Msec]))[0]
+                    p, e, x = ELQ_to_pex(self.a, y_at_tmax[0], y_at_tmax[1], y_at_tmax[2])
+                    if not self.enforce_schwarz_sep:
+                        p_sep_at_tmax = self.get_p_sep([e, x])
+                    else:
+                        p_sep_at_tmax = 6 + 2*e
+
+                    if (p - (p_sep_at_tmax + self.separatrix_buffer_dist)) > 0:
+                        # the trajectory didnt cross the boundary before t=tmax, so stop at t=tmax.
+                        # just place the point at y_at_tmax above.
+                        # we do not pass any spline information here as it has already been computed in the main integrator loop
+                        self.traj_step -= 1  # revert the step counter to place the last (t, y) in the right place (spline info not overwritten)
+                        self.save_point(
+                            self.tmax_dimensionless * self.Msec, y_at_tmax, spline_output=None
+                        )
+                else:
+                    # the trajectory crosses the boundary before t=tmax. Root-find to get the crossing time.
+                    result = brentq(
+                        self.inner_func,
+                        t * self.Msec,  # lower bound: the current point
+                        self.integrator_t_cache[-1],  # upper bound: the knot that passed the boundary
+                        # args=(y_out,),
+                        maxiter=MAX_ITER,
+                        xtol=INNER_THRESHOLD,
+                        rtol=1e-10,
+                        full_output=True,
+                    )
+
+                    if result[1].converged:
+                        t_out = result[0]
+                        y_out = self.eval_integrator_spline(np.array([t_out,]))[0]
+
+                        self.traj_step -= 1  # revert the step counter to place the last (t, y) in the right place (spline info not overwritten)
+                        self.save_point(
+                            t_out, y_out, spline_output=None
+                        )
+                    else:
+                        raise RuntimeError(
+                            "Separatrix root-finding operation did not converge within MAX_ITER."
+                        )
+
+            else:
+                self.finishing_function_euler_step(
+                    t, y
+                )  # weird step-halving Euler thing
+
+        else:  # If integrator walked past tmax during main loop, place a point at tmax and finish integration
+            if not self.dopr.fix_step:
+                y_finish = self.eval_integrator_spline(np.array([self.tmax_dimensionless * self.Msec,]))[0]
+                
+                self.traj_step -= 1  # revert the step counter to place the last (t, y) in the right place (spline info not overwritten)
+                # we do not pass any spline information here as it has already been computed in the main integrator loop
+                self.save_point(
+                    self.tmax_dimensionless * self.Msec, y_finish, spline_output=None
+                )  # adds time in seconds
+            else:
+                # if another fixed step does not fit in the time window, just finish integration
+                pass

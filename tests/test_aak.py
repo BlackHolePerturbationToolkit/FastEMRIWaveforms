@@ -27,7 +27,7 @@ class AAKWaveformTest(unittest.TestCase):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
         inspiral_kwargs = {
             "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
-            "max_init_len": int(
+            "buffer_length": int(
                 1e3
             )  # all of the trajectories will be well under len = 1000
         }
@@ -89,7 +89,7 @@ class AAKWaveformTest(unittest.TestCase):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
         inspiral_kwargs_forward = {
             "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
-            "max_init_len": int(
+            "buffer_length": int(
                 1e3
             ),  # all of the trajectories will be well under len = 1000
             "integrate_backwards":False

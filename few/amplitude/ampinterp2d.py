@@ -51,6 +51,7 @@ except (ImportError, ModuleNotFoundError) as e:
 
 from ..cutils.pyAmpInterp2D_cpu import interp2D as interp2D_cpu
 
+from typing import Optional, Union
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -100,59 +101,25 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
     This module is available for GPU and CPU.
 
     args:
-        max_init_len (int, optional): Number of points to initialize for
-            buffers. This allows the user to limit memory usage. However, if the
-            user requests more length, a warning will be thrown and the
-            max_init_len will be increased accordingly and arrays reallocated.
-            Default is 1000.
-        **kwargs (dict, optional): Keyword arguments for the base classes:
-            :class:`few.utils.baseclasses.SchwarzschildEccentric`,
+        fp: The coefficients file name in `file_directory`.
+        l_arr: Array of :math:`\ell` mode indices.
+        m_arr: Array of :math:`m` mode indices.
+        n_arr: Array of :math:`n` mode indices.
+        file_directory: The path to the directory containing the coefficients file.
+        **kwargs: Optional keyword arguments for the base class:
             :class:`few.utils.baseclasses.AmplitudeBase`,
             :class:`few.utils.baseclasses.ParallelModuleBase`.
-            Default is {}.
-
     """
 
-    def attributes_AmpInterp2D(self):
-        """
-        attributes:
-            few_dir (str): absolute path to the FastEMRIWaveforms directory
-            break_index (int): length of output vector from network divded by 2.
-                It is really the number of pairs of real and imaginary numbers.
-            use_gpu (bool): If True, use the GPU.
-            neural_layer (obj): C++ class for computing neural network operations
-            transform_output(obj): C++ class for transforming output from
-                neural network in the reduced basis to the full amplitude basis.
-            num_teuk_modes (int): number of teukolsky modes in the data file.
-            transform_factor_inv (double): Inverse of the scalar transform factor.
-                For this model, that is 1000.0.
-            max_init_len (int): This class uses buffers. This is the maximum length
-                the user expects for the input arrays.
-            weights (list of xp.ndarrays): List of the weight matrices for each
-                layer of the neural network. They are flattened for entry into
-                C++ in column-major order. They have shape (dim1, dim2).
-            bias (list of xp.ndarrays): List of the bias arrays for each layer
-                of the neural network. They have shape (dim2,).
-            dim1 (list of int): List of 1st dimension length in each layer.
-            dim2 (list of int): List of 2nd dimension length in each layer.
-            num_layers (int): Number of layers in the neural network.
-            transform_matrix (2D complex128 xp.ndarray): Matrix for tranforming
-                output of neural network onto original amplitude basis.
-            max_num (int): Figures out the maximum dimension of all weight matrices
-                for buffers.
-            temp_mats (len-2 list of double xp.ndarrays): List that holds
-                temporary matrices for neural network evaluation. Each layer switches
-                between which is the input and output to properly interface with
-                cBLAS/cuBLAS.
-            run_relu_arr  (1D int xp.ndarray): Array holding information about
-                whether each layer will run the relu activation. All layers have
-                value 1, except for the last layer with value 0.
-
-        """
-        pass
-
-    def __init__(self, fp, l_arr, m_arr, n_arr, file_directory=None, **kwargs):
-
+    def __init__(
+            self, 
+            fp: str, 
+            l_arr: np.ndarray, 
+            m_arr: np.ndarray, 
+            n_arr: np.ndarray, 
+            file_directory:Optional[str]=None,
+            **kwargs
+        ):
         ParallelModuleBase.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
@@ -162,15 +129,15 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         self.n_arr = n_arr
 
         if file_directory is None:
-            self.file_dir = dir_path + "/../../few/files/"
-        else:
-            self.file_dir = file_directory
-
+            file_directory = dir_path + "/../../few/files/"
+        
+        self.file_directory = file_directory
+        
         # check if user has the necessary data
         # if not, the data will automatically download
-        check_for_file_download(fp, self.file_dir)
+        check_for_file_download(fp, self.file_directory)
 
-        mystery_file = h5py.File(os.path.join(self.file_dir, fp))
+        mystery_file = h5py.File(os.path.join(self.file_directory, fp))
         try:
             is_coeffs = mystery_file.attrs["is_coefficients"]
         except KeyError:
@@ -181,24 +148,26 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         else:
             print(fp, "is not a spline coefficients file. Attempting to convert...")
             spline_fp = _spline_coefficients_to_file(
-                fp, self.l_arr, self.m_arr, self.n_arr, file_directory=self.file_dir
+                fp, self.l_arr, self.m_arr, self.n_arr, file_directory=self.file_directory
             )
-            coefficients = h5py.File(os.path.join(self.file_dir, spline_fp))
+            coefficients = h5py.File(os.path.join(self.file_directory, spline_fp))
 
         self.a_val_store = coefficients.attrs["signed_spin"]
+        """float: The value of :math:`a` associated with this interpolant."""
 
         self.num_teuk_modes = coefficients.attrs["num_teuk_modes"]
+        """int: Total number of mode amplitude grids this interpolant stores."""
+
         self.tck = [
             self.xp.asarray(coefficients["x1"]),
             self.xp.asarray(coefficients["x2"]),
             self.xp.asarray(coefficients["c"]),
         ]
-        self.degrees = (
-            coefficients.attrs["spline_degree_x"],
-            coefficients.attrs["spline_degree_y"],
-        )
-        self.len_indiv_c = coefficients.attrs["points_per_modegrid"]
+        """list[np.ndarray]: Arrays holding all spline coefficient information."""
 
+        self.len_indiv_c = coefficients.attrs["points_per_modegrid"]
+        """int: Total number of coefficients per mode amplitude grid."""
+        
     @property
     def interp2D(self) -> callable:
         """GPU or CPU interp2D"""
@@ -220,25 +189,19 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         """Confirms GPU capability"""
         return True
 
-    def __call__(self, a, p, e, xI, *args, specific_modes=None, **kwargs):
+    def __call__(self, a: Union[float,np.ndarray], p: Union[float,np.ndarray], e: Union[float,np.ndarray], xI: Union[float,np.ndarray], *args, specific_modes: Optional[Union[list, np.ndarray]]=None, **kwargs) -> np.ndarray:
         """
         Evaluate the spline or its derivatives at given positions.
-        Parameters
-        ----------
-        x, y : array_like
-            Input coordinates.
-            If `grid` is False, evaluate the spline at points ``(x[i],
-            y[i]), i=0, ..., len(x)-1``.  Standard Numpy broadcasting
-            is obeyed.
-            If `grid` is True: evaluate spline at the grid points
-            defined by the coordinate arrays x, y. The arrays must be
-            sorted to increasing order.
-            Note that the axis ordering is inverted relative to
-            the output of meshgrid.
 
+        Args:
+            a: Dimensionless spin parameter of MBH.
+            p: Dimensionless semi-latus rectum.
+            e: Eccentricity.
+            xI: Cosine of orbital inclination. Only :math:`|x_I| = 1` is currently supported.
+            specific_modes: Either indices or mode index tuples of modes to be generated (optional; defaults to all modes).
+        Returns:
+            Complex Teukolsky mode amplitudes at the requested points.
         """
-
-        grid = False
 
         try:
             a_cpu, p_cpu, e_cpu, xI_cpu = (
@@ -263,7 +226,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         w = self.xp.sqrt(e)
 
         tw, tu, c = self.tck[:3]
-        kw, ku = self.degrees
+        kw = ku = 3
 
         # standard Numpy broadcasting
         if w.shape != u.shape:
@@ -326,21 +289,36 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
     def __reduce__(self):
         return (
             self.__class__,
-            (self.fp, self.l_arr, self.m_arr, self.n_arr, self.file_dir),
+            (self.fp, self.l_arr, self.m_arr, self.n_arr, self.file_directory),
         )
 
 
-class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleBase):
-    def __init__(self, file_directory=None, filenames=None, **kwargs):
+class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
+    """Calculate Teukolsky amplitudes in the Kerr eccentric equatorial regime with a bicubic spline + linear
+    interpolation scheme.
 
-        ParallelModuleBase.__init__(self, **kwargs)
+    When called with arguments :math:`(a, p, e, xI)`, these parameters are transformed into a set of
+    interpolation coordinates and the bicubic spline interpolant is evaluated at these coordinates for
+    all sets of coefficients. To interpolate in the :math"`a` direction, the bicubic spline is evaluated at
+    the adjacent grid points and a linear interpolation is performed.
+
+    This module is available for GPU and CPU.
+
+    args:
+        fp: The coefficients file name in `file_directory`.
+        file_directory: The path to the directory containing the coefficients file.
+        **kwargs: Optional keyword arguments for the base classes:
+            :class:`few.utils.baseclasses.AmplitudeBase`,
+            :class:`few.utils.baseclasses.KerrEccentricEquatorial`.
+    """
+    def __init__(self, file_directory=None, filenames=None, **kwargs):
         KerrEccentricEquatorial.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
         if file_directory is None:
-            self.file_dir = dir_path + "/../../few/files/"
+            self.file_directory = dir_path + "/../../few/files/"
         else:
-            self.file_dir = file_directory
+            self.file_directory = file_directory
 
         if filenames is None:
             self.filenames = _DEFAULT_AMPLITUDE_FILENAMES
@@ -356,7 +334,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleB
                 self.l_arr,
                 self.m_arr,
                 self.n_arr,
-                file_directory=self.file_dir,
+                file_directory=self.file_directory,
                 use_gpu=self.use_gpu,
             )
 
@@ -386,8 +364,21 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleB
 
         self.pos_neg_n_swap_inds = self.xp.asarray(pos_neg_n_swap_inds)
 
-    def get_amplitudes(self, a, p, e, xI, specific_modes=None):
+    def get_amplitudes(self, a, p, e, xI, specific_modes=None) -> Union[dict, np.ndarray]:
+        """
+        Generate Teukolsky amplitudes for a given set of parameters.
 
+        Args:
+            a: Dimensionless spin parameter of MBH.
+            p: Dimensionless semi-latus rectum.
+            e: Eccentricity.
+            xI: Cosine of orbital inclination. Only :math:`|x_I| = 1` is currently supported.
+            specific_modes: Either indices or mode index tuples of modes to be generated (optional; defaults to all modes).
+        Returns:
+            If specific_modes is a list of tuples, returns a dictionary of complex mode amplitudes.
+            Else, returns an array of complex mode amplitudes.
+        """
+        
         # prograde: spin pos, xI pos
         # retrograde: spin pos, xI neg - >  spin neg, xI pos
         assert isinstance(a, float)
@@ -488,21 +479,34 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial, ParallelModuleB
             return temp
 
 
-class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleBase):
-    """
-    A legacy class for compatibility with the old Schwarzschild waveform structure.
+class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
+    """Calculate Teukolsky amplitudes in the Schwarzschild eccentric regime with a bicubic spline interpolation.
+
+    When called with arguments :math:`(a, p, e, xI)`, these parameters are transformed into a set of
+    interpolation coordinates and the bicubic spline interpolant is evaluated at these coordinates for
+    all sets of coefficients.
+
+    This class is retained for legacy compatibility with the original Schwarzschild eccentric models. It is
+    recommended to use `AmpInterpKerrEqEcc` instead of this class.
+
+    This module is available for GPU and CPU.
+    
+    args:
+        fp: The coefficients file name in `file_directory`.
+        file_directory: The path to the directory containing the coefficients file.
+        **kwargs: Optional keyword arguments for the base classes:
+            :class:`few.utils.baseclasses.AmplitudeBase`,
+            :class:`few.utils.baseclasses.SchwarzschildEccentric`.
     """
 
     def __init__(self, file_directory=None, filenames=None, **kwargs):
-
-        ParallelModuleBase.__init__(self, **kwargs)
         SchwarzschildEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
         if file_directory is None:
-            self.file_dir = dir_path + "/../../few/files/"
+            self.file_directory = dir_path + "/../../few/files/"
         else:
-            self.file_dir = file_directory
+            self.file_directory = file_directory
 
         if filenames is None:
             self.filename = "Teuk_amps_a0.0_lmax_10_nmax_30_new.h5"
@@ -513,10 +517,10 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
 
         # check if user has the necessary data
         # if not, the data will automatically download
-        check_for_file_download(self.filename, self.file_dir)
+        check_for_file_download(self.filename, self.file_directory)
 
         data = {}
-        with h5py.File(os.path.join(self.file_dir, self.filename), "r") as f:
+        with h5py.File(os.path.join(self.file_directory, self.filename), "r") as f:
             # load attributes in the right order for correct mode sorting later
             format_string1 = "l{}m{}"
             format_string2 = "n{}k0"
@@ -579,7 +583,6 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
 
         self.num_teuk_modes = num_teuk_modes
 
-        self.degrees = example_spl.degrees
         self.len_indiv_c = tck_last_entry.shape[-1]
 
     @property
@@ -588,8 +591,20 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
         interp2D = interp2D_cpu if not self.use_gpu else interp2D_gpu
         return interp2D
 
-    def get_amplitudes(self, a, p, e, xI, specific_modes=None):
+    def get_amplitudes(self, a, p, e, xI, specific_modes=None) -> Union[dict,np.ndarray]:
+        """
+        Generate Teukolsky amplitudes for a given set of parameters.
 
+        Args:
+            a: Dimensionless spin parameter of MBH (must be equal to zero).
+            p: Dimensionless semi-latus rectum.
+            e: Eccentricity.
+            xI: Cosine of orbital inclination. Only :math:`x_I = 1` is currently supported.
+            specific_modes: Either indices or mode index tuples of modes to be generated (optional; defaults to all modes).
+        Returns:
+            If specific_modes is a list of tuples, returns a dictionary of complex mode amplitudes.
+            Else, returns an array of complex mode amplitudes.
+        """
         assert a == 0.0
 
         assert np.all(xI == 1.0)
@@ -608,7 +623,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
         w = e.copy()
 
         tw, tu, c = self.tck[:3]
-        kw, ku = self.degrees
+        kw = ku = 3
 
         # standard Numpy broadcasting
         if w.shape != u.shape:
@@ -683,7 +698,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric, ParallelModuleB
             return temp
 
     def __reduce__(self):
-        return (self.__class__, (self.file_dir, self.filename))
+        return (self.__class__, (self.file_directory, self.filename))
 
 
 def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr, file_directory=None):

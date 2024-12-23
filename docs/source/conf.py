@@ -90,7 +90,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 import sphinx_rtd_theme
 
 autodoc_member_order = "bysource"
-
+autodoc_typehints = "description"
 
 def skip(app, what, name, obj, would_skip, options):
     if name == "__call__":
@@ -115,7 +115,6 @@ html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 
 html_theme_options = {
-    "display_version": True,
     "prev_next_buttons_location": "both",
     "style_nav_header_background": "coral",
     # Toc options

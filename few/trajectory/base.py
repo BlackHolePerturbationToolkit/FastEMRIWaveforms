@@ -3,6 +3,8 @@ from few.utils.citations import *
 from few.utils.constants import *
 import numpy as np
 
+from typing import Optional, Union
+
 class TrajectoryBase(ABC):
     """Base class used for trajectory modules.
 
@@ -26,10 +28,6 @@ class TrajectoryBase(ABC):
 
         @classmethod that requires a child class to have a get_inspiral method.
 
-        returns:
-            2D double np.ndarray: t, p, e, Phi_phi, Phi_r, flux with shape:
-                (params, traj length).
-
         raises:
             NotImplementedError: The child class does not have this method.
 
@@ -39,76 +37,80 @@ class TrajectoryBase(ABC):
     def __call__(
         self,
         *args,
-        in_coordinate_time=True,
-        dt=10.0,
-        T=1.0,
-        new_t=None,
-        spline_kwargs={},
-        DENSE_STEPPING=0,
-        max_init_len=1000,
-        upsample=False,
-        err=1e-11,
-        fix_t=False,
-        integrate_backwards=False,
+        in_coordinate_time: bool=True,
+        dt: float=10.0,
+        T: float=1.0,
+        new_t: Optional[np.ndarray]=None,
+        spline_kwargs: Optional[dict]=None,
+        DENSE_STEPPING: bool=False,
+        buffer_length: int=1000,
+        upsample: bool=False,
+        err: float=1e-11,
+        fix_t: bool=False,
+        integrate_backwards: bool=False,
         **kwargs,
-    ):
+    ) -> tuple[np.ndarray]:
         """Call function for trajectory interface.
 
         This is the function for calling the creation of the
         trajectory. Inputs define the output time spacing.
 
         args:
-            *args (list): Input of variable number of arguments specific to the
+            *args: Input of variable number of arguments specific to the
                 inspiral model (see the trajectory class' `get_inspiral` method).
                 **Important Note**: M must be the first parameter of any model
                 that uses this base class.
-            in_coordinate_time (bool, optional): If True, the trajectory will be
+            in_coordinate_time: If True, the trajectory will be
                 outputted in coordinate time. If False, the trajectory will be
                 outputted in units of M. Default is True.
-            dt (double, optional): Time step for output waveform in seconds. Also sets
+            dt: Time step for output waveform in seconds. Also sets
                 initial step for integrator. Default is 10.0.
-            T (double, optional): Total observation time in years. Sets the maximum time
+            T: Total observation time in years. Sets the maximum time
                 for the integrator to run. Default is 1.0.
-            new_t (1D np.ndarray, optional): If given, this represents the final
+            new_t: If given, this represents the final
                 time array at which the trajectory is analyzed. This is
                 performed by using a cubic spline on the integrator output.
                 Default is None.
-            spline_kwargs (dict, optional): If using upsampling, spline_kwargs
+            spline_kwargs: If using upsampling, spline_kwargs
                 provides the kwargs desired for scipy.interpolate.CubicSpline.
                 Default is {}.
-            DENSE_STEPPING (int, optional): If 1, the trajectory used in the
-                integrator will be densely stepped at steps of :obj:`dt`. If 0,
-                the integrator will determine its stepping. Default is 0.
-            max_init_len (int, optional): Sets the allocation of memory for
+            DENSE_STEPPING: If True, the trajectory used in the
+                integrator will be densely stepped at steps of :obj:`dt`. If False,
+                the integrator will determine its stepping. Default is False.
+            buffer_length: Sets the allocation of memory for
                 trajectory parameters. This should be the maximum length
-                expected for a trajectory. Trajectories with default settings
+                expected for a trajectory. If it is reached, output arrays will be
+                extended, but this is more expensive than allocating a larger array
+                initially. Trajectories with default settings
                 will be ~100 points. Default is 1000.
-            upsample (bool, optional): If True, upsample, with a cubic spline,
+            upsample: If True, upsample, with a cubic spline,
                 the trajectories from 0 to T in steps of dt. Default is False.
-            err (double, optional): Tolerance for integrator. Default is 1e-10.
+            err: Tolerance for integrator. Default is 1e-10.
                 Decreasing this parameter will give more steps over the
                 trajectory, but if it is too small, memory issues will occur as
                 the trajectory length will blow up. We recommend not adjusting
                 this parameter.
-            fix_T (bool, optional): If upsampling, this will affect excess
+            fix_T: If upsampling, this will affect excess
                 points in the t array. If True, it will shave any excess on the
                 trajectories arrays where the time is greater than the overall
                 time of the trajectory requested.
-            **kwargs (dict, optional): kwargs passed to trajectory module.
+            **kwargs: kwargs passed to trajectory module.
                 Default is {}.
 
         Returns:
-            tuple: Tuple of (t, p, e, Phi_phi, Phi_r, flux_norm).
+            Tuple of (t, p, e, Phi_phi, Phi_r, flux_norm).
 
         Raises:
             ValueError: If input parameters are not allowed in this model.
 
         """
-
+        if spline_kwargs is None:
+            spline_kwargs = {}
+        
         # add call kwargs to kwargs dictionary
         kwargs["dt"] = dt
         kwargs["T"] = T
-        kwargs["max_init_len"] = max_init_len
+        kwargs["buffer_length"] = buffer_length
         kwargs["err"] = err
         kwargs["DENSE_STEPPING"] = DENSE_STEPPING
         kwargs["integrate_backwards"] = integrate_backwards
@@ -118,9 +120,6 @@ class TrajectoryBase(ABC):
 
         # inspiral generator that must be added to each trajectory class
         out = self.get_inspiral(*args, **kwargs)
-
-        # t = out[0]
-        # params = out[1:]
 
         # get time separate from the rest of the params
         t = out[0]

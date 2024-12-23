@@ -31,7 +31,7 @@ insp_kw = {
 "dt": 1.0,
 "err": 1e-10,
 "DENSE_STEPPING": 0,
-"max_init_len": int(1e4),
+"buffer_length": int(1e4),
 "upsample": False
 }
 
@@ -174,10 +174,10 @@ class ModuleTest(unittest.TestCase):
                 e0 = np.random.uniform(0.1, 0.5)
 
                 tic = time.perf_counter()
-                t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, T=100.0, err=1e-10, max_init_len=int(1e5))
+                t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, T=100.0, err=1e-10, buffer_length=int(1e5))
                 toc = time.perf_counter()
 
-                tS, pS, eS, xS, Phi_phiS, Phi_thetaS, Phi_rS = traj_Schw(M, mu, 0.0, p0, e0, 1.0, T=100.0, new_t=t,upsample=True, err=1e-14, max_init_len=int(1e5))
+                tS, pS, eS, xS, Phi_phiS, Phi_thetaS, Phi_rS = traj_Schw(M, mu, 0.0, p0, e0, 1.0, T=100.0, new_t=t,upsample=True, err=1e-14, buffer_length=int(1e5))
                 mask = (Phi_rS!=0.0)
                 diff =  np.abs(Phi_phi[mask] - Phi_phiS[mask])
                 # print(np.max(diff),toc-tic,len(t))
@@ -195,8 +195,8 @@ class ModuleTest(unittest.TestCase):
             p0 = np.random.uniform(10.0,15)
             e0 = np.random.uniform(0.1, 0.5)
 
-            t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, T=2.0, max_init_len=int(1e5))
-            tS, pS, eS, xS, Phi_phiS, Phi_thetaS, Phi_rS = traj_Schw(M, mu, 0.0, p0, e0, 1.0, T=2.0, new_t=t, upsample=True, max_init_len=int(1e5))
+            t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, T=2.0, buffer_length=int(1e5))
+            tS, pS, eS, xS, Phi_phiS, Phi_thetaS, Phi_rS = traj_Schw(M, mu, 0.0, p0, e0, 1.0, T=2.0, new_t=t, upsample=True, buffer_length=int(1e5))
             mask = (Phi_rS!=0.0)
             diff =  np.abs(Phi_phi[mask] - Phi_phiS[mask])
             # plt.figure(); plt.plot(tS,pS);plt.plot(t,p);plt.show()

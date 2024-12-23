@@ -1,10 +1,11 @@
 from .base import ODEBase
-from ...utils.utility import _KerrGeoCoordinateFrequencies_kernel_inner, _get_separatrix_kernel_inner
-from ...utils.pn_map import _Y_to_xI_kernel_inner
+from ...utils.utility import get_separatrix, get_fundamental_frequencies
+from ...utils.pn_map import Y_to_xI
 
 from numba import njit
 from math import sqrt, log, cosh, sinh, pow
 import numpy as np
+from typing import Union
 
 #    PostNewtonian fluxes (5PN, e^10; arbitrary inclinations)
 
@@ -21,15 +22,18 @@ class PN5(ODEBase):
     @property
     def convert_Y(self):
         return True
+    
+    @property
+    def supports_ELQ(self):
+        return False
 
-    def evaluate_rhs(self, p: float, e: float, Y: float, *args) -> list[float]:
-
+    def evaluate_rhs(self, y: Union[list[float], np.ndarray]) -> list[Union[float, np.ndarray]]:
+        p, e, Y = y[:3]
         if e < 0:
              return [0., 0., 0., 0., 0., 0.,]
 
-        # directly evaluate the numba kernels for speed
-        xI = _Y_to_xI_kernel_inner(self.a, p, e, Y)
-        p_sep = _get_separatrix_kernel_inner(self.a, e, xI)
+        xI = Y_to_xI(self.a, p, e, Y)
+        p_sep = get_separatrix(self.a, e, xI)
         if p < p_sep:
              return [0., 0., 0., 0., 0., 0.,]
 
@@ -37,8 +41,7 @@ class PN5(ODEBase):
         edot = dedt8H_5PNe10(self.a, p, e, Y, 10, 8)
         Ydot = dYdt8H_5PNe10(self.a, p, e, Y, 7, 10)
         
-        # directly evaluate the numba kernel for speed
-        frequencies = _KerrGeoCoordinateFrequencies_kernel_inner(self.a, p, e, xI)
+        frequencies = get_fundamental_frequencies(self.a, p, e, xI)
         
         return [pdot, edot, Ydot, frequencies[0], frequencies[1], frequencies[2]]
 

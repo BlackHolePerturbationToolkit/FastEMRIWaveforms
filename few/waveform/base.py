@@ -17,7 +17,6 @@ except (ImportError, ModuleNotFoundError) as e:
 from ..utils.baseclasses import (
     Pn5AAK,
     ParallelModuleBase,
-    SphericalHarmonic
 )
 
 from ..utils.utility import (
@@ -37,24 +36,52 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
     (to be upgraded to Kerr generic once that is available). Stock waveform classes constructed in
     this basis can subclass this class and implement their own "__call__" method to fill in the
     relevant data.
-    """
 
+    Args:
+        inspiral_module: Class object representing the module for creating the inspiral.
+            This returns the phases and orbital parameters. See :ref:`trajectory-label`.
+        amplitude_module: Class object representing the module for creating the amplitudes.
+            This returns the complex amplitudes of the modes. See :ref:`amplitude-label`.
+        sum_module: Class object representing the module for summing the final waveform from the
+            amplitude and phase information. See :ref:`summation-label`.
+        mode_selector_module: Class object representing the module for selecting modes that contribute
+            to the waveform. See :ref:`utilities-label`.
+        inspiral_kwargs: Optional kwargs to pass to the inspiral generator. Default is {}.
+        amplitude_kwargs: Optional kwargs to pass to the amplitude generator. Default is {}.
+        sum_kwargs: Optional kwargs to pass to the sum module during instantiation. Default is {}.
+        Ylm_kwargs: Optional kwargs to pass to the Ylm generator. Default is {}.
+        mode_selector_kwargs: Optional kwargs to pass to the mode selector module. Default is {}.
+        use_gpu: If True, use GPU resources. Default is False.
+        normalize_amps: If True, normalize the amplitudes at each step of the trajectory. This option should
+            be used alongside ROMAN networks that have been trained with normalized amplitudes.
+            Default is False.
+    """
     def __init__(
         self,
-        inspiral_module,
-        amplitude_module,
-        sum_module,
-        mode_selector_module,
-        inspiral_kwargs={},
-        amplitude_kwargs={},
-        sum_kwargs={},
-        Ylm_kwargs={},
-        mode_selector_kwargs={},
-        use_gpu=False,
-        num_threads=None,
-        normalize_amps=False,
+        inspiral_module: object,
+        amplitude_module: object,
+        sum_module: object,
+        mode_selector_module: object,
+        inspiral_kwargs: Optional[dict]=None,
+        amplitude_kwargs: Optional[dict]=None,
+        sum_kwargs: Optional[dict]=None,
+        Ylm_kwargs: Optional[dict]=None,
+        mode_selector_kwargs: Optional[dict]=None,
+        use_gpu:bool=False,
+        normalize_amps:bool=False,
     ):
-        ParallelModuleBase.__init__(self, use_gpu=use_gpu, num_threads=num_threads)
+        if inspiral_kwargs is None:
+            inspiral_kwargs = {}
+        if amplitude_kwargs is None:
+            amplitude_kwargs = {}
+        if sum_kwargs is None:
+            sum_kwargs = {}
+        if Ylm_kwargs is None:
+            Ylm_kwargs = {}
+        if mode_selector_kwargs is None:
+            mode_selector_kwargs = {}
+
+        ParallelModuleBase.__init__(self, use_gpu=use_gpu)
 
         (
             amplitude_kwargs,
@@ -73,16 +100,16 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
 
         # function for generating the inpsiral
         self.inspiral_generator = inspiral_module(**inspiral_kwargs)
-
+        """object: instantiated trajectory module."""
         # function for generating the amplitude
         self.amplitude_generator = amplitude_module(**amplitude_kwargs)
-
+        """object: instantiated amplitude module."""
         # summation generator
         self.create_waveform = sum_module(**sum_kwargs)
-
+        """object: instantiated summation module."""
         # angular harmonics generation
         self.ylm_gen = GetYlms(**Ylm_kwargs)
-
+        """object: instantiated Ylm module."""
         # selecting modes that contribute at threshold to the waveform
         self.mode_selector = mode_selector_module(
             self.l_arr_no_mask,
@@ -90,6 +117,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
             self.n_arr_no_mask,
             **mode_selector_kwargs,
         )
+        """object: instantiated mode selector module."""
 
     def _generate_waveform(
         self,
@@ -110,45 +138,45 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
         eps: float=1e-5,
         show_progress: bool=False,
         batch_size: int=-1,
-        mode_selection: Optional[Union[str, list]]=None,
+        mode_selection: Optional[Union[str, list, np.ndarray]]=None,
         include_minus_m: bool=True,
         **kwargs: Optional[dict],
-    ):
+    ) -> np.ndarray:
         """Call function for waveform models built in the spherical harmonic basis.
 
         This function will take input parameters and produce waveforms. It will use all of the modules preloaded to
         compute desired outputs.
 
         args:
-            M (double): Mass of larger black hole in solar masses.
-            mu (double): Mass of compact object in solar masses.
-            a (double): Dimensionless spin parameter of larger black hole.
-            p0 (double): Initial (osculating) semilatus rectum of inspiral trajectory.
-            e0 (double): Initial (osculating) eccentricity of inspiral trajectory.
-            theta (double): Polar viewing angle in radians (:math:`-\pi/2\leq\Theta\leq\pi/2`).
-            phi (double): Azimuthal viewing angle in radians.
-            *args (list): extra args for trajectory model.
-            dist (double, optional): Luminosity distance in Gpc. Default is None. If None,
+            M: Mass of larger black hole in solar masses.
+            mu: Mass of compact object in solar masses.
+            a: Dimensionless spin parameter of larger black hole.
+            p0: Initial (osculating) semilatus rectum of inspiral trajectory.
+            e0: Initial (osculating) eccentricity of inspiral trajectory.
+            theta: Polar viewing angle in radians (:math:`-\pi/2\leq\Theta\leq\pi/2`).
+            phi: Azimuthal viewing angle in radians.
+            *args: extra args for trajectory model.
+            dist: Luminosity distance in Gpc. Default is None. If None,
                 will return source frame.
-            Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
+            Phi_phi0: Initial phase for :math:`\Phi_\phi`.
                 Default is 0.0.
-            Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
+            Phi_r0: Initial phase for :math:`\Phi_r`.
                 Default is 0.0.
-            dt (double, optional): Time between samples in seconds (inverse of
+            dt: Time between samples in seconds (inverse of
                 sampling frequency). Default is 10.0.
-            T (double, optional): Total observation time in years.
+            T: Total observation time in years.
                 Default is 1.0.
-            eps (double, optional): Controls the fractional accuracy during mode
+            eps: Controls the fractional accuracy during mode
                 filtering. Raising this parameter will remove modes. Lowering
                 this parameter will add modes. Default that gives a good overalp
                 is 1e-5.
-            show_progress (bool, optional): If True, show progress through
+            show_progress: If True, show progress through
                 amplitude/waveform batches using
                 `tqdm <https://tqdm.github.io/>`_. Default is False.
             batch_size (int, optional): If less than 0, create the waveform
                 without batching. If greater than zero, create the waveform
                 batching in sizes of batch_size. Default is -1.
-            mode_selection (str or list or None): Determines the type of mode
+            mode_selection: Determines the type of mode
                 filtering to perform. If None, perform our base mode filtering
                 with eps as the fractional accuracy on the total power.
                 If 'all', it will run all modes without filtering. If a list of
@@ -156,12 +184,12 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
                 (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
                 provided, it will return those modes combined into a
                 single waveform.
-            include_minus_m (bool, optional): If True, then include -m modes when
+            include_minus_m: If True, then include -m modes when
                 computing a mode with m. This only effects modes if :code:`mode_selection`
                 is a list of specific modes. Default is True.
 
         Returns:
-            1D complex128 self.xp.ndarray: The output waveform.
+            The output waveform.
 
         Raises:
             ValueError: user selections are not allowed.
@@ -211,7 +239,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
 
         # get ylms only for unique (l,m) pairs
         # then expand to all (lmn with self.inverse_lm)
-        ylms = self.ylm_gen(self.unique_l, self.unique_m, theta, phi).copy()[
+        ylms = self.ylm_gen(self.unique_l, self.unique_m, theta, phi)[
             self.inverse_lm
         ]
         # if mode selector is predictive, run now to avoid generating amplitudes that are not required
@@ -401,6 +429,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
                     p_temp,
                     e_temp,
                     self.xp.zeros_like(e_temp),
+                    t_temp,
                 )
                 modeinds = [self.l_arr, self.m_arr, self.n_arr]
                 (
@@ -520,23 +549,19 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
     The generic waveform interface directly converts :math:`x_I` to :math:`Y`.
 
     args:
-        inspiral_module (obj): Class object representing the module
+        inspiral_module: Class object representing the module
             for creating the inspiral. This returns the phases and orbital
             parameters. See :ref:`trajectory-label`.
-        sum_module (obj): Class object representing the module for summing the
+        sum_module: Class object representing the module for summing the
             final waveform from the amplitude and phase information. See
             :ref:`summation-label`.
-        inspiral_kwargs (dict, optional): Optional kwargs to pass to the
+        inspiral_kwargs: Optional kwargs to pass to the
             inspiral generator. **Important Note**: These kwargs are passed
             online, not during instantiation like other kwargs here. Default is
             {}. This is stored as an attribute.
-        sum_kwargs (dict, optional): Optional kwargs to pass to the
+        sum_kwargs: Optional kwargs to pass to the
             sum module during instantiation. Default is {}.
-        use_gpu (bool, optional): If True, use GPU resources. Default is False.
-        num_threads (int, optional): Number of parallel threads to use in OpenMP.
-            If :code:`None`, will not set the global variable :code:`OMP_NUM_THREADS`.
-            Default is None.
-
+        use_gpu: If True, use GPU resources. Default is False.
     """
 
     def __init__(
@@ -546,41 +571,31 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         inspiral_kwargs: Optional[dict]=None,
         sum_kwargs: Optional[dict]=None,
         use_gpu: bool=False,
-        num_threads: Optional[int]=None,
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
         if sum_kwargs is None:
             sum_kwargs = {}
 
-        ParallelModuleBase.__init__(self, use_gpu=use_gpu, num_threads=num_threads)
+        ParallelModuleBase.__init__(self, use_gpu=use_gpu)
         Pn5AAK.__init__(self)
 
         sum_kwargs = self.adjust_gpu_usage(use_gpu, sum_kwargs)
 
         # kwargs that are passed to the inspiral call function
         self.inspiral_kwargs = inspiral_kwargs
+        """dict: Kwargs related to the inspiral."""
 
         # function for generating the inpsiral
         self.inspiral_generator = inspiral_module(**inspiral_kwargs)
+        """object: instantiated trajectory module."""
 
         # summation generator
         self.create_waveform = sum_module(**sum_kwargs)
+        """object: instantiated summation module."""
 
-    def attributes_AAKWaveform(self):
-        """
-        attributes:
-            inspiral_generator (obj): instantiated trajectory module.
-            create_waveform (obj): instantiated summation module.
-            inspiral_kwargs (dict): Kwargs related to the inspiral.
-            xp (obj): numpy or cupy based on gpu usage.
-            num_modes_kept/nmodes (int): Number of modes for final waveform.
-                For this model, it is solely determined from the
-                eccentricity.
-
-
-        """
-        pass
+        self.num_modes_kept = None
+        """int: Number of modes for final waveform. For this model, it is solely determined from the eccentricity."""
 
     @property
     def citation(self):
@@ -629,49 +644,49 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         dt: float=10.0,
         T: float=1.0,
         nmodes: Optional[int]=None,
-    ) -> xp.ndarray:
+    ) -> np.ndarray:
         """Call function for AAK + 5PN model.
 
         This function will take input parameters and produce AAK waveforms with 5PN trajectories in generic Kerr.
 
         args:
-            M (double): Mass of larger black hole in solar masses.
-            mu (double): Mass of compact object in solar masses.
-            a (double): Dimensionless spin of massive black hole.
-            p0 (double): Initial semilatus rectum (Must be greater than
+            M: Mass of larger black hole in solar masses.
+            mu: Mass of compact object in solar masses.
+            a: Dimensionless spin of massive black hole.
+            p0: Initial semilatus rectum (Must be greater than
                 the separatrix at the the given e0 and Y0).
                 See documentation for more information.
-            e0 (double): Initial eccentricity.
-            Y0 (double): Initial cosine of :math:`\iota`. :math:`Y=\cos{\iota}\equiv L_z/\sqrt{L_z^2 + Q}`
+            e0: Initial eccentricity.
+            Y0: Initial cosine of :math:`\iota`. :math:`Y=\cos{\iota}\equiv L_z/\sqrt{L_z^2 + Q}`
                 in the semi-relativistic formulation.
-            dist (double): Luminosity distance in Gpc.
-            qS (double): Sky location polar angle in ecliptic
+            dist: Luminosity distance in Gpc.
+            qS: Sky location polar angle in ecliptic
                 coordinates.
-            phiS (double): Sky location azimuthal angle in
+            phiS: Sky location azimuthal angle in
                 ecliptic coordinates.
-            qK (double): Initial BH spin polar angle in ecliptic
+            qK: Initial BH spin polar angle in ecliptic
                 coordinates.
-            phiK (double): Initial BH spin azimuthal angle in
+            phiK: Initial BH spin azimuthal angle in
                 ecliptic coordinates.
-            *args (tuple, optional): Any additional arguments required for the
+            *args: Any additional arguments required for the
                 trajectory.
-            Phi_phi0 (double, optional): Initial phase for :math:`\Phi_\phi`.
+            Phi_phi0 : Initial phase for :math:`\Phi_\phi`.
                 Default is 0.0.
-            Phi_theta0 (double, optional): Initial phase for :math:`\Phi_\Theta`.
+            Phi_theta0 : Initial phase for :math:`\Phi_\Theta`.
                 Default is 0.0.
-            Phi_r0 (double, optional): Initial phase for :math:`\Phi_r`.
+            Phi_r0 : Initial phase for :math:`\Phi_r`.
                 Default is 0.0.
-            mich (bool, optional): If True, produce waveform with
+            mich: If True, produce waveform with
                 long-wavelength response approximation (hI, hII). Please
                 note this is not TDI. If False, return hplus and hcross.
                 Default is False.
-            dt (double, optional): Time between samples in seconds
+            dt : Time between samples in seconds
                 (inverse of sampling frequency). Default is 10.0.
-            T (double, optional): Total observation time in years.
+            T : Total observation time in years.
                 Default is 1.0.
 
         Returns:
-            1D complex128 self.xp.ndarray: The output waveform.
+            The output waveform.
 
         Raises:
             ValueError: user selections are not allowed.
