@@ -146,11 +146,13 @@ fi
 
 machine=$(uname -m)
 
-if [[ "$machine" == "arm64" ]]; then
-    "$pip_here" install . --ccbin /usr/bin/
-else
-    "$pip_here" install .
-fi
+# if [[ "$machine" == "arm64" ]]; then
+#     "$pip_here" install . --ccbin /usr/bin/
+# else
+#     "$pip_here" install .
+# fi
+
+"$pip_here" install .
 
 if [[ "$run_tests" == "true" ]]; 
  then echo "Running tests...";
