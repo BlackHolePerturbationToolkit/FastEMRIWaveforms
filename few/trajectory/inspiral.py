@@ -25,7 +25,7 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 
 # Cython/C++ imports
-from pyInspiral import pyInspiralGenerator
+from ..cutils.pyInspiral import pyInspiralGenerator
 
 # Python imports
 from few.utils.baseclasses import TrajectoryBase

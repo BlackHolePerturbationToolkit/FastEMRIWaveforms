@@ -30,12 +30,12 @@ except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
 
 # Cython/C++ imports
-from pycpuAAK import pyWaveform as pyWaveform_cpu
-from pyParameterMap import pyParMap
+from ..cutils.pycpuAAK import pyWaveform as pyWaveform_cpu
+from ..cutils.pyParameterMap import pyParMap
 
 # Attempt Cython imports of GPU functions
 try:
-    from pygpuAAK import pyWaveform as pyWaveform_gpu
+    from ..cutils.pygpuAAK import pyWaveform as pyWaveform_gpu
 
 except (ImportError, ModuleNotFoundError) as e:
     pass

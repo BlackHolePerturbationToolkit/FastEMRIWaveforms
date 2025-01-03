@@ -26,7 +26,7 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 from scipy.optimize import brentq
 
-from pyUtility import (
+from ..cutils.pyUtility import (
     pyKerrGeoCoordinateFrequencies,
     pyGetSeparatrix,
     pyKerrGeoConstantsOfMotionVectorized,
@@ -806,14 +806,18 @@ def check_for_file_download(fp, few_dir, version_string=None):
         # download the file
         response = requests.get(url, stream=True)
         if response.ok != True:
-          response = requests.get(zenodourl, stream=True)
+            response = requests.get(zenodourl, stream=True)
 
         # Save the file to the files folder, downloading 8KB at a time
         with open(few_dir + "few/files/" + fp, mode="wb") as file:
-          filesize = int(response.headers.get('content-length'))
-          csize = 2**15
-          for chunk in track(response.iter_content(chunk_size = csize), description="Downloading "+fp, total=filesize/csize):
-            file.write(chunk)
+            filesize = int(response.headers.get("content-length"))
+            csize = 2**15
+            for chunk in track(
+                response.iter_content(chunk_size=csize),
+                description="Downloading " + fp,
+                total=filesize / csize,
+            ):
+                file.write(chunk)
 
 
 def wrapper(*args, **kwargs):

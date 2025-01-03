@@ -24,7 +24,7 @@ except (ImportError, ModuleNotFoundError) as e:
 import numpy as np
 
 # import Cython wrapped C++ function
-from pySpinWeightedSpherHarm import get_spin_weighted_spher_harm_wrap
+from ..cutils.pySpinWeightedSpherHarm import get_spin_weighted_spher_harm_wrap
 
 # base classes
 from few.utils.baseclasses import ParallelModuleBase

@@ -23,7 +23,7 @@ import h5py
 import numpy as np
 
 # Cython/C++ imports
-from pyInterp2DAmplitude import pyAmplitudeGenerator
+from ..cutils.pyInterp2DAmplitude import pyAmplitudeGenerator
 
 # Python imports
 from few.utils.baseclasses import SchwarzschildEccentric, AmplitudeBase

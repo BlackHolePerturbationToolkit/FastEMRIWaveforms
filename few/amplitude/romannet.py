@@ -23,8 +23,8 @@ import numpy as np
 import h5py
 
 # Cython/C++ imports
-from pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
-from pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
+from ..cutils.pymatmul_cpu import neural_layer_wrap as neural_layer_wrap_cpu
+from ..cutils.pymatmul_cpu import transform_output_wrap as transform_output_wrap_cpu
 
 # Python imports
 from few.utils.baseclasses import (
@@ -39,7 +39,7 @@ from few.utils.utility import p_to_y
 # check for cupy and GPU version of pymatmul
 try:
     # Cython/C++ imports
-    from pymatmul import neural_layer_wrap, transform_output_wrap
+    from ..cutils.pymatmul import neural_layer_wrap, transform_output_wrap
 
     # Python imports
     import cupy as cp

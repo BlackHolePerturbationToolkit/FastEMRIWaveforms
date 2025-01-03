@@ -247,7 +247,13 @@ if run_cuda_install:
                 # "-lineinfo",
             ],  # for debugging
         },
-        include_dirs=[numpy_include, CUDA["include"], "./include"],
+        include_dirs=[
+            numpy_include,
+            CUDA["include"],
+            "/usr/include",
+            "/usr/include/hdf5/serial",
+            "./few/cutils/include",
+        ],
     )
 
     if args.ccbin is not None:
@@ -256,29 +262,44 @@ if run_cuda_install:
         )
 
     matmul_ext = Extension(
-        "pymatmul", sources=["src/matmul.cu", "src/pymatmul.pyx"], **gpu_extension
+        "few.cutils.pymatmul",
+        sources=["few/cutils/src/matmul.cu", "few/cutils/src/pymatmul.pyx"],
+        **gpu_extension,
     )
 
     interp_ext = Extension(
-        "pyinterp",
-        sources=["src/Utility.cc", "src/interpolate.cu", "src/pyinterp.pyx"],
+        "few.cutils.pyinterp",
+        sources=[
+            "few/cutils/src/Utility.cc",
+            "few/cutils/src/interpolate.cu",
+            "few/cutils/src/pyinterp.pyx",
+        ],
         **gpu_extension,
     )
 
     gpuAAK_ext = Extension(
-        "pygpuAAK",
-        sources=["src/Utility.cc", "src/gpuAAK.cu", "src/gpuAAKWrap.pyx"],
+        "few.cutils.pygpuAAK",
+        sources=[
+            "few/cutils/src/Utility.cc",
+            "few/cutils/src/gpuAAK.cu",
+            "few/cutils/src/gpuAAKWrap.pyx",
+        ],
         **gpu_extension,
     )
 
 # build all cpu modules
 cpu_extension = dict(
-    libraries=["gsl", "gslcblas", "lapack", "lapacke", "hdf5", "hdf5_hl"],
+    libraries=["lapacke", "lapack", "gsl", "gslcblas", "hdf5", "hdf5_hl"],
     language="c++",
     runtime_library_dirs=[],
     extra_compile_args={"gcc": ["-std=c++11"]},  # '-g'
-    include_dirs=[numpy_include, "./include"],
-    library_dirs=None,
+    include_dirs=[
+        numpy_include,
+        "./few/cutils/include",
+        "/usr/include",
+        "/usr/include/hdf5/serial",
+    ],
+    library_dirs=[],
 )
 
 if add_lapack:
@@ -298,56 +319,70 @@ if add_gsl:
     cpu_extension["include_dirs"] += gsl_include
 
 Interp2DAmplitude_ext = Extension(
-    "pyInterp2DAmplitude",
-    sources=["src/Interpolant.cc", "src/Amplitude.cc", "src/pyinterp2damp.pyx"],
+    "few.cutils.pyInterp2DAmplitude",
+    sources=[
+        "few/cutils/src/Interpolant.cc",
+        "few/cutils/src/Amplitude.cc",
+        "few/cutils/src/pyinterp2damp.pyx",
+    ],
     **cpu_extension,
 )
 
 inspiral_ext = Extension(
-    "pyInspiral",
+    "few.cutils.pyInspiral",
     sources=[
-        "src/Utility.cc",
-        "src/Interpolant.cc",
-        "src/dIdt8H_5PNe10.cc",
-        "src/ode.cc",
-        "src/Inspiral.cc",
-        "src/inspiralwrap.pyx",
+        "few/cutils/src/Utility.cc",
+        "few/cutils/src/Interpolant.cc",
+        "few/cutils/src/dIdt8H_5PNe10.cc",
+        "few/cutils/src/ode.cc",
+        "few/cutils/src/Inspiral.cc",
+        "few/cutils/src/inspiralwrap.pyx",
     ],
     **cpu_extension,
 )
 
 par_map_ext = Extension(
-    "pyParameterMap",
-    sources=["src/ParameterMapAAK.cc", "src/ParMap.pyx"],
+    "few.cutils.pyParameterMap",
+    sources=["few/cutils/src/ParameterMapAAK.cc", "few/cutils/src/ParMap.pyx"],
     **cpu_extension,
 )
 
 fund_freqs_ext = Extension(
-    "pyUtility",
-    sources=["src/Utility.cc", "src/utility_functions.pyx"],
+    "few.cutils.pyUtility",
+    sources=["few/cutils/src/Utility.cc", "few/cutils/src/utility_functions.pyx"],
     **cpu_extension,
 )
 
 matmul_cpu_ext = Extension(
-    "pymatmul_cpu", sources=["src/matmul.cpp", "src/pymatmul_cpu.pyx"], **cpu_extension
+    "few.cutils.pymatmul_cpu",
+    sources=["few/cutils/src/matmul.cpp", "few/cutils/src/pymatmul_cpu.pyx"],
+    **cpu_extension,
 )
 
 interp_cpu_ext = Extension(
-    "pyinterp_cpu",
-    sources=["src/Utility.cc", "src/interpolate.cpp", "src/pyinterp_cpu.pyx"],
+    "few.cutils.pyinterp_cpu",
+    sources=[
+        "few/cutils/src/Utility.cc",
+        "few/cutils/src/interpolate.cpp",
+        "few/cutils/src/pyinterp_cpu.pyx",
+    ],
     **cpu_extension,
 )
 
 AAK_cpu_ext = Extension(
-    "pycpuAAK",
-    sources=["src/Utility.cc", "src/gpuAAK.cpp", "src/gpuAAKWrap_cpu.pyx"],
+    "few.cutils.pycpuAAK",
+    sources=[
+        "few/cutils/src/Utility.cc",
+        "few/cutils/src/gpuAAK.cpp",
+        "few/cutils/src/gpuAAKWrap_cpu.pyx",
+    ],
     **cpu_extension,
 )
 
 
 spher_harm_ext = Extension(
-    "pySpinWeightedSpherHarm",
-    sources=["src/SWSH.cc", "src/pySWSH.pyx"],
+    "few.cutils.pySpinWeightedSpherHarm",
+    sources=["few/cutils/src/SWSH.cc", "few/cutils/src/pySWSH.pyx"],
     **cpu_extension,
 )
 
@@ -378,10 +413,19 @@ setup(
     description="Fast and accurate EMRI Waveforms.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version="1.5.5",
+    version="1.5.11",
     url="https://github.com/mikekatz04/FastEMRIWaveforms",
     ext_modules=extensions,
-    packages=["few", "few.utils", "few.trajectory", "few.amplitude", "few.summation"],
+    packages=[
+        "few",
+        "few.utils",
+        "few.trajectory",
+        "few.amplitude",
+        "few.summation",
+        "few.cutils",
+        "few.cutils.src",
+        "few.cutils.include",
+    ],
     py_modules=["few.waveform"],
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -397,4 +441,45 @@ setup(
     # Since the package has c code, the egg cannot be zipped
     zip_safe=False,
     python_requires=">=3.6",
+    package_data={
+        "few.cutils.src": [
+            "Amplitude.cc",
+            "Inspiral.cc",
+            "Interpolant.cc",
+            "SWSH.cc",
+            "dIdt8H_5PNe10.cc",
+            "Utility.cc",
+            "gpuAAK.cu",
+            "gpuAAKWrap.pyx",
+            "inspiralwrap.pyx",
+            "interpolate.cu",
+            "matmul.cu",
+            "ode_base_example.cc",
+            "pyinterp.pyx",
+            "pyinterp2damp.pyx",
+            "pymatmul.pyx",
+            "pySWSH.pyx",
+            "utility_functions.pyx",
+            "ylm.cpp",
+            "ode.cc",
+            "ParameterMapAAK.cc",
+        ],
+        "few.cutils.include": [
+            "Amplitude.hh",
+            "Utility.hh",
+            "global.h",
+            "ode_base_example.hh",
+            "Inspiral.hh",
+            "gpuAAK.hh",
+            "ylm.hh",
+            "Interpolant.h",
+            "cuda_complex.hpp",
+            "interpolate.hh",
+            "matmul.hh",
+            "ode.hh",
+            "SWSH.hh",
+            "dIdt8H_5PNe10.h",
+            "ParameterMapAAK.hh",
+        ],
+    },
 )

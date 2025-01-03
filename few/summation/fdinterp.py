@@ -27,7 +27,7 @@ except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
 
 # Cython imports
-from pyinterp_cpu import (
+from ..cutils.pyinterp_cpu import (
     get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_cpu,
 )
 
@@ -44,7 +44,7 @@ from few.summation.interpolatedmodesum import CubicSplineInterpolant
 
 # Attempt Cython imports of GPU functions
 try:
-    from pyinterp import (
+    from ..cutils.pyinterp import (
         get_waveform_generic_fd_wrap,
     )
 
@@ -414,9 +414,9 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
                     axis=-1,
                 )
 
-                tmp_freqs_base_sorted_segs[
-                    check_turnover, fix_turnover_seg_ind
-                ] = tmp_segs_sorted_turnover[:, np.array([0, 2])]
+                tmp_freqs_base_sorted_segs[check_turnover, fix_turnover_seg_ind] = (
+                    tmp_segs_sorted_turnover[:, np.array([0, 2])]
+                )
 
         except ValueError:
             pass

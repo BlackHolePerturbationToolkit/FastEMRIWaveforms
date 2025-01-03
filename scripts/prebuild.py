@@ -2,7 +2,7 @@ import shutil
 
 fp_loc = __file__.split("scripts/prebuild.py")[0]
 fp_out_name = fp_loc + "few/utils/constants.py"
-fp_in_name = fp_loc + "include/global.h"
+fp_in_name = fp_loc + "few/cutils/include/global.h"
 
 # develop few.utils.constants.py
 with open(fp_out_name, "w") as fp_out:
@@ -23,7 +23,8 @@ with open(fp_out_name, "w") as fp_out:
 
 # need to copy cuda files to cpp for this special compiler we are using
 # also copy pyx files to cpu version
-src = "src/"
+src = "few/cutils/src/"
+include = "few/cutils/include/"
 
 cp_cu_files = ["matmul", "interpolate", "gpuAAK"]
 cp_pyx_files = ["pymatmul", "pyinterp", "gpuAAKWrap"]
@@ -290,7 +291,6 @@ def ode_prepare():
     with open(src + "ode.cc", "w") as fp:
         fp.write(full)
 
-    include = "include/"
     # get ode_base_example.hh
     with open(include + "ode_base_example.hh", "r") as fp:
         hh_lines = fp.read()
@@ -353,7 +353,7 @@ def ode_prepare():
     """
 
     # add to ode.hh
-    with open("include/ode.hh", "w") as fp:
+    with open(include + "ode.hh", "w") as fp:
         fp.write(full_hh)
 
 

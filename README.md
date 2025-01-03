@@ -173,7 +173,7 @@ This will install necessary packages for building the documentation (`sphinx`, `
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags).
 
-Current Version: 1.5.5
+Current Version: 1.5.11
 
 ## Authors/Developers
 

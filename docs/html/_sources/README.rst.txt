@@ -76,7 +76,8 @@ will download automatically the first time they are needed. Files are
 generally under 10MB. However, there is a 100MB file needed for the slow
 waveform and the bicubic amplitude interpolation. This larger file will
 only download if you run either of those two modules. The files are
-hosted on `Zenodo <https://zenodo.org/record/3981654#.XzS_KRNKjlw>`__.
+hosted on the `Black Hole Perturbation Toolkit Download
+Server <https://download.bhptoolkit.org/few/data>`__.
 
 Installing
 ~~~~~~~~~~
@@ -146,14 +147,14 @@ More Customized Installation (legacy)
 
 ::
 
-   conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.7
+   conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests rich matplotlib python=3.7
    conda activate few_env
 
 ::
 
    If on MACOSX, substitute `gcc_linux-64` and `gxx_linus-64` with `clang_osx-64` and `clangxx_osx-64`.
 
-   If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, matplotlib) with pip.
+   If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, rich, matplotlib) with pip.
 
 2) Clone the repository.
 
@@ -164,16 +165,17 @@ More Customized Installation (legacy)
 
 3) If using GPUs, use pip to `install
    cupy <https://docs-cupy.chainer.org/en/stable/install.html>`__. If
-   you have cuda version 9.2, for example:
+   you have cuda version 12.1, for example:
 
 ::
 
-   pip install cupy-cuda92
+   pip install cupy-cuda12x
 
 4) Run install.
 
 ::
 
+   python scripts/prebuild.py
    python setup.py install
 
 When installing lapack and gsl, the setup file will default to assuming
@@ -260,7 +262,7 @@ We use `SemVer <http://semver.org/>`__ for versioning. For the versions
 available, see the `tags on this
 repository <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags>`__.
 
-Current Version: 1.5.5
+Current Version: 1.5.11
 
 Authors/Developers
 ------------------

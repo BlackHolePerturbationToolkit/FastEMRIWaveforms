@@ -27,8 +27,8 @@ except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
 
 # Cython imports
-from pyinterp_cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
-from pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
+from ..cutils.pyinterp_cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
+from ..cutils.pyinterp_cpu import get_waveform_wrap as get_waveform_wrap_cpu
 
 # Python imports
 from few.utils.baseclasses import (
@@ -42,7 +42,7 @@ from few.utils.constants import *
 
 # Attempt Cython imports of GPU functions
 try:
-    from pyinterp import interpolate_arrays_wrap, get_waveform_wrap
+    from ..cutils.pyinterp import interpolate_arrays_wrap, get_waveform_wrap
 
 except (ImportError, ModuleNotFoundError) as e:
     pass
