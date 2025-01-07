@@ -2,7 +2,7 @@ build/*
 dist/*
 few.egg-info/*
 few/__pycache__/*
-few/_version.py
+src/few/_version.py
 few/amplitude/__pycache__/*
 few/files/*
 few/summation/__pycache__/*
