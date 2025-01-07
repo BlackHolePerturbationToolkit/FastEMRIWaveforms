@@ -138,8 +138,9 @@ jobs:
           path: /wheelhouse/*.whl
           retention-days: 2
 
-  testpypi-publish:
+  publish:
     runs-on: ubuntu-latest
+    environment: pypiconf
     defaults:
       run:
         shell: bash
@@ -148,8 +149,6 @@ jobs:
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
-    environment:
-      name: pypiconf
     steps:
       - name: Retrieve release distributions
         uses: actions/download-artifact@v4
@@ -161,11 +160,13 @@ jobs:
         run: |
           ls -al wheelhouse/*
 
+      - name: See Twine configuration variables
+        run: |
+          env | grep --color=never TWINE_
+
       - name: Install twine from PyPI
         uses: install-pinned/twine@e0e1034852ffdf3e7867300539b1065f1bff2a87  # 6.0.1
 
-      - name: Publish release distributions to Test PyPI
-        env:
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+      - name: Publish release distributions to registry
         run : |
           twine upload wheelhouse/*
