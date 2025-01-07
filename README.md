@@ -6,172 +6,156 @@ This package is a part of the [Black Hole Perturbation Toolkit](https://bhptoolk
 
 If you use all or any parts of this code, please cite [arxiv.org/2104.04582](https://arxiv.org/abs/2104.04582) and [arxiv.org/2008.06071](https://arxiv.org/abs/2008.06071). See the [documentation](https://bhptoolkit.org/FastEMRIWaveforms/) to properly cite specific modules.
 
-## Getting Started
+## Getting started
 
-Install with pip (CPU only for now):
-```
-pip install fastemriwaveforms
+To install the latest pre-compiled version of `fastemriwaveforms`, simply run:
+
+```sh
+# For CPU-only version
+pip install fastemriwaveforms-cpu
+
+# For GPU-enabled versions with CUDA 11.Y.Z
+pip install fastemriwaveforms-cuda11x 'nvidia-cuda-runtime-cu11==11.Y.*'
+
+# For GPU-enabled versions with CUDA 12.Y.Z
+pip install fastemriwaveforms-cuda12x 'nvidia-cuda-runtime-cu12==12.Y.*'
 ```
 
-In a python file or notebook:
+To know your CUDA version, run the tool `nvidia-smi` in a terminal a check the CUDA version reported in the table header:
+
+```sh
+$ nvidia-smi
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 550.54.15              Driver Version: 550.54.15      CUDA Version: 12.4     |
+|-----------------------------------------+------------------------+----------------------+
+...
+
+# CUDA version is 12.4, so run the following command to properly install FEW with support for CUDA 12.4
+$ pip install fastemriwaveforms-cuda12x 'nvidia-cuda-runtime-cu12==12.4.*'
 ```
+
+Now, in a python file or notebook:
+
+```py3
 import few
 ```
+
 See [examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb).
 
+### Installing from sources
 
-### Prerequisites
+#### Prerequisites
 
-To install this software for CPU usage, you need [lapack (3.6.1)](https://www.netlib.org/lapack/lug/node14.html), Python >3.4, wget, and NumPy. If you install lapack with conda, the new version (3.9) seems to not install the correct header files. Therefore, the lapack version must be 3.6.1. To run the examples, you will also need jupyter and matplotlib. We generally recommend installing everything, including gcc and g++ compilers, in the conda environment as is shown in the examples here. This generally helps avoid compilation and linking issues. If you use your own chosen compiler, you will need to make sure all necessary information is passed to the setup command (see below). You also may need to add information to the `setup.py` file.
+To install this software from source, you will need:
 
-To install this software for use with NVIDIA GPUs (compute capability >2.0), you need the [CUDA toolkit](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and [CuPy](https://cupy.chainer.org/). The CUDA toolkit must have cuda version >8.0. Be sure to properly install CuPy within the correct CUDA toolkit version. Make sure the nvcc binary is on `$PATH` or set it as the `CUDA_HOME` environment variable.
+- A C++ compiler (g++, clang++, ...)
+- A Python version supported by [scikit-build-core](https://github.com/scikit-build/scikit-build-core) (>=3.7 as of Jan. 2025)
+
+Some installation steps require the external library `LAPACK` along with its C-bindings provided by `LAPACKE`.
+If these libraries and their header files (in particular `lapacke.h`) are available on your system, they will be detected
+and used automatically. If they are available on a non-standard location, see below for some options to help detecting them.
+Note that by default, if `LAPACKE` is not available on your system, the installation step will attempt to download its sources
+and add them to the compilation tree. This makes the installation a bit longer but a lot easier.
+
+If you want to enable GPU support in FEW, you will also need the NVIDIA CUDA Compiler `nvcc` in your path as well as
+the [CUDA toolkit](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) (with, in particular, the
+libraries `CUDA Runtime Library`, `cuBLAS` and `cuSPARSE`).
 
 There are a set of files required for total use of this package. They will download automatically the first time they are needed. Files are generally under 10MB. However, there is a 100MB file needed for the slow waveform and the bicubic amplitude interpolation. This larger file will only download if you run either of those two modules. The files are hosted on the [Black Hole Perturbation Toolkit Download Server](https://download.bhptoolkit.org/few/data).
 
-### Installing
+#### Running the installation
 
+To start the from-source installation, ensure the pre-requisite are met, clone the repository, and then simply run a `pip install` command:
 
-Install with pip (CPU only for now):
-```
-pip install fastemriwaveforms
-```
-
-To install from source:
-
-0) [Install Anaconda](https://docs.anaconda.com/anaconda/install/) if you do not have it.
-
-1) Clone the repository.
-
-```
+```sh
+# Clone the repository
 git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
 cd FastEMRIWaveforms
+
+# Run the install
+pip install .
 ```
 
-2) Installation is made easy through [install.sh](install.sh). This is a bash script that will create a conda environment, install FEW, run tests, and install any additional packages needed for sampling or development. It will look for an `nvcc` binary, the `CUDA_HOME` variable, or the `CUDAHOME` variable. If it finds that information, it will install for CUDA as well (including installing the proper version of `cupy`). **Note**: If you already have performed installation and you are updating FEW after a `git pull`, then run `pip install .` rather than the following command.
+Many options are available to change the installation behaviour. These can be set by adding `--config-settings=cmake.define.OPTION_NAME=OPTION_VALUE` to the `pip` command. Available options are:
 
-  ```
-  bash install.sh
-  ```
+- `FEW_LAPACKE_FETCH=ON|OFF|[AUTO]`: Whether `LAPACK` and `LAPACKE` should be automatically fetched from internet.
+  - `ON`: ignore pre-installed `LAPACK(E)` and always fetch and compile their sources
+  - `OFF`: disable `LAPACK(E)` fetching and only use pre-installed library and headers (install will fail if pre-installed lib and headers are not available)
+  - `AUTO` (default): try to detect pre-installed `LAPACK(E)` and their headers. If found, use them, otherwise fetch `LAPACK(E)`.
+- `FEW_LAPACKE_DETECT_WITH=[CMAKE]|PKGCONFIG`: How `LAPACK(E)` should be detected
+  - `CMAKE` (default): `LAPACK(E)` will be detected using the cmake `FindPackage` command. If your `LAPACK(E)` install provides `lapacke-config.cmake` in a non-standard location, add its path to the `CMAKE_PREFIX_PATH` environment variable.
+  - `PKGCONFIG`: `LAPACK(E)` will be detected using `pkg-config` by searching for the files `lapack.pc` and `lapacke.pc` . If these files are provided by your `LAPACK(E)` install in a non-standard location, add their path to the environment variable `PKG_CONFIG_PATH`
+- `FEW_WITH_GPU=ON|OFF|[AUTO]`: Whether GPU-support must be enabled
+  - `ON`: Forcefully enable GPU support (install will fail if GPU prerequisites are not met)
+  - `OFF`: Disable GPU support
+  - `AUTO` (default): Check whether `nvcc` and the `CUDA Toolkit` are available in environment and enable/disable GPU support accordingly.
+- `FEW_CUDA_ARCH`: List of CUDA architectures that will be targeted by the CUDA compiler using [CMake CUDA_ARCHITECTURES](https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html) syntax. (Default = `all`).
 
-  Options for installation can be applied by running `bash install.sh key=value`. These can be found with `bash install.sh -h`:
-  
-  ```
-  keyword argument options (given as key=value):
-    env_name:  Name of generated conda environment. Default is 'few_env'.
-    install_type:  Type of install. 'basic', 'development', or 'sampling'. 
-        'development' adds packages needed for development and documentation.
-        'sampling' adds packages for sampling like eryn, lisatools, corner, chainconsumer.
-        Default is 'basic'. 
-    run_tests: Either true or false. Whether to run tests after install. Default is true.
-  ```
+Example of custom install with specific options to forcefully enable GPU support with support for the host's GPU only (`native` architecture) using LAPACK fetched from internet:
 
-3) Load the environment (change "few_env" to the correct environment name is specified in previous step):
-
+```sh
+pip install . \
+  --config-settings=cmake.define.FEW_WITH_GPU=ON \
+  --config-settings=cmake.define.FEW_CUDA_ARCH="native" \
+  --config-settings=cmake.define.FEW_LAPACKE_FETCH=ON
 ```
-conda activate few_env
-```
+
+If you enabled `GPU` support (or it was automatically enabled by the `AUTO` mode), you will also need to install the `nvidia-cuda-runtime`
+package corresponding to the CUDA version detected by `nvidia-smi` as explained in the *Getting Started* section above.
+You will also need to manually install `cupy-cuda11x` or `cupy-cuda12x` according to your CUDA version.
 
 Please contact the developers if the installation does not work.
 
-### More Customized Installation (legacy)
 
-0) [Install Anaconda](https://docs.anaconda.com/anaconda/install/) if you do not have it.
+### Running the Tests
 
-1) Create a virtual environment.
+The tests require a few dependencies which are not installed by default. To install them, add the `[testing]` label to FEW package
+name when installing it. E.g:
 
-```
-conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests rich matplotlib numba python=3.7
-conda activate few_env
-```
+```sh
+# For CPU-only version with testing enabled
+pip install fastemriwaveforms[testing]
 
-* If you want a faster install, you can install the python packages (numpy, Cython, scipy, tqdm, jupyter, ipython, h5py, requests, rich, numba, matplotlib) with pip.
-* If on MACOSX with an Intel CPU, substitute `gcc_linux-64` and `gxx_linux-64` with `clang_osx-64` and `clangxx_osx-64`.
-* For an ARM CPU (Apple Silicon) substitute these arguments with `clang_osx-arm64` and `clangxx_osx-arm64` instead, and replace `lapack=3.6.1` with `liblapacke`, `lapack` and `openblas`.
+# For GPU version with CUDA 12.Y and testing enabled
+pip install fastemriwaveforms-cuda12x[testing]
 
-2) Clone the repository.
-
-```
+# For from-source install with testing enabled
 git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
 cd FastEMRIWaveforms
+pip install .[testing]
 ```
 
-3) If using GPUs, use pip to [install cupy](https://docs-cupy.chainer.org/en/stable/install.html). If you have cuda version 9.2, for example:
+To run the tests, open a terminal in a directory containing the sources of FEW and then run the `unittest` module in `discover` mode:
 
+```sh
+$ git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
+$ cd FastEMRIWaveforms
+$ python -m unittest discover
+...
+----------------------------------------------------------------------
+Ran 20 tests in 71.514s
+OK
 ```
-pip install cupy-cuda92
-```
-
-4) Copy the prebuild script to the top-level directory of the repository and run it (simply running it will not work!):
-
-```
-python scripts/prebuild.py
-```
-
-5) Run install.
-
-```
-python setup.py install
-```
-
-
-When installing lapack, the setup file will default to assuming lib and include for both are in installed within the conda environment. To provide other lib and include directories you can provide command line options when installing. You can also remove usage of OpenMP.
-
-```
-python setup.py --help
-usage: setup.py [-h] [--lapack_lib LAPACK_LIB]
-                [--lapack_include LAPACK_INCLUDE] [--lapack LAPACK]
-                [--ccbin CCBIN]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --lapack_lib LAPACK_LIB
-                        Directory of the lapack lib. If you add lapack lib,
-                        must also add lapack include.
-  --lapack_include LAPACK_INCLUDE
-                        Directory of the lapack include. If you add lapack
-                        includ, must also add lapack lib.
-  --lapack LAPACK       Directory of both lapack lib and include. '/include'
-                        and '/lib' will be added to the end of this string.
-  --ccbin CCBIN         path/to/compiler to link with nvcc when installing
-                        with CUDA.
-```
-
-When installing the package with `python setup.py install`, the setup file uses the C compiler present in your `PATH`. However, it might happen that the setup file incorrectly uses another compiler present on your path. To solve this issue you can directly specify the C compiler using the flag `--ccbin` as in the following example:
-
-```
-python setup.py install --ccbin /path/to/anaconda3/envs/few_env/bin/x86_64-conda-linux-gnu-gcc
-```
-
-or if on MACOSX:
-
-```
-python setup.py install --ccbin /path/to/anaconda3/envs/few_env/bin/x86_64-apple-darwin13.4.0-clang
-```
-
-## Running the Tests
-
-In the main directory of the package run in the terminal (if you run [install.sh](install.sh) with defaults, the tests will be performed):
-```
-cd tests/
-python -m unittest discover
-```
-
 
 ## Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
-If you want to develop FEW and produce documentation, install `few` with
+If you want to develop FEW and produce documentation, install `few` from source with the `[dev]` label and in `editable` mode:
+
 ```
-bash install.sh install_type=development
+$ git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
+$ cd FastEMRIWaveforms
+pip install -e '.[dev, testing]'
 ```
-This will install necessary packages for building the documentation (`sphinx`, `pypandoc`, `sphinx_rtd_theme`, `nbsphinx`). The documentation source files are in `docs/source`. To compile the documentation, change to the `docs` directory and run `make html`. 
+
+This will install necessary packages for building the documentation (`sphinx`, `pypandoc`, `sphinx_rtd_theme`, `nbsphinx`) and to run the tests.
+
+The documentation source files are in `docs/source`. To compile the documentation, change to the `docs` directory and run `make html`.
 
 ## Versioning
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags).
-
-Current Version: 1.5.5
 
 ## Authors/Developers
 
@@ -195,7 +179,7 @@ This project is licensed under the GNU License - see the [LICENSE.md](LICENSE.md
 
 ## Citation
 
-Please make sure to cite FEW papers and the FEW software on [Zenodo](https://zenodo.org/record/8190418). There are other papers that require citation based on the classes used. For most classes this applies to, you can find these by checking the `citation` attribute for that class. Below is a list of citable papers that have lead to the development of FEW. 
+Please make sure to cite FEW papers and the FEW software on [Zenodo](https://zenodo.org/record/8190418). There are other papers that require citation based on the classes used. For most classes this applies to, you can find these by checking the `citation` attribute for that class. Below is a list of citable papers that have lead to the development of FEW.
 
 ```
 @article{Chua:2020stf,
@@ -229,7 +213,7 @@ Please make sure to cite FEW papers and the FEW software on [Zenodo](https://zen
                   Christian E. A. Chapman-Bird and
                   Niels Warburton and
                   Scott A. Hughes},
-  title        = {{BlackHolePerturbationToolkit/FastEMRIWaveforms: 
+  title        = {{BlackHolePerturbationToolkit/FastEMRIWaveforms:
                    Frequency Domain Waveform Added!}},
   month        = jul,
   year         = 2023,

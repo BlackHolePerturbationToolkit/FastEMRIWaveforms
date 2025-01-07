@@ -41,7 +41,14 @@ dependencies = [
   #@CUPYCUDA@,
 ]
 
-optional-dependencies.post = [
+optional-dependencies.dev = [
+  "nbsphinx",
+  "pypandoc",
+  "sphinx",
+  "sphinx-rtd-theme",
+]
+
+optional-dependencies.sampling = [
   "eryn",
   "fastlisaresponse",
   "lisaanalysistools",
