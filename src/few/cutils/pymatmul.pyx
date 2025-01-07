@@ -1,7 +1,7 @@
 import numpy as np
 cimport numpy as np
 
-from few.utils.utility import wrapper
+from few.cutils.wrappers import wrapper
 
 try:
     import cupy as cp

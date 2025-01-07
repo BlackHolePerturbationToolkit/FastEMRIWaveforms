@@ -2,7 +2,7 @@ import numpy as np
 cimport numpy as np
 from libcpp cimport bool
 
-from few.utils.utility import wrapper
+from few.cutils.wrappers import wrapper
 
 assert sizeof(int) == sizeof(np.int32_t)
 

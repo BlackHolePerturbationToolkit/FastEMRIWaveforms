@@ -2,11 +2,11 @@ import numpy as np
 cimport numpy as np
 from libcpp.string cimport string
 from libcpp cimport bool
-from few.utils.utility import wrapper
+from few.cutils.wrappers import wrapper
 
 assert sizeof(int) == sizeof(np.int32_t)
 
-cdef extern from "../include/gpuAAK.hh":
+cdef extern from "gpuAAK.hh":
     ctypedef void* cmplx 'cmplx'
     void get_waveform(cmplx* waveform, double* interp_array,
                   double M_phys, double S_phys, double mu, double qS, double phiS, double qK, double phiK, double dist,

@@ -2,7 +2,7 @@ import numpy as np
 cimport numpy as np
 from libcpp.string cimport string
 
-from few.utils.utility import pointer_adjust
+from few.cutils.wrappers import pointer_adjust
 
 assert sizeof(int) == sizeof(np.int32_t)
 

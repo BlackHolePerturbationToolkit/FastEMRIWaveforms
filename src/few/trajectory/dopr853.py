@@ -17,7 +17,6 @@ import numpy as np
 from .pydopr853_cpu import error as error_cpu
 from .pydopr853_cpu import controllerSuccess as controllerSuccess_cpu
 """
-import matplotlib.pyplot as plt
 
 np.random.seed(5)
 
