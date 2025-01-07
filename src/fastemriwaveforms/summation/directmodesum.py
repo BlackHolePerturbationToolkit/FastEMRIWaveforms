@@ -1,0 +1,141 @@
+# Direct summation of modes in python for the FastEMRIWaveforms Package
+
+# Copyright (C) 2020 Michael L. Katz, Alvin J.K. Chua, Niels Warburton, Scott A. Hughes
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+import numpy as np
+
+# check for cupy
+try:
+    import cupy as cp
+
+except (ImportError, ModuleNotFoundError) as e:
+    import numpy as np
+
+# Necessary base classes
+from ..utils.baseclasses import (
+    SchwarzschildEccentric,
+    ParallelModuleBase,
+)
+from .base import SummationBase
+from ..utils.citations import *
+
+
+class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
+    """Create waveform by direct summation.
+
+    This class sums the amplitude and phase information as received.
+
+    args:
+        *args (list, placeholder): Added for flexibility.
+        **kwargs (dict, placeholder):  Added for flexibility.
+
+    """
+
+    def __init__(self, *args, use_gpu=False, **kwargs):
+        ParallelModuleBase.__init__(self, *args, **kwargs)
+        SchwarzschildEccentric.__init__(self, *args, **kwargs)
+        SummationBase.__init__(self, *args, **kwargs)
+
+    @property
+    def citation(self):
+        """Return citations for this class"""
+        return larger_few_citation + few_citation + few_software_citation
+
+    @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
+
+    def sum(self, t, teuk_modes, ylms, phase_interp_t, phases_in, m_arr, n_arr, *args, dt=10., integrate_backwards=False, **kwargs):
+        """Direct summation function.
+
+        This function directly sums the amplitude and phase information, as well
+        as the spin-weighted spherical harmonic values.
+
+        args:
+            t (1D double np.ndarray): Array of t values.
+            teuk_modes (2D double np.array): Array of complex amplitudes.
+                Shape: (len(t), num_teuk_modes).
+            ylms (1D complex128 self.xp.ndarray): Array of ylm values for each mode,
+                including m<0. Shape is (num of m==0,) + (num of m>0,)
+                + (num of m<0). Number of m<0 and m>0 is the same, but they are
+                ordered as (m==0 first then) m>0 then m<0.
+            Phi_phi (1D double np.ndarray): Array of azimuthal phase values
+                (:math:`\Phi_\phi`).
+            Phi_r (1D double np.ndarray): Array of radial phase values
+                 (:math:`\Phi_r`).
+            m_arr (1D int np.ndarray): :math:`m` values associated with each mode.
+            n_arr (1D int np.ndarray): :math:`n` values associated with each mode.
+            *args (list, placeholder): Added for future flexibility.
+            **kwargs (dict, placeholder): Added for future flexibility.
+
+        """
+
+        Phi_phi, Phi_theta, Phi_r = phases_in
+
+        if phase_interp_t is None:
+            phase_interp_t = t.copy()
+
+        # numpy -> cupy if requested
+        # it will never go the other way
+        teuk_modes = self.xp.asarray(teuk_modes)
+        ylms = self.xp.asarray(ylms)
+        Phi_phi = self.xp.asarray(Phi_phi)
+        Phi_r = self.xp.asarray(Phi_r)
+        m_arr = self.xp.asarray(m_arr)
+        n_arr = self.xp.asarray(n_arr)
+
+        if integrate_backwards:
+            # For consistency with forward integration, we slightly shift the knots so that they line up at t=0
+            offset = h_t[-1] - int(h_t[-1] / dt) * dt
+            h_t = h_t - offset
+            phase_interp_t = phase_interp_t - offset
+            raise NotImplementedError  # TODO: spline the above quantities to shift them onto phase_interp_t
+
+        # waveform with M >= 0
+        w1 = self.xp.sum(
+            ylms[self.xp.newaxis, : teuk_modes.shape[1]]
+            * teuk_modes
+            * self.xp.exp(
+                -1j
+                * (
+                    m_arr[self.xp.newaxis, :] * Phi_phi[:, self.xp.newaxis]
+                    + n_arr[self.xp.newaxis, :] * Phi_r[:, self.xp.newaxis]
+                )
+            ),
+            axis=1,
+        )
+
+        inds = self.xp.where(m_arr > 0)[0]
+
+        # waveform sum where m < 0
+        w2 = self.xp.sum(
+            (m_arr[self.xp.newaxis, inds] > 0)
+            * ylms[self.xp.newaxis, teuk_modes.shape[1] :][:, inds]
+            * self.xp.conj(teuk_modes[:, inds])
+            * self.xp.exp(
+                -1j
+                * (
+                    -m_arr[self.xp.newaxis, inds] * Phi_phi[:, self.xp.newaxis]
+                    - n_arr[self.xp.newaxis, inds] * Phi_r[:, self.xp.newaxis]
+                )
+            ),
+            axis=1,
+        )
+
+        # they can be directly summed
+        # the base class function __call__ will return the waveform
+        self.waveform = w1 + w2
