@@ -228,7 +228,7 @@ class GenerateEMRIWaveform:
         *add_args: Optional[tuple],
         **kwargs: Optional[dict],
     ) -> Union[np.ndarray, list]:
-        """Generate the waveform with the given parameters.
+        r"""Generate the waveform with the given parameters.
 
         Args:
             M: Mass of larger black hole in solar masses.
@@ -942,7 +942,7 @@ class SlowSchwarzschildEccentricFlux(SphericalHarmonicWaveformBase, Schwarzschil
         )
 
 class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase, ABC):
-    """Waveform generation class for AAK with 5PN trajectory.
+    r"""Waveform generation class for AAK with 5PN trajectory.
 
     This class generates waveforms based on the Augmented Analytic Kludge
     given in the

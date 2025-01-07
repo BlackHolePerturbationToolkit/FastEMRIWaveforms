@@ -32,7 +32,7 @@ def read_txt(fname):
         # Convert each value to a float and append to the two-dimensional list
         # data.append([np.float128(value) for value in values])
         data.append([np.float64(value) for value in values])
-    
+
     return np.asarray(data)
 
 def Edotpn(a, p, e, pLSO):
@@ -100,7 +100,7 @@ fluxfiles = [filepath.format(ah, xh) for ah, xh in zip(a_in, xi_in)]
 for ff in fluxfiles:
     imp = read_txt(ff)
     a, p, e, xi, E, Lz, Q, pLSO, EdotInf_tot, EdotH_tot, LzdotInf_tot, LzdotH_tot, QdotInf_tot, QdotH_tot, pdotInf_tot, pdotH_tot, eccdotInf_tot, eccdotH_tot, xidotInf_tot, xidotH_tot = imp.T
-    
+
     u = np.log((p-pLSO + beta)/alpha)
     w = np.sqrt(e)
     a_tot.append(a*xi )

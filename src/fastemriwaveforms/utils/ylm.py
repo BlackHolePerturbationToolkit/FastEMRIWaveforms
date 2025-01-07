@@ -291,7 +291,7 @@ def _ylm_kernel(out: np.ndarray, l: np.ndarray, m:np.ndarray, theta:float, phi: 
     return out
 
 class GetYlms(ParallelModuleBase):
-    """(-2) Spin-weighted Spherical Harmonics
+    r"""(-2) Spin-weighted Spherical Harmonics
 
     The class generates (-2) spin-weighted spherical harmonics,
     :math:`Y_{lm}(\Theta,\phi)`. **Important Note**: this class also applies

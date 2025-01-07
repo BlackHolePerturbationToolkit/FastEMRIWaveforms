@@ -62,7 +62,7 @@ for i,el in enumerate(X):
 for bc in ["E(3)","not-a-knot"]: #"natural","not-a-knot","clamped", "E(3)", "natural-alt"
     interpTR = BicubicSpline(x1, x2, reshapedF, bc=bc)
     interpTP = TPI.TP_Interpolant_ND(X, F=reshapedF)
-    
+
     # test the interpolation against each other
     Ntest=100
     # x1_test = np.random.uniform(0, 1, Ntest)
@@ -84,7 +84,7 @@ for bc in ["E(3)","not-a-knot"]: #"natural","not-a-knot","clamped", "E(3)", "nat
     xi_in = np.sign(a_transformed) * 1.
 
     truth = get_separatrix(a_in, e_in, xi_in)
-    
+
     TR_vs_truth = eval_TR * (6 + 2*e_in) - truth
     TP_vs_truth = eval_TP * (6 + 2*e_in) - truth
 

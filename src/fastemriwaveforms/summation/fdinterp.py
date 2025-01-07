@@ -187,7 +187,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         integrate_backwards=False,
         **kwargs,
     ):
-        """Interpolated summation function in Frequency Domain.
+        r"""Interpolated summation function in Frequency Domain.
 
         This function interpolates the amplitude and phase information, and
         creates the final waveform with the combination of ylm values for each

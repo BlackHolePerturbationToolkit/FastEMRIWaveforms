@@ -33,7 +33,7 @@ dist = 1.0
 
 
 
-for model_name in ["FastKerrEccentricEquatorialFlux"]:#"FastSchwarzschildEccentricFlux", 
+for model_name in ["FastKerrEccentricEquatorialFlux"]:#"FastSchwarzschildEccentricFlux",
     print(f"Testing model: {model_name}, waveform duration: {T} years, dt: {dt} seconds")
     # print parameters
     print(f"M = {M}, mu = {mu}, a = {a}, p_0 = {p_0}, e_0 = {e_0}, Y_0 = {Y_0}")

@@ -350,7 +350,7 @@ class InterpolatedModeSum(SummationBase, ParallelModuleBase):
         integrate_backwards: bool=False,
         **kwargs,
     ):
-        """Interpolated summation function.
+        r"""Interpolated summation function.
 
         This function interpolates the amplitude and phase information, and
         creates the final waveform with the combination of ylm values for each

@@ -1,7 +1,7 @@
 import unittest
 import warnings
 
-# from few.waveform import FastSchwarzschildEccentricFlux 
+# from few.waveform import FastSchwarzschildEccentricFlux
 from few.waveform import GenerateEMRIWaveform
 
 from few.utils.utility import get_mismatch
@@ -32,32 +32,32 @@ inspiral_kwargs_Kerr = {
 
 class KerrWaveformTest(unittest.TestCase):
     def test_Kerr_vs_Schwarzchild(self):
-        # Test whether the Kerr and Schwarzschild waveforms agree.  
+        # Test whether the Kerr and Schwarzschild waveforms agree.
 
         wave_generator_Kerr = GenerateEMRIWaveform("FastKerrEccentricEquatorialFlux",
                                                         use_gpu=use_gpu)
         wave_generator_Schwarz = GenerateEMRIWaveform("FastSchwarzschildEccentricFlux",
                                                         use_gpu=use_gpu)
-                                                                                  
+
 
         # parameters
         M = 1e6
         mu = 1e1
         p0 = 10.0
         e0 = 0.4
-        
+
         qS = 0.2
         phiS = 0.2
         qK = 0.8
         phiK = 0.8
 
         Phi_phi0 = 1.0
-        Phi_theta0 = 2.0 
-        Phi_r0 = 3.0 
+        Phi_theta0 = 2.0
+        Phi_r0 = 3.0
 
         dist = 1.0
         dt = 10.0
-        T = 0.1 
+        T = 0.1
 
         Kerr_wave = wave_generator_Kerr(M, mu, 0.0, p0, e0, 1.0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0, T = T, dt = dt)
         Schwarz_wave = wave_generator_Schwarz(M, mu, 0.0, p0, e0, 1.0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0, T = T, dt = dt)
@@ -66,7 +66,7 @@ class KerrWaveformTest(unittest.TestCase):
 
         self.assertLess(mm, 1e-4)
     def test_retrograde_orbits(self):
-        """
+        r"""
         Here we test that retrograde orbits and prograde orbits for a = \pm 0.7
         have large mismatches.
         """
@@ -81,24 +81,22 @@ class KerrWaveformTest(unittest.TestCase):
         a = 0.7
         p0 = 15.0
         e0 = 0.4
-        
+
         qS = 0.2
         phiS = 0.2
         qK = 0.8
         phiK = 0.8
 
         Phi_phi0 = 1.0
-        Phi_theta0 = 2.0 
-        Phi_r0 = 3.0 
+        Phi_theta0 = 2.0
+        Phi_r0 = 3.0
 
         dist = 1.0
         dt = 10.0
-        T = 0.1 
+        T = 0.1
 
         Kerr_wave_retrograde = wave_generator_Kerr(M, mu, abs(a), p0, e0, -1.0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0, T = T, dt = dt)
         Kerr_wave_prograde = wave_generator_Kerr(M, mu, abs(a), p0, e0, 1.0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0, T = T, dt = dt)
 
         mm = get_mismatch(Kerr_wave_retrograde, Kerr_wave_prograde, use_gpu=use_gpu)
         self.assertGreater(mm, 1e-3)
-
-

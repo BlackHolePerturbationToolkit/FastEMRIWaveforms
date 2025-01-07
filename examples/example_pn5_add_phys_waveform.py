@@ -26,7 +26,7 @@ class PN5AddPhys(ODEBase):
         # guard against bad integration steps
         if e < 0 or (p - 6 - 2* e) < 0:
             return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        
+
         xI = Y_to_xI(self.a, p, e, Y)
         p_sep = get_separatrix(self.a, e, xI)
 
@@ -40,11 +40,11 @@ class PN5AddPhys(ODEBase):
         pdot = dpdt8H_5PNe10(self.a, p, e, Y, 10, 10) * (1. + phys_factor1)
         edot = dedt8H_5PNe10(self.a, p, e, Y, 10, 8) * (1. + phys_factor1)
         Ydot = dYdt8H_5PNe10(self.a, p, e, Y, 7, 10)
-        
+
         Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(self.a, p, e, xI)
         # or we can directly evaluate the numba kernel for speed
         # frequencies = _KerrGeoCoordinateFrequencies_kernel_inner(self.a, p, e, xI)
-        
+
         Omega_phi *= (1. + phys_factor2)
 
         return [pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r]
@@ -70,7 +70,7 @@ class pn5_add_phys_AAK(AAKWaveformBase, Pn5AAK, ParallelModuleBase):
     @property
     def allow_batching(self):
         return False
-        
+
 
 # define parameters
 M = 1e6
@@ -131,7 +131,7 @@ plt.savefig("plot2.png")
 print(f"Mismatch: {get_mismatch(h1, h2)}")
 
 # time CPU
-import time 
+import time
 num = 3
 st = time.perf_counter()
 for _ in range(num):

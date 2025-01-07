@@ -55,7 +55,7 @@ T = 2.
 
 M = 1e6; mu = 1e1; a=0.0; e0=0.03;Y0 = 1.0; dist=1.0;
 theta_S=np.pi/2;phi_S = np.pi/4; theta_K = np.pi/6; phi_K = 3*np.pi/4;
-Phi_phi0 = 1.0; Phi_theta0 = 0.0; Phi_r0 = 3.0 
+Phi_phi0 = 1.0; Phi_theta0 = 0.0; Phi_r0 = 3.0
 
 # ==================== Check out trajectory =================
 
@@ -77,7 +77,7 @@ p_new = get_p_at_t(
 )
 
 print("We need to set p_new = {} to get a waveform of length {} years".format(p_new,T))
-print("setting... p0 = ",p_new) 
+print("setting... p0 = ",p_new)
 p0 = p_new+0.01
 t_kerr, p_kerr, e_kerr, x_kerr, Phi_phi_kerr, Phi_theta_kerr, Phi_r_kerr = kerr_traj(M, mu, 0.0, p0, e0, 1.0)
 t_schw, p_schw, e_schw, x_schw, Phi_phi_schw, Phi_theta_schw, Phi_r_schw = schw_traj(M, mu, 0.0, p0, e0, 1.0)
@@ -90,7 +90,7 @@ pars = np.array([
     M,  # M
     mu,  # mu
     a,  # a
-    p0,  # p 
+    p0,  # p
     e0,  # e
     Y0,   # Y0
     dist,   # Distance
@@ -132,8 +132,8 @@ freq = xp.fft.rfftfreq(N_t,delta_t)[1:]
 PSD = get_sensitivity(freq,sens_fn="cornish_lisa_psd")
 
 
-SNR2_kerr = inner_prod(kerr_fft,kerr_fft,N_t,delta_t,PSD) 
-SNR2_schw = inner_prod(schw_fft,schw_fft,N_t,delta_t,PSD) 
+SNR2_kerr = inner_prod(kerr_fft,kerr_fft,N_t,delta_t,PSD)
+SNR2_schw = inner_prod(schw_fft,schw_fft,N_t,delta_t,PSD)
 
 print("SNR accumulated for Kerr inspiral is", SNR2_kerr**(1/2))
 print("SNR accumulated for Schw inspiral is", SNR2_schw**(1/2))

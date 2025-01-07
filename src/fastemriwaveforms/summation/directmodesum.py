@@ -60,7 +60,7 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
         return True
 
     def sum(self, t, teuk_modes, ylms, phase_interp_t, phases_in, m_arr, n_arr, *args, dt=10., integrate_backwards=False, **kwargs):
-        """Direct summation function.
+        r"""Direct summation function.
 
         This function directly sums the amplitude and phase information, as well
         as the spin-weighted spherical harmonic values.

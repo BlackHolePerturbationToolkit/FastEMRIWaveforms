@@ -1,17 +1,17 @@
 import cupy as cp
 import numpy as np
-import os 
+import os
 import sys
 sys.path.append("../")
 
-# from scipy.signal import tukey       # I'm always pro windowing.  
+# from scipy.signal import tukey       # I'm always pro windowing.
 
 from fastlisaresponse import ResponseWrapper             # Response
 
 # Import relevant EMRI packages
 from few.waveform import GenerateEMRIWaveform, AAKWaveformBase, KerrEquatorialEccentric,KerrEquatorialEccentricWaveformBase
 from few.trajectory.inspiral import EMRIInspiral
-from few.summation.directmodesum import DirectModeSum 
+from few.summation.directmodesum import DirectModeSum
 from few.summation.interpolatedmodesum import InterpolatedModeSum
 from few.summation.aakwave import AAKSummation
 
@@ -32,21 +32,21 @@ np.random.seed(1234)
 def sensitivity_LWA(f):
     """
     LISA sensitivity function in the long-wavelength approximation (https://arxiv.org/pdf/1803.01944.pdf).
-    
+
     args:
         f (float): LISA-band frequency of the signal
-    
+
     Returns:
         The output sensitivity strain Sn(f)
     """
-    
+
     #Defining supporting functions
     L = 2.5e9 #m
     fstar = 19.09e-3 #Hz
-    
+
     P_OMS = (1.5e-11**2)*(1+(2e-3/f)**4) #Hz-1
     P_acc = (3e-15**2)*(1+(0.4e-3/f)**2)*(1+(f/8e-3)**4) #Hz-1
-    
+
     #S_c changes depending on signal duration (Equation 14 in 1803.01944)
     #for 1 year
     alpha = 0.171
@@ -54,14 +54,14 @@ def sensitivity_LWA(f):
     kappa = 1020
     gamma = 1680
     fk = 0.00215
-    #log10_Sc = (np.log10(9)-45) -7/3*np.log10(f) -(f*alpha + beta*f*np.sin(kappa*f))*np.log10(np.e) + np.log10(1 + np.tanh(gamma*(fk-f))) #Hz-1 
-    
+    #log10_Sc = (np.log10(9)-45) -7/3*np.log10(f) -(f*alpha + beta*f*np.sin(kappa*f))*np.log10(np.e) + np.log10(1 + np.tanh(gamma*(fk-f))) #Hz-1
+
     A=9e-45
     Sc = A*f**(-7/3)*np.exp(-f**alpha+beta*f*np.sin(kappa*f))*(1+np.tanh(gamma*(fk-f)))
     sensitivity_LWA = (10/(3*L**2))*(P_OMS+4*(P_acc)/((2*np.pi*f)**4))*(1 + 6*f**2/(10*fstar**2))+Sc
     return sensitivity_LWA
 def zero_pad(data):
-    """
+    r"""
     Inputs: data stream of length N
     Returns: zero_padded data stream of new length 2^{J} for J \in \mathbb{N}
     """
@@ -72,12 +72,12 @@ def zero_pad(data):
 def inner_prod(sig1_f,sig2_f,N_t,delta_t,PSD):
     """
     Compute stationary noise-weighted inner product
-    Inputs: sig1_f and sig2_f are signals in frequency domain 
+    Inputs: sig1_f and sig2_f are signals in frequency domain
             N_t length of padded signal in time domain
             delta_t sampling interval
             PSD Power spectral density
 
-    Returns: Noise weighted inner product 
+    Returns: Noise weighted inner product
     """
     prefac = 4*delta_t / N_t
     sig2_f_conj = xp.conjugate(sig2_f)
@@ -87,10 +87,10 @@ def SNR_function(sig1_t, dt, N_channels = 2):
 
     sig1_f = [xp.fft.rfft(zero_pad(sig1_t[i])) for i in range(N_channels)]
     N_t = len(zero_pad(sig1_t[0]))
-    
+
     freq_np = xp.asnumpy(xp.fft.rfftfreq(N_t, dt))
 
-    freq_np[0] = freq_np[1] 
+    freq_np[0] = freq_np[1]
 
     PSD = 2 * [xp.asarray(sensitivity_LWA(freq_np))]
 
@@ -109,13 +109,13 @@ def llike(params):
     # Intrinsic Parameters
     M_val = float(params[0])
     mu_val = float(params[1])
-    
-    a_val =  float(params[2])            
+
+    a_val =  float(params[2])
     p0_val = float(params[3])
     e0_val = float(params[4])
-    xI0_val = 1.0 
-    
-    # Luminosity distance 
+    xI0_val = 1.0
+
+    # Luminosity distance
     D_val = float(params[5])
 
     # Angular Parameters
@@ -129,21 +129,21 @@ def llike(params):
     Phi_theta0_val = Phi_theta0
     Phi_r0_val = float(params[11])
 
-    # Secondary charge 
-    gamma_val = float(params[12]) 
+    # Secondary charge
+    gamma_val = float(params[12])
 
     if a_val < 0:
         a_val *= -1.0
         xI0_val *= -1.0
 
     # Propose new waveform model
-    waveform_prop = Waveform_model(M_val, mu_val, a_val, p0_val, e0_val, 
+    waveform_prop = Waveform_model(M_val, mu_val, a_val, p0_val, e0_val,
                                   xI0_val, D_val, qS_val, phiS_val, qK_val, phiK_val,
-                                    Phi_phi0_val, Phi_theta0_val, Phi_r0_val, gamma_val, 
+                                    Phi_phi0_val, Phi_theta0_val, Phi_r0_val, gamma_val,
                                     mich=True, dt=delta_t, T=T)  # EMRI waveform across A, E and T.
 
 
-    # Taper and then zero pad. 
+    # Taper and then zero pad.
     EMRI_w_pad_prop = [zero_pad(waveform_prop[i]) for i in range(N_channels)]
 
     # Compute in frequency domain
@@ -152,13 +152,13 @@ def llike(params):
     # Compute (d - h| d- h)
     diff_f = [data_f[k] - EMRI_fft_prop[k] for k in range(N_channels)]
     inn_prod = xp.asarray([inner_prod(diff_f[k],diff_f[k],N_t,delta_t,PSD[k]) for k in range(N_channels)])
-    
-    # Return log-likelihood value as numpy val. 
-    llike_val_np = xp.asnumpy(-0.5 * (xp.sum(inn_prod))) 
+
+    # Return log-likelihood value as numpy val.
+    llike_val_np = xp.asnumpy(-0.5 * (xp.sum(inn_prod)))
     return (llike_val_np)
 
 M = 1e6; mu = 10; a = 0.9; p0 = 8.54; e0 = 0.3; x_I0 = 1.0;
-dist = 1.0; qS = 0.7; phiS = 0.7; qK = 0.7; phiK = 0.7; 
+dist = 1.0; qS = 0.7; phiS = 0.7; qK = 0.7; phiK = 0.7;
 Phi_phi0 = 2.0; Phi_theta0 = 3.0; Phi_r0 = 4.0
 
 delta_t = 10.0;  # Sampling interval [seconds]
@@ -182,12 +182,12 @@ sum_kwargs = {
 }
 
 ## ===================== CHECK TRAJECTORY ====================
-# 
+#
 traj = EMRIInspiral(func=func, inspiral_kwargs = insp_kwargs)  # Set up trajectory module, pn5 AAK
 
-# Compute trajectory 
+# Compute trajectory
 if a < 0:
-    a *= -1.0 
+    a *= -1.0
     x_I0 *= -1.0
 
 
@@ -198,7 +198,7 @@ print("Final value in semi-latus rectum", out_GR[0][-1])
 
 traj_args_GR = [M, mu, a, out_GR[1][0], x_I0]
 index_of_p = 3
-# Check to see what value of semi-latus rectum is required to build inspiral lasting T years. 
+# Check to see what value of semi-latus rectum is required to build inspiral lasting T years.
 p_new = 30
 # p_new = get_p_at_t(
 #     traj,
@@ -218,7 +218,7 @@ print("Your chosen semi-latus rectum is", p0)
 if p0 < p_new:
     print("Careful, the smaller body is plunging. Expect instabilities.")
 else:
-    print("Body is not plunging.") 
+    print("Body is not plunging.")
 print("Final point in semilatus rectum achieved is", out_GR[0][-1])
 print("Separatrix : ", get_separatrix(a, out_GR[1][-1], x_I0))
 
@@ -237,7 +237,7 @@ sum_kwargs = {
     "use_gpu": True,  # GPU is availabel for this type of summation
     "pad_output": True,
 }
-    
+
 
 amplitude_kwargs = {
     "specific_spins":[0.8, 0.9, 0.95],
@@ -253,7 +253,7 @@ use_gpu=use_gpu,
 return_list=True,
 frame="detector"
 )
-    
+
 Waveform_model_Kerr = GenerateEMRIWaveform(
 KerrEquatorialEccentricWaveformBase, # Define the base waveform
 EMRIInspiral, # Define the trajectory
@@ -269,9 +269,9 @@ frame='detector'
 )
 
 ## ============= USE THE LONG WAVELENGTH APPROXIMATION, VOMIT ================ ##
-nmodes = 
+# nmodes =
 specific_modes = [(2,2,n) for n in range(-2,2)]
-params = [M,mu,a,p0,e0,1.0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0] 
+params = [M,mu,a,p0,e0,1.0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
 
 waveform_AAK = Waveform_model_AAK(*params, T = T, dt = delta_t, mich = True)  # Generate h_plus and h_cross
 waveform_Kerr = Waveform_model_Kerr(*params, T = T, dt = delta_t, mich = True)  # Generate h_plus and h_cross
@@ -302,14 +302,14 @@ SNR_AAK_vec=[]
 
 import matplotlib.pyplot as plt
 for eccentricity in e0_vec:
-    params = [M,mu,a,p0,eccentricity,1.0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]  
+    params = [M,mu,a,p0,eccentricity,1.0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
 
     waveform_Kerr = Waveform_model_Kerr(*params, mich = True, dt = delta_t, T = T)
     waveform_AAK = Waveform_model_AAK(*params, mich = True, dt = delta_t, T = T)
-    
+
     SNR_Kerr = SNR_function(waveform_Kerr, delta_t, N_channels = 2)
     SNR_AAK = SNR_function(waveform_AAK, delta_t, N_channels = 2)
-    
+
     SNR_Kerr_vec.append(xp.asnumpy(SNR_Kerr))
     SNR_AAK_vec.append(xp.asnumpy(SNR_AAK))
 
@@ -333,14 +333,14 @@ p0 = 14.0 # Weak field
 SNR_Kerr_vec=[]
 SNR_AAK_vec=[]
 for eccentricity in e0_vec:
-    params = [M,mu,a,p0,eccentricity,1.0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]  
+    params = [M,mu,a,p0,eccentricity,1.0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0]
 
     waveform_Kerr = Waveform_model_Kerr(*params, mich = True, dt = delta_t, T = T)
     waveform_AAK = Waveform_model_AAK(*params, mich = True, dt = delta_t, T = T)
-    
+
     SNR_Kerr = SNR_function(waveform_Kerr, delta_t, N_channels = 2)
     SNR_AAK = SNR_function(waveform_AAK, delta_t, N_channels = 2)
-    
+
     SNR_Kerr_vec.append(xp.asnumpy(SNR_Kerr))
     SNR_AAK_vec.append(xp.asnumpy(SNR_AAK))
 
@@ -360,7 +360,7 @@ aa = xp.asarray([inner_prod(waveform_AAK_fft[i],waveform_AAK_fft[i], N_t, delta_
 bb = xp.asarray([inner_prod(waveform_Kerr_fft[i],waveform_Kerr_fft[i], N_t, delta_t, PSD[i]) for i in range(N_channels)])
 ab = xp.asarray([inner_prod(waveform_AAK_fft[i],waveform_Kerr_fft[i], N_t, delta_t, PSD[i]) for i in range(N_channels)])
 
-mismatch = 1 - 0.5 * xp.sum(ab/(np.sqrt(aa*bb))) 
+mismatch = 1 - 0.5 * xp.sum(ab/(np.sqrt(aa*bb)))
 quit()
 ##=====================Noise Setting: Currently 0=====================
 
@@ -372,9 +372,9 @@ noise_f_imag = [xp.random.normal(0,np.sqrt(variance_noise[k])) for k in range(N_
 # Compute noise in frequency domain
 noise_f = xp.asarray([noise_f_real[k] + 1j * noise_f_imag[k] for k in range(N_channels)])
 
-# Dealing with positive transform, so first and last values are real. 
+# Dealing with positive transform, so first and last values are real.
 # todo: fix
-#noise_f_AET[0] = np.sqrt(2)*np.real(noise_f_AET) 
+#noise_f_AET[0] = np.sqrt(2)*np.real(noise_f_AET)
 #noise_f_AET[-1] = np.sqrt(2)*np.real(noise_f_AET)
 
 data_f = EMRI_truth_fft + 0*noise_f   # define the data
@@ -393,15 +393,15 @@ tempering_kwargs=dict(ntemps=ntemps)  # Sampler requires the number of temperatu
 d = 1 # A parameter that can be used to dictate how close we want to start to the true parameters
 # Useful check: If d = 0 and noise_f = 0, llike(*params)!!
 
-# We start the sampler exceptionally close to the true parameters and let it run. This is reasonable 
-# if and only if we are quantifying how well we can measure parameters. We are not performing a search. 
+# We start the sampler exceptionally close to the true parameters and let it run. This is reasonable
+# if and only if we are quantifying how well we can measure parameters. We are not performing a search.
 
 if x_I0 < 0:
-    a *= -1.0 
+    a *= -1.0
     x_I0 *= -1.0
 # Intrinsic Parameters
 
-start_M = M*(1. + d * 1e-7 * np.random.randn(nwalkers,1))   
+start_M = M*(1. + d * 1e-7 * np.random.randn(nwalkers,1))
 start_mu = mu*(1. + d * 1e-7 * np.random.randn(nwalkers,1))
 
 start_a = a*(1. + d * 1e-7 * np.random.randn(nwalkers,1))
@@ -418,7 +418,7 @@ start_phiS = phiS*(1. + d * 1e-6 * np.random.randn(nwalkers,1))
 start_qK = qK*(1. + d * 1e-6 * np.random.randn(nwalkers,1))
 start_phiK = phiK*(1. + d * 1e-6 * np.random.randn(nwalkers,1))
 
-# Initial phases 
+# Initial phases
 start_Phi_Phi0 = Phi_phi0*(1. + d * 1e-5 * np.random.randn(nwalkers, 1))
 start_Phi_theta0 = Phi_theta0*(1. + d * 1e-5 * np.random.randn(nwalkers, 1))
 start_Phi_r0 = Phi_r0*(1. + d * 1e-5 * np.random.randn(nwalkers, 1))
@@ -426,14 +426,14 @@ start_Phi_r0 = Phi_r0*(1. + d * 1e-5 * np.random.randn(nwalkers, 1))
 # Charge
 start_gamma = gamma + d * 1e-7 * np.random.randn(nwalkers,1)
 
-start = np.hstack((start_M,start_mu, start_a, start_p0, start_e0, start_D, 
+start = np.hstack((start_M,start_mu, start_a, start_p0, start_e0, start_D,
 start_qS, start_phiS, start_qK, start_phiK,start_Phi_Phi0, start_Phi_r0, start_gamma))
 
-# start = np.hstack((start_M, start_a, start_p0, start_e0, start_D, 
+# start = np.hstack((start_M, start_a, start_p0, start_e0, start_D,
 # start_qS, start_phiS, start_qK, start_phiK,start_Phi_Phi0, start_Phi_r0, start_Charge))
 if ntemps > 1:
     # If we decide to use parallel tempering, we fall into this if statement. We assign each *group* of walkers
-    # an associated temperature. We take the original starting values and "stack" them on top of each other. 
+    # an associated temperature. We take the original starting values and "stack" them on top of each other.
     start = np.tile(start,(ntemps,1,1))
 
 if np.size(start.shape) == 1:
@@ -467,7 +467,7 @@ priors_in = {
     11: uniform_dist(0, 2*np.pi), # Phi_r00
     # 12: uniform_dist(-1, 1) # Charge
     12: uniform_dist(-1, 1) # Gamma
-}  
+}
 
 
 priors = ProbDistContainer(priors_in, use_cupy = False)   # Set up priors so they can be used with the sampler.
@@ -478,12 +478,12 @@ moves_stretch = StretchMove(a=2.0, use_gpu=True)
 
 # Quick checks
 if ntemps > 1:
-    print("Value of starting log-likelihood points", llike(start[0][0])) 
+    print("Value of starting log-likelihood points", llike(start[0][0]))
     if np.isinf(sum(priors.logpdf(xp.asarray(start[0])))):
         print("You are outside the prior range, you fucked up")
         quit()
 else:
-    print("Value of starting log-likelihood points", llike(start[0])) 
+    print("Value of starting log-likelihood points", llike(start[0]))
 os.chdir('/work/scratch/data/burkeol/tgr_mcmc_results/Constrain_charge')
 
 # fp = "kerr_traj_AAK_amp_M_1e5_mu_5_a_0p9_p0_23p2_e0_0p4_dist_SNR_50_Charge_0_gamma_directly_sample_prior_neg1_1.h5"
@@ -492,7 +492,7 @@ fp = "kerr_traj_AAK_amp_M_1e5_mu_5_a_0p9_p0_23p2_e0_0p4_dist_SNR_50_Charge_zero_
 backend = HDFBackend(fp)
 
 ensemble = EnsembleSampler(
-                            nwalkers,          
+                            nwalkers,
                             ndim,
                             llike,
                             priors,
@@ -505,7 +505,7 @@ if Reset_Backend:
     os.remove(fp) # Manually get rid of backend
     backend = HDFBackend(fp) # Set up new backend
     ensemble = EnsembleSampler(
-                            nwalkers,          
+                            nwalkers,
                             ndim,
                             llike,
                             priors,
@@ -518,4 +518,3 @@ else:
 out = ensemble.run_mcmc(start, iterations, progress=True)  # Run the sampler
 
 ##===========================MCMC Settings (change this)============================
-

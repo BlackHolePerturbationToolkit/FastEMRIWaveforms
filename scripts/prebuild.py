@@ -46,4 +46,3 @@ for line in lines:
 
 with open("few/_version.py", "w") as f:
     f.write("__version__ = '{}'".format(version_string))
-

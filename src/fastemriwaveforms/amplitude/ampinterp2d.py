@@ -89,7 +89,7 @@ _DEFAULT_AMPLITUDE_FILENAMES = [
 
 
 class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
-    """Calculate Teukolsky amplitudes with a bicubic spline interpolation.
+    r"""Calculate Teukolsky amplitudes with a bicubic spline interpolation.
 
     This class is initialised by providing mode index arrays and a corresponding spline coefficients array.
     These coefficients can be computed for user-supplied data with the TODO METHOD method of this class.

@@ -169,7 +169,7 @@ class EMRIInspiral(TrajectoryBase):
         Phi_r0:float=0.0,
         **kwargs,
     ) -> tuple[np.ndarray]:
-        """Generate the inspiral.
+        r"""Generate the inspiral.
 
         This is the function for calling the creation of the trajectory.
         Inputs define the output time spacing.
@@ -283,7 +283,7 @@ class EMRIInspiral(TrajectoryBase):
         Phi_r0: float=0.0,
         **kwargs,
     ) -> tuple[np.ndarray]:
-        """Compute the right hand side of the ordinary differential equation.
+        r"""Compute the right hand side of the ordinary differential equation.
 
         This is a convenience function for interfacing with the call method of the ODE class.
 

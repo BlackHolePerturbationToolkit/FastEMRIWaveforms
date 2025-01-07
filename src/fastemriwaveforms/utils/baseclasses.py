@@ -128,7 +128,7 @@ class ParallelModuleBase(ABC):
         return kwargs
 
 class SphericalHarmonic(ParallelModuleBase, ABC):
-    """Base class for waveforms constructed in a spherical harmonic basis.
+    r"""Base class for waveforms constructed in a spherical harmonic basis.
 
     This class creates shared traits between different implementations of the
     same model. Particularly, this class includes descriptive traits as well as
@@ -378,7 +378,7 @@ class SchwarzschildEccentric(SphericalHarmonic):
         return larger_few_citation + few_citation + few_software_citation
 
     def sanity_check_init(self, M: float, mu: float, a: float, p0: float, e0: float, xI: float):
-        """Sanity check initial parameters.
+        r"""Sanity check initial parameters.
 
         Make sure parameters are within allowable ranges.
 
@@ -486,7 +486,7 @@ class KerrEccentricEquatorial(SphericalHarmonic):
         return larger_few_citation + few_citation + few_software_citation
 
     def sanity_check_init(self, M: float, mu:float, a:float, p0:float, e0:float, xI:float):
-        """Sanity check initial parameters.
+        r"""Sanity check initial parameters.
 
         Make sure parameters are within allowable ranges.
 
@@ -598,7 +598,7 @@ class Pn5AAK(ParallelModuleBase, ABC):
         return (qS, phiS, qK, phiK)
 
     def sanity_check_traj(self, p: np.ndarray, e: np.ndarray, Y: np.ndarray):
-        """Sanity check on parameters output from thte trajectory module.
+        r"""Sanity check on parameters output from thte trajectory module.
 
         Make sure parameters are within allowable ranges.
 
@@ -629,7 +629,7 @@ class Pn5AAK(ParallelModuleBase, ABC):
             )
 
     def sanity_check_init(self, M: float, mu: float, a: float, p0: float, e0: float, Y0: float):
-        """Sanity check initial parameters.
+        r"""Sanity check initial parameters.
 
         Make sure parameters are within allowable ranges.
 

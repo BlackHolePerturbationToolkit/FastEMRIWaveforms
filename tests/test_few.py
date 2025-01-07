@@ -162,7 +162,7 @@ class WaveformTest(unittest.TestCase):
         """
         Unit test to determine whether the Kerr models are working or not.
         """
-        
+
 
 
 def amplitude_test(amp_class):

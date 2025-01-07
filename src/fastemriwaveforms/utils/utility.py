@@ -53,7 +53,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def get_overlap(time_series_1: np.ndarray, time_series_2: np.ndarray, use_gpu: bool=False) -> float:
-    """Calculate the overlap.
+    r"""Calculate the overlap.
 
     Takes two time series and finds which one is shorter in length. It then
     shortens the longer time series if necessary. Then it performs a
@@ -554,7 +554,7 @@ def _KerrGeoCoordinateFrequencies_kernel(OmegaPhi, OmegaTheta, OmegaR, a, p, e, 
         OmegaPhi[i], OmegaTheta[i], OmegaR[i] = _KerrGeoCoordinateFrequencies_kernel_inner(a[i], p[i], e[i], x[i])
 
 def get_fundamental_frequencies(a: Union[float, np.ndarray], p:Union[float, np.ndarray], e:Union[float, np.ndarray], x:Union[float, np.ndarray]) -> tuple[Union[float, np.ndarray]]:
-    """Get dimensionless fundamental frequencies.
+    r"""Get dimensionless fundamental frequencies.
 
     Determines fundamental frequencies in generic Kerr from
     `Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_.
@@ -705,7 +705,7 @@ def _KerrEqSpinFrequenciesCorrections_kernel(OmegaPhi, OmegaTheta, OmegaR, a, p,
         OmegaPhi[i], OmegaR[i] = _KerrEqSpinFrequenciesCorrections_kernel_inner(a[i], p[i], e[i], x[i])
 
 def get_fundamental_frequencies_spin_corrections(a: Union[float, np.ndarray], p:Union[float, np.ndarray], e:Union[float, np.ndarray], x:Union[float, np.ndarray]) -> tuple[Union[float, np.ndarray]]:
-    """Get the leading-order correction term to the fundamental frequencies due to the spin of the secondary compact object.
+    r"""Get the leading-order correction term to the fundamental frequencies due to the spin of the secondary compact object.
 
     Currently only supported for equatorial orbits.
 
@@ -859,7 +859,7 @@ def _KerrGeoConstantsOfMotion_kernel(E_out, L_out, Q_out, a, p, e, x):
         E_out[i], L_out[i], Q_out[i] = _KerrGeoConstantsOfMotion_kernel_inner(a[i], p[i], e[i], x[i])
 
 def get_kerr_geo_constants_of_motion(a: Union[float, np.ndarray], p:Union[float, np.ndarray], e:Union[float, np.ndarray], x:Union[float, np.ndarray]) -> tuple[Union[float, np.ndarray]]:
-    """Get Kerr constants of motion.
+    r"""Get Kerr constants of motion.
 
     Determines the constants of motion: :math:`(E, L, Q)` associated with a
     geodesic orbit in the generic Kerr spacetime.
@@ -1074,7 +1074,7 @@ def _get_separatrix_kernel(p_sep: np.ndarray, a: np.ndarray, e: np.ndarray, x: n
 
 
 def get_separatrix(a: Union[float, np.ndarray], e: Union[float, np.ndarray], x: Union[float, np.ndarray], tol:float=1e-13) -> Union[float, np.ndarray]:
-    """Get separatrix in generic Kerr.
+    r"""Get separatrix in generic Kerr.
 
     Determines separatrix in generic Kerr from
     `Stein & Warburton 2020 <https://arxiv.org/abs/1912.07609>`_.

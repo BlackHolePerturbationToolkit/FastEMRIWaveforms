@@ -81,7 +81,7 @@ class AAKWaveformTest(unittest.TestCase):
         Phi_r0 = np.pi/2
         h_p_c_phase = few_gen(M, mu, a, p0, e0, Y0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0, T=2.0, dt=dt)
         h_p_c_phase2 = few_gen(M, mu, a, p0, e0, Y0, dist, qS, phiS, qK, phiK, Phi_phi0+0.5, Phi_theta0, Phi_r0, T=2.0, dt=dt)
-        
+
         # print(get_overlap(h_p_c_phase.get(), h_p_c_phase2.get()))
 
     def test_aak_backwards(self):
@@ -139,4 +139,3 @@ class AAKWaveformTest(unittest.TestCase):
 
         mm = get_mismatch(waveform_cpu_forward, waveform_cpu_backward[::-1], use_gpu=gpu_available)
         self.assertLess(mm, 1e-3)
-

@@ -142,7 +142,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
         include_minus_m: bool=True,
         **kwargs: Optional[dict],
     ) -> np.ndarray:
-        """Call function for waveform models built in the spherical harmonic basis.
+        r"""Call function for waveform models built in the spherical harmonic basis.
 
         This function will take input parameters and produce waveforms. It will use all of the modules preloaded to
         compute desired outputs.
@@ -511,7 +511,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
 
 
 class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
-    """Waveform generation class for AAK with arbitrary trajectory.
+    r"""Waveform generation class for AAK with arbitrary trajectory.
 
     This class generates waveforms based on the Augmented Analytic Kludge
     given in the
@@ -645,7 +645,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         T: float=1.0,
         nmodes: Optional[int]=None,
     ) -> np.ndarray:
-        """Call function for AAK + 5PN model.
+        r"""Call function for AAK + 5PN model.
 
         This function will take input parameters and produce AAK waveforms with 5PN trajectories in generic Kerr.
 

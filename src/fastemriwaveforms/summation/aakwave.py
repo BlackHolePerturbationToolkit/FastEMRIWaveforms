@@ -121,7 +121,7 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         integrate_backwards:bool=False,
         **kwargs
     ) -> None:
-        """Compute an AAK waveform from an input trajectory.
+        r"""Compute an AAK waveform from an input trajectory.
 
         This function performs the AAK waveform summation and fills the waveform array in-place.
 

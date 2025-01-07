@@ -131,9 +131,9 @@ class ModeSelector(ParallelModuleBase):
         self.m0mask = m0mask
         """array: Mask for m=0 modes."""
         self.num_m_zero_up = len(m0mask)
-        """int: Number of modes with :math:`m\geq0`."""
+        r"""int: Number of modes with :math:`m\geq0`."""
         self.num_m_1_up = len(self.xp.arange(len(m0mask))[m0mask])
-        """int: Number of modes with :math:`m\geq1`."""
+        r"""int: Number of modes with :math:`m\geq1`."""
         self.num_m0 = len(self.xp.arange(len(m0mask))[~m0mask])
         """int: Number of modes with :math:`m=0`."""
 
@@ -156,7 +156,7 @@ class ModeSelector(ParallelModuleBase):
         return larger_few_citation + few_citation + few_software_citation
 
     def __call__(self, teuk_modes: np.ndarray, ylms: np.ndarray, modeinds: list[np.ndarray], fund_freq_args: Optional[tuple] = None, eps: float=1e-5) -> np.ndarray:
-        """Call to sort and filer teukolsky modes.
+        r"""Call to sort and filer teukolsky modes.
 
         This is the call function that takes the teukolsky modes, ylms,
         mode indices and fractional accuracy of the total power and returns
