@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
 import warnings
+import pathlib
 
 from few.trajectory.inspiral import EMRIInspiral
 from few.utils.ylm import GetYlms
@@ -66,7 +67,7 @@ class ModeSelectorTest(unittest.TestCase):
 
         # produce sensitivity function
 
-        noise = np.genfromtxt("../examples/files/LPA.txt", names=True)
+        noise = np.genfromtxt(pathlib.Path(__file__).parent.parent / "examples" / "files" /"LPA.txt", names=True)
         f, PSD = (
             np.asarray(noise["f"], dtype=np.float64),
             np.asarray(noise["ASD"], dtype=np.float64) ** 2,
