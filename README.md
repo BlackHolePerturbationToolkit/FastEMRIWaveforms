@@ -166,7 +166,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 * Niels Warburton
 * Scott Hughes
 
-### Contibutors
+### Contributors
 
 * Philip Lynch
 * Soichiro Isoyama
