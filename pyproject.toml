@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 requires = [ "cython", "numpy", "scikit-build-core" ]
 
 [project]
-name = "fastemriwaveforms"
+name = "fastemriwaveforms" #@NAMESUFFIX@
 
 readme = "README.md"
 
@@ -38,6 +38,7 @@ dependencies = [
   "rich",
   "scipy",
   "tqdm",
+  #@CUPYCUDA@,
 ]
 
 optional-dependencies.post = [
@@ -59,6 +60,7 @@ urls.Tracker = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveform
 
 [tool.setuptools_scm]
 version_scheme = "no-guess-dev"
+local_scheme = "node-and-date"
 write_to = "src/few/_version.py"
 
 [tool.scikit-build]
