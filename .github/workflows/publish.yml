@@ -160,13 +160,14 @@ jobs:
         run: |
           ls -al wheelhouse/*
 
-      - name: See Twine configuration variables
-        run: |
-          env | grep --color=never TWINE_
-
       - name: Install twine from PyPI
         uses: install-pinned/twine@e0e1034852ffdf3e7867300539b1065f1bff2a87  # 6.0.1
 
       - name: Publish release distributions to registry
+        env:
+          TWINE_NON_INTERACTIVE: "yes"
+          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+          TWINE_REPOSITORY: ${{ vars.TWINE_REPOSITORY }}
+          TWINE_USERNAME: ${{ vars.TWINE_USERNAME }}
         run : |
           twine upload wheelhouse/*
