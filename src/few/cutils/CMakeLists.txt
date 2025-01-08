@@ -90,29 +90,29 @@ if(_FEW_ACTUALLY_FETCH_LAPACK)
   endif()
 endif()
 
-set(_COMMON_ARGS INCLUDE PRIVATE ${Python_NumPy_INCLUDE_DIR} WITH_CPU_VERSION)
+set(_COMMON_ARGS INCLUDE PRIVATE ${Python_NumPy_INCLUDE_DIR})
 
-few_add_cython_library(
-  NAME pymatmul DESTINATION "few/cutils"
+few_add_lib_to_cuda_cpu_backends(
+  NAME pymatmul
   PYX_SOURCES pymatmul.pyx
   CU_SOURCES matmul.cu
   HEADERS cuda_complex.hpp global.h matmul.hh ${_COMMON_ARGS})
 
-few_add_cython_library(
-  NAME pyinterp DESTINATION "few/cutils"
+few_add_lib_to_cuda_cpu_backends(
+  NAME pyinterp
   PYX_SOURCES pyinterp.pyx
   CU_SOURCES interpolate.cu
   LINK PUBLIC ${FEW_LAPACKE_LIBS}
-  HEADERS cuda_complex.hpp global.h interpolate.hh ${_COMMON_ARGS})
+  HEADERS cuda_complex.hpp global.h matmul.hh ${_COMMON_ARGS})
 
-few_add_cython_library(
-  NAME pyAAK DESTINATION "few/cutils"
+few_add_lib_to_cuda_cpu_backends(
+  NAME pyAAK
   PYX_SOURCES gpuAAKWrap.pyx
   CU_SOURCES gpuAAK.cu
   HEADERS cuda_complex.hpp global.h gpuAAK.hh ${_COMMON_ARGS})
 
-few_add_cython_library(
-  NAME pyAmpInterp2D DESTINATION "few/cutils"
+few_add_lib_to_cuda_cpu_backends(
+  NAME pyAmpInterp2D
   PYX_SOURCES pyampinterp2D.pyx
   CU_SOURCES AmpInterp2D.cu
   HEADERS cuda_complex.hpp global.h AmpInterp2D.hh ${_COMMON_ARGS})

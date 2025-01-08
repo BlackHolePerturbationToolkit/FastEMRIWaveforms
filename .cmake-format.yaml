@@ -1,10 +1,20 @@
 parse:
   additional_commands:
-    few_add_cython_library:
+    _few_add_lib_to_backend:
       kwargs:
-        NAME: '*'
-        PYX_SOURCES: '*'
+        NAME: 1
+        BACKEND: 1
+        SOURCES: '*'
+        LINK: '*'
+        HEADERS: '*'
+        INCLUDE: '*'
+        PROPERTIES: '*'
+    few_add_lib_to_cuda_cpu_backends:
+      kwargs:
+        NAME: 1
         CU_SOURCES: '*'
+        CXX_SOURCES: '*'
+        PYX_SOURCES: '*'
         LINK: '*'
         HEADERS: '*'
         INCLUDE: '*'

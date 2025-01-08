@@ -21,16 +21,63 @@ function(_few_convert_pyx_to_cxx PYX_FILE OUT_C_FILE)
   set("${OUT_C_FILE}" "${NAME_FILE_WLE}.cpp" PARENT_SCOPE)
 endfunction()
 
-# Define a python library based on one or multiple Cython files
-# few_add_cython_library(NAME libname SOURCES file0.pyx file1.pyx)
-function(few_add_cython_library)
+# Define a library into a backend
+function(_few_add_lib_to_backend)
   # Process arguments
-  set(options WITH_CPU_VERSION)
-  set(oneValueArgs NAME DESTINATION)
+  set(options)
+  set(oneValueArgs NAME BACKEND)
+  set(multiValueArgs SOURCES LINK INCLUDE HEADERS PROPERTIES)
+
+  cmake_parse_arguments(FEW_ADDLIB "${options}" "${oneValueArgs}"
+                        "${multiValueArgs}" ${ARGN})
+
+  # Define the library
+  set(FEW_ADDLIB_TARGET_NAME
+      "few_cutils_${FEW_ADDLIB_BACKEND}_${FEW_ADDLIB_NAME}")
+  python_add_library(${FEW_ADDLIB_TARGET_NAME} MODULE ${FEW_ADDLIB_SOURCES}
+                     WITH_SOABI)
+
+  # Add links to other libraries
+  if(FEW_ADDLIB_LINK)
+    target_link_libraries(${FEW_ADDLIB_TARGET_NAME} ${FEW_ADDLIB_LINK})
+  endif()
+
+  # Add include directories
+  if(FEW_ADDLIB_INCLUDE)
+    target_include_directories(${FEW_ADDLIB_TARGET_NAME} ${FEW_ADDLIB_INCLUDE})
+  endif()
+
+  # Add headers to sources
+  if(FEW_ADDLIB_HEADERS)
+    target_sources(${FEW_ADDLIB_TARGET_NAME} PUBLIC FILE_SET HEADERS FILES
+                                                    ${FEW_ADDLIB_HEADERS})
+  endif()
+
+  # Add properties
+  if(FEW_ADDLIB_PROPERTIES)
+    set_target_properties(${FEW_ADDLIB_TARGET_NAME}
+                          PROPERTIES ${FEW_ADDLIB_PROPERTIES})
+  endif()
+
+  # Make target installed
+  install(TARGETS ${FEW_ADDLIB_TARGET_NAME}
+          DESTINATION "few/cutils/${FEW_ADDLIB_BACKEND}/")
+  set_target_properties(${FEW_ADDLIB_TARGET_NAME}
+                        PROPERTIES OUTPUT_NAME "${FEW_ADDLIB_NAME}")
+
+endfunction() # _few_add_lib_to_backend
+
+# Define a library based on Cython and CUDA/CXX files. The CXX version of CUDA
+# sources will be used for CPU backends. The CUDA version of CUDA sources will
+# be used for GPU backends if enabled.
+function(few_add_lib_to_cuda_cpu_backends)
+  # Process arguments
+  set(options)
+  set(oneValueArgs NAME)
   set(multiValueArgs
-      PYX_SOURCES
       CU_SOURCES
       CXX_SOURCES
+      PYX_SOURCES
       LINK
       INCLUDE
       HEADERS)
@@ -38,8 +85,7 @@ function(few_add_cython_library)
   cmake_parse_arguments(FEW_ADDLIB "${options}" "${oneValueArgs}"
                         "${multiValueArgs}" ${ARGN})
 
-  # Add processing command to each input cython file and build list of output C
-  # files
+  # Process Cython files into CXX files
   set(FEW_ADDLIB_PYX_TO_CXX_SOURCES)
   foreach(FEW_PYX_SOURCE IN ITEMS ${FEW_ADDLIB_PYX_SOURCES})
     _few_convert_pyx_to_cxx("${FEW_PYX_SOURCE}" "FEW_CXX_SOURCE")
@@ -49,80 +95,52 @@ function(few_add_cython_library)
                        "${FEW_ADDLIB_NAME}")
   endforeach()
 
-  # Define the cython-based python library
-  python_add_library(
-    ${FEW_ADDLIB_NAME}
-    MODULE
-    ${FEW_ADDLIB_PYX_TO_CXX_SOURCES}
-    ${FEW_ADDLIB_CU_SOURCES}
-    ${FEW_ADDLIB_CXX_SOURCES}
-    WITH_SOABI)
+  # Copy CUDA files into CXX files
+  set(FEW_ADDLIB_CU_TO_CXX_SOURCES)
+  foreach(CU_FILE IN ITEMS ${FEW_ADDLIB_CU_SOURCES})
+    add_custom_command(
+      OUTPUT "${FEW_ADDLIB_NAME}_cpu/${CU_FILE}.cxx"
+      COMMENT
+        "Copy ${CMAKE_CURRENT_SOURCE_DIR}/${CU_FILE} to ${CMAKE_CURRENT_BINARY_DIR}/${FEW_ADDLIB_NAME}_cpu/${CU_FILE}.cxx ."
+      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${CU_FILE}
+              ${CMAKE_CURRENT_BINARY_DIR}/${FEW_ADDLIB_NAME}_cpu/${CU_FILE}.cxx
+      DEPENDS "${CU_FILE}"
+      VERBATIM)
+    list(APPEND FEW_ADDLIB_CU_TO_CXX_SOURCES
+         "${CMAKE_CURRENT_BINARY_DIR}/${FEW_ADDLIB_NAME}_cpu/${CU_FILE}.cxx")
+  endforeach()
 
-  # Ensure CU files are interpreted as CXX or CUDA depending on GPU support
-  get_target_property(_FEW_CU_LANGUAGE ${SKBUILD_PROJECT_NAME} CU_LANGUAGE)
-  set_source_files_properties(${FEW_ADDLIB_CU_SOURCES}
-                              PROPERTIES LANGUAGE ${_FEW_CU_LANGUAGE})
-  unset(_FEW_CU_LANGUAGE)
+  # Set the language of CXX source files
+  set_source_files_properties(${FEW_ADDLIB_CXX_SOURCES} PROPERTIES LANGUAGE CXX)
+  set_source_files_properties(${FEW_ADDLIB_PYX_TO_CXX_SOURCES}
+                              PROPERTIES LANGUAGE CXX)
+  set_source_files_properties(${FEW_ADDLIB_CU_TO_CXX_SOURCES}
+                              PROPERTIES LANGUAGE CXX)
 
-  # If GPU support is enabled and at least one CU file is provided, then link
-  # cudart, cublas and cusparse
+  # Define the CPU version
+  _few_add_lib_to_backend(
+    NAME "${FEW_ADDLIB_NAME}"
+    BACKEND "cpu"
+    SOURCES ${FEW_ADDLIB_CXX_SOURCES} ${FEW_ADDLIB_PYX_TO_CXX_SOURCES}
+            ${FEW_ADDLIB_CU_TO_CXX_SOURCES}
+    LINK ${FEW_ADDLIB_LINK}
+    INCLUDE ${FEW_ADDLIB_INCLUDE}
+    HEADERS ${FEW_ADDLIB_HEADERS})
+
+  # Define the GPU version
   get_target_property(_FEW_WITH_GPU ${SKBUILD_PROJECT_NAME} WITH_GPU)
   if(_FEW_WITH_GPU)
-    target_link_libraries(${FEW_ADDLIB_NAME} PUBLIC CUDA::cudart CUDA::cublas
-                                                    CUDA::cusparse)
-  endif()
-  unset(_FEW_WITH_GPU)
-
-  set_source_files_properties(${FEW_ADDLIB_CXX_SOURCES} PROPERTIES LANGUAGE CXX)
-
-  # Add links to other libraries
-  if(FEW_ADDLIB_LINK)
-    target_link_libraries(${FEW_ADDLIB_NAME} ${FEW_ADDLIB_LINK})
-  endif()
-
-  # Add include directories
-  if(FEW_ADDLIB_INCLUDE)
-    target_include_directories(${FEW_ADDLIB_NAME} ${FEW_ADDLIB_INCLUDE})
-  endif()
-
-  # Add headers to sources
-  if(FEW_ADDLIB_HEADERS)
-    target_sources(${FEW_ADDLIB_NAME} PUBLIC FILE_SET HEADERS FILES
-                                             ${FEW_ADDLIB_HEADERS})
-  endif()
-
-  # Define the CUDA architectures on target
-  set_property(TARGET ${FEW_ADDLIB_NAME} PROPERTY CUDA_ARCHITECTURES
-                                                  ${FEW_CUDA_ARCH})
-
-  # Make target installed
-  if(NOT FEW_ADDLIB_DESTINATION)
-    set(FEW_ADDLIB_DESTINATION ".")
-  endif()
-  install(TARGETS ${FEW_ADDLIB_NAME} DESTINATION ${FEW_ADDLIB_DESTINATION})
-
-  # Define the CPU version if requested
-  if(FEW_ADDLIB_WITH_CPU_VERSION)
-    foreach(CU_FILE IN ITEMS ${FEW_ADDLIB_CU_SOURCES})
-      add_custom_command(
-        OUTPUT "${FEW_ADDLIB_NAME}_cpu/${CU_FILE}.cxx"
-        COMMENT
-          "Copy ${CMAKE_CURRENT_SOURCE_DIR}/${CU_FILE} to ${CMAKE_CURRENT_BINARY_DIR}/${FEW_ADDLIB_NAME}_cpu/${CU_FILE}.cxx ."
-        COMMAND
-          ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${CU_FILE}
-          ${CMAKE_CURRENT_BINARY_DIR}/${FEW_ADDLIB_NAME}_cpu/${CU_FILE}.cxx
-        DEPENDS "${CU_FILE}"
-        VERBATIM)
-      list(APPEND FEW_ADDLIB_CXX_SOURCES
-           "${CMAKE_CURRENT_BINARY_DIR}/${FEW_ADDLIB_NAME}_cpu/${CU_FILE}.cxx")
-    endforeach()
-
-    few_add_cython_library(
-      NAME "${FEW_ADDLIB_NAME}_cpu"
-      PYX_SOURCES ${FEW_ADDLIB_PYX_SOURCES} CXX_SOURCES
-                  ${FEW_ADDLIB_CXX_SOURCES}
-      LINK ${FEW_ADDLIB_LINK}
+    set_source_files_properties(${FEW_ADDLIB_CU_SOURCES} PROPERTIES LANGUAGE
+                                                                    CUDA)
+    _few_add_lib_to_backend(
+      NAME "${FEW_ADDLIB_NAME}"
+      BACKEND "cuda${CUDAToolkit_VERSION_MAJOR}x"
+      SOURCES ${FEW_ADDLIB_CXX_SOURCES} ${FEW_ADDLIB_PYX_TO_CXX_SOURCES}
+              ${FEW_ADDLIB_CU_SOURCES}
+      LINK ${FEW_ADDLIB_LINK} PUBLIC CUDA::cudart CUDA::cublas CUDA::cusparse
       INCLUDE ${FEW_ADDLIB_INCLUDE}
-      HEADERS ${FEW_ADDLIB_HEADERS} DESTINATION ${FEW_ADDLIB_DESTINATION})
+      HEADERS ${FEW_ADDLIB_HEADERS}
+      PROPERTIES CUDA_ARCHITECTURES ${FEW_CUDA_ARCH})
   endif()
-endfunction()
+
+endfunction() # few_add_lib_to_cuda_cpu_backends

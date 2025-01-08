@@ -41,7 +41,7 @@ from ..utils.utility import p_to_y, kerr_p_to_u
 # check for cupy and GPU version of pymatmul
 try:
     # Cython/C++ imports
-    from ..cutils.pyAmpInterp2D import interp2D as interp2D_gpu
+    from ..cutils.fast import interp2D as interp2D_gpu
 
     # Python imports
     import cupy as cp
@@ -49,7 +49,7 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
 
-from ..cutils.pyAmpInterp2D_cpu import interp2D as interp2D_cpu
+from ..cutils.cpu import interp2D as interp2D_cpu
 
 from typing import Optional, Union
 

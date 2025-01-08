@@ -82,7 +82,7 @@ if(FEW_WITH_GPU STREQUAL "AUTO")
   if(CMAKE_CUDA_COMPILER AND CUDAToolkit_FOUND)
     message(
       STATUS
-        "FEW GPU support was set to AUTO and will be turned ON as CUDA and CUDA Toolkit are available."
+        "FEW GPU support was set to AUTO and will be turned ON as CUDA and CUDA Toolkit are available with CUDA version ${CUDAToolkit_VERSION_MAJOR}."
     )
     set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU ON)
   else()
@@ -103,6 +103,9 @@ get_target_property(_FEW_WITH_GPU ${SKBUILD_PROJECT_NAME} WITH_GPU)
 if(_FEW_WITH_GPU)
   enable_language(CUDA)
   find_package(CUDAToolkit REQUIRED)
+  set_target_properties(
+    ${SKBUILD_PROJECT_NAME} PROPERTIES FAST_BACKEND
+                                       "cuda${CUDAToolkit_VERSION_MAJOR}x")
   set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES CU_LANGUAGE "CUDA")
 else()
   set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES CU_LANGUAGE "CXX")

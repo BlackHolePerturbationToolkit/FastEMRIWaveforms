@@ -27,7 +27,7 @@ except (ImportError, ModuleNotFoundError) as e:
     import numpy as np
 
 # Cython imports
-from ..cutils.pyinterp_cpu import (
+from ..cutils.cpu import (
     get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_cpu,
 )
 
@@ -44,7 +44,7 @@ from ..summation.interpolatedmodesum import CubicSplineInterpolant
 
 # Attempt Cython imports of GPU functions
 try:
-    from ..cutils.pyinterp import (
+    from ..cutils.fast import (
         get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_gpu,
     )
 

@@ -95,10 +95,11 @@ sdist.exclude = [
   "Tutorial_interpolation.ipynb",
 ]
 wheel.packages = [ "src/few" ]
+wheel.exclude = [ "**.pyx", "**.cu", "**.cxx", "**.hh", "**.h", "**.hpp", "**/CMakeLists.txt" ]
 
 [tool.scikit-build.cmake.define]
 # Default values for CMake options used when building FEW.
-# These can be tuned on CLI as follozs:
+# These can be tuned on CLI as follows:
 #   $ pip install . --config-settings=cmake.define.FEW_LAPACKE_FETCH=OFF
 
 # Whether LAPACK should be automatically fetched and compiled.
