@@ -8,6 +8,7 @@ from .pyinterp import (
 )
 from .pymatmul import neural_layer_wrap, transform_output_wrap
 
+__backend__ = "cpu"
 
 __all__ = [
     "pyWaveform",
@@ -17,4 +18,5 @@ __all__ = [
     "get_waveform_generic_fd_wrap",
     "neural_layer_wrap",
     "transform_output_wrap",
+    "__backend__",
 ]

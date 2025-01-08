@@ -7,9 +7,11 @@ try:
         get_waveform_generic_fd_wrap,
     )
     from .pymatmul import neural_layer_wrap, transform_output_wrap
-except ImportError:
+except ImportError as e:
     from few.utils.exceptions import BackendUnavailable
-    raise BackendUnavailable("CUDA 12.x") from None
+    raise BackendUnavailable("CUDA 12.x") from e
+
+__backend__ = "cuda12x"
 
 __all__ = [
     "pyWaveform",
@@ -19,4 +21,5 @@ __all__ = [
     "get_waveform_generic_fd_wrap",
     "neural_layer_wrap",
     "transform_output_wrap",
+    "__backend__",
 ]
