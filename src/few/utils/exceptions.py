@@ -19,3 +19,11 @@ class MissingDependency(FewException):
 class BackendUnavailable(FewException):
     """Exception raised when the backend is not available."""
     pass
+
+class BackendNotInstalled(BackendUnavailable):
+    """Exception raised when the backend is not installed."""
+    pass
+
+class BackendImportFailed(BackendUnavailable):
+    """Exception raised when the backend import fails."""
+    pass

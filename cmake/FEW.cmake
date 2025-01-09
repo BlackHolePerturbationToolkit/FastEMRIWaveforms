@@ -61,12 +61,12 @@ function(_few_add_lib_to_backend)
 
   # Make target installed
   install(TARGETS ${FEW_ADDLIB_TARGET_NAME}
-          DESTINATION "few/cutils/${FEW_ADDLIB_BACKEND}/")
+          DESTINATION "few_backend_${FEW_ADDLIB_BACKEND}")
   set_target_properties(
     ${FEW_ADDLIB_TARGET_NAME}
     PROPERTIES OUTPUT_NAME "${FEW_ADDLIB_NAME}"
                LIBRARY_OUTPUT_DIRECTORY
-               "$CMAKE_CURRENT_BINARY_DIR}/few/cutils/${FEW_ADDLIB_BACKEND}/")
+               "$CMAKE_CURRENT_BINARY_DIR}/few_backend/${FEW_ADDLIB_BACKEND}/")
 
 endfunction() # _few_add_lib_to_backend
 

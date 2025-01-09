@@ -11,6 +11,9 @@ class BackendSelectionMode(Enum):
     """
     BEST = "best"  # Determine the best backend best on available drivers and devices. Fails if it cannot be loaded.
     LAZY = "lazy"  # Automatically selects the best available backend in current environment.
+    CPU = "cpu"  # Forces the CPU backend.
+    CUDA11X = "cuda11x"  # Forces the CUDA 11.x backend.
+    CUDA12X = "cuda12x"  # Forces the CUDA 12.x backend.
 
 def get_cuda_version() -> tuple[int, int]:
     """Get current CUDA version."""
@@ -39,6 +42,7 @@ def check_cupy_works():
     # Try to import CuPy
     try:
         import cupy
+        import cupy_backends.cuda
     except ImportError as e:
         raise MissingDependency(f"CuPy is not installed. Run `pip install cupy-cuda{cuda_version[0]}x` to install it.") from e
 
@@ -47,7 +51,8 @@ def check_cupy_works():
         _ = cupy.arange(1)
     except cupy.cuda.compiler.CompileException as e:
         raise MissingDependency(f"CuPy fails to run due to missing dependencies. Run `pip install nvidia-cuda-runtime-cu{cuda_version[0]}=='{cuda_version[0]}.{cuda_version[0]}{cuda_version[1]}.*'` to install them.") from e
-
+    except cupy_backends.cuda.api.runtime.CUDARuntimeError as e:
+        raise CuPyException("CuPy could not execute properly.") from e
 
 def try_import_cuda11x() -> ModuleType:
     """Try to import the cuda11x backend."""
@@ -86,13 +91,41 @@ def import_cpu_backend() -> ModuleType:
     from .. import cpu
     return cpu
 
-def import_so_libs(libs: Sequence[tuple[str, str, str]]) -> None:
-    """Import a list of libraries."""
-    raise NotImplementedError("Importing shared libraries is not implemented yet.")
-    solibs = [item for item in libs.items()]
-
+def try_import_nvidia_so_libs(libs: Sequence[tuple[str, str, str]], cuda_version: tuple[int, int]) -> None:
+    """Try to load a set of NVidia dynamic libraries."""
     import ctypes
+    import importlib
+    import pathlib
 
+    try:
+        nvidia_root = pathlib.Path(importlib.import_module("nvidia").__file__).parent
+    except ModuleNotFoundError:
+        nvidia_root = None
+
+    failed_idx = []
+    for idx, _, module_name, soname in enumerate(libs):
+        try:
+            ctypes.cdll.LoadLibrary(soname)
+            continue
+        except OSError:
+            pass
+
+        try:
+            if nvidia_root is not None:
+                ctypes.cdll.LoadLibrary(nvidia_root / module_name / "lib" / soname)
+                continue
+        except OSError:
+            pass
+
+        failed_idx.append(idx)
+
+    if failed_idx:
+        failed_libs = [libs[idx][2] for idx in failed_idx]
+        packages = [f"{lib[0]}=='{cuda_version[0]}.{cuda_version[1]}.*'" for lib in libs]
+
+        raise MissingDependency(f"Could not load the following NVidia libraries: {failed_libs}. "
+                                f"If you installed FEW using pip, you may install them by running"
+                                f"`pip install {packages}`. ")
 
 
 def import_lazy_backend() -> ModuleType:
@@ -109,14 +142,7 @@ def import_lazy_backend() -> ModuleType:
 
     return import_cpu_backend()
 
-def check_cuda12x_backend_installed():
-    """Check that the cuda12x backend is installed."""
-    import importlib.util
-    import sys
-
-    cuda12x_spec = importlib.util.find_spec("few.cutils.cuda12x")
-
-def try_preload_cuda12x_dynlibs():
+def try_preload_cuda12x_dynlibs(cuda_version: tuple[int, int]):
     """Preload dynamic libraries required for CUDA 12x backend"""
     import sys
     if sys.platform == "linux":
@@ -128,39 +154,60 @@ def try_preload_cuda12x_dynlibs():
             ("nvidia-cuda-nvrtc-cu12", "cuda_nvrtc", "libnvrtc.so.12"),
             ("nvidia-cufft-cu12", "cufft", "libcufftw.so.11"),
         ]
-        try_import_so_libs(cuda12x_solibs)
+        try_import_nvidia_so_libs(cuda12x_solibs, cuda_version)
+
+def try_preload_cuda11x_dynlibs(cuda_version: tuple[int, int]):
+    """Preload dynamic libraries required for CUDA 11x backend"""
+    import sys
+    if sys.platform == "linux":
+        cuda11x_solibs = [
+            ("nvidia-cuda-runtime-cu11", "cuda_runtime", "libcudart.so.11"),
+            ("nvidia-cublas-cu11", "cublas", "libcublas.so.11"),
+            ("nvidia-cusparse-cu11", "cusparse", "libcusparse.so.11"),
+            ("nvidia-nvjitlink-cu11", "nvjitlink", "libnvJitLink.so.11"),
+            ("nvidia-cuda-nvrtc-cu11", "cuda_nvrtc", "libnvrtc.so.11"),
+            ("nvidia-cufft-cu11", "cufft", "libcufftw.so.11"),
+        ]
+        try_import_nvidia_so_libs(cuda11x_solibs, cuda_version)
 
 
-def force_import_cuda12x_backend() -> ModuleType:
+def force_import_cuda11x_backend(cuda_version: tuple[int, int]) -> ModuleType:
+    """Force import the cuda11x backend."""
+    # If this method is called, the CUDA driver is installed with version 12.x.
+
+    # Check that nvidia dynamic libraries are available
+    try:
+        try_preload_cuda11x_dynlibs(cuda_version)
+    except MissingDependency as e:
+        raise BackendUnavailable("Some CUDA libraries required by FEW are not available. Please follow previous instructions.") from e
+
+    # Then check that CuPy works
+    try:
+        check_cupy_works()
+    except CuPyException as e:
+        raise BackendUnavailable("Your system has CUDA 11.x installed but CuPy does not work. Follow previous instructions.") from e
+
+    # Then try to import the cuda12x backend
+    return try_import_cuda11x()
+
+def force_import_cuda12x_backend(cuda_version: tuple[int, int]) -> ModuleType:
     """Force import the cuda12x backend."""
     # If this method is called, the CUDA driver is installed with version 12.x.
 
-    # First check that CuPy works
+    # Check that nvidia dynamic libraries are available
+    try:
+        try_preload_cuda12x_dynlibs(cuda_version)
+    except MissingDependency as e:
+        raise BackendUnavailable("Some CUDA libraries required by FEW are not available. Please follow previous instructions.") from e
+
+    # Then check that CuPy works
     try:
         check_cupy_works()
     except CuPyException as e:
         raise BackendUnavailable("Your system has CUDA 12.x installed but CuPy does not work. Follow previous instructions.") from e
 
-    # Then check whether the cuda12x backend is installed (either from source or as a plugin)
-    try:
-        check_cuda12x_backend_installed()
-    except BackendUnavailable as e:
-        raise BackendUnavailable("Your system has CUDA 12.x installed but the corresponding backend is not installed. "
-                                 "If you installed FEW from pip, run `pip install fastemriwaveforms-cuda12x`. "
-                                 "If you installed from source, ensure that you enabled GPU support (refer to the documentation).") from e
-
     # Then try to import the cuda12x backend
-    try:
-        return try_import_cuda12x()
-    except BackendUnavailable as e:
-        pass # Failure could occur if some dynamic dependencies are missing, let's try to import them
-
-    # If we reach this point, the cuda12x backend is not importable. This could be due to missing dynamic dependencies.
-    try:
-        try_preload_cuda12x_dynlibs()
-    except MissingDependency as e:
-        raise BackendUnavailable("Some CUDA libraries required by FEW are not available. Please follow previous instructions.") from e
-
+    return try_import_cuda12x()
 
 def import_best_backend() -> ModuleType:
     """Determine the best backend based on available drivers and devices."""
@@ -170,10 +217,10 @@ def import_best_backend() -> ModuleType:
         return import_cpu_backend()
 
     if cuda_version[0] == 12:
-        return force_import_cuda12x_backend()
+        return force_import_cuda12x_backend(cuda_version)
 
     if cuda_version[0] == 11:
-        return force_import_cuda11x_backend()
+        return force_import_cuda11x_backend(cuda_version)
 
     return import_cpu_backend()
 
@@ -182,10 +229,19 @@ def import_fast_backend(mode: BackendSelectionMode) -> ModuleType:
     Selects the appropriate backend module based on the provided mode.
     """
 
-    if mode == BackendSelectionMode.AUTO_LAZY:
+    if mode == BackendSelectionMode.LAZY:
         return import_lazy_backend()
 
-    if mode == BackendSelectionMode.AUTO_BEST:
+    if mode == BackendSelectionMode.BEST:
         return import_best_backend()
+
+    if mode == BackendSelectionMode.CPU:
+        return import_cpu_backend()
+
+    if mode == BackendSelectionMode.CUDA11X:
+        return force_import_cuda11x_backend(get_cuda_version())
+
+    if mode == BackendSelectionMode.CUDA12X:
+        return force_import_cuda12x_backend(get_cuda_version())
 
     raise ValueError(f"Invalid backend selection mode: {mode}")
