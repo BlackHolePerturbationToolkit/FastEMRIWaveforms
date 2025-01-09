@@ -50,8 +50,8 @@ def check_cupy_works():
     try:
         _ = cupy.arange(1)
     except cupy.cuda.compiler.CompileException as e:
-        raise MissingDependency(f"CuPy fails to run due to missing dependencies. Run `pip install nvidia-cuda-runtime-cu{cuda_version[0]}=='{cuda_version[0]}.{cuda_version[0]}{cuda_version[1]}.*'` to install them.") from e
-    except cupy_backends.cuda.api.runtime.CUDARuntimeError as e:
+        raise MissingDependency(f"CuPy fails to run due to missing dependencies. Run `pip install nvidia-cuda-runtime-cu{cuda_version[0]}=='{cuda_version[0]}.{cuda_version[1]}.*'` to install them.") from e
+    except (cupy_backends.cuda.api.runtime.CUDARuntimeError, RuntimeError) as e:
         raise CuPyException("CuPy could not execute properly.") from e
 
 def try_import_cuda11x() -> ModuleType:
@@ -103,7 +103,7 @@ def try_import_nvidia_so_libs(libs: Sequence[tuple[str, str, str]], cuda_version
         nvidia_root = None
 
     failed_idx = []
-    for idx, _, module_name, soname in enumerate(libs):
+    for idx, (_, module_name, soname) in enumerate(libs):
         try:
             ctypes.cdll.LoadLibrary(soname)
             continue
