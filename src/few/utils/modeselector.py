@@ -30,9 +30,8 @@ import sys
 # check for cupy
 try:
     import cupy as cp
-
 except (ImportError, ModuleNotFoundError):
-    import numpy as np
+    pass
 
 # pytorch
 try:

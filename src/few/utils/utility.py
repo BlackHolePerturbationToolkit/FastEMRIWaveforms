@@ -30,17 +30,14 @@ from .elliptic import EllipK, EllipE, EllipPi
 
 from numba import njit
 from math import sqrt, pow, cos, acos
+import few
 
 # check to see if cupy is available for gpus
-try:
+if few.cutils.fast.is_gpu:
     import cupy as cp
     from cupy.cuda.runtime import setDevice
-
     gpu = True
-
-except (ImportError, ModuleNotFoundError) as e:
-    import numpy as np
-
+else:
     setDevice = None
     gpu = False
 

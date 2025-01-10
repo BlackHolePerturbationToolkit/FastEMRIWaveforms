@@ -29,7 +29,7 @@ import numpy as np
 from typing import Union, Optional
 
 # try to import cupy
-from ..cutils.fast import fast as fast_backend
+from ..cutils import fast as fast_backend
 gpu_available = fast_backend.is_gpu
 
 # Python imports
