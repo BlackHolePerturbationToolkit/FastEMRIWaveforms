@@ -6,22 +6,13 @@ from scipy.interpolate import CubicSpline
 import time
 import matplotlib.pyplot as plt
 
+import few
 from few.trajectory.inspiral import EMRIInspiral
 from few.utils.constants import *
 from few.trajectory.ode import KerrEccEqFlux, PN5, SchwarzEccFlux
 
-try:
-    import cupy as xp
-
-    gpu_available = True
-
-except (ModuleNotFoundError, ImportError) as e:
-    import numpy as xp
-
-    warnings.warn(
-        "CuPy is not installed or a gpu is not available. If trying to run on a gpu, please install CuPy."
-    )
-    gpu_available = False
+gpu_available = few.cutils.fast.is_gpu
+warnings.warn("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
 
 T = 1000.0
 dt = 10.0

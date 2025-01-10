@@ -3,6 +3,7 @@ import numpy as np
 import warnings
 import pathlib
 
+import few
 from few.trajectory.inspiral import EMRIInspiral
 from few.utils.ylm import GetYlms
 from few.utils.modeselector import ModeSelector
@@ -12,18 +13,9 @@ from few.waveform import FastSchwarzschildEccentricFluxBicubic
 from few.utils.utility import get_overlap,get_mismatch
 from few.trajectory.ode import SchwarzEccFlux
 
-try:
-    import cupy as xp
 
-    gpu_available = True
-
-except (ModuleNotFoundError, ImportError) as e:
-    import numpy as xp
-
-    warnings.warn(
-        "CuPy is not installed or a gpu is not available. If trying to run on a gpu, please install CuPy."
-    )
-    gpu_available = False
+gpu_available = few.cutils.fast.is_gpu
+warnings.warn("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
 
 
 class ModeSelectorTest(unittest.TestCase):

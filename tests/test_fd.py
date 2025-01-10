@@ -3,24 +3,15 @@ import pickle
 import numpy as np
 import warnings
 
+import few
 from few.waveform import FastSchwarzschildEccentricFlux
 from few.waveform import GenerateEMRIWaveform
 from few.utils.constants import *
 
+from few.cutils.fast import xp
+gpu_available = few.cutils.fast.is_gpu
 
-try:
-    import cupy as xp
-
-    gpu_available = True
-
-except (ModuleNotFoundError, ImportError) as e:
-    import numpy as xp
-
-    warnings.warn(
-        "CuPy is not installed or a gpu is not available. If trying to run on a gpu, please install CuPy."
-    )
-    gpu_available = False
-
+warnings.warn("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
 
 few_gen = GenerateEMRIWaveform(
     "FastSchwarzschildEccentricFlux",

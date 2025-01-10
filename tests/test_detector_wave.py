@@ -3,20 +3,11 @@ import pickle
 import numpy as np
 import warnings
 
+import few
 from few.waveform import GenerateEMRIWaveform
 
-try:
-    import cupy as xp
-
-    gpu_available = True
-
-except (ModuleNotFoundError, ImportError) as e:
-    import numpy as xp
-
-    warnings.warn(
-        "CuPy is not installed or a gpu is not available. If trying to run on a gpu, please install CuPy."
-    )
-    gpu_available = False
+gpu_available = few.cutils.fast.is_gpu
+warnings.warn("Test is running with fast backend '{}' (use_gpu: {})".format(few.cutils.fast.__backend__, gpu_available))
 
 
 def run_detector_frame_test(test_pickle=False):

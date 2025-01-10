@@ -2,24 +2,14 @@ import unittest
 import warnings
 
 # from few.waveform import FastSchwarzschildEccentricFlux
+import few
 from few.waveform import GenerateEMRIWaveform
 
 from few.utils.utility import get_mismatch
 from few.trajectory.ode import KerrEccEqFlux
 
-try:
-    import cupy as xp
-
-    use_gpu = True
-
-except (ModuleNotFoundError, ImportError) as e:
-    import numpy as xp
-
-    warnings.warn(
-        "CuPy is not installed or a gpu is not available. If trying to run on a gpu, please install CuPy."
-    )
-    use_gpu = False
-
+use_gpu = few.cutils.fast.is_gpu
+warnings.warn("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
 
 # keyword arguments for inspiral generator (Kerr Waveform)
 inspiral_kwargs_Kerr = {
