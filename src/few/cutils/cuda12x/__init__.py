@@ -17,6 +17,10 @@ except ImportError as e:
     from few.utils.exceptions import BackendImportFailed
     raise BackendImportFailed("CUDA 12.x backend installed but not importable") from e
 
+import cupy as xp
+
+is_gpu: bool = True
+
 __backend__ = "cuda12x"
 
 __all__ = [
@@ -28,4 +32,6 @@ __all__ = [
     "neural_layer_wrap",
     "transform_output_wrap",
     "__backend__",
+    "is_gpu",
+    "xp",
 ]

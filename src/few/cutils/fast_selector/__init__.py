@@ -3,7 +3,7 @@
 from enum import Enum
 from types import ModuleType
 from typing import Sequence
-from ...utils.exceptions import BackendUnavailable, CudaException, CuPyException, MissingDependency
+from ...utils.exceptions import BackendUnavailable, CudaException, CuPyException, FewException, MissingDependency
 
 class BackendSelectionMode(Enum):
     """
@@ -103,44 +103,31 @@ def try_import_nvidia_so_libs(libs: Sequence[tuple[str, str, str]], cuda_version
         nvidia_root = None
 
     failed_idx = []
+    exceptions = []
     for idx, (_, module_name, soname) in enumerate(libs):
         try:
             ctypes.cdll.LoadLibrary(soname)
             continue
-        except OSError:
-            pass
+        except OSError as e:
+            exceptions.append(e)
 
         try:
             if nvidia_root is not None:
                 ctypes.cdll.LoadLibrary(nvidia_root / module_name / "lib" / soname)
                 continue
-        except OSError:
-            pass
+        except OSError as e:
+            exceptions.append(e)
 
         failed_idx.append(idx)
 
     if failed_idx:
         failed_libs = [libs[idx][2] for idx in failed_idx]
-        packages = [f"{lib[0]}=='{cuda_version[0]}.{cuda_version[1]}.*'" for lib in libs]
+        packages = " ".join([f"{lib[0]}=='{cuda_version[0]}.{cuda_version[1]}.*'" for lib in libs])
 
         raise MissingDependency(f"Could not load the following NVidia libraries: {failed_libs}. "
                                 f"If you installed FEW using pip, you may install them by running"
-                                f"`pip install {packages}`. ")
+                                f"`pip install {packages}`. ") from ExceptionGroup("Following exceptions were raised when trying to load these libraries", exceptions)
 
-
-def import_lazy_backend() -> ModuleType:
-    """Determine the best available backend in current environment."""
-    try:
-        return try_import_cuda12x()
-    except BackendUnavailable:
-        pass
-
-    try:
-        return try_import_cuda11x()
-    except BackendUnavailable:
-        pass
-
-    return import_cpu_backend()
 
 def try_preload_cuda12x_dynlibs(cuda_version: tuple[int, int]):
     """Preload dynamic libraries required for CUDA 12x backend"""
@@ -149,8 +136,8 @@ def try_preload_cuda12x_dynlibs(cuda_version: tuple[int, int]):
         cuda12x_solibs = [
             ("nvidia-cuda-runtime-cu12", "cuda_runtime", "libcudart.so.12"),
             ("nvidia-cublas-cu12", "cublas", "libcublas.so.12"),
-            ("nvidia-cusparse-cu12", "cusparse", "libcusparse.so.12"),
             ("nvidia-nvjitlink-cu12", "nvjitlink", "libnvJitLink.so.12"),
+            ("nvidia-cusparse-cu12", "cusparse", "libcusparse.so.12"),
             ("nvidia-cuda-nvrtc-cu12", "cuda_nvrtc", "libnvrtc.so.12"),
             ("nvidia-cufft-cu12", "cufft", "libcufftw.so.11"),
         ]
@@ -163,8 +150,8 @@ def try_preload_cuda11x_dynlibs(cuda_version: tuple[int, int]):
         cuda11x_solibs = [
             ("nvidia-cuda-runtime-cu11", "cuda_runtime", "libcudart.so.11"),
             ("nvidia-cublas-cu11", "cublas", "libcublas.so.11"),
-            ("nvidia-cusparse-cu11", "cusparse", "libcusparse.so.11"),
             ("nvidia-nvjitlink-cu11", "nvjitlink", "libnvJitLink.so.11"),
+            ("nvidia-cusparse-cu11", "cusparse", "libcusparse.so.11"),
             ("nvidia-cuda-nvrtc-cu11", "cuda_nvrtc", "libnvrtc.so.11"),
             ("nvidia-cufft-cu11", "cufft", "libcufftw.so.11"),
         ]
@@ -208,6 +195,30 @@ def force_import_cuda12x_backend(cuda_version: tuple[int, int]) -> ModuleType:
 
     # Then try to import the cuda12x backend
     return try_import_cuda12x()
+
+def import_lazy_backend() -> ModuleType:
+    """Determine the best available backend in current environment."""
+    try:
+        cuda_version = get_cuda_version()
+    except CudaException:
+        return import_cpu_backend()
+
+    try:
+        try_preload_cuda12x_dynlibs(cuda_version)
+        check_cupy_works()
+        return try_import_cuda12x()
+    except FewException:
+        pass
+
+    try:
+        try_preload_cuda11x_dynlibs(cuda_version)
+        check_cupy_works()
+        return try_import_cuda11x()
+    except FewException:
+        pass
+
+    return import_cpu_backend()
+
 
 def import_best_backend() -> ModuleType:
     """Determine the best backend based on available drivers and devices."""

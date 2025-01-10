@@ -13,6 +13,10 @@ from few_backend_cpu.pyinterp import (
 )
 from few_backend_cpu.pymatmul import neural_layer_wrap, transform_output_wrap
 
+import numpy as xp
+
+is_gpu: bool = False
+
 __backend__ = "cpu"
 
 __all__ = [
@@ -24,4 +28,6 @@ __all__ = [
     "neural_layer_wrap",
     "transform_output_wrap",
     "__backend__",
+    "is_gpu",
+    "xp"
 ]
