@@ -136,15 +136,6 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
             transform_factor = fp.attrs["transform_factor"]
             self.break_index = fp.attrs["break_index"]
 
-        # adjust c++ classes based on gpu usage
-        if self.use_gpu:
-            self.neural_layer = neural_layer_wrap
-            self.transform_output = transform_output_wrap
-
-        else:
-            self.neural_layer = neural_layer_wrap_cpu
-            self.transform_output = transform_output_wrap_cpu
-
         self.num_teuk_modes = num_teuk_modes
         self.transform_factor_inv = 1 / transform_factor
 
@@ -166,6 +157,15 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         self.amp_norm_spline = RectBivariateSpline(
             np.unique(y_in), np.unique(e_in), norm.reshape(num_e, num_y).T
         )
+
+    @property
+    def neural_layer(self):
+        return neural_layer_wrap if self.use_gpu else neural_layer_wrap_cpu
+
+    @property
+    def transform_output(self):
+        return transform_output_wrap if self.use_gpu else transform_output_wrap_cpu
+
 
     @property
     def citation(self):

@@ -6,14 +6,6 @@ import numpy as np
 from tqdm import tqdm
 from scipy.interpolate import RectBivariateSpline
 
-# check if cupy is available / GPU is available
-try:
-    import cupy as cp
-    import numpy as xp
-
-except (ImportError, ModuleNotFoundError) as e:
-    import numpy as xp
-
 from ..utils.baseclasses import (
     Pn5AAK,
     ParallelModuleBase,
@@ -235,6 +227,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
         e = self.xp.asarray(e)
         xI = self.xp.asarray(xI)
         Phi_phi = self.xp.asarray(Phi_phi)
+        Phi_theta = self.xp.asarray(Phi_theta)
         Phi_r = self.xp.asarray(Phi_r)
 
         # get ylms only for unique (l,m) pairs

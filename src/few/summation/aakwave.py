@@ -65,14 +65,10 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         Pn5AAK.__init__(self, **kwargs)
         SummationBase.__init__(self, **kwargs)
 
-        if self.use_gpu:
-            waveform_generator = pyWaveform_gpu
-
-        else:
-            waveform_generator = pyWaveform_cpu
-
-        self.waveform_generator = waveform_generator
+    @property
+    def waveform_generator(self):
         """obj: Compiled CPU/GPU that performs the AAK waveform generation."""
+        return pyWaveform_gpu if self.use_gpu else pyWaveform_cpu
 
     @property
     def gpu_capability(self):
