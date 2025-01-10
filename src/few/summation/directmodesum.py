@@ -15,15 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
-
-# check for cupy
-try:
-    import cupy as cp
-
-except (ImportError, ModuleNotFoundError) as e:
-    import numpy as np
-
 # Necessary base classes
 from ..utils.baseclasses import (
     SchwarzschildEccentric,

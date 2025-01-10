@@ -29,15 +29,8 @@ import numpy as np
 from typing import Union, Optional
 
 # try to import cupy
-try:
-    import cupy as cp
-
-    gpu_available = True
-
-except:
-    import numpy as np
-
-    gpu_available = False
+from ..cutils.fast import fast as fast_backend
+gpu_available = fast_backend.is_gpu
 
 # Python imports
 from ..utils.constants import *
@@ -63,7 +56,7 @@ class ParallelModuleBase(ABC):
     @property
     def xp(self) -> object:
         """Cupy or Numpy"""
-        xp = np if not self.use_gpu else cp
+        xp = np if not self.use_gpu else fast_backend.xp
         return xp
 
     @classmethod

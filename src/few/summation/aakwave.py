@@ -22,22 +22,11 @@ import warnings
 import h5py
 import numpy as np
 
-# try to import cupy
-try:
-    import cupy as cp
 
-except (ImportError, ModuleNotFoundError) as e:
-    import numpy as np
 
 # Cython/C++ imports
 from ..cutils.cpu import pyWaveform as pyWaveform_cpu
-
-# Attempt Cython imports of GPU functions
-try:
-    from ..cutils.fast import pyWaveform as pyWaveform_gpu
-
-except (ImportError, ModuleNotFoundError) as e:
-    pass
+from ..cutils.fast import pyWaveform as pyWaveform_gpu
 
 # Python imports
 from ..utils.baseclasses import Pn5AAK, ParallelModuleBase

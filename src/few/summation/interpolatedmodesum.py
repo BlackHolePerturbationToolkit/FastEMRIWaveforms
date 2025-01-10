@@ -19,16 +19,12 @@ import warnings
 
 import numpy as np
 
-# try to import cupy
-try:
-    import cupy as cp
-
-except (ImportError, ModuleNotFoundError) as e:
-    import numpy as np
 
 # Cython imports
 from ..cutils.cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
 from ..cutils.cpu import get_waveform_wrap as get_waveform_wrap_cpu
+from ..cutils.fast import interpolate_arrays_wrap as interpolate_arrays_wrap_gpu
+from ..cutils.fast import get_waveform_wrap as get_waveform_wrap_gpu
 
 # Python imports
 from ..utils.baseclasses import (
@@ -39,14 +35,6 @@ from .base import SummationBase
 from ..utils.citations import *
 from ..utils.utility import get_fundamental_frequencies
 from ..utils.constants import *
-
-# Attempt Cython imports of GPU functions
-try:
-    from ..cutils.fast import interpolate_arrays_wrap as interpolate_arrays_wrap_gpu
-    from ..cutils.fast import get_waveform_wrap as get_waveform_wrap_gpu
-
-except (ImportError, ModuleNotFoundError) as e:
-    pass
 
 
 class CubicSplineInterpolant(ParallelModuleBase):

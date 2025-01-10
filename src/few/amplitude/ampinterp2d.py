@@ -38,17 +38,10 @@ from ..utils.utility import check_for_file_download
 from ..utils.citations import *
 from ..utils.utility import p_to_y, kerr_p_to_u
 
-# check for cupy and GPU version of pymatmul
-try:
-    # Cython/C++ imports
-    from ..cutils.fast import interp2D as interp2D_gpu
 
-    # Python imports
-    import cupy as cp
+import numpy as np
 
-except (ImportError, ModuleNotFoundError) as e:
-    import numpy as np
-
+from ..cutils.fast import interp2D as interp2D_gpu
 from ..cutils.cpu import interp2D as interp2D_cpu
 
 from typing import Optional, Union

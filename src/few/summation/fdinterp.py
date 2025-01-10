@@ -19,13 +19,6 @@ import warnings
 
 import numpy as np
 
-# try to import cupy
-try:
-    import cupy as cp
-
-except (ImportError, ModuleNotFoundError) as e:
-    import numpy as np
-
 # Cython imports
 from ..cutils.cpu import (
     get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_cpu,
@@ -42,14 +35,9 @@ from ..utils.utility import get_fundamental_frequencies
 from ..utils.constants import *
 from ..summation.interpolatedmodesum import CubicSplineInterpolant
 
-# Attempt Cython imports of GPU functions
-try:
-    from ..cutils.fast import (
-        get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_gpu,
-    )
-
-except (ImportError, ModuleNotFoundError) as e:
-    pass
+from ..cutils.fast import (
+    get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_gpu,
+)
 
 # for special functions
 from scipy import special

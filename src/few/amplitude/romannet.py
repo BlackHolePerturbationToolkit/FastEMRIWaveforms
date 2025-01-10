@@ -25,6 +25,7 @@ import h5py
 # Cython/C++ imports
 from ..cutils.cpu import neural_layer_wrap as neural_layer_wrap_cpu
 from ..cutils.cpu import transform_output_wrap as transform_output_wrap_cpu
+from ..cutils.fast import neural_layer_wrap, transform_output_wrap
 
 # Python imports
 from ..utils.baseclasses import (
@@ -36,18 +37,6 @@ from ..utils.utility import check_for_file_download
 from ..utils.citations import *
 from ..utils.utility import p_to_y
 from scipy.interpolate import RectBivariateSpline
-
-# check for cupy and GPU version of pymatmul
-try:
-    # Cython/C++ imports
-    from ..cutils.fast import neural_layer_wrap, transform_output_wrap
-
-    # Python imports
-    import cupy as cp
-
-except (ImportError, ModuleNotFoundError) as e:
-    import numpy as np
-
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))

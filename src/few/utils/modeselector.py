@@ -31,13 +31,13 @@ import sys
 try:
     import cupy as cp
 
-except (ImportError, ModuleNotFoundError) as e:
+except (ImportError, ModuleNotFoundError):
     import numpy as np
 
 # pytorch
 try:
     import torch
-except (ImportError, ModuleNotFoundError) as e:
+except (ImportError, ModuleNotFoundError):
     pass #  we can catch this later
 
 from typing import Optional

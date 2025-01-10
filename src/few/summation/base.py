@@ -2,16 +2,6 @@ from abc import ABC
 from ..utils.citations import *
 from ..utils.constants import *
 
-# try to import cupy
-import numpy as np
-
-try:
-    import cupy as cp
-    gpu_available = True
-
-except:
-    gpu_available = False
-
 
 from ..utils.baseclasses import ParallelModuleBase
 
