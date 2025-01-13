@@ -1,7 +1,8 @@
 from ..fast_selector import import_fast_backend, BackendSelectionMode
 
-def load_backend(backend):
+def load_backend(mode: BackendSelectionMode):
     global pyWaveform, interp2D, interpolate_arrays_wrap, get_waveform_wrap, get_waveform_generic_fd_wrap, neural_layer_wrap, transform_output_wrap, __backend__, xp, is_gpu
+    backend = import_fast_backend(mode)
     pyWaveform = backend.pyWaveform
     interp2D = backend.interp2D
     interpolate_arrays_wrap = backend.interpolate_arrays_wrap
@@ -13,24 +14,12 @@ def load_backend(backend):
     xp = backend.xp
     is_gpu = backend.is_gpu
 
-def select_best_backend():
-    load_backend(import_fast_backend(BackendSelectionMode.BEST))
+del import_fast_backend
 
-def select_lazy_backend():
-    load_backend(import_fast_backend(BackendSelectionMode.LAZY))
-
-def force_cpu_backend():
-    load_backend(import_fast_backend(BackendSelectionMode.CPU))
-
-def force_cuda11x_backend():
-    load_backend(import_fast_backend(BackendSelectionMode.CUDA11X))
-
-def force_cuda12x_backend():
-    load_backend(import_fast_backend(BackendSelectionMode.CUDA12X))
-
-load_backend(import_fast_backend(BackendSelectionMode.LAZY))
+load_backend(BackendSelectionMode.LAZY)
 
 __all__ = [
+    "BackendSelectionMode"
     "pyWaveform",
     "interp2D",
     "interpolate_arrays_wrap",
