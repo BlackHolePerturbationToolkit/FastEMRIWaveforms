@@ -24,12 +24,11 @@ jobs:
         arch: [x86_64]
         image: [quay.io/pypa/manylinux_2_28_x86_64]
         manylinux_plat: [manylinux_2_27_x86_64]
+        is_plugin: [true]
         include:
           - release: cpu
             opt_with_gpu: OFF
-            cuda_major: null
-            cuda_minor: null
-            nvcc_ccbin_ver: null
+            is_plugin: false
           - release: cuda11x
             cuda_major: 11
             cuda_minor: 8
@@ -48,7 +47,7 @@ jobs:
         run: |
           touch .compiler.env
 
-      # Install CUDA Toolkit for v11.X
+      # Install CUDA Toolkit
       - name: Install CUDA Toolkit v${{ matrix.cuda_major }}.${{ matrix.cuda_minor }}
         if: ${{ matrix.cuda_major }}
         run: |
@@ -72,11 +71,15 @@ jobs:
           cat .compiler.env
 
       # Update project name
-      - name: Update project name and version scheme
+      - name: Update version scheme
         run: |
-          sed -i 's|" #@NAMESUFFIX@|-${{ matrix.release }}"|g' pyproject.toml
           sed -i 's|version_scheme = "no-guess-dev"|version_scheme = "only-version"|g' pyproject.toml
           sed -i 's|local_scheme = "node-and-date"|local_scheme = "no-local-version"|g' pyproject.toml
+
+      # Update project name
+      - name: Add release suffix to project name
+        run: |
+          sed -i 's|" #@NAMESUFFIX@|-${{ matrix.release }}"|g' pyproject.toml
 
       # Add CuPy dependency
       - name: Add CuPy dependency
@@ -85,12 +88,19 @@ jobs:
           sed -i 's|#@DEPS_CUPYCUDA@|"cupy-${{ matrix.release }}"|g' pyproject.toml
           sed -i 's|#@DEPS_FEWCORE@|"fastemriwaveforms-cpu"|g' pyproject.toml
 
+      # Remove base sources from plugin wheels
+      - name: Exclude core package from plugins
+        if: ${{ matrix.is_plugin }}
+        run: |
+          sed -i 's|wheel.packages = [ "src/few" ]|wheel.packages = [ ]|g' pyproject.toml
+
       - name: Compile LAPACK
         if: ${{ matrix.opt_with_gpu != 'ONLY' }}
         run: |
           source .compiler.env
 
-          git clone --branch v3.12.0 https://github.com/Reference-LAPACK/lapack
+          git clone https://github.com/Reference-LAPACK/lapack
+          git -C lapack reset --hard 6ec7f2bc4ecf4c4a93496aa2fa519575bc0e39ca  # version 3.12.1
           cmake -B lapack/build -S lapack -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DLAPACKE=ON -DCMAKE_INSTALL_PREFIX=/opt/lapack
           cmake --build lapack/build -- -j
           cmake --install lapack/build

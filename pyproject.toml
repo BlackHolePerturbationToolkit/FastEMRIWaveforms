@@ -6,6 +6,8 @@ requires = [ "cython", "numpy", "scikit-build-core" ]
 [project]
 name = "fastemriwaveforms" #@NAMESUFFIX@
 
+description = "Fast and accurate EMRI Waveforms."
+
 readme = "README.md"
 
 authors = [
@@ -27,7 +29,7 @@ classifiers = [
 
 # version is deduced from the lattest git tag
 # description is the docstring at the top of src/few/__init__.py
-dynamic = [ "description", "version" ]
+dynamic = [ "version" ]
 
 dependencies = [
   "h5py",
