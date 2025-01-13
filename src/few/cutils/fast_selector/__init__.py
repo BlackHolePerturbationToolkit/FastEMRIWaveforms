@@ -3,7 +3,7 @@
 from enum import Enum
 from types import ModuleType
 from typing import Sequence
-from ...utils.exceptions import BackendUnavailable, CudaException, CuPyException, FewException, MissingDependency
+from ...utils.exceptions import BackendUnavailable, BackendNotInstalled, CudaException, CuPyException, FewException, MissingDependency
 
 class BackendSelectionMode(Enum):
     """
@@ -162,6 +162,12 @@ def force_import_cuda11x_backend(cuda_version: tuple[int, int]) -> ModuleType:
     """Force import the cuda11x backend."""
     # If this method is called, the CUDA driver is installed with version 12.x.
 
+    try:
+        try_import_cuda11x()
+    except BackendNotInstalled as e:
+        raise BackendUnavailable("Backend CUDA 11.x is not installed. "
+                                 "Run `pip install fastemriwaveforms-cuda11x` to install it.") from e
+
     # Check that nvidia dynamic libraries are available
     try:
         try_preload_cuda11x_dynlibs(cuda_version)
@@ -180,6 +186,12 @@ def force_import_cuda11x_backend(cuda_version: tuple[int, int]) -> ModuleType:
 def force_import_cuda12x_backend(cuda_version: tuple[int, int]) -> ModuleType:
     """Force import the cuda12x backend."""
     # If this method is called, the CUDA driver is installed with version 12.x.
+
+    try:
+        try_import_cuda12x()
+    except BackendNotInstalled as e:
+        raise BackendUnavailable("Backend CUDA 12.x is not installed. "
+                                 "Run `pip install fastemriwaveforms-cuda12x` to install it.") from e
 
     # Check that nvidia dynamic libraries are available
     try:
