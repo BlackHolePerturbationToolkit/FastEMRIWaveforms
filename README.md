@@ -15,10 +15,10 @@ To install the latest pre-compiled version of `fastemriwaveforms`, simply run:
 pip install fastemriwaveforms-cpu
 
 # For GPU-enabled versions with CUDA 11.Y.Z
-pip install fastemriwaveforms-cuda11x 'nvidia-cuda-runtime-cu11==11.Y.*'
+pip install fastemriwaveforms-cuda11x
 
 # For GPU-enabled versions with CUDA 12.Y.Z
-pip install fastemriwaveforms-cuda12x 'nvidia-cuda-runtime-cu12==12.Y.*'
+pip install fastemriwaveforms-cuda12x
 ```
 
 To know your CUDA version, run the tool `nvidia-smi` in a terminal a check the CUDA version reported in the table header:
@@ -29,9 +29,6 @@ $ nvidia-smi
 | NVIDIA-SMI 550.54.15              Driver Version: 550.54.15      CUDA Version: 12.4     |
 |-----------------------------------------+------------------------+----------------------+
 ...
-
-# CUDA version is 12.4, so run the following command to properly install FEW with support for CUDA 12.4
-$ pip install fastemriwaveforms-cuda12x 'nvidia-cuda-runtime-cu12==12.4.*'
 ```
 
 Now, in a python file or notebook:
@@ -40,7 +37,33 @@ Now, in a python file or notebook:
 import few
 ```
 
-See [examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb).
+You may check the currently selected backend for accelerated computations with:
+
+```py3
+>>> print(few.cutils.fast.__backend__)
+cuda12x
+```
+
+If you installed the CUDA 12.x backend but the previous command returns `cpu`, it means that some dependencies
+are missing and prevent the CUDA backend to be used. Run the following command to obtain an error message which
+can guide you to fix this issue:
+
+```py3
+>>> import few
+>>> print(few.cutils.fast.__backend__)
+cpu
+>>> few.cutils.guide_best_backend()
+...
+few.utils.exceptions.MissingDependency: Could not load the following NVidia libraries: ['libcudart.so.12', 'libcublas.so.12', 'libnvJitLink.so.12', 'libcusparse.so.12', 'libnvrtc.so.12', 'libcufftw.so.11']. If you installed FEW using pip, you may install them by running `pip install nvidia-cuda-runtime-cu12 nvidia-cublas-cu12 nvidia-nvjitlink-cu12 nvidia-cusparse-cu12 nvidia-cuda-nvrtc-cu12 nvidia-cufft-cu12`.
+[...]
+The above exception was the direct cause of the following exception:
+few.utils.exceptions.BackendUnavailable: Some CUDA libraries required by FEW are not available. Please follow previous instructions.
+```
+
+Once FEW is working and the expected backend is selected, you may see
+[examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb)
+on how to start with this software.
+
 
 ### Installing from sources
 
