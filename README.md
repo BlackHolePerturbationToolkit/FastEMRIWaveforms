@@ -122,7 +122,7 @@ pip install fastemriwaveforms-cuda12x[testing]
 # For from-source install with testing enabled
 git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
 cd FastEMRIWaveforms
-pip install .[testing]
+pip install '.[testing]'
 ```
 
 To run the tests, open a terminal in a directory containing the sources of FEW and then run the `unittest` module in `discover` mode:
