@@ -24,7 +24,6 @@ jobs:
         arch: [x86_64]
         image: [quay.io/pypa/manylinux_2_28_x86_64]
         manylinux_plat: [manylinux_2_27_x86_64]
-        is_plugin: [true]
         include:
           - release: cpu
             opt_with_gpu: OFF
@@ -34,11 +33,13 @@ jobs:
             cuda_minor: 8
             nvcc_ccbin_ver: 11
             opt_with_gpu: ONLY
+            is_plugin: true
           - release: cuda12x
             cuda_major: 12
             cuda_minor: 6
             nvcc_ccbin_ver: 11
             opt_with_gpu: ONLY
+            is_plugin: true
     steps:
       # Checkout sources
       - uses: actions/checkout@v4
@@ -48,7 +49,7 @@ jobs:
           touch .compiler.env
 
       # Install CUDA Toolkit
-      - name: Install CUDA Toolkit v${{ matrix.cuda_major }}.${{ matrix.cuda_minor }}
+      - name: Install CUDA Toolkit
         if: ${{ matrix.cuda_major }}
         run: |
           dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo
@@ -63,7 +64,7 @@ jobs:
           echo 'export CUDADIR=/usr/local/cuda' >> .compiler.env
           cat .compiler.env
 
-      - name: Install GCC Toolset v${{ matrix.nvcc_ccbin_ver }}
+      - name: Install GCC Toolset
         if: ${{ matrix.nvcc_ccbin_ver }}
         run: |
           dnf install -y gcc-toolset-${{ matrix.nvcc_ccbin_ver }}
@@ -82,10 +83,15 @@ jobs:
           sed -i 's|" #@NAMESUFFIX@|-${{ matrix.release }}"|g' pyproject.toml
 
       # Add CuPy dependency
-      - name: Add CuPy dependency
+      - name: Add Cupy dependency
         if: ${{ matrix.cuda_major }}
         run: |
           sed -i 's|#@DEPS_CUPYCUDA@|"cupy-${{ matrix.release }}"|g' pyproject.toml
+
+      # Add Core project dependency
+      - name: Add core project dependency on plugin
+        if: ${{ matrix.is_plugin }}
+        run: |
           sed -i 's|#@DEPS_FEWCORE@|"fastemriwaveforms-cpu"|g' pyproject.toml
 
       # Remove base sources from plugin wheels
