@@ -1,8 +1,10 @@
 import importlib
 
-if importlib.import_module("few_backend_cuda11x") is None:
+try:
+    importlib.import_module("few_backend_cuda11x")
+except ModuleNotFoundError as e:
     from ...utils.exceptions import BackendNotInstalled
-    raise BackendNotInstalled("CUDA 11.x backend")
+    raise BackendNotInstalled("CUDA 11.x backend") from e
 
 try:
     from few_backend_cuda11x.pyAAK import pyWaveform

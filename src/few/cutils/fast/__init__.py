@@ -1,7 +1,10 @@
-from ..fast_selector import import_fast_backend, BackendSelectionMode
+from ..fast_selector import BackendSelectionMode
 
 def load_backend(mode: BackendSelectionMode):
+    from ..fast_selector import import_fast_backend
+
     global pyWaveform, interp2D, interpolate_arrays_wrap, get_waveform_wrap, get_waveform_generic_fd_wrap, neural_layer_wrap, transform_output_wrap, __backend__, xp, is_gpu
+
     backend = import_fast_backend(mode)
     pyWaveform = backend.pyWaveform
     interp2D = backend.interp2D
@@ -13,8 +16,6 @@ def load_backend(mode: BackendSelectionMode):
     __backend__ = backend.__backend__
     xp = backend.xp
     is_gpu = backend.is_gpu
-
-del import_fast_backend
 
 load_backend(BackendSelectionMode.LAZY)
 

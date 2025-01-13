@@ -1,8 +1,10 @@
 import importlib
 
-if importlib.import_module("few_backend_cuda12x") is None:
+try:
+    importlib.import_module("few_backend_cuda12x")
+except ModuleNotFoundError as e:
     from ...utils.exceptions import BackendNotInstalled
-    raise BackendNotInstalled("CUDA 12.x backend")
+    raise BackendNotInstalled("CUDA 12.x backend") from e
 
 try:
     from few_backend_cuda12x.pyAAK import pyWaveform
@@ -13,7 +15,7 @@ try:
         get_waveform_generic_fd_wrap,
     )
     from few_backend_cuda12x.pymatmul import neural_layer_wrap, transform_output_wrap
-except ImportError as e:
+except ImportError  as e:
     from few.utils.exceptions import BackendImportFailed
     raise BackendImportFailed("CUDA 12.x backend installed but not importable") from e
 

@@ -92,13 +92,13 @@ jobs:
       - name: Add core project dependency on plugin
         if: ${{ matrix.is_plugin }}
         run: |
-          sed -i 's|#@DEPS_FEWCORE@|"fastemriwaveforms-cpu"|g' pyproject.toml
+          sed -i 's|#@DEPS_FEWCORE@|"fastemriwaveforms-cpu==${{ github.ref_name }}"|g' pyproject.toml
 
       # Remove base sources from plugin wheels
       - name: Exclude core package from plugins
         if: ${{ matrix.is_plugin }}
         run: |
-          sed -i 's|wheel.packages = [ "src/few" ]|wheel.packages = [ ]|g' pyproject.toml
+          sed -i '/@SKIP_PLUGIN@/d' pyproject.toml
 
       - name: Compile LAPACK
         if: ${{ matrix.opt_with_gpu != 'ONLY' }}

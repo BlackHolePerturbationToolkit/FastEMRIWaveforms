@@ -98,7 +98,9 @@ sdist.exclude = [
   "TODO.txt",
   "Tutorial_interpolation.ipynb",
 ]
-wheel.packages = [ "src/few" ]
+wheel.packages = [
+  "src/few", #@SKIP_PLUGIN@
+]
 wheel.exclude = [
   "**.pyx",
   "**.cu",
