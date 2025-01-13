@@ -39,7 +39,8 @@ dependencies = [
   "rich",
   "scipy",
   "tqdm",
-  #@CUPYCUDA@,
+  #@DEPS_CUPYCUDA@,
+  #@DEPS_FEWCORE@,
 ]
 
 optional-dependencies.dev = [

@@ -20,7 +20,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        release: [cpu, cuda11x, cuda12x]
         arch: [x86_64]
         image: [quay.io/pypa/manylinux_2_28_x86_64]
         manylinux_plat: [manylinux_2_27_x86_64]
@@ -34,12 +33,12 @@ jobs:
             cuda_major: 11
             cuda_minor: 8
             nvcc_ccbin_ver: 11
-            opt_with_gpu: ON
+            opt_with_gpu: ONLY
           - release: cuda12x
             cuda_major: 12
             cuda_minor: 6
             nvcc_ccbin_ver: 11
-            opt_with_gpu: ON
+            opt_with_gpu: ONLY
     steps:
       # Checkout sources
       - uses: actions/checkout@v4
@@ -82,9 +81,11 @@ jobs:
       - name: Add CuPy dependency
         if: ${{ matrix.cuda_major }}
         run: |
-          sed -i 's|#@CUPYCUDA@|"cupy-${{ matrix.release }}"|g' pyproject.toml
+          sed -i 's|#@DEPS_CUPYCUDA@|"cupy-${{ matrix.release }}"|g' pyproject.toml
+          sed -i 's|#@DEPS_FEWCORE@|"fastemriwaveforms-cpu"|g' pyproject.toml
 
       - name: Compile LAPACK
+        if: ${{ matrix.opt_with_gpu != 'ONLY' }}
         run: |
           source .compiler.env
 
