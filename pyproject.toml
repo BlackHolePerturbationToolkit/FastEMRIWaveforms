@@ -69,7 +69,7 @@ urls.Tracker = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveform
 [tool.setuptools_scm]
 version_scheme = "no-guess-dev"
 local_scheme = "node-and-date"
-write_to = "src/few/_version.py"
+version_file = "src/few/_version.py"
 
 [tool.scikit-build]
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
@@ -96,7 +96,19 @@ sdist.exclude = [
   "Tutorial_interpolation.ipynb",
 ]
 wheel.packages = [ "src/few" ]
-wheel.exclude = [ "**.pyx", "**.cu", "**.cxx", "**.hh", "**.h", "**.hpp", "**/CMakeLists.txt" ]
+wheel.exclude = [
+  "**.pyx",
+  "**.cu",
+  "**.cxx",
+  "**.hh",
+  "**.h",
+  "**.hpp",
+  "**/CMakeLists.txt",
+  "lib/pkgconfig",
+  "lib/cmake",
+  "lib/*.so",
+  "lib/*.a",
+]
 
 [tool.scikit-build.cmake.define]
 # Default values for CMake options used when building FEW.

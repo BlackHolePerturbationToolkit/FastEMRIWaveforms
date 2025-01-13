@@ -82,6 +82,7 @@ function(few_add_lib_to_cuda_cpu_backends)
       CXX_SOURCES
       PYX_SOURCES
       LINK
+      CPU_LINK
       INCLUDE
       HEADERS)
 
@@ -121,14 +122,17 @@ function(few_add_lib_to_cuda_cpu_backends)
                               PROPERTIES LANGUAGE CXX)
 
   # Define the CPU version
-  _few_add_lib_to_backend(
-    NAME "${FEW_ADDLIB_NAME}"
-    BACKEND "cpu"
-    SOURCES ${FEW_ADDLIB_CXX_SOURCES} ${FEW_ADDLIB_PYX_TO_CXX_SOURCES}
-            ${FEW_ADDLIB_CU_TO_CXX_SOURCES}
-    LINK ${FEW_ADDLIB_LINK}
-    INCLUDE ${FEW_ADDLIB_INCLUDE}
-    HEADERS ${FEW_ADDLIB_HEADERS})
+  get_target_property(_FEW_WITH_CPU ${SKBUILD_PROJECT_NAME} WITH_CPU)
+  if(_FEW_WITH_CPU)
+    _few_add_lib_to_backend(
+      NAME "${FEW_ADDLIB_NAME}"
+      BACKEND "cpu"
+      SOURCES ${FEW_ADDLIB_CXX_SOURCES} ${FEW_ADDLIB_PYX_TO_CXX_SOURCES}
+              ${FEW_ADDLIB_CU_TO_CXX_SOURCES}
+      LINK ${FEW_ADDLIB_LINK} ${FEW_ADDLIB_CPU_LINK}
+      INCLUDE ${FEW_ADDLIB_INCLUDE}
+      HEADERS ${FEW_ADDLIB_HEADERS})
+  endif()
 
   # Define the GPU version
   get_target_property(_FEW_WITH_GPU ${SKBUILD_PROJECT_NAME} WITH_GPU)

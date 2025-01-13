@@ -27,6 +27,7 @@ set_property(
            AUTO
            ON
            OFF
+           ONLY
            HELPSTRING
            "Whether to enable GPU support"
            TYPE
@@ -72,6 +73,9 @@ set_property(
            VALUE
            "CMAKE")
 
+# ---- Enable building the CPU version of backends by default ----
+set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_CPU ON)
+
 # ---- Optionnally check if GPU is supported ----
 if(FEW_WITH_GPU STREQUAL "AUTO")
   include(CheckLanguage)
@@ -92,6 +96,13 @@ if(FEW_WITH_GPU STREQUAL "AUTO")
     )
     set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU OFF)
   endif()
+elseif(FEW_WITH_GPU STREQUAL "ONLY")
+  message(
+    STATUS
+      "FEW GPU support is set to ON and CPU support is set to OFF (use only to build a standalone plugin)."
+  )
+  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU ON)
+  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_CPU OFF)
 else()
   message(STATUS "FEW GPU support is set to ${FEW_WITH_GPU}.")
   set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU

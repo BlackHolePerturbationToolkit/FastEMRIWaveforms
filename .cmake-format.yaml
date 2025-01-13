@@ -6,6 +6,7 @@ parse:
         BACKEND: 1
         SOURCES: '*'
         LINK: '*'
+        CPU_LINK: '*'
         HEADERS: '*'
         INCLUDE: '*'
         PROPERTIES: '*'
