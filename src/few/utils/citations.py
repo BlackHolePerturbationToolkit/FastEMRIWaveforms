@@ -23,156 +23,198 @@ module is then imported to add citations to module classes using their :code:`ci
 attribute.
 """
 
-few_citation = """
-@article{Chua:2020stf,
-    author = "Chua, Alvin J. K. and Katz, Michael L. and Warburton, Niels and Hughes, Scott A.",
-    title = "{Rapid generation of fully relativistic extreme-mass-ratio-inspiral waveform templates for LISA data analysis}",
-    eprint = "2008.06071",
-    archivePrefix = "arXiv",
-    primaryClass = "gr-qc",
-    doi = "10.1103/PhysRevLett.126.051102",
-    journal = "Phys. Rev. Lett.",
-    volume = "126",
-    number = "5",
-    pages = "051102",
-    year = "2021"
-}
-"""
+import abc
+from pydantic import BaseModel
+from typing import Sequence
+from few.utils.exceptions import InvalidInputFile
 
-larger_few_citation = """
-@article{Katz:2021yft,
-    author = "Katz, Michael L. and Chua, Alvin J. K. and Speri, Lorenzo and Warburton, Niels and Hughes, Scott A.",
-    title = "{FastEMRIWaveforms: New tools for millihertz gravitational-wave data analysis}",
-    eprint = "2104.04582",
-    archivePrefix = "arXiv",
-    primaryClass = "gr-qc",
-    month = "4",
-    year = "2021"
-}
-"""
+class HyphenUnderscoreAliasModel(BaseModel):
+    """Pydantic model were hyphen replace underscore in field names."""
+    class Config:
+        alias_generator = lambda field : field.replace("_", "-")
+        extra = 'ignore'
+        frozen = True
 
-few_software_citation = """
-@software{michael_l_katz_2023_8190418,
-  author       = {Michael L. Katz and
-                  Lorenzo Speri and
-                  Alvin J. K. Chua and
-                  Christian E. A. Chapman-Bird and
-                  Niels Warburton and
-                  Scott A. Hughes},
-  title        = {{BlackHolePerturbationToolkit/FastEMRIWaveforms:
-                   Frequency Domain Waveform Added!}},
-  month        = jul,
-  year         = 2023,
-  publisher    = {Zenodo},
-  version      = {v1.5.1},
-  doi          = {10.5281/zenodo.8190418},
-  url          = {https://doi.org/10.5281/zenodo.8190418}
-}
-"""
+class Author(HyphenUnderscoreAliasModel):
+    """Description of a reference author."""
+    family_names: str
+    given_names: str
+    orcid: str | None = None
+    affiliation: str | None = None
+    email: str | None = None
 
-romannet_citation = """
-@article{Chua:2018woh,
-    author = "Chua, Alvin J.K. and Galley, Chad R. and Vallisneri, Michele",
-    title = "{Reduced-order modeling with artificial neurons for gravitational-wave inference}",
-    eprint = "1811.05491",
-    archivePrefix = "arXiv",
-    primaryClass = "astro-ph.IM",
-    doi = "10.1103/PhysRevLett.122.211101",
-    journal = "Phys. Rev. Lett.",
-    volume = "122",
-    number = "21",
-    pages = "211101",
-    year = "2019"
-}
-"""
+class Publisher(HyphenUnderscoreAliasModel):
+    """Description of a publisher."""
+    name: str
 
-Pn5_citation = """
-@article{Fujita:2020zxe,
-    author = "Fujita, Ryuichi and Shibata, Masaru",
-    title = "{Extreme mass ratio inspirals on the equatorial plane in the adiabatic order}",
-    eprint = "2008.13554",
-    archivePrefix = "arXiv",
-    primaryClass = "gr-qc",
-    doi = "10.1103/PhysRevD.102.064005",
-    journal = "Phys. Rev. D",
-    volume = "102",
-    number = "6",
-    pages = "064005",
-    year = "2020"
-}
-"""
+class Identifier(HyphenUnderscoreAliasModel):
+    """Description of an identifier."""
+    type: str
+    value: str
+    description: str | None = None
 
-kerr_separatrix_citation = """
-@article{Stein:2019buj,
-    author = "Stein, Leo C. and Warburton, Niels",
-    title = "{Location of the last stable orbit in Kerr spacetime}",
-    eprint = "1912.07609",
-    archivePrefix = "arXiv",
-    primaryClass = "gr-qc",
-    doi = "10.1103/PhysRevD.101.064007",
-    journal = "Phys. Rev. D",
-    volume = "101",
-    number = "6",
-    pages = "064007",
-    year = "2020"
-}
-"""
+class ReferenceABC(HyphenUnderscoreAliasModel, abc.ABC):
+    """Abstract base class for references."""
 
-AAK_citation_1 = """
+    @abc.abstractmethod
+    def to_bibtex(self) -> str:
+        """Convert a reference object to a BibTeX string representation."""
 
-@article{Chua:2015mua,
-    author = "Chua, Alvin J.K. and Gair, Jonathan R.",
-    title = "{Improved analytic extreme-mass-ratio inspiral model for scoping out eLISA data analysis}",
-    eprint = "1510.06245",
-    archivePrefix = "arXiv",
-    primaryClass = "gr-qc",
-    doi = "10.1088/0264-9381/32/23/232002",
-    journal = "Class. Quant. Grav.",
-    volume = "32",
-    pages = "232002",
-    year = "2015"
-}
+class ArticleReference(ReferenceABC):
+    """Description of an article."""
 
-"""
+    abbreviation: str
+    authors: list[Author]
+    title: str
+    journal: str
+    year: int
+    month: int | None = None
+    issue: int | None = None
+    publisher: Publisher | None = None
+    pages: int | None = None
+    start: int | None = None
+    issn : str | None = None
+    doi: str | None = None
 
-AAK_citation_2 = """
-@article{Chua:2017ujo,
-    author = "Chua, Alvin J.K. and Moore, Christopher J. and Gair, Jonathan R.",
-    title = "{Augmented kludge waveforms for detecting extreme-mass-ratio inspirals}",
-    eprint = "1705.04259",
-    archivePrefix = "arXiv",
-    primaryClass = "gr-qc",
-    doi = "10.1103/PhysRevD.96.044005",
-    journal = "Phys. Rev. D",
-    volume = "96",
-    number = "4",
-    pages = "044005",
-    year = "2017"
-}
-"""
+    def to_bibtex(self) -> str:
+        """Build the BibTeX representation of an article."""
 
-AK_citation = """
-@article{Barack:2003fp,
-    author = "Barack, Leor and Cutler, Curt",
-    title = "{LISA capture sources: Approximate waveforms, signal-to-noise ratios, and parameter estimation accuracy}",
-    eprint = "gr-qc/0310125",
-    archivePrefix = "arXiv",
-    doi = "10.1103/PhysRevD.69.082005",
-    journal = "Phys. Rev. D",
-    volume = "69",
-    pages = "082005",
-    year = "2004"
-}
-"""
+        def format_line(key: str, value: str) -> str:
+            return """  {:<10} = "{}" """.format(key, value)
+        lines = []
+        lines.append("@article{" + self.abbreviation)
+        lines.append(format_line("author", " and ".join(["{}, {}".format(author.family_names, author.given_names) for author in self.authors])))
+        lines.append(format_line("title", "{" + self.title + "}"))
+        lines.append(format_line("journal", self.journal))
+        lines.append(format_line("year", str(self.year)))
+        if self.month is not None:
+            lines.append(format_line("month", str(self.month)))
+        if self.issue is not None:
+            lines.append(format_line("number", str(self.issue)))
+        if self.publisher is not None:
+            lines.append(format_line("publisher", str(self.publisher.name)))
+        if self.start is not None:
+            lines.append(format_line("pages", str(self.start) if self.pages is None
+                                     else "{}--{}".format(self.start, self.start+self.pages)))
+        if self.issn is not None:
+            lines.append(format_line("issn", str(self.issn)))
+        if self.doi is not None:
+            lines.append(format_line("doi", str(self.doi)))
 
-fd_citation = """
-@article{Speri:2023jte,
-    author = "Speri, Lorenzo and Katz, Michael L. and Chua, Alvin J. K. and Hughes, Scott A. and Warburton, Niels and Thompson, Jonathan E. and Chapman-Bird, Christian E. A. and Gair, Jonathan R.",
-    title = "{Fast and Fourier: Extreme Mass Ratio Inspiral Waveforms in the Frequency Domain}",
-    eprint = "2307.12585",
-    archivePrefix = "arXiv",
-    primaryClass = "gr-qc",
-    month = "7",
-    year = "2023"
-}
-"""
+
+        return ",\n".join(lines) + "\n}"
+
+class SoftwareReference(ReferenceABC):
+    """Description of a Software"""
+
+    authors: list[Author]
+    title: str
+
+    license: str | None = None
+    url: str | None = None
+    repository: str | None = None
+    identifiers: list[Identifier] | None = None
+    year: int | None = None
+    month: int | None = None
+    version: str | None = None
+
+    @property
+    def doi(self) -> str | None:
+        """Return the first DOI in identifiers if any"""
+        for identifier in self.identifiers:
+            if identifier.type == "doi":
+              return identifier.value
+        return None
+
+    def to_bibtex(self) -> str:
+        """Build the BibTeX representation of a software."""
+
+        def format_line(key: str, value: str) -> str:
+            return """  {:<10} = "{}" """.format(key, value)
+
+        lines = []
+        lines.append("@software{" + self.title)
+        lines.append(format_line("author", " and ".join(["{}, {}".format(author.family_names, author.given_names) for author in self.authors])))
+        lines.append(format_line("title", "{" + self.title + "}"))
+        if self.license is not None:
+            lines.append(format_line("license", self.license))
+        if self.url is not None:
+            lines.append(format_line("url", self.url))
+        if self.repository is not None:
+            lines.append(format_line("repository", self.repository))
+        if self.year is not None:
+            lines.append(format_line("year", str(self.year)))
+        if self.month is not None:
+            lines.append(format_line("month", str(self.month)))
+        if self.version is not None:
+            lines.append(format_line("version", self.version))
+        if self.doi is not None:
+            lines.append(format_line("doi", str(self.doi)))
+
+        return ",\n".join(lines) + "\n}"
+
+
+type Reference = ArticleReference | SoftwareReference
+
+class CitationRegistry:
+    __slots__ = ('registry')
+
+    registry: dict[str, Reference]
+
+    def __init__(self, **kwargs):
+        self.registry = kwargs
+
+    def get(self, reference_names: Sequence[str]) -> list[Reference]:
+        """Return a list of Reference objects from a list of names."""
+        return [self.registry[name] for name in reference_names]
+
+    def as_bibtex(self, reference_names: Sequence[str] |str) -> str:
+        """Return a bibtex file of requested references."""
+        refs = self.get([reference_names] if isinstance(reference_names, str) else reference_names)
+        bibtex_entries = [ref.to_bibtex() for ref in refs]
+        return "\n\n".join(bibtex_entries)
+
+def build_citation_registry() -> CitationRegistry:
+    """Read the package CITATION.cff and build the corresponding registry."""
+    import jsonschema
+    import pathlib
+    import cffconvert
+
+    from few import __file__ as _few_root_file
+
+    citation_cff_path = pathlib.Path(_few_root_file).parent / 'CITATION.cff'
+    with open(citation_cff_path, 'rt') as fid:
+        cff = cffconvert.Citation(fid.read())
+
+    try:
+        cff.validate()
+    except jsonschema.exceptions.ValidationError as e:
+        raise InvalidInputFile("The file {} does not match its expected schema. Contact few developers.".format(citation_cff_path)) from e
+
+    def to_reference(ref_dict) -> Reference:
+        if ref_dict["type"] == "article":
+            return ArticleReference(**ref_dict)
+        if ref_dict["type"] == "software":
+            return SoftwareReference(**ref_dict)
+
+        raise InvalidInputFile("The file {} contains references whose type ({}) ".format(citation_cff_path, ref_dict["type"]) +
+                               "is not supported", ref_dict)
+
+    references = {
+        ref["abbreviation"]: to_reference(ref) for ref in cff.cffobj["references"]
+    }
+
+    return CitationRegistry(**references, **{cff.cffobj["title"] : to_reference(cff.cffobj)})
+
+CITATIONS = build_citation_registry()
+
+few_citation = "\n" + CITATIONS.as_bibtex("Chua:2020stf") + "\n"
+larger_few_citation = "\n" + CITATIONS.as_bibtex("Katz:2021yft") + "\n"
+romannet_citation = "\n" + CITATIONS.as_bibtex("Chua:2018woh") + "\n"
+Pn5_citation = "\n" + CITATIONS.as_bibtex("Fujita:2020zxe") + "\n"
+kerr_separatrix_citation = "\n" + CITATIONS.as_bibtex("Stein:2019buj") + "\n"
+AAK_citation_1 = "\n" + CITATIONS.as_bibtex("Chua:2015mua") + "\n"
+AAK_citation_2 = "\n" + CITATIONS.as_bibtex("Chua:2017ujo") + "\n"
+AK_citation = "\n" + CITATIONS.as_bibtex("Barack:2003fp") + "\n"
+fd_citation = "\n" + CITATIONS.as_bibtex("Speri:2023jte") + "\n"
+few_software_citation = "\n" + CITATIONS.as_bibtex("FastEMRIWaveforms") + "\n"

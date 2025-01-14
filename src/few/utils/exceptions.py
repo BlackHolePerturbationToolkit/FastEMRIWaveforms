@@ -27,3 +27,6 @@ class BackendNotInstalled(BackendUnavailable):
 class BackendImportFailed(BackendUnavailable):
     """Exception raised when the backend import fails."""
     pass
+
+class InvalidInputFile(FewException):
+    """Exception raised when the content of an input file does not match expectations."""
