@@ -1,10 +1,9 @@
-from abc import ABC
-from ..utils.citations import *
+from ..utils.citations import Citable
 
 import numpy as np
 from typing import Optional, Union
 
-class AmplitudeBase(ABC):
+class AmplitudeBase(Citable):
     """Base class used for amplitude modules.
 
     This class provides a common flexible interface to various amplitude
@@ -31,11 +30,6 @@ class AmplitudeBase(ABC):
 
         """
         raise NotImplementedError
-
-    @property
-    def citation(self):
-        """Return citation for this class"""
-        return larger_few_citation + few_citation + few_software_citation
 
     def __call__(self, *args, specific_modes:Optional[Union[list, np.ndarray]]=None, **kwargs) -> Union[dict, np.ndarray]:
         """Common call for Teukolsky amplitudes

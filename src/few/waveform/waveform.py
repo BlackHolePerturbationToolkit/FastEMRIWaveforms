@@ -16,7 +16,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-from abc import ABC
 
 import numpy as np
 
@@ -36,7 +35,6 @@ from ..utils.modeselector import ModeSelector, NeuralModeSelector
 from ..summation.directmodesum import DirectModeSum
 from ..summation.aakwave import AAKSummation
 from ..utils.constants import *
-from ..utils.citations import *
 from ..summation.interpolatedmodesum import InterpolatedModeSum
 from ..summation.fdinterp import FDInterpolatedModeSum
 
@@ -355,7 +353,7 @@ class GenerateEMRIWaveform:
 
 
 class FastKerrEccentricEquatorialFlux(
-    SphericalHarmonicWaveformBase, KerrEccentricEquatorial, ABC
+    SphericalHarmonicWaveformBase, KerrEccentricEquatorial
 ):
     """Prebuilt model for fast Kerr eccentric equatorial flux-based waveforms.
 
@@ -510,8 +508,7 @@ class FastKerrEccentricEquatorialFlux(
 
 
 class FastSchwarzschildEccentricFlux(
-    SphericalHarmonicWaveformBase, SchwarzschildEccentric, ABC
-):
+    SphericalHarmonicWaveformBase, SchwarzschildEccentric):
     """Prebuilt model for fast Schwarzschild eccentric flux-based waveforms.
 
     This model combines the most efficient modules to produce the fastest
@@ -661,8 +658,7 @@ class FastSchwarzschildEccentricFlux(
 
 
 class FastSchwarzschildEccentricFluxBicubic(
-    SphericalHarmonicWaveformBase, SchwarzschildEccentric, ABC
-):
+    SphericalHarmonicWaveformBase, SchwarzschildEccentric):
     """Prebuilt model for fast Schwarzschild eccentric flux-based waveforms.
 
     This model combines the most efficient modules to produce the fastest
@@ -808,7 +804,7 @@ class FastSchwarzschildEccentricFluxBicubic(
             **kwargs,
         )
 
-class SlowSchwarzschildEccentricFlux(SphericalHarmonicWaveformBase, SchwarzschildEccentric, ABC):
+class SlowSchwarzschildEccentricFlux(SphericalHarmonicWaveformBase, SchwarzschildEccentric):
     """Prebuilt model for slow Schwarzschild eccentric flux-based waveforms.
 
     This model combines the various modules to produce the a reference waveform
@@ -941,7 +937,7 @@ class SlowSchwarzschildEccentricFlux(SphericalHarmonicWaveformBase, Schwarzschil
             **kwargs,
         )
 
-class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase, ABC):
+class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase):
     r"""Waveform generation class for AAK with 5PN trajectory.
 
     This class generates waveforms based on the Augmented Analytic Kludge
@@ -1013,19 +1009,4 @@ class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase, ABC):
             inspiral_kwargs=inspiral_kwargs,
             sum_kwargs=sum_kwargs,
             use_gpu=use_gpu,
-        )
-
-    @property
-    def citation(self):
-        """Return citations related to this module"""
-        return (
-            larger_few_citation
-            + few_citation
-            + few_software_citation
-            + fd_citation
-            + AAK_citation_1
-            + AAK_citation_2
-            + AK_citation
-            + Pn5_citation
-            + kerr_separatrix_citation
         )

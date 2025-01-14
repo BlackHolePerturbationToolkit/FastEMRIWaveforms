@@ -159,7 +159,7 @@ type Reference = ArticleReference | SoftwareReference
 
 class REFERENCE(enum.Enum):
     FEW = "Chua:2020stf"
-    LARGER_FEW = "Chua:2020stf"
+    LARGER_FEW = "Katz:2021yft"
     FEW_SOFTWARE = "FastEMRIWaveforms"
     ROMANNET = "Chua:2018woh"
     PN5 = "Fujita:2020zxe"
@@ -215,31 +215,19 @@ def build_citation_registry() -> CitationRegistry:
 
 CITATIONS_REGISTRY = build_citation_registry()
 
-few_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.FEW).to_bibtex() + "\n"
-larger_few_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.LARGER_FEW).to_bibtex() + "\n"
-romannet_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.ROMANNET).to_bibtex() + "\n"
-Pn5_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.PN5).to_bibtex() + "\n"
-kerr_separatrix_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.KERR_SEPARATRIX).to_bibtex() + "\n"
-AAK_citation_1 = "\n" + CITATIONS_REGISTRY.get(REFERENCE.AAK1).to_bibtex() + "\n"
-AAK_citation_2 = "\n" + CITATIONS_REGISTRY.get(REFERENCE.AAK2).to_bibtex() + "\n"
-AK_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.AK).to_bibtex() + "\n"
-fd_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.FD).to_bibtex() + "\n"
-few_software_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.FEW_SOFTWARE).to_bibtex() + "\n"
-
 COMMON_REFERENCES = [REFERENCE.FEW, REFERENCE.LARGER_FEW, REFERENCE.FEW_SOFTWARE]
 
-class CitableClass(abc.ABC):
+class Citable:
     """Base class for classes associated with specific citations."""
 
     @classmethod
     def citation(cls) -> str:
         """Return the module references as a printable BibTeX string."""
-        references = cls.module_references() + COMMON_REFERENCES
+        references = cls.module_references()
         bibtex_entries = [CITATIONS_REGISTRY.get(key.value).to_bibtex() for key in references]
-        return "\n".join(bibtex_entries)
+        return "\n\n".join(bibtex_entries)
 
     @classmethod
-    @abc.abstractmethod
     def module_references(cls) -> list[REFERENCE]:
         """Method implemented by each class to define its list of references"""
-        return []
+        return COMMON_REFERENCES

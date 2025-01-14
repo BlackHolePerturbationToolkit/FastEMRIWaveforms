@@ -21,7 +21,6 @@ from ..utils.baseclasses import (
     ParallelModuleBase,
 )
 from .base import SummationBase
-from ..utils.citations import *
 
 
 class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
@@ -39,11 +38,6 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
         ParallelModuleBase.__init__(self, *args, **kwargs)
         SchwarzschildEccentric.__init__(self, *args, **kwargs)
         SummationBase.__init__(self, *args, **kwargs)
-
-    @property
-    def citation(self):
-        """Return citations for this class"""
-        return larger_few_citation + few_citation + few_software_citation
 
     @property
     def gpu_capability(self):
