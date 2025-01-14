@@ -59,7 +59,8 @@ keywords:
   - Waveform
 license: GPL-3.0
 references:
-  - authors:
+  - abbreviation: "Chua:2020stf"
+    authors:
       - family-names: Chua
         given-names: Alvin J. K.
       - family-names: Katz
@@ -88,7 +89,8 @@ references:
         value: 'arXiv:2008.06071'
         description: arXiv preprint of this article
     type: article
-  - authors:
+  - abbreviation: "Katz:2021yft"
+    authors:
       - family-names: Katz
         given-names: Michael L.
       - family-names: Chua
@@ -119,7 +121,8 @@ references:
         value: 'arXiv:2104.04582'
         description: arXiv preprint of this article
     type: article
-  - authors:
+  - abbreviation: "Chua:2018woh"
+    authors:
       - family-names: Chua
         given-names: Alvin J. K.
       - family-names: Galley
@@ -146,7 +149,8 @@ references:
         value: 'arXiv:1811.05491'
         description: arXiv preprint of this article
     type: article
-  - authors:
+  - abbreviation: "Fujita:2020zxe"
+    authors:
       - family-names: Fujita
         given-names: Ryuichi
       - family-names: Shibata
@@ -171,7 +175,8 @@ references:
         value: 'arXiv:2008.13554'
         description: arXiv preprint of this article
     type: article
-  - authors:
+  - abbreviation: "Stein:2019buj"
+    authors:
       - family-names: Stein
         given-names: Leo C.
       - family-names: Warburton
@@ -194,7 +199,8 @@ references:
         value: 'arXiv:1912.07609'
         description: arXiv preprint of this article
     type: article
-  - authors:
+  - abbreviation: "Chua:2015mua"
+    authors:
       - family-names: Chua
         given-names: Alvin J. K.
       - family-names: Gair
@@ -218,7 +224,8 @@ references:
         value: 'arXiv:1510.06245'
         description: arXiv preprint of this article
     type: article
-  - authors:
+  - abbreviation: "Chua:2017ujo"
+    authors:
       - family-names: Chua
         given-names: Alvin J. K.
       - family-names: Moore
@@ -243,7 +250,8 @@ references:
         value: 'arXiv:1705.04259'
         description: arXiv preprint of this article
     type: article
-  - authors:
+  - abbreviation: "Barack:2003fp"
+    authors:
       - family-names: Barack
         given-names: Leor
       - family-names: Cutler
@@ -268,7 +276,8 @@ references:
         value: 'arXiv:gr-qc/0310125'
         description: arXiv preprint of this article
     type: article
-  - authors:
+  - abbreviation: "Speri:2023jte"
+    authors:
       - family-names: Speri
         given-names: Lorenzo
       - family-names: Katz
