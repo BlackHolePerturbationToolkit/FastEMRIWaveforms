@@ -24,6 +24,7 @@ attribute.
 """
 
 import abc
+import enum
 from pydantic import BaseModel
 from typing import Sequence
 from few.utils.exceptions import InvalidInputFile
@@ -156,6 +157,18 @@ class SoftwareReference(ReferenceABC):
 
 type Reference = ArticleReference | SoftwareReference
 
+class REFERENCE(enum.Enum):
+    FEW = "Chua:2020stf"
+    LARGER_FEW = "Chua:2020stf"
+    FEW_SOFTWARE = "FastEMRIWaveforms"
+    ROMANNET = "Chua:2018woh"
+    PN5 = "Fujita:2020zxe"
+    KERR_SEPARATRIX = "Stein:2019buj"
+    AAK1 = "Chua:2015mua"
+    AAK2 = "Chua:2017ujo"
+    AK = "Barack:2003fp"
+    FD = "Speri:2023jte"
+
 class CitationRegistry:
     __slots__ = ('registry')
 
@@ -164,15 +177,9 @@ class CitationRegistry:
     def __init__(self, **kwargs):
         self.registry = kwargs
 
-    def get(self, reference_names: Sequence[str]) -> list[Reference]:
-        """Return a list of Reference objects from a list of names."""
-        return [self.registry[name] for name in reference_names]
-
-    def as_bibtex(self, reference_names: Sequence[str] |str) -> str:
-        """Return a bibtex file of requested references."""
-        refs = self.get([reference_names] if isinstance(reference_names, str) else reference_names)
-        bibtex_entries = [ref.to_bibtex() for ref in refs]
-        return "\n\n".join(bibtex_entries)
+    def get(self, key: str | REFERENCE) -> Reference:
+        """Return a Reference object from its key."""
+        return self.registry[key if isinstance(key, str) else key.value]
 
 def build_citation_registry() -> CitationRegistry:
     """Read the package CITATION.cff and build the corresponding registry."""
@@ -206,15 +213,33 @@ def build_citation_registry() -> CitationRegistry:
 
     return CitationRegistry(**references, **{cff.cffobj["title"] : to_reference(cff.cffobj)})
 
-CITATIONS = build_citation_registry()
+CITATIONS_REGISTRY = build_citation_registry()
 
-few_citation = "\n" + CITATIONS.as_bibtex("Chua:2020stf") + "\n"
-larger_few_citation = "\n" + CITATIONS.as_bibtex("Katz:2021yft") + "\n"
-romannet_citation = "\n" + CITATIONS.as_bibtex("Chua:2018woh") + "\n"
-Pn5_citation = "\n" + CITATIONS.as_bibtex("Fujita:2020zxe") + "\n"
-kerr_separatrix_citation = "\n" + CITATIONS.as_bibtex("Stein:2019buj") + "\n"
-AAK_citation_1 = "\n" + CITATIONS.as_bibtex("Chua:2015mua") + "\n"
-AAK_citation_2 = "\n" + CITATIONS.as_bibtex("Chua:2017ujo") + "\n"
-AK_citation = "\n" + CITATIONS.as_bibtex("Barack:2003fp") + "\n"
-fd_citation = "\n" + CITATIONS.as_bibtex("Speri:2023jte") + "\n"
-few_software_citation = "\n" + CITATIONS.as_bibtex("FastEMRIWaveforms") + "\n"
+few_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.FEW).to_bibtex() + "\n"
+larger_few_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.LARGER_FEW).to_bibtex() + "\n"
+romannet_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.ROMANNET).to_bibtex() + "\n"
+Pn5_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.PN5).to_bibtex() + "\n"
+kerr_separatrix_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.KERR_SEPARATRIX).to_bibtex() + "\n"
+AAK_citation_1 = "\n" + CITATIONS_REGISTRY.get(REFERENCE.AAK1).to_bibtex() + "\n"
+AAK_citation_2 = "\n" + CITATIONS_REGISTRY.get(REFERENCE.AAK2).to_bibtex() + "\n"
+AK_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.AK).to_bibtex() + "\n"
+fd_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.FD).to_bibtex() + "\n"
+few_software_citation = "\n" + CITATIONS_REGISTRY.get(REFERENCE.FEW_SOFTWARE).to_bibtex() + "\n"
+
+COMMON_REFERENCES = [REFERENCE.FEW, REFERENCE.LARGER_FEW, REFERENCE.FEW_SOFTWARE]
+
+class CitableClass(abc.ABC):
+    """Base class for classes associated with specific citations."""
+
+    @classmethod
+    def citation(cls) -> str:
+        """Return the module references as a printable BibTeX string."""
+        references = cls.module_references() + COMMON_REFERENCES
+        bibtex_entries = [CITATIONS_REGISTRY.get(key.value).to_bibtex() for key in references]
+        return "\n".join(bibtex_entries)
+
+    @classmethod
+    @abc.abstractmethod
+    def module_references(cls) -> list[REFERENCE]:
+        """Method implemented by each class to define its list of references"""
+        return []
