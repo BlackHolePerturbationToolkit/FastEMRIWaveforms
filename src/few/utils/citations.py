@@ -107,7 +107,7 @@ class ArticleReference(ReferenceABC):
         """Build the BibTeX representation of an article."""
         arxiv_id = self.arxiv_preprint
 
-        line_format = """  {:<10} = "{}" """ if arxiv_id is None else """  {:<13} = "{}" """
+        line_format = """  {:<10} = \"{}\"""" if arxiv_id is None else """  {:<13} = \"{}\""""
         def format_line(key: str, value: str, format: str = line_format) -> str:
             return format.format(key, value)
 
@@ -166,7 +166,7 @@ class SoftwareReference(ReferenceABC):
         """Build the BibTeX representation of a software."""
 
         def format_line(key: str, value: str) -> str:
-            return """  {:<10} = "{}" """.format(key, value)
+            return """  {:<10} = \"{}\"""".format(key, value)
 
         lines = []
         lines.append("@software{" + self.title)
