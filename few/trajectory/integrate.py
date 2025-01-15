@@ -22,7 +22,6 @@ import os
 from typing import Tuple, List, Union, Type, Optional
 
 import numpy as np
-from scipy.optimize import brentq
 
 # Python imports
 from ..utils.utility import (
@@ -33,6 +32,8 @@ from ..utils.utility import (
 )
 from ..utils.constants import *
 from ..utils.citations import *
+
+from ..utils.baseclasses import ParallelModuleBase
 
 from .ode.base import ODEBase, get_ode_properties
 from .ode import _STOCK_TRAJECTORY_OPTIONS
@@ -46,7 +47,112 @@ INNER_THRESHOLD = 1e-8
 PERCENT_STEP = 0.25
 MAX_ITER = 1000
 
+import time
+
 from .dopr853 import DOPR853
+
+def brentq_array(f, a, b, args, tol):
+    a = a.copy()
+    b = b.copy()
+
+    # Machine epsilon for double precision
+    eps = 2.220446049250313e-16
+
+    converged = np.zeros(len(a), dtype=bool)
+    outputs = np.zeros(len(a))
+
+    fa = f(a, args)
+    fb = f(b, args)
+    
+    # Check that f(a) and f(b) have different signs
+
+    # we write the above as a vectorised operation to find indices that have converged
+    fa_mask = fa == 0.0
+    outputs[fa_mask] = a[fa_mask]
+    fb_mask = fb == 0.0
+    outputs[fb_mask] = b[fb_mask]
+    converged[fa_mask | fb_mask] = 1
+
+    if np.any((fa * fb > 0.0)[~converged]):
+        raise ValueError("f(a) and f(b) must have different signs.")
+
+    c = a.copy()
+    fc = fa.copy()
+    d = b - a
+    e = d.copy()
+
+    p = np.empty_like(a)
+    q = np.empty_like(a)
+    
+    max_iter = 100
+    iter = 0
+    while np.any(~converged):
+        if iter > max_iter:
+            raise ValueError("Maximum number of iterations exceeded.")
+        
+        afc_gt_afb_mask = np.abs(fc) < np.abs(fb)
+
+        a[afc_gt_afb_mask] = b[afc_gt_afb_mask]
+        b[afc_gt_afb_mask] = c[afc_gt_afb_mask]
+        c[afc_gt_afb_mask] = a[afc_gt_afb_mask]
+        fa[afc_gt_afb_mask] = fb[afc_gt_afb_mask]
+        fb[afc_gt_afb_mask] = fc[afc_gt_afb_mask]
+        fc[afc_gt_afb_mask] = fa[afc_gt_afb_mask]
+
+        tol1 = 2.0 * eps * np.abs(b) + 0.5 * tol
+        xm = 0.5 * (c - b)
+        check_convergence_mask = ((np.abs(xm) <= tol1) | (fb == 0.0)) & ~converged
+        outputs[check_convergence_mask] = b[check_convergence_mask]
+        converged[check_convergence_mask] = 1
+
+        # Check if bisection is forced
+        no_bisect_mask = ((np.abs(e) >= tol1) & (abs(fa) > abs(fb)))
+
+        s = fb / fa
+
+        # linear_interpolation
+        a_eq_c_mask = a == c
+        linear_mask = no_bisect_mask & a_eq_c_mask
+        p[linear_mask] = (2.0 * xm * s)[linear_mask]
+        q[linear_mask] = 1.0 - s[linear_mask]
+
+        # Inverse quadratic interpolation
+        inverse_quad_mask = no_bisect_mask & ~a_eq_c_mask
+        q[inverse_quad_mask] = (fa / fc)[inverse_quad_mask]
+        r = fb / fc
+        p[inverse_quad_mask] = (s * (2.0 * xm * q * (q - r) - (b - a) * (r - 1.0)))[inverse_quad_mask]
+        q[inverse_quad_mask] = ((q - 1.0) * (r - 1.0) * (s - 1.0))[inverse_quad_mask]
+
+        p_pos_mask = (p > 0.0)
+        q[p_pos_mask] *= -1
+        p[~p_pos_mask] *= -1
+
+        accept_interp_mask = (2.0 * p < 3.0 * xm * q - np.abs(tol1 * q)) & (p < np.abs(0.5 * e * q))
+        d[accept_interp_mask] = (p / q)[accept_interp_mask]
+        d[~accept_interp_mask] = xm[~accept_interp_mask]
+        e[~accept_interp_mask] = d[~accept_interp_mask]
+
+        d[~no_bisect_mask] = xm[~no_bisect_mask]
+        e[~no_bisect_mask] = d[~no_bisect_mask]
+
+        a = b.copy()
+        fa = fb.copy()
+        tolmask = np.abs(d) > tol1
+        b[tolmask] += d[tolmask]
+        add = tol1 * (2 * (xm > 0) - 1)
+        b[~tolmask] += add[~tolmask]
+
+        fb = f(b, args)
+        final_upd_mask = fb * fc > 0.0
+        c[final_upd_mask] = a[final_upd_mask]
+        fc[final_upd_mask] = fa[final_upd_mask]
+        d[final_upd_mask] = (b - a)[final_upd_mask]
+        e[final_upd_mask] = d[final_upd_mask]
+
+        iter += 1
+
+    return outputs
+
 
 def get_integrator(func, file_directory=None, integrate_constants_of_motion=False, **kwargs):
     if file_directory is None:
@@ -94,7 +200,7 @@ def get_integrator(func, file_directory=None, integrate_constants_of_motion=Fals
             **kwargs,
         )
 
-class Integrate:
+class Integrate(ParallelModuleBase):
     def __init__(
         self,
         func: Type[ODEBase],
@@ -105,8 +211,8 @@ class Integrate:
         file_directory: Optional[str]=None,
         **kwargs
     ):  
-        if buffer_length is True:
-            breakpoint()
+        ParallelModuleBase.__init__(self, **kwargs)
+
         self.buffer_length = buffer_length
         self.file_directory = file_directory
 
@@ -136,7 +242,12 @@ class Integrate:
         # assert np.all(self.circular == self.circular[0])
 
     def __reduce__(self):
-        return (self.__class__, (self.base_func, self.integrate_constants_of_motion, self.buffer_length, self.rootfind_separatrix, self.enforce_schwarz_sep, self.file_directory))
+        return (self.__class__, (self.base_func, self.integrate_constants_of_motion, self.buffer_length, self.rootfind_separatrix, self.enforce_schwarz_sep, self.file_directory, self.use_gpu))
+
+    @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
 
     @property
     def nparams(self) -> int:
@@ -175,189 +286,285 @@ class Integrate:
         return self.func.separatrix_buffer_dist
 
     def _dopr_ode_wrap(self, t, y, ydot, additionalArgs):
-        self.func(y[:,0], out=ydot[:,0])
+        self.func(y, out=ydot)
         if self.integrate_backwards:
             ydot *= -1
         return ydot
 
-    def take_step(
-        self, t: float, h: float, y: np.ndarray
-    ) -> Tuple[float, float, np.ndarray]:
-        return self.dopr.take_step_single(t, h, y, self.tmax_dimensionless, None)
+    # def take_step(
+    #     self, t: float, h: float, y: np.ndarray
+    # ) -> Tuple[float, float, np.ndarray]:
+    #     return self.dopr.take_step_single(t, h, y, self.tmax_dimensionless, None)
 
-    def log_failed_step(self):
-        # check for number of tries to fix this
-        self.bad_num += 1
-        if self.bad_num >= 100:
-            raise ValueError("error, reached bad limit.\n")
+    def take_step(
+        self, t: np.ndarray, h: np.ndarray, y: np.ndarray
+    ) -> np.ndarray:
+        return self.dopr.take_step(t, h, y, self.tmax_dimensionless, None)
 
     def integrate(self, t0: float, y0: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        t = t0
-        h = self.dt_dimensionless
-
-        t_prev = t0
+        
+        t = t0.copy()
+        h = self.dt_dimensionless * self.xp.ones((self.numSys,))
+        
+        t_prev = t0.copy()
         y_prev = y0.copy()
+        h_prev = h.copy()
         y = y0.copy()
 
-        self.bad_num = 0
+        t_finish = t.copy()
+        y_finish = y.copy()
+
         # add the first point
-        self.save_point(0.0, y)
-        self._integrator_t_cache[0] = 0.0
-        # breakpoint()
-        while t < self.tmax_dimensionless:
+        self.save_point(self.xp.zeros(self.numSys), y)
+        self.integrator_t_cache[0] = 0.0
 
+        # explanation of the status codes
+        # 0: continue integration
+        # -1: reached stopping criterion
+        # -2: reached maximum time
+        # -3: failed integration
+        # >= 1: event boundary reached (not yet implemented)
+
+        # the integrator will advance all trajectories, then check events and the stopping criterion
+        # if events are reached by trajectories, the integrator will evaluate them all together
+        # integration will continue until all trajectories reach either the stopping criterion or the max time
+        # those at the stopping criterion are then evaluated together
+
+        final_time = 0.0
+        step_time = 0.0
+        prep_time = 0.0
+        tmax_mask_time = 0.0
+        action_time = 0.0
+        sep_mask_time = 0.0
+        save_time = 0.0
+
+        while self.xp.any(self.integrate_mask):
+            # print(self.traj_step.max())
+            st=time.perf_counter()
             try:
-                t_old = t
-                h_old = h
-                y_old = y.copy()
-                status, t, h = self.dopr.take_step_single(
-                    t_old, h_old, y, self.tmax_dimensionless, None
+                status = self.take_step(
+                    t, h, y
                 )
-
             except (
                 ValueError
-            ):  # an Elliptic function returned a nan and it raised an exception
+            ) as e:  # an Elliptic function returned a nan and it raised an exception
+                # TODO: improve handling of these errors (optional nan handling)
+                raise e
 
-                # self.integrator.reset_solver()
-                t = t_prev
-                y[:] = y_prev[:]
-                h = h_old / 2
-                self.log_failed_step()
-                continue
+            step_time += time.perf_counter() - st
+                # t = t_prev
+                # y[:] = y_prev[:]
+                # h = h_old / 2
+                # self.failed_steps[self.integrate_mask] += 1
+                # continue
             
-            if np.isnan(h):
-                t = t_prev
-                y[:] = y_prev[:]
-                h = h_old / 2
-                self.log_failed_step()
-                continue
+            #if any quantity is nan, step those trajectories back and take a smaller step.
+            fail_mask = self.xp.any((self.xp.isnan(h)) | (self.xp.isnan(y)), axis=0) | ~status
+            
+            # move failed points back to their previous values
+            t[fail_mask] = t_prev[fail_mask]
+            y[:, fail_mask] = y_prev[:, fail_mask]
 
-            if not status:  # what does this do?
-                self.bad_num += 1
-                self.log_failed_step()
-                continue
+            # if h returned as nan, we halve the previous step size
+            h_nan_mask = self.xp.isnan(h)
+            h[h_nan_mask] = h_prev[h_nan_mask] / 2
+            # h was adjusted to a new step size, so we update h_prev to match it for the next iteration            
+            h_prev[fail_mask] = h[fail_mask]
+            self.failed_steps[fail_mask] += 1
+
+            # if all trajectories failed just skip to the start of the next iteration
+            # if self.xp.all(fail_mask == self.integrate_mask):
+            #     continue
+            
+            st = time.perf_counter()
 
             if not self.dopr.fix_step:
-                spline_info = self.dopr.prep_evaluate_single(
-                    t_old, y_old, h_old, t, y, None
+                spline_info = self.dopr.prep_evaluate(
+                    t_prev, y_prev, h_prev, t, y, None
                 )
             else:
                 spline_info = None
 
-            # or if any quantity is nan, step back and take a smaller step.
-            if np.any(np.isnan(y)):  # an Elliptic function returned a nan and it raised an exception
-
-                # self.integrator.reset_solver()
-                t = t_prev
-                y[:] = y_prev[:]
-                h /= 2
-                
-                self.log_failed_step()
-                continue
+            prep_time += time.perf_counter() - st
 
             # if it made it here, reset bad num
-            self.bad_num = 0
+            self.failed_steps[~fail_mask] = 0
 
-            # should not be needed but is safeguard against stepping past maximum allowable time
+            st = time.perf_counter()
             # the last point in the trajectory will be at t = tmax
-            if t > self.tmax_dimensionless:
-                if not self.dopr.fix_step:
-                    self.dopr_spline_output[self.traj_step - 1, :] = spline_info
-                    self._integrator_t_cache[self.traj_step] = t * self.Msec
-                break
+            past_tmax_mask = (t > self.tmax_dimensionless) & (~fail_mask) & self.integrate_mask
+            self.status_arr[past_tmax_mask] = -2
+            if self.xp.any(past_tmax_mask) and not self.dopr.fix_step:
+                step_here = self.traj_step[past_tmax_mask]
+                # print(upd_inds)
+                # self.xp.put_along_axis(self._integrator_t_cache, upd_inds, (t * self.Msec)[past_tmax_mask], axis=0)
+                self.dopr_spline_output[step_here - 1, past_tmax_mask] = spline_info[past_tmax_mask]
 
-            # if status is 9 meaning inside the separatrix
-            action = self.action_function(t, y)
+                # self.xp.put_along_axis(self.dopr_spline_output, upd_inds[:,:,None,None], spline_info[past_tmax_mask], axis=0)
+                self._integrator_t_cache[step_here, past_tmax_mask] = (t * self.Msec)[past_tmax_mask]
 
-            if action == "stop":
-                if not self.dopr.fix_step:
-                    self.dopr_spline_output[self.traj_step - 1, :] = spline_info
-                    self._integrator_t_cache[self.traj_step] = t * self.Msec
+                t_finish[past_tmax_mask] = t[past_tmax_mask]
+                y_finish[:, past_tmax_mask] = y[:, past_tmax_mask]
+            
+            tmax_mask_time += time.perf_counter() - st
+            # if status is 1 then trajectory went inside the separatrix
+
+            st = time.perf_counter()
+            actions = self.action_function(t, y)
+            action_time += time.perf_counter() - st
+            
+            st = time.perf_counter()
+            separatrix_mask = ((actions == 1) & ~past_tmax_mask) & (~fail_mask) & self.integrate_mask
+            self.status_arr[separatrix_mask] = -1
+            if self.xp.any(separatrix_mask) and not self.dopr.fix_step:
+                step_here = self.traj_step[separatrix_mask]
+                self.dopr_spline_output[step_here - 1, separatrix_mask] = spline_info[separatrix_mask]
+                self._integrator_t_cache[step_here, separatrix_mask] = (t * self.Msec)[separatrix_mask]
 
                 # go back to last values
-                y[:] = y_prev[:]
-                t = t_prev
-                break
+                y_finish[:, separatrix_mask] = y_prev[:, separatrix_mask]
+                t_finish[separatrix_mask] = t_prev[separatrix_mask]
+            sep_mask_time += time.perf_counter() - st
+            save_mask = (~past_tmax_mask & ~separatrix_mask) & ~fail_mask  & self.integrate_mask
+            # breakpoint()
+            # print('------')
+            # print("NEW POINT:", self.traj_step)
+            # print("STATUS:", status)
+            # print("PAST MAX T:", past_tmax_mask)
+            # print("SAVING POINTS:", save_mask)
+            # print(t_prev, t, t_finish)
+            # print(t, y_prev[0], y[0], fail_mask, status, save_mask)
+            st = time.perf_counter()
+            if self.xp.any(save_mask):
+                self.save_point(
+                    t * self.Msec, y, spline_output=spline_info, locs=save_mask,
+                )  # adds time in seconds
 
-            self.save_point(
-                t * self.Msec, y, spline_output=spline_info
-            )  # adds time in seconds
+                # update previous values to current values
+                t_prev[save_mask] = t[save_mask]
+                y_prev[:,save_mask] = y[:,save_mask]
+                h_prev[save_mask] = h[save_mask]
+            save_time += time.perf_counter() - st
 
-            t_prev = t
-            y_prev[:] = y[:]
+            # check fails here and stop trajectories that have failed too many times
+            self.status_arr[self.failed_steps >= 50] = -3
 
+            # re-check which trajectories are still integrating
+            self.integrate_mask = self.status_arr >= 0
+            # print("CONTINUE NEXT:", self.integrate_mask, "STATUS:", self.status_arr)
+            
         if hasattr(self, "finishing_function"):
-            self.finishing_function(t, y)
+            # print("DIST:", y_finish[0] - (self.get_p_sep(y_finish) + self.func.separatrix_buffer_dist))
+            # breakpoint()
+            st = time.perf_counter()
+            self.finishing_function(t_finish, y_finish)
+            final_time += time.perf_counter() - st
+
+        # print("STEP TIME:", step_time)
+        # print("PREP TIME:", prep_time)
+        # print("TMAX MASK TIME:", tmax_mask_time)
+        # print("ACTION TIME:", action_time)
+        # print("SEP MASK TIME:", sep_mask_time)
+        # print("SAVE TIME:", save_time)
+        # print("FINAL TIME:", final_time)
+
 
     def initialize_integrator(
         self, err=1e-11, DENSE_STEPPING=False, integrate_backwards=False, **kwargs
-    ):
+    ):  
+        self.dopr.reset(self.numSys, self.nparams)
+
         self.dopr.abstol = err
         self.dopr.fix_step = DENSE_STEPPING
         self.integrate_backwards = integrate_backwards
-        try:
-            self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
-        except TypeError:
-            breakpoint()
-        self._integrator_t_cache = np.zeros((self.buffer_length, ))
-        self.dopr_spline_output = np.zeros(
-            (self.buffer_length, 6, 8)
+
+        self.trajectory_arr = self.xp.zeros((self.buffer_length, self.nparams + 1, self.numSys))
+        self._integrator_t_cache = self.xp.zeros((self.buffer_length, self.numSys))
+        self.dopr_spline_output = self.xp.zeros(
+            (self.buffer_length, self.numSys, 6, 8)
         )  # 3 parameters + 3 phases, 8 coefficients
-        self.traj_step = 0
+        self.traj_step = self.xp.zeros((self.numSys,), dtype=np.int32)
+
+        # failed steps
+        self.failed_steps = self.xp.zeros((self.numSys,), dtype=np.int32)
+
+        # store the status of each ODE here
+        self.status_arr = self.xp.zeros((self.numSys,), dtype=np.int32)
+        self.integrate_mask = self.xp.ones((self.numSys,), dtype=np.bool)
 
     @property
     def trajectory(self):
-        return self.trajectory_arr[: self.traj_step]
+        return self.trajectory_arr[: self.traj_step.max()]
     
     @property
     def integrator_t_cache(self):
-        return self._integrator_t_cache[: self.traj_step]
+        return self._integrator_t_cache[: self.traj_step.max()]
 
     @property
     def integrator_spline_coeff(self):
-        return self.dopr_spline_output[: self.traj_step - 1]
+        return self.dopr_spline_output[: self.traj_step.max() - 1]
 
     def save_point(
-        self, t: float, y: np.ndarray, spline_output: List[np.ndarray] = None
+        self, t: float, y: np.ndarray, spline_output: np.ndarray = None, locs: Optional[np.ndarray[bool]]=None, inds: Optional[np.ndarray[int]]=None 
     ):
 
-        self.trajectory_arr[self.traj_step, 0] = t
-        self.trajectory_arr[self.traj_step, 1:] = y
+        if locs is not None:
+            t = t[locs]
+            y = y[:, locs]
+            if spline_output is not None:
+                spline_output = spline_output[locs]
+
+            inds = self.xp.where(locs)[0]
+        elif locs is None and inds is None:
+            inds = self.xp.arange(self.numSys)
+
+        step_here = self.traj_step[inds]
+
+        self.trajectory_arr[step_here, 0, inds] = t
+        self.trajectory_arr[step_here, 1:, inds] = y.T
+        # self.xp.put_along_axis(self.trajectory_arr, self.traj_step[inds][:,None,None], self.xp.vstack((t[inds], y[:,inds])), axis=0)
 
         if spline_output is not None:
-            assert self.traj_step >= 0
-            self._integrator_t_cache[self.traj_step] = t
-            self.dopr_spline_output[self.traj_step - 1, :] = spline_output
+            assert self.xp.all(self.traj_step >= 0)
+            self._integrator_t_cache[step_here, inds] = t
+            self.dopr_spline_output[step_here - 1, inds] = spline_output
+            # self.xp.put_along_axis(self._integrator_t_cache, self.traj_step[inds][:,None], t[inds], axis=0)
+            # self.xp.put_along_axis(self.dopr_spline_output, self.traj_step[inds][:,None,None,None] - 1, spline_output[inds], axis=0)
 
-        self.traj_step += 1
-        if self.traj_step >= self.buffer_length:
+        self.traj_step[inds] += 1
+        if self.xp.any(self.traj_step >= self.buffer_length):
             # increase by 100
             buffer_increment = 100
 
-            self.trajectory_arr = np.concatenate(
-                [self.trajectory_arr, np.zeros((buffer_increment, self.nparams + 1))], axis=0
+            self.trajectory_arr = self.xp.concatenate(
+                [self.trajectory_arr, self.xp.zeros((buffer_increment, self.numSys, self.nparams + 1))], axis=0
             )
             if not self.dopr.fix_step:
-                self.dopr_spline_output = np.concatenate(
-                    [self.dopr_spline_output, np.zeros((buffer_increment, self.nparams, 8))], axis=0
+                self.dopr_spline_output = self.xp.concatenate(
+                    [self.dopr_spline_output, self.xp.zeros((buffer_increment, self.numSys, self.nparams, 8))], axis=0
                 )
-                self._integrator_t_cache = np.concatenate([self._integrator_t_cache, np.zeros(buffer_increment,)])
+                self._integrator_t_cache = self.xp.concatenate([self._integrator_t_cache, self.xp.zeros(buffer_increment, self.numSys)])
             self.buffer_length += buffer_increment
 
-    def eval_integrator_spline(self, t_new: np.ndarray):
-        t_old = self.integrator_t_cache
+    def eval_integrator_spline(self, t_new: np.ndarray, inds=None):
+        if inds is None:
+            inds = self.xp.arange(self.numSys)
 
-        result = np.zeros((t_new.size, 6))
-        t_in_mask = (t_new >= 0.) & (t_new <= t_old.max())
-        
-        result[t_in_mask,:] = self.dopr.eval(t_new[t_in_mask], t_old, self.integrator_spline_coeff)
+        t_old = self.integrator_t_cache[:,inds]
+
+        result = self.xp.zeros((*t_new.shape, self.nparams))
+        # t_in_mask = (t_new >= 0.) & (t_new <= t_old.max(0))
+        # print(t_in_mask)
+        # print(t_in_mask.shape)
+        # print(t_new, t_old.max())
+        result[:,:] = self.dopr.eval(self.xp.atleast_2d(t_new), t_old, self.integrator_spline_coeff[:,inds], self.traj_step[inds] - 1)
 
         if not self.generating_trajectory:
-            result[:,3:6] /= self.epsilon
+            result[:,:,3:6] /= self.epsilon
 
         # backwards integration requires an additional adjustment to match forwards phase conventions
         if self.integrate_backwards and not self.generating_trajectory:
-            result[:,3:6] += (self.trajectory[0,4:7] + self.trajectory[-1,4:7])
+            result[:,:,3:6] += (self.trajectory[0,4:7] + self.trajectory[self.traj_step,4:7])
         return result
     
     def eval_integrator_derivative_spline(self, t_new: np.ndarray, order: int=1):
@@ -372,6 +579,8 @@ class Integrate:
     def run_inspiral(self, M, mu, a, y0, additional_args, T=1.0, dt=10.0, **kwargs):
         # Indicate we are generating a trajectory (alters behaviour of integrator spline) 
         self.generating_trajectory = True
+        
+        self.numSys = y0.shape[1]
 
         self.moves_check = 0
         self.initialize_integrator(**kwargs)
@@ -381,13 +590,12 @@ class Integrate:
         self.dt_dimensionless = dt / (M * MTSUN_SI) * self.epsilon
         self.Msec = MTSUN_SI * M / self.epsilon
         self.a = a
-        assert self.nparams == len(y0)
 
+        assert self.nparams == y0.shape[0]
+        
         self.func.add_fixed_parameters(
             M, mu, a, additional_args=additional_args
         )
-
-        self.integrate(0.0, y0)
 
         orb_params = [y0[0], y0[1], y0[2]]
         if self.integrate_constants_of_motion:
@@ -404,8 +612,10 @@ class Integrate:
             ) < self.separatrix_buffer_dist - INNER_THRESHOLD:
                 # Raise a warning
                 raise ValueError(
-                    f"Warning: p_f is too close to separatrix. It must start above p_sep + {self.separatrix_buffer_dist}."
+                    f"p_f is too close to separatrix. It must start above p_sep + {self.separatrix_buffer_dist}."
                 )
+
+        self.integrate(self.xp.zeros(self.numSys), y0)
 
         # scale phases here by the mass ratio so the cache is accurate
         self.trajectory_arr[:, 4:7] /= self.epsilon
@@ -420,22 +630,23 @@ class Integrate:
 
 
 class APEXIntegrate(Integrate):
-    def get_p_sep(self, y: np.ndarray) -> float:
+    def get_p_sep(self, y: np.ndarray, inds: Optional[np.ndarray]=None) -> float:
+        if inds is None:
+            inds = self.xp.arange(self.numSys)
+
         p = y[0]
         e = y[1]
         x = y[2]
 
-        if self.a == 0.0:
-            p_sep = 6.0 + 2.0 * e
-
-        else:
-            p_sep = get_separatrix_interpolant(self.a, e, x)
+        p_sep = get_separatrix(self.a[inds], e, x)
         return p_sep
 
     def action_function(
         self, t: float, y: np.ndarray
     ) -> str:  # Stop the inspiral when close to the separatrix
         # TODO: implement a function for checking the outer grid bounds for backwards integration.
+        actions_out = self.xp.zeros(self.numSys)
+
         p = y[0]
 
         if self.integrate_backwards:
@@ -445,9 +656,9 @@ class APEXIntegrate(Integrate):
                 p_sep = self.get_p_sep(y)
             else:
                 p_sep = 6 + 2*y[1]
-
-            if p - p_sep < self.separatrix_buffer_dist + INNER_THRESHOLD:
-                return "stop"
+    
+            past_sep_mask = p - p_sep < self.separatrix_buffer_dist
+            actions_out[past_sep_mask] = 1
 
             # if p < 10.0 and self.moves_check < 1:
             #     self.integrator.currently_running_ode_index = 1
@@ -458,7 +669,7 @@ class APEXIntegrate(Integrate):
             #     print(f"Switched to index: {self.integrator.currently_running_ode_index}")
             #     self.moves_check += 1
 
-            return None
+        return actions_out
 
     def end_stepper(self, t: float, y: np.ndarray, ydot: np.ndarray, factor: float):
         # estimate the step to the breaking point and multiply by PERCENT_STEP
@@ -534,13 +745,13 @@ class APEXIntegrate(Integrate):
 
             self.save_point(t * self.Msec, y)
 
-    def inner_func(self, t_step):
+    def inner_func(self, t_step, args):
+        inds = args[0]
         # evaluate the dense output at y_step
-        y_step = self.eval_integrator_spline(np.array([t_step,]))[0]
-
+        y_step = self.eval_integrator_spline(self.xp.array([t_step,]), inds=inds)[0].T
         # get the separatrix value at this new step
         if not self.enforce_schwarz_sep:
-            p_sep = self.get_p_sep(y_step)
+            p_sep = self.get_p_sep(y_step, inds=inds)
         else:
             p_sep = 6 + 2 * y_step[1]
 
@@ -548,79 +759,87 @@ class APEXIntegrate(Integrate):
 
     def finishing_function(self, t: float, y: np.ndarray):
         # Tune the step-size of a dense integration step such that the trajectory terminates within INNER_THRESHOLD of p_sep + DIST_TO_SEPARATRIX
-
+        if self.dopr.fix_step:
+            # no rootfinding performed for the fixed stepper
+            return
+        
         # advance the step counter by one temporarily to read the last spline value
-        if not self.dopr.fix_step:
-            self.traj_step += 1
+        self.traj_step += 1
+
+        # mask based on finishing condition
+        sep_mask = self.status_arr == -1
+        tmax_mask = self.status_arr == -2
+
         if (
-            t < self.tmax_dimensionless
-        ):  # don't step to the separatrix if we already hit the time window
-            if (
-                self.rootfind_separatrix and not self.dopr.fix_step
-            ):  # use a root-finder and the full integration routine to tune the finish
-                
-                # if tmax occurs before the last point, we need to determine if the crossing is before t=tmax
-                if self.integrator_t_cache[-1] > self.tmax_dimensionless * self.Msec:
+            self.rootfind_separatrix
+        ):  # use a root-finder and the full integration routine to tune the finish
+            
+            # if tmax occurs before the last point, we need to determine if the crossing is before t=tmax
+            last_point_above_mask = (self._integrator_t_cache[self.traj_step] > self.tmax_dimensionless * self.Msec) & sep_mask
+            if self.xp.any(last_point_above_mask):
 
-                    # first, check if the crossing has happened by t=tmax (this is unlikely but can happen)
-                    y_at_tmax = self.eval_integrator_spline(np.array([self.tmax_dimensionless * self.Msec]))[0]
+                # first, check if the crossing has happened by t=tmax (this is unlikely but can happen)
+                y_at_tmax = self.eval_integrator_spline(self.xp.array([self.tmax_dimensionless * self.Msec]))[0, :, last_point_above_mask]
 
-                    if not self.enforce_schwarz_sep:
-                        p_sep_at_tmax = self.get_p_sep(y_at_tmax)
-                    else:
-                        p_sep_at_tmax = 6 + 2*y_at_tmax[1]
-
-                    if (y_at_tmax[0] - (p_sep_at_tmax + self.separatrix_buffer_dist)) > 0:
-                        # the trajectory didnt cross the boundary before t=tmax, so stop at t=tmax.
-                        # just place the point at y_at_tmax above.
-                        # we do not pass any spline information here as it has already been computed in the main integrator loop
-                        self.traj_step -= 1  # revert the step counter to place the last (t, y) in the right place (spline info not overwritten)
-                        self.save_point(
-                            self.tmax_dimensionless * self.Msec, y_at_tmax, spline_output=None
-                        )
+                if not self.enforce_schwarz_sep:
+                    p_sep_at_tmax = self.get_p_sep(y_at_tmax)
                 else:
-                    # the trajectory crosses the boundary before t=tmax. Root-find to get the crossing time.
-                    result = brentq(
-                        self.inner_func,
-                        t * self.Msec,  # lower bound: the current point
-                        self.integrator_t_cache[-1],  # upper bound: the knot that passed the boundary
-                        # args=(y_out,),
-                        maxiter=MAX_ITER,
-                        xtol=INNER_THRESHOLD,
-                        rtol=1e-10,
-                        full_output=True,
-                    )
+                    p_sep_at_tmax = 6 + 2*y_at_tmax[1]
 
-                    if result[1].converged:
-                        t_out = result[0]
-                        y_out = self.eval_integrator_spline(np.array([t_out,]))[0]
+                save_here_inds = last_point_above_mask & (y_at_tmax[0] - (p_sep_at_tmax + self.separatrix_buffer_dist) > 0)
 
-                        self.traj_step -= 1  # revert the step counter to place the last (t, y) in the right place (spline info not overwritten)
-                        self.save_point(
-                            t_out, y_out, spline_output=None
-                        )
-                    else:
-                        raise RuntimeError(
-                            "Separatrix root-finding operation did not converge within MAX_ITER."
-                        )
-
-            else:
-                self.finishing_function_euler_step(
-                    t, y
-                )  # weird step-halving Euler thing
-
-        else:  # If integrator walked past tmax during main loop, place a point at tmax and finish integration
-            if not self.dopr.fix_step:
-                y_finish = self.eval_integrator_spline(np.array([self.tmax_dimensionless * self.Msec,]))[0]
-                
-                self.traj_step -= 1  # revert the step counter to place the last (t, y) in the right place (spline info not overwritten)
+                # the trajectory didnt cross the boundary before t=tmax, so stop at t=tmax.
+                # just place the point at y_at_tmax above.
                 # we do not pass any spline information here as it has already been computed in the main integrator loop
+                self.traj_step[save_here_inds] -= 1  # revert the step counter to place the last (t, y) in the right place (spline info not overwritten)
                 self.save_point(
-                    self.tmax_dimensionless * self.Msec, y_finish, spline_output=None
-                )  # adds time in seconds
-            else:
-                # if another fixed step does not fit in the time window, just finish integration
-                pass
+                    self.tmax_dimensionless * self.Msec, y_at_tmax, spline_output=None, inds=save_here_inds
+                )
+            
+                sep_mask[save_here_inds] = False  # remove these points from the separatrix mask as they have now been processed
+
+            # now we perform root-finding for those points that crossed the boundary before t=tmax
+            # the trajectory crosses the boundary before t=tmax. Root-find to get the crossing time.
+            if self.xp.any(sep_mask):
+                # t_out = brentq(
+                #     self.inner_func,
+                #     (t * self.Msec)[sep_mask],  # lower bound: the current point
+                #     self._integrator_t_cache.max(axis=0)[sep_mask],  # upper bound: the knot that passed the boundary
+                #     # args=(y_out,),
+                #     maxiter=MAX_ITER,
+                #     xtol=INNER_THRESHOLD,
+                # )
+                t_out = brentq_array(
+                    self.inner_func,
+                    (t * self.Msec)[sep_mask],  # lower bound: the current point
+                    self._integrator_t_cache.max(axis=0)[sep_mask],  # upper bound: the knot that passed the boundary,
+                    args=(sep_mask,),
+                    tol=INNER_THRESHOLD,
+                )
+                y_out = self.eval_integrator_spline(t_out[None, :], inds=sep_mask)[0]
+
+                self.traj_step[sep_mask] -= 1  # revert the step counter to place the last (t, y) in the right place (spline info not overwritten)
+                self.save_point(
+                    t_out, y_out.T, spline_output=None, inds=sep_mask
+                )
+
+        elif not self.rootfind_separatrix:
+            raise NotImplementedError
+            self.finishing_function_euler_step(
+                t, y
+            )  # weird step-halving Euler thing (not yet updated)
+
+        # else:  # If integrator walked past tmax during main loop, place a point at tmax and finish integration
+        if self.xp.any(tmax_mask):
+            t_out = (self.tmax_dimensionless * self.Msec)[tmax_mask]
+
+            y_finish = self.eval_integrator_spline(t_out[None, :], inds=tmax_mask)[0]
+
+            self.traj_step[tmax_mask] -= 1  # revert the step counter to place the last (t, y) in the right place (spline info not overwritten)
+            # we do not pass any spline information here as it has already been computed in the main integrator loop
+            self.save_point(
+                t_out, y_finish.T, spline_output=None, inds=tmax_mask
+            )  # adds time in seconds
 
 class AELQIntegrate(Integrate):
     def get_p_sep(self, y: np.ndarray) -> float:

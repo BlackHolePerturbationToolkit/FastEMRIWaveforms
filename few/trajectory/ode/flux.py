@@ -72,18 +72,15 @@ class SchwarzEccFlux(ODEBase):
     def evaluate_rhs(self, y: Union[list[float], np.ndarray]) -> list[Union[float, np.ndarray]]:
         if self.use_ELQ:
             E, L, Q = y[:3]
-            p, e, x= ELQ_to_pex(self.a, E, L, Q)
+            p, e, x= ELQ_to_pex(self.a_cache, E, L, Q)
 
         else:
             p, e, x = y[:3]
 
-        if e < 0 or p < 6 + 2*e:
-            return [0., 0., 0., 0., 0., 0.,]
-
         Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(0., p, e, x)
         yPN = Omega_phi**(2/3)
 
-        y1 = np.log((p - 2. * e - 2.1))
+        y1 = self.xp.log((p - 2. * e - 2.1))
 
         Edot_PN = _Edot_PN(e, yPN)
         Ldot_PN = _Ldot_PN(e, yPN) 
@@ -101,17 +98,17 @@ class SchwarzEccFlux(ODEBase):
         return [y1dot, y2dot, y3dot, Omega_phi, Omega_theta, Omega_r]
 
 
-@njit(fastmath=True)
+@njit
 def _pdot_PN(p, e, risco, p_sep):
-    return ((8. * pow(1. - (e * e), 1.5) * (8. + 7. * (e * e))) / (5. * p * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))))
+    return ((8. * np.pow(1. - (e * e), 1.5) * (8. + 7. * (e * e))) / (5. * p * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))))
 
-@njit(fastmath=True)
+@njit
 def _edot_PN(p, e, risco, p_sep):
-    return ((pow(1. - (e * e), 1.5) * (304. + 121. * (e * e))) / (15. * (p*p) * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))))
+    return ((np.pow(1. - (e * e), 1.5) * (304. + 121. * (e * e))) / (15. * (p*p) * (((p - risco)*(p - risco)) - ((-risco + p_sep)*(-risco + p_sep)))))
 
-@njit(fastmath=True)
+@njit
 def _p_to_u(p, p_sep):
-    return log((p - p_sep + 4.0 - 0.05)/4)
+    return np.log((p - p_sep + 4.0 - 0.05)/4)
 
 
 class KerrEccEqFlux(ODEBase):
@@ -144,43 +141,37 @@ class KerrEccEqFlux(ODEBase):
         self.pdot_interp = TricubicSpline(x, y, z, np.log(-pdot))
         self.edot_interp = TricubicSpline(x, y, z, edot)
 
+        self.fr_time = 0.0
+        self.interp_time = 0.0
+
     @property
     def equatorial(self):
         return True
 
     @property
     def separatrix_buffer_dist(self):
-        return 0.05
+        return 0.1
     
     @property
     def supports_ELQ(self):
         return False
 
-    def evaluate_rhs(self, y: Union[list[float], np.ndarray]) -> list[Union[float, np.ndarray]]:
+    def evaluate_rhs(self, y: np.ndarray) -> list[Union[float, np.ndarray]]:
         if self.use_ELQ:
             raise NotImplementedError
         else:
             p, e, x = y[:3]
 
-        if e < 0:
-             return [0., 0., 0., 0., 0., 0.,]
-         
-        p_sep = get_separatrix(self.a, e, x)
+        p_sep = self.p_sep_cache
 
-        if p < p_sep:
-             return [0., 0., 0., 0., 0., 0.,]
+        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(self.a_cache, p, e, x)
 
-        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(self.a, p, e, x)
-
-        risco = get_separatrix(self.a, 0., x)
+        risco = get_separatrix(self.a_cache, self.xp.zeros_like(x), x)
         u = _p_to_u(p, p_sep)
         w = e**0.5
-        a_sign = self.a * x
+        a_sign = self.a_cache * x
 
-        pdot = -np.exp(self.pdot_interp(a_sign, w, u)) * _pdot_PN(p, e, risco, p_sep)
+        pdot = -self.xp.exp(self.pdot_interp(a_sign, w, u)) * _pdot_PN(p, e, risco, p_sep)
         edot = self.edot_interp(a_sign, w, u) * _edot_PN(p, e, risco, p_sep)
 
-        if e < 1e-6:
-            edot = 0.
-
-        return [pdot, edot, 0., Omega_phi, Omega_theta, Omega_r]
+        return pdot, edot, self.xp.zeros_like(pdot), Omega_phi, Omega_theta, Omega_r

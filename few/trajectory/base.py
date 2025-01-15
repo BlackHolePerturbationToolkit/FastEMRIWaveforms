@@ -148,7 +148,7 @@ class TrajectoryBase(ABC):
 
         # upsample everything
         upsamp_traj = self.inspiral_generator.eval_integrator_spline(new_t).T
-        if fix_t:
+        if fix_t:  # TODO: fix for vectorised
             if np.any(upsamp_traj[1] == 0):
 
                 trunc_ind = np.where(upsamp_traj[1] == 0)[0][0]

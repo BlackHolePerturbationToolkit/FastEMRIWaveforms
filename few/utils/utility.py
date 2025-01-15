@@ -549,11 +549,11 @@ def _KerrGeoCoordinateFrequencies_kernel_inner(a, p, e, x):
         return _SchwarzschildGeoCoordinateFrequencies_kernel(p, e)
 
 @njit(fastmath=False)
-def _KerrGeoCoordinateFrequencies_kernel(OmegaPhi, OmegaTheta, OmegaR, a, p, e, x):
-    for i in range(len(OmegaPhi)):
-        OmegaPhi[i], OmegaTheta[i], OmegaR[i] = _KerrGeoCoordinateFrequencies_kernel_inner(a[i], p[i], e[i], x[i])
+def _KerrGeoCoordinateFrequencies_kernel(OmegaAlpha, a, p, e, x):
+    for i in range(OmegaAlpha.shape[1]):
+        OmegaAlpha[:,i] = _KerrGeoCoordinateFrequencies_kernel_inner(a[i], p[i], e[i], x[i])
 
-def get_fundamental_frequencies(a: Union[float, np.ndarray], p:Union[float, np.ndarray], e:Union[float, np.ndarray], x:Union[float, np.ndarray]) -> tuple[Union[float, np.ndarray]]:
+def get_fundamental_frequencies(a: Union[float, np.ndarray], p:Union[float, np.ndarray], e:Union[float, np.ndarray], x:Union[float, np.ndarray], out:Optional[np.ndarray]=None) -> tuple[Union[float, np.ndarray]]:
     """Get dimensionless fundamental frequencies.
 
     Determines fundamental frequencies in generic Kerr from
@@ -581,6 +581,10 @@ def get_fundamental_frequencies(a: Union[float, np.ndarray], p:Union[float, np.n
         OmegaPhi, OmegaTheta, OmegaR = _KerrGeoCoordinateFrequencies_kernel_inner(
             a, p, e, x
         )
+        if out is not None:
+            out[0] = OmegaPhi
+            out[1] = OmegaTheta
+            out[2] = OmegaR
     else:
         p_in = np.atleast_1d(p)
         e_in = np.atleast_1d(e)
@@ -594,14 +598,16 @@ def get_fundamental_frequencies(a: Union[float, np.ndarray], p:Union[float, np.n
 
         assert len(a_in) == len(p_in)
 
-        OmegaPhi = np.empty_like(p_in)
-        OmegaTheta = np.empty_like(p_in)
-        OmegaR = np.empty_like(p_in)
+        if out is None:
+            out = np.empty((3, len(p_in)))
+        else:
+            assert out.shape == (3, len(p_in))
+        
         _KerrGeoCoordinateFrequencies_kernel(
-            OmegaPhi, OmegaTheta, OmegaR, a_in, p_in, e_in, x_in
+            out, a_in, p_in, e_in, x_in
         )
 
-    return (OmegaPhi, OmegaTheta, OmegaR)
+    return out
 
 
 @njit(fastmath=False)
@@ -928,7 +934,9 @@ def _brentq_jit(f, a, b, args, tol):
     d = b - a
     e = d
 
-    while True:
+    iter = 0
+    max_iter = 1000
+    while iter < max_iter:
         if abs(fc) < abs(fb):
             a=b
             b=c
@@ -988,6 +996,10 @@ def _brentq_jit(f, a, b, args, tol):
             fc = fa
             d = b - a
             e = d
+
+        iter += 1
+    
+    raise ValueError("Maximum number of iterations exceeded in brentq rootfinder.")
 
 @njit(fastmath=False)
 def _separatrix_polynomial_full(p, args):
@@ -1070,10 +1082,13 @@ def _get_separatrix_kernel_inner(a: float, e: float, x: float, tol: float=1e-13)
 @njit(fastmath=False)
 def _get_separatrix_kernel(p_sep: np.ndarray, a: np.ndarray, e: np.ndarray, x: np.ndarray, tol: float=1e-13):
     for i in range(len(a)):
-        p_sep[i] = _get_separatrix_kernel_inner(a[i], e[i], x[i], tol=tol)
+        if e[i] < 0:
+            p_sep[i] = np.nan
+        else:
+            p_sep[i] = _get_separatrix_kernel_inner(a[i], e[i], x[i], tol=tol)
 
 
-def get_separatrix(a: Union[float, np.ndarray], e: Union[float, np.ndarray], x: Union[float, np.ndarray], tol:float=1e-13) -> Union[float, np.ndarray]:
+def get_separatrix(a: Union[float, np.ndarray], e: Union[float, np.ndarray], x: Union[float, np.ndarray], tol:float=1e-13, out:Optional[np.ndarray]=None) -> Union[float, np.ndarray]:
     """Get separatrix in generic Kerr.
 
     Determines separatrix in generic Kerr from
@@ -1097,7 +1112,10 @@ def get_separatrix(a: Union[float, np.ndarray], e: Union[float, np.ndarray], x: 
     # determines shape of input
     if isinstance(e, float):
         separatrix = _get_separatrix_kernel_inner(a, e, x, tol=tol)
-
+        if out is not None:
+            out[0] = separatrix
+        else:
+            out = separatrix
     else:
         e_in = np.atleast_1d(e)
 
@@ -1119,10 +1137,14 @@ def get_separatrix(a: Union[float, np.ndarray], e: Union[float, np.ndarray], x: 
 
         assert len(a_in) == len(e_in) == len(x_in)
         
-        separatrix = np.empty_like(e_in)
-        _get_separatrix_kernel(separatrix, a_in, e_in, x_in, tol=tol)
+        if out is None:
+            out = np.empty_like(e_in)
+        else:
+            assert out.shape == e_in.shape
 
-    return separatrix
+        _get_separatrix_kernel(out, a_in, e_in, x_in, tol=tol)
+
+    return out
 
 
 # TODO: initialise this properly from the coefficients files, rather than all this stuff getting run every time

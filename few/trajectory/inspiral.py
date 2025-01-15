@@ -33,6 +33,8 @@ from ..utils.pn_map import Y_to_xI
 from ..utils.constants import *
 from ..utils.citations import *
 
+from ..utils.baseclasses import ParallelModuleBase, ABC
+
 from .integrate import get_integrator
 
 from typing import Type, Optional, Union
@@ -42,7 +44,7 @@ from .ode.base import ODEBase
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class EMRIInspiral(TrajectoryBase):
+class EMRIInspiral(TrajectoryBase, ParallelModuleBase, ABC):
     """EMRI trajectory module.
 
     This module implements generic trajectories by integrating with a
@@ -95,7 +97,7 @@ class EMRIInspiral(TrajectoryBase):
         file_directory: Optional[str]=None,
         **kwargs,
     ):
-
+        ParallelModuleBase.__init__(self, *args, **kwargs)
         TrajectoryBase.__init__(self, *args, **kwargs)
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
@@ -138,6 +140,11 @@ class EMRIInspiral(TrajectoryBase):
         )
 
         return citations_out
+
+    @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
 
     @property
     def trajectory(self):
@@ -208,27 +215,30 @@ class EMRIInspiral(TrajectoryBase):
         x0 = y3
 
         if background == "Schwarzschild":
-            a = 0.0
-        elif a < fill_value:
-            if background == "Kerr" and not equatorial:
-                warnings.warn(
-                    "Our model with spin breaks near a = 0. Adjusting to a = 1e-6.".format(
-                        fill_value
+            a = 0.0 * a
+        else:
+            a_fill_mask = a < fill_value
+            if self.xp.any(a_fill_mask):
+                if background == "Kerr" and not equatorial:
+                    warnings.warn(
+                        "Our model with spin breaks near a = 0. Adjusting to a = 1e-6.".format(
+                            fill_value
+                        )
                     )
-                )
-                a = fill_value
+                    a[a_fill_mask] = fill_value
 
         if equatorial:
-            if abs(x0) != 1:
+            if self.xp.any(self.xp.abs(x0) != 1):
                 raise RuntimeError(
                     "Magnitude of orbital inclination cosine x0 needs to be one for equatorial inspiral."
                 )
 
-        if x0 == -1:
-            Phi_phi0 = -1 * Phi_phi0  # flip initial azimuthal phase for retrograde
+        flip_mask = x0 == -1
+        if self.xp.any(flip_mask):
+            Phi_phi0[flip_mask] = -1 * Phi_phi0[flip_mask]  # flip initial azimuthal phase for retrograde
 
         if circular:
-            e0 = 0.0
+            e0 = 0. * e0
 
         # if integrating constants of motion, convert from pex to ELQ now
         if self.integrate_constants_of_motion:
@@ -238,11 +248,11 @@ class EMRIInspiral(TrajectoryBase):
 
         # transfer kwargs from parent class
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
-        args_in = np.asarray(args)
+        args_in = self.xp.asarray(args)
 
         # correct for issue in Cython pass
-        if len(args_in) == 0:
-            args_in = np.array([0.0])
+        if args_in.size == 0:
+            args_in = self.xp.array([[0.0]])
 
         # flip initial phases if integrating backwards
         if temp_kwargs["integrate_backwards"]:
@@ -250,24 +260,24 @@ class EMRIInspiral(TrajectoryBase):
             Phi_theta0 = -1 * Phi_theta0
             Phi_r0 = -1 * Phi_r0
 
-        y0 = np.array(
+        y0 = self.xp.vstack(
             [y1, y2, y3, Phi_phi0 * (mu / M), Phi_theta0 * (mu / M), Phi_r0 * (mu / M)]
         )
 
         # this will return in coordinate time
         out = self.inspiral_generator.run_inspiral(M, mu, a, y0, args_in, **temp_kwargs)
+        t, y1, y2, y3, Phi_phi, Phi_theta, Phi_r = self.xp.rollaxis(out, 1)
         if self.integrate_constants_of_motion and self.convert_to_pex:
-            out_ELQ = out.copy()
-            pex = ELQ_to_pex(a, out[:, 1].copy(), out[:, 2].copy(), out[:, 3].copy())
-            out[:, 1] = pex[0]
-            out[:, 2] = pex[1]
+            pex = ELQ_to_pex(a, y1, y2, y3)
+            p = pex[0]
+            e = pex[1]
             if self.inspiral_generator.convert_Y:
-                out[:, 3] = out_ELQ[:, 2] / np.sqrt(out_ELQ[:, 2] ** 2 + out_ELQ[:, 3])
+                x = y2 / self.xp.sqrt(y2 ** 2 + y3)
             else:
-                out[:, 3] = pex[2]
+                x = pex[2]
+            y1, y2, y3 = p, e, x
 
-        t, p, e, x, Phi_phi, Phi_theta, Phi_r = out.T.copy()
-        return t, p, e, x, Phi_phi, Phi_theta, Phi_r
+        return t, y1, y2, y3, Phi_phi, Phi_theta, Phi_r
 
     def get_rhs_ode(
         self,
@@ -320,7 +330,7 @@ class EMRIInspiral(TrajectoryBase):
         p0 = y1
         e0 = y2
         x0 = y3
-
+        
         if background == "Schwarzschild":
             a = 0.0
         elif a < fill_value:
@@ -350,9 +360,9 @@ class EMRIInspiral(TrajectoryBase):
                 x0 = Y_to_xI(a, p0, e0, x0)
             y1, y2, y3 = get_kerr_geo_constants_of_motion(a, p0, e0, x0)
 
-        y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
+        y0 = self.xp.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
 
-        y0_and_args = np.concatenate(([y0], args))
+        y0_and_args = self.xp.concatenate(([y0], args))
         out = self.inspiral_generator.func(y0_and_args)
         # out = self.inspiral_generator.func(np.r_[y0, *args])
 

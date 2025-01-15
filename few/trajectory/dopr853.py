@@ -18,7 +18,7 @@ from .pydopr853_cpu import error as error_cpu
 from .pydopr853_cpu import controllerSuccess as controllerSuccess_cpu
 """
 import matplotlib.pyplot as plt
-
+from typing import Optional
 np.random.seed(5)
 
 # Tolerances
@@ -218,6 +218,16 @@ def ODE_pendulum(x, arg, k, additionalArgs):
     k[1] = -b * omega - c * xp.sin(theta)
 
 
+# class EventGroup:
+    # """
+    # Evaluate a set of stopping conditions in parallel that are functions of the same state variables.
+    # """
+    # def __init__(self, event_func):
+    #     self.event_func = event_func
+
+    # def check_stop(self, t, y):
+    #     return self.event_func(t, y)
+
 class DOPR853:
 
     def __init__(
@@ -227,7 +237,7 @@ class DOPR853:
         tmax=1e300,
         max_step=int(1e6),
         use_gpu=False,
-        read_out_to_cpu=True,
+        read_out_to_cpu=False,
     ):
         self.ode = ode
         self.stopping_criterion = stopping_criterion
@@ -250,10 +260,16 @@ class DOPR853:
         if read_out_to_cpu:
             self.xp_read_out = np
         else:
-            self.xp_read_out = xp
+            self.xp_read_out = self.xp
 
         self.fix_step = False
         self.abstol = 1e-10
+
+    def reset(self, numSys, numODE):
+        self.previousRejectTemp = self.xp.zeros(numSys, dtype=bool)
+        self.errOldTemp = self.xp.ones(numSys) * 1e-4
+        self.k_coefficient_storage = self.xp.zeros((10, numODE, numSys))
+        self.sysArange = self.xp.arange(numSys)
 
     def dormandPrinceSteps(
         self,
@@ -467,7 +483,7 @@ class DOPR853:
         if self.xp.any(h == 0.0):
             breakpoint()
 
-        accept_and_prev_reject = previousReject & acceptable
+        # accept_and_prev_reject = previousReject & acceptable
 
         # TODO: do we want this to fix the adjustment if the last was rejected
         # h[accept_and_prev_reject] = h[accept_and_prev_reject] * self.xp.clip(
@@ -493,7 +509,7 @@ class DOPR853:
         scale[unacceptable] = self.xp.clip(
             safe * (err[unacceptable] ** -alpha), minscale, 1e300
         )
-        htmp = h.copy()
+        # htmp = h.copy()
 
         h[unacceptable] = h[unacceptable] * scale[unacceptable]
         previousReject[unacceptable] = True
@@ -540,10 +556,10 @@ class DOPR853:
         hOldTemp = hTemp.copy()
 
         if inds is None:
-            inds = np.arange(hTemp.shape[0])
+            inds = self.xp.arange(hTemp.shape[0])
 
         nODE, numSysTemp = solOldTemp.shape
-
+        
         (
             k1,
             k2,
@@ -555,7 +571,7 @@ class DOPR853:
             k8,
             k9,
             k10,
-        ) = [self.xp.zeros((nODE, numSysTemp)) for _ in range(10)]
+        ) = self.k_coefficient_storage#[self.xp.zeros((nODE, numSysTemp)) for _ in range(10)]
 
         self.dormandPrinceSteps(
             xTemp,
@@ -575,8 +591,8 @@ class DOPR853:
         )
 
         if not self.fix_step:
-            err = np.zeros_like(xTemp)
-            solNewTemp = np.zeros_like(solOldTemp)
+            err = self.xp.zeros_like(xTemp)
+            solNewTemp = self.xp.zeros_like(solOldTemp)
 
             self.error(
                 err,
@@ -598,14 +614,8 @@ class DOPR853:
             # hOldTemp[:] = hTemp
             # xOldTemp[:] = xTemp
 
-            flagSuccess = np.zeros_like(xTemp, dtype=bool)
-
-            if not hasattr(self, "errOldTemp"):
-                self.errOldTemp = np.full_like(err, 1e-4)
-
-            if not hasattr(self, "previousRejectTemp"):
-                self.previousRejectTemp = np.zeros_like(err, dtype=bool)
-
+            flagSuccess = self.xp.zeros_like(xTemp, dtype=bool)
+ 
             errOldTemp = self.errOldTemp[inds].copy()
             previousRejectTemp = self.previousRejectTemp[inds].copy()
 
@@ -627,12 +637,13 @@ class DOPR853:
 
             xTemp[flagSuccess] = xTemp[flagSuccess] + hOldTemp[flagSuccess]
             self.errOldTemp[inds[flagSuccess]] = err[flagSuccess]
-            self.previousRejectTemp[inds] = ~flagSuccess
+            self.previousRejectTemp[inds] = ~flagSuccess            
+            # self.k_coefficient_storage = [k1, k2, k3, k4, k5, k6, k7, k8, k9, k10]
+            # zero coefficients for the failing steps so that calls to prep_evaluate do not go out of bounds
+            self.k_coefficient_storage[:,:,~flagSuccess] = 0.
 
-            self.k_coefficient_storage = [k1, k2, k3, k4, k5, k6, k7, k8, k9, k10]
-        
         else:  # Not controlling for error so return successes and advance xTemp for all
-            flagSuccess = np.ones_like(xTemp, dtype=bool)
+            flagSuccess = self.xp.ones_like(xTemp, dtype=bool)
             xTemp[flagSuccess] = xTemp + hOldTemp
 
             temp = (
@@ -669,9 +680,8 @@ class DOPR853:
     def prep_evaluate(self, x0, y0, h0, x1, y1, additionalArgs):
         assert not self.fix_step
 
-        newDer = np.zeros_like(y0)
+        newDer = self.xp.zeros_like(y0)
         (k1, k2, k3, k4, k5, k6, k7, k8, k9, k10) = self.k_coefficient_storage
-
         # Derivative at new time step
         self.ode(x1, y1, newDer, additionalArgs)
 
@@ -792,7 +802,7 @@ class DOPR853:
         rcont7 = h0 * (rcont7 + d613 * newDer + d614 * k10 + d615 * k2 + d616 * k3)
         rcont8 = h0 * (rcont8 + d713 * newDer + d714 * k10 + d715 * k2 + d716 * k3)
 
-        return np.array(
+        return self.xp.array(
             [
                 rcont1,
                 rcont2,
@@ -805,37 +815,48 @@ class DOPR853:
             ]
         ).T
 
-    def eval(self, t_new: np.ndarray, t_old: np.ndarray, spline_coeffs: np.ndarray):
+    def eval(self, t_new: np.ndarray, t_old: np.ndarray, spline_coeffs: np.ndarray, lengths: np.ndarray, bounds_check=False):
         assert not self.fix_step
 
-        t_min = t_old.min()
-        t_max = t_old.max()
+        t_min = t_old.min(0)
+        t_max = t_old.max(0)
+        
+        if bounds_check:
+            if not self.xp.all((t_min <= t_new.T) & (t_new.T <= t_max)):
+                raise ValueError(
+                    f"All t_new values must be between t_min ({t_min}) and t_max ({t_max})."
+                )
+        # print(t_new.shape)
+        # print(t_min.shape)
+        # not vectorised (to be improved in future?)
+        segments = self.xp.asarray([self.xp.searchsorted(t_old[:lengths[i],i], t_new[:,i], side="right") for i in range(len(t_min))]).T - 1
+        # segments = self.xp.searchsorted(t_old, t_new, side="right") - 1
+        max_t_mask = (t_new == t_max)
+        if self.xp.any(max_t_mask):
+            segments[max_t_mask] = lengths - 2  # there is 1 less spline segment
 
-        if not np.all((t_min <= t_new) & (t_new <= t_max)):
-            raise ValueError(
-                f"All t_new values must be between t_min ({t_min}) and t_max ({t_max})."
-            )
-
-        segments = np.searchsorted(t_old, t_new, side="right") - 1
-        segments[t_new == t_max] = t_old.shape[0] - 2  # there is 1 less spline segment
+        # segments shape: (num_time_points, num_systems)
+        # spline_coeffs shape: (num_traj_points, num_systems, num_parameters, 8)
 
         # NOT MEMORY EFFICIENT
-        tmp_coeffs = spline_coeffs[segments]
-        tmp_t_old = t_old[segments]
-        diffs = np.diff(t_old)[segments]
+        tmp_coeffs = self.xp.take_along_axis(spline_coeffs, segments[..., None, None], axis=0)
+        tmp_t_old = self.xp.take_along_axis(t_old, segments, axis=0)
+        diffs = self.xp.take_along_axis(self.xp.diff(t_old, axis=0), segments, axis=0)
+        # diffs shape: (num_time_points, num_systems)
+        # tmp_t_old shape: (num_time_points, num_systems)
 
-        assert spline_coeffs.ndim == 3 and spline_coeffs.shape[-1] == 8
+        assert spline_coeffs.ndim == 4 and spline_coeffs.shape[-1] == 8
 
-        rcont1 = tmp_coeffs[:, :, 0]
-        rcont2 = tmp_coeffs[:, :, 1]
-        rcont3 = tmp_coeffs[:, :, 2]
-        rcont4 = tmp_coeffs[:, :, 3]
-        rcont5 = tmp_coeffs[:, :, 4]
-        rcont6 = tmp_coeffs[:, :, 5]
-        rcont7 = tmp_coeffs[:, :, 6]
-        rcont8 = tmp_coeffs[:, :, 7]
+        rcont1 = tmp_coeffs[..., 0]
+        rcont2 = tmp_coeffs[..., 1]
+        rcont3 = tmp_coeffs[..., 2]
+        rcont4 = tmp_coeffs[..., 3]
+        rcont5 = tmp_coeffs[..., 4]
+        rcont6 = tmp_coeffs[..., 5]
+        rcont7 = tmp_coeffs[..., 6]
+        rcont8 = tmp_coeffs[..., 7]
 
-        s = ((t_new - tmp_t_old) / diffs)[:, None]  # add axes to match rcont shape
+        s = ((t_new - tmp_t_old) / diffs)[:,:,None]  # add axes to match rcont shape
         s1 = 1.0 - s
 
         output = rcont1 + s * (
@@ -848,7 +869,6 @@ class DOPR853:
             )
         )
         # output = rcont1 + s*rcont2 + rcont3 * (s - s**2)  + rcont4 * (s**2 - s**3) + rcont5 * (s**4 - s**5) + rcont6 * (s**5 - s**6) + rcont7 * (s**6 - s**7) + rcont8 * (s**7 - s**8)
-        
 
         return output
 
@@ -1130,7 +1150,6 @@ class DOPR853:
                 solOldTemp,
                 tMax,
                 additionalArgsTemp,
-                fix_step=fix_step,
                 inds=np.arange(numSys)[individual_loop_flag],
             )
 

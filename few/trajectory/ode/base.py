@@ -2,6 +2,8 @@
 Contains the ODEBase baseclass that handles evaluating the ODE
 """
 from typing import Optional, Type, Union
+from ...utils.baseclasses import ParallelModuleBase
+from ...utils.utility import ELQ_to_pex, get_separatrix
 import numpy as np
 import os
 
@@ -10,7 +12,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 # def get_ode_function_options():
 #     return _STOCK_TRAJECTORY_OPTIONS
 
-class ODEBase:
+class ODEBase(ParallelModuleBase):
     """
     A baseclass for handling the evaluation of ODE derivatives in the trajectory module. 
 
@@ -20,6 +22,7 @@ class ODEBase:
 
     """
     def __init__(self, *args, file_directory=None, use_ELQ=False, **kwargs):
+        ParallelModuleBase.__init__(self, *args, **kwargs)
         if file_directory is None:
             self.file_dir = os.path.join(dir_path,"../../../few/files/")
         else:
@@ -36,7 +39,11 @@ class ODEBase:
         self.num_add_args = 0
         """int: Number of additional arguments being passed to the ODE function."""
 
-
+    @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
+    
     @property
     def convert_Y(self):
         """
@@ -112,14 +119,44 @@ class ODEBase:
     def modify_rhs(self, ydot: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
         return ydot
 
-    def __call__(self, y: Union[list, np.ndarray], out: Optional[np.ndarray] = None, scale_by_eps=False, **kwargs: Optional[dict]) -> np.ndarray:
-        derivs = self.evaluate_rhs(y, **kwargs)
-        if out is None:
-            out = np.asarray(derivs)
-        else:
-            out[:] = derivs
+    def cache_values_and_check_bounds(self, y: np.ndarray) -> np.ndarray:
+        """
+        This function checks the input points to ensure they are within the physical bounds of parameter space.
+        These checks include ensuring that the separatrix has not been crossed, and that the eccentricity is within bounds.
         
-        self.modify_rhs(out, y, **kwargs)
+        Returns a boolean array of passing/failing points.
+        """
+        out = self.xp.ones(y.shape[1], dtype=bool)
+
+        if self.use_ELQ:
+            E, L, Q = y[:3]
+            p, e, x = ELQ_to_pex(self.a, E, L, Q)
+        else:
+            p, e, x = y[:3]
+
+        # first: check the eccentricity
+        out[y[1] < 0] = False
+        # second: check the separatrix
+        p_sep = get_separatrix(self.a, e, x)
+        out[p < p_sep] = False
+
+        # cache p_sep for the accepted points
+        self.p_sep_cache = p_sep[out]
+
+        # also cache the values of a that were accepted
+        self.a_cache = self.a[out]
+        return out
+
+    def __call__(self, y: Union[list, np.ndarray], out: Optional[np.ndarray] = None, scale_by_eps=False, **kwargs: Optional[dict]) -> np.ndarray:
+        if out is None:
+            out = self.xp.zeros_like(y)
+
+        in_bounds = self.cache_values_and_check_bounds(y)
+        
+        out[:,in_bounds] = self.evaluate_rhs(y[:,in_bounds], **kwargs)
+        out[:,~in_bounds] = np.nan
+
+        out[:, in_bounds] = self.modify_rhs(out[:,in_bounds], y[:, in_bounds], **kwargs)
 
         if scale_by_eps:
             out[:3] *= self.epsilon
