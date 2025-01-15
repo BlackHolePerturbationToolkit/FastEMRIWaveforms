@@ -19,13 +19,12 @@ authors:
   - given-names: Lorenzo
     family-names: Speri
     orcid: 'https://orcid.org/0000-0002-5442-7267'
-    affiliation: Albert Einstein Institute
+    affiliation: European Space Research Technology Center
   - given-names: Christian
     family-names: Chapman-Bird
-    affiliation: University of Glasgow
+    affiliation: University of Birmingham
     orcid: 'https://orcid.org/0000-0002-2728-9612'
-  - given-names: Alvin
-    name-particle: J. K.
+  - given-names: Alvin J. K.
     family-names: Chua
     affiliation: National University of Singapore
   - given-names: Niels
@@ -33,7 +32,7 @@ authors:
     affiliation: University College Dublin
     orcid: 'https://orcid.org/0000-0003-0914-8645'
   - given-names: Scott
-    family-names: Hugues
+    family-names: Hughes
     affiliation: Massachusetts Institute of Technology
     orcid: 'https://orcid.org/0000-0001-6211-1388'
 identifiers:
