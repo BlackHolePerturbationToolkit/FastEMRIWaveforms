@@ -86,7 +86,7 @@ references:
     issn: 1079-7114
     identifiers:
       - type: other
-        value: 'arXiv:2008.06071'
+        value: 'arXiv:gr-qc/2008.06071'
         description: arXiv preprint of this article
     type: article
   - abbreviation: "Katz:2021yft"
@@ -118,7 +118,7 @@ references:
     issn: 2470-0029
     identifiers:
       - type: other
-        value: 'arXiv:2104.04582'
+        value: 'arXiv:gr-qc/2104.04582'
         description: arXiv preprint of this article
     type: article
   - abbreviation: "Chua:2018woh"
@@ -146,7 +146,7 @@ references:
     issn: 1079-7114
     identifiers:
       - type: other
-        value: 'arXiv:1811.05491'
+        value: 'arXiv:astro-ph.IM/1811.05491'
         description: arXiv preprint of this article
     type: article
   - abbreviation: "Fujita:2020zxe"
@@ -172,7 +172,7 @@ references:
     issn: 2470-0029
     identifiers:
       - type: other
-        value: 'arXiv:2008.13554'
+        value: 'arXiv:gr-qc/2008.13554'
         description: arXiv preprint of this article
     type: article
   - abbreviation: "Stein:2019buj"
@@ -196,7 +196,7 @@ references:
     issn: 2470-0029
     identifiers:
       - type: other
-        value: 'arXiv:1912.07609'
+        value: 'arXiv:gr-qc/1912.07609'
         description: arXiv preprint of this article
     type: article
   - abbreviation: "Chua:2015mua"
@@ -221,7 +221,7 @@ references:
     issn: 1361-6382
     identifiers:
       - type: other
-        value: 'arXiv:1510.06245'
+        value: 'arXiv:gr-qc/1510.06245'
         description: arXiv preprint of this article
     type: article
   - abbreviation: "Chua:2017ujo"
@@ -247,7 +247,7 @@ references:
     issn: 2470-0029
     identifiers:
       - type: other
-        value: 'arXiv:1705.04259'
+        value: 'arXiv:gr-qc/1705.04259'
         description: arXiv preprint of this article
     type: article
   - abbreviation: "Barack:2003fp"
@@ -308,6 +308,6 @@ references:
     issn: 2297-4687
     identifiers:
       - type: other
-        value: 'arXiv:2307.125855'
+        value: 'arXiv:gr-qc/2307.12585'
         description: arXiv preprint of this article
     type: article

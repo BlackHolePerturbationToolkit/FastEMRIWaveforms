@@ -61,6 +61,11 @@ class ReferenceABC(HyphenUnderscoreAliasModel, abc.ABC):
     def to_bibtex(self) -> str:
         """Convert a reference object to a BibTeX string representation."""
 
+class ArxivIdentifier(BaseModel):
+    """Class representing an arXiv identifier"""
+    reference: str
+    primary_class: str | None = None
+
 class ArticleReference(ReferenceABC):
     """Description of an article."""
 
@@ -76,12 +81,36 @@ class ArticleReference(ReferenceABC):
     start: int | None = None
     issn : str | None = None
     doi: str | None = None
+    identifiers: list[Identifier] | None = None
+
+    @property
+    def arxiv_preprint(self) -> ArxivIdentifier | None:
+        """
+        Detect an arXiv identifier if any.
+
+        an arXiv identifier is:
+        - an identifier of type "other"
+        - which starts with "arxiv:" (case insensitive)
+        - whose second part is either:
+          - The arXiv reference (e.g. "arxiv:1912.07609")
+          - The primary class followed by '/' and the reference (e.g. "arxiv:gr-qc/1912.07609")
+        """
+        for identifier in self.identifiers:
+            if identifier.type != "other": continue
+            if not identifier.value.lower().startswith('arxiv:'): continue
+            data = identifier.value.lower().removeprefix('arxiv:')
+            primary_class, reference = data.split('/', 1) if '/' in data else (None, data)
+            return ArxivIdentifier(primary_class=primary_class, reference=reference)
+        return None
 
     def to_bibtex(self) -> str:
         """Build the BibTeX representation of an article."""
+        arxiv_id = self.arxiv_preprint
 
-        def format_line(key: str, value: str) -> str:
-            return """  {:<10} = "{}" """.format(key, value)
+        line_format = """  {:<10} = "{}" """ if arxiv_id is None else """  {:<13} = "{}" """
+        def format_line(key: str, value: str, format: str = line_format) -> str:
+            return format.format(key, value)
+
         lines = []
         lines.append("@article{" + self.abbreviation)
         lines.append(format_line("author", " and ".join(["{}, {}".format(author.family_names, author.given_names) for author in self.authors])))
@@ -101,6 +130,12 @@ class ArticleReference(ReferenceABC):
             lines.append(format_line("issn", str(self.issn)))
         if self.doi is not None:
             lines.append(format_line("doi", str(self.doi)))
+        if arxiv_id is not None:
+            lines.append(format_line("archivePrefix", "arXiv"))
+            lines.append(format_line("eprint", arxiv_id.reference))
+            if arxiv_id.primary_class is not None:
+                lines.append(format_line("primaryClass", arxiv_id.primary_class))
+
 
 
         return ",\n".join(lines) + "\n}"
