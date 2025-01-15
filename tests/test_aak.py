@@ -2,23 +2,14 @@ import unittest
 import numpy as np
 import warnings
 
+import few
 from few.waveform import Pn5AAKWaveform,GenerateEMRIWaveform
 from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode import PN5
 from few.utils.utility import get_overlap, get_mismatch
 
-try:
-    import cupy as xp
-
-    gpu_available = True
-
-except (ModuleNotFoundError, ImportError) as e:
-    import numpy as xp
-
-    warnings.warn(
-        "CuPy is not installed or a gpu is not available. If trying to run on a gpu, please install CuPy."
-    )
-    gpu_available = False
+gpu_available = few.cutils.fast.is_gpu
+warnings.warn("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
 
 
 class AAKWaveformTest(unittest.TestCase):
@@ -81,7 +72,7 @@ class AAKWaveformTest(unittest.TestCase):
         Phi_r0 = np.pi/2
         h_p_c_phase = few_gen(M, mu, a, p0, e0, Y0, dist, qS, phiS, qK, phiK, Phi_phi0, Phi_theta0, Phi_r0, T=2.0, dt=dt)
         h_p_c_phase2 = few_gen(M, mu, a, p0, e0, Y0, dist, qS, phiS, qK, phiK, Phi_phi0+0.5, Phi_theta0, Phi_r0, T=2.0, dt=dt)
-        
+
         # print(get_overlap(h_p_c_phase.get(), h_p_c_phase2.get()))
 
     def test_aak_backwards(self):
@@ -139,4 +130,3 @@ class AAKWaveformTest(unittest.TestCase):
 
         mm = get_mismatch(waveform_cpu_forward, waveform_cpu_backward[::-1], use_gpu=gpu_available)
         self.assertLess(mm, 1e-3)
-

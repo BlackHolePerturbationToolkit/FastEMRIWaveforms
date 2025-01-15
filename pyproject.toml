@@ -1,7 +1,139 @@
 [build-system]
-requires = [
-	"setuptools",
-	"cython",
-	"numpy",
+build-backend = "scikit_build_core.build"
+
+requires = [ "cython", "numpy", "scikit-build-core" ]
+
+[project]
+name = "fastemriwaveforms" #@NAMESUFFIX@
+
+description = "Fast and accurate EMRI Waveforms."
+
+readme = "README.md"
+
+authors = [
+  { name = "Michael Katz", email = "mikekatz04@gmail.com" },
 ]
-build-backend = "setuptools.build_meta"
+classifiers = [
+  "Environment :: GPU :: NVIDIA CUDA",
+  "License :: OSI Approved :: GNU General Public License (GPL)",
+  "Natural Language :: English",
+  "Programming Language :: C++",
+  "Programming Language :: Cython",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+
+# version is deduced from the lattest git tag
+# description is the docstring at the top of src/few/__init__.py
+dynamic = [ "version" ]
+
+dependencies = [
+  "h5py",
+  "multispline",
+  "numba",
+  "numpy",
+  "nvidia-ml-py",
+  "requests",
+  "rich",
+  "scipy",
+  "tqdm",
+  #@DEPS_CUPYCUDA@,
+  #@DEPS_FEWCORE@,
+]
+
+optional-dependencies.dev = [
+  "nbsphinx",
+  "pypandoc",
+  "sphinx",
+  "sphinx-rtd-theme",
+]
+
+optional-dependencies.sampling = [
+  "eryn",
+  "fastlisaresponse",
+  "lisaanalysistools",
+  "lisatools",
+]
+
+optional-dependencies.testing = [
+  "matplotlib",
+]
+
+urls.Documentation = "https://bhptoolkit.org/FastEMRIWaveforms/html/index.html"
+urls.Download = "https://pypi.org/project/fastemriwaveforms/#files"
+urls.Homepage = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms"
+urls.Source = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms"
+urls.Tracker = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/issues"
+
+[tool.setuptools_scm]
+version_scheme = "no-guess-dev"
+local_scheme = "node-and-date"
+version_file = "src/few/_version.py"
+
+[tool.scikit-build]
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+sdist.include = [ "src/few/_version.py" ]
+sdist.exclude = [
+  ".ci-environments",
+  ".cmake-format.yaml",
+  "data_for_FEW/",
+  ".devcontainer",
+  "EllipticIntegrals",
+  "examples",
+  ".github",
+  ".gitignore",
+  "gpu_test.py",
+  "integrate_backwards.py",
+  "KerrEquatorialCodes/",
+  "KerrEquatorialPaper.md",
+  ".pre-commit-config.yaml",
+  "prior_emri.py",
+  "produce_TPI_coeff.py",
+  "SeparatrixInterpolant_example.ipynb",
+  "tests/",
+  "TODO.txt",
+  "Tutorial_interpolation.ipynb",
+]
+wheel.packages = [
+  "src/few", #@SKIP_PLUGIN@
+]
+wheel.exclude = [
+  "**.pyx",
+  "**.cu",
+  "**.cxx",
+  "**.hh",
+  "**.h",
+  "**.hpp",
+  "**/CMakeLists.txt",
+  "lib/pkgconfig",
+  "lib/cmake",
+  "lib/*.so",
+  "lib/*.a",
+]
+
+[tool.scikit-build.cmake.define]
+# Default values for CMake options used when building FEW.
+# These can be tuned on CLI as follows:
+#   $ pip install . --config-settings=cmake.define.FEW_LAPACKE_FETCH=OFF
+
+# Whether LAPACK should be automatically fetched and compiled.
+#  note: for now this option is ignored and LAPACK is always fetched
+FEW_LAPACKE_FETCH = "ON"
+
+# List of libs that must be linked to build against LAPACKE
+# FEW_LAPACKE_LIBS = "lapack;lapacke;gfortran"
+
+# Whether GPU support should be enabled
+#  NO: GPU support is disabled
+#  YES: GPU support is mandatory, install will fail if prerequisites are
+#       not met (missing CUDA and CUDAToolKit in environment)
+#  AUTO: GPU support enabled only if CUDA and CUDAToolKit are found
+FEW_WITH_GPU = "AUTO" # ON | OFF | AUTO
+
+# What CUDA architectures to target.
+# See https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html
+FEW_CUDA_ARCH = "all"

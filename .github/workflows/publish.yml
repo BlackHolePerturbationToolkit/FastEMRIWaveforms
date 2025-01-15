@@ -1,0 +1,191 @@
+name: Publish tagued version to TestPyPI
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+      - 'v*.*.**'
+
+permissions:
+  contents: read
+
+jobs:
+  build_wheels:
+    name: Build manylinux wheels for FEW
+    runs-on: "ubuntu-latest"
+    container: ${{ matrix.image }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        release: [cpu, cuda11x, cuda12x]
+        arch: [x86_64]
+        image: [quay.io/pypa/manylinux_2_28_x86_64]
+        manylinux_plat: [manylinux_2_27_x86_64]
+        include:
+          - release: cpu
+            opt_with_gpu: OFF
+            is_plugin: false
+          - release: cuda11x
+            cuda_major: 11
+            cuda_minor: 8
+            nvcc_ccbin_ver: 11
+            opt_with_gpu: ONLY
+            is_plugin: true
+          - release: cuda12x
+            cuda_major: 12
+            cuda_minor: 6
+            nvcc_ccbin_ver: 11
+            opt_with_gpu: ONLY
+            is_plugin: true
+    steps:
+      # Checkout sources
+      - uses: actions/checkout@v4
+
+      - name: Prepare environment file
+        run: |
+          touch .compiler.env
+
+      # Install CUDA Toolkit
+      - name: Install CUDA Toolkit
+        if: ${{ matrix.cuda_major }}
+        run: |
+          dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo
+          dnf -y install cuda-compiler-${{ matrix.cuda_major }}-${{ matrix.cuda_minor }}.${{ matrix.arch }} \
+                   cuda-libraries-${{ matrix.cuda_major }}-${{ matrix.cuda_minor }} \
+                   cuda-libraries-devel-${{ matrix.cuda_major }}-${{ matrix.cuda_minor }}
+          echo 'export PATH=/usr/local/cuda/bin:${PATH}' >> .compiler.env
+          echo 'export LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}' >> .compiler.env
+          echo 'export CUDA_HOME=/usr/local/cuda' >> .compiler.env
+          echo 'export CUDA_ROOT=/usr/local/cuda' >> .compiler.env
+          echo 'export CUDA_PATH=/usr/local/cuda' >> .compiler.env
+          echo 'export CUDADIR=/usr/local/cuda' >> .compiler.env
+          cat .compiler.env
+
+      - name: Install GCC Toolset
+        if: ${{ matrix.nvcc_ccbin_ver }}
+        run: |
+          dnf install -y gcc-toolset-${{ matrix.nvcc_ccbin_ver }}
+          echo 'source /opt/rh/gcc-toolset-${{ matrix.nvcc_ccbin_ver }}/enable' >> .compiler.env
+          cat .compiler.env
+
+      # Update project name
+      - name: Update version scheme
+        run: |
+          sed -i 's|version_scheme = "no-guess-dev"|version_scheme = "only-version"|g' pyproject.toml
+          sed -i 's|local_scheme = "node-and-date"|local_scheme = "no-local-version"|g' pyproject.toml
+
+      # Update project name
+      - name: Add release suffix to project name
+        run: |
+          sed -i 's|" #@NAMESUFFIX@|-${{ matrix.release }}"|g' pyproject.toml
+
+      # Add CuPy dependency
+      - name: Add Cupy dependency
+        if: ${{ matrix.cuda_major }}
+        run: |
+          sed -i 's|#@DEPS_CUPYCUDA@|"cupy-${{ matrix.release }}"|g' pyproject.toml
+
+      # Add Core project dependency
+      - name: Add core project dependency on plugin
+        if: ${{ matrix.is_plugin }}
+        run: |
+          sed -i 's|#@DEPS_FEWCORE@|"fastemriwaveforms-cpu==${{ github.ref_name }}"|g' pyproject.toml
+
+      # Remove base sources from plugin wheels
+      - name: Exclude core package from plugins
+        if: ${{ matrix.is_plugin }}
+        run: |
+          sed -i '/@SKIP_PLUGIN@/d' pyproject.toml
+
+      - name: Compile LAPACK
+        if: ${{ matrix.opt_with_gpu != 'ONLY' }}
+        run: |
+          source .compiler.env
+
+          git clone https://github.com/Reference-LAPACK/lapack
+          git -C lapack reset --hard 6ec7f2bc4ecf4c4a93496aa2fa519575bc0e39ca  # version 3.12.1
+          cmake -B lapack/build -S lapack -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DLAPACKE=ON -DCMAKE_INSTALL_PREFIX=/opt/lapack
+          cmake --build lapack/build -- -j
+          cmake --install lapack/build
+          rm -Rf lapack
+          echo 'export PKG_CONFIG_PATH=/opt/lapack/lib64/pkgconfig/:${PKG_CONFIG_PATH}' >> .compiler.env
+
+      # Build wheels
+      - name: Build wheels
+        run: |
+          source .compiler.env
+
+          for PYVER in cp39-cp39 cp310-cp310 cp311-cp311 cp312-cp312 cp313-cp313; do
+             "/opt/python/${PYVER}/bin/pip" wheel ./ \
+                --no-deps -w ./dist \
+                --config-settings=cmake.define.FEW_LAPACKE_FETCH=OFF \
+                --config-settings=cmake.define.FEW_LAPACKE_DETECT_WITH=PKGCONFIG \
+                --config-settings=cmake.define.FEW_LAPACKE_LIBS="PkgConfig::LAPACKE;PkgConfig::LAPACK;gfortran" \
+                --config-settings=cmake.define.FEW_WITH_GPU=${{ matrix.opt_with_gpu }} &
+          done;
+          wait
+
+      - name: Repair wheels (GPU)
+        if: ${{ matrix.cuda_major }}
+        run: |
+          for whl in ./dist/*.whl; do
+            auditwheel repair "${whl}" -w /wheelhouse/ \
+              --plat ${{ matrix.manylinux_plat }} \
+              --exclude "libcudart.so.${{ matrix.cuda_major }}" \
+              --exclude "libcusparse.so.${{ matrix.cuda_major }}" \
+              --exclude "libcublas.so.${{ matrix.cuda_major }}" \
+              --exclude "libnvJitLink.so.${{ matrix.cuda_major }}" \
+              --exclude "libcublasLt.so.${{ matrix.cuda_major }}"
+          done
+
+      - name: Repair wheels (CPU)
+        if: ${{ ! matrix.cuda_major }}
+        run: |
+          for whl in ./dist/*.whl; do
+            auditwheel repair "${whl}" -w /wheelhouse/ \
+              --plat ${{ matrix.manylinux_plat }}
+          done
+
+      - name: Upload wheels as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-wheels-${{ matrix.release }}
+          path: /wheelhouse/*.whl
+          retention-days: 2
+
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypiconf
+    defaults:
+      run:
+        shell: bash
+    needs:
+      - build_wheels
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+    steps:
+      - name: Retrieve release distributions
+        uses: actions/download-artifact@v4
+        with:
+          path: wheelhouse/
+          merge-multiple: true
+
+      - name: List wheels
+        run: |
+          ls -al wheelhouse/*
+
+      - name: Install twine from PyPI
+        uses: install-pinned/twine@e0e1034852ffdf3e7867300539b1065f1bff2a87  # 6.0.1
+
+      - name: Publish release distributions to registry
+        env:
+          TWINE_NON_INTERACTIVE: "yes"
+          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+          TWINE_REPOSITORY: ${{ vars.TWINE_REPOSITORY }}
+          TWINE_USERNAME: ${{ vars.TWINE_USERNAME }}
+        run : |
+          twine upload wheelhouse/*

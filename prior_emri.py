@@ -33,7 +33,7 @@ for mm in range(-10,11):
             mask = (keys[:,1:] == [mm,nn])
             mn_dict[(mm,nn)] = values[np.prod(mask,axis=1,dtype=bool)]
             tot_check += len(mn_dict[(mm,nn)])
-            
+
 print(tot_check, len(values))
 print("total harmonics", len(list(mn_dict.keys())))
 
@@ -119,7 +119,7 @@ def get_approx_SNR(M, mu, p0, e0, T, dist=1.0):
     if p0 == 0.0:
         return 0.0
     # get trajectory
-    
+
     (t, p, e, x, Phi_phi, Phi_theta, Phi_r) = traj(M, mu, 0.0, p0, e0, 1.0, T=T, dt=10.0)
     m0mask = amp.m0mask != 0
     m0mask = m0mask
@@ -127,10 +127,10 @@ def get_approx_SNR(M, mu, p0, e0, T, dist=1.0):
     num_m_1_up = len(np.arange(len(m0mask))[m0mask])
     num_m0 = len(np.arange(len(m0mask))[~m0mask])
     modeinds = [amp.l_arr, amp.m_arr, amp.n_arr]
-    
+
     # amplitudes
     teuk_modes = amp(p, e, amp.l_arr, amp.m_arr, amp.n_arr)
-    
+
     ylms = 1.0
     Msec = M * MTSUN_SI
 
@@ -143,7 +143,7 @@ def get_approx_SNR(M, mu, p0, e0, T, dist=1.0):
         np.asarray(OmegaTheta) / (Msec * 2 * PI),
         np.asarray(OmegaR) / (Msec * 2 * PI),
     )
-    
+
     zero_modes_mask = (modeinds[1]==0)*(modeinds[2]==0)
     freqs = (
         modeinds[1][np.newaxis, :] * f_Phi[:, np.newaxis]
@@ -151,12 +151,12 @@ def get_approx_SNR(M, mu, p0, e0, T, dist=1.0):
     )
 
     freqs_shape = freqs.shape
-    
+
     # make all frequencies positive
     freqs_in = np.abs(freqs)
     PSD = sensitivity_fn(freqs_in.flatten()).reshape(freqs_shape)
 
-    # weight by PSD, only for non zero modes  
+    # weight by PSD, only for non zero modes
     fact = get_factor(t, freqs.T).T
     ylm_gen = GetYlms(assume_positive_m=True, use_gpu=False)
     theta = np.pi/3.
@@ -167,7 +167,7 @@ def get_approx_SNR(M, mu, p0, e0, T, dist=1.0):
     Amp2 = np.concatenate([teuk_modes, np.conj(teuk_modes[:, m0mask])], axis=1) * ylms
     power = (2 * np.abs(Amp2 * fact)**2 /PSD)
     snr_harmonic = np.trapz(power, x=freqs, axis=0)
-    
+
     # plot power
     # plt.figure(); plt.plot(freqs[:,amp.index_map[(2,2,0)]],power[:,amp.index_map[(2,2,0)]]); plt.show()
     inn_prod = np.sum(snr_harmonic[~zero_modes_mask])

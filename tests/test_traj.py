@@ -1,4 +1,4 @@
-#python -m unittest few/tests/test_traj.py 
+#python -m unittest few/tests/test_traj.py
 import unittest
 import numpy as np
 import warnings
@@ -6,22 +6,13 @@ from scipy.interpolate import CubicSpline
 import time
 import matplotlib.pyplot as plt
 
+import few
 from few.trajectory.inspiral import EMRIInspiral
 from few.utils.constants import *
 from few.trajectory.ode import KerrEccEqFlux, PN5, SchwarzEccFlux
 
-try:
-    import cupy as xp
-
-    gpu_available = True
-
-except (ModuleNotFoundError, ImportError) as e:
-    import numpy as xp
-
-    warnings.warn(
-        "CuPy is not installed or a gpu is not available. If trying to run on a gpu, please install CuPy."
-    )
-    gpu_available = False
+gpu_available = few.cutils.fast.is_gpu
+warnings.warn("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
 
 T = 1000.0
 dt = 10.0
@@ -53,7 +44,7 @@ def run_forward_back(traj_module, M, mu, a, p0, e0, xI0, forwards_kwargs):
     insp_kw_back.update({"integrate_backwards":True})
     insp_kw_back.update({"T":forwards_result[0][-1]/YRSID_SI})
 
-    backwards_result = traj_module(M, mu, a, final_p, final_e, final_x, **insp_kw_back)            
+    backwards_result = traj_module(M, mu, a, final_p, final_e, final_x, **insp_kw_back)
 
     return forwards_result, backwards_result
 
@@ -99,9 +90,9 @@ class ModuleTest(unittest.TestCase):
 
     def test_trajectory_KerrEccentricEquatorial(self):
 
-        
+
         # initialize trajectory class
-        # 
+        #
         list_func = [ KerrEccEqFlux]#, 'KerrEccentricEquatorial_ELQ', 'KerrEccentricEquatorial_ELQ_nofrequencies',]
         # list_func = ['KerrEccentricEquatorial_ELQ', 'KerrEccentricEquatorial_ELQ_nofrequencies']
         for el in list_func:
@@ -111,7 +102,7 @@ class ModuleTest(unittest.TestCase):
             # set initial parameters
             M = 1e6
             mu = 1.0
-                        
+
             Np = 0
             eval_time = []
             N_points = []
@@ -128,7 +119,7 @@ class ModuleTest(unittest.TestCase):
                 t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, a, p0, e0, 1.0, **insp_kw)
                 toc = time.perf_counter()
                 return len(t), Phi_phi[-1], toc-tic
-            
+
             # err_vec = 10**np.linspace(-9,-13,10)
             # muvec = np.asarray([1, 1000])
             # results = np.asarray([[[get_N_Phif_evalT(M, mu, avec[i], pvec[i], evec[i], err)  for i in range(Ntest)] for mu in muvec]for err in err_vec])
@@ -136,7 +127,7 @@ class ModuleTest(unittest.TestCase):
             # timing = results[:,:,:,2]
             # N_points = results[:,:,:,0]
             # plt.figure(figsize=(10, 8))
-            
+
             # # Plot 1: Mean phase difference
             # plt.subplot(3, 1, 1)
             # plt.title(f'Average over {Ntest} random initial conditions, M{M:.0e}')
@@ -184,7 +175,7 @@ class ModuleTest(unittest.TestCase):
                 # self.assertLess(np.max(diff),2.0)
 
             #     plt.plot(p[mask],e[mask])
-            #     plt.plot(pS[mask],eS[mask],'--') 
+            #     plt.plot(pS[mask],eS[mask],'--')
             # plt.show()
             # plot phases
             # plt.figure(); plt.plot(t[mask],np.abs(Phi_phi[mask] - Phi_phiS[mask])); plt.show()
@@ -206,14 +197,14 @@ class ModuleTest(unittest.TestCase):
 
         # t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(1e6, 100.0, 0.99, 6.0, 0.5, 1.0, T=2079375.6399400292/YRSID_SI)
         # self.assertLess(np.abs(Phi_phi[-1] - 37548.68909110543),2.0) # value from Scott
-  
+
         # s_t, s_p, s_e, s_x, s_omr, s_omt, s_omph, s_r, s_th, s_ph = np.loadtxt("data_for_lorenzo/scott_data/a0.99_p0_6_e0_0.5_xI0_1.0_wl.txt").T
         # mask = (s_p>(0.1+s_p[-1]))
         # t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(1e6, 100.0, 0.99, s_p[0], s_e[0], 1.0, T=4.0, new_t=s_t[mask]*MTSUN_SI*M, upsample=True)
         # # plt.figure();  plt.plot(t,p); plt.plot(s_t*MTSUN_SI*M,s_p,'--',label='Scott'); plt.show()
         # plt.figure();  plt.plot(p,e); plt.plot(s_p[mask],s_e[mask],'--',label='Scott'); plt.show()
         # plt.figure();  plt.semilogy(t,np.abs(Phi_phi-s_ph[mask])); plt.ylabel('phase difference phi'); plt.xlabel('time [seconds]'); plt.show()
-  
+
     def test_backwards_trajectory(self):
     # initialize trajectory class
         list_func = [PN5, SchwarzEccFlux, KerrEccEqFlux,]
@@ -224,7 +215,7 @@ class ModuleTest(unittest.TestCase):
             # set initial parameters
             M = 1e6
             mu = 10.0
-                
+
             # plt.figure()
             # tic = time.perf_counter()
             for i in range(100):
@@ -240,12 +231,12 @@ class ModuleTest(unittest.TestCase):
                     Y0 = 1.0
                 else:
                     Y0 = np.random.uniform(0.2, 0.8)
-                    
+
                 # print(a,p0,e0)
                 # run trajectory forwards
                 insp_kw["T"] = 0.1
                 t, p_forward, e_forward, x_forward, _, _, _ = traj(M, mu, np.abs(a), p0, e0, Y0, **insp_kw)
-                    
+
                 p_final = p_forward[-1]
                 e_final = e_forward[-1]
                 x_final = x_forward[-1]
@@ -253,7 +244,7 @@ class ModuleTest(unittest.TestCase):
                 # run trajectory backwards
                 insp_kw_back = insp_kw.copy()
                 insp_kw_back.update({"integrate_backwards":True})
-                    
+
                 t, p_back, e_back, x_back, _, _, _ = traj(M, mu, np.abs(a), p_final, e_final, x_final, **insp_kw_back)
 
                 self.assertAlmostEqual(p_back[-1],p_forward[0], places = 8)

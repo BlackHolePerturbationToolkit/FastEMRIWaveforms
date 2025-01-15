@@ -35,7 +35,7 @@ def read_txt(fname):
         # Convert each value to a float and append to the two-dimensional list
         # data.append([np.float128(value) for value in values])
         data.append([np.float64(value) for value in values])
-    
+
     return np.asarray(data)
 
 def Edotpn(a, p, e, pLSO):
@@ -103,7 +103,7 @@ fluxfiles = [filepath.format(ah, xh) for ah, xh in zip(a_in, xi_in)]
 for ff in fluxfiles:
     imp = read_txt(ff)
     a, p, e, xi, E, Lz, Q, pLSO, EdotInf_tot, EdotH_tot, LzdotInf_tot, LzdotH_tot, QdotInf_tot, QdotH_tot, pdotInf_tot, pdotH_tot, eccdotInf_tot, eccdotH_tot, xidotInf_tot, xidotH_tot = imp.T
-    
+
     u = np.log((p-pLSO + beta)/alpha)
     w = np.sqrt(e)
     a_tot.append(a*xi )
@@ -143,7 +143,7 @@ for flux, lab in zip([pdot, edot, Edot, Ldot], ['pdot', 'edot','Endot', 'Ldot'])
     for bc in ["E(3)","not-a-knot"]: #"natural","not-a-knot","clamped", "E(3)", "natural-alt"
         interpTR = TricubicSpline(x1, x2, x3, reshapedF, bc=bc)
         interpTP = TPI.TP_Interpolant_ND(X, F=reshapedF)
-        
+
         # test the interpolation against each other
         # Ntest = 100
         # x1_test = np.linspace(avals.min(), avals.max(), Ntest)
@@ -169,7 +169,7 @@ for flux, lab in zip([pdot, edot, Edot, Ldot], ['pdot', 'edot','Endot', 'Ldot'])
         plt.xlabel('w=sqrt(e)')
         plt.ylabel('u~log(p-pLSO)')
         plt.savefig(f"./{lab}_TPvsTR"+bc+"_error.png")
-        
+
         # plot the two evaluations against each other
         # plt.figure()
         # plt.semilogy(x2_test, np.abs(eval_TP), '.', label='TP',alpha=0.3)
@@ -179,4 +179,3 @@ for flux, lab in zip([pdot, edot, Edot, Ldot], ['pdot', 'edot','Endot', 'Ldot'])
         # plt.xlabel('w=sqrt(e)')
         # plt.ylabel('interpolated value')
         # plt.savefig(f"InterpolationComparison/{lab}_eval.png")
-        

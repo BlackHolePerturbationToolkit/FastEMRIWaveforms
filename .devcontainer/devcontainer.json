@@ -1,0 +1,35 @@
+{
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-azuretools.vscode-docker",
+                "ms-python.python",
+                "ms-vscode.cmake-tools",
+                "tamasfe.even-better-toml",
+                "ms-vscode.cpptools-extension-pack",
+                "ktnrg45.vscode-cython",
+                "github.vscode-github-actions"
+            ]
+        }
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "configureZshAsDefaultShell": "true",
+            "installZsh": "true",
+            "upgradePackages": "true",
+            "userGid": "2000",
+            "userUid": "2000",
+            "username": "few"
+        },
+        "ghcr.io/devcontainers/features/git:1": {
+            "ppa": "false",
+            "version": "latest"
+        }
+    },
+    "name": "FastEMRIWaveforms",
+    "postCreateCommand": ".devcontainer/setup.sh",
+    "remoteUser": "few"
+}

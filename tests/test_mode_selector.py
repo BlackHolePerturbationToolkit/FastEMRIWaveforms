@@ -1,7 +1,9 @@
 import unittest
 import numpy as np
 import warnings
+import pathlib
 
+import few
 from few.trajectory.inspiral import EMRIInspiral
 from few.utils.ylm import GetYlms
 from few.utils.modeselector import ModeSelector
@@ -11,23 +13,14 @@ from few.waveform import FastSchwarzschildEccentricFluxBicubic
 from few.utils.utility import get_overlap,get_mismatch
 from few.trajectory.ode import SchwarzEccFlux
 
-try:
-    import cupy as xp
 
-    gpu_available = True
-
-except (ModuleNotFoundError, ImportError) as e:
-    import numpy as xp
-
-    warnings.warn(
-        "CuPy is not installed or a gpu is not available. If trying to run on a gpu, please install CuPy."
-    )
-    gpu_available = False
+gpu_available = few.cutils.fast.is_gpu
+warnings.warn("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
 
 
 class ModeSelectorTest(unittest.TestCase):
 
-    def test_mode_selector(self):        
+    def test_mode_selector(self):
         # first, lets get amplitudes for a trajectory
         traj = EMRIInspiral(func=SchwarzEccFlux)
         ylm_gen = GetYlms(assume_positive_m=True, use_gpu=False)
@@ -63,10 +56,10 @@ class ModeSelectorTest(unittest.TestCase):
         ls_orig = ls
         ms_orig = ms
         ns_orig = ns
-        
+
         # produce sensitivity function
 
-        noise = np.genfromtxt("../examples/files/LPA.txt", names=True)
+        noise = np.genfromtxt(pathlib.Path(__file__).parent.parent / "examples" / "files" /"LPA.txt", names=True)
         f, PSD = (
             np.asarray(noise["f"], dtype=np.float64),
             np.asarray(noise["ASD"], dtype=np.float64) ** 2,
@@ -90,13 +83,13 @@ class ModeSelectorTest(unittest.TestCase):
 
         # print("We reduced the mode content from {} modes to {} modes when using noise-weighting.".format(teuk_modes.shape[1], teuk_modes_in.shape[1]))
         # import matplotlib.pyplot as plt
-        # plt.figure(); plt.title(f'Mode selection comparison \n M={M:.1e},mu={mu:.1e},e0={e0},p0={p0},eps={eps:.2e}'); 
+        # plt.figure(); plt.title(f'Mode selection comparison \n M={M:.1e},mu={mu:.1e},e0={e0},p0={p0},eps={eps:.2e}');
         # plt.plot(ms,ns,'o',label=f'new select, N={len(ms)}', ms=10); plt.plot(ms_orig,ns_orig,'P',label=f'old select, N={len(ms_orig)}', ms=5); plt.legend(); plt.ylabel('n'); plt.xlabel('m'); plt.show()
-        
+
         mode_selector_kwargs = {}
 
         noise_weighted_mode_selector_kwargs = dict(sensitivity_fn=sens_fn)
-        
+
         few_base = FastSchwarzschildEccentricFluxBicubic(use_gpu = gpu_available)
 
         M = 1e6
