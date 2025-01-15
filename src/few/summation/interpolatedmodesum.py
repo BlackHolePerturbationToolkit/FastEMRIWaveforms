@@ -32,7 +32,6 @@ from ..utils.baseclasses import (
     ParallelModuleBase,
 )
 from .base import SummationBase
-from ..utils.citations import *
 from ..utils.utility import get_fundamental_frequencies
 from ..utils.constants import *
 
@@ -148,11 +147,6 @@ class CubicSplineInterpolant(ParallelModuleBase):
     def gpu_capability(self):
         """Confirms GPU capability"""
         return True
-
-    @property
-    def citation(self):
-        """Return the citation for this class"""
-        return larger_few_citation + few_citation + few_software_citation
 
     @property
     def y(self) -> np.ndarray:
@@ -319,10 +313,6 @@ class InterpolatedModeSum(SummationBase, ParallelModuleBase):
     def gpu_capability(self):
         """Confirms GPU capability"""
         return True
-
-    @property
-    def citation(self):
-        return larger_few_citation + few_citation + few_software_citation
 
     def sum(
         self,

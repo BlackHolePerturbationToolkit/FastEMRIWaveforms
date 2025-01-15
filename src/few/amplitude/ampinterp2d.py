@@ -35,7 +35,7 @@ from ..utils.baseclasses import (
 )
 from .base import AmplitudeBase
 from ..utils.utility import check_for_file_download
-from ..utils.citations import *
+from ..utils.citations import REFERENCE
 from ..utils.utility import p_to_y, kerr_p_to_u
 
 
@@ -167,15 +167,10 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         interp2D = interp2D_cpu if not self.use_gpu else interp2D_gpu
         return interp2D
 
-    @property
-    def citation(self):
-        """Return citations for this module"""
-        return (
-            romannet_citation
-            + larger_few_citation
-            + few_citation
-            + few_software_citation
-        )
+    @classmethod
+    def module_references(cls) -> list[REFERENCE]:
+        """Return citations related to this module"""
+        return [REFERENCE.ROMANNET] + super(AmpInterp2D, cls).module_references()
 
     @property
     def gpu_capability(self):

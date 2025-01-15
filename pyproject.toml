@@ -32,11 +32,13 @@ classifiers = [
 dynamic = [ "version" ]
 
 dependencies = [
+  "cffconvert",   # To read and validate CITATION.cff
   "h5py",
   "multispline",
   "numba",
   "numpy",
-  "nvidia-ml-py",
+  "nvidia-ml-py", # To detect CUDA version if any
+  "pydantic",     # To handle citations and references with advanced dataclasses
   "requests",
   "rich",
   "scipy",
@@ -69,6 +71,8 @@ urls.Homepage = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWavefor
 urls.Source = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms"
 urls.Tracker = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/issues"
 
+scripts.few_citations = "few.utils.citations:cli_citation"
+
 [tool.setuptools_scm]
 version_scheme = "no-guess-dev"
 local_scheme = "node-and-date"
@@ -78,6 +82,7 @@ version_file = "src/few/_version.py"
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 sdist.include = [ "src/few/_version.py" ]
 sdist.exclude = [
+  "docs/",
   ".ci-environments",
   ".cmake-format.yaml",
   "data_for_FEW/",

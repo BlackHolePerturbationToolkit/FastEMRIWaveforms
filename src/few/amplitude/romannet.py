@@ -34,7 +34,7 @@ from ..utils.baseclasses import (
 )
 from .base import AmplitudeBase
 from ..utils.utility import check_for_file_download
-from ..utils.citations import *
+from ..utils.citations import REFERENCE
 from ..utils.utility import p_to_y
 from scipy.interpolate import RectBivariateSpline
 
@@ -167,15 +167,10 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         return transform_output_wrap if self.use_gpu else transform_output_wrap_cpu
 
 
-    @property
-    def citation(self):
-        """Return citations for this module"""
-        return (
-            romannet_citation
-            + larger_few_citation
-            + few_citation
-            + few_software_citation
-        )
+    @classmethod
+    def module_references(cls) -> list[REFERENCE]:
+        """Return citations related to this module"""
+        return [REFERENCE.ROMANNET] + super(RomanAmplitude, cls).module_references()
 
     @property
     def gpu_capability(self):

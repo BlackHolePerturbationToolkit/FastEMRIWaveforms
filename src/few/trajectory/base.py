@@ -1,11 +1,11 @@
-from abc import ABC
-from few.utils.citations import *
+import abc
+from few.utils.citations import Citable
 from few.utils.constants import *
 import numpy as np
 
 from typing import Optional, Union
 
-class TrajectoryBase(ABC):
+class TrajectoryBase(Citable, abc.ABC):
     """Base class used for trajectory modules.
 
     This class provides a flexible interface to various trajectory
@@ -17,12 +17,8 @@ class TrajectoryBase(ABC):
     def __init__(self, *args, **kwargs):
         pass
 
-    @property
-    def citation(self):
-        """Return citation for this class"""
-        return larger_few_citation + few_citation + few_software_citation
-
     @classmethod
+    @abc.abstractmethod
     def get_inspiral(self, *args, **kwargs):
         """Inspiral Generator
 

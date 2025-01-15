@@ -21,7 +21,6 @@ from scipy import special
 
 import os
 from ..summation.interpolatedmodesum import CubicSplineInterpolant
-from ..utils.citations import *
 from ..utils.utility import get_fundamental_frequencies
 from ..utils.constants import *
 from ..utils.baseclasses import ParallelModuleBase
@@ -148,11 +147,6 @@ class ModeSelector(ParallelModuleBase):
     def is_predictive(self):
         """Whether this mode selector should be used before or after amplitude generation"""
         return False
-
-    @property
-    def citation(self):
-        """Return citations related to this class."""
-        return larger_few_citation + few_citation + few_software_citation
 
     def __call__(self, teuk_modes: np.ndarray, ylms: np.ndarray, modeinds: list[np.ndarray], fund_freq_args: Optional[tuple] = None, eps: float=1e-5) -> np.ndarray:
         r"""Call to sort and filer teukolsky modes.
@@ -372,11 +366,6 @@ class NeuralModeSelector(ParallelModuleBase):
         self.__dict__ = d
         # we now load the model as we've unpickled again
         self.load_model(self.model_loc)
-
-    @property
-    def citation(self):
-        """Return citations related to this class."""
-        return larger_few_citation + few_citation + few_software_citation
 
     def load_model(self, fp):
         self.model = torch.jit.load(fp)  # assume the model has been jit compiled

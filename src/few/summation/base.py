@@ -1,11 +1,9 @@
-from abc import ABC
-from ..utils.citations import *
 from ..utils.constants import *
 
 
 from ..utils.baseclasses import ParallelModuleBase
 
-class SummationBase(ParallelModuleBase, ABC):
+class SummationBase(ParallelModuleBase):
     """Base class used for summation modules.
 
     This class provides a common flexible interface to various summation
@@ -46,12 +44,6 @@ class SummationBase(ParallelModuleBase, ABC):
 
         self.waveform = None
         """Complex waveform given by :math:`h_+ + i*h_x`."""
-
-
-    @property
-    def citation(self):
-        """Return citation for this class"""
-        return larger_few_citation + few_citation + few_software_citation
 
     @classmethod
     def sum(self, *args, **kwargs):

@@ -16,12 +16,12 @@ from ..utils.utility import (
 )
 from ..utils.ylm import GetYlms
 from ..utils.constants import *
-from ..utils.citations import *
+from ..utils.citations import REFERENCE
 
 from typing import Union, Optional
 
 
-class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
+class SphericalHarmonicWaveformBase(ParallelModuleBase):
     """Base class for waveforms built with amplitudes expressed in a spherical harmonic basis.
 
     This class contains the methods required to build the core waveform for Kerr equatorial eccentric
@@ -503,7 +503,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase, ABC):
 
 
 
-class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
+class AAKWaveformBase(Pn5AAK, ParallelModuleBase):
     r"""Waveform generation class for AAK with arbitrary trajectory.
 
     This class generates waveforms based on the Augmented Analytic Kludge
@@ -590,19 +590,12 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, ABC):
         self.num_modes_kept = None
         """int: Number of modes for final waveform. For this model, it is solely determined from the eccentricity."""
 
-    @property
-    def citation(self):
+    @classmethod
+    def module_references(cls) -> list[REFERENCE]:
         """Return citations related to this module"""
-        return (
-            larger_few_citation
-            + few_citation
-            + few_software_citation
-            + fd_citation
-            + AAK_citation_1
-            + AAK_citation_2
-            + AK_citation
-            + kerr_separatrix_citation
-        )
+        return [REFERENCE.FD, REFERENCE.AAK1, REFERENCE.AAK2,
+                REFERENCE.AK, REFERENCE.KERR_SEPARATRIX
+                ] + super(AAKWaveformBase, cls).module_references()
 
     @property
     def gpu_capability(self):

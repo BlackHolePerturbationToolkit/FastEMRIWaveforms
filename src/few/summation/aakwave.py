@@ -31,7 +31,6 @@ from ..cutils.fast import pyWaveform as pyWaveform_gpu
 # Python imports
 from ..utils.baseclasses import Pn5AAK, ParallelModuleBase
 from .base import SummationBase
-from ..utils.citations import *
 from ..utils.utility import get_fundamental_frequencies
 from ..utils.pn_map import Y_to_xI
 from ..utils.constants import *
@@ -73,18 +72,6 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
     @property
     def gpu_capability(self):
         return True
-
-    @property
-    def citation(self):
-        """Return citations for this class"""
-        return (
-            larger_few_citation
-            + few_citation
-            + few_software_citation
-            + AAK_citation_1
-            + AAK_citation_2
-            + AK_citation
-        )
 
     def sum(
         self,

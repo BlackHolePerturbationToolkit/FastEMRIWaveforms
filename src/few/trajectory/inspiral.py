@@ -31,7 +31,7 @@ from ..utils.utility import (
 )
 from ..utils.pn_map import Y_to_xI
 from ..utils.constants import *
-from ..utils.citations import *
+from ..utils.citations import REFERENCE
 
 from .integrate import get_integrator
 
@@ -127,17 +127,10 @@ class EMRIInspiral(TrajectoryBase):
 
         self.convert_to_pex = convert_to_pex
 
-    @property
-    def citation(self):
-        """Return citation for this class"""
-        citations_out = (
-            larger_few_citation
-            + few_citation
-            + few_software_citation
-            + kerr_separatrix_citation
-        )
-
-        return citations_out
+    @classmethod
+    def module_references(cls) -> list[REFERENCE]:
+        """Return citations related to this module"""
+        return [REFERENCE.KERR_SEPARATRIX] + super(EMRIInspiral, cls).module_references()
 
     @property
     def trajectory(self):

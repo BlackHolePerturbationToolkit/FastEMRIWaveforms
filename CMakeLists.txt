@@ -125,3 +125,6 @@ unset(_FEW_WITH_GPU)
 
 # ---- Include sources ----
 add_subdirectory(src)
+
+# ---- Let CMake handle copying CITATION.cff into wheel ----
+install(FILES CITATION.cff DESTINATION few)

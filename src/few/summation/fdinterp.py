@@ -30,7 +30,7 @@ from ..utils.baseclasses import (
     ParallelModuleBase,
 )
 from .base import SummationBase
-from ..utils.citations import *
+from ..utils.citations import REFERENCE
 from ..utils.utility import get_fundamental_frequencies
 from ..utils.constants import *
 from ..summation.interpolatedmodesum import CubicSplineInterpolant
@@ -148,9 +148,10 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         """Confirms GPU capability"""
         return True
 
-    @property
-    def citation(self):
-        return larger_few_citation + few_citation + few_software_citation
+    @classmethod
+    def module_references(cls) -> list[REFERENCE]:
+        """Return citations related to this module"""
+        return [REFERENCE.FD] + super(FDInterpolatedModeSum, cls).module_references()
 
     def sum(
         self,

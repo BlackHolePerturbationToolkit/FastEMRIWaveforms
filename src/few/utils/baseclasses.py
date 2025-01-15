@@ -34,10 +34,10 @@ gpu_available = fast_backend.is_gpu
 
 # Python imports
 from ..utils.constants import *
-from ..utils.citations import *
+from ..utils.citations import Citable, REFERENCE
 from ..utils.utility import kerr_p_to_u
 
-class ParallelModuleBase(ABC):
+class ParallelModuleBase(Citable, ABC):
     """Base class for modules that can use GPUs.
 
     This class mainly handles setting GPU usage.
@@ -64,11 +64,6 @@ class ParallelModuleBase(ABC):
     def gpu_capability(self):
         """Indicator if the module has gpu capability"""
         raise NotImplementedError
-
-    @property
-    def citation(self):
-        """Return citations related to this module"""
-        return larger_few_citation + few_citation + few_software_citation
 
     @classmethod
     def __call__(*args, **kwargs):
@@ -120,7 +115,7 @@ class ParallelModuleBase(ABC):
 
         return kwargs
 
-class SphericalHarmonic(ParallelModuleBase, ABC):
+class SphericalHarmonic(ParallelModuleBase):
     r"""Base class for waveforms constructed in a spherical harmonic basis.
 
     This class creates shared traits between different implementations of the
@@ -365,11 +360,6 @@ class SchwarzschildEccentric(SphericalHarmonic):
         """Confirms GPU capability"""
         return True
 
-    @property
-    def citation(self):
-        """Return citations of this class"""
-        return larger_few_citation + few_citation + few_software_citation
-
     def sanity_check_init(self, M: float, mu: float, a: float, p0: float, e0: float, xI: float):
         r"""Sanity check initial parameters.
 
@@ -473,11 +463,6 @@ class KerrEccentricEquatorial(SphericalHarmonic):
         """Confirms GPU capability"""
         return True
 
-    @property
-    def citation(self):
-        """Return citations of this class"""
-        return larger_few_citation + few_citation + few_software_citation
-
     def sanity_check_init(self, M: float, mu:float, a:float, p0:float, e0:float, xI:float):
         r"""Sanity check initial parameters.
 
@@ -527,7 +512,7 @@ class KerrEccentricEquatorial(SphericalHarmonic):
         #     )
 
 
-class Pn5AAK(ParallelModuleBase, ABC):
+class Pn5AAK(ParallelModuleBase):
     """Base class for Pn5AAK waveforms.
 
     This class contains some basic checks and information for AAK waveforms
@@ -553,10 +538,10 @@ class Pn5AAK(ParallelModuleBase, ABC):
         self.needs_Y = True
         """bool: If True, model expects inclination parameter Y (rather than xI). Is True."""
 
-    @property
-    def citation(self):
-        """Return citations of this class"""
-        return larger_few_citation + few_citation + few_software_citation + Pn5_citation
+    @classmethod
+    def module_references(cls) -> list[REFERENCE]:
+        """Return citations related to this module"""
+        return [REFERENCE.PN5] + super(Pn5AAK, cls).module_references()
 
     def sanity_check_angles(self, qS: float, phiS: float, qK: float, phiK: float):
         """Sanity check on viewing angles.
