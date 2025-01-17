@@ -8,15 +8,6 @@ If you use all or any parts of this code, please cite [arxiv.org/2104.04582](htt
 
 ## Getting Started
 
-Install with pip (CPU only for now):
-```
-pip install fastemriwaveforms
-```
-
-In a python file or notebook:
-```
-import few
-```
 See [examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb).
 
 
@@ -29,12 +20,6 @@ To install this software for use with NVIDIA GPUs (compute capability >2.0), you
 There are a set of files required for total use of this package. They will download automatically the first time they are needed. Files are generally under 10MB. However, there is a 100MB file needed for the slow waveform and the bicubic amplitude interpolation. This larger file will only download if you run either of those two modules. The files are hosted on the [Black Hole Perturbation Toolkit Download Server](https://download.bhptoolkit.org/few/data).
 
 ### Installing
-
-
-Install with pip (CPU only for now):
-```
-pip install fastemriwaveforms
-```
 
 To install from source:
 
