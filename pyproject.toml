@@ -143,3 +143,13 @@ FEW_WITH_GPU = "AUTO" # ON | OFF | AUTO
 # What CUDA architectures to target.
 # See https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html
 FEW_CUDA_ARCH = "all"
+
+[tool.coverage]
+paths.source = [
+  "src/",
+  "**/site-packages/",
+]
+
+report.omit = [
+  "*/few/_version.py",
+]
