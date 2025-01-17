@@ -32,13 +32,14 @@ classifiers = [
 dynamic = [ "version" ]
 
 dependencies = [
-  "cffconvert",   # To read and validate CITATION.cff
+  "cffconvert",                            # To read and validate CITATION.cff
+  "exceptiongroup; python_version<'3.11'",
   "h5py",
   "multispline",
   "numba",
   "numpy",
-  "nvidia-ml-py", # To detect CUDA version if any
-  "pydantic",     # To handle citations and references with advanced dataclasses
+  "nvidia-ml-py",                          # To detect CUDA version if any
+  "pydantic",                              # To handle citations and references with advanced dataclasses
   "requests",
   "rich",
   "scipy",
