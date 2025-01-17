@@ -26,7 +26,7 @@ attribute.
 import abc
 import enum
 from pydantic import BaseModel
-from typing import Sequence
+from typing import Union, Optional, List
 from few.utils.exceptions import InvalidInputFile
 
 class HyphenUnderscoreAliasModel(BaseModel):
@@ -40,9 +40,9 @@ class Author(HyphenUnderscoreAliasModel):
     """Description of a reference author."""
     family_names: str
     given_names: str
-    orcid: str | None = None
-    affiliation: str | None = None
-    email: str | None = None
+    orcid: Optional[str] = None
+    affiliation: Optional[str] = None
+    email: Optional[str] = None
 
 class Publisher(HyphenUnderscoreAliasModel):
     """Description of a publisher."""
@@ -52,7 +52,7 @@ class Identifier(HyphenUnderscoreAliasModel):
     """Description of an identifier."""
     type: str
     value: str
-    description: str | None = None
+    description: Optional[str] = None
 
 class ReferenceABC(HyphenUnderscoreAliasModel, abc.ABC):
     """Abstract base class for references."""
@@ -64,27 +64,27 @@ class ReferenceABC(HyphenUnderscoreAliasModel, abc.ABC):
 class ArxivIdentifier(BaseModel):
     """Class representing an arXiv identifier"""
     reference: str
-    primary_class: str | None = None
+    primary_class: Optional[str] = None
 
 class ArticleReference(ReferenceABC):
     """Description of an article."""
 
     abbreviation: str
-    authors: list[Author]
+    authors: List[Author]
     title: str
     journal: str
     year: int
-    month: int | None = None
-    issue: int | None = None
-    publisher: Publisher | None = None
-    pages: int | None = None
-    start: int | None = None
-    issn : str | None = None
-    doi: str | None = None
-    identifiers: list[Identifier] | None = None
+    month: Optional[int] = None
+    issue: Optional[int] = None
+    publisher: Optional[Publisher] = None
+    pages: Optional[int] = None
+    start: Optional[int] = None
+    issn : Optional[str] = None
+    doi: Optional[str] = None
+    identifiers: Optional[List[Identifier]] = None
 
     @property
-    def arxiv_preprint(self) -> ArxivIdentifier | None:
+    def arxiv_preprint(self) -> Optional[ArxivIdentifier]:
         """
         Detect an arXiv identifier if any.
 
@@ -146,16 +146,16 @@ class SoftwareReference(ReferenceABC):
     authors: list[Author]
     title: str
 
-    license: str | None = None
-    url: str | None = None
-    repository: str | None = None
-    identifiers: list[Identifier] | None = None
-    year: int | None = None
-    month: int | None = None
-    version: str | None = None
+    license: Optional[str] = None
+    url: Optional[str] = None
+    repository: Optional[str] = None
+    identifiers: Optional[List[Identifier]] = None
+    year: Optional[int] = None
+    month: Optional[int] = None
+    version: Optional[str] = None
 
     @property
-    def doi(self) -> str | None:
+    def doi(self) -> Optional[str]:
         """Return the first DOI in identifiers if any"""
         for identifier in self.identifiers:
             if identifier.type == "doi":
@@ -190,7 +190,7 @@ class SoftwareReference(ReferenceABC):
         return ",\n".join(lines) + "\n}"
 
 
-type Reference = ArticleReference | SoftwareReference
+Reference = Union[ArticleReference, SoftwareReference]
 
 class REFERENCE(enum.Enum):
     FEW = "Chua:2020stf"
@@ -212,7 +212,7 @@ class CitationRegistry:
     def __init__(self, **kwargs):
         self.registry = kwargs
 
-    def get(self, key: str | REFERENCE) -> Reference:
+    def get(self, key: Union[str, REFERENCE]) -> Reference:
         """Return a Reference object from its key."""
         return self.registry[key if isinstance(key, str) else key.value]
 
