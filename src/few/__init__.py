@@ -14,6 +14,8 @@ except ModuleNotFoundError:
 
 from . import amplitude, cutils, files, summation, trajectory, utils, waveform
 
+from .utils.config import CONFIG as cfg
+
 __all__ = [
     "__version__",
     "amplitude",
@@ -23,4 +25,5 @@ __all__ = [
     "trajectory",
     "utils",
     "waveform",
+    "cfg"
 ]

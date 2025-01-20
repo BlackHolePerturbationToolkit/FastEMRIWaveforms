@@ -3,7 +3,8 @@
 import dataclasses
 import enum
 import os
-from typing import TypeVar, Generic, Optional, List, Union, Sequence, Mapping, Dict, Callable, Tuple
+import pathlib
+from typing import Any, TypeVar, Generic, Optional, List, Union, Sequence, Mapping, Dict, Callable, Tuple
 from . import exceptions
 
 class ConfigSource(enum.Enum):
@@ -13,7 +14,7 @@ class ConfigSource(enum.Enum):
     ENVVAR = "environment_var"
     CLIOPT = "command_line"
 
-T = TypeVar['T']
+T = TypeVar('T')
 
 ENVVAR_PREFIX: str = "FEW_"
 
@@ -22,13 +23,17 @@ class ConfigEntry(Generic[T]):
     """Description of a configuration entry."""
     label: str  # How the entry is referred to in Python code (config.get("label"))
     description: str  # Description of the configuration entry
+    type: TypeVar = T  # Type of the value
     default: Optional[T] = None  # Default value
     cfg_entry: Optional[str] = None  # Name of the entry in a config file
     env_var: Optional[str] = None  # Entry corresponding env var (uppercase, without FEW_ prefix)
     cli_flags: Optional[Union[str, List[str]]] = None  # Flag(s) for CLI arguments of this entry (e.g. "-f")
-    type: TypeVar = T  # Type of the value
-    convert: Callable[[str], T] = lambda val_str: T(val_str)
+    cli_kwargs: Optional[Dict[str, Any]] = None  # Supplementary arguments to argparse add_argument method for CLI options
+    convert: Callable[[str], T] = None
     validate: Callable[[T], bool] = lambda _: True
+
+    def __post_init__(self):
+        self.convert = lambda v: self.type(v)
 
 @dataclasses.dataclass
 class ConfigItem(Generic[T]):
@@ -54,7 +59,7 @@ class ConfigConsumer:
 
     def __init__(self,
                  config_entries: Sequence[ConfigEntry],
-                 config_file: Optional[os.PathLike] = None,
+                 config_file: Union[os.PathLike, Mapping[str, str], None] = None,
                  env_vars: Optional[Mapping[str, str]] = None,
                  cli_args: Optional[Sequence[str]] = None):
         """Initialize the items list and extra parameters."""
@@ -63,7 +68,7 @@ class ConfigConsumer:
         self._entries = {entry.label: entry for entry in config_entries}
 
         # Build default items
-        default_items = ConfigConsumer._build_items_from_default()
+        default_items = ConfigConsumer._build_items_from_default(config_entries)
 
         # Retrieve option from sources
         opt_from_file = ConfigConsumer._get_from_config_file(config_file)
@@ -92,11 +97,31 @@ class ConfigConsumer:
             raise errors[0] if len(errors) == 1 else exceptions.ExceptionGroup("Invalid configuration due to previous issues.", errors)
 
 
+    def __getitem__(self, key: str) -> Any:
+        """Get the value of a config entry."""
+        return self._items[key].value
+
+    def get_item(self, key: str) -> Tuple[ConfigItem, ConfigEntry]:
+        return self._items[key], self._entries[key]
+
+    def get_extras(self) -> Tuple[Mapping[str, str], Mapping[str, str], Sequence[str]]:
+        """Return extra file, env and cli entries for other consumer."""
+        return self._extra_file, self._extra_env, self._extra_cli
+
     @staticmethod
-    def _get_from_config_file(config_file: Optional[os.PathLike]) -> Dict[str, str]:
-        """Read a config file (if existing) and return its items as a dictionary."""
-        raise NotImplementedError("Implement reading options from file.")
-        return {}
+    def _get_from_config_file(config_file: Union[os.PathLike, Mapping[str, str], None]) -> Dict[str, str]:
+        """Read a config file and return its items as a dictionary."""
+        if config_file is None:
+            return {}
+        if isinstance(config_file, Mapping):
+            return {key: value for key, value in config_file.items()}
+        import configparser
+        config = configparser.ConfigParser()
+        config.read(config_file)
+        if not 'few' in config:
+            return {}
+        few_section = config['few']
+        return {key: few_section[key] for key in few_section}
 
     @staticmethod
     def _get_from_envvars(env_vars: Optional[Mapping[str, str]]) -> Dict[str, str]:
@@ -134,7 +159,9 @@ class ConfigConsumer:
         """Extract configuration items from file option and build dict of unconsumed extra items."""
         extras_from_env = {**opt_from_env}
         items_from_env = {entry.label: ConfigItem(value=entry.convert(extras_from_env.pop(ENVVAR_PREFIX + entry.env_var)), source=ConfigSource.ENVVAR)
-                            for entry in config_entries if entry.cfg_entry in extras_from_env}
+                            for entry in config_entries
+                            if entry.env_var is not None
+                            and ENVVAR_PREFIX + entry.env_var in extras_from_env}
 
         return items_from_env, extras_from_env
 
@@ -143,4 +170,112 @@ class ConfigConsumer:
                                opt_from_cli: Sequence[str]
                                ) -> Tuple[Dict[str, ConfigItem], List[str]]:
         """Extract configuration items from file option and build dict of unconsumed extra items."""
-        raise NotImplementedError("Implement building options from CLI using argparse.")
+        import argparse
+        parser = argparse.ArgumentParser()
+        for config_entry in config_entries:
+            if config_entry.cli_flags:
+                cli_options = {
+                    "help": config_entry.description,
+                    "dest": config_entry.label,
+                }
+                if config_entry.cli_kwargs is not None:
+                    cli_options = cli_options | config_entry.cli_kwargs
+                flags = [config_entry.cli_flags] if isinstance(config_entry.cli_flags, str) else config_entry.cli_flags
+                parser.add_argument(*flags, **cli_options)
+        parsed_options, extras_from_cli = parser.parse_known_args(opt_from_cli)
+
+        items_from_cli = {option_label: ConfigItem(value= option_value, source= ConfigSource.CLIOPT) for option_label, option_value in vars(parsed_options).items() if option_value is not None}
+        return items_from_cli, extras_from_cli
+
+def userstr_to_bool(user_str: str) -> Optional[bool]:
+    """Convert a yes/no, on/off or true/false to bool."""
+    if user_str.lower().startswith(("y", "t", "on")):
+        return True
+    if user_str.lower().startswith("n", "f", "off"):
+        return False
+    return None
+
+class InitialConfigConsumer(ConfigConsumer):
+    """
+    Class implementing first-pass config consumer.
+
+    On first pass, we only detect if there are CLI arguments which disable
+    config file or environment variables.
+    """
+
+    def __init__(self, cli_args: Optional[Sequence[str]] = None):
+        if cli_args is None:
+            import sys
+            cli_args = sys.argv[1:]
+
+        config_entries= [
+            ConfigEntry(
+                label="ignore_cfg",
+                description="Whether to ignore config file options",
+                type=bool,
+                default=False,
+                cli_flags="--ignore-config-file",
+                cli_kwargs={
+                    "action": "store_true"
+                },
+                convert=userstr_to_bool,
+                validate=lambda x: isinstance(x, bool)
+            ),
+            ConfigEntry(
+                label="ignore_env",
+                description="Whether to ignore environment variables",
+                type=bool,
+                default=False,
+                cli_flags="--ignore-env",
+                cli_kwargs={
+                    "action": "store_true",
+                },
+                convert=userstr_to_bool,
+                validate=lambda x: isinstance(x, bool)
+            )
+        ]
+
+        super().__init__(config_entries, config_file=None, env_vars=None, cli_args=cli_args)
+
+class CompleteConfigConsumer(ConfigConsumer):
+    """
+    Class implementing FEW complete configuration for the library.
+    """
+
+    def __init__(self, config_file: Union[os.PathLike, Mapping[str, str], None] = None,
+                 env_vars: Optional[Mapping[str, str]] = None,
+                 cli_args: Optional[Sequence[str]] = None):
+        from ..cutils.fast_selector import BackendSelectionMode
+        config_entries = [
+            ConfigEntry(
+                label="fast_backend",
+                description="Fast backend selection mode",
+                type=BackendSelectionMode,
+                default=BackendSelectionMode.LAZY,
+                cli_flags="--fast-backend",
+                cli_kwargs={
+                    "type": BackendSelectionMode,
+                },
+                env_var="FAST_BACKEND",
+                cfg_entry="fast-backend",
+            )
+        ]
+
+        super().__init__(config_entries, config_file=config_file, env_vars=env_vars, cli_args=cli_args)
+
+def _detect_cfg_file() -> Optional[pathlib.Path]:
+    """Test common path locations for config and return highest-priority existing one (if any)."""
+
+def load_config(cli_args: Optional[Sequence[str]] = None):
+    import os
+    global CONFIG
+
+    first_cfg = InitialConfigConsumer(cli_args)
+
+    cfg_file = None if first_cfg["ignore_cfg"] else _detect_cfg_file()
+    env_vars = None if first_cfg["ignore_env"] else os.environ
+    _, _, extra_cli_args = first_cfg.get_extras()
+
+    CONFIG = CompleteConfigConsumer(config_file=cfg_file, env_vars=env_vars, cli_args=extra_cli_args)
+
+load_config()
