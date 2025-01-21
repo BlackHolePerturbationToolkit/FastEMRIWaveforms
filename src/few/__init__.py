@@ -17,6 +17,12 @@ except ModuleNotFoundError:
 from . import amplitude, cutils, files, summation, trajectory, utils, waveform
 
 from .utils.config import CONFIG as cfg
+from .utils.logging import LOGGER as log, postconfig_install_handlers
+
+# Post init tasks
+cutils.fast.load_backend(cfg.fast_backend)
+postconfig_install_handlers()
+del postconfig_install_handlers
 
 __all__ = [
     "__version__",
@@ -28,5 +34,6 @@ __all__ = [
     "trajectory",
     "utils",
     "waveform",
-    "cfg"
+    "cfg",
+    "log",
 ]

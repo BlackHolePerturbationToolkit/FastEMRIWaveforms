@@ -2,6 +2,7 @@
 
 import dataclasses
 import enum
+import logging
 import os
 import pathlib
 from typing import Any, TypeVar, Generic, Optional, List, Union, Sequence, Mapping, Dict, Callable, Tuple
@@ -269,6 +270,8 @@ class CompleteConfigConsumer(ConfigConsumer):
     """
 
     fast_backend: BackendSelectionMode
+    log_level: int
+    log_format: str
 
     def __init__(self, config_file: Union[os.PathLike, Mapping[str, str], None] = None,
                  env_vars: Optional[Mapping[str, str]] = None,
@@ -286,10 +289,57 @@ class CompleteConfigConsumer(ConfigConsumer):
                 },
                 env_var="FAST_BACKEND",
                 cfg_entry="fast-backend",
+            ),
+            ConfigEntry(
+                label="log_level",
+                description="Application log level",
+                type=int,
+                default=logging.WARN,
+                cli_flags=["--log-level"],
+                env_var="LOG_LEVEL",
+                cfg_entry="log-level",
+                convert=CompleteConfigConsumer._str_to_logging_level,
+            ),
+            ConfigEntry(
+                label="log_format",
+                description="Application log format",
+                type=Optional[str],
+                default=None,
+                cli_flags=["--log-format"],
+                env_var="LOG_FORMAT",
+                cfg_entry="log-format",
+                convert=lambda input: input,
+                validate=lambda input: input is None or isinstance(input, str)
             )
         ]
 
         super().__init__(config_entries, config_file=config_file, env_vars=env_vars, cli_args=cli_args)
+
+        # Post-init task: read -v and -q options
+        self._handle_verbosity()
+
+    @staticmethod
+    def _str_to_logging_level(input: str) -> int:
+        as_int_level = logging.getLevelName(input.upper())
+        if isinstance(as_int_level, int):
+            return as_int_level
+        raise exceptions.ConfigurationValidationError("'{}' is not a valid log level.".format(input))
+
+    def _apply_verbosity(self, level):
+        self._items["log_level"].value = level
+
+    def _handle_verbosity(self):
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-v', '--verbose', dest="verbose_count", action='count', default=0)
+        parser.add_argument('-Q', '--quiet', dest="quiet", action="store_true")
+        parsed_options, self._extra_cli = parser.parse_known_args(self._extra_cli)
+
+        if parsed_options.quiet:
+            self._apply_verbosity(logging.CRITICAL)
+        else:
+            new_level = self.log_level - parsed_options.verbose_count * 10
+            self._apply_verbosity(new_level if new_level > logging.DEBUG else logging.DEBUG)
 
 def _detect_cfg_file() -> Optional[pathlib.Path]:
     """Test common path locations for config and return highest-priority existing one (if any)."""
