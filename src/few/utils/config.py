@@ -6,6 +6,7 @@ import os
 import pathlib
 from typing import Any, TypeVar, Generic, Optional, List, Union, Sequence, Mapping, Dict, Callable, Tuple
 from . import exceptions
+from ..cutils.fast_selector import BackendSelectionMode
 
 class ConfigSource(enum.Enum):
     """Enumeration of config option sources."""
@@ -33,7 +34,8 @@ class ConfigEntry(Generic[T]):
     validate: Callable[[T], bool] = lambda _: True
 
     def __post_init__(self):
-        self.convert = lambda v: self.type(v)
+        if self.convert is None:
+            self.convert = lambda v: self.type(v)
 
 @dataclasses.dataclass
 class ConfigItem(Generic[T]):
@@ -101,8 +103,17 @@ class ConfigConsumer:
         """Get the value of a config entry."""
         return self._items[key].value
 
+    def __getattr__(self, attr: str) -> Any:
+        """Get the value of a config entry via attributes."""
+        if attr in self._items:
+            return self._items[attr].value
+        return self.__getattribute__(attr)
+
     def get_item(self, key: str) -> Tuple[ConfigItem, ConfigEntry]:
         return self._items[key], self._entries[key]
+
+    def get_items(self) -> List[Tuple[ConfigItem, ConfigEntry]]:
+        return [(self._items[key], entry) for key, entry in self._entries.items()]
 
     def get_extras(self) -> Tuple[Mapping[str, str], Mapping[str, str], Sequence[str]]:
         """Return extra file, env and cli entries for other consumer."""
@@ -202,8 +213,11 @@ class InitialConfigConsumer(ConfigConsumer):
     On first pass, we only detect if there are CLI arguments which disable
     config file or environment variables.
     """
+    ignore_cfg: bool
+    ignore_env: bool
+    config_file: Optional[pathlib.Path]
 
-    def __init__(self, cli_args: Optional[Sequence[str]] = None):
+    def __init__(self, env_vars: Optional[Mapping[str, str]] = None, cli_args: Optional[Sequence[str]] = None):
         if cli_args is None:
             import sys
             cli_args = sys.argv[1:]
@@ -216,7 +230,8 @@ class InitialConfigConsumer(ConfigConsumer):
                 default=False,
                 cli_flags="--ignore-config-file",
                 cli_kwargs={
-                    "action": "store_true"
+                    "action": "store_const",
+                    "const": True
                 },
                 convert=userstr_to_bool,
                 validate=lambda x: isinstance(x, bool)
@@ -228,24 +243,37 @@ class InitialConfigConsumer(ConfigConsumer):
                 default=False,
                 cli_flags="--ignore-env",
                 cli_kwargs={
-                    "action": "store_true",
+                    "action": "store_const",
+                    "const": True
                 },
                 convert=userstr_to_bool,
                 validate=lambda x: isinstance(x, bool)
+            ),
+            ConfigEntry(
+                label="config_file",
+                description="Path to FEW configuration file",
+                type=Optional[pathlib.Path],
+                default=None,
+                cli_flags=["-C", "--config-file"],
+                env_var="CONFIG_FILE",
+                convert=lambda p: None if p is None else pathlib.Path(p),
+                validate=lambda p: True if p is None else os.path.isfile(p),
             )
         ]
 
-        super().__init__(config_entries, config_file=None, env_vars=None, cli_args=cli_args)
+        super().__init__(config_entries, config_file=None, env_vars=env_vars, cli_args=cli_args)
 
 class CompleteConfigConsumer(ConfigConsumer):
     """
     Class implementing FEW complete configuration for the library.
     """
 
+    fast_backend: BackendSelectionMode
+
     def __init__(self, config_file: Union[os.PathLike, Mapping[str, str], None] = None,
                  env_vars: Optional[Mapping[str, str]] = None,
                  cli_args: Optional[Sequence[str]] = None):
-        from ..cutils.fast_selector import BackendSelectionMode
+
         config_entries = [
             ConfigEntry(
                 label="fast_backend",
@@ -266,16 +294,23 @@ class CompleteConfigConsumer(ConfigConsumer):
 def _detect_cfg_file() -> Optional[pathlib.Path]:
     """Test common path locations for config and return highest-priority existing one (if any)."""
 
+CONFIG: CompleteConfigConsumer
+
 def load_config(cli_args: Optional[Sequence[str]] = None):
     import os
     global CONFIG
 
-    first_cfg = InitialConfigConsumer(cli_args)
+    ignores_cfg = InitialConfigConsumer(cli_args=cli_args) # Read only CLI args (ignores)
 
-    cfg_file = None if first_cfg["ignore_cfg"] else _detect_cfg_file()
-    env_vars = None if first_cfg["ignore_env"] else os.environ
-    _, _, extra_cli_args = first_cfg.get_extras()
+    file_cfg = InitialConfigConsumer(env_vars=None if ignores_cfg.ignore_env else os.environ,
+                                     cli_args=cli_args) # Read CLI args (and env if not ignored)
 
-    CONFIG = CompleteConfigConsumer(config_file=cfg_file, env_vars=env_vars, cli_args=extra_cli_args)
+    cfg_file = None if file_cfg.ignore_cfg \
+                    else file_cfg.config_file if file_cfg.config_file is not None \
+                                              else _detect_cfg_file()
+
+    _, extra_env_vars, extra_cli_args = file_cfg.get_extras()
+
+    CONFIG = CompleteConfigConsumer(config_file=cfg_file, env_vars=extra_env_vars, cli_args=extra_cli_args)
 
 load_config()
