@@ -35,12 +35,14 @@ dependencies = [
   "cffconvert",                            # To read and validate CITATION.cff
   "exceptiongroup; python_version<'3.11'",
   "h5py",
+  "jsonschema",                            # To validate content of file registry
   "multispline",
   "numba",
   "numpy",
   "nvidia-ml-py",                          # To detect CUDA version if any
   "platformdirs",                          # To locate config and data dir on all platforms
   "pydantic",                              # To handle citations and references with advanced dataclasses
+  "pydantic-yaml",                         # To read/write pydantic instances to/from YAML (file registry)
   "requests",
   "rich",
   "scipy",
