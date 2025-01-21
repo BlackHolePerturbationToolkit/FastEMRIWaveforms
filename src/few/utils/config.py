@@ -257,7 +257,7 @@ class InitialConfigConsumer(ConfigConsumer):
                 cli_flags=["-C", "--config-file"],
                 env_var="CONFIG_FILE",
                 convert=lambda p: None if p is None else pathlib.Path(p),
-                validate=lambda p: True if p is None else os.path.isfile(p),
+                validate=lambda p: True if p is None else p.is_file(),
             )
         ]
 
@@ -293,6 +293,17 @@ class CompleteConfigConsumer(ConfigConsumer):
 
 def _detect_cfg_file() -> Optional[pathlib.Path]:
     """Test common path locations for config and return highest-priority existing one (if any)."""
+    import platformdirs
+    from .. import __version_tuple__
+    LOCATIONS = [
+        pathlib.Path.cwd() / 'few.ini',
+        platformdirs.user_config_path() / 'few.ini',
+        platformdirs.site_config_path() / 'few'/ "v{}.{}".format(__version_tuple__[0], __version_tuple__[1]) / 'few.ini',
+    ]
+    for location in LOCATIONS:
+        if location.is_file():
+            return location
+    return None
 
 CONFIG: CompleteConfigConsumer
 

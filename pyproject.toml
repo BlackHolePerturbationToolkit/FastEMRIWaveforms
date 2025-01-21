@@ -39,6 +39,7 @@ dependencies = [
   "numba",
   "numpy",
   "nvidia-ml-py",                          # To detect CUDA version if any
+  "platformdirs",                          # To locate config and data dir on all platforms
   "pydantic",                              # To handle citations and references with advanced dataclasses
   "requests",
   "rich",
