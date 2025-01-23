@@ -10,8 +10,9 @@ import typing
 import pydantic
 import rich.progress
 
-from .registry import FileRegistry
+from .registry import FileRegistry, File
 from ..utils import exceptions
+from ..utils.config import CompleteConfigConsumer as Configuration
 
 
 class FileIntegrityCheckMode(enum.Enum):
@@ -32,12 +33,13 @@ class FileMissingAction(enum.Enum):
 class FileUnknownAction(enum.Enum):
     """Action to take when a requested file is not known in the file registry."""
 
+    SEARCH_LOCALLY = "search_locally"  # Tyy to locate file locally
     ATTEMPT_ALL_REPOS = "attempt_all_repos"  # Try to locate file in known repositories
     FAIL = "fail"  # Fail the program
 
 
 class FileManagerOptions(pydantic.BaseModel):
-    """Options controliing the file manager behaviour"""
+    """Options controling the file manager behavior"""
 
     download_path: pathlib.Path
     """Where to install downloaded files"""
@@ -63,8 +65,20 @@ class FileManagerOptions(pydantic.BaseModel):
         return [self.download_path] + self.extra_paths
 
     @staticmethod
-    def from_config() -> FileManagerOptions:
+    def from_config(few_cfg: Configuration) -> FileManagerOptions:
         """Build an option instance from FEW config manager entries."""
+        import platformdirs
+
+        from few import __version__
+
+        download_path = (
+            few_cfg.file_download_dir
+            if few_cfg.file_download_dir is not None
+            else platformdirs.user_data_path(
+                appname="few", version="v{}".format(__version__), ensure_exists=True
+            )
+        )
+        return FileManagerOptions(download_path=download_path)
 
 
 class FileDownloadMetadata(pydantic.BaseModel):
@@ -84,7 +98,7 @@ class FileCacheEntry(pydantic.BaseModel):
     path: pathlib.Path
     """Path to the file"""
 
-    download_metadata: typing.Optional[FileDownloadMetadata]
+    download_metadata: typing.Optional[FileDownloadMetadata] = None
     """Optional metadata associated to file download."""
 
 
@@ -95,12 +109,15 @@ class FileManager:
     _options: FileManagerOptions
     _cache: typing.Dict[str, FileCacheEntry]
 
-    def __init__(self):
-        from few import cfg
+    def __init__(self, config: typing.Optional[Configuration] = None):
+        if config is None:
+            from few import globals
 
-        self._registry = FileRegistry.load_and_validate(cfg.file_registry_path)
-        self._options = FileManagerOptions.from_config()
-        self._cache = list()
+            config = globals.config
+
+        self._registry = FileRegistry.load_and_validate(config.file_registry_path)
+        self._options = FileManagerOptions.from_config(config)
+        self._cache = dict()
 
     def _try_add_local_file_to_cache(
         self, file_name: str
@@ -125,7 +142,7 @@ class FileManager:
                     continue
             cache_entry = FileCacheEntry(name=file_name, path=file_path)
             # Add or replace cache entry
-            self._cache[file_name] = cache_entry
+            self._cache.update({file_name: cache_entry})
             return cache_entry
 
         # File was not found (or found with invalid checksum)
@@ -139,13 +156,19 @@ class FileManager:
             return self._cache[file_name]
         return None
 
-    def _is_file_locally_present(self, file_name: str) -> bool:
+    def _get_file_if_locally_present(
+        self, file_name: str
+    ) -> typing.Optional[FileCacheEntry]:
         """Detect if a file is locally present."""
-        if self._try_get_file_from_local_cache(file_name=file_name) is not None:
-            return True
-        if self._try_add_local_file_to_cache(file_name=file_name) is not None:
-            return True
-        return False
+        if (
+            entry := self._try_get_file_from_local_cache(file_name=file_name)
+        ) is not None:
+            return entry
+        if (
+            entry := self._try_add_local_file_to_cache(file_name=file_name)
+        ) is not None:
+            return entry
+        return None
 
     def build_local_cache(self):
         """Add to cache all local files from the registry."""
@@ -153,7 +176,7 @@ class FileManager:
             self._try_add_local_file_to_cache(file.name)
 
     def _download_file_from_repos(
-        self, file_name: str, repository_names: typing.List[str]
+        self, file_name: str, repository_names: typing.Iterable[str]
     ) -> FileCacheEntry:
         """
         Try to download a file from list of repositories.
@@ -172,9 +195,13 @@ class FileManager:
                     )
                     new_exception.__cause__ = e
                     errors.append(new_exception)
-        raise exceptions.ExceptionGroup(
+        raise exceptions.FileDownloadException(
+            "Failed downloading '{}' after {} attempts per repository.".format(
+                file_name, self._options.download_max_attempts
+            )
+        ) from exceptions.ExceptionGroup(
             "File {} could not be downloaded from repositories {}".format(
-                file_name, repository_names
+                file_name, [name for name in repository_names]
             ),
             errors,
         )
@@ -205,7 +232,9 @@ class FileManager:
                 file_entry.check_file_matches_checksums(output_path)
             except exceptions.FileInvalidChecksum as e:
                 raise exceptions.FileDownloadIntegrityError(
-                    "File '{}' downloaded from '{}' failed integrity checks."
+                    "File '{}' downloaded from '{}' failed integrity checks.".format(
+                        file_name, repository_name
+                    )
                 ) from e
 
         return FileCacheEntry(
@@ -249,3 +278,111 @@ class FileManager:
                 total=file_size / chunk_size,
             ):
                 file.write(chunk)
+
+    def _ensure_known_file(self, file_entry: File) -> FileCacheEntry:
+        """Applies allowed strategies to obtain a file cache entry of declared file"""
+
+        # 1 - Try to get file from existing cache
+        if (
+            cache_entry := self._try_get_file_from_local_cache(
+                file_name=file_entry.name
+            )
+        ) is not None:
+            if self._options.integrity_check == FileIntegrityCheckMode.ALWAYS:
+                if file_entry.check_file_matches_checksums(cache_entry.path):
+                    return cache_entry
+            else:
+                return cache_entry
+
+        # 2 - Try to find file locally
+        if (
+            cache_entry := self._try_add_local_file_to_cache(file_name=file_entry.name)
+        ) is not None:
+            return cache_entry
+
+        # 3 - Raise error if download is disabled
+        if self._options.on_missing_file == FileMissingAction.FAIL:
+            raise exceptions.FileNotFoundLocally(
+                "File '{}' is not found locally and download is disabled.".format(
+                    file_entry.name
+                )
+            )
+
+        # 4 - Try to download file
+        return self._download_file_from_repos(file_entry.name, file_entry.repositories)
+
+    def _ensure_unknown_file(self, file_name: str) -> FileCacheEntry:
+        """Applies allowed strategies to obtain a file cache entry of unknown file"""
+        if self._options.on_unknown_file == FileUnknownAction.FAIL:
+            raise exceptions.FileNotInRegistry(
+                "File '{}' is not defined in registry.".format(file_name)
+            )
+
+        local_entry = self._get_file_if_locally_present(file_name=file_name)
+        if local_entry is not None:
+            return local_entry
+
+        if self._options.on_unknown_file == FileUnknownAction.SEARCH_LOCALLY:
+            raise exceptions.FileNotInRegistry(
+                "File '{}' is not defined in registry and not found locally.".format(
+                    file_name
+                )
+            )
+
+        assert self._options.on_unknown_file == FileUnknownAction.ATTEMPT_ALL_REPOS
+        if self._options.on_missing_file == FileMissingAction.FAIL:
+            raise exceptions.FileNotFoundLocally(
+                "File '{}' is not found locally and download is disabled.".format(
+                    file_name
+                )
+            )
+
+        try:
+            return self._download_file_from_repos(
+                file_name=file_name, repository_names=self._registry.repository_names
+            )
+        except exceptions.FileDownloadException as e:
+            raise exceptions.FileNotInRegistry(
+                "File '{}' is not defined in registry and not found locally or in known repositories.".format(
+                    file_name
+                )
+            ) from e
+
+    def _ensure_file(self, file_name: str) -> FileCacheEntry:
+        """Try all allowed strategies to obtain a file cache entry."""
+        # 1 - Check file is in registry
+        file_entry = self._registry.get_file(file_name)
+
+        if file_entry is not None:
+            return self._ensure_known_file(file_entry)
+
+        return self._ensure_unknown_file(file_name)
+
+    def get_file(self, file_name: str) -> pathlib.Path:
+        """Get file locally and return its path"""
+        return self._ensure_file(file_name=file_name).path
+
+    def prefetch_files_by_list(self, file_names: typing.Iterable[str]):
+        """Ensure all files in the given list are present (or raise errors for missing files)"""
+        errors = []
+        for file_name in file_names:
+            try:
+                self._ensure_file(file_name=file_name)
+            except exceptions.FileManagerException as e:
+                errors.append(e)
+        if errors:
+            raise exceptions.FileManagerException(
+                "Some files could not be prefetch."
+            ) from exceptions.ExceptionGroup(
+                "The following exceptions were raised while prefetching files.", errors
+            )
+
+    def prefetch_files_by_tag(self, tag: str):
+        """Ensure all files matching a given tag are locally present (or raise errors)"""
+        self.prefetch_files_by_list(
+            (file.name for file in self._registry.get_files_by_tag(tag))
+        )
+
+    def prefetch_all_files(self):
+        """Ensure all files defined in registry are locally present (or raise errors)"""
+        self.prefetch_files_by_list((file.name for file in self._registry.files))

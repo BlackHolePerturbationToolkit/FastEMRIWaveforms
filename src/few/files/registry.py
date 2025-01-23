@@ -7,7 +7,7 @@ import os
 import pydantic
 
 from ..utils.exceptions import InvalidInputFile, FileInvalidChecksum, ExceptionGroup
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Iterator
 
 
 class Repository(pydantic.BaseModel):
@@ -94,6 +94,7 @@ class FileRegistry(pydantic.BaseModel):
         self.check_repo_name_unique()
         self.check_file_name_unique()
         self.check_file_repositories_known()
+        return self
 
     def check_repo_name_unique(self):
         if len(self.repositories) > len(set(self.repository_mapping.keys())):
@@ -134,6 +135,11 @@ class FileRegistry(pydantic.BaseModel):
                 return repo
         return None
 
+    @property
+    def repository_names(self) -> Iterator[str]:
+        for repository in self.repositories:
+            yield repository.name
+
     def get_file(self, name: str) -> Optional[File]:
         """Get a file by its name"""
         for file in self.files:
@@ -141,15 +147,13 @@ class FileRegistry(pydantic.BaseModel):
                 return file
         return None
 
-    def get_files_by_tag(self, tag: str) -> List[File]:
+    def get_files_by_tag(self, tag: str) -> Iterator[File]:
         """Get files of given tag"""
-        match_files = []
         for file in self.files:
             if tag in file.tags:
-                match_files.append(file)
-        return match_files
+                yield file
 
-    @classmethod
+    @staticmethod
     def load_and_validate(registry_path: Optional[os.PathLike] = None) -> FileRegistry:
         import json
         import jsonschema

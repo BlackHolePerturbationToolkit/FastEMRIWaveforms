@@ -467,7 +467,7 @@ class CompleteConfigConsumer(ConfigConsumer):
             )
 
 
-def _detect_cfg_file() -> Optional[pathlib.Path]:
+def detect_cfg_file() -> Optional[pathlib.Path]:
     """Test common path locations for config and return highest-priority existing one (if any)."""
     import platformdirs
     from .. import __version_tuple__
@@ -484,37 +484,3 @@ def _detect_cfg_file() -> Optional[pathlib.Path]:
         if location.is_file():
             return location
     return None
-
-
-CONFIG: CompleteConfigConsumer
-
-
-def load_config(cli_args: Optional[Sequence[str]] = None):
-    import os
-
-    global CONFIG
-
-    ignores_cfg = InitialConfigConsumer(
-        cli_args=cli_args
-    )  # Read only CLI args (ignores)
-
-    file_cfg = InitialConfigConsumer(
-        env_vars=None if ignores_cfg.ignore_env else os.environ, cli_args=cli_args
-    )  # Read CLI args (and env if not ignored)
-
-    cfg_file = (
-        None
-        if file_cfg.ignore_cfg
-        else file_cfg.config_file
-        if file_cfg.config_file is not None
-        else _detect_cfg_file()
-    )
-
-    _, extra_env_vars, extra_cli_args = file_cfg.get_extras()
-
-    CONFIG = CompleteConfigConsumer(
-        config_file=cfg_file, env_vars=extra_env_vars, cli_args=extra_cli_args
-    )
-
-
-load_config()

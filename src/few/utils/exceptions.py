@@ -72,6 +72,10 @@ class FileNotInRegistry(FileManagerException):
     """Exception raised when a requested file is not in file registry."""
 
 
+class FileNotFoundLocally(FileManagerException):
+    """Exception raised when file not found locally but expected to be."""
+
+
 class FileInvalidChecksum(FileManagerException):
     """Exception raised when file has invalid checksum."""
 
