@@ -205,6 +205,24 @@ class ConfigConsumer:
         return [arg for arg in cli_args] if cli_args is not None else []
 
     @staticmethod
+    def _compatibility_isinstance(obj, cls) -> bool:
+        import sys
+        import typing
+
+        if (sys.version_info >= (3, 10)) or (typing.get_origin(cls) is None):
+            return isinstance(obj, cls)
+
+        if typing.get_origin(cls) is typing.Union:
+            for arg in typing.get_args(cls):
+                if ConfigConsumer._compatibility_isinstance(obj, arg):
+                    return True
+            return False
+
+        raise NotImplementedError(
+            "compatiblity wrapper for isinstance on Python 3.9 does not support given type."
+        )
+
+    @staticmethod
     def _build_items_from_default(
         config_entries: Sequence[ConfigEntry],
     ) -> Dict[str, ConfigItem]:
@@ -212,7 +230,7 @@ class ConfigConsumer:
         return {
             entry.label: ConfigItem(value=entry.default, source=ConfigSource.DEFAULT)
             for entry in config_entries
-            if isinstance(entry.default, entry.type)
+            if ConfigConsumer._compatibility_isinstance(entry.default, entry.type)
         }
 
     @staticmethod
