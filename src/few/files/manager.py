@@ -119,6 +119,11 @@ class FileManager:
         self._options = FileManagerOptions.from_config(config)
         self._cache = dict()
 
+    @property
+    def storage_dir(self) -> pathlib.Path:
+        """Directory in which files can be written."""
+        return self._options.download_path
+
     def _try_add_local_file_to_cache(
         self, file_name: str
     ) -> typing.Optional[FileCacheEntry]:
