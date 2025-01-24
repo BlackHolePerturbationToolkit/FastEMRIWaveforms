@@ -1,11 +1,13 @@
 """
 Contains the ODEBase baseclass that handles evaluating the ODE
 """
+
 from typing import Optional, Type, Union
 import numpy as np
 
 # def get_ode_function_options():
 #     return _STOCK_TRAJECTORY_OPTIONS
+
 
 class ODEBase:
     """
@@ -16,8 +18,8 @@ class ODEBase:
     See the documentation for examples on how to do this.
 
     """
-    def __init__(self, *args, use_ELQ=False, **kwargs):
 
+    def __init__(self, *args, use_ELQ=False, **kwargs):
         if use_ELQ:
             assert self.supports_ELQ, "This ODE does not support ELQ evaluation."
         self.use_ELQ = use_ELQ
@@ -26,7 +28,6 @@ class ODEBase:
         """
         self.num_add_args = 0
         """int: Number of additional arguments being passed to the ODE function."""
-
 
     @property
     def convert_Y(self):
@@ -103,7 +104,13 @@ class ODEBase:
     def modify_rhs(self, ydot: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
         return ydot
 
-    def __call__(self, y: Union[list, np.ndarray], out: Optional[np.ndarray] = None, scale_by_eps=False, **kwargs: Optional[dict]) -> np.ndarray:
+    def __call__(
+        self,
+        y: Union[list, np.ndarray],
+        out: Optional[np.ndarray] = None,
+        scale_by_eps=False,
+        **kwargs: Optional[dict],
+    ) -> np.ndarray:
         derivs = self.evaluate_rhs(y, **kwargs)
         if out is None:
             out = np.asarray(derivs)
@@ -126,11 +133,8 @@ class ODEBase:
 
 
 def _properties(cls: type) -> list[str]:
-    return [
-        key
-        for key, value in cls.__dict__.items()
-        if isinstance(value, property)
-    ]
+    return [key for key, value in cls.__dict__.items() if isinstance(value, property)]
+
 
 def get_ode_properties(inst_cls: Type[ODEBase]):
     cls = inst_cls.__class__
@@ -138,9 +142,9 @@ def get_ode_properties(inst_cls: Type[ODEBase]):
     # first get all the properties of ODEBase
     parent = cls.__bases__[0]
     parentprops = _properties(parent)
-    props = {pkey : getattr(parent, pkey).fget(parent) for pkey in parentprops}
+    props = {pkey: getattr(parent, pkey).fget(parent) for pkey in parentprops}
 
     # now update with what is changed by this subclass
     childprops = _properties(cls)
-    props.update({ckey : getattr(cls, ckey).fget(cls) for ckey in childprops})
+    props.update({ckey: getattr(cls, ckey).fget(cls) for ckey in childprops})
     return props

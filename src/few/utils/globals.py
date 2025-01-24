@@ -44,7 +44,6 @@ class MultiHandlerTarget:
             handler.handle(record)
 
 
-
 class Globals(metaclass=Singleton):
     _logger: logging.Logger
     _initial_config: InitialConfigConsumer
@@ -167,20 +166,25 @@ class Globals(metaclass=Singleton):
         cfg: Configuration = super().__getattribute__("_config")
         load_backend(cfg.fast_backend)
 
+
 def get_logger() -> logging.Logger:
     """Get FEW logger"""
     return Globals().logger
+
 
 def get_file_manager() -> FileManager:
     """Get FEW File Manager"""
     return Globals().file_manager
 
+
 def get_config() -> Configuration:
     """Get FEW configuration"""
     return Globals().config
 
+
 def initialize(*cli_args):
     """Initialize FEW configuration, logger and file manager with CLI arguments"""
     Globals().init(*cli_args)
+
 
 __all__ = ["Globals", "get_logger", "get_file_manager", "get_config", "initialize"]

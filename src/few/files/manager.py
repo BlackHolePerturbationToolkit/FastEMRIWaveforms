@@ -66,9 +66,9 @@ class FileManagerOptions(pydantic.BaseModel):
     def search_paths(self) -> typing.List[pathlib.Path]:
         """List of file search paths."""
         return [self.download_path, self.storage_path] + [
-            extra_path if extra_path.is_absolute()
-            else self.storage_path / extra_path
-            for extra_path in self.extra_paths]
+            extra_path if extra_path.is_absolute() else self.storage_path / extra_path
+            for extra_path in self.extra_paths
+        ]
 
     @staticmethod
     def from_config(few_cfg: Configuration) -> FileManagerOptions:
@@ -91,7 +91,9 @@ class FileManagerOptions(pydantic.BaseModel):
             else storage_path / "download"
         )
         download_path.mkdir(parents=True, exist_ok=True)
-        return FileManagerOptions(storage_path = storage_path, download_path=download_path)
+        return FileManagerOptions(
+            storage_path=storage_path, download_path=download_path
+        )
 
 
 class FileDownloadMetadata(pydantic.BaseModel):
@@ -410,7 +412,7 @@ class FileManager:
         """Ensure all files defined in registry are locally present (or raise errors)"""
         self.prefetch_files_by_list((file.name for file in self._registry.files))
 
-    def open(self, file: os.PathLike, mode='r', **kwargs):
+    def open(self, file: os.PathLike, mode="r", **kwargs):
         """Wrapper for open() built-in with automatic file download if needed."""
         file_path = pathlib.Path(file)
 
@@ -418,7 +420,7 @@ class FileManager:
         if file_path.is_file() or file_path.is_absolute() or len(file_path.parts) > 1:
             return open(file_path, mode, **kwargs)
 
-        if 'r' in mode:  # File is to be read, we must first ensure its fetched
+        if "r" in mode:  # File is to be read, we must first ensure its fetched
             return open(self.get_file(file), mode=mode, **kwargs)
 
         # File is to be written, open it in the context of storage_path

@@ -138,7 +138,9 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         self._initialize_weights()
 
         # setup amplitude normalization
-        y_in, e_in, norm = np.genfromtxt(get_file_manager().get_file("AmplitudeVectorNorm.dat")).T
+        y_in, e_in, norm = np.genfromtxt(
+            get_file_manager().get_file("AmplitudeVectorNorm.dat")
+        ).T
 
         num_y = len(np.unique(y_in))
         num_e = len(np.unique(e_in))
@@ -154,7 +156,6 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
     @property
     def transform_output(self):
         return transform_output_wrap if self.use_gpu else transform_output_wrap_cpu
-
 
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
