@@ -26,7 +26,6 @@ from scipy.optimize import brentq
 
 # Python imports
 from ..utils.utility import (
-    check_for_file_download,
     ELQ_to_pex,
     get_kerr_geo_constants_of_motion,
     get_separatrix_interpolant,
@@ -48,48 +47,17 @@ MAX_ITER = 1000
 
 from .dopr853 import DOPR853
 
-def get_integrator(func, file_directory=None, integrate_constants_of_motion=False, **kwargs):
-    if file_directory is None:
-        file_directory = dir_path + "/../../few/files/"
-    # ode_info = get_ode_function_options()
-
-    # if isinstance(func, str):
-    #     num_add_args = ode_info[func]["num_add_args"]
-    #     func = [func]
-
-    # integrator = pyInspiralGenerator(
-    #     nparams,
-    #     num_add_args,
-    # )
-
-    # for func_i in func:
-    #     assert isinstance(func_i, str)
-    #     if func_i not in ode_info:
-    #         raise ValueError(
-    #             f"func not available. Options are {list(ode_info.keys())}."
-    #         )
-    #         # make sure all files needed for the ode specifically are downloaded
-    #     for fp in ode_info[func_i]["files"]:
-    #         try:
-    #             check_for_file_download(fp, file_directory)
-    #         except FileNotFoundError:
-    #             raise ValueError(
-    #                 f"File required for the ODE ({fp}) was not found in the proper folder ({file_directory}) and could not be downloaded."
-    #             )
-
-    #     integrator.add_ode(func_i.encode(), file_directory.encode())
+def get_integrator(func, integrate_constants_of_motion=False, **kwargs):
 
     if integrate_constants_of_motion:
         return AELQIntegrate(
             func=func,
-            file_directory=file_directory,
             integrate_constants_of_motion=integrate_constants_of_motion,
             **kwargs,
         )
     else:
         return APEXIntegrate(
             func=func,
-            file_directory=file_directory,
             integrate_constants_of_motion=integrate_constants_of_motion,
             **kwargs,
         )
@@ -102,13 +70,11 @@ class Integrate:
         buffer_length: int = 1000,
         rootfind_separatrix: bool=True,
         enforce_schwarz_sep: bool=False,
-        file_directory: Optional[str]=None,
         **kwargs
     ):
         if buffer_length is True:
             breakpoint()
         self.buffer_length = buffer_length
-        self.file_directory = file_directory
 
         if isinstance(func, str):
             try:
@@ -117,7 +83,7 @@ class Integrate:
                 raise ValueError(f"The trajectory function {func} could not be found.")
 
         self.base_func = func
-        self.func = func(file_directory=file_directory, use_ELQ=integrate_constants_of_motion, **kwargs)
+        self.func = func(use_ELQ=integrate_constants_of_motion, **kwargs)
 
         self.ode_info = get_ode_properties(self.func)
 
@@ -136,7 +102,7 @@ class Integrate:
         # assert np.all(self.circular == self.circular[0])
 
     def __reduce__(self):
-        return (self.__class__, (self.base_func, self.integrate_constants_of_motion, self.buffer_length, self.rootfind_separatrix, self.enforce_schwarz_sep, self.file_directory))
+        return (self.__class__, (self.base_func, self.integrate_constants_of_motion, self.buffer_length, self.rootfind_separatrix, self.enforce_schwarz_sep))
 
     @property
     def nparams(self) -> int:
@@ -145,10 +111,6 @@ class Integrate:
     @property
     def num_add_args(self) -> int:
         return self.func.num_add_args
-
-    @property
-    def file_dir(self) -> str:
-        return str(self.func.file_dir)
 
     @property
     def convert_Y(self):

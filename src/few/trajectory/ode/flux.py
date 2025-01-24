@@ -1,5 +1,6 @@
 from .base import ODEBase
-from ...utils.utility import get_fundamental_frequencies, get_separatrix, check_for_file_download, ELQ_to_pex
+from ...utils.utility import get_fundamental_frequencies, get_separatrix, ELQ_to_pex
+from ...utils.globals import get_file_manager
 from numba import njit
 
 from multispline.spline import BicubicSpline, TricubicSpline
@@ -36,17 +37,14 @@ class SchwarzEccFlux(ODEBase):
     Schwarzschild eccentric flux ODE.
 
     Args:
-        file_directory: The directory where the ODE data files are stored. Defaults to the FEW installation directory.
         use_ELQ: If True, the ODE will output derivatives of the orbital elements of (E, L, Q). Defaults to False.
     """
-    def __init__(self, *args, file_directory: Optional[str]=None, use_ELQ: bool=False, **kwargs):
-        super().__init__(*args, file_directory=file_directory, use_ELQ=use_ELQ, **kwargs)
+    def __init__(self, *args, use_ELQ: bool=False, **kwargs):
+        super().__init__(*args, use_ELQ=use_ELQ, **kwargs)
         # construct the BicubicSpline object from the expected file
         fp = "FluxNewMinusPNScaled_fixed_y_order.dat"
 
-        check_for_file_download(fp, self.file_dir)
-
-        data = np.loadtxt(os.path.join(self.file_dir, fp))
+        data = np.loadtxt(get_file_manager().get_file(fp))
         x = np.unique(data[:,0])
         y = np.unique(data[:,1])
 
@@ -119,11 +117,10 @@ class KerrEccEqFlux(ODEBase):
     Kerr eccentric equatorial flux ODE.
 
     Args:
-        file_directory: The directory where the ODE data files are stored. Defaults to the FEW installation directory.
         use_ELQ: If True, the ODE will output derivatives of the orbital elements of (E, L, Q). Defaults to False.
     """
-    def __init__(self, *args, file_directory: Optional[str]=None, use_ELQ: bool=False, **kwargs):
-        super().__init__(*args,file_directory=file_directory, use_ELQ=use_ELQ, **kwargs)
+    def __init__(self, *args, use_ELQ: bool=False, **kwargs):
+        super().__init__(*args, use_ELQ=use_ELQ, **kwargs)
         self.files = [
             "KerrEqEcc_x0.dat",
             "KerrEqEcc_x1.dat",
@@ -131,15 +128,15 @@ class KerrEccEqFlux(ODEBase):
             "KerrEqEcc_pdot.dat",
             "KerrEqEcc_edot.dat"
         ]
-        for fp in self.files:
-            check_for_file_download(fp, self.file_dir)
+        fm = get_file_manager()
+        fm.prefetch_files_by_list(self.files)
 
-        x = np.loadtxt(os.path.join(self.file_dir, self.files[0]))
-        y = np.loadtxt(os.path.join(self.file_dir, self.files[1]))
-        z = np.loadtxt(os.path.join(self.file_dir, self.files[2]))
+        x = np.loadtxt(fm.get_file(self.files[0]))
+        y = np.loadtxt(fm.get_file(self.files[1]))
+        z = np.loadtxt(fm.get_file(self.files[2]))
 
-        pdot = np.loadtxt(os.path.join(self.file_dir, self.files[3])).reshape(x.size, y.size, z.size)
-        edot = np.loadtxt(os.path.join(self.file_dir, self.files[4])).reshape(x.size, y.size, z.size)
+        pdot = np.loadtxt(fm.get_file(self.files[3])).reshape(x.size, y.size, z.size)
+        edot = np.loadtxt(fm.get_file(self.files[4])).reshape(x.size, y.size, z.size)
 
         self.pdot_interp = TricubicSpline(x, y, z, np.log(-pdot))
         self.edot_interp = TricubicSpline(x, y, z, edot)

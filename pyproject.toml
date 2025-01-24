@@ -148,14 +148,18 @@ FEW_WITH_GPU = "AUTO" # ON | OFF | AUTO
 FEW_CUDA_ARCH = "all"
 
 [tool.ruff]
-include = [
-  "pyproject.toml",
+
+extend-include = [
+  "!*.py",
   # Enable Ruff on a white-list approach for now
-  "src/few/files/manager.py",
-  "src/few/files/registry.py",
-  "src/few/utils/config.py",
-  "src/few/utils/exceptions.py",
+  "!src/few/files/manager.py",
+  "!src/few/files/registry.py",
+  "!src/few/utils/config.py",
+  "!src/few/utils/exceptions.py",
+  "!src/few/utils/globals.py",
 ]
+
+lint.ignore = [ "E741" ]
 
 [tool.coverage]
 paths.source = [

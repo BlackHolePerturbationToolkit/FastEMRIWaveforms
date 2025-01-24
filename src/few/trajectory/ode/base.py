@@ -3,9 +3,6 @@ Contains the ODEBase baseclass that handles evaluating the ODE
 """
 from typing import Optional, Type, Union
 import numpy as np
-import os
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # def get_ode_function_options():
 #     return _STOCK_TRAJECTORY_OPTIONS
@@ -19,14 +16,8 @@ class ODEBase:
     See the documentation for examples on how to do this.
 
     """
-    def __init__(self, *args, file_directory=None, use_ELQ=False, **kwargs):
-        if file_directory is None:
-            self.file_dir = os.path.join(dir_path,"../../../few/files/")
-        else:
-            self.file_dir = file_directory
+    def __init__(self, *args, use_ELQ=False, **kwargs):
 
-        self.file_dir
-        """str: The directory where the ODE data files are stored. Defaults to the FEW installation directory."""
         if use_ELQ:
             assert self.supports_ELQ, "This ODE does not support ELQ evaluation."
         self.use_ELQ = use_ELQ
@@ -131,7 +122,7 @@ class ODEBase:
         #  TODO: re-examine this in future, this is a band-aid fix that breaks
         #  if the user adds their own args/kwargs to their class
         #  Or optionally, we can ask the user to define this as well (not ideal)
-        return (self.__class__, (self.file_dir, self.use_ELQ ))
+        return self.__class__, (self.use_ELQ,)
 
 
 def _properties(cls: type) -> list[str]:

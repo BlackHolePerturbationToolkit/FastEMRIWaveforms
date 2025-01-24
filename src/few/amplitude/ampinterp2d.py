@@ -683,7 +683,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
             return temp
 
     def __reduce__(self):
-        return (self.__class__, (self.file_directory, self.filename))
+        return (self.__class__, (self.filename,))
 
 
 def _spline_coefficients_to_file(
@@ -796,7 +796,7 @@ if __name__ == "__main__":
         filepaths.append(base_path.format(part1, part2))
 
     # running this should auto-produce coefficients files
-    AmpInterpKerrEqEcc(filenames=filepaths, file_directory="../../processed_amplitudes")
+    AmpInterpKerrEqEcc(filenames=filepaths)
 
     amp = AmpInterpKerrEqEcc()
     print(amp(0.0, np.array([10.0]), np.array([0.3]), np.array([1.0])))

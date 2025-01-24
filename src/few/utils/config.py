@@ -360,7 +360,8 @@ class CompleteConfigConsumer(ConfigConsumer):
     log_level: int
     log_format: str
     file_registry_path: Optional[pathlib.Path]
-    file_download_dir: Optional[pathlib.Path]
+    file_storage_path: Optional[pathlib.Path]
+    file_download_path: Optional[pathlib.Path]
 
     def __init__(
         self,
@@ -414,15 +415,28 @@ class CompleteConfigConsumer(ConfigConsumer):
                 validate=lambda p: True if p is None else p.is_file(),
             ),
             ConfigEntry(
-                label="file_download_dir",
-                description="File Manager download directory",
+                label="file_storage_path",
+                description="File Manager storage directory (absolute or relative to current working directory, must exist)",
+                type=Optional[pathlib.Path],
+                default=None,
+                cli_flags=["--storage-dir"],
+                env_var="FILE_STORAGE_DIR",
+                cfg_entry="file-storage-dir",
+                convert=lambda p: None if p is None else pathlib.Path(p).absolute(),
+                validate=lambda p: True if p is None else p.is_dir(),
+            ),
+            ConfigEntry(
+                label="file_download_path",
+                description="File Manager download directory (absolute, or relative to storage_path)",
                 type=Optional[pathlib.Path],
                 default=None,
                 cli_flags=["--download-dir"],
                 env_var="FILE_DOWNLOAD_DIR",
                 cfg_entry="file-download-dir",
                 convert=lambda p: None if p is None else pathlib.Path(p),
-                validate=lambda p: True if p is None else p.is_dir(),
+                validate=lambda p: True
+                if p is None
+                else (p.is_dir() if p.is_absolute() else True),
             ),
         ]
 

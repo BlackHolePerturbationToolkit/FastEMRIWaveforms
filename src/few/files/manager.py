@@ -41,11 +41,14 @@ class FileUnknownAction(enum.Enum):
 class FileManagerOptions(pydantic.BaseModel):
     """Options controling the file manager behavior"""
 
+    storage_path: pathlib.Path
+    """Base directory for FEW local storage."""
+
     download_path: pathlib.Path
-    """Where to install downloaded files"""
+    """Where to install downloaded files (absolute path, or relative to storage path)"""
 
     extra_paths: typing.List[pathlib.Path] = []
-    """Additional read-only paths where to look for files"""
+    """Additional read-only paths where to look for files (absolute or relative to storage path)"""
 
     integrity_check: FileIntegrityCheckMode = FileIntegrityCheckMode.ONCE
     """How to handle integrity checks"""
@@ -62,7 +65,10 @@ class FileManagerOptions(pydantic.BaseModel):
     @property
     def search_paths(self) -> typing.List[pathlib.Path]:
         """List of file search paths."""
-        return [self.download_path] + self.extra_paths
+        return [self.download_path, self.storage_path] + [
+            extra_path if extra_path.is_absolute()
+            else self.storage_path / extra_path
+            for extra_path in self.extra_paths]
 
     @staticmethod
     def from_config(few_cfg: Configuration) -> FileManagerOptions:
@@ -71,14 +77,21 @@ class FileManagerOptions(pydantic.BaseModel):
 
         from few import __version__
 
-        download_path = (
-            few_cfg.file_download_dir
-            if few_cfg.file_download_dir is not None
+        storage_path = (
+            few_cfg.file_storage_path
+            if few_cfg.file_storage_path is not None
             else platformdirs.user_data_path(
                 appname="few", version="v{}".format(__version__), ensure_exists=True
             )
         )
-        return FileManagerOptions(download_path=download_path)
+
+        download_path = (
+            few_cfg.file_download_path
+            if few_cfg.file_download_path is not None
+            else storage_path / "download"
+        )
+        download_path.mkdir(parents=True, exist_ok=True)
+        return FileManagerOptions(storage_path = storage_path, download_path=download_path)
 
 
 class FileDownloadMetadata(pydantic.BaseModel):
@@ -121,7 +134,12 @@ class FileManager:
 
     @property
     def storage_dir(self) -> pathlib.Path:
-        """Directory in which files can be written."""
+        """Directory in which files can be read or written."""
+        return self._options.storage_path
+
+    @property
+    def download_dir(self) -> pathlib.Path:
+        """Directory in which downloaded files are written."""
         return self._options.download_path
 
     def _try_add_local_file_to_cache(
@@ -221,7 +239,7 @@ class FileManager:
         assert repo_entry is not None
 
         url = repo_entry.build_url(file_name=file_name)
-        output_path = self._options.download_path / file_name
+        output_path = self.download_dir / file_name
 
         self._download_file(
             url=url,
@@ -391,3 +409,17 @@ class FileManager:
     def prefetch_all_files(self):
         """Ensure all files defined in registry are locally present (or raise errors)"""
         self.prefetch_files_by_list((file.name for file in self._registry.files))
+
+    def open(self, file: os.PathLike, mode='r', **kwargs):
+        """Wrapper for open() built-in with automatic file download if needed."""
+        file_path = pathlib.Path(file)
+
+        # Do not change behavior of open if file is already defined or absolute
+        if file_path.is_file() or file_path.is_absolute() or len(file_path.parts) > 1:
+            return open(file_path, mode, **kwargs)
+
+        if 'r' in mode:  # File is to be read, we must first ensure its fetched
+            return open(self.get_file(file), mode=mode, **kwargs)
+
+        # File is to be written, open it in the context of storage_path
+        return open(self.storage_dir / file_path, mode=mode, **kwargs)

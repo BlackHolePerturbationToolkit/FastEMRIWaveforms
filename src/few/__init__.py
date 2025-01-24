@@ -16,7 +16,7 @@ except ModuleNotFoundError:
         del version, PackageNotFoundError
 
 from . import amplitude, cutils, files, summation, trajectory, utils, waveform
-from ._globals import Globals
+from .utils.globals import Globals
 
 globals = Globals()
 

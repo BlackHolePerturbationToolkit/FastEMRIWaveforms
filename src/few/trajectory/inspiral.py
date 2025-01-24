@@ -72,7 +72,6 @@ class EMRIInspiral(TrajectoryBase):
             Default is True.
         rootfind_separatrix: Finish trajectory by performing a numerical root-finding operation to place the final point
             of the trajectory. If False, performs Euler integration to the final point. Default is True.
-        file_directory: Directory where ODE data files are stored. Defaults to the files directory of the FEW install.
         *args: Any arguments for parent
             class :class:`few.trajectory.base.TrajectoryBase`
         **kwargs: Any keyword arguments for the integrator and ODE classes
@@ -92,7 +91,6 @@ class EMRIInspiral(TrajectoryBase):
         enforce_schwarz_sep: bool=False,
         convert_to_pex: bool=True,
         rootfind_separatrix: bool=True,
-        file_directory: Optional[str]=None,
         **kwargs,
     ):
 
@@ -102,7 +100,6 @@ class EMRIInspiral(TrajectoryBase):
         self.inspiral_generator = get_integrator(
             func,
             integrate_constants_of_motion=integrate_constants_of_motion,
-            file_directory=file_directory,
             enforce_schwarz_sep=enforce_schwarz_sep,
             rootfind_separatrix=rootfind_separatrix,
             **kwargs
