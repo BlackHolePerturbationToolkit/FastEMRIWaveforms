@@ -128,7 +128,11 @@ wheel.exclude = [
 
 # Whether LAPACK should be automatically fetched and compiled.
 #  note: for now this option is ignored and LAPACK is always fetched
-FEW_LAPACKE_FETCH = "ON"
+FEW_LAPACKE_FETCH = "AUTO"
+
+# Whether to search for LIBNAME-config.cmake file or for libname.pc file
+# To detect and link LAPACK(E)
+FEW_LAPACKE_DETECT_WITH = "PKGCONFIG" # or "CMAKE"
 
 # List of libs that must be linked to build against LAPACKE
 # FEW_LAPACKE_LIBS = "lapack;lapacke;gfortran"
