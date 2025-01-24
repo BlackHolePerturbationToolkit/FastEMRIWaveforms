@@ -33,7 +33,7 @@ dynamic = [ "version" ]
 
 dependencies = [
   "cffconvert",                            # To read and validate CITATION.cff
-  "exceptiongroup; python_version<'3.11'",
+  "exceptiongroup; python_version<'3.11'", # To access ExceptionGroup with Python 3.9 and 3.10
   "h5py",
   "jsonschema",                            # To validate content of file registry
   "multispline",
@@ -42,9 +42,9 @@ dependencies = [
   "nvidia-ml-py",                          # To detect CUDA version if any
   "platformdirs",                          # To locate config and data dir on all platforms
   "pydantic",                              # To handle citations and references with advanced dataclasses
-  "pydantic-yaml",                         # To read/write pydantic instances to/from YAML (file registry)
-  "requests",
-  "rich",
+  "pyyaml",                                # To read file registry
+  "requests",                              # To download files automatically
+  "rich",                                  # To display downlaod progress bar
   "scipy",
   "tqdm",
   #@DEPS_CUPYCUDA@,
