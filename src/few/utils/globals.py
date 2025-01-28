@@ -37,13 +37,16 @@ class MultiHandlerTarget:
     """Helper class to transition logger from memory-buffer to stream handler during globals init"""
 
     handlers: typing.List[logging.Handler]
+    level: int
 
-    def __init__(self, *handlers):
+    def __init__(self, level: int, *handlers):
         self.handlers = handlers
+        self.level = level
 
     def handle(self, record):
-        for handler in self.handlers:
-            handler.handle(record)
+        if record.levelno >= self.level:
+            for handler in self.handlers:
+                handler.handle(record)
 
 
 class Globals(metaclass=Singleton):
@@ -183,7 +186,9 @@ class Globals(metaclass=Singleton):
         for handler in logger.handlers:
             if handler.get_name() == "_few_initial_handler":
                 assert isinstance(handler, logging.handlers.MemoryHandler)
-                handler.setTarget(MultiHandlerTarget(stdout_handler, stderr_handler))
+                handler.setTarget(
+                    MultiHandlerTarget(cfg.log_level, stdout_handler, stderr_handler)
+                )
                 handler.close()
                 break
 

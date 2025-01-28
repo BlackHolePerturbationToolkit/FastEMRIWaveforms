@@ -520,7 +520,7 @@ class CompleteConfigConsumer(ConfigConsumer):
         )
 
     def _apply_verbosity(self, level):
-        self._items["log_level"].value = level
+        self._items["log_level"] = ConfigItem(value=level, source=ConfigSource.CLIOPT)
 
     def _handle_verbosity(self):
         import argparse
