@@ -57,11 +57,11 @@ class Globals(metaclass=Singleton):
         self._preinit_logger()
         super().__setattr__("_to_initialize", True)
 
-    def init(self, *cli_args):
+    def init(self, cli_args: typing.Optional[typing.Sequence[typing.Any]] = None):
         """Initialize config, file manager and logger with optional CLI arguments."""
         if not super().__getattribute__("_to_initialize"):
             raise FewGlobalsInitializedTwice("FEW globals are already initialized.")
-        self._init_config(*cli_args)
+        self._init_config(cli_args=cli_args)
         self._postconfig_logger()
         self._init_file_manager()
         self._init_fast_backend()
@@ -97,7 +97,7 @@ class Globals(metaclass=Singleton):
         logger.addHandler(handler)
         super().__setattr__("_logger", logger)
 
-    def _init_config(self, *cli_args):
+    def _init_config(self, cli_args):
         """Initialize configurations"""
         import os
 

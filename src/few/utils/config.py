@@ -1,5 +1,6 @@
 """Implementation of a centralized configuration management for FEW."""
 
+import abc
 import argparse
 import dataclasses
 import enum
@@ -71,7 +72,7 @@ class ConfigItem(Generic[T]):
     source: ConfigSource  # Source of the item current value
 
 
-class ConfigConsumer:
+class ConfigConsumer(abc.ABC):
     """
     Base class for actual configs.
 
@@ -86,14 +87,22 @@ class ConfigConsumer:
     _extra_env: Dict[str, str]
     _extra_cli: List[str]
 
+    @classmethod
+    @abc.abstractmethod
+    def config_entries(cls) -> List[ConfigEntry]:
+        """Return the list of the class config entries"""
+        raise NotImplementedError(
+            "A ConfigConsumer must implement 'config_entries' method."
+        )
+
     def __init__(
         self,
-        config_entries: Sequence[ConfigEntry],
         config_file: Union[os.PathLike, Mapping[str, str], None] = None,
         env_vars: Optional[Mapping[str, str]] = None,
         cli_args: Optional[Sequence[str]] = None,
     ):
         """Initialize the items list and extra parameters."""
+        config_entries = self.config_entries()
 
         # Build the entries mapping
         self._entries = {entry.label: entry for entry in config_entries}
@@ -271,7 +280,7 @@ class ConfigConsumer:
 
     @staticmethod
     def _build_parser(config_entries: Sequence[ConfigEntry]) -> argparse.ArgumentParser:
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(add_help=False)
         for config_entry in config_entries:
             if config_entry.cli_flags:
                 cli_options = {
@@ -325,17 +334,9 @@ class InitialConfigConsumer(ConfigConsumer):
     ignore_env: bool
     config_file: Optional[pathlib.Path]
 
-    def __init__(
-        self,
-        env_vars: Optional[Mapping[str, str]] = None,
-        cli_args: Optional[Sequence[str]] = None,
-    ):
-        if cli_args is None:
-            import sys
-
-            cli_args = sys.argv[1:]
-
-        config_entries = [
+    @staticmethod
+    def config_entries() -> List[ConfigEntry]:
+        return [
             ConfigEntry(
                 label="ignore_cfg",
                 description="Whether to ignore config file options",
@@ -368,9 +369,17 @@ class InitialConfigConsumer(ConfigConsumer):
             ),
         ]
 
-        super().__init__(
-            config_entries, config_file=None, env_vars=env_vars, cli_args=cli_args
-        )
+    def __init__(
+        self,
+        env_vars: Optional[Mapping[str, str]] = None,
+        cli_args: Optional[Sequence[str]] = None,
+    ):
+        if cli_args is None:
+            import sys
+
+            cli_args = sys.argv[1:]
+
+        super().__init__(config_file=None, env_vars=env_vars, cli_args=cli_args)
 
 
 class CompleteConfigConsumer(ConfigConsumer):
@@ -385,13 +394,9 @@ class CompleteConfigConsumer(ConfigConsumer):
     file_storage_path: Optional[pathlib.Path]
     file_download_path: Optional[pathlib.Path]
 
-    def __init__(
-        self,
-        config_file: Union[os.PathLike, Mapping[str, str], None] = None,
-        env_vars: Optional[Mapping[str, str]] = None,
-        cli_args: Optional[Sequence[str]] = None,
-    ):
-        config_entries = [
+    @staticmethod
+    def config_entries() -> List[ConfigEntry]:
+        return [
             ConfigEntry(
                 label="fast_backend",
                 description="Fast backend selection mode",
@@ -460,10 +465,25 @@ class CompleteConfigConsumer(ConfigConsumer):
                 if p is None
                 else (p.is_dir() if p.is_absolute() else True),
             ),
+            ConfigEntry(
+                label="config_help",
+                description="show this help message and exit",
+                type=type(None),
+                default=None,
+                cli_flags=["-H", "--config-help"],
+                cli_kwargs={
+                    "action": "help",
+                },
+            ),
         ]
 
+    def __init__(
+        self,
+        config_file: Union[os.PathLike, Mapping[str, str], None] = None,
+        env_vars: Optional[Mapping[str, str]] = None,
+        cli_args: Optional[Sequence[str]] = None,
+    ):
         super().__init__(
-            config_entries,
             config_file=config_file,
             env_vars=env_vars,
             cli_args=cli_args,
@@ -487,7 +507,7 @@ class CompleteConfigConsumer(ConfigConsumer):
     def _handle_verbosity(self):
         import argparse
 
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(add_help=False)
         parser.add_argument(
             "-v", "--verbose", dest="verbose_count", action="count", default=0
         )

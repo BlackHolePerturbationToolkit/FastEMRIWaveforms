@@ -76,6 +76,7 @@ urls.Source = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms
 urls.Tracker = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/issues"
 
 scripts.few_citations = "few.utils.citations:cli_citation"
+scripts.few_files = "few.files.cli:few_files"
 
 [tool.setuptools_scm]
 version_scheme = "no-guess-dev"
