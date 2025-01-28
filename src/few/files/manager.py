@@ -144,6 +144,16 @@ class FileManager:
         """Directory in which downloaded files are written."""
         return self._options.download_path
 
+    @property
+    def options(self) -> FileManagerOptions:
+        """Get options of this file manager"""
+        return self._options
+
+    @property
+    def registry(self) -> FileRegistry:
+        """Get the registry of this file manager"""
+        return self._registry
+
     def _try_add_local_file_to_cache(
         self, file_name: str
     ) -> typing.Optional[FileCacheEntry]:
@@ -396,6 +406,17 @@ class FileManager:
     def get_tags(self) -> typing.List[str]:
         """Get the list of file tags"""
         return self._registry.get_tags()
+
+    def try_get_local_file(
+        self, file_name: str, use_cache: bool = False
+    ) -> typing.Optional[pathlib.Path]:
+        """Try to get file locally and return its path"""
+        optional_entry = (
+            self._try_get_file_from_local_cache(file_name=file_name)
+            if use_cache
+            else self._get_file_if_locally_present(file_name=file_name)
+        )
+        return optional_entry.path if optional_entry is not None else None
 
     def get_file(self, file_name: str) -> pathlib.Path:
         """Get file locally and return its path"""

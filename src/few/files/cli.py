@@ -60,6 +60,21 @@ def _few_files_fetch(subparsers):
 
 def few_files_list(args: argparse.Namespace):
     """Run the 'few_files list' subcommand."""
+    file_manager = get_file_manager()
+    logger = get_logger()
+    if logger.level > logging.INFO:
+        logger.setLevel(logging.INFO)
+
+    file_manager.build_local_cache()
+
+    logger.info("Listing files from the File Registry:")
+    for file in file_manager.registry.files:
+        path = file_manager.try_get_local_file(file.name, use_cache=True)
+        logger.info(
+            "  - {}: {}".format(
+                file.name, f"found in '{path}'" if path is not None else "not found"
+            )
+        )
 
 
 def _few_files_list(subparsers):
