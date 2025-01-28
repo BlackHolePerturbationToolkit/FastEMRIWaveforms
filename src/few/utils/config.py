@@ -280,7 +280,9 @@ class ConfigConsumer(abc.ABC):
 
     @staticmethod
     def _build_parser(config_entries: Sequence[ConfigEntry]) -> argparse.ArgumentParser:
-        parser = argparse.ArgumentParser(add_help=False)
+        parser = argparse.ArgumentParser(
+            add_help=False, argument_default=argparse.SUPPRESS
+        )
         for config_entry in config_entries:
             if config_entry.cli_flags:
                 cli_options = {
@@ -305,11 +307,26 @@ class ConfigConsumer(abc.ABC):
         parser = ConfigConsumer._build_parser(config_entries)
         parsed_options, extras_from_cli = parser.parse_known_args(opt_from_cli)
 
-        items_from_cli = {
-            option_label: ConfigItem(value=option_value, source=ConfigSource.CLIOPT)
-            for option_label, option_value in vars(parsed_options).items()
-            if option_value is not None
-        }
+        parsed_dict = vars(parsed_options)
+
+        items_from_cli = {}
+
+        for entry in config_entries:
+            if entry.label not in parsed_dict:
+                continue
+            parsed_value = parsed_dict[entry.label]
+            if ConfigConsumer._compatibility_isinstance(
+                parsed_dict[entry.label], entry.type
+            ):
+                value = parsed_value
+            elif isinstance(parsed_value, str):
+                value = entry.convert(parsed_value)
+            else:
+                continue
+            items_from_cli[entry.label] = ConfigItem(
+                value=value, source=ConfigSource.CLIOPT
+            )
+
         return items_from_cli, extras_from_cli
 
 

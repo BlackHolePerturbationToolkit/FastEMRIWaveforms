@@ -68,6 +68,8 @@ class Globals(metaclass=Singleton):
 
         super().__setattr__("_to_initialize", False)
 
+        self.logger.debug("FEW globals initialized.")
+
     @property
     def logger(self) -> logging.Logger:
         return super().__getattribute__("_logger")
@@ -133,11 +135,9 @@ class Globals(metaclass=Singleton):
         cfg: Configuration = super().__getattribute__("_config")
 
         stdout_handler = logging.StreamHandler(stream=sys.stdout)
-        stdout_handler.setLevel(cfg.log_level)
         stdout_handler.addFilter(lambda record: record.levelno <= logging.INFO)
 
         stderr_handler = logging.StreamHandler(stream=sys.stderr)
-        stderr_handler.setLevel(cfg.log_level)
         stderr_handler.addFilter(lambda record: record.levelno > logging.INFO)
 
         if cfg.log_format is not None:

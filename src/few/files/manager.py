@@ -148,7 +148,11 @@ class FileManager:
         self, file_name: str
     ) -> typing.Optional[FileCacheEntry]:
         """Try to locate file locally and add it to cache if success"""
+        from ..utils.globals import get_logger
 
+        logger = get_logger()
+
+        logger.debug(f"Trying to locate file '{file_name}' locally.")
         from ..utils.exceptions import FileNotInRegistry
 
         if (file_entry := self._registry.file_mapping.get(file_name, None)) is None:
@@ -157,14 +161,20 @@ class FileManager:
             )
 
         for search_path in self._options.search_paths:
+            logger.debug(f" Trying in path '{search_path}'...")
             file_path = search_path / file_name
             if not file_path.is_file():
+                logger.debug("  ... not found.")
                 continue
+
             if self._options.integrity_check != FileIntegrityCheckMode.NEVER:
                 try:
                     file_entry.check_file_matches_checksums(file_path)
                 except exceptions.FileInvalidChecksum:
+                    logger.debug("  ... found, but erroneous checksum.")
                     continue
+
+            logger.debug("  ... found!")
             cache_entry = FileCacheEntry(name=file_name, path=file_path)
             # Add or replace cache entry
             self._cache.update({file_name: cache_entry})
@@ -382,6 +392,10 @@ class FileManager:
             return self._ensure_known_file(file_entry)
 
         return self._ensure_unknown_file(file_name)
+
+    def get_tags(self) -> typing.List[str]:
+        """Get the list of file tags"""
+        return self._registry.get_tags()
 
     def get_file(self, file_name: str) -> pathlib.Path:
         """Get file locally and return its path"""

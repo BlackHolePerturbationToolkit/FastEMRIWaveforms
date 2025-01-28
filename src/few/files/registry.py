@@ -153,6 +153,14 @@ class FileRegistry(pydantic.BaseModel):
             if tag in file.tags:
                 yield file
 
+    def get_tags(self) -> List[str]:
+        """Get the list of known file tags"""
+        tags = set()
+        for file in self.files:
+            for tag in file.tags:
+                tags.add(tag)
+        return sorted(tags)
+
     @staticmethod
     def load_and_validate(registry_path: Optional[os.PathLike] = None) -> FileRegistry:
         import json
