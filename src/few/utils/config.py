@@ -1,5 +1,6 @@
 """Implementation of a centralized configuration management for FEW."""
 
+import argparse
 import dataclasses
 import enum
 import logging
@@ -269,12 +270,7 @@ class ConfigConsumer:
         return items_from_env, extras_from_env
 
     @staticmethod
-    def _build_items_from_cli(
-        config_entries: Sequence[ConfigEntry], opt_from_cli: Sequence[str]
-    ) -> Tuple[Dict[str, ConfigItem], List[str]]:
-        """Extract configuration items from file option and build dict of unconsumed extra items."""
-        import argparse
-
+    def _build_parser(config_entries: Sequence[ConfigEntry]) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser()
         for config_entry in config_entries:
             if config_entry.cli_flags:
@@ -290,6 +286,14 @@ class ConfigConsumer:
                     else config_entry.cli_flags
                 )
                 parser.add_argument(*flags, **cli_options)
+        return parser
+
+    @staticmethod
+    def _build_items_from_cli(
+        config_entries: Sequence[ConfigEntry], opt_from_cli: Sequence[str]
+    ) -> Tuple[Dict[str, ConfigItem], List[str]]:
+        """Extract configuration items from file option and build dict of unconsumed extra items."""
+        parser = ConfigConsumer._build_parser(config_entries)
         parsed_options, extras_from_cli = parser.parse_known_args(opt_from_cli)
 
         items_from_cli = {
