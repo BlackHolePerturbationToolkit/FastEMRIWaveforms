@@ -6,6 +6,8 @@ import typing
 
 from .exceptions import FewException
 from .config import (
+    ConfigSource,
+    ConfigConsumer,
     InitialConfigConsumer,
     CompleteConfigConsumer as Configuration,
     detect_cfg_file,
@@ -107,9 +109,24 @@ class Globals(metaclass=Singleton):
             cli_args=cli_args
         )  # Read only CLI args (ignores)
 
+        logger = get_logger()
+        if ignores_cfg.ignore_env:
+            logger.debug(
+                "ConfigInitialization: ignoring environment as requested by command-line options"
+            )
+
         file_cfg = InitialConfigConsumer(
             env_vars=None if ignores_cfg.ignore_env else os.environ, cli_args=cli_args
         )  # Read CLI args (and env if not ignored)
+
+        if file_cfg.ignore_cfg:
+            logger.debug(
+                "ConfigInitialization: ignoring configuration file as requested by {} options".format(
+                    "command-line"
+                    if file_cfg.get_item("ignore_cfg")[0].source == ConfigSource.CLIOPT
+                    else "environment"
+                )
+            )
 
         cfg_file = (
             None
@@ -119,6 +136,11 @@ class Globals(metaclass=Singleton):
             else detect_cfg_file()
         )
 
+        if cfg_file is not None:
+            logger.debug(
+                "ConfigInitialization: using configuration file '{}'.".format(cfg_file)
+            )
+
         _, extra_env_vars, extra_cli_args = file_cfg.get_extras()
 
         config = Configuration(
@@ -126,6 +148,19 @@ class Globals(metaclass=Singleton):
         )
         super().__setattr__("_initial_config", file_cfg)
         super().__setattr__("_config", config)
+
+        logger.debug("ConfigInitialization: final configuration entries are")
+        self._log_config(file_cfg)
+        self._log_config(config)
+
+    def _log_config(self, config: ConfigConsumer, log_level=logging.DEBUG):
+        """Print configuration options in logs"""
+        logger = get_logger()
+        for item, entry in config.get_items():
+            logger.log(
+                level=log_level,
+                msg=f" {entry.label}={item.value} (from: {str(item.source)})",
+            )
 
     def _postconfig_logger(self):
         """Initialize logger after config is initialized."""

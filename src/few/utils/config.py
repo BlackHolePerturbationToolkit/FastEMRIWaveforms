@@ -359,6 +359,7 @@ class InitialConfigConsumer(ConfigConsumer):
                 description="Whether to ignore config file options",
                 type=bool,
                 default=False,
+                env_var="IGNORE_CFG_FILE",
                 cli_flags="--ignore-config-file",
                 cli_kwargs={"action": "store_const", "const": True},
                 convert=userstr_to_bool,
