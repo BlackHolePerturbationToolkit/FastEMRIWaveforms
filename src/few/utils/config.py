@@ -42,26 +42,67 @@ ENVVAR_PREFIX: str = "FEW_"
 class ConfigEntry(Generic[T]):
     """Description of a configuration entry."""
 
-    label: str  # How the entry is referred to in Python code (config.get("label"))
-    description: str  # Description of the configuration entry
-    type: TypeVar = T  # Type of the value
-    default: Optional[T] = None  # Default value
-    cfg_entry: Optional[str] = None  # Name of the entry in a config file
-    env_var: Optional[str] = (
-        None  # Entry corresponding env var (uppercase, without FEW_ prefix)
-    )
-    cli_flags: Optional[Union[str, List[str]]] = (
-        None  # Flag(s) for CLI arguments of this entry (e.g. "-f")
-    )
-    cli_kwargs: Optional[Dict[str, Any]] = (
-        None  # Supplementary arguments to argparse add_argument method for CLI options
-    )
+    label: str
+    """How the entry is referred to in Python code (config.get("label"))"""
+    description: str
+    """Description of the configuration entry"""
+
+    type: TypeVar = T
+    """Type of the value"""
+
+    default: Optional[T] = None
+    """Default value"""
+
+    cfg_entry: Optional[str] = None
+    """Name of the entry in a config file"""
+
+    env_var: Optional[str] = None
+    """Entry corresponding env var (uppercase, without FEW_ prefix)"""
+
+    cli_flags: Optional[Union[str, List[str]]] = None
+    """Flag(s) for CLI arguments of this entry (e.g. "-f")"""
+
+    cli_kwargs: Optional[Dict[str, Any]] = None
+    """Supplementary arguments to argparse add_argument method for CLI options"""
+
     convert: Callable[[str], T] = None
+    """Method used to convert a user input to expected type"""
+
     validate: Callable[[T], bool] = lambda _: True
+    """Method used to validate the provided option value"""
+
+    overwrite: Callable[[T, T], T] = lambda _, new: new
+    """Method used to update the value if given by multiple means"""
 
     def __post_init__(self):
         if self.convert is None:
             self.convert = lambda v: self.type(v)
+
+
+def compatibility_isinstance(obj, cls) -> bool:
+    import sys
+    import typing
+
+    if (sys.version_info >= (3, 10)) or (typing.get_origin(cls) is None):
+        return isinstance(obj, cls)
+
+    if typing.get_origin(cls) is typing.Union:
+        for arg in typing.get_args(cls):
+            if compatibility_isinstance(obj, arg):
+                return True
+        return False
+
+    if typing.get_origin(cls) is list:
+        if not isinstance(obj, list):
+            return False
+        for item in obj:
+            if not compatibility_isinstance(item, typing.get_args(cls)[0]):
+                return False
+        return True
+
+    raise NotImplementedError(
+        "compatiblity wrapper for isinstance on Python 3.9 does not support given type."
+    )
 
 
 @dataclasses.dataclass
@@ -127,7 +168,7 @@ class ConfigConsumer(abc.ABC):
         )
 
         # Build final item mapping
-        self._items = default_items | file_items | env_items | cli_items
+        self._items = self._overwrite(default_items, file_items, env_items, cli_items)
 
         # Validate items:
         errors: List[Exception] = []
@@ -157,6 +198,31 @@ class ConfigConsumer(abc.ABC):
                     "Invalid configuration due to previous issues.", errors
                 )
             )
+
+    def _overwrite(
+        self,
+        old_items: Dict[str, ConfigItem],
+        new_items: Dict[str, ConfigItem],
+        *other_items,
+    ) -> Dict[str, ConfigItem]:
+        merged_items = {}
+        for label, old_item in old_items.items():
+            if label not in new_items:
+                merged_items[label] = old_item
+
+        for label, new_item in new_items.items():
+            if label not in old_items:
+                merged_items[label] = new_item
+                continue
+            old_item = old_items[label]
+            entry = self._entries[label]
+            merged_items[label] = ConfigItem(
+                value=entry.overwrite(old_item.value, new_item.value),
+                source=new_item.source,
+            )
+        if len(other_items) > 0:
+            return self._overwrite(merged_items, *other_items)
+        return merged_items
 
     def __getitem__(self, key: str) -> Any:
         """Get the value of a config entry."""
@@ -215,24 +281,6 @@ class ConfigConsumer(abc.ABC):
         return [arg for arg in cli_args] if cli_args is not None else []
 
     @staticmethod
-    def _compatibility_isinstance(obj, cls) -> bool:
-        import sys
-        import typing
-
-        if (sys.version_info >= (3, 10)) or (typing.get_origin(cls) is None):
-            return isinstance(obj, cls)
-
-        if typing.get_origin(cls) is typing.Union:
-            for arg in typing.get_args(cls):
-                if ConfigConsumer._compatibility_isinstance(obj, arg):
-                    return True
-            return False
-
-        raise NotImplementedError(
-            "compatiblity wrapper for isinstance on Python 3.9 does not support given type."
-        )
-
-    @staticmethod
     def _build_items_from_default(
         config_entries: Sequence[ConfigEntry],
     ) -> Dict[str, ConfigItem]:
@@ -240,7 +288,7 @@ class ConfigConsumer(abc.ABC):
         return {
             entry.label: ConfigItem(value=entry.default, source=ConfigSource.DEFAULT)
             for entry in config_entries
-            if ConfigConsumer._compatibility_isinstance(entry.default, entry.type)
+            if compatibility_isinstance(entry.default, entry.type)
         }
 
     @staticmethod
@@ -315,14 +363,11 @@ class ConfigConsumer(abc.ABC):
             if entry.label not in parsed_dict:
                 continue
             parsed_value = parsed_dict[entry.label]
-            if ConfigConsumer._compatibility_isinstance(
-                parsed_dict[entry.label], entry.type
-            ):
+            if compatibility_isinstance(parsed_dict[entry.label], entry.type):
                 value = parsed_value
-            elif isinstance(parsed_value, str):
-                value = entry.convert(parsed_value)
             else:
-                continue
+                value = entry.convert(parsed_value)
+
             items_from_cli[entry.label] = ConfigItem(
                 value=value, source=ConfigSource.CLIOPT
             )
@@ -334,9 +379,26 @@ def userstr_to_bool(user_str: str) -> Optional[bool]:
     """Convert a yes/no, on/off or true/false to bool."""
     if user_str.lower().startswith(("y", "t", "on")):
         return True
-    if user_str.lower().startswith("n", "f", "off"):
+    if user_str.lower().startswith(("n", "f", "off")):
         return False
     return None
+
+
+def userinput_to_pathlist(user_input) -> List[pathlib.Path]:
+    """Convert a user input to a list of paths"""
+    if user_input is None:
+        return []
+    if isinstance(user_input, str):
+        return userinput_to_pathlist(user_input.split(";"))
+    if compatibility_isinstance(user_input, List[str]):
+        return [pathlib.Path(path_str) for path_str in user_input]
+    if compatibility_isinstance(user_input, List[pathlib.Path]):
+        return user_input
+    raise ValueError(
+        "User input '{}' of type '{}' is not convertible to a list of paths".format(
+            user_input, type(user_input)
+        )
+    )
 
 
 class InitialConfigConsumer(ConfigConsumer):
@@ -411,6 +473,9 @@ class CompleteConfigConsumer(ConfigConsumer):
     file_registry_path: Optional[pathlib.Path]
     file_storage_path: Optional[pathlib.Path]
     file_download_path: Optional[pathlib.Path]
+    file_allow_download: bool
+    file_integrity_check: str
+    file_extra_paths: List[pathlib.Path]
 
     @staticmethod
     def config_entries() -> List[ConfigEntry]:
@@ -482,6 +547,42 @@ class CompleteConfigConsumer(ConfigConsumer):
                 validate=lambda p: True
                 if p is None
                 else (p.is_dir() if p.is_absolute() else True),
+            ),
+            ConfigEntry(
+                label="file_allow_download",
+                description="Whether file manager can download missing files from internet",
+                type=bool,
+                default=True,
+                cli_flags="--file-download",
+                cli_kwargs={"action": argparse.BooleanOptionalAction},
+                env_var="FILE_ALLOW_DOWNLOAD",
+                cfg_entry="file-allow-download",
+                convert=lambda x: userstr_to_bool(x) if isinstance(x, str) else bool(x),
+            ),
+            ConfigEntry(
+                label="file_integrity_check",
+                description="When should th file manager perform integrity checks (never, once, always)",
+                type=str,
+                default="once",
+                cli_flags="--file-integrity-check",
+                cli_kwargs={"choices": ("never", "once", "always")},
+                env_var="FILE_INTEGRITY_CHECK",
+                cfg_entry="file-integrity-check",
+                validate=lambda x: x in ("never", "once", "always"),
+            ),
+            ConfigEntry(
+                label="file_extra_paths",
+                description="Supplementary paths in which FEW will search for files",
+                type=Optional[List[pathlib.Path]],
+                default=None,
+                cli_flags=["--extra-path"],
+                cli_kwargs={"action": "append"},
+                env_var="FILE_EXTRA_PATHS",
+                cfg_entry="file-extra-paths",
+                convert=userinput_to_pathlist,
+                overwrite=lambda old, new: old + new
+                if old is not None
+                else new,  # concatenate extra path lists
             ),
             ConfigEntry(
                 label="config_help",

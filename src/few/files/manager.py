@@ -91,8 +91,23 @@ class FileManagerOptions(pydantic.BaseModel):
             else storage_path / "download"
         )
         download_path.mkdir(parents=True, exist_ok=True)
+
+        on_missing_file = (
+            FileMissingAction.DOWNLOAD
+            if few_cfg.file_allow_download
+            else FileMissingAction.FAIL
+        )
+        integrity_check = FileIntegrityCheckMode(few_cfg.file_integrity_check)
+        extra_paths = (
+            [] if few_cfg.file_extra_paths is None else few_cfg.file_extra_paths
+        )
+
         return FileManagerOptions(
-            storage_path=storage_path, download_path=download_path
+            storage_path=storage_path,
+            download_path=download_path,
+            on_missing_file=on_missing_file,
+            integrity_check=integrity_check,
+            extra_paths=extra_paths,
         )
 
 
