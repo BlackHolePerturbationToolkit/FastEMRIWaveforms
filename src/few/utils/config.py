@@ -84,7 +84,10 @@ def compatibility_isinstance(obj, cls) -> bool:
     import typing
 
     if (sys.version_info >= (3, 10)) or (typing.get_origin(cls) is None):
-        return isinstance(obj, cls)
+        try:
+            return isinstance(obj, cls)
+        except TypeError:
+            pass
 
     if typing.get_origin(cls) is typing.Union:
         for arg in typing.get_args(cls):
