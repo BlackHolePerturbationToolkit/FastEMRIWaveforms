@@ -22,7 +22,6 @@ from typing import (
 )
 from . import exceptions
 from ..cutils.fast_selector import BackendSelectionMode
-from .globals import get_logger
 
 
 class ConfigSource(enum.Enum):
@@ -638,6 +637,8 @@ class CompleteConfigConsumer(ConfigConsumer):
         parser.add_argument("-Q", "--quiet", dest="quiet", action="store_true")
         parsed_options, self._extra_cli = parser.parse_known_args(self._extra_cli)
 
+        from .globals import get_logger
+
         if parsed_options.quiet:
             get_logger().debug(
                 "Logger level set to CRITICAL since quiet mode is requested."
@@ -669,6 +670,8 @@ def detect_cfg_file() -> Optional[pathlib.Path]:
         / "v{}.{}".format(__version_tuple__[0], __version_tuple__[1])
         / "few.ini",
     ]
+    from .globals import get_logger
+
     for location in LOCATIONS:
         if location.is_file():
             get_logger().debug("Configuration file located in '{}'".format(location))
