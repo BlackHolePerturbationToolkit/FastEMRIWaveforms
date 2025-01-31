@@ -32,13 +32,14 @@ classifiers = [
 dynamic = [ "version" ]
 
 dependencies = [
-  "cffconvert",   # To read and validate CITATION.cff
+  "cffconvert",                            # To read and validate CITATION.cff
+  "exceptiongroup; python_version<'3.11'",
   "h5py",
   "multispline",
   "numba",
   "numpy",
-  "nvidia-ml-py", # To detect CUDA version if any
-  "pydantic",     # To handle citations and references with advanced dataclasses
+  "nvidia-ml-py",                          # To detect CUDA version if any
+  "pydantic",                              # To handle citations and references with advanced dataclasses
   "requests",
   "rich",
   "scipy",
@@ -127,7 +128,11 @@ wheel.exclude = [
 
 # Whether LAPACK should be automatically fetched and compiled.
 #  note: for now this option is ignored and LAPACK is always fetched
-FEW_LAPACKE_FETCH = "ON"
+FEW_LAPACKE_FETCH = "AUTO"
+
+# Whether to search for LIBNAME-config.cmake file or for libname.pc file
+# To detect and link LAPACK(E)
+FEW_LAPACKE_DETECT_WITH = "PKGCONFIG" # or "CMAKE"
 
 # List of libs that must be linked to build against LAPACKE
 # FEW_LAPACKE_LIBS = "lapack;lapacke;gfortran"
@@ -142,3 +147,13 @@ FEW_WITH_GPU = "AUTO" # ON | OFF | AUTO
 # What CUDA architectures to target.
 # See https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html
 FEW_CUDA_ARCH = "all"
+
+[tool.coverage]
+paths.source = [
+  "src/",
+  "**/site-packages/",
+]
+
+report.omit = [
+  "*/few/_version.py",
+]

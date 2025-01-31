@@ -124,9 +124,14 @@ def try_import_nvidia_so_libs(libs: Sequence[tuple[str, str, str]]) -> None:
         failed_libs = [libs[idx][2] for idx in failed_idx]
         packages = " ".join([f"{lib[0]}" for lib in libs])
 
+        try:
+            from exceptiongroup import ExceptionGroup as ExceptionGroupFew
+        except (ImportError, ModuleNotFoundError):
+            ExceptionGroupFew = ExceptionGroup
+
         raise MissingDependency(f"Could not load the following NVidia libraries: {failed_libs}. "
                                 f"If you installed FEW using pip, you may install them by running "
-                                f"`pip install {packages}`. ") from ExceptionGroup("Following exceptions were raised when trying to load these libraries", exceptions)
+                                f"`pip install {packages}`. ") from ExceptionGroupFew("Following exceptions were raised when trying to load these libraries", exceptions)
 
 
 def try_preload_cuda12x_dynlibs():
