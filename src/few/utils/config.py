@@ -22,6 +22,7 @@ from typing import (
 )
 from . import exceptions
 from ..cutils.fast_selector import BackendSelectionMode
+from .globals import get_logger
 
 
 class ConfigSource(enum.Enum):
@@ -380,9 +381,9 @@ class ConfigConsumer(abc.ABC):
 
 def userstr_to_bool(user_str: str) -> Optional[bool]:
     """Convert a yes/no, on/off or true/false to bool."""
-    if user_str.lower().startswith(("y", "t", "on")):
+    if user_str.lower().startswith(("y", "t", "on", "1")):
         return True
-    if user_str.lower().startswith(("n", "f", "off")):
+    if user_str.lower().startswith(("n", "f", "off", "0")):
         return False
     return None
 
@@ -491,6 +492,7 @@ class CompleteConfigConsumer(ConfigConsumer):
                 cli_flags="--fast-backend",
                 cli_kwargs={
                     "type": BackendSelectionMode,
+                    "choices": ("cpu", "cuda11x", "cuda12x", "lazy", "best"),
                 },
                 env_var="FAST_BACKEND",
                 cfg_entry="fast-backend",
@@ -637,9 +639,18 @@ class CompleteConfigConsumer(ConfigConsumer):
         parsed_options, self._extra_cli = parser.parse_known_args(self._extra_cli)
 
         if parsed_options.quiet:
+            get_logger().debug(
+                "Logger level set to CRITICAL since quiet mode is requested."
+            )
             self._apply_verbosity(logging.CRITICAL)
         else:
-            new_level = self.log_level - parsed_options.verbose_count * 10
+            old_level = self.log_level
+            new_level = old_level - parsed_options.verbose_count * 10
+            get_logger().debug(
+                "Logger level is decreased from {} to {} since verbose flag was set {} times".format(
+                    old_level, new_level, parsed_options.verbose_count
+                )
+            )
             self._apply_verbosity(
                 new_level if new_level > logging.DEBUG else logging.DEBUG
             )
@@ -660,5 +671,7 @@ def detect_cfg_file() -> Optional[pathlib.Path]:
     ]
     for location in LOCATIONS:
         if location.is_file():
+            get_logger().debug("Configuration file located in '{}'".format(location))
             return location
+        get_logger().debug("Configuration file not found in '{}'".format(location))
     return None

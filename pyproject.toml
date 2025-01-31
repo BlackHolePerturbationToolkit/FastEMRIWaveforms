@@ -24,7 +24,6 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
 ]
 
 # version is deduced from the lattest git tag
@@ -51,7 +50,9 @@ dependencies = [
   #@DEPS_FEWCORE@,
 ]
 
-optional-dependencies.dev = [
+optional-dependencies.doc = [
+  "ipython",
+  "myst-parser",
   "nbsphinx",
   "pypandoc",
   "sphinx",
@@ -161,6 +162,9 @@ extend-include = [
 ]
 
 lint.ignore = [ "E741" ]
+
+[tool.pyproject-fmt]
+max_supported_python = "3.12"
 
 [tool.coverage]
 paths.source = [

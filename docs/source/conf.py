@@ -14,7 +14,10 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+import pathlib
+import shutil
 
+import few
 # -- Project information -----------------------------------------------------
 
 project = "few: Fast EMRI Waveforms"
@@ -22,45 +25,23 @@ copyright = "2020, Michael Katz, Alvin Chua, Niels Warburton"
 author = "Michael Katz, Alvin Chua, Niels Warburton"
 
 # The full version, including alpha/beta/rc tags
-release = "0.1.0"
+release = few.__version__
 
-import pypandoc
 
-output = pypandoc.convert_file("../../README.md", "rst")
-with open("README.rst", "w") as fp:
-    fp.write(output)
+# -- Copy example notebook --
+root_dir = pathlib.Path(__file__).parent.parent.parent
+src_dir = root_dir / "examples"
+trg_dir = root_dir / "docs" / "source" / "tutorial"
+trg_dir.mkdir(parents=True, exist_ok=True)
 
-import sys, os
-
-dir_path = os.path.dirname(os.path.realpath(__file__)) + "/../../"
-
-sys.path.insert(0, os.path.abspath(dir_path))
-sys.path.insert(0, os.path.abspath(dir_path + "few/"))
-sys.path.insert(0, os.path.abspath(dir_path + "few/amplitude/"))
-sys.path.insert(0, os.path.abspath(dir_path + "few/trajectory/"))
-
-import shutil
-
-shutil.copy(
-    dir_path + "examples/Trajectory_tutorial.ipynb",
-    dir_path + "docs/source/tutorial/Trajectory_tutorial.ipynb",
-)
-
-shutil.copy(
-    dir_path + "examples/FastEMRIWaveforms_tutorial.ipynb",
-    dir_path + "docs/source/tutorial/FastEMRIWaveforms_tutorial.ipynb",
-)
-
-shutil.copy(
-    dir_path + "examples/Tutorial_FD_construction_single_mode.ipynb",
-    dir_path + "docs/source/tutorial/Tutorial_FD_construction_single_mode.ipynb",
-)
-
-shutil.copy(
-    dir_path + "examples/Tutorial_FrequencyDomain_Waveforms.ipynb",
-    dir_path + "docs/source/tutorial/Tutorial_FrequencyDomain_Waveforms.ipynb",
-)
-
+for example in (
+    "Trajectory_tutorial",
+    "FastEMRIWaveforms_tutorial",
+    "Tutorial_FD_construction_single_mode",
+    "Tutorial_FrequencyDomain_Waveforms",
+):
+    filename = example + ".ipynb"
+    shutil.copy(src_dir / filename, trg_dir / filename)
 
 # -- General configuration ---------------------------------------------------
 
@@ -69,15 +50,17 @@ shutil.copy(
 # ones.
 html_theme = "sphinx_rtd_theme"
 extensions = [
+    "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "sphinx_rtd_theme",
     "nbsphinx",
     "sphinx.ext.mathjax",
+    "IPython.sphinxext.ipython_console_highlighting",
 ]
 
-source_suffix = [".rst"]
+source_suffix = [".rst", ".md"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -87,10 +70,9 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-import sphinx_rtd_theme
-
 autodoc_member_order = "bysource"
 autodoc_typehints = "description"
+
 
 def skip(app, what, name, obj, would_skip, options):
     if name == "__call__":
