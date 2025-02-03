@@ -44,6 +44,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: prefetch_files
+          path: local_cache
+      - name: List artifacts
+        run: |
+          ls -R ./local_cache
       - name: Export configuration options to force using prefetched cache of files
         run: |
           echo "FEW_FILE_ALLOW_DOWNLOAD=no" >> "$GITHUB_ENV"
