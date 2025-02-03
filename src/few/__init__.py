@@ -15,10 +15,10 @@ except ModuleNotFoundError:
     finally:
         del version, PackageNotFoundError
 
-from . import amplitude, cutils, files, summation, trajectory, utils, waveform
-from .utils.globals import Globals
+from .utils.globals import get_logger, get_config, get_file_manager
 
-globals = Globals()
+from . import amplitude, cutils, files, summation, trajectory, utils, waveform
+
 
 __all__ = [
     "__version__",
@@ -30,6 +30,8 @@ __all__ = [
     "trajectory",
     "utils",
     "waveform",
-    "globals",
     "log",
+    "get_logger",
+    "get_config",
+    "get_file_manager",
 ]

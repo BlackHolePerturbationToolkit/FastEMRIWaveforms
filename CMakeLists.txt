@@ -103,6 +103,13 @@ elseif(FEW_WITH_GPU STREQUAL "ONLY")
   )
   set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU ON)
   set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_CPU OFF)
+elseif(FEW_WITH_GPU STREQUAL "BARE")
+  message(
+    STATUS
+      "FEW GPU and CPU support are disabled (use only to build a non-functional pure-python release)."
+  )
+  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU OFF)
+  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_CPU OFF)
 else()
   message(STATUS "FEW GPU support is set to ${FEW_WITH_GPU}.")
   set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU
