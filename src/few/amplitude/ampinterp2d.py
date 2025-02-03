@@ -112,9 +112,9 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
 
         # check if user has the necessary data
         # if not, the data will automatically download
-        from few import globals
+        from few import get_file_manager
 
-        file_path = globals.file_manager.get_file(fp)
+        file_path = get_file_manager().get_file(fp)
 
         mystery_file = h5py.File(file_path)
         try:
@@ -135,7 +135,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
                 l_arr=self.l_arr,
                 m_arr=self.m_arr,
                 n_arr=self.n_arr,
-                output_directory=globals.file_manager.storage_dir,
+                output_directory=get_file_manager().storage_dir,
             )
             coefficients = h5py.File(spline_file_path)
 
@@ -498,9 +498,9 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
 
         # check if user has the necessary data
         # if not, the data will automatically download
-        from few import globals
+        from few import get_file_manager
 
-        file_path = globals.file_manager.get_file(self.filename)
+        file_path = get_file_manager().get_file(self.filename)
 
         data = {}
         with h5py.File(file_path, "r") as f:
