@@ -73,7 +73,8 @@ def few_files_list(args: argparse.Namespace):
         path = file_manager.try_get_local_file(file.name, use_cache=True)
         logger.info(
             "  - {}: {}".format(
-                file.name, f"found in '{path}'" if path is not None else "not found"
+                file.name,
+                f"found in '{path.parent}'" if path is not None else "not found",
             )
         )
 
