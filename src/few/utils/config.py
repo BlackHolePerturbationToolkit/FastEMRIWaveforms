@@ -330,9 +330,14 @@ class ConfigConsumer(abc.ABC):
         return items_from_env, extras_from_env
 
     @staticmethod
-    def _build_parser(config_entries: Sequence[ConfigEntry]) -> argparse.ArgumentParser:
+    def _build_parser(
+        config_entries: Sequence[ConfigEntry],
+        parent_parsers: Optional[Sequence[argparse.ArgumentParser]] = None,
+    ) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(
-            add_help=False, argument_default=argparse.SUPPRESS
+            add_help=False,
+            argument_default=argparse.SUPPRESS,
+            parents=[] if parent_parsers is None else parent_parsers,
         )
         for config_entry in config_entries:
             if config_entry.cli_flags:
@@ -588,16 +593,6 @@ class CompleteConfigConsumer(ConfigConsumer):
                 if old is not None
                 else new,  # concatenate extra path lists
             ),
-            ConfigEntry(
-                label="config_help",
-                description="show this help message and exit",
-                type=type(None),
-                default=None,
-                cli_flags=["-H", "--config-help"],
-                cli_kwargs={
-                    "action": "help",
-                },
-            ),
         ]
 
     def __init__(
@@ -627,14 +622,30 @@ class CompleteConfigConsumer(ConfigConsumer):
     def _apply_verbosity(self, level):
         self._items["log_level"] = ConfigItem(value=level, source=ConfigSource.CLIOPT)
 
-    def _handle_verbosity(self):
-        import argparse
-
+    @staticmethod
+    def _build_verbosity_parser() -> argparse.ArgumentParser:
+        """Build a parser to handle -v and -Q options"""
         parser = argparse.ArgumentParser(add_help=False)
-        parser.add_argument(
-            "-v", "--verbose", dest="verbose_count", action="count", default=0
+        exclusive_groups = parser.add_mutually_exclusive_group()
+        exclusive_groups.add_argument(
+            "-v",
+            "--verbose",
+            dest="verbose_count",
+            action="count",
+            default=0,
+            help="Increase the verbosity (can be used multiple times)",
         )
-        parser.add_argument("-Q", "--quiet", dest="quiet", action="store_true")
+        exclusive_groups.add_argument(
+            "-Q",
+            "--quiet",
+            dest="quiet",
+            action="store_true",
+            help="Disable all logging outputs",
+        )
+        return parser
+
+    def _handle_verbosity(self):
+        parser = self._build_verbosity_parser()
         parsed_options, self._extra_cli = parser.parse_known_args(self._extra_cli)
 
         from .globals import get_logger
@@ -655,6 +666,18 @@ class CompleteConfigConsumer(ConfigConsumer):
             self._apply_verbosity(
                 new_level if new_level > logging.DEBUG else logging.DEBUG
             )
+
+    def build_cli_parent_parsers(self) -> List[argparse.ArgumentParser]:
+        """Build a Parser that can be used as parent parser from CLI-specific parsers"""
+        init_parser = ConfigConsumer._build_parser(
+            InitialConfigConsumer.config_entries()
+        )
+        verbosity_parser = self._build_verbosity_parser()
+        complete_parser = ConfigConsumer._build_parser(
+            CompleteConfigConsumer.config_entries(),
+            parent_parsers=[init_parser, verbosity_parser],
+        )
+        return [complete_parser]
 
 
 def detect_cfg_file() -> Optional[pathlib.Path]:

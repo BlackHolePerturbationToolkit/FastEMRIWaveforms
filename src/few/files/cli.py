@@ -3,6 +3,7 @@
 import argparse
 import logging
 import sys
+import typing
 
 from ..utils.globals import Globals, get_logger, get_file_manager
 
@@ -84,9 +85,11 @@ def _few_files_list(subparsers):
     parser.set_defaults(callback=few_files_list)
 
 
-def _few_files_parser() -> argparse.ArgumentParser:
+def _few_files_parser(
+    parent_parsers: typing.Sequence[argparse.ArgumentParser],
+) -> argparse.ArgumentParser:
     """Build the CLI argument parser"""
-    parser = argparse.ArgumentParser(prog="few_files")
+    parser = argparse.ArgumentParser(prog="few_files", parents=parent_parsers)
     subparsers = parser.add_subparsers()
     _few_files_fetch(subparsers)
     _few_files_list(subparsers)
@@ -97,5 +100,6 @@ def few_files():
     globals = Globals()
     globals.init(cli_args=sys.argv[1:])
     _, _, extra_args = globals.config.get_extras()
-    args, _ = _few_files_parser().parse_known_args(extra_args)
+    parent_parsers = globals.config.build_cli_parent_parsers()
+    args = _few_files_parser(parent_parsers).parse_args(extra_args)
     args.callback(args)
