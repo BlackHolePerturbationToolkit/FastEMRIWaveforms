@@ -17,8 +17,7 @@ gpu_available = few.cutils.fast.is_gpu
 warnings.warn("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
 
 class WaveformTest(unittest.TestCase):
-    def __init__(self, methodName = "runTest"):
-        super().__init__(methodName)
+    def setUp(self):
         self.waveform_generator = FastKerrEccentricEquatorialFlux(use_gpu=gpu_available)
 
     def test_sampling_rate_variation(self):
