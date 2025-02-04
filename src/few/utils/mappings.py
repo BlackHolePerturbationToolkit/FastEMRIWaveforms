@@ -150,11 +150,11 @@ def kerrecceq_forward_map(a, p, e, xI, use_gpu=False, return_mask=False, kind="f
 
     # if scalar directly evaluate the kernel for speed
     if isinstance(p, float):
-        a_in = abs(a)
-        xI_in = -1 if a < 0 else 1
-        pLSO = get_separatrix(a_in, e, xI_in)
+        a_sep = abs(a)
+        xI_sep = -1 if a < 0 else 1
+        pLSO = get_separatrix(a_sep, e, xI_sep)
         if p < pLSO + DELTAPMAX:
-            return _uwyz_of_apex_kernel(a_in, p, e, xI_in, pLSO, alpha=alpha, beta=beta)
+            return _uwyz_of_apex_kernel(a, p, e, xI, pLSO, alpha=alpha, beta=beta)
         else:
             raise ValueError
 

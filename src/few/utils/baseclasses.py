@@ -442,7 +442,7 @@ class KerrEccentricEquatorial(SphericalHarmonic):
             *args: Optional[list],
             use_gpu:bool=False,
             lmax:int= 10,
-            nmax:int = 55,
+            nmax:int = 50,
             ndim:int = 2,
             **kwargs:Optional[dict]
         ):
@@ -496,8 +496,19 @@ class KerrEccentricEquatorial(SphericalHarmonic):
             if test:
                 raise ValueError("{} is negative. It must be positive.".format(key))
         
+        if a < 0:
+            raise ValueError(
+                "Negative black hole spin is not accepted. Our model defines retrograde orbits with a > 0.0, xI < 0."
+            )
+        if a > 0.999:
+            raise ValueError(
+                "Larger black hole spin magnitude above 0.999 is outside of our domain of validity."
+            )
+
         # transform parameters and check they are within bounds
-        grid_coords = kerrecceq_forward_map(a, p0, e0, xI)
+        a_sign = a * xI
+        xI_in = abs(xI)
+        grid_coords = kerrecceq_forward_map(a_sign, p0, e0, xI_in)
 
         if np.isnan(grid_coords[0]):
             raise ValueError(
@@ -511,11 +522,7 @@ class KerrEccentricEquatorial(SphericalHarmonic):
             raise ValueError(
                 f"This a ({a}), p0 ({p0}) and e0 ({e0}) combination is outside of our domain of validity."
                 )
-        
-        if abs(a) > 0.999:
-            raise ValueError(
-                "Larger black hole spin magnitude above 0.999 is outside of our domain of validity."
-            )
+
 
         if abs(xI) != 1.:
             raise ValueError(

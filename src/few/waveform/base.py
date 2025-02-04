@@ -191,8 +191,15 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
             ValueError: user selections are not allowed.
 
         """
-        if dist <= 0.0:
-            raise ValueError("Luminosity distance must be greater than zero.")
+
+        if dist is not None:
+            if dist <= 0.0:
+                raise ValueError("Luminosity distance must be greater than zero.")
+            
+            dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
+
+        else:
+            dist_dimensionless = 1.0
 
         # makes sure viewing angles are allowable
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
@@ -505,12 +512,6 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
             # return entire waveform
             else:
                 waveform = waveform_temp
-
-        if dist is not None:
-            dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
-
-        else:
-            dist_dimensionless = 1.0
 
         return waveform / dist_dimensionless
 
