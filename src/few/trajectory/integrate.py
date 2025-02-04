@@ -51,33 +51,6 @@ from .dopr853 import DOPR853
 def get_integrator(func, file_directory=None, integrate_constants_of_motion=False, **kwargs):
     if file_directory is None:
         file_directory = dir_path + "/../../few/files/"
-    # ode_info = get_ode_function_options()
-
-    # if isinstance(func, str):
-    #     num_add_args = ode_info[func]["num_add_args"]
-    #     func = [func]
-
-    # integrator = pyInspiralGenerator(
-    #     nparams,
-    #     num_add_args,
-    # )
-
-    # for func_i in func:
-    #     assert isinstance(func_i, str)
-    #     if func_i not in ode_info:
-    #         raise ValueError(
-    #             f"func not available. Options are {list(ode_info.keys())}."
-    #         )
-    #         # make sure all files needed for the ode specifically are downloaded
-    #     for fp in ode_info[func_i]["files"]:
-    #         try:
-    #             check_for_file_download(fp, file_directory)
-    #         except FileNotFoundError:
-    #             raise ValueError(
-    #                 f"File required for the ODE ({fp}) was not found in the proper folder ({file_directory}) and could not be downloaded."
-    #             )
-
-    #     integrator.add_ode(func_i.encode(), file_directory.encode())
 
     if integrate_constants_of_motion:
         return AELQIntegrate(
@@ -94,6 +67,14 @@ def get_integrator(func, file_directory=None, integrate_constants_of_motion=Fals
             **kwargs,
         )
 
+def digest_func(func):
+    if isinstance(func, str):
+        try:
+            func = _STOCK_TRAJECTORY_OPTIONS[func]
+        except KeyError:
+            raise ValueError(f"The trajectory function {func} could not be found.")
+    return func
+
 class Integrate:
     def __init__(
         self,
@@ -105,17 +86,11 @@ class Integrate:
         file_directory: Optional[str]=None,
         **kwargs
     ):
-        if buffer_length is True:
-            breakpoint()
         self.buffer_length = buffer_length
         self.file_directory = file_directory
 
-        if isinstance(func, str):
-            try:
-                func = _STOCK_TRAJECTORY_OPTIONS[func]
-            except KeyError:
-                raise ValueError(f"The trajectory function {func} could not be found.")
-
+        func = digest_func(func)
+        
         self.base_func = func
         self.func = func(file_directory=file_directory, use_ELQ=integrate_constants_of_motion, **kwargs)
 
@@ -604,10 +579,10 @@ class APEXIntegrate(Integrate):
                             "Separatrix root-finding operation did not converge within MAX_ITER."
                         )
 
-            else:
-                self.finishing_function_euler_step(
-                    t, y
-                )  # weird step-halving Euler thing
+            # else:
+            #     self.finishing_function_euler_step(
+            #         t, y
+            #     )  # weird step-halving Euler thing
 
         else:  # If integrator walked past tmax during main loop, place a point at tmax and finish integration
             if not self.dopr.fix_step:
