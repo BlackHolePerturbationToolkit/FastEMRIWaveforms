@@ -147,4 +147,21 @@ class WaveformTest(unittest.TestCase):
         wave2 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10., dist = 2.)
         assert get_mismatch(wave1, wave2 * 2) < 1e-14, "Waveform not invariant under a rescaling of luminosity distance."
 
+    def test_nonphysical_input_failure(self):
+        T = 0.001
+        M = 1e6
+        mu = 1e1
+        a = 0.6
+        p0 = 8.0
+        e0 = 0.3
+        xI = 1.
+        theta = np.pi/3
+        phi = np.pi/4 
+        pars = [M, mu, a, p0, e0, xI, theta, phi]
+        with self.assertRaises(ValueError):
+            self.waveform_generator(*pars, T=T, dt=10., dist = -1.)
+            for i in range(5):
+                pars_copy = pars.copy()
+                pars_copy[i] *= -1
+                self.waveform_generator(*pars_copy, T=T, dt=10., dist = 1.)
 
