@@ -141,9 +141,9 @@ class FileManager:
 
     def __init__(self, config: typing.Optional[Configuration] = None):
         if config is None:
-            from few import globals
+            from few import get_config
 
-            config = globals.config
+            config = get_config()
 
         self._registry = FileRegistry.load_and_validate(config.file_registry_path)
         self._options = FileManagerOptions.from_config(config)
