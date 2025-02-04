@@ -27,26 +27,23 @@ class PN5(ODEBase):
     def supports_ELQ(self):
         return False
 
+    @property
+    def flux_output_convention(self):
+        return "pex"
+
     def evaluate_rhs(self, y: Union[list[float], np.ndarray]) -> list[Union[float, np.ndarray]]:
         p, e, Y = y[:3]
-        if e < 0:
-             return [0., 0., 0., 0., 0., 0.,]
-
-        xI = Y_to_xI(self.a, p, e, Y)
-        p_sep = get_separatrix(self.a, e, xI)
-        if p < p_sep:
-             return [0., 0., 0., 0., 0., 0.,]
 
         pdot = dpdt8H_5PNe10(self.a, p, e, Y, 10, 10)
         edot = dedt8H_5PNe10(self.a, p, e, Y, 10, 8)
         Ydot = dYdt8H_5PNe10(self.a, p, e, Y, 7, 10)
 
-        frequencies = get_fundamental_frequencies(self.a, p, e, xI)
+        frequencies = get_fundamental_frequencies(self.a, p, e, self.xI_cache)
 
         return [pdot, edot, Ydot, frequencies[0], frequencies[1], frequencies[2]]
 
 # /*-*-*-*-*-*-*-*-*-*-*-* External functions (can be refered by other source files) *-*-*-*-*-*-*-*-*-*-*-*/
-@njit(fastmath=True)
+@njit
 def dEdt8H_5PNe10 (q, p, e, Y, Nv, ne):
     nv = Nv
 
@@ -444,7 +441,7 @@ def dEdt8H_5PNe10 (q, p, e, Y, Nv, ne):
 
     return tmp1
 
-@njit(fastmath=True)
+@njit
 def dLdt8H_5PNe10 (q, p, e, Y, Nv, ne):
     nv = Nv
 
@@ -706,7 +703,7 @@ def dLdt8H_5PNe10 (q, p, e, Y, Nv, ne):
 
     return tmp1
 
-@njit(fastmath=True)
+@njit
 def dCdt8H_5PNe10 (q, p, e, Y, Nv, ne):
     nv = Nv
 
@@ -1048,7 +1045,7 @@ def dCdt8H_5PNe10 (q, p, e, Y, Nv, ne):
 
     return tmp1
 
-@njit(fastmath=True)
+@njit
 def dpdt8H_5PNe10 (q, p, e, Y, Nv, ne):
 
     nv = Nv
@@ -1392,7 +1389,7 @@ def dpdt8H_5PNe10 (q, p, e, Y, Nv, ne):
 
     return tmp1
 
-@njit(fastmath=True)
+@njit
 def dedt8H_5PNe10 (q, p, e, Y, Nv, ne):
 
     nv = Nv
@@ -1738,7 +1735,7 @@ def dedt8H_5PNe10 (q, p, e, Y, Nv, ne):
 
     return tmp1
 
-@njit(fastmath=True)
+@njit
 def dYdt8H_5PNe10 (q: float, p: float, e: float, Y: float, Nv: int, ne: int):
 
     nv = Nv

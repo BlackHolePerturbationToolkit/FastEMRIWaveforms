@@ -11,8 +11,8 @@ from ..utils.baseclasses import (
     ParallelModuleBase,
 )
 
-from ..utils.utility import (
-    p_to_y,
+from ..utils.mappings import (
+    schwarzecc_p_to_y,
 )
 from ..utils.ylm import GetYlms
 from ..utils.constants import *
@@ -93,15 +93,19 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
         # function for generating the inpsiral
         self.inspiral_generator = inspiral_module(**inspiral_kwargs)
         """object: instantiated trajectory module."""
+
         # function for generating the amplitude
         self.amplitude_generator = amplitude_module(**amplitude_kwargs)
         """object: instantiated amplitude module."""
+
         # summation generator
         self.create_waveform = sum_module(**sum_kwargs)
         """object: instantiated summation module."""
+
         # angular harmonics generation
         self.ylm_gen = GetYlms(**Ylm_kwargs)
         """object: instantiated Ylm module."""
+
         # selecting modes that contribute at threshold to the waveform
         self.mode_selector = mode_selector_module(
             self.l_arr_no_mask,
@@ -187,6 +191,8 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
             ValueError: user selections are not allowed.
 
         """
+        if dist <= 0.0:
+            raise ValueError("Luminosity distance must be greater than zero.")
 
         # makes sure viewing angles are allowable
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
@@ -215,7 +221,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
         if self.normalize_amps:
             # get the vector norm
             amp_norm = self.amplitude_generator.amp_norm_spline.ev(
-                p_to_y(p, e), e
+                schwarzecc_p_to_y(p, e), e
             )  # TODO: handle this grid parameter change, fix to Schwarzschild for now
             amp_norm = self.xp.asarray(amp_norm)
 
@@ -442,7 +448,6 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
             # store number of modes for external information
             self.num_modes_kept = teuk_modes_in.shape[1]
 
-
             # prepare phases for summation modules
             if not self.inspiral_generator.inspiral_generator.dopr.fix_step:
                 # prepare phase spline coefficients
@@ -450,6 +455,10 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
 
                 # scale coefficients here by the mass ratio
                 phase_information_in = phase_spline_coeff[:,[3,5],:] / (mu / M)
+
+                # flip azimuthal phase for retrograde inspirals
+                if a > 0:
+                    phase_information_in[:,0] *= self.xp.sign(xI0)
 
                 if self.inspiral_generator.inspiral_generator.integrate_backwards:
                     phase_information_in[:,:,0] += self.xp.array([Phi_phi[-1] + Phi_phi[0], Phi_r[-1] + Phi_r[0]])
@@ -461,6 +470,10 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
                     phase_information_in[0] += self.xp.array([Phi_phi[-1] + Phi_phi[0]])
                     phase_information_in[1] += self.xp.array([Phi_theta[-1] + Phi_theta[0]])
                     phase_information_in[2] += self.xp.array([Phi_r[-1] + Phi_r[0]])
+
+                # flip azimuthal phase for retrograde inspirals
+                if a > 0:
+                    phase_information_in[0] *= self.xp.sign(xI0)
 
                 phase_t_in = None
 

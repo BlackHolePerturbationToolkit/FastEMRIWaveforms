@@ -28,7 +28,7 @@ from scipy.optimize import brentq
 from multispline.spline import BicubicSpline
 from .elliptic import EllipK, EllipE, EllipPi
 
-from numba import njit
+from numba import njit, cuda
 from math import sqrt, pow, cos, acos
 import few
 
@@ -139,66 +139,6 @@ def get_mismatch(time_series_1: np.ndarray, time_series_2: np.ndarray, use_gpu: 
     """
     overlap = get_overlap(time_series_1, time_series_2, use_gpu=use_gpu)
     return 1.0 - overlap
-
-
-def p_to_y(p, e, use_gpu=False):
-    """Convert from separation :math:`p` to :math:`y` coordinate
-
-    Conversion from the semilatus rectum or separation :math:`p` to :math:`y`.
-
-    arguments:
-        p (double scalar or 1D xp.ndarray): Values of separation,
-            :math:`p`, to convert.
-        e (double scalar or 1D xp.ndarray): Associated eccentricity values
-            of :math:`p` necessary for conversion.
-        use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
-
-    """
-    if use_gpu:
-        e_cp = cp.asarray(e)
-        p_cp = cp.asarray(p)
-        return cp.log(-(21 / 10) - 2 * e_cp + p_cp)
-
-    else:
-        return np.log(-(21 / 10) - 2 * e + p)
-
-
-def kerr_p_to_u(a, p, e, xI, use_gpu=False):
-    """Convert from separation :math:`p` to :math:`y` coordinate
-
-    Conversion from the semilatus rectum or separation :math:`p` to :math:`y`.
-
-    arguments:
-        p (double scalar or 1D xp.ndarray): Values of separation,
-            :math:`p`, to convert.
-        e (double scalar or 1D xp.ndarray): Associated eccentricity values
-            of :math:`p` necessary for conversion.
-        use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
-
-    """
-    xp = cp if use_gpu else np
-
-    scalar = False
-    if isinstance(a, float):
-        scalar = True
-
-    delta_p = 0.05
-    alpha = 4.0
-
-    pLSO = get_separatrix(a, e, xI)
-    beta = alpha - delta_p
-    u = xp.log((p + beta - pLSO) / alpha)
-
-    if xp.any(u < -1e9):
-        raise ValueError("u values are too far below zero.")
-
-    # numerical errors
-    if scalar:
-        u = max(u, 0)
-    else:
-        u[u < 0.0] = 0.0
-
-    return u
 
 @njit(fastmath=False)
 def _solveCubic(A2, A1, A0):
@@ -546,11 +486,17 @@ def _KerrGeoCoordinateFrequencies_kernel_inner(a, p, e, x):
         return _SchwarzschildGeoCoordinateFrequencies_kernel(p, e)
 
 @njit(fastmath=False)
-def _KerrGeoCoordinateFrequencies_kernel(OmegaPhi, OmegaTheta, OmegaR, a, p, e, x):
+def _KerrGeoCoordinateFrequencies_kernel_cpu(OmegaPhi, OmegaTheta, OmegaR, a, p, e, x):
     for i in range(len(OmegaPhi)):
         OmegaPhi[i], OmegaTheta[i], OmegaR[i] = _KerrGeoCoordinateFrequencies_kernel_inner(a[i], p[i], e[i], x[i])
 
-def get_fundamental_frequencies(a: Union[float, np.ndarray], p:Union[float, np.ndarray], e:Union[float, np.ndarray], x:Union[float, np.ndarray]) -> tuple[Union[float, np.ndarray]]:
+@cuda.jit
+def _KerrGeoCoordinateFrequencies_kernel_gpu(OmegaPhi, OmegaTheta, OmegaR, a, p, e, x):
+    i = cuda.grid(1)
+    if i < OmegaPhi.size:
+        OmegaPhi[i], OmegaTheta[i], OmegaR[i] = _KerrGeoCoordinateFrequencies_kernel_inner(a[i], p[i], e[i], x[i])
+
+def get_fundamental_frequencies(a: Union[float, np.ndarray], p:Union[float, np.ndarray], e:Union[float, np.ndarray], x:Union[float, np.ndarray], use_gpu:bool=False) -> tuple[Union[float, np.ndarray]]:
     r"""Get dimensionless fundamental frequencies.
 
     Determines fundamental frequencies in generic Kerr from
@@ -572,6 +518,10 @@ def get_fundamental_frequencies(a: Union[float, np.ndarray], p:Union[float, np.n
         Tuple of (OmegaPhi, OmegaTheta, OmegaR). These are 1D arrays or scalar values depending on inputs.
 
     """
+    if use_gpu:
+        xp = cp
+    else:
+        xp = np
 
     # check if inputs are scalar or array
     if isinstance(p, float):
@@ -579,24 +529,31 @@ def get_fundamental_frequencies(a: Union[float, np.ndarray], p:Union[float, np.n
             a, p, e, x
         )
     else:
-        p_in = np.atleast_1d(p)
-        e_in = np.atleast_1d(e)
-        x_in = np.atleast_1d(x)
+        p_in = xp.atleast_1d(p)
+        e_in = xp.atleast_1d(e)
+        x_in = xp.atleast_1d(x)
 
         # cast the spin to the same size array as p
         if isinstance(a, float):
-            a_in = np.full_like(p_in, a)
+            a_in = xp.full_like(p_in, a)
         else:
-            a_in = np.atleast_1d(a)
+            a_in = xp.atleast_1d(a)
 
         assert len(a_in) == len(p_in)
 
-        OmegaPhi = np.empty_like(p_in)
-        OmegaTheta = np.empty_like(p_in)
-        OmegaR = np.empty_like(p_in)
-        _KerrGeoCoordinateFrequencies_kernel(
-            OmegaPhi, OmegaTheta, OmegaR, a_in, p_in, e_in, x_in
-        )
+        OmegaPhi = xp.empty_like(p_in)
+        OmegaTheta = xp.empty_like(p_in)
+        OmegaR = xp.empty_like(p_in)
+        if use_gpu:
+            threadsperblock = 256
+            blockspergrid = (p_in.size + (threadsperblock - 1)) // threadsperblock
+            _KerrGeoCoordinateFrequencies_kernel_gpu[blockspergrid, threadsperblock](
+                OmegaPhi, OmegaTheta, OmegaR, a_in, p_in, e_in, x_in
+            )
+        else:
+            _KerrGeoCoordinateFrequencies_kernel_cpu(
+                OmegaPhi, OmegaTheta, OmegaR, a_in, p_in, e_in, x_in
+            )
 
     return (OmegaPhi, OmegaTheta, OmegaR)
 
@@ -1065,12 +1022,17 @@ def _get_separatrix_kernel_inner(a: float, e: float, x: float, tol: float=1e-13)
 
 
 @njit(fastmath=False)
-def _get_separatrix_kernel(p_sep: np.ndarray, a: np.ndarray, e: np.ndarray, x: np.ndarray, tol: float=1e-13):
+def _get_separatrix_kernel_cpu(p_sep: np.ndarray, a: np.ndarray, e: np.ndarray, x: np.ndarray, tol: float=1e-13):
     for i in range(len(a)):
         p_sep[i] = _get_separatrix_kernel_inner(a[i], e[i], x[i], tol=tol)
 
+@cuda.jit
+def _get_separatrix_kernel_gpu(p_sep: np.ndarray, a: np.ndarray, e: np.ndarray, x: np.ndarray, tol: float=1e-13):
+    i = cuda.grid(1)
+    if i < len(a):
+        p_sep[i] = _get_separatrix_kernel_inner(a[i], e[i], x[i], tol=tol)
 
-def get_separatrix(a: Union[float, np.ndarray], e: Union[float, np.ndarray], x: Union[float, np.ndarray], tol:float=1e-13) -> Union[float, np.ndarray]:
+def get_separatrix(a: Union[float, np.ndarray], e: Union[float, np.ndarray], x: Union[float, np.ndarray], tol:float=1e-13, use_gpu:bool=False) -> Union[float, np.ndarray]:
     r"""Get separatrix in generic Kerr.
 
     Determines separatrix in generic Kerr from
@@ -1091,33 +1053,43 @@ def get_separatrix(a: Union[float, np.ndarray], e: Union[float, np.ndarray], x: 
         Separatrix value with shape based on input shapes.
 
     """
+    if use_gpu:
+        xp = cp
+    else:
+        xp = np
+    
     # determines shape of input
     if isinstance(e, float):
         separatrix = _get_separatrix_kernel_inner(a, e, x, tol=tol)
 
     else:
-        e_in = np.atleast_1d(e)
+        e_in = xp.atleast_1d(e)
 
         if isinstance(x, float):
-            x_in = np.full_like(e_in, x)
+            x_in = xp.full_like(e_in, x)
         else:
-            x_in = np.atleast_1d(x)
+            x_in = xp.atleast_1d(x)
 
         # cast spin values if necessary
         if isinstance(a, float):
-            a_in = np.full_like(e_in, a)
+            a_in = xp.full_like(e_in, a)
         else:
-            a_in = np.atleast_1d(a)
+            a_in = xp.atleast_1d(a)
 
         if isinstance(x, float):
-            x_in = np.full_like(e_in, x)
+            x_in = xp.full_like(e_in, x)
         else:
-            x_in = np.atleast_1d(x)
+            x_in = xp.atleast_1d(x)
 
         assert len(a_in) == len(e_in) == len(x_in)
 
-        separatrix = np.empty_like(e_in)
-        _get_separatrix_kernel(separatrix, a_in, e_in, x_in, tol=tol)
+        separatrix = xp.empty_like(e_in)
+        if use_gpu:
+            threadsperblock = 256
+            blockspergrid = (len(a_in) + (threadsperblock - 1)) // threadsperblock
+            _get_separatrix_kernel_gpu[blockspergrid, threadsperblock](separatrix, a_in, e_in, x_in, tol)
+        else:
+            _get_separatrix_kernel_cpu(separatrix, a_in, e_in, x_in, tol=tol)
 
     return separatrix
 

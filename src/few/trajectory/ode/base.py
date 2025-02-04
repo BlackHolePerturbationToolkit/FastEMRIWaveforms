@@ -4,6 +4,9 @@ Contains the ODEBase baseclass that handles evaluating the ODE
 from typing import Optional, Type, Union
 import numpy as np
 import os
+from ...utils.utility import ELQ_to_pex, get_separatrix, get_kerr_geo_constants_of_motion
+from ...utils.mappings import ELdot_to_PEdot_Jacobian
+from ...utils.pn_map import Y_to_xI
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -27,8 +30,10 @@ class ODEBase:
 
         self.file_dir
         """str: The directory where the ODE data files are stored. Defaults to the FEW installation directory."""
-        if use_ELQ:
-            assert self.supports_ELQ, "This ODE does not support ELQ evaluation."
+
+        if use_ELQ and not self.supports_ELQ:
+            raise ValueError("This ODE does not support ELQ evaluation.")
+        
         self.use_ELQ = use_ELQ
         """
         bool: If True, the ODE will take as input (and output derivatives of) the integrals of motion (E, L, Q). Defaults to False.
@@ -36,6 +41,7 @@ class ODEBase:
         self.num_add_args = 0
         """int: Number of additional arguments being passed to the ODE function."""
 
+        self.apply_Jacobian_bool = (self.flux_output_convention == "ELQ" and not self.use_ELQ)
 
     @property
     def convert_Y(self):
@@ -96,6 +102,18 @@ class ODEBase:
         """
         return 6
 
+    @property
+    def flux_output_convention(self):
+        """
+        A string describing the coordinate convention of the fluxes for this model, as output by `evaluate_rhs`.
+        These are either "pex" or "ELQ". If "ELQ", a Jacobian transformation is performed if
+        the output derivatives of the model are expected to be in the "pex" convention.
+        Defaults to "ELQ".
+
+        For models that do not perform interpolation to generate fluxes (e.g., PN5), this property is not accessed.
+        """    
+        return "ELQ"
+
     def add_fixed_parameters(self, M: float, mu: float, a: float, additional_args=None):
         self.epsilon = mu / M
         self.a = a
@@ -106,18 +124,85 @@ class ODEBase:
         else:
             self.num_add_args = len(additional_args)
 
-    def evaluate_rhs(self, y, **kwargs) -> NotImplementedError:
+    def evaluate_rhs(self, y: np.ndarray, **kwargs) -> NotImplementedError:
+        """
+        This function evaluates the right-hand side of the ODE at the point y.
+        An ODE model can be defined by subclassing the ODEBase class and implementing this method.
+        """
         raise NotImplementedError
 
-    def modify_rhs(self, ydot: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
+    def modify_rhs_before_Jacobian(self, ydot: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
+        """
+        This function allows the user to modify the right-hand side of the ODE before the Jacobian transform is applied.
+        This is particularly useful if the user wishes to apply modifications to fluxes of the integrals of motion "ELQ",
+        but integrate a trajectory in terms of "pex".
+
+        By default, this function returns the input right-hand side unchanged.
+        """
         return ydot
 
+    def modify_rhs(self, ydot: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
+        """
+        This function allows the user to modify the right-hand side of the ODE after any required Jacobian transforms 
+        have been applied.
+
+        By default, this function returns the input right-hand side unchanged.
+        """
+        return ydot
+
+    def interpolate_flux_grids(self, *args) -> NotImplementedError:
+        """
+        This function handles the interpolation of the fluxes from the precomputed grids, including parameter transformations.
+        Each stock model implements this function to handle the specifics of their own interpolants.
+        To easily incorporate interpolated fluxes into their own models, users can subclass the stock models; the
+        interpolated fluxes can then be accessed from `evaluate_rhs` by calling this function.
+        """
+        raise NotImplementedError
+
+    def cache_values_and_check_bounds(self, y: np.ndarray) -> bool:
+        """
+        This function checks the input points to ensure they are within the physical bounds of the inspiral parameter space.
+        These checks include ensuring that the separatrix has not been crossed, and that the eccentricity is within bounds.
+        
+        Returns a boolean indicating whether the input was in bounds.
+        """
+
+        if self.use_ELQ:
+            E, L, Q = y[:3]
+            p, e, x = ELQ_to_pex(self.a, E, L, Q)
+        else:
+            p, e, x = y[:3]
+
+        # first: check the eccentricity
+        in_bounds = y[1] > 0
+        if in_bounds:
+            # second: check the separatrix
+            if self.convert_Y:
+                x = Y_to_xI(self.a, p, e, x)
+                self.xI_cache = x
+
+            self.p_sep_cache = get_separatrix(self.a, e, x)
+            in_bounds = p > self.p_sep_cache
+
+        return in_bounds
+
     def __call__(self, y: Union[list, np.ndarray], out: Optional[np.ndarray] = None, scale_by_eps=False, **kwargs: Optional[dict]) -> np.ndarray:
-        derivs = self.evaluate_rhs(y, **kwargs)
+        in_bounds = self.cache_values_and_check_bounds(y)
+
+        if in_bounds:
+            derivs = self.evaluate_rhs(y, **kwargs)
+        else:
+            derivs = np.zeros(6)*np.nan
+
         if out is None:
             out = np.asarray(derivs)
         else:
             out[:] = derivs
+
+        self.modify_rhs_before_Jacobian(out, y, **kwargs)
+
+        if self.apply_Jacobian_bool:  # implicitly this means that y contains (p, e, x)
+            out[:2] = ELdot_to_PEdot_Jacobian(self.a, *y[:3], *out[:2])
 
         self.modify_rhs(out, y, **kwargs)
 

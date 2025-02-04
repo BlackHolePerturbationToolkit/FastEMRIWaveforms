@@ -11,15 +11,15 @@ from math import pow, sqrt, log
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-@njit(fastmath=True)
+@njit
 def _Edot_PN(e, yPN):
     return (96 + 292 * pow(e, 2) + 37 * pow(e, 4)) / (15. * pow(1 - pow(e, 2), 3.5)) * pow(yPN, 5)
 
-@njit(fastmath=True)
+@njit
 def _Ldot_PN(e, yPN):
     return (4 * (8 + 7 * pow(e, 2))) / (5. * pow(-1 + pow(e, 2), 2)) * pow(yPN, 7. / 2.)
 
-@njit(fastmath=True)
+@njit
 def _schwarz_jac_kernel(p, e, Edot, Ldot):
     pdot = (-2 * (Edot * sqrt((4 * pow(e, 2) - pow(-2 + p, 2)) / (3 + pow(e, 2) - p)) * (3 + pow(e, 2) - p) * pow(p, 1.5) + Ldot * pow(-4 + p, 2) * sqrt(-3 - pow(e, 2) + p))) / (4 * pow(e, 2) - pow(-6 + p, 2))
     if e > 0:
@@ -69,6 +69,19 @@ class SchwarzEccFlux(ODEBase):
     def supports_ELQ(self):
         return True
 
+    def interpolate_flux_grids(self, p: float, e: float, Omega_phi: float) -> tuple[float]:
+
+        y1 = np.log((p - 2. * e - 2.1))
+        yPN = Omega_phi**(2/3)
+
+        Edot_PN = _Edot_PN(e, yPN)
+        Ldot_PN = _Ldot_PN(e, yPN)
+
+        Edot = -(self.Edot_interp(y1, e)* yPN**6 + Edot_PN)
+        Ldot = -(self.Ldot_interp(y1, e)* yPN**(9/2) + Ldot_PN)
+
+        return Edot, Ldot
+
     def evaluate_rhs(self, y: Union[list[float], np.ndarray]) -> list[Union[float, np.ndarray]]:
         if self.use_ELQ:
             E, L, Q = y[:3]
@@ -77,28 +90,11 @@ class SchwarzEccFlux(ODEBase):
         else:
             p, e, x = y[:3]
 
-        if e < 0 or p < 6 + 2*e:
-            return [0., 0., 0., 0., 0., 0.,]
+        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(self.a, p, e, x)
 
-        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(0., p, e, x)
-        yPN = Omega_phi**(2/3)
+        Edot, Ldot = self.interpolate_flux_grids(p, e, Omega_phi)
 
-        y1 = np.log((p - 2. * e - 2.1))
-
-        Edot_PN = _Edot_PN(e, yPN)
-        Ldot_PN = _Ldot_PN(e, yPN)
-
-        Edot = -(self.Edot_interp(y1, e)* yPN**6 + Edot_PN)
-        Ldot = -(self.Ldot_interp(y1, e)* yPN**(9/2) + Ldot_PN)
-
-        if self.use_ELQ:
-            y1dot, y2dot = Edot, Ldot
-        else:
-            y1dot, y2dot = _schwarz_jac_kernel(p, e, Edot, Ldot)
-
-        y3dot = 0.
-
-        return [y1dot, y2dot, y3dot, Omega_phi, Omega_theta, Omega_r]
+        return [Edot, Ldot, 0., Omega_phi, Omega_theta, Omega_r]
 
 
 @njit(fastmath=True)
@@ -124,6 +120,7 @@ class KerrEccEqFlux(ODEBase):
     """
     def __init__(self, *args, file_directory: Optional[str]=None, use_ELQ: bool=False, **kwargs):
         super().__init__(*args,file_directory=file_directory, use_ELQ=use_ELQ, **kwargs)
+
         self.files = [
             "KerrEqEcc_x0.dat",
             "KerrEqEcc_x1.dat",
@@ -156,31 +153,30 @@ class KerrEccEqFlux(ODEBase):
     def supports_ELQ(self):
         return False
 
+    @property
+    def flux_output_convention(self):
+        return "pex"
+
+    def interpolate_flux_grids(self, p: float, e: float, x: float) -> tuple[float]:
+
+        risco = get_separatrix(self.a, 0., x)
+        u = _p_to_u(p, self.p_sep_cache)
+        w = e**0.5
+        a_sign = self.a * x
+
+        pdot = -np.exp(self.pdot_interp(a_sign, w, u)) * _pdot_PN(p, e, risco, self.p_sep_cache)
+        edot = self.edot_interp(a_sign, w, u) * _edot_PN(p, e, risco, self.p_sep_cache)
+
+        return pdot, edot
+
     def evaluate_rhs(self, y: Union[list[float], np.ndarray]) -> list[Union[float, np.ndarray]]:
         if self.use_ELQ:
             raise NotImplementedError
         else:
             p, e, x = y[:3]
 
-        if e < 0:
-             return [0., 0., 0., 0., 0., 0.,]
-
-        p_sep = get_separatrix(self.a, e, x)
-
-        if p < p_sep:
-             return [0., 0., 0., 0., 0., 0.,]
-
         Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(self.a, p, e, x)
 
-        risco = get_separatrix(self.a, 0., x)
-        u = _p_to_u(p, p_sep)
-        w = e**0.5
-        a_sign = self.a * x
-
-        pdot = -np.exp(self.pdot_interp(a_sign, w, u)) * _pdot_PN(p, e, risco, p_sep)
-        edot = self.edot_interp(a_sign, w, u) * _edot_PN(p, e, risco, p_sep)
-
-        if e < 1e-6:
-            edot = 0.
+        pdot, edot = self.interpolate_flux_grids(p, e, x)
 
         return [pdot, edot, 0., Omega_phi, Omega_theta, Omega_r]

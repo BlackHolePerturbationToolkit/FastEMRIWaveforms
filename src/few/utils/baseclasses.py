@@ -35,7 +35,7 @@ gpu_available = fast_backend.is_gpu
 # Python imports
 from ..utils.constants import *
 from ..utils.citations import Citable, REFERENCE
-from ..utils.utility import kerr_p_to_u
+from ..utils.mappings import kerrecceq_forward_map
 
 class ParallelModuleBase(Citable, ABC):
     """Base class for modules that can use GPUs.
@@ -156,7 +156,7 @@ class SphericalHarmonic(ParallelModuleBase):
         m0mask = self.xp.array(
             [
                 m == 0
-                for l in range(2, 10 + 1)
+                for l in range(2, self.lmax + 1)
                 for m in range(0, l + 1)
                 for n in range(-self.nmax, self.nmax + 1)
             ]
@@ -247,6 +247,10 @@ class SphericalHarmonic(ParallelModuleBase):
         """dict: Maps mode index to mode tuple."""
         self.special_index_map = {}  # maps the minus m values to positive m
         """dict: Maps mode index to mode tuple with m > 0."""
+        self.index_map_arr = self.xp.zeros((self.lmax + 1, self.lmax * 2 + 1, self.nmax * 2 + 1), dtype=self.xp.int32) - 1
+        """np.ndarray: Array mapping mode tuple to mode index - used for fast indexing. Returns -1 if mode does not exist."""
+        self.special_index_map_arr = self.xp.zeros((self.lmax + 1, self.lmax + 1, self.nmax * 2 + 1), dtype=self.xp.int32) - 1
+        """np.ndarray: Array mapping mode tuple to mode index with m > 0 - used for fast indexing. Returns -1 if mode does not exist."""
         for i, (l, m, n) in enumerate(zip(self.l_arr, self.m_arr, self.n_arr)):
             try:
                 l = l.item()
@@ -258,11 +262,13 @@ class SphericalHarmonic(ParallelModuleBase):
 
             # regular index to mode tuple
             self.index_map[(l, m, n)] = i
-
+            self.index_map_arr[l, m, n] = i
             # special map that gives m < 0 indices as m > 0 indices
-            self.special_index_map[(l, m, n)] = (
+            sp_i = (
                 i if i < self.num_modes else i - self.num_m_1_up
             )
+            self.special_index_map[(l, m, n)] = sp_i
+            self.special_index_map_arr[l, m, n] = sp_i
 
     def sanity_check_viewing_angles(self, theta: float, phi: float):
         """Sanity check on viewing angles.
@@ -427,7 +433,7 @@ class KerrEccentricEquatorial(SphericalHarmonic):
     Args:
         use_gpu: If True, will allocate arrays on the GPU. Default is False.
         lmax: Maximum l value for the model. Default is 10.
-        nmax: Maximum n value for the model. Default is 50.
+        nmax: Maximum n value for the model. Default is 55.
         ndim: Number of phases in the model. Default is 2.
     """
 
@@ -436,7 +442,7 @@ class KerrEccentricEquatorial(SphericalHarmonic):
             *args: Optional[list],
             use_gpu:bool=False,
             lmax:int= 10,
-            nmax:int = 50,
+            nmax:int = 55,
             ndim:int = 2,
             **kwargs:Optional[dict]
         ):
@@ -489,27 +495,32 @@ class KerrEccentricEquatorial(SphericalHarmonic):
             test = val < 0.0
             if test:
                 raise ValueError("{} is negative. It must be positive.".format(key))
+        
+        # transform parameters and check they are within bounds
+        grid_coords = kerrecceq_forward_map(a, p0, e0, xI)
 
-        if a > 0.99:
+        if np.isnan(grid_coords[0]):
             raise ValueError(
-                "Larger black hole spin above 0.99 is outside of our domain of validity."
+                f"This value of p0 ({p0}) is too close to the separatrix for our model."
+            )
+        elif grid_coords[0] > 1.000001:
+            raise ValueError(
+                f"This value of p0 ({p0}) is outside of our domain of validity."
+            )
+        if grid_coords[1] < -1e-6 or grid_coords[1] > 1.000001:
+            raise ValueError(
+                f"This a ({a}), p0 ({p0}) and e0 ({e0}) combination is outside of our domain of validity."
+                )
+        
+        if abs(a) > 0.999:
+            raise ValueError(
+                "Larger black hole spin magnitude above 0.999 is outside of our domain of validity."
             )
 
         if abs(xI) != 1.:
             raise ValueError(
                 "For equatorial orbits, xI must be either 1 or -1."
             )
-
-        #  TODO: implement the transforms we end up with here and apply them to perform bounds checking.
-
-        # u = kerr_p_to_u(a, p0, e0, xI)
-        # if u > 1.365:
-        #     raise ValueError(
-        #         "This a ({}), p0 ({}) and e0 ({}) combination is outside of our domain of validity.".format(
-        #             a, p0, e0
-        #         )
-
-        #     )
 
 
 class Pn5AAK(ParallelModuleBase):

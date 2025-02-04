@@ -35,7 +35,7 @@ from ..utils.baseclasses import (
 from .base import AmplitudeBase
 from ..utils.utility import check_for_file_download
 from ..utils.citations import REFERENCE
-from ..utils.utility import p_to_y
+from ..utils.mappings import schwarzecc_p_to_y
 from scipy.interpolate import RectBivariateSpline
 
 # get path to this file
@@ -276,7 +276,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
             ]
 
         # the input is (y, e)
-        y = p_to_y(p, e, use_gpu=self.use_gpu)
+        y = schwarzecc_p_to_y(p, e, use_gpu=self.use_gpu)
 
         # column-major single dimensional array input
         input = self.xp.concatenate([y, e])

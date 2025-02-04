@@ -36,15 +36,14 @@ from ..utils.baseclasses import (
 from .base import AmplitudeBase
 from ..utils.utility import check_for_file_download
 from ..utils.citations import REFERENCE
-from ..utils.utility import p_to_y, kerr_p_to_u
-
+from ..utils.mappings import a_of_z, kerrecceq_forward_map, kerrecceq_legacy_p_to_u, schwarzecc_p_to_y
 
 import numpy as np
 
 from ..cutils.fast import interp2D as interp2D_gpu
 from ..cutils.cpu import interp2D as interp2D_cpu
 
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -82,6 +81,343 @@ _DEFAULT_AMPLITUDE_FILENAMES = [
 
 
 class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
+    r"""Calculate Teukolsky amplitudes with a bicubic spline interpolation.
+
+    This class is initialised by providing mode index arrays and a corresponding spline coefficients array.
+    These coefficients can be computed for user-supplied data with the TODO METHOD method of this class.
+
+    When called with arguments :math:`(a, p, e, xI)`, these parameters are transformed into a set of
+    interpolation coordinates and the bicubic spline interpolant is evaluated at these coordinates for
+    all sets of coefficients.
+
+    This module is available for GPU and CPU.
+
+    args:
+        w_knots: The knots in the w direction.
+        u_knots: The knots in the u direction.
+        coefficients: The Teukolsky mode amplitudes to be interpolated.
+        l_arr: Array of :math:`\ell` mode indices.
+        m_arr: Array of :math:`m` mode indices.
+        n_arr: Array of :math:`n` mode indices.
+        file_directory: The path to the directory containing the coefficients file.
+        **kwargs: Optional keyword arguments for the base class:
+            :class:`few.utils.baseclasses.AmplitudeBase`,
+            :class:`few.utils.baseclasses.ParallelModuleBase`.
+    """
+
+    def __init__(
+            self,
+            w_knots: np.ndarray,
+            u_knots: np.ndarray,
+            coefficients: np.ndarray,
+            l_arr: np.ndarray,
+            m_arr: np.ndarray,
+            n_arr: np.ndarray,
+            **kwargs
+        ):
+        ParallelModuleBase.__init__(self, **kwargs)
+        AmplitudeBase.__init__(self, **kwargs)
+
+        self.l_arr = l_arr
+        self.m_arr = m_arr
+        self.n_arr = n_arr
+
+        self.num_teuk_modes = coefficients.shape[0]
+        """int: Total number of mode amplitude grids this interpolant stores."""
+        
+        self.knots = [
+            self.xp.asarray(w_knots),
+            self.xp.asarray(u_knots),
+        ]
+        """list[np.ndarray]: Arrays holding spline knots in each dimension."""
+
+        self.coeff = coefficients
+        """np.ndarray: Array holding all spline coefficient information."""
+
+        # for mode_ind in range(self.num_teuk_modes):
+        #     spl1 = RectBivariateSpline(w_knots, u_knots, coefficients[mode_ind,0], kx=3, ky=3)
+        #     spl2 = RectBivariateSpline(w_knots, u_knots, coefficients[mode_ind,1], kx=3, ky=3)
+
+        #     self.coeff[mode_ind,0] = spl1.tck[2].flatten()
+        #     self.coeff[mode_ind,1] = spl2.tck[2].flatten()
+
+        self.len_indiv_c = self.coeff.shape[2]
+        """int: Total number of coefficients per mode amplitude grid."""
+
+    @property
+    def interp2D(self) -> callable:
+        """GPU or CPU interp2D"""
+        interp2D = interp2D_cpu if not self.use_gpu else interp2D_gpu
+        return interp2D
+
+    @classmethod
+    def module_references(cls) -> list[REFERENCE]:
+        """Return citations related to this module"""
+        return [REFERENCE.ROMANNET] + super(AmpInterp2D, cls).module_references()
+
+    @property
+    def gpu_capability(self):
+        """Confirms GPU capability"""
+        return True
+
+    def __call__(self, w: Union[float,np.ndarray], u: Union[float,np.ndarray], *args, specific_modes: Optional[Union[list, np.ndarray]]=None, **kwargs) -> np.ndarray:
+        """
+        Evaluate the spline or its derivatives at given positions.
+
+        Args:
+            w: Eccentricity interpolation parameter.
+            u: Dimensionless semi-latus rectum interpolation parameter.
+            specific_modes: Either indices or mode index tuples of modes to be generated (optional; defaults to all modes).
+        Returns:
+            Complex Teukolsky mode amplitudes at the requested points.
+        """
+
+        w = self.xp.asarray(w)
+        u = self.xp.asarray(u)
+
+        tw, tu = self.knots
+        c = self.coeff
+        kw = ku = 3
+
+        # standard Numpy broadcasting
+        if w.shape != u.shape:
+            w, u = np.broadcast_arrays(w, u)
+
+        shape = w.shape
+        w = w.ravel()
+        u = u.ravel()
+
+        if w.size == 0 or u.size == 0:
+            return np.zeros(shape, dtype=self.tck[2].dtype)
+
+        nw = tw.shape[0]
+        nu = tu.shape[0]
+        mw = w.shape[0]
+        mu = u.shape[0]
+
+        assert mw == mu
+
+        if specific_modes is None:
+            mode_indexes = self.xp.arange(self.num_teuk_modes)
+
+        else:
+            if isinstance(specific_modes, self.xp.ndarray):
+                mode_indexes = specific_modes
+            elif isinstance(
+                specific_modes, list
+            ):  # the following is slow and kills efficiency
+                mode_indexes = self.xp.zeros(len(specific_modes), dtype=self.xp.int32)
+                for i, (l, m, n) in enumerate(specific_modes):
+                    try:
+                        mode_indexes[i] = np.where(
+                            (self.l_arr == l)
+                            & (self.m_arr == abs(m))
+                            & (self.n_arr == n)
+                        )[0]
+                    except:
+                        raise Exception(f"Could not find mode index ({l},{m},{n}).")
+
+        # TODO: perform this in the kernel
+        c_in = c[mode_indexes].flatten()
+
+        num_indiv_c = 2 * len(mode_indexes)  # Re and Im
+        len_indiv_c = self.len_indiv_c
+
+        z = self.xp.zeros((num_indiv_c * mw))
+
+        self.interp2D(
+            z, tw, nw, tu, nu, c_in, kw, ku, w, mw, u, mu, num_indiv_c, len_indiv_c
+        )
+        
+        z = z.reshape(num_indiv_c // 2, 2, mw).transpose(2, 1, 0)
+
+        z = z[:, 0] + 1j * z[:, 1]
+        return z
+
+class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
+    """Calculate Teukolsky amplitudes in the Kerr eccentric equatorial regime with a bicubic spline + linear
+    interpolation scheme.
+
+    When called with arguments :math:`(a, p, e, xI)`, these parameters are transformed into a set of
+    interpolation coordinates and the bicubic spline interpolant is evaluated at these coordinates for
+    all sets of coefficients. To interpolate in the :math"`a` direction, the bicubic spline is evaluated at
+    the adjacent grid points and a linear interpolation is performed.
+
+    This module is available for GPU and CPU.
+
+    args:
+        fp: The coefficients file name in `file_directory`.
+        file_directory: The path to the directory containing the coefficients file.
+        **kwargs: Optional keyword arguments for the base classes:
+            :class:`few.utils.baseclasses.AmplitudeBase`,
+            :class:`few.utils.baseclasses.KerrEccentricEquatorial`.
+    """
+    def __init__(self, file_directory=None, filename=None, downsample_Z=1, **kwargs):
+        KerrEccentricEquatorial.__init__(self, **kwargs)
+        AmplitudeBase.__init__(self, **kwargs)
+
+        if file_directory is None:
+            self.file_directory = dir_path + "/../../few/files/"
+        else:
+            self.file_directory = file_directory
+
+        if filename is None:
+            self.filename = "ZNAmps_l10_m10_n55.h5"
+        else:
+            self.filename = filename
+
+        with h5py.File(os.path.join(self.file_directory, self.filename), "r") as f:
+            coeffsA = f["CoeffsRegionA"][()]
+            w_knots = f['w_knots'][()]
+            u_knots = f['u_knots'][()]
+            z_knots = f["z_knots"][()]
+
+            z_knots = z_knots[::downsample_Z]
+            coeffsA = coeffsA[::downsample_Z]
+
+            self.spin_information_holder_A = [
+                None for _ in range(z_knots.size)
+            ]
+
+            for i in range(z_knots.size):
+                self.spin_information_holder_A[i] = AmpInterp2D(
+                    w_knots,
+                    u_knots,
+                    coeffsA[i],
+                    self.l_arr,
+                    self.m_arr,
+                    self.n_arr,
+                    use_gpu=self.use_gpu,
+                )
+
+            try:
+                coeffsB = f["CoeffsRegionB"][()]
+                coeffsB = coeffsB[::downsample_Z]
+                self.spin_information_holder_B = [
+                    None for _ in range(z_knots.size)
+                ]
+
+                for i in range(z_knots.size):
+                    self.spin_information_holder_B[i] = AmpInterp2D(
+                        w_knots,
+                        u_knots,
+                        coeffsB[i],
+                        self.l_arr,
+                        self.m_arr,
+                        self.n_arr,
+                        use_gpu=self.use_gpu,
+                    )
+            except KeyError:
+                pass
+
+            self.w_values = w_knots
+            self.u_values = u_knots
+            self.z_values = z_knots
+
+    def evaluate_interpolant_at_index(self, index, region_A_mask, w, u, specific_modes=None):
+        z_out = self.xp.zeros((region_A_mask.size, self.num_modes_eval), dtype=self.xp.complex128)
+
+        if self.xp.any(region_A_mask):
+            z_out[region_A_mask, :] = self.spin_information_holder_A[index](
+                    w[region_A_mask], u[region_A_mask], specific_modes=specific_modes
+                )
+        
+        if self.xp.any(~region_A_mask):
+            z_out[~region_A_mask, :] = self.spin_information_holder_B[index](
+                    w[~region_A_mask], u[~region_A_mask], specific_modes=specific_modes
+                )
+        
+        return z_out
+
+    def get_amplitudes(self, a, p, e, xI, specific_modes=None) -> Union[dict, np.ndarray]:
+        """
+        Generate Teukolsky amplitudes for a given set of parameters.
+
+        Args:
+            a: Dimensionless spin parameter of MBH.
+            p: Dimensionless semi-latus rectum.
+            e: Eccentricity.
+            xI: Cosine of orbital inclination. Only :math:`|x_I| = 1` is currently supported.
+            specific_modes: Either indices or mode index tuples of modes to be generated (optional; defaults to all modes).
+        Returns:
+            If specific_modes is a list of tuples, returns a dictionary of complex mode amplitudes.
+            Else, returns an array of complex mode amplitudes.
+        """
+
+        # prograde: spin pos, xI pos
+        # retrograde: spin pos, xI neg - >  spin neg, xI pos
+        assert isinstance(a, float)
+
+        p = np.atleast_1d(p)
+        e = np.atleast_1d(e)
+        xI = np.atleast_1d(xI)
+
+        assert np.all(xI == 1.0) or np.all(
+            xI == -1.0
+        )  # either all prograde or all retrograde
+        xI_in = np.ones_like(p) * xI
+
+        signed_spin = a * xI_in[0].item()
+        a_in = np.full_like(p, signed_spin)
+        xI_in = np.abs(xI_in)
+        
+        if specific_modes is not None:
+            self.num_modes_eval = len(specific_modes)
+        else:
+            self.num_modes_eval = self.num_teuk_modes
+        
+        u, w, y, z, region_mask = kerrecceq_forward_map(a_in, p, e, xI_in, use_gpu=self.use_gpu, return_mask=True, kind="amplitude")
+        z_check = z[0]
+
+        for elem in [u, w, z]:
+            if np.any((elem < 0)|(elem > 1)):
+                raise ValueError("Amplitude interpolant accessed out-of-bounds.")
+
+        if z_check in self.z_values:
+            ind_1 = np.where(self.z_values == z_check)[0][0]
+
+            z = self.evaluate_interpolant_at_index(
+                ind_1, region_mask, w, u, specific_modes=specific_modes
+            )
+
+        else:
+            ind_above = np.where(self.z_values > z_check)[0][0]
+            ind_below = ind_above - 1
+            assert ind_above < len(self.z_values)
+            assert ind_below >= 0
+
+            z_above = self.z_values[ind_above]
+            Amp_above = self.evaluate_interpolant_at_index(
+                ind_above, region_mask, w, u, specific_modes=specific_modes
+            )
+
+            z_below = self.z_values[ind_below]
+            Amp_below = self.evaluate_interpolant_at_index(
+                ind_below, region_mask, w, u, specific_modes=specific_modes
+            )
+
+            z = ((Amp_above - Amp_below) / (z_above - z_below)) * (
+                z_check - z_below
+            ) + Amp_below
+
+        if not isinstance(specific_modes, list):
+            return z
+
+        # dict containing requested modes
+        else:
+            temp = {}
+            for i, lmn in enumerate(specific_modes):
+                temp[lmn] = z[:, i]
+                l, m, n = lmn
+
+                # apply +/- m symmetry
+                if m < 0:
+                    temp[lmn] = self.xp.conj(temp[lmn])
+
+            return temp
+
+
+class AmpInterp2DLegacy(AmplitudeBase, ParallelModuleBase):
     r"""Calculate Teukolsky amplitudes with a bicubic spline interpolation.
 
     This class is initialised by providing mode index arrays and a corresponding spline coefficients array.
@@ -170,7 +506,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
         """Return citations related to this module"""
-        return [REFERENCE.ROMANNET] + super(AmpInterp2D, cls).module_references()
+        return [REFERENCE.ROMANNET] + super(AmpInterp2DLegacy, cls).module_references()
 
     @property
     def gpu_capability(self):
@@ -209,7 +545,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         assert self.xp.all(a == self.a_val_store)
         a_cpu *= xI_cpu  # correct the sign of a now we've passed the check, for the reparameterisation
         # TODO: make this GPU accessible
-        u = self.xp.asarray(kerr_p_to_u(a_cpu, p_cpu, e_cpu, xI_cpu, use_gpu=False))
+        u = self.xp.asarray(kerrecceq_legacy_p_to_u(a_cpu, p_cpu, e_cpu, xI_cpu, use_gpu=False))
 
         w = self.xp.sqrt(e)
 
@@ -234,11 +570,8 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
 
         assert mw == mu
 
-        # TODO: adjustable
-
         if specific_modes is None:
             mode_indexes = self.xp.arange(self.num_teuk_modes)
-
         else:
             if isinstance(specific_modes, self.xp.ndarray):
                 mode_indexes = specific_modes
@@ -281,7 +614,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         )
 
 
-class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
+class AmpInterpKerrEqEccLegacy(AmplitudeBase, KerrEccentricEquatorial):
     """Calculate Teukolsky amplitudes in the Kerr eccentric equatorial regime with a bicubic spline + linear
     interpolation scheme.
 
@@ -300,6 +633,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
             :class:`few.utils.baseclasses.KerrEccentricEquatorial`.
     """
     def __init__(self, file_directory=None, filenames=None, **kwargs):
+        kwargs["nmax"] = 50
         KerrEccentricEquatorial.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
@@ -317,7 +651,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
             None for _ in range(len(self.filenames))
         ]
         for i, fp in enumerate(self.filenames):
-            self.spin_information_holder_unsorted[i] = AmpInterp2D(
+            self.spin_information_holder_unsorted[i] = AmpInterp2DLegacy(
                 fp,
                 self.l_arr,
                 self.m_arr,
@@ -527,7 +861,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
             # adjust the grid
             p = grid.T[1].copy()
             e = grid.T[2].copy()
-            u = np.round(p_to_y(p, e, use_gpu=False), 8)
+            u = np.round(schwarzecc_p_to_y(p, e, use_gpu=False), 8)
             w = e.copy()
 
             grid_size = p.shape[0]
@@ -605,9 +939,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
         p = self.xp.asarray(p)
         e = self.xp.asarray(e)
 
-        # TODO: make this GPU accessible
-        u = self.xp.asarray(p_to_y(p_cpu, e_cpu, use_gpu=False))
-
+        u = self.xp.asarray(schwarzecc_p_to_y(p_cpu, e_cpu, use_gpu=False))
         w = e.copy()
 
         tw, tu, c = self.tck[:3]
