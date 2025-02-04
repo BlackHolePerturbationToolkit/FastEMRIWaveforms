@@ -1,5 +1,6 @@
 
-.. include:: README.rst
+.. include:: ../../README.md
+   :parser: myst_parser.sphinx_
 
 .. toctree::
    :maxdepth: 4
@@ -9,6 +10,7 @@
    user/traj
    user/amp
    user/sum
+   user/cfg
    user/util
    user/cite
 

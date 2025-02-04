@@ -30,12 +30,11 @@ from ..utils.utility import (
     get_kerr_geo_constants_of_motion,
 )
 from ..utils.pn_map import Y_to_xI
-from ..utils.constants import *
 from ..utils.citations import REFERENCE
 
 from .integrate import get_integrator
 
-from typing import Type, Optional, Union
+from typing import Type, Union
 from .ode.base import ODEBase
 
 # get path to this file
@@ -72,7 +71,6 @@ class EMRIInspiral(TrajectoryBase):
             Default is True.
         rootfind_separatrix: Finish trajectory by performing a numerical root-finding operation to place the final point
             of the trajectory. If False, performs Euler integration to the final point. Default is True.
-        file_directory: Directory where ODE data files are stored. Defaults to the files directory of the FEW install.
         *args: Any arguments for parent
             class :class:`few.trajectory.base.TrajectoryBase`
         **kwargs: Any keyword arguments for the integrator and ODE classes
@@ -87,25 +85,22 @@ class EMRIInspiral(TrajectoryBase):
     def __init__(
         self,
         *args,
-        func: Union[str,Type[ODEBase]],
-        integrate_constants_of_motion: bool=False,
-        enforce_schwarz_sep: bool=False,
-        convert_to_pex: bool=True,
-        rootfind_separatrix: bool=True,
-        file_directory: Optional[str]=None,
+        func: Union[str, Type[ODEBase]],
+        integrate_constants_of_motion: bool = False,
+        enforce_schwarz_sep: bool = False,
+        convert_to_pex: bool = True,
+        rootfind_separatrix: bool = True,
         **kwargs,
     ):
-
         TrajectoryBase.__init__(self, *args, **kwargs)
 
         self.enforce_schwarz_sep = enforce_schwarz_sep
         self.inspiral_generator = get_integrator(
             func,
             integrate_constants_of_motion=integrate_constants_of_motion,
-            file_directory=file_directory,
             enforce_schwarz_sep=enforce_schwarz_sep,
             rootfind_separatrix=rootfind_separatrix,
-            **kwargs
+            **kwargs,
         )
         """class: Integrator class for the trajectory."""
 
@@ -130,7 +125,9 @@ class EMRIInspiral(TrajectoryBase):
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
         """Return citations related to this module"""
-        return [REFERENCE.KERR_SEPARATRIX] + super(EMRIInspiral, cls).module_references()
+        return [REFERENCE.KERR_SEPARATRIX] + super(
+            EMRIInspiral, cls
+        ).module_references()
 
     @property
     def trajectory(self):
@@ -146,7 +143,10 @@ class EMRIInspiral(TrajectoryBase):
 
     @property
     def integrator_spline_phase_coeff(self):
-        return self.inspiral_generator.integrator_spline_coeff[:, 3:6] / self.inspiral_generator.epsilon
+        return (
+            self.inspiral_generator.integrator_spline_coeff[:, 3:6]
+            / self.inspiral_generator.epsilon
+        )
 
     def get_inspiral(
         self,
@@ -157,9 +157,9 @@ class EMRIInspiral(TrajectoryBase):
         y2: float,
         y3: float,
         *args,
-        Phi_phi0:float=0.0,
-        Phi_theta0:float=0.0,
-        Phi_r0:float=0.0,
+        Phi_phi0: float = 0.0,
+        Phi_theta0: float = 0.0,
+        Phi_r0: float = 0.0,
         **kwargs,
     ) -> tuple[np.ndarray]:
         r"""Generate the inspiral.
@@ -205,9 +205,7 @@ class EMRIInspiral(TrajectoryBase):
         elif a < fill_value:
             if background == "Kerr" and not equatorial:
                 warnings.warn(
-                    "Our model with spin breaks near a = 0. Adjusting to a = 1e-6.".format(
-                        fill_value
-                    )
+                    "Our model with spin breaks near a = 0. Adjusting to a = 1e-6."
                 )
                 a = fill_value
 
@@ -271,9 +269,9 @@ class EMRIInspiral(TrajectoryBase):
         y2: float,
         y3: float,
         *args,
-        Phi_phi0: float=0.0,
-        Phi_theta0: float=0.0,
-        Phi_r0: float=0.0,
+        Phi_phi0: float = 0.0,
+        Phi_theta0: float = 0.0,
+        Phi_r0: float = 0.0,
         **kwargs,
     ) -> tuple[np.ndarray]:
         r"""Compute the right hand side of the ordinary differential equation.
@@ -319,9 +317,7 @@ class EMRIInspiral(TrajectoryBase):
         elif a < fill_value:
             if background == "Kerr" and not equatorial:
                 warnings.warn(
-                    "Our model with spin breaks near a = 0. Adjusting to a = 1e-6.".format(
-                        fill_value
-                    )
+                    "Our model with spin breaks near a = 0. Adjusting to a = 1e-6."
                 )
                 a = fill_value
 

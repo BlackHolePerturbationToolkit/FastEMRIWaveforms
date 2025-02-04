@@ -33,7 +33,7 @@ from ..utils.baseclasses import (
     ParallelModuleBase,
 )
 from .base import AmplitudeBase
-from ..utils.utility import check_for_file_download
+from ..utils.globals import get_file_manager
 from ..utils.citations import REFERENCE
 from ..utils.utility import p_to_y
 from scipy.interpolate import RectBivariateSpline
@@ -115,23 +115,17 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         """
         pass
 
-    def __init__(self, buffer_length=1000, file_directory=None, **kwargs):
+    def __init__(self, buffer_length=1000, **kwargs):
         ParallelModuleBase.__init__(self, **kwargs)
         SchwarzschildEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
-        if file_directory is None:
-            self.file_dir = dir_path + "/../../few/files/"
-        else:
-            self.file_dir = file_directory
-
         # check if user has the necessary data
         # if not, the data will automatically download
-        self.data_file = fp = "SchwarzschildEccentricInput.hdf5"
-        check_for_file_download(fp, self.file_dir)
+        self.data_file = "SchwarzschildEccentricInput.hdf5"
 
         # get information about this specific model from the file
-        with h5py.File(os.path.join(self.file_dir, self.data_file), "r") as fp:
+        with h5py.File(get_file_manager().get_file(self.data_file), "r") as fp:
             num_teuk_modes = fp.attrs["num_teuk_modes"]
             transform_factor = fp.attrs["transform_factor"]
             self.break_index = fp.attrs["break_index"]
@@ -144,11 +138,8 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         self._initialize_weights()
 
         # setup amplitude normalization
-        fp = "AmplitudeVectorNorm.dat"
-        check_for_file_download(fp, self.file_dir)
-
         y_in, e_in, norm = np.genfromtxt(
-            os.path.join(self.file_dir, "AmplitudeVectorNorm.dat")
+            get_file_manager().get_file("AmplitudeVectorNorm.dat")
         ).T
 
         num_y = len(np.unique(y_in))
@@ -165,7 +156,6 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
     @property
     def transform_output(self):
         return transform_output_wrap if self.use_gpu else transform_output_wrap_cpu
-
 
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
@@ -189,7 +179,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         self.num_layers = 0
 
         # extract all necessary information from the file
-        with h5py.File(os.path.join(self.file_dir, self.data_file), "r") as fp:
+        with h5py.File(get_file_manager().get_file(self.data_file), "r") as fp:
             for key, value in fp.items():
                 if key == "reduced_basis":
                     continue

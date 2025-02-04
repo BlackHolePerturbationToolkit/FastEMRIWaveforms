@@ -7,12 +7,16 @@
             "extensions": [
                 "ms-azuretools.vscode-docker",
                 "ms-python.python",
+                "ms-python.vscode-pylance",
                 "ms-vscode.cmake-tools",
                 "tamasfe.even-better-toml",
                 "ms-vscode.cpptools-extension-pack",
                 "ktnrg45.vscode-cython",
                 "github.vscode-github-actions"
-            ]
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/home/few/.local/few-venv/bin/python"
+            }
         }
     },
     "features": {

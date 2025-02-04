@@ -24,7 +24,6 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
 ]
 
 # version is deduced from the lattest git tag
@@ -33,22 +32,27 @@ dynamic = [ "version" ]
 
 dependencies = [
   "cffconvert",                            # To read and validate CITATION.cff
-  "exceptiongroup; python_version<'3.11'",
+  "exceptiongroup; python_version<'3.11'", # To access ExceptionGroup with Python 3.9 and 3.10
   "h5py",
+  "jsonschema",                            # To validate content of file registry
   "multispline",
   "numba",
   "numpy",
   "nvidia-ml-py",                          # To detect CUDA version if any
+  "platformdirs",                          # To locate config and data dir on all platforms
   "pydantic",                              # To handle citations and references with advanced dataclasses
-  "requests",
-  "rich",
+  "pyyaml",                                # To read file registry
+  "requests",                              # To download files automatically
+  "rich",                                  # To display downlaod progress bar
   "scipy",
   "tqdm",
   #@DEPS_CUPYCUDA@,
   #@DEPS_FEWCORE@,
 ]
 
-optional-dependencies.dev = [
+optional-dependencies.doc = [
+  "ipython",
+  "myst-parser",
   "nbsphinx",
   "pypandoc",
   "sphinx",
@@ -73,6 +77,7 @@ urls.Source = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms
 urls.Tracker = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/issues"
 
 scripts.few_citations = "few.utils.citations:cli_citation"
+scripts.few_files = "few.files.cli:few_files"
 
 [tool.setuptools_scm]
 version_scheme = "no-guess-dev"
@@ -147,6 +152,23 @@ FEW_WITH_GPU = "AUTO" # ON | OFF | AUTO
 # What CUDA architectures to target.
 # See https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html
 FEW_CUDA_ARCH = "all"
+
+[tool.ruff]
+
+extend-include = [
+  "!*.py",
+  # Enable Ruff on a white-list approach for now
+  "!src/few/files/manager.py",
+  "!src/few/files/registry.py",
+  "!src/few/utils/config.py",
+  "!src/few/utils/exceptions.py",
+  "!src/few/utils/globals.py",
+]
+
+lint.ignore = [ "E741" ]
+
+[tool.pyproject-fmt]
+max_supported_python = "3.12"
 
 [tool.coverage]
 paths.source = [
