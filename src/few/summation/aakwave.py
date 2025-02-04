@@ -17,12 +17,9 @@
 
 
 import os
-import warnings
 
 import h5py
 import numpy as np
-
-
 
 # Cython/C++ imports
 from ..cutils.cpu import pyWaveform as pyWaveform_cpu
@@ -36,9 +33,9 @@ from ..utils.pn_map import Y_to_xI
 from ..utils.constants import *
 from ..summation.interpolatedmodesum import CubicSplineInterpolant
 
-# get path to file
-dir_path = os.path.dirname(os.path.realpath(__file__))
+from few.utils.globals import get_logger
 
+few_logger = get_logger()
 
 class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
     """Calculate an AAK waveform from an input trajectory.
@@ -147,7 +144,7 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
 
         fill_val = 1e-6
         if qK < fill_val or qK > np.pi - fill_val:
-            warnings.warn(
+            few_logger.warning(
                 "qK is within 1e-6 of the poles. We shift this value automatically away from poles by 1e-6."
             )
             if qK < fill_val:
@@ -156,7 +153,7 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
                 qK = np.pi - fill_val
 
         if qS < fill_val or qS > np.pi - fill_val:
-            warnings.warn(
+            few_logger.warning(
                 "qS is within 1e-6 of the poles. We shift this value automatically away from poles by 1e-6."
             )
             if qS < fill_val:

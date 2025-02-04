@@ -1,13 +1,16 @@
 import unittest
 import pickle
 import numpy as np
-import warnings
 
 import few
 from few.waveform import GenerateEMRIWaveform
 
+from few.utils.globals import get_logger
+
+few_logger = get_logger()
+
 gpu_available = few.cutils.fast.is_gpu
-warnings.warn("Test is running with fast backend '{}' (use_gpu: {})".format(few.cutils.fast.__backend__, gpu_available))
+few_logger.warning("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
 
 
 def run_detector_frame_test(test_pickle=False):

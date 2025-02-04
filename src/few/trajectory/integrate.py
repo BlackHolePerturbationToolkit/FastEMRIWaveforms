@@ -375,7 +375,7 @@ class Integrate:
         if self.integrate_constants_of_motion:
             orb_params = ELQ_to_pex(self.a, y0[0], y0[1], y0[2])
 
-        # Create a warning in case we start too close to separatrix.
+        # Error if we start too close to separatrix.
         if self.integrate_backwards:
             if not self.enforce_schwarz_sep:
                 p_sep = get_separatrix_interpolant(self.a, orb_params[1], orb_params[2])
@@ -384,7 +384,7 @@ class Integrate:
             if (orb_params[0] - p_sep) < self.separatrix_buffer_dist - INNER_THRESHOLD:
                 # Raise a warning
                 raise ValueError(
-                    f"Warning: p_f is too close to separatrix. It must start above p_sep + {self.separatrix_buffer_dist}."
+                    f"p_f is too close to separatrix. It must start above p_sep + {self.separatrix_buffer_dist}."
                 )
 
         # scale phases here by the mass ratio so the cache is accurate

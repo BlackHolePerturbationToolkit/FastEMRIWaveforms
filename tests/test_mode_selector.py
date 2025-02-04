@@ -1,6 +1,5 @@
 import unittest
 import numpy as np
-import warnings
 import pathlib
 
 import few
@@ -12,10 +11,12 @@ from few.amplitude.romannet import RomanAmplitude
 from few.waveform import FastSchwarzschildEccentricFluxBicubic
 from few.utils.utility import get_overlap,get_mismatch
 from few.trajectory.ode import SchwarzEccFlux
+from few.utils.globals import get_logger
 
+few_logger = get_logger()
 
 gpu_available = few.cutils.fast.is_gpu
-warnings.warn("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
+few_logger.warning("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
 
 
 class ModeSelectorTest(unittest.TestCase):

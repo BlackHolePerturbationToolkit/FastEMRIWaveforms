@@ -1,7 +1,6 @@
 import unittest
 import pickle
 import numpy as np
-import warnings
 
 import few
 from few.waveform import FastSchwarzschildEccentricFlux
@@ -9,9 +8,12 @@ from few.waveform import GenerateEMRIWaveform
 from few.utils.constants import *
 
 from few.cutils.fast import xp
-gpu_available = few.cutils.fast.is_gpu
+from few.utils.globals import get_logger
 
-warnings.warn("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
+few_logger = get_logger()
+
+gpu_available = few.cutils.fast.is_gpu
+few_logger.warning("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
 
 few_gen = GenerateEMRIWaveform(
     "FastSchwarzschildEccentricFlux",

@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import warnings
-
 import numpy as np
 
 
@@ -34,6 +32,10 @@ from ..utils.baseclasses import (
 from .base import SummationBase
 from ..utils.utility import get_fundamental_frequencies
 from ..utils.constants import *
+
+from few.utils.globals import get_logger
+
+few_logger = get_logger()
 
 
 class CubicSplineInterpolant(ParallelModuleBase):
@@ -185,7 +187,7 @@ class CubicSplineInterpolant(ParallelModuleBase):
         inds_bad_right = tnew > self.t[:, -1][:, None]
 
         if np.any(inds < 0) or np.any(inds >= self.t.shape[1]):
-            warnings.warn(
+            few_logger.warning(
                 "New t array outside bounds of input t array. These points are filled with edge values."
             )
         return inds, inds_bad_left, inds_bad_right

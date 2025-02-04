@@ -1,6 +1,5 @@
 import unittest
 import numpy as np
-import warnings
 
 import few
 from few.waveform import Pn5AAKWaveform,GenerateEMRIWaveform
@@ -8,8 +7,12 @@ from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode import PN5
 from few.utils.utility import get_overlap, get_mismatch
 
+from few.utils.globals import get_logger
+
+few_logger = get_logger()
+
 gpu_available = few.cutils.fast.is_gpu
-warnings.warn("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
+few_logger.warning("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
 
 
 class AAKWaveformTest(unittest.TestCase):

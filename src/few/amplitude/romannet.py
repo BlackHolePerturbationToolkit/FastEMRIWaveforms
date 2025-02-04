@@ -17,7 +17,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-import warnings
 
 import numpy as np
 import h5py
@@ -38,8 +37,9 @@ from ..utils.citations import REFERENCE
 from ..utils.mappings import schwarzecc_p_to_y
 from scipy.interpolate import RectBivariateSpline
 
-# get path to this file
-dir_path = os.path.dirname(os.path.realpath(__file__))
+from few.utils.globals import get_logger
+
+few_logger = get_logger()
 
 
 class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
@@ -249,7 +249,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         # check ifn input_len is greater than the buffer_length attribute
         # if so reset the buffers and update the attribute
         if input_len > self.buffer_length:
-            warnings.warn(
+            few_logger.warning(
                 "Input length {} is larger than initial buffer_length ({}). Reallocating preallocated arrays for this size.".format(
                     input_len, self.buffer_length
                 )

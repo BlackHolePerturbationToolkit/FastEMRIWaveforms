@@ -23,7 +23,6 @@ a common interface and pass information related to each model.
 
 
 from abc import ABC
-import warnings
 import numpy as np
 
 from typing import Union, Optional
@@ -36,6 +35,9 @@ gpu_available = fast_backend.is_gpu
 from ..utils.constants import *
 from ..utils.citations import Citable, REFERENCE
 from ..utils.mappings import kerrecceq_forward_map
+
+from few.utils.globals import get_logger
+few_logger = get_logger()
 
 class ParallelModuleBase(Citable, ABC):
     """Base class for modules that can use GPUs.
@@ -650,7 +652,7 @@ class Pn5AAK(ParallelModuleBase):
                 raise ValueError("{} is negative. It must be positive.".format(key))
 
         if mu / M > 1e-4:
-            warnings.warn(
+            few_logger.warning(
                 "Mass ratio is outside of generally accepted range for an extreme mass ratio (1e-4). (q={})".format(
                     mu / M
                 )

@@ -1,7 +1,6 @@
 import unittest
 import pickle
 import numpy as np
-import warnings
 
 import few
 from few.trajectory.inspiral import EMRIInspiral
@@ -14,8 +13,12 @@ from few.utils.ylm import GetYlms
 from few.utils.modeselector import ModeSelector
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
 
+from few.utils.globals import get_logger
+
+few_logger = get_logger()
+
 gpu_available = few.cutils.fast.is_gpu
-warnings.warn("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
+few_logger.warning("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
 
 
 class WaveformTest(unittest.TestCase):

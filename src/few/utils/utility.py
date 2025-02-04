@@ -17,7 +17,6 @@
 
 
 import os
-import warnings
 
 import numpy as np
 from scipy.optimize import brentq
@@ -38,12 +37,13 @@ else:
     setDevice = None
     gpu = False
 
+from few.utils.globals import get_logger
+
+few_logger = get_logger()
+
 from .constants import YRSID_SI, PI
 
 from typing import Union, Optional
-
-# get path to this file
-dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def get_overlap(
@@ -99,7 +99,7 @@ def get_overlap(
     min_len = int(np.min([len(time_series_1), len(time_series_2)]))
 
     if len(time_series_1) != len(time_series_2):
-        warnings.warn(
+        few_logger.warning(
             "The two time series are not the same length ({} vs {}). The calculation will run with length {} starting at index 0 for both arrays.".format(
                 len(time_series_1), len(time_series_2), min_len
             )
@@ -2082,4 +2082,4 @@ def cuda_set_device(dev: int):
     if setDevice is not None:
         setDevice(dev)
     else:
-        warnings.warn("Setting cuda device, but cupy/cuda not detected.")
+        few_logger.warning("Setting cuda device, but cupy/cuda not detected.")

@@ -1,7 +1,6 @@
 #python -m unittest few/tests/test_traj.py
 import unittest
 import numpy as np
-import warnings
 from scipy.interpolate import CubicSpline
 import time
 import matplotlib.pyplot as plt
@@ -11,8 +10,12 @@ from few.trajectory.inspiral import EMRIInspiral
 from few.utils.constants import *
 from few.trajectory.ode import KerrEccEqFlux, PN5, SchwarzEccFlux
 
+from few.utils.globals import get_logger
+
+few_logger = get_logger()
+
 gpu_available = few.cutils.fast.is_gpu
-warnings.warn("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
+few_logger.warning("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
 
 T = 1000.0
 dt = 10.0
