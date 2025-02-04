@@ -18,12 +18,11 @@
 
 from copy import deepcopy
 import os
-import warnings
+import pathlib
 
 import numpy as np
 import h5py
 from scipy.interpolate import RectBivariateSpline
-from tqdm import tqdm
 
 # Cython/C++ imports
 
@@ -34,16 +33,13 @@ from ..utils.baseclasses import (
     KerrEccentricEquatorial,
 )
 from .base import AmplitudeBase
-from ..utils.utility import check_for_file_download
 from ..utils.citations import REFERENCE
 from ..utils.mappings import a_of_z, kerrecceq_forward_map, kerrecceq_legacy_p_to_u, schwarzecc_p_to_y
-
-import numpy as np
 
 from ..cutils.fast import interp2D as interp2D_gpu
 from ..cutils.cpu import interp2D as interp2D_cpu
 
-from typing import Optional, Union, Tuple
+from typing import List, Optional, Union, Tuple
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -99,7 +95,6 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         l_arr: Array of :math:`\ell` mode indices.
         m_arr: Array of :math:`m` mode indices.
         n_arr: Array of :math:`n` mode indices.
-        file_directory: The path to the directory containing the coefficients file.
         **kwargs: Optional keyword arguments for the base class:
             :class:`few.utils.baseclasses.AmplitudeBase`,
             :class:`few.utils.baseclasses.ParallelModuleBase`.
@@ -247,26 +242,24 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
 
     args:
         fp: The coefficients file name in `file_directory`.
-        file_directory: The path to the directory containing the coefficients file.
         **kwargs: Optional keyword arguments for the base classes:
             :class:`few.utils.baseclasses.AmplitudeBase`,
             :class:`few.utils.baseclasses.KerrEccentricEquatorial`.
     """
-    def __init__(self, file_directory=None, filename=None, downsample_Z=1, **kwargs):
+    def __init__(self, filename: Optional[str] = None, downsample_Z=1, **kwargs):
         KerrEccentricEquatorial.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
-
-        if file_directory is None:
-            self.file_directory = dir_path + "/../../few/files/"
-        else:
-            self.file_directory = file_directory
 
         if filename is None:
             self.filename = "ZNAmps_l10_m10_n55.h5"
         else:
             self.filename = filename
 
-        with h5py.File(os.path.join(self.file_directory, self.filename), "r") as f:
+        from few import globals
+
+        file_path = globals.file_manager.get_file(self.filename)
+
+        with h5py.File(file_path, "r") as f:
             coeffsA = f["CoeffsRegionA"][()]
             w_knots = f['w_knots'][()]
             u_knots = f['u_knots'][()]
@@ -431,24 +424,18 @@ class AmpInterp2DLegacy(AmplitudeBase, ParallelModuleBase):
 
     args:
         fp: The coefficients file name in `file_directory`.
+        fp: The coefficients file name
         l_arr: Array of :math:`\ell` mode indices.
         m_arr: Array of :math:`m` mode indices.
         n_arr: Array of :math:`n` mode indices.
-        file_directory: The path to the directory containing the coefficients file.
         **kwargs: Optional keyword arguments for the base class:
             :class:`few.utils.baseclasses.AmplitudeBase`,
             :class:`few.utils.baseclasses.ParallelModuleBase`.
     """
 
     def __init__(
-            self,
-            fp: str,
-            l_arr: np.ndarray,
-            m_arr: np.ndarray,
-            n_arr: np.ndarray,
-            file_directory:Optional[str]=None,
-            **kwargs
-        ):
+        self, fp: str, l_arr: np.ndarray, m_arr: np.ndarray, n_arr: np.ndarray, **kwargs
+    ):
         ParallelModuleBase.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
@@ -457,16 +444,13 @@ class AmpInterp2DLegacy(AmplitudeBase, ParallelModuleBase):
         self.m_arr = m_arr
         self.n_arr = n_arr
 
-        if file_directory is None:
-            file_directory = dir_path + "/../../few/files/"
-
-        self.file_directory = file_directory
-
         # check if user has the necessary data
         # if not, the data will automatically download
-        check_for_file_download(fp, self.file_directory)
+        from few import globals
 
-        mystery_file = h5py.File(os.path.join(self.file_directory, fp))
+        file_path = globals.file_manager.get_file(fp)
+
+        mystery_file = h5py.File(file_path)
         try:
             is_coeffs = mystery_file.attrs["is_coefficients"]
         except KeyError:
@@ -475,11 +459,19 @@ class AmpInterp2DLegacy(AmplitudeBase, ParallelModuleBase):
         if is_coeffs:
             coefficients = mystery_file
         else:
-            print(fp, "is not a spline coefficients file. Attempting to convert...")
-            spline_fp = _spline_coefficients_to_file(
-                fp, self.l_arr, self.m_arr, self.n_arr, file_directory=self.file_directory
+            print(
+                "File '{}' is not a spline coefficients file. Attempting to convert...".format(
+                    fp
+                )
             )
-            coefficients = h5py.File(os.path.join(self.file_directory, spline_fp))
+            spline_file_path = _spline_coefficients_to_file(
+                fp=file_path,
+                l_arr=self.l_arr,
+                m_arr=self.m_arr,
+                n_arr=self.n_arr,
+                output_directory=globals.file_manager.storage_dir,
+            )
+            coefficients = h5py.File(spline_file_path)
 
         self.a_val_store = coefficients.attrs["signed_spin"]
         """float: The value of :math:`a` associated with this interpolant."""
@@ -513,7 +505,16 @@ class AmpInterp2DLegacy(AmplitudeBase, ParallelModuleBase):
         """Confirms GPU capability"""
         return True
 
-    def __call__(self, a: Union[float,np.ndarray], p: Union[float,np.ndarray], e: Union[float,np.ndarray], xI: Union[float,np.ndarray], *args, specific_modes: Optional[Union[list, np.ndarray]]=None, **kwargs) -> np.ndarray:
+    def __call__(
+        self,
+        a: Union[float, np.ndarray],
+        p: Union[float, np.ndarray],
+        e: Union[float, np.ndarray],
+        xI: Union[float, np.ndarray],
+        *args,
+        specific_modes: Optional[Union[list, np.ndarray]] = None,
+        **kwargs,
+    ) -> np.ndarray:
         """
         Evaluate the spline or its derivatives at given positions.
 
@@ -586,7 +587,7 @@ class AmpInterp2DLegacy(AmplitudeBase, ParallelModuleBase):
                             & (self.m_arr == abs(m))
                             & (self.n_arr == n)
                         )[0]
-                    except:
+                    except:  # noqa: E722
                         raise Exception(f"Could not find mode index ({l},{m},{n}).")
         # TODO: perform this in the kernel
         c_in = c[mode_indexes].flatten()
@@ -610,7 +611,7 @@ class AmpInterp2DLegacy(AmplitudeBase, ParallelModuleBase):
     def __reduce__(self):
         return (
             self.__class__,
-            (self.fp, self.l_arr, self.m_arr, self.n_arr, self.file_directory),
+            (self.fp, self.l_arr, self.m_arr, self.n_arr),
         )
 
 
@@ -626,21 +627,15 @@ class AmpInterpKerrEqEccLegacy(AmplitudeBase, KerrEccentricEquatorial):
     This module is available for GPU and CPU.
 
     args:
-        fp: The coefficients file name in `file_directory`.
-        file_directory: The path to the directory containing the coefficients file.
+        filenames: The coefficients file names
         **kwargs: Optional keyword arguments for the base classes:
             :class:`few.utils.baseclasses.AmplitudeBase`,
             :class:`few.utils.baseclasses.KerrEccentricEquatorial`.
     """
-    def __init__(self, file_directory=None, filenames=None, **kwargs):
+    def __init__(self, filenames: Optional[List[str]] = None, **kwargs):
         kwargs["nmax"] = 50
         KerrEccentricEquatorial.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
-
-        if file_directory is None:
-            self.file_directory = dir_path + "/../../few/files/"
-        else:
-            self.file_directory = file_directory
 
         if filenames is None:
             self.filenames = _DEFAULT_AMPLITUDE_FILENAMES
@@ -656,7 +651,6 @@ class AmpInterpKerrEqEccLegacy(AmplitudeBase, KerrEccentricEquatorial):
                 self.l_arr,
                 self.m_arr,
                 self.n_arr,
-                file_directory=self.file_directory,
                 use_gpu=self.use_gpu,
             )
 
@@ -686,7 +680,9 @@ class AmpInterpKerrEqEccLegacy(AmplitudeBase, KerrEccentricEquatorial):
 
         self.pos_neg_n_swap_inds = self.xp.asarray(pos_neg_n_swap_inds)
 
-    def get_amplitudes(self, a, p, e, xI, specific_modes=None) -> Union[dict, np.ndarray]:
+    def get_amplitudes(
+        self, a, p, e, xI, specific_modes=None
+    ) -> Union[dict, np.ndarray]:
         """
         Generate Teukolsky amplitudes for a given set of parameters.
 
@@ -814,21 +810,15 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
     This module is available for GPU and CPU.
 
     args:
-        fp: The coefficients file name in `file_directory`.
-        file_directory: The path to the directory containing the coefficients file.
+        filenames: The coefficients file names.
         **kwargs: Optional keyword arguments for the base classes:
             :class:`few.utils.baseclasses.AmplitudeBase`,
             :class:`few.utils.baseclasses.SchwarzschildEccentric`.
     """
 
-    def __init__(self, file_directory=None, filenames=None, **kwargs):
+    def __init__(self, filenames: Optional[List[str]] = None, **kwargs):
         SchwarzschildEccentric.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
-
-        if file_directory is None:
-            self.file_directory = dir_path + "/../../few/files/"
-        else:
-            self.file_directory = file_directory
 
         if filenames is None:
             self.filename = "Teuk_amps_a0.0_lmax_10_nmax_30_new.h5"
@@ -839,10 +829,12 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
 
         # check if user has the necessary data
         # if not, the data will automatically download
-        check_for_file_download(self.filename, self.file_directory)
+        from few import globals
+
+        file_path = globals.file_manager.get_file(self.filename)
 
         data = {}
-        with h5py.File(os.path.join(self.file_directory, self.filename), "r") as f:
+        with h5py.File(file_path, "r") as f:
             # load attributes in the right order for correct mode sorting later
             format_string1 = "l{}m{}"
             format_string2 = "n{}k0"
@@ -913,7 +905,9 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
         interp2D = interp2D_cpu if not self.use_gpu else interp2D_gpu
         return interp2D
 
-    def get_amplitudes(self, a, p, e, xI, specific_modes=None) -> Union[dict,np.ndarray]:
+    def get_amplitudes(
+        self, a, p, e, xI, specific_modes=None
+    ) -> Union[dict, np.ndarray]:
         """
         Generate Teukolsky amplitudes for a given set of parameters.
 
@@ -982,7 +976,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
                             & (self.m_arr == abs(m))
                             & (self.n_arr == n)
                         )[0]
-                    except:
+                    except:  # noqa: E722
                         raise Exception(f"Could not find mode index ({l},{m},{n}).")
 
         # TODO: perform this in the kernel
@@ -1018,13 +1012,15 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
             return temp
 
     def __reduce__(self):
-        return (self.__class__, (self.file_directory, self.filename))
+        return (self.__class__, (self.filename,))
 
 
-def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr, file_directory=None):
+def _spline_coefficients_to_file(
+    fp: os.PathLike, l_arr, m_arr, n_arr, output_directory: os.PathLike
+) -> pathlib.Path:
     data = {}
     # get information about this specific model from the file
-    with h5py.File(os.path.join(file_directory, fp), "r") as f:
+    with h5py.File(fp, "r") as f:
         # load attributes in the right order for correct mode sorting later
         kerr_format_string = "l{}m{}k0n{}"
         grid = f["grid"][:]
@@ -1040,10 +1036,10 @@ def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr, file_directory=None):
     # adjust the grid
     a = grid.T[0].copy()
     p = grid.T[1].copy()
-    e = grid.T[2].copy()
+    # e = grid.T[2].copy()
     xI = grid.T[3].copy()
     u = np.round(grid.T[4].copy(), 8)  # fix rounding errors in the files
-    sep = grid.T[5].copy()
+    # sep = grid.T[5].copy()
     w = grid.T[6].copy()
 
     assert np.all(a == a[0])
@@ -1054,7 +1050,8 @@ def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr, file_directory=None):
     a_val_store = a[0]
 
     out_fp = f"KerrEqEccAmpCoeffs_a{a_val_store:.3f}.h5"
-    outfile = h5py.File(os.path.join(file_directory, out_fp), "w")
+    out_filepath = pathlib.Path(output_directory) / out_fp
+    outfile = h5py.File(out_filepath, "w")
     outfile.attrs["signed_spin"] = a_val_store
     outfile.attrs["is_coefficients"] = True
 
@@ -1107,7 +1104,7 @@ def _spline_coefficients_to_file(fp, l_arr, m_arr, n_arr, file_directory=None):
 
     outfile.close()
 
-    return out_fp
+    return out_filepath
 
 
 if __name__ == "__main__":
@@ -1128,7 +1125,7 @@ if __name__ == "__main__":
         filepaths.append(base_path.format(part1, part2))
 
     # running this should auto-produce coefficients files
-    AmpInterpKerrEqEcc(filenames=filepaths, file_directory="../../processed_amplitudes")
+    AmpInterpKerrEqEcc(filenames=filepaths)
 
     amp = AmpInterpKerrEqEcc()
     print(amp(0.0, np.array([10.0]), np.array([0.3]), np.array([1.0])))
