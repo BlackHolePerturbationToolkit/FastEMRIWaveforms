@@ -69,7 +69,7 @@ class KerrWaveformTest(unittest.TestCase):
         M = 1e6
         mu = 1e1
         a = 0.7
-        p0 = 15.0
+        p0 = 11.0
         e0 = 0.4
 
         qS = 0.2
