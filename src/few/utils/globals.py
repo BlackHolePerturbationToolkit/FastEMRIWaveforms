@@ -227,4 +227,7 @@ def initialize(*cli_args):
     Globals().init(*cli_args)
 
 
+# Initialize the globals singleton when first importing this file
+Globals()
+
 __all__ = ["Globals", "get_logger", "get_file_manager", "get_config", "initialize"]
