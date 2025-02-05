@@ -30,24 +30,6 @@ class MissingDependency(FewException):
     pass
 
 
-class BackendUnavailable(FewException):
-    """Exception raised when the backend is not available."""
-
-    pass
-
-
-class BackendNotInstalled(BackendUnavailable):
-    """Exception raised when the backend is not installed."""
-
-    pass
-
-
-class BackendImportFailed(BackendUnavailable):
-    """Exception raised when the backend import fails."""
-
-    pass
-
-
 class InvalidInputFile(FewException):
     """Exception raised when the content of an input file does not match expectations."""
 

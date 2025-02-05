@@ -3,13 +3,6 @@ cimport numpy as np
 
 from few.cutils.wrappers import wrapper
 
-try:
-    import cupy as cp
-    gpu = True
-except (ModuleNotFoundError, ImportError) as e:
-    gpu = False
-
-
 assert sizeof(int) == sizeof(np.int32_t)
 
 cdef extern from "matmul.hh":

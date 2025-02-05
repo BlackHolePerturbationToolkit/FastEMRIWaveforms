@@ -1,32 +1,545 @@
-from . import cpu
-from . import fast
+import dataclasses
+import enum
+import typing
+import types
 
-def guide_best_backend():
-    """Select the fastest backend. Fails if missing dependencies to use it."""
-    fast.load_backend(fast.BackendSelectionMode.BEST)
+from ..utils.exceptions import FewException
 
-def load_best_backend():
-    """Select the fastest backend available without installing any dependency."""
-    fast.load_backend(fast.BackendSelectionMode.LAZY)
 
-def force_cpu_backend():
-    """Force usage of CPU backend for fast operations."""
-    fast.load_backend(fast.BackendSelectionMode.CPU)
+class BackendStatus(enum.Enum):
+    UNLOADED = "unloaded"
+    """Backend loading was not yet attempted"""
 
-def force_cuda11x_backend():
-    """Force usage of CUDA 11.x backend for fast operations."""
-    fast.load_backend(fast.BackendSelectionMode.CUDA11X)
+    LOADED = "loaded"
+    """Backend loading was a success"""
 
-def force_cuda12x_backend():
-    """Force usage of CUDA 12.x backend for fast operations."""
-    fast.load_backend(fast.BackendSelectionMode.CUDA12X)
+    DISABLED = "disabled"
+    """Backend has been disabled"""
 
-__all__ = (
-    "cpu",
-    "fast",
-    "guide_best_backend",
-    "load_best_backend",
-    "force_cpu_backend",
-    "force_cuda11x_backend",
-    "force_cuda12x_backend",
-)
+    UNAVAILABLE = "unavailable"
+    """Backend cannot be used"""
+
+
+class BackendUnavailableStrategy:
+    IGNORE = enum.auto()
+    """Ignore silently the fact that backend is unavailable."""
+
+    ADVISE = enum.auto()
+    """Log a warning explaining what can be done to make the backend available"""
+
+    FAIL = enum.auto()
+    """Raise an exception explaining why the backend is unavailable"""
+
+
+class BackendUnavailable(FewException):
+    """Exception raised when the backend is not available."""
+
+
+class BackendNotInstalled(BackendUnavailable):
+    """Exception raised when the backend has not been installed"""
+
+
+class MissingDependencies(BackendUnavailable):
+    """Exception raised when the backend has missing dependencies"""
+
+    pip_deps: typing.List[str]
+    """List of missing dependencies to install in pip-managed environments"""
+
+    conda_deps: typing.List[str]
+    """List of missing dependencies to install in conda-managed environments."""
+
+    def __init__(
+        self, *args, pip_deps: typing.List[str], conda_deps: typing.List[str], **kwargs
+    ):
+        self.pip_deps = pip_deps
+        self.conda_deps = conda_deps
+        super().__init__(*args, **kwargs)
+
+    def __str__(self) -> str:
+        message = super().__str__()
+        if self.pip_deps:
+            message += """
+    If you are using few in an environment managed using pip, run:
+        $ pip install {}
+
+""".format(", ".join(self.pip_deps))
+        if self.conda_deps:
+            message += """
+    If you are using few in an environment managed using conda, run:
+        $ conda install {}
+
+""".format(", ".join(self.conda_deps))
+        return message
+
+
+class MissingDriver(BackendUnavailable):
+    """Exception raised when backend needs driver-like software to be installed."""
+
+
+class SoftwareException(BackendUnavailable):
+    """Exception raised due to unexpected software error when loading the backend"""
+
+
+class MissingHardware(BackendUnavailable):
+    """Exception raised when backend needs unavailable hardware."""
+
+
+@dataclasses.dataclass
+class BackendMethods:
+    pyWaveform: typing.Callable[(...), None]
+    interp2D: typing.Callable[(...), None]
+    interpolate_arrays_wrap: typing.Callable[(...), None]
+    get_waveform_wrap: typing.Callable[(...), None]
+    get_waveform_generic_fd_wrap: typing.Callable[(...), None]
+    neural_layer_wrap: typing.Callable[(...), None]
+    transform_output_wrap: typing.Callable[(...), None]
+    xp: types.ModuleType
+
+
+class Backend:
+    """Abstract definition of a backend"""
+
+    name: str
+    """Backend unique name"""
+
+    pyWaveform: typing.Callable[(...), None]
+    interp2D: typing.Callable[(...), None]
+    interpolate_arrays_wrap: typing.Callable[(...), None]
+    get_waveform_wrap: typing.Callable[(...), None]
+    get_waveform_generic_fd_wrap: typing.Callable[(...), None]
+    neural_layer_wrap: typing.Callable[(...), None]
+    transform_output_wrap: typing.Callable[(...), None]
+
+    xp: types.ModuleType
+    """Reference to package handling the backend ndarrays (numpy or cupy for now)"""
+
+    def __init__(self, name: str, methods: BackendMethods):
+        self.name = name
+        self.pyWaveform = methods.pyWaveform
+        self.interp2D = methods.interp2D
+        self.interpolate_arrays_wrap = methods.interpolate_arrays_wrap
+        self.get_waveform_wrap = methods.get_waveform_wrap
+        self.get_waveform_generic_fd_wrap = methods.get_waveform_generic_fd_wrap
+        self.neural_layer_wrap = methods.neural_layer_wrap
+        self.transform_output_wrap = methods.transform_output_wrap
+        self.xp = methods.xp
+
+    @staticmethod
+    def _check_module_installed(backend_name: str, module_name: str):
+        """Check that the module containing the backend implementation is installed."""
+        import importlib
+
+        try:
+            importlib.import_module(module_name)
+        except ModuleNotFoundError as e:
+            raise BackendNotInstalled(
+                "The '{}' backend is not installed.".format(backend_name)
+            ) from e
+
+
+class CpuBackend(Backend):
+    """Implementation of the CPU backend"""
+
+    @staticmethod
+    def cpu_methods_loader() -> BackendMethods:
+        try:
+            import few_backend_cpu.pyAAK
+            import few_backend_cpu.pyAmpInterp2D
+            import few_backend_cpu.pyinterp
+            import few_backend_cpu.pymatmul
+        except (ModuleNotFoundError, ImportError) as e:
+            raise BackendUnavailable("'cpu' backend could not be imported.") from e
+
+        try:
+            import numpy
+        except (ModuleNotFoundError, ImportError) as e:
+            raise MissingDependencies(
+                "'cpu' backend requires numpy", pip_deps=["numpy"], conda_deps=["numpy"]
+            ) from e
+
+        return BackendMethods(
+            pyWaveform=few_backend_cpu.pyAAK.pyWaveform,
+            interp2D=few_backend_cpu.pyAmpInterp2D.interp2D,
+            interpolate_arrays_wrap=few_backend_cpu.pyinterp.interpolate_arrays_wrap,
+            get_waveform_wrap=few_backend_cpu.pyinterp.get_waveform_wrap,
+            get_waveform_generic_fd_wrap=few_backend_cpu.pyinterp.get_waveform_generic_fd_wrap,
+            neural_layer_wrap=few_backend_cpu.pymatmul.neural_layer_wrap,
+            transform_output_wrap=few_backend_cpu.pymatmul.transform_output_wrap,
+            xp=numpy,
+        )
+
+    def __init__(self):
+        """Initialize the CPU backend"""
+        name = "cpu"
+        self._check_module_installed(name, "few_backend_cpu")
+
+        super().__init__(name="cpu", methods=self.cpu_methods_loader())
+
+
+class _CudaBackend(Backend):
+    """Implementation of generic CUDA backend"""
+
+    @staticmethod
+    def _get_cuda_version() -> typing.Tuple[int, int]:
+        """Get the CUDA version or raise an exception"""
+        try:
+            import pynvml
+
+            pynvml.nvmlInit()
+            cuda_version = pynvml.nvmlSystemGetCudaDriverVersion_v2()
+        except pynvml.NVMLError_DriverNotLoaded as e:
+            raise MissingDriver(
+                "CUDA Driver is missing. Ensure you installed it properly."
+            ) from e
+        except pynvml.NVMLError as e:
+            raise SoftwareException(
+                "CUDA driver exception: could not detect a CUDA version."
+            ) from e
+
+        cuda_major = cuda_version // 1000
+        cuda_minor = (cuda_version % 1000) // 10
+        return cuda_major, cuda_minor
+
+    @staticmethod
+    def _check_cupy_works(cuda_major: int):
+        try:
+            import cupy
+            import cupy_backends.cuda
+        except ImportError as e:
+            raise MissingDependencies(
+                "CuPy is missing.", pip_deps=["cupy-cuda{}x".format(cuda_major)]
+            ) from e
+
+        try:
+            _ = cupy.arange(1)
+        except cupy.cuda.compiler.CompileException as e:
+            raise MissingDependencies(
+                "CuPy fails to run due to missing CUDA Runtime.",
+                pip_deps=["nvidia-cuda-runtime-cu{}".format(cuda_major)],
+            ) from e
+        except (cupy_backends.cuda.api.runtime.CUDARuntimeError, RuntimeError) as e:
+            raise SoftwareException("CuPy could not execute properly.") from e
+
+    @dataclasses.dataclass
+    class NvidiaSoLib:
+        """Description of a NVidia .so dynamic library"""
+
+        soname: str
+        """Dynamic library name (eg libname.so.1)"""
+
+        module_name: str
+        """Name of the nvidia module containing the library"""
+
+        pip_pkg: typing.Optional[str] = None
+        """Name of a pip-installable package providing that library"""
+
+        conda_pkg: typing.Optional[str] = None
+        """Name of a conda-installable package providing that library"""
+
+    @staticmethod
+    def _try_import_nvidia_solib(libs: typing.Sequence[NvidiaSoLib]) -> None:
+        """Try to load a set of Nvidia dynamic libraries"""
+        import ctypes
+        import importlib
+        import pathlib
+        from ..utils.exceptions import ExceptionGroup
+
+        try:
+            nvidia_root = pathlib.Path(
+                importlib.import_module("nvidia").__file__
+            ).parent
+        except ModuleNotFoundError:
+            nvidia_root = None
+
+        failed_idx: typing.List[int] = []
+        exceptions = []
+        for idx, lib in enumerate(libs):
+            try:
+                ctypes.cdll.LoadLibrary(lib.soname)
+                continue
+            except OSError as e:
+                exceptions.append(e)
+
+            try:
+                if nvidia_root is not None:
+                    ctypes.cdll.LoadLibrary(
+                        nvidia_root / lib.module_name / "lib" / lib.soname
+                    )
+                    continue
+            except OSError as e:
+                exceptions.append(e)
+
+            failed_idx.append(idx)
+
+        if failed_idx:
+            raise MissingDependencies(
+                "Could not load following NVidia libraries: {}".format(
+                    ", ".join([libs[idx].soname for idx in failed_idx])
+                ),
+                pip_deps=[
+                    libs[idx].pip_pkg
+                    for idx in failed_idx
+                    if libs[idx].pip_pkg is not None
+                ],
+                conda_deps=[
+                    libs[idx].conda_pkg
+                    for idx in failed_idx
+                    if libs[idx].conda_pkg is not None
+                ],
+            ) from ExceptionGroup(
+                "Following exceptions were raised while trying to load NVidia libraries",
+                exceptions,
+            )
+
+    @classmethod
+    def check_cuda_backend(
+        cls,
+        name: str,
+        backend_module_name: str,
+        cuda_min: tuple[int, int],  # Inclusive minimum
+        cuda_max: tuple[int, int],  # Exclusive maximum
+        module_loader: typing.Callable[[], None],  # Method loading
+        dynlib_loader: typing.Optional[typing.Callable[[], None]] = None,
+    ) -> BackendMethods:
+        """Perform all tests to ensure that a CUDA backend can be used"""
+
+        # 1. Check backend module is installed
+        try:
+            cls._check_module_installed(name, backend_module_name)
+        except BackendNotInstalled as e:
+            raise MissingDependencies(
+                "FastEMRIWaveforms CUDA plugin is missing.",
+                pip_deps=["fastemriwaveforms-cuda{}x".format(cuda_min[0])],
+                conda_deps=[],
+            ) from e
+
+        # 2. Try getting CUDA version
+        cuda_version = cls._get_cuda_version()
+
+        def fmt_version(version: tuple[int, int]) -> str:
+            return "{}.{}".format(version[0], version[1])
+
+        # 3. Check CUDA version
+        if cuda_version < cuda_min:
+            raise MissingDriver(
+                "Cuda version is below minimum supported version (expected >= {} and < {}, got {})".format(
+                    fmt_version(cuda_min),
+                    fmt_version(cuda_max),
+                    fmt_version(cuda_version),
+                )
+            )
+        if cuda_version >= cuda_max:
+            raise MissingDriver(
+                "Cuda version is above maximum supported version (expected >= {} and < {}, got {})".format(
+                    fmt_version(cuda_min),
+                    fmt_version(cuda_max),
+                    fmt_version(cuda_version),
+                )
+            )
+
+        # 4. Check CuPy works
+        cls._check_cupy_works(cuda_major=cuda_version[0])
+
+        # 5. Try to load module directly
+        try:
+            return module_loader()
+        except BackendUnavailable as e:
+            if dynlib_loader is None:
+                raise e
+
+        # 6. module_loader failed but dynlib_loader is defined, let's try that
+        dynlib_loader()
+        return module_loader()
+
+
+class Cuda11xBackend(_CudaBackend):
+    """Implementation of CUDA 11.x backend"""
+
+    @staticmethod
+    def cuda11x_module_loader():
+        try:
+            import few_backend_cuda11x.pyAAK
+            import few_backend_cuda11x.pyAmpInterp2D
+            import few_backend_cuda11x.pyinterp
+            import few_backend_cuda11x.pymatmul
+        except (ModuleNotFoundError, ImportError) as e:
+            raise BackendUnavailable("'cuda11x' backend could not be imported.") from e
+
+        try:
+            import cupy
+        except (ModuleNotFoundError, ImportError) as e:
+            raise MissingDependencies(
+                "'cuda11x' backend requires cupy", pip_deps=["cupy-cuda11x"]
+            ) from e
+
+        return BackendMethods(
+            pyWaveform=few_backend_cuda11x.pyAAK.pyWaveform,
+            interp2D=few_backend_cuda11x.pyAmpInterp2D.interp2D,
+            interpolate_arrays_wrap=few_backend_cuda11x.pyinterp.interpolate_arrays_wrap,
+            get_waveform_wrap=few_backend_cuda11x.pyinterp.get_waveform_wrap,
+            get_waveform_generic_fd_wrap=few_backend_cuda11x.pyinterp.get_waveform_generic_fd_wrap,
+            neural_layer_wrap=few_backend_cuda11x.pymatmul.neural_layer_wrap,
+            transform_output_wrap=few_backend_cuda11x.pymatmul.transform_output_wrap,
+            xp=cupy,
+        )
+
+    @staticmethod
+    def cuda11x_dynlib_loader():
+        import sys
+
+        if sys.platform == "linux":
+            cuda11x_solibs = [
+                _CudaBackend.NvidiaSoLib(
+                    soname="libcudart.so.11",
+                    module_name="cuda_runtime",
+                    pip_pkg="nvidia-cuda-runtime-cu11",
+                    conda_pkg=None,
+                ),
+                _CudaBackend.NvidiaSoLib(
+                    soname="libcublas.so.11",
+                    module_name="cublas",
+                    pip_pkg="nvidia-cublas-cu11",
+                    conda_pkg=None,
+                ),
+                _CudaBackend.NvidiaSoLib(
+                    soname="libnvJitLink.so.11",
+                    module_name="nvjitlink",
+                    pip_pkg="nvidia-nvjitlink-cu11",
+                    conda_pkg=None,
+                ),
+                _CudaBackend.NvidiaSoLib(
+                    soname="libcusparse.so.11",
+                    module_name="cusparse",
+                    pip_pkg="nvidia-cusparse-cu11",
+                    conda_pkg=None,
+                ),
+                _CudaBackend.NvidiaSoLib(
+                    soname="libnvrtc.so.11",
+                    module_name="cuda_nvrtc",
+                    pip_pkg="nvidia-cuda-nvrtc-cu11",
+                    conda_pkg=None,
+                ),
+                _CudaBackend.NvidiaSoLib(
+                    soname="libcufftw.so.11",
+                    module_name="cufft",
+                    pip_pkg="nvidia-cufft-cu11",
+                    conda_pkg=None,
+                ),
+            ]
+            _CudaBackend._try_import_nvidia_solib(cuda11x_solibs)
+
+    def __init__(self):
+        """Initialize the CPU backend"""
+        name = "cuda11x"
+        methods = self.check_cuda_backend(
+            name=name,
+            backend_module_name="few_backend_cuda11x",
+            cuda_min=(11, 2),
+            cuda_max=(12, 0),
+            module_loader=Cuda11xBackend.cuda11x_module_loader,
+            dynlib_loader=Cuda11xBackend.cuda11x_dynlib_loader,
+        )
+
+        super().__init__(name=name, methods=methods)
+
+
+class Cuda12xBackend(_CudaBackend):
+    """Implementation of CUDA 12.x backend"""
+
+    @staticmethod
+    def cuda12x_module_loader():
+        try:
+            import few_backend_cuda12x.pyAAK
+            import few_backend_cuda12x.pyAmpInterp2D
+            import few_backend_cuda12x.pyinterp
+            import few_backend_cuda12x.pymatmul
+        except (ModuleNotFoundError, ImportError) as e:
+            raise BackendUnavailable("'cuda12x' backend could not be imported.") from e
+
+        try:
+            import cupy
+        except (ModuleNotFoundError, ImportError) as e:
+            raise MissingDependencies(
+                "'cuda12x' backend requires cupy", pip_deps=["cupy-cuda12x"]
+            ) from e
+
+        return BackendMethods(
+            pyWaveform=few_backend_cuda12x.pyAAK.pyWaveform,
+            interp2D=few_backend_cuda12x.pyAmpInterp2D.interp2D,
+            interpolate_arrays_wrap=few_backend_cuda12x.pyinterp.interpolate_arrays_wrap,
+            get_waveform_wrap=few_backend_cuda12x.pyinterp.get_waveform_wrap,
+            get_waveform_generic_fd_wrap=few_backend_cuda12x.pyinterp.get_waveform_generic_fd_wrap,
+            neural_layer_wrap=few_backend_cuda12x.pymatmul.neural_layer_wrap,
+            transform_output_wrap=few_backend_cuda12x.pymatmul.transform_output_wrap,
+            xp=cupy,
+        )
+
+    @staticmethod
+    def cuda12x_dynlib_loader():
+        import sys
+
+        if sys.platform == "linux":
+            cuda12x_solibs = [
+                _CudaBackend.NvidiaSoLib(
+                    soname="libcudart.so.12",
+                    module_name="cuda_runtime",
+                    pip_pkg="nvidia-cuda-runtime-cu12",
+                    conda_pkg=None,
+                ),
+                _CudaBackend.NvidiaSoLib(
+                    soname="libcublas.so.12",
+                    module_name="cublas",
+                    pip_pkg="nvidia-cublas-cu12",
+                    conda_pkg=None,
+                ),
+                _CudaBackend.NvidiaSoLib(
+                    soname="libnvJitLink.so.12",
+                    module_name="nvjitlink",
+                    pip_pkg="nvidia-nvjitlink-cu12",
+                    conda_pkg=None,
+                ),
+                _CudaBackend.NvidiaSoLib(
+                    soname="libcusparse.so.12",
+                    module_name="cusparse",
+                    pip_pkg="nvidia-cusparse-cu12",
+                    conda_pkg=None,
+                ),
+                _CudaBackend.NvidiaSoLib(
+                    soname="libnvrtc.so.12",
+                    module_name="cuda_nvrtc",
+                    pip_pkg="nvidia-cuda-nvrtc-cu12",
+                    conda_pkg=None,
+                ),
+                _CudaBackend.NvidiaSoLib(
+                    soname="libcufftw.so.11",
+                    module_name="cufft",
+                    pip_pkg="nvidia-cufft-cu12",
+                    conda_pkg=None,
+                ),
+            ]
+            _CudaBackend._try_import_nvidia_solib(cuda12x_solibs)
+
+    def __init__(self):
+        """Initialize the CPU backend"""
+        name = "cuda12x"
+        methods = self.check_cuda_backend(
+            name=name,
+            backend_module_name="few_backend_cuda12x",
+            cuda_min=(12, 0),
+            cuda_max=(13, 0),
+            module_loader=Cuda12xBackend.cuda12x_module_loader,
+            dynlib_loader=Cuda12xBackend.cuda12x_dynlib_loader,
+        )
+
+        super().__init__(name=name, methods=methods)
+
+
+KNOWN_BACKENDS = {
+    "cuda12x": Cuda12xBackend,
+    "cuda11x": Cuda11xBackend,
+    "cpu": CpuBackend,
+}
+"""List of existing backends, per default order of preference."""
+
+
+__all__ = ["KNOWN_BACKENDS", "Backend"]

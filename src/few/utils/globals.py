@@ -13,7 +13,6 @@ from .config import (
     detect_cfg_file,
 )
 from ..files import FileManager
-from ..cutils.fast import load_backend
 
 
 class Singleton(type):
@@ -201,10 +200,6 @@ class Globals(metaclass=Singleton):
         cfg: Configuration = super().__getattribute__("_config")
         file_manager = FileManager(cfg)
         super().__setattr__("_file_manager", file_manager)
-
-    def _init_fast_backend(self):
-        cfg: Configuration = super().__getattribute__("_config")
-        load_backend(cfg.fast_backend)
 
 
 def get_logger() -> logging.Logger:

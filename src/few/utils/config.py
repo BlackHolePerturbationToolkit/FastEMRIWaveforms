@@ -21,7 +21,6 @@ from typing import (
     Tuple,
 )
 from . import exceptions
-from ..cutils.fast_selector import BackendSelectionMode
 
 
 class ConfigSource(enum.Enum):
@@ -470,7 +469,6 @@ class CompleteConfigConsumer(ConfigConsumer):
     Class implementing FEW complete configuration for the library.
     """
 
-    fast_backend: BackendSelectionMode
     log_level: int
     log_format: str
     file_registry_path: Optional[pathlib.Path]
@@ -483,19 +481,6 @@ class CompleteConfigConsumer(ConfigConsumer):
     @staticmethod
     def config_entries() -> List[ConfigEntry]:
         return [
-            ConfigEntry(
-                label="fast_backend",
-                description="Fast backend selection mode",
-                type=BackendSelectionMode,
-                default=BackendSelectionMode.LAZY,
-                cli_flags="--fast-backend",
-                cli_kwargs={
-                    "type": BackendSelectionMode,
-                    "choices": ("cpu", "cuda11x", "cuda12x", "lazy", "best"),
-                },
-                env_var="FAST_BACKEND",
-                cfg_entry="fast-backend",
-            ),
             ConfigEntry(
                 label="log_level",
                 description="Application log level",

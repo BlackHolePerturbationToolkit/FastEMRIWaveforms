@@ -38,26 +38,6 @@ logger = few.utils.globals.get_logger()
 
 The default log level is `logging.WARNING` but this can be modified through the `log_level` configuration option.
 
-### Backend selection
-
-Many classes in the `few` package can benefit from GPU acceleration. This is managed through the `use_gpu` boolean flag that
-can be passed to the object constructor.
-
-When `use_gpu==False`, the object will use methods that are provided by the `few.cutils.cpu` module. When `use_gpu==True`, the
-object will rather use methods provided by the `few.cutils.fast` module.
-
-Note however that `few.cutils.fast` is simply an alias for either the `cpu` backend, the `cuda11x` backend or the `cuda12x` backend.
-By default, `few` will detect automatically the best available backend and silently revert back to the `cpu` backend
-if CUDA backends are uninstalled, or unusable due to missing software or hardware.
-
-The `fast_backend` option can change the `fast` backend selection mode:
-
-- `cpu`: force the unnacelerated CPU backend (cannot fail)
-- `cuda11x`: force the CUDA 11.x backend, fail if it has missing sotware or hardware dependencies
-- `cuda12x`: force the CUDA 12.x backend, fail if it has missing sotware or hardware dependencies
-- `lazy` (default): try to load the `cuda12x` backend, then the `cuda11x` in case of error, then the `cpu` if case of further error (cannot fail)
-- `best`: detect the available CUDA version (if any) then act the same way as the `cpu`, `cuda11x` or `cuda12x` values corresponding to the detected version
-
 ### File manager
 
 The `few` package requires external files of pre-computed coefficients which are too large to be bundled with the source code.
@@ -119,7 +99,6 @@ General configuration options:
 
 | Option name | Config file entry | Environment variable | Command-line option | Authorized values | Comment |
 |---|---|---|---|---|---|
-| `fast_backend` | `fast-backend` | `FEW_FAST_BACKEND` | `--fast-backend` | `cpu`, `cuda11x`, `cuda12x`, `lazy`, `best` |  |
 | `log_level` | `log-level` | `FEW_LOG_LEVEL` | `--log-level` | `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |  |
 | `log_format` | `log-format` | `FEW_LOG_FORMAT` | `--log-format` | Any format string supported by [`logging.Formatter`](https://docs.python.org/3/library/logging.html#logging.Formatter) |  |
 | `file_registry_path` | `file-registry` | `FEW_FILE_REGISTRY` | `--file-registry` | Path to a `registry.yml` file |  |
@@ -145,8 +124,8 @@ In your program, you may access the values of these configuration option by acce
 >>> cfg = few.utils.globals.get_config()
 >>> cfg.log_level
 30
->>> cfg.fast_backend
-<BackendSelectionMode.LAZY: 'lazy'>
+>>> cfg.file_integrity_check
+'once'
 ```
 
 Unless stated otherwise, command-line arguments take precedence over environment variable which in turn take precedence over configuration file entries.
