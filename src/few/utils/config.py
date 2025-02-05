@@ -462,11 +462,6 @@ class InitialConfigConsumer(ConfigConsumer):
         env_vars: Optional[Mapping[str, str]] = None,
         cli_args: Optional[Sequence[str]] = None,
     ):
-        if cli_args is None:
-            import sys
-
-            cli_args = sys.argv[1:]
-
         super().__init__(config_file=None, env_vars=env_vars, cli_args=cli_args)
 
 
