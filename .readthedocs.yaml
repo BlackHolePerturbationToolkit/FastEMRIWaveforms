@@ -5,6 +5,9 @@ build:
     python: "3.12"
   apt_packages:
     - pandoc
+  jobs:
+    post_checkout:
+      - git fetch --tags
 python:
   install:
     - method: pip
