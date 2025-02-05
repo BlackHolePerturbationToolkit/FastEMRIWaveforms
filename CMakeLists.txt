@@ -78,6 +78,13 @@ set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_CPU ON)
 
 # ---- Optionnally check if GPU is supported ----
 if(FEW_WITH_GPU STREQUAL "AUTO")
+  if(DEFINED ENV{READTHEDOCS})
+    message(
+      STATUS "FEW backend generation is disabled in ReadTheDocs build context.")
+    set(FEW_WITH_GPU "BARE")
+  endif()
+endif()
+if(FEW_WITH_GPU STREQUAL "AUTO")
   include(CheckLanguage)
   check_language(CUDA)
   if(CMAKE_CUDA_COMPILER)
