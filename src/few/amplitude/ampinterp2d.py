@@ -155,14 +155,14 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         """Confirms GPU capability"""
         return True
 
-    def __call__(self, w: Union[float,np.ndarray], u: Union[float,np.ndarray], *args, specific_modes: Optional[Union[list, np.ndarray]]=None, **kwargs) -> np.ndarray:
+    def __call__(self, w: Union[float,np.ndarray], u: Union[float,np.ndarray], *args, mode_indexes: Optional[np.ndarray]=None, **kwargs) -> np.ndarray:
         """
         Evaluate the spline or its derivatives at given positions.
 
         Args:
             w: Eccentricity interpolation parameter.
             u: Dimensionless semi-latus rectum interpolation parameter.
-            specific_modes: Either indices or mode index tuples of modes to be generated (optional; defaults to all modes).
+            mode_indexes: Array indices of modes to be generated (optional; defaults to all modes).
         Returns:
             Complex Teukolsky mode amplitudes at the requested points.
         """
@@ -192,26 +192,9 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
 
         assert mw == mu
 
-        if specific_modes is None:
+        if mode_indexes is None:
             mode_indexes = self.xp.arange(self.num_teuk_modes)
-
-        else:
-            if isinstance(specific_modes, self.xp.ndarray):
-                mode_indexes = specific_modes
-            elif isinstance(
-                specific_modes, list
-            ):  # the following is slow and kills efficiency
-                mode_indexes = self.xp.zeros(len(specific_modes), dtype=self.xp.int32)
-                for i, (l, m, n) in enumerate(specific_modes):
-                    try:
-                        mode_indexes[i] = np.where(
-                            (self.l_arr == l)
-                            & (self.m_arr == abs(m))
-                            & (self.n_arr == n)
-                        )[0]
-                    except:
-                        raise Exception(f"Could not find mode index ({l},{m},{n}).")
-
+        
         # TODO: perform this in the kernel
         c_in = c[mode_indexes].flatten()
 
@@ -255,9 +238,9 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
         else:
             self.filename = filename
 
-        from few import globals
+        from few import get_file_manager
 
-        file_path = globals.file_manager.get_file(self.filename)
+        file_path = get_file_manager().get_file(self.filename)
 
         with h5py.File(file_path, "r") as f:
             coeffsA = f["CoeffsRegionA"][()]
@@ -307,17 +290,18 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
             self.u_values = u_knots
             self.z_values = z_knots
 
-    def evaluate_interpolant_at_index(self, index, region_A_mask, w, u, specific_modes=None):
+
+    def evaluate_interpolant_at_index(self, index, region_A_mask, w, u, mode_indexes):
         z_out = self.xp.zeros((region_A_mask.size, self.num_modes_eval), dtype=self.xp.complex128)
 
         if self.xp.any(region_A_mask):
             z_out[region_A_mask, :] = self.spin_information_holder_A[index](
-                    w[region_A_mask], u[region_A_mask], specific_modes=specific_modes
+                    w[region_A_mask], u[region_A_mask], mode_indexes=mode_indexes
                 )
         
         if self.xp.any(~region_A_mask):
             z_out[~region_A_mask, :] = self.spin_information_holder_B[index](
-                    w[~region_A_mask], u[~region_A_mask], specific_modes=specific_modes
+                    w[~region_A_mask], u[~region_A_mask], mode_indexes=mode_indexes
                 )
         
         return z_out
@@ -356,9 +340,20 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
         
         if specific_modes is not None:
             self.num_modes_eval = len(specific_modes)
+            if isinstance(
+                specific_modes, list
+            ):
+                specific_modes_arr = self.xp.asarray(specific_modes)
+                mode_indexes = self.special_index_map_arr[specific_modes_arr[:,0], specific_modes_arr[:,1], specific_modes_arr[:,2]]
+                if self.xp.any(mode_indexes == -1):
+                        failed_mode = specific_modes_arr[self.xp.where(mode_indexes == -1)[0][0]]
+                        raise ValueError(f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]}).")
+            else:
+                mode_indexes = specific_modes
         else:
+            mode_indexes = self.xp.arange(self.num_teuk_modes)
             self.num_modes_eval = self.num_teuk_modes
-        
+
         u, w, y, z, region_mask = kerrecceq_forward_map(a_in, p, e, xI_in, use_gpu=self.use_gpu, return_mask=True, kind="amplitude")
         z_check = z[0]
 
@@ -370,7 +365,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
             ind_1 = np.where(self.z_values == z_check)[0][0]
 
             z = self.evaluate_interpolant_at_index(
-                ind_1, region_mask, w, u, specific_modes=specific_modes
+                ind_1, region_mask, w, u, mode_indexes=mode_indexes
             )
 
         else:
@@ -381,12 +376,12 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
 
             z_above = self.z_values[ind_above]
             Amp_above = self.evaluate_interpolant_at_index(
-                ind_above, region_mask, w, u, specific_modes=specific_modes
+                ind_above, region_mask, w, u, mode_indexes
             )
 
             z_below = self.z_values[ind_below]
             Amp_below = self.evaluate_interpolant_at_index(
-                ind_below, region_mask, w, u, specific_modes=specific_modes
+                ind_below, region_mask, w, u, mode_indexes
             )
 
             z = ((Amp_above - Amp_below) / (z_above - z_below)) * (
@@ -406,393 +401,6 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
                 # apply +/- m symmetry
                 if m < 0:
                     temp[lmn] = self.xp.conj(temp[lmn])
-
-            return temp
-
-
-class AmpInterp2DLegacy(AmplitudeBase, ParallelModuleBase):
-    r"""Calculate Teukolsky amplitudes with a bicubic spline interpolation.
-
-    This class is initialised by providing mode index arrays and a corresponding spline coefficients array.
-    These coefficients can be computed for user-supplied data with the TODO METHOD method of this class.
-
-    When called with arguments :math:`(a, p, e, xI)`, these parameters are transformed into a set of
-    interpolation coordinates and the bicubic spline interpolant is evaluated at these coordinates for
-    all sets of coefficients.
-
-    This module is available for GPU and CPU.
-
-    args:
-        fp: The coefficients file name in `file_directory`.
-        fp: The coefficients file name
-        l_arr: Array of :math:`\ell` mode indices.
-        m_arr: Array of :math:`m` mode indices.
-        n_arr: Array of :math:`n` mode indices.
-        **kwargs: Optional keyword arguments for the base class:
-            :class:`few.utils.baseclasses.AmplitudeBase`,
-            :class:`few.utils.baseclasses.ParallelModuleBase`.
-    """
-
-    def __init__(
-        self, fp: str, l_arr: np.ndarray, m_arr: np.ndarray, n_arr: np.ndarray, **kwargs
-    ):
-        ParallelModuleBase.__init__(self, **kwargs)
-        AmplitudeBase.__init__(self, **kwargs)
-
-        self.fp = fp
-        self.l_arr = l_arr
-        self.m_arr = m_arr
-        self.n_arr = n_arr
-
-        # check if user has the necessary data
-        # if not, the data will automatically download
-        from few import get_file_manager
-
-        file_path = get_file_manager().get_file(fp)
-
-        mystery_file = h5py.File(file_path)
-        try:
-            is_coeffs = mystery_file.attrs["is_coefficients"]
-        except KeyError:
-            is_coeffs = False
-
-        if is_coeffs:
-            coefficients = mystery_file
-        else:
-            print(
-                "File '{}' is not a spline coefficients file. Attempting to convert...".format(
-                    fp
-                )
-            )
-            spline_file_path = _spline_coefficients_to_file(
-                fp=file_path,
-                l_arr=self.l_arr,
-                m_arr=self.m_arr,
-                n_arr=self.n_arr,
-                output_directory=get_file_manager().storage_dir,
-            )
-            coefficients = h5py.File(spline_file_path)
-
-        self.a_val_store = coefficients.attrs["signed_spin"]
-        """float: The value of :math:`a` associated with this interpolant."""
-
-        self.num_teuk_modes = coefficients.attrs["num_teuk_modes"]
-        """int: Total number of mode amplitude grids this interpolant stores."""
-
-        self.tck = [
-            self.xp.asarray(coefficients["x1"]),
-            self.xp.asarray(coefficients["x2"]),
-            self.xp.asarray(coefficients["c"]),
-        ]
-        """list[np.ndarray]: Arrays holding all spline coefficient information."""
-
-        self.len_indiv_c = coefficients.attrs["points_per_modegrid"]
-        """int: Total number of coefficients per mode amplitude grid."""
-
-    @property
-    def interp2D(self) -> callable:
-        """GPU or CPU interp2D"""
-        interp2D = interp2D_cpu if not self.use_gpu else interp2D_gpu
-        return interp2D
-
-    @classmethod
-    def module_references(cls) -> list[REFERENCE]:
-        """Return citations related to this module"""
-        return [REFERENCE.ROMANNET] + super(AmpInterp2DLegacy, cls).module_references()
-
-    @property
-    def gpu_capability(self):
-        """Confirms GPU capability"""
-        return True
-
-    def __call__(
-        self,
-        a: Union[float, np.ndarray],
-        p: Union[float, np.ndarray],
-        e: Union[float, np.ndarray],
-        xI: Union[float, np.ndarray],
-        *args,
-        specific_modes: Optional[Union[list, np.ndarray]] = None,
-        **kwargs,
-    ) -> np.ndarray:
-        """
-        Evaluate the spline or its derivatives at given positions.
-
-        Args:
-            a: Dimensionless spin parameter of MBH.
-            p: Dimensionless semi-latus rectum.
-            e: Eccentricity.
-            xI: Cosine of orbital inclination. Only :math:`|x_I| = 1` is currently supported.
-            specific_modes: Either indices or mode index tuples of modes to be generated (optional; defaults to all modes).
-        Returns:
-            Complex Teukolsky mode amplitudes at the requested points.
-        """
-
-        try:
-            a_cpu, p_cpu, e_cpu, xI_cpu = (
-                a.get().copy(),
-                p.get().copy(),
-                e.get().copy(),
-                xI.get().copy(),
-            )
-        except AttributeError:
-            a_cpu, p_cpu, e_cpu, xI_cpu = a.copy(), p.copy(), e.copy(), xI.copy()
-
-        a = self.xp.asarray(a)
-        p = self.xp.asarray(p)
-        e = self.xp.asarray(e)
-        xI = self.xp.asarray(xI)
-
-        assert self.xp.all(a == self.a_val_store)
-        a_cpu *= xI_cpu  # correct the sign of a now we've passed the check, for the reparameterisation
-        # TODO: make this GPU accessible
-        u = self.xp.asarray(kerrecceq_legacy_p_to_u(a_cpu, p_cpu, e_cpu, xI_cpu, use_gpu=False))
-
-        w = self.xp.sqrt(e)
-
-        tw, tu, c = self.tck[:3]
-        kw = ku = 3
-
-        # standard Numpy broadcasting
-        if w.shape != u.shape:
-            w, u = np.broadcast_arrays(w, u)
-
-        shape = w.shape
-        w = w.ravel()
-        u = u.ravel()
-
-        if w.size == 0 or u.size == 0:
-            return np.zeros(shape, dtype=self.tck[2].dtype)
-
-        nw = tw.shape[0]
-        nu = tu.shape[0]
-        mw = w.shape[0]
-        mu = u.shape[0]
-
-        assert mw == mu
-
-        if specific_modes is None:
-            mode_indexes = self.xp.arange(self.num_teuk_modes)
-        else:
-            if isinstance(specific_modes, self.xp.ndarray):
-                mode_indexes = specific_modes
-            elif isinstance(
-                specific_modes, list
-            ):  # the following is slow and kills efficiency
-                mode_indexes = self.xp.zeros(len(specific_modes), dtype=self.xp.int32)
-                for i, (l, m, n) in enumerate(specific_modes):
-                    try:
-                        mode_indexes[i] = np.where(
-                            (self.l_arr == l)
-                            & (self.m_arr == abs(m))
-                            & (self.n_arr == n)
-                        )[0]
-                    except:  # noqa: E722
-                        raise Exception(f"Could not find mode index ({l},{m},{n}).")
-        # TODO: perform this in the kernel
-        c_in = c[mode_indexes].flatten()
-
-        num_indiv_c = 2 * len(mode_indexes)  # Re and Im
-        len_indiv_c = self.len_indiv_c
-
-        z = self.xp.zeros((num_indiv_c * mw))
-
-        self.interp2D(
-            z, tw, nw, tu, nu, c_in, kw, ku, w, mw, u, mu, num_indiv_c, len_indiv_c
-        )
-
-        # check = np.asarray([[spl.ev(e.get(), y.get()) for spl in spl1] for spl1 in self.spl2D.values()]).transpose(2, 1, 0)
-
-        z = z.reshape(num_indiv_c // 2, 2, mw).transpose(2, 1, 0)
-
-        z = z[:, 0] + 1j * z[:, 1]
-        return z
-
-    def __reduce__(self):
-        return (
-            self.__class__,
-            (self.fp, self.l_arr, self.m_arr, self.n_arr),
-        )
-
-
-class AmpInterpKerrEqEccLegacy(AmplitudeBase, KerrEccentricEquatorial):
-    """Calculate Teukolsky amplitudes in the Kerr eccentric equatorial regime with a bicubic spline + linear
-    interpolation scheme.
-
-    When called with arguments :math:`(a, p, e, xI)`, these parameters are transformed into a set of
-    interpolation coordinates and the bicubic spline interpolant is evaluated at these coordinates for
-    all sets of coefficients. To interpolate in the :math"`a` direction, the bicubic spline is evaluated at
-    the adjacent grid points and a linear interpolation is performed.
-
-    This module is available for GPU and CPU.
-
-    args:
-        filenames: The coefficients file names
-        **kwargs: Optional keyword arguments for the base classes:
-            :class:`few.utils.baseclasses.AmplitudeBase`,
-            :class:`few.utils.baseclasses.KerrEccentricEquatorial`.
-    """
-    def __init__(self, filenames: Optional[List[str]] = None, **kwargs):
-        kwargs["nmax"] = 50
-        KerrEccentricEquatorial.__init__(self, **kwargs)
-        AmplitudeBase.__init__(self, **kwargs)
-
-        if filenames is None:
-            self.filenames = _DEFAULT_AMPLITUDE_FILENAMES
-        else:
-            self.filenames = filenames
-
-        self.spin_information_holder_unsorted = [
-            None for _ in range(len(self.filenames))
-        ]
-        for i, fp in enumerate(self.filenames):
-            self.spin_information_holder_unsorted[i] = AmpInterp2DLegacy(
-                fp,
-                self.l_arr,
-                self.m_arr,
-                self.n_arr,
-                use_gpu=self.use_gpu,
-            )
-
-        spin_values_unsorted = [
-            sh.a_val_store for sh in self.spin_information_holder_unsorted
-        ]
-        rearrange_inds = np.argsort(spin_values_unsorted)
-
-        self.spin_values = np.asarray(spin_values_unsorted)[rearrange_inds]
-        self.spin_information_holder = [
-            self.spin_information_holder_unsorted[i] for i in rearrange_inds
-        ]
-
-        pos_neg_n_swap_inds = []
-        if self.use_gpu:
-            for l, m, n in zip(
-                self.l_arr_no_mask.get(),
-                self.m_arr_no_mask.get(),
-                self.n_arr_no_mask.get(),
-            ):
-                pos_neg_n_swap_inds.append(self.special_index_map[(l, m, -n)])
-        else:
-            for l, m, n in zip(
-                self.l_arr_no_mask, self.m_arr_no_mask, self.n_arr_no_mask
-            ):
-                pos_neg_n_swap_inds.append(self.special_index_map[(l, m, -n)])
-
-        self.pos_neg_n_swap_inds = self.xp.asarray(pos_neg_n_swap_inds)
-
-    def get_amplitudes(
-        self, a, p, e, xI, specific_modes=None
-    ) -> Union[dict, np.ndarray]:
-        """
-        Generate Teukolsky amplitudes for a given set of parameters.
-
-        Args:
-            a: Dimensionless spin parameter of MBH.
-            p: Dimensionless semi-latus rectum.
-            e: Eccentricity.
-            xI: Cosine of orbital inclination. Only :math:`|x_I| = 1` is currently supported.
-            specific_modes: Either indices or mode index tuples of modes to be generated (optional; defaults to all modes).
-        Returns:
-            If specific_modes is a list of tuples, returns a dictionary of complex mode amplitudes.
-            Else, returns an array of complex mode amplitudes.
-        """
-
-        # prograde: spin pos, xI pos
-        # retrograde: spin pos, xI neg - >  spin neg, xI pos
-        assert isinstance(a, float)
-
-        assert np.all(xI == 1.0) or np.all(
-            xI == -1.0
-        )  # either all prograde or all retrograde
-        xI_in = np.ones_like(p) * xI
-
-        signed_spin = a * xI_in[0].item()
-
-        if signed_spin in self.spin_values:
-            ind_1 = np.where(self.spin_values == signed_spin)[0][0]
-            a_in = np.full_like(p, signed_spin)
-
-            z = self.spin_information_holder[ind_1](
-                a_in, p, e, xI_in, specific_modes=specific_modes
-            )
-            if xI_in[0] == -1 and signed_spin != 0.0:  # retrograde needs mode flip
-                z = self.xp.conj(z[:, self.pos_neg_n_swap_inds])
-
-        else:
-            ind_above = np.where(self.spin_values > signed_spin)[0][0]
-            ind_below = ind_above - 1
-            assert ind_above < len(self.spin_values)
-            assert ind_below >= 0
-
-            a_above = np.full_like(p, self.spin_values[ind_above])
-            a_above_single = a_above[0]
-            assert np.all(a_above_single == a_above[0])
-
-            a_below = np.full_like(p, self.spin_values[ind_below])
-            a_below_single = a_below[0]
-            assert np.all(a_below_single == a_below[0])
-
-            # handle retrograde mode flip (n -> conj(-n))
-
-            if a_below_single < 0:
-                apply_conjugate_below = True
-                if specific_modes is None:
-                    specific_modes_below = self.pos_neg_n_swap_inds
-                elif isinstance(specific_modes, self.xp.ndarray):
-                    specific_modes_below = self.pos_neg_n_swap_inds[specific_modes]
-                elif isinstance(specific_modes, list):
-                    specific_modes_below = []
-                    for l, m, n in specific_modes:
-                        specific_modes_below.append((l, m, -n))
-            else:
-                apply_conjugate_below = False
-                specific_modes_below = specific_modes
-
-            if a_above_single < 0:
-                apply_conjugate_above = True
-                specific_modes_above = specific_modes_below
-            else:
-                apply_conjugate_above = False
-                specific_modes_above = specific_modes
-
-            if (
-                apply_conjugate_above and apply_conjugate_below
-            ):  # combine the flags to save a conj call if both retrograde
-                apply_conjugate_total = True
-                apply_conjugate_above = False
-                apply_conjugate_below = False
-            else:
-                apply_conjugate_total = False
-
-            z_above = self.spin_information_holder[ind_above](
-                a_above, p, e, xI_in, specific_modes=specific_modes_above
-            )
-            z_below = self.spin_information_holder[ind_below](
-                a_below, p, e, xI_in, specific_modes=specific_modes_below
-            )
-            if apply_conjugate_below:
-                z_below = z_below.conj()
-            if apply_conjugate_above:
-                z_above = z_above.conj()
-            z = ((z_above - z_below) / (a_above_single - a_below_single)) * (
-                signed_spin - a_below_single
-            ) + z_below
-            if apply_conjugate_total:
-                z = z.conj()
-
-        if not isinstance(specific_modes, list):
-            return z
-
-        # dict containing requested modes
-        else:
-            temp = {}
-            for i, lmn in enumerate(specific_modes):
-                temp[lmn] = z[:, i]
-                l, m, n = lmn
-
-                # apply +/- m symmetry
-                if m < 0:
-                    temp[lmn] = np.conj(temp[lmn])
 
             return temp
 
@@ -925,15 +533,10 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
 
         assert np.all(xI == 1.0)
 
-        try:
-            p_cpu, e_cpu = p.get().copy(), e.get().copy()
-        except AttributeError:
-            p_cpu, e_cpu = p.copy(), e.copy()
-
         p = self.xp.asarray(p)
         e = self.xp.asarray(e)
 
-        u = self.xp.asarray(schwarzecc_p_to_y(p_cpu, e_cpu, use_gpu=False))
+        u = self.xp.asarray(schwarzecc_p_to_y(p, e, use_gpu=self.use_gpu))
         w = e.copy()
 
         tw, tu, c = self.tck[:3]

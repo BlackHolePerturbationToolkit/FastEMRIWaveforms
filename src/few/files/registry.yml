@@ -231,3 +231,13 @@ files:
     checksums:
       - algorithm: sha256
         value: 29600eaeabe5d0e5a8c9a4f477e7f56444e4407f880cc2b554cb6ed8aedb8a86
+  - name: ZNAmps_l10_m10_n55.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: e3a40557038a32ca86e42a862dbb1a8d8cf0138915a1e28eeba96e438d20dc6f
+  - name: ZNAmps_l10_m10_n55_DS2.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: ca29bde00dac996a579445aa996e98da7666d8da32fbaa429adb81dfc687b08d

@@ -444,7 +444,7 @@ class KerrEccentricEquatorial(SphericalHarmonic):
             *args: Optional[list],
             use_gpu:bool=False,
             lmax:int= 10,
-            nmax:int = 50,
+            nmax:int = 55,
             ndim:int = 2,
             **kwargs:Optional[dict]
         ):

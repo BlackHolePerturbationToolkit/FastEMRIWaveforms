@@ -36,11 +36,11 @@ class WaveformTest(unittest.TestCase):
         theta = np.pi/3
         phi = np.pi/4
         
-        wave1 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10.)[:1000]
+        wave1 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10.)[:500]
         wave2 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=5.)[:1000]
 
         # these two waveforms should be identical once resampled to the same time axis
-        assert get_mismatch(wave1, wave2[::2]) < 1e-14, "Waveforms not invariant under a rescaling of total mass and coordinate time."
+        assert get_mismatch(wave1, wave2[::2]) < 1e-14, "Waveforms not invariant under a change of sampling rate."
 
     def test_mass_invariance(self):
         # parameters
@@ -55,14 +55,14 @@ class WaveformTest(unittest.TestCase):
         theta = np.pi/3
         phi = np.pi/4
         
-        wave1 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10.)[:1000]
+        wave1 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10.)[:500]
 
         M2 = M *  2
         mu2 = mu * 2
         wave2 = self.waveform_generator(M2, mu2, a, p0, e0, xI, theta, phi, T=T, dt=10.)[:1000]
 
         # these two waveforms should be identical up to a rescailing of the time axis
-        assert get_mismatch(wave1, wave2[::2]) < 1e-14, "Waveforms not invariant under a change of sampling rate."
+        assert get_mismatch(wave1, wave2[::2]) < 1e-14, "Waveforms not invariant under a rescaling of total mass and coordinate time."
 
     def test_prograde_retrograde_convergence(self):
         # parameters
@@ -167,3 +167,16 @@ class WaveformTest(unittest.TestCase):
                 pars_copy[i] *= -1
                 self.waveform_generator(*pars_copy, T=T, dt=10., dist = 1.)
 
+    def test_request_nonphysical_modes(self):
+        T = 0.001
+        M = 1e6
+        mu = 1e1
+        a = 0.6
+        p0 = 8.0
+        e0 = 0.3
+        xI = 1.
+        theta = np.pi/3
+        phi = np.pi/4
+        modes = [(2, 2, 0), (2, 4, 0), (2, 3, 0)]
+        with self.assertRaises(ValueError):
+            self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10., mode_selection=modes)
