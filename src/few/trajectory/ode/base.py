@@ -166,7 +166,7 @@ class ODEBase:
         do not use interpolation, this function returns a positive constant (such that root-finding never occurs) 
         and does not need to be implemented.
         """
-        raise 1e10
+        return 1e10
     
     def get_pex(self, y: np.ndarray) -> tuple[float]:
         """

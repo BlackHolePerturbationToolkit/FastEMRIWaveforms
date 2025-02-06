@@ -232,27 +232,26 @@ class DOPR853:
         self.stopping_criterion = stopping_criterion
         self.tmax, self.max_step = tmax, max_step
         self.use_gpu = use_gpu
-        self.read_out_to_cpu = read_out_to_cpu
+        self.read_out_to_cpus = read_out_to_cpu
 
-        if use_gpu:
-            self.xp = xp
             # self.dormandPrinceSteps2 = dormandPrinceSteps_gpu
             # self.error2 = error_gpu
             # self.controllerSuccess2 = controllerSuccess_gpu
 
-        else:
-            self.xp = np
             # self.dormandPrinceSteps2 = dormandPrinceSteps_cpu
             # self.error2 = error_cpu
             # self.controllerSuccess2 = controllerSuccess_cpu
 
-        if read_out_to_cpu:
-            self.xp_read_out = np
-        else:
-            self.xp_read_out = xp
-
         self.fix_step = False
         self.abstol = 1e-10
+
+    @property
+    def xp(self):
+        return xp if self.use_gpu else np
+    
+    @property
+    def xp_read_out(self):
+        return xp if self.read_out_to_cpus else np
 
     def dormandPrinceSteps(
         self,
