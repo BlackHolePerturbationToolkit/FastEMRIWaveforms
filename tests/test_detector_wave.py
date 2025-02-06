@@ -1,22 +1,22 @@
 import unittest
 import pickle
-import numpy as np
 
-import few
-from few.waveform import GenerateEMRIWaveform
+from few.waveform import GenerateEMRIWaveform, FastSchwarzschildEccentricFlux
 
-from few.utils.globals import get_logger
+from few.utils.globals import get_logger, get_first_backend
 
 few_logger = get_logger()
 
-gpu_available = few.cutils.fast.is_gpu
-few_logger.warning("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
+best_backend = get_first_backend(FastSchwarzschildEccentricFlux.supported_backends())
+few_logger.warning(
+    "DetectorWave test is running with backend '{}'".format(best_backend.name)
+)
 
 
 def run_detector_frame_test(test_pickle=False):
     # specific waveform kwargs
     waveform_kwargs = dict(
-        use_gpu=gpu_available,
+        force_backend=best_backend,
     )
 
     gen_wave = GenerateEMRIWaveform("FastSchwarzschildEccentricFlux", **waveform_kwargs)
@@ -52,7 +52,7 @@ def run_detector_frame_test(test_pickle=False):
         extracted_gen_wave = gen_wave
         extracted_gen_wave_aak = gen_wave_aak
 
-    h = extracted_gen_wave(
+    _ = extracted_gen_wave(
         M,
         mu,
         a,
@@ -71,7 +71,7 @@ def run_detector_frame_test(test_pickle=False):
         dt=dt,
     )
 
-    h2 = extracted_gen_wave_aak(
+    _ = extracted_gen_wave_aak(
         M,
         mu,
         a,

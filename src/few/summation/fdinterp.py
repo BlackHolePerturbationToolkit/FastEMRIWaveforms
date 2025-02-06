@@ -115,9 +115,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
     """
 
     def __init__(self, *args, **kwargs):
-        ParallelModuleBase.__init__(self, *args, **kwargs)
-        SchwarzschildEccentric.__init__(self, *args, **kwargs)
-        SummationBase.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.kwargs = kwargs
 
@@ -125,16 +123,11 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
     @property
     def get_waveform_fd(self) -> callable:
         """GPU or CPU waveform generation."""
-        return (
-            get_waveform_generic_fd_wrap_cpu
-            if not self.use_gpu
-            else get_waveform_generic_fd_wrap_gpu
-        )
+        return self.backend.get_waveform_generic_fd_wrap
 
-    @property
-    def gpu_capability(self):
-        """Confirms GPU capability"""
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
@@ -253,8 +246,10 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         # create two splines
         # spline: freqs, phases, and amplitudes for the summation kernel
         # freqs_spline: only the frequencies [f(t)]
-        freqs_spline = CubicSplineInterpolant(t, y_all_freqs, use_gpu=self.use_gpu)
-        spline = CubicSplineInterpolant(t, y_all, use_gpu=self.use_gpu)
+        freqs_spline = self.build_with_same_backend(
+            CubicSplineInterpolant, args=[t, y_all_freqs]
+        )
+        spline = self.build_with_same_backend(CubicSplineInterpolant, args=[t, y_all])
 
         # t_new is a denser (but not completely dense) set
         # of time values to help estimate where/when turnovers occur

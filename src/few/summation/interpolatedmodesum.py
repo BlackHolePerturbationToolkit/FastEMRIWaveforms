@@ -22,7 +22,6 @@ from ..utils.baseclasses import (
     ParallelModuleBase,
 )
 from .base import SummationBase
-from ..utils.constants import *
 
 from few.utils.globals import get_logger
 
@@ -130,16 +129,11 @@ class CubicSplineInterpolant(ParallelModuleBase):
     @property
     def interpolate_arrays(self) -> callable:
         """GPU or CPU waveform generation."""
-        return (
-            interpolate_arrays_wrap_cpu
-            if not self.use_gpu
-            else interpolate_arrays_wrap_gpu
-        )
+        return self.backend.interpolate_arrays_wrap
 
-    @property
-    def gpu_capability(self):
-        """Confirms GPU capability"""
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     @property
     def y(self) -> np.ndarray:
@@ -294,18 +288,16 @@ class InterpolatedModeSum(SummationBase, ParallelModuleBase):
     """
 
     def __init__(self, *args, **kwargs):
-        ParallelModuleBase.__init__(self, *args, **kwargs)
-        SummationBase.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @property
     def get_waveform(self) -> callable:
         """GPU or CPU waveform generation."""
-        return get_waveform_wrap_cpu if not self.use_gpu else get_waveform_wrap_gpu
+        return self.backend.get_waveform_wrap
 
-    @property
-    def gpu_capability(self):
-        """Confirms GPU capability"""
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     def sum(
         self,
@@ -357,12 +349,9 @@ class InterpolatedModeSum(SummationBase, ParallelModuleBase):
         y_all[:num_teuk_modes] = teuk_modes.T.real
         y_all[num_teuk_modes : 2 * num_teuk_modes] = teuk_modes.T.imag
 
-        spline = CubicSplineInterpolant(t, y_all, use_gpu=self.use_gpu)
+        spline = self.build_with_same_backend(CubicSplineInterpolant, args=[t, y_all])
 
-        try:
-            h_t = t.get()
-        except:
-            h_t = t
+        h_t = t.get() if self.backend.uses_cupy else t
 
         if integrate_backwards:
             # For consistency with forward integration, we slightly shift the knots so that they line up at t=0
@@ -370,7 +359,7 @@ class InterpolatedModeSum(SummationBase, ParallelModuleBase):
             h_t = h_t - offset
             phase_interp_t = phase_interp_t - offset
 
-        if not self.use_gpu:
+        if not self.backend.supports(self.backend.Feature.CUDA):
             dev = 0
         else:
             dev = int(self.xp.cuda.runtime.getDevice())

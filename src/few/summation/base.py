@@ -3,6 +3,7 @@ from ..utils.constants import *
 
 from ..utils.baseclasses import ParallelModuleBase
 
+
 class SummationBase(ParallelModuleBase):
     """Base class used for summation modules.
 
@@ -21,7 +22,12 @@ class SummationBase(ParallelModuleBase):
     """
 
     def __init__(
-        self, *args, output_type:str="td", pad_output:bool=False, odd_len:bool=False, **kwargs
+        self,
+        *args,
+        output_type: str = "td",
+        pad_output: bool = False,
+        odd_len: bool = False,
+        **kwargs,
     ):
         self.pad_output = pad_output
         self.odd_len = odd_len
@@ -45,6 +51,8 @@ class SummationBase(ParallelModuleBase):
         self.waveform = None
         """Complex waveform given by :math:`h_+ + i*h_x`."""
 
+        super().__init__(*args, **kwargs)
+
     @classmethod
     def sum(self, *args, **kwargs):
         """Sum Generator
@@ -57,7 +65,7 @@ class SummationBase(ParallelModuleBase):
         """
         raise NotImplementedError
 
-    def __call__(self, t: float, *args, T:float=1.0, dt:float=10.0, **kwargs):
+    def __call__(self, t: float, *args, T: float = 1.0, dt: float = 10.0, **kwargs):
         """Common call function for summation modules.
 
         Provides a common interface for summation modules. It can adjust for

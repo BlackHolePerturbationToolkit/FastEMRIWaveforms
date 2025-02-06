@@ -57,7 +57,7 @@ def get_overlap(
 
     # adjust arrays based on GPU usage
     if use_gpu:
-        xp = cp
+        import cupy as xp
 
         if isinstance(time_series_1, np.ndarray):
             time_series_1 = xp.asarray(time_series_1)

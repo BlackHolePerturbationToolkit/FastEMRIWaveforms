@@ -25,7 +25,7 @@ from ..utils.baseclasses import (
     Pn5AAK,
     ParallelModuleBase,
 )
-from .base import AAKWaveformBase, SphericalHarmonicWaveformBase
+from .base import AAKWaveformBase, SphericalHarmonicWaveformBase, WaveformModule
 
 from ..trajectory.inspiral import EMRIInspiral
 from ..amplitude.ampinterp2d import AmpInterpKerrEqEcc, AmpInterpSchwarzEcc
@@ -40,13 +40,13 @@ from ..summation.fdinterp import FDInterpolatedModeSum
 
 from ..trajectory.ode import KerrEccEqFlux, PN5, SchwarzEccFlux
 
-from typing import Union, Optional
+from typing import Union, Optional, Generic
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class GenerateEMRIWaveform:
+class GenerateEMRIWaveform(Generic[WaveformModule]):
     r"""Generic waveform generator for data analysis
 
     This class allows the user interface to be the exact same between any
@@ -78,8 +78,32 @@ class GenerateEMRIWaveform:
 
     """
 
+    waveform_generator: WaveformModule
+    """Instance of the waveform module"""
+
+    frame: str
+    """Frame in which waveform is generated."""
+
+    return_list: bool
+    """Whether to return :math:`h_p` and :math:`h_x` as list, otherwise returned as :math:`h_p - i h_x`"""
+
+    flip_output: bool
+    """Whether :math:`h_p` and :math:`h_x` output time series (if time-domain) should be reversed"""
+
+    args_remove: list[int]
+    """List of arguments to remove based on the specific waveform"""
+
+    phases_needed: dict[str, int]
+    """Phases needed based on specific waveform"""
+
     def __init__(
-        self, waveform_class: Union[str, object], *args: Optional[Union[list, tuple]], frame:str="detector", return_list:bool=False, flip_output:bool=False, **kwargs: Optional[dict]
+        self,
+        waveform_class: Union[str, type[WaveformModule]],
+        *args: Optional[Union[list, tuple]],
+        frame: str = "detector",
+        return_list: bool = False,
+        flip_output: bool = False,
+        **kwargs: Optional[dict],
     ):
         # instantiate the class
         if isinstance(waveform_class, str):
@@ -124,20 +148,16 @@ class GenerateEMRIWaveform:
     @property
     def _stock_waveform_definitions(self):
         return {
-        "FastSchwarzschildEccentricFlux" : FastSchwarzschildEccentricFlux,
-        "FastSchwarzschildEccentricFluxBicubic": FastSchwarzschildEccentricFluxBicubic,
-        "SlowSchwarzschildEccentricFlux": SlowSchwarzschildEccentricFlux,
-        "FastKerrEccentricEquatorialFlux": FastKerrEccentricEquatorialFlux,
-        "Pn5AAKWaveform" : Pn5AAKWaveform,
-    }
+            "FastSchwarzschildEccentricFlux": FastSchwarzschildEccentricFlux,
+            "FastSchwarzschildEccentricFluxBicubic": FastSchwarzschildEccentricFluxBicubic,
+            "SlowSchwarzschildEccentricFlux": SlowSchwarzschildEccentricFlux,
+            "FastKerrEccentricEquatorialFlux": FastKerrEccentricEquatorialFlux,
+            "Pn5AAKWaveform": Pn5AAKWaveform,
+        }
 
     @property
     def stock_waveform_options(self):
-        print(
-            list(
-                self._stock_waveform_definitions.keys()
-            )
-        )
+        print(list(self._stock_waveform_definitions.keys()))
 
     def _get_viewing_angles(self, qS, phiS, qK, phiK):
         """Transform from the detector frame to the source frame"""
@@ -387,43 +407,35 @@ class FastKerrEccentricEquatorialFlux(
             sum module during instantiation. Default is {}.
         Ylm_kwargs: Optional kwargs to pass to the
             Ylm generator during instantiation. Default is {}.
-        use_gpu: If True, use GPU resources. Default is False.
         *args: args for waveform model.
         **kwargs: kwargs for waveform model.
 
     """
+
     def __init__(
         self,
-        inspiral_kwargs: Optional[dict]=None,
-        amplitude_kwargs: Optional[dict]=None,
-        sum_kwargs: Optional[dict]=None,
-        Ylm_kwargs: Optional[dict]=None,
-        mode_selector_kwargs: Optional[dict]=None,
-        use_gpu: bool=False,
+        inspiral_kwargs: Optional[dict] = None,
+        amplitude_kwargs: Optional[dict] = None,
+        sum_kwargs: Optional[dict] = None,
+        Ylm_kwargs: Optional[dict] = None,
+        mode_selector_kwargs: Optional[dict] = None,
         *args: Optional[tuple],
         **kwargs: Optional[dict],
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
-        if amplitude_kwargs is None:
-            amplitude_kwargs = {}
-        if sum_kwargs is None:
-            sum_kwargs = {}
-        if Ylm_kwargs is None:
-            Ylm_kwargs = {}
-        if mode_selector_kwargs is None:
-            mode_selector_kwargs = {}
-
-        KerrEccentricEquatorial.__init__(self, use_gpu=use_gpu)
-
         inspiral_kwargs["func"] = KerrEccEqFlux
         # inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 
+        if sum_kwargs is None:
+            sum_kwargs = {}
         mode_summation_module = InterpolatedModeSum
         if "output_type" in sum_kwargs:
             if sum_kwargs["output_type"] == "fd":
                 mode_summation_module = FDInterpolatedModeSum
 
+        if mode_selector_kwargs is None:
+            mode_selector_kwargs = {}
         mode_selection_module = ModeSelector
         if "mode_selection_type" in mode_selector_kwargs:
             if mode_selector_kwargs["mode_selection_type"] == "neural":
@@ -437,25 +449,23 @@ class FastKerrEccentricEquatorialFlux(
                     [0, 1, 2, 3, 4, 6, 7, 8, 9]
                 )
 
-        SphericalHarmonicWaveformBase.__init__(
-            self,
-            EMRIInspiral,
-            AmpInterpKerrEqEcc,
-            mode_summation_module,
-            mode_selection_module,
+        super().__init__(
+            inspiral_module=EMRIInspiral,
+            amplitude_module=AmpInterpKerrEqEcc,
+            sum_module=mode_summation_module,
+            mode_selector_module=mode_selection_module,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             mode_selector_kwargs=mode_selector_kwargs,
-            use_gpu=use_gpu,
             *args,
             **kwargs,
         )
 
-    @property
-    def gpu_capability(self):
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     @property
     def allow_batching(self):
@@ -508,7 +518,8 @@ class FastKerrEccentricEquatorialFlux(
 
 
 class FastSchwarzschildEccentricFlux(
-    SphericalHarmonicWaveformBase, SchwarzschildEccentric):
+    SphericalHarmonicWaveformBase, SchwarzschildEccentric
+):
     """Prebuilt model for fast Schwarzschild eccentric flux-based waveforms.
 
     This model combines the most efficient modules to produce the fastest
@@ -541,43 +552,35 @@ class FastSchwarzschildEccentricFlux(
             sum module during instantiation. Default is {}.
         Ylm_kwargs: Optional kwargs to pass to the
             Ylm generator during instantiation. Default is {}.
-        use_gpu: If True, use GPU resources. Default is False.
         *args: args for waveform model.
         **kwargs: kwargs for waveform model.
 
     """
+
     def __init__(
         self,
-        inspiral_kwargs: Optional[dict]=None,
-        amplitude_kwargs: Optional[dict]=None,
-        sum_kwargs: Optional[dict]=None,
-        Ylm_kwargs: Optional[dict]=None,
-        mode_selector_kwargs: Optional[dict]=None,
-        use_gpu: bool=False,
+        inspiral_kwargs: Optional[dict] = None,
+        amplitude_kwargs: Optional[dict] = None,
+        sum_kwargs: Optional[dict] = None,
+        Ylm_kwargs: Optional[dict] = None,
+        mode_selector_kwargs: Optional[dict] = None,
         *args: Optional[tuple],
         **kwargs: Optional[dict],
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
-        if amplitude_kwargs is None:
-            amplitude_kwargs = {}
-        if sum_kwargs is None:
-            sum_kwargs = {}
-        if Ylm_kwargs is None:
-            Ylm_kwargs = {}
-        if mode_selector_kwargs is None:
-            mode_selector_kwargs = {}
-
-        SchwarzschildEccentric.__init__(self, use_gpu=use_gpu, nmax=30)
-
         inspiral_kwargs["func"] = SchwarzEccFlux
         # inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 
+        if sum_kwargs is None:
+            sum_kwargs = {}
         mode_summation_module = InterpolatedModeSum
         if "output_type" in sum_kwargs:
             if sum_kwargs["output_type"] == "fd":
                 mode_summation_module = FDInterpolatedModeSum
 
+        if mode_selector_kwargs is None:
+            mode_selector_kwargs = {}
         mode_selection_module = ModeSelector
         if "mode_selection_type" in mode_selector_kwargs:
             if mode_selector_kwargs["mode_selection_type"] == "neural":
@@ -589,26 +592,25 @@ class FastSchwarzschildEccentricFlux(
                     )
                 mode_selector_kwargs["keep_inds"] = np.array([0, 1, 3, 4, 6, 7, 8, 9])
 
-        SphericalHarmonicWaveformBase.__init__(
-            self,
-            EMRIInspiral,
-            RomanAmplitude,
-            mode_summation_module,
-            mode_selection_module,
+        super().__init__(
+            inspiral_module=EMRIInspiral,
+            amplitude_module=RomanAmplitude,
+            sum_module=mode_summation_module,
+            mode_selector_module=mode_selection_module,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             mode_selector_kwargs=mode_selector_kwargs,
-            use_gpu=use_gpu,
+            nmax=30,
             normalize_amps=True,
             *args,
             **kwargs,
         )
 
-    @property
-    def gpu_capability(self):
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     @property
     def allow_batching(self):
@@ -658,7 +660,8 @@ class FastSchwarzschildEccentricFlux(
 
 
 class FastSchwarzschildEccentricFluxBicubic(
-    SphericalHarmonicWaveformBase, SchwarzschildEccentric):
+    SphericalHarmonicWaveformBase, SchwarzschildEccentric
+):
     """Prebuilt model for fast Schwarzschild eccentric flux-based waveforms.
 
     This model combines the most efficient modules to produce the fastest
@@ -691,43 +694,35 @@ class FastSchwarzschildEccentricFluxBicubic(
             sum module during instantiation. Default is {}.
         Ylm_kwargs: Optional kwargs to pass to the
             Ylm generator during instantiation. Default is {}.
-        use_gpu: If True, use GPU resources. Default is False.
         *args: args for waveform model.
         **kwargs: kwargs for waveform model.
 
     """
+
     def __init__(
         self,
-        inspiral_kwargs: Optional[dict]=None,
-        amplitude_kwargs: Optional[dict]=None,
-        sum_kwargs: Optional[dict]=None,
-        Ylm_kwargs: Optional[dict]=None,
-        mode_selector_kwargs: Optional[dict]=None,
-        use_gpu: bool=False,
+        inspiral_kwargs: Optional[dict] = None,
+        amplitude_kwargs: Optional[dict] = None,
+        sum_kwargs: Optional[dict] = None,
+        Ylm_kwargs: Optional[dict] = None,
+        mode_selector_kwargs: Optional[dict] = None,
         *args: Optional[tuple],
         **kwargs: Optional[dict],
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
-        if amplitude_kwargs is None:
-            amplitude_kwargs = {}
-        if sum_kwargs is None:
-            sum_kwargs = {}
-        if Ylm_kwargs is None:
-            Ylm_kwargs = {}
-        if mode_selector_kwargs is None:
-            mode_selector_kwargs = {}
-
-        SchwarzschildEccentric.__init__(self, use_gpu=use_gpu)
-
         inspiral_kwargs["func"] = SchwarzEccFlux
         # inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 
+        if sum_kwargs is None:
+            sum_kwargs = {}
         mode_summation_module = InterpolatedModeSum
         if "output_type" in sum_kwargs:
             if sum_kwargs["output_type"] == "fd":
                 mode_summation_module = FDInterpolatedModeSum
 
+        if mode_selector_kwargs is None:
+            mode_selector_kwargs = {}
         mode_selection_module = ModeSelector
         if "mode_selection_type" in mode_selector_kwargs:
             if mode_selector_kwargs["mode_selection_type"] == "neural":
@@ -739,25 +734,23 @@ class FastSchwarzschildEccentricFluxBicubic(
                     )
                 mode_selector_kwargs["keep_inds"] = np.array([0, 1, 3, 4, 6, 7, 8, 9])
 
-        SphericalHarmonicWaveformBase.__init__(
-            self,
-            EMRIInspiral,
-            AmpInterpSchwarzEcc,
-            mode_summation_module,
-            mode_selection_module,
+        super().__init__(
+            inspiral_module=EMRIInspiral,
+            amplitude_module=AmpInterpSchwarzEcc,
+            sum_module=mode_summation_module,
+            mode_selector_module=mode_selection_module,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             mode_selector_kwargs=mode_selector_kwargs,
-            use_gpu=use_gpu,
             *args,
             **kwargs,
         )
 
-    @property
-    def gpu_capability(self):
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     @property
     def allow_batching(self):
@@ -804,7 +797,10 @@ class FastSchwarzschildEccentricFluxBicubic(
             **kwargs,
         )
 
-class SlowSchwarzschildEccentricFlux(SphericalHarmonicWaveformBase, SchwarzschildEccentric):
+
+class SlowSchwarzschildEccentricFlux(
+    SphericalHarmonicWaveformBase, SchwarzschildEccentric
+):
     """Prebuilt model for slow Schwarzschild eccentric flux-based waveforms.
 
     This model combines the various modules to produce the a reference waveform
@@ -839,15 +835,14 @@ class SlowSchwarzschildEccentricFlux(SphericalHarmonicWaveformBase, Schwarzschil
             sum module during instantiation. Default is {}.
         Ylm_kwargs: Optional kwargs to pass to the
             Ylm generator during instantiation. Default is {}.
-        use_gpu: If True, use GPU resources. Default is False.
         *args: args for waveform model.
         **kwargs: kwargs for waveform model.
 
     """
 
-    @property
-    def gpu_capability(self):
-        return False
+    @classmethod
+    def supported_backends(cls):
+        return cls.CPU_ONLY()
 
     @property
     def allow_batching(self):
@@ -855,40 +850,28 @@ class SlowSchwarzschildEccentricFlux(SphericalHarmonicWaveformBase, Schwarzschil
 
     def __init__(
         self,
-        inspiral_kwargs: Optional[dict]=None,
-        amplitude_kwargs: Optional[dict]=None,
-        sum_kwargs: Optional[dict]=None,
-        Ylm_kwargs: Optional[dict]=None,
-        use_gpu: bool=False,
+        inspiral_kwargs: Optional[dict] = None,
+        amplitude_kwargs: Optional[dict] = None,
+        sum_kwargs: Optional[dict] = None,
+        Ylm_kwargs: Optional[dict] = None,
         *args: Optional[tuple],
         **kwargs: Optional[dict],
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
-        if amplitude_kwargs is None:
-            amplitude_kwargs = {}
-        if sum_kwargs is None:
-            sum_kwargs = {}
-        if Ylm_kwargs is None:
-            Ylm_kwargs = {}
-
-        SchwarzschildEccentric.__init__(self, use_gpu=use_gpu)
-
         # declare specific properties
         inspiral_kwargs["DENSE_STEPPING"] = 1
         inspiral_kwargs["func"] = SchwarzEccFlux
 
-        SphericalHarmonicWaveformBase.__init__(
-            self,
-            EMRIInspiral,
-            AmpInterpSchwarzEcc,
-            DirectModeSum,
-            ModeSelector,
+        super().__init__(
+            inspiral_module=EMRIInspiral,
+            amplitude_module=AmpInterpSchwarzEcc,
+            sum_module=DirectModeSum,
+            mode_selector_module=ModeSelector,
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
             Ylm_kwargs=Ylm_kwargs,
-            use_gpu=use_gpu,
             *args,
             **kwargs,
         )
@@ -936,6 +919,7 @@ class SlowSchwarzschildEccentricFlux(SphericalHarmonicWaveformBase, Schwarzschil
             *args,
             **kwargs,
         )
+
 
 class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase):
     r"""Waveform generation class for AAK with 5PN trajectory.
@@ -989,24 +973,26 @@ class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase):
             {}. This is stored as an attribute.
         sum_kwargs: Optional kwargs to pass to the
             sum module during instantiation. Default is {}.
-        use_gpu: If True, use GPU resources. Default is False.
     """
 
     def __init__(
-        self, inspiral_kwargs: Optional[dict]=None, sum_kwargs:Optional[dict]=None, use_gpu:bool=False
+        self,
+        inspiral_kwargs: Optional[dict] = None,
+        sum_kwargs: Optional[dict] = None,
+        **kwargs,
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
-        if sum_kwargs is None:
-            sum_kwargs = {}
-
         inspiral_kwargs["func"] = PN5
 
-        AAKWaveformBase.__init__(
-            self,
-            EMRIInspiral,
-            AAKSummation,
+        super().__init__(
+            inspiral_module=EMRIInspiral,
+            sum_module=AAKSummation,
             inspiral_kwargs=inspiral_kwargs,
             sum_kwargs=sum_kwargs,
-            use_gpu=use_gpu,
+            **kwargs,
         )
+
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()

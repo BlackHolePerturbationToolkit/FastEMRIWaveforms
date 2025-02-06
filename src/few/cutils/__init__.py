@@ -1,4 +1,5 @@
 import dataclasses
+import enum
 import typing
 import types
 
@@ -87,8 +88,28 @@ class Backend:
     xp: types.ModuleType
     """Reference to package handling the backend ndarrays (numpy or cupy for now)"""
 
-    def __init__(self, name: str, methods: BackendMethods):
+    class Feature(enum.Flag):
+        NUMPY = enum.auto()
+        """Flag indicating that backend uses numpy.ndarray"""
+
+        CUPY = enum.auto()
+        """Flag indicating that backend uses cupy.ndarray"""
+
+        CUDA = enum.auto()
+        """Flag indicating that backend uses CUDA devices and offers a set_cuda_device() method."""
+
+        GPU = enum.auto()
+        """Flag indicating that backend uses GPU hardware"""
+
+        NONE = 0
+        """Special flag representing no activated feature"""
+
+    features: Feature
+    """List of Backend features used by a backend"""
+
+    def __init__(self, name: str, methods: BackendMethods, features: Feature):
         self.name = name
+
         self.pyWaveform = methods.pyWaveform
         self.interp2D = methods.interp2D
         self.interpolate_arrays_wrap = methods.interpolate_arrays_wrap
@@ -97,6 +118,8 @@ class Backend:
         self.neural_layer_wrap = methods.neural_layer_wrap
         self.transform_output_wrap = methods.transform_output_wrap
         self.xp = methods.xp
+
+        self.features = features
 
     @staticmethod
     def _check_module_installed(backend_name: str, module_name: str):
@@ -109,6 +132,30 @@ class Backend:
             raise BackendNotInstalled(
                 "The '{}' backend is not installed.".format(backend_name)
             ) from e
+
+    def supports(self, feature: Feature) -> bool:
+        """Check whether a backend supports a given feature"""
+        return feature in self.features
+
+    @property
+    def uses_gpu(self) -> bool:
+        """Shortcut to check if a backend supports GPU"""
+        return self.supports(feature=Backend.Feature.GPU)
+
+    @property
+    def uses_numpy(self) -> bool:
+        """Shortcut to check if a backend makes use of NumPy"""
+        return self.supports(feature=Backend.Feature.NUMPY)
+
+    @property
+    def uses_cupy(self) -> bool:
+        """Shortcut to check if a backend makes use of CuPy"""
+        return self.supports(feature=Backend.Feature.CUPY)
+
+    @property
+    def uses_cuda(self) -> bool:
+        """Shortcut to check whether a backend uses CUDA devices"""
+        return self.supports(feature=Backend.Feature.CUDA)
 
 
 class CpuBackend(Backend):
@@ -149,7 +196,11 @@ class CpuBackend(Backend):
         name = "cpu"
         self._check_module_installed(name, "few_backend_cpu")
 
-        super().__init__(name="cpu", methods=self.cpu_methods_loader())
+        super().__init__(
+            name="cpu",
+            methods=self.cpu_methods_loader(),
+            features=Backend.Feature.NUMPY,
+        )
 
 
 class _CudaBackend(Backend):
@@ -423,8 +474,13 @@ class Cuda11xBackend(_CudaBackend):
             module_loader=Cuda11xBackend.cuda11x_module_loader,
             dynlib_loader=Cuda11xBackend.cuda11x_dynlib_loader,
         )
+        Feature = Backend.Feature
 
-        super().__init__(name=name, methods=methods)
+        super().__init__(
+            name=name,
+            methods=methods,
+            features=Feature.CUPY | Feature.CUDA | Feature.GPU,
+        )
 
 
 class Cuda12xBackend(_CudaBackend):
@@ -516,8 +572,13 @@ class Cuda12xBackend(_CudaBackend):
             module_loader=Cuda12xBackend.cuda12x_module_loader,
             dynlib_loader=Cuda12xBackend.cuda12x_dynlib_loader,
         )
+        Feature = Backend.Feature
 
-        super().__init__(name=name, methods=methods)
+        super().__init__(
+            name=name,
+            methods=methods,
+            features=Feature.CUPY | Feature.CUDA | Feature.GPU,
+        )
 
 
 KNOWN_BACKENDS = {
@@ -601,6 +662,13 @@ class BackendsManager:
 
         If current status is different from UNLOADED, return it directly.
         """
+        if backend_name not in self._registry:
+            raise ValueError(
+                "'{}' is not a valid backend name, expected any of: {}".format(
+                    backend_name, ", ".join(self.backend_list)
+                )
+            )
+
         if not isinstance(
             current_status := self._registry[backend_name], BackendStatusUnloaded
         ):

@@ -34,17 +34,29 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
 
     """
 
-    def __init__(self, *args, use_gpu=False, **kwargs):
+    def __init__(self, *args, **kwargs):
         ParallelModuleBase.__init__(self, *args, **kwargs)
         SchwarzschildEccentric.__init__(self, *args, **kwargs)
         SummationBase.__init__(self, *args, **kwargs)
 
-    @property
-    def gpu_capability(self):
-        """Confirms GPU capability"""
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.CPU_RECOMMENDED_WITH_GPU_SUPPORT()
 
-    def sum(self, t, teuk_modes, ylms, phase_interp_t, phases_in, m_arr, n_arr, *args, dt=10., integrate_backwards=False, **kwargs):
+    def sum(
+        self,
+        t,
+        teuk_modes,
+        ylms,
+        phase_interp_t,
+        phases_in,
+        m_arr,
+        n_arr,
+        *args,
+        dt=10.0,
+        integrate_backwards=False,
+        **kwargs,
+    ):
         r"""Direct summation function.
 
         This function directly sums the amplitude and phase information, as well

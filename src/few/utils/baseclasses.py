@@ -21,97 +21,113 @@ various modules. When creating new modules, these classes should be used to main
 a common interface and pass information related to each model.
 """
 
-from abc import ABC
+from __future__ import annotations
+
 import numpy as np
 
-from typing import Union, Optional
+import types
+from typing import Optional, Sequence, TypeVar, Union
 
 # Python imports
-from ..utils.constants import *
+from ..cutils import Backend
 from ..utils.citations import Citable, REFERENCE
 from ..utils.mappings import kerrecceq_forward_map
+from ..utils.globals import get_logger, get_backend, get_first_backend
 
-from few.utils.globals import get_logger
+xp_ndarray = TypeVar("xp_ndarray")
+"""Generic alias for backend ndarray"""
 
-few_logger = get_logger()
 
+class ParallelModuleBase(Citable):
+    """
+    Base class for modules that can use a GPU (or revert back to CPU).
 
-class ParallelModuleBase(Citable, ABC):
-    """Base class for modules that can use GPUs.
-
-    This class mainly handles setting GPU usage.
+    This class mainly handles backend selection. Each backend offers accelerated
+    computations on a specific device (cpu, CUDA 11.x enabled GPU, CUDA 12.x enabled GPU).
 
     args:
-        use_gpu: If True, use GPU resources. Default is False.
-
+        force_backend (str, optional): Name of the backend to use
     """
 
-    def __init__(self, *args, use_gpu: bool = False, **kwargs):
-        self.use_gpu = use_gpu
+    _backend_name: str
 
-        # checks if gpu capability is available if requested
-        self.sanity_check_gpu(use_gpu)
+    def __init__(self, force_backend: Optional[Union[str, Backend]] = None):
+        if force_backend is not None:
+            if isinstance(force_backend, Backend):
+                force_backend = force_backend.name
+            self._backend_name = get_backend(force_backend).name
+        else:
+            self._backend_name = get_first_backend(self.supported_backends()).name
 
     @property
-    def xp(self) -> object:
-        """Cupy or Numpy"""
-        xp = np if not self.use_gpu else fast_backend.xp
-        return xp
+    def backend(self) -> Backend:
+        """Access the underlying backend."""
+        return get_backend(self._backend_name)
 
     @classmethod
+    def supported_backends(cls) -> Sequence[str]:
+        """List of backends supported by a parallel module by order of preference."""
+        raise NotImplementedError(
+            "Class {} does not implement the supported_backends method.".format(cls)
+        )
+
+    @staticmethod
+    def CPU_ONLY() -> list[str]:
+        """List of supported backend for CPU only class"""
+        return ["cpu"]
+
+    @staticmethod
+    def GPU_RECOMMENDED() -> list[str]:
+        """List of supported backends for GPU-recommended class with CPU support"""
+        return ["cuda12x", "cuda11x", "cpu"]
+
+    @staticmethod
+    def CPU_RECOMMENDED_WITH_GPU_SUPPORT() -> list[str]:
+        """List of supported backends for CPU-recommended class with GPU support"""
+        return ["cpu", "cuda12x", "cuda11x"]
+
+    @staticmethod
+    def GPU_ONLY() -> list[str]:
+        """List of supported backends for GPU-only class"""
+        return ["cuda12x", "cuda11x"]
+
     @property
-    def gpu_capability(self):
-        """Indicator if the module has gpu capability"""
-        raise NotImplementedError
+    def xp(self) -> types.ModuleType:
+        """Return the module providing ndarray capabilities"""
+        return self.backend.xp
 
-    @classmethod
-    def __call__(*args, **kwargs):
-        """Method to call waveform model"""
-        raise NotImplementedError
+    @property
+    def backend_name(self) -> str:
+        """Return the name of current backend"""
+        return self.backend.name
 
-    def sanity_check_gpu(self, use_gpu: bool):
-        """Check if this class has GPU capability
+    ParallelModuleDerivate = TypeVar(
+        "ParallelModuleDerivate", bound="ParallelModuleBase"
+    )
 
-        If the user is requesting GPU usage, this will confirm the class has
-        GPU capabilites.
-
-        Args:
-            use_gpu: If True, the user is requesting GPU usage.
-
-        Raises:
-            ValueError: The user is requesting GPU usage, but this class does
-                not have that capability.
-
+    def build_with_same_backend(
+        self,
+        module_class: type[ParallelModuleDerivate],
+        args: Optional[list] = None,
+        kwargs: Optional[dict] = None,
+    ) -> ParallelModuleDerivate:
         """
-        if (self.gpu_capability is False or gpu_available is False) and use_gpu is True:
-            if self.gpu_capability is False:
-                raise ValueError(
-                    "The use_gpu kwarg is True, but this class does not have GPU capabilites."
-                )
-            else:
-                raise ValueError("Either a GPU and/or CuPy is not available.")
-
-    def adjust_gpu_usage(self, use_gpu: bool, kwargs: Union[list, dict]):
-        """Adjust all inputs for gpu usage
-
-        If user wants to use gpu, it will change all :code:`kwargs` in
-        so that :code:`use_gpu=True`.
+        Build an instance of `module_class` with same backend as current object.
 
         args:
-            use_gpu (bool): If True, use gpu resources.
-            kwargs (list of dicts or dict): List of kwargs dictionaries or
-                single dictionary for each constituent class in the
-                waveform generator.
-
+          module_class: class of the object to be built, must derive from ParallelModuleBase
+          args (list, optional): positional arguments for module_class constructor
+          kwargs (dict, optional): keyword arguments for module_class constructor
+                                   (the 'force_backend' argument will be ignored and replaced)
         """
+        args = [] if args is None else args
+        return module_class(*args, **self.adapt_backend_kwargs(kwargs=kwargs))
 
-        if use_gpu:
-            if isinstance(kwargs, list):
-                for i, kwargs_i in enumerate(kwargs):
-                    kwargs[i]["use_gpu"] = use_gpu
-            else:
-                kwargs["use_gpu"] = use_gpu
-
+    def adapt_backend_kwargs(self, kwargs: Optional[dict] = None) -> dict:
+        """Adapt a set of keyword arguments to add/set 'force_backend' to current backend"""
+        if kwargs is None:
+            kwargs = {}
+        kwargs["force_backend"] = self.backend_name
         return kwargs
 
 
@@ -131,17 +147,79 @@ class SphericalHarmonic(ParallelModuleBase):
     As we assume the amplitudes have been remapped to a spherical harmonic basis,
     we use -2 spin-weighted spherical harmonics (:math:`(s=-2)Y_{l,m}`) in place
     of the more generic angular function from Eq. :eq:`emri_wave_eq`.
-
-    args:
-        use_gpu (bool, optional): If True, will allocate arrays on the GPU.
-            Default is False.
-
     """
 
+    lmax: int
+    """Maximum l value for the model."""
+
+    nmax: int
+    """Maximum n value for the model."""
+
+    num_modes: int
+    """Total number of modes in the model"""
+
+    num_teuk_modes: int
+    """Number of Teukolsky modes in the model."""
+
+    m0sort: xp_ndarray
+    """1D Array of sorted mode indices with m=0 first, then m<0, then m>0."""
+
+    l_arr_no_mask: xp_ndarray
+    """1D Array of l values for each mode before masking."""
+    m_arr_no_mask: xp_ndarray
+    """1D Array of m values for each mode before masking."""
+    n_arr_no_mask: xp_ndarray
+    """1D Array of n values for each mode before masking."""
+
+    lmn_indices: dict[int, int]
+    """Dictionary of mode indices to mode number."""
+
+    m0mask: xp_ndarray
+    """1D Array Mask for m != 0."""
+
+    num_m_zero_up: int
+    """Number of modes with m >= 0."""
+    num_m0: int
+    """Number of modes with m == 0."""
+    num_m_1_up: int
+    """Number of modes with m > 0."""
+
+    l_arr: xp_ndarray
+    """1D Array of l values for each mode."""
+    m_arr: xp_ndarray
+    """1D Array of m values for each mode."""
+    n_arr: xp_ndarray
+    """1D Array of n values for each mode."""
+
+    m_zero_up_mask: xp_ndarray
+    """1D Mask for m >= 0."""
+
+    unique_l: xp_ndarray
+    """1D Array of unique l values."""
+    unique_m: xp_ndarray
+    """1D Array of unique m values."""
+    num_unique_lm: int
+    """Number of unique (l,m) values."""
+
+    index_map: dict[tuple[int, int, int], int]
+    """Maps mode index to mode tuple."""
+    special_index_map: dict[tuple[int, int, int], int]
+    """Maps mode index to mode tuple with m > 0."""
+    index_map_arr: xp_ndarray
+    """Array mapping mode tuple to mode index - used for fast indexing. Returns -1 if mode does not exist."""
+    special_index_map_arr: xp_ndarray
+    """Array mapping mode tuple to mode index with m > 0 - used for fast indexing. Returns -1 if mode does not exist."""
+
     def __init__(
-        self, *args: Optional[list], use_gpu: bool = False, **kwargs: Optional[dict]
+        self,
+        lmax: int = 10,
+        nmax: int = 30,
+        **kwargs,
     ):
-        ParallelModuleBase.__init__(self, *args, use_gpu=use_gpu, **kwargs)
+        super().__init__(**kwargs)
+
+        self.lmax = lmax
+        self.nmax = nmax
 
         # fill all lmn mode values
         md = []
@@ -153,7 +231,6 @@ class SphericalHarmonic(ParallelModuleBase):
         # total number of modes in the model
         self.num_modes = len(md)
         self.num_teuk_modes = self.num_modes
-        """int: Number of Teukolsky modes in the model."""
 
         # mask for m == 0
         m0mask = self.xp.array(
@@ -172,70 +249,59 @@ class SphericalHarmonic(ParallelModuleBase):
                 self.xp.arange(self.num_teuk_modes)[~m0mask],
             ]
         )
-        """1D np.ndarray: Sorted mode indices with m=0 first, then m<0, then m>0."""
 
         # sorts the mode indexes
         md = self.xp.asarray(md).T[:, m0sort].astype(self.xp.int32)
 
         # store l m and n values
         self.l_arr_no_mask = md[0]
-        """1D np.ndarray: Array of l values for each mode before masking."""
         self.m_arr_no_mask = md[1]
-        """1D np.ndarray: Array of m values for each mode before masking."""
         self.n_arr_no_mask = md[2]
-        """1D np.ndarray: Array of n values for each mode before masking."""
 
         # adjust with .get method for cupy
-        try:
+        if self.backend.supports(self.backend.Feature.CUPY):
             lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T.get())}
-
-        except AttributeError:
+        else:
             lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
 
         self.lmn_indices = lmn_indices
-        """dict: Dictionary of mode indices to mode number."""
 
         # store the mask as m != 0 is True
         self.m0mask = self.m_arr_no_mask != 0
-        """1D np.ndarray: Mask for m != 0."""
+
         # number of m >= 0
         self.num_m_zero_up = len(self.m_arr_no_mask)
-        """int: Number of modes with m >= 0."""
+
         # number of m == 0
         self.num_m0 = len(self.xp.arange(self.num_teuk_modes)[m0mask])
-        """int: Number of modes with m == 0."""
+
         # number of m > 0
         self.num_m_1_up = self.num_m_zero_up - self.num_m0
-        """int: Number of modes with m > 0."""
+
         # create final arrays to include -m modes
         self.l_arr = self.xp.concatenate(
             [self.l_arr_no_mask, self.l_arr_no_mask[self.m0mask]]
         )
-        """1D np.ndarray: Array of l values for each mode."""
         self.m_arr = self.xp.concatenate(
             [self.m_arr_no_mask, -self.m_arr_no_mask[self.m0mask]]
         )
-        """1D np.ndarray: Array of m values for each mode."""
         self.n_arr = self.xp.concatenate(
             [self.n_arr_no_mask, self.n_arr_no_mask[self.m0mask]]
         )
-        """1D np.ndarray: Array of n values for each mode."""
 
         # mask for m >= 0
         self.m_zero_up_mask = self.m_arr >= 0
-        """1D np.ndarray: Mask for m >= 0."""
 
         # find unique sets of (l,m)
         # create inverse array to build full (l,m,n) from unique l and m
         # also adjust for cupy
-        try:
+        if self.backend.supports(self.backend.Feature.CUPY):
             temp, self.inverse_lm = np.unique(
                 np.asarray([self.l_arr.get(), self.m_arr.get()]).T,
                 axis=0,
                 return_inverse=True,
             )
-
-        except AttributeError:
+        else:
             temp, self.inverse_lm = np.unique(
                 np.asarray([self.l_arr, self.m_arr]).T, axis=0, return_inverse=True
             )
@@ -243,19 +309,14 @@ class SphericalHarmonic(ParallelModuleBase):
         # unique values of l and m
         unique_l, unique_m = self.xp.asarray(temp).T
         self.unique_l = unique_l
-        """1D np.ndarray: Array of unique l values."""
         self.unique_m = unique_m
-        """1D np.ndarray: Array of unique m values."""
 
         # number of unique values
         self.num_unique_lm = len(self.unique_l)
-        """int: Number of unique (l,m) values."""
 
         # creates special maps to the modes
         self.index_map = {}
-        """dict: Maps mode index to mode tuple."""
         self.special_index_map = {}  # maps the minus m values to positive m
-        """dict: Maps mode index to mode tuple with m > 0."""
         self.index_map_arr = (
             self.xp.zeros(
                 (self.lmax + 1, self.lmax * 2 + 1, self.nmax * 2 + 1),
@@ -263,7 +324,6 @@ class SphericalHarmonic(ParallelModuleBase):
             )
             - 1
         )
-        """np.ndarray: Array mapping mode tuple to mode index - used for fast indexing. Returns -1 if mode does not exist."""
         self.special_index_map_arr = (
             self.xp.zeros(
                 (self.lmax + 1, self.lmax * 2 + 1, self.nmax * 2 + 1),
@@ -271,7 +331,6 @@ class SphericalHarmonic(ParallelModuleBase):
             )
             - 1
         )
-        """np.ndarray: Array mapping mode tuple to mode index with m > 0 - used for fast indexing. Returns -1 if mode does not exist."""
         for i, (l, m, n) in enumerate(zip(self.l_arr, self.m_arr, self.n_arr)):
             try:
                 l = l.item()
@@ -349,43 +408,40 @@ class SchwarzschildEccentric(SphericalHarmonic):
     Schwarzschild eccentric base class.
 
     Args:
-        use_gpu: If True, will allocate arrays on the GPU. Default is False.
         lmax: Maximum l value for the model. Default is 10.
         nmax: Maximum n value for the model. Default is 30.
         ndim: Number of phases in the model. Default is 2.
     """
 
+    background: str = "Schwarzschild"
+    """The spacetime background for this model."""
+
+    descriptor: str = "eccentric"
+    """Description of the inspiral trajectory properties for this model."""
+
+    frame: str = "source"
+    """Frame in which source is generated. Is source frame."""
+
+    needs_Y: bool = False
+    """If True, model expects inclination parameter Y (rather than xI)."""
+
+    ndim: int
+    """Number of phases in the model."""
+
     def __init__(
         self,
-        *args: Optional[list],
-        use_gpu: bool = False,
         lmax: int = 10,
         nmax: int = 30,
         ndim: int = 2,
-        **kwargs: Optional[dict],
+        **kwargs,
     ):
-        # some descriptive information
-        self.background = "Schwarzschild"
-        """str: The spacetime background for this model. Is Schwarzschild."""
-        self.descriptor = "eccentric"
-        """str: Description of the inspiral trajectory properties for this model. Is eccentric."""
-        self.frame = "source"
-        """str: Frame in which source is generated. Is source frame."""
-        self.needs_Y = False
-        """bool: If True, model expects inclination parameter Y (rather than xI). Is False."""
-
-        # set mode index settings
-        self.lmax = lmax
-        self.nmax = nmax
+        super().__init__(lmax=lmax, nmax=nmax, **kwargs)
 
         self.ndim = ndim
 
-        SphericalHarmonic.__init__(self, *args, use_gpu=use_gpu, **kwargs)
-
-    @property
-    def gpu_capability(self):
-        """Confirms GPU capability"""
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     def sanity_check_init(
         self, M: float, mu: float, a: float, p0: float, e0: float, xI: float
@@ -455,43 +511,40 @@ class KerrEccentricEquatorial(SphericalHarmonic):
     Kerr eccentric equatorial base class.
 
     Args:
-        use_gpu: If True, will allocate arrays on the GPU. Default is False.
         lmax: Maximum l value for the model. Default is 10.
         nmax: Maximum n value for the model. Default is 55.
         ndim: Number of phases in the model. Default is 2.
     """
 
+    background: str = "Kerr"
+    """The spacetime background for this model."""
+
+    descriptor: str = "eccentric equatorial"
+    """Description of the inspiral trajectory properties for this model."""
+
+    frame: str = "source"
+    """Frame in which source is generated. Is source frame."""
+
+    needs_Y: bool = False
+    """If True, model expects inclination parameter Y (rather than xI)."""
+
+    ndim: int
+    """Number of phases in the model."""
+
     def __init__(
         self,
-        *args: Optional[list],
-        use_gpu: bool = False,
         lmax: int = 10,
         nmax: int = 55,
         ndim: int = 2,
-        **kwargs: Optional[dict],
+        **kwargs,
     ):
-        # some descriptive information
-        self.background = "Kerr"
-        """str: The spacetime background for this model. Is Kerr."""
-        self.descriptor = "eccentric equatorial"
-        """str: Description of the inspiral trajectory properties for this model. Is eccentric equatorial."""
-        self.frame = "source"
-        """str: Frame in which source is generated. Is source frame."""
-        self.needs_Y = False
-        """bool: If True, model expects inclination parameter Y (rather than xI). Is False."""
-
-        # set mode index settings
-        self.lmax = lmax
-        self.nmax = nmax
+        super().__init__(lmax=lmax, nmax=nmax, **kwargs)
 
         self.ndim = ndim
 
-        SphericalHarmonic.__init__(self, *args, use_gpu=use_gpu, **kwargs)
-
-    @property
-    def gpu_capability(self):
-        """Confirms GPU capability"""
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     def sanity_check_init(
         self, M: float, mu: float, a: float, p0: float, e0: float, xI: float
@@ -574,25 +627,26 @@ class Pn5AAK(ParallelModuleBase):
 
     """
 
-    def __init__(
-        self, *args: Optional[list], use_gpu: bool = False, **kwargs: Optional[dict]
-    ):
-        ParallelModuleBase.__init__(self, *args, use_gpu=use_gpu, **kwargs)
+    background: str = "Kerr"
+    """The spacetime background for this model."""
 
-        # some descriptive information
-        self.background = "Kerr"
-        """str: The spacetime background for this model. Is Kerr."""
-        self.descriptor = "eccentric inclined"
-        """str: Description of the inspiral trajectory properties for this model. Is eccentric inclined."""
-        self.frame = "detector"
-        """str: Frame in which source is generated. Is detector frame."""
-        self.needs_Y = True
-        """bool: If True, model expects inclination parameter Y (rather than xI). Is True."""
+    descriptor: str = "eccentric inclined"
+    """Description of the inspiral trajectory properties for this model."""
+
+    frame: str = "detector"
+    """Frame in which source is generated. Is source frame."""
+
+    needs_Y: bool = True
+    """If True, model expects inclination parameter Y (rather than xI)."""
 
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
         """Return citations related to this module"""
         return [REFERENCE.PN5] + super(Pn5AAK, cls).module_references()
+
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     def sanity_check_angles(self, qS: float, phiS: float, qK: float, phiK: float):
         """Sanity check on viewing angles.
@@ -693,7 +747,7 @@ class Pn5AAK(ParallelModuleBase):
             Y0 = -Y0
 
         if mu / M > 1e-4:
-            few_logger.warning(
+            get_logger().warning(
                 "Mass ratio is outside of generally accepted range for an extreme mass ratio (1e-4). (q={})".format(
                     mu / M
                 )

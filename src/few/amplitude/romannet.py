@@ -23,7 +23,6 @@ import h5py
 # Python imports
 from ..utils.baseclasses import (
     SchwarzschildEccentric,
-    ParallelModuleBase,
 )
 from .base import AmplitudeBase
 from ..utils.globals import get_file_manager
@@ -77,7 +76,6 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
             few_dir (str): absolute path to the FastEMRIWaveforms directory
             break_index (int): length of output vector from network divded by 2.
                 It is really the number of pairs of real and imaginary numbers.
-            use_gpu (bool): If True, use the GPU.
             neural_layer (obj): C++ class for computing neural network operations
             transform_output(obj): C++ class for transforming output from
                 neural network in the reduced basis to the full amplitude basis.
@@ -110,9 +108,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         pass
 
     def __init__(self, buffer_length=1000, **kwargs):
-        ParallelModuleBase.__init__(self, **kwargs)
-        SchwarzschildEccentric.__init__(self, **kwargs)
-        AmplitudeBase.__init__(self, **kwargs)
+        super().__init__(**kwargs)
 
         # check if user has the necessary data
         # if not, the data will automatically download
@@ -145,21 +141,20 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
 
     @property
     def neural_layer(self):
-        return neural_layer_wrap if self.use_gpu else neural_layer_wrap_cpu
+        return self.backend.neural_layer_wrap
 
     @property
     def transform_output(self):
-        return transform_output_wrap if self.use_gpu else transform_output_wrap_cpu
+        return self.backend.transform_output_wrap
 
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
         """Return citations related to this module"""
         return [REFERENCE.ROMANNET] + super(RomanAmplitude, cls).module_references()
 
-    @property
-    def gpu_capability(self):
-        """Confirms GPU capability"""
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     def _initialize_weights(self):
         # initalize weights/bias/dimensions for the neural network
@@ -260,7 +255,9 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
             ]
 
         # the input is (y, e)
-        y = schwarzecc_p_to_y(p, e, use_gpu=self.use_gpu)
+        y = schwarzecc_p_to_y(
+            p, e, use_gpu=self.backend.supports(self.backend.Feature.CUPY)
+        )
 
         # column-major single dimensional array input
         input = self.xp.concatenate([y, e])

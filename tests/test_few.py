@@ -2,23 +2,19 @@ import unittest
 import pickle
 import numpy as np
 
-import few
 from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode import SchwarzEccFlux
 from few.amplitude.romannet import RomanAmplitude
 from few.amplitude.ampinterp2d import AmpInterpSchwarzEcc
 from few.waveform import FastSchwarzschildEccentricFlux, SlowSchwarzschildEccentricFlux
 from few.utils.utility import get_overlap, get_mismatch
-from few.utils.ylm import GetYlms
-from few.utils.modeselector import ModeSelector
-from few.summation.interpolatedmodesum import CubicSplineInterpolant
 
-from few.utils.globals import get_logger
+from few.utils.globals import get_logger, get_first_backend
 
 few_logger = get_logger()
 
-gpu_available = few.cutils.fast.is_gpu
-few_logger.warning("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
+best_backend = get_first_backend(FastSchwarzschildEccentricFlux.supported_backends())
+few_logger.warning("FEW Test is running with backend {}".format(best_backend.name))
 
 
 class WaveformTest(unittest.TestCase):
@@ -30,7 +26,7 @@ class WaveformTest(unittest.TestCase):
             "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
             "buffer_length": int(
                 1e3
-            )  # all of the trajectories will be well under len = 1000
+            ),  # all of the trajectories will be well under len = 1000
         }
 
         # keyword arguments for inspiral generator (RomanAmplitude)
@@ -53,7 +49,7 @@ class WaveformTest(unittest.TestCase):
             amplitude_kwargs=amplitude_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             sum_kwargs=sum_kwargs,
-            use_gpu=gpu_available,
+            force_backend=best_backend,
         )
 
         check_pickle = pickle.dumps(fast)
@@ -70,7 +66,7 @@ class WaveformTest(unittest.TestCase):
         phi = np.pi / 4  # azimuthal viewing angle
         dist = 1.0  # distance
 
-        fast_wave = extracted_gen(M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
+        _fast_wave = extracted_gen(M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
 
     def test_fast_and_slow(self):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
@@ -78,7 +74,7 @@ class WaveformTest(unittest.TestCase):
             "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
             "buffer_length": int(
                 1e3
-            )  # all of the trajectories will be well under len = 1000
+            ),  # all of the trajectories will be well under len = 1000
         }
 
         # keyword arguments for inspiral generator (RomanAmplitude)
@@ -101,7 +97,7 @@ class WaveformTest(unittest.TestCase):
             amplitude_kwargs=amplitude_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             sum_kwargs=sum_kwargs,
-            use_gpu=gpu_available,
+            force_backend=best_backend,
         )
 
         # setup slow
@@ -109,11 +105,11 @@ class WaveformTest(unittest.TestCase):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
         inspiral_kwargs = {
             "DENSE_STEPPING": 1,  # we want a sparsely sampled trajectory
-            "buffer_length": int(1e7)  # dense stepping trajectories
+            "buffer_length": int(1e7),  # dense stepping trajectories
         }
 
-        # keyword arguments for inspiral generator (RomanAmplitude)
-        amplitude_kwargs = {"buffer_length": int(1e4)}  # this must be >= batch_size
+        # keyword arguments for amplitude generator (AmpInterpSchwarzEcc)
+        amplitude_kwargs = {}
 
         # keyword arguments for Ylm generator (GetYlms)
         Ylm_kwargs = {
@@ -121,13 +117,15 @@ class WaveformTest(unittest.TestCase):
         }
 
         # keyword arguments for summation generator (InterpolatedModeSum)
-        sum_kwargs = {"use_gpu": False}  # GPU is availabel for this type of summation
+        sum_kwargs = {
+            "force_backend": "cpu"
+        }  # GPU is availabel for this type of summation
         slow = SlowSchwarzschildEccentricFlux(
             inspiral_kwargs=inspiral_kwargs,
             amplitude_kwargs=amplitude_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             sum_kwargs=sum_kwargs,
-            use_gpu=False,
+            force_backend=best_backend,
         )
 
         # parameters
@@ -148,7 +146,7 @@ class WaveformTest(unittest.TestCase):
 
         fast_wave = fast(M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
 
-        mm = get_mismatch(slow_wave, fast_wave, use_gpu=gpu_available)
+        mm = get_mismatch(slow_wave, fast_wave, use_gpu=best_backend.uses_gpu)
 
         self.assertLess(mm, 1e-4)
 
@@ -156,7 +154,6 @@ class WaveformTest(unittest.TestCase):
         """
         Unit test to determine whether the Kerr models are working or not.
         """
-
 
 
 def amplitude_test(amp_class):
@@ -168,13 +165,15 @@ def amplitude_test(amp_class):
 
     p_all, e_all = np.asarray([temp.ravel() for temp in np.meshgrid(p, e)])
 
-    teuk_modes = amp_class(0., p_all, e_all, np.ones_like(p_all)*1.)
+    teuk_modes = amp_class(0.0, p_all, e_all, np.ones_like(p_all) * 1.0)
 
     # (2, 2, 0) and (7, -3, 1) modes
     specific_modes = [(2, 2, 0), (7, -3, 1)]
 
     # notice this returns a dictionary with keys as the mode tuple and values as the mode values at all trajectory points
-    specific_teuk_modes = amp_class(0., p_all, e_all, np.ones_like(p_all)*1., specific_modes=specific_modes)
+    specific_teuk_modes = amp_class(
+        0.0, p_all, e_all, np.ones_like(p_all) * 1.0, specific_modes=specific_modes
+    )
 
     # we can find the index to these modes to check
     inds = np.array([amp.special_index_map[lmn] for lmn in specific_modes])
