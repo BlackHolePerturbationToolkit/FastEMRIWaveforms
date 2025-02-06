@@ -16,26 +16,17 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import os
-
-import h5py
 import numpy as np
-
-# Cython/C++ imports
-from ..cutils.cpu import pyWaveform as pyWaveform_cpu
-from ..cutils.fast import pyWaveform as pyWaveform_gpu
 
 # Python imports
 from ..utils.baseclasses import Pn5AAK, ParallelModuleBase
 from .base import SummationBase
-from ..utils.utility import get_fundamental_frequencies
-from ..utils.pn_map import Y_to_xI
 from ..utils.constants import *
-from ..summation.interpolatedmodesum import CubicSplineInterpolant
 
 from few.utils.globals import get_logger
 
 few_logger = get_logger()
+
 
 class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
     """Calculate an AAK waveform from an input trajectory.
@@ -85,10 +76,10 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         interp_t: np.ndarray,
         interp_coeffs: np.ndarray,
         *args,
-        mich:bool=False,
-        dt:float=10.0,
-        integrate_backwards:bool=False,
-        **kwargs
+        mich: bool = False,
+        dt: float = 10.0,
+        integrate_backwards: bool = False,
+        **kwargs,
     ) -> None:
         r"""Compute an AAK waveform from an input trajectory.
 
@@ -171,8 +162,8 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         # if equatorial, set theta phase coefficients equal to phi counterparts
         # we check this by inspecting the first coefficient of Y
         # as equatorial goes to equatorial, this is a necessary and sufficient condition
-        if abs(interp_coeffs[0,2,0]) == 1.0:
-            interp_coeffs[:,4] = interp_coeffs[:,3]
+        if abs(interp_coeffs[0, 2, 0]) == 1.0:
+            interp_coeffs[:, 4] = interp_coeffs[:, 3]
 
         # convert to gpu if desired
         interp_coeffs_in = self.xp.transpose(

@@ -21,15 +21,10 @@ various modules. When creating new modules, these classes should be used to main
 a common interface and pass information related to each model.
 """
 
-
 from abc import ABC
 import numpy as np
 
 from typing import Union, Optional
-
-# try to import cupy
-from ..cutils import fast as fast_backend
-gpu_available = fast_backend.is_gpu
 
 # Python imports
 from ..utils.constants import *
@@ -37,7 +32,9 @@ from ..utils.citations import Citable, REFERENCE
 from ..utils.mappings import kerrecceq_forward_map
 
 from few.utils.globals import get_logger
+
 few_logger = get_logger()
+
 
 class ParallelModuleBase(Citable, ABC):
     """Base class for modules that can use GPUs.
@@ -49,7 +46,7 @@ class ParallelModuleBase(Citable, ABC):
 
     """
 
-    def __init__(self, *args, use_gpu:bool=False, **kwargs):
+    def __init__(self, *args, use_gpu: bool = False, **kwargs):
         self.use_gpu = use_gpu
 
         # checks if gpu capability is available if requested
@@ -117,6 +114,7 @@ class ParallelModuleBase(Citable, ABC):
 
         return kwargs
 
+
 class SphericalHarmonic(ParallelModuleBase):
     r"""Base class for waveforms constructed in a spherical harmonic basis.
 
@@ -139,14 +137,17 @@ class SphericalHarmonic(ParallelModuleBase):
             Default is False.
 
     """
-    def __init__(self, *args:Optional[list], use_gpu: bool=False, **kwargs:Optional[dict]):
+
+    def __init__(
+        self, *args: Optional[list], use_gpu: bool = False, **kwargs: Optional[dict]
+    ):
         ParallelModuleBase.__init__(self, *args, use_gpu=use_gpu, **kwargs)
 
         # fill all lmn mode values
         md = []
-        for l in  range(2, self.lmax+1):
+        for l in range(2, self.lmax + 1):
             for m in range(0, l + 1):
-                for n in range(-self.nmax, self.nmax+1):
+                for n in range(-self.nmax, self.nmax + 1):
                     md.append([l, m, n])
 
         # total number of modes in the model
@@ -207,11 +208,17 @@ class SphericalHarmonic(ParallelModuleBase):
         self.num_m_1_up = self.num_m_zero_up - self.num_m0
         """int: Number of modes with m > 0."""
         # create final arrays to include -m modes
-        self.l_arr = self.xp.concatenate([self.l_arr_no_mask, self.l_arr_no_mask[self.m0mask]])
+        self.l_arr = self.xp.concatenate(
+            [self.l_arr_no_mask, self.l_arr_no_mask[self.m0mask]]
+        )
         """1D np.ndarray: Array of l values for each mode."""
-        self.m_arr = self.xp.concatenate([self.m_arr_no_mask, -self.m_arr_no_mask[self.m0mask]])
+        self.m_arr = self.xp.concatenate(
+            [self.m_arr_no_mask, -self.m_arr_no_mask[self.m0mask]]
+        )
         """1D np.ndarray: Array of m values for each mode."""
-        self.n_arr = self.xp.concatenate([self.n_arr_no_mask, self.n_arr_no_mask[self.m0mask]])
+        self.n_arr = self.xp.concatenate(
+            [self.n_arr_no_mask, self.n_arr_no_mask[self.m0mask]]
+        )
         """1D np.ndarray: Array of n values for each mode."""
 
         # mask for m >= 0
@@ -249,9 +256,21 @@ class SphericalHarmonic(ParallelModuleBase):
         """dict: Maps mode index to mode tuple."""
         self.special_index_map = {}  # maps the minus m values to positive m
         """dict: Maps mode index to mode tuple with m > 0."""
-        self.index_map_arr = self.xp.zeros((self.lmax + 1, self.lmax * 2 + 1, self.nmax * 2 + 1), dtype=self.xp.int32) - 1
+        self.index_map_arr = (
+            self.xp.zeros(
+                (self.lmax + 1, self.lmax * 2 + 1, self.nmax * 2 + 1),
+                dtype=self.xp.int32,
+            )
+            - 1
+        )
         """np.ndarray: Array mapping mode tuple to mode index - used for fast indexing. Returns -1 if mode does not exist."""
-        self.special_index_map_arr = self.xp.zeros((self.lmax + 1, self.lmax * 2 + 1, self.nmax * 2 + 1), dtype=self.xp.int32) - 1
+        self.special_index_map_arr = (
+            self.xp.zeros(
+                (self.lmax + 1, self.lmax * 2 + 1, self.nmax * 2 + 1),
+                dtype=self.xp.int32,
+            )
+            - 1
+        )
         """np.ndarray: Array mapping mode tuple to mode index with m > 0 - used for fast indexing. Returns -1 if mode does not exist."""
         for i, (l, m, n) in enumerate(zip(self.l_arr, self.m_arr, self.n_arr)):
             try:
@@ -266,9 +285,7 @@ class SphericalHarmonic(ParallelModuleBase):
             self.index_map[(l, m, n)] = i
             self.index_map_arr[l, m, n] = i
             # special map that gives m < 0 indices as m > 0 indices
-            sp_i = (
-                i if i < self.num_modes else i - self.num_m_1_up
-            )
+            sp_i = i if i < self.num_modes else i - self.num_m_1_up
             self.special_index_map[(l, m, n)] = sp_i
             self.special_index_map_arr[l, m, n] = sp_i
 
@@ -294,7 +311,7 @@ class SphericalHarmonic(ParallelModuleBase):
         phi = phi % (2 * np.pi)
         return (theta, phi)
 
-    def sanity_check_traj(self, a: float, p:np.ndarray, e:np.ndarray, xI:np.ndarray):
+    def sanity_check_traj(self, a: float, p: np.ndarray, e: np.ndarray, xI: np.ndarray):
         """Sanity check on parameters output from the trajectory module.
 
         Make sure parameters are within allowable ranges.
@@ -326,6 +343,7 @@ class SphericalHarmonic(ParallelModuleBase):
         if np.any(abs(xI) > 1.0):
             raise ValueError("Members of xI array have a magnitude greater than one.")
 
+
 class SchwarzschildEccentric(SphericalHarmonic):
     """
     Schwarzschild eccentric base class.
@@ -336,15 +354,16 @@ class SchwarzschildEccentric(SphericalHarmonic):
         nmax: Maximum n value for the model. Default is 30.
         ndim: Number of phases in the model. Default is 2.
     """
+
     def __init__(
-            self,
-            *args:Optional[list],
-            use_gpu: bool=False,
-            lmax:int = 10,
-            nmax:int = 30,
-            ndim:int = 2,
-            **kwargs: Optional[dict]
-        ):
+        self,
+        *args: Optional[list],
+        use_gpu: bool = False,
+        lmax: int = 10,
+        nmax: int = 30,
+        ndim: int = 2,
+        **kwargs: Optional[dict],
+    ):
         # some descriptive information
         self.background = "Schwarzschild"
         """str: The spacetime background for this model. Is Schwarzschild."""
@@ -368,7 +387,9 @@ class SchwarzschildEccentric(SphericalHarmonic):
         """Confirms GPU capability"""
         return True
 
-    def sanity_check_init(self, M: float, mu: float, a: float, p0: float, e0: float, xI: float) -> tuple[float, float]:
+    def sanity_check_init(
+        self, M: float, mu: float, a: float, p0: float, e0: float, xI: float
+    ) -> tuple[float, float]:
         r"""Sanity check initial parameters.
 
         Make sure parameters are within allowable ranges.
@@ -385,7 +406,7 @@ class SchwarzschildEccentric(SphericalHarmonic):
 
         Returns:
             (a_fix, xI_fix): a and xI in the correct convention (a >= 0).
-        
+
         Raises:
             ValueError: If any of the parameters are not allowed.
 
@@ -420,16 +441,12 @@ class SchwarzschildEccentric(SphericalHarmonic):
                 )
             )
 
-        if a != 0.:
-            raise ValueError(
-                "Spin must be zero for Schwarzschild inspirals."
-            )
+        if a != 0.0:
+            raise ValueError("Spin must be zero for Schwarzschild inspirals.")
 
-        if abs(xI) != 1.:
-            raise ValueError(
-                "For equatorial orbits, xI must be either 1 or -1."
-            )
-        
+        if abs(xI) != 1.0:
+            raise ValueError("For equatorial orbits, xI must be either 1 or -1.")
+
         return a, xI
 
 
@@ -445,14 +462,14 @@ class KerrEccentricEquatorial(SphericalHarmonic):
     """
 
     def __init__(
-            self,
-            *args: Optional[list],
-            use_gpu:bool=False,
-            lmax:int= 10,
-            nmax:int = 55,
-            ndim:int = 2,
-            **kwargs:Optional[dict]
-        ):
+        self,
+        *args: Optional[list],
+        use_gpu: bool = False,
+        lmax: int = 10,
+        nmax: int = 55,
+        ndim: int = 2,
+        **kwargs: Optional[dict],
+    ):
         # some descriptive information
         self.background = "Kerr"
         """str: The spacetime background for this model. Is Kerr."""
@@ -476,7 +493,9 @@ class KerrEccentricEquatorial(SphericalHarmonic):
         """Confirms GPU capability"""
         return True
 
-    def sanity_check_init(self, M: float, mu:float, a:float, p0:float, e0:float, xI:float) -> tuple[float, float]:
+    def sanity_check_init(
+        self, M: float, mu: float, a: float, p0: float, e0: float, xI: float
+    ) -> tuple[float, float]:
         r"""Sanity check initial parameters.
 
         Make sure parameters are within allowable ranges.
@@ -493,7 +512,7 @@ class KerrEccentricEquatorial(SphericalHarmonic):
 
         Returns:
             (a_fix, xI_fix): a and xI in the correct convention (a >= 0).
-        
+
         Raises:
             ValueError: If any of the parameters are not allowed.
 
@@ -504,7 +523,7 @@ class KerrEccentricEquatorial(SphericalHarmonic):
             test = val < 0.0
             if test:
                 raise ValueError("{} is negative. It must be positive.".format(key))
-        
+
         if a < 0:
             # flip convention
             few_logger.warning(
@@ -534,13 +553,11 @@ class KerrEccentricEquatorial(SphericalHarmonic):
         if grid_coords[1] < -1e-6 or grid_coords[1] > 1.000001:
             raise ValueError(
                 f"This a ({a}), p0 ({p0}) and e0 ({e0}) combination is outside of our domain of validity."
-                )
-
-        if abs(xI) != 1.:
-            raise ValueError(
-                "For equatorial orbits, xI must be either 1 or -1."
             )
-        
+
+        if abs(xI) != 1.0:
+            raise ValueError("For equatorial orbits, xI must be either 1 or -1.")
+
         return a, xI
 
 
@@ -557,7 +574,9 @@ class Pn5AAK(ParallelModuleBase):
 
     """
 
-    def __init__(self, *args:Optional[list], use_gpu: bool=False, **kwargs:Optional[dict]):
+    def __init__(
+        self, *args: Optional[list], use_gpu: bool = False, **kwargs: Optional[dict]
+    ):
         ParallelModuleBase.__init__(self, *args, use_gpu=use_gpu, **kwargs)
 
         # some descriptive information
@@ -638,7 +657,9 @@ class Pn5AAK(ParallelModuleBase):
                 "Members of Y array are greater than 1.0 or less than -1.0."
             )
 
-    def sanity_check_init(self, M: float, mu: float, a: float, p0: float, e0: float, Y0: float):
+    def sanity_check_init(
+        self, M: float, mu: float, a: float, p0: float, e0: float, Y0: float
+    ):
         r"""Sanity check initial parameters.
 
         Make sure parameters are within allowable ranges.

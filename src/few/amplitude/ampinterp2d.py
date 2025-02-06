@@ -34,12 +34,12 @@ from ..utils.baseclasses import (
 )
 from .base import AmplitudeBase
 from ..utils.citations import REFERENCE
-from ..utils.mappings import a_of_z, kerrecceq_forward_map, kerrecceq_legacy_p_to_u, schwarzecc_p_to_y
+from ..utils.mappings import (
+    kerrecceq_forward_map,
+    schwarzecc_p_to_y,
+)
 
-from ..cutils.fast import interp2D as interp2D_gpu
-from ..cutils.cpu import interp2D as interp2D_cpu
-
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -101,15 +101,15 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
     """
 
     def __init__(
-            self,
-            w_knots: np.ndarray,
-            u_knots: np.ndarray,
-            coefficients: np.ndarray,
-            l_arr: np.ndarray,
-            m_arr: np.ndarray,
-            n_arr: np.ndarray,
-            **kwargs
-        ):
+        self,
+        w_knots: np.ndarray,
+        u_knots: np.ndarray,
+        coefficients: np.ndarray,
+        l_arr: np.ndarray,
+        m_arr: np.ndarray,
+        n_arr: np.ndarray,
+        **kwargs,
+    ):
         ParallelModuleBase.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
 
@@ -119,7 +119,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
 
         self.num_teuk_modes = coefficients.shape[0]
         """int: Total number of mode amplitude grids this interpolant stores."""
-        
+
         self.knots = [
             self.xp.asarray(w_knots),
             self.xp.asarray(u_knots),
@@ -155,7 +155,14 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         """Confirms GPU capability"""
         return True
 
-    def __call__(self, w: Union[float,np.ndarray], u: Union[float,np.ndarray], *args, mode_indexes: Optional[np.ndarray]=None, **kwargs) -> np.ndarray:
+    def __call__(
+        self,
+        w: Union[float, np.ndarray],
+        u: Union[float, np.ndarray],
+        *args,
+        mode_indexes: Optional[np.ndarray] = None,
+        **kwargs,
+    ) -> np.ndarray:
         """
         Evaluate the spline or its derivatives at given positions.
 
@@ -193,7 +200,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
 
         if mode_indexes is None:
             mode_indexes = self.xp.arange(self.num_teuk_modes)
-        
+
         # TODO: perform this in the kernel
         c_in = c[mode_indexes].flatten()
 
@@ -205,11 +212,12 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         self.interp2D(
             z, tw, nw, tu, nu, c_in, kw, ku, w, mw, u, mu, num_indiv_c, len_indiv_c
         )
-        
+
         z = z.reshape(num_indiv_c // 2, 2, mw).transpose(2, 1, 0)
 
         z = z[:, 0] + 1j * z[:, 1]
         return z
+
 
 class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
     """Calculate Teukolsky amplitudes in the Kerr eccentric equatorial regime with a bicubic spline + linear
@@ -228,6 +236,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
             :class:`few.utils.baseclasses.AmplitudeBase`,
             :class:`few.utils.baseclasses.KerrEccentricEquatorial`.
     """
+
     def __init__(self, filename: Optional[str] = None, downsample_Z=1, **kwargs):
         KerrEccentricEquatorial.__init__(self, **kwargs)
         AmplitudeBase.__init__(self, **kwargs)
@@ -243,16 +252,14 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
 
         with h5py.File(file_path, "r") as f:
             coeffsA = f["CoeffsRegionA"][()]
-            w_knots = f['w_knots'][()]
-            u_knots = f['u_knots'][()]
+            w_knots = f["w_knots"][()]
+            u_knots = f["u_knots"][()]
             z_knots = f["z_knots"][()]
 
             z_knots = z_knots[::downsample_Z]
             coeffsA = coeffsA[::downsample_Z]
 
-            self.spin_information_holder_A = [
-                None for _ in range(z_knots.size)
-            ]
+            self.spin_information_holder_A = [None for _ in range(z_knots.size)]
 
             for i in range(z_knots.size):
                 self.spin_information_holder_A[i] = AmpInterp2D(
@@ -268,9 +275,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
             try:
                 coeffsB = f["CoeffsRegionB"][()]
                 coeffsB = coeffsB[::downsample_Z]
-                self.spin_information_holder_B = [
-                    None for _ in range(z_knots.size)
-                ]
+                self.spin_information_holder_B = [None for _ in range(z_knots.size)]
 
                 for i in range(z_knots.size):
                     self.spin_information_holder_B[i] = AmpInterp2D(
@@ -289,22 +294,26 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
             self.u_values = u_knots
             self.z_values = z_knots
 
-
     def evaluate_interpolant_at_index(self, index, region_A_mask, w, u, mode_indexes):
-        z_out = self.xp.zeros((region_A_mask.size, self.num_modes_eval), dtype=self.xp.complex128)
+        z_out = self.xp.zeros(
+            (region_A_mask.size, self.num_modes_eval), dtype=self.xp.complex128
+        )
+
         if self.xp.any(region_A_mask):
             z_out[region_A_mask, :] = self.spin_information_holder_A[index](
-                    w[region_A_mask], u[region_A_mask], mode_indexes=mode_indexes
-                )
-        
+                w[region_A_mask], u[region_A_mask], mode_indexes=mode_indexes
+            )
+
         if self.xp.any(~region_A_mask):
             z_out[~region_A_mask, :] = self.spin_information_holder_B[index](
-                    w[~region_A_mask], u[~region_A_mask], mode_indexes=mode_indexes
-                )
-        
+                w[~region_A_mask], u[~region_A_mask], mode_indexes=mode_indexes
+            )
+
         return z_out
 
-    def get_amplitudes(self, a, p, e, xI, specific_modes=None) -> Union[dict, np.ndarray]:
+    def get_amplitudes(
+        self, a, p, e, xI, specific_modes=None
+    ) -> Union[dict, np.ndarray]:
         """
         Generate Teukolsky amplitudes for a given set of parameters.
 
@@ -329,7 +338,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
             xI = xI.get()
         except AttributeError:
             pass
-        
+
         p = np.atleast_1d(p)
         e = np.atleast_1d(e)
         xI = np.atleast_1d(xI)
@@ -342,35 +351,42 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
         signed_spin = a * xI_in[0].item()
         a_in = np.full_like(p, signed_spin)
         xI_in = np.abs(xI_in)
-        
+
         if specific_modes is not None:
             self.num_modes_eval = len(specific_modes)
-            if isinstance(
-                specific_modes, list
-            ):
+            if isinstance(specific_modes, list):
                 specific_modes_arr = self.xp.asarray(specific_modes)
-                mode_indexes = self.special_index_map_arr[specific_modes_arr[:,0], specific_modes_arr[:,1], specific_modes_arr[:,2]]
+                mode_indexes = self.special_index_map_arr[
+                    specific_modes_arr[:, 0],
+                    specific_modes_arr[:, 1],
+                    specific_modes_arr[:, 2],
+                ]
                 if self.xp.any(mode_indexes == -1):
-                        failed_mode = specific_modes_arr[self.xp.where(mode_indexes == -1)[0][0]]
-                        raise ValueError(f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]}).")
+                    failed_mode = specific_modes_arr[
+                        self.xp.where(mode_indexes == -1)[0][0]
+                    ]
+                    raise ValueError(
+                        f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]})."
+                    )
             else:
                 mode_indexes = specific_modes
         else:
             mode_indexes = self.xp.arange(self.num_teuk_modes)
             self.num_modes_eval = self.num_teuk_modes
 
-        u, w, y, z, region_mask = kerrecceq_forward_map(a_in, p, e, xI_in, return_mask=True, kind="amplitude")
+        u, w, y, z, region_mask = kerrecceq_forward_map(
+            a_in, p, e, xI_in, use_gpu=self.use_gpu, return_mask=True, kind="amplitude"
+        )
         z_check = z[0]
 
-        
         for elem in [u, w, z]:
-            if np.any((elem < 0)|(elem > 1)):
+            if np.any((elem < 0) | (elem > 1)):
                 raise ValueError("Amplitude interpolant accessed out-of-bounds.")
 
         region_mask = self.xp.asarray(region_mask)
         u = self.xp.asarray(u)
         w = self.xp.asarray(w)
-        
+
         if z_check in self.z_values:
             ind_1 = np.where(self.z_values == z_check)[0][0]
 
@@ -578,14 +594,20 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
         else:
             if isinstance(specific_modes, self.xp.ndarray):
                 mode_indexes = specific_modes
-            elif isinstance(
-                specific_modes, list
-            ):
+            elif isinstance(specific_modes, list):
                 specific_modes_arr = self.xp.asarray(specific_modes)
-                mode_indexes = self.special_index_map_arr[specific_modes_arr[:,0], specific_modes_arr[:,1], specific_modes_arr[:,2]]
+                mode_indexes = self.special_index_map_arr[
+                    specific_modes_arr[:, 0],
+                    specific_modes_arr[:, 1],
+                    specific_modes_arr[:, 2],
+                ]
                 if self.xp.any(mode_indexes == -1):
-                        failed_mode = specific_modes_arr[self.xp.where(mode_indexes == -1)[0][0]]
-                        raise ValueError(f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]}).")
+                    failed_mode = specific_modes_arr[
+                        self.xp.where(mode_indexes == -1)[0][0]
+                    ]
+                    raise ValueError(
+                        f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]})."
+                    )
 
         # TODO: perform this in the kernel
         c_in = c[mode_indexes].flatten()

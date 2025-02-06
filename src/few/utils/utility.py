@@ -16,26 +16,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import os
-
 import numpy as np
 from scipy.optimize import brentq
-from multispline.spline import BicubicSpline
 from .elliptic import EllipK, EllipE, EllipPi
 
 from numba import njit, cuda
 from math import sqrt, pow, cos, acos
-import few
-
-# check to see if cupy is available for gpus
-if few.cutils.fast.is_gpu:
-    import cupy as cp
-    from cupy.cuda.runtime import setDevice
-
-    gpu = True
-else:
-    setDevice = None
-    gpu = False
 
 from few.utils.globals import get_logger
 
@@ -140,6 +126,7 @@ def get_mismatch(
     """
     overlap = get_overlap(time_series_1, time_series_2, use_gpu=use_gpu)
     return 1.0 - overlap
+
 
 @njit(fastmath=False)
 def _solveCubic(A2, A1, A0):
@@ -648,13 +635,15 @@ def _KerrGeoCoordinateFrequencies_kernel_cpu(OmegaPhi, OmegaTheta, OmegaR, a, p,
             _KerrGeoCoordinateFrequencies_kernel_inner(a[i], p[i], e[i], x[i])
         )
 
+
 @cuda.jit
 def _KerrGeoCoordinateFrequencies_kernel_gpu(OmegaPhi, OmegaTheta, OmegaR, a, p, e, x):
     i = cuda.grid(1)
     if i < OmegaPhi.size:
-        OmegaPhi[i], OmegaTheta[i], OmegaR[i] = _KerrGeoCoordinateFrequencies_kernel_inner(
-            a[i], p[i], e[i], x[i]
+        OmegaPhi[i], OmegaTheta[i], OmegaR[i] = (
+            _KerrGeoCoordinateFrequencies_kernel_inner(a[i], p[i], e[i], x[i])
         )
+
 
 def get_fundamental_frequencies(
     a: Union[float, np.ndarray],
@@ -1623,18 +1612,22 @@ def _get_separatrix_kernel_cpu(
     for i in range(len(a)):
         p_sep[i] = _get_separatrix_kernel_inner(a[i], e[i], x[i], tol=tol)
 
+
 @cuda.jit
-def _get_separatrix_kernel_gpu(p_sep: np.ndarray, a: np.ndarray, e: np.ndarray, x: np.ndarray, tol: float=1e-13):
+def _get_separatrix_kernel_gpu(
+    p_sep: np.ndarray, a: np.ndarray, e: np.ndarray, x: np.ndarray, tol: float = 1e-13
+):
     i = cuda.grid(1)
     if i < len(a):
         p_sep[i] = _get_separatrix_kernel_inner(a[i], e[i], x[i], tol=tol)
+
 
 def get_separatrix(
     a: Union[float, np.ndarray],
     e: Union[float, np.ndarray],
     x: Union[float, np.ndarray],
     tol: float = 1e-13,
-    use_gpu:bool=False
+    use_gpu: bool = False,
 ) -> Union[float, np.ndarray]:
     r"""Get separatrix in generic Kerr.
 
@@ -1660,7 +1653,7 @@ def get_separatrix(
         xp = cp
     else:
         xp = np
-    
+
     # determines shape of input
     if isinstance(e, float):
         separatrix = _get_separatrix_kernel_inner(a, e, x, tol=tol)
@@ -1690,7 +1683,9 @@ def get_separatrix(
         if use_gpu:
             threadsperblock = 256
             blockspergrid = (len(a_in) + (threadsperblock - 1)) // threadsperblock
-            _get_separatrix_kernel_gpu[blockspergrid, threadsperblock](separatrix, a_in, e_in, x_in, tol)
+            _get_separatrix_kernel_gpu[blockspergrid, threadsperblock](
+                separatrix, a_in, e_in, x_in, tol
+            )
         else:
             _get_separatrix_kernel_cpu(separatrix, a_in, e_in, x_in, tol=tol)
 
@@ -2025,16 +2020,3 @@ def pointer_adjust(func):
         return func(*targs, **tkwargs)
 
     return func_wrapper
-
-
-def cuda_set_device(dev: int):
-    """Globally sets CUDA device
-
-    Args:
-        dev: CUDA device number.
-
-    """
-    if setDevice is not None:
-        setDevice(dev)
-    else:
-        few_logger.warning("Setting cuda device, but cupy/cuda not detected.")

@@ -1,45 +1,19 @@
 import dataclasses
-import enum
 import typing
 import types
 
 from ..utils.exceptions import FewException
 
 
-class BackendStatus(enum.Enum):
-    UNLOADED = "unloaded"
-    """Backend loading was not yet attempted"""
-
-    LOADED = "loaded"
-    """Backend loading was a success"""
-
-    DISABLED = "disabled"
-    """Backend has been disabled"""
-
-    UNAVAILABLE = "unavailable"
-    """Backend cannot be used"""
-
-
-class BackendUnavailableStrategy:
-    IGNORE = enum.auto()
-    """Ignore silently the fact that backend is unavailable."""
-
-    ADVISE = enum.auto()
-    """Log a warning explaining what can be done to make the backend available"""
-
-    FAIL = enum.auto()
-    """Raise an exception explaining why the backend is unavailable"""
-
-
-class BackendUnavailable(FewException):
+class BackendUnavailableException(FewException):
     """Exception raised when the backend is not available."""
 
 
-class BackendNotInstalled(BackendUnavailable):
+class BackendNotInstalled(BackendUnavailableException):
     """Exception raised when the backend has not been installed"""
 
 
-class MissingDependencies(BackendUnavailable):
+class MissingDependencies(BackendUnavailableException):
     """Exception raised when the backend has missing dependencies"""
 
     pip_deps: typing.List[str]
@@ -72,15 +46,15 @@ class MissingDependencies(BackendUnavailable):
         return message
 
 
-class MissingDriver(BackendUnavailable):
+class MissingDriver(BackendUnavailableException):
     """Exception raised when backend needs driver-like software to be installed."""
 
 
-class SoftwareException(BackendUnavailable):
+class SoftwareException(BackendUnavailableException):
     """Exception raised due to unexpected software error when loading the backend"""
 
 
-class MissingHardware(BackendUnavailable):
+class MissingHardware(BackendUnavailableException):
     """Exception raised when backend needs unavailable hardware."""
 
 
@@ -148,7 +122,9 @@ class CpuBackend(Backend):
             import few_backend_cpu.pyinterp
             import few_backend_cpu.pymatmul
         except (ModuleNotFoundError, ImportError) as e:
-            raise BackendUnavailable("'cpu' backend could not be imported.") from e
+            raise BackendUnavailableException(
+                "'cpu' backend could not be imported."
+            ) from e
 
         try:
             import numpy
@@ -343,13 +319,19 @@ class _CudaBackend(Backend):
         # 5. Try to load module directly
         try:
             return module_loader()
-        except BackendUnavailable as e:
+        except BackendUnavailableException as e:
             if dynlib_loader is None:
                 raise e
 
         # 6. module_loader failed but dynlib_loader is defined, let's try that
         dynlib_loader()
         return module_loader()
+
+    def set_cuda_device(self, dev: int):
+        """Globally sets CUDA device"""
+        from cupy.cuda.runtime import setDevice
+
+        setDevice(dev)
 
 
 class Cuda11xBackend(_CudaBackend):
@@ -363,7 +345,9 @@ class Cuda11xBackend(_CudaBackend):
             import few_backend_cuda11x.pyinterp
             import few_backend_cuda11x.pymatmul
         except (ModuleNotFoundError, ImportError) as e:
-            raise BackendUnavailable("'cuda11x' backend could not be imported.") from e
+            raise BackendUnavailableException(
+                "'cuda11x' backend could not be imported."
+            ) from e
 
         try:
             import cupy
@@ -454,7 +438,9 @@ class Cuda12xBackend(_CudaBackend):
             import few_backend_cuda12x.pyinterp
             import few_backend_cuda12x.pymatmul
         except (ModuleNotFoundError, ImportError) as e:
-            raise BackendUnavailable("'cuda12x' backend could not be imported.") from e
+            raise BackendUnavailableException(
+                "'cuda12x' backend could not be imported."
+            ) from e
 
         try:
             import cupy
@@ -542,4 +528,140 @@ KNOWN_BACKENDS = {
 """List of existing backends, per default order of preference."""
 
 
-__all__ = ["KNOWN_BACKENDS", "Backend"]
+class BackendStatus:
+    """Base class for backend statuses in the backends manager"""
+
+
+class BackendStatusUnloaded(BackendStatus):
+    """Backend is not yet loaded"""
+
+
+@dataclasses.dataclass
+class BackendStatusLoaded(BackendStatus):
+    """Backend loaded successfully"""
+
+    instance: Backend
+
+
+class BackendStatusDisabled(BackendStatus):
+    """Backend has been disabled by configuration options"""
+
+
+@dataclasses.dataclass
+class BackendStatusUnavailable:
+    """Backend could not be loaded due to exception"""
+
+    reason: BackendUnavailableException
+
+
+class BackendAccessException(FewException):
+    """Method raised by BackendManager if requested backend cannot be accessed"""
+
+
+class BackendsManager:
+    """Handles loading and accessing backend instances."""
+
+    _registry: typing.Dict[str, BackendStatus]
+
+    @property
+    def backend_list(self) -> typing.List[str]:
+        """Return the list of backend names"""
+        return [name for name in self._registry.keys()]
+
+    def __init__(self, enabled_backends: typing.Optional[typing.Sequence[str]] = None):
+        """
+        Initialize the backend registry.
+
+        enabled_backends: optional list of backend names which must be loaded, others will be disabled
+        """
+        self._registry = {
+            name: BackendStatusUnloaded() for name in KNOWN_BACKENDS.keys()
+        }
+
+        if enabled_backends is not None:
+            for backend_name in self.backend_list:
+                if backend_name in enabled_backends:
+                    status = self._try_loading_backend(backend_name)
+                    if isinstance(status, BackendStatusUnavailable):
+                        raise BackendAccessException(
+                            "Backend '{}' is marked as enabled but cannot be loaded".format(
+                                backend_name
+                            )
+                        ) from status.reason
+                else:
+                    self._disable_backend(backend_name)
+
+    def _disable_backend(self, backend_name: str):
+        """Mark a backend as disabled"""
+        self._registry[backend_name] = BackendStatusDisabled()
+
+    def _try_loading_backend(self, backend_name: str) -> BackendStatus:
+        """
+        Try to load a backend and return its new status.
+
+        If current status is different from UNLOADED, return it directly.
+        """
+        if not isinstance(
+            current_status := self._registry[backend_name], BackendStatusUnloaded
+        ):
+            return current_status
+
+        try:
+            new_status = BackendStatusLoaded(instance=KNOWN_BACKENDS[backend_name]())
+        except BackendUnavailableException as e:
+            new_status = BackendStatusUnavailable(reason=e)
+
+        self._registry[backend_name] = new_status
+        return new_status
+
+    def get_backend(self, backend_name: str) -> Backend:
+        """Get a backend instance or raise a BackendAccessException"""
+        status = self._try_loading_backend(backend_name=backend_name)
+        if isinstance(status, BackendStatusDisabled):
+            raise BackendAccessException(
+                "Backend '{}' cannot be accessed, it has been disabled.".format(
+                    backend_name
+                )
+            )
+        if isinstance(status, BackendStatusUnavailable):
+            raise BackendAccessException(
+                "Backend '{}' is unavailable. See previous error messages.".format(
+                    backend_name
+                )
+            ) from status.reason
+
+        assert isinstance(status, BackendStatusLoaded)
+        return status.instance
+
+    def get_first_backend(self, backends: typing.Sequence[str]) -> Backend:
+        """Get first available backend from a list or raise BackendAccessException if none available"""
+        assert len(backends) > 0
+
+        reasons: typing.List[BackendUnavailableException] = []
+        for backend_name in backends:
+            if isinstance(
+                status := self._try_loading_backend(backend_name=backend_name),
+                BackendStatusLoaded,
+            ):
+                return status.instance
+            if isinstance(status, BackendStatusUnavailable):
+                reasons.append(status.reason)
+            if isinstance(status, BackendStatusDisabled):
+                reasons.append(
+                    BackendAccessException(
+                        "Backend '{}' is disabled.".format(backend_name)
+                    )
+                )
+
+        from ..utils.exceptions import ExceptionGroup
+
+        raise BackendAccessException(
+            "Could not access any of the following backends which are either disabled or unavailable: {}".format(
+                ", ".join(backends)
+            )
+        ) from ExceptionGroup(
+            "The backends were not available for following reasons.", reasons
+        )
+
+
+__all__ = ["BackendsManager", "BackendAccessException"]

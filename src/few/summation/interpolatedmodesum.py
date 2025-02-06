@@ -17,20 +17,11 @@
 
 import numpy as np
 
-
-# Cython imports
-from ..cutils.cpu import interpolate_arrays_wrap as interpolate_arrays_wrap_cpu
-from ..cutils.cpu import get_waveform_wrap as get_waveform_wrap_cpu
-from ..cutils.fast import interpolate_arrays_wrap as interpolate_arrays_wrap_gpu
-from ..cutils.fast import get_waveform_wrap as get_waveform_wrap_gpu
-
 # Python imports
 from ..utils.baseclasses import (
-    SchwarzschildEccentric,
     ParallelModuleBase,
 )
 from .base import SummationBase
-from ..utils.utility import get_fundamental_frequencies
 from ..utils.constants import *
 
 from few.utils.globals import get_logger
@@ -72,7 +63,7 @@ class CubicSplineInterpolant(ParallelModuleBase):
 
         # get quantities related to how many interpolations
         ninterps, length = y_all.shape
-        self.ninterps= ninterps
+        self.ninterps = ninterps
         """int: Number of interpolants."""
         self.length = length
         """int: Length of the input t array."""
@@ -192,7 +183,7 @@ class CubicSplineInterpolant(ParallelModuleBase):
             )
         return inds, inds_bad_left, inds_bad_right
 
-    def __call__(self, tnew: np.ndarray, deriv_order:int=0) -> np.ndarray:
+    def __call__(self, tnew: np.ndarray, deriv_order: int = 0) -> np.ndarray:
         """Evaluation function for the spline
 
         Put in an array of new t values at which all interpolants will be
@@ -326,8 +317,8 @@ class InterpolatedModeSum(SummationBase, ParallelModuleBase):
         m_arr: np.ndarray,
         n_arr: np.ndarray,
         *args,
-        dt: float=10.0,
-        integrate_backwards: bool=False,
+        dt: float = 10.0,
+        integrate_backwards: bool = False,
         **kwargs,
     ):
         r"""Interpolated summation function.

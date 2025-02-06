@@ -18,9 +18,6 @@
 import numpy as np
 
 # Cython imports
-from ..cutils.cpu import (
-    get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_cpu,
-)
 
 # Python imports
 from ..utils.baseclasses import (
@@ -33,14 +30,7 @@ from ..utils.utility import get_fundamental_frequencies
 from ..utils.constants import *
 from ..summation.interpolatedmodesum import CubicSplineInterpolant
 
-from ..cutils.fast import (
-    get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_gpu,
-)
-
 # for special functions
-from scipy import special
-from scipy.interpolate import CubicSpline
-import multiprocessing as mp
 
 
 # added to return element or none in list

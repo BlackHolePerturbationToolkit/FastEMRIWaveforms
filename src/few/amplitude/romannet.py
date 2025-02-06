@@ -16,15 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
 
 import numpy as np
 import h5py
-
-# Cython/C++ imports
-from ..cutils.cpu import neural_layer_wrap as neural_layer_wrap_cpu
-from ..cutils.cpu import transform_output_wrap as transform_output_wrap_cpu
-from ..cutils.fast import neural_layer_wrap, transform_output_wrap
 
 # Python imports
 from ..utils.baseclasses import (
