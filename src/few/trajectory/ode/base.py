@@ -150,8 +150,34 @@ class ODEBase:
         Each stock model implements this function to handle the specifics of their own interpolants.
         To easily incorporate interpolated fluxes into their own models, users can subclass the stock models; the
         interpolated fluxes can then be accessed from `evaluate_rhs` by calling this function.
+
+        This method should also handle checking that the input parameters are within the bounds of the precomputed grids.
+        Failure to do so may result in erroneous behaviour during trajectory evaluation in which fluxes are extrapolated.
         """
         raise NotImplementedError
+
+    def distance_to_outer_boundary(self, y: np.ndarray) -> float:
+        """
+        This function returns the distance to the outer boundary of the interpolation grid. This is necessary for
+        backwards integration, which performs root-finding to ensure that the trajectory ends on this outer boundary.
+        Root-finding is initiated when this function returns a negative value.
+
+        Each stock model implements this function to handle the specifics of their own interpolants. For models that 
+        do not use interpolation, this function returns a positive constant (such that root-finding never occurs) 
+        and does not need to be implemented.
+        """
+        raise 1e10
+    
+    def get_pex(self, y: np.ndarray) -> tuple[float]:
+        """
+        This function converts the integrals of motion (E, L, Q) to the orbital elements (p, e, x), if required.
+        """
+        if self.use_ELQ:
+            E, L, Q = y[:3]
+            p, e, x = ELQ_to_pex(self.a, E, L, Q)
+        else:
+            p, e, x = y[:3]
+        return p, e, x
 
     def cache_values_and_check_bounds(self, y: np.ndarray) -> bool:
         """
@@ -161,19 +187,17 @@ class ODEBase:
         Returns a boolean indicating whether the input was in bounds.
         """
 
-        if self.use_ELQ:
-            E, L, Q = y[:3]
-            p, e, x = ELQ_to_pex(self.a, E, L, Q)
-        else:
-            p, e, x = y[:3]
+        p, e, x_or_Y = self.get_pex(y)
 
         # first: check the eccentricity
-        in_bounds = y[1] > 0
+        in_bounds = e > 0
         if in_bounds:
             # second: check the separatrix
             if self.convert_Y:
-                x = Y_to_xI(self.a, p, e, x)
+                x = Y_to_xI(self.a, p, e, x_or_Y)
                 self.xI_cache = x
+            else:
+                x = x_or_Y
 
             self.p_sep_cache = get_separatrix(self.a, e, x)
             in_bounds = p > self.p_sep_cache

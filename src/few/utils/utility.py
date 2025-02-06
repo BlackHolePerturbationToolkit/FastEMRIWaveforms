@@ -1697,51 +1697,6 @@ def get_separatrix(
     return separatrix
 
 
-# TODO: initialise this properly from the coefficients files, rather than all this stuff getting run every time
-
-CHI2_SCALE = 3
-CHI2_AMAX = 0.99998
-CHI2_EMIN, CHI2_EMAX = 0.0, 0.9
-
-
-def chi2_to_a(chi2):
-    ymin = (1 - CHI2_AMAX) ** (1 / CHI2_SCALE)
-    ymax = (1 + CHI2_AMAX) ** (1 / CHI2_SCALE)
-    return 1 - (chi2 * (ymax - ymin) + ymin) ** CHI2_SCALE
-
-
-@njit(fastmath=False)
-def a_to_chi2(a):
-    y = (1 - a) ** (1 / CHI2_SCALE)
-    ymin = (1 - CHI2_AMAX) ** (1 / CHI2_SCALE)
-    ymax = (1 + CHI2_AMAX) ** (1 / CHI2_SCALE)
-    return (y - ymin) / (ymax - ymin)
-
-
-Nx1 = 256
-Nx2 = 256
-
-x1 = np.linspace(0, 1, num=Nx1)
-x2 = np.linspace(CHI2_EMIN**0.5, CHI2_EMAX**0.5, num=Nx2)
-chi2, sqrtecc = np.meshgrid(x1, x2, indexing="ij")
-
-spin = chi2_to_a(chi2.flatten())
-e = sqrtecc.flatten() ** 2
-to_interp = get_separatrix(np.abs(spin), e, np.sign(spin) * 1.0) / (6.0 + 2.0 * e)
-
-reshapedF = np.asarray(to_interp).reshape((Nx1, Nx2))
-
-PSEP_INTERPOLANT = BicubicSpline(x1, x2, reshapedF, bc="E(3)")
-
-
-def get_separatrix_interpolant(a, e, x):
-    a_sign = a * x
-    w = e**0.5
-    chi2 = a_to_chi2(a_sign)
-
-    return PSEP_INTERPOLANT(chi2, w) * (6 + 2 * e)
-
-
 def get_at_t(
     traj_module: object,
     traj_args: list[float],

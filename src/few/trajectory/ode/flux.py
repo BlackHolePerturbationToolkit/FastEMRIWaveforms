@@ -94,11 +94,31 @@ class SchwarzEccFlux(ODEBase):
     def supports_ELQ(self):
         return True
 
+    def distance_to_outer_boundary(self, y):
+        p, e, x = self.get_pex(y)
+        dist_p = 3.817 - np.log((p - 2. * e - 2.1))
+        dist_e = 0.75 - e
+
+        if dist_p < 0 or dist_e < 0:
+            mult = -1
+        else:
+            mult = 1
+
+        dist = mult * min(abs(dist_p), abs(dist_e))
+        return dist
+
     def interpolate_flux_grids(
               self, p: float, e: float, Omega_phi: float
               ) -> tuple[float]:
 
+        if e > 0.755:
+            raise ValueError("Interpolation: e out of bounds.")
+
         y1 = np.log((p - 2. * e - 2.1))
+        
+        if y1 < 1.3686394258811698 or y1 > 3.817712325956905:  # bounds described in 2104.04582
+            raise ValueError("Interpolation: p out of bounds.")
+        
         yPN = Omega_phi**(2/3)
 
         Edot_PN = _Edot_PN(e, yPN)

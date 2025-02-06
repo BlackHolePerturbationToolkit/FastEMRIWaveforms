@@ -238,7 +238,7 @@ def z2_of_a(a, amin=AMIN, amax=AMAX):
 
 @njit
 def Secc_of_uz(u, z, beta, esep=ESEP, emax=EMAX, ):
-    return esep + (emax - esep)*sqrt(abs(z + u**beta*(1 - z)))
+    return esep + (emax - esep)*np.sqrt(np.abs(z + u**beta*(1 - z)))
 
 @njit
 def w_of_euz(e, u, z, beta, esep=ESEP, emax=EMAX):
