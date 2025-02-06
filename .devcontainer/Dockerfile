@@ -6,7 +6,7 @@ RUN apt update \
       g++-14 \
       gfortran-14 \
       libgsl-dev \
-      liblapacke64-dev \
+      liblapacke-dev \
       pkg-config \
       python3 \
       python3-dev \
@@ -21,3 +21,4 @@ ENV CXX=g++-14
 ENV FC=gfortran-14
 
 ENV PATH=/home/few/.local/few-venv/bin:${PATH}
+ENV PATH=/usr/local/cuda/bin:${PATH}
