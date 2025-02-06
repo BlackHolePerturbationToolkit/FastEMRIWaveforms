@@ -251,7 +251,7 @@ class DOPR853:
     
     @property
     def xp_read_out(self):
-        return xp if self.read_out_to_cpus else np
+        return np if self.read_out_to_cpus else xp
 
     def dormandPrinceSteps(
         self,
