@@ -103,19 +103,23 @@ class WaveformTest(unittest.TestCase):
         phi = np.pi/4
 
         # confirm the parity of the spherical harmonics
-        # choose modes with even ell
-        modes_check = [(2*ell, 2, enn) for ell in range(1,5) for enn in range(-50, 51)]
-        wave1 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10., mode_selection=modes_check)
-        wave2 = self.waveform_generator(M, mu, a, p0, e0, xI, np.pi - theta, phi + np.pi, T=T, dt=10., mode_selection=modes_check)
-        assert get_mismatch(wave1, -wave2.conj()) < 1e-14, "Even ell-mode waveform not convergent under a parity transformation."
+        # one can show that under the transformation (theta, phi) -> (pi - theta, phi + pi),
+        # Then h -> h^* (-1)^m for all \ell modes
 
-        # choose modes with odd ell
-        modes_check = [(2*ell+1, 2, enn) for ell in range(1,4) for enn in range(-50, 51)]
-
+        # choose modes with even m
+        modes_check = [(ell, 2, enn) for ell in range(2,11) for enn in range(-50, 51)]
         wave1 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10., mode_selection=modes_check)
         wave2 = self.waveform_generator(M, mu, a, p0, e0, xI, np.pi - theta, phi + np.pi, T=T, dt=10., mode_selection=modes_check)
 
-        assert get_mismatch(wave1, wave2.conj()) < 1e-14, "Odd ell-mode waveform not convergent under a parity transformation."
+        assert get_mismatch(wave1, wave2.conj()) < 1e-14, "Even ell-mode waveform not convergent under a parity transformation."
+
+        # choose modes with odd m
+        modes_check = [(ell, 3, enn) for ell in range(3,11) for enn in range(-50, 51)]
+
+        wave1 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10., mode_selection=modes_check)
+        wave2 = self.waveform_generator(M, mu, a, p0, e0, xI, np.pi - theta, phi + np.pi, T=T, dt=10., mode_selection=modes_check)
+
+        assert get_mismatch(wave1,-wave2.conj()) < 1e-14, "Odd ell-mode waveform not convergent under a parity transformation."
     
     def test_distance_scaling(self):
         # parameters
