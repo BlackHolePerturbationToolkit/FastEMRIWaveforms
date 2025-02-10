@@ -204,7 +204,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
         # makes sure viewing angles are allowable
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
 
-        self.sanity_check_init(M, mu, a, p0, e0, xI0)
+        a, xI0 = self.sanity_check_init(M, mu, a, p0, e0, xI0)
 
         # get trajectory
         (t, p, e, xI, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
@@ -696,7 +696,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase):
         # makes sure angular extrinsic parameters are allowable
         qS, phiS, qK, phiK = self.sanity_check_angles(qS, phiS, qK, phiK)
 
-        self.sanity_check_init(M, mu, a, p0, e0, Y0)
+        a, Y0 = self.sanity_check_init(M, mu, a, p0, e0, Y0)
 
         # get trajectory
         t, p, e, Y, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(

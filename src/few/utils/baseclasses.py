@@ -368,7 +368,7 @@ class SchwarzschildEccentric(SphericalHarmonic):
         """Confirms GPU capability"""
         return True
 
-    def sanity_check_init(self, M: float, mu: float, a: float, p0: float, e0: float, xI: float):
+    def sanity_check_init(self, M: float, mu: float, a: float, p0: float, e0: float, xI: float) -> tuple[float, float]:
         r"""Sanity check initial parameters.
 
         Make sure parameters are within allowable ranges.
@@ -383,11 +383,13 @@ class SchwarzschildEccentric(SphericalHarmonic):
             e0: Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
             xI: Initial cosine(inclination) :math:`(x_I = 1)`.
 
+        Returns:
+            (a_fix, xI_fix): a and xI in the correct convention (a > 0).
+        
         Raises:
             ValueError: If any of the parameters are not allowed.
 
         """
-
         for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"]]:
             test = val < 0.0
             if test:
@@ -427,6 +429,9 @@ class SchwarzschildEccentric(SphericalHarmonic):
             raise ValueError(
                 "For equatorial orbits, xI must be either 1 or -1."
             )
+        
+        return a, xI
+
 
 class KerrEccentricEquatorial(SphericalHarmonic):
     """
@@ -471,7 +476,7 @@ class KerrEccentricEquatorial(SphericalHarmonic):
         """Confirms GPU capability"""
         return True
 
-    def sanity_check_init(self, M: float, mu:float, a:float, p0:float, e0:float, xI:float):
+    def sanity_check_init(self, M: float, mu:float, a:float, p0:float, e0:float, xI:float) -> tuple[float, float]:
         r"""Sanity check initial parameters.
 
         Make sure parameters are within allowable ranges.
@@ -479,29 +484,35 @@ class KerrEccentricEquatorial(SphericalHarmonic):
         args:
             M: Massive black hole mass in solar masses.
             mu: compact object mass in solar masses.
-            a: Dimensionless spin of massive black hole.
+            a: Dimensionless spin of massive black hole :math:`(a = 0)`.
             p0: Initial semilatus rectum (dimensionless)
                 :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
                 more information on :math:`p_0 \leq 10.0`.
             e0: Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
-            xI: Initial cosine(inclination) :math:`(|x_I| = 1)`.
+            xI: Initial cosine(inclination) :math:`(x_I = 1)`.
 
+        Returns:
+            (a_fix, xI_fix): a and xI in the correct convention (a > 0).
+        
         Raises:
             ValueError: If any of the parameters are not allowed.
 
         """
-
         # TODO: update function when grids replaced
 
-        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"], [a, "a"]]:
+        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"]]:
             test = val < 0.0
             if test:
                 raise ValueError("{} is negative. It must be positive.".format(key))
         
         if a < 0:
-            raise ValueError(
-                "Negative black hole spin is not accepted. Our model defines retrograde orbits with a > 0.0, xI < 0."
+            # flip convention
+            few_logger.warning(
+                "Negative spin magnitude detected. Flipping sign of a and xI to match convention."
             )
+            a = -a
+            xI = -xI
+
         if a > 0.999:
             raise ValueError(
                 "Larger black hole spin magnitude above 0.999 is outside of our domain of validity."
@@ -525,11 +536,12 @@ class KerrEccentricEquatorial(SphericalHarmonic):
                 f"This a ({a}), p0 ({p0}) and e0 ({e0}) combination is outside of our domain of validity."
                 )
 
-
         if abs(xI) != 1.:
             raise ValueError(
                 "For equatorial orbits, xI must be either 1 or -1."
             )
+        
+        return a, xI
 
 
 class Pn5AAK(ParallelModuleBase):
@@ -646,10 +658,18 @@ class Pn5AAK(ParallelModuleBase):
 
         """
 
-        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"], [a, "a"]]:
+        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"]]:
             test = val < 0.0
             if test:
                 raise ValueError("{} is negative. It must be positive.".format(key))
+
+        if a < 0:
+            # flip convention
+            few_logger.warning(
+                "Negative spin magnitude detected. Flipping sign of a and Y0 to match convention."
+            )
+            a = -a
+            Y0 = -Y0
 
         if mu / M > 1e-4:
             few_logger.warning(
@@ -662,3 +682,5 @@ class Pn5AAK(ParallelModuleBase):
             raise ValueError(
                 "Y0 is greater than 1 or less than -1. Must be between -1 and 1."
             )
+
+        return a, Y0

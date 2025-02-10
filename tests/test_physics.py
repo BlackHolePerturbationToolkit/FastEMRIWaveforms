@@ -23,7 +23,7 @@ class WaveformTest(unittest.TestCase):
     def setUp(self):
         self.waveform_generator = FastKerrEccentricEquatorialFlux(use_gpu=gpu_available)
 
-    def test_sampling_rate_variation(self):
+    def test_sampling_variation(self):
         # parameters
         T = 0.001
         M = 1e6
@@ -41,6 +41,12 @@ class WaveformTest(unittest.TestCase):
 
         # these two waveforms should be identical once resampled to the same time axis
         assert get_mismatch(wave1, wave2[::2]) < 1e-14, "Waveforms not invariant under a change of sampling rate."
+
+        wave1 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10.)[:1000]
+        wave2 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=2*T, dt=10.)[:1000]
+
+        # these two waveforms should be identical once resampled to the same time axis
+        assert get_mismatch(wave1, wave2) < 1e-14, "Waveforms not invariant under a change of duration."
 
     def test_mass_invariance(self):
         # parameters
@@ -90,6 +96,20 @@ class WaveformTest(unittest.TestCase):
         # these two waveforms should be identical as they represent (essentially) the same physical system
         assert get_mismatch(wave1, wave2) < 1e-14, "Prograde-retrograde waveforms not convergent."
 
+        a = 0.3
+
+        # check that negative spin inputs are correctly handled
+        wave1 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10.)
+        wave2 = self.waveform_generator(M, mu, -a, p0, e0, -xI, theta, phi, T=T, dt=10.)
+
+        # these two waveforms should be identical as they represent the same physical system
+        assert get_mismatch(wave1, wave2) < 1e-14, "Waveforms not convergent under joint sign-flip of a and xI."
+
+        wave3 = self.waveform_generator(M, mu, -a, p0, e0, xI, theta, phi, T=T, dt=10.)
+
+        # these waveforms should greatly differ
+        assert get_mismatch(wave1, wave3) > 1e-5, "Waveforms not divergent under a sign-flip of xI."
+
     def test_orientation_behaviour(self):
         # parameters
         T = 0.001
@@ -121,22 +141,6 @@ class WaveformTest(unittest.TestCase):
 
         assert get_mismatch(wave1,-wave2.conj()) < 1e-14, "Odd ell-mode waveform not convergent under a parity transformation."
     
-    def test_distance_scaling(self):
-        # parameters
-        T = 0.001
-        M = 1e6
-        mu = 1e1
-        a = 0.6
-        p0 = 8.0
-        e0 = 0.3
-        xI = 1.
-        theta = np.pi/3
-        phi = np.pi/4
-
-        wave1 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10., dist = 1.)
-        wave2 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10., dist = 2.)
-        assert get_mismatch(wave1, wave2 * 2) < 1e-14, "Waveform not invariant under a rescaling of luminosity distance."
-
     def test_distance_scaling(self):
         # parameters
         T = 0.001
