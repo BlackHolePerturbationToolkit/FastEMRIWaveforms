@@ -27,37 +27,6 @@ def _Ldot_PN(e, yPN):
     )
 
 
-@njit
-def _schwarz_jac_kernel(p, e, Edot, Ldot):
-    pdot = (
-        -2
-        * (
-            Edot
-            * sqrt((4 * pow(e, 2) - pow(-2 + p, 2)) / (3 + pow(e, 2) - p))
-            * (3 + pow(e, 2) - p)
-            * pow(p, 1.5)
-            + Ldot * pow(-4 + p, 2) * sqrt(-3 - pow(e, 2) + p)
-        )
-    ) / (4 * pow(e, 2) - pow(-6 + p, 2))
-    if e > 0:
-        edot = -(
-            (
-                Edot
-                * sqrt((4 * pow(e, 2) - pow(-2 + p, 2)) / (3 + pow(e, 2) - p))
-                * pow(p, 1.5)
-                * (18 + 2 * pow(e, 4) - 3 * pow(e, 2) * (-4 + p) - 9 * p + pow(p, 2))
-                + (-1 + pow(e, 2))
-                * Ldot
-                * sqrt(-3 - pow(e, 2) + p)
-                * (12 + 4 * pow(e, 2) - 8 * p + pow(p, 2))
-            )
-            / (e * (4 * pow(e, 2) - pow(-6 + p, 2)) * p)
-        )
-    else:
-        edot = 0.0
-    return pdot, edot
-
-
 class SchwarzEccFlux(ODEBase):
     """
     Schwarzschild eccentric flux ODE.

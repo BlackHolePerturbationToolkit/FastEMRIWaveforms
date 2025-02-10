@@ -190,7 +190,7 @@ class ODEBase:
         p, e, x_or_Y = self.get_pex(y)
 
         # first: check the eccentricity
-        in_bounds = e > 0
+        in_bounds = e >= 0
         if in_bounds:
             # second: check the separatrix
             if self.convert_Y:

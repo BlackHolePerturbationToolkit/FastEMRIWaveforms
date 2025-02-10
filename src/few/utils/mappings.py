@@ -28,8 +28,61 @@ BETA_FLUX = 2.0
 ALPHA_AMP = 1./3.
 BETA_AMP = 3.0
 
+
 @njit
-def ELdot_to_PEdot_Jacobian(a, p, ecc, xI, Edot, Lzdot):
+def _schwarz_jac_kernel(p, e, Edot, Ldot):
+    pdot = (
+        -2
+        * (
+            Edot
+            * sqrt((4 * pow(e, 2) - pow(-2 + p, 2)) / (3 + pow(e, 2) - p))
+            * (3 + pow(e, 2) - p)
+            * pow(p, 1.5)
+            + Ldot * pow(-4 + p, 2) * sqrt(-3 - pow(e, 2) + p)
+        )
+    ) / (4 * pow(e, 2) - pow(-6 + p, 2))
+    if e > 0:
+        edot = -(
+            (
+                Edot
+                * sqrt((4 * pow(e, 2) - pow(-2 + p, 2)) / (3 + pow(e, 2) - p))
+                * pow(p, 1.5)
+                * (18 + 2 * pow(e, 4) - 3 * pow(e, 2) * (-4 + p) - 9 * p + pow(p, 2))
+                + (-1 + pow(e, 2))
+                * Ldot
+                * sqrt(-3 - pow(e, 2) + p)
+                * (12 + 4 * pow(e, 2) - 8 * p + pow(p, 2))
+            )
+            / (e * (4 * pow(e, 2) - pow(-6 + p, 2)) * p)
+        )
+    else:
+        edot = 0.0
+    return pdot, edot
+
+@njit
+def ELdot_to_PEdot_Jacobian(
+    a: float, 
+    p: float, 
+    ecc: float, 
+    xI: float, 
+    Edot: float, 
+    Lzdot: float
+    ):
+    """
+    Jacobian transformation of fluxes from (E, Lz) to (p, ecc) coordinates.
+    As this function is a numba kernel, float inputs are required.
+    Arguments:
+        a (float): Spin parameter of the massive black hole.
+        p (float): Semi-latus rectum of inspiral.
+        ecc (float): Eccentricity of inspiral.
+        xI (float): Cosine of inclination of inspiral. Must have a magnitude of 1.
+        Edot (float): Time derivative of orbital energy.
+        Lzdot (float): Time derivative of orbital angular momentum.
+    """
+    
+    if a == 0:
+        return _schwarz_jac_kernel(p, ecc, Edot, Lzdot)
+
     E = _KerrGeoEnergy(a, p, ecc, xI)
     Lz = _KerrGeoAngularMomentum(a, p, ecc, xI, E)
 
@@ -75,7 +128,7 @@ def ELdot_to_PEdot_Jacobian(a, p, ecc, xI, Edot, Lzdot):
       if (abs(eccdot) < 3.e-14):
         eccdot = 0.;
 
-      return pdot, eccdot
+    return pdot, eccdot
 
 
 def schwarzecc_p_to_y(p, e, use_gpu=False):
@@ -138,7 +191,37 @@ def kerrecceq_legacy_p_to_u(a, p, e, xI, use_gpu=False):
     return u
 
 
-def kerrecceq_forward_map(a, p, e, xI, use_gpu=False, return_mask=False, kind="flux"):
+def kerrecceq_forward_map(
+        a: Union[float, np.ndarray], 
+        p: Union[float, np.ndarray],
+        e: Union[float, np.ndarray], 
+        xI: Union[float, np.ndarray],
+        use_gpu:Optional[bool]=False, 
+        return_mask:Optional[bool]=False, 
+        kind:str="flux"):
+    """
+    Map from apex coordinates to interpolation coordinates for the KerrEccEq model.
+    This mapping returns the interpolation coordinates (u, w, y, z) corresponding to the apex coordinates (p, e, xI, a).
+    
+    The interpolation coordinates are defined on the range [0, 1] and refer to either a "close" region A or a "far" region B.
+    To also output an array indicating whether each point is in region A or B, set return_mask=True.
+
+    For either flux or amplitude interpolation with the KerrEccEq model, the same formulae are applied with different tunable
+    parameters. The default is flux interpolation, but amplitude interpolation can be selected by setting kind="amplitude".
+
+    Arguments:
+        a (float or np.ndarray): Spin parameter of the massive black hole.
+        p (float or np.ndarray): Semi-latus rectum of inspiral.
+        e (float or np.ndarray): Eccentricity of inspiral.
+        xI (float or np.ndarray): Cosine of inclination of inspiral. Only a value of 1 is supported.
+        use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
+        return_mask (bool, optional): If True, return a mask indicating whether the point is in region A or B. Default is False.
+        kind (str, optional): Type of mapping to perform. Default is "flux".
+    """
+
+    if np.any(xI != 1):
+        raise ValueError("Only xI = 1 is supported.")
+    
     if kind == "flux":
         alpha = ALPHA_FLUX
         beta = BETA_FLUX
@@ -213,7 +296,7 @@ def u_of_p(p, pLSO, dpmin, dpmax, alpha):
     return np.abs((np.log(p - pLSO + dpmax - 2*dpmin) - log(dpmax - dpmin))/log(2))**(alpha)
 
 @njit
-def y_of_x(x, xmin):
+def y_of_x(x, xmin=XMIN):
     return (x-xmin)/(1-xmin)
 
 @njit
@@ -249,7 +332,7 @@ def p_of_u(u, pLSO, dpmin, dpmax, alpha):
     return (pLSO + dpmin) + (dpmax - dpmin)*(np.exp(u**(1/alpha)*log(2)) - 1)
 
 @njit
-def x_of_y(y, xmin):
+def x_of_y(y, xmin=XMIN):
     return y*(1-xmin) + xmin
 
 @njit
@@ -284,17 +367,18 @@ def _uwyz_of_apex_kernel(a, p, e, x, pLSO, amin = AMIN, amax = AMAX, dpmin = DEL
     w = w_of_euz(e, u, z, beta, esep, emax)
     return u, w, y, z
 
-@njit
-def _apex_of_uwyz_kernel(u, w, y, z, amin = AMIN, amax = AMAX, dpmin = DELTAPMIN, dpmax = DELTAPMAX, xmin = XMIN, esep = ESEP, emax = EMAX, alpha = ALPHA_FLUX, beta = BETA_FLUX):
+def apex_of_uwyz(u, w, y, z, amin = AMIN, amax = AMAX, dpmin = DELTAPMIN, dpmax = DELTAPMAX, xmin = XMIN, esep = ESEP, emax = EMAX, alpha = ALPHA_FLUX, beta = BETA_FLUX):
     a = a_of_z(z, amin, amax)
     x = x_of_y(y, xmin)
     e = e_of_uwz(u, w, z, beta, esep, emax)
-    a_in = abs(a)
-    x_in = -1 if a < 0 else 1
-    pLSO = _get_separatrix_kernel_inner(a_in, e, x_in)
+    a = np.asarray(a)
+    a_in = np.abs(a)
+    x_in = np.sign(a)
+    x_in[x_in == 0] = 1
+
+    pLSO = get_separatrix(a_in, e, x_in)
     p = p_of_u(u, pLSO, dpmin, dpmax, alpha)
     return a, p, e, x
-
 
 # def kerrecceq_amp_forward_map(a, p, e, xI, use_gpu=False, return_mask = False):
 #     if use_gpu:

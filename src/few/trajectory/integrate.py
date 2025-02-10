@@ -688,10 +688,16 @@ class Integrate:
         raise NotImplementedError
 
 class APEXIntegrate(Integrate):
+    """
+    An subclass of Integrate for integrating in pex coordinates.
+    """
     def get_pex(self, y):
         return y[:3]
 
 class AELQIntegrate(Integrate):
+    """
+    An subclass of Integrate for integrating in ELQ coordinates.
+    """
     def get_pex(self, y):
         p, e, x = ELQ_to_pex(
             self.a, y[0], y[1], y[2]
