@@ -384,7 +384,7 @@ class SchwarzschildEccentric(SphericalHarmonic):
             xI: Initial cosine(inclination) :math:`(x_I = 1)`.
 
         Returns:
-            (a_fix, xI_fix): a and xI in the correct convention (a > 0).
+            (a_fix, xI_fix): a and xI in the correct convention (a >= 0).
         
         Raises:
             ValueError: If any of the parameters are not allowed.
@@ -484,15 +484,15 @@ class KerrEccentricEquatorial(SphericalHarmonic):
         args:
             M: Massive black hole mass in solar masses.
             mu: compact object mass in solar masses.
-            a: Dimensionless spin of massive black hole :math:`(a = 0)`.
+            a: Dimensionless spin of massive black hole.
             p0: Initial semilatus rectum (dimensionless)
                 :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
                 more information on :math:`p_0 \leq 10.0`.
             e0: Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
-            xI: Initial cosine(inclination) :math:`(x_I = 1)`.
+            xI: Initial cosine(inclination) :math:`(|x_I| = 1)`.
 
         Returns:
-            (a_fix, xI_fix): a and xI in the correct convention (a > 0).
+            (a_fix, xI_fix): a and xI in the correct convention (a >= 0).
         
         Raises:
             ValueError: If any of the parameters are not allowed.
