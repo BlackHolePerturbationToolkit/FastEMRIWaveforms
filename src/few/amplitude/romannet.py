@@ -21,9 +21,7 @@ import numpy as np
 import h5py
 
 # Python imports
-from ..utils.baseclasses import (
-    SchwarzschildEccentric,
-)
+from ..utils.baseclasses import SchwarzschildEccentric, BackendLike
 from .base import AmplitudeBase
 from ..utils.globals import get_file_manager
 from ..utils.citations import REFERENCE
@@ -107,8 +105,9 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         """
         pass
 
-    def __init__(self, buffer_length=1000, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, buffer_length=1000, force_backend: BackendLike = None, **kwargs):
+        AmplitudeBase.__init__(self)
+        SchwarzschildEccentric.__init__(self, **kwargs, force_backend=force_backend)
 
         # check if user has the necessary data
         # if not, the data will automatically download

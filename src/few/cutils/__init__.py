@@ -243,6 +243,7 @@ class _CudaBackend(Backend):
             raise MissingDependencies(
                 "CuPy fails to run due to missing CUDA Runtime.",
                 pip_deps=["nvidia-cuda-runtime-cu{}".format(cuda_major)],
+                conda_deps=[],
             ) from e
         except (cupy_backends.cuda.api.runtime.CUDARuntimeError, RuntimeError) as e:
             raise SoftwareException("CuPy could not execute properly.") from e

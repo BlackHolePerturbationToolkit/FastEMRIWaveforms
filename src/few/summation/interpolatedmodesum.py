@@ -18,9 +18,7 @@
 import numpy as np
 
 # Python imports
-from ..utils.baseclasses import (
-    ParallelModuleBase,
-)
+from ..utils.baseclasses import ParallelModuleBase, BackendLike
 from .base import SummationBase
 
 from few.utils.globals import get_logger
@@ -276,7 +274,7 @@ class CubicSplineInterpolant(ParallelModuleBase):
         return out.squeeze()
 
 
-class InterpolatedModeSum(SummationBase, ParallelModuleBase):
+class InterpolatedModeSum(SummationBase):
     """Create waveform by interpolating a sparse trajectory.
 
     It interpolates all of the modes of interest and phases at sparse
@@ -287,8 +285,8 @@ class InterpolatedModeSum(SummationBase, ParallelModuleBase):
 
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, force_backend: BackendLike = None, **kwargs):
+        SummationBase.__init__(self, **kwargs, force_backend=force_backend)
 
     @property
     def get_waveform(self) -> callable:

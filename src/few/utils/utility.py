@@ -23,9 +23,7 @@ from .elliptic import EllipK, EllipE, EllipPi
 from numba import njit, cuda
 from math import sqrt, pow, cos, acos
 
-from few.utils.globals import get_logger
-
-few_logger = get_logger()
+from few.utils.globals import get_logger, get_first_backend
 
 from .constants import YRSID_SI, PI
 
@@ -85,10 +83,13 @@ def get_overlap(
     min_len = int(np.min([len(time_series_1), len(time_series_2)]))
 
     if len(time_series_1) != len(time_series_2):
-        few_logger.warning(
+        import logging
+
+        get_logger().warning(
             "The two time series are not the same length ({} vs {}). The calculation will run with length {} starting at index 0 for both arrays.".format(
                 len(time_series_1), len(time_series_2), min_len
-            )
+            ),
+            stack_info=get_logger().getEffectiveLevel() <= logging.DEBUG,
         )
 
     # chop off excess length on a longer array
@@ -674,9 +675,9 @@ def get_fundamental_frequencies(
 
     """
     if use_gpu:
-        xp = cp
+        import cupy as xp
     else:
-        xp = np
+        import numpy as xp
 
     # check if inputs are scalar or array
     if isinstance(p, float):
@@ -1650,9 +1651,9 @@ def get_separatrix(
 
     """
     if use_gpu:
-        xp = cp
+        import cupy as xp
     else:
-        xp = np
+        import numpy as xp
 
     # determines shape of input
     if isinstance(e, float):
@@ -1955,11 +1956,13 @@ def wrapper(*args, **kwargs):
     targs = []
     tkwargs = {}
 
+    best_backend = get_first_backend(["cuda12x", "cuda11x", "cpu"])
+
     # args first
     for arg in args:
-        if gpu:
+        if best_backend.uses_cupy:
             # cupy arrays
-            if isinstance(arg, cp.ndarray):
+            if isinstance(arg, best_backend.xp.ndarray):
                 targs.append(arg.data.mem.ptr)
                 continue
 
@@ -1978,9 +1981,9 @@ def wrapper(*args, **kwargs):
 
     # kwargs next
     for key, arg in kwargs.items():
-        if gpu:
+        if best_backend.uses_cupy:
             # cupy arrays
-            if isinstance(arg, cp.ndarray):
+            if isinstance(arg, best_backend.xp.ndarray):
                 tkwargs[key] = arg.data.mem.ptr
                 continue
 

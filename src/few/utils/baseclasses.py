@@ -37,6 +37,9 @@ from ..utils.globals import get_logger, get_backend, get_first_backend
 xp_ndarray = TypeVar("xp_ndarray")
 """Generic alias for backend ndarray"""
 
+BackendLike = Union[str, Backend, None]
+"""Type hint to declare a backend in constructor."""
+
 
 class ParallelModuleBase(Citable):
     """
@@ -51,7 +54,7 @@ class ParallelModuleBase(Citable):
 
     _backend_name: str
 
-    def __init__(self, force_backend: Optional[Union[str, Backend]] = None):
+    def __init__(self, /, force_backend: BackendLike = None):
         if force_backend is not None:
             if isinstance(force_backend, Backend):
                 force_backend = force_backend.name
@@ -211,12 +214,9 @@ class SphericalHarmonic(ParallelModuleBase):
     """Array mapping mode tuple to mode index with m > 0 - used for fast indexing. Returns -1 if mode does not exist."""
 
     def __init__(
-        self,
-        lmax: int = 10,
-        nmax: int = 30,
-        **kwargs,
+        self, lmax: int = 10, nmax: int = 30, force_backend: BackendLike = None
     ):
-        super().__init__(**kwargs)
+        ParallelModuleBase.__init__(self, force_backend=force_backend)
 
         self.lmax = lmax
         self.nmax = nmax
@@ -430,12 +430,15 @@ class SchwarzschildEccentric(SphericalHarmonic):
 
     def __init__(
         self,
+        /,
         lmax: int = 10,
         nmax: int = 30,
         ndim: int = 2,
-        **kwargs,
+        force_backend: BackendLike = None,
     ):
-        super().__init__(lmax=lmax, nmax=nmax, **kwargs)
+        SphericalHarmonic.__init__(
+            self, lmax=lmax, nmax=nmax, force_backend=force_backend
+        )
 
         self.ndim = ndim
 
@@ -536,9 +539,11 @@ class KerrEccentricEquatorial(SphericalHarmonic):
         lmax: int = 10,
         nmax: int = 55,
         ndim: int = 2,
-        **kwargs,
+        force_backend: BackendLike = None,
     ):
-        super().__init__(lmax=lmax, nmax=nmax, **kwargs)
+        SphericalHarmonic.__init__(
+            self, lmax=lmax, nmax=nmax, force_backend=force_backend
+        )
 
         self.ndim = ndim
 
@@ -579,7 +584,7 @@ class KerrEccentricEquatorial(SphericalHarmonic):
 
         if a < 0:
             # flip convention
-            few_logger.warning(
+            get_logger().warning(
                 "Negative spin magnitude detected. Flipping sign of a and xI to match convention."
             )
             a = -a
@@ -614,17 +619,12 @@ class KerrEccentricEquatorial(SphericalHarmonic):
         return a, xI
 
 
-class Pn5AAK(ParallelModuleBase):
+class Pn5AAK(Citable):
     """Base class for Pn5AAK waveforms.
 
     This class contains some basic checks and information for AAK waveforms
     with a 5PN trajectory model. Please see :class:`few.waveform.Pn5AAKWaveform`
     for more details.
-
-    args:
-        use_gpu: If True, will allocate arrays on the GPU.
-            Default is False.
-
     """
 
     background: str = "Kerr"
@@ -643,10 +643,6 @@ class Pn5AAK(ParallelModuleBase):
     def module_references(cls) -> list[REFERENCE]:
         """Return citations related to this module"""
         return [REFERENCE.PN5] + super(Pn5AAK, cls).module_references()
-
-    @classmethod
-    def supported_backends(cls):
-        return cls.GPU_RECOMMENDED()
 
     def sanity_check_angles(self, qS: float, phiS: float, qK: float, phiK: float):
         """Sanity check on viewing angles.
@@ -740,7 +736,7 @@ class Pn5AAK(ParallelModuleBase):
 
         if a < 0:
             # flip convention
-            few_logger.warning(
+            get_logger().warning(
                 "Negative spin magnitude detected. Flipping sign of a and Y0 to match convention."
             )
             a = -a

@@ -19,16 +19,15 @@
 import numpy as np
 
 # Python imports
-from ..utils.baseclasses import Pn5AAK, ParallelModuleBase
+from ..utils.baseclasses import Pn5AAK, BackendLike
 from .base import SummationBase
-from ..utils.constants import *
 
 from few.utils.globals import get_logger
 
 few_logger = get_logger()
 
 
-class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
+class AAKSummation(Pn5AAK, SummationBase):
     """Calculate an AAK waveform from an input trajectory.
 
     Please see the documentations for
@@ -42,13 +41,13 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
 
     args:
         **kwargs: Optional keyword arguments for the base classes:
-            :class:`few.utils.baseclasses.ParallelModuleBase`,
             :class:`few.utils.baseclasses.Pn5AAK`.
             :class:`few.utils.baseclasses.SummationBase`.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, force_backend: BackendLike = None, **kwargs):
+        Pn5AAK.__init__(self)
+        SummationBase.__init__(self, **kwargs, force_backend=force_backend)
 
     @property
     def waveform_generator(self):

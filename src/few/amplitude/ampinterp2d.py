@@ -32,6 +32,7 @@ from ..utils.baseclasses import (
     ParallelModuleBase,
     KerrEccentricEquatorial,
     xp_ndarray,
+    BackendLike,
 )
 from .base import AmplitudeBase
 from ..utils.citations import REFERENCE
@@ -128,9 +129,10 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         l_arr: np.ndarray,
         m_arr: np.ndarray,
         n_arr: np.ndarray,
-        **kwargs,
+        force_backend: BackendLike = None,
     ):
-        super().__init__(**kwargs)
+        AmplitudeBase.__init__(self)
+        ParallelModuleBase.__init__(self, force_backend=force_backend)
 
         self.l_arr = l_arr
         self.m_arr = m_arr
@@ -158,7 +160,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
     @property
     def interp2D(self) -> callable:
         """GPU or CPU interp2D"""
-        self.backend.interp2D
+        return self.backend.interp2D
 
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
@@ -259,13 +261,17 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
     u_values: np.ndarray
     z_values: np.ndarray
 
-    def __init__(self, filename: Optional[str] = None, downsample_Z=1, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        filename: Optional[str] = None,
+        downsample_Z=1,
+        force_backend: BackendLike = None,
+        **kwargs,
+    ):
+        AmplitudeBase.__init__(self)
+        KerrEccentricEquatorial.__init__(self, force_backend=force_backend, **kwargs)
 
-        if filename is None:
-            self.filename = "ZNAmps_l10_m10_n55_DS2.h5"
-        else:
-            self.filename = filename
+        self.filename = "ZNAmps_l10_m10_n55_DS2.h5" if filename is None else filename
 
         from few import get_file_manager
 
@@ -401,7 +407,13 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
             self.num_modes_eval = self.num_teuk_modes
 
         u, w, y, z, region_mask = kerrecceq_forward_map(
-            a_in, p, e, xI_in, use_gpu=self.use_gpu, return_mask=True, kind="amplitude"
+            a_in,
+            p,
+            e,
+            xI_in,
+            use_gpu=self.backend.uses_gpu,
+            return_mask=True,
+            kind="amplitude",
         )
         z_check = z[0]
 
@@ -488,8 +500,14 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
     len_indiv_c: int
     """Total number of coefficients per mode amplitude grid."""
 
-    def __init__(self, filenames: Optional[List[str]] = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        filenames: Optional[List[str]] = None,
+        force_backend: BackendLike = None,
+        **kwargs,
+    ):
+        AmplitudeBase.__init__(self)
+        SchwarzschildEccentric.__init__(self, **kwargs, force_backend=force_backend)
 
         if filenames is None:
             self.filename = "Teuk_amps_a0.0_lmax_10_nmax_30_new.h5"
@@ -598,7 +616,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
         p = self.xp.asarray(p)
         e = self.xp.asarray(e)
 
-        u = self.xp.asarray(schwarzecc_p_to_y(p, e, use_gpu=self.use_gpu))
+        u = self.xp.asarray(schwarzecc_p_to_y(p, e, use_gpu=self.backend.uses_gpu))
         w = e.copy()
 
         tw, tu, c = self.tck[:3]

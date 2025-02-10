@@ -22,8 +22,7 @@ import numpy as np
 from ..utils.baseclasses import (
     SchwarzschildEccentric,
     KerrEccentricEquatorial,
-    Pn5AAK,
-    ParallelModuleBase,
+    BackendLike,
 )
 from .base import AAKWaveformBase, SphericalHarmonicWaveformBase, WaveformModule
 
@@ -34,7 +33,7 @@ from ..amplitude.romannet import RomanAmplitude
 from ..utils.modeselector import ModeSelector, NeuralModeSelector
 from ..summation.directmodesum import DirectModeSum
 from ..summation.aakwave import AAKSummation
-from ..utils.constants import *
+from ..utils.constants import MRSUN_SI, Gpc
 from ..summation.interpolatedmodesum import InterpolatedModeSum
 from ..summation.fdinterp import FDInterpolatedModeSum
 
@@ -156,8 +155,8 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
         }
 
     @property
-    def stock_waveform_options(self):
-        print(list(self._stock_waveform_definitions.keys()))
+    def stock_waveform_options(self) -> list[str]:
+        return list(self._stock_waveform_definitions.keys())
 
     def _get_viewing_angles(self, qS, phiS, qK, phiK):
         """Transform from the detector frame to the source frame"""
@@ -193,14 +192,14 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
         cqS = np.cos(qS)
         sqS = np.sin(qS)
 
-        cphiS = np.cos(phiS)
-        sphiS = np.sin(phiS)
+        # cphiS = np.cos(phiS)
+        # sphiS = np.sin(phiS)
 
         cqK = np.cos(qK)
         sqK = np.sin(qK)
 
-        cphiK = np.cos(phiK)
-        sphiK = np.sin(phiK)
+        # cphiK = np.cos(phiK)
+        # sphiK = np.sin(phiK)
 
         # get polarization angle
 
@@ -414,13 +413,14 @@ class FastKerrEccentricEquatorialFlux(
 
     def __init__(
         self,
+        /,
         inspiral_kwargs: Optional[dict] = None,
         amplitude_kwargs: Optional[dict] = None,
         sum_kwargs: Optional[dict] = None,
         Ylm_kwargs: Optional[dict] = None,
         mode_selector_kwargs: Optional[dict] = None,
-        *args: Optional[tuple],
-        **kwargs: Optional[dict],
+        force_backend: BackendLike = None,
+        **kwargs: dict,
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
@@ -449,7 +449,17 @@ class FastKerrEccentricEquatorialFlux(
                     [0, 1, 2, 3, 4, 6, 7, 8, 9]
                 )
 
-        super().__init__(
+        KerrEccentricEquatorial.__init__(
+            self,
+            **{
+                key: value
+                for key, value in kwargs.items()
+                if key in ["lmax", "nmax", "ndim"]
+            },
+            force_backend=force_backend,
+        )
+        SphericalHarmonicWaveformBase.__init__(
+            self,
             inspiral_module=EMRIInspiral,
             amplitude_module=AmpInterpKerrEqEcc,
             sum_module=mode_summation_module,
@@ -459,8 +469,10 @@ class FastKerrEccentricEquatorialFlux(
             sum_kwargs=sum_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             mode_selector_kwargs=mode_selector_kwargs,
-            *args,
-            **kwargs,
+            **{
+                key: value for key, value in kwargs.items() if key in ["normalize_amps"]
+            },
+            force_backend=force_backend,
         )
 
     @classmethod
@@ -559,13 +571,14 @@ class FastSchwarzschildEccentricFlux(
 
     def __init__(
         self,
+        /,
         inspiral_kwargs: Optional[dict] = None,
         amplitude_kwargs: Optional[dict] = None,
         sum_kwargs: Optional[dict] = None,
         Ylm_kwargs: Optional[dict] = None,
         mode_selector_kwargs: Optional[dict] = None,
-        *args: Optional[tuple],
-        **kwargs: Optional[dict],
+        force_backend: BackendLike = None,
+        **kwargs: dict,
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
@@ -592,7 +605,14 @@ class FastSchwarzschildEccentricFlux(
                     )
                 mode_selector_kwargs["keep_inds"] = np.array([0, 1, 3, 4, 6, 7, 8, 9])
 
-        super().__init__(
+        SchwarzschildEccentric.__init__(
+            self,
+            **{k: v for k, v in kwargs.items() if k in ["lmax", "ndim"]},
+            nmax=kwargs["nmax"] if "nmax" in kwargs else 30,
+            force_backend=force_backend,
+        )
+        SphericalHarmonicWaveformBase.__init__(
+            self,
             inspiral_module=EMRIInspiral,
             amplitude_module=RomanAmplitude,
             sum_module=mode_summation_module,
@@ -602,10 +622,8 @@ class FastSchwarzschildEccentricFlux(
             sum_kwargs=sum_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             mode_selector_kwargs=mode_selector_kwargs,
-            nmax=30,
             normalize_amps=True,
-            *args,
-            **kwargs,
+            force_backend=force_backend,
         )
 
     @classmethod
@@ -701,12 +719,13 @@ class FastSchwarzschildEccentricFluxBicubic(
 
     def __init__(
         self,
+        /,
         inspiral_kwargs: Optional[dict] = None,
         amplitude_kwargs: Optional[dict] = None,
         sum_kwargs: Optional[dict] = None,
         Ylm_kwargs: Optional[dict] = None,
         mode_selector_kwargs: Optional[dict] = None,
-        *args: Optional[tuple],
+        force_backend: BackendLike = None,
         **kwargs: Optional[dict],
     ):
         if inspiral_kwargs is None:
@@ -734,7 +753,13 @@ class FastSchwarzschildEccentricFluxBicubic(
                     )
                 mode_selector_kwargs["keep_inds"] = np.array([0, 1, 3, 4, 6, 7, 8, 9])
 
-        super().__init__(
+        SchwarzschildEccentric.__init__(
+            self,
+            **{k: v for k, v in kwargs.items() if k in ["lmax", "ndim", "nmax"]},
+            force_backend=force_backend,
+        )
+        SphericalHarmonicWaveformBase.__init__(
+            self,
             inspiral_module=EMRIInspiral,
             amplitude_module=AmpInterpSchwarzEcc,
             sum_module=mode_summation_module,
@@ -744,8 +769,10 @@ class FastSchwarzschildEccentricFluxBicubic(
             sum_kwargs=sum_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             mode_selector_kwargs=mode_selector_kwargs,
-            *args,
-            **kwargs,
+            **{
+                key: value for key, value in kwargs.items() if key in ["normalize_amps"]
+            },
+            force_backend=force_backend,
         )
 
     @classmethod
@@ -850,12 +877,13 @@ class SlowSchwarzschildEccentricFlux(
 
     def __init__(
         self,
+        /,
         inspiral_kwargs: Optional[dict] = None,
         amplitude_kwargs: Optional[dict] = None,
         sum_kwargs: Optional[dict] = None,
         Ylm_kwargs: Optional[dict] = None,
-        *args: Optional[tuple],
-        **kwargs: Optional[dict],
+        force_backend: BackendLike = None,
+        **kwargs: dict,
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
@@ -863,7 +891,13 @@ class SlowSchwarzschildEccentricFlux(
         inspiral_kwargs["DENSE_STEPPING"] = 1
         inspiral_kwargs["func"] = SchwarzEccFlux
 
-        super().__init__(
+        SchwarzschildEccentric.__init__(
+            self,
+            **{k: v for k, v in kwargs.items() if k in ["lmax", "ndim", "nmax"]},
+            force_backend=force_backend,
+        )
+        SphericalHarmonicWaveformBase.__init__(
+            self,
             inspiral_module=EMRIInspiral,
             amplitude_module=AmpInterpSchwarzEcc,
             sum_module=DirectModeSum,
@@ -872,8 +906,12 @@ class SlowSchwarzschildEccentricFlux(
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
             Ylm_kwargs=Ylm_kwargs,
-            *args,
-            **kwargs,
+            **{
+                key: value
+                for key, value in kwargs.items()
+                if key in ["mode_selector_kwargs", "normalize_amps"]
+            },
+            force_backend=force_backend,
         )
 
     def __call__(
@@ -921,7 +959,7 @@ class SlowSchwarzschildEccentricFlux(
         )
 
 
-class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase):
+class Pn5AAKWaveform(AAKWaveformBase):
     r"""Waveform generation class for AAK with 5PN trajectory.
 
     This class generates waveforms based on the Augmented Analytic Kludge
@@ -979,18 +1017,19 @@ class Pn5AAKWaveform(AAKWaveformBase, Pn5AAK, ParallelModuleBase):
         self,
         inspiral_kwargs: Optional[dict] = None,
         sum_kwargs: Optional[dict] = None,
-        **kwargs,
+        force_backend: BackendLike = None,
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
         inspiral_kwargs["func"] = PN5
 
-        super().__init__(
+        AAKWaveformBase.__init__(
+            self,
             inspiral_module=EMRIInspiral,
             sum_module=AAKSummation,
             inspiral_kwargs=inspiral_kwargs,
             sum_kwargs=sum_kwargs,
-            **kwargs,
+            force_backend=force_backend,
         )
 
     @classmethod

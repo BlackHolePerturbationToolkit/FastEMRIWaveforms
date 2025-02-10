@@ -1,7 +1,7 @@
-from ..utils.constants import *
+from ..utils.constants import YRSID_SI
 
 
-from ..utils.baseclasses import ParallelModuleBase
+from ..utils.baseclasses import ParallelModuleBase, BackendLike
 
 
 class SummationBase(ParallelModuleBase):
@@ -23,12 +23,14 @@ class SummationBase(ParallelModuleBase):
 
     def __init__(
         self,
-        *args,
+        /,
         output_type: str = "td",
         pad_output: bool = False,
         odd_len: bool = False,
-        **kwargs,
+        force_backend: BackendLike = None,
     ):
+        ParallelModuleBase.__init__(self, force_backend=force_backend)
+
         self.pad_output = pad_output
         self.odd_len = odd_len
 
@@ -50,8 +52,6 @@ class SummationBase(ParallelModuleBase):
 
         self.waveform = None
         """Complex waveform given by :math:`h_+ + i*h_x`."""
-
-        super().__init__(*args, **kwargs)
 
     @classmethod
     def sum(self, *args, **kwargs):

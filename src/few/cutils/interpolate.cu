@@ -463,8 +463,8 @@ void make_waveform(cmplx *waveform,
   cmplx trans(0.0, 0.0);
   cmplx trans2(0.0, 0.0);
 
-  cmplx complexI(0.0, 1.0);
-  cmplx minus_I(0.0, -1.0);
+  const cmplx complexI(0.0, 1.0);
+  const cmplx minus_I(0.0, -1.0);
 
   cmplx mode_val;
   cmplx partial_mode;
@@ -1142,7 +1142,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
 
     int num_pars = 2;
 
-    cmplx complexI(0.0, 1.0);
+    const cmplx complexI(0.0, 1.0);
 
     // declare all the shared memory
     // MAX_MODES_BLOCK is fixed based on shared memory
@@ -1187,8 +1187,6 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
     double f_r_c3;
 
     double roots[3];
-
-    cmplx I(0.0, 1.0);
 
     // number of splines
     int num_base = (2 * num_teuk_modes + num_pars) * init_length;
@@ -1436,7 +1434,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                         double temp_arg = 2.* PI * fdot * fdot * fdot / (3.* fddot * fddot);
                         cmplx amp_term2 = -1.0 * fdot/abs(fddot) * 2./sqrt(3.) * SPAFunc(temp_arg) / gcmplx::sqrt(cmplx(temp_arg, 0.0));
 
-                        cmplx temp_exp = R_amp * amp_term2 * gcmplx::exp(I* (2. * PI * f * t - phase_term));
+                        cmplx temp_exp = R_amp * amp_term2 * gcmplx::exp(complexI* (2. * PI * f * t - phase_term));
 
                         cmplx R_tmp = Ylm_plus_m * temp_exp;  // combine with spherical harmonic
 

@@ -1,16 +1,13 @@
 import numpy as np
 from tqdm import tqdm
 
-from ..utils.baseclasses import (
-    Pn5AAK,
-    ParallelModuleBase,
-)
+from ..utils.baseclasses import Pn5AAK, ParallelModuleBase, BackendLike
 
 from ..utils.mappings import (
     schwarzecc_p_to_y,
 )
 from ..utils.ylm import GetYlms
-from ..utils.constants import *
+from ..utils.constants import MRSUN_SI, Gpc
 from ..utils.citations import REFERENCE
 
 from typing import Union, Optional, TypeVar, Generic
@@ -84,6 +81,7 @@ class SphericalHarmonicWaveformBase(
 
     def __init__(
         self,
+        /,  # force use of keyword arguments for readability
         inspiral_module: type[InspiralModule],
         amplitude_module: type[AmplitudeModule],
         sum_module: type[SumModule],
@@ -94,9 +92,9 @@ class SphericalHarmonicWaveformBase(
         Ylm_kwargs: Optional[dict] = None,
         mode_selector_kwargs: Optional[dict] = None,
         normalize_amps: bool = False,
-        **kwargs,
+        force_backend: BackendLike = None,
     ):
-        super().__init__(**kwargs)
+        ParallelModuleBase.__init__(self, force_backend=force_backend)
 
         self.normalize_amps = normalize_amps
         self.inspiral_kwargs = {} if inspiral_kwargs is None else inspiral_kwargs
@@ -274,10 +272,11 @@ class SphericalHarmonicWaveformBase(
 
         # select tqdm if user wants to see progress
         iterator = enumerate(inds_split_all)
-        iterator = tqdm(iterator, desc="time batch") if show_progress else iterator
-
-        if show_progress:
-            print("total:", len(inds_split_all))
+        iterator = (
+            tqdm(iterator, desc="time batch", total=len(inds_split_all))
+            if show_progress
+            else iterator
+        )
 
         for i, inds_in in iterator:
             # get subsections of the arrays for each batch
@@ -521,13 +520,14 @@ class SphericalHarmonicWaveformBase(
                 **kwargs,
             )
 
-            # if batching, need to add the waveform
-            if i > 0:
-                waveform = self.xp.concatenate([waveform, waveform_temp])
+            # if batching, need to add the waveform (block if/else disabled since waveform is not already defined)
+            # if i > 0:
+            #     waveform = self.xp.concatenate([waveform, waveform_temp])
 
-            # return entire waveform
-            else:
-                waveform = waveform_temp
+            # # return entire waveform
+            # else:
+            #     waveform = waveform_temp
+            waveform = waveform_temp
 
         return waveform / dist_dimensionless
 
@@ -603,9 +603,10 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumMod
         sum_module: type[SumModule],
         inspiral_kwargs: Optional[dict] = None,
         sum_kwargs: Optional[dict] = None,
-        **kwargs,
+        force_backend: BackendLike = None,
     ):
-        super().__init__(**kwargs)
+        Pn5AAK.__init__(self)
+        ParallelModuleBase.__init__(self, force_backend=force_backend)
 
         self.inspiral_kwargs = {} if inspiral_kwargs is None else inspiral_kwargs
         self.inspiral_generator = inspiral_module(
@@ -728,7 +729,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumMod
             **self.inspiral_kwargs,
         )
 
-        if nmodes == None:
+        if nmodes is None:
             if (p[0] - p[1]) < 0:  # Integrating backwards
                 # Need to keep the number of modes equivalent
                 initial_e = e[-1]
