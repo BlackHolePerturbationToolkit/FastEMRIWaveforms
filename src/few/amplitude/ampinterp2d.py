@@ -570,17 +570,12 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
                 mode_indexes = specific_modes
             elif isinstance(
                 specific_modes, list
-            ):  # the following is slow and kills efficiency
-                mode_indexes = self.xp.zeros(len(specific_modes), dtype=self.xp.int32)
-                for i, (l, m, n) in enumerate(specific_modes):
-                    try:
-                        mode_indexes[i] = np.where(
-                            (self.l_arr == l)
-                            & (self.m_arr == abs(m))
-                            & (self.n_arr == n)
-                        )[0]
-                    except:  # noqa: E722
-                        raise Exception(f"Could not find mode index ({l},{m},{n}).")
+            ):
+                specific_modes_arr = self.xp.asarray(specific_modes)
+                mode_indexes = self.special_index_map_arr[specific_modes_arr[:,0], specific_modes_arr[:,1], specific_modes_arr[:,2]]
+                if self.xp.any(mode_indexes == -1):
+                        failed_mode = specific_modes_arr[self.xp.where(mode_indexes == -1)[0][0]]
+                        raise ValueError(f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]}).")
 
         # TODO: perform this in the kernel
         c_in = c[mode_indexes].flatten()
