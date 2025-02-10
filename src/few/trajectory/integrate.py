@@ -682,7 +682,7 @@ class Integrate:
             self.tmax_dimensionless * self.Msec, y_finish, spline_output=None
         )  # adds time in seconds
 
-
+    @classmethod
     def get_pex(self, y: np.ndarray) -> np.ndarray:
         """Handles integrator-specific conversion from y to pex and returns the result."""
         raise NotImplementedError
