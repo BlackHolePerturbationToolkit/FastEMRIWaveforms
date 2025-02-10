@@ -251,7 +251,7 @@ class SphericalHarmonic(ParallelModuleBase):
         """dict: Maps mode index to mode tuple with m > 0."""
         self.index_map_arr = self.xp.zeros((self.lmax + 1, self.lmax * 2 + 1, self.nmax * 2 + 1), dtype=self.xp.int32) - 1
         """np.ndarray: Array mapping mode tuple to mode index - used for fast indexing. Returns -1 if mode does not exist."""
-        self.special_index_map_arr = self.xp.zeros((self.lmax + 1, self.lmax + 1, self.nmax * 2 + 1), dtype=self.xp.int32) - 1
+        self.special_index_map_arr = self.xp.zeros((self.lmax + 1, self.lmax * 2 + 1, self.nmax * 2 + 1), dtype=self.xp.int32) - 1
         """np.ndarray: Array mapping mode tuple to mode index with m > 0 - used for fast indexing. Returns -1 if mode does not exist."""
         for i, (l, m, n) in enumerate(zip(self.l_arr, self.m_arr, self.n_arr)):
             try:
