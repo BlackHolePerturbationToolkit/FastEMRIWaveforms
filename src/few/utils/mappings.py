@@ -160,6 +160,8 @@ def schwarzecc_p_to_y(p, e, use_gpu=False):
 
     """
     if use_gpu:
+        import cupy as cp
+
         e_cp = cp.asarray(e)
         p_cp = cp.asarray(p)
         return cp.log(-(21 / 10) - 2 * e_cp + p_cp)
@@ -181,7 +183,10 @@ def kerrecceq_legacy_p_to_u(a, p, e, xI, use_gpu=False):
         use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
 
     """
-    xp = cp if use_gpu else np
+    if use_gpu:
+        import cupy as xp
+    else:
+        import numpy as xp
 
     scalar = False
     if isinstance(a, float):

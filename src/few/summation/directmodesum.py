@@ -97,10 +97,10 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
 
         if integrate_backwards:
             # For consistency with forward integration, we slightly shift the knots so that they line up at t=0
-            offset = h_t[-1] - int(h_t[-1] / dt) * dt
-            h_t = h_t - offset
-            phase_interp_t = phase_interp_t - offset
-            raise NotImplementedError  # TODO: spline the above quantities to shift them onto phase_interp_t
+            raise NotImplementedError  # TODO: spline the below quantities to shift them onto phase_interp_t
+            # offset = h_t[-1] - int(h_t[-1] / dt) * dt
+            # h_t = h_t - offset
+            # phase_interp_t = phase_interp_t - offset
 
         # waveform with M >= 0
         w1 = self.xp.sum(
