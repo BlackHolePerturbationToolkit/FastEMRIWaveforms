@@ -3,7 +3,7 @@
 # ====================================
 
 # ---- CMake related definitions ----
-cmake_minimum_required(VERSION 3.15...3.31)
+cmake_minimum_required(VERSION 3.23...3.31)
 
 # ---- Main project definition ----
 project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION}
