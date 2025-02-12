@@ -458,7 +458,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
             # prepare phases for summation modules
             if not self.inspiral_generator.inspiral_generator.dopr.fix_step:
                 # prepare phase spline coefficients
-                phase_spline_coeff = self.inspiral_generator.inspiral_generator.integrator_spline_coeff  # TODO make these accessible from EMRIInspiral
+                phase_spline_coeff = self.xp.asarray(self.inspiral_generator.inspiral_generator.integrator_spline_coeff)  # TODO make these accessible from EMRIInspiral
 
                 # scale coefficients here by the mass ratio
                 phase_information_in = phase_spline_coeff[:,[3,5],:] / (mu / M)
@@ -472,7 +472,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
 
                 phase_t_in = self.inspiral_generator.inspiral_generator.integrator_t_cache
             else:
-                phase_information_in = [Phi_phi_temp, Phi_theta_temp, Phi_r_temp]
+                phase_information_in = self.xp.asarray([Phi_phi_temp, Phi_theta_temp, Phi_r_temp])
                 if self.inspiral_generator.inspiral_generator.integrate_backwards:
                     phase_information_in[0] += self.xp.array([Phi_phi[-1] + Phi_phi[0]])
                     phase_information_in[1] += self.xp.array([Phi_theta[-1] + Phi_theta[0]])
@@ -735,7 +735,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase):
         self.end_time = t[-1]
 
         # prepare phase spline coefficients
-        traj_spline_coeff = self.inspiral_generator.inspiral_generator.integrator_spline_coeff  # TODO make these accessible from EMRIInspiral
+        traj_spline_coeff = self.xp.asarray(self.inspiral_generator.inspiral_generator.integrator_spline_coeff)  # TODO make these accessible from EMRIInspiral
 
         # scale coefficients here by the mass ratio
         traj_spline_coeff_in = traj_spline_coeff.copy()

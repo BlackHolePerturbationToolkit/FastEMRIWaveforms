@@ -126,7 +126,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         ]
         """list[np.ndarray]: Arrays holding spline knots in each dimension."""
 
-        self.coeff = coefficients
+        self.coeff = self.xp.asarray(coefficients)
         """np.ndarray: Array holding all spline coefficient information."""
 
         # for mode_ind in range(self.num_teuk_modes):
@@ -166,7 +166,6 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         Returns:
             Complex Teukolsky mode amplitudes at the requested points.
         """
-
         w = self.xp.asarray(w)
         u = self.xp.asarray(u)
 
@@ -234,7 +233,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
         AmplitudeBase.__init__(self, **kwargs)
 
         if filename is None:
-            self.filename = "ZNAmps_l10_m10_n55.h5"
+            self.filename = "ZNAmps_l10_m10_n55_DS2.h5"
         else:
             self.filename = filename
 
@@ -293,7 +292,6 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
 
     def evaluate_interpolant_at_index(self, index, region_A_mask, w, u, mode_indexes):
         z_out = self.xp.zeros((region_A_mask.size, self.num_modes_eval), dtype=self.xp.complex128)
-
         if self.xp.any(region_A_mask):
             z_out[region_A_mask, :] = self.spin_information_holder_A[index](
                     w[region_A_mask], u[region_A_mask], mode_indexes=mode_indexes
@@ -325,6 +323,13 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
         # retrograde: spin pos, xI neg - >  spin neg, xI pos
         assert isinstance(a, float)
 
+        try:
+            p = p.get()
+            e = e.get()
+            xI = xI.get()
+        except AttributeError:
+            pass
+        
         p = np.atleast_1d(p)
         e = np.atleast_1d(e)
         xI = np.atleast_1d(xI)
@@ -354,13 +359,18 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
             mode_indexes = self.xp.arange(self.num_teuk_modes)
             self.num_modes_eval = self.num_teuk_modes
 
-        u, w, y, z, region_mask = kerrecceq_forward_map(a_in, p, e, xI_in, use_gpu=self.use_gpu, return_mask=True, kind="amplitude")
+        u, w, y, z, region_mask = kerrecceq_forward_map(a_in, p, e, xI_in, return_mask=True, kind="amplitude")
         z_check = z[0]
 
+        
         for elem in [u, w, z]:
             if np.any((elem < 0)|(elem > 1)):
                 raise ValueError("Amplitude interpolant accessed out-of-bounds.")
 
+        region_mask = self.xp.asarray(region_mask)
+        u = self.xp.asarray(u)
+        w = self.xp.asarray(w)
+        
         if z_check in self.z_values:
             ind_1 = np.where(self.z_values == z_check)[0][0]
 

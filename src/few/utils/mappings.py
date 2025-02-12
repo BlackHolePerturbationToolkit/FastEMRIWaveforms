@@ -196,7 +196,6 @@ def kerrecceq_forward_map(
         p: Union[float, np.ndarray],
         e: Union[float, np.ndarray], 
         xI: Union[float, np.ndarray],
-        use_gpu:Optional[bool]=False, 
         return_mask:Optional[bool]=False, 
         kind:str="flux"):
     """
@@ -214,10 +213,10 @@ def kerrecceq_forward_map(
         p (float or np.ndarray): Semi-latus rectum of inspiral.
         e (float or np.ndarray): Eccentricity of inspiral.
         xI (float or np.ndarray): Cosine of inclination of inspiral. Only a value of 1 is supported.
-        use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
         return_mask (bool, optional): If True, return a mask indicating whether the point is in region A or B. Default is False.
         kind (str, optional): Type of mapping to perform. Default is "flux".
     """
+    xp = np  # TODO: gpu
 
     if np.any(xI != 1):
         raise ValueError("Only xI = 1 is supported.")
@@ -240,11 +239,6 @@ def kerrecceq_forward_map(
             return _uwyz_of_apex_kernel(a, p, e, xI, pLSO, alpha=alpha, beta=beta)
         else:
             raise ValueError
-
-    if use_gpu:
-        xp = cp
-    else:
-        xp = np
 
     # else, we have multiple points
     a = xp.atleast_1d(xp.asarray(a))
