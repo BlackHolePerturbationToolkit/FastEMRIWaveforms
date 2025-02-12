@@ -210,7 +210,8 @@ class Globals(metaclass=Singleton):
         super().__setattr__("_file_manager", file_manager)
 
     def _init_backends_manager(self):
-        backends_manager = BackendsManager()
+        cfg: Configuration = super().__getattribute__("_config")
+        backends_manager = BackendsManager(enabled_backends=cfg.enabled_backends)
         super().__setattr__("_backends_manager", backends_manager)
 
 

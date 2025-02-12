@@ -21,6 +21,7 @@ from typing import (
     Tuple,
 )
 from . import exceptions
+from ..cutils import KNOWN_BACKENDS
 
 
 class ConfigSource(enum.Enum):
@@ -408,6 +409,21 @@ def userinput_to_pathlist(user_input) -> List[pathlib.Path]:
     )
 
 
+def userinput_to_strlist(user_input) -> List[str]:
+    """Convert a user input to a list of paths"""
+    if user_input is None:
+        return []
+    if isinstance(user_input, str):
+        return user_input.split(";")
+    if compatibility_isinstance(user_input, List[str]):
+        return user_input
+    raise ValueError(
+        "User input '{}' of type '{}' is not convertible to a list of strings".format(
+            user_input, type(user_input)
+        )
+    )
+
+
 class InitialConfigConsumer(ConfigConsumer):
     """
     Class implementing first-pass config consumer.
@@ -477,6 +493,7 @@ class CompleteConfigConsumer(ConfigConsumer):
     file_allow_download: bool
     file_integrity_check: str
     file_extra_paths: List[pathlib.Path]
+    enabled_backends: Optional[List[str]]
 
     @staticmethod
     def config_entries() -> List[ConfigEntry]:
@@ -572,6 +589,20 @@ class CompleteConfigConsumer(ConfigConsumer):
                 overwrite=lambda old, new: old + new
                 if old is not None
                 else new,  # concatenate extra path lists
+            ),
+            ConfigEntry(
+                label="enabled_backends",
+                description="List of backends that must be enabled",
+                type=Optional[List[str]],
+                default=None,
+                cli_flags="--enable-backend",
+                cli_kwargs={"action": "append"},
+                env_var="ENABLED_BACKENDS",
+                cfg_entry="enabled-backends",
+                convert=lambda x: [v.lower() for v in userinput_to_strlist(x)],
+                validate=lambda x: all(v in KNOWN_BACKENDS for v in x)
+                if x is not None
+                else True,
             ),
         ]
 
