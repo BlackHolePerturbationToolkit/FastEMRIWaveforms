@@ -1,5 +1,7 @@
 """Implementation of a centralized configuration management for FEW."""
 
+from __future__ import annotations
+
 import abc
 import argparse
 import dataclasses
@@ -28,9 +30,19 @@ class ConfigSource(enum.Enum):
     """Enumeration of config option sources."""
 
     DEFAULT = "default"
+    """Config value comes from its default value"""
+
     CFGFILE = "config_file"
+    """Config value comes from the configuration file"""
+
     ENVVAR = "environment_var"
+    """Config value comes from environment variable"""
+
     CLIOPT = "command_line"
+    """Config value comes from command line parameter"""
+
+    SETTER = "setter"
+    """Config value set by config setter after importing FEW"""
 
 
 T = TypeVar("T")
@@ -103,8 +115,18 @@ def compatibility_isinstance(obj, cls) -> bool:
                 return False
         return True
 
+    import collections.abc
+
+    if typing.get_origin(cls) is collections.abc.Sequence:
+        if not hasattr(obj, "__iter__"):
+            return False
+        for item in obj:
+            if not compatibility_isinstance(item, typing.get_args(cls)[0]):
+                return False
+        return True
+
     raise NotImplementedError(
-        "compatiblity wrapper for isinstance on Python 3.9 does not support given type."
+        "Compatiblity wrapper for isinstance on Python 3.9 does not support given type."
     )
 
 
@@ -144,6 +166,7 @@ class ConfigConsumer(abc.ABC):
         config_file: Union[os.PathLike, Mapping[str, str], None] = None,
         env_vars: Optional[Mapping[str, str]] = None,
         cli_args: Optional[Sequence[str]] = None,
+        set_args: Optional[Dict[str, Any]] = None,
     ):
         """Initialize the items list and extra parameters."""
         config_entries = self.config_entries()
@@ -169,9 +192,12 @@ class ConfigConsumer(abc.ABC):
         cli_items, self._extra_cli = ConfigConsumer._build_items_from_cli(
             config_entries, opt_from_cli
         )
+        set_items = ConfigConsumer._build_items_from_set(config_entries, set_args)
 
         # Build final item mapping
-        self._items = self._overwrite(default_items, file_items, env_items, cli_items)
+        self._items = self._overwrite(
+            default_items, file_items, env_items, cli_items, set_items
+        )
 
         # Validate items:
         errors: List[Exception] = []
@@ -382,6 +408,29 @@ class ConfigConsumer(abc.ABC):
 
         return items_from_cli, extras_from_cli
 
+    @staticmethod
+    def _build_items_from_set(
+        config_entries: Sequence[ConfigEntry], set_values: Optional[Dict[str, Any]]
+    ) -> Dict[str, ConfigItem]:
+        """Check that provided items match the entries."""
+        set_items = {}
+
+        if set_values is None:
+            return set_items
+
+        for config_entry in config_entries:
+            if (label := config_entry.label) in set_values:
+                set_value = set_values[label]
+                if not config_entry.validate(set_value):
+                    raise exceptions.ConfigurationValidationError(
+                        "Configuration entry '{}' has invalid value '{}'".format(
+                            label, set_value
+                        )
+                    )
+                set_items[label] = ConfigItem(set_value, ConfigSource.SETTER)
+
+        return set_items
+
 
 def userstr_to_bool(user_str: str) -> Optional[bool]:
     """Convert a yes/no, on/off or true/false to bool."""
@@ -398,9 +447,9 @@ def userinput_to_pathlist(user_input) -> List[pathlib.Path]:
         return []
     if isinstance(user_input, str):
         return userinput_to_pathlist(user_input.split(";"))
-    if compatibility_isinstance(user_input, List[str]):
+    if compatibility_isinstance(user_input, Sequence[str]):
         return [pathlib.Path(path_str) for path_str in user_input]
-    if compatibility_isinstance(user_input, List[pathlib.Path]):
+    if compatibility_isinstance(user_input, Sequence[pathlib.Path]):
         return user_input
     raise ValueError(
         "User input '{}' of type '{}' is not convertible to a list of paths".format(
@@ -611,18 +660,22 @@ class CompleteConfigConsumer(ConfigConsumer):
         config_file: Union[os.PathLike, Mapping[str, str], None] = None,
         env_vars: Optional[Mapping[str, str]] = None,
         cli_args: Optional[Sequence[str]] = None,
+        set_args: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(
             config_file=config_file,
             env_vars=env_vars,
             cli_args=cli_args,
+            set_args=set_args,
         )
 
         # Post-init task: read -v and -q options
         self._handle_verbosity()
 
     @staticmethod
-    def _str_to_logging_level(input: str) -> int:
+    def _str_to_logging_level(input: Union[str, int]) -> int:
+        if isinstance(input, int):
+            return input
         as_int_level = logging.getLevelName(input.upper())
         if isinstance(as_int_level, int):
             return as_int_level
