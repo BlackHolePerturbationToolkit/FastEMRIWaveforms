@@ -78,6 +78,8 @@ doctest_global_cleanup = """
 few.utils.globals.reset(True)
 """
 
+myst_heading_anchors = 2
+
 source_suffix = [".rst", ".md"]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -98,8 +100,21 @@ def skip(app, what, name, obj, would_skip, options):
     return would_skip
 
 
+reftarget_aliases = {"CITATION.cff": "CITATION"}
+
+
+def substitute_ref_targets(_, doctree):
+    from sphinx.addnodes import pending_xref
+
+    for node in doctree.traverse(condition=pending_xref):
+        if (alias := node.get("reftarget", None)) in reftarget_aliases:
+            node["reftarget"] = reftarget_aliases[alias]
+
+
 def setup(app):
     app.connect("autodoc-skip-member", skip)
+    app.connect("doctree-read", substitute_ref_targets)
+    # app.connect("missing-reference", resolve_intersphinx_aliases)
 
 
 # -- Options for HTML output -------------------------------------------------
