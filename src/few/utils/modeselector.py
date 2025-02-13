@@ -389,10 +389,7 @@ class NeuralModeSelector(ParallelModuleBase):
         # if torch wasn't installed with GPU capability, raise
         if self.backend.uses_cuda and not torch.cuda.is_available():
             raise RuntimeError(
-                "pytorch has not been installed with CUDA capability. Fix installation or set use_gpu=False."
-            )
-            raise RuntimeError(
-                "pytorch has not been installed with CUDA capability. Fix installation or set use_gpu=False."
+                "pytorch has not been installed with CUDA capability. Fix installation or force 'cpu' backend."
             )
 
         self.model_loc = os.path.join(
