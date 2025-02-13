@@ -200,7 +200,7 @@ class ModuleTest(unittest.TestCase):
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, 0.0, p0, e0, 1.0)
 
     def test_amplitudes(self):
-        amp = RomanAmplitude()
+        amp = RomanAmplitude(force_backend="cpu")
 
         first_check, second_check = amplitude_test(amp)
 

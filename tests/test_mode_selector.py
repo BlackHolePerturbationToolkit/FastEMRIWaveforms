@@ -39,7 +39,7 @@ class ModeSelectorTest(unittest.TestCase):
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, 0.0, p0, e0, 1.0, T=10.0)
 
         # get amplitudes along trajectory
-        amp = RomanAmplitude()
+        amp = RomanAmplitude(force_backend="cpu")
 
         teuk_modes = amp(0.0, p, e, x)
 
