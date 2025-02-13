@@ -6,7 +6,7 @@ from .utility import (
     _KerrGeoEnergy,
     _KerrGeoAngularMomentum,
 )
-from typing import Union, Optional
+from typing import Optional, Union
 
 
 XMIN = 0.05
@@ -217,7 +217,7 @@ def kerrecceq_forward_map(
     e: Union[float, np.ndarray],
     xI: Union[float, np.ndarray],
     pLSO: Optional[Union[float, np.ndarray]] = None,
-    return_mask: Optional[bool] = False,
+    return_mask: bool = False,
     kind: str = "flux",
 ):
     """

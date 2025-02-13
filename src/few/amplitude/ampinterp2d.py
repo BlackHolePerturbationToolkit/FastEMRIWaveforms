@@ -411,7 +411,6 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
             p,
             e,
             xI_in,
-            use_gpu=self.backend.uses_gpu,
             return_mask=True,
             kind="amplitude",
         )
