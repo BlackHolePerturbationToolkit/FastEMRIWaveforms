@@ -254,9 +254,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
             ]
 
         # the input is (y, e)
-        y = schwarzecc_p_to_y(
-            p, e, use_gpu=self.backend.supports(self.backend.Feature.CUPY)
-        )
+        y = schwarzecc_p_to_y(p, e, use_gpu=self.backend.uses_cupy)
 
         # column-major single dimensional array input
         input = self.xp.concatenate([y, e])

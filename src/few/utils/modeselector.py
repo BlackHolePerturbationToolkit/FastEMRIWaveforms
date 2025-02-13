@@ -339,8 +339,7 @@ class NeuralModeSelector(ParallelModuleBase):
         ParallelModuleBase.__init__(self, force_backend=force_backend)
 
         # we set the pytorch device here for use with the neural network
-        backend_uses_cuda = self.backend.supports(self.backend.Feature.CUDA)
-        if backend_uses_cuda:
+        if self.backend.uses_cuda:
             import cupy as cp
 
             self.device = f"cuda:{cp.cuda.runtime.getDevice()}"
@@ -388,7 +387,7 @@ class NeuralModeSelector(ParallelModuleBase):
         if "torch" not in sys.modules:
             raise ModuleNotFoundError("Pytorch not installed.")
         # if torch wasn't installed with GPU capability, raise
-        if backend_uses_cuda and not torch.cuda.is_available():
+        if self.backend.uses_cuda and not torch.cuda.is_available():
             raise RuntimeError(
                 "pytorch has not been installed with CUDA capability. Fix installation or set use_gpu=False."
             )

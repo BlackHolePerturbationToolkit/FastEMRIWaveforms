@@ -357,7 +357,7 @@ class InterpolatedModeSum(SummationBase):
             h_t = h_t - offset
             phase_interp_t = phase_interp_t - offset
 
-        if not self.backend.supports(self.backend.Feature.CUDA):
+        if not self.backend.uses_cuda:
             dev = 0
         else:
             dev = int(self.xp.cuda.runtime.getDevice())

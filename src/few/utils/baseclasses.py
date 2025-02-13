@@ -259,7 +259,7 @@ class SphericalHarmonic(ParallelModuleBase):
         self.n_arr_no_mask = md[2]
 
         # adjust with .get method for cupy
-        if self.backend.supports(self.backend.Feature.CUPY):
+        if self.backend.uses_cupy:
             lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T.get())}
         else:
             lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
@@ -295,7 +295,7 @@ class SphericalHarmonic(ParallelModuleBase):
         # find unique sets of (l,m)
         # create inverse array to build full (l,m,n) from unique l and m
         # also adjust for cupy
-        if self.backend.supports(self.backend.Feature.CUPY):
+        if self.backend.uses_cupy:
             temp, self.inverse_lm = np.unique(
                 np.asarray([self.l_arr.get(), self.m_arr.get()]).T,
                 axis=0,
