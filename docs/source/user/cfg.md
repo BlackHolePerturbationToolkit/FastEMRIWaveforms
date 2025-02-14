@@ -32,9 +32,9 @@ logger = logging.getLogger("few")
 or by accessing `few` global states with
 
 ```py3
-import few.utils.globals
+import few
 
-logger = few.utils.globals.get_logger()
+logger = few.get_logger()
 ```
 
 The default log level is `logging.WARNING` but this can be modified through the `log_level` configuration option.
@@ -74,7 +74,7 @@ The `few` package requires external files of pre-computed coefficients which are
 These files are accessed through the `FileManager` global entity which takes care of locating these files, checking their integrity,
 and downloading missing files on request.
 
-The file manager is accessed through `few.utils.globals.get_file_manager()`
+The file manager is accessed through `few.get_file_manager()`
 
 This `FileManager` is highly tunable and propose the following options:
 
