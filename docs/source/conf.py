@@ -71,6 +71,12 @@ extensions = [
 
 intersphinx_mapping = {"python": ("https://docs.python.org/3.11", None)}
 
+doctest_global_setup = """
+import few
+"""
+doctest_global_cleanup = """
+few.utils.globals.reset(True)
+"""
 
 source_suffix = [".rst", ".md"]
 

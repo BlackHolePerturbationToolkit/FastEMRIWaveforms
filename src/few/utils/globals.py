@@ -165,6 +165,23 @@ class Globals(metaclass=Singleton):
 
         self.logger.debug("FEW globals initialized.")
 
+    def reset(self):
+        """Reset the global structure."""
+
+        # Remove attributes existing only in initialized globals
+        if self.is_initialized:
+            super().__delattr__("_initial_config")
+            super().__delattr__("_config")
+            super().__delattr__("_file_manager")
+
+        # Remove attributes always existing
+        super().__delattr__("_logger")
+        super().__delattr__("_config_setter")
+        super().__delattr__("_to_initialize")
+
+        # Reinitiliaze the structure
+        Globals.__init__(self)
+
     @property
     def is_initialized(self) -> bool:
         """Whether global properties are initialized."""
@@ -211,6 +228,9 @@ class Globals(metaclass=Singleton):
         """Pre-initialize logger."""
         logger = logging.getLogger("few")
         logger.setLevel(logging.DEBUG)
+        for handler in logger.handlers:
+            logger.removeHandler(handler)
+
         INITIAL_CAPACITY = 1024  # Log up to 1024 messages until globals are initialized
         handler = logging.handlers.MemoryHandler(capacity=INITIAL_CAPACITY)
         handler.set_name("_few_initial_handler")
@@ -362,6 +382,15 @@ def initialize(*cli_args):
 def get_config_setter() -> ConfigurationSetter:
     """Get a configuration setter."""
     return Globals().get_configuration_setter()
+
+
+def reset(quiet: bool = False):
+    """Reset global states."""
+    if not quiet:
+        get_logger().warning(
+            "FEW globals are about to be reset. Objects built up until now should be deleted to prevent unexpected side-effects."
+        )
+    Globals().reset()
 
 
 # Initialize the globals singleton when first importing this file

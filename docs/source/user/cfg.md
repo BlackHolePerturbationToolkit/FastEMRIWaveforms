@@ -150,7 +150,7 @@ Similarly, one may disable options from the environment using the `--ignore-env`
 
 In your program, you may access the values of these configuration option by accessing the global configuration:
 
-```py3
+```{eval-rst}
 >>> import few
 >>> cfg = few.get_config()
 >>> cfg.log_level
@@ -176,9 +176,9 @@ The *configuration setter* is accessed by `few.get_config_setter`and offers mult
 customize configuration options. Note that these methods can be chained directly:
 
 ```{eval-rst}
-.. testcode::
+.. testcode:: cfg-setter
 
-    import few
+    # import few
     # Access the setter
     setter = few.get_config_setter()
 
@@ -189,4 +189,38 @@ customize configuration options. Note that these methods can be chained directly
     setter.set_log_level(
         "debug"
     ).add_file_extra_paths("/tmp/few_data")
+```
+
+Options defined in the [*configuration setter*](few.utils.globals.ConfigurationSetter) can be applied
+immediately by calling the `finalize()` method like:
+
+```{eval-rst}
+.. testcode:: cfg-explicit-finalize
+
+    import few
+    # Access the setter, set an option and finalize options
+    few.get_config_setter().set_log_level("info").finalize()
+```
+
+But if `finalize()` is not explicitely called, the options set will still be taken into account
+automatically at a latter stage:
+
+```{eval-rst}
+.. testcode:: cfg-implicit-finalized
+
+    import few
+    # Set the log level
+    few.get_config_setter().set_log_level("debug")
+
+    # Build a FEW object
+    amp = few.amplitude.romannet.RomanAmplitude()
+
+.. testoutput:: cfg-implicit-finalized
+
+    ...
+    ConfigInitialization: final configuration entries are
+    ...
+     log_level=10 (from: ConfigSource.SETTER)
+    ...
+
 ```
