@@ -529,7 +529,7 @@ class InitialConfigConsumer(ConfigConsumer):
         super().__init__(config_file=None, env_vars=env_vars, cli_args=cli_args)
 
 
-class CompleteConfigConsumer(ConfigConsumer):
+class Configuration(ConfigConsumer):
     """
     Class implementing FEW complete configuration for the library.
     """
@@ -555,7 +555,7 @@ class CompleteConfigConsumer(ConfigConsumer):
                 cli_flags=["--log-level"],
                 env_var="LOG_LEVEL",
                 cfg_entry="log-level",
-                convert=CompleteConfigConsumer._str_to_logging_level,
+                convert=Configuration._str_to_logging_level,
             ),
             ConfigEntry(
                 label="log_format",
@@ -740,7 +740,7 @@ class CompleteConfigConsumer(ConfigConsumer):
         )
         verbosity_parser = self._build_verbosity_parser()
         complete_parser = ConfigConsumer._build_parser(
-            CompleteConfigConsumer.config_entries(),
+            Configuration.config_entries(),
             parent_parsers=[init_parser, verbosity_parser],
         )
         return [complete_parser]

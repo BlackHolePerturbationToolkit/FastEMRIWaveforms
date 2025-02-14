@@ -12,7 +12,7 @@ import rich.progress
 
 from .registry import FileRegistry, File
 from ..utils import exceptions
-from ..utils.config import CompleteConfigConsumer as Configuration
+from ..utils.config import Configuration
 
 
 class FileIntegrityCheckMode(enum.Enum):

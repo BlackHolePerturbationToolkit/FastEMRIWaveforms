@@ -5,6 +5,7 @@ The `few` package can be tuned through the use of optional configuration options
 - A `few.ini` configuration file
 - Environment variables
 - Command-line arguments when using a compatible command-line utility
+- A Python object named the `ConfigurationSetter` which can be used right after importing the `few` module for the first time
 
 The `few.ini` file is searched, in priority order:
 
@@ -150,8 +151,8 @@ Similarly, one may disable options from the environment using the `--ignore-env`
 In your program, you may access the values of these configuration option by accessing the global configuration:
 
 ```py3
->>> import few.utils.globals
->>> cfg = few.utils.globals.get_config()
+>>> import few
+>>> cfg = few.get_config()
 >>> cfg.log_level
 30
 >>> cfg.file_integrity_check
@@ -159,3 +160,33 @@ In your program, you may access the values of these configuration option by acce
 ```
 
 Unless stated otherwise, command-line arguments take precedence over environment variable which in turn take precedence over configuration file entries.
+
+## Configuration setter
+
+If you need to update configuration settings in a given script, or in an interactive Python context (terminal, notebook),
+this can be done using the [*configuration setter*](few.utils.globals.ConfigurationSetter).
+
+```{important}
+The Configuration Setter can only be used right after importing `few`.
+As soon as any `few` entity makes use of a configuration option (for instance, when initializing
+the first backend-accelerated object), the setter cannot be used anymore to change an option.
+```
+
+The *configuration setter* is accessed by `few.get_config_setter`and offers multiple methods to
+customize configuration options. Note that these methods can be chained directly:
+
+```{eval-rst}
+.. testcode::
+
+    import few
+    # Access the setter
+    setter = few.get_config_setter()
+
+    # Use a single method
+    setter.disable_file_download()
+
+    # Chain methods
+    setter.set_log_level(
+        "debug"
+    ).add_file_extra_paths("/tmp/few_data")
+```

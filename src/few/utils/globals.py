@@ -13,7 +13,7 @@ from .config import (
     ConfigEntry,
     ConfigConsumer,
     InitialConfigConsumer,
-    CompleteConfigConsumer as Configuration,
+    Configuration,
     detect_cfg_file,
 )
 from ..cutils import BackendsManager, Backend
@@ -369,10 +369,12 @@ Globals()
 
 __all__ = [
     "Globals",
+    "ConfigurationSetter",
     "get_logger",
     "get_file_manager",
     "get_config",
-    "initialize",
+    "get_config_setter",
     "get_backend",
     "get_first_backend",
+    "initialize",
 ]
