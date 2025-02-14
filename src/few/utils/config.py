@@ -466,6 +466,8 @@ def userinput_to_strlist(user_input) -> List[str]:
         return user_input.split(";")
     if compatibility_isinstance(user_input, List[str]):
         return user_input
+    if compatibility_isinstance(user_input, Sequence[str]):
+        return [input for input in user_input]
     raise ValueError(
         "User input '{}' of type '{}' is not convertible to a list of strings".format(
             user_input, type(user_input)

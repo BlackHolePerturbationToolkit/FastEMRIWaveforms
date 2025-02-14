@@ -70,6 +70,10 @@ class ConfigurationSetter:
         self._entries = {entry.label: entry for entry in Configuration.config_entries()}
         self._finalizer = finalizer
 
+    def enable_backends(self, *backends: str) -> ConfigurationSetter:
+        """Enable one or multiple backends"""
+        return self._convert_and_set("enabled_backends", backends)
+
     def set_log_level(self, level: typing.Union[str, int]) -> ConfigurationSetter:
         """Set a specific log level"""
         return self._convert_and_set("log_level", level)
