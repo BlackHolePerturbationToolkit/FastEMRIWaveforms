@@ -18,8 +18,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import os
-
 import numpy as np
 
 # Python imports
@@ -37,8 +35,6 @@ from typing import Type, Union
 from .ode.base import ODEBase
 
 from few.utils.globals import get_logger
-
-few_logger = get_logger()
 
 
 class EMRIInspiral(TrajectoryBase):
@@ -204,7 +200,7 @@ class EMRIInspiral(TrajectoryBase):
             a = 0.0
         elif a < fill_value:
             if background == "Kerr" and not equatorial:
-                few_logger.warning(
+                get_logger().warning(
                     "Our model with spin breaks near a = 0. Adjusting to a = 1e-6."
                 )
                 a = fill_value
@@ -316,7 +312,7 @@ class EMRIInspiral(TrajectoryBase):
             a = 0.0
         elif a < fill_value:
             if background == "Kerr" and not equatorial:
-                few_logger.warning(
+                get_logger().warning(
                     "Our model with spin breaks near a = 0. Adjusting to a = 1e-6."
                 )
                 a = fill_value

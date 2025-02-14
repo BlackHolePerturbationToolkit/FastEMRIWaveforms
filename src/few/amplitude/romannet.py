@@ -30,8 +30,6 @@ from scipy.interpolate import RectBivariateSpline
 
 from few.utils.globals import get_logger
 
-few_logger = get_logger()
-
 
 class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
     """Calculate Teukolsky amplitudes with a ROMAN.
@@ -237,7 +235,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         # check ifn input_len is greater than the buffer_length attribute
         # if so reset the buffers and update the attribute
         if input_len > self.buffer_length:
-            few_logger.warning(
+            get_logger().warning(
                 "Input length {} is larger than initial buffer_length ({}). Reallocating preallocated arrays for this size.".format(
                     input_len, self.buffer_length
                 )
