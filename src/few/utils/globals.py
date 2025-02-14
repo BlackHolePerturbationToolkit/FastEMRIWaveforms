@@ -53,11 +53,87 @@ class MultiHandlerTarget:
                 handler.handle(record)
 
 
+class ConfigurationSetter:
+    """Helper class to define configuration options."""
+
+    _args: typing.Dict[str, typing.Any]
+    _entries: typing.Dict[str, ConfigEntry]
+    _finalizer: typing.Optional[typing.Callable[[typing.Dict[str, typing.Any]], None]]
+
+    def __init__(
+        self,
+        finalizer: typing.Optional[
+            typing.Callable[[typing.Dict[str, typing.Any]], None]
+        ] = None,
+    ):
+        self._args = {}
+        self._entries = {entry.label: entry for entry in Configuration.config_entries()}
+        self._finalizer = finalizer
+
+    def set_log_level(self, level: typing.Union[str, int]) -> ConfigurationSetter:
+        """Set a specific log level"""
+        return self._convert_and_set("log_level", level)
+
+    def set_storage_path(self, path: os.PathLike) -> ConfigurationSetter:
+        """Modify the storage path"""
+        return self._convert_and_set("file_storage_path", path)
+
+    def set_log_format(self, format: str) -> ConfigurationSetter:
+        """Change the log format"""
+        return self._convert_and_set("log_format", format)
+
+    def set_file_registry_path(self, registry_path: os.PathLike) -> ConfigurationSetter:
+        """Set the file registry to use"""
+        return self._convert_and_set("file_registry_path", registry_path)
+
+    def set_file_download_path(self, path: os.PathLike) -> ConfigurationSetter:
+        """Set the download path"""
+        return self._convert_and_set("file_download_path", path)
+
+    def enable_file_download(self) -> ConfigurationSetter:
+        """Authorize the file manager to download missing files"""
+        return self._convert_and_set("file_allow_download", True)
+
+    def disable_file_download(self) -> ConfigurationSetter:
+        """Authorize the file manager to download missing files"""
+        return self._convert_and_set("file_allow_download", False)
+
+    def set_file_integrity_check(self, when: str) -> ConfigurationSetter:
+        """Define when integrity checks should be performed (never, once, always)"""
+        return self._convert_and_set("file_integrity_check", when)
+
+    def add_file_extra_paths(
+        self, *paths: typing.List[os.PathLike]
+    ) -> ConfigurationSetter:
+        """Add supplementary research paths to file manager"""
+        return self._convert_and_set("file_extra_paths", paths)
+
+    def _convert_and_set(self, label: str, value: typing.Any) -> ConfigurationSetter:
+        if Globals().is_initialized:
+            get_logger().warning(
+                "FEW configurations is already initialized. Option {}={} might not be taken into account".format(
+                    label, value
+                )
+            )
+        self._args[label] = self._entries[label].convert(value)
+        return self
+
+    def get_args(self) -> dict[str, typing.Any]:
+        """Get a dictionnary of set options."""
+        return self._args
+
+    def finalize(self):
+        """Finalize FEW initialization with specified parameters."""
+        if self._finalizer is not None:
+            self._finalizer(self.get_args())
+
+
 class Globals(metaclass=Singleton):
     _logger: logging.Logger
     _initial_config: InitialConfigConsumer
     _config: Configuration
     _file_manager: FileManager
+    _config_setter: ConfigurationSetter
     _backends_manager: BackendsManager
 
     _to_initialize: bool
@@ -65,6 +141,7 @@ class Globals(metaclass=Singleton):
     def __init__(self):
         """Initiliaze the logger"""
         self._preinit_logger()
+        self._preinit_setter()
         super().__setattr__("_to_initialize", True)
 
     def init(
@@ -75,12 +152,16 @@ class Globals(metaclass=Singleton):
         """Initialize config, file manager and logger with optional CLI arguments."""
         if not super().__getattribute__("_to_initialize"):
             raise FewGlobalsInitializedTwice("FEW globals are already initialized.")
+        if set_args is None:
+            config_setter = self.get_configuration_setter()
+            set_args = config_setter.get_args()
         self._init_config(cli_args=cli_args, set_args=set_args)
         self._postconfig_logger()
         self._init_file_manager()
         self._init_backends_manager()
 
         super().__setattr__("_to_initialize", False)
+        super().__setattr__("_config_setter", None)
 
         self.logger.debug("FEW globals initialized.")
 
@@ -105,6 +186,18 @@ class Globals(metaclass=Singleton):
             self.init()
         return super().__getattribute__("_file_manager")
 
+    def get_configuration_setter(self) -> ConfigurationSetter:
+        """
+        Access a configuration setter.
+
+        raises FewGlobalsInitializedTwice if globals are already initialized.
+        """
+        if self.is_initialized:
+            raise FewGlobalsInitializedTwice(
+                "FEW globals are already initialized. Cannot access a setter."
+            )
+        return super().__getattribute__("_config_setter")
+
     @property
     def backends_manager(self) -> BackendsManager:
         if super().__getattribute__("_to_initialize"):
@@ -123,6 +216,11 @@ class Globals(metaclass=Singleton):
         handler.set_name("_few_initial_handler")
         logger.addHandler(handler)
         super().__setattr__("_logger", logger)
+
+    def _preinit_setter(self):
+        """Initialize the configuration setter."""
+        setter = ConfigurationSetter(finalizer=lambda args: self.init(set_args=args))
+        super().__setattr__("_config_setter", setter)
 
     def _init_config(self, cli_args, set_args):
         """Initialize configurations"""
@@ -261,71 +359,9 @@ def initialize(*cli_args):
     Globals().init(*cli_args)
 
 
-class ConfigurationSetter:
-    """Helper class to define configuration options."""
-
-    _args: typing.Dict[str, typing.Any]
-    _entries: typing.Dict[str, ConfigEntry]
-
-    def __init__(self):
-        self._args = {}
-        self._entries = {entry.label: entry for entry in Configuration.config_entries()}
-
-    def set_log_level(self, level: typing.Union[str, int]) -> ConfigurationSetter:
-        """Set a specific log level"""
-        return self._convert_and_set("log_level", level)
-
-    def set_storage_path(self, path: os.PathLike) -> ConfigurationSetter:
-        """Modify the storage path"""
-        return self._convert_and_set("file_storage_path", path)
-
-    def set_log_format(self, format: str) -> ConfigurationSetter:
-        """Change the log format"""
-        return self._convert_and_set("log_format", format)
-
-    def set_file_registry_path(self, registry_path: os.PathLike) -> ConfigurationSetter:
-        """Set the file registry to use"""
-        return self._convert_and_set("file_registry_path", registry_path)
-
-    def set_file_download_path(self, path: os.PathLike) -> ConfigurationSetter:
-        """Set the download path"""
-        return self._convert_and_set("file_download_path", path)
-
-    def enable_file_download(self) -> ConfigurationSetter:
-        """Authorize the file manager to download missing files"""
-        return self._convert_and_set("file_allow_download", True)
-
-    def disable_file_download(self) -> ConfigurationSetter:
-        """Authorize the file manager to download missing files"""
-        return self._convert_and_set("file_allow_download", False)
-
-    def set_file_integrity_check(self, when: str) -> ConfigurationSetter:
-        """Define when integrity checks should be performed (never, once, always)"""
-        return self._convert_and_set("file_integrity_check", when)
-
-    def add_file_extra_paths(
-        self, *paths: typing.List[os.PathLike]
-    ) -> ConfigurationSetter:
-        """Add supplementary research paths to file manager"""
-        return self._convert_and_set("file_extra_paths", paths)
-
-    def _convert_and_set(self, label: str, value: typing.Any) -> ConfigurationSetter:
-        self._args[label] = self._entries[label].convert(value)
-        return self
-
-    def finalize(self):
-        """Finalize FEW initialization with specified parameters."""
-        globals = Globals()
-        globals.init(set_args=self._args)
-
-
 def get_config_setter() -> ConfigurationSetter:
     """Get a configuration setter."""
-    if Globals().is_initialized:
-        raise FewGlobalsInitializedTwice(
-            "FEW globals are already initialized. Cannot access a setter."
-        )
-    return ConfigurationSetter()
+    return Globals().get_configuration_setter()
 
 
 # Initialize the globals singleton when first importing this file

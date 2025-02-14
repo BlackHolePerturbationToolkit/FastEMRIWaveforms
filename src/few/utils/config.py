@@ -719,12 +719,14 @@ class CompleteConfigConsumer(ConfigConsumer):
                 "Logger level set to CRITICAL since quiet mode is requested."
             )
             self._apply_verbosity(logging.CRITICAL)
-        elif parsed_options.verbose_count > 0:
+        else:
+            if (count := parsed_options.verbose_count) == 0:
+                return
             old_level = self.log_level
-            new_level = old_level - parsed_options.verbose_count * 10
+            new_level = old_level - count * 10
             get_logger().debug(
                 "Logger level is decreased from {} to {} since verbose flag was set {} times".format(
-                    old_level, new_level, parsed_options.verbose_count
+                    old_level, new_level, count
                 )
             )
             self._apply_verbosity(
