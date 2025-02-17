@@ -33,6 +33,9 @@
             "version": "latest"
         }
     },
+    "hostRequirements": {
+        "gpu": "optional"
+    },
     "name": "FastEMRIWaveforms",
     "postCreateCommand": ".devcontainer/setup.sh",
     "remoteUser": "few"

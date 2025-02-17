@@ -180,3 +180,36 @@ If you need to commit your developments while ignoring the pre-commit tests, you
 ```bash
 $ git commit -m "wip: unfinished incredible feature" --no-verify
 ```
+
+## Standard development environment using devcontainers
+
+If you are using [VSCode](https://code.visualstudio.com/) and have [Docker](https://www.docker.com/) installed, you can use the [devcontainers](https://code.visualstudio.com/docs/remote/containers) extension to quickly set up a development environment.
+Follow the [devcontainer installation steps](https://code.visualstudio.com/docs/devcontainers/containers#_installation) to install the devcontainer extension.
+
+You can then use the VSCode action `Clone Repository in Container` to clone the repository in a devcontainer
+or you can simply [click here](vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https%3A%2F%2Fgithub.com%2FBlackHolePerturbationToolkit%2FFastEMRIWaveforms.git).
+
+The *FastEMRIWaveforms* devcontainer is configured to use an Ubuntu 24.04 image with GNU compilers 14, system LAPACKE library, pre-configured pre-commit and a pre-loaded virtualenv based on Python 3.12.
+
+To test the compilation of CUDA backends, you can also install the CUDA Toolkit within the devcontainer by
+running the following command:
+
+```bash
+$ CUDA_VERSION=12.6.3-1 ./.devcontainer/install_cuda_toolkit.sh
+# To know the list of available CUDA versions, run the script without
+# the CUDA_VERSION variable like so:
+$ ./.devcontainer/install_cuda_toolkit.sh
+...
+Please run the script as follow:
+  $ CUDA_VERSION=12.6.3-1 ./.devcontainer/install_cuda_toolkit.sh
+ with a version selected from this list:
+cuda-toolkit |   12.8.0-1 | https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/sbsa  Packages
+cuda-toolkit |   12.6.3-1 | https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/sbsa  Packages
+cuda-toolkit |   12.6.2-1 | https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/sbsa  Packages
+cuda-toolkit |   12.6.1-1 | https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/sbsa  Packages
+cuda-toolkit |   12.6.0-1 | https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/sbsa  Packages
+cuda-toolkit |   12.5.1-1 | https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/sbsa  Packages
+```
+
+Actual GPU support in devcontainers has not been tested yet, please reach out by opening a GitHub issue
+if you have a Linux workstation with VScode, Docker and a NVIDIA GPU with CUDA >=11.2.
