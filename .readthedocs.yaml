@@ -8,6 +8,7 @@ build:
   jobs:
     post_checkout:
       - git fetch --tags
+      - git fetch --unshallow
 python:
   install:
     - method: pip
