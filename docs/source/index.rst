@@ -32,6 +32,7 @@
    :maxdepth: 4
    :caption: Developer guide:
 
+   dev/ide
    dev/api
 
 .. toctree::
