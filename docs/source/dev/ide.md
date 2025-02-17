@@ -16,7 +16,7 @@ To develop into FEW, the project must be installed from sources in editable mode
 
 - If you will only develop Python code, it is advised to use [standard editable](#install-the-project-in-standard-editable-mode) installation.
 - If tou will also develop C++/CUDA code, backends will need to be recompiled after each change. This can be done automatically
-  using the *inplace editable* installation
+  using the [*rebuild editable* install](#install-the-project-with-backend-recompilation-rebuild-editable-mode)
 
 ## Installation steps
 
@@ -77,14 +77,14 @@ Doctest summary
 build succeeded, 4 warnings.
 ```
 
-### Install the project with backend recompilation (inplace editable mode)
+### Install the project with backend recompilation (rebuild editable mode)
 
-If you need backends to be automatically rebuilt on changes, you can install the project using the `inplace`
+If you need backends to be automatically rebuilt on changes, you can install the project using the `rebuild`
 editable install provided by
 [scikit-build-core **in experimental mode**](https://scikit-build-core.readthedocs.io/en/latest/configuration.html#editable-installs).
 
 Note that this mode requires to pre-install all of the project build dependencies before-hand.
-**inplace editable mode**:
+
 
 ```bash
 # 1. First, install the project build dependencies
@@ -93,7 +93,7 @@ Note that this mode requires to pre-install all of the project build dependencie
 # 2. Also, make sure that LAPACK(E) is properly installed on your system, for example on Ubuntu 24.04:
 (few-venv) FastEMRIWaveforms$ sudo apt-get install liblapacke-dev
 
-# 3. Install the project in inplace editable mode
+# 3. Install the project in rebuild editable mode
 # Make the install verbose since this mode is more likely to fail since it is still experimental
 # Note that the building steps will be performed in ./build/editable
 #  Do not delete that directory, it is used by the build system
@@ -125,4 +125,58 @@ ninja: no work to do.
 ...
 <few.cutils.CpuBackend object at 0xffffacae3890>
 >>>
+```
+
+## pre-commit: apply common guidelines to your code
+
+The *FastEMRIWaveforms* package ships with a [`pre-commit`](https://pre-commit.com/) configuration file.
+It is highly recommended to install that tool in your development environment so that each *commit*
+you add is checked by pre-commit. This can be done by running:
+
+```bash
+(few-venv) FastEMRIWaveforms$ pip install pre-commit
+(few-venv) FastEMRIWaveforms$ pre-commit install
+pre-commit installed at .git/hooks/pre-commit
+```
+
+Now, whenever you add a new commit to the git history, pre-commit will automatically run the
+configured tools to check the content of that commit, and suggest/apply changes if necessary:
+
+```bash
+(few-venv) FastEMRIWaveforms$ git commit -m "Add a new feature"
+check for added large files..............................................Passed
+check python ast.....................................(no files to check)Skipped
+check for case conflicts.................................................Passed
+check json...........................................(no files to check)Skipped
+check for merge conflicts................................................Passed
+check for broken symlinks............................(no files to check)Skipped
+check xml............................................(no files to check)Skipped
+check yaml...........................................(no files to check)Skipped
+fix end of files.........................................................Passed
+mixed line ending........................................................Passed
+python tests naming..................................(no files to check)Skipped
+pretty format json...................................(no files to check)Skipped
+fix requirements.txt.................................(no files to check)Skipped
+trim trailing whitespace.................................................Passed
+yamlfmt..............................................(no files to check)Skipped
+cmake-format.........................................(no files to check)Skipped
+pyproject-fmt........................................(no files to check)Skipped
+ruff.................................................(no files to check)Skipped
+ruff-format..........................................(no files to check)Skipped
+```
+
+If all tests succeed, the commit created as expected.
+If any tests fail, the commit is cancelled. Most of the time, the failing test
+will automatically modify your source file (for example to enforce code style
+guidelines). You simply need to check the proposed modification, stage the file
+(`git add` it) and retry the commit.
+
+You can also run the pre-commit tests manually using `pre-commit run`.
+By default, `pre-commit` will only run on the files that have been staged (`git add`).
+You can also run it on all files using `pre-commit run --all-files`.
+
+If you need to commit your developments while ignoring the pre-commit tests, you can use the `--no-verify` option:
+
+```bash
+$ git commit -m "wip: unfinished incredible feature" --no-verify
 ```
