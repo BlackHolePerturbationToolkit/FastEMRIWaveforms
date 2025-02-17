@@ -207,16 +207,25 @@ class Globals(metaclass=Singleton):
             self.init()
         return super().__getattribute__("_file_manager")
 
-    def get_configuration_setter(self) -> ConfigurationSetter:
+    @property
+    def backends_manager(self) -> BackendsManager:
+        if super().__getattribute__("_to_initialize"):
+            self.init()
+        return super().__getattribute__("_backends_manager")
+
+    def get_configuration_setter(self, reset: bool = False) -> ConfigurationSetter:
         """
         Access a configuration setter.
 
-        raises FewGlobalsInitializedTwice if globals are already initialized.
+        raises FewGlobalsInitializedTwice if globals are already initialized and reset is False.
         """
         if self.is_initialized:
-            raise FewGlobalsInitializedTwice(
-                "FEW globals are already initialized. Cannot access a setter."
-            )
+            if reset:
+                self.reset()
+            else:
+                raise FewGlobalsInitializedTwice(
+                    "FEW globals are already initialized. Cannot access a setter."
+                )
         return super().__getattribute__("_config_setter")
 
     @property
@@ -383,9 +392,9 @@ def initialize(*cli_args):
     Globals().init(*cli_args)
 
 
-def get_config_setter() -> ConfigurationSetter:
+def get_config_setter(reset: bool = False) -> ConfigurationSetter:
     """Get a configuration setter."""
-    return Globals().get_configuration_setter()
+    return Globals().get_configuration_setter(reset=reset)
 
 
 def reset(quiet: bool = False):

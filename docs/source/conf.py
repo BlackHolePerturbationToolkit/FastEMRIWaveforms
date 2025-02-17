@@ -88,6 +88,11 @@ myst_url_schemes = {
     "vscode": None,
 }
 
+nbsphinx_allow_errors = True
+
+nbsphinx_execute = "auto"
+nbsphinx_kernel_name = "python3"
+
 source_suffix = [".rst", ".md"]
 
 # Add any paths that contain templates here, relative to this directory.

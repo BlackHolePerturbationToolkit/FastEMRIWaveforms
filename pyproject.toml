@@ -51,6 +51,7 @@ dependencies = [
 ]
 
 optional-dependencies.doc = [
+  "ipykernel",
   "ipython",
   "myst-parser",
   "nbsphinx",
