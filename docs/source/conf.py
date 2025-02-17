@@ -80,6 +80,14 @@ few.utils.globals.reset(True)
 
 myst_heading_anchors = 2
 
+myst_url_schemes = {
+    "http": None,
+    "https": None,
+    "mailto": None,
+    "ftp": None,
+    "vscode": None,
+}
+
 source_suffix = [".rst", ".md"]
 
 # Add any paths that contain templates here, relative to this directory.
