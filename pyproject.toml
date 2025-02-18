@@ -58,6 +58,7 @@ optional-dependencies.doc = [
   "pypandoc",
   "sphinx",
   "sphinx-rtd-theme",
+  "sphinx-tippy",
 ]
 
 optional-dependencies.sampling = [

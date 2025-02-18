@@ -65,10 +65,13 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "sphinx_rtd_theme",
+    "sphinx_tippy",
     "nbsphinx",
     "sphinx.ext.mathjax",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
+
+nbsphinx_requirejs_path = ""
 
 intersphinx_mapping = {"python": ("https://docs.python.org/3.11", None)}
 
@@ -141,7 +144,8 @@ html_theme = "sphinx_rtd_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path = ["_static"]
+html_css_file = ["tippy.css"]
 
 html_theme_options = {
     "prev_next_buttons_location": "both",
@@ -151,3 +155,10 @@ html_theme_options = {
     "sticky_navigation": True,
     "navigation_depth": 4,
 }
+
+tippy_add_class = "has-tippy"
+tippy_js = (
+    "https://unpkg.com/@popperjs/core@2",
+    "https://unpkg.com/tippy.js@6",
+    "https://unpkg.com/requirejs@2",
+)

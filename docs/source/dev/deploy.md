@@ -6,7 +6,7 @@ how the plugin system is setup.
 
 ## Default build process
 
-The FastEMRIWaveforms package relies on [*scikit-buikd-core*](https://scikit-build-core.readthedocs.io) to handle
+The FastEMRIWaveforms package relies on [*scikit-build-core*](https://scikit-build-core.readthedocs.io) to handle
 the build process. This tool makes use of [CMake](https://cmake.org) to handle the compilation of C/C++/CUDA backends
 while being compatible with modern python packaging practices (*i.e.* by using a `pyproject.toml` file instead of the
 legacy `setup.py` approach).
