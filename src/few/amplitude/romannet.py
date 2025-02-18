@@ -147,7 +147,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
         """Return citations related to this module"""
-        return [REFERENCE.ROMANNET] + super(RomanAmplitude, cls).module_references()
+        return [REFERENCE.ROMANNET] + super().module_references()
 
     @classmethod
     def supported_backends(cls):

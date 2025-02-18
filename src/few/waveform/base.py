@@ -627,7 +627,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumMod
             REFERENCE.AAK2,
             REFERENCE.AK,
             REFERENCE.KERR_SEPARATRIX,
-        ] + super(AAKWaveformBase, cls).module_references()
+        ] + super().module_references()
 
     @classmethod
     def supported_backends(cls):

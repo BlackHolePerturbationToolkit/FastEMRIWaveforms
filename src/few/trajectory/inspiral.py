@@ -121,9 +121,7 @@ class EMRIInspiral(TrajectoryBase):
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
         """Return citations related to this module"""
-        return [REFERENCE.KERR_SEPARATRIX] + super(
-            EMRIInspiral, cls
-        ).module_references()
+        return [REFERENCE.KERR_SEPARATRIX] + super().module_references()
 
     @property
     def trajectory(self):
