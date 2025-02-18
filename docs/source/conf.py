@@ -15,7 +15,7 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 import pathlib
-import shutil
+import os
 
 import few
 
@@ -48,7 +48,8 @@ for example in (
     "Tutorial_FrequencyDomain_Waveforms",
 ):
     filename = example + ".ipynb"
-    shutil.copy(src_dir / filename, trg_dir / filename)
+    if not (trg_dir / filename).is_file():
+        os.symlink(src_dir / filename, trg_dir / filename)
 
 # -- General configuration ---------------------------------------------------
 
@@ -90,7 +91,7 @@ myst_url_schemes = {
 
 nbsphinx_allow_errors = True
 
-nbsphinx_execute = "auto"
+nbsphinx_execute = "never"
 nbsphinx_kernel_name = "python3"
 
 source_suffix = [".rst", ".md"]

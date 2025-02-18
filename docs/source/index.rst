@@ -33,6 +33,8 @@
    :caption: Developer guide:
 
    dev/ide
+   dev/feat
+   dev/deploy
    dev/api
 
 .. toctree::
