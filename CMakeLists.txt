@@ -3,7 +3,7 @@
 # ====================================
 
 # ---- CMake related definitions ----
-cmake_minimum_required(VERSION 3.15...3.31)
+cmake_minimum_required(VERSION 3.23...3.31)
 
 # ---- Main project definition ----
 project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION}
@@ -60,10 +60,11 @@ set_property(
   CACHE FEW_LAPACKE_LIBS
   PROPERTY HELPSTRING "Libs to link to build against LAPACKE." TYPE "STRING")
 
-set(FEW_LAPACKE_DETECT_WITH "CMAKE" CACHE STRING "Tool used to locate LAPACKE.")
+set(FEW_LAPACKE_DETECT_WITH "AUTO" CACHE STRING "Tool used to locate LAPACKE.")
 set_property(
   CACHE FEW_LAPACKE_DETECT_WITH
   PROPERTY STRINGS
+           AUTO
            CMAKE
            PKGCONFIG
            HELPSTRING
