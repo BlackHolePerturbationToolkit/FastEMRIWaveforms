@@ -18,6 +18,7 @@ import pathlib
 import shutil
 
 import few
+
 # -- Project information -----------------------------------------------------
 
 project = "few: Fast EMRI Waveforms"
@@ -35,6 +36,12 @@ trg_dir = root_dir / "docs" / "source" / "tutorial"
 trg_dir.mkdir(parents=True, exist_ok=True)
 
 for example in (
+    "utility.ipynb",
+    "Amplitude_tutorial.ipynb",
+    "swsh.ipynb",
+    "modeselect.ipynb",
+    "cubicspline.ipynb",
+    "modesummation.ipynb",
     "Trajectory_tutorial",
     "FastEMRIWaveforms_tutorial",
     "Tutorial_FD_construction_single_mode",
