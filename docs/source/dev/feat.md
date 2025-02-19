@@ -200,3 +200,28 @@ The list of action to take to add a new configuration option is thus:
 - [ ] Add the new option as a class attribute in the header of the [Configuration](few.utils.config.Configuration) class
 - [ ] Add a method to tune the option to the [ConfigurationSetter](few.utils.globals.ConfigurationSetter)
 - [ ] Add documentation for that option in `docs/source/user/cfg.md`
+
+
+## Adding log messages
+
+The recommended way to print messages in FEW is to use the package [logger](logging.Logger).
+[pre-commit](./ide.md#pre-commit-apply-common-guidelines-to-your-code) will, by default, complain about the use of [`print`](print) statements which should be replaced by calls to the logger methods:
+
+- `few_logger.debug(message)`: should contain detailed information about the innerworking of a piece of code to guide a user or developper during debugging phases
+- `few_logger.info(message)`: should replace most print statements directed to the user
+- `few_logger.warning(message)`: should warn the user about unexpected states which are recoverable
+- `few_logger.error(message)`: should warn the user about unexpected state which are unrecoverable
+
+The FEW logger is accessible by:
+
+```py3
+import few
+
+few_logger = few.get_logger()
+
+def myfunction():
+  few_logger.debug("Now executing myfunction()")
+```
+
+The logger is defined to output `debug` and `info` messages to the standard output `stdout`, while `warning` and `error` messages are sent to the standard error `stderr`.
+You may customize this behavior by clearing the logger `handlers` and adding your own. See the [logging](logging) package documentation for references.
