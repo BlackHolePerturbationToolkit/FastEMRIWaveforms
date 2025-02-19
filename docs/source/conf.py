@@ -43,9 +43,7 @@ for example in (
     "cubicspline.ipynb",
     "modesummation.ipynb",
     "Trajectory_tutorial",
-    "FastEMRIWaveforms_tutorial",
-    "Tutorial_FD_construction_single_mode",
-    "Tutorial_FrequencyDomain_Waveforms",
+    "Amplitude_tutorial",
 ):
     filename = example + ".ipynb"
     if not (trg_dir / filename).is_file():
@@ -94,7 +92,7 @@ myst_url_schemes = {
 
 nbsphinx_allow_errors = True
 
-nbsphinx_execute = "never"
+nbsphinx_execute = "always"
 nbsphinx_kernel_name = "python3"
 
 source_suffix = [".rst", ".md"]
