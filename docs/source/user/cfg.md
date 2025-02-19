@@ -5,7 +5,7 @@ The `few` package can be tuned through the use of optional configuration options
 - A `few.ini` configuration file
 - Environment variables
 - Command-line arguments when using a compatible command-line utility
-- A Python object named the `ConfigurationSetter` which can be used right after importing the `few` module for the first time
+- A Python object named the [`ConfigurationSetter`](few.utils.globals.ConfigurationSetter) which can be used right after importing the `few` module for the first time
 
 The `few.ini` file is searched, in priority order:
 

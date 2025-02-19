@@ -96,3 +96,107 @@ You may also query the citations directly on an instance of your class:
   doi        = "10.5281/zenodo.3969004"
 }
 ```
+
+## Implement access to a file
+
+The FastEMRIWaveforms contain a [File Manager](few.files.FileManager) utility to simplify access to
+files in a way configurable through [configuration options](../user/cfg.md#file-manager).
+
+This file manager should be used to:
+
+- Read a downloadable file
+- Obtain the path to a write-only file (which should be located in the [storage directory](../user/cfg.md#file-storage-path))
+
+### Declare a new downloadable file
+
+If you implement a class which requires access to a large file, the recommended approach is to
+
+1. Upload that file to a publicly available storage repository
+2. Declare the file in the [FileRegistry](few.files.FileRegistry) by editing `src/few/files/registry.yml``
+  - If the public repository you are using is not declared yet, add it to the `repositories` section
+  - Declare your file in the `files` section by defining:
+    - its name (will be used to build the file URL from the `url_pattern` declared with the repository, and to access the file from the file manager)
+    - its repository(-ies)
+    - its SHA256 checksum (use the command `sha256sum /path/to/file` to generate its checksum)
+
+Once this is done, the file can be accessed automatically using its path:
+
+```py3
+from few import get_file_manager()
+file_path = get_file_manager().get_file("filename")
+
+with open(file_path, "r") as fp:
+    # Do anything with the file
+```
+
+or directly open it through the FileManager open method:
+
+```py3
+from few import get_file_manager()
+
+with get_file_manager().open("filename", "r") as fp:
+    # Do anything with the file
+```
+
+The approach to use dopends on whether you need the file path itself (to open it through `h5py` for example), or if you'll directly open it.
+
+If the file is not locally present in one of the file manager search paths, it will be first downloaded automatically.
+
+### Obtain path to an output file
+
+If you need to write a result file, multiple options are possible:
+
+- Use an absolute path:
+
+```py3
+with open("/my/absolute/path/filename", "w") as fp:
+  ...
+```
+
+- Use a path relative to current working directory (not advised):
+
+```py3
+with open("relative_path/filename", "w") as fp:
+  ...
+```
+
+- Use a relative path, or only filename, relative to the file manager storage path:
+
+```py3
+with few.get_file_manager().open("filename", "w") as fp:
+  ...
+```
+
+## Add a configuration option
+
+FEW offers a [centralized configuration management](../user/cfg.md#configuration-options) which is meant to be highly customizable.
+
+To add a new configuration option, one simply needs to declare it by adding
+a new [Entry](few.utils.config.ConfigEntry) in the [`config_entries`](few.utils.config.Configuration.config_entries) method of the [Configuration](few.utils.config.Configuration) class in `src/few/utils/config.py`.
+
+Each configuration entry is defined by:
+
+- `label`: attribute name of that entry associated to the configuration (final value will be accessible as `few.get_config().label`)
+- `description`: short description, can be used in CLI help message for example
+- `type`: python datatype of this entry
+- `default`: default value, must be of the type defined in `type``
+- `cfg_entry` (optional): name of the configuration entry in the FEW config file, if not provided, this entry is not affected by the configuration file
+- `env_var` (optional): environment variable whose value, if defined, will affect this configuration entry. Note that the variable name will be automatically prefixed with `FEW_`, so set `MYCFG` to have the variable `FEW_MYCFG` affect your entry.
+- `cli_flags` (optional): list of command-line parameter flags (e.g. `-x`, `--my-option`, ...) associated to the configuration entry
+- `cli_kwargs` (optional, ignored if `cli_flags` not set): dict of keyword arguments accepted by [argparse.ArgumentParser.add_argument](argparse.ArgumentParser.add_argument) to customize the way CLI parameters are parsed for this entry
+- `convert` (optional): function that can take a [str](str) (and optionally other types) as input, and convert it to a value of type given by the `type`
+- `validate` (optional): function that can take a value of type `type` and return `True` if the value if a valid one for this entry, and `False` otherwise
+
+It is also strongly advised to declare the entry as a class attribute
+in the header of the [Configuration](few.utils.config.Configuration) class.
+
+Finally, configuration options can be modified via the [ConfigurationSetter](few.utils.globals.ConfigurationSetter) as [detailed here](../user/cfg.md#configuration-setter).
+It is therefore advised to also add a new method to that class (defined in `src/few/utils/globals.py`) to make your configuration option
+tunable via this method.
+
+The list of action to take to add a new configuration option is thus:
+
+- [ ] Add the new entry to the [`config_entries`](few.utils.config.Configuration.config_entries) method of the [Configuration](few.utils.config.Configuration) class in `src/few/utils/config.py`.
+- [ ] Add the new option as a class attribute in the header of the [Configuration](few.utils.config.Configuration) class
+- [ ] Add a method to tune the option to the [ConfigurationSetter](few.utils.globals.ConfigurationSetter)
+- [ ] Add documentation for that option in `docs/source/user/cfg.md`

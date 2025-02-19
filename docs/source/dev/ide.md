@@ -9,7 +9,7 @@ Developping on FEW requires the following:
 If you have a local GPU available and want to also develop for the GPU backend, you will also need:
 
 - CUDA drivers properly installed (the command `nvidia-smi` should detect a CUDA version >=11.2 and a GPU)
-- The NVIDIA CUDA compiler `nvcc``
+- The NVIDIA CUDA compiler `nvcc`
 - The CUDA HPC Toolkit
 
 To develop into FEW, the project must be installed from sources in editable mode.
@@ -26,7 +26,8 @@ To clone the repository, run the following command:
 
 ```bash
 $ git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
-FastEMRIWaveforms$ cd FastEMRIWaveforms
+$ cd FastEMRIWaveforms
+FastEMRIWaveforms$
 ```
 
 ### Create a dedicated virtualenv

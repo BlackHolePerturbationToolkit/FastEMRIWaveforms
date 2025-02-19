@@ -14,7 +14,6 @@
 .. automodule:: few.files
     :members:
     :show-inheritance:
-    :inherited-members:
 ```
 
 ## Configuration
