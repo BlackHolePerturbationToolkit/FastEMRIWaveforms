@@ -228,12 +228,6 @@ class Globals(metaclass=Singleton):
                 )
         return super().__getattribute__("_config_setter")
 
-    @property
-    def backends_manager(self) -> BackendsManager:
-        if super().__getattribute__("_to_initialize"):
-            self.init()
-        return super().__getattribute__("_backends_manager")
-
     def __setattr__(self, name, value):
         raise FewGlobalsReadOnly("Cannot set attribute on Globals structure.")
 
