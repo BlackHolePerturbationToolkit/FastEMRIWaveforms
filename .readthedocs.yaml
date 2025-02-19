@@ -5,6 +5,9 @@ build:
     python: "3.12"
   apt_packages:
     - pandoc
+    - g++14
+    - pkg-config
+    - liblapacke-dev
   jobs:
     post_checkout:
       - git fetch --tags
@@ -15,5 +18,6 @@ python:
       path: .
       extra_requirements:
         - doc
+        - testing
 sphinx:
   configuration: docs/source/conf.py

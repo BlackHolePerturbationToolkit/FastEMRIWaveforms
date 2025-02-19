@@ -90,7 +90,7 @@ myst_url_schemes = {
     "vscode": None,
 }
 
-nbsphinx_allow_errors = True
+nbsphinx_allow_errors = False
 
 nbsphinx_execute = "always"
 nbsphinx_kernel_name = "python3"
