@@ -52,14 +52,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: Restore the cache
         uses: actions/cache/restore@v4
+        id: restore_cache
         with:
           path: local_cache
           key: ${{ hashFiles('src/few/files/registry.yml') }}
-          fail-on-cache-miss: true
       - name: List artifacts
         run: |
           ls -R ./local_cache
       - name: Export configuration options to force using prefetched cache of files
+        if: ${{ steps.restore_cache.outputs.cache-hit == 'true' }}
         run: |
           echo "FEW_FILE_ALLOW_DOWNLOAD=no" >> "$GITHUB_ENV"
           echo "FEW_FILE_EXTRA_PATHS=$(pwd)/local_cache" >> "$GITHUB_ENV"
