@@ -54,7 +54,6 @@ for example in (
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-html_theme = "sphinx_rtd_theme"
 extensions = [
     "myst_parser",
     "sphinx.ext.autodoc",
@@ -69,9 +68,15 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
-nbsphinx_requirejs_path = ""
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+source_suffix = [".rst", ".md"]
+templates_path = []
 
-intersphinx_mapping = {"python": ("https://docs.python.org/3.11", None)}
+
+# -- Extensions configuration ---------------------------------------------------
+
+autodoc_member_order = "bysource"
+autodoc_typehints = "description"
 
 doctest_global_setup = """
 import few
@@ -80,8 +85,9 @@ doctest_global_cleanup = """
 few.utils.globals.reset(True)
 """
 
-myst_heading_anchors = 2
+intersphinx_mapping = {"python": ("https://docs.python.org/3.11", None)}
 
+myst_heading_anchors = 2
 myst_url_schemes = {
     "http": None,
     "https": None,
@@ -90,23 +96,22 @@ myst_url_schemes = {
     "vscode": None,
 }
 
-nbsphinx_allow_errors = False
 
-nbsphinx_execute = "always"
+nbsphinx_allow_errors = True
+nbsphinx_execute = "auto"
 nbsphinx_kernel_name = "python3"
+nbsphinx_requirejs_path = ""
 
-source_suffix = [".rst", ".md"]
+if os.getenv("READTHEDOCS", None) is not None:
+    nbsphinx_execute = "always"
+    nbsphinx_allow_errors = False
 
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
-
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-
-autodoc_member_order = "bysource"
-autodoc_typehints = "description"
+tippy_add_class = "has-tippy"
+tippy_js = (
+    "https://unpkg.com/@popperjs/core@2",
+    "https://unpkg.com/tippy.js@6",
+    "https://unpkg.com/requirejs@2",
+)
 
 
 def skip(app, what, name, obj, would_skip, options):
@@ -129,19 +134,11 @@ def substitute_ref_targets(_, doctree):
 def setup(app):
     app.connect("autodoc-skip-member", skip)
     app.connect("doctree-read", substitute_ref_targets)
-    # app.connect("missing-reference", resolve_intersphinx_aliases)
 
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
 html_theme = "sphinx_rtd_theme"
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 html_css_file = ["tippy.css"]
 
@@ -153,10 +150,3 @@ html_theme_options = {
     "sticky_navigation": True,
     "navigation_depth": 4,
 }
-
-tippy_add_class = "has-tippy"
-tippy_js = (
-    "https://unpkg.com/@popperjs/core@2",
-    "https://unpkg.com/tippy.js@6",
-    "https://unpkg.com/requirejs@2",
-)
