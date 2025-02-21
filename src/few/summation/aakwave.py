@@ -24,8 +24,6 @@ from .base import SummationBase
 
 from few.utils.globals import get_logger
 
-few_logger = get_logger()
-
 
 class AAKSummation(Pn5AAK, SummationBase):
     """Calculate an AAK waveform from an input trajectory.
@@ -132,7 +130,7 @@ class AAKSummation(Pn5AAK, SummationBase):
 
         fill_val = 1e-6
         if qK < fill_val or qK > np.pi - fill_val:
-            few_logger.warning(
+            get_logger().warning(
                 "qK is within 1e-6 of the poles. We shift this value automatically away from poles by 1e-6."
             )
             if qK < fill_val:
@@ -141,7 +139,7 @@ class AAKSummation(Pn5AAK, SummationBase):
                 qK = np.pi - fill_val
 
         if qS < fill_val or qS > np.pi - fill_val:
-            few_logger.warning(
+            get_logger().warning(
                 "qS is within 1e-6 of the poles. We shift this value automatically away from poles by 1e-6."
             )
             if qS < fill_val:

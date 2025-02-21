@@ -5,6 +5,7 @@ The `few` package can be tuned through the use of optional configuration options
 - A `few.ini` configuration file
 - Environment variables
 - Command-line arguments when using a compatible command-line utility
+- A Python object named the `ConfigurationSetter` which can be used right after importing the `few` module for the first time
 
 The `few.ini` file is searched, in priority order:
 
@@ -31,9 +32,9 @@ logger = logging.getLogger("few")
 or by accessing `few` global states with
 
 ```py3
-import few.utils.globals
+import few
 
-logger = few.utils.globals.get_logger()
+logger = few.get_logger()
 ```
 
 The default log level is `logging.WARNING` but this can be modified through the `log_level` configuration option.
@@ -73,7 +74,7 @@ The `few` package requires external files of pre-computed coefficients which are
 These files are accessed through the `FileManager` global entity which takes care of locating these files, checking their integrity,
 and downloading missing files on request.
 
-The file manager is accessed through `few.utils.globals.get_file_manager()`
+The file manager is accessed through `few.get_file_manager()`
 
 This `FileManager` is highly tunable and propose the following options:
 
@@ -149,9 +150,9 @@ Similarly, one may disable options from the environment using the `--ignore-env`
 
 In your program, you may access the values of these configuration option by accessing the global configuration:
 
-```py3
->>> import few.utils.globals
->>> cfg = few.utils.globals.get_config()
+```{eval-rst}
+>>> import few
+>>> cfg = few.get_config()
 >>> cfg.log_level
 30
 >>> cfg.file_integrity_check
@@ -159,3 +160,67 @@ In your program, you may access the values of these configuration option by acce
 ```
 
 Unless stated otherwise, command-line arguments take precedence over environment variable which in turn take precedence over configuration file entries.
+
+## Configuration setter
+
+If you need to update configuration settings in a given script, or in an interactive Python context (terminal, notebook),
+this can be done using the [*configuration setter*](few.utils.globals.ConfigurationSetter).
+
+```{important}
+The Configuration Setter can only be used right after importing `few`.
+As soon as any `few` entity makes use of a configuration option (for instance, when initializing
+the first backend-accelerated object), the setter cannot be used anymore to change an option.
+```
+
+The *configuration setter* is accessed by `few.get_config_setter`and offers multiple methods to
+customize configuration options. Note that these methods can be chained directly:
+
+```{eval-rst}
+.. testcode:: cfg-setter
+
+    # import few
+    # Access the setter
+    setter = few.get_config_setter()
+
+    # Use a single method
+    setter.disable_file_download()
+
+    # Chain methods
+    setter.set_log_level(
+        "debug"
+    ).add_file_extra_paths("/tmp/few_data")
+```
+
+Options defined in the [*configuration setter*](few.utils.globals.ConfigurationSetter) can be applied
+immediately by calling the `finalize()` method like:
+
+```{eval-rst}
+.. testcode:: cfg-explicit-finalize
+
+    import few
+    # Access the setter, set an option and finalize options
+    few.get_config_setter().set_log_level("info").finalize()
+```
+
+But if `finalize()` is not explicitely called, the options set will still be taken into account
+automatically at a latter stage:
+
+```{eval-rst}
+.. testcode:: cfg-implicit-finalized
+
+    import few
+    # Set the log level
+    few.get_config_setter().set_log_level("debug")
+
+    # Build a FEW object
+    amp = few.amplitude.romannet.RomanAmplitude()
+
+.. testoutput:: cfg-implicit-finalized
+
+    ...
+    ConfigInitialization: final configuration entries are
+    ...
+     log_level=10 (from: ConfigSource.SETTER)
+    ...
+
+```

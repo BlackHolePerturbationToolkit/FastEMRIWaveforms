@@ -4,7 +4,7 @@
 
 .. toctree::
    :maxdepth: 4
-   :caption: Documentation:
+   :caption: User guide:
 
    user/main
    user/traj
@@ -12,7 +12,6 @@
    user/sum
    user/cfg
    user/util
-   user/cite
 
 .. toctree::
    :maxdepth: 4
@@ -28,6 +27,12 @@
    tutorial/swsh
    tutorial/utility
    
+
+.. toctree::
+   :maxdepth: 4
+   :caption: Developer guide:
+
+   dev/api
 
 .. toctree::
    :maxdepth: 4

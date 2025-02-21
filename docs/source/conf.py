@@ -59,6 +59,8 @@ html_theme = "sphinx_rtd_theme"
 extensions = [
     "myst_parser",
     "sphinx.ext.autodoc",
+    "sphinx.ext.doctest",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "sphinx_rtd_theme",
@@ -66,6 +68,15 @@ extensions = [
     "sphinx.ext.mathjax",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
+
+intersphinx_mapping = {"python": ("https://docs.python.org/3.11", None)}
+
+doctest_global_setup = """
+import few
+"""
+doctest_global_cleanup = """
+few.utils.globals.reset(True)
+"""
 
 source_suffix = [".rst", ".md"]
 

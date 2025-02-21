@@ -634,7 +634,7 @@ class Pn5AAK(Citable):
     """Description of the inspiral trajectory properties for this model."""
 
     frame: str = "detector"
-    """Frame in which source is generated. Is source frame."""
+    """Frame in which source is generated. Is detector frame."""
 
     needs_Y: bool = True
     """If True, model expects inclination parameter Y (rather than xI)."""
