@@ -642,7 +642,7 @@ class Pn5AAK(Citable):
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
         """Return citations related to this module"""
-        return [REFERENCE.PN5] + super(Pn5AAK, cls).module_references()
+        return [REFERENCE.PN5] + super().module_references()
 
     def sanity_check_angles(self, qS: float, phiS: float, qK: float, phiK: float):
         """Sanity check on viewing angles.

@@ -68,11 +68,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '${{ matrix.python-version }}'
-      - name: Install LAPACKE
+      - name: Install LAPACKE and pandoc
         uses: ConorMacBride/install-package@v1
         with:
-          brew: lapack
-          apt: liblapacke-dev
+          brew: lapack pandoc
+          apt: liblapacke-dev pandoc
       - name: Export LAPACK pkgconfig path (macOS 13)
         if: ${{ matrix.os == 'macos-13' }}
         run: |
@@ -86,7 +86,7 @@ jobs:
           which python
           export PKG_CONFIG_PATH=${LAPACK_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}
           python --version
-          python -m pip install '.[testing]' \
+          python -m pip install '.[testing, doc]' \
             --config-settings=cmake.define.FEW_WITH_GPU=OFF \
             --config-settings=cmake.define.FEW_LAPACKE_FETCH=OFF \
             --config-settings=cmake.define.FEW_LAPACKE_DETECT_WITH=PKGCONFIG
@@ -96,6 +96,9 @@ jobs:
       - name: Run module tests
         run: |
           coverage run --source=few -m unittest discover
+      - name: Run doc tests
+        run: |
+          coverage run --source=few -m sphinx.cmd.build -M doctest docs/source docs/build
       - name: Show coverage results
         run: |
           coverage report -m

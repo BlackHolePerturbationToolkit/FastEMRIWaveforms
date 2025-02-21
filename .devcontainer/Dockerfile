@@ -7,6 +7,7 @@ RUN apt update \
       gfortran-14 \
       libgsl-dev \
       liblapacke-dev \
+      pandoc \
       pkg-config \
       python3 \
       python3-dev \

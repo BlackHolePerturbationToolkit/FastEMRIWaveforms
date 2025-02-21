@@ -81,8 +81,9 @@ set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_CPU ON)
 if(FEW_WITH_GPU STREQUAL "AUTO")
   if(DEFINED ENV{READTHEDOCS})
     message(
-      STATUS "FEW backend generation is disabled in ReadTheDocs build context.")
-    set(FEW_WITH_GPU "BARE")
+      STATUS
+        "FEW GPU backend generation is disabled in ReadTheDocs build context.")
+    set(FEW_WITH_GPU "OFF")
   endif()
 endif()
 if(FEW_WITH_GPU STREQUAL "AUTO")

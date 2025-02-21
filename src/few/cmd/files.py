@@ -1,11 +1,11 @@
-"""Implementation of few_files CLI utility"""
+"""Implementation of the few_files CLI utility"""
 
 import argparse
 import logging
 import sys
 import typing
 
-from ..utils.globals import Globals, get_logger, get_file_manager
+from few.utils.globals import Globals, get_logger, get_file_manager
 
 
 def few_files_fetch(args: argparse.Namespace):
@@ -97,10 +97,14 @@ def _few_files_parser(
     return parser
 
 
-def few_files():
+def main():
     globals = Globals()
     globals.init(cli_args=sys.argv[1:])
     _, _, extra_args = globals.config.get_extras()
     parent_parsers = globals.config.build_cli_parent_parsers()
     args = _few_files_parser(parent_parsers).parse_args(extra_args)
     args.callback(args)
+
+
+if __name__ == "__main__":
+    main()

@@ -149,7 +149,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
         """Return citations related to this module"""
-        return [REFERENCE.FD] + super(FDInterpolatedModeSum, cls).module_references()
+        return [REFERENCE.FD] + super().module_references()
 
     def sum(
         self,

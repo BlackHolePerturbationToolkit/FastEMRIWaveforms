@@ -165,7 +165,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
         """Return citations related to this module"""
-        return [REFERENCE.ROMANNET] + super(AmpInterp2D, cls).module_references()
+        return [REFERENCE.ROMANNET] + super().module_references()
 
     @classmethod
     def supported_backends(cls):
