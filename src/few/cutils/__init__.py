@@ -702,6 +702,12 @@ class BackendsManager:
         assert isinstance(status, BackendStatusLoaded)
         return status.instance
 
+    def has_backend(self, backend_name: str) -> bool:
+        """Check if a backend is available"""
+        return isinstance(
+            self._try_loading_backend(backend_name=backend_name), BackendStatusLoaded
+        )
+
     def get_first_backend(self, backends: typing.Sequence[str]) -> Backend:
         """Get first available backend from a list or raise BackendAccessException if none available"""
         assert len(backends) > 0

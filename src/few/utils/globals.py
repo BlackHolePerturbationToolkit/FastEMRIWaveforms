@@ -372,8 +372,31 @@ def get_config() -> Configuration:
 
 
 def get_backend(backend_name: str) -> Backend:
-    """Get a backend by its name"""
+    """
+    Get a backend by its name.
+
+    If the backend name is "cuda", return a CUDA backend if any available.
+    If the backend name is "gpu", return a GPU backend if any available.
+    """
+    if backend_name == "cuda":
+        return get_first_backend(["cuda12x", "cuda11x"])
+    if backend_name == "gpu":
+        return get_backend("cuda")
     return Globals().backends_manager.get_backend(backend_name=backend_name)
+
+
+def has_backend(backend_name: str) -> bool:
+    """
+    Test if a backend is available.
+
+    If the backend name is "cuda", return true if any of "cuda11x" or "cuda12x" is available.
+    If the backend name is "gpu", return true if any GPU backend is available.
+    """
+    if backend_name == "cuda":
+        return has_backend("cuda11x") or has_backend("cuda12x")
+    if backend_name == "gpu":
+        return has_backend("cuda")
+    return Globals().backends_manager.has_backend(backend_name=backend_name)
 
 
 def get_first_backend(backend_names: typing.Sequence[str]) -> Backend:
@@ -412,5 +435,6 @@ __all__ = [
     "get_config_setter",
     "get_backend",
     "get_first_backend",
+    "has_backend",
     "initialize",
 ]
