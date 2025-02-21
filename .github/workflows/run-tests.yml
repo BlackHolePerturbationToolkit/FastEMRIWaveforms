@@ -57,6 +57,7 @@ jobs:
           path: local_cache
           key: ${{ hashFiles('src/few/files/registry.yml') }}
       - name: List artifacts
+        if: ${{ steps.restore_cache.outputs.cache-hit == 'true' }}
         run: |
           ls -R ./local_cache
       - name: Export configuration options to force using prefetched cache of files
