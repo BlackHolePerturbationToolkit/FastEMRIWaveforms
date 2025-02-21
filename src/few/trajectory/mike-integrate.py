@@ -19,7 +19,7 @@
 
 from __future__ import annotations
 import os
-from typing import Tuple, List, Type, Optional
+from typing import Tuple, Type, Optional
 
 import numpy as np
 from scipy.optimize import brentq
@@ -331,21 +331,6 @@ class Integrate:
 
         """
         return None
-
-    def stop_integrate_check(self, t: float, y: np.ndarray) -> bool:
-        """Check to stop the integrator.
-
-        **Note**: This function will not be run if ``self.integrate_backwards == True``.
-
-        Args:
-            t: Time.
-            y: Current position of integrator.
-
-        Returns:
-            ``True`` if the integration should be stopped.
-
-        """
-        raise NotImplementedError
 
     def _stop_integrate_check(self, *args, **kwargs):
         # if integrating backwards, no need to stop it.

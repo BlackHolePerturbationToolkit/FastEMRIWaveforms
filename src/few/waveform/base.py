@@ -1,27 +1,37 @@
-import sys
-import os
-from abc import ABC
-
 import numpy as np
 from tqdm import tqdm
-from scipy.interpolate import RectBivariateSpline
 
-from ..utils.baseclasses import (
-    Pn5AAK,
-    ParallelModuleBase,
-)
+from ..utils.baseclasses import Pn5AAK, ParallelModuleBase, BackendLike
 
 from ..utils.mappings import (
     schwarzecc_p_to_y,
 )
 from ..utils.ylm import GetYlms
-from ..utils.constants import *
+from ..utils.constants import MRSUN_SI, Gpc
 from ..utils.citations import REFERENCE
 
-from typing import Union, Optional
+from typing import Union, Optional, TypeVar, Generic
+
+InspiralModule = TypeVar("InspiralModule", bound=ParallelModuleBase)
+"""Used for type hinting the Inspiral generator classes."""
+
+AmplitudeModule = TypeVar("AmplitudeModule", bound=ParallelModuleBase)
+"""Used for type hinting the Amplitude generator classes."""
+
+SumModule = TypeVar("SumModule", bound=ParallelModuleBase)
+"""Used for type hinting the Sum classes."""
+
+ModeSelectorModule = TypeVar("ModeSelectorModule", bound=ParallelModuleBase)
+"""Used for type hinting the Mode selector classes."""
+
+WaveformModule = TypeVar("WaveformModule", bound=ParallelModuleBase)
+"""Used for type hinting Waveform Generator classes"""
 
 
-class SphericalHarmonicWaveformBase(ParallelModuleBase):
+class SphericalHarmonicWaveformBase(
+    ParallelModuleBase,
+    Generic[InspiralModule, AmplitudeModule, SumModule, ModeSelectorModule],
+):
     """Base class for waveforms built with amplitudes expressed in a spherical harmonic basis.
 
     This class contains the methods required to build the core waveform for Kerr equatorial eccentric
@@ -43,77 +53,69 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
         sum_kwargs: Optional kwargs to pass to the sum module during instantiation. Default is {}.
         Ylm_kwargs: Optional kwargs to pass to the Ylm generator. Default is {}.
         mode_selector_kwargs: Optional kwargs to pass to the mode selector module. Default is {}.
-        use_gpu: If True, use GPU resources. Default is False.
         normalize_amps: If True, normalize the amplitudes at each step of the trajectory. This option should
             be used alongside ROMAN networks that have been trained with normalized amplitudes.
             Default is False.
     """
+
+    normalize_amps: bool
+    """Whether to normalize amplitudes to flux at each step from trajectory"""
+
+    inspiral_kwargs: dict
+    """Keyword arguments passed to the inspiral generator call function"""
+
+    inspiral_generator: InspiralModule
+    """Instance of the trajectory module"""
+
+    amplitude_generator: AmplitudeModule
+    """Instance of the amplitude module"""
+
+    create_waveform: SumModule
+    """Instance of the summation module"""
+
+    ylm_gen: GetYlms
+    """Instance of the Ylm module"""
+
+    mode_selector: ModeSelectorModule
+    """Instance of the mode selector module"""
+
     def __init__(
         self,
-        inspiral_module: object,
-        amplitude_module: object,
-        sum_module: object,
-        mode_selector_module: object,
-        inspiral_kwargs: Optional[dict]=None,
-        amplitude_kwargs: Optional[dict]=None,
-        sum_kwargs: Optional[dict]=None,
-        Ylm_kwargs: Optional[dict]=None,
-        mode_selector_kwargs: Optional[dict]=None,
-        use_gpu:bool=False,
-        normalize_amps:bool=False,
+        /,  # force use of keyword arguments for readability
+        inspiral_module: type[InspiralModule],
+        amplitude_module: type[AmplitudeModule],
+        sum_module: type[SumModule],
+        mode_selector_module: type[ModeSelectorModule],
+        inspiral_kwargs: Optional[dict] = None,
+        amplitude_kwargs: Optional[dict] = None,
+        sum_kwargs: Optional[dict] = None,
+        Ylm_kwargs: Optional[dict] = None,
+        mode_selector_kwargs: Optional[dict] = None,
+        normalize_amps: bool = False,
+        force_backend: BackendLike = None,
     ):
-        if inspiral_kwargs is None:
-            inspiral_kwargs = {}
-        if amplitude_kwargs is None:
-            amplitude_kwargs = {}
-        if sum_kwargs is None:
-            sum_kwargs = {}
-        if Ylm_kwargs is None:
-            Ylm_kwargs = {}
-        if mode_selector_kwargs is None:
-            mode_selector_kwargs = {}
+        ParallelModuleBase.__init__(self, force_backend=force_backend)
 
-        ParallelModuleBase.__init__(self, use_gpu=use_gpu)
-
-        (
-            amplitude_kwargs,
-            sum_kwargs,
-            Ylm_kwargs,
-            mode_selector_kwargs,
-        ) = self.adjust_gpu_usage(
-            use_gpu, [amplitude_kwargs, sum_kwargs, Ylm_kwargs, mode_selector_kwargs]
-        )
-
-        # normalize amplitudes to flux at each step from trajectory
         self.normalize_amps = normalize_amps
+        self.inspiral_kwargs = {} if inspiral_kwargs is None else inspiral_kwargs
+        self.inspiral_generator = inspiral_module(
+            **self.inspiral_kwargs
+        )  # The inspiral generator does not rely on backend adjustement
 
-        # kwargs that are passed to the inspiral call function
-        self.inspiral_kwargs = inspiral_kwargs
-
-        # function for generating the inpsiral
-        self.inspiral_generator = inspiral_module(**inspiral_kwargs)
-        """object: instantiated trajectory module."""
-
-        # function for generating the amplitude
-        self.amplitude_generator = amplitude_module(**amplitude_kwargs)
-        """object: instantiated amplitude module."""
-
-        # summation generator
-        self.create_waveform = sum_module(**sum_kwargs)
-        """object: instantiated summation module."""
-
-        # angular harmonics generation
-        self.ylm_gen = GetYlms(**Ylm_kwargs)
-        """object: instantiated Ylm module."""
+        self.amplitude_generator = self.build_with_same_backend(
+            amplitude_module, kwargs=amplitude_kwargs
+        )
+        self.create_waveform = self.build_with_same_backend(
+            sum_module, kwargs=sum_kwargs
+        )
+        self.ylm_gen = self.build_with_same_backend(GetYlms, kwargs=Ylm_kwargs)
 
         # selecting modes that contribute at threshold to the waveform
-        self.mode_selector = mode_selector_module(
-            self.l_arr_no_mask,
-            self.m_arr_no_mask,
-            self.n_arr_no_mask,
-            **mode_selector_kwargs,
+        self.mode_selector = self.build_with_same_backend(
+            mode_selector_module,
+            args=[self.l_arr_no_mask, self.m_arr_no_mask, self.n_arr_no_mask],
+            kwargs=mode_selector_kwargs,
         )
-        """object: instantiated mode selector module."""
 
     def _generate_waveform(
         self,
@@ -126,16 +128,16 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
         theta: float,
         phi: float,
         *args: Optional[tuple],
-        dist: Optional[float]=None,
-        Phi_phi0: float=0.0,
-        Phi_r0: float=0.0,
-        dt: float=10.0,
-        T: float=1.0,
-        eps: float=1e-5,
-        show_progress: bool=False,
-        batch_size: int=-1,
-        mode_selection: Optional[Union[str, list, np.ndarray]]=None,
-        include_minus_m: bool=True,
+        dist: Optional[float] = None,
+        Phi_phi0: float = 0.0,
+        Phi_r0: float = 0.0,
+        dt: float = 10.0,
+        T: float = 1.0,
+        eps: float = 1e-5,
+        show_progress: bool = False,
+        batch_size: int = -1,
+        mode_selection: Optional[Union[str, list, np.ndarray]] = None,
+        include_minus_m: bool = True,
         **kwargs: Optional[dict],
     ) -> np.ndarray:
         r"""Call function for waveform models built in the spherical harmonic basis.
@@ -195,7 +197,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
         if dist is not None:
             if dist <= 0.0:
                 raise ValueError("Luminosity distance must be greater than zero.")
-            
+
             dist_dimensionless = (dist * Gpc) / (mu * MRSUN_SI)
 
         else:
@@ -245,9 +247,7 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
 
         # get ylms only for unique (l,m) pairs
         # then expand to all (lmn with self.inverse_lm)
-        ylms = self.ylm_gen(self.unique_l, self.unique_m, theta, phi)[
-            self.inverse_lm
-        ]
+        ylms = self.ylm_gen(self.unique_l, self.unique_m, theta, phi)[self.inverse_lm]
         # if mode selector is predictive, run now to avoid generating amplitudes that are not required
         if self.mode_selector.is_predictive:
             # overwrites mode_selection so it's now a list of modes to keep, ready to feed into amplitudes
@@ -272,10 +272,11 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
 
         # select tqdm if user wants to see progress
         iterator = enumerate(inds_split_all)
-        iterator = tqdm(iterator, desc="time batch") if show_progress else iterator
-
-        if show_progress:
-            print("total:", len(inds_split_all))
+        iterator = (
+            tqdm(iterator, desc="time batch", total=len(inds_split_all))
+            if show_progress
+            else iterator
+        )
 
         for i, inds_in in iterator:
             # get subsections of the arrays for each batch
@@ -362,12 +363,16 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
                         axis=1,
                     ) ** (1 / 2)
 
-                    keep_inds = self.xp.asarray([self.amplitude_generator.special_index_map[md] for md in mode_selection])
+                    keep_inds = self.xp.asarray(
+                        [
+                            self.amplitude_generator.special_index_map[md]
+                            for md in mode_selection
+                        ]
+                    )
 
                     # filter modes and normalize
                     factor = amp_norm_temp / amp_for_norm
                     teuk_modes = teuk_modes[:, keep_inds] * factor[:, np.newaxis]
-
 
                 else:
                     # generate only the required modes with the amplitude module
@@ -458,24 +463,34 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
             # prepare phases for summation modules
             if not self.inspiral_generator.inspiral_generator.dopr.fix_step:
                 # prepare phase spline coefficients
-                phase_spline_coeff = self.xp.asarray(self.inspiral_generator.inspiral_generator.integrator_spline_coeff)  # TODO make these accessible from EMRIInspiral
+                phase_spline_coeff = self.xp.asarray(
+                    self.inspiral_generator.inspiral_generator.integrator_spline_coeff
+                )  # TODO make these accessible from EMRIInspiral
 
                 # scale coefficients here by the mass ratio
-                phase_information_in = phase_spline_coeff[:,[3,5],:] / (mu / M)
+                phase_information_in = phase_spline_coeff[:, [3, 5], :] / (mu / M)
 
                 # flip azimuthal phase for retrograde inspirals
                 if a > 0:
-                    phase_information_in[:,0] *= self.xp.sign(xI0)
+                    phase_information_in[:, 0] *= self.xp.sign(xI0)
 
                 if self.inspiral_generator.inspiral_generator.integrate_backwards:
-                    phase_information_in[:,:,0] += self.xp.array([Phi_phi[-1] + Phi_phi[0], Phi_r[-1] + Phi_r[0]])
+                    phase_information_in[:, :, 0] += self.xp.array(
+                        [Phi_phi[-1] + Phi_phi[0], Phi_r[-1] + Phi_r[0]]
+                    )
 
-                phase_t_in = self.inspiral_generator.inspiral_generator.integrator_t_cache
+                phase_t_in = (
+                    self.inspiral_generator.inspiral_generator.integrator_t_cache
+                )
             else:
-                phase_information_in = self.xp.asarray([Phi_phi_temp, Phi_theta_temp, Phi_r_temp])
+                phase_information_in = self.xp.asarray(
+                    [Phi_phi_temp, Phi_theta_temp, Phi_r_temp]
+                )
                 if self.inspiral_generator.inspiral_generator.integrate_backwards:
                     phase_information_in[0] += self.xp.array([Phi_phi[-1] + Phi_phi[0]])
-                    phase_information_in[1] += self.xp.array([Phi_theta[-1] + Phi_theta[0]])
+                    phase_information_in[1] += self.xp.array(
+                        [Phi_theta[-1] + Phi_theta[0]]
+                    )
                     phase_information_in[2] += self.xp.array([Phi_r[-1] + Phi_r[0]])
 
                 # flip azimuthal phase for retrograde inspirals
@@ -505,19 +520,19 @@ class SphericalHarmonicWaveformBase(ParallelModuleBase):
                 **kwargs,
             )
 
-            # if batching, need to add the waveform
-            if i > 0:
-                waveform = self.xp.concatenate([waveform, waveform_temp])
+            # if batching, need to add the waveform (block if/else disabled since waveform is not already defined)
+            # if i > 0:
+            #     waveform = self.xp.concatenate([waveform, waveform_temp])
 
-            # return entire waveform
-            else:
-                waveform = waveform_temp
+            # # return entire waveform
+            # else:
+            #     waveform = waveform_temp
+            waveform = waveform_temp
 
         return waveform / dist_dimensionless
 
 
-
-class AAKWaveformBase(Pn5AAK, ParallelModuleBase):
+class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumModule]):
     r"""Waveform generation class for AAK with arbitrary trajectory.
 
     This class generates waveforms based on the Augmented Analytic Kludge
@@ -568,56 +583,55 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase):
             {}. This is stored as an attribute.
         sum_kwargs: Optional kwargs to pass to the
             sum module during instantiation. Default is {}.
-        use_gpu: If True, use GPU resources. Default is False.
     """
+
+    inspiral_kwargs: dict
+    """Keyword arguments passed to the inspiral generator call function"""
+
+    inspiral_generator: InspiralModule
+    """Instance of the trajectory module"""
+
+    create_waveform: SumModule
+    """Instance of the summation module"""
+
+    num_modes_kept: int
+    """Number of modes for final waveform (unset before call). For this model, it is solely determined from the eccentricity."""
 
     def __init__(
         self,
-        inspiral_module: object,
-        sum_module: object,
-        inspiral_kwargs: Optional[dict]=None,
-        sum_kwargs: Optional[dict]=None,
-        use_gpu: bool=False,
+        inspiral_module: type[InspiralModule],
+        sum_module: type[SumModule],
+        inspiral_kwargs: Optional[dict] = None,
+        sum_kwargs: Optional[dict] = None,
+        force_backend: BackendLike = None,
     ):
-        if inspiral_kwargs is None:
-            inspiral_kwargs = {}
-        if sum_kwargs is None:
-            sum_kwargs = {}
-
-        ParallelModuleBase.__init__(self, use_gpu=use_gpu)
         Pn5AAK.__init__(self)
+        ParallelModuleBase.__init__(self, force_backend=force_backend)
 
-        sum_kwargs = self.adjust_gpu_usage(use_gpu, sum_kwargs)
-
-        # kwargs that are passed to the inspiral call function
-        self.inspiral_kwargs = inspiral_kwargs
-        """dict: Kwargs related to the inspiral."""
-
-        # function for generating the inpsiral
-        self.inspiral_generator = inspiral_module(**inspiral_kwargs)
-        """object: instantiated trajectory module."""
-
-        # summation generator
-        self.create_waveform = sum_module(**sum_kwargs)
-        """object: instantiated summation module."""
+        self.inspiral_kwargs = {} if inspiral_kwargs is None else inspiral_kwargs
+        self.inspiral_generator = inspiral_module(
+            **self.inspiral_kwargs
+        )  # The inspiral generator does not rely on backend adjustement
+        self.create_waveform = self.build_with_same_backend(
+            sum_module, kwargs=sum_kwargs
+        )
 
         self.num_modes_kept = None
-        """int: Number of modes for final waveform. For this model, it is solely determined from the eccentricity."""
 
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
         """Return citations related to this module"""
-        return [REFERENCE.FD, REFERENCE.AAK1, REFERENCE.AAK2,
-                REFERENCE.AK, REFERENCE.KERR_SEPARATRIX
-                ] + super(AAKWaveformBase, cls).module_references()
+        return [
+            REFERENCE.FD,
+            REFERENCE.AAK1,
+            REFERENCE.AAK2,
+            REFERENCE.AK,
+            REFERENCE.KERR_SEPARATRIX,
+        ] + super(AAKWaveformBase, cls).module_references()
 
-    @property
-    def gpu_capability(self):
-        return True
-
-    @property
-    def is_source_frame(self):
-        return False
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     @property
     def allow_batching(self):
@@ -637,13 +651,13 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase):
         qK: float,
         phiK: float,
         *args: Optional[tuple],
-        Phi_phi0: float=0.0,
-        Phi_theta0: float=0.0,
-        Phi_r0: float=0.0,
-        mich: bool=False,
-        dt: float=10.0,
-        T: float=1.0,
-        nmodes: Optional[int]=None,
+        Phi_phi0: float = 0.0,
+        Phi_theta0: float = 0.0,
+        Phi_r0: float = 0.0,
+        mich: bool = False,
+        dt: float = 10.0,
+        T: float = 1.0,
+        nmodes: Optional[int] = None,
     ) -> np.ndarray:
         r"""Call function for AAK + 5PN model.
 
@@ -715,7 +729,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase):
             **self.inspiral_kwargs,
         )
 
-        if nmodes == None:
+        if nmodes is None:
             if (p[0] - p[1]) < 0:  # Integrating backwards
                 # Need to keep the number of modes equivalent
                 initial_e = e[-1]
@@ -735,14 +749,22 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase):
         self.end_time = t[-1]
 
         # prepare phase spline coefficients
-        traj_spline_coeff = self.xp.asarray(self.inspiral_generator.inspiral_generator.integrator_spline_coeff)  # TODO make these accessible from EMRIInspiral
+        traj_spline_coeff = self.xp.asarray(
+            self.inspiral_generator.inspiral_generator.integrator_spline_coeff
+        )  # TODO make these accessible from EMRIInspiral
 
         # scale coefficients here by the mass ratio
         traj_spline_coeff_in = traj_spline_coeff.copy()
-        traj_spline_coeff_in[:,3:,:] /= (mu / M)
+        traj_spline_coeff_in[:, 3:, :] /= mu / M
 
         if self.inspiral_generator.inspiral_generator.integrate_backwards:
-            traj_spline_coeff_in[:,3:,0] += self.xp.array([Phi_phi[-1] + Phi_phi[0], Phi_theta[-1] + Phi_theta[0], Phi_r[-1] + Phi_r[0]])
+            traj_spline_coeff_in[:, 3:, 0] += self.xp.array(
+                [
+                    Phi_phi[-1] + Phi_phi[0],
+                    Phi_theta[-1] + Phi_theta[0],
+                    Phi_r[-1] + Phi_r[0],
+                ]
+            )
 
         waveform = self.create_waveform(
             t,

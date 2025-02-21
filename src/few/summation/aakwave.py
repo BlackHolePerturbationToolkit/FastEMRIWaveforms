@@ -16,28 +16,18 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import os
-
-import h5py
 import numpy as np
 
-# Cython/C++ imports
-from ..cutils.cpu import pyWaveform as pyWaveform_cpu
-from ..cutils.fast import pyWaveform as pyWaveform_gpu
-
 # Python imports
-from ..utils.baseclasses import Pn5AAK, ParallelModuleBase
+from ..utils.baseclasses import Pn5AAK, BackendLike
 from .base import SummationBase
-from ..utils.utility import get_fundamental_frequencies
-from ..utils.pn_map import Y_to_xI
-from ..utils.constants import *
-from ..summation.interpolatedmodesum import CubicSplineInterpolant
 
 from few.utils.globals import get_logger
 
 few_logger = get_logger()
 
-class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
+
+class AAKSummation(Pn5AAK, SummationBase):
     """Calculate an AAK waveform from an input trajectory.
 
     Please see the documentations for
@@ -51,24 +41,22 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
 
     args:
         **kwargs: Optional keyword arguments for the base classes:
-            :class:`few.utils.baseclasses.ParallelModuleBase`,
             :class:`few.utils.baseclasses.Pn5AAK`.
             :class:`few.utils.baseclasses.SummationBase`.
     """
 
-    def __init__(self, **kwargs):
-        ParallelModuleBase.__init__(self, **kwargs)
-        Pn5AAK.__init__(self, **kwargs)
-        SummationBase.__init__(self, **kwargs)
+    def __init__(self, force_backend: BackendLike = None, **kwargs):
+        Pn5AAK.__init__(self)
+        SummationBase.__init__(self, **kwargs, force_backend=force_backend)
 
     @property
     def waveform_generator(self):
         """obj: Compiled CPU/GPU that performs the AAK waveform generation."""
-        return pyWaveform_gpu if self.use_gpu else pyWaveform_cpu
+        return self.backend.pyWaveform
 
-    @property
-    def gpu_capability(self):
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     def sum(
         self,
@@ -85,10 +73,10 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         interp_t: np.ndarray,
         interp_coeffs: np.ndarray,
         *args,
-        mich:bool=False,
-        dt:float=10.0,
-        integrate_backwards:bool=False,
-        **kwargs
+        mich: bool = False,
+        dt: float = 10.0,
+        integrate_backwards: bool = False,
+        **kwargs,
     ) -> None:
         r"""Compute an AAK waveform from an input trajectory.
 
@@ -171,8 +159,8 @@ class AAKSummation(SummationBase, Pn5AAK, ParallelModuleBase):
         # if equatorial, set theta phase coefficients equal to phi counterparts
         # we check this by inspecting the first coefficient of Y
         # as equatorial goes to equatorial, this is a necessary and sufficient condition
-        if abs(interp_coeffs[0,2,0]) == 1.0:
-            interp_coeffs[:,4] = interp_coeffs[:,3]
+        if abs(interp_coeffs[0, 2, 0]) == 1.0:
+            interp_coeffs[:, 4] = interp_coeffs[:, 3]
 
         # convert to gpu if desired
         interp_coeffs_in = self.xp.transpose(

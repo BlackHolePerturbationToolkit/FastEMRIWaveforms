@@ -17,31 +17,25 @@
 
 
 import numpy as np
-from scipy import special
 
 import os
-from ..summation.interpolatedmodesum import CubicSplineInterpolant
 from ..utils.utility import get_fundamental_frequencies
-from ..utils.constants import *
-from ..utils.baseclasses import ParallelModuleBase
+from ..utils.constants import MTSUN_SI, PI
+from ..utils.baseclasses import ParallelModuleBase, BackendLike
 import sys
-
-# check for cupy
-try:
-    import cupy as cp
-except (ImportError, ModuleNotFoundError):
-    pass
 
 # pytorch
 try:
     import torch
 except (ImportError, ModuleNotFoundError):
-    pass #  we can catch this later
+    pass  #  we can catch this later
 
 from typing import Optional
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+
+# fmt: off
 @np.vectorize
 def SPAFunc(x, th=7.0):
     II = 0.0 + 1.0j
@@ -88,6 +82,8 @@ def SPAFunc(x, th=7.0):
         ans = pref * ser
 
     return ans
+# fmt: on
+
 
 class ModeSelector(ParallelModuleBase):
     """Filter teukolsky amplitudes based on power contribution.
@@ -120,8 +116,15 @@ class ModeSelector(ParallelModuleBase):
 
     """
 
-    def __init__(self, l_arr: np.ndarray, m_arr: np.ndarray, n_arr: np.ndarray, sensitivity_fn: Optional[object]=None, **kwargs: Optional[dict]):
-        ParallelModuleBase.__init__(self, **kwargs)
+    def __init__(
+        self,
+        l_arr: np.ndarray,
+        m_arr: np.ndarray,
+        n_arr: np.ndarray,
+        sensitivity_fn: Optional[object] = None,
+        force_backend: BackendLike = None,
+    ):
+        ParallelModuleBase.__init__(self, force_backend=force_backend)
 
         # store information releated to m values
         # the order is m = 0, m > 0, m < 0
@@ -138,17 +141,23 @@ class ModeSelector(ParallelModuleBase):
         self.sensitivity_fn = sensitivity_fn
         """object: sensitivity generating function for power-weighting."""
 
-    @property
-    def gpu_capability(self):
-        """Confirms GPU capability"""
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     @property
     def is_predictive(self):
         """Whether this mode selector should be used before or after amplitude generation"""
         return False
 
-    def __call__(self, teuk_modes: np.ndarray, ylms: np.ndarray, modeinds: list[np.ndarray], fund_freq_args: Optional[tuple] = None, eps: float=1e-5) -> np.ndarray:
+    def __call__(
+        self,
+        teuk_modes: np.ndarray,
+        ylms: np.ndarray,
+        modeinds: list[np.ndarray],
+        fund_freq_args: Optional[tuple] = None,
+        eps: float = 1e-5,
+    ) -> np.ndarray:
         r"""Call to sort and filer teukolsky modes.
 
         This is the call function that takes the teukolsky modes, ylms,
@@ -181,7 +190,7 @@ class ModeSelector(ParallelModuleBase):
                 1e-5.
 
         """
-        zero_modes_mask = (modeinds[1]==0)*(modeinds[2]==0)
+        #  zero_modes_mask = (modeinds[1] == 0) * (modeinds[2] == 0)
 
         # get the power contribution of each mode including m < 0
         # if self.sensitivity_fn is None:
@@ -197,7 +206,6 @@ class ModeSelector(ParallelModuleBase):
 
         # if noise weighting
         if self.sensitivity_fn is not None:
-
             if fund_freq_args is None:
                 raise ValueError(
                     "If sensitivity weighting is desired, the fund_freq_args kwarg must be provided."
@@ -208,7 +216,7 @@ class ModeSelector(ParallelModuleBase):
 
             a_fr, p_fr, e_fr, x_fr = fund_freq_args[1:-1]
 
-            if self.use_gpu:  # fundamental frequencies only defined on CPU
+            if self.backend.uses_cupy:  # fundamental frequencies only defined on CPU
                 p_fr = p_fr.get()
                 e_fr = e_fr.get()
                 x_fr = x_fr.get()
@@ -218,7 +226,7 @@ class ModeSelector(ParallelModuleBase):
             )
 
             # get frequencies in Hz
-            f_Phi, f_omega, f_r = OmegaPhi, OmegaTheta, OmegaR = (
+            f_Phi, _f_omega, f_r = OmegaPhi, OmegaTheta, OmegaR = (
                 self.xp.asarray(OmegaPhi) / (Msec * 2 * PI),
                 self.xp.asarray(OmegaTheta) / (Msec * 2 * PI),
                 self.xp.asarray(OmegaR) / (Msec * 2 * PI),
@@ -247,7 +255,9 @@ class ModeSelector(ParallelModuleBase):
         inds_keep = self.xp.full(cumsum.shape, True)
 
         # keep modes that add to within the fractional power (1 - eps)
-        inds_keep[:, 1:] = cumsum[:, :-1] < cumsum[:, -1][:, self.xp.newaxis] * (1 - eps)
+        inds_keep[:, 1:] = cumsum[:, :-1] < cumsum[:, -1][:, self.xp.newaxis] * (
+            1 - eps
+        )
 
         # finds indices of each mode to be kept
         temp = inds_sort[inds_keep]
@@ -279,6 +289,7 @@ class ModeSelector(ParallelModuleBase):
 
         return out1 + out2
 
+
 class NeuralModeSelector(ParallelModuleBase):
     """Filter teukolsky amplitudes based on power contribution.
 
@@ -303,42 +314,102 @@ class NeuralModeSelector(ParallelModuleBase):
             Default is {}.
     """
 
-    def __init__(self, l_arr, m_arr, n_arr, threshold=0.5, mode_selector_location=None, return_type="tuples", keep_inds=None, maximise_over_theta=False, **kwargs):
+    def __init__(
+        self,
+        l_arr,
+        m_arr,
+        n_arr,
+        threshold=0.5,
+        mode_selector_location=None,
+        return_type="tuples",
+        keep_inds=None,
+        maximise_over_theta=False,
+        force_backend: BackendLike = None,
+    ):
         if mode_selector_location is None:
             raise ValueError("mode_selector_location kwarg cannot be none.")
         elif not os.path.isdir(mode_selector_location):
-            raise ValueError(f"mode_selector location path ({mode_selector_location}) does not point to an existing directory.")
+            raise ValueError(
+                f"mode_selector location path ({mode_selector_location}) does not point to an existing directory."
+            )
+            raise ValueError(
+                f"mode_selector location path ({mode_selector_location}) does not point to an existing directory."
+            )
 
-        ParallelModuleBase.__init__(self, **kwargs)
+        ParallelModuleBase.__init__(self, force_backend=force_backend)
 
         # we set the pytorch device here for use with the neural network
-        if self.use_gpu:
-            self.device=f"cuda:{cp.cuda.runtime.getDevice()}"
-            self.neural_mode_list = [(lh, mh, nh) for lh, mh, nh in zip(l_arr.get(), m_arr.get(), n_arr.get())]
+        if self.backend.uses_cuda:
+            import cupy as cp
+
+            self.device = f"cuda:{cp.cuda.runtime.getDevice()}"
+            self.neural_mode_list = [
+                (lh, mh, nh)
+                for lh, mh, nh in zip(l_arr.get(), m_arr.get(), n_arr.get())
+            ]
+
+            self.device = f"cuda:{cp.cuda.runtime.getDevice()}"
+            self.neural_mode_list = [
+                (lh, mh, nh)
+                for lh, mh, nh in zip(l_arr.get(), m_arr.get(), n_arr.get())
+            ]
         else:
-            self.device="cpu"
-            self.neural_mode_list = [(lh, mh, nh) for lh, mh, nh in zip(l_arr, m_arr, n_arr)]
+            self.device = "cpu"
+            self.neural_mode_list = [
+                (lh, mh, nh) for lh, mh, nh in zip(l_arr, m_arr, n_arr)
+            ]
+            self.device = "cpu"
+            self.neural_mode_list = [
+                (lh, mh, nh) for lh, mh, nh in zip(l_arr, m_arr, n_arr)
+            ]
 
         # TODO include waveform name in paths
-        self.precomputed_mask = np.load(os.path.join(mode_selector_location, "precomputed_mode_mask.npy")).astype(np.int32)
-        self.masked_mode_list = [self.neural_mode_list[maskind] for maskind in self.precomputed_mask]
+        self.precomputed_mask = np.load(
+            os.path.join(mode_selector_location, "precomputed_mode_mask.npy")
+        ).astype(np.int32)
+        self.masked_mode_list = [
+            self.neural_mode_list[maskind] for maskind in self.precomputed_mask
+        ]
+        self.precomputed_mask = np.load(
+            os.path.join(mode_selector_location, "precomputed_mode_mask.npy")
+        ).astype(np.int32)
+        self.masked_mode_list = [
+            self.neural_mode_list[maskind] for maskind in self.precomputed_mask
+        ]
 
-        self.precomputed_mask = self.xp.asarray(self.precomputed_mask)  # for "array" return type compatibility
+        self.precomputed_mask = self.xp.asarray(
+            self.precomputed_mask
+        )  # for "array" return type compatibility
+        self.precomputed_mask = self.xp.asarray(
+            self.precomputed_mask
+        )  # for "array" return type compatibility
 
         if "torch" not in sys.modules:
             raise ModuleNotFoundError("Pytorch not installed.")
         # if torch wasn't installed with GPU capability, raise
-        if self.use_gpu and not torch.cuda.is_available():
-            raise RuntimeError("pytorch has not been installed with CUDA capability. Fix installation or set use_gpu=False.")
+        if self.backend.uses_cuda and not torch.cuda.is_available():
+            raise RuntimeError(
+                "pytorch has not been installed with CUDA capability. Fix installation or force 'cpu' backend."
+            )
 
-        self.model_loc = os.path.join(mode_selector_location, "neural_mode_selector.tjm")
+        self.model_loc = os.path.join(
+            mode_selector_location, "neural_mode_selector.tjm"
+        )
+        self.model_loc = os.path.join(
+            mode_selector_location, "neural_mode_selector.tjm"
+        )
         try:
             self.load_model(self.model_loc)
         except FileNotFoundError:
             raise FileNotFoundError("Neural mode predictor model file not found.")
 
         self.threshold = threshold
-        self.vector_min, self.vector_max = np.load(os.path.join(mode_selector_location, "network_norm.npy"))
+        self.vector_min, self.vector_max = np.load(
+            os.path.join(mode_selector_location, "network_norm.npy")
+        )
+        self.vector_min, self.vector_max = np.load(
+            os.path.join(mode_selector_location, "network_norm.npy")
+        )
 
         self.return_type = return_type
 
@@ -346,10 +417,9 @@ class NeuralModeSelector(ParallelModuleBase):
 
         self.maximise_over_theta = maximise_over_theta
 
-    @property
-    def gpu_capability(self):
-        """Confirms GPU capability"""
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     @property
     def is_predictive(self):
@@ -395,22 +465,39 @@ class NeuralModeSelector(ParallelModuleBase):
         if not hasattr(self, "model"):
             self.load_model(self.model_loc)
 
-        #wrap angles to training bounds
-        phi = phi % (2*np.pi)
+        # wrap angles to training bounds
+        phi = phi % (2 * np.pi)
+        # wrap angles to training bounds
+        phi = phi % (2 * np.pi)
 
         # maximise mode count over theta (stabilises the likelihood but often requires more modes)
         if self.maximise_over_theta:
             theta = 1.39
 
-        inputs = np.asarray([[np.log(M), mu, a, p0, e0, xI, T, theta, phi, np.log10(eps)]])[:,np.asarray(self.keep_inds)]  # throw away the params we dont need
+        inputs = np.asarray(
+            [[np.log(M), mu, a, p0, e0, xI, T, theta, phi, np.log10(eps)]]
+        )[:, np.asarray(self.keep_inds)]  # throw away the params we dont need
+        inputs = np.asarray(
+            [[np.log(M), mu, a, p0, e0, xI, T, theta, phi, np.log10(eps)]]
+        )[:, np.asarray(self.keep_inds)]  # throw away the params we dont need
         # rescale network input from pre-computed
-        inputs = 2 * (inputs - self.vector_min) / (self.vector_max - self.vector_min) - 1
+        inputs = (
+            2 * (inputs - self.vector_min) / (self.vector_max - self.vector_min) - 1
+        )
+        inputs = (
+            2 * (inputs - self.vector_min) / (self.vector_max - self.vector_min) - 1
+        )
         inputs = torch.as_tensor(inputs, device=self.device).float()
         self.check_bounds(inputs)
         # get network output and threshold it based on the defined value
         with torch.inference_mode():
             mode_predictions = torch.nn.functional.sigmoid(self.model(inputs))
-            keep_inds = torch.where(mode_predictions > self.threshold)[0].int().cpu().numpy()  # cpu() works for cpu and gpu
+            keep_inds = (
+                torch.where(mode_predictions > self.threshold)[0].int().cpu().numpy()
+            )  # cpu() works for cpu and gpu
+            keep_inds = (
+                torch.where(mode_predictions > self.threshold)[0].int().cpu().numpy()
+            )  # cpu() works for cpu and gpu
         # return list of modes for kept indices
         if self.return_type == "tuples":
             return [self.masked_mode_list[ind] for ind in keep_inds]
@@ -421,4 +508,9 @@ class NeuralModeSelector(ParallelModuleBase):
         # Enforce bounds. Normalising to [-1,1] so it's easy to check (space for numerical errors)
         if torch.any(torch.abs(inputs) > 1 + 1e-3):
             breakpoint()
-            raise ValueError(f"One of the inputs to the neural mode selector is out of bounds. Normalised inputs: {inputs}")
+            raise ValueError(
+                f"One of the inputs to the neural mode selector is out of bounds. Normalised inputs: {inputs}"
+            )
+            raise ValueError(
+                f"One of the inputs to the neural mode selector is out of bounds. Normalised inputs: {inputs}"
+            )

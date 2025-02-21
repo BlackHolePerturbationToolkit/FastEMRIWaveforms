@@ -7,9 +7,10 @@ from multispline.spline import BicubicSpline, TricubicSpline
 import os
 from typing import Union
 import numpy as np
-from math import pow, sqrt, log
+from math import pow, log
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
+
 
 @njit
 def _Edot_PN(e, yPN):
@@ -65,7 +66,7 @@ class SchwarzEccFlux(ODEBase):
 
     def distance_to_outer_boundary(self, y):
         p, e, x = self.get_pex(y)
-        dist_p = 3.817 - np.log((p - 2. * e - 2.1))
+        dist_p = 3.817 - np.log((p - 2.0 * e - 2.1))
         dist_e = 0.75 - e
 
         if dist_p < 0 or dist_e < 0:
@@ -77,24 +78,25 @@ class SchwarzEccFlux(ODEBase):
         return dist
 
     def interpolate_flux_grids(
-              self, p: float, e: float, Omega_phi: float
-              ) -> tuple[float]:
-
+        self, p: float, e: float, Omega_phi: float
+    ) -> tuple[float]:
         if e > 0.755:
             raise ValueError("Interpolation: e out of bounds.")
 
-        y1 = np.log((p - 2. * e - 2.1))
-        
-        if y1 < 1.3686394258811698 or y1 > 3.817712325956905:  # bounds described in 2104.04582
+        y1 = np.log((p - 2.0 * e - 2.1))
+
+        if (
+            y1 < 1.3686394258811698 or y1 > 3.817712325956905
+        ):  # bounds described in 2104.04582
             raise ValueError("Interpolation: p out of bounds.")
-        
-        yPN = Omega_phi**(2/3)
+
+        yPN = Omega_phi ** (2 / 3)
 
         Edot_PN = _Edot_PN(e, yPN)
         Ldot_PN = _Ldot_PN(e, yPN)
 
-        Edot = -(self.Edot_interp(y1, e)* yPN**6 + Edot_PN)
-        Ldot = -(self.Ldot_interp(y1, e)* yPN**(9/2) + Ldot_PN)
+        Edot = -(self.Edot_interp(y1, e) * yPN**6 + Edot_PN)
+        Ldot = -(self.Ldot_interp(y1, e) * yPN ** (9 / 2) + Ldot_PN)
 
         return Edot, Ldot
 
@@ -112,7 +114,7 @@ class SchwarzEccFlux(ODEBase):
 
         Edot, Ldot = self.interpolate_flux_grids(p, e, Omega_phi)
 
-        return [Edot, Ldot, 0., Omega_phi, Omega_theta, Omega_r]
+        return [Edot, Ldot, 0.0, Omega_phi, Omega_theta, Omega_r]
 
 
 @njit(fastmath=True)
@@ -182,16 +184,15 @@ class KerrEccEqFlux(ODEBase):
     def flux_output_convention(self):
         return "pex"
 
-    def interpolate_flux_grids(
-            self, p: float, e: float, x: float
-        ) -> tuple[float]:
-
-        risco = get_separatrix(self.a, 0., x)
+    def interpolate_flux_grids(self, p: float, e: float, x: float) -> tuple[float]:
+        risco = get_separatrix(self.a, 0.0, x)
         u = _p_to_u(p, self.p_sep_cache)
         w = e**0.5
         a_sign = self.a * x
 
-        pdot = -np.exp(self.pdot_interp(a_sign, w, u)) * _pdot_PN(p, e, risco, self.p_sep_cache)
+        pdot = -np.exp(self.pdot_interp(a_sign, w, u)) * _pdot_PN(
+            p, e, risco, self.p_sep_cache
+        )
         edot = self.edot_interp(a_sign, w, u) * _edot_PN(p, e, risco, self.p_sep_cache)
 
         return pdot, edot

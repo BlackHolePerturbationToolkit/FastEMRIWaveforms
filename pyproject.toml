@@ -165,7 +165,13 @@ extend-include = [
   "!src/few/utils/globals.py",
 ]
 
+lint.extend-select = [
+  "T201", # Fail when "print" is used, to be replaced with logger calls
+]
+
 lint.ignore = [ "E741" ]
+
+lint.extend-per-file-ignores."*.ipynb" = [ "T201" ] # Allow "print" statements in notebooks
 
 [tool.pyproject-fmt]
 max_supported_python = "3.12"

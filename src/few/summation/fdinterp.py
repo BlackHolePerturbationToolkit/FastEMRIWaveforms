@@ -18,29 +18,19 @@
 import numpy as np
 
 # Cython imports
-from ..cutils.cpu import (
-    get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_cpu,
-)
 
 # Python imports
 from ..utils.baseclasses import (
     SchwarzschildEccentric,
-    ParallelModuleBase,
+    BackendLike,
 )
 from .base import SummationBase
 from ..utils.citations import REFERENCE
 from ..utils.utility import get_fundamental_frequencies
-from ..utils.constants import *
+from ..utils.constants import MTSUN_SI
 from ..summation.interpolatedmodesum import CubicSplineInterpolant
 
-from ..cutils.fast import (
-    get_waveform_generic_fd_wrap as get_waveform_generic_fd_wrap_gpu,
-)
-
 # for special functions
-from scipy import special
-from scipy.interpolate import CubicSpline
-import multiprocessing as mp
 
 
 # added to return element or none in list
@@ -52,7 +42,7 @@ def find_element_in_list(element, list_element):
         return None
 
 
-def searchsorted2d_vec(a, b, batch_size=-1, xp=None, **kwargs):
+def searchsorted2d_vec(self, a, b, batch_size=-1, xp=None, **kwargs):
     if xp is None:
         xp = np
 
@@ -114,7 +104,7 @@ def searchsorted2d_vec(a, b, batch_size=-1, xp=None, **kwargs):
     return out
 
 
-class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
+class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
     """Create waveform by interpolating sparse trajectory in the frequency domain.
 
     It interpolates all of the modes of interest and phases at sparse
@@ -124,27 +114,37 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
     This class can be run on GPUs and CPUs.
     """
 
-    def __init__(self, *args, **kwargs):
-        ParallelModuleBase.__init__(self, *args, **kwargs)
-        SchwarzschildEccentric.__init__(self, *args, **kwargs)
-        SummationBase.__init__(self, *args, **kwargs)
+    def __init__(self, /, force_backend: BackendLike = None, **kwargs):
+        SummationBase.__init__(
+            self,
+            **{
+                key: value
+                for key, value in kwargs.items()
+                if key in ["output_type", "pad_output", "odd_len"]
+            },
+            force_backend=force_backend,
+        )
+        SchwarzschildEccentric.__init__(
+            self,
+            **{
+                key: value
+                for key, value in kwargs.items()
+                if key in ["lmax", "nmax", "ndim"]
+            },
+            force_backend=force_backend,
+        )
 
-        self.kwargs = kwargs
+        # self.kwargs = kwargs
 
     # eventually the name will change to adapt for the gpu implementantion
     @property
     def get_waveform_fd(self) -> callable:
         """GPU or CPU waveform generation."""
-        return (
-            get_waveform_generic_fd_wrap_cpu
-            if not self.use_gpu
-            else get_waveform_generic_fd_wrap_gpu
-        )
+        return self.backend.get_waveform_generic_fd_wrap
 
-    @property
-    def gpu_capability(self):
-        """Confirms GPU capability"""
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
@@ -219,7 +219,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
 
         init_len = len(t)  # length of sparse traj
         num_teuk_modes = teuk_modes.shape[1]
-        num_pts = self.num_pts  # from the base clase, adjust in the baseclass
+        _num_pts = self.num_pts  # from the base clase, adjust in the baseclass
 
         length = init_len
         # number of quantities to be interp in time domain
@@ -263,8 +263,10 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         # create two splines
         # spline: freqs, phases, and amplitudes for the summation kernel
         # freqs_spline: only the frequencies [f(t)]
-        freqs_spline = CubicSplineInterpolant(t, y_all_freqs, use_gpu=self.use_gpu)
-        spline = CubicSplineInterpolant(t, y_all, use_gpu=self.use_gpu)
+        freqs_spline = self.build_with_same_backend(
+            CubicSplineInterpolant, args=[t, y_all_freqs]
+        )
+        spline = self.build_with_same_backend(CubicSplineInterpolant, args=[t, y_all])
 
         # t_new is a denser (but not completely dense) set
         # of time values to help estimate where/when turnovers occur
@@ -454,7 +456,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         inds_fin[inds_fin < 0] = 0
 
         # frequencies to check boundaries
-        freq_check = self.frequency[inds_fin]
+        _freq_check = self.frequency[inds_fin]
 
         # place holder for k array
         k_arr = self.xp.zeros_like(m_arr)
@@ -475,11 +477,12 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric, ParallelModul
         if separate_modes:
             include_minus_m = False
 
-        if integrate_backwards:
-            # For consistency with forward integration, we slightly shift the knots so that they line up at t=0
-            offset = h_t[-1] - int(h_t[-1] / dt) * dt
-            h_t = h_t - offset
-            phase_interp_t = phase_interp_t - offset
+        # block disabled since it uses h_t which is undefined
+        # if integrate_backwards:
+        #     # For consistency with forward integration, we slightly shift the knots so that they line up at t=0
+        #     offset = h_t[-1] - int(h_t[-1] / dt) * dt
+        #     h_t = h_t - offset
+        #     phase_interp_t = phase_interp_t - offset
 
         phase_interp_t_in = self.xp.asarray(phase_interp_t)
 

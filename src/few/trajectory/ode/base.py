@@ -5,7 +5,7 @@ Contains the ODEBase baseclass that handles evaluating the ODE
 from typing import Optional, Type, Union
 import numpy as np
 import os
-from ...utils.utility import ELQ_to_pex, get_separatrix, get_kerr_geo_constants_of_motion
+from ...utils.utility import ELQ_to_pex, get_separatrix
 from ...utils.mappings import ELdot_to_PEdot_Jacobian
 from ...utils.pn_map import Y_to_xI
 
@@ -35,7 +35,9 @@ class ODEBase:
         self.num_add_args = 0
         """int: Number of additional arguments being passed to the ODE function."""
 
-        self.apply_Jacobian_bool = (self.flux_output_convention == "ELQ" and not self.use_ELQ)
+        self.apply_Jacobian_bool = (
+            self.flux_output_convention == "ELQ" and not self.use_ELQ
+        )
 
     @property
     def convert_Y(self):
@@ -105,7 +107,7 @@ class ODEBase:
         Defaults to "ELQ".
 
         For models that do not perform interpolation to generate fluxes (e.g., PN5), this property is not accessed.
-        """    
+        """
         return "ELQ"
 
     def add_fixed_parameters(self, M: float, mu: float, a: float, additional_args=None):
@@ -125,7 +127,9 @@ class ODEBase:
         """
         raise NotImplementedError
 
-    def modify_rhs_before_Jacobian(self, ydot: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
+    def modify_rhs_before_Jacobian(
+        self, ydot: np.ndarray, y: np.ndarray, **kwargs
+    ) -> np.ndarray:
         """
         This function allows the user to modify the right-hand side of the ODE before the Jacobian transform is applied.
         This is particularly useful if the user wishes to apply modifications to fluxes of the integrals of motion "ELQ",
@@ -137,7 +141,7 @@ class ODEBase:
 
     def modify_rhs(self, ydot: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
         """
-        This function allows the user to modify the right-hand side of the ODE after any required Jacobian transforms 
+        This function allows the user to modify the right-hand side of the ODE after any required Jacobian transforms
         have been applied.
 
         By default, this function returns the input right-hand side unchanged.
@@ -162,12 +166,12 @@ class ODEBase:
         backwards integration, which performs root-finding to ensure that the trajectory ends on this outer boundary.
         Root-finding is initiated when this function returns a negative value.
 
-        Each stock model implements this function to handle the specifics of their own interpolants. For models that 
-        do not use interpolation, this function returns a positive constant (such that root-finding never occurs) 
+        Each stock model implements this function to handle the specifics of their own interpolants. For models that
+        do not use interpolation, this function returns a positive constant (such that root-finding never occurs)
         and does not need to be implemented.
         """
         return 1e10
-    
+
     def get_pex(self, y: np.ndarray) -> tuple[float]:
         """
         This function converts the integrals of motion (E, L, Q) to the orbital elements (p, e, x), if required.
@@ -183,7 +187,7 @@ class ODEBase:
         """
         This function checks the input points to ensure they are within the physical bounds of the inspiral parameter space.
         These checks include ensuring that the separatrix has not been crossed, and that the eccentricity is within bounds.
-        
+
         Returns a boolean indicating whether the input was in bounds.
         """
 
@@ -216,8 +220,8 @@ class ODEBase:
         if in_bounds:
             derivs = self.evaluate_rhs(y, **kwargs)
         else:
-            derivs = np.zeros(6)*np.nan
-        
+            derivs = np.zeros(6) * np.nan
+
         if out is None:
             out = np.asarray(derivs)
         else:

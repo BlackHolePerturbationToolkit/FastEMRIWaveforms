@@ -1,7 +1,8 @@
-from ..utils.constants import *
+from ..utils.constants import YRSID_SI
 
 
-from ..utils.baseclasses import ParallelModuleBase
+from ..utils.baseclasses import ParallelModuleBase, BackendLike
+
 
 class SummationBase(ParallelModuleBase):
     """Base class used for summation modules.
@@ -21,8 +22,15 @@ class SummationBase(ParallelModuleBase):
     """
 
     def __init__(
-        self, *args, output_type:str="td", pad_output:bool=False, odd_len:bool=False, **kwargs
+        self,
+        /,
+        output_type: str = "td",
+        pad_output: bool = False,
+        odd_len: bool = False,
+        force_backend: BackendLike = None,
     ):
+        ParallelModuleBase.__init__(self, force_backend=force_backend)
+
         self.pad_output = pad_output
         self.odd_len = odd_len
 
@@ -57,7 +65,7 @@ class SummationBase(ParallelModuleBase):
         """
         raise NotImplementedError
 
-    def __call__(self, t: float, *args, T:float=1.0, dt:float=10.0, **kwargs):
+    def __call__(self, t: float, *args, T: float = 1.0, dt: float = 10.0, **kwargs):
         """Common call function for summation modules.
 
         Provides a common interface for summation modules. It can adjust for

@@ -2,30 +2,29 @@ import unittest
 import pickle
 import numpy as np
 
-import few
 from few.waveform import FastSchwarzschildEccentricFlux
 from few.waveform import GenerateEMRIWaveform
-from few.utils.constants import *
+from few.utils.constants import YRSID_SI
 
-from few.cutils.fast import xp
-from few.utils.globals import get_logger
+from few.utils.globals import get_logger, get_first_backend
 
 few_logger = get_logger()
 
-gpu_available = few.cutils.fast.is_gpu
-few_logger.warning("Test is running with fast backend {}".format(few.cutils.fast.__backend__))
+best_backend = get_first_backend(FastSchwarzschildEccentricFlux.supported_backends())
+xp = best_backend.xp
+few_logger.warning("FD Test is running with backend {}".format(best_backend.name))
 
 few_gen = GenerateEMRIWaveform(
     "FastSchwarzschildEccentricFlux",
     sum_kwargs=dict(pad_output=True, output_type="fd", odd_len=True),
-    use_gpu=gpu_available,
+    force_backend=best_backend,
     return_list=False,
 )
 
 few_gen_list = GenerateEMRIWaveform(
     "FastSchwarzschildEccentricFlux",
     sum_kwargs=dict(pad_output=True, output_type="fd", odd_len=True),
-    use_gpu=gpu_available,
+    force_backend=best_backend,
     return_list=True,
 )
 
@@ -37,7 +36,7 @@ class WaveformTest(unittest.TestCase):
             "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
             "buffer_length": int(
                 1e3
-            )  # all of the trajectories will be well under len = 1000
+            ),  # all of the trajectories will be well under len = 1000
         }
 
         # keyword arguments for inspiral generator (RomanAmplitude)
@@ -60,7 +59,7 @@ class WaveformTest(unittest.TestCase):
             amplitude_kwargs=amplitude_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             sum_kwargs=sum_kwargs,
-            use_gpu=gpu_available,
+            force_backend=best_backend,
         )
 
         check_pickle = pickle.dumps(fast)
@@ -77,9 +76,9 @@ class WaveformTest(unittest.TestCase):
         phi = np.pi / 4  # azimuthal viewing angle
         dist = 1.0  # distance
 
-        N = int(T * YRSID_SI / dt)
+        _N = int(T * YRSID_SI / dt)
 
-        fast_wave = extracted_gen(
+        _fast_wave = extracted_gen(
             M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-3
         )
 
@@ -89,7 +88,7 @@ class WaveformTest(unittest.TestCase):
             "DENSE_STEPPING": 0,  # we want a sparsely sampled trajectory
             "buffer_length": int(
                 1e3
-            ) # all of the trajectories will be well under len = 1000
+            ),  # all of the trajectories will be well under len = 1000
         }
 
         # keyword arguments for inspiral generator (RomanAmplitude)
@@ -112,7 +111,7 @@ class WaveformTest(unittest.TestCase):
             amplitude_kwargs=amplitude_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             sum_kwargs=sum_kwargs,
-            use_gpu=gpu_available,
+            force_backend=best_backend,
         )
 
         # setup td
@@ -123,7 +122,7 @@ class WaveformTest(unittest.TestCase):
             amplitude_kwargs=amplitude_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             sum_kwargs=sum_kwargs,
-            use_gpu=gpu_available,
+            force_backend=best_backend,
         )
 
         # parameters
@@ -136,7 +135,7 @@ class WaveformTest(unittest.TestCase):
         theta = np.pi / 3  # polar viewing angle
         phi = np.pi / 4  # azimuthal viewing angle
         dist = 1.0  # distance
-        batch_size = int(1e4)
+        # batch_size = int(1e4)
 
         slow_wave = slow(
             M,
@@ -152,7 +151,6 @@ class WaveformTest(unittest.TestCase):
 
         # make sure frequencies will be equivalent
         f_in = xp.array(np.linspace(-1 / (2 * dt), +1 / (2 * dt), num=len(slow_wave)))
-        N = len(f_in)
         kwargs = dict(f_arr=f_in)
 
         fast_wave = fast(
@@ -166,7 +164,7 @@ class WaveformTest(unittest.TestCase):
         # take fft of TD
         h_td = xp.asarray(slow_wave)
         h_td_real = xp.real(h_td)
-        h_td_imag = -xp.imag(h_td)
+        _h_td_imag = -xp.imag(h_td)
         time_series_1_fft = xp.fft.fftshift(xp.fft.fft(h_td_real))[mask]
 
         # mask only positive frequencies
@@ -201,7 +199,7 @@ class WaveformTest(unittest.TestCase):
         )
 
         # test some different configurations
-        # few_gen_list(*injection_test, T=1.0, eps=1e-3, dt=6.0)
+        few_gen_list(*injection_test, T=1.0, eps=1e-3, dt=6.0)
         # few_gen_list(*injection_test, T=1.0, eps=1e-3, dt=6.0, f_arr=freq)
         # few_gen_list(*injection_test, T=4.0, eps=1e-3, dt=6.0)
         # few_gen_list(*injection_test, T=1.0, eps=1e-3, dt=3.0)

@@ -18,8 +18,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
-import os
-from typing import Tuple, List, Type, Optional
+from typing import Tuple, Type, Optional
 
 import numpy as np
 from scipy.optimize import brentq
@@ -27,7 +26,6 @@ from scipy.optimize import brentq
 # Python imports
 from ..utils.utility import (
     ELQ_to_pex,
-    get_kerr_geo_constants_of_motion,
     get_separatrix,
 )
 from ..utils.constants import YRSID_SI, MTSUN_SI
@@ -65,6 +63,7 @@ def digest_func(func):
             raise ValueError(f"The trajectory function {func} could not be found.")
     return func
 
+
 class Integrate:
     """Custom integrator class.
 
@@ -79,6 +78,7 @@ class Integrate:
         **kwargs: Keyword arguments for the ODE function, ``func``.
 
     """
+
     def __init__(
         self,
         func: Type[ODEBase],
@@ -90,7 +90,7 @@ class Integrate:
         self.buffer_length = buffer_length
 
         func = digest_func(func)
-        
+
         self.base_func = func
 
         # load func
@@ -161,7 +161,6 @@ class Integrate:
             ydot *= -1
         return ydot
 
-
     def take_step(
         self, t: float, h: float, y: np.ndarray
     ) -> Tuple[float, float, np.ndarray]:
@@ -210,7 +209,6 @@ class Integrate:
         t_prev = t0
         y_prev = y0.copy()
         y = y0.copy()
-
 
         # setup integrator
         self.bad_num = 0
@@ -292,7 +290,7 @@ class Integrate:
                     self.dopr_spline_output[self.traj_step - 1, :] = spline_info
                     self._integrator_t_cache[self.traj_step] = t * self.Msec
                 break
-            
+
             # We did not stop or cross tmax, so save the point
             self.save_point(
                 t * self.Msec, y, spline_output=spline_info
@@ -561,7 +559,7 @@ class Integrate:
                 ]
             )
         )[0]
-        
+
         p, e, x = self.get_pex(self._y_inner_cache)
         # get the separatrix value at this new step
         if not self.enforce_schwarz_sep:
@@ -569,9 +567,7 @@ class Integrate:
         else:
             p_sep = 6 + 2 * e
 
-        return p - (
-            p_sep + self.separatrix_buffer_dist
-        )  # we want this to go to zero
+        return p - (p_sep + self.separatrix_buffer_dist)  # we want this to go to zero
 
     def inner_func_backward(self, t_step):
         """
@@ -586,7 +582,7 @@ class Integrate:
                 ]
             )
         )[0]
-        
+
         return self.distance_to_outer_boundary(self._y_inner_cache)
 
     def finishing_function(self, t: float, y: np.ndarray):
@@ -597,14 +593,16 @@ class Integrate:
         if self.dopr.fix_step:
             return
 
-        # advance the step counter by one temporarily to read the last spline value        
+        # advance the step counter by one temporarily to read the last spline value
         self.traj_step += 1
 
-        if t < self.tmax_dimensionless:  # don't step to the separatrix if we already hit the time window
+        if (
+            t < self.tmax_dimensionless
+        ):  # don't step to the separatrix if we already hit the time window
             self._finishing_function_stop(t)
         else:
             self._finishing_function_at_tmax()
-    
+
     def _finishing_function_stop(self, t: float):
         """
         If the integrator stops due to the separatrix stopping condition, place a point at the inner
@@ -687,19 +685,21 @@ class Integrate:
         """Handles integrator-specific conversion from y to pex and returns the result."""
         raise NotImplementedError
 
+
 class APEXIntegrate(Integrate):
     """
     An subclass of Integrate for integrating in pex coordinates.
     """
+
     def get_pex(self, y):
         return y[:3]
+
 
 class AELQIntegrate(Integrate):
     """
     An subclass of Integrate for integrating in ELQ coordinates.
     """
+
     def get_pex(self, y):
-        p, e, x = ELQ_to_pex(
-            self.a, y[0], y[1], y[2]
-        )
+        p, e, x = ELQ_to_pex(self.a, y[0], y[1], y[2])
         return p, e, x

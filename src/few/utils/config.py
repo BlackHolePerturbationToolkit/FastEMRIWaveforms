@@ -21,7 +21,7 @@ from typing import (
     Tuple,
 )
 from . import exceptions
-from ..cutils.fast_selector import BackendSelectionMode
+from ..cutils import KNOWN_BACKENDS
 
 
 class ConfigSource(enum.Enum):
@@ -409,6 +409,21 @@ def userinput_to_pathlist(user_input) -> List[pathlib.Path]:
     )
 
 
+def userinput_to_strlist(user_input) -> List[str]:
+    """Convert a user input to a list of paths"""
+    if user_input is None:
+        return []
+    if isinstance(user_input, str):
+        return user_input.split(";")
+    if compatibility_isinstance(user_input, List[str]):
+        return user_input
+    raise ValueError(
+        "User input '{}' of type '{}' is not convertible to a list of strings".format(
+            user_input, type(user_input)
+        )
+    )
+
+
 class InitialConfigConsumer(ConfigConsumer):
     """
     Class implementing first-pass config consumer.
@@ -470,7 +485,6 @@ class CompleteConfigConsumer(ConfigConsumer):
     Class implementing FEW complete configuration for the library.
     """
 
-    fast_backend: BackendSelectionMode
     log_level: int
     log_format: str
     file_registry_path: Optional[pathlib.Path]
@@ -479,23 +493,11 @@ class CompleteConfigConsumer(ConfigConsumer):
     file_allow_download: bool
     file_integrity_check: str
     file_extra_paths: List[pathlib.Path]
+    enabled_backends: Optional[List[str]]
 
     @staticmethod
     def config_entries() -> List[ConfigEntry]:
         return [
-            ConfigEntry(
-                label="fast_backend",
-                description="Fast backend selection mode",
-                type=BackendSelectionMode,
-                default=BackendSelectionMode.LAZY,
-                cli_flags="--fast-backend",
-                cli_kwargs={
-                    "type": BackendSelectionMode,
-                    "choices": ("cpu", "cuda11x", "cuda12x", "lazy", "best"),
-                },
-                env_var="FAST_BACKEND",
-                cfg_entry="fast-backend",
-            ),
             ConfigEntry(
                 label="log_level",
                 description="Application log level",
@@ -588,6 +590,20 @@ class CompleteConfigConsumer(ConfigConsumer):
                 if old is not None
                 else new,  # concatenate extra path lists
             ),
+            ConfigEntry(
+                label="enabled_backends",
+                description="List of backends that must be enabled",
+                type=Optional[List[str]],
+                default=None,
+                cli_flags="--enable-backend",
+                cli_kwargs={"action": "append"},
+                env_var="ENABLED_BACKENDS",
+                cfg_entry="enabled-backends",
+                convert=lambda x: [v.lower() for v in userinput_to_strlist(x)],
+                validate=lambda x: all(v in KNOWN_BACKENDS for v in x)
+                if x is not None
+                else True,
+            ),
         ]
 
     def __init__(
@@ -650,7 +666,7 @@ class CompleteConfigConsumer(ConfigConsumer):
                 "Logger level set to CRITICAL since quiet mode is requested."
             )
             self._apply_verbosity(logging.CRITICAL)
-        else:
+        elif parsed_options.verbose_count > 0:
             old_level = self.log_level
             new_level = old_level - parsed_options.verbose_count * 10
             get_logger().debug(

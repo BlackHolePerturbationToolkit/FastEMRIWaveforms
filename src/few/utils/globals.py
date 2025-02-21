@@ -12,8 +12,8 @@ from .config import (
     CompleteConfigConsumer as Configuration,
     detect_cfg_file,
 )
+from ..cutils import BackendsManager, Backend
 from ..files import FileManager
-from ..cutils.fast import load_backend
 
 
 class Singleton(type):
@@ -30,7 +30,7 @@ class FewGlobalsInitializedTwice(FewException):
 
 
 class FewGlobalsReadOnly(FewException):
-    """Exception raised hen trying to modify the global structure."""
+    """Exception raised when trying to modify the global structure."""
 
 
 class MultiHandlerTarget:
@@ -54,6 +54,7 @@ class Globals(metaclass=Singleton):
     _initial_config: InitialConfigConsumer
     _config: Configuration
     _file_manager: FileManager
+    _backends_manager: BackendsManager
 
     _to_initialize: bool
 
@@ -69,7 +70,7 @@ class Globals(metaclass=Singleton):
         self._init_config(cli_args=cli_args)
         self._postconfig_logger()
         self._init_file_manager()
-        self._init_fast_backend()
+        self._init_backends_manager()
 
         super().__setattr__("_to_initialize", False)
 
@@ -90,6 +91,12 @@ class Globals(metaclass=Singleton):
         if super().__getattribute__("_to_initialize"):
             self.init()
         return super().__getattribute__("_file_manager")
+
+    @property
+    def backends_manager(self) -> BackendsManager:
+        if super().__getattribute__("_to_initialize"):
+            self.init()
+        return super().__getattribute__("_backends_manager")
 
     def __setattr__(self, name, value):
         raise FewGlobalsReadOnly("Cannot set attribute on Globals structure.")
@@ -202,9 +209,10 @@ class Globals(metaclass=Singleton):
         file_manager = FileManager(cfg)
         super().__setattr__("_file_manager", file_manager)
 
-    def _init_fast_backend(self):
+    def _init_backends_manager(self):
         cfg: Configuration = super().__getattribute__("_config")
-        load_backend(cfg.fast_backend)
+        backends_manager = BackendsManager(enabled_backends=cfg.enabled_backends)
+        super().__setattr__("_backends_manager", backends_manager)
 
 
 def get_logger() -> logging.Logger:
@@ -222,6 +230,16 @@ def get_config() -> Configuration:
     return Globals().config
 
 
+def get_backend(backend_name: str) -> Backend:
+    """Get a backend by its name"""
+    return Globals().backends_manager.get_backend(backend_name=backend_name)
+
+
+def get_first_backend(backend_names: typing.Sequence[str]) -> Backend:
+    """Get the first available backend from a list of backend names"""
+    return Globals().backends_manager.get_first_backend(backend_names)
+
+
 def initialize(*cli_args):
     """Initialize FEW configuration, logger and file manager with CLI arguments"""
     Globals().init(*cli_args)
@@ -230,4 +248,12 @@ def initialize(*cli_args):
 # Initialize the globals singleton when first importing this file
 Globals()
 
-__all__ = ["Globals", "get_logger", "get_file_manager", "get_config", "initialize"]
+__all__ = [
+    "Globals",
+    "get_logger",
+    "get_file_manager",
+    "get_config",
+    "initialize",
+    "get_backend",
+    "get_first_backend",
+]
