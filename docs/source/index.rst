@@ -32,6 +32,7 @@
    dev/ide
    dev/feat
    dev/deploy
+   dev/doc
    dev/api
 
 .. toctree::
