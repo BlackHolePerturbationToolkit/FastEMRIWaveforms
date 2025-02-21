@@ -36,18 +36,21 @@ trg_dir = root_dir / "docs" / "source" / "tutorial"
 trg_dir.mkdir(parents=True, exist_ok=True)
 
 for example in (
-    "utility.ipynb",
-    "Amplitude_tutorial.ipynb",
-    "swsh.ipynb",
-    "modeselect.ipynb",
-    "cubicspline.ipynb",
-    "modesummation.ipynb",
     "Trajectory_tutorial",
     "Amplitude_tutorial",
+    "modeselect",
+    "modesummation",
+    "cubicspline",
+    "swsh",
+    "utility",
 ):
     filename = example + ".ipynb"
     if not (trg_dir / filename).is_file():
         os.symlink(src_dir / filename, trg_dir / filename)
+try:
+    os.symlink(src_dir / "files", trg_dir / "files", target_is_directory=True)
+except FileExistsError:
+    pass
 
 # -- General configuration ---------------------------------------------------
 

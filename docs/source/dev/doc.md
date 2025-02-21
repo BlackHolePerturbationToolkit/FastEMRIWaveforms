@@ -22,11 +22,11 @@ Then, you can build the documentation with:
 $ sphinx-build -b html docs/source docs/build
 ```
 
-The documentation is then available at `docs/build/html/index.html`. If you want to open
+The documentation is then available at `docs/build/index.html`. If you want to open
 it locally, you may start a local HTTP server with
 
 ```bash
-$ python -m http.server -d docs/build/html/
+$ python -m http.server -d docs/build/
 Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
 ```
 

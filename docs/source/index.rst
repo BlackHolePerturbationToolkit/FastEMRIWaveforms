@@ -20,7 +20,7 @@
    tutorial/Trajectory_tutorial
    tutorial/Amplitude_tutorial
    tutorial/modeselect
-   tutorial/modelsummation
+   tutorial/modesummation
    tutorial/cubicspline
    tutorial/swsh
    tutorial/utility
