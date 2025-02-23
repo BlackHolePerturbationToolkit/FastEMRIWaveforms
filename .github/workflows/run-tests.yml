@@ -97,7 +97,8 @@ jobs:
           python -m pip install ".[${FEW_EXTRAS}]" \
             --config-settings=cmake.define.FEW_WITH_GPU=OFF \
             --config-settings=cmake.define.FEW_LAPACKE_FETCH=OFF \
-            --config-settings=cmake.define.FEW_LAPACKE_DETECT_WITH=PKGCONFIG
+            --config-settings=cmake.define.FEW_LAPACKE_DETECT_WITH=PKGCONFIG \
+            -vvv --config-settings=cmake.verbose=true --config-settings=logging.level=INFO
       - name: Install coverage
         run: |
           python -m pip install coverage[toml]
