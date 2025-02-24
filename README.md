@@ -12,7 +12,7 @@ To install the latest pre-compiled version of `fastemriwaveforms`, simply run:
 
 ```sh
 # For CPU-only version
-pip install fastemriwaveforms-cpu
+pip install fastemriwaveforms
 
 # For GPU-enabled versions with CUDA 11.Y.Z
 pip install fastemriwaveforms-cuda11x
