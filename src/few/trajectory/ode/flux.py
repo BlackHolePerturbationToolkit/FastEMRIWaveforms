@@ -2,6 +2,9 @@ from .base import ODEBase
 from ...utils.utility import get_fundamental_frequencies, get_separatrix, ELQ_to_pex
 from ...utils.globals import get_file_manager
 from numba import njit
+from few.utils.mappings import kerrecceq_forward_map, apex_of_uwyz, apex_of_UWYZ
+
+import h5py
 
 from multispline.spline import BicubicSpline, TricubicSpline
 import os
@@ -104,7 +107,6 @@ class SchwarzEccFlux(ODEBase):
         if self.use_ELQ:
             E, L, Q = y[:3]
             p, e, x = ELQ_to_pex(self.a, E, L, Q)
-
         else:
             p, e, x = y[:3]
 
@@ -114,6 +116,143 @@ class SchwarzEccFlux(ODEBase):
 
         return [Edot, Ldot, 0., Omega_phi, Omega_theta, Omega_r]
 
+@njit
+def _EdotPN_alt(p, e):
+    """
+    https://arxiv.org/pdf/2201.07044.pdf
+    eq 91
+    """
+    pdot_V = 32./5. * p**(-5) * (1-e**2)**1.5 * (1 + 73/24 * e**2 + 37/96 * e**4)
+    return pdot_V
+
+@njit
+def _LdotPN_alt(p, e):
+    """
+    https://arxiv.org/pdf/2201.07044.pdf
+    eq 91
+    """
+    pdot_V = 32./5. * p**(-7/2) * (1-e**2)**1.5 * (1 + 7./8. * e**2)
+    return pdot_V
+
+
+class KerrEccEqFlux(ODEBase):
+    """
+    Kerr eccentric equatorial flux ODE.
+
+    Args:
+        use_ELQ: If True, the ODE will output derivatives of the orbital elements of (E, L, Q). Defaults to False.
+        downsample: List of two 3-tuples of integers to downsample the flux grid in u, w, z. The first list element
+        refers to the inner grid, the second to the outer. Useful for testing error convergence. Defaults to None (no downsampling).
+    """
+
+    def __init__(self, *args, use_ELQ: bool = False, downsample=None, **kwargs):
+        super().__init__(*args, use_ELQ=use_ELQ, **kwargs)
+
+        fp = "KerrEccEqFluxData.h5"
+
+        if downsample is None:
+            downsample = [(1,1,1),(1,1,1)]
+
+        downsample_inner = downsample[0]
+        downsample_outer = downsample[1]
+        
+        fm = get_file_manager()
+        file_path = fm.get_file(fp)
+
+        with h5py.File(file_path, "r") as fluxData:
+            regionA = fluxData['regionA']
+            u = np.linspace(0,1,regionA.attrs['NU'])[::downsample_inner[0]]
+            w = np.linspace(0,1,regionA.attrs['NW'])[::downsample_inner[1]]
+            z = np.linspace(0,1,regionA.attrs['NZ'])[::downsample_inner[2]]
+
+            ugrid, wgrid, zgrid = np.asarray(np.meshgrid(u, w, z, indexing='ij')).reshape(3,-1)
+            agrid, pgrid, egrid, xgrid = apex_of_uwyz(ugrid, wgrid, np.ones_like(zgrid), zgrid)
+            EdotPN = _EdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
+            LdotPN = _LdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
+
+            # normalise by PN contribution
+            Edot = regionA['Edot'][()][::downsample_inner[0],::downsample_inner[1], ::downsample_inner[2]] / EdotPN
+            Ldot = regionA['Ldot'][()][::downsample_inner[0],::downsample_inner[1], ::downsample_inner[2]] / LdotPN
+
+            self.Edot_interp_A = TricubicSpline(u, w, z, Edot)
+            self.Ldot_interp_A = TricubicSpline(u, w, z, Ldot)
+
+            regionB = fluxData['regionB']
+            u = np.linspace(0,1,regionB.attrs['NU'])[::downsample_outer[0]]
+            w = np.linspace(0,1,regionB.attrs['NW'])[::downsample_outer[1]]
+            z = np.linspace(0,1,regionB.attrs['NZ'])[::downsample_outer[2]]
+
+            ugrid, wgrid, zgrid = np.asarray(np.meshgrid(u, w, z, indexing='ij')).reshape(3,-1)
+            agrid, pgrid, egrid, xgrid = apex_of_UWYZ(ugrid, wgrid, np.ones_like(zgrid), zgrid, True)
+
+            EdotPN = _EdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
+            LdotPN = _LdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
+
+            # normalise by PN contribution
+            Edot = regionB['Edot'][()][::downsample_outer[0],::downsample_outer[1], ::downsample_outer[2]] / EdotPN
+            Ldot = regionB['Ldot'][()][::downsample_outer[0],::downsample_outer[1], ::downsample_outer[2]] / LdotPN
+
+            self.Edot_interp_B = TricubicSpline(u, w, z, Edot)
+            self.Ldot_interp_B = TricubicSpline(u, w, z, Ldot)
+
+    @property
+    def equatorial(self):
+        return True
+
+    @property
+    def separatrix_buffer_dist(self):
+        return 2e-3
+
+    @property
+    def supports_ELQ(self):
+        return True
+
+    @property
+    def flux_output_convention(self):
+        return "ELQ"
+
+    def interpolate_flux_grids(
+            self, p: float, e: float, x: float
+        ) -> tuple[float]:
+        # handle xI = -1 case
+        if x == -1:
+            a_in = -self.a
+        else:
+            a_in = self.a
+
+        u, w, _, z, in_region_A = kerrecceq_forward_map(a_in, p, e, 1., pLSO=self.p_sep_cache, kind="flux")
+
+        if u < 0 or u > 1 + 1e-8 or np.isnan(u):
+            raise ValueError("Interpolation: p out of bounds.")
+        if w < 0 or w > 1 + 1e-8:
+            raise ValueError("Interpolation: e out of bounds.")
+
+        if in_region_A:
+            Edot = -self.Edot_interp_A(u, w, z) * _EdotPN_alt(p, e)
+            Ldot = -self.Ldot_interp_A(u, w, z) * _LdotPN_alt(p, e)
+        else:
+            Edot = -self.Edot_interp_B(u, w, z) * _EdotPN_alt(p, e)
+            Ldot = -self.Ldot_interp_B(u, w, z) * _LdotPN_alt(p, e)
+
+        if a_in < 0:
+            Ldot *= -1
+
+        return Edot, Ldot
+
+    def evaluate_rhs(
+        self, y: Union[list[float], np.ndarray]
+    ) -> list[Union[float, np.ndarray]]:
+        if self.use_ELQ:
+            E, L, Q = y[:3]
+            p, e, x = ELQ_to_pex(self.a, E, L, Q)
+        else:
+            p, e, x = y[:3]        
+
+        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(self.a, p, e, x)
+
+        Edot, Ldot = self.interpolate_flux_grids(p, e, x)
+
+        return [Edot, Ldot, 0.0, Omega_phi, Omega_theta, Omega_r]
 
 @njit(fastmath=True)
 def _pdot_PN(p, e, risco, p_sep):
@@ -135,8 +274,7 @@ def _edot_PN(p, e, risco, p_sep):
 def _p_to_u(p, p_sep):
     return log((p - p_sep + 4.0 - 0.05) / 4)
 
-
-class KerrEccEqFlux(ODEBase):
+class KerrEccEqFluxLegacy(ODEBase):
     """
     Kerr eccentric equatorial flux ODE.
 

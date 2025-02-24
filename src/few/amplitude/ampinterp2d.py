@@ -233,7 +233,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
         AmplitudeBase.__init__(self, **kwargs)
 
         if filename is None:
-            self.filename = "ZNAmps_l10_m10_n55_DS2.h5"
+            self.filename = "ZNAmps_l10_m10_n55_DS2Outer.h5"
         else:
             self.filename = filename
 
@@ -242,10 +242,11 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
         file_path = get_file_manager().get_file(self.filename)
 
         with h5py.File(file_path, "r") as f:
-            coeffsA = f["CoeffsRegionA"][()]
-            w_knots = f['w_knots'][()]
-            u_knots = f['u_knots'][()]
-            z_knots = f["z_knots"][()]
+            regionA = f["regionA"]
+            coeffsA = regionA["CoeffsRegionA"][()]
+            w_knots = regionA['w_knots'][()]
+            u_knots = regionA['u_knots'][()]
+            z_knots = regionA["z_knots"][()]
 
             z_knots = z_knots[::downsample_Z]
             coeffsA = coeffsA[::downsample_Z]
@@ -266,7 +267,15 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
                 )
 
             try:
-                coeffsB = f["CoeffsRegionB"][()]
+                regionB = f["regionB"]
+                coeffsB = regionB["CoeffsRegionB"][()]
+
+                w_knots = regionB['w_knots'][()]
+                u_knots = regionB['u_knots'][()]
+                z_knots = regionB["z_knots"][()]
+
+                z_knots = z_knots[::downsample_Z]
+
                 coeffsB = coeffsB[::downsample_Z]
                 self.spin_information_holder_B = [
                     None for _ in range(z_knots.size)
@@ -284,11 +293,8 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
                     )
             except KeyError:
                 pass
-
-            self.w_values = w_knots
-            self.u_values = u_knots
-            self.z_values = z_knots
-
+        
+        self.z_values = z_knots
 
     def evaluate_interpolant_at_index(self, index, region_A_mask, w, u, mode_indexes):
         z_out = self.xp.zeros((region_A_mask.size, self.num_modes_eval), dtype=self.xp.complex128)

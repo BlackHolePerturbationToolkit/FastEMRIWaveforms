@@ -23,11 +23,17 @@ DELTAPMAX = 9 + DELTAPMIN
 EMAX = 0.9
 ESEP = 0.25
 
-ALPHA_FLUX = 1./2.
+ALPHA_FLUX = 1./2
 BETA_FLUX = 2.0
 ALPHA_AMP = 1./3.
 BETA_AMP = 3.0
 
+DPC_REGIONB = DELTAPMAX - 0.001
+PMAX_REGIONB = 200
+AMAX_REGIONB = 0.999
+AMIN_REGIONB = -AMAX_REGIONB
+EMAX_REGIONB = 0.9
+DELTAPMIN_REGIONB = 9
 
 @njit
 def _schwarz_jac_kernel(p, e, Edot, Ldot):
@@ -214,7 +220,11 @@ def kerrecceq_forward_map(
         p (float or np.ndarray): Semi-latus rectum of inspiral.
         e (float or np.ndarray): Eccentricity of inspiral.
         xI (float or np.ndarray): Cosine of inclination of inspiral. Only a value of 1 is supported.
-        return_mask (bool, optional): If True, return a mask indicating whether the point is in region A or B. Default is False.
+        pLSO (float or np.ndarray, optional): Separatrix value for the given parameters. If not provided, it will be computed.
+        use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
+        return_mask (bool, optional): If True, return a mask indicating whether the point is in region A or B. 
+            A value of True corresponds to region A. For kind="flux", a mask is always returned for efficiency. 
+            Default is False.
         kind (str, optional): Type of mapping to perform. Default is "flux".
     """
     xp = np  # TODO: gpu
@@ -241,8 +251,7 @@ def kerrecceq_forward_map(
         if p <= pLSO + DELTAPMAX + 1e-8:
             return *_uwyz_of_apex_kernel(a, p, e, xI, pLSO, alpha=alpha, beta=beta), True
         else:
-            raise ValueError("Far region not supported yet.")
-
+            return *_UWYZ_of_apex_kernel(a, p, e, xI, pLSO, True), False
 
     # else, we have multiple points
     a = xp.atleast_1d(xp.asarray(a))
@@ -276,12 +285,11 @@ def kerrecceq_forward_map(
     
     far = ~near
     if xp.any(far):
-        raise ValueError
-    #     out = UWYZ_of_apex(a[far], p[far], e[far], xI[far], pLSO[far])
-    #     u[far] = out[0]
-    #     w[far] = out[1]
-    #     y[far] = out[2]
-    #     z[far] = out[3]
+        out = _UWYZ_of_apex_kernel(a[far], p[far], e[far], xI[far], pLSO[far], False)
+        u[far] = out[0]
+        w[far] = out[1]
+        y[far] = out[2]
+        z[far] = out[3]
 
     if return_mask:
         return u, w, y, z, near
@@ -378,325 +386,84 @@ def apex_of_uwyz(u, w, y, z, amin = AMIN, amax = AMAX, dpmin = DELTAPMIN, dpmax 
     p = p_of_u(u, pLSO, dpmin, dpmax, alpha)
     return a, p, e, x
 
-# def kerrecceq_amp_forward_map(a, p, e, xI, use_gpu=False, return_mask = False):
-#     if use_gpu:
-#         xp = cp
-#     else:
-#         xp = np
-    
-#     a = xp.atleast_1d(xp.asarray(a))
-#     p = xp.atleast_1d(xp.asarray(p))
-#     e = xp.atleast_1d(xp.asarray(e))
-#     xI = xp.atleast_1d(xp.asarray(xI))
-
-#     u = xp.zeros_like(a)
-#     w = xp.zeros_like(a)
-#     y = xp.zeros_like(a)
-#     z = xp.zeros_like(a)
-
-#     a_sep_in = xp.abs(a)
-
-#     asign = xp.sign(a)
-#     asign[asign == 0] = 1
-
-#     xI_sep_in = asign*xI
-
-#     # compute separatrix at all points
-#     pLSO = get_separatrix(a_sep_in, e, xI_sep_in)
-
-#     # handle regions A and B
-#     near = p < pLSO + DELTAPMAX
-#     if xp.any(near):
-#         out = uwyz_of_apex(a[near], p[near], e[near], xI[near], pLSO[near])
-#         u[near] = out[0]
-#         w[near] = out[1]
-#         y[near] = out[2]
-#         z[near] = out[3]
-    
-#     far = ~near
-#     if xp.any(far):
-#         out = UWYZ_of_apex(a[far], p[far], e[far], xI[far], pLSO[far])
-#         u[far] = out[0]
-#         w[far] = out[1]
-#         y[far] = out[2]
-#         z[far] = out[3]
-
-#     if return_mask:
-#         return u, w, y, z, near
-#     else:
-#         return u, w, y, z
-
-# # Region A
-# def p_critical(pmin, dpc):
-#     return pmin + dpc
-
-# def u_of_p(p, pLSO, dpmin = DELTAPMIN, dpmax = DELTAPMAX):
-#     pmax = pLSO + dpmax
-#     pmin = pLSO + dpmin
-#     return ((np.log(p + pmax - 2*pmin) - np.log(pmax - pmin))/np.log(2))**(1/3)
-# def y_of_x(x, xmin):
-#     return (x-xmin)/(1-xmin)
-# def chi_of_a(a):
-#     return (1-a)**(1/3)
-# def z_of_a(a, amin=AMIN, amax=AMAX):
-#     chimax = chi_of_a(amin)
-#     chimin = chi_of_a(amax)
-#     return (chi_of_a(a) - chimin)/(chimax - chimin)
-# def Secc_of_uz(u, z, esep=ESEP, emax=EMAX):
-#     param = 1
-#     power = 1
-#     return esep + (emax - esep)*np.sqrt(param*z**power + u**3*(1 - param*z**power))
-# def w_of_euz(e, u, z, esep=ESEP, emax=EMAX):
-#     return e/Secc_of_uz(u, z, esep, emax)
-
-# def p_of_u(u, pLSO, dpmin = DELTAPMIN, dpmax = DELTAPMAX):
-#     pmax = pLSO + dpmax
-#     pmin = pLSO + dpmin
-#     return pmin + (pmax - pmin)*(np.exp(u**3*np.log(2)) - 1)
-# def x_of_y(y, xmin):
-#     return y*(1-xmin) + xmin
-# def a_of_chi(chi):
-#     return 1-chi**3
-# def a_of_z(z, amin=AMIN, amax=AMAX):
-#     chimax = chi_of_a(amin)
-#     chimin = chi_of_a(amax)
-#     return a_of_chi(chimin + z*(chimax - chimin))
-# def e_of_uwz(u, w, z, esep=ESEP, emax=EMAX):
-#     return Secc_of_uz(u, z, esep, emax)*w
-
-# def uwyz_of_apex(a, p, e, x, pLSO, amin = AMIN, amax = AMAX, dpmin = DELTAPMIN, dpmax = DELTAPMAX, xmin = XMIN, esep = ESEP, emax = EMAX):
-#     u = u_of_p(p, pLSO, dpmin=dpmin, dpmax=dpmax)
-#     y = y_of_x(x, xmin)
-#     z = z_of_a(a, amin, amax)
-#     w = w_of_euz(e, u, z, esep, emax)
-#     return np.array([u, w, y, z])
-
-# def apex_of_uwyz(u, w, y, z, amin = AMIN, amax = AMAX, dpmin = DELTAPMIN, dpmax = DELTAPMAX, xmin = XMIN, esep = ESEP, emax = EMAX):
-#     a = a_of_z(z, amin, amax)
-#     x = x_of_y(y, xmin)
-#     e = e_of_uwz(u, w, z, esep, emax)
-
-#     a_in =np.abs(a)
-#     x_in = np.sign(a)*x
-
-#     pLSO = get_separatrix(a_in, e, x_in)
-
-#     p = p_of_u(u, pLSO, dpmin=dpmin, dpmax=dpmax)
-#     return [a, p, e, x]
-
 # # Region B
-# DPC_REGIONB = DELTAPMAX - 0.001
-# PMAX_REGIONB = 200
-# AMAX_REGIONB = 0.999
-# AMIN_REGIONB = -AMAX_REGIONB
-# EMAX_REGIONB = 0.9
 
-# def U_of_p(p, pmin, pmax = PMAX_REGIONB):
-#     pc = pmin
-#     pmax += pc
-#     return (pc**(-0.5)  - p**(-0.5))/(pc**(-0.5)  - pmax**(-0.5))
-# def p_of_U(U, pmin, pmax = PMAX_REGIONB):
-#     pc = pmin
-#     pmax += pc
-#     return (pc**(-0.5) - U*(pc**(-0.5)  - pmax**(-0.5)))**(-2)
+@njit
+def U_of_p_flux(p, pLSO, delta_pmin = DELTAPMIN_REGIONB, pmax = PMAX_REGIONB):
+    pmin = pLSO + delta_pmin
+    return ((pmin-pLSO)**(-0.5)  - (p-pLSO)**(-0.5))/((pmin-pLSO)**(-0.5)  - (pmax-pLSO)**(-0.5))
 
-# def W_of_e(e, emax = EMAX_REGIONB):
-#     return e/emax
-# def e_of_W(y, emax = EMAX_REGIONB):
-#     return y*emax
+@njit
+def p_of_U_flux(U, pLSO, delta_pmin = DELTAPMIN_REGIONB, pmax = PMAX_REGIONB):
+    pmin = pLSO + delta_pmin
+    return ((pmin-pLSO)**(-0.5) - U*((pmin-pLSO)**(-0.5)  - (pmax-pLSO)**(-0.5)))**(-2) + pLSO
 
-# def Y_of_x(x, xmin):
-#     return y_of_x(x, xmin)
-# def x_of_Y(y, xmin):
-#     return x_of_y(y, xmin)
+@njit
+def U_of_p_amplitude(p, pmin, pmax = PMAX_REGIONB):
+    pc = pmin
+    pmax = pmax + pc
+    return (pc**(-0.5)  - p**(-0.5))/(pc**(-0.5)  - pmax**(-0.5))
 
-# def chi_of_a(a):
-#     return (1-a)**(1/3)
-# def Z_of_a(a, amin=AMIN_REGIONB, amax=AMAX_REGIONB):
-#     chimax = chi_of_a(amin)
-#     chimin = chi_of_a(amax)
-#     return (chi_of_a(a) - chimin)/(chimax - chimin)
-# def a_of_chi(chi):
-#     return 1-chi**3
-# def a_of_Z(z, amin=AMIN_REGIONB, amax=AMAX_REGIONB):
-#     chimax = chi_of_a(amin)
-#     chimin = chi_of_a(amax)
-#     return a_of_chi(chimin + z*(chimax - chimin))
+@njit
+def p_of_U_amplitude(U, pmin, pmax = PMAX_REGIONB):
+    pc = pmin
+    pmax += pc
+    return (pc**(-0.5) - U*(pc**(-0.5)  - pmax**(-0.5)))**(-2)
 
-# def UWYZ_of_apex(a, p, e, x, pLSO, amin = AMIN, amax = AMAX, dpc = DPC_REGIONB, pmax = PMAX_REGIONB, xmin = XMIN, emax = EMAX):
-#     pmin = pLSO + dpc
-#     u = U_of_p(p, pmin, pmax)
-#     y = Y_of_x(x, xmin)
-#     z = Z_of_a(a, amin, amax)
-#     w = W_of_e(e, emax)
-#     return np.array([u, w, y, z])
+@njit
+def W_of_e(e, emax = EMAX_REGIONB):
+    return e/emax
 
-# def apex_of_UWYZ(u, w, y, z, amin = AMIN, amax = AMAX, dpc = DPC_REGIONB, pmax = PMAX_REGIONB, xmin = XMIN, emax = EMAX):
-#     a = a_of_Z(z, amin, amax)
-#     x = x_of_Y(y, xmin)
-#     e = e_of_W(w, emax)
-#     pmin = kerr_separatrix(a, e, x) + dpc
-#     p = p_of_U(u, pmin, pmax)
-#     return [a, p, e, x]
+@njit
+def e_of_W(y, emax = EMAX_REGIONB):
+    return y*emax
 
+@njit
+def Y_of_x(x, xmin):
+    return y_of_x(x, xmin)
 
-# def kerrecceq_amp_forward_map(a, p, e, xI, use_gpu=False, return_mask = False):
-#     if use_gpu:
-#         xp = cp
-#     else:
-#         xp = np
+@njit
+def x_of_Y(y, xmin):
+    return x_of_y(y, xmin)
+
+@njit
+def Z_of_a(a, amin=AMIN_REGIONB, amax=AMAX_REGIONB):
+    chimax = chi_of_a(amin)
+    chimin = chi_of_a(amax)
+    return (chi_of_a(a) - chimin)/(chimax - chimin)
+
+@njit
+def a_of_Z(z, amin=AMIN_REGIONB, amax=AMAX_REGIONB):
+    chimax = chi_of_a(amin)
+    chimin = chi_of_a(amax)
+    return a_of_chi(chimin + z*(chimax - chimin))
+
+@njit
+def _UWYZ_of_apex_kernel(a, p, e, x, pLSO, is_flux, amin = AMIN, amax = AMAX, dpc = DPC_REGIONB, pmax = PMAX_REGIONB, xmin = XMIN, emax = EMAX, delta_pmin=DELTAPMIN_REGIONB):
+    if is_flux:
+        u = U_of_p_flux(p, pLSO, delta_pmin, pmax)
+    else:
+        pmin = pLSO + dpc
+        u = U_of_p_amplitude(p, pmin, pmax)
+    y = Y_of_x(x, xmin)
+    z = Z_of_a(a, amin, amax)
+    w = W_of_e(e, emax)
+    return u, w, y, z
+
+def apex_of_UWYZ(u, w, y, z, is_flux, amin = AMIN, amax = AMAX,  dpc = DPC_REGIONB, pmax = PMAX_REGIONB, xmin = XMIN, emax = EMAX, delta_pmin=DELTAPMIN_REGIONB):
+    a = a_of_Z(z, amin, amax)
+    x = x_of_Y(y, xmin)
+    e = e_of_W(w, emax)
     
-#     a = xp.atleast_1d(xp.asarray(a))
-#     p = xp.atleast_1d(xp.asarray(p))
-#     e = xp.atleast_1d(xp.asarray(e))
-#     xI = xp.atleast_1d(xp.asarray(xI))
+    a = np.asarray(a)
+    a_in = np.abs(a)
+    x_in = np.sign(a)
+    x_in[x_in == 0] = 1
 
-#     u = xp.zeros_like(a)
-#     w = xp.zeros_like(a)
-#     y = xp.zeros_like(a)
-#     z = xp.zeros_like(a)
-
-#     a_sep_in = xp.abs(a)
-
-#     asign = xp.sign(a)
-#     asign[asign == 0] = 1
-
-#     xI_sep_in = asign*xI
-
-#     # compute separatrix at all points
-#     pLSO = get_separatrix(a_sep_in, e, xI_sep_in)
-
-#     # handle regions A and B
-#     near = p < pLSO + DELTAPMAX
-#     if xp.any(near):
-#         out = uwyz_of_apex(a[near], p[near], e[near], xI[near], pLSO[near])
-#         u[near] = out[0]
-#         w[near] = out[1]
-#         y[near] = out[2]
-#         z[near] = out[3]
-    
-#     far = ~near
-#     if xp.any(far):
-#         out = UWYZ_of_apex(a[far], p[far], e[far], xI[far], pLSO[far])
-#         u[far] = out[0]
-#         w[far] = out[1]
-#         y[far] = out[2]
-#         z[far] = out[3]
-
-#     if return_mask:
-#         return u, w, y, z, near
-#     else:
-#         return u, w, y, z
-
-# # Region A
-# def p_critical(pmin, dpc):
-#     return pmin + dpc
-
-# def u_of_p(p, pLSO, dpmin = DELTAPMIN, dpmax = DELTAPMAX):
-#     pmax = pLSO + dpmax
-#     pmin = pLSO + dpmin
-#     return ((np.log(p + pmax - 2*pmin) - np.log(pmax - pmin))/np.log(2))**(1/3)
-# def y_of_x(x, xmin):
-#     return (x-xmin)/(1-xmin)
-# def chi_of_a(a):
-#     return (1-a)**(1/3)
-# def z_of_a(a, amin=AMIN, amax=AMAX):
-#     chimax = chi_of_a(amin)
-#     chimin = chi_of_a(amax)
-#     return (chi_of_a(a) - chimin)/(chimax - chimin)
-# def Secc_of_uz(u, z, esep=ESEP, emax=EMAX):
-#     param = 1
-#     power = 1
-#     return esep + (emax - esep)*np.sqrt(param*z**power + u**3*(1 - param*z**power))
-# def w_of_euz(e, u, z, esep=ESEP, emax=EMAX):
-#     return e/Secc_of_uz(u, z, esep, emax)
-
-# def p_of_u(u, pLSO, dpmin = DELTAPMIN, dpmax = DELTAPMAX):
-#     pmax = pLSO + dpmax
-#     pmin = pLSO + dpmin
-#     return pmin + (pmax - pmin)*(np.exp(u**3*np.log(2)) - 1)
-# def x_of_y(y, xmin):
-#     return y*(1-xmin) + xmin
-# def a_of_chi(chi):
-#     return 1-chi**3
-# def a_of_z(z, amin=AMIN, amax=AMAX):
-#     chimax = chi_of_a(amin)
-#     chimin = chi_of_a(amax)
-#     return a_of_chi(chimin + z*(chimax - chimin))
-# def e_of_uwz(u, w, z, esep=ESEP, emax=EMAX):
-#     return Secc_of_uz(u, z, esep, emax)*w
-
-# def uwyz_of_apex(a, p, e, x, pLSO, amin = AMIN, amax = AMAX, dpmin = DELTAPMIN, dpmax = DELTAPMAX, xmin = XMIN, esep = ESEP, emax = EMAX):
-#     u = u_of_p(p, pLSO, dpmin=dpmin, dpmax=dpmax)
-#     y = y_of_x(x, xmin)
-#     z = z_of_a(a, amin, amax)
-#     w = w_of_euz(e, u, z, esep, emax)
-#     return np.array([u, w, y, z])
-
-# def apex_of_uwyz(u, w, y, z, amin = AMIN, amax = AMAX, dpmin = DELTAPMIN, dpmax = DELTAPMAX, xmin = XMIN, esep = ESEP, emax = EMAX):
-#     a = a_of_z(z, amin, amax)
-#     x = x_of_y(y, xmin)
-#     e = e_of_uwz(u, w, z, esep, emax)
-
-#     a_in =np.abs(a)
-#     x_in = np.sign(a)*x
-
-#     pLSO = get_separatrix(a_in, e, x_in)
-
-#     p = p_of_u(u, pLSO, dpmin=dpmin, dpmax=dpmax)
-#     return [a, p, e, x]
-
-# # Region B
-# DPC_REGIONB = DELTAPMAX - 0.001
-# PMAX_REGIONB = 200
-# AMAX_REGIONB = 0.999
-# AMIN_REGIONB = -AMAX_REGIONB
-# EMAX_REGIONB = 0.9
-
-# def U_of_p(p, pmin, pmax = PMAX_REGIONB):
-#     pc = pmin
-#     pmax += pc
-#     return (pc**(-0.5)  - p**(-0.5))/(pc**(-0.5)  - pmax**(-0.5))
-# def p_of_U(U, pmin, pmax = PMAX_REGIONB):
-#     pc = pmin
-#     pmax += pc
-#     return (pc**(-0.5) - U*(pc**(-0.5)  - pmax**(-0.5)))**(-2)
-
-# def W_of_e(e, emax = EMAX_REGIONB):
-#     return e/emax
-# def e_of_W(y, emax = EMAX_REGIONB):
-#     return y*emax
-
-# def Y_of_x(x, xmin):
-#     return y_of_x(x, xmin)
-# def x_of_Y(y, xmin):
-#     return x_of_y(y, xmin)
-
-# def chi_of_a(a):
-#     return (1-a)**(1/3)
-# def Z_of_a(a, amin=AMIN_REGIONB, amax=AMAX_REGIONB):
-#     chimax = chi_of_a(amin)
-#     chimin = chi_of_a(amax)
-#     return (chi_of_a(a) - chimin)/(chimax - chimin)
-# def a_of_chi(chi):
-#     return 1-chi**3
-# def a_of_Z(z, amin=AMIN_REGIONB, amax=AMAX_REGIONB):
-#     chimax = chi_of_a(amin)
-#     chimin = chi_of_a(amax)
-#     return a_of_chi(chimin + z*(chimax - chimin))
-
-# def UWYZ_of_apex(a, p, e, x, pLSO, amin = AMIN, amax = AMAX, dpc = DPC_REGIONB, pmax = PMAX_REGIONB, xmin = XMIN, emax = EMAX):
-#     pmin = pLSO + dpc
-#     u = U_of_p(p, pmin, pmax)
-#     y = Y_of_x(x, xmin)
-#     z = Z_of_a(a, amin, amax)
-#     w = W_of_e(e, emax)
-#     return np.array([u, w, y, z])
-
-# def apex_of_UWYZ(u, w, y, z, amin = AMIN, amax = AMAX, dpc = DPC_REGIONB, pmax = PMAX_REGIONB, xmin = XMIN, emax = EMAX):
-#     a = a_of_Z(z, amin, amax)
-#     x = x_of_Y(y, xmin)
-#     e = e_of_W(w, emax)
-#     pmin = kerr_separatrix(a, e, x) + dpc
-#     p = p_of_U(u, pmin, pmax)
-#     return [a, p, e, x]
+    pLSO = get_separatrix(a_in, e, x_in)
+    if is_flux:
+        p = p_of_U_flux(u, pLSO, delta_pmin, pmax)
+    else:
+        pmin = pLSO + dpc
+        p = p_of_U_amplitude(u, pmin, pmax)
+    return a, p, e, x
