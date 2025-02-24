@@ -168,31 +168,26 @@ files:
     checksums:
       - algorithm: sha256
         value: 1032cab2fa2f68a4377f7eeda62d6981ca87b137db39ac5334245005a16f4692
-    tags: [unittest]
   - name: KerrEqEcc_pdot.dat
     repositories: [bhptk_kerreq]
     checksums:
       - algorithm: sha256
         value: 9ca4f76f5c98e0ada9c68d772fc028c65bd5c46a35a1581ff786942d3d1cdf42
-    tags: [unittest]
   - name: KerrEqEcc_x0.dat
     repositories: [bhptk_kerreq]
     checksums:
       - algorithm: sha256
         value: 43ca7fb0eecbd4f77a509be9a16342293961037b3ae35f837e6756a0f9e5bf26
-    tags: [unittest]
   - name: KerrEqEcc_x1.dat
     repositories: [bhptk_kerreq]
     checksums:
       - algorithm: sha256
         value: 7a55fddc2d8d28d4d4196f9748a68fe791b96870c8af74112e1abad209b39adb
-    tags: [unittest]
   - name: KerrEqEcc_x2.dat
     repositories: [bhptk_kerreq]
     checksums:
       - algorithm: sha256
         value: 9a1d871ff9dd9fb9acf5a8632142f070222fff0a1fb3a57cebc625a87e486589
-    tags: [unittest]
   - name: Separatrix_psep.dat
     repositories: [bhptk_kerreq]
     checksums:
