@@ -218,7 +218,6 @@ def ODE_pendulum(x, arg, k, additionalArgs):
 
 
 class DOPR853:
-
     def __init__(
         self,
         ode,
@@ -234,13 +233,13 @@ class DOPR853:
         self.use_gpu = use_gpu
         self.read_out_to_cpus = read_out_to_cpu
 
-            # self.dormandPrinceSteps2 = dormandPrinceSteps_gpu
-            # self.error2 = error_gpu
-            # self.controllerSuccess2 = controllerSuccess_gpu
+        # self.dormandPrinceSteps2 = dormandPrinceSteps_gpu
+        # self.error2 = error_gpu
+        # self.controllerSuccess2 = controllerSuccess_gpu
 
-            # self.dormandPrinceSteps2 = dormandPrinceSteps_cpu
-            # self.error2 = error_cpu
-            # self.controllerSuccess2 = controllerSuccess_cpu
+        # self.dormandPrinceSteps2 = dormandPrinceSteps_cpu
+        # self.error2 = error_cpu
+        # self.controllerSuccess2 = controllerSuccess_cpu
 
         self.fix_step = False
         self.abstol = 1e-10
@@ -248,7 +247,7 @@ class DOPR853:
     @property
     def xp(self):
         return xp if self.use_gpu else np
-    
+
     @property
     def xp_read_out(self):
         return np if self.read_out_to_cpus else xp
@@ -270,7 +269,6 @@ class DOPR853:
         k9,
         k10,
     ):
-
         # Create temporary index for use in loops
 
         # Step 1
@@ -419,7 +417,7 @@ class DOPR853:
         # )
 
         sk = 1.0 / (
-            self.abstol + 0. * self.xp.max(self.xp.array([solOld, solNew]), axis=0)
+            self.abstol + 0.0 * self.xp.max(self.xp.array([solOld, solNew]), axis=0)
         )
 
         err2 = (((temp - bhh1 * k1 - bhh2 * k9 - bhh3 * k3) * sk) ** n).sum(axis=0)
@@ -449,7 +447,6 @@ class DOPR853:
 
     # Contoller for setting step size on next iteration
     def controllerSuccess(self, flagSuccess, err, errOld, previousReject, h, x):
-
         # flagSuccess and previousReject were bool*
 
         # The error was acceptable
@@ -534,7 +531,6 @@ class DOPR853:
         additionalArgsTemp,
         inds=None,
     ):
-
         hOldTemp = hTemp.copy()
 
         if inds is None:
@@ -629,7 +625,7 @@ class DOPR853:
 
             self.k_coefficient_storage = [k1, k2, k3, k4, k5, k6, k7, k8, k9, k10]
 
-        else:  # Not controlling for error so return successes and advance xTemp for all
+        else:  # Not controlling for error so return successes and advance xTemp for all
             flagSuccess = np.ones_like(xTemp, dtype=bool)
             xTemp[flagSuccess] = xTemp + hOldTemp
 
@@ -847,11 +843,15 @@ class DOPR853:
         )
         # output = rcont1 + s*rcont2 + rcont3 * (s - s**2)  + rcont4 * (s**2 - s**3) + rcont5 * (s**4 - s**5) + rcont6 * (s**5 - s**6) + rcont7 * (s**6 - s**7) + rcont8 * (s**7 - s**8)
 
-
         return output
 
-    def eval_derivative(self, t_new: np.ndarray, t_old: np.ndarray, spline_coeffs: np.ndarray, order: int=1):
-
+    def eval_derivative(
+        self,
+        t_new: np.ndarray,
+        t_old: np.ndarray,
+        spline_coeffs: np.ndarray,
+        order: int = 1,
+    ):
         t_min = t_old.min()
         t_max = t_old.max()
         if not np.all((t_min <= t_new) & (t_new <= t_max)):
@@ -887,16 +887,38 @@ class DOPR853:
         if order == 0:
             d_by_ds = self.eval(t_new, t_old, spline_coeffs)
         if order == 1:
-            d_by_ds = rcont2 + rcont3 * (1 - 2*s)  + rcont4 * (2*s - 3*s2) + rcont5 * (2*s - 6*s2 + 4*s3) + rcont6 * (3*s2 - 8*s3 + 5*s4) + rcont7 * (3*s2 - 12*s3 + 15*s4 - 6*s5) + rcont8 * (4*s3 - 15*s4 + 18*s5 - 7*s6)
+            d_by_ds = (
+                rcont2
+                + rcont3 * (1 - 2 * s)
+                + rcont4 * (2 * s - 3 * s2)
+                + rcont5 * (2 * s - 6 * s2 + 4 * s3)
+                + rcont6 * (3 * s2 - 8 * s3 + 5 * s4)
+                + rcont7 * (3 * s2 - 12 * s3 + 15 * s4 - 6 * s5)
+                + rcont8 * (4 * s3 - 15 * s4 + 18 * s5 - 7 * s6)
+            )
         if order == 2:
-            d_by_ds = -2*rcont3 + rcont4 * (2 - 6*s) + rcont5 * (2 - 12*s + 12*s2) + rcont6 * (6*s - 24*s2 + 20*s3) + rcont7*(6*s - 36*s2 + 60*s3 - 30*s4) + rcont8 * (12*s2 - 60*s3 + 90*s4 - 42*s5)
+            d_by_ds = (
+                -2 * rcont3
+                + rcont4 * (2 - 6 * s)
+                + rcont5 * (2 - 12 * s + 12 * s2)
+                + rcont6 * (6 * s - 24 * s2 + 20 * s3)
+                + rcont7 * (6 * s - 36 * s2 + 60 * s3 - 30 * s4)
+                + rcont8 * (12 * s2 - 60 * s3 + 90 * s4 - 42 * s5)
+            )
         if order == 3:
-            d_by_ds = -6*rcont4 + rcont5 * (-12 + 24*s) + rcont6 * (6 - 48*s + 60*s2) + rcont7 * (6 - 72*s + 180*s2 - 120*s3) + rcont8 * (24*s - 180 * s2 + 360*s3 - 210*s4)
+            d_by_ds = (
+                -6 * rcont4
+                + rcont5 * (-12 + 24 * s)
+                + rcont6 * (6 - 48 * s + 60 * s2)
+                + rcont7 * (6 - 72 * s + 180 * s2 - 120 * s3)
+                + rcont8 * (24 * s - 180 * s2 + 360 * s3 - 210 * s4)
+            )
 
         # Scale by dt/ds = diffs to get derivative with respect to t
-        derivative = d_by_ds / diffs[:, None]**order
+        derivative = d_by_ds / diffs[:, None] ** order
 
         return derivative
+
     #                         denseOutput[indexOut] = rcont1 + s * (rcont2 + s1 * (rcont3 + s * (rcont4 + s1 * (rcont5 + s * (rcont6 + s1 * (rcont7 + s * rcont8))))))
 
     #                             denseDerivOutput[indexOut] = (rcont2 + rcont3 - 2*rcont3*s + rcont4*(2 - 3*s)*s - (-1 + s)*s*(rcont5*(2 - 4*s) + rcont6*(3 - 5*s)*s + (-1 + s)*s*(rcont7*(-3 + 6*s) + rcont8*s*(-4 + 7*s))))/h
@@ -1076,7 +1098,6 @@ class DOPR853:
         stop = self.xp.ones_like(x, dtype=bool)
         self.stop_info = self.xp.zeros_like(x, dtype=int)
         while loopFlag:
-
             num_current = np.sum(individual_loop_flag)
             xTemp = x[individual_loop_flag]
             hTemp = h[individual_loop_flag]
@@ -1181,9 +1202,7 @@ class DOPR853:
                         read_out_ode_dim.get(),
                         read_out_index_update.get(),
                     )
-                ] = (
-                    solOld[:, index_update].flatten().get()
-                )
+                ] = solOld[:, index_update].flatten().get()
                 denseOutputLoc[(step_num[index_update].get(), index_update.get())] = x[
                     index_update
                 ].get()
@@ -1236,7 +1255,6 @@ class DOPR853:
 
 
 def stopping_criterion(step_num, denseOutput):
-
     stop = xp.zeros_like(step_num, dtype=bool)
     num_diff = 10
     for i, step in enumerate(step_num):

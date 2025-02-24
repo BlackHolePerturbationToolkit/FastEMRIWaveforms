@@ -1,5 +1,7 @@
 """Implementation of a centralized configuration management for FEW."""
 
+from __future__ import annotations
+
 import abc
 import argparse
 import dataclasses
@@ -21,16 +23,26 @@ from typing import (
     Tuple,
 )
 from . import exceptions
-from ..cutils.fast_selector import BackendSelectionMode
+from ..cutils import KNOWN_BACKENDS
 
 
 class ConfigSource(enum.Enum):
     """Enumeration of config option sources."""
 
     DEFAULT = "default"
+    """Config value comes from its default value"""
+
     CFGFILE = "config_file"
+    """Config value comes from the configuration file"""
+
     ENVVAR = "environment_var"
+    """Config value comes from environment variable"""
+
     CLIOPT = "command_line"
+    """Config value comes from command line parameter"""
+
+    SETTER = "setter"
+    """Config value set by config setter after importing FEW"""
 
 
 T = TypeVar("T")
@@ -103,8 +115,18 @@ def compatibility_isinstance(obj, cls) -> bool:
                 return False
         return True
 
+    import collections.abc
+
+    if typing.get_origin(cls) is collections.abc.Sequence:
+        if not hasattr(obj, "__iter__"):
+            return False
+        for item in obj:
+            if not compatibility_isinstance(item, typing.get_args(cls)[0]):
+                return False
+        return True
+
     raise NotImplementedError(
-        "compatiblity wrapper for isinstance on Python 3.9 does not support given type."
+        "Compatiblity wrapper for isinstance on Python 3.9 does not support given type."
     )
 
 
@@ -144,6 +166,7 @@ class ConfigConsumer(abc.ABC):
         config_file: Union[os.PathLike, Mapping[str, str], None] = None,
         env_vars: Optional[Mapping[str, str]] = None,
         cli_args: Optional[Sequence[str]] = None,
+        set_args: Optional[Dict[str, Any]] = None,
     ):
         """Initialize the items list and extra parameters."""
         config_entries = self.config_entries()
@@ -169,9 +192,12 @@ class ConfigConsumer(abc.ABC):
         cli_items, self._extra_cli = ConfigConsumer._build_items_from_cli(
             config_entries, opt_from_cli
         )
+        set_items = ConfigConsumer._build_items_from_set(config_entries, set_args)
 
         # Build final item mapping
-        self._items = self._overwrite(default_items, file_items, env_items, cli_items)
+        self._items = self._overwrite(
+            default_items, file_items, env_items, cli_items, set_items
+        )
 
         # Validate items:
         errors: List[Exception] = []
@@ -382,6 +408,29 @@ class ConfigConsumer(abc.ABC):
 
         return items_from_cli, extras_from_cli
 
+    @staticmethod
+    def _build_items_from_set(
+        config_entries: Sequence[ConfigEntry], set_values: Optional[Dict[str, Any]]
+    ) -> Dict[str, ConfigItem]:
+        """Check that provided items match the entries."""
+        set_items = {}
+
+        if set_values is None:
+            return set_items
+
+        for config_entry in config_entries:
+            if (label := config_entry.label) in set_values:
+                set_value = set_values[label]
+                if not config_entry.validate(set_value):
+                    raise exceptions.ConfigurationValidationError(
+                        "Configuration entry '{}' has invalid value '{}'".format(
+                            label, set_value
+                        )
+                    )
+                set_items[label] = ConfigItem(set_value, ConfigSource.SETTER)
+
+        return set_items
+
 
 def userstr_to_bool(user_str: str) -> Optional[bool]:
     """Convert a yes/no, on/off or true/false to bool."""
@@ -398,12 +447,29 @@ def userinput_to_pathlist(user_input) -> List[pathlib.Path]:
         return []
     if isinstance(user_input, str):
         return userinput_to_pathlist(user_input.split(";"))
-    if compatibility_isinstance(user_input, List[str]):
+    if compatibility_isinstance(user_input, Sequence[str]):
         return [pathlib.Path(path_str) for path_str in user_input]
-    if compatibility_isinstance(user_input, List[pathlib.Path]):
+    if compatibility_isinstance(user_input, Sequence[pathlib.Path]):
         return user_input
     raise ValueError(
         "User input '{}' of type '{}' is not convertible to a list of paths".format(
+            user_input, type(user_input)
+        )
+    )
+
+
+def userinput_to_strlist(user_input) -> List[str]:
+    """Convert a user input to a list of paths"""
+    if user_input is None:
+        return []
+    if isinstance(user_input, str):
+        return user_input.split(";")
+    if compatibility_isinstance(user_input, List[str]):
+        return user_input
+    if compatibility_isinstance(user_input, Sequence[str]):
+        return [input for input in user_input]
+    raise ValueError(
+        "User input '{}' of type '{}' is not convertible to a list of strings".format(
             user_input, type(user_input)
         )
     )
@@ -465,12 +531,11 @@ class InitialConfigConsumer(ConfigConsumer):
         super().__init__(config_file=None, env_vars=env_vars, cli_args=cli_args)
 
 
-class CompleteConfigConsumer(ConfigConsumer):
+class Configuration(ConfigConsumer):
     """
     Class implementing FEW complete configuration for the library.
     """
 
-    fast_backend: BackendSelectionMode
     log_level: int
     log_format: str
     file_registry_path: Optional[pathlib.Path]
@@ -479,23 +544,11 @@ class CompleteConfigConsumer(ConfigConsumer):
     file_allow_download: bool
     file_integrity_check: str
     file_extra_paths: List[pathlib.Path]
+    enabled_backends: Optional[List[str]]
 
     @staticmethod
     def config_entries() -> List[ConfigEntry]:
         return [
-            ConfigEntry(
-                label="fast_backend",
-                description="Fast backend selection mode",
-                type=BackendSelectionMode,
-                default=BackendSelectionMode.LAZY,
-                cli_flags="--fast-backend",
-                cli_kwargs={
-                    "type": BackendSelectionMode,
-                    "choices": ("cpu", "cuda11x", "cuda12x", "lazy", "best"),
-                },
-                env_var="FAST_BACKEND",
-                cfg_entry="fast-backend",
-            ),
             ConfigEntry(
                 label="log_level",
                 description="Application log level",
@@ -504,7 +557,7 @@ class CompleteConfigConsumer(ConfigConsumer):
                 cli_flags=["--log-level"],
                 env_var="LOG_LEVEL",
                 cfg_entry="log-level",
-                convert=CompleteConfigConsumer._str_to_logging_level,
+                convert=Configuration._str_to_logging_level,
             ),
             ConfigEntry(
                 label="log_format",
@@ -588,6 +641,20 @@ class CompleteConfigConsumer(ConfigConsumer):
                 if old is not None
                 else new,  # concatenate extra path lists
             ),
+            ConfigEntry(
+                label="enabled_backends",
+                description="List of backends that must be enabled",
+                type=Optional[List[str]],
+                default=None,
+                cli_flags="--enable-backend",
+                cli_kwargs={"action": "append"},
+                env_var="ENABLED_BACKENDS",
+                cfg_entry="enabled-backends",
+                convert=lambda x: [v.lower() for v in userinput_to_strlist(x)],
+                validate=lambda x: all(v in KNOWN_BACKENDS for v in x)
+                if x is not None
+                else True,
+            ),
         ]
 
     def __init__(
@@ -595,18 +662,22 @@ class CompleteConfigConsumer(ConfigConsumer):
         config_file: Union[os.PathLike, Mapping[str, str], None] = None,
         env_vars: Optional[Mapping[str, str]] = None,
         cli_args: Optional[Sequence[str]] = None,
+        set_args: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(
             config_file=config_file,
             env_vars=env_vars,
             cli_args=cli_args,
+            set_args=set_args,
         )
 
         # Post-init task: read -v and -q options
         self._handle_verbosity()
 
     @staticmethod
-    def _str_to_logging_level(input: str) -> int:
+    def _str_to_logging_level(input: Union[str, int]) -> int:
+        if isinstance(input, int):
+            return input
         as_int_level = logging.getLevelName(input.upper())
         if isinstance(as_int_level, int):
             return as_int_level
@@ -651,11 +722,13 @@ class CompleteConfigConsumer(ConfigConsumer):
             )
             self._apply_verbosity(logging.CRITICAL)
         else:
+            if (count := parsed_options.verbose_count) == 0:
+                return
             old_level = self.log_level
-            new_level = old_level - parsed_options.verbose_count * 10
+            new_level = old_level - count * 10
             get_logger().debug(
                 "Logger level is decreased from {} to {} since verbose flag was set {} times".format(
-                    old_level, new_level, parsed_options.verbose_count
+                    old_level, new_level, count
                 )
             )
             self._apply_verbosity(
@@ -669,7 +742,7 @@ class CompleteConfigConsumer(ConfigConsumer):
         )
         verbosity_parser = self._build_verbosity_parser()
         complete_parser = ConfigConsumer._build_parser(
-            CompleteConfigConsumer.config_entries(),
+            Configuration.config_entries(),
             parent_parsers=[init_parser, verbosity_parser],
         )
         return [complete_parser]

@@ -5,6 +5,7 @@ The `few` package can be tuned through the use of optional configuration options
 - A `few.ini` configuration file
 - Environment variables
 - Command-line arguments when using a compatible command-line utility
+- A Python object named the [`ConfigurationSetter`](few.utils.globals.ConfigurationSetter) which can be used right after importing the `few` module for the first time
 
 The `few.ini` file is searched, in priority order:
 
@@ -31,32 +32,41 @@ logger = logging.getLogger("few")
 or by accessing `few` global states with
 
 ```py3
-import few.utils.globals
+import few
 
-logger = few.utils.globals.get_logger()
+logger = few.get_logger()
 ```
 
 The default log level is `logging.WARNING` but this can be modified through the `log_level` configuration option.
 
-### Backend selection
+### Backends management
 
-Many classes in the `few` package can benefit from GPU acceleration. This is managed through the `use_gpu` boolean flag that
-can be passed to the object constructor.
+Backends are plugin-like entities which can be used to delegate heavy computations to specific hardware like GPUs.
+By default, FEW will try to use the best available backend for each class that the user instanciates. It is however
+possible to enforce or prevent the use of specific backends through the `enabled_backends` options.
 
-When `use_gpu==False`, the object will use methods that are provided by the `few.cutils.cpu` module. When `use_gpu==True`, the
-object will rather use methods provided by the `few.cutils.fast` module.
+The list of available backends is:
 
-Note however that `few.cutils.fast` is simply an alias for either the `cpu` backend, the `cuda11x` backend or the `cuda12x` backend.
-By default, `few` will detect automatically the best available backend and silently revert back to the `cpu` backend
-if CUDA backends are uninstalled, or unusable due to missing software or hardware.
+- `cpu`: Use the CPU itself for accelerated computations
+- `cuda11x`: Use a NVIDIA GPU with CUDA 11.x drivers
+- `cuda12x`: Use a NVIDIA GPU with CUDA 12.x drivers
 
-The `fast_backend` option can change the `fast` backend selection mode:
+By default, all these backends can be used provided they are installed and have required sotware and hardware available.
+A class that supports only CPU will only attempt to use he `cpu` backend, whilst a class with hybrid GPU/CPU support will
+(usually) first attempt to use the `cuda12x` backend, in case of failure it will attempt using the `cuda11x` and finally
+fallback to the `cpu` one.
 
-- `cpu`: force the unnacelerated CPU backend (cannot fail)
-- `cuda11x`: force the CUDA 11.x backend, fail if it has missing sotware or hardware dependencies
-- `cuda12x`: force the CUDA 12.x backend, fail if it has missing sotware or hardware dependencies
-- `lazy` (default): try to load the `cuda12x` backend, then the `cuda11x` in case of error, then the `cpu` if case of further error (cannot fail)
-- `best`: detect the available CUDA version (if any) then act the same way as the `cpu`, `cuda11x` or `cuda12x` values corresponding to the detected version
+When setting the `enabled_backends` option, all items present in that list will be loaded (and FEW will fail initializing
+if any in not loadable) while other items will be strictly disabled.
+
+Example:
+
+- On a computer with only a CPU, setting `enabled_backends = ['cpu']` will speed-up FEW loading process by disabling
+  the `cuda11x` and `cuda12x` backends and not even try loading them
+- On a computer with a NVIDIA GPU and CUDA 12.x drivers, setting `enabled_backends = ['cuda12x', 'cpu']` ensures that
+  the CUDA 12.x backend will be loaded and that CPU only classes are still supported. If for any reason, the CUDA 12.x backend
+  cannot be loaded, FEW will fail to run (and the message error should explain the failure and suggest mitigation strategies).
+
 
 ### File manager
 
@@ -64,7 +74,7 @@ The `few` package requires external files of pre-computed coefficients which are
 These files are accessed through the `FileManager` global entity which takes care of locating these files, checking their integrity,
 and downloading missing files on request.
 
-The file manager is accessed through `few.utils.globals.get_file_manager()`
+The file manager is accessed through `few.get_file_manager()`
 
 This `FileManager` is highly tunable and propose the following options:
 
@@ -119,9 +129,9 @@ General configuration options:
 
 | Option name | Config file entry | Environment variable | Command-line option | Authorized values | Comment |
 |---|---|---|---|---|---|
-| `fast_backend` | `fast-backend` | `FEW_FAST_BACKEND` | `--fast-backend` | `cpu`, `cuda11x`, `cuda12x`, `lazy`, `best` |  |
 | `log_level` | `log-level` | `FEW_LOG_LEVEL` | `--log-level` | `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |  |
 | `log_format` | `log-format` | `FEW_LOG_FORMAT` | `--log-format` | Any format string supported by [`logging.Formatter`](https://docs.python.org/3/library/logging.html#logging.Formatter) |  |
+| `enabled_backends` | `enbaled-backends` | `FEW_ENABLED_BACKENDS` | `--enable-backend` | `cpu`, `cuda11x`, `cuda12x` | ";"-separated list of values. The CLI parameter can be used multiple time for each enabled backend. |
 | `file_registry_path` | `file-registry` | `FEW_FILE_REGISTRY` | `--file-registry` | Path to a `registry.yml` file |  |
 | `file_storage_path` | `file-storage-dir` | `FEW_FILE_STORAGE_DIR` | `--storage-dir` | Absolute path, or relative to current working directory | Directory must already exist |
 | `file_download_path` | `file-download-dir` | `FEW_FILE_DOWNLOAD_DIR` | `--download-dir` | Absolute path, or relative to the storage directory |  |
@@ -140,13 +150,77 @@ Similarly, one may disable options from the environment using the `--ignore-env`
 
 In your program, you may access the values of these configuration option by accessing the global configuration:
 
-```py3
->>> import few.utils.globals
->>> cfg = few.utils.globals.get_config()
+```{eval-rst}
+>>> import few
+>>> cfg = few.get_config()
 >>> cfg.log_level
 30
->>> cfg.fast_backend
-<BackendSelectionMode.LAZY: 'lazy'>
+>>> cfg.file_integrity_check
+'once'
 ```
 
 Unless stated otherwise, command-line arguments take precedence over environment variable which in turn take precedence over configuration file entries.
+
+## Configuration setter
+
+If you need to update configuration settings in a given script, or in an interactive Python context (terminal, notebook),
+this can be done using the [*configuration setter*](few.utils.globals.ConfigurationSetter).
+
+```{important}
+The Configuration Setter can only be used right after importing `few`.
+As soon as any `few` entity makes use of a configuration option (for instance, when initializing
+the first backend-accelerated object), the setter cannot be used anymore to change an option.
+```
+
+The *configuration setter* is accessed by `few.get_config_setter`and offers multiple methods to
+customize configuration options. Note that these methods can be chained directly:
+
+```{eval-rst}
+.. testcode:: cfg-setter
+
+    # import few
+    # Access the setter
+    setter = few.get_config_setter()
+
+    # Use a single method
+    setter.disable_file_download()
+
+    # Chain methods
+    setter.set_log_level(
+        "debug"
+    ).add_file_extra_paths("/tmp/few_data")
+```
+
+Options defined in the [*configuration setter*](few.utils.globals.ConfigurationSetter) can be applied
+immediately by calling the `finalize()` method like:
+
+```{eval-rst}
+.. testcode:: cfg-explicit-finalize
+
+    import few
+    # Access the setter, set an option and finalize options
+    few.get_config_setter().set_log_level("info").finalize()
+```
+
+But if `finalize()` is not explicitely called, the options set will still be taken into account
+automatically at a latter stage:
+
+```{eval-rst}
+.. testcode:: cfg-implicit-finalized
+
+    import few
+    # Set the log level
+    few.get_config_setter().set_log_level("debug")
+
+    # Build a FEW object
+    amp = few.amplitude.romannet.RomanAmplitude()
+
+.. testoutput:: cfg-implicit-finalized
+
+    ...
+    ConfigInitialization: final configuration entries are
+    ...
+     log_level=10 (from: ConfigSource.SETTER)
+    ...
+
+```

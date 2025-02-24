@@ -15,7 +15,7 @@ except ModuleNotFoundError:
     finally:
         del version, PackageNotFoundError
 
-from .utils.globals import get_logger, get_config, get_file_manager
+from .utils.globals import get_logger, get_config, get_file_manager, get_config_setter
 
 from . import amplitude, cutils, files, summation, trajectory, utils, waveform
 
@@ -33,5 +33,6 @@ __all__ = [
     "log",
     "get_logger",
     "get_config",
+    "get_config_setter",
     "get_file_manager",
 ]

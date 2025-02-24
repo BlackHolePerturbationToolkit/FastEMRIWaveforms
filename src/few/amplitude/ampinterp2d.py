@@ -31,15 +31,17 @@ from ..utils.baseclasses import (
     SchwarzschildEccentric,
     ParallelModuleBase,
     KerrEccentricEquatorial,
+    xp_ndarray,
+    BackendLike,
 )
 from .base import AmplitudeBase
 from ..utils.citations import REFERENCE
-from ..utils.mappings import a_of_z, kerrecceq_forward_map, kerrecceq_legacy_p_to_u, schwarzecc_p_to_y
+from ..utils.mappings import (
+    kerrecceq_forward_map,
+    schwarzecc_p_to_y,
+)
 
-from ..cutils.fast import interp2D as interp2D_gpu
-from ..cutils.cpu import interp2D as interp2D_cpu
-
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -100,31 +102,48 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
             :class:`few.utils.baseclasses.ParallelModuleBase`.
     """
 
+    l_arr: xp_ndarray
+    """1D Array of :math:`l` mode indices."""
+    m_arr: xp_ndarray
+    """1D Array of :math:`m` mode indices."""
+    n_arr: xp_ndarray
+    """1D Array of :math:`n` mode indices."""
+
+    num_teuk_modes: int
+    """Total number of mode amplitude grids this interpolant stores."""
+
+    knots: list[xp_ndarray]
+    """Arrays holding spline knots in each dimension."""
+
+    coeff: xp_ndarray
+    """Array holding all spline coefficient information."""
+
+    len_indiv_c: int
+    """Total number of coefficients per mode amplitude grid."""
+
     def __init__(
-            self,
-            w_knots: np.ndarray,
-            u_knots: np.ndarray,
-            coefficients: np.ndarray,
-            l_arr: np.ndarray,
-            m_arr: np.ndarray,
-            n_arr: np.ndarray,
-            **kwargs
-        ):
-        ParallelModuleBase.__init__(self, **kwargs)
-        AmplitudeBase.__init__(self, **kwargs)
+        self,
+        w_knots: np.ndarray,
+        u_knots: np.ndarray,
+        coefficients: np.ndarray,
+        l_arr: np.ndarray,
+        m_arr: np.ndarray,
+        n_arr: np.ndarray,
+        force_backend: BackendLike = None,
+    ):
+        AmplitudeBase.__init__(self)
+        ParallelModuleBase.__init__(self, force_backend=force_backend)
 
         self.l_arr = l_arr
         self.m_arr = m_arr
         self.n_arr = n_arr
 
         self.num_teuk_modes = coefficients.shape[0]
-        """int: Total number of mode amplitude grids this interpolant stores."""
-        
+
         self.knots = [
             self.xp.asarray(w_knots),
             self.xp.asarray(u_knots),
         ]
-        """list[np.ndarray]: Arrays holding spline knots in each dimension."""
 
         self.coeff = self.xp.asarray(coefficients)
         """np.ndarray: Array holding all spline coefficient information."""
@@ -137,25 +156,29 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         #     self.coeff[mode_ind,1] = spl2.tck[2].flatten()
 
         self.len_indiv_c = self.coeff.shape[2]
-        """int: Total number of coefficients per mode amplitude grid."""
 
     @property
     def interp2D(self) -> callable:
         """GPU or CPU interp2D"""
-        interp2D = interp2D_cpu if not self.use_gpu else interp2D_gpu
-        return interp2D
+        return self.backend.interp2D
 
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
         """Return citations related to this module"""
-        return [REFERENCE.ROMANNET] + super(AmpInterp2D, cls).module_references()
+        return [REFERENCE.ROMANNET] + super().module_references()
 
-    @property
-    def gpu_capability(self):
-        """Confirms GPU capability"""
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
-    def __call__(self, w: Union[float,np.ndarray], u: Union[float,np.ndarray], *args, mode_indexes: Optional[np.ndarray]=None, **kwargs) -> np.ndarray:
+    def __call__(
+        self,
+        w: Union[float, xp_ndarray],
+        u: Union[float, xp_ndarray],
+        *args,
+        mode_indexes: Optional[xp_ndarray] = None,
+        **kwargs,
+    ) -> xp_ndarray:
         """
         Evaluate the spline or its derivatives at given positions.
 
@@ -193,7 +216,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
 
         if mode_indexes is None:
             mode_indexes = self.xp.arange(self.num_teuk_modes)
-        
+
         # TODO: perform this in the kernel
         c_in = c[mode_indexes].flatten()
 
@@ -205,11 +228,12 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         self.interp2D(
             z, tw, nw, tu, nu, c_in, kw, ku, w, mw, u, mu, num_indiv_c, len_indiv_c
         )
-        
+
         z = z.reshape(num_indiv_c // 2, 2, mw).transpose(2, 1, 0)
 
         z = z[:, 0] + 1j * z[:, 1]
         return z
+
 
 class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
     """Calculate Teukolsky amplitudes in the Kerr eccentric equatorial regime with a bicubic spline + linear
@@ -228,14 +252,24 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
             :class:`few.utils.baseclasses.AmplitudeBase`,
             :class:`few.utils.baseclasses.KerrEccentricEquatorial`.
     """
-    def __init__(self, filename: Optional[str] = None, downsample_Z=1, **kwargs):
-        KerrEccentricEquatorial.__init__(self, **kwargs)
-        AmplitudeBase.__init__(self, **kwargs)
 
-        if filename is None:
-            self.filename = "ZNAmps_l10_m10_n55_DS2Outer.h5"
-        else:
-            self.filename = filename
+    filename: str
+
+    spin_information_holder_A: list[AmpInterp2D]
+
+    z_values: np.ndarray
+
+    def __init__(
+        self,
+        filename: Optional[str] = None,
+        downsample_Z=1,
+        force_backend: BackendLike = None,
+        **kwargs,
+    ):
+        AmplitudeBase.__init__(self)
+        KerrEccentricEquatorial.__init__(self, force_backend=force_backend, **kwargs)
+
+        self.filename = "ZNAmps_l10_m10_n55_DS2Outer.h5" if filename is None else filename
 
         from few import get_file_manager
 
@@ -252,19 +286,19 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
             coeffsA = coeffsA[::downsample_Z]
 
             self.spin_information_holder_A = [
-                None for _ in range(z_knots.size)
-            ]
-
-            for i in range(z_knots.size):
-                self.spin_information_holder_A[i] = AmpInterp2D(
-                    w_knots,
-                    u_knots,
-                    coeffsA[i],
-                    self.l_arr,
-                    self.m_arr,
-                    self.n_arr,
-                    use_gpu=self.use_gpu,
+                self.build_with_same_backend(
+                    AmpInterp2D,
+                    args=[
+                        w_knots,
+                        u_knots,
+                        coeffsA[i],
+                        self.l_arr,
+                        self.m_arr,
+                        self.n_arr,
+                    ],
                 )
+                for i in range(z_knots.size)
+            ]
 
             try:
                 regionB = f["regionB"]
@@ -277,40 +311,46 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
                 z_knots = z_knots[::downsample_Z]
 
                 coeffsB = coeffsB[::downsample_Z]
-                self.spin_information_holder_B = [
-                    None for _ in range(z_knots.size)
-                ]
 
-                for i in range(z_knots.size):
-                    self.spin_information_holder_B[i] = AmpInterp2D(
-                        w_knots,
-                        u_knots,
-                        coeffsB[i],
-                        self.l_arr,
-                        self.m_arr,
-                        self.n_arr,
-                        use_gpu=self.use_gpu,
+                self.spin_information_holder_B = [
+                    self.build_with_same_backend(
+                        AmpInterp2D,
+                        args=[
+                            w_knots,
+                            u_knots,
+                            coeffsB[i],
+                            self.l_arr,
+                            self.m_arr,
+                            self.n_arr,
+                        ],
                     )
+                    for i in range(z_knots.size)
+                ]
             except KeyError:
                 pass
         
         self.z_values = z_knots
 
     def evaluate_interpolant_at_index(self, index, region_A_mask, w, u, mode_indexes):
-        z_out = self.xp.zeros((region_A_mask.size, self.num_modes_eval), dtype=self.xp.complex128)
+        z_out = self.xp.zeros(
+            (region_A_mask.size, self.num_modes_eval), dtype=self.xp.complex128
+        )
+
         if self.xp.any(region_A_mask):
             z_out[region_A_mask, :] = self.spin_information_holder_A[index](
-                    w[region_A_mask], u[region_A_mask], mode_indexes=mode_indexes
-                )
-        
+                w[region_A_mask], u[region_A_mask], mode_indexes=mode_indexes
+            )
+
         if self.xp.any(~region_A_mask):
             z_out[~region_A_mask, :] = self.spin_information_holder_B[index](
-                    w[~region_A_mask], u[~region_A_mask], mode_indexes=mode_indexes
-                )
-        
+                w[~region_A_mask], u[~region_A_mask], mode_indexes=mode_indexes
+            )
+
         return z_out
 
-    def get_amplitudes(self, a, p, e, xI, specific_modes=None) -> Union[dict, np.ndarray]:
+    def get_amplitudes(
+        self, a, p, e, xI, specific_modes=None
+    ) -> Union[dict, np.ndarray]:
         """
         Generate Teukolsky amplitudes for a given set of parameters.
 
@@ -335,7 +375,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
             xI = xI.get()
         except AttributeError:
             pass
-        
+
         p = np.atleast_1d(p)
         e = np.atleast_1d(e)
         xI = np.atleast_1d(xI)
@@ -348,35 +388,47 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
         signed_spin = a * xI_in[0].item()
         a_in = np.full_like(p, signed_spin)
         xI_in = np.abs(xI_in)
-        
+
         if specific_modes is not None:
             self.num_modes_eval = len(specific_modes)
-            if isinstance(
-                specific_modes, list
-            ):
+            if isinstance(specific_modes, list):
                 specific_modes_arr = self.xp.asarray(specific_modes)
-                mode_indexes = self.special_index_map_arr[specific_modes_arr[:,0], specific_modes_arr[:,1], specific_modes_arr[:,2]]
+                mode_indexes = self.special_index_map_arr[
+                    specific_modes_arr[:, 0],
+                    specific_modes_arr[:, 1],
+                    specific_modes_arr[:, 2],
+                ]
                 if self.xp.any(mode_indexes == -1):
-                        failed_mode = specific_modes_arr[self.xp.where(mode_indexes == -1)[0][0]]
-                        raise ValueError(f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]}).")
+                    failed_mode = specific_modes_arr[
+                        self.xp.where(mode_indexes == -1)[0][0]
+                    ]
+                    raise ValueError(
+                        f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]})."
+                    )
             else:
                 mode_indexes = specific_modes
         else:
             mode_indexes = self.xp.arange(self.num_teuk_modes)
             self.num_modes_eval = self.num_teuk_modes
 
-        u, w, y, z, region_mask = kerrecceq_forward_map(a_in, p, e, xI_in, return_mask=True, kind="amplitude")
+        u, w, y, z, region_mask = kerrecceq_forward_map(
+            a_in,
+            p,
+            e,
+            xI_in,
+            return_mask=True,
+            kind="amplitude",
+        )
         z_check = z[0]
 
-        
         for elem in [u, w, z]:
-            if np.any((elem < 0)|(elem > 1)):
+            if np.any((elem < 0) | (elem > 1)):
                 raise ValueError("Amplitude interpolant accessed out-of-bounds.")
 
         region_mask = self.xp.asarray(region_mask)
         u = self.xp.asarray(u)
         w = self.xp.asarray(w)
-        
+
         if z_check in self.z_values:
             ind_1 = np.where(self.z_values == z_check)[0][0]
 
@@ -440,16 +492,33 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
             :class:`few.utils.baseclasses.SchwarzschildEccentric`.
     """
 
-    def __init__(self, filenames: Optional[List[str]] = None, **kwargs):
-        SchwarzschildEccentric.__init__(self, **kwargs)
-        AmplitudeBase.__init__(self, **kwargs)
+    filename: str
+    """Coefficient file name."""
+
+    tck: list[xp_ndarray]
+    """Arrays holding all spline coefficient information."""
+
+    num_teuk_modes: int
+    """Total number of mode amplitude grids this interpolant stores."""
+
+    len_indiv_c: int
+    """Total number of coefficients per mode amplitude grid."""
+
+    def __init__(
+        self,
+        filenames: Optional[List[str]] = None,
+        force_backend: BackendLike = None,
+        **kwargs,
+    ):
+        AmplitudeBase.__init__(self)
+        SchwarzschildEccentric.__init__(self, **kwargs, force_backend=force_backend)
 
         if filenames is None:
             self.filename = "Teuk_amps_a0.0_lmax_10_nmax_30_new.h5"
         else:
             if isinstance(filenames, list):
                 assert len(filenames) == 1
-            self.filename = filenames
+            self.filename = filenames[0]
 
         # check if user has the necessary data
         # if not, the data will automatically download
@@ -526,8 +595,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
     @property
     def interp2D(self) -> callable:
         """GPU or CPU interp2D"""
-        interp2D = interp2D_cpu if not self.use_gpu else interp2D_gpu
-        return interp2D
+        return self.backend.interp2D
 
     def get_amplitudes(
         self, a, p, e, xI, specific_modes=None
@@ -552,7 +620,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
         p = self.xp.asarray(p)
         e = self.xp.asarray(e)
 
-        u = self.xp.asarray(schwarzecc_p_to_y(p, e, use_gpu=self.use_gpu))
+        u = self.xp.asarray(schwarzecc_p_to_y(p, e, use_gpu=self.backend.uses_gpu))
         w = e.copy()
 
         tw, tu, c = self.tck[:3]
@@ -584,14 +652,20 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
         else:
             if isinstance(specific_modes, self.xp.ndarray):
                 mode_indexes = specific_modes
-            elif isinstance(
-                specific_modes, list
-            ):
+            elif isinstance(specific_modes, list):
                 specific_modes_arr = self.xp.asarray(specific_modes)
-                mode_indexes = self.special_index_map_arr[specific_modes_arr[:,0], specific_modes_arr[:,1], specific_modes_arr[:,2]]
+                mode_indexes = self.special_index_map_arr[
+                    specific_modes_arr[:, 0],
+                    specific_modes_arr[:, 1],
+                    specific_modes_arr[:, 2],
+                ]
                 if self.xp.any(mode_indexes == -1):
-                        failed_mode = specific_modes_arr[self.xp.where(mode_indexes == -1)[0][0]]
-                        raise ValueError(f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]}).")
+                    failed_mode = specific_modes_arr[
+                        self.xp.where(mode_indexes == -1)[0][0]
+                    ]
+                    raise ValueError(
+                        f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]})."
+                    )
 
         # TODO: perform this in the kernel
         c_in = c[mode_indexes].flatten()
@@ -740,6 +814,7 @@ if __name__ == "__main__":
 
     # running this should auto-produce coefficients files
     AmpInterpKerrEqEcc(filenames=filepaths)
+    from few import get_logger
 
     amp = AmpInterpKerrEqEcc()
-    print(amp(0.0, np.array([10.0]), np.array([0.3]), np.array([1.0])))
+    get_logger().info(amp(0.0, np.array([10.0]), np.array([0.3]), np.array([1.0])))

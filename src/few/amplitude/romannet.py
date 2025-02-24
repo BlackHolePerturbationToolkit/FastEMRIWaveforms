@@ -16,21 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
 
 import numpy as np
 import h5py
 
-# Cython/C++ imports
-from ..cutils.cpu import neural_layer_wrap as neural_layer_wrap_cpu
-from ..cutils.cpu import transform_output_wrap as transform_output_wrap_cpu
-from ..cutils.fast import neural_layer_wrap, transform_output_wrap
-
 # Python imports
-from ..utils.baseclasses import (
-    SchwarzschildEccentric,
-    ParallelModuleBase,
-)
+from ..utils.baseclasses import SchwarzschildEccentric, BackendLike
 from .base import AmplitudeBase
 from ..utils.globals import get_file_manager
 from ..utils.citations import REFERENCE
@@ -38,8 +29,6 @@ from ..utils.mappings import schwarzecc_p_to_y
 from scipy.interpolate import RectBivariateSpline
 
 from few.utils.globals import get_logger
-
-few_logger = get_logger()
 
 
 class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
@@ -83,7 +72,6 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
             few_dir (str): absolute path to the FastEMRIWaveforms directory
             break_index (int): length of output vector from network divded by 2.
                 It is really the number of pairs of real and imaginary numbers.
-            use_gpu (bool): If True, use the GPU.
             neural_layer (obj): C++ class for computing neural network operations
             transform_output(obj): C++ class for transforming output from
                 neural network in the reduced basis to the full amplitude basis.
@@ -115,10 +103,9 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         """
         pass
 
-    def __init__(self, buffer_length=1000, **kwargs):
-        ParallelModuleBase.__init__(self, **kwargs)
-        SchwarzschildEccentric.__init__(self, **kwargs)
-        AmplitudeBase.__init__(self, **kwargs)
+    def __init__(self, buffer_length=1000, force_backend: BackendLike = None, **kwargs):
+        AmplitudeBase.__init__(self)
+        SchwarzschildEccentric.__init__(self, **kwargs, force_backend=force_backend)
 
         # check if user has the necessary data
         # if not, the data will automatically download
@@ -151,21 +138,20 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
 
     @property
     def neural_layer(self):
-        return neural_layer_wrap if self.use_gpu else neural_layer_wrap_cpu
+        return self.backend.neural_layer_wrap
 
     @property
     def transform_output(self):
-        return transform_output_wrap if self.use_gpu else transform_output_wrap_cpu
+        return self.backend.transform_output_wrap
 
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
         """Return citations related to this module"""
-        return [REFERENCE.ROMANNET] + super(RomanAmplitude, cls).module_references()
+        return [REFERENCE.ROMANNET] + super().module_references()
 
-    @property
-    def gpu_capability(self):
-        """Confirms GPU capability"""
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     def _initialize_weights(self):
         # initalize weights/bias/dimensions for the neural network
@@ -249,7 +235,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         # check ifn input_len is greater than the buffer_length attribute
         # if so reset the buffers and update the attribute
         if input_len > self.buffer_length:
-            few_logger.warning(
+            get_logger().warning(
                 "Input length {} is larger than initial buffer_length ({}). Reallocating preallocated arrays for this size.".format(
                     input_len, self.buffer_length
                 )
@@ -266,7 +252,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
             ]
 
         # the input is (y, e)
-        y = schwarzecc_p_to_y(p, e, use_gpu=self.use_gpu)
+        y = schwarzecc_p_to_y(p, e, use_gpu=self.backend.uses_cupy)
 
         # column-major single dimensional array input
         input = self.xp.concatenate([y, e])

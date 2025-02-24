@@ -15,12 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# test import of cupy
-try:
-    import cupy as cp
-except (ImportError, ModuleNotFoundError) as e:
-    pass
-
 import numpy as np
 
 # base classes
@@ -34,6 +28,8 @@ from math import pi as PI
 
 I = 1j
 
+
+# fmt: off
 @njit(fastmath=False)
 def _ylm_kernel_inner(
     l: int,
@@ -277,18 +273,24 @@ def _ylm_kernel_inner(
         temp = 3.*exp(10.*I*phi)*sqrt(146965./(2.*PI))*pow(cos(theta/2.),12)*pow(sin(theta/2.),8)
 
     else:
-        raise ValueError(f"(l, m) > 10 are not supported.")
+        raise ValueError("(l, m) > 10 are not supported.")
 
     if m < 0:
         temp = (-1)**l * temp
     return temp
 
+# fmt: on
+
+
 @njit(fastmath=False)
-def _ylm_kernel(out: np.ndarray, l: np.ndarray, m:np.ndarray, theta:float, phi: float):
+def _ylm_kernel(
+    out: np.ndarray, l: np.ndarray, m: np.ndarray, theta: float, phi: float
+):
     for k in range(len(out)):
         out[k] = _ylm_kernel_inner(l[k], m[k], theta, phi)
 
     return out
+
 
 class GetYlms(ParallelModuleBase):
     r"""(-2) Spin-weighted Spherical Harmonics
@@ -306,23 +308,18 @@ class GetYlms(ParallelModuleBase):
             :class:`few.utils.baseclasses.ParallelModuleBase`.
     """
 
-    def __init__(self, assume_positive_m: bool=False, **kwargs: Optional[dict]):
+    def __init__(self, assume_positive_m: bool = False, **kwargs: Optional[dict]):
         ParallelModuleBase.__init__(self, **kwargs)
         self.assume_positive_m = assume_positive_m
 
-    @property
-    def gpu_capability(self):
-        """Confirms GPU capability"""
-        return True
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
 
     # These are the spin-weighted spherical harmonics with s=2
     def __call__(
-            self,
-            l_in: np.ndarray,
-            m_in: np.ndarray,
-            theta: float,
-            phi: float
-        ) -> np.ndarray:
+        self, l_in: np.ndarray, m_in: np.ndarray, theta: float, phi: float
+    ) -> np.ndarray:
         """Call method for Ylms.
 
         This returns ylms based on requested :math:`(l,m)` values and viewing
@@ -367,7 +364,5 @@ class GetYlms(ParallelModuleBase):
         out = np.zeros(len(l), dtype=np.complex128)
         # get ylm arrays and cast back to cupy if using cupy/GPUs
         return self.xp.asarray(
-            _ylm_kernel(
-                out, l.astype(np.int32), m.astype(np.int32), theta, phi
-            )
+            _ylm_kernel(out, l.astype(np.int32), m.astype(np.int32), theta, phi)
         )

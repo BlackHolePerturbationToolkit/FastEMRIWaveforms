@@ -7,23 +7,33 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check if cache already exists
+        uses: actions/cache/restore@v4
+        id: file_cache
+        with:
+          path: local_cache
+          key: ${{ hashFiles('src/few/files/registry.yml') }}
+          lookup-only: true
+      - name: Install Python 3.12
+        if: ${{ steps.file_cache.outputs.cache-hit != 'true' }}
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Install bare package
+        if: ${{ steps.file_cache.outputs.cache-hit != 'true' }}
         run: |
           python -m pip install . --config-settings=cmake.define.FEW_WITH_GPU=BARE
-      - name: Download files
+      - name: Download files into cache
+        if: ${{ steps.file_cache.outputs.cache-hit != 'true' }}
         run: |
-          mkdir local_cache
+          mkdir -p local_cache
           few_files fetch --download-dir $(pwd)/local_cache --tag unittest
-      - name: Upload coverage results as artifacts
-        uses: actions/upload-artifact@v4
+      - name: Save the cache
+        uses: actions/cache/save@v4
+        if: ${{ steps.file_cache.outputs.cache-hit != 'true' }}
         with:
-          name: prefetch_files
           path: local_cache
-          retention-days: 1
-          if-no-files-found: error
+          key: ${{ hashFiles('src/few/files/registry.yml') }}
   install_and_run_tests:
     name: Install and run non-GPU tests
     runs-on: ${{ matrix.os }}
@@ -40,26 +50,29 @@ jobs:
         # cuda-version: ["12.4.0"]
     steps:
       - uses: actions/checkout@v4
-      - name: Retrieve prefetched files
-        uses: actions/download-artifact@v4
+      - name: Restore the cache
+        uses: actions/cache/restore@v4
+        id: restore_cache
         with:
-          name: prefetch_files
           path: local_cache
+          key: ${{ hashFiles('src/few/files/registry.yml') }}
       - name: List artifacts
+        if: ${{ steps.restore_cache.outputs.cache-hit == 'true' }}
         run: |
           ls -R ./local_cache
       - name: Export configuration options to force using prefetched cache of files
+        if: ${{ steps.restore_cache.outputs.cache-hit == 'true' }}
         run: |
           echo "FEW_FILE_ALLOW_DOWNLOAD=no" >> "$GITHUB_ENV"
           echo "FEW_FILE_EXTRA_PATHS=$(pwd)/local_cache" >> "$GITHUB_ENV"
       - uses: actions/setup-python@v5
         with:
           python-version: '${{ matrix.python-version }}'
-      - name: Install LAPACKE
+      - name: Install LAPACKE and pandoc
         uses: ConorMacBride/install-package@v1
         with:
-          brew: lapack
-          apt: liblapacke-dev
+          brew: lapack pandoc
+          apt: liblapacke-dev pandoc
       - name: Export LAPACK pkgconfig path (macOS 13)
         if: ${{ matrix.os == 'macos-13' }}
         run: |
@@ -73,7 +86,7 @@ jobs:
           which python
           export PKG_CONFIG_PATH=${LAPACK_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}
           python --version
-          python -m pip install '.[testing]' \
+          python -m pip install '.[testing, doc]' \
             --config-settings=cmake.define.FEW_WITH_GPU=OFF \
             --config-settings=cmake.define.FEW_LAPACKE_FETCH=OFF \
             --config-settings=cmake.define.FEW_LAPACKE_DETECT_WITH=PKGCONFIG
@@ -83,6 +96,9 @@ jobs:
       - name: Run module tests
         run: |
           coverage run --source=few -m unittest discover
+      - name: Run doc tests
+        run: |
+          coverage run --source=few -m sphinx.cmd.build -M doctest docs/source docs/build
       - name: Show coverage results
         run: |
           coverage report -m
