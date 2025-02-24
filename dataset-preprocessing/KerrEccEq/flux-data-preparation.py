@@ -8,7 +8,7 @@ data_loc = "./raw_data"
 
 with h5py.File('KerrEccEqFluxData.h5', 'w') as outfile:
     # region A
-    dataA = pd.read_feather(os.path.join(data_loc,"fluxes_regionA_raw_65_65_65_fixed.feather"))
+    dataA = pd.read_feather(os.path.join(data_loc,"fluxes_regionA_129_65_65.feather"))
     df_infoA = pd.read_feather(os.path.join(data_loc, 'flux_grid_params_inner.feather'))
 
     NU = np.int64(df_infoA['nu'][0])
