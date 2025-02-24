@@ -73,6 +73,7 @@ jobs:
           sed -i 's|local_scheme = "node-and-date"|local_scheme = "no-local-version"|g' pyproject.toml
       # Update project name
       - name: Add release suffix to project name
+        if: ${{ matrix.cuda_major }}
         run: |
           sed -i 's|" #@NAMESUFFIX@|-${{ matrix.release }}"|g' pyproject.toml
       # Add CuPy dependency
@@ -84,7 +85,7 @@ jobs:
       - name: Add core project dependency on plugin
         if: ${{ matrix.is_plugin }}
         run: |
-          sed -i 's|#@DEPS_FEWCORE@|"fastemriwaveforms-cpu==${{ github.ref_name }}"|g' pyproject.toml
+          sed -i 's|#@DEPS_FEWCORE@|"fastemriwaveforms==${{ github.ref_name }}"|g' pyproject.toml
       # Remove base sources from plugin wheels
       - name: Exclude core package from plugins
         if: ${{ matrix.is_plugin }}
