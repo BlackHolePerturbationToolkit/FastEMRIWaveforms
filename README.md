@@ -37,30 +37,47 @@ Now, in a python file or notebook:
 import few
 ```
 
-You may check the currently selected backend for accelerated computations with:
+You may check the currently available backends:
 
 ```py3
->>> print(few.cutils.fast.__backend__)
-cuda12x
+>>> for backend in ["cpu", "cuda11x", "cuda12x", "cuda", "gpu"]: print(f" - Backend '{backend}': {"un" if not few.has_backend(backend) else ""}available")
+ - Backend 'cpu': available
+ - Backend 'cuda11x': unavailable
+ - Backend 'cuda12x': unavailable
+ - Backend 'cuda': unavailable
+ - Backend 'gpu': unavailable
 ```
 
-If you installed the CUDA 12.x backend but the previous command returns `cpu`, it means that some dependencies
-are missing and prevent the CUDA backend to be used. Run the following command to obtain an error message which
-can guide you to fix this issue:
+Note that the `cuda` backend is an alias for either `cuda11x` or `cuda12x`. If any is available, then the `cuda` backend is available.
+Similarly, the `gpu` backend is (fpr now) an alias for `cuda`.
+
+If you expected a backend to be available but it is not, run the following command to obtain an error
+message which can guide you to fix this issue:
 
 ```py3
 >>> import few
->>> print(few.cutils.fast.__backend__)
-cpu
->>> few.cutils.guide_best_backend()
-...
-few.utils.exceptions.MissingDependency: Could not load the following NVidia libraries: ['libcudart.so.12', 'libcublas.so.12', 'libnvJitLink.so.12', 'libcusparse.so.12', 'libnvrtc.so.12', 'libcufftw.so.11']. If you installed FEW using pip, you may install them by running `pip install nvidia-cuda-runtime-cu12 nvidia-cublas-cu12 nvidia-nvjitlink-cu12 nvidia-cusparse-cu12 nvidia-cuda-nvrtc-cu12 nvidia-cufft-cu12`.
-[...]
+>>> few.get_backend("cuda12x")
+ModuleNotFoundError: No module named 'few_backend_cuda12x'
+
 The above exception was the direct cause of the following exception:
-few.utils.exceptions.BackendUnavailable: Some CUDA libraries required by FEW are not available. Please follow previous instructions.
+...
+
+few.cutils.BackendNotInstalled: The 'cuda12x' backend is not installed.
+
+The above exception was the direct cause of the following exception:
+...
+
+few.cutils.MissingDependencies: FastEMRIWaveforms CUDA plugin is missing.
+    If you are using few in an environment managed using pip, run:
+        $ pip install fastemriwaveforms-cuda12x
+
+The above exception was the direct cause of the following exception:
+...
+
+few.cutils.BackendAccessException: Backend 'cuda12x' is unavailable. See previous error messages.
 ```
 
-Once FEW is working and the expected backend is selected, you may see
+Once FEW is working and the expected backends are selected, you may see
 [examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb)
 on how to start with this software.
 

@@ -17,6 +17,7 @@ except ModuleNotFoundError:
 
 from .utils.globals import (
     get_logger,
+    get_backend,
     get_config,
     get_file_manager,
     get_config_setter,
@@ -40,6 +41,7 @@ __all__ = [
     "get_logger",
     "get_config",
     "get_config_setter",
+    "get_backend",
     "get_file_manager",
     "has_backend",
 ]
