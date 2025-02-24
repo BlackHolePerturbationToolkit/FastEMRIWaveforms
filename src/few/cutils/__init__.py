@@ -222,6 +222,10 @@ class _CudaBackend(Backend):
             raise SoftwareException(
                 "CUDA driver exception: could not detect a CUDA version."
             ) from e
+        except AttributeError as e:
+            raise SoftwareException(
+                "The NVIDIA Management Library (libnvml) does not support the expected method to detect CUDA version."
+            ) from e
 
         cuda_major = cuda_version // 1000
         cuda_minor = (cuda_version % 1000) // 10
@@ -234,8 +238,20 @@ class _CudaBackend(Backend):
             import cupy_backends.cuda
         except ImportError as e:
             raise MissingDependencies(
-                "CuPy is missing.", pip_deps=["cupy-cuda{}x".format(cuda_major)]
+                "CuPy is missing.",
+                pip_deps=["cupy-cuda{}x".format(cuda_major)],
+                conda_deps=[],
             ) from e
+
+        cupy_cuda_ver = cupy.cuda.get_local_runtime_version() // 1000
+        if cupy_cuda_ver != cuda_major:
+            raise MissingDependencies(
+                "CuPy is installed but supports CUDA {} instead of {}".format(
+                    cupy_cuda_ver, cuda_major
+                ),
+                pip_deps=["cupy-cuda{}x".format(cuda_major)],
+                conda_deps=[],
+            )
 
         try:
             _ = cupy.arange(1)
@@ -341,13 +357,21 @@ class _CudaBackend(Backend):
                 conda_deps=[],
             ) from e
 
-        # 2. Try getting CUDA version
+        # 2. Check CuPy works with expected cuda major version
+        cls._check_cupy_works(cuda_major=cuda_min[0])
+
+        # 3. Try to load directly
+        try:
+            return module_loader()
+        except BackendUnavailableException:
+            pass
+
+        # 4. Get and check the CUDA version
         cuda_version = cls._get_cuda_version()
 
         def fmt_version(version: tuple[int, int]) -> str:
             return "{}.{}".format(version[0], version[1])
 
-        # 3. Check CUDA version
         if cuda_version < cuda_min:
             raise MissingDriver(
                 "Cuda version is below minimum supported version (expected >= {} and < {}, got {})".format(
@@ -365,10 +389,7 @@ class _CudaBackend(Backend):
                 )
             )
 
-        # 4. Check CuPy works
-        cls._check_cupy_works(cuda_major=cuda_version[0])
-
-        # 5. Try to load module directly
+        # 5. Retry to load module
         try:
             return module_loader()
         except BackendUnavailableException as e:
