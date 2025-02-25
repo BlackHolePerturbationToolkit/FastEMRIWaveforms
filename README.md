@@ -12,14 +12,17 @@ To install the latest pre-compiled version of `fastemriwaveforms`, simply run:
 
 ```sh
 # For CPU-only version
-pip install fastemriwaveforms
+pip install --pre fastemriwaveforms
 
 # For GPU-enabled versions with CUDA 11.Y.Z
-pip install fastemriwaveforms-cuda11x
+pip install --pre fastemriwaveforms-cuda11x
 
 # For GPU-enabled versions with CUDA 12.Y.Z
-pip install fastemriwaveforms-cuda12x
+pip install --pre fastemriwaveforms-cuda12x
 ```
+
+The `--pre-` flag means that you are installing a pre-release version of the project.
+This flag will not be necessary once version 2.0 is officially released.
 
 To know your CUDA version, run the tool `nvidia-smi` in a terminal a check the CUDA version reported in the table header:
 
