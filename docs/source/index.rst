@@ -19,6 +19,7 @@
 
    tutorial/Trajectory_tutorial
    tutorial/Amplitude_tutorial
+   tutorial/waveform
    tutorial/modeselect
    tutorial/modesummation
    tutorial/cubicspline
