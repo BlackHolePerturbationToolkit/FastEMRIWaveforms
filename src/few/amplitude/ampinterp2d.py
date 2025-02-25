@@ -269,7 +269,9 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
         AmplitudeBase.__init__(self)
         KerrEccentricEquatorial.__init__(self, force_backend=force_backend, **kwargs)
 
-        self.filename = "ZNAmps_l10_m10_n55_DS2Outer.h5" if filename is None else filename
+        self.filename = (
+            "ZNAmps_l10_m10_n55_DS2Outer.h5" if filename is None else filename
+        )
 
         from few import get_file_manager
 
@@ -278,8 +280,8 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
         with h5py.File(file_path, "r") as f:
             regionA = f["regionA"]
             coeffsA = regionA["CoeffsRegionA"][()]
-            w_knots = regionA['w_knots'][()]
-            u_knots = regionA['u_knots'][()]
+            w_knots = regionA["w_knots"][()]
+            u_knots = regionA["u_knots"][()]
             z_knots = regionA["z_knots"][()]
 
             z_knots = z_knots[::downsample_Z]
@@ -304,8 +306,8 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
                 regionB = f["regionB"]
                 coeffsB = regionB["CoeffsRegionB"][()]
 
-                w_knots = regionB['w_knots'][()]
-                u_knots = regionB['u_knots'][()]
+                w_knots = regionB["w_knots"][()]
+                u_knots = regionB["u_knots"][()]
                 z_knots = regionB["z_knots"][()]
 
                 z_knots = z_knots[::downsample_Z]
@@ -328,7 +330,7 @@ class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
                 ]
             except KeyError:
                 pass
-        
+
         self.z_values = z_knots
 
     def evaluate_interpolant_at_index(self, index, region_A_mask, w, u, mode_indexes):

@@ -26,4 +26,3 @@ ROMAN Network
     :members:
     :show-inheritance:
     :inherited-members:
-

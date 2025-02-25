@@ -34,7 +34,7 @@ ODE Classes
     :members:
     :show-inheritance:
     :inherited-members:
-  
+
 .. automodule:: few.trajectory.ode.flux
     :members:
     :show-inheritance:

@@ -4,11 +4,13 @@ the duplication theorem to compute Carlson's symmetric forms.
 
 Derived from Carlson's algorithms in the SLATEC library.
 """
+
 from math import sqrt, acosh, acos, log
 from numba import njit
 
+
 @njit(fastmath=False)
-def RF(x: float, y: float, z: float, tol: float=5e-4) -> float:
+def RF(x: float, y: float, z: float, tol: float = 5e-4) -> float:
     r"""
     Computes the Carlson symmetric form of the
     elliptic integral of the first kind, :math:`R_F`.
@@ -79,8 +81,9 @@ def RC(x: float, y: float) -> float:
     else:
         return 1 / sqrt(y)
 
+
 @njit(fastmath=False)
-def RJ(x: float, y: float, z: float, p: float, tol: float=5e-4) -> float:
+def RJ(x: float, y: float, z: float, p: float, tol: float = 5e-4) -> float:
     r"""
     Computes the Carlson symmetric form of the
     elliptic integral of the second kind, :math:`R_J`.
@@ -123,7 +126,7 @@ def RJ(x: float, y: float, z: float, p: float, tol: float=5e-4) -> float:
         z = (z + lamda) * 0.25
         p = (p + lamda) * 0.25
 
-        mu = (x + y + z + 2*p) * 0.2
+        mu = (x + y + z + 2 * p) * 0.2
         xdev = (mu - x) / mu
         ydev = (mu - y) / mu
         zdev = (mu - z) / mu
@@ -133,7 +136,7 @@ def RJ(x: float, y: float, z: float, p: float, tol: float=5e-4) -> float:
     # Taylor expansion
     ea = xdev * (ydev + zdev) + ydev * zdev
     eb = xdev * ydev * zdev
-    ec = pdev ** 2
+    ec = pdev**2
     e2 = ea - 3.0 * ec
     e3 = eb + 2.0 * pdev * (ea - ec)
 
@@ -144,8 +147,9 @@ def RJ(x: float, y: float, z: float, p: float, tol: float=5e-4) -> float:
 
     return drj
 
+
 @njit(fastmath=False)
-def RD(x: float, y: float, z: float, tol: float=5e-4) -> float:
+def RD(x: float, y: float, z: float, tol: float = 5e-4) -> float:
     r"""
     Computes the reduced Carlson symmetric form of the
     elliptic integral of the second kind, :math:`R_D`.
@@ -193,7 +197,7 @@ def RD(x: float, y: float, z: float, tol: float=5e-4) -> float:
 
     # Taylor expansion
     ea = xdev * ydev
-    eb = zdev ** 2
+    eb = zdev**2
     ec = ea - eb
     ed = ea - 6.0 * eb
     ef = ed + 2 * ec
@@ -205,8 +209,9 @@ def RD(x: float, y: float, z: float, tol: float=5e-4) -> float:
 
     return drd
 
+
 @njit(fastmath=False)
-def EllipK(k: float, tol: float=5e-4) -> float:
+def EllipK(k: float, tol: float = 5e-4) -> float:
     r"""
     Computes the complete elliptic integral of the first kind, :math:`K(k)`.
 
@@ -223,13 +228,18 @@ def EllipK(k: float, tol: float=5e-4) -> float:
     if k < 0 or k > 1:
         raise ValueError("Elliptic integral K(k) valid only for k in [0, 1].")
     elif k > 1 - 1e-10:
-        y = 1 - k*k
-        return 1.38629436112 + y * (0.09666344259 + y * 0.03590092383) - log(y) * (0.5 + y * (0.12498593597 + y * 0.06880248576))
+        y = 1 - k * k
+        return (
+            1.38629436112
+            + y * (0.09666344259 + y * 0.03590092383)
+            - log(y) * (0.5 + y * (0.12498593597 + y * 0.06880248576))
+        )
     else:
-        return RF(0, 1 - k*k, 1, tol=tol)
+        return RF(0, 1 - k * k, 1, tol=tol)
+
 
 @njit(fastmath=False)
-def EllipE(k: float, tol: float=5e-4) -> float:
+def EllipE(k: float, tol: float = 5e-4) -> float:
     r"""
     Computes the complete elliptic integral of the second kind, :math:`E(k)`.
 
@@ -246,14 +256,19 @@ def EllipE(k: float, tol: float=5e-4) -> float:
     if k < 0 or k > 1:
         raise ValueError("Elliptic integral E(k) valid only for k in [0, 1].")
     elif k > 1 - 1e-10:
-        y = 1 - k*k
-        return 1 + y * (0.44325141463 + y * (0.06260601220 + y * 0.04757383546)) - y * log(y) * (0.24998368310 + y * (0.09200180037 + y *  0.04069697526))
+        y = 1 - k * k
+        return (
+            1
+            + y * (0.44325141463 + y * (0.06260601220 + y * 0.04757383546))
+            - y * log(y) * (0.24998368310 + y * (0.09200180037 + y * 0.04069697526))
+        )
     else:
-        y = 1 - k*k
-        return RF(0, y, 1, tol=tol) - 1/3 * k**2 * RD(0, y, 1, tol=tol)
+        y = 1 - k * k
+        return RF(0, y, 1, tol=tol) - 1 / 3 * k**2 * RD(0, y, 1, tol=tol)
+
 
 @njit(fastmath=False)
-def EllipPi(n: float, k: float, tol: float=5e-4) -> float:
+def EllipPi(n: float, k: float, tol: float = 5e-4) -> float:
     r"""
     Computes the complete elliptic integral of the third kind, :math:`\Pi(n, k)`.
 
@@ -267,8 +282,8 @@ def EllipPi(n: float, k: float, tol: float=5e-4) -> float:
     """
     if k < 0 or k > 1:
         raise ValueError("Elliptic integral Pi(n, k) valid only for k in [0, 1].")
-    y = 1 - k*k
-    return RF(0., y, 1., tol=tol) + 1/3 * n * RJ(0, y, 1, 1 - n, tol=tol)
+    y = 1 - k * k
+    return RF(0.0, y, 1.0, tol=tol) + 1 / 3 * n * RJ(0, y, 1, 1 - n, tol=tol)
 
 
 # TODO: add the incomplete elliptic integrals?

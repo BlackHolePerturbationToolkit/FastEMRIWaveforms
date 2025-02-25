@@ -29,6 +29,7 @@ AMIN_REGIONB = -AMAX_REGIONB
 EMAX_REGIONB = 0.9
 DELTAPMIN_REGIONB = 9
 
+
 @njit
 def _schwarz_jac_kernel(p, e, Edot, Ldot):
     pdot = (
@@ -242,9 +243,8 @@ def kerrecceq_forward_map(
         e (float or np.ndarray): Eccentricity of inspiral.
         xI (float or np.ndarray): Cosine of inclination of inspiral. Only a value of 1 is supported.
         pLSO (float or np.ndarray, optional): Separatrix value for the given parameters. If not provided, it will be computed.
-        use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
-        return_mask (bool, optional): If True, return a mask indicating whether the point is in region A or B. 
-            A value of True corresponds to region A. For kind="flux", a mask is always returned for efficiency. 
+        return_mask (bool, optional): If True, return a mask indicating whether the point is in region A or B.
+            A value of True corresponds to region A. For kind="flux", a mask is always returned for efficiency.
             Default is False.
         kind (str, optional): Type of mapping to perform. Default is "flux".
     """
@@ -274,9 +274,7 @@ def kerrecceq_forward_map(
                 a, p, e, xI, pLSO, alpha=alpha, beta=beta
             ), True
         else:
-            return *_UWYZ_of_apex_kernel(
-                a, p, e, xI, pLSO, True
-            ), False
+            return *_UWYZ_of_apex_kernel(a, p, e, xI, pLSO, True), False
 
     # else, we have multiple points
     a = xp.atleast_1d(xp.asarray(a))
@@ -466,60 +464,91 @@ def apex_of_uwyz(
     p = p_of_u(u, pLSO, dpmin, dpmax, alpha)
     return a, p, e, x
 
+
 # # Region B
 
-@njit
-def U_of_p_flux(p, pLSO, delta_pmin = DELTAPMIN_REGIONB, pmax = PMAX_REGIONB):
-    pmin = pLSO + delta_pmin
-    return ((pmin-pLSO)**(-0.5)  - (p-pLSO)**(-0.5))/((pmin-pLSO)**(-0.5)  - (pmax-pLSO)**(-0.5))
 
 @njit
-def p_of_U_flux(U, pLSO, delta_pmin = DELTAPMIN_REGIONB, pmax = PMAX_REGIONB):
+def U_of_p_flux(p, pLSO, delta_pmin=DELTAPMIN_REGIONB, pmax=PMAX_REGIONB):
     pmin = pLSO + delta_pmin
-    return ((pmin-pLSO)**(-0.5) - U*((pmin-pLSO)**(-0.5)  - (pmax-pLSO)**(-0.5)))**(-2) + pLSO
+    return ((pmin - pLSO) ** (-0.5) - (p - pLSO) ** (-0.5)) / (
+        (pmin - pLSO) ** (-0.5) - (pmax - pLSO) ** (-0.5)
+    )
+
 
 @njit
-def U_of_p_amplitude(p, pmin, pmax = PMAX_REGIONB):
+def p_of_U_flux(U, pLSO, delta_pmin=DELTAPMIN_REGIONB, pmax=PMAX_REGIONB):
+    pmin = pLSO + delta_pmin
+    return (
+        (pmin - pLSO) ** (-0.5)
+        - U * ((pmin - pLSO) ** (-0.5) - (pmax - pLSO) ** (-0.5))
+    ) ** (-2) + pLSO
+
+
+@njit
+def U_of_p_amplitude(p, pmin, pmax=PMAX_REGIONB):
     pc = pmin
     pmax = pmax + pc
-    return (pc**(-0.5)  - p**(-0.5))/(pc**(-0.5)  - pmax**(-0.5))
+    return (pc ** (-0.5) - p ** (-0.5)) / (pc ** (-0.5) - pmax ** (-0.5))
+
 
 @njit
-def p_of_U_amplitude(U, pmin, pmax = PMAX_REGIONB):
+def p_of_U_amplitude(U, pmin, pmax=PMAX_REGIONB):
     pc = pmin
     pmax += pc
-    return (pc**(-0.5) - U*(pc**(-0.5)  - pmax**(-0.5)))**(-2)
+    return (pc ** (-0.5) - U * (pc ** (-0.5) - pmax ** (-0.5))) ** (-2)
+
 
 @njit
-def W_of_e(e, emax = EMAX_REGIONB):
-    return e/emax
+def W_of_e(e, emax=EMAX_REGIONB):
+    return e / emax
+
 
 @njit
-def e_of_W(y, emax = EMAX_REGIONB):
-    return y*emax
+def e_of_W(y, emax=EMAX_REGIONB):
+    return y * emax
+
 
 @njit
 def Y_of_x(x, xmin):
     return y_of_x(x, xmin)
 
+
 @njit
 def x_of_Y(y, xmin):
     return x_of_y(y, xmin)
+
 
 @njit
 def Z_of_a(a, amin=AMIN_REGIONB, amax=AMAX_REGIONB):
     chimax = chi_of_a(amin)
     chimin = chi_of_a(amax)
-    return (chi_of_a(a) - chimin)/(chimax - chimin)
+    return (chi_of_a(a) - chimin) / (chimax - chimin)
+
 
 @njit
 def a_of_Z(z, amin=AMIN_REGIONB, amax=AMAX_REGIONB):
     chimax = chi_of_a(amin)
     chimin = chi_of_a(amax)
-    return a_of_chi(chimin + z*(chimax - chimin))
+    return a_of_chi(chimin + z * (chimax - chimin))
+
 
 @njit
-def _UWYZ_of_apex_kernel(a, p, e, x, pLSO, is_flux, amin = AMIN, amax = AMAX, dpc = DPC_REGIONB, pmax = PMAX_REGIONB, xmin = XMIN, emax = EMAX, delta_pmin=DELTAPMIN_REGIONB):
+def _UWYZ_of_apex_kernel(
+    a,
+    p,
+    e,
+    x,
+    pLSO,
+    is_flux,
+    amin=AMIN,
+    amax=AMAX,
+    dpc=DPC_REGIONB,
+    pmax=PMAX_REGIONB,
+    xmin=XMIN,
+    emax=EMAX,
+    delta_pmin=DELTAPMIN_REGIONB,
+):
     if is_flux:
         u = U_of_p_flux(p, pLSO, delta_pmin, pmax)
     else:
@@ -530,11 +559,25 @@ def _UWYZ_of_apex_kernel(a, p, e, x, pLSO, is_flux, amin = AMIN, amax = AMAX, dp
     w = W_of_e(e, emax)
     return u, w, y, z
 
-def apex_of_UWYZ(u, w, y, z, is_flux, amin = AMIN, amax = AMAX,  dpc = DPC_REGIONB, pmax = PMAX_REGIONB, xmin = XMIN, emax = EMAX, delta_pmin=DELTAPMIN_REGIONB):
+
+def apex_of_UWYZ(
+    u,
+    w,
+    y,
+    z,
+    is_flux,
+    amin=AMIN,
+    amax=AMAX,
+    dpc=DPC_REGIONB,
+    pmax=PMAX_REGIONB,
+    xmin=XMIN,
+    emax=EMAX,
+    delta_pmin=DELTAPMIN_REGIONB,
+):
     a = a_of_Z(z, amin, amax)
     x = x_of_Y(y, xmin)
     e = e_of_W(w, emax)
-    
+
     a = np.asarray(a)
     a_in = np.abs(a)
     x_in = np.sign(a)

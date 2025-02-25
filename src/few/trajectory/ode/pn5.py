@@ -1,6 +1,5 @@
 from .base import ODEBase
-from ...utils.utility import get_separatrix, get_fundamental_frequencies
-from ...utils.pn_map import Y_to_xI
+from ...utils.utility import get_fundamental_frequencies
 
 from numba import njit
 from math import sqrt, log, cosh, sinh, pow
@@ -18,7 +17,6 @@ from typing import Union
 
 
 class PN5(ODEBase):
-
     @property
     def convert_Y(self):
         return True
@@ -31,7 +29,9 @@ class PN5(ODEBase):
     def flux_output_convention(self):
         return "pex"
 
-    def evaluate_rhs(self, y: Union[list[float], np.ndarray]) -> list[Union[float, np.ndarray]]:
+    def evaluate_rhs(
+        self, y: Union[list[float], np.ndarray]
+    ) -> list[Union[float, np.ndarray]]:
         p, e, Y = y[:3]
 
         pdot = dpdt8H_5PNe10(self.a, p, e, Y, 10, 10)
@@ -42,20 +42,24 @@ class PN5(ODEBase):
 
         return [pdot, edot, Ydot, frequencies[0], frequencies[1], frequencies[2]]
 
+
 # /*-*-*-*-*-*-*-*-*-*-*-* External functions (can be refered by other source files) *-*-*-*-*-*-*-*-*-*-*-*/
+
+
 @njit
-def dEdt8H_5PNe10 (q, p, e, Y, Nv, ne):
+def dEdt8H_5PNe10(q, p, e, Y, Nv, ne):
     nv = Nv
 
     v = 1.0 / sqrt(p)
     lnv = log(v)
 
     av = np.zeros((11))
-    a = np.zeros((11,11))
+    a = np.zeros((11, 11))
 
     if Nv == 0:
-       nv = 1
+        nv = 1
 
+    # fmt: off
     tmp1 = 0.1e1
     a[0][0]=tmp1
     tmp1 = 0.304166666666666667e1
@@ -423,38 +427,48 @@ def dEdt8H_5PNe10 (q, p, e, Y, Nv, ne):
     t70 = sinh(t16)
     tmp1 = 0.480651855468750000e0 * t5 * (0.314159265358979324e1 * t4 * (0.290666666666666667e1 + (0.398666666666666667e1 + 0.536000000000000000e1 * t6 + t8) * t1 + 0.165333333333333333e1 * t6 - 0.222222222222222222e0 * t8) * t18 * q - 0.845783371126228269e2 * ((-0.243917691150327521e2 + 0.693147180559945309e0 * (-0.106701297241186284e7 * t6 + 0.111278412658049714e7) * t1 + 0.109861228866810969e1 * (0.513299688054000951e6 - 0.502519879925342078e6 * t6) * t1 + 0.160943791243410037e1 * (-0.591839398177383000e6 + 0.567129734616094746e6 * t6) * t1 + 0.194591014905531331e1 * (0.194856384565103968e6 * t6 - 0.196774065512069217e6) * t1 + (0.137050473318621012e0 + t8 - 0.975396868945890842e0 * t6) * t40 + 0.252138486179084019e1 * (-0.447885206420640402e0 + t6) * Y * t1 * q + ((0.795673483701192005e0 * lnv - 0.294387114818156647e3) * t6 + 0.203177051822745199e3 - 0.324416227260142663e0 * lnv) * t1 - 0.289262736523229248e2 * Y * q - 0.136633554625904100e2 * lnv) * t4 + 0.394111949599426759e-2 * (0.228000000000000000e1 - 0.232000000000000000e1 * t6 + t8) * t61 * t60 * t65 * t64) * t70 * t17 - 0.104719755119659775e1 * (0.740000000000000000e1 + 0.792000000000000000e1 * t6 + t8) * t4 * (0.333333333333333333e0 + t1) * q) / t70 / t17
     a[10][10]=tmp1
+    # fmt: on
 
     for i in range(nv, -1, -1):
         tmp1 = a[i][ne - 1] + e * a[i][ne]
         for j in range(ne - 1, 0, -1):
             tmp2 = tmp1
-            tmp1 = a[i][j-1] + e * tmp2
+            tmp1 = a[i][j - 1] + e * tmp2
         av[i] = tmp1
 
-    tmp1 = av[nv - 1] + v * av[nv] #(nv/2)-PN
+    tmp1 = av[nv - 1] + v * av[nv]  # (nv/2)-PN
 
-    for i in range(nv-1, 0, -1):
+    for i in range(nv - 1, 0, -1):
         tmp2 = tmp1
         tmp1 = av[i - 1] + v * tmp2
 
-    tmp1 *= -32./5. * pow((1. - e * e), 1.5) * ( v * v * v ) * ( v * v * v )  * (v * v * v) * v
+    tmp1 *= (
+        -32.0
+        / 5.0
+        * pow((1.0 - e * e), 1.5)
+        * (v * v * v)
+        * (v * v * v)
+        * (v * v * v)
+        * v
+    )
 
     return tmp1
 
+
 @njit
-def dLdt8H_5PNe10 (q, p, e, Y, Nv, ne):
+def dLdt8H_5PNe10(q, p, e, Y, Nv, ne):
     nv = Nv
 
     v = 1.0 / sqrt(p)
     lnv = log(v)
 
     av = np.zeros((11))
-    a = np.zeros((11,11))
+    a = np.zeros((11, 11))
 
     if Nv == 0:
-       nv = 1
+        nv = 1
 
-
+    # fmt: off
     a[0][0]=Y
     a[0][2]=0.875000000000000000e0 * Y
     a[2][0]=-0.371130952380952381e1 * Y
@@ -686,36 +700,39 @@ def dLdt8H_5PNe10 (q, p, e, Y, Nv, ne):
     t25 = t1 * t1
     t28 = t1 * q
     a[10][10]=-0.174839251442528137e8 * (0.130008644944352948e2 - 0.981895725426337832e0 * t1 + t4) * Y + 0.992023250212932133e7 * (0.219651511997036684e2 - 0.961927247517862388e0 * t1 + t4) * Y + 0.746951938468273066e-18 * (-0.187853514464440951e26 * t1 + 0.634781580382132200e27) * Y + 0.142686634303067099e8 * t16 * t1 - 0.670765758357075921e7 * (0.692847440733428568e2 - 0.955471425102699167e0 * t1 + t4) * Y - 0.397344512939453125e2 * t23 * Y * t25 + 0.249900032777727619e2 * t23 * t28 + 0.107762385741057569e-17 * (0.297361104439679280e20 * t25 + 0.249283113767769489e22 * t1) * t16 + 0.107762385741057569e-17 * (-0.113025160881431411e20 * t28 - 0.275622844298178601e20 * q) * t3 + 0.107762385741057569e-17 * (-0.479589151513071600e19 * t25 - 0.187439166273597638e22 * t1 + 0.165208487065509888e20 * lnv - 0.607007577063550018e22) * Y + 0.911066521195744044e-2 * t28 - 0.658518101526782725e2 * q
+    # fmt: on
 
     for i in range(nv, -1, -1):
         tmp1 = a[i][ne - 1] + e * a[i][ne]
-        for j in range(ne-1, 0, -1):
+        for j in range(ne - 1, 0, -1):
             tmp2 = tmp1
-            tmp1 = a[i][j-1] + e * tmp2
+            tmp1 = a[i][j - 1] + e * tmp2
         av[i] = tmp1
-    tmp1 = av[nv-1] + v * av[nv] #(nv/2)-PN
+    tmp1 = av[nv - 1] + v * av[nv]  # (nv/2)-PN
 
-    for i in range(nv-1, 0, -1):
+    for i in range(nv - 1, 0, -1):
         tmp2 = tmp1
-        tmp1 = av[i-1] + v * tmp2
+        tmp1 = av[i - 1] + v * tmp2
 
-    tmp1 *= -32./5. * pow((1. - e * e), 1.5) * ( v * v * v ) * ( v * v * v ) * v
+    tmp1 *= -32.0 / 5.0 * pow((1.0 - e * e), 1.5) * (v * v * v) * (v * v * v) * v
 
     return tmp1
 
+
 @njit
-def dCdt8H_5PNe10 (q, p, e, Y, Nv, ne):
+def dCdt8H_5PNe10(q, p, e, Y, Nv, ne):
     nv = Nv
 
     v = 1.0 / sqrt(p)
     lnv = log(v)
 
     av = np.zeros((11))
-    a = np.zeros((11,11))
+    a = np.zeros((11, 11))
 
     if Nv == 0:
         nv = 1
 
+    # fmt: off
     #for(i=0i<=nvi++){ for(j=0j<=nej++){ a[i][j]=0. }}
     a[0][0]=0.1e1
     a[0][2]=0.875000000000000000e0
@@ -1026,38 +1043,47 @@ def dCdt8H_5PNe10 (q, p, e, Y, Nv, ne):
     t23 = t4 * t4
     a[10][10]=\
     -0.20671240038936565e3 + 0.746951938468273066e-18 * (0.198192385473294088e26 * t1 - 0.147564239918889246e26) * t4 + 0.118389081231318926e-17 * (0.876892852291072074e25 * t1 - 0.631732862357482697e25) * t4 + 0.173436869146005958e-17 * (-0.104715363659753331e26 * t1 + 0.777540590996427070e25) * t4 + 0.209695920099937504e-17 * (-0.335098627279156990e25 * t1 + 0.239275322871512600e25) * t4 + 0.107762385741057569e-17 * (-0.407350664760279240e20 * t19 + 0.259517993072017680e20 * t1 - 0.222267510737672400e19) * t23 + 0.264971620920028919e2 * (-0.428835667046842304e0 + t1) * Y * t4 * q + 0.107762385741057569e-17 * (0.286778219957520940e22 * t1 - 0.135818871789018338e22) * t4 - 0.121858019542843941e3 * Y * q + 0.754882034095203738e1 * lnv
+    # fmt: on
 
     for i in range(nv, -1, -1):
         tmp1 = a[i][ne - 1] + e * a[i][ne]
-        for j in range(ne-1, 0, -1):
+        for j in range(ne - 1, 0, -1):
             tmp2 = tmp1
             tmp1 = a[i][j - 1] + e * tmp2
         av[i] = tmp1
 
-    tmp1 = av[nv - 1] + v * av[nv] #//(nv/2)-PN
+    tmp1 = av[nv - 1] + v * av[nv]  # //(nv/2)-PN
 
     # for(i = nv - 1 i >= 1 i--) {
     for i in range(nv - 1, 0, -1):
         tmp2 = tmp1
         tmp1 = av[i - 1] + v * tmp2
 
-    tmp1 *= -64./5.*pow((1. - e * e), 1.5) * ( v * v * v ) * ( v * v * v ) * (1. - Y * Y)
+    tmp1 *= (
+        -64.0
+        / 5.0
+        * pow((1.0 - e * e), 1.5)
+        * (v * v * v)
+        * (v * v * v)
+        * (1.0 - Y * Y)
+    )
 
     return tmp1
 
-@njit
-def dpdt8H_5PNe10 (q, p, e, Y, Nv, ne):
 
+@njit
+def dpdt8H_5PNe10(q, p, e, Y, Nv, ne):
     nv = Nv
 
     v = 1.0 / sqrt(p)
     lnv = log(v)
 
     av = np.zeros((11))
-    a = np.zeros((11,11))
+    a = np.zeros((11, 11))
     if Nv == 0:
         nv = 1
 
+    # fmt: off
     a[0][0]=0.1e1
     a[0][2]=0.875000000000000000e0
     a[2][0]=-0.221130952380952381e1
@@ -1369,40 +1395,42 @@ def dpdt8H_5PNe10 (q, p, e, Y, Nv, ne):
     t23 = t4 * t4
     a[10][10]=\
     -0.32241796515061409e3 + 0.746951938468273066e-18 * (0.133912268667384235e26 * t1 - 0.147564239918889246e26) * t4 + 0.118389081231318926e-17 * (0.583647197332393673e25 * t1 - 0.631732862357482697e25) * t4 + 0.173436869146005958e-17 * (-0.705532020461784141e25 * t1 + 0.777540590996427070e25) * t4 + 0.209695920099937504e-17 * (-0.223072556794478525e25 * t1 + 0.239275322871512600e25) * t4 + 0.107762385741057569e-17 * (-0.319806575084997000e20 * t19 + 0.218372282252364240e20 * t1 - 0.219605494372664400e19) * t23 + 0.262731087072118533e2 * (-0.428182255034031932e0 + t1) * Y * t4 * q + 0.107762385741057569e-17 * (0.150715530943748395e22 * t1 - 0.137594774468594964e22) * t4 + 0.306294359808085078e3 * Y * q + 0.426959105832989762e2 * lnv
+    # fmt: on
 
     # for(i = nv i >= 0i--) {
-    for i in range(nv, -1 ,-1):
+    for i in range(nv, -1, -1):
         tmp1 = a[i][ne - 1] + e * a[i][ne]
         # for(j = ne - 1 j >= 1 j--) {
         for j in range(ne - 1, 0, -1):
             tmp2 = tmp1
-            tmp1 = a[i][j-1] + e * tmp2
+            tmp1 = a[i][j - 1] + e * tmp2
         av[i] = tmp1
 
-    tmp1 = av[nv-1] + v * av[nv] #//(nv/2)-PN
+    tmp1 = av[nv - 1] + v * av[nv]  # //(nv/2)-PN
 
     for i in range(nv - 1, 0, -1):
         tmp2 = tmp1
         tmp1 = av[i - 1] + v * tmp2
 
-    tmp1 *= -64./5. * pow((1. - e * e), 1.5) * ( v * v * v ) * ( v * v * v )
+    tmp1 *= -64.0 / 5.0 * pow((1.0 - e * e), 1.5) * (v * v * v) * (v * v * v)
 
     return tmp1
 
-@njit
-def dedt8H_5PNe10 (q, p, e, Y, Nv, ne):
 
+@njit
+def dedt8H_5PNe10(q, p, e, Y, Nv, ne):
     nv = Nv
 
     v = 1.0 / sqrt(p)
     lnv = log(v)
 
     av = np.zeros((11))
-    a = np.zeros((11,11))
+    a = np.zeros((11, 11))
 
     if Nv == 0:
         nv = 1
 
+    # fmt: off
     a[0][0]=0.1e1
     a[0][2]=0.398026315789473684e0
     a[2][0]=-0.321851503759398496e1
@@ -1714,6 +1742,7 @@ def dedt8H_5PNe10 (q, p, e, Y, Nv, ne):
     t30 = t6 * t6
     a[10][10]=\
     -0.98394281083838850e2 + 0.235879559516296757e-18 * (-0.937515559379974254e24 * t2 + 0.514625349510447622e25 * t1 - 0.147564239918889246e26) * t6 - 0.599886289743e1 * t1 + 0.373860256519954501e-18 * (-0.402688060070514014e24 * t2 + 0.221777407977432709e25 * t1 - 0.631732862357482697e25) * t6 + 0.547695376250545130e-18 * (0.494639595625957031e24 * t2 - 0.269025070197633750e25 * t1 + 0.777540590996427070e25) * t6 + 0.662197642420855274e-18 * (0.152231819021556700e24 * t2 - 0.860639196750774947e24 * t1 + 0.239275322871512600e25) * t6 + 0.340302270761234428e-18 * (0.877530862792584000e18 * t2 * t1 - 0.247211972845077240e20 * t2 + 0.185639203930340160e20 * t1 - 0.217371099785439600e19) * t30 - 0.331776832868268559e-1 * (0.109378019533070590e3 - 0.274643683014975444e3 * t1 + t2) * Y * t6 * q + 0.340302270761234428e-18 * (-0.400197399300578880e20 * t2 + 0.820378063214673163e21 * t1 - 0.139973356619329353e22) * t6 + 0.340302270761234428e-18 * (-0.335674770039066030e20 * t1 * Y + 0.380382697724002325e21 * Y) * q + 0.214972413489418894e2 * lnv
+    # fmt: on
 
     # for(i = nv i >= 0 i--) {
     for i in range(nv, -1, -1):
@@ -1724,31 +1753,34 @@ def dedt8H_5PNe10 (q, p, e, Y, Nv, ne):
             tmp1 = a[i][j - 1] + e * tmp2
         av[i] = tmp1
 
-    tmp1 = av[nv - 1] + v * av[nv] #//(nv/2)-PN
+    tmp1 = av[nv - 1] + v * av[nv]  # //(nv/2)-PN
 
     # for(i = nv - 1 i >= 1 i--) {
     for i in range(nv - 1, 0, -1):
         tmp2 = tmp1
         tmp1 = av[i - 1] + v * tmp2
 
-    tmp1 *= -304./15. * e * pow((1. - e * e), 1.5) * ( v * v * v * v ) * ( v * v * v * v )
+    tmp1 *= (
+        -304.0 / 15.0 * e * pow((1.0 - e * e), 1.5) * (v * v * v * v) * (v * v * v * v)
+    )
 
     return tmp1
 
-@njit
-def dYdt8H_5PNe10 (q: float, p: float, e: float, Y: float, Nv: int, ne: int):
 
+@njit
+def dYdt8H_5PNe10(q: float, p: float, e: float, Y: float, Nv: int, ne: int):
     nv = Nv
 
     v = 1.0 / sqrt(p)
     lnv = log(v)
 
-    a = np.zeros((11,11))
+    a = np.zeros((11, 11))
     av = np.zeros(11)
 
     if Nv == 0:
         nv = 1
 
+    # fmt: off
     a[3][0]=0.1e1
     a[3][2]=0.309836065573770492e1
     a[3][4]=0.584016393442622951e0
@@ -1978,6 +2010,7 @@ def dYdt8H_5PNe10 (q: float, p: float, e: float, Y: float, Nv: int, ne: int):
     t4 = t3 * q
     a[10][10]=\
     0.230686475409836066e1 * t1 * Y * t4 - 0.366303522918945551e0 * t1 * t3 - 0.109744813012295082e1 * Y * t4 - 0.3611706334064e1 * Y * q + 0.358452401781932084e-2 * t3 - 0.323544032360036650e2
+    # fmt: on
 
     # for(i =nv i >= 0 i--) {
     for i in range(nv, -1, -1):
@@ -1985,16 +2018,24 @@ def dYdt8H_5PNe10 (q: float, p: float, e: float, Y: float, Nv: int, ne: int):
         # for(j = ne - 1 j >= 1 j--) {
         for j in range(ne - 1, 0, -1):
             tmp2 = tmp1
-            tmp1= a[i][j - 1] + e * tmp2
+            tmp1 = a[i][j - 1] + e * tmp2
         av[i] = tmp1
 
-    tmp1 = av[nv - 1] + v * av[nv] #//(nv/2)-PN
+    tmp1 = av[nv - 1] + v * av[nv]  # //(nv/2)-PN
 
     # for(i = nv - 1 i >= 1 i--) {
     for i in range(nv - 1, 0, -1):
         tmp2 = tmp1
         tmp1 = av[i - 1] + v * tmp2
 
-    tmp1 *= -244./15. * q * pow((1. - e * e), 1.5) * ( v * v * v * v ) * ( v * v * v * v )* (1. - Y * Y)
+    tmp1 *= (
+        -244.0
+        / 15.0
+        * q
+        * pow((1.0 - e * e), 1.5)
+        * (v * v * v * v)
+        * (v * v * v * v)
+        * (1.0 - Y * Y)
+    )
 
     return tmp1
