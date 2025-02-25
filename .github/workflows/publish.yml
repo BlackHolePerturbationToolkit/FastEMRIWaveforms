@@ -1,14 +1,11 @@
 name: Publish tagued version to TestPyPI
-
 on:
   push:
     tags:
       - 'v*.*.*'
       - 'v*.*.**'
-
 permissions:
   contents: read
-
 jobs:
   build_wheels:
     name: Build manylinux wheels for FEW
@@ -43,11 +40,9 @@ jobs:
     steps:
       # Checkout sources
       - uses: actions/checkout@v4
-
       - name: Prepare environment file
         run: |
           touch .compiler.env
-
       # Install CUDA Toolkit
       - name: Install CUDA Toolkit
         if: ${{ matrix.cuda_major }}
@@ -63,43 +58,36 @@ jobs:
           echo 'export CUDA_PATH=/usr/local/cuda' >> .compiler.env
           echo 'export CUDADIR=/usr/local/cuda' >> .compiler.env
           cat .compiler.env
-
       - name: Install GCC Toolset
         if: ${{ matrix.nvcc_ccbin_ver }}
         run: |
           dnf install -y gcc-toolset-${{ matrix.nvcc_ccbin_ver }}
           echo 'source /opt/rh/gcc-toolset-${{ matrix.nvcc_ccbin_ver }}/enable' >> .compiler.env
           cat .compiler.env
-
       # Update project name
       - name: Update version scheme
         run: |
           sed -i 's|version_scheme = "no-guess-dev"|version_scheme = "only-version"|g' pyproject.toml
           sed -i 's|local_scheme = "node-and-date"|local_scheme = "no-local-version"|g' pyproject.toml
-
       # Update project name
       - name: Add release suffix to project name
         run: |
           sed -i 's|" #@NAMESUFFIX@|-${{ matrix.release }}"|g' pyproject.toml
-
       # Add CuPy dependency
       - name: Add Cupy dependency
         if: ${{ matrix.cuda_major }}
         run: |
           sed -i 's|#@DEPS_CUPYCUDA@|"cupy-${{ matrix.release }}"|g' pyproject.toml
-
       # Add Core project dependency
       - name: Add core project dependency on plugin
         if: ${{ matrix.is_plugin }}
         run: |
           sed -i 's|#@DEPS_FEWCORE@|"fastemriwaveforms-cpu==${{ github.ref_name }}"|g' pyproject.toml
-
       # Remove base sources from plugin wheels
       - name: Exclude core package from plugins
         if: ${{ matrix.is_plugin }}
         run: |
           sed -i '/@SKIP_PLUGIN@/d' pyproject.toml
-
       - name: Compile LAPACK
         if: ${{ matrix.opt_with_gpu != 'ONLY' }}
         run: |
@@ -112,7 +100,6 @@ jobs:
           cmake --install lapack/build
           rm -Rf lapack
           echo 'export PKG_CONFIG_PATH=/opt/lapack/lib64/pkgconfig/:${PKG_CONFIG_PATH}' >> .compiler.env
-
       # Build wheels
       - name: Build wheels
         run: |
@@ -127,7 +114,6 @@ jobs:
                 --config-settings=cmake.define.FEW_WITH_GPU=${{ matrix.opt_with_gpu }} &
           done;
           wait
-
       - name: Repair wheels (GPU)
         if: ${{ matrix.cuda_major }}
         run: |
@@ -140,7 +126,6 @@ jobs:
               --exclude "libnvJitLink.so.${{ matrix.cuda_major }}" \
               --exclude "libcublasLt.so.${{ matrix.cuda_major }}"
           done
-
       - name: Repair wheels (CPU)
         if: ${{ ! matrix.cuda_major }}
         run: |
@@ -148,14 +133,12 @@ jobs:
             auditwheel repair "${whl}" -w /wheelhouse/ \
               --plat ${{ matrix.manylinux_plat }}
           done
-
       - name: Upload wheels as artifacts
         uses: actions/upload-artifact@v4
         with:
           name: release-wheels-${{ matrix.release }}
           path: /wheelhouse/*.whl
           retention-days: 2
-
   publish:
     runs-on: ubuntu-latest
     environment: pypiconf
@@ -173,19 +156,16 @@ jobs:
         with:
           path: wheelhouse/
           merge-multiple: true
-
       - name: List wheels
         run: |
           ls -al wheelhouse/*
-
       - name: Install twine from PyPI
-        uses: install-pinned/twine@e0e1034852ffdf3e7867300539b1065f1bff2a87  # 6.0.1
-
+        uses: install-pinned/twine@e0e1034852ffdf3e7867300539b1065f1bff2a87 # 6.0.1
       - name: Publish release distributions to registry
         env:
           TWINE_NON_INTERACTIVE: "yes"
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
           TWINE_REPOSITORY: ${{ vars.TWINE_REPOSITORY }}
           TWINE_USERNAME: ${{ vars.TWINE_USERNAME }}
-        run : |
+        run: |
           twine upload wheelhouse/*
