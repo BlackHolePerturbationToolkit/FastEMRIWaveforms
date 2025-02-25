@@ -43,6 +43,7 @@ for example in (
     "cubicspline",
     "swsh",
     "utility",
+    "waveform",
 ):
     filename = example + ".ipynb"
     if not (trg_dir / filename).is_file():
