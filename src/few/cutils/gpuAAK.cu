@@ -344,8 +344,8 @@ void make_waveform(cmplx *waveform,
           double gimdot = OmegaTheta - OmegaR;
           double lam = acos(Y);
 
-          if (lam > M_PI - fill_val) lam = M_PI - fill_val;
-          if (lam < fill_val) lam = fill_val;
+         //  if (lam > M_PI - fill_val) lam = M_PI - fill_val;
+         //  if (lam < fill_val) lam = fill_val;
 
           double coslam=cos(lam);
           double sinlam=sin(lam);
@@ -360,7 +360,7 @@ void make_waveform(cmplx *waveform,
           double Ldotn2=Ldotn*Ldotn;
           double Sdotn=cosqK*cosqS+sinqK*sinqS*cos(phiK-phiS);
           double beta;
-          if (S_phys == 0.0)
+          if (S_phys == 0.0 || lam == 0.0)
           {
               beta = 0.0; // This seems to work nicely
           }
