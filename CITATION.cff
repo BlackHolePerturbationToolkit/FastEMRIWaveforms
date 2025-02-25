@@ -56,7 +56,7 @@ keywords:
   - LISA
   - EMRI
   - Waveform
-license: GPL-3.0
+license: MIT
 references:
   - abbreviation: "Chua:2020stf"
     authors:

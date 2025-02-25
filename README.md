@@ -201,7 +201,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 * **Michael Katz**
 * Lorenzo Speri
-* Christian Chapman-Bird
+* Christian Chapman-Bird
 * Alvin J. K. Chua
 * Niels Warburton
 * Scott Hughes
@@ -212,6 +212,8 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 * Soichiro Isoyama
 * Ryuichi Fujita
 * Monica Rizzo
+* Ollie Burke
+* Maxime Pigou
 
 ## License
 

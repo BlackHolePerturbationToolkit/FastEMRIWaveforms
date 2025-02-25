@@ -10,12 +10,22 @@ description = "Fast and accurate EMRI Waveforms."
 
 readme = "README.md"
 
+maintainers = [
+  { name = "Michael Katz", email = "mikekatz04@gmail.com" },
+  { name = "Christian Chapman-Bird", email = "c.chapmanbird@gmail.com" },
+]
+
 authors = [
   { name = "Michael Katz", email = "mikekatz04@gmail.com" },
+  { name = "Lorenzo Speri", email = "lorenzo.speri@gmail.com" },
+  { name = "Christian Chapman-Bird", email = "c.chapmanbird@gmail.com" },
+  { name = "Alvin J. K. Chua" },
+  { name = "Niels Warburton", email = "nielsw@gmail.com" },
+  { name = "Scott Hughes" },
 ]
 classifiers = [
   "Environment :: GPU :: NVIDIA CUDA",
-  "License :: OSI Approved :: GNU General Public License (GPL)",
+  "License :: OSI Approved :: MIT License",
   "Natural Language :: English",
   "Programming Language :: C++",
   "Programming Language :: Cython",
