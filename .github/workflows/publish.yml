@@ -4,6 +4,8 @@ on:
     tags:
       - 'v*.*.*'
       - 'v*.*.**'
+      - 'v*.*.*-rc*'
+      - 'v*.*.*-rc**'
 permissions:
   contents: read
 jobs:
