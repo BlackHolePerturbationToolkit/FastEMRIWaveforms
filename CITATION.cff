@@ -42,7 +42,7 @@ identifiers:
 repository-code: >-
   https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms
 url: 'https://bhptoolkit.org/FastEMRIWaveforms/html/index.html'
-repository: 'https://zenodo.org/records/8190418'
+repository: 'https://zenodo.org/records/3969004'
 repository-artifact: 'https://pypi.org/project/fastemriwaveforms/'
 abstract: >-
   This package contains the highly modular framework for
