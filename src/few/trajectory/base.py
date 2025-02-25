@@ -1,9 +1,10 @@
 import abc
 from few.utils.citations import Citable
-from few.utils.constants import *
+from few.utils.constants import YRSID_SI, MTSUN_SI
 import numpy as np
 
-from typing import Optional, Union
+from typing import Optional
+
 
 class TrajectoryBase(Citable, abc.ABC):
     """Base class used for trajectory modules.
@@ -33,17 +34,17 @@ class TrajectoryBase(Citable, abc.ABC):
     def __call__(
         self,
         *args,
-        in_coordinate_time: bool=True,
-        dt: float=10.0,
-        T: float=1.0,
-        new_t: Optional[np.ndarray]=None,
-        spline_kwargs: Optional[dict]=None,
-        DENSE_STEPPING: bool=False,
-        buffer_length: int=1000,
-        upsample: bool=False,
-        err: float=1e-11,
-        fix_t: bool=False,
-        integrate_backwards: bool=False,
+        in_coordinate_time: bool = True,
+        dt: float = 10.0,
+        T: float = 1.0,
+        new_t: Optional[np.ndarray] = None,
+        spline_kwargs: Optional[dict] = None,
+        DENSE_STEPPING: bool = False,
+        buffer_length: int = 1000,
+        upsample: bool = False,
+        err: float = 1e-11,
+        fix_t: bool = False,
+        integrate_backwards: bool = False,
         **kwargs,
     ) -> tuple[np.ndarray]:
         """Call function for trajectory interface.
@@ -140,15 +141,14 @@ class TrajectoryBase(Citable, abc.ABC):
 
         else:
             # new time array for upsampling
-            new_t = np.arange(int(T/dt)) * dt
+            new_t = np.arange(int(T / dt)) * dt
 
         # upsample everything
         upsamp_traj = self.inspiral_generator.eval_integrator_spline(new_t).T
         if fix_t:
             if np.any(upsamp_traj[1] == 0):
-
                 trunc_ind = np.where(upsamp_traj[1] == 0)[0][0]
-                upsamp_traj = upsamp_traj[:,:trunc_ind]
+                upsamp_traj = upsamp_traj[:, :trunc_ind]
                 new_t = new_t[:trunc_ind]
         out = tuple(upsamp_traj)
 

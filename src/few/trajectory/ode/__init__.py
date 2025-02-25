@@ -7,7 +7,7 @@ from .flux import SchwarzEccFlux, KerrEccEqFlux
 from .pn5 import PN5
 
 _STOCK_TRAJECTORY_OPTIONS = {
-    "SchwarzEccFlux" : SchwarzEccFlux,
-    "KerrEccEqFlux" : KerrEccEqFlux,
-    "PN5" : PN5,
+    "SchwarzEccFlux": SchwarzEccFlux,
+    "KerrEccEqFlux": KerrEccEqFlux,
+    "PN5": PN5,
 }

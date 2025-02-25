@@ -4,31 +4,41 @@ from .utility import get_kerr_geo_constants_of_motion
 import numpy as np
 from typing import Union
 
+
 @njit(fastmath=False)
 def _d1(q, p, e, Y):
     p2 = p * p
     q2 = q * q
-    inv_ep4 = 1.0 / ((1.0 + e)**4)
+    inv_ep4 = 1.0 / ((1.0 + e) ** 4)
 
     if abs(q) >= 1.0 or abs(e) >= 1.0 or p <= 1.0 or abs(Y) > 1.0:
         raise ValueError("Parameter errors: _d1")
     elif e == 0.0:
         return (p2 + q2 - 2.0 * p) * p2
     else:
-        return p2 * ((q2 * e * e) + (2.0 * q2 - 2.0 * p) * e + p2 + q2 - 2.0 * p) * inv_ep4
+        return (
+            p2 * ((q2 * e * e) + (2.0 * q2 - 2.0 * p) * e + p2 + q2 - 2.0 * p) * inv_ep4
+        )
+
 
 @njit(fastmath=False)
 def _f1(q, p, e, Y):
     p2 = p * p
     q2 = q * q
-    inv_ep4 = 1.0 / ((1.0 + e)**4)
+    inv_ep4 = 1.0 / ((1.0 + e) ** 4)
 
     if abs(q) >= 1.0 or abs(e) >= 1.0 or p <= 1.0 or abs(Y) > 1.0:
         raise ValueError("Parameter errors: _f1")
     elif e == 0.0:
         return p2 * p2 + p2 * q2 + 2.0 * p * q2
     else:
-        return 2.0 * p * ((1.0 + e)**2 * (e + p / 2.0 + 1.0) * q2 + (p2 * p) / 2.0) * inv_ep4
+        return (
+            2.0
+            * p
+            * ((1.0 + e) ** 2 * (e + p / 2.0 + 1.0) * q2 + (p2 * p) / 2.0)
+            * inv_ep4
+        )
+
 
 @njit(fastmath=False)
 def _g1(q, p, e, Y):
@@ -39,13 +49,14 @@ def _g1(q, p, e, Y):
     else:
         return 2.0 * q * p / (1.0 + e)
 
+
 @njit(fastmath=False)
 def _h1(q, p, e, Y):
     q2 = q * q
     p2 = p * p
     Y2 = Y * Y
     y2 = 1.0 - Y2
-    inv_ep2 = 1.0 / ((1.0 + e)**2)
+    inv_ep2 = 1.0 / ((1.0 + e) ** 2)
 
     if abs(q) >= 1.0 or abs(e) >= 1.0 or p <= 1.0 or abs(Y) > 1.0:
         raise ValueError("Parameter errors: _h1")
@@ -56,33 +67,49 @@ def _h1(q, p, e, Y):
     elif Y == 1.0:
         return (-2.0 * p * e + p2 - 2.0 * p) * inv_ep2
     else:
-        return (y2 * q2 * e * e + (2.0 * y2 * q2 - 2.0 * p) * e + y2 * q2 + p2 - 2.0 * p) * inv_ep2 / Y2
+        return (
+            (y2 * q2 * e * e + (2.0 * y2 * q2 - 2.0 * p) * e + y2 * q2 + p2 - 2.0 * p)
+            * inv_ep2
+            / Y2
+        )
+
 
 @njit(fastmath=False)
 def _d2(q, p, e, Y):
     q2 = q * q
     p2 = p * p
-    inv_em4 = 1.0 / ((-1.0 + e)**4)
+    inv_em4 = 1.0 / ((-1.0 + e) ** 4)
 
     if abs(q) >= 1.0 or abs(e) >= 1.0 or p <= 1.0 or abs(Y) > 1.0:
         raise ValueError("Parameter errors: _d2")
     elif e == 0.0:
         return 4.0 * p2 * p + 2.0 * p * q2 - 6.0 * p2
     else:
-        return p2 * ((q2 * e * e) + (-2.0 * q2 + 2.0 * p) * e + p2 + q2 - 2.0 * p) * inv_em4
+        return (
+            p2
+            * ((q2 * e * e) + (-2.0 * q2 + 2.0 * p) * e + p2 + q2 - 2.0 * p)
+            * inv_em4
+        )
+
 
 @njit(fastmath=False)
 def _f2(q, p, e, Y):
     q2 = q * q
     p2 = p * p
-    inv_em4 = 1.0 / ((-1.0 + e)**4)
+    inv_em4 = 1.0 / ((-1.0 + e) ** 4)
 
     if abs(q) >= 1.0 or abs(e) >= 1.0 or p <= 1.0 or abs(Y) > 1.0:
         raise ValueError("Parameter errors: _f2")
     elif e == 0.0:
         return (2.0 * p + 2.0) * q2 + 4.0 * p2 * p
     else:
-        return -2.0 * ((e - p / 2.0 - 1.0) * (-1.0 + e)**2 * q2 - (p2 * p) / 2.0) * p * inv_em4
+        return (
+            -2.0
+            * ((e - p / 2.0 - 1.0) * (-1.0 + e) ** 2 * q2 - (p2 * p) / 2.0)
+            * p
+            * inv_em4
+        )
+
 
 @njit(fastmath=False)
 def _g2(q, p, e, Y):
@@ -93,13 +120,14 @@ def _g2(q, p, e, Y):
     else:
         return -2.0 * q * p / (-1.0 + e)
 
+
 @njit(fastmath=False)
 def _h2(q, p, e, Y):
     q2 = q * q
     p2 = p * p
     Y2 = Y * Y
     y2 = 1.0 - Y2
-    inv_em2 = 1.0 / ((-1.0 + e)**2)
+    inv_em2 = 1.0 / ((-1.0 + e) ** 2)
 
     if abs(q) >= 1.0 or abs(e) >= 1.0 or p <= 1.0 or abs(Y) > 1.0:
         raise ValueError("Parameter errors: _h2")
@@ -110,7 +138,12 @@ def _h2(q, p, e, Y):
     elif Y == 1.0:
         return (2.0 * p * e + p2 - 2.0 * p) * inv_em2
     else:
-        return (y2 * q2 * e * e + (-2.0 * y2 * q2 + 2.0 * p) * e + y2 * q2 + p2 - 2.0 * p) * inv_em2 / Y2
+        return (
+            (y2 * q2 * e * e + (-2.0 * y2 * q2 + 2.0 * p) * e + y2 * q2 + p2 - 2.0 * p)
+            * inv_em2
+            / Y2
+        )
+
 
 @njit(fastmath=False)
 def _PN_E(q, p, e, Y):
@@ -123,12 +156,15 @@ def _PN_E(q, p, e, Y):
     eta = f1 * g2 - f2 * g1
     sigma = g1 * h2 - g2 * h1
 
-    rhs_sqrt = sigma * (sigma * epsilon * epsilon + rho * epsilon * kappa - eta * kappa * kappa)
+    rhs_sqrt = sigma * (
+        sigma * epsilon * epsilon + rho * epsilon * kappa - eta * kappa * kappa
+    )
     rhs_numer = kappa * rho + 2.0 * epsilon * sigma
     rhs_denom = rho * rho + 4.0 * eta * sigma
 
     E_square = (rhs_numer - 2.0 * sqrt(rhs_sqrt)) / rhs_denom
     return sqrt(E_square)
+
 
 @njit(fastmath=False)
 def _PN_L(q, p, e, Y):
@@ -139,6 +175,7 @@ def _PN_L(q, p, e, Y):
 
     return rhs_first_term + sqrt(rhs_sqrt)
 
+
 @njit(fastmath=False)
 def _PN_C(q, p, e, Y):
     L = _PN_L(q, p, e, Y)
@@ -146,6 +183,7 @@ def _PN_C(q, p, e, Y):
         return 0.0
     else:
         return L * L * ((1.0 / (Y * Y)) - 1.0)
+
 
 @njit(fastmath=False)
 def _Y_to_xI_kernel_inner(a, p, e, Y):
@@ -156,20 +194,27 @@ def _Y_to_xI_kernel_inner(a, p, e, Y):
     Lz = _PN_L(a, p, e, Y)
     Q = _PN_C(a, p, e, Y)
 
-    a2 = a*a
-    Lz2 = Lz*Lz
-    E2m1= (E - 1)*(E + 1.)
-    QpLz2ma2omE2 = Q + Lz2 + a2*E2m1
-    denomsqr = QpLz2ma2omE2 + sqrt(QpLz2ma2omE2*QpLz2ma2omE2 - 4.*Lz2*a2*E2m1)
-    xI = sqrt(2.)*Lz/sqrt(denomsqr)
+    a2 = a * a
+    Lz2 = Lz * Lz
+    E2m1 = (E - 1) * (E + 1.0)
+    QpLz2ma2omE2 = Q + Lz2 + a2 * E2m1
+    denomsqr = QpLz2ma2omE2 + sqrt(QpLz2ma2omE2 * QpLz2ma2omE2 - 4.0 * Lz2 * a2 * E2m1)
+    xI = sqrt(2.0) * Lz / sqrt(denomsqr)
     return xI
+
 
 @njit
 def _Y_to_xI_kernel(xI, a, p, e, Y):
     for i in range(len(xI)):
         xI[i] = _Y_to_xI_kernel_inner(a[i], p[i], e[i], Y[i])
 
-def Y_to_xI(a: Union[float, np.ndarray], p: Union[float, np.ndarray], e: Union[float, np.ndarray], Y: Union[float, np.ndarray]) ->  Union[float, np.ndarray]:
+
+def Y_to_xI(
+    a: Union[float, np.ndarray],
+    p: Union[float, np.ndarray],
+    e: Union[float, np.ndarray],
+    Y: Union[float, np.ndarray],
+) -> Union[float, np.ndarray]:
     r"""Convert from :math:`Y=\cos{\iota}` to :math:`x_I=\cos{I}`.
 
     Converts between the two different inclination parameters. :math:`\cos{I}\equiv x_I`,
@@ -212,7 +257,13 @@ def Y_to_xI(a: Union[float, np.ndarray], p: Union[float, np.ndarray], e: Union[f
 
     return x
 
-def xI_to_Y(a: Union[float, np.ndarray], p: Union[float, np.ndarray], e: Union[float, np.ndarray], x: Union[float, np.ndarray]) ->  Union[float, np.ndarray]:
+
+def xI_to_Y(
+    a: Union[float, np.ndarray],
+    p: Union[float, np.ndarray],
+    e: Union[float, np.ndarray],
+    x: Union[float, np.ndarray],
+) -> Union[float, np.ndarray]:
     r"""Convert from :math:`x_I=\cos{I}` to :math:`Y=\cos{\iota}`.
 
     Converts between the two different inclination parameters. :math:`\cos{I}\equiv x_I`,

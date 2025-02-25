@@ -17,14 +17,8 @@
 
 import numpy as np
 
-try:
-    import cupy as cp
-    from cupyx.scipy.signal import convolve as cupy_convolve
-except:
-    from scipy.signal import convolve as numpy_convolve
-    import numpy as np
-
 from typing import Optional
+
 
 def get_convolution(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """
@@ -38,28 +32,34 @@ def get_convolution(a: np.ndarray, b: np.ndarray) -> np.ndarray:
         convolution of the two arrays.
 
     """
-    # determine if using gpu or cpu based on input arrays
-    try:
-        if isinstance(a, cp.ndarray) or isinstance(b, cp.ndarray):
-            if isinstance(a, cp.ndarray) and isinstance(b, cp.ndarray):
-                use_gpu = True
-            else:
-                raise ValueError(
-                    "One array is cupy and one array is numpy. Need to be the same."
-                )
 
-    # if cupy did not import
-    except NameError:
-        use_gpu = False
+    # Check a and b are the same type
+    if type(a) is not type(b):
+        raise ValueError(
+            "One array is cupy and one array is numpy. Need to be the same."
+        )
 
-    xp = cp if use_gpu else np
-    convolve = cupy_convolve if use_gpu else numpy_convolve
+    # Handle the case where both arrays are cupy.ndarray
+    import few
 
-    # convolve two signals
-    return convolve(xp.hstack((a[1:], a)), b, mode="valid") / len(b)
+    if few.has_backend("cuda"):
+        import cupy as cp
+
+        if isinstance(a, cp.ndarray):
+            from cupyx.scipy.signal import convolve
+
+            return convolve(cp.hstack((a[1:], a)), b, mode="valid") / len(b)
+
+    # Handle the case where both arrays are numpy.ndarray
+    assert isinstance(a, np.ndarray)
+    from scipy.signal import convolve
+
+    return convolve(np.hstack((a[1:], a)), b, mode="valid") / len(b)
 
 
-def get_fft_td_windowed(signal: list, window: np.ndarray, dt: float) -> list[np.ndarray]:
+def get_fft_td_windowed(
+    signal: list, window: np.ndarray, dt: float
+) -> list[np.ndarray]:
     """
     Calculate the Fast Fourier Transform of a windowed time domain signal.
 
@@ -72,27 +72,32 @@ def get_fft_td_windowed(signal: list, window: np.ndarray, dt: float) -> list[np.
         Fast Fourier Transform of the windowed time domain signals.
 
     """
-    try:
-        if isinstance(signal[0], cp.ndarray) or isinstance(window, cp.ndarray):
-            if isinstance(signal[0], cp.ndarray) and isinstance(window, cp.ndarray):
-                use_gpu = True
-            else:
-                raise ValueError(
-                    "One array is cupy and one array is numpy. Need to be the same."
-                )
+    # Check a and b are the same type
+    if type(signal[0]) is not type(window):
+        raise ValueError(
+            "One array is cupy and one array is numpy. Need to be the same."
+        )
 
-    # if cupy did not import
-    except NameError:
-        use_gpu = False
+    # Handle the case where arrays are cupy.ndarray
+    xp = np
 
-    xp = cp if use_gpu else np
+    import few
 
+    if few.has_backend("cuda"):
+        import cupy as cp
+
+        if isinstance(signal, cp.ndarray):
+            xp = cp
+
+    # Compute the FFT of the windowed signals
     fft_td_wave_p = xp.fft.fftshift(xp.fft.fft(signal[0] * window)) * dt
     fft_td_wave_c = xp.fft.fftshift(xp.fft.fft(signal[1] * window)) * dt
     return [fft_td_wave_p, fft_td_wave_c]
 
 
-def get_fd_windowed(signal: list, window: Optional[bool]=None, window_in_fd: bool=False) -> list[np.ndarray]:
+def get_fd_windowed(
+    signal: list, window: Optional[bool] = None, window_in_fd: bool = False
+) -> list[np.ndarray]:
     """
     Calculate the convolution of a frequency domain signal with a window in time domain.
 
@@ -107,20 +112,19 @@ def get_fd_windowed(signal: list, window: Optional[bool]=None, window_in_fd: boo
         convolution of a frequency domain signal with a time domain window.
 
     """
-    try:
-        if isinstance(signal[0], cp.ndarray) or isinstance(window, cp.ndarray):
-            if isinstance(signal[0], cp.ndarray) and isinstance(window, cp.ndarray):
-                use_gpu = True
-            else:
-                raise ValueError(
-                    "One array is cupy and one array is numpy. Need to be the same."
-                )
+    if type(signal[0]) is not type(window):
+        raise ValueError(
+            "One array is cupy and one array is numpy. Need to be the same."
+        )
 
-    # if cupy did not import
-    except NameError:
-        use_gpu = False
+    import few
 
-    xp = cp if use_gpu else np
+    xp = np
+    if few.has_backend("cuda"):
+        import cupy as cp
+
+        if isinstance(window, cp.ndarray):
+            xp = cp
 
     # apply no window
     if window is None:
@@ -161,9 +165,9 @@ class GetFDWaveformFromFD:
         waveform_generator: object,
         positive_frequency_mask: np.ndarray,
         dt: float,
-        non_zero_mask: Optional[np.ndarray]=None,
-        window: Optional[np.ndarray]=None,
-        window_in_fd: Optional[bool]=False,
+        non_zero_mask: Optional[np.ndarray] = None,
+        window: Optional[np.ndarray] = None,
+        window_in_fd: Optional[bool] = False,
     ):
         self.waveform_generator = waveform_generator
         self.positive_frequency_mask = positive_frequency_mask
@@ -216,8 +220,8 @@ class GetFDWaveformFromTD:
         waveform_generator: object,
         positive_frequency_mask: np.ndarray,
         dt: float,
-        non_zero_mask: Optional[np.ndarray]=None,
-        window: Optional[np.ndarray]=None,
+        non_zero_mask: Optional[np.ndarray] = None,
+        window: Optional[np.ndarray] = None,
     ):
         self.waveform_generator = waveform_generator
         self.positive_frequency_mask = positive_frequency_mask

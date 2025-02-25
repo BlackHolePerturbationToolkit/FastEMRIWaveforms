@@ -383,7 +383,10 @@ class SphericalHarmonicWaveformBase(
                 # unpack the dictionary
                 if isinstance(teuk_modes, dict):
                     teuk_modes_in = self.xp.asarray(
-                        [teuk_modes[lmn] if lmn[1] >= 0 else teuk_modes[lmn].conj() for lmn in mode_selection]
+                        [
+                            teuk_modes[lmn] if lmn[1] >= 0 else teuk_modes[lmn].conj()
+                            for lmn in mode_selection
+                        ]
                     ).T
                 else:
                     teuk_modes_in = teuk_modes
