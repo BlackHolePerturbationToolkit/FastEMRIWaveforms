@@ -360,7 +360,7 @@ void make_waveform(cmplx *waveform,
           double Ldotn2=Ldotn*Ldotn;
           double Sdotn=cosqK*cosqS+sinqK*sinqS*cos(phiK-phiS);
           double beta;
-          if (S_phys == 0.0 || lam == 0.0)
+          if (S_phys == 0.0 || lam < 1e-10 || lam > (M_PI - 1e-10))
           {
               beta = 0.0; // This seems to work nicely
           }
