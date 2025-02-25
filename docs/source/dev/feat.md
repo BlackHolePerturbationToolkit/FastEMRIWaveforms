@@ -76,7 +76,7 @@ $ few_citations few.amplitude.ampinterp2d.AmpInterp2D  # replace by your class m
   title      = "{FastEMRIWaveforms}",
   license    = "GPL-3.0",
   url        = "https://bhptoolkit.org/FastEMRIWaveforms/html/index.html",
-  repository = "https://zenodo.org/records/8190418",
+  repository = "https://zenodo.org/records/3969004",
   doi        = "10.5281/zenodo.3969004"
 }
 ```
@@ -92,7 +92,7 @@ You may also query the citations directly on an instance of your class:
   title      = "{FastEMRIWaveforms}",
   license    = "GPL-3.0",
   url        = "https://bhptoolkit.org/FastEMRIWaveforms/html/index.html",
-  repository = "https://zenodo.org/records/8190418",
+  repository = "https://zenodo.org/records/3969004",
   doi        = "10.5281/zenodo.3969004"
 }
 ```
