@@ -73,7 +73,7 @@ jobs:
           sed -i 's|local_scheme = "node-and-date"|local_scheme = "no-local-version"|g' pyproject.toml
       # Update project name
       - name: Add release suffix to project name
-        if: ${{ matrix.cuda_major }}
+        if: ${{ matrix.is_plugin }}
         run: |
           sed -i 's|" #@NAMESUFFIX@|-${{ matrix.release }}"|g' pyproject.toml
       # Add CuPy dependency
