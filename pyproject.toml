@@ -200,4 +200,5 @@ paths.source = [
 
 report.omit = [
   "*/few/_version.py",
+  "*/few/tests/*.py",
 ]
