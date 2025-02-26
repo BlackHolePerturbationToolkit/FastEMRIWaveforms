@@ -107,7 +107,7 @@ nbsphinx_kernel_name = "python3"
 nbsphinx_requirejs_path = ""
 
 if os.getenv("READTHEDOCS", None) is not None:
-    nbsphinx_execute = "always"
+    nbsphinx_execute = "never"
     nbsphinx_allow_errors = False
 
 tippy_add_class = "has-tippy"

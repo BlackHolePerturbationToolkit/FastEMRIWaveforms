@@ -21,7 +21,7 @@ pip install --pre fastemriwaveforms-cuda11x
 pip install --pre fastemriwaveforms-cuda12x
 ```
 
-The `--pre-` flag means that you are installing a pre-release version of the project.
+The `--pre` flag means that you are installing a pre-release version of the project.
 This flag will not be necessary once version 2.0 is officially released.
 
 To know your CUDA version, run the tool `nvidia-smi` in a terminal a check the CUDA version reported in the table header:
@@ -43,7 +43,8 @@ import few
 You may check the currently available backends:
 
 ```py3
->>> for backend in ["cpu", "cuda11x", "cuda12x", "cuda", "gpu"]: print(f" - Backend '{backend}': {"un" if not few.has_backend(backend) else ""}available")
+>>> for backend in ["cpu", "cuda11x", "cuda12x", "cuda", "gpu"]:
+...     print(f" - Backend '{backend}': {"available" if few.has_backend(backend) else "unavailable"}")
  - Backend 'cpu': available
  - Backend 'cuda11x': unavailable
  - Backend 'cuda12x': unavailable
@@ -52,7 +53,7 @@ You may check the currently available backends:
 ```
 
 Note that the `cuda` backend is an alias for either `cuda11x` or `cuda12x`. If any is available, then the `cuda` backend is available.
-Similarly, the `gpu` backend is (fpr now) an alias for `cuda`.
+Similarly, the `gpu` backend is (for now) an alias for `cuda`.
 
 If you expected a backend to be available but it is not, run the following command to obtain an error
 message which can guide you to fix this issue:
@@ -220,7 +221,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## License
 
-This project is licensed under the GNU License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Citation
 
