@@ -124,6 +124,7 @@ jobs:
         if: runner.os == 'macOS' && matrix.kind == 'core'
         uses: pypa/cibuildwheel@v2.22.0
         env:
+          CIBW_SKIP: pp*
           CIBW_PROJECT_REQUIRES_PYTHON: ${{ matrix.reqpython }}
           CIBW_ARCHS_MACOS: ${{ matrix.arch }}
           CIBW_CONFIG_SETTINGS: cmake.define.FEW_LAPACKE_FETCH=ON cmake.define.FEW_WITH_GPU=OFF cmake.define.CMAKE_Fortran_COMPILER=${{ steps.setup-fortran.outputs.fc }}
