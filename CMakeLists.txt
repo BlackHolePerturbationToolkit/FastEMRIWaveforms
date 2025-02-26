@@ -6,11 +6,7 @@
 cmake_minimum_required(VERSION 3.23...3.31)
 
 # ---- Main project definition ----
-project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION}
-        LANGUAGES CXX)
-
-# ---- Phony target for project specific properties ----
-add_library(${SKBUILD_PROJECT_NAME} INTERFACE)
+project(fastemriwaveforms VERSION ${SKBUILD_PROJECT_VERSION} LANGUAGES CXX)
 
 # ---- Find required dependencies ----
 find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
@@ -74,8 +70,12 @@ set_property(
            VALUE
            "CMAKE")
 
+# --- Define
+# ---- Phony target for project specific properties ----
+add_library(fastemriwaveforms INTERFACE)
+
 # ---- Enable building the CPU version of backends by default ----
-set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_CPU ON)
+set_target_properties(fastemriwaveforms PROPERTIES WITH_CPU ON)
 
 # ---- Optionnally check if GPU is supported ----
 if(FEW_WITH_GPU STREQUAL "AUTO")
@@ -97,45 +97,44 @@ if(FEW_WITH_GPU STREQUAL "AUTO")
       STATUS
         "FEW GPU support was set to AUTO and will be turned ON as CUDA and CUDA Toolkit are available with CUDA version ${CUDAToolkit_VERSION_MAJOR}."
     )
-    set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU ON)
+    set_target_properties(fastemriwaveforms PROPERTIES WITH_GPU ON)
   else()
     message(
       STATUS
         "FEW GPU support was set to AUTO and will be turned OFF as CUDA and CUDA Toolkit are not found (CMAKE_CUDA_COMPILER:${CMAKE_CUDA_COMPILER} CUDAToolkit_FOUND:${CUDAToolkit_FOUND})."
     )
-    set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU OFF)
+    set_target_properties(fastemriwaveforms PROPERTIES WITH_GPU OFF)
   endif()
 elseif(FEW_WITH_GPU STREQUAL "ONLY")
   message(
     STATUS
       "FEW GPU support is set to ON and CPU support is set to OFF (use only to build a standalone plugin)."
   )
-  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU ON)
-  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_CPU OFF)
+  set_target_properties(fastemriwaveforms PROPERTIES WITH_GPU ON)
+  set_target_properties(fastemriwaveforms PROPERTIES WITH_CPU OFF)
 elseif(FEW_WITH_GPU STREQUAL "BARE")
   message(
     STATUS
       "FEW GPU and CPU support are disabled (use only to build a non-functional pure-python release)."
   )
-  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU OFF)
-  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_CPU OFF)
+  set_target_properties(fastemriwaveforms PROPERTIES WITH_GPU OFF)
+  set_target_properties(fastemriwaveforms PROPERTIES WITH_CPU OFF)
 else()
   message(STATUS "FEW GPU support is set to ${FEW_WITH_GPU}.")
-  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU
-                                                           ${FEW_WITH_GPU})
+  set_target_properties(fastemriwaveforms PROPERTIES WITH_GPU ${FEW_WITH_GPU})
 endif()
 
 # ---- Handle GPU support ----
-get_target_property(_FEW_WITH_GPU ${SKBUILD_PROJECT_NAME} WITH_GPU)
+get_target_property(_FEW_WITH_GPU fastemriwaveforms WITH_GPU)
 if(_FEW_WITH_GPU)
   enable_language(CUDA)
   find_package(CUDAToolkit REQUIRED)
   set_target_properties(
-    ${SKBUILD_PROJECT_NAME} PROPERTIES FAST_BACKEND
-                                       "cuda${CUDAToolkit_VERSION_MAJOR}x")
-  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES CU_LANGUAGE "CUDA")
+    fastemriwaveforms PROPERTIES FAST_BACKEND
+                                 "cuda${CUDAToolkit_VERSION_MAJOR}x")
+  set_target_properties(fastemriwaveforms PROPERTIES CU_LANGUAGE "CUDA")
 else()
-  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES CU_LANGUAGE "CXX")
+  set_target_properties(fastemriwaveforms PROPERTIES CU_LANGUAGE "CXX")
 endif()
 unset(_FEW_WITH_GPU)
 

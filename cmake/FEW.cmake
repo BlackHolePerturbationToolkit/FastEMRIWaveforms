@@ -74,7 +74,7 @@ function(_few_add_lib_to_backend)
       ${FEW_ADDLIB_TARGET_NAME}
       PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY
-        "${${SKBUILD_PROJECT_NAME}_BINARY_DIR}/src/few_backend_${FEW_ADDLIB_BACKEND}/"
+        "${fastemriwaveforms_BINARY_DIR}/src/few_backend_${FEW_ADDLIB_BACKEND}/"
     )
   endif()
 
@@ -132,7 +132,7 @@ function(few_add_lib_to_cuda_cpu_backends)
                               PROPERTIES LANGUAGE CXX)
 
   # Define the CPU version
-  get_target_property(_FEW_WITH_CPU ${SKBUILD_PROJECT_NAME} WITH_CPU)
+  get_target_property(_FEW_WITH_CPU fastemriwaveforms WITH_CPU)
   if(_FEW_WITH_CPU)
     _few_add_lib_to_backend(
       NAME "${FEW_ADDLIB_NAME}"
@@ -145,7 +145,7 @@ function(few_add_lib_to_cuda_cpu_backends)
   endif()
 
   # Define the GPU version
-  get_target_property(_FEW_WITH_GPU ${SKBUILD_PROJECT_NAME} WITH_GPU)
+  get_target_property(_FEW_WITH_GPU fastemriwaveforms WITH_GPU)
   if(_FEW_WITH_GPU)
     set_source_files_properties(${FEW_ADDLIB_CU_SOURCES} PROPERTIES LANGUAGE
                                                                     CUDA)

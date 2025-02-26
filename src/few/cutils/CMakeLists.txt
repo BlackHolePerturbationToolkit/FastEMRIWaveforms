@@ -1,7 +1,7 @@
 # Define the compilation of the Cython part of this project
 
 # ---- Handle LAPACK/LAPACKE access ----
-get_target_property(_FEW_WITH_CPU ${SKBUILD_PROJECT_NAME} WITH_CPU)
+get_target_property(_FEW_WITH_CPU fastemriwaveforms WITH_CPU)
 
 if(_FEW_WITH_CPU)
   if(FEW_LAPACKE_FETCH STREQUAL "AUTO")
