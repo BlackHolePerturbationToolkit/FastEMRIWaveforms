@@ -23,6 +23,8 @@ authors = [
   { name = "Niels Warburton", email = "nielsw@gmail.com" },
   { name = "Scott Hughes" },
 ]
+requires-python = ">=3.9"
+
 classifiers = [
   "Environment :: GPU :: NVIDIA CUDA",
   "License :: OSI Approved :: MIT License",
@@ -35,7 +37,6 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
 ]
-
 # version is deduced from the lattest git tag
 # description is the docstring at the top of src/few/__init__.py
 dynamic = [ "version" ]
@@ -96,10 +97,11 @@ scripts.few_files = "few.cmd.files:main"
 version_scheme = "no-guess-dev"
 local_scheme = "node-and-date"
 version_file = "src/few/_version.py"
+#@FALLBACK_VERSION@
 
 [tool.scikit-build]
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
-sdist.include = [ "src/few/_version.py" ]
+sdist.include = [ "src/few/_version.py", "tests/" ]
 sdist.exclude = [
   ".devcontainer/",
   ".github/",
@@ -108,7 +110,6 @@ sdist.exclude = [
   "EllipticIntegrals/",
   "examples/",
   "KerrEquatorialCodes/",
-  "tests/",
   ".cmake-format.yaml",
   ".gitignore",
   ".pre-commit-config.yaml",
@@ -122,9 +123,7 @@ sdist.exclude = [
   "TODO.txt",
   "Tutorial_interpolation.ipynb",
 ]
-wheel.packages = [
-  "src/few", #@SKIP_PLUGIN@
-]
+
 wheel.exclude = [
   "**.pyx",
   "**.cu",
@@ -138,6 +137,10 @@ wheel.exclude = [
   "lib/*.so",
   "lib/*.a",
 ]
+
+[tool.scikit-build.wheel.packages]
+few = "src/few"       #@SKIP_PLUGIN@
+"few/tests" = "tests" #@SKIP_PLUGIN@
 
 [tool.scikit-build.cmake.define]
 # Default values for CMake options used when building FEW.
@@ -197,4 +200,5 @@ paths.source = [
 
 report.omit = [
   "*/few/_version.py",
+  "*/few/tests/*.py",
 ]
