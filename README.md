@@ -21,7 +21,7 @@ pip install --pre fastemriwaveforms-cuda11x
 pip install --pre fastemriwaveforms-cuda12x
 ```
 
-The `--pre-` flag means that you are installing a pre-release version of the project.
+The `--pre` flag means that you are installing a pre-release version of the project.
 This flag will not be necessary once version 2.0 is officially released.
 
 To know your CUDA version, run the tool `nvidia-smi` in a terminal a check the CUDA version reported in the table header:
