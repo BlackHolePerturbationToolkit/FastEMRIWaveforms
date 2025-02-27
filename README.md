@@ -127,9 +127,10 @@ export CXXFLAGS="-march=native"
 export CFLAGS="-march=native"
 ```
 
-Find the clang compiler by
+Find the clang compiler by running
 ```
-which /opt/miniconda3/envs/few_env/bin/*clang*
+ls ${CONDA_PREFIX}/bin/*clang
+ls ${CONDA_PREFIX}/bin/*clang++
 ```
 
 Then export and define the compilers, on my laptop it looks like
