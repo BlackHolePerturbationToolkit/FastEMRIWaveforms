@@ -117,8 +117,8 @@ git checkout Kerr_Equatorial_Eccentric
 
 Now create an environment (here Mac OSX arm)
 ```
-conda create -n test -y -c conda-forge python=3.12 clangxx_osx-arm64 clang_osx-arm64 h5py wget gsl liblapacke lapack openblas fortran-compiler scipy numpy matplotlib jupyter
-conda activate test
+conda create -n few_env -y -c conda-forge python=3.12 clangxx_osx-arm64 clang_osx-arm64 h5py wget gsl liblapacke lapack openblas fortran-compiler scipy numpy matplotlib jupyter
+conda activate few_env
 ```
 
 You should have now installed the packages that allow FEW to be compiled but let's enforce the compilers by running
