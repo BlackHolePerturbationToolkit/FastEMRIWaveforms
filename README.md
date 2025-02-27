@@ -85,9 +85,9 @@ Once FEW is working and the expected backends are selected, you may see
 [examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb)
 on how to start with this software.
 
-### Installing from sources
+## Installing from sources
 
-#### Prerequisites
+### Prerequisites
 
 To install this software from source, you will need:
 
@@ -106,7 +106,45 @@ libraries `CUDA Runtime Library`, `cuBLAS` and `cuSPARSE`).
 
 There are a set of files required for total use of this package. They will download automatically the first time they are needed. Files are generally under 10MB. However, there is a 100MB file needed for the slow waveform and the bicubic amplitude interpolation. This larger file will only download if you run either of those two modules. The files are hosted on the [Black Hole Perturbation Toolkit Download Server](https://download.bhptoolkit.org/few/data).
 
-#### Running the installation
+### Installation instructions using conda
+
+We recommend to install FEW using conda in order to have the compilers all within an environment. First clone the repo
+```
+git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
+cd FastEMRIWaveforms
+git checkout Kerr_Equatorial_Eccentric
+```
+
+Now create an environment (here Mac OSX arm)
+```
+conda create -n test -y -c conda-forge python=3.12 clangxx_osx-arm64 clang_osx-arm64 h5py wget gsl liblapacke lapack openblas fortran-compiler scipy numpy matplotlib jupyter
+conda activate test
+```
+
+You should have now installed the packages that allow FEW to be compiled but let's enforce the compilers by running
+```
+export CXXFLAGS="-march=native"
+export CFLAGS="-march=native"
+```
+
+Find the clang compiler by
+```
+which /opt/miniconda3/envs/few_env/bin/*clang*
+```
+
+Then export and define the compilers, on my laptop it looks like
+```
+export CC=/opt/miniconda3/envs/few_env/bin/arm64-apple-darwin20.0.0-clang
+export CXX=/opt/miniconda3/envs/few_env/bin/arm64-apple-darwin20.0.0-clang++
+```
+
+Then we can install locally for development:
+```
+pip install -e '.[dev, testing]'
+```
+
+
+### Running the installation
 
 To start the from-source installation, ensure the pre-requisite are met, clone the repository, and then simply run a `pip install` command:
 
