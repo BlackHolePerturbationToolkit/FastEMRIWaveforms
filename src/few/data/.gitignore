@@ -1,0 +1,4 @@
+**
+!.gitignore
+# Manually define the list of data file that must be tracked by git
+!LPA.txt
