@@ -531,6 +531,12 @@ class InitialConfigConsumer(ConfigConsumer):
         super().__init__(config_file=None, env_vars=env_vars, cli_args=cli_args)
 
 
+def get_package_basepath() -> pathlib.Path:
+    import few
+
+    return pathlib.Path(few.__file__).parent
+
+
 class Configuration(ConfigConsumer):
     """
     Class implementing FEW complete configuration for the library.
@@ -548,6 +554,8 @@ class Configuration(ConfigConsumer):
 
     @staticmethod
     def config_entries() -> List[ConfigEntry]:
+        from few import _is_editable as is_editable_mode
+
         return [
             ConfigEntry(
                 label="log_level",
@@ -585,7 +593,7 @@ class Configuration(ConfigConsumer):
                 label="file_storage_path",
                 description="File Manager storage directory (absolute or relative to current working directory, must exist)",
                 type=Optional[pathlib.Path],
-                default=None,
+                default=get_package_basepath() / "data" if is_editable_mode else None,
                 cli_flags=["--storage-dir"],
                 env_var="FILE_STORAGE_DIR",
                 cfg_entry="file-storage-dir",
@@ -596,7 +604,7 @@ class Configuration(ConfigConsumer):
                 label="file_download_path",
                 description="File Manager download directory (absolute, or relative to storage_path)",
                 type=Optional[pathlib.Path],
-                default=None,
+                default=pathlib.Path(".") if is_editable_mode else None,
                 cli_flags=["--download-dir"],
                 env_var="FILE_DOWNLOAD_DIR",
                 cfg_entry="file-download-dir",
@@ -631,7 +639,7 @@ class Configuration(ConfigConsumer):
                 label="file_extra_paths",
                 description="Supplementary paths in which FEW will search for files",
                 type=Optional[List[pathlib.Path]],
-                default=None,
+                default=[get_package_basepath() / "data"],
                 cli_flags=["--extra-path"],
                 cli_kwargs={"action": "append"},
                 env_var="FILE_EXTRA_PATHS",
