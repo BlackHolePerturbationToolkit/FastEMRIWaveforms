@@ -1816,25 +1816,16 @@ def get_p_at_t(
 
     # fix bounds
     if bounds is None:
-        if not enforce_schwarz_sep:
-            p_sep = get_separatrix(
-                traj_args[index_of_a], traj_args[index_of_e], traj_args[index_of_x]
-            )  # should be fairly close.
-        else:
-            p_sep = 6 + 2 * traj_args[index_of_e]
-        bounds = [p_sep + 0.2, 16.0 + 2 * traj_args[index_of_e]]
+        bounds = [None, None]
 
-    elif bounds[0] is None:
+    if bounds[0] is None:
         if not enforce_schwarz_sep:
-            p_sep = get_separatrix(
-                traj_args[index_of_a], traj_args[index_of_e], traj_args[index_of_x]
-            )  # should be fairly close.
+            bounds[0] = traj_module.func.min_p(traj_args[index_of_e], traj_args[index_of_x], a=traj_args[index_of_a])
         else:
-            p_sep = 6 + 2 * traj_args[index_of_e]
-        bounds[0] = p_sep + 0.2
+            bounds[0] = min(traj_module.func.min_p(traj_args[index_of_e], traj_args[index_of_x], a=traj_args[index_of_a]), 6 + 2*traj_args[index_of_e])
 
-    elif bounds[1] is None:
-        bounds[1] = 16.0 + 2 * traj_args[index_of_e]
+    if bounds[1] is None:
+        bounds[1] = traj_module.func.max_p(traj_args[index_of_e], traj_args[index_of_x], a=traj_args[index_of_a])
 
     root = get_at_t(traj_module, traj_args, bounds, t_out, index_of_p, **kwargs)
     return root
