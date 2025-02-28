@@ -19,7 +19,7 @@ def main():
 
     if not few_class.startswith("few."):
         raise ValueError(
-            "The requested class must be part of the 'few' package (e.g. 'few.amplitude.AmpInterp2D')."
+            "The requested class must be part of the 'few' package (e.g. 'few.amplitude.ampinterp2d.AmpInterp2D')."
         )
 
     module_path, class_name = few_class.rsplit(".", 1)

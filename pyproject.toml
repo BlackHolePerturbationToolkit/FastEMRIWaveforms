@@ -42,7 +42,6 @@ classifiers = [
 dynamic = [ "version" ]
 
 dependencies = [
-  "cffconvert",                            # To read and validate CITATION.cff
   "exceptiongroup; python_version<'3.11'", # To access ExceptionGroup with Python 3.9 and 3.10
   "h5py",
   "jsonschema",                            # To validate content of file registry
