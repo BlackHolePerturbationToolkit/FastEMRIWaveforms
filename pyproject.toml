@@ -36,6 +36,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
 ]
 # version is deduced from the lattest git tag
 # description is the docstring at the top of src/few/__init__.py
@@ -190,7 +191,7 @@ lint.ignore = [ "E741" ]
 lint.extend-per-file-ignores."*.ipynb" = [ "T201" ] # Allow "print" statements in notebooks
 
 [tool.pyproject-fmt]
-max_supported_python = "3.12"
+max_supported_python = "3.13"
 
 [tool.coverage]
 paths.source = [
