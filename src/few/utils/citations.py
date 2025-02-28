@@ -271,18 +271,24 @@ class CitationRegistry:
 
 def build_citation_registry() -> CitationRegistry:
     """Read the package CITATION.cff and build the corresponding registry."""
+    import json
     import jsonschema
     import pathlib
-    import cffconvert
+    import yaml
 
     from few import __file__ as _few_root_file
 
     citation_cff_path = pathlib.Path(_few_root_file).parent / "CITATION.cff"
     with open(citation_cff_path, "rt") as fid:
-        cff = cffconvert.Citation(fid.read())
+        cff = yaml.safe_load(fid)
+
+    with open(pathlib.Path(__file__).parent / "cff_1_2_0.schema.json", "r") as f:
+        cff_schema = json.load(f)
 
     try:
-        cff.validate()
+        jsonschema.validate(cff, cff_schema)
+    except jsonschema.SchemaError as e:
+        raise InvalidInputFile("cff_1_2_0.schema.json is not a valid schema.") from e
     except jsonschema.exceptions.ValidationError as e:
         raise InvalidInputFile(
             "The file {} does not match its expected schema. Contact few developers.".format(
@@ -304,13 +310,9 @@ def build_citation_registry() -> CitationRegistry:
             ref_dict,
         )
 
-    references = {
-        ref["abbreviation"]: to_reference(ref) for ref in cff.cffobj["references"]
-    }
+    references = {ref["abbreviation"]: to_reference(ref) for ref in cff["references"]}
 
-    return CitationRegistry(
-        **references, **{cff.cffobj["title"]: to_reference(cff.cffobj)}
-    )
+    return CitationRegistry(**references, **{cff["title"]: to_reference(cff)})
 
 
 CITATIONS_REGISTRY = build_citation_registry()
