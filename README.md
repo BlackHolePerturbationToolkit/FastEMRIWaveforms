@@ -145,12 +145,11 @@ pip install -e '.[dev, testing]'
 ```
 
 ### Installation instructions using conda on GPUs and linux
-Below is a quick set of instructions to install the Fast EMRI Waveform (FEW) package.
+Below is a quick set of instructions to install the Fast EMRI Waveform package on GPUs and linux.
 
-Create an environment for the figures of merit
 ```sh
-conda create -n fom -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.12 pandas fortran-compiler
-conda activate fom
+conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.12 pandas fortran-compiler
+conda activate few_env
 ```
 
 Locate where the `nvcc` compile is located and add it to the path, in my case it is located in `/usr/local/cuda-12.5/bin/`
