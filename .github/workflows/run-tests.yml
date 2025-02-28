@@ -45,7 +45,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-24.04", "ubuntu-22.04", "macos-13", "macos-14", "macos-15"] #, "windows-latest"]
+        os: ["ubuntu-24.04", "ubuntu-22.04", "macos-13", "macos-14", "macos-15", "ubuntu-24.04-arm"] #, "windows-latest"]
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         # cuda-version: ["12.4.0"]
     steps:
