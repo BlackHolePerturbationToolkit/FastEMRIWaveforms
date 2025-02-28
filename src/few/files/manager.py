@@ -241,6 +241,10 @@ class FileManager:
         """
         Try to download a file from list of repositories.
         """
+        if not repository_names:
+            raise exceptions.FileDownloadException(
+                "No repository associated to file '{}'".format(file_name)
+            )
 
         errors: typing.List[Exception] = []
         for attempt in range(self._options.download_max_attempts):

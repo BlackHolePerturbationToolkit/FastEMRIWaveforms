@@ -53,7 +53,7 @@ class File(pydantic.BaseModel):
     """Representation of a file entry in the registry."""
 
     name: str
-    repositories: List[str]
+    repositories: List[str] = []
     checksums: List[Checksum]  # min size is 1 by registry.schema.json
     tags: List[str] = []
 
