@@ -16,11 +16,11 @@ maintainers = [
 ]
 
 authors = [
-  { name = "Michael Katz", email = "mikekatz04@gmail.com" },
-  { name = "Lorenzo Speri", email = "lorenzo.speri@gmail.com" },
-  { name = "Christian Chapman-Bird", email = "c.chapmanbird@gmail.com" },
+  { name = "Michael Katz" },
+  { name = "Lorenzo Speri" },
+  { name = "Christian Chapman-Bird" },
   { name = "Alvin J. K. Chua" },
-  { name = "Niels Warburton", email = "nielsw@gmail.com" },
+  { name = "Niels Warburton" },
   { name = "Scott Hughes" },
 ]
 requires-python = ">=3.9"
