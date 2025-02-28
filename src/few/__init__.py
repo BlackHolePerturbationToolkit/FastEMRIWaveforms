@@ -26,10 +26,18 @@ from .utils.globals import (
 
 from . import amplitude, cutils, files, summation, trajectory, utils, waveform
 
+try:
+    from . import _editable
+
+    _is_editable: bool = True
+    del _editable
+except (ModuleNotFoundError, ImportError):
+    _is_editable: bool = False
 
 __all__ = [
     "__version__",
     "__version_tuple__",
+    "_is_editable",
     "amplitude",
     "cutils",
     "files",

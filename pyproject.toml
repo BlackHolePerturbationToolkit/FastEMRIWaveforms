@@ -122,6 +122,7 @@ sdist.exclude = [
   "SeparatrixInterpolant_example.ipynb",
   "TODO.txt",
   "Tutorial_interpolation.ipynb",
+  "src/few/_editable.py",
 ]
 
 wheel.exclude = [
