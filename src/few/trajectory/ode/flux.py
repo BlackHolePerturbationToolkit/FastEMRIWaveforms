@@ -270,7 +270,7 @@ class KerrEccEqFlux(ODEBase):
         else:
             a_in = a
 
-        z = z_of_a(a_in, e, x)
+        z = z_of_a(a_in)
         p_sep = get_separatrix(a, e, x)
 
         if w_of_euz(e, 0., z) > 1:
