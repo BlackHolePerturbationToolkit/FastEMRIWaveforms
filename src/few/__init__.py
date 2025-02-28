@@ -15,6 +15,14 @@ except ModuleNotFoundError:
     finally:
         del version, PackageNotFoundError
 
+try:
+    from . import _editable
+
+    _is_editable: bool = True
+    del _editable
+except (ModuleNotFoundError, ImportError):
+    _is_editable: bool = False
+
 from .utils.globals import (
     get_logger,
     get_backend,
@@ -25,14 +33,6 @@ from .utils.globals import (
 )
 
 from . import amplitude, cutils, files, summation, trajectory, utils, waveform
-
-try:
-    from . import _editable
-
-    _is_editable: bool = True
-    del _editable
-except (ModuleNotFoundError, ImportError):
-    _is_editable: bool = False
 
 __all__ = [
     "__version__",
