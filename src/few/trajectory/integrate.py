@@ -177,7 +177,7 @@ class Integrate:
         """
         return self.dopr.take_step_single(t, h, y, self.tmax_dimensionless, None)
 
-    def log_failed_step(self):
+    def log_failed_step(self, lastError: Exception):
         """Add to and check failed step count.
 
         Raises:
@@ -186,8 +186,9 @@ class Integrate:
         """
         # check for number of tries to fix this
         self.bad_num += 1
+        self.last_error = lastError
         if self.bad_num >= 100:
-            raise ValueError("error, reached bad limit.\n")
+            raise self.last_error
 
     def integrate(self, t0: float, y0: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """Integrate from (t0, y0).
@@ -227,22 +228,22 @@ class Integrate:
                     t_old, h_old, y, self.tmax_dimensionless, None
                 )
 
-            except ValueError:
+            except ValueError or TrajectoryOutsideLowerLimitError or TrajectoryOutsideUpperLimitError as e:
                 t = t_prev
                 y[:] = y_prev[:]
                 h = h_old / 2
-                self.log_failed_step()
+                self.log_failed_step(e)
                 continue
 
             if np.isnan(h):
                 t = t_prev
                 y[:] = y_prev[:]
                 h = h_old / 2
-                self.log_failed_step()
+                self.log_failed_step(ValueError)
                 continue
 
             if not status:  # the step failed, but we retain the step size as this is the estimate for the next attempt
-                self.log_failed_step()
+                self.log_failed_step(ValueError)
                 continue
 
             if not self.dopr.fix_step:
@@ -262,7 +263,7 @@ class Integrate:
                 y[:] = y_prev[:]
                 h /= 2
 
-                self.log_failed_step()
+                self.log_failed_step(ValueError)
                 continue
 
             # if it made it here, reset bad num

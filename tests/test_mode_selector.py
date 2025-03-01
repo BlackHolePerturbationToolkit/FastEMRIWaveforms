@@ -1,6 +1,5 @@
 import unittest
 import numpy as np
-import pathlib
 
 from few.trajectory.inspiral import EMRIInspiral
 from few.utils.ylm import GetYlms
@@ -10,7 +9,7 @@ from few.amplitude.romannet import RomanAmplitude
 from few.waveform import FastSchwarzschildEccentricFluxBicubic
 from few.utils.utility import get_mismatch
 from few.trajectory.ode import SchwarzEccFlux
-from few.utils.globals import get_logger, get_first_backend
+from few.utils.globals import get_logger, get_first_backend, get_file_manager
 
 few_logger = get_logger()
 
@@ -67,7 +66,7 @@ class ModeSelectorTest(unittest.TestCase):
         # produce sensitivity function
 
         noise = np.genfromtxt(
-            pathlib.Path(__file__).parent.parent / "examples" / "files" / "LPA.txt",
+            get_file_manager().get_file("LPA.txt"),
             names=True,
         )
         f, PSD = (

@@ -9,11 +9,6 @@ from ...utils.utility import ELQ_to_pex, get_separatrix
 from ...utils.mappings import ELdot_to_PEdot_Jacobian
 from ...utils.pn_map import Y_to_xI
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-
-# def get_ode_function_options():
-#     return _STOCK_TRAJECTORY_OPTIONS
-
 
 class ODEBase:
     """
@@ -138,6 +133,33 @@ class ODEBase:
         By default, this function returns the input right-hand side unchanged.
         """
         return ydot
+    
+    def min_p(
+        self, e: Union[float, np.ndarray], x: Union[float, np.ndarray], a: Optional[Union[float, np.ndarray]]=None
+    ) -> Union[float, np.ndarray]:
+        """
+        Computes the minimum value of the radial coordinate p for a given eccentricity and inclination for this model.
+        Trajectory models implementing their own interpolants should override this function to return the minimum value
+        corresponding to the precomputed grid boundaries. 
+
+        By default, this function assumes things are rectilinear and returns `p_sep + self.separatrix_buffer_dist`.
+        """
+        return get_separatrix(self.a, e, x) + self.separatrix_buffer_dist
+
+    def max_p(
+        self, e: Union[float, np.ndarray], x: Union[float, np.ndarray], a: Optional[Union[float, np.ndarray]]=None
+    ) -> Union[float, np.ndarray]:
+        """
+        Computes the maximum value of the radial coordinate p for a given eccentricity and inclination for this model.
+        Trajectory models implementing their own interpolants should override this function to return the maximum value
+        corresponding to the precomputed grid boundaries. 
+
+        By default, this function returns `np.inf` (assumes no bound on p).
+        """
+        if isinstance(e, float):
+            return np.inf
+        else:
+            return np.full_like(e, np.inf)
 
     def modify_rhs(self, ydot: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
         """

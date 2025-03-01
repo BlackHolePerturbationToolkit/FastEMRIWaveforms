@@ -2,7 +2,7 @@ from .base import ODEBase
 from ...utils.utility import get_fundamental_frequencies, get_separatrix, ELQ_to_pex
 from ...utils.globals import get_file_manager
 from numba import njit
-from few.utils.mappings import kerrecceq_forward_map, apex_of_uwyz, apex_of_UWYZ
+from few.utils.mappings import kerrecceq_forward_map, apex_of_uwyz, apex_of_UWYZ, z_of_a, w_of_euz, p_of_u, u_where_w_is_unity
 
 import h5py
 
@@ -11,8 +11,6 @@ import os
 from typing import Union
 import numpy as np
 from math import pow, log
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 @njit
@@ -67,6 +65,12 @@ class SchwarzEccFlux(ODEBase):
     def supports_ELQ(self):
         return True
 
+    def min_p(self, e, x, a=None):
+        return 6 + 2*e + self.separatrix_buffer_dist
+
+    def max_p(self, e, x, a=None):
+        return np.exp(3.817712325956905) + 2.1 + 2.0 * e
+    
     def distance_to_outer_boundary(self, y):
         p, e, x = self.get_pex(y)
         dist_p = 3.817 - np.log((p - 2.0 * e - 2.1))
@@ -256,6 +260,28 @@ class KerrEccEqFlux(ODEBase):
     @property
     def flux_output_convention(self):
         return "ELQ"
+
+    def min_p(self, e, x, a=None):
+        if a is None:
+            a = self.a
+
+        if x == -1:
+            a_in = -a
+        else:
+            a_in = a
+
+        z = z_of_a(a_in)
+        p_sep = get_separatrix(a, e, x)
+
+        if w_of_euz(e, 0., z) > 1:
+            u_min = u_where_w_is_unity(e, z, kind="flux")
+        else:
+            u_min = 0.
+
+        return max(p_of_u(u_min, p_sep), p_sep + self.separatrix_buffer_dist) + 1e-5
+
+    def max_p(self, e, x, a=None):
+        return 200. - 1e-5
 
     def interpolate_flux_grids(self, p: float, e: float, x: float) -> tuple[float]:
         # handle xI = -1 case

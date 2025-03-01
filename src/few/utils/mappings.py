@@ -362,7 +362,7 @@ def z2_of_a(a, amin=AMIN, amax=AMAX):
 def Secc_of_uz(
     u,
     z,
-    beta,
+    beta=BETA_FLUX,
     esep=ESEP,
     emax=EMAX,
 ):
@@ -370,12 +370,12 @@ def Secc_of_uz(
 
 
 @njit
-def w_of_euz(e, u, z, beta, esep=ESEP, emax=EMAX):
+def w_of_euz(e, u, z, beta=BETA_FLUX, esep=ESEP, emax=EMAX):
     return e / Secc_of_uz(u, z, beta, esep, emax)
 
 
 @njit
-def p_of_u(u, pLSO, dpmin, dpmax, alpha):
+def p_of_u(u, pLSO, dpmin=DELTAPMIN, dpmax=DELTAPMAX, alpha=ALPHA_FLUX):
     return (pLSO + dpmin) + (dpmax - dpmin) * (np.exp(u ** (1 / alpha) * log(2)) - 1)
 
 
@@ -412,6 +412,22 @@ def a_of_z(z, amin=AMIN, amax=AMAX):
 def e_of_uwz(u, w, z, beta, esep=ESEP, emax=EMAX):
     return Secc_of_uz(u, z, beta, esep, emax) * w
 
+@njit
+def u_where_w_is_unity(e, z, esep=ESEP, emax=EMAX, kind = "flux"):
+    if kind == "flux":
+        beta = BETA_FLUX
+    elif kind == "amplitude":
+        beta = BETA_AMP
+    
+    if z == 1:
+        return 0.
+
+    if e < esep:
+        return np.nan
+
+    part = ((e - esep) / (emax - esep))**2
+    inside_root =  (part - z) / (1 - z)
+    return inside_root**(1/beta)
 
 @njit
 def _uwyz_of_apex_kernel(
