@@ -437,9 +437,11 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
         df = self.frequency[1] - self.frequency[0]
 
         # figures out where in self.frequency each segment frequency falls
-        inds_check = self.xp.abs(
-            (tmp_freqs_base_sorted_segs - first_frequency) / df
-        ).astype(int)
+        inds_check = self.xp.abs((tmp_freqs_base_sorted_segs - first_frequency) / df).astype(int)
+        if f_arr is not None:
+            mask_pos = (tmp_freqs_base_sorted_segs > 0.0)
+            inds_check_pos = self.xp.abs((tmp_freqs_base_sorted_segs - self.frequency[ind_zero+1]) / df).astype(int) + ind_zero + 1
+            inds_check[mask_pos] = inds_check_pos[mask_pos]
 
         # start frequency index of each segment
         start_inds = (inds_check[:, :, 0].copy() + 1).astype(int)
