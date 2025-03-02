@@ -115,9 +115,18 @@ cd FastEMRIWaveforms
 git checkout Kerr_Equatorial_Eccentric
 ```
 
-Now create an environment (here Mac OSX arm)
+Now create an environment (here Mac OSX arm M chip)
 ```
-conda create -n few_env -y -c conda-forge python=3.12 clangxx_osx-arm64 clang_osx-arm64 h5py wget gsl liblapacke lapack openblas fortran-compiler scipy numpy matplotlib jupyter
+conda create -n few_env -y -c conda-forge -y python=3.12 clangxx_osx-arm64 clang_osx-arm64 h5py wget gsl liblapacke lapack openblas fortran-compiler scipy numpy matplotlib jupyter
+```
+
+Instead for MACOS:
+```
+conda create -n few_env -c conda-forge -y clangxx_osx-64 clang_osx-64 h5py wget gsl liblapacke lapack openblas fortran-compiler scipy numpy matplotlib jupyter python=3.12
+```
+
+And activate the environment
+```
 conda activate few_env
 ```
 
