@@ -82,7 +82,7 @@ build succeeded, 4 warnings.
 
 If you need backends to be automatically rebuilt on changes, you can install the project using the `rebuild`
 editable install provided by
-[scikit-build-core **in experimental mode**](https://scikit-build-core.readthedocs.io/en/latest/configuration.html#editable-installs).
+[scikit-build-core **in experimental mode**](https://scikit-build-core.readthedocs.io/en/latest/configuration/index.html#editable-installs).
 
 Note that this mode requires to pre-install all of the project build dependencies before-hand.
 
@@ -184,7 +184,7 @@ $ git commit -m "wip: unfinished incredible feature" --no-verify
 
 ## Standard development environment using devcontainers
 
-If you are using [VSCode](https://code.visualstudio.com/) and have [Docker](https://www.docker.com/) installed, you can use the [devcontainers](https://code.visualstudio.com/docs/remote/containers) extension to quickly set up a development environment.
+If you are using [VSCode](https://code.visualstudio.com/) and have [Docker](https://www.docker.com/) installed, you can use the [devcontainers](https://code.visualstudio.com/docs/devcontainers/containers) extension to quickly set up a development environment.
 Follow the [devcontainer installation steps](https://code.visualstudio.com/docs/devcontainers/containers#_installation) to install the devcontainer extension.
 
 You can then use the VSCode action `Clone Repository in Container` to clone the repository in a devcontainer

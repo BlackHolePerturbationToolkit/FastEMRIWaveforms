@@ -62,7 +62,7 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
     Args:
         waveform_class: String with the name of the waveform class to use.
             See the `pre-built waveform models
-            <https://bhptoolkit.org/FastEMRIWaveforms/html/user/main.html#prebuilt-waveform-models>`_.
+            <https://bhptoolkit.org/FastEMRIWaveforms/user/main.html#prebuilt-waveform-models>`_.
             If an object is provided, must be a waveform class.
         *args: Arguments for the instantiation of
             the waveform generation class.
