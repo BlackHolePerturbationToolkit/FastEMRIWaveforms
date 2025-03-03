@@ -180,6 +180,12 @@ class KerrEccEqFlux(ODEBase):
         fm = get_file_manager()
         file_path = fm.get_file(fp)
 
+        # set cache of separatrix to None as placeholder
+        self.p_sep_cache = None
+
+        # set cache of separatrix to None as placeholder
+        self.p_sep_cache = None
+
         with h5py.File(file_path, "r") as fluxData:
             regionA = fluxData["regionA"]
             u = np.linspace(0, 1, regionA.attrs["NU"])[:: downsample_inner[0]]
@@ -430,6 +436,38 @@ class KerrEccEqFlux(ODEBase):
                 edot = self.edot_interp_B(u, w, z) * edotPN
 
             return -pdot, -edot
+    
+    def interpolate_EL_flux(self, a: float, p: float, e: float, x: float) -> tuple[float]:
+        # handle xI = -1 case
+        if np.abs(x) != 1:
+            raise ValueError(f"Interpolation: x={x} out of bounds for equatorial orbit.")
+
+        if x == -1:
+            a_in = -a
+        else:
+            a_in = a
+
+        u, w, _, z, in_region_A = kerrecceq_flux_forward_map(
+            a_in, p, e, 1.0, pLSO=self.p_sep_cache
+        )
+
+        if u < 0 or u > 1 + 1e-8 or np.isnan(u):
+            raise ValueError(f"Interpolation: p={p} out of bounds.")
+        if w < 0 or w > 1 + 1e-8:
+            raise ValueError(f"Interpolation: e={e} out of bounds.")
+
+        EdotPN, LdotPN = _PN_alt(p, e)
+        if in_region_A:
+            Edot = self.Edot_interp_A(u, w, z) * EdotPN
+            Ldot = self.Ldot_interp_A(u, w, z) * LdotPN
+        else:
+            Edot = self.Edot_interp_B(u, w, z) * EdotPN
+            Ldot = self.Ldot_interp_B(u, w, z) * LdotPN
+
+        if a_in < 0:
+            Ldot *= -1
+
+        return Edot, Ldot
 
     def evaluate_rhs(
         self, y: Union[list[float], np.ndarray]
