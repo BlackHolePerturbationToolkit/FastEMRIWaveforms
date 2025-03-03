@@ -163,6 +163,8 @@ To install the package directly from PyPI, simply run:
 Check that the code is properly installed and working by running the tests.
 Note that the tests will automatically download required files. It is then advised
 create a configuration file to specify where the files should be downloaded.
+It is strongly advised to use a high-volumetry storage space for that purpose,
+like [project shared-spaces on `/work/`](https://hpc.pages.cnes.fr/wiki-hpc-sphinx/page-stockage-work.html)
 If you have access to the LISA project, you can for example use the following:
 
 ```sh
@@ -279,3 +281,56 @@ replace the first item in the `argv` field by replacing `.../bin/python` with `.
 
 Now, when connected to the [CNES Jupyter Hub](https://jupyterhub.cnes.fr/), you should have access to the `few2.0rc1` kernel and FEW
 should work correctly in it.
+
+## On the CC-IN2P3 cluster with GPU support
+
+### Preliminary steps
+
+First log into the CC-IN2P3 cluster and request an interactive session on a GPU node:
+
+```sh
+# Here a 2h session with 64GB of RAM
+$ srun -p gpu_interactive -t 0-02:00 --mem 64G --gres=gpu:v100:1 --pty bash -i
+```
+
+On the GPU node, load the python module and create a virtual environment named `few2.0rc1`, then activate it:
+
+```sh
+$ module load Programming_Languages/python/3.12.2
+$ python -m venv few2.0rc1
+$ source ./few2.0rc1/bin/activate
+```
+
+### Perform a from-source install
+
+Clone FEW and checkout the `v2.0.0rc1` tag:
+
+```sh
+(few2.0rc1) $ git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
+(few2.0rc1) $ cd FastEMRIWaveforms
+(few2.0rc1) $ git checkout v2.0.0rc1
+```
+
+Load the `nvhpc` module to get access to CUDA compilers:
+
+```sh
+(few2.0rc1) $ module load HPC_GPU/nvhpc/24.5
+```
+
+Install FEW and force the CUDA backend compilation with the option `FEW_WITH_GPU=ON`:
+
+```sh
+(few2.0rc1) $ CXX=g++ CC=gcc pip install -e '.[testing]' --config-settings=cmake.define.FEW_WITH_GPU=ON
+...
+Successfully installed fastemriwaveforms-2.0.0rc1
+(few2.0rc1) $ pip install cupy-cuda12x nvidia-cuda-runtime-cu12==12.4.* # Must be installed manually when installed from source
+```
+
+### Perform a package install
+
+To install the package directly from PyPI, simply run:
+
+```sh
+(few2.0rc1) $ pip install --pre fastemriwaveforms-cuda12x==2.0.0rc1
+(few2.0rc1) $ pip install nvidia-cuda-runtime-cu12==12.4.*
+```
