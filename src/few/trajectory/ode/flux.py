@@ -351,7 +351,7 @@ class KerrEccEqFlux(ODEBase):
             a_in = self.a
 
         u, w, _, z, in_region_A = kerrecceq_forward_map(
-            a_in, p, e, 1.0, pLSO=self.p_sep_cache, kind="flux"
+            a_in, p, e, 1.0, pLSO=self.p_sep_cache, kind="flux", return_mask=True
         )
 
         if u < 0 or u > 1 + 1e-8 or np.isnan(u):
