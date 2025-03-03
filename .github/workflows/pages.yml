@@ -7,7 +7,7 @@ on:
 jobs:
   build_doc:
     name: Build and upload documentation
-    runs-on: "ubuntu-latest"
+    runs-on: "ubuntu-24.04-arm"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,6 +27,17 @@ jobs:
             --config-settings=cmake.define.FEW_WITH_GPU=OFF \
             --config-settings=cmake.define.FEW_LAPACKE_FETCH=OFF \
             --config-settings=cmake.define.FEW_LAPACKE_DETECT_WITH=PKGCONFIG
+      - name: Restore the cache
+        uses: actions/cache/restore@v4
+        id: restore_cache
+        with:
+          path: local_cache
+          key: ${{ hashFiles('src/few/files/registry.yml') }}
+      - name: Export configuration options to force using prefetched cache of files
+        if: ${{ steps.restore_cache.outputs.cache-hit == 'true' }}
+        run: |
+          echo "FEW_FILE_ALLOW_DOWNLOAD=no" >> "$GITHUB_ENV"
+          echo "FEW_FILE_EXTRA_PATHS=$(pwd)/local_cache" >> "$GITHUB_ENV"
       - name: Build documentation
         run: |
           sphinx-build -M html docs/source docs/build \
