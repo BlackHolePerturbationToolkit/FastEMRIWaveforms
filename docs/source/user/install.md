@@ -360,5 +360,58 @@ To install the package directly from PyPI, simply run:
 
 ```sh
 (few2.0rc1) $ pip install --pre fastemriwaveforms-cuda12x==2.0.0rc1
-(few2.0rc1) $ pip install nvidia-cuda-runtime-cu12==12.4.*
+```
+
+### Configure file storage
+
+Execute the following command to write a configuration file in `~/.config/few.ini` which specifies that FEW files must be downloaded in `/sps/lisaf/${USER}}/few_files` (adapt to any large storage volume
+[you have access to](https://doc.cc.in2p3.fr/fr/Data-storage/storage-areas.html)):
+
+```sh
+(few2.0rc1) $ cat << EOC > ~/.config/few.ini
+[few]
+file-storage-dir=/sps/lisaf/${USER}/few_files
+file-download-dir=/sps/lisaf/${USER}/few_files
+EOC
+(few2.0rc1) $ mkdir /sps/lisaf/${USER}/few_files
+```
+
+Now, you may run the folowwing command to pre-download all files required for test execution.
+If you don't run this command, files will still be downloaded during test execution:
+
+```sh
+(few2.0rc1) $ few_files fetch --tag unittest
+Downloading all missing files tagged 'unittest' into '/sps/lisaf/your_username/few_files'
+Downloading 'AmplitudeVectorNorm.dat'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+Downloading 'FluxNewMinusPNScaled_fixed_y_order.dat'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+...
+Downloading 'ZNAmps_l10_m10_n55_DS2Outer.h5'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+```
+
+### Run tests
+
+Execute the package tests suite to ensure that everything works as expected:
+
+```sh
+(few2.0rc1) $ python -m few.tests
+AAKWaveform test is running with backend 'cuda12x'
+[...]
+.......
+----------------------------------------------------------------------
+Ran 27 tests in 231.381s
+
+OK
+```
+
+You may also force FEW to run only on the `cpu` backend with:
+
+```sh
+(few2.0rc1) $ FEW_ENABLED_BACKENDS="cpu" python -m few.tests
+AAKWaveform test is running with backend 'cpu'
+[...]
+.......
+----------------------------------------------------------------------
+Ran 27 tests in 512.101s
+
+OK
 ```
