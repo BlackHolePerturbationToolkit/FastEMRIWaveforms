@@ -37,11 +37,14 @@ jobs:
         run: |
           echo "FEW_FILE_ALLOW_DOWNLOAD=no" >> "$GITHUB_ENV"
           echo "FEW_FILE_EXTRA_PATHS=$(pwd)/local_cache" >> "$GITHUB_ENV"
+      - name: Check external links are working
+        run: |
+          sphinx-build -M linkcheck docs/source docs/build_checklinks \
+              --define nbsphinx_execute=never
       - name: Build documentation
         run: |
           sphinx-build -M html docs/source docs/build \
-              --define nbsphinx_execute=always \
-              --define nbsphinx_allow_errors=0
+              --define nbsphinx_execute=never
       - name: Upload static files as artifact
         id: deployment
         uses: actions/upload-pages-artifact@v3
