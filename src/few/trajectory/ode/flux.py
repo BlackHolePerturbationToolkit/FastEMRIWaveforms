@@ -2,7 +2,8 @@ from .base import ODEBase
 from ...utils.utility import get_fundamental_frequencies, get_separatrix, ELQ_to_pex
 from ...utils.globals import get_file_manager
 from numba import njit
-from few.utils.mappings import kerrecceq_forward_map, apex_of_uwyz, apex_of_UWYZ, z_of_a, w_of_euz, p_of_u, u_where_w_is_unity
+from few.utils.mappings import kerrecceq_forward_map, apex_of_uwyz, apex_of_UWYZ, z_of_a, w_of_euz, p_of_u, u_where_w_is_unity, e_of_uwz, u_of_p
+from few.utils.utility import _brentq_jit, _get_separatrix_kernel_inner
 
 import h5py
 
@@ -70,7 +71,7 @@ class SchwarzEccFlux(ODEBase):
 
     def max_p(self, e, x, a=None):
         return np.exp(3.817712325956905) + 2.1 + 2.0 * e
-    
+
     def distance_to_outer_boundary(self, y):
         p, e, x = self.get_pex(y)
         dist_p = 3.817 - np.log((p - 2.0 * e - 2.1))
@@ -148,6 +149,15 @@ def _LdotPN_alt(p, e):
     pdot_V = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5 * (1 + 7.0 / 8.0 * e**2)
     return pdot_V
 
+@njit
+def _emax_w(e, args):
+    a = args[0]
+    p = args[1]
+    z = args[2]
+    psep = _get_separatrix_kernel_inner(a, e, 1)
+    u = u_of_p(p, psep)
+    w = w_of_euz(e, u, z)
+    return w-1
 
 class KerrEccEqFlux(ODEBase):
     """
@@ -261,9 +271,13 @@ class KerrEccEqFlux(ODEBase):
     def flux_output_convention(self):
         return "ELQ"
 
-    def min_p(self, e, x, a=None):
+    def min_p(self, e, x=None, a=None):
         if a is None:
             a = self.a
+
+        if x is not None:
+            if np.abs(x) > 1:
+                raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
 
         if x == -1:
             a_in = -a
@@ -280,8 +294,51 @@ class KerrEccEqFlux(ODEBase):
 
         return max(p_of_u(u_min, p_sep), p_sep + self.separatrix_buffer_dist) + 1e-5
 
-    def max_p(self, e, x, a=None):
+    def max_p(self, e, x=None, a=None):
+        if x is not None:
+            if np.abs(x) > 1:
+                raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
+        
         return 200. - 1e-5
+    
+    def min_e(self, p, x=None, a=None):
+        if x is not None:
+            if np.abs(x) > 1:
+                raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
+            
+        return 0.0
+    
+    def max_e(self, p, x=None, a=None):
+        if x is not None:
+            if np.abs(x) > 1:
+                raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
+            
+        if a is None:
+            a = self.a
+
+        if x == -1:
+            a_in = -a
+        else:
+            a_in = a
+
+        p_sep_min_buffer = get_separatrix(a_in, 0, 1) + self.separatrix_buffer_dist
+        if p < p_sep_min_buffer:
+            raise ValueError(f"Interpolation: p out of bounds. Must be greater than innermost stable circular orbit + buffer = {p_sep_min_buffer}.")
+        
+        p_min = self.min_p(0.9, x, a)
+        if p > p_min:
+            emax = 0.9
+        else:
+            tol = 1e-13
+            z = z_of_a(a_in)
+            emax = _brentq_jit(_emax_w, 0, 0.9, (a_in, p, z), tol)
+        return emax
+    
+    def bounds_p(self, e, x=None, a=None):
+        return [self.min_p(e, x, a), self.max_p(e, x, a)]
+    
+    def bounds_e(self, p, x=None, a=None):
+        return [self.min_e(p, x, a), self.max_e(p, x, a)]
 
     def interpolate_flux_grids(self, p: float, e: float, x: float) -> tuple[float]:
         # handle xI = -1 case

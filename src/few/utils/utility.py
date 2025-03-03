@@ -1563,14 +1563,14 @@ def _get_separatrix_kernel_inner(a: float, e: float, x: float, tol: float = 1e-1
         # Schwarzschild
         return 6 + 2 * e
 
-    elif x == 1.0:  # Eccentric Prograde Equatorial
+    elif np.abs(x) == 1.0 and a*x > 0:  # Eccentric Prograde Equatorial
         x_lo = 1.0 + e
         x_hi = 6.0 + 2.0 * e
 
         p_sep = _brentq_jit(_separatrix_polynomial_equat, x_lo, x_hi, (a, e), tol)
         return p_sep
 
-    elif x == -1.0:  # Eccentric Retrograde Equatorial
+    elif np.abs(x) == 1.0 and a*x < 0:  # Eccentric Retrograde Equatorial
         x_lo = 6 + 2.0 * e
         x_hi = 5 + e + 4 * sqrt(1 + e)
 
@@ -1656,24 +1656,24 @@ def get_separatrix(
         import numpy as xp
 
     # determines shape of input
-    if isinstance(e, float):
+    if isinstance(e, float) or isinstance(e, int):
         separatrix = _get_separatrix_kernel_inner(a, e, x, tol=tol)
 
     else:
         e_in = xp.atleast_1d(e)
 
-        if isinstance(x, float):
+        if isinstance(x, float) or isinstance(x, int):
             x_in = xp.full_like(e_in, x)
         else:
             x_in = xp.atleast_1d(x)
 
         # cast spin values if necessary
-        if isinstance(a, float):
+        if isinstance(a, float) or isinstance(a, int):
             a_in = xp.full_like(e_in, a)
         else:
             a_in = xp.atleast_1d(a)
 
-        if isinstance(x, float):
+        if isinstance(x, float) or isinstance(x, int):
             x_in = xp.full_like(e_in, x)
         else:
             x_in = xp.atleast_1d(x)

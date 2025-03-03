@@ -323,7 +323,7 @@ def kerrecceq_forward_map(
 
 
 @njit
-def u_of_p(p, pLSO, dpmin, dpmax, alpha):
+def u_of_p(p, pLSO, dpmin=DELTAPMIN, dpmax=DELTAPMAX, alpha=ALPHA_FLUX):
     return np.abs(
         (np.log(p - pLSO + dpmax - 2 * dpmin) - log(dpmax - dpmin)) / log(2)
     ) ** (alpha)
@@ -409,7 +409,7 @@ def a_of_z(z, amin=AMIN, amax=AMAX):
 
 
 @njit
-def e_of_uwz(u, w, z, beta, esep=ESEP, emax=EMAX):
+def e_of_uwz(u, w, z, beta=BETA_FLUX, esep=ESEP, emax=EMAX):
     return Secc_of_uz(u, z, beta, esep, emax) * w
 
 @njit
