@@ -2,7 +2,6 @@ name: Publish documentation to GitHub Pages
 on:
   push:
     tags:
-      - 'v*.*.*'
       - 'v*.*.**'
 jobs:
   build_doc:
