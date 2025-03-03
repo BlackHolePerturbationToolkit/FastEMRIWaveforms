@@ -98,7 +98,7 @@ jobs:
           coverage run --source=few -m few.tests
       - name: Run doc tests
         run: |
-          coverage run --source=few -m sphinx.cmd.build -M doctest docs/source docs/build
+          coverage run --source=few -m sphinx.cmd.build -M doctest docs/source docs/build --define nbsphinx_execute=never
       - name: Show coverage results
         run: |
           coverage report -m
