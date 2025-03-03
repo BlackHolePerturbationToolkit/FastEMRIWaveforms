@@ -365,7 +365,7 @@ class KerrEccEqFlux(ODEBase):
         else:
             Edot = -self.Edot_interp_B(u, w, z) * _EdotPN_alt(p, e)
             Ldot = -self.Ldot_interp_B(u, w, z) * _LdotPN_alt(p, e)
-
+        
         if a_in < 0:
             Ldot *= -1
 
