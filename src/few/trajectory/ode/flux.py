@@ -542,7 +542,7 @@ class KerrEccEqFlux(ODEBase):
     def interpolate_EL_flux(self, a: float, p: float, e: float, x: float) -> tuple[float]:
         # handle xI = -1 case
         if np.abs(x) != 1:
-            raise ValueError(f"Interpolation: x of {x} out of bounds for equatorial orbit.")
+            raise ValueError(f"Interpolation: x={x} out of bounds for equatorial orbit.")
 
         if x == -1:
             a_in = -a
@@ -554,16 +554,16 @@ class KerrEccEqFlux(ODEBase):
         )
 
         if u < 0 or u > 1 + 1e-8 or np.isnan(u):
-            raise ValueError("Interpolation: p out of bounds.")
+            raise ValueError(f"Interpolation: p={p} out of bounds.")
         if w < 0 or w > 1 + 1e-8:
-            raise ValueError("Interpolation: e out of bounds.")
+            raise ValueError(f"Interpolation: e={e} out of bounds.")
 
         if in_region_A:
-            Edot = -self.Edot_interp_A(u, w, z) * _EdotPN_alt(p, e)
-            Ldot = -self.Ldot_interp_A(u, w, z) * _LdotPN_alt(p, e)
+            Edot = self.Edot_interp_A(u, w, z) * _EdotPN_alt(p, e)
+            Ldot = self.Ldot_interp_A(u, w, z) * _LdotPN_alt(p, e)
         else:
-            Edot = -self.Edot_interp_B(u, w, z) * _EdotPN_alt(p, e)
-            Ldot = -self.Ldot_interp_B(u, w, z) * _LdotPN_alt(p, e)
+            Edot = self.Edot_interp_B(u, w, z) * _EdotPN_alt(p, e)
+            Ldot = self.Ldot_interp_B(u, w, z) * _LdotPN_alt(p, e)
 
         if a_in < 0:
             Ldot *= -1
