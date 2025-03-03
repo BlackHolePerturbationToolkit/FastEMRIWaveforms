@@ -270,11 +270,17 @@ def kerrecceq_forward_map(
             pLSO = get_separatrix(a_sep, e, xI_sep)
 
         if p <= pLSO + DELTAPMAX:
-            return *_uwyz_of_apex_kernel(
-                a, p, e, xI, pLSO, alpha=alpha, beta=beta
-            ), True
+            if return_mask:
+                return *_uwyz_of_apex_kernel(
+                    a, p, e, xI, pLSO, alpha=alpha, beta=beta
+                ), True
+            else:
+                return *_uwyz_of_apex_kernel(a, p, e, xI, pLSO, alpha=alpha, beta=beta),
         else:
-            return *_UWYZ_of_apex_kernel(a, p, e, xI, pLSO, True), False
+            if return_mask:
+                return *_UWYZ_of_apex_kernel(a, p, e, xI, pLSO, True), False
+            else:
+                return *_UWYZ_of_apex_kernel(a, p, e, xI, pLSO, True),
 
     # else, we have multiple points
     a = xp.atleast_1d(xp.asarray(a))
