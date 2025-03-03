@@ -59,7 +59,7 @@ Whenever you want to check tests are correctly running, simply run:
 
 ```bash
 # To execute unit tests
-(few-venv) FastEMRIWaveforms$ python -m unittest discover
+(few-venv) FastEMRIWaveforms$ python -m few.tests  # or "python -m unittest discover"
 ...
 ----------------------------------------------------------------------
 Ran 27 tests in 156.359s

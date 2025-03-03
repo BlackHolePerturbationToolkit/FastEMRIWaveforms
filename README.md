@@ -236,7 +236,7 @@ To run the tests, open a terminal in a directory containing the sources of FEW a
 ```sh
 $ git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
 $ cd FastEMRIWaveforms
-$ python -m unittest discover
+$ python -m few.tests  # or "python -m unittest discover"
 ...
 ----------------------------------------------------------------------
 Ran 20 tests in 71.514s
