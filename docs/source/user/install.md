@@ -1,4 +1,4 @@
-# Working with FEW 2.0
+# Installation guide
 
 This page is a guide for installing and executing FEW tests on most platforms and some clusters available to members of the user community.
 
@@ -11,6 +11,10 @@ local copy of sources). In following instructions, from-source installations are
 where you can modify sources on the fly and these changes are taken into account in the python environment.
 To disable this *editable mode* (and thus be able to delete the source directory whilst keeping access to FEW
 in python), simply remove the `-e` option from the `pip install` commands in the from-source installation instructions.
+
+If the from-source installation instructions do not work in your environment, retry by adding the options
+`-v -Cbuild.verbose=true -Clogging.level=INFO` to the `pip install -e .` command to obtain detailed
+information about the cause of failure.
 
 ## On Mac OS with Apple Silicon CPU (M1 to M4)
 
@@ -26,7 +30,6 @@ Create a new conda environment `few2.0rc1` and activate it:
 $ conda create -n few2.0rc1 python=3.12 --channel conda-forge --override-channels
 $ conda activate few2.0rc1
 (few2.0rc1) $ conda config --env --add channels conda-forge
-(few2.0rc1) $ conda config --env --set channel_priority strict
 ```
 
 Note that, to ensure having up-to-date compilers, we force the use of the `conda-forge` channel.
@@ -41,19 +44,44 @@ Clone FEW and checkout the `v2.0.0rc1` tag:
 (few2.0rc1) $ git checkout v2.0.0rc1
 ```
 
-Ensure you have both a C++ and a Fortran compiler available in your environment:
+#### With automatic LAPACK(E) fetching
+
+This first method will automatically download the sources of LAPACK and LAPACKE, and compile
+them along with FEW. For that, you will need a Fortran compiler as well as a C++ compiler:
 
 ```sh
 (few2.0rc1) $ conda install conda-forge::cxx-compiler conda-forge::fortran-compiler
 ```
 
-Run the installation. Note that we disable `LAPACKE` detect feature to prevent conflicts that
-can appear with macOS XCode `Accelerated` framework:
+By default, the FEW installation process will try to detect LAPACK in your environment using
+the CMake `FindLapack` feature which, on macOS, can link to the XCode *Accelerated* framework.
+This results in a non-working FEW installation. To prevent that, disable completely LAPACK
+detection:
 
 ```sh
 (few2.0rc1) $ pip install -e '.[testing]' -Ccmake.define.FEW_LAPACKE_DETECT_WITH=NONE
 Successfully installed [...] fastemriwaveforms-2.0.0rc1 [...]
 ```
+
+#### With conda-installed LAPACK
+
+As of March 2025, the default `conda-forge::lapack` package has version `v3.9.0` and does not
+install the development files required for FEW compilation.
+We will instead use the `lapack_rc` package, in version `v3.11.0` which does work as expected.
+
+First, install a C++ compiler and the LAPACK package:
+
+```sh
+(few2.0rc1) $ conda install conda-forge::cxx-compiler conda-forge/label/lapack_dev::lapack
+```
+
+Then run FEW installation from source:
+
+```sh
+(few2.0rc1) $ pip install -e '.[testing]'
+Successfully installed [...] fastemriwaveforms-2.0.0rc1 [...]
+```
+
 
 ### Perform a package install
 
