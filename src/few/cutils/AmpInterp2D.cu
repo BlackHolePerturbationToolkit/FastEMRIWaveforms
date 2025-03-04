@@ -1,10 +1,10 @@
-#include "stdio.h"
 #include "global.h"
+
 #include "AmpInterp2D.hh"
 
 #define NUM_THREADS 256
-__inline__ CUDA_CALLABLE_MEMBER
-void fpbspl(const double* t, int k, double x, int l, double* h)
+
+FEW_INLINE CUDA_CALLABLE_MEMBER void fpbspl(const double* t, int k, double x, int l, double* h)
 {
 /*  subroutine fpbspl evaluates the (k+1) non-zero b-splines of
     degree k at t(l) <= x < t(l+1) using the stable recurrence
