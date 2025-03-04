@@ -1651,7 +1651,7 @@ def get_separatrix(
 
     """
     # determines shape of input
-    if isinstance(e, float):
+    if isinstance(e, float) or isinstance(e, int):
         return _get_separatrix_kernel_inner(a, e, x, tol=tol)
 
     if use_gpu:
@@ -1659,28 +1659,23 @@ def get_separatrix(
     else:
         import numpy as xp
 
-    # determines shape of input
-    if isinstance(e, float) or isinstance(e, int):
-        separatrix = _get_separatrix_kernel_inner(a, e, x, tol=tol)
+    e_in = xp.atleast_1d(e)
 
+    if isinstance(x, float) or isinstance(x, int):
+        x_in = xp.full_like(e_in, x)
     else:
-        e_in = xp.atleast_1d(e)
+        x_in = xp.atleast_1d(x)
 
-        if isinstance(x, float) or isinstance(x, int):
-            x_in = xp.full_like(e_in, x)
-        else:
-            x_in = xp.atleast_1d(x)
+    # cast spin values if necessary
+    if isinstance(a, float) or isinstance(a, int):
+        a_in = xp.full_like(e_in, a)
+    else:
+        a_in = xp.atleast_1d(a)
 
-        # cast spin values if necessary
-        if isinstance(a, float) or isinstance(a, int):
-            a_in = xp.full_like(e_in, a)
-        else:
-            a_in = xp.atleast_1d(a)
-
-        if isinstance(x, float) or isinstance(x, int):
-            x_in = xp.full_like(e_in, x)
-        else:
-            x_in = xp.atleast_1d(x)
+    if isinstance(x, float) or isinstance(x, int):
+        x_in = xp.full_like(e_in, x)
+    else:
+        x_in = xp.atleast_1d(x)
 
     assert len(a_in) == len(e_in) == len(x_in)
 
