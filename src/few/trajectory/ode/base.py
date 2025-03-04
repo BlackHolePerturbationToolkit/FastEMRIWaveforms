@@ -19,7 +19,8 @@ class ODEBase:
     See the documentation for examples on how to do this.
 
     """
-
+    _flux_output_convention = "pex"
+    
     def __init__(self, *args, use_ELQ=False, **kwargs):
         if use_ELQ:
             assert self.supports_ELQ, "This ODE does not support ELQ evaluation."
@@ -29,6 +30,8 @@ class ODEBase:
         """
         self.num_add_args = 0
         """int: Number of additional arguments being passed to the ODE function."""
+
+        self.flux_output_convention = "pex"
 
         self.apply_Jacobian_bool = (
             self.flux_output_convention == "ELQ" and not self.use_ELQ
@@ -99,11 +102,22 @@ class ODEBase:
         A string describing the coordinate convention of the fluxes for this model, as output by `evaluate_rhs`.
         These are either "pex" or "ELQ". If "ELQ", a Jacobian transformation is performed if
         the output derivatives of the model are expected to be in the "pex" convention.
-        Defaults to "ELQ".
+        Defaults to "pex".
 
         For models that do not perform interpolation to generate fluxes (e.g., PN5), this property is not accessed.
         """
-        return "ELQ"
+        return self._flux_output_convention
+
+    @flux_output_convention.setter
+    def flux_output_convention(self, value):
+        if value not in ["pex", "ELQ"]:
+            raise ValueError(
+                f"Invalid flux output convention: {value}. Must be 'pex' or 'ELQ'."
+            )
+        self._flux_output_convention = value
+        self.apply_Jacobian_bool = (
+            self.flux_output_convention == "ELQ" and not self.use_ELQ
+        )
 
     def add_fixed_parameters(self, M: float, mu: float, a: float, additional_args=None):
         self.epsilon = mu / M

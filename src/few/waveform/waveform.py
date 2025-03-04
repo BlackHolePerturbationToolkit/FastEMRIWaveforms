@@ -424,7 +424,10 @@ class FastKerrEccentricEquatorialFlux(
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
-        inspiral_kwargs["func"] = KerrEccEqFlux
+
+        if "func" not in inspiral_kwargs.keys():
+            inspiral_kwargs["func"] = KerrEccEqFlux
+
         # inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 
         if sum_kwargs is None:

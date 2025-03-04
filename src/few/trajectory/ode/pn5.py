@@ -25,10 +25,6 @@ class PN5(ODEBase):
     def supports_ELQ(self):
         return False
 
-    @property
-    def flux_output_convention(self):
-        return "pex"
-
     def evaluate_rhs(
         self, y: Union[list[float], np.ndarray]
     ) -> list[Union[float, np.ndarray]]:

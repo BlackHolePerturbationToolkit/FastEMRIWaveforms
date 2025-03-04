@@ -99,7 +99,7 @@ class ModuleTest(unittest.TestCase):
         # list_func = ['KerrEccentricEquatorial_ELQ', 'KerrEccentricEquatorial_ELQ_nofrequencies']
         for el in list_func:
             few_logger.info("testing kerr {}".format(el))
-            traj = EMRIInspiral(func=el)
+            traj = EMRIInspiral(func=el, flux_output_convention="ELQ")
 
             # set initial parameters
             M = 1e6
