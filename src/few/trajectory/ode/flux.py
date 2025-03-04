@@ -142,6 +142,16 @@ def _PN_alt(p, e):
     Ldot = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5 * (1 + 7.0 / 8.0 * e**2)
     return Edot, Ldot
 
+@njit
+def _emax_w(e, args):
+    a = args[0]
+    p = args[1]
+    z = args[2]
+    psep = _get_separatrix_kernel_inner(a, e, 1)
+    u = u_of_p(p, psep)
+    w = w_of_euz(e, u, z)
+    return w-1
+
 class KerrEccEqFlux(ODEBase):
     """
     Kerr eccentric equatorial flux ODE.
@@ -501,9 +511,10 @@ class KerrEccEqFluxAPEX(ODEBase):
             agrid, pgrid, egrid, xgrid = apex_of_uwyz(
                 ugrid, wgrid, np.ones_like(zgrid), zgrid
             )
-            EdotPN = _EdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
-            LdotPN = _LdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
-            
+            EdotPN, LdotPN = _PN_alt(pgrid, egrid)
+            EdotPN = EdotPN.reshape(u.size, w.size, z.size)
+            LdotPN = LdotPN.reshape(u.size, w.size, z.size)
+
             # normalise by PN contribution
             Edot = (
                 regionA["Edot"][()][
@@ -552,8 +563,9 @@ class KerrEccEqFluxAPEX(ODEBase):
                 ugrid, wgrid, np.ones_like(zgrid), zgrid, True
             )
 
-            EdotPN = _EdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
-            LdotPN = _LdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
+            EdotPN, LdotPN = _PN_alt(pgrid, egrid)
+            EdotPN = EdotPN.reshape(u.size, w.size, z.size)
+            LdotPN = LdotPN.reshape(u.size, w.size, z.size)
 
             # normalise by PN contribution
             Edot = (
@@ -684,8 +696,8 @@ class KerrEccEqFluxAPEX(ODEBase):
         else:
             a_in = self.a
 
-        u, w, _, z, in_region_A = kerrecceq_forward_map(
-            a_in, p, e, 1.0, pLSO=self.p_sep_cache, kind="flux"
+        u, w, _, z, in_region_A = kerrecceq_flux_forward_map(
+            a_in, p, e, 1.0, self.p_sep_cache
         )
 
         if u < 0 or u > 1 + 1e-8 or np.isnan(u):
