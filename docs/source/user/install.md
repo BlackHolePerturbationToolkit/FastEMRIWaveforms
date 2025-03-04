@@ -50,7 +50,7 @@ This first method will automatically download the sources of LAPACK and LAPACKE,
 them along with FEW. For that, you will need a Fortran compiler as well as a C++ compiler:
 
 ```sh
-(few2.0rc1) $ conda install conda-forge::cxx-compiler conda-forge::fortran-compiler
+(few2.0rc1) $ conda install cxx-compiler fortran-compiler
 ```
 
 By default, the FEW installation process will try to detect LAPACK in your environment using
@@ -115,6 +115,64 @@ Downloading 'AmplitudeVectorNorm.dat'... ━━━━━━━━━━━━━
 Downloading 'FluxNewMinusPNScaled_fixed_y_order.dat'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
 ...
 Downloading 'ZNAmps_l10_m10_n55_DS2Outer.h5'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+```
+
+### Run tests
+
+Execute the package tests suite to ensure that everything works as expected:
+
+```sh
+(few2.0rc1) $ python -m few.tests
+AAKWaveform test is running with backend 'cpu'
+[...]
+.......
+----------------------------------------------------------------------
+Ran 27 tests in 87.305s
+
+OK
+```
+
+## On Windows
+
+For now, only from-source installations are possible on Microsoft Windows.
+
+### Preliminary steps
+
+Ensure you have a recent [Microsoft Visual Studio](https://visualstudio.microsoft.com/fr/downloads/) release installed locally.
+Tests were performed with *Visual Studio 2022 Community Edition*.
+
+Create a new conda environment `few2.0rc1` and activate it:
+
+```sh
+$ conda create -n few2.0rc1 python=3.12 --channel conda-forge --override-channels
+$ conda activate few2.0rc1
+(few2.0rc1) $ conda config --env --add channels conda-forge
+```
+
+Like for [Mac OS](#on-mac-os-with-apple-silicon-cpu-m1-to-m4), we force here the use of the `conda-forge` channel.
+
+Install the required dependencies in the conda environment:
+
+```sh
+(few2.0rc1) $ conda install conda-forge/label/lapack_rc::liblapacke pkgconfig
+```
+
+### Perform a from-source install
+
+Clone FEW and checkout the `Kerr_Equatorial_Eccentric` branch (Windows installation using MSVC was not working at the
+time `v2.0.0rc1` was released):
+
+```sh
+(few2.0rc1) $ git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
+(few2.0rc1) $ cd FastEMRIWaveforms
+(few2.0rc1) $ git checkout Kerr_Equatorial_Eccentric
+```
+
+Then run FEW installation from source:
+
+```sh
+(few2.0rc1) $ pip install -e '.[testing]' --config-settings=cmake.define.FEW_LAPACKE_DETECT_WITH=PKGCONFIG
+Successfully installed [...] fastemriwaveforms-2.0.0rc1.post1.dev1+ge0c124b.d20250304 [...]
 ```
 
 ### Run tests
