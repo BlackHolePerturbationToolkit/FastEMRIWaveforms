@@ -1650,45 +1650,44 @@ def get_separatrix(
         Separatrix value with shape based on input shapes.
 
     """
+    # determines shape of input
+    if isinstance(e, float) or isinstance(e, int):
+        return _get_separatrix_kernel_inner(a, e, x, tol=tol)
+
     if use_gpu:
         import cupy as xp
     else:
         import numpy as xp
 
-    # determines shape of input
-    if isinstance(e, float) or isinstance(e, int):
-        separatrix = _get_separatrix_kernel_inner(a, e, x, tol=tol)
+    e_in = xp.atleast_1d(e)
 
+    if isinstance(x, float) or isinstance(x, int):
+        x_in = xp.full_like(e_in, x)
     else:
-        e_in = xp.atleast_1d(e)
+        x_in = xp.atleast_1d(x)
 
-        if isinstance(x, float) or isinstance(x, int):
-            x_in = xp.full_like(e_in, x)
-        else:
-            x_in = xp.atleast_1d(x)
+    # cast spin values if necessary
+    if isinstance(a, float) or isinstance(a, int):
+        a_in = xp.full_like(e_in, a)
+    else:
+        a_in = xp.atleast_1d(a)
 
-        # cast spin values if necessary
-        if isinstance(a, float) or isinstance(a, int):
-            a_in = xp.full_like(e_in, a)
-        else:
-            a_in = xp.atleast_1d(a)
+    if isinstance(x, float) or isinstance(x, int):
+        x_in = xp.full_like(e_in, x)
+    else:
+        x_in = xp.atleast_1d(x)
 
-        if isinstance(x, float) or isinstance(x, int):
-            x_in = xp.full_like(e_in, x)
-        else:
-            x_in = xp.atleast_1d(x)
+    assert len(a_in) == len(e_in) == len(x_in)
 
-        assert len(a_in) == len(e_in) == len(x_in)
-
-        separatrix = xp.empty_like(e_in)
-        if use_gpu:
-            threadsperblock = 256
-            blockspergrid = (len(a_in) + (threadsperblock - 1)) // threadsperblock
-            _get_separatrix_kernel_gpu[blockspergrid, threadsperblock](
-                separatrix, a_in, e_in, x_in, tol
-            )
-        else:
-            _get_separatrix_kernel_cpu(separatrix, a_in, e_in, x_in, tol=tol)
+    separatrix = xp.empty_like(e_in)
+    if use_gpu:
+        threadsperblock = 256
+        blockspergrid = (len(a_in) + (threadsperblock - 1)) // threadsperblock
+        _get_separatrix_kernel_gpu[blockspergrid, threadsperblock](
+            separatrix, a_in, e_in, x_in, tol
+        )
+    else:
+        _get_separatrix_kernel_cpu(separatrix, a_in, e_in, x_in, tol=tol)
 
     return separatrix
 

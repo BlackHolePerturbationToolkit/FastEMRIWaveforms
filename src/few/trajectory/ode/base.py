@@ -239,15 +239,13 @@ class ODEBase:
     ) -> np.ndarray:
         in_bounds = self.cache_values_and_check_bounds(y)
 
-        if in_bounds:
-            derivs = self.evaluate_rhs(y, **kwargs)
-        else:
-            derivs = np.zeros(6) * np.nan
-
         if out is None:
-            out = np.asarray(derivs)
+            out = np.zeros(6) 
+
+        if in_bounds:
+            out[:] = self.evaluate_rhs(y, **kwargs)
         else:
-            out[:] = derivs
+            out *= np.nan
 
         self.modify_rhs_before_Jacobian(out, y, **kwargs)
 
