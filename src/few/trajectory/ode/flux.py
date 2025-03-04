@@ -192,9 +192,6 @@ class KerrEccEqFlux(ODEBase):
             agrid, pgrid, egrid, xgrid = apex_of_uwyz(
                 ugrid, wgrid, np.ones_like(zgrid), zgrid
             )
-            EdotPN, LdotPN = _PN_alt(pgrid, egrid)
-            EdotPN = EdotPN.reshape(u.size, w.size, z.size)
-            LdotPN = LdotPN.reshape(u.size, w.size, z.size)
 
             # normalise by PN contribution
             Edot = (
@@ -216,6 +213,12 @@ class KerrEccEqFlux(ODEBase):
                 # calculate pdot and edot from Edot and Ldot
                 Edothere = (Edot).flatten()
                 Ldothere = (Ldot).flatten()
+                xgrid = np.sign(agrid)
+                xgrid[xgrid == 0] = 1
+                
+                Ldothere = Ldothere * xgrid
+                agrid = np.abs(agrid)
+
                 out_pdot_edot = np.asarray([ELdot_to_PEdot_Jacobian(agrid[i], pgrid[i], egrid[i], xgrid[i], Edothere[i], Ldothere[i]) for i in range(Edothere.size)])
                     
                 # check whether there are no nans in the output and Edot and Ldot
@@ -224,11 +227,20 @@ class KerrEccEqFlux(ODEBase):
                 
                 pdot = out_pdot_edot[:, 0].reshape(u.size, w.size, z.size)
                 edot = out_pdot_edot[:, 1].reshape(u.size, w.size, z.size)
-            
-                self.pdot_interp_A = TricubicSpline(u, w, z, pdot)
-                self.edot_interp_A = TricubicSpline(u, w, z, edot)
+
+                risco = get_separatrix(agrid.flatten(), np.zeros_like(agrid.flatten()), xgrid.flatten())
+                psep = get_separatrix(agrid.flatten(), egrid.flatten(), xgrid.flatten())
+                pdot_pn = _pdot_PN(pgrid.flatten(), egrid.flatten(), risco, psep).reshape(u.size, w.size, z.size)
+                edot_pn = _edot_PN(pgrid.flatten(), egrid.flatten(), risco, psep).reshape(u.size, w.size, z.size)
+
+                self.pdot_interp_A = TricubicSpline(u, w, z, pdot / pdot_pn)
+                self.edot_interp_A = TricubicSpline(u, w, z, edot / edot_pn)
                 
             else:
+                EdotPN, LdotPN = _PN_alt(pgrid, egrid)
+                EdotPN = EdotPN.reshape(u.size, w.size, z.size)
+                LdotPN = LdotPN.reshape(u.size, w.size, z.size)
+
                 self.Edot_interp_A = TricubicSpline(u, w, z, Edot / EdotPN)
                 self.Ldot_interp_A = TricubicSpline(u, w, z, Ldot / LdotPN)
 
@@ -243,10 +255,6 @@ class KerrEccEqFlux(ODEBase):
             agrid, pgrid, egrid, xgrid = apex_of_UWYZ(
                 ugrid, wgrid, np.ones_like(zgrid), zgrid, True
             )
-
-            EdotPN, LdotPN = _PN_alt(pgrid, egrid)
-            EdotPN = EdotPN.reshape(u.size, w.size, z.size)
-            LdotPN = LdotPN.reshape(u.size, w.size, z.size)
 
             # normalise by PN contribution
             Edot = (
@@ -268,6 +276,12 @@ class KerrEccEqFlux(ODEBase):
                 # calculate pdot and edot from Edot and Ldot
                 Edothere = (Edot).flatten()
                 Ldothere = (Ldot).flatten()
+                xgrid = np.sign(agrid)
+                xgrid[xgrid == 0] = 1
+                
+                Ldothere = Ldothere * xgrid
+                agrid = np.abs(agrid)
+
                 out_pdot_edot = np.asarray([ELdot_to_PEdot_Jacobian(agrid[i], pgrid[i], egrid[i], xgrid[i], Edothere[i], Ldothere[i]) for i in range(Edothere.size)])
                 
                 # check whether there are no nans in the output and Edot and Ldot
@@ -276,10 +290,19 @@ class KerrEccEqFlux(ODEBase):
                 
                 pdot = out_pdot_edot[:, 0].reshape(u.size, w.size, z.size)
                 edot = out_pdot_edot[:, 1].reshape(u.size, w.size, z.size)
-                
-                self.pdot_interp_B = TricubicSpline(u, w, z, pdot)
-                self.edot_interp_B = TricubicSpline(u, w, z, edot)
+
+                risco = get_separatrix(agrid.flatten(), np.zeros_like(agrid.flatten()), xgrid.flatten())
+                psep = get_separatrix(agrid.flatten(), egrid.flatten(), xgrid.flatten())
+                pdot_pn = _pdot_PN(pgrid.flatten(), egrid.flatten(), risco, psep).reshape(u.size, w.size, z.size)
+                edot_pn = _edot_PN(pgrid.flatten(), egrid.flatten(), risco, psep).reshape(u.size, w.size, z.size)
+
+                self.pdot_interp_B = TricubicSpline(u, w, z, pdot / pdot_pn)
+                self.edot_interp_B = TricubicSpline(u, w, z, edot / edot_pn)
             else:
+                EdotPN, LdotPN = _PN_alt(pgrid, egrid)
+                EdotPN = EdotPN.reshape(u.size, w.size, z.size)
+                LdotPN = LdotPN.reshape(u.size, w.size, z.size)
+
                 self.Edot_interp_B = TricubicSpline(u, w, z, Edot / EdotPN)
                 self.Ldot_interp_B = TricubicSpline(u, w, z, Ldot / LdotPN)
 
@@ -395,12 +418,16 @@ class KerrEccEqFlux(ODEBase):
             return Edot, Ldot
 
         else:
+            risco = get_separatrix(a_in, 0.0, 1.0)
+            p_sep = self.p_sep_cache
+            pdotPN = _pdot_PN(p, e, risco, p_sep)
+            edotPN = _edot_PN(p, e, risco, p_sep)
             if in_region_A:
-                pdot = self.pdot_interp_A(u, w, z)
-                edot = self.edot_interp_A(u, w, z)
+                pdot = self.pdot_interp_A(u, w, z) * pdotPN
+                edot = self.edot_interp_A(u, w, z) * edotPN
             else:
-                pdot = self.pdot_interp_B(u, w, z)
-                edot = self.edot_interp_B(u, w, z)
+                pdot = self.pdot_interp_B(u, w, z) * pdotPN
+                edot = self.edot_interp_B(u, w, z) * edotPN
 
             return -pdot, -edot
 
@@ -420,16 +447,15 @@ class KerrEccEqFlux(ODEBase):
         return [Edot, Ldot, 0.0, Omega_phi, Omega_theta, Omega_r]
 
 
-@njit(fastmath=True)
+@njit
 def _pdot_PN(p, e, risco, p_sep):
-    return (8.0 * pow(1.0 - (e * e), 1.5) * (8.0 + 7.0 * (e * e))) / (
+    return (8.0 * (1.0 - (e * e))** 1.5 * (8.0 + 7.0 * (e * e))) / (
         5.0 * p * (((p - risco) * (p - risco)) - ((-risco + p_sep) * (-risco + p_sep)))
     )
 
-
-@njit(fastmath=True)
+@njit
 def _edot_PN(p, e, risco, p_sep):
-    return (pow(1.0 - (e * e), 1.5) * (304.0 + 121.0 * (e * e))) / (
+    return (((1.0 - (e * e)) ** 1.5) * (304.0 + 121.0 * (e * e))) / (
         15.0
         * (p * p)
         * (((p - risco) * (p - risco)) - ((-risco + p_sep) * (-risco + p_sep)))
