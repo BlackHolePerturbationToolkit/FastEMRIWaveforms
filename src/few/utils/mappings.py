@@ -326,8 +326,8 @@ def kerrecceq_forward_map(
 
 @njit
 def u_of_p(p, pLSO, alpha):
-    return abs(
-        (log(p - pLSO + DELTAPMAX - 2 * DELTAPMIN) - log(DELTAPMAX - DELTAPMIN)) / log(2)
+    return np.abs(
+        (np.log(p - pLSO + DELTAPMAX - 2 * DELTAPMIN) - log(DELTAPMAX - DELTAPMIN)) / log(2)
     ) ** (alpha)
 
 @njit
