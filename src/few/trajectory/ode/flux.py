@@ -2,8 +2,8 @@ from .base import ODEBase
 from ...utils.utility import get_fundamental_frequencies, get_separatrix, ELQ_to_pex
 from ...utils.globals import get_file_manager
 from numba import njit
-from few.utils.mappings import kerrecceq_forward_map, apex_of_uwyz, apex_of_UWYZ, z_of_a, w_of_euz, p_of_u, u_where_w_is_unity, e_of_uwz, u_of_p
-from few.utils.utility import _brentq_jit, _get_separatrix_kernel_inner, kerrecceq_flux_forward_map
+from few.utils.mappings import kerrecceq_flux_forward_map, apex_of_uwyz, apex_of_UWYZ, z_of_a, w_of_euz, p_of_u, u_where_w_is_unity, e_of_uwz, u_of_p
+from few.utils.utility import _brentq_jit, _get_separatrix_kernel_inner
 
 import h5py
 
