@@ -21,7 +21,7 @@ def wrapper(*args, **kwargs):
     If you use this function, you must convert input arrays to size_t data type in Cython and
     then properly cast the pointer as it enters the c++ function. See the
     Cython codes
-    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/src>`_
+    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/few/cutils/src>`_
     for examples.
 
     args:
@@ -91,7 +91,7 @@ def pointer_adjust(func):
     If you use this decorator, you must convert input arrays to size_t data type in Cython and
     then properly cast the pointer as it enters the c++ function. See the
     Cython codes
-    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/src>`_
+    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/few/cutils/src>`_
     for examples.
 
     """
