@@ -1650,6 +1650,10 @@ def get_separatrix(
         Separatrix value with shape based on input shapes.
 
     """
+    # determines shape of input
+    if isinstance(e, float):
+        return _get_separatrix_kernel_inner(a, e, x, tol=tol)
+
     if use_gpu:
         import cupy as xp
     else:
@@ -1678,17 +1682,17 @@ def get_separatrix(
         else:
             x_in = xp.atleast_1d(x)
 
-        assert len(a_in) == len(e_in) == len(x_in)
+    assert len(a_in) == len(e_in) == len(x_in)
 
-        separatrix = xp.empty_like(e_in)
-        if use_gpu:
-            threadsperblock = 256
-            blockspergrid = (len(a_in) + (threadsperblock - 1)) // threadsperblock
-            _get_separatrix_kernel_gpu[blockspergrid, threadsperblock](
-                separatrix, a_in, e_in, x_in, tol
-            )
-        else:
-            _get_separatrix_kernel_cpu(separatrix, a_in, e_in, x_in, tol=tol)
+    separatrix = xp.empty_like(e_in)
+    if use_gpu:
+        threadsperblock = 256
+        blockspergrid = (len(a_in) + (threadsperblock - 1)) // threadsperblock
+        _get_separatrix_kernel_gpu[blockspergrid, threadsperblock](
+            separatrix, a_in, e_in, x_in, tol
+        )
+    else:
+        _get_separatrix_kernel_cpu(separatrix, a_in, e_in, x_in, tol=tol)
 
     return separatrix
 

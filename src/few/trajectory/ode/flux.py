@@ -3,7 +3,7 @@ from ...utils.utility import get_fundamental_frequencies, get_separatrix, ELQ_to
 from ...utils.globals import get_file_manager
 from numba import njit
 from few.utils.mappings import kerrecceq_forward_map, apex_of_uwyz, apex_of_UWYZ, z_of_a, w_of_euz, p_of_u, u_where_w_is_unity, e_of_uwz, u_of_p
-from few.utils.utility import _brentq_jit, _get_separatrix_kernel_inner
+from few.utils.utility import _brentq_jit, _get_separatrix_kernel_inner, kerrecceq_flux_forward_map
 
 import h5py
 
@@ -124,40 +124,22 @@ class SchwarzEccFlux(ODEBase):
         return [Edot, Ldot, 0.0, Omega_phi, Omega_theta, Omega_r]
 
 
-@njit
-def _EdotPN_alt(p, e):
+@njit 
+def _PN_alt(p, e):
     """
     https://arxiv.org/pdf/2201.07044.pdf
     eq 91
     """
-    pdot_V = (
+    oneme2 = (1 - e**2)**1.5
+    Edot = (
         32.0
         / 5.0
         * p ** (-5)
-        * (1 - e**2) ** 1.5
+        * oneme2
         * (1 + 73 / 24 * e**2 + 37 / 96 * e**4)
     )
-    return pdot_V
-
-
-@njit
-def _LdotPN_alt(p, e):
-    """
-    https://arxiv.org/pdf/2201.07044.pdf
-    eq 91
-    """
-    pdot_V = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5 * (1 + 7.0 / 8.0 * e**2)
-    return pdot_V
-
-@njit
-def _emax_w(e, args):
-    a = args[0]
-    p = args[1]
-    z = args[2]
-    psep = _get_separatrix_kernel_inner(a, e, 1)
-    u = u_of_p(p, psep)
-    w = w_of_euz(e, u, z)
-    return w-1
+    Ldot = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5 * (1 + 7.0 / 8.0 * e**2)
+    return Edot, Ldot
 
 class KerrEccEqFlux(ODEBase):
     """
@@ -195,8 +177,9 @@ class KerrEccEqFlux(ODEBase):
             agrid, pgrid, egrid, xgrid = apex_of_uwyz(
                 ugrid, wgrid, np.ones_like(zgrid), zgrid
             )
-            EdotPN = _EdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
-            LdotPN = _LdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
+            EdotPN, LdotPN = _PN_alt(pgrid, egrid)
+            EdotPN = EdotPN.reshape(u.size, w.size, z.size)
+            LdotPN = LdotPN.reshape(u.size, w.size, z.size)
 
             # normalise by PN contribution
             Edot = (
@@ -231,8 +214,9 @@ class KerrEccEqFlux(ODEBase):
                 ugrid, wgrid, np.ones_like(zgrid), zgrid, True
             )
 
-            EdotPN = _EdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
-            LdotPN = _LdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
+            EdotPN, LdotPN = _PN_alt(pgrid, egrid)
+            EdotPN = EdotPN.reshape(u.size, w.size, z.size)
+            LdotPN = LdotPN.reshape(u.size, w.size, z.size)
 
             # normalise by PN contribution
             Edot = (
@@ -347,8 +331,8 @@ class KerrEccEqFlux(ODEBase):
         else:
             a_in = self.a
 
-        u, w, _, z, in_region_A = kerrecceq_forward_map(
-            a_in, p, e, 1.0, pLSO=self.p_sep_cache, kind="flux"
+        u, w, _, z, in_region_A = kerrecceq_flux_forward_map(
+            a_in, p, e, 1.0, self.p_sep_cache
         )
 
         if u < 0 or u > 1 + 1e-8 or np.isnan(u):
@@ -356,12 +340,13 @@ class KerrEccEqFlux(ODEBase):
         if w < 0 or w > 1 + 1e-8:
             raise ValueError("Interpolation: e out of bounds.")
 
+        EdotPN, LdotPN = _PN_alt(p, e)
         if in_region_A:
-            Edot = -self.Edot_interp_A(u, w, z) * _EdotPN_alt(p, e)
-            Ldot = -self.Ldot_interp_A(u, w, z) * _LdotPN_alt(p, e)
+            Edot = -self.Edot_interp_A(u, w, z) * EdotPN
+            Ldot = -self.Ldot_interp_A(u, w, z) * LdotPN
         else:
-            Edot = -self.Edot_interp_B(u, w, z) * _EdotPN_alt(p, e)
-            Ldot = -self.Ldot_interp_B(u, w, z) * _LdotPN_alt(p, e)
+            Edot = -self.Edot_interp_B(u, w, z) * EdotPN
+            Ldot = -self.Ldot_interp_B(u, w, z) * LdotPN
 
         if a_in < 0:
             Ldot *= -1
