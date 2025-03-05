@@ -585,8 +585,8 @@ class FastSchwarzschildEccentricFlux(
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
-        inspiral_kwargs["func"] = SchwarzEccFlux
-        # inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
+        if "func" not in inspiral_kwargs.keys():
+            inspiral_kwargs["func"] = SchwarzEccFlux
 
         if sum_kwargs is None:
             sum_kwargs = {}
@@ -733,8 +733,8 @@ class FastSchwarzschildEccentricFluxBicubic(
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
-        inspiral_kwargs["func"] = SchwarzEccFlux
-        # inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
+        if "func" not in inspiral_kwargs.keys():
+            inspiral_kwargs["func"] = SchwarzEccFlux
 
         if sum_kwargs is None:
             sum_kwargs = {}
@@ -892,7 +892,8 @@ class SlowSchwarzschildEccentricFlux(
             inspiral_kwargs = {}
         # declare specific properties
         inspiral_kwargs["DENSE_STEPPING"] = 1
-        inspiral_kwargs["func"] = SchwarzEccFlux
+        if "func" not in inspiral_kwargs.keys():
+            inspiral_kwargs["func"] = SchwarzEccFlux
 
         SchwarzschildEccentric.__init__(
             self,
@@ -1024,7 +1025,8 @@ class Pn5AAKWaveform(AAKWaveformBase):
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
-        inspiral_kwargs["func"] = PN5
+        if "func" not in inspiral_kwargs.keys():
+            inspiral_kwargs["func"] = PN5
 
         AAKWaveformBase.__init__(
             self,
