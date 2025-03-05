@@ -134,7 +134,10 @@ OK
 
 ## On Windows
 
+```{attention}
 For now, only from-source installations are possible on Microsoft Windows.
+The compilation of backends on Windows is less stable than on other platforms. Try at your own risk!
+```
 
 ### Preliminary steps
 
@@ -403,10 +406,13 @@ Load the `nvhpc` module to get access to CUDA compilers:
 (few2.0rc1) $ module load HPC_GPU/nvhpc/24.5
 ```
 
-Install FEW and force the CUDA backend compilation with the option `FEW_WITH_GPU=ON`:
+Install FEW and force the CUDA backend compilation with the option `FEW_WITH_GPU=ON`.
+We also force fetching and compiling LAPACK(E), otherwise CMake will detect the system
+LAPACK library (`/lib64/liblapack.so.3`) which makes somes tests fails with a segmentation fault error.
+The installation command line is thus:
 
 ```sh
-(few2.0rc1) $ CXX=g++ CC=gcc pip install -e '.[testing]' --config-settings=cmake.define.FEW_WITH_GPU=ON
+(few2.0rc1) $ CXX=g++ CC=gcc pip install -e '.[testing]' --config-settings=cmake.define.FEW_WITH_GPU=ON --config-settings=cmake.define.FEW_LAPACKE_FETCH=ON
 ...
 Successfully installed fastemriwaveforms-2.0.0rc1
 (few2.0rc1) $ pip install cupy-cuda12x nvidia-cuda-runtime-cu12==12.4.* # Must be installed manually when installed from source
