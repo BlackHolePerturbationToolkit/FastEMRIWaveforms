@@ -482,8 +482,7 @@ class KerrEccEqFlux(ODEBase):
     
     def interpolate_ELQ_flux(self, p: float, e: float, x: float = 1, a: float = 0) -> tuple[float]:
         # handle xI = -1 case
-        if np.any(np.abs(x) != 1):
-            raise ValueError(f"Interpolation: x out of bounds for equatorial orbit.")
+        self.isvalid_x(x)
 
         if x == -1:
             a_in = -a
@@ -523,12 +522,12 @@ class KerrEccEqFlux(ODEBase):
         self, y: Union[list[float], np.ndarray]
     ) -> list[Union[float, np.ndarray]]:
         if self.use_ELQ:
-            E, L, Q = y[:3]
-            p, e, x = ELQ_to_pex(self.a, E, L, Q)
+            a, E, L, Q = y[:4]
+            p, e, x = ELQ_to_pex(a, E, L, Q)
         else:
-            p, e, x = y[:3]
+            a, p, e, x = y[:4]
 
-        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(self.a, p, e, x)
+        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(a, p, e, x)
 
         Edot, Ldot = self.interpolate_flux_grids(p, e, x, a=self.a)
 
