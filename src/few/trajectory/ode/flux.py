@@ -180,6 +180,29 @@ def _PN_alt(p, e):
 #     pdot_V = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5
 #     return pdot_V
 
+# @njit
+# def _EdotPN_alt(p, e):
+#     """
+#     https://arxiv.org/pdf/2201.07044.pdf
+#     eq 91
+#     """
+#     pdot_V = (
+#         32.0
+#         / 5.0
+#         * p ** (-5)
+#         * (1 + (37*e**2)/24 - (365*e**4)/96 + (5*e**6)/8 + 275/768*e**8 + 329/3072*e**10)
+#     )
+#     return pdot_V
+
+# @njit
+# def _LdotPN_alt(p, e):
+#     """
+#     https://arxiv.org/pdf/2201.07044.pdf
+#     eq 91
+#     """
+#     pdot_V = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5
+#     return pdot_V
+
 @njit
 def _emax_w(e, args):
     a = args[0]
@@ -358,7 +381,7 @@ class KerrEccEqFlux(ODEBase):
         return True
     
     def isvalid_x(self, x):
-        if np.any(np.abs(x) > 1):
+        if np.any(np.abs(x) != 1):
             raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
         
     def isvalid_e(self, e):
@@ -418,7 +441,7 @@ class KerrEccEqFlux(ODEBase):
             raise ValueError(f"Interpolation: p out of bounds. Must be greater than innermost stable circular orbit + buffer = {p_sep_min_buffer}.")
         
         p_min = self._min_p(EMAX, x, a)
-        print(p_min)
+
         if p > p_min:
             emax = EMAX
         else:
@@ -499,8 +522,7 @@ class KerrEccEqFlux(ODEBase):
     
     def interpolate_ELQ_flux(self, p: float, e: float, x: float = 1, a: float = 0) -> tuple[float]:
         # handle xI = -1 case
-        if np.any(np.abs(x) != 1):
-            raise ValueError(f"Interpolation: x out of bounds for equatorial orbit.")
+        self.isvalid_x(x)
 
         if x == -1:
             a_in = -a
@@ -540,12 +562,12 @@ class KerrEccEqFlux(ODEBase):
         self, y: Union[list[float], np.ndarray]
     ) -> list[Union[float, np.ndarray]]:
         if self.use_ELQ:
-            E, L, Q = y[:3]
-            p, e, x = ELQ_to_pex(self.a, E, L, Q)
+            a, E, L, Q = y[:4]
+            p, e, x = ELQ_to_pex(a, E, L, Q)
         else:
-            p, e, x = y[:3]
+            a, p, e, x = y[:4]
 
-        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(self.a, p, e, x)
+        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(a, p, e, x)
 
         Edot, Ldot = self.interpolate_flux_grids(p, e, x, a=self.a)
 
