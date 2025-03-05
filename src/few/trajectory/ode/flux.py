@@ -158,6 +158,29 @@ def _PN_alt(p, e):
     Ldot = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5 * (1 + 7.0 / 8.0 * e**2)
     return Edot, Ldot
 
+# @njit
+# def _EdotPN_alt(p, e):
+#     """
+#     https://arxiv.org/pdf/2201.07044.pdf
+#     eq 91
+#     """
+#     pdot_V = (
+#         32.0
+#         / 5.0
+#         * p ** (-5)
+#         * (1 + (37*e**2)/24 - (365*e**4)/96 + (5*e**6)/8 + 275/768*e**8 + 329/3072*e**10)
+#     )
+#     return pdot_V
+
+# @njit
+# def _LdotPN_alt(p, e):
+#     """
+#     https://arxiv.org/pdf/2201.07044.pdf
+#     eq 91
+#     """
+#     pdot_V = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5
+#     return pdot_V
+
 @njit
 def _emax_w(e, args):
     a = args[0]
@@ -522,12 +545,12 @@ class KerrEccEqFlux(ODEBase):
         self, y: Union[list[float], np.ndarray]
     ) -> list[Union[float, np.ndarray]]:
         if self.use_ELQ:
-            E, L, Q = y[:3]
-            p, e, x = ELQ_to_pex(self.a, E, L, Q)
+            a, E, L, Q = y[:4]
+            p, e, x = ELQ_to_pex(a, E, L, Q)
         else:
-            p, e, x = y[:3]
+            a, p, e, x = y[:4]
 
-        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(self.a, p, e, x)
+        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(a, p, e, x)
 
         Edot, Ldot = self.interpolate_flux_grids(p, e, x, a=self.a)
 
