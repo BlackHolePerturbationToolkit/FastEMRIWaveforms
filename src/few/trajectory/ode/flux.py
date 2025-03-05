@@ -2,7 +2,7 @@ from .base import ODEBase
 from ...utils.utility import get_fundamental_frequencies, get_separatrix, ELQ_to_pex
 from ...utils.globals import get_file_manager
 from numba import njit
-from few.utils.mappings import kerrecceq_flux_forward_map, apex_of_uwyz, apex_of_UWYZ, z_of_a, w_of_euz, p_of_u, u_where_w_is_unity, e_of_uwz, u_of_p, ELdot_to_PEdot_Jacobian
+from few.utils.mappings import kerrecceq_flux_forward_map, apex_of_uwyz, apex_of_UWYZ, z_of_a, w_of_euz, p_of_u, u_where_w_is_unity, e_of_uwz, u_of_p, ELdot_to_PEdot_Jacobian, ALPHA_FLUX, BETA_FLUX
 
 from few.utils.utility import _brentq_jit, _get_separatrix_kernel_inner
 
@@ -150,8 +150,8 @@ def _emax_w(e, args):
     p = args[1]
     z = args[2]
     psep = _get_separatrix_kernel_inner(a, e, 1)
-    u = u_of_p(p, psep)
-    w = w_of_euz(e, u, z)
+    u = u_of_p(p, psep, ALPHA_FLUX)
+    w = w_of_euz(e, u, z, BETA_FLUX)
     return w-1
 
 class KerrEccEqFlux(ODEBase):
@@ -334,12 +334,12 @@ class KerrEccEqFlux(ODEBase):
         z = z_of_a(a_in)
         p_sep = get_separatrix(a, e, x)
 
-        if w_of_euz(e, 0., z) > 1:
+        if w_of_euz(e, 0., z, BETA_FLUX) > 1:
             u_min = u_where_w_is_unity(e, z, kind="flux")
         else:
             u_min = 0.
 
-        return max(p_of_u(u_min, p_sep), p_sep + self.separatrix_buffer_dist) + 1e-5
+        return max(p_of_u(u_min, p_sep, ALPHA_FLUX), p_sep + self.separatrix_buffer_dist) + 1e-5
 
     def max_p(self, e, x=None, a=None):
         if x is not None:
