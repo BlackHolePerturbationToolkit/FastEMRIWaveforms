@@ -344,6 +344,15 @@ def kerrecceq_forward_map(
         return u, w, y, z, near
     else:
         return u, w, y, z
+    
+@njit
+def kerrecceq_flux_backward_map_near(
+        u: float,
+        w: float,
+        y: float,
+        zI: float,
+):
+    return apex_of_uwyz_near(u, w, 1, zI)
 
 def kerrecceq_backward_map(
     u: Union[float, np.ndarray],
@@ -532,8 +541,7 @@ def apex_of_uwyz(
     w,
     y,
     z,
-    alpha=ALPHA_FLUX,
-    beta=BETA_FLUX,
+    is_flux
 ):
     a = a_of_z(z)
     x = x_of_y(y)
