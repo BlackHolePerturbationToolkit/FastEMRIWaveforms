@@ -3,6 +3,7 @@ from numba import njit
 from math import sqrt, log
 from .utility import (
     get_separatrix,
+    _get_separatrix_kernel_inner,
     _KerrGeoEnergy,
     _KerrGeoAngularMomentum,
 )
@@ -314,7 +315,7 @@ def kerrecceq_forward_map(
         y[near] = out[2]
         z[near] = out[3]
 
-    far = ~near
+    far = not near
     if xp.any(far):
         out = _UWYZ_of_apex_kernel(a[far], p[far], e[far], xI[far], pLSO[far], False)
         u[far] = out[0]
@@ -326,6 +327,69 @@ def kerrecceq_forward_map(
         return u, w, y, z, near
     else:
         return u, w, y, z
+
+def kerrecceq_backward_map(
+    u: Union[float, np.ndarray],
+    w: Union[float, np.ndarray],
+    y: Union[float, np.ndarray],
+    z: Union[float, np.ndarray],
+    pLSO: Optional[Union[float, np.ndarray]] = None,
+    regionA: bool = True,
+    kind: str = "flux",
+):
+    """
+    Map from interpolation coordinates to apex coordinates for the KerrEccEq model.
+    This mapping returns the apex coordinates (a, p, e, xI) corresponding to the interpolation coordinates (u, w, y, z).
+
+    There are two sets of interpolation coordinates. Both are defined on the range [0, 1], with one valid in a "close" region A
+    and the other in a "far" region B.
+
+    For either flux or amplitude interpolation with the KerrEccEq model, the same formulae are applied with different tunable
+    parameters. The default is flux interpolation, but amplitude interpolation can be selected by setting kind="amplitude".
+
+    Arguments:
+        a (float or np.ndarray): Spin parameter of the massive black hole.
+        p (float or np.ndarray): Semi-latus rectum of inspiral.
+        e (float or np.ndarray): Eccentricity of inspiral.
+        xI (float or np.ndarray): Cosine of inclination of inspiral. Only a value of 1 is supported.
+        pLSO (float or np.ndarray, optional): Separatrix value for the given parameters. If not provided, it will be computed.
+        regionA (bool, optional): If True, perform the transformation in RegionA. If False, perform transformation in RegionB.
+            Default is True.
+        kind (str, optional): Type of mapping to perform. Default is "flux".
+    """
+    xp = np  # TODO: gpu
+
+    if np.any(np.asarray(y) != 1):
+        raise ValueError("Only xI = 1 is supported.")
+
+    is_flux = (kind == "flux")
+    is_amp = (kind == "amplitude")
+    if is_flux:
+        alpha = ALPHA_FLUX
+        beta = BETA_FLUX
+    elif is_amp:
+        alpha = ALPHA_AMP
+        beta = BETA_AMP
+    else:
+        raise ValueError
+
+    # if scalar directly evaluate the kernel for speed
+    if isinstance(u, float) or isinstance(u, int):
+        if regionA:
+            return apex_of_uwyz(u, w, y, z, alpha=alpha, beta=beta)
+        else:
+            return apex_of_UWYZ(u, w, y, z, is_flux)
+
+    # else, we have multiple points
+    u = xp.atleast_1d(xp.asarray(u))
+    w = xp.atleast_1d(xp.asarray(w))
+    y = xp.atleast_1d(xp.asarray(y))
+    z = xp.atleast_1d(xp.asarray(z))
+
+    if regionA:
+        return apex_of_uwyz(u, w, y, z, alpha=alpha, beta=beta)
+    else:
+        return apex_of_UWYZ(u, w, y, z, is_flux)
 
 
 @njit
@@ -478,17 +542,19 @@ def apex_of_uwyz(
     x = x_of_y(y, xmin)
     e = e_of_uwz(u, w, z, beta, esep, emax)
     a = np.asarray(a)
-    a_in = np.abs(a)
-    x_in = np.sign(a)
+    a_in = np.empty(a.shape)
+    e_in = np.asarray(e)
+    x_in = np.empty(a.shape)
+    
+    np.abs(a, a_in)
+    np.sign(a, x_in)
     x_in[x_in == 0] = 1
 
-    pLSO = get_separatrix(a_in, e, x_in)
+    pLSO = get_separatrix(a_in, e_in, x_in)
     p = p_of_u(u, pLSO, dpmin, dpmax, alpha)
     return a, p, e, x
 
-
 # # Region B
-
 
 @njit
 def U_of_p_flux(p, pLSO, delta_pmin=DELTAPMIN_REGIONB, pmax=PMAX_REGIONB):
@@ -601,11 +667,15 @@ def apex_of_UWYZ(
     e = e_of_W(w, emax)
 
     a = np.asarray(a)
-    a_in = np.abs(a)
-    x_in = np.sign(a)
+    a_in = np.empty(a.shape)
+    e_in = np.asarray(e)
+    x_in = np.empty(a.shape)
+    
+    np.abs(a, a_in)
+    np.sign(a, x_in)
     x_in[x_in == 0] = 1
 
-    pLSO = get_separatrix(a_in, e, x_in)
+    pLSO = get_separatrix(a_in, e_in, x_in)
     if is_flux:
         p = p_of_U_flux(u, pLSO, delta_pmin, pmax)
     else:
