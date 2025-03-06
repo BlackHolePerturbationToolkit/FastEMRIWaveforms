@@ -522,12 +522,12 @@ class KerrEccEqFlux(ODEBase):
         self, y: Union[list[float], np.ndarray]
     ) -> list[Union[float, np.ndarray]]:
         if self.use_ELQ:
-            a, E, L, Q = y[:4]
-            p, e, x = ELQ_to_pex(a, E, L, Q)
+            E, L, Q = y[:3]
+            p, e, x = ELQ_to_pex(self.a, E, L, Q)
         else:
-            a, p, e, x = y[:4]
+            p, e, x = y[:3]
 
-        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(a, p, e, x)
+        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(self.a, p, e, x)
 
         Edot, Ldot = self.interpolate_flux_grids(p, e, x, a=self.a)
 
