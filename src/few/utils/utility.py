@@ -1764,6 +1764,8 @@ def get_p_at_t(
     index_of_e: int = 4,
     index_of_x: int = 5,
     bounds: list[Optional[float]] = None,
+    lower_bound_buffer: float = 1e-6,
+    upper_bound_maximum: float = 1e6,
     **kwargs,
 ) -> float:
     """Find the value of p that will give a specific length inspiral using Brent's method.
@@ -1790,10 +1792,12 @@ def get_p_at_t(
         index_of_e: Index of e0 in provided :code:`traj_module` arguments. Default is 4.
         index_of_x: Index of x0 in provided :code:`traj_module` arguments. Default is 5.
         bounds: Minimum and maximum values of p over which brentq will search for a root.
-            If not given, will be set to [separatrix + 0.101, 50]. To supply only one of these two limits, set the
-            other limit to None.
+            If not given, will be set to the minimum and maximum values of p for the trajectory modules.
         **kwargs: Keyword arguments for :func:`get_at_t`.
-
+        lower_bound_buffer: A float that offsets the lower bound by a small number to prevent starting on the separatrix
+            If not provided, it will default to 1e-6
+        upper_bound_maximum: A float that sets the maximum value of the upper bound to a large finite number if max_p returns inf
+            If not provided, it will default to 1e6
     returns:
         Value of p that creates the proper length trajectory.
 
@@ -1836,7 +1840,21 @@ def get_p_at_t(
         bounds[1] = traj_module.func.max_p(
             traj_args[index_of_e], x=traj_args[index_of_x], a=traj_args[index_of_a]
         )
+    # Adding a buffer to prevent starting trajectories on the separatrix
+    bounds[0] += lower_bound_buffer
 
+    # Prevent the rootfinder from starting at infinity
+    if bounds[1] == float("inf"):
+        bounds[1] = upper_bound_maximum
+    # With the varying bounds of eccentricity used for KerrEccEqFlux, 
+    # it is possible to have no solution within the bounds of the interpolants
+    # We now add a check to see if the bounds are valid
+    traj_pars = [traj_args[0],traj_args[1],traj_args[index_of_a], bounds[0],traj_args[index_of_e],traj_args[index_of_x]]
+    
+    t, p, e, xI, Phi_phi, Phi_theta, Phi_r = traj_module(*traj_pars, T=t_out*1.01)
+    if t[-1] >= t_out*YRSID_SI:
+        raise ValueError("No solution found within the bounds of the interpolants.")
+    
     root = get_at_t(traj_module, traj_args, bounds, t_out, index_of_p, **kwargs)
     return root
 
