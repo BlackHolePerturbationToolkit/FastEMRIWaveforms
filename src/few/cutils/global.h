@@ -2,56 +2,21 @@
 #define _GLOBAL_HEADER_
 
 #include <stdlib.h>
-#include <complex.h>
 #include <stdio.h>
-
-#if defined(_MSC_VER)
-    #define LAPACK_COMPLEX_CUSTOM
-    #define lapack_complex_float _Fcomplex
-    #define lapack_complex_double _Dcomplex
-    #define _USE_MATH_DEFINES
-    #include <cmath>
-    #define FEW_INLINE __inline
-#else
-    #define FEW_INLINE __inline__
-#endif
-
+#include <complex>
 #include "cuda_complex.hpp"
 
 // Definitions needed for Mathematicas CForm output
 #define Power(x, y)     (pow((double)(x), (double)(y)))
 #define Sqrt(x)         (sqrt((double)(x)))
 
-//#include "pdbParam.h" // LISA constants
 
-//#define MSUN_SI 1.98848e+30
-#define YRSID_SI 31558149.763545603
-//#define AU_SI 149597870700.
-//#define C_SI 299792458.
-//#define G_SI 6.674080e-11
-//#define GMSUN 1.3271244210789466e+20
-#define MTSUN_SI 4.925491025873693e-06
-//#define MRSUN_SI 1476.6250615036158
-//#define PC_SI 3.0856775814913674e+16
+// Constants below from lisaconstants -- all in units of seconds
+#define YRSID_SI 31558149.763545595   
+#define MTSUN_SI 4.9254909491978065e-06 
 
-//#define PI        3.141592653589793238462643383279502884
-//#define Pi        3.141592653589793238462643383279502884
-//#define TWOPI     6.283185307179586476925286766559005768
-//#define PI_2      1.570796326794896619231321691639751442
-//#define PI_4      0.785398163397448309615660845819875721
-
-//#define GAMMA     0.577215664901532860606512090082402431
-
-//#define  Gpc 3.0856775814913674e+25
-#define  GPCINSEC 1.029271251e17
-
-//#define sqrt3 1.7320508075688772
-//#define invsqrt3 0.5773502691896258
-//#define invsqrt6 0.4082482904638631
-//#define sqrt2 1.4142135623730951
-//#define L_SI 2.5e9
-//#define eorbit 0.004824185218078991
-#define AUsec 499.004783836156412
+#define  GPCINSEC 1.02927125054339e+17 
+#define AUsec 499.00478383615643 
 
 typedef double fod;
 typedef gcmplx::complex<double> cmplx;
@@ -69,9 +34,7 @@ typedef gcmplx::complex<double> cmplx;
 #endif
 
 #ifdef __CUDACC__
-
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
 {
    if (code != cudaSuccess)
@@ -120,4 +83,4 @@ typedef struct tagModeReImContainer {
 
 typedef void (*fptr)(double *, double *, double *, double *, double *, double *, double, double, double, double, double);
 
-#endif  // _GLOBAL_HEADER_
+#endif
