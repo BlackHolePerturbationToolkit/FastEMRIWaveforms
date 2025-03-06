@@ -17,7 +17,7 @@
 
 #include "global.h"
 #include "interpolate.hh"
-#include <stdio.h>
+
 
 // adjust imports based on CUDA or not
 #ifdef __CUDACC__
@@ -724,8 +724,9 @@ void get_waveform(cmplx *d_waveform, double *interp_array, double *phase_interp_
 {
 
   // arrays for determining spline windows for new arrays
-  int start_inds[init_len];
-  int unit_length[init_len - 1];
+  int *start_inds, *unit_length;
+  start_inds = (int*)malloc(init_len * sizeof(int));
+  unit_length = (int*)malloc((init_len-1) * sizeof(int));
 
   int number_of_old_spline_points = init_len;
 
@@ -787,6 +788,8 @@ void get_waveform(cmplx *d_waveform, double *interp_array, double *phase_interp_
     cudaStreamDestroy(streams[i]);
   }
 #endif
+  free(unit_length);
+  free(start_inds);
 }
 
 // make a frequency domain waveform in parallel

@@ -2,8 +2,20 @@
 #define _GLOBAL_HEADER_
 
 #include <stdlib.h>
+#include <complex.h>
 #include <stdio.h>
-#include <complex>
+
+#if defined(_MSC_VER)
+    #define LAPACK_COMPLEX_CUSTOM
+    #define lapack_complex_float _Fcomplex
+    #define lapack_complex_double _Dcomplex
+    #define _USE_MATH_DEFINES
+    #include <cmath>
+    #define FEW_INLINE __inline
+#else
+    #define FEW_INLINE __inline__
+#endif
+
 #include "cuda_complex.hpp"
 
 // Definitions needed for Mathematicas CForm output
@@ -57,7 +69,9 @@ typedef gcmplx::complex<double> cmplx;
 #endif
 
 #ifdef __CUDACC__
+
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
 {
    if (code != cudaSuccess)
@@ -106,4 +120,4 @@ typedef struct tagModeReImContainer {
 
 typedef void (*fptr)(double *, double *, double *, double *, double *, double *, double, double, double, double, double);
 
-#endif
+#endif  // _GLOBAL_HEADER_

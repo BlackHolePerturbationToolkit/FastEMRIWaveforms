@@ -15,11 +15,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "stdio.h"
+#include "global.h"
 #include "matmul.hh"
 #include "cuda_complex.hpp"
 #include <chrono>
-#include "global.h"
 
 using namespace std;
 
