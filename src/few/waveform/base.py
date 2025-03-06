@@ -194,6 +194,12 @@ class SphericalHarmonicWaveformBase(
 
         """
 
+        if x0 < 0.0:
+            a = -a
+            x0 = -x0
+            theta = np.pi - theta
+            phi = -phi
+
         if dist is not None:
             if dist <= 0.0:
                 raise ValueError("Luminosity distance must be greater than zero.")
