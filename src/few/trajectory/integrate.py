@@ -207,6 +207,16 @@ class Integrate:
         t = t0
         h = self.dt_dimensionless
 
+        # Initialize step size based on the problem's scale
+        scale = 1e-10 #TODO create initial scale based on error
+        d0 = np.linalg.norm(y0 / scale)
+        d1 = np.linalg.norm(self.func(y0) / scale)
+        if d0 < 1e-5 or d1 < 1e-5:
+            h0 = 1e-6
+        else:
+            h0 = 0.01 * d0 / d1
+        h = h0
+
         t_prev = t0
         y_prev = y0.copy()
         y = y0.copy()
