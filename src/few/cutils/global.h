@@ -6,17 +6,29 @@
 #include <complex>
 #include "cuda_complex.hpp"
 
+#if defined(_MSC_VER)
+    #define LAPACK_COMPLEX_CUSTOM
+    #define lapack_complex_float _Fcomplex
+    #define lapack_complex_double _Dcomplex
+    #define _USE_MATH_DEFINES
+    #define FEW_INLINE __inline
+#else
+    #define FEW_INLINE __inline__
+#endif
+
+#include <cmath>
+
 // Definitions needed for Mathematicas CForm output
 #define Power(x, y)     (pow((double)(x), (double)(y)))
 #define Sqrt(x)         (sqrt((double)(x)))
 
 
 // Constants below from lisaconstants -- all in units of seconds
-#define YRSID_SI 31558149.763545595   
-#define MTSUN_SI 4.9254909491978065e-06 
+#define YRSID_SI 31558149.763545595
+#define MTSUN_SI 4.9254909491978065e-06
 
-#define  GPCINSEC 1.02927125054339e+17 
-#define AUsec 499.00478383615643 
+#define  GPCINSEC 1.02927125054339e+17
+#define AUsec 499.00478383615643
 
 typedef double fod;
 typedef gcmplx::complex<double> cmplx;
@@ -83,4 +95,4 @@ typedef struct tagModeReImContainer {
 
 typedef void (*fptr)(double *, double *, double *, double *, double *, double *, double, double, double, double, double);
 
-#endif
+#endif  // _GLOBAL_HEADER_

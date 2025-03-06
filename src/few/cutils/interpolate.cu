@@ -1434,10 +1434,10 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                         //               = conj(-1.0 * fdot/abs(fddot) * 2./sqrt(3.) * i\sqrt{x} e^{-i x} K_{1/3}(-i x) / sqrt(x))
                         //               = conj(amp_term2(x))
 
-                        double temp_arg = 2.* PI * fdot * fdot * fdot / (3.* fddot * fddot);
+                        double temp_arg = 2.* M_PI * fdot * fdot * fdot / (3.* fddot * fddot);
                         cmplx amp_term2 = -1.0 * fdot/abs(fddot) * 2./sqrt(3.) * SPAFunc(temp_arg) / gcmplx::sqrt(cmplx(temp_arg, 0.0));
 
-                        cmplx temp_exp = R_amp * amp_term2 * gcmplx::exp(complexI* (2. * PI * f * t - phase_term));
+                        cmplx temp_exp = R_amp * amp_term2 * gcmplx::exp(complexI* (2. * M_PI * f * t - phase_term));
 
                         cmplx R_tmp = Ylm_plus_m * temp_exp;  // combine with spherical harmonic
 
