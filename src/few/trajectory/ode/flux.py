@@ -157,52 +157,6 @@ def _PN_alt(p, e):
     Ldot = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5 * (1 + 7.0 / 8.0 * e**2)
     return Edot, Ldot
 
-# @njit
-# def _EdotPN_alt(p, e):
-#     """
-#     https://arxiv.org/pdf/2201.07044.pdf
-#     eq 91
-#     """
-#     pdot_V = (
-#         32.0
-#         / 5.0
-#         * p ** (-5)
-#         * (1 + (37*e**2)/24 - (365*e**4)/96 + (5*e**6)/8 + 275/768*e**8 + 329/3072*e**10)
-#     )
-#     return pdot_V
-
-# @njit
-# def _LdotPN_alt(p, e):
-#     """
-#     https://arxiv.org/pdf/2201.07044.pdf
-#     eq 91
-#     """
-#     pdot_V = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5
-#     return pdot_V
-
-# @njit
-# def _EdotPN_alt(p, e):
-#     """
-#     https://arxiv.org/pdf/2201.07044.pdf
-#     eq 91
-#     """
-#     pdot_V = (
-#         32.0
-#         / 5.0
-#         * p ** (-5)
-#         * (1 + (37*e**2)/24 - (365*e**4)/96 + (5*e**6)/8 + 275/768*e**8 + 329/3072*e**10)
-#     )
-#     return pdot_V
-
-# @njit
-# def _LdotPN_alt(p, e):
-#     """
-#     https://arxiv.org/pdf/2201.07044.pdf
-#     eq 91
-#     """
-#     pdot_V = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5
-#     return pdot_V
-
 @njit
 def _emax_w(e, args):
     a = args[0]
@@ -271,7 +225,6 @@ class KerrEccEqFlux(ODEBase):
                 ]
             )
 
-<<<<<<< HEAD
             if flux_output_convention == "pex":
                 # calculate pdot and edot from Edot and Ldot
                 Edothere = (Edot).flatten()
@@ -306,10 +259,6 @@ class KerrEccEqFlux(ODEBase):
 
                 self.Edot_interp_A = TricubicSpline(u, w, z, Edot / EdotPN)
                 self.Ldot_interp_A = TricubicSpline(u, w, z, Ldot / LdotPN)
-=======
-            self.Edot_interp_A = TricubicSpline(u, w, z, (Edot))
-            self.Ldot_interp_A = TricubicSpline(u, w, z, (Ldot))
->>>>>>> 0e3fb7cf131bd3a84111750e69c4cf75c61a93ff
 
             regionB = fluxData["regionB"]
             u = np.linspace(0, 1, regionB.attrs["NU"])[:: downsample_outer[0]]
@@ -339,7 +288,6 @@ class KerrEccEqFlux(ODEBase):
                 ]
             )
 
-<<<<<<< HEAD
             if self.flux_output_convention == "pex":
                 # calculate pdot and edot from Edot and Ldot
                 Edothere = (Edot).flatten()
@@ -373,10 +321,6 @@ class KerrEccEqFlux(ODEBase):
 
                 self.Edot_interp_B = TricubicSpline(u, w, z, Edot / EdotPN)
                 self.Ldot_interp_B = TricubicSpline(u, w, z, Ldot / LdotPN)
-=======
-            self.Edot_interp_B = TricubicSpline(u, w, z, (Edot))
-            self.Ldot_interp_B = TricubicSpline(u, w, z, (Ldot))
->>>>>>> 0e3fb7cf131bd3a84111750e69c4cf75c61a93ff
 
     @property
     def equatorial(self):
@@ -406,18 +350,7 @@ class KerrEccEqFlux(ODEBase):
         if np.any(np.abs(a) > AMAX):
             raise ValueError(f"Interpolation: a out of bounds. Must be between {-AMAX} and {AMAX}.")
 
-<<<<<<< HEAD
     def _min_p(self, e, x, a):
-=======
-    @property
-    def flux_output_convention(self):
-        return "ELQ"
-
-    def min_p(self, a, e, x=1):
-        if np.abs(x) > 1:
-            raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
-
->>>>>>> 0e3fb7cf131bd3a84111750e69c4cf75c61a93ff
         if x == -1:
             a_in = -a
         else:
@@ -433,7 +366,6 @@ class KerrEccEqFlux(ODEBase):
 
         return max(p_of_u_flux(u_min, p_sep), p_sep + self.separatrix_buffer_dist) + 1e-5
 
-<<<<<<< HEAD
     def _max_p(self, e, x, a):        
         return PMAX
     
@@ -451,23 +383,6 @@ class KerrEccEqFlux(ODEBase):
 
     def _min_e(self, p, x, a):            
         return 0.0
-=======
-    def max_p(self, a, e, x=1):
-        if np.abs(x) > 1:
-            raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
-        
-        return 200. - 1e-5
-    
-    def min_e(self, a, p, x=1):
-        if np.abs(x) > 1:
-            raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
-            
-        return 0.0
-    
-    def max_e(self, a, p, x=1):
-        if np.abs(x) > 1:
-            raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
->>>>>>> 0e3fb7cf131bd3a84111750e69c4cf75c61a93ff
 
     def _max_e(self, p, x, a):
         if x == -1:
@@ -479,12 +394,7 @@ class KerrEccEqFlux(ODEBase):
         if p < p_sep_min_buffer:
             raise ValueError(f"Interpolation: p out of bounds. Must be greater than innermost stable circular orbit + buffer = {p_sep_min_buffer}.")
         
-<<<<<<< HEAD
         p_min = self._min_p(EMAX, x, a)
-        print(p_min)
-=======
-        p_min = self.min_p(a, 0.9, x)
->>>>>>> 0e3fb7cf131bd3a84111750e69c4cf75c61a93ff
         if p > p_min:
             emax = EMAX
         else:
@@ -492,7 +402,6 @@ class KerrEccEqFlux(ODEBase):
             z = z_of_a(a_in)
             emax = _brentq_jit(_emax_w, 0, EMAX, (a_in, p, z), tol)
         return emax
-<<<<<<< HEAD
 
     def min_e(self, p = 20, x = 1, a = 0):
         self.isvalid_x(x)
@@ -519,29 +428,14 @@ class KerrEccEqFlux(ODEBase):
         return [self._min_e(p, x, a), self._max_e(p, x, a)]
 
     def interpolate_flux_grids(self, p: float, e: float, x: float = 1, a: float = 0) -> tuple[float]:
-=======
-    
-    def bounds_p(self, a, e, x=1):
-        return [self.min_p(a, e, x), self.max_p(a, e, x)]
-    
-    def bounds_e(self, a, p, x=1):
-        return [self.min_e(a, p, x), self.max_e(a, p, x)]
-
-    def interpolate_flux_grids(self, a: float, p: float, e: float, x: float) -> tuple[float]:
->>>>>>> 0e3fb7cf131bd3a84111750e69c4cf75c61a93ff
         # handle xI = -1 case
         if x == -1:
             a_in = -a
         else:
             a_in = a
 
-<<<<<<< HEAD
         u, w, _, z, in_region_A = kerrecceq_flux_forward_map(
             a_in, p, e, 1.0, self.p_sep_cache
-=======
-        u, w, _, z, in_region_A = kerrecceq_forward_map(
-            a_in, p, e, 1.0, pLSO=self.p_sep_cache, kind="flux", return_mask=True
->>>>>>> 0e3fb7cf131bd3a84111750e69c4cf75c61a93ff
         )
 
         if u < 0 or u > 1 + 1e-8 or np.isnan(u):
@@ -550,7 +444,6 @@ class KerrEccEqFlux(ODEBase):
             raise ValueError("Interpolation: e out of bounds.")
         if z < 0 or z > 1 + 1e-8:
             raise ValueError("Interpolation: a out of bounds.")
-<<<<<<< HEAD
 
         if self.flux_output_convention == "ELQ":
             EdotPN, LdotPN = _PN_alt(p, e)
@@ -565,11 +458,8 @@ class KerrEccEqFlux(ODEBase):
                 Ldot *= -1
 
             return Edot, Ldot
-=======
->>>>>>> 0e3fb7cf131bd3a84111750e69c4cf75c61a93ff
 
         else:
-<<<<<<< HEAD
             risco = get_separatrix(a_in, 0.0, 1.0)
             p_sep = self.p_sep_cache
             pdotPN = _pdot_PN(p, e, risco, p_sep)
@@ -612,11 +502,6 @@ class KerrEccEqFlux(ODEBase):
             Edot = self.Edot_interp_B(u, w, z) * EdotPN
             Ldot = self.Ldot_interp_B(u, w, z) * LdotPN
 
-=======
-            Edot = -self.Edot_interp_B(u, w, z) * _EdotPN_alt(p, e)
-            Ldot = -self.Ldot_interp_B(u, w, z) * _LdotPN_alt(p, e)
-        
->>>>>>> 0e3fb7cf131bd3a84111750e69c4cf75c61a93ff
         if a_in < 0:
             Ldot *= -1
         
@@ -625,53 +510,6 @@ class KerrEccEqFlux(ODEBase):
         else:
             Qdot = np.zeros(Edot.shape)
 
-<<<<<<< HEAD
-=======
-        if isinstance(Edot, float):
-            Qdot = 0.0
-        else:
-            Qdot = np.zeros(Edot.shape)
-
-        return Edot, Ldot, Qdot
-    
-    def interpolate_ELQ_flux(self, a, p, e, x) -> tuple[float]:
-        # handle xI = -1 case
-        if np.any(np.abs(x) != 1):
-            raise ValueError(f"Interpolation: x out of bounds for equatorial orbit.")
-
-
-        if x == -1:
-            a_in = -a
-        else:
-            a_in = a
-
-        u, w, _, z, in_region_A = kerrecceq_forward_map(
-            a_in, p, e, 1.0, pLSO=self.p_sep_cache, kind="flux", return_mask=True
-        )
-
-        if u < 0 or u > 1 + 1e-8 or np.isnan(u):
-            raise ValueError(f"Interpolation: p={p} out of bounds.")
-        if w < 0 or w > 1 + 1e-8:
-            raise ValueError(f"Interpolation: e={e} out of bounds.")
-        if z < 0 or z > 1 + 1e-8:
-            raise ValueError(f"Interpolation: a={a} out of bounds.")
-
-        if in_region_A:
-            Edot = self.Edot_interp_A(u, w, z) * _EdotPN_alt(p, e)
-            Ldot = self.Ldot_interp_A(u, w, z) * _LdotPN_alt(p, e)
-        else:
-            Edot = self.Edot_interp_B(u, w, z) * _EdotPN_alt(p, e)
-            Ldot = self.Ldot_interp_B(u, w, z) * _LdotPN_alt(p, e)
-
-        if a_in < 0:
-            Ldot *= -1
-        
-        if isinstance(Edot, float):
-            Qdot = 0.0
-        else:
-            Qdot = np.zeros(Edot.shape)
-
->>>>>>> 0e3fb7cf131bd3a84111750e69c4cf75c61a93ff
         return Edot, Ldot, Qdot
 
     def evaluate_rhs(
@@ -685,11 +523,7 @@ class KerrEccEqFlux(ODEBase):
 
         Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(a, p, e, x)
 
-<<<<<<< HEAD
         Edot, Ldot = self.interpolate_flux_grids(p, e, x, a=self.a)
-=======
-        Edot, Ldot, Qdot = self.interpolate_flux_grids(a, p, e, x)
->>>>>>> 0e3fb7cf131bd3a84111750e69c4cf75c61a93ff
 
         return [Edot, Ldot, 0.0, Omega_phi, Omega_theta, Omega_r]
 
