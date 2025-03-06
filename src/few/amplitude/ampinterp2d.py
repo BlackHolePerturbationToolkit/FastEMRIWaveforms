@@ -655,6 +655,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
                 mode_indexes = specific_modes
             elif isinstance(specific_modes, list):
                 specific_modes_arr = self.xp.asarray(specific_modes)
+                specific_modes_arr[specific_modes_arr[:,1] < 0, 2] *= -1
                 mode_indexes = self.special_index_map_arr[
                     specific_modes_arr[:, 0],
                     specific_modes_arr[:, 1],
@@ -696,7 +697,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
 
                 # apply +/- m symmetry
                 if m < 0:
-                    temp[lmn] = np.conj(temp[lmn])
+                    temp[lmn] = (-1) ** l * np.conj(temp[lmn])
 
             return temp
 
