@@ -157,29 +157,6 @@ def _PN_alt(p, e):
     Ldot = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5 * (1 + 7.0 / 8.0 * e**2)
     return Edot, Ldot
 
-# @njit
-# def _EdotPN_alt(p, e):
-#     """
-#     https://arxiv.org/pdf/2201.07044.pdf
-#     eq 91
-#     """
-#     pdot_V = (
-#         32.0
-#         / 5.0
-#         * p ** (-5)
-#         * (1 + (37*e**2)/24 - (365*e**4)/96 + (5*e**6)/8 + 275/768*e**8 + 329/3072*e**10)
-#     )
-#     return pdot_V
-
-# @njit
-# def _LdotPN_alt(p, e):
-#     """
-#     https://arxiv.org/pdf/2201.07044.pdf
-#     eq 91
-#     """
-#     pdot_V = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5
-#     return pdot_V
-
 @njit
 def _emax_w(e, args):
     a = args[0]
