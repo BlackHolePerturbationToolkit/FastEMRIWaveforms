@@ -6,8 +6,10 @@
 # * * Helper functions to detect LAPACK * *
 # * * * * * * * * * * * * * * * * * * * * *
 
-# few_try_get_lapacke_with_cmake: This method will try to locate LAPACKE using
-# CMake find_package() mechanism
+# few_try_get_lapacke_with_cmake
+# ------------------------------
+#
+# This method will try to locate LAPACKE using CMake find_package() mechanism.
 #
 # This functions sets the following variables in the parent scope:
 #
@@ -33,7 +35,10 @@ function(few_try_get_lapacke_with_cmake)
   endif()
 endfunction()
 
-# This method will try to locate LAPACKE using PkgConfig
+# few_try_get_lapacke_with_pkgconfig
+# ----------------------------------
+#
+# This method will try to locate LAPACKE using PkgConfig.
 #
 # This functions sets the following variables in the parent scope:
 #
@@ -72,6 +77,9 @@ function(few_try_get_lapacke_with_pkgconfig)
   endif()
 endfunction()
 
+# few_try_get_lapacke_with_cpm
+# ----------------------------
+#
 # This method will use CPM (CMake Package Manager) to fetch LAPACK sources and
 # and them to the build tree with LAPACKE support.
 #
@@ -96,10 +104,13 @@ function(few_try_get_lapacke_with_cpm)
             "CMAKE_UNITY_BUILD_BATCH_SIZE"
             64)
   set(LAPACKE_WITH_CPM_SUCCESS ON PARENT_SCOPE)
-  set(LAPACKE_WITH_CPM_LIBS "lapacke" PARENT_SCOPE)
+  set(LAPACKE_WITH_CPM_LIBS "lapacke;lapack" PARENT_SCOPE)
   message(CHECK_PASS "done")
 endfunction()
 
+# few_get_lapacke
+# ---------------
+#
 # This method will try to make LAPACKE available using the following strategies:
 #
 # * PKGCONFIG: use the function "few_try_get_lapacke_with_pkgconfig"
@@ -109,7 +120,8 @@ endfunction()
 # The PKGCONFIG strategy is only attempted if FEW_LAPACKE_DETECT_WITH is "AUTO"
 # or "PKGCONFIG". The CMAKE strategy is only attempted if
 # FEW_LAPACKE_DETECT_WITH is "AUTO" or "CMAKE". The FETCH strategy is only
-# attempted if FEW_LAPACKE_FETCH is "AUTO" or "ON".
+# attempted if FEW_LAPACKE_FETCH is "AUTO" or "ON". The CMAKE and PKGCONFIG
+# strategies are forcefully disabled if FEW_LAPACKE_FETCH is "ON"
 #
 # If no strategy is attempted, the function raises a warning and does not set
 # any variable in parent scope. In this case, it is the user responsibility to
@@ -145,6 +157,11 @@ function(few_get_lapacke)
   else()
     set(fetch_strategy_enabled OFF)
   endif()
+  if(FEW_LAPACKE_FETCH STREQUAL "ON")
+    set(pkgconfig_strategy_enabled OFF)
+    set(cmake_strategy_enabled OFF)
+  endif()
+
   if(pkgconfig_strategy_enabled OR cmake_strategy_enabled
      OR fetch_strategy_enabled)
     set(any_strategy_enabled ON)
@@ -228,7 +245,7 @@ function(few_get_lapacke)
         WARNING "LAPACKE automatic fetching was enabled but somehow "
                 "failed?...\n"
                 "CMake processing should have stop much sooner with a detailed "
-                "explanation of the failure.\n" "See previous error messages.")
+                "explanation of the failure.\nSee previous error messages.")
     endif()
     message(
       FATAL_ERROR
@@ -237,7 +254,7 @@ function(few_get_lapacke)
         "THEY SHOULD HELP YOU TO FIX THE ISSUE.")
   endif()
 
-  # VI. Add message
+  # VI. Add message if lapacke detection is ignored
   message(CHECK_PASS "ignored "
           "(FEW_LAPACKE_DETECT_WITH=${FEW_LAPACKE_DETECT_WITH}"
           " and FEW_LAPACKE_FETCH=${FEW_LAPACKE_FETCH})")
@@ -253,37 +270,320 @@ function(few_get_lapacke)
       "variable).")
 endfunction()
 
-# ---- Handle LAPACK/LAPACKE access ----
-get_target_property(_FEW_WITH_CPU fastemriwaveforms WITH_CPU)
+get_target_property(FEW_WITH_CPU fastemriwaveforms WITH_CPU)
+get_target_property(FEW_WITH_GPU fastemriwaveforms WITH_GPU)
 
-if(_FEW_WITH_CPU)
+if(FEW_WITH_CPU)
   # This method will locate or download LAPACKE and set ${FEW_LAPACKE_LIBS}. In
   # case of failure, it will stop the processing execution.
   few_get_lapacke()
+  # Now, the libraries that need access to liblapacke and 'liapacke.h' must link
+  # against ${FEW_LAPACKE_LIBS}
+endif()
+
+if(FEW_WITH_GPU)
+  set(FEW_GPU_BACKEND_NAME "few_backend_cuda${CUDAToolkit_VERSION_MAJOR}")
+endif()
+
+if(SKBUILD_STATE STREQUAL "editable")
+  set(BACKEND_BASE_OUTPUT_DIRECTORY "${fastemriwaveforms_BINARY_DIR}/src")
+else()
+  set(BACKEND_BASE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 endif()
 
 set(COMMON_ARGS INCLUDE PRIVATE ${Python_NumPy_INCLUDE_DIR})
 
-few_add_lib_to_cuda_cpu_backends(
-  NAME pymatmul
-  PYX_SOURCES pymatmul.pyx
-  CU_SOURCES matmul.cu
-  HEADERS cuda_complex.hpp global.h matmul.hh ${COMMON_ARGS})
+# ----------------
+# --- pymatmul ---
+# ----------------
 
-few_add_lib_to_cuda_cpu_backends(
-  NAME pyinterp
-  PYX_SOURCES pyinterp.pyx
-  CU_SOURCES interpolate.cu CPU_LINK PUBLIC ${FEW_LAPACKE_LIBS}
-  HEADERS cuda_complex.hpp global.h matmul.hh ${COMMON_ARGS})
+# I. Process pymatmul.pyx into a C++ file
+add_custom_command(
+  OUTPUT "pymatmul.cxx"
+  COMMENT "Cythonize pymatmul.pyx into pymatmul.cxx"
+  COMMAND
+    Python::Interpreter -m cython "${CMAKE_CURRENT_SOURCE_DIR}/pymatmul.pyx"
+    --output-file "${CMAKE_CURRENT_BINARY_DIR}/pymatmul.cxx" -3 -+ --module-name
+    "pymatmul" -I "${CMAKE_CURRENT_SOURCE_DIR}"
+  DEPENDS "pymatmul.pyx"
+  VERBATIM)
 
-few_add_lib_to_cuda_cpu_backends(
-  NAME pyAAK
-  PYX_SOURCES gpuAAKWrap.pyx
-  CU_SOURCES gpuAAK.cu
-  HEADERS cuda_complex.hpp global.h gpuAAK.hh ${COMMON_ARGS})
+set_source_files_properties(
+  "${CMAKE_CURRENT_BINARY_DIR}/pymatmul.cxx"
+  PROPERTIES COMPILE_DEFINITIONS "NPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION")
 
-few_add_lib_to_cuda_cpu_backends(
-  NAME pyAmpInterp2D
-  PYX_SOURCES pyampinterp2D.pyx
-  CU_SOURCES AmpInterp2D.cu
-  HEADERS cuda_complex.hpp global.h AmpInterp2D.hh ${COMMON_ARGS})
+# II. Declare the CPU backend
+if(FEW_WITH_CPU)
+  add_custom_command(
+    OUTPUT "matmul.cxx"
+    COMMENT "Copy matmul.cu to matmul.cxx"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/matmul.cu"
+            "${CMAKE_CURRENT_BINARY_DIR}/matmul.cxx"
+    DEPENDS "matmul.cu"
+    VERBATIM)
+
+  python_add_library(few_cpu_pymatmul MODULE WITH_SOABI pymatmul.cxx matmul.cxx)
+  target_include_directories(few_cpu_pymatmul
+                             PRIVATE ${Python_NumPy_INCLUDE_DIR})
+  target_sources(
+    few_cpu_pymatmul
+    PUBLIC FILE_SET
+           HEADERS
+           FILES
+           cuda_complex.hpp
+           global.h
+           matmul.hh)
+
+  install(TARGETS few_cpu_pymatmul DESTINATION few_backend_cpu)
+  set_property(TARGET few_cpu_pymatmul PROPERTY OUTPUT_NAME pymatmul)
+  set_property(
+    TARGET few_cpu_pymatmul
+    PROPERTY LIBRARY_OUTPUT_DIRECTORY
+             "${BACKEND_BASE_OUTPUT_DIRECTORY}/few_backend_cpu")
+
+endif()
+
+# III. Declare the GPU backend
+if(FEW_WITH_GPU)
+  python_add_library(few_gpu_pymatmul MODULE WITH_SOABI pymatmul.cxx matmul.cu)
+  target_include_directories(few_gpu_pymatmul
+                             PRIVATE ${Python_NumPy_INCLUDE_DIR})
+  target_sources(
+    few_gpu_pymatmul
+    PUBLIC FILE_SET
+           HEADERS
+           FILES
+           cuda_complex.hpp
+           global.h
+           matmul.hh)
+
+  install(TARGETS few_gpu_pymatmul DESTINATION ${FEW_GPU_BACKEND_NAME})
+  set_property(TARGET few_gpu_pymatmul PROPERTY OUTPUT_NAME pymatmul)
+  set_property(
+    TARGET few_gpu_pymatmul
+    PROPERTY LIBRARY_OUTPUT_DIRECTORY
+             "${BACKEND_BASE_OUTPUT_DIRECTORY}/${FEW_GPU_BACKEND_NAME}")
+endif()
+
+# ----------------
+# --- pyinterp ---
+# ----------------
+
+# I. Process pyinterp.pyx into a C++ file
+add_custom_command(
+  OUTPUT "pyinterp.cxx"
+  COMMENT "Cythonize pyinterp.pyx into pyinterp.cxx"
+  COMMAND
+    Python::Interpreter -m cython "${CMAKE_CURRENT_SOURCE_DIR}/pyinterp.pyx"
+    --output-file "${CMAKE_CURRENT_BINARY_DIR}/pyinterp.cxx" -3 -+ --module-name
+    "pyinterp" -I "${CMAKE_CURRENT_SOURCE_DIR}"
+  DEPENDS "pyinterp.pyx"
+  VERBATIM)
+
+set_source_files_properties(
+  "${CMAKE_CURRENT_BINARY_DIR}/pyinterp.cxx"
+  PROPERTIES COMPILE_DEFINITIONS "NPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION")
+
+# II. Declare the CPU backend
+if(FEW_WITH_CPU)
+  add_custom_command(
+    OUTPUT "interpolate.cxx"
+    COMMENT "Copy interpolate.cu to interpolate.cxx"
+    COMMAND
+      ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/interpolate.cu"
+      "${CMAKE_CURRENT_BINARY_DIR}/interpolate.cxx"
+    DEPENDS "interpolate.cu"
+    VERBATIM)
+
+  python_add_library(few_cpu_pyinterp MODULE WITH_SOABI pyinterp.cxx
+                     interpolate.cxx)
+  target_include_directories(few_cpu_pyinterp
+                             PRIVATE ${Python_NumPy_INCLUDE_DIR})
+  target_link_libraries(few_cpu_pyinterp PUBLIC ${FEW_LAPACKE_LIBS})
+
+  target_sources(
+    few_cpu_pyinterp
+    PUBLIC FILE_SET
+           HEADERS
+           FILES
+           cuda_complex.hpp
+           global.h
+           interpolate.hh)
+
+  install(TARGETS few_cpu_pyinterp DESTINATION few_backend_cpu)
+  set_property(TARGET few_cpu_pyinterp PROPERTY OUTPUT_NAME pyinterp)
+  set_property(
+    TARGET few_cpu_pyinterp
+    PROPERTY LIBRARY_OUTPUT_DIRECTORY
+             "${BACKEND_BASE_OUTPUT_DIRECTORY}/few_backend_cpu")
+
+endif()
+
+# III. Declare the GPU backend
+if(FEW_WITH_GPU)
+  python_add_library(few_gpu_pyinterp MODULE WITH_SOABI pyinterp.cxx
+                     interpolate.cu)
+  target_include_directories(few_gpu_pyinterp
+                             PRIVATE ${Python_NumPy_INCLUDE_DIR})
+  target_sources(
+    few_gpu_pyinterp
+    PUBLIC FILE_SET
+           HEADERS
+           FILES
+           cuda_complex.hpp
+           global.h
+           interpolate.hh)
+
+  install(TARGETS few_gpu_pyinterp DESTINATION ${FEW_GPU_BACKEND_NAME})
+  set_property(TARGET few_gpu_pyinterp PROPERTY OUTPUT_NAME pyinterp)
+  set_property(
+    TARGET few_gpu_pyinterp
+    PROPERTY LIBRARY_OUTPUT_DIRECTORY
+             "${BACKEND_BASE_OUTPUT_DIRECTORY}/${FEW_GPU_BACKEND_NAME}")
+endif()
+
+# -------------
+# --- pyAAK ---
+# -------------
+
+# I. Process pymatmul.pyx into a C++ file
+add_custom_command(
+  OUTPUT "gpuAAKWrap.cxx"
+  COMMENT "Cythonize gpuAAKWrap.pyx into gpuAAKWrap.cxx"
+  COMMAND
+    Python::Interpreter -m cython "${CMAKE_CURRENT_SOURCE_DIR}/gpuAAKWrap.pyx"
+    --output-file "${CMAKE_CURRENT_BINARY_DIR}/gpuAAKWrap.cxx" -3 -+
+    --module-name "pyAAK" -I "${CMAKE_CURRENT_SOURCE_DIR}"
+  DEPENDS "gpuAAKWrap.pyx"
+  VERBATIM)
+
+set_source_files_properties(
+  "${CMAKE_CURRENT_BINARY_DIR}/gpuAAKWrap.cxx"
+  PROPERTIES COMPILE_DEFINITIONS "NPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION")
+
+# II. Declare the CPU backend
+if(FEW_WITH_CPU)
+  add_custom_command(
+    OUTPUT "gpuAAK.cxx"
+    COMMENT "Copy gpuAAK.cu to gpuAAK.cxx"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/gpuAAK.cu"
+            "${CMAKE_CURRENT_BINARY_DIR}/gpuAAK.cxx"
+    DEPENDS "gpuAAK.cu"
+    VERBATIM)
+
+  python_add_library(few_cpu_pyAAK MODULE WITH_SOABI gpuAAKWrap.cxx gpuAAK.cxx)
+  target_include_directories(few_cpu_pyAAK PRIVATE ${Python_NumPy_INCLUDE_DIR})
+  target_sources(
+    few_cpu_pyAAK
+    PUBLIC FILE_SET
+           HEADERS
+           FILES
+           cuda_complex.hpp
+           global.h
+           gpuAAK.hh)
+
+  install(TARGETS few_cpu_pyAAK DESTINATION few_backend_cpu)
+  set_property(TARGET few_cpu_pyAAK PROPERTY OUTPUT_NAME pyAAK)
+  set_property(
+    TARGET few_cpu_pyAAK
+    PROPERTY LIBRARY_OUTPUT_DIRECTORY
+             "${BACKEND_BASE_OUTPUT_DIRECTORY}/few_backend_cpu")
+
+endif()
+
+# III. Declare the GPU backend
+if(FEW_WITH_GPU)
+  python_add_library(few_gpu_pyAAK MODULE WITH_SOABI gpuAAKWrap.cxx gpuAAK.cu)
+  target_include_directories(few_gpu_pyAAK PRIVATE ${Python_NumPy_INCLUDE_DIR})
+  target_sources(
+    few_gpu_pyAAK
+    PUBLIC FILE_SET
+           HEADERS
+           FILES
+           cuda_complex.hpp
+           global.h
+           gpuAAK.hh)
+
+  install(TARGETS few_gpu_pyAAK DESTINATION ${FEW_GPU_BACKEND_NAME})
+  set_property(TARGET few_gpu_pyAAK PROPERTY OUTPUT_NAME pyAAK)
+  set_property(
+    TARGET few_gpu_pyAAK
+    PROPERTY LIBRARY_OUTPUT_DIRECTORY
+             "${BACKEND_BASE_OUTPUT_DIRECTORY}/${FEW_GPU_BACKEND_NAME}")
+endif()
+
+# ---------------------
+# --- pyAmpInterp2D ---
+# ---------------------
+
+# I. Process pyampinterp2D.pyx into a C++ file
+add_custom_command(
+  OUTPUT "pyampinterp2D.cxx"
+  COMMENT "Cythonize pyampinterp2D.pyx into pyampinterp2D.cxx"
+  COMMAND
+    Python::Interpreter -m cython
+    "${CMAKE_CURRENT_SOURCE_DIR}/pyampinterp2D.pyx" --output-file
+    "${CMAKE_CURRENT_BINARY_DIR}/pyampinterp2D.cxx" -3 -+ --module-name
+    "pyAmpInterp2D" -I "${CMAKE_CURRENT_SOURCE_DIR}"
+  DEPENDS "pyampinterp2D.pyx"
+  VERBATIM)
+
+set_source_files_properties(
+  "${CMAKE_CURRENT_BINARY_DIR}/pyampinterp2D.cxx"
+  PROPERTIES COMPILE_DEFINITIONS "NPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION")
+
+# II. Declare the CPU backend
+if(FEW_WITH_CPU)
+  add_custom_command(
+    OUTPUT "AmpInterp2D.cxx"
+    COMMENT "Copy AmpInterp2D.cu to AmpInterp2D.cxx"
+    COMMAND
+      ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/AmpInterp2D.cu"
+      "${CMAKE_CURRENT_BINARY_DIR}/AmpInterp2D.cxx"
+    DEPENDS "AmpInterp2D.cu"
+    VERBATIM)
+
+  python_add_library(few_cpu_pyAmpInterp2D MODULE WITH_SOABI pyampinterp2D.cxx
+                     AmpInterp2D.cxx)
+  target_include_directories(few_cpu_pyAmpInterp2D
+                             PRIVATE ${Python_NumPy_INCLUDE_DIR})
+  target_sources(
+    few_cpu_pyAmpInterp2D
+    PUBLIC FILE_SET
+           HEADERS
+           FILES
+           cuda_complex.hpp
+           global.h
+           AmpInterp2D.hh)
+
+  install(TARGETS few_cpu_pyAmpInterp2D DESTINATION few_backend_cpu)
+  set_property(TARGET few_cpu_pyAmpInterp2D PROPERTY OUTPUT_NAME pyAmpInterp2D)
+  set_property(
+    TARGET few_cpu_pyAmpInterp2D
+    PROPERTY LIBRARY_OUTPUT_DIRECTORY
+             "${BACKEND_BASE_OUTPUT_DIRECTORY}/few_backend_cpu")
+
+endif()
+
+# III. Declare the GPU backend
+if(FEW_WITH_GPU)
+  python_add_library(few_gpu_pyAmpInterp2D MODULE WITH_SOABI pyampinterp2D.cxx
+                     AmpInterp2D.cu)
+  target_include_directories(few_gpu_pyAmpInterp2D
+                             PRIVATE ${Python_NumPy_INCLUDE_DIR})
+  target_sources(
+    few_gpu_pyAmpInterp2D
+    PUBLIC FILE_SET
+           HEADERS
+           FILES
+           cuda_complex.hpp
+           global.h
+           AmpInterp2D.hh)
+
+  install(TARGETS few_gpu_pyAmpInterp2D DESTINATION ${FEW_GPU_BACKEND_NAME})
+  set_property(TARGET few_gpu_pyAmpInterp2D PROPERTY OUTPUT_NAME pyAmpInterp2D)
+  set_property(
+    TARGET few_gpu_pyAmpInterp2D
+    PROPERTY LIBRARY_OUTPUT_DIRECTORY
+             "${BACKEND_BASE_OUTPUT_DIRECTORY}/${FEW_GPU_BACKEND_NAME}")
+endif()
