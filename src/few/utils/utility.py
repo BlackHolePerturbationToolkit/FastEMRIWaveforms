@@ -179,8 +179,7 @@ def _solveCubic(A2, A1, A0):
         root1 = 2.0 * r * cos(theta / 3.0) - b / (3.0 * a)
         root2 = 2.0 * r * cos((theta + 2.0 * PI) / 3.0) - b / (3.0 * a)
         root3 = 2.0 * r * cos((theta - 2.0 * PI) / 3.0) - b / (3.0 * a)
-        # ra = -2.*rtQnr*cos((theta + 2.*M_PI)/3.) - A2/3.
-        # rp = -2.*rtQnr*cos((theta - 2.*M_PI)/3.) - A2/3.
+        
         ra = root1
         rp = root3
         r3 = root2
