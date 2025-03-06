@@ -157,7 +157,15 @@ class ModuleTest(unittest.TestCase):
             abs_diff_e = np.abs(res.sol(new_time)[1] - forwards_result[2])
             abs_diff_phi = np.abs(res.sol(new_time)[3]/(mu/M) - forwards_result[4])
             abs_diff_phir = np.abs(res.sol(new_time)[5]/(mu/M) - forwards_result[6])
-            
+
+            # plot delta p of the two integrators
+            # plt.figure()
+            # plt.plot(np.diff(res.y[0]), '.', label="scipy ")
+            # plt.plot(np.diff(forwards_result[1]), '.', label="trajectory")
+            # plt.legend()
+            # plt.title('Delta p Comparison')
+            # plt.savefig("delta_p.png")
+
             # plt.figure(figsize=(18, 12))
 
             # # First subplot with the two trajectories for Phi_phi
