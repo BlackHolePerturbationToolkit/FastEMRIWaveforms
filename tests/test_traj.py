@@ -150,7 +150,14 @@ class ModuleTest(unittest.TestCase):
             scipy_duration = end_time_scipy - start_time_scipy
             print(f"Scipy solve_ivp duration: {scipy_duration:.4f} seconds")
             print(f"Ratio scipy/traj: {scipy_duration/traj_duration:.4f}")
+            print(f"Number of steps scipy: {res.t.size}, Number of steps traj: {len(forwards_result[0])}, Ratio: {res.t.size/len(forwards_result[0]):.4f}")
             new_time = pars[1] * forwards_result[0]/ (pars[0]**2*MTSUN_SI)
+            
+            abs_diff_p = np.abs(res.sol(new_time)[0] - forwards_result[1])
+            abs_diff_e = np.abs(res.sol(new_time)[1] - forwards_result[2])
+            abs_diff_phi = np.abs(res.sol(new_time)[3]/(mu/M) - forwards_result[4])
+            abs_diff_phir = np.abs(res.sol(new_time)[5]/(mu/M) - forwards_result[6])
+            
             # plt.figure(figsize=(18, 12))
 
             # # First subplot with the two trajectories for Phi_phi
@@ -164,8 +171,6 @@ class ModuleTest(unittest.TestCase):
 
             # # Second subplot with the absolute difference for Phi_phi
             # plt.subplot(3, 2, 2)
-            abs_diff_phi = np.abs(res.sol(new_time)[3]/(mu/M) - forwards_result[4])
-            abs_diff_phir = np.abs(res.sol(new_time)[5]/(mu/M) - forwards_result[6])
             # plt.plot(new_time, abs_diff_phi, label="Absolute Difference")
             # plt.xlabel('Time')
             # plt.ylabel('Absolute Difference')
@@ -183,7 +188,7 @@ class ModuleTest(unittest.TestCase):
 
             # # Fourth subplot with the absolute difference for p
             # plt.subplot(3, 2, 4)
-            abs_diff_p = np.abs(res.sol(new_time)[0] - forwards_result[1])
+            
             # plt.plot(new_time, abs_diff_p, label="Absolute Difference")
             # plt.xlabel('Time')
             # plt.ylabel('Absolute Difference')
@@ -201,7 +206,6 @@ class ModuleTest(unittest.TestCase):
 
             # # Sixth subplot with the absolute difference for e
             # plt.subplot(3, 2, 6)
-            abs_diff_e = np.abs(res.sol(new_time)[1] - forwards_result[2])
             # plt.plot(new_time, abs_diff_e, label="Absolute Difference")
             # plt.xlabel('Time')
             # plt.ylabel('Absolute Difference')
