@@ -1,6 +1,6 @@
 import unittest
 
-from few.utils.utility import ELQ_to_pex,get_kerr_geo_constants_of_motion,get_mu_at_t,get_p_at_t
+from few.utils.utility import ELQ_to_pex,get_kerr_geo_constants_of_motion,get_mu_at_t,get_p_at_t,get_separatrix
 from few.trajectory.inspiral import EMRIInspiral
 from few.utils.constants import YRSID_SI
 from few.trajectory.ode import KerrEccEqFlux
@@ -77,6 +77,19 @@ class UtilityTest(unittest.TestCase):
         diff = 1 - t[-1]/ (t_out*YRSID_SI)
 
         self.assertLess(abs(diff), 1e-10)
+    def test_get_separatrix_generic(self):
+        
+            a= 0.9
+            e = 0.3
+            x = 0.5
+
+            p_sep = get_separatrix(a, e, x)
+
+            p_sep_KerrGeo = 4.100908189793339
+
+            diff = p_sep_KerrGeo - p_sep
+
+            self.assertLess(abs(diff), 1e-14)
 
     
 
