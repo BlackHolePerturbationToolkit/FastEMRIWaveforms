@@ -123,6 +123,7 @@ conda create -n few_env -y -c conda-forge -y python=3.12 clangxx_osx-arm64 clang
 Instead for MACOS:
 ```
 conda create -n few_env -c conda-forge -y clangxx_osx-64 clang_osx-64 h5py wget gsl liblapacke lapack openblas fortran-compiler scipy numpy matplotlib jupyter python=3.12
+pip install lisaconstants
 ```
 
 And activate the environment
@@ -158,6 +159,7 @@ Below is a quick set of instructions to install the Fast EMRI Waveform package o
 
 ```sh
 conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.12 pandas fortran-compiler
+pip install lisaconstants
 conda activate few_env
 ```
 
