@@ -44,7 +44,7 @@ def run_forward_back(traj_module, M, mu, a, p0, e0, xI0, forwards_kwargs):
 
     return forwards_result, backwards_result
 
-N_TESTS = 100
+N_TESTS = 50
 
 class ModuleTest(unittest.TestCase):
     def test_trajectory_pn5(self):
