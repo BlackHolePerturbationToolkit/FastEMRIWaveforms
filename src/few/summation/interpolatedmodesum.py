@@ -367,7 +367,8 @@ class InterpolatedModeSum(SummationBase):
         ).flatten()
 
         # for ylm with negative m, need to multiply by (-1)**l as this is assumed to have happened by the kernel
-        breakpoint()
+        ylms = ylms.copy()
+        ylms[num_teuk_modes:] *= (-1) ** l_arr
 
         self.get_waveform(
             self.waveform,
