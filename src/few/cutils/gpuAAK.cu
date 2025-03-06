@@ -4,13 +4,9 @@
 
 #define  NUM_THREADS 32
 
-
-
 #define ACC 40.0
 #define BIGNO 1.0e10
 #define BIGNI 1.0e-10
-
-
 
 static double bessel_j0( double x ) {
    // Numerical Recipes, pp. 274-280.
@@ -162,16 +158,16 @@ void d_RotCoeff(double* rot, double* n, double* L, double* S, double* nxL, doubl
 
   double norm=d_vec_norm(nxL)*d_vec_norm(nxS);
   double dot,cosrot,sinrot;
-  //gsl_blas_ddot(nxL,nxS,&dot);
+  
   dot = d_dot_product(nxL,nxS);
 
   if (norm < 1e-6) norm = 1e-6;
 
   cosrot=dot/norm;
-  //gsl_blas_ddot(L,nxS,&dot);
+  
   dot = d_dot_product(L,nxS);
   sinrot=dot;
-  //gsl_blas_ddot(S,nxL,&dot);
+  
   dot = d_dot_product(S,nxL);
   sinrot-=dot;
   sinrot/=norm;
@@ -190,8 +186,7 @@ void make_waveform(cmplx *waveform,
               double M_phys, double S_phys, double mu, double qS, double phiS, double qK, double phiK, double dist,
               int nmodes, bool mich,
               double delta_t, double start_t, int old_ind, int start_ind, int end_ind, int init_length, double segwidth)
-{
-      // cmplx I = cmplx(0.0, 1.0);
+{ 
 
       #ifdef __CUDACC__
 
@@ -275,8 +270,10 @@ void make_waveform(cmplx *waveform,
       double cosphiK=cos(phiK);
       double sinphiK=sin(phiK);
       double halfsqrt3=sqrt(3.)/2.;
+
+      // Defined in global.h file 
       double mu_sec = mu * MTSUN_SI;
-      double zeta=mu_sec/dist/GPCINSEC; // M/D
+      double zeta=mu_sec/dist/GPCINSEC; 
 
       #ifdef __CUDACC__
 
@@ -344,9 +341,6 @@ void make_waveform(cmplx *waveform,
           double gimdot = OmegaTheta - OmegaR;
           double lam = acos(Y);
 
-         //  if (lam > M_PI - fill_val) lam = M_PI - fill_val;
-         //  if (lam < fill_val) lam = fill_val;
-
           double coslam=cos(lam);
           double sinlam=sin(lam);
           double cosalp=cos(alp);
@@ -360,9 +354,9 @@ void make_waveform(cmplx *waveform,
           double Ldotn2=Ldotn*Ldotn;
           double Sdotn=cosqK*cosqS+sinqK*sinqS*cos(phiK-phiS);
           double beta;
-          if (S_phys == 0.0 || lam < 1e-10 || lam > (M_PI - 1e-10))
+          if (S_phys == 0.0 || lam < 1e-10 || lam > (M_PI - 1e-10)) // Useful fix to make AAK match Kerr. 
           {
-              beta = 0.0; // This seems to work nicely
+              beta = 0.0; 
           }
           else
           {
@@ -392,6 +386,7 @@ void make_waveform(cmplx *waveform,
           double sin2phi=sin(2.*phiw);
           double cos2psi=cos(2.*psi);
           double sin2psi=sin(2.*psi);
+          // antenna patterns, detector frame 
           FplusI=cosq1*cos2phi*cos2psi-cosq*sin2phi*sin2psi;
           FcrosI=cosq1*cos2phi*sin2psi+cosq*sin2phi*cos2psi;
           FplusII=cosq1*sin2phi*cos2psi+cosq*cos2phi*sin2psi;
@@ -399,24 +394,7 @@ void make_waveform(cmplx *waveform,
         }
         else
         {
-            /*
-            double up_ldc = (cosqS*sinqK*cos(phiS-phiK) - cosqK*sinqS);
-              double dw_ldc = (sinqK*sin(phiS-phiK));
-              double psi_ldc;
-              if (dw_ldc != 0.0) {
-                psi_ldc = atan2(up_ldc, dw_ldc);
-              }
-              else {
-            psi_ldc = 0.5*M_PI;
-              }
-              double c2psi_ldc=cos(2.*psi_ldc);
-              double s2psi_ldc=sin(2.*psi_ldc);
-
-            FplusI=c2psi_ldc;
-            FcrosI=-s2psi_ldc;
-            FplusII=s2psi_ldc;
-            FcrosII=c2psi_ldc;*/
-
+            // Antenna patterns, source frame 
             FplusI = 1.0;
             FcrosI = 0.0;
             FplusII = 0.0;
