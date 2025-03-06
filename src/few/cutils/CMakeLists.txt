@@ -26,18 +26,9 @@ function(few_try_get_lapacke_with_cmake)
   message(CHECK_START "Trying with find_package()")
   find_package(LAPACKE)
 
-  include(CheckLanguage)
-  check_language(Fortran)
-  if(CMAKE_Fortran_COMPILER)
-    enable_language(Fortran)
-    set(fortran_libs ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
-  else()
-    set(fortran_libs "")
-  endif()
-
   if(LAPACKE_FOUND)
     set(LAPACKE_WITH_CMAKE_SUCCESS ON PARENT_SCOPE)
-    set(LAPACKE_WITH_CMAKE_LIBS lapacke ${fortran_libs} PARENT_SCOPE)
+    set(LAPACKE_WITH_CMAKE_LIBS lapacke PARENT_SCOPE)
     message(CHECK_PASS "success! Found LAPACKE ${LAPACKE_VERSION}")
   else()
     set(LAPACKE_WITH_CMAKE_SUCCESS OFF PARENT_SCOPE)
@@ -83,19 +74,10 @@ function(few_try_get_lapacke_with_pkgconfig)
     return()
   endif()
 
-  include(CheckLanguage)
-  check_language(Fortran)
-  if(CMAKE_Fortran_COMPILER)
-    enable_language(Fortran)
-    set(fortran_libs ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
-  else()
-    set(fortran_libs "")
-  endif()
-
   message(CHECK_PASS
           "success! Found LAPACKE ${lapacke_VERSION} in ${lapacke_LIBDIR}")
   set(LAPACKE_WITH_PKGCONFIG_SUCCESS ON PARENT_SCOPE)
-  set(LAPACKE_WITH_PKGCONFIG_LIBS PkgConfig::lapacke ${fortran_libs}
+  set(LAPACKE_WITH_PKGCONFIG_LIBS PkgConfig::lapacke
       PARENT_SCOPE)
 endfunction()
 
@@ -471,7 +453,7 @@ if(FEW_WITH_CPU)
   few_get_lapacke()
   # Now, link against ${FEW_LAPACKE_LIBS} to link against liblapacke.so and
   # include lapacke.h
-  target_link_libraries(few_cpu_pyinterp LINK_PUBLIC ${FEW_LAPACKE_LIBS})
+  target_link_libraries(few_cpu_pyinterp LINK_PUBLIC ${FEW_LAPACKE_LIBS} ${FEW_LAPACKE_EXTRA_LIBS})
 
 endif()
 

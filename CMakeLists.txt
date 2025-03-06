@@ -48,10 +48,12 @@ set_property(
            VALUE
            "AUTO")
 
-set(FEW_LAPACKE_LIBS "" CACHE STRING "Libs to link to build against LAPACKE.")
+set(FEW_LAPACKE_EXTRA_LIBS "" CACHE STRING "Extra libs to link to when linking \
+against LAPACKE.")
 set_property(
-  CACHE FEW_LAPACKE_LIBS
-  PROPERTY HELPSTRING "Libs to link to build against LAPACKE." TYPE "STRING")
+  CACHE FEW_LAPACKE_EXTRA_LIBS
+  PROPERTY HELPSTRING "Extra libs to link to when linking against LAPACKE." 
+  TYPE "STRING")
 
 set(FEW_LAPACKE_DETECT_WITH "AUTO" CACHE STRING "Tool used to locate LAPACKE.")
 set_property(
