@@ -5,6 +5,7 @@ from numba import njit
 from math import sqrt, log, cosh, sinh, pow
 import numpy as np
 from typing import Union
+from few.utils.utility import get_separatrix
 
 #    PostNewtonian fluxes (5PN, e^10; arbitrary inclinations)
 
@@ -24,6 +25,23 @@ class PN5(ODEBase):
     @property
     def supports_ELQ(self):
         return False
+    
+    @property
+    def separatrix_buffer_dist(self):
+        return 0.1
+    
+    
+    def max_p(self, e, x, a):
+        return float("inf")
+    
+    def min_p(self, e, x, a):
+        if np.abs(x) > 1:
+                raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
+        if np.abs(e) > 1:
+            raise ValueError("Interpolation: e out of bounds. Must be either 1 or -1.")
+        
+
+        return get_separatrix(a,e,x) + self.separatrix_buffer_dist
 
     def evaluate_rhs(
         self, y: Union[list[float], np.ndarray]
