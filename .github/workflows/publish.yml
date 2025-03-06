@@ -1,4 +1,4 @@
-name: Publish tagued version to TestPyPI
+name: Build and publish wheels
 on:
   push:
     tags:
@@ -130,7 +130,6 @@ jobs:
           CIBW_CONFIG_SETTINGS: cmake.define.FEW_LAPACKE_FETCH=ON cmake.define.FEW_WITH_GPU=OFF cmake.define.CMAKE_Fortran_COMPILER=${{ steps.setup-fortran.outputs.fc }}
           CIBW_TEST_COMMAND: python -c "import few; assert few.has_backend('cpu')"
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.macos_ver }}
-
       - name: Build core wheels (Linux)
         if: runner.os == 'Linux' && matrix.kind == 'core'
         uses: pypa/cibuildwheel@v2.22.0
@@ -144,7 +143,6 @@ jobs:
             cmake.define.FEW_LAPACKE_DETECT_WITH=PKGCONFIG
             cmake.define.FEW_LAPACKE_LIBS="PkgConfig::LAPACKE;PkgConfig::LAPACK;gfortran"
             cmake.define.FEW_WITH_GPU=OFF
-
           CIBW_BEFORE_ALL: >
             git clone https://github.com/Reference-LAPACK/lapack &&
             git -C lapack reset --hard 6ec7f2bc4ecf4c4a93496aa2fa519575bc0e39ca &&
@@ -152,12 +150,9 @@ jobs:
             cmake --build lapack/build -- -j &&
             cmake --install lapack/build &&
             rm -Rf lapack
-
           CIBW_ENVIRONMENT: >
             PKG_CONFIG_PATH="/opt/lapack/lib64/pkgconfig/:${PKG_CONFIG_PATH}"
-
           CIBW_TEST_COMMAND: python -c "import few; assert few.has_backend('cpu')"
-
       - name: Build cuda plugin wheels (Linux)
         if: runner.os == 'Linux' && matrix.kind == 'cuda_plugin' && matrix.arch == 'x86_64'
         uses: pypa/cibuildwheel@v2.22.0
@@ -168,13 +163,11 @@ jobs:
           CIBW_CONFIG_SETTINGS: >
             cmake.define.FEW_LAPACKE_FETCH=OFF
             cmake.define.FEW_WITH_GPU=ONLY
-
           CIBW_BEFORE_ALL: >
             yum install -y devtoolset-11-gcc-c++ &&
             yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo &&
             yum install -y cuda-compiler-${{ matrix.cuda_major }}-${{ matrix.cuda_minor }}.${{ matrix.arch }} cuda-libraries-${{ matrix.cuda_major }}-${{ matrix.cuda_minor }} cuda-libraries-devel-${{ matrix.cuda_major }}-${{ matrix.cuda_minor }}
           CIBW_BEFORE_BUILD: source /opt/rh/devtoolset-11/enable
-
           CIBW_ENVIRONMENT: >
             PATH="/usr/local/cuda/bin:${PATH}"
             LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
@@ -184,7 +177,6 @@ jobs:
             CUDADIR=/usr/local/cuda
             CC=gcc
             CXX=g++
-
           CIBW_REPAIR_WHEEL_COMMAND: auditwheel repair -w {dest_dir} {wheel} --exclude "libcudart.so.${{ matrix.cuda_major }}" --exclude "libcusparse.so.${{ matrix.cuda_major }}" --exclude "libcublas.so.${{ matrix.cuda_major }}" --exclude "libnvJitLink.so.${{ matrix.cuda_major }}" --exclude "libcublasLt.so.${{ matrix.cuda_major }}"
       # =====================
       # = V. Upload wheels  =
