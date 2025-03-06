@@ -516,7 +516,7 @@ class Integrate:
             if (orb_params[0] - p_sep) < self.separatrix_buffer_dist - INNER_THRESHOLD:
                 # Raise a warning
                 raise ValueError(
-                    f"p_f is too close to separatrix. It must start above p_sep + {self.separatrix_buffer_dist}."
+                    f"p_f is too close to separatrix. It must start above p_sep + {self.separatrix_buffer_dist}. Started at {orb_params[0]}, separatrix {p_sep}, starting p {orb_params[0]} should be larger than {p_sep + self.separatrix_buffer_dist - INNER_THRESHOLD}."
                 )
 
         # scale phases here by the mass ratio so the cache is accurate
@@ -655,7 +655,7 @@ class Integrate:
             ],  # upper bound: the knot that passed the boundary
             maxiter=MAX_ITER,
             xtol=INNER_THRESHOLD,
-            rtol=1e-10,
+            rtol=1e-13,
             full_output=True,
         )
 
