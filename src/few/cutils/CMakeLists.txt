@@ -25,9 +25,10 @@ function(few_try_get_lapacke_with_cmake)
 
   message(CHECK_START "Trying with find_package()")
   find_package(LAPACKE)
-  if(LAPACKE_FOUND)
+  find_package(LAPACK)
+  if(LAPACKE_FOUND AND LAPACK_FOUND)
     set(LAPACKE_WITH_CMAKE_SUCCESS ON PARENT_SCOPE)
-    set(LAPACKE_WITH_CMAKE_LIBS "LAPACK::LAPACK" PARENT_SCOPE)
+    set(LAPACKE_WITH_CMAKE_LIBS lapacke lapack PARENT_SCOPE)
     message(CHECK_PASS "success! Found LAPACKE ${LAPACKE_VERSION}")
   else()
     set(LAPACKE_WITH_CMAKE_SUCCESS OFF PARENT_SCOPE)
@@ -53,6 +54,7 @@ endfunction()
 #   * LAPACKE_WITH_PKGCONFIG_REASON to
 #
 #     * "MISSING_PKGCONFIG" if PKGCONFIG is not available
+#     * "MISSING_LAPACK" if lapack.pc is not found
 #     * "MISSING_LAPACKE" if lapacke.pc is not found
 function(few_try_get_lapacke_with_pkgconfig)
   message(CHECK_START "Trying with PkgConfig")
@@ -65,16 +67,24 @@ function(few_try_get_lapacke_with_pkgconfig)
   endif()
 
   pkg_check_modules(lapacke IMPORTED_TARGET lapacke)
-
-  if(lapacke_FOUND)
-    message(CHECK_PASS "success! Found LAPACKE ${lapacke_VERSION}")
-    set(LAPACKE_WITH_PKGCONFIG_SUCCESS ON PARENT_SCOPE)
-    set(LAPACKE_WITH_PKGCONFIG_LIBS "PkgConfig::lapacke" PARENT_SCOPE)
-  else()
+  if(NOT lapacke_FOUND)
     message(CHECK_FAIL "not found")
     set(LAPACKE_WITH_PKGCONFIG_SUCCESS OFF PARENT_SCOPE)
     set(LAPACKE_WITH_PKGCONFIG_REASON "MISSING_LAPACKE" PARENT_SCOPE)
   endif()
+
+  pkg_check_modules(lapacke IMPORTED_TARGET lapack)
+  if(NOT lapack_FOUND)
+    message(CHECK_FAIL "not found")
+    set(LAPACKE_WITH_PKGCONFIG_SUCCESS OFF PARENT_SCOPE)
+    set(LAPACKE_WITH_PKGCONFIG_REASON "MISSING_LAPACK" PARENT_SCOPE)
+  endif()
+
+  message(CHECK_PASS "success! Found LAPACKE ${lapacke_VERSION}")
+  set(LAPACKE_WITH_PKGCONFIG_SUCCESS ON PARENT_SCOPE)
+  set(LAPACKE_WITH_PKGCONFIG_LIBS PkgConfig::lapacke PkgConfig::lapack
+                                  ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
+      PARENT_SCOPE)
 endfunction()
 
 # few_try_get_lapacke_with_cpm
@@ -237,9 +247,9 @@ function(few_get_lapacke)
         WARNING
           "LAPACKE could not be located with CMake find_package() mechanism.\n"
           "If your LAPACK installation provides a 'lapacke-config.cmake' file \
-          (or similar installed target file), add its path to the \n
+          (or similar installed target file), add its path to the \
           CMAKE_PREFIX_PATH environment variable.\n"
-          "It is usually located in the library install path, in the \n
+          "It is usually located in the library install path, in the \
           'lib/cmake' subdirectory.")
     endif()
     if(fetch_strategy_enabled)
