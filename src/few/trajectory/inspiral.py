@@ -26,7 +26,7 @@ from ..utils.utility import (
     ELQ_to_pex,
     get_kerr_geo_constants_of_motion,
 )
-from ..utils.pn_map import Y_to_xI
+from ..utils.mappings.pn import Y_to_xI
 from ..utils.citations import REFERENCE
 
 from .integrate import get_integrator

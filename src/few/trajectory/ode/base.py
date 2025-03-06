@@ -6,8 +6,8 @@ from typing import Optional, Type, Union
 import numpy as np
 import os
 from ...utils.utility import ELQ_to_pex, get_separatrix
-from ...utils.mappings import ELdot_to_PEdot_Jacobian
-from ...utils.pn_map import Y_to_xI
+from ...utils.mappings.jacobian import ELdot_to_PEdot_Jacobian
+from ...utils.mappings.pn import Y_to_xI
 
 
 class ODEBase:
@@ -20,8 +20,8 @@ class ODEBase:
 
     """
     _flux_output_convention = "pex"
-    
     def __init__(self, *args, use_ELQ=False, **kwargs):
+        self.flux_output_convention = "pex"
         if use_ELQ:
             assert self.supports_ELQ, "This ODE does not support ELQ evaluation."
         self.use_ELQ = use_ELQ
@@ -30,12 +30,6 @@ class ODEBase:
         """
         self.num_add_args = 0
         """int: Number of additional arguments being passed to the ODE function."""
-
-        self.flux_output_convention = "pex"
-
-        self.apply_Jacobian_bool = (
-            self.flux_output_convention == "ELQ" and not self.use_ELQ
-        )
 
     @property
     def convert_Y(self):
@@ -149,7 +143,7 @@ class ODEBase:
         return ydot
     
     def min_p(
-        self, e: Union[float, np.ndarray], x: Union[float, np.ndarray], a: Optional[Union[float, np.ndarray]]=None
+        self, e: Union[float, np.ndarray], x: Union[float, np.ndarray] = 1, a: Optional[Union[float, np.ndarray]] = 0
     ) -> Union[float, np.ndarray]:
         """
         Computes the minimum value of the radial coordinate p for a given eccentricity and inclination for this model.
@@ -161,10 +155,10 @@ class ODEBase:
         return get_separatrix(self.a, e, x) + self.separatrix_buffer_dist
 
     def max_p(
-        self, e: Union[float, np.ndarray], x: Union[float, np.ndarray], a: Optional[Union[float, np.ndarray]]=None
+        self, e: Union[float, np.ndarray], x: Union[float, np.ndarray] = 1, a: Optional[Union[float, np.ndarray]] = 0
     ) -> Union[float, np.ndarray]:
         """
-        Computes the maximum value of the radial coordinate p for a given eccentricity and inclination for this model.
+        Computes the maximum value of the semilatus rectum p for a given eccentricity and inclination for this model.
         Trajectory models implementing their own interpolants should override this function to return the maximum value
         corresponding to the precomputed grid boundaries. 
 
@@ -174,6 +168,36 @@ class ODEBase:
             return np.inf
         else:
             return np.full_like(e, np.inf)
+        
+    def min_e(
+        self, p: Union[float, np.ndarray], x: Union[float, np.ndarray] = 1, a: Optional[Union[float, np.ndarray]] = 0
+    ) -> Union[float, np.ndarray]:
+        """
+        Computes the minimum value of the eccentricity e for a given semilatus rectum and inclination for this model.
+        Trajectory models implementing their own interpolants should override this function to return the minimum value
+        corresponding to the precomputed grid boundaries. 
+
+        By default, this function assumes things are rectilinear and returns `p_sep + self.separatrix_buffer_dist`.
+        """
+        if isinstance(p, float):
+            return 0
+        else:
+            return np.full_like(p, 0)
+
+    def max_e(
+        self, p: Union[float, np.ndarray], x: Union[float, np.ndarray] = 1, a: Optional[Union[float, np.ndarray]] = 0
+    ) -> Union[float, np.ndarray]:
+        """
+        Computes the maximum value of the eccentricity e for a given semilatus rectum and inclination for this model.
+        Trajectory models implementing their own interpolants should override this function to return the minimum value
+        corresponding to the precomputed grid boundaries. 
+
+        By default, this function assumes things are rectilinear and returns `p_sep + self.separatrix_buffer_dist`.
+        """
+        if isinstance(p, float):
+            return np.inf
+        else:
+            return np.full_like(p, np.inf)
 
     def modify_rhs(self, ydot: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
         """

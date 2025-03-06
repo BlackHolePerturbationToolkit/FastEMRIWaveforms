@@ -25,7 +25,7 @@ from ..utils.baseclasses import SchwarzschildEccentric, BackendLike
 from .base import AmplitudeBase
 from ..utils.globals import get_file_manager
 from ..utils.citations import REFERENCE
-from ..utils.mappings import schwarzecc_p_to_y
+from ..utils.mappings.schwarzecc import schwarzecc_p_to_y
 from scipy.interpolate import RectBivariateSpline
 
 from few.utils.globals import get_logger

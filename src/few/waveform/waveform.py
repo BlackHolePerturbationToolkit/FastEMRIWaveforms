@@ -27,8 +27,8 @@ from ..utils.baseclasses import (
 from .base import AAKWaveformBase, SphericalHarmonicWaveformBase, WaveformModule
 
 from ..trajectory.inspiral import EMRIInspiral
-from ..amplitude.ampinterp2d import AmpInterpKerrEqEcc, AmpInterpSchwarzEcc
-from ..utils.pn_map import xI_to_Y
+from ..amplitude.ampinterp2d import AmpInterpKerrEccEq, AmpInterpSchwarzEcc
+from ..utils.mappings.pn import xI_to_Y
 from ..amplitude.romannet import RomanAmplitude
 from ..utils.modeselector import ModeSelector, NeuralModeSelector
 from ..summation.directmodesum import DirectModeSum
@@ -464,7 +464,7 @@ class FastKerrEccentricEquatorialFlux(
         SphericalHarmonicWaveformBase.__init__(
             self,
             inspiral_module=EMRIInspiral,
-            amplitude_module=AmpInterpKerrEqEcc,
+            amplitude_module=AmpInterpKerrEccEq,
             sum_module=mode_summation_module,
             mode_selector_module=mode_selection_module,
             inspiral_kwargs=inspiral_kwargs,

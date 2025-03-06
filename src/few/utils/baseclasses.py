@@ -31,7 +31,7 @@ from typing import Optional, Sequence, TypeVar, Union
 # Python imports
 from ..cutils import Backend
 from ..utils.citations import Citable, REFERENCE
-from ..utils.mappings import kerrecceq_forward_map
+from ..utils.mappings.kerrecceq import kerrecceq_forward_map
 from ..utils.globals import get_logger, get_backend, get_first_backend
 
 xp_ndarray = TypeVar("xp_ndarray")
