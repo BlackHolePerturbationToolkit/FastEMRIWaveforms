@@ -509,6 +509,7 @@ class SphericalHarmonicWaveformBase(
                 ylms_in,
                 phase_t_in,
                 phase_information_in,
+                self.ls,
                 self.ms,
                 self.ns,
                 M,
