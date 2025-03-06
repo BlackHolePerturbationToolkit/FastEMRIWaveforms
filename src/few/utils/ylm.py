@@ -275,8 +275,6 @@ def _ylm_kernel_inner(
     else:
         raise ValueError("(l, m) > 10 are not supported.")
 
-    if m < 0:
-        temp = (-1)**l * temp
     return temp
 
 # fmt: on
