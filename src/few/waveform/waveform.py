@@ -280,6 +280,13 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
 
         """
 
+        if x0 < 0.0:
+            a = -a
+            x0 = -x0
+            qK = np.pi - qK
+            phiK = phiK + np.pi
+            Phi_phi0 = Phi_phi0 + np.pi
+
         args_all = (
             M,
             mu,
