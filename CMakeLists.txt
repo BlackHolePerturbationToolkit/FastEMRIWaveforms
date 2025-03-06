@@ -13,7 +13,6 @@ find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 
 # ---- Import project-specific CMake functions ----
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-include(FEW)
 
 # ---- Define project specific options ----
 set(FEW_WITH_GPU AUTO CACHE STRING "Enable GPU support")
@@ -31,10 +30,8 @@ set_property(
            VALUE
            "AUTO")
 set(FEW_CUDA_ARCH
-    CACHE
-      STRING
-      "CUDA Architecture targetted for FEW compilation (see doc of CMAKE_CUDA_ARCHITECTURE)."
-)
+    CACHE STRING "CUDA Architecture targetted for FEW compilation (see doc of \
+          CMAKE_CUDA_ARCHITECTURE).")
 
 set(FEW_LAPACKE_FETCH AUTO CACHE STRING
                                  "Download and compile LAPACK (with LAPACKE)")
@@ -70,7 +67,6 @@ set_property(
            VALUE
            "CMAKE")
 
-# --- Define
 # ---- Phony target for project specific properties ----
 add_library(fastemriwaveforms INTERFACE)
 
@@ -95,28 +91,28 @@ if(FEW_WITH_GPU STREQUAL "AUTO")
   if(CMAKE_CUDA_COMPILER AND CUDAToolkit_FOUND)
     message(
       STATUS
-        "FEW GPU support was set to AUTO and will be turned ON as CUDA and CUDA Toolkit are available with CUDA version ${CUDAToolkit_VERSION_MAJOR}."
-    )
+        "FEW GPU support was set to AUTO and will be turned ON as CUDA and \
+        CUDA Toolkit are available with CUDA version \
+        ${CUDAToolkit_VERSION_MAJOR}.")
     set_target_properties(fastemriwaveforms PROPERTIES WITH_GPU ON)
   else()
     message(
       STATUS
-        "FEW GPU support was set to AUTO and will be turned OFF as CUDA and CUDA Toolkit are not found (CMAKE_CUDA_COMPILER:${CMAKE_CUDA_COMPILER} CUDAToolkit_FOUND:${CUDAToolkit_FOUND})."
-    )
+        "FEW GPU support was set to AUTO and will be turned OFF as CUDA and \
+        CUDA Toolkit are not found (CMAKE_CUDA_COMPILER:${CMAKE_CUDA_COMPILER} \
+        CUDAToolkit_FOUND:${CUDAToolkit_FOUND}).")
     set_target_properties(fastemriwaveforms PROPERTIES WITH_GPU OFF)
   endif()
 elseif(FEW_WITH_GPU STREQUAL "ONLY")
   message(
     STATUS
-      "FEW GPU support is set to ON and CPU support is set to OFF (use only to build a standalone plugin)."
-  )
+      "FEW GPU support is set to ON and CPU support is set to OFF (use only to \
+      build a standalone plugin).")
   set_target_properties(fastemriwaveforms PROPERTIES WITH_GPU ON)
   set_target_properties(fastemriwaveforms PROPERTIES WITH_CPU OFF)
 elseif(FEW_WITH_GPU STREQUAL "BARE")
-  message(
-    STATUS
-      "FEW GPU and CPU support are disabled (use only to build a non-functional pure-python release)."
-  )
+  message(STATUS "FEW GPU and CPU support are disabled (use only to build a \
+      non-functional pure-python release).")
   set_target_properties(fastemriwaveforms PROPERTIES WITH_GPU OFF)
   set_target_properties(fastemriwaveforms PROPERTIES WITH_CPU OFF)
 else()
@@ -129,12 +125,6 @@ get_target_property(_FEW_WITH_GPU fastemriwaveforms WITH_GPU)
 if(_FEW_WITH_GPU)
   enable_language(CUDA)
   find_package(CUDAToolkit REQUIRED)
-  set_target_properties(
-    fastemriwaveforms PROPERTIES FAST_BACKEND
-                                 "cuda${CUDAToolkit_VERSION_MAJOR}x")
-  set_target_properties(fastemriwaveforms PROPERTIES CU_LANGUAGE "CUDA")
-else()
-  set_target_properties(fastemriwaveforms PROPERTIES CU_LANGUAGE "CXX")
 endif()
 unset(_FEW_WITH_GPU)
 
