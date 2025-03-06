@@ -3,7 +3,7 @@ from tqdm import tqdm
 
 from ..utils.baseclasses import Pn5AAK, ParallelModuleBase, BackendLike
 
-from ..utils.mappings import (
+from ..utils.mappings.schwarzecc import (
     schwarzecc_p_to_y,
 )
 from ..utils.ylm import GetYlms

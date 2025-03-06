@@ -36,10 +36,8 @@ from ..utils.baseclasses import (
 )
 from .base import AmplitudeBase
 from ..utils.citations import REFERENCE
-from ..utils.mappings import (
-    kerrecceq_forward_map,
-    schwarzecc_p_to_y,
-)
+from ..utils.mappings.kerrecceq import kerrecceq_forward_map
+from ..utils.mappings.schwarzecc import schwarzecc_p_to_y
 
 from typing import List, Optional, Union
 
@@ -235,7 +233,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         return z
 
 
-class AmpInterpKerrEqEcc(AmplitudeBase, KerrEccentricEquatorial):
+class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
     """Calculate Teukolsky amplitudes in the Kerr eccentric equatorial regime with a bicubic spline + linear
     interpolation scheme.
 
@@ -483,7 +481,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
     all sets of coefficients.
 
     This class is retained for legacy compatibility with the original Schwarzschild eccentric models. It is
-    recommended to use `AmpInterpKerrEqEcc` instead of this class.
+    recommended to use `AmpInterpKerrEccEq` instead of this class.
 
     This module is available for GPU and CPU.
 
@@ -815,8 +813,8 @@ if __name__ == "__main__":
         filepaths.append(base_path.format(part1, part2))
 
     # running this should auto-produce coefficients files
-    AmpInterpKerrEqEcc(filenames=filepaths)
+    AmpInterpKerrEccEq(filenames=filepaths)
     from few import get_logger
 
-    amp = AmpInterpKerrEqEcc()
+    amp = AmpInterpKerrEccEq()
     get_logger().info(amp(0.0, np.array([10.0]), np.array([0.3]), np.array([1.0])))
