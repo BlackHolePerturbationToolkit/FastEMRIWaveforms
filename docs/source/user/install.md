@@ -412,7 +412,9 @@ LAPACK library (`/lib64/liblapack.so.3`) which makes somes tests fails with a se
 The installation command line is thus:
 
 ```sh
-(few2.0rc1) $ CXX=g++ CC=gcc pip install -e '.[testing]' --config-settings=cmake.define.FEW_WITH_GPU=ON --config-settings=cmake.define.FEW_LAPACKE_FETCH=ON
+(few2.0rc1) $ CXX=g++ CC=gcc FC=gfortran pip install -e '.[testing]' \
+                --config-settings=cmake.define.FEW_WITH_GPU=ON \
+                --config-settings=cmake.define.FEW_LAPACKE_FETCH=ON
 ...
 Successfully installed fastemriwaveforms-2.0.0rc1
 (few2.0rc1) $ pip install cupy-cuda12x nvidia-cuda-runtime-cu12==12.4.* # Must be installed manually when installed from source
