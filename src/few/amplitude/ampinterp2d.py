@@ -482,7 +482,7 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
 
                 # apply +/- m symmetry
                 if m < 0:
-                    temp[lmn] = self.xp.conj(temp[lmn])
+                    temp[lmn] = (-1)**l * self.xp.conj(temp[lmn])
 
             return temp
 
