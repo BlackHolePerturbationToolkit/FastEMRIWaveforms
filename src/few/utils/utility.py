@@ -1888,7 +1888,7 @@ def get_mu_at_t(
         index_of_mu: Index where to insert the new p values in
             the :code:`traj_args` list. Default is 1.
         bounds: Minimum and maximum values of p over which brentq will search for a root.
-            If not given, will be set to [1e-1, 1e3]. To supply only one of these two limits, set the
+            If not given, will be set to [1e-1, m1]. To supply only one of these two limits, set the
             other limit to None.
         **kwargs: Keyword arguments for :func:`get_at_t`.
 
@@ -1899,13 +1899,26 @@ def get_mu_at_t(
 
     # fix bounds
     if bounds is None:
-        bounds = [1e-1, 1e3]
+        bounds = [1e-1, traj_args[0]]
 
     elif bounds[0] is None:
         bounds[0] = 1e-1
 
     elif bounds[1] is None:
-        bounds[1] = 1e3
+        bounds[1] = traj_args[0]
+
+    # Check lower bound
+    traj_pars = [traj_args[0],bounds[0],traj_args[1], traj_args[2],traj_args[3],traj_args[4]]
+    t, p, e, xI, Phi_phi, Phi_theta, Phi_r = traj_module(*traj_pars, T=t_out*1.001)
+    if t[-1] <= t_out*YRSID_SI:
+        raise ValueError("No solution found within the bounds for secondary mass.")
+   
+   # Check lower bound
+    traj_pars = [traj_args[0],bounds[1],traj_args[1], traj_args[2],traj_args[3],traj_args[4]]
+    t, p, e, xI, Phi_phi, Phi_theta, Phi_r = traj_module(*traj_pars, T=t_out*1.001)
+    if t[-1] >= t_out*YRSID_SI:
+        raise ValueError("No solution found within the bounds for secondary mass.")
+   
 
     root = get_at_t(traj_module, traj_args, bounds, t_out, index_of_mu, **kwargs)
     return root
