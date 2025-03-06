@@ -194,9 +194,9 @@ class SphericalHarmonicWaveformBase(
 
         """
 
-        if x0 < 0.0:
+        if xI0 < 0.0:
             a = -a
-            x0 = -x0
+            xI0 = -xI0
             theta = np.pi - theta
             phi = -phi
 

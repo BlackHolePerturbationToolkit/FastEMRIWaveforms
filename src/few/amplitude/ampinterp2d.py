@@ -367,25 +367,39 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
 
         # prograde: spin pos, xI pos
         # retrograde: spin pos, xI neg - >  spin neg, xI pos
-        assert isinstance(a, float)
+        # assert isinstance(a, float)
 
         try:
+            a = a.get()
             p = p.get()
             e = e.get()
             xI = xI.get()
         except AttributeError:
             pass
 
+        a = np.atleast_1d(a)
         p = np.atleast_1d(p)
         e = np.atleast_1d(e)
         xI = np.atleast_1d(xI)
 
-        assert np.all(xI == 1.0) or np.all(
-            xI == -1.0
+        lengths = [len(arr) for arr in (a, p, e, xI)]
+        non_one_lengths = {l for l in lengths if l > 1}  # Collect lengths greater than 1
+    
+        assert len(non_one_lengths) <= 1, f"Arrays must be length one or, if larger, have the same length. Found lengths: {lengths}"
+
+        assert np.all(a*xI <= 0.0) or np.all(
+            a*xI >= 0.0
         )  # either all prograde or all retrograde
+        assert np.all(np.abs(xI) == 1.0) # all equatorial
+
+        if np.all(xI < 0.0):
+            m_mode_sign = -1
+        else:
+            m_mode_sign = 1
+
         xI_in = np.ones_like(p) * xI
 
-        signed_spin = a * xI_in[0].item()
+        signed_spin = a * xI_in
         a_in = np.full_like(p, signed_spin)
         xI_in = np.abs(xI_in)
 
@@ -395,7 +409,7 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
                 specific_modes_arr = self.xp.asarray(specific_modes)
                 mode_indexes = self.special_index_map_arr[
                     specific_modes_arr[:, 0],
-                    specific_modes_arr[:, 1],
+                    m_mode_sign*specific_modes_arr[:, 1],
                     specific_modes_arr[:, 2],
                 ]
                 if self.xp.any(mode_indexes == -1):
