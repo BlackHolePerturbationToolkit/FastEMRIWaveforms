@@ -145,10 +145,4 @@ add_subdirectory(src)
 # ---- Let CMake handle copying CITATION.cff into wheel ----
 if(SKBUILD_STATE STREQUAL "sdist" OR SKBUILD_STATE STREQUAL "wheel")
   install(FILES CITATION.cff DESTINATION few)
-elseif(SKBUILD_STATE STREQUAL "editable")
-  install(CODE "execute_process( \
-  COMMAND ${CMAKE_COMMAND} -E create_symlink \
-  ${CMAKE_CURRENT_SOURCE_DIR}/CITATION.cff \
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/few/CITATION.cff  \
-  )")
 endif()

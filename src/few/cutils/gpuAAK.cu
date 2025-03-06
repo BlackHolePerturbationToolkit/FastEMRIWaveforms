@@ -183,6 +183,7 @@ void d_RotCoeff(double* rot, double* n, double* L, double* S, double* nxL, doubl
 }
 
 #define  NUM_PARS 6
+
 CUDA_KERNEL
 void make_waveform(cmplx *waveform,
               double* interp_array,
@@ -190,8 +191,7 @@ void make_waveform(cmplx *waveform,
               int nmodes, bool mich,
               double delta_t, double start_t, int old_ind, int start_ind, int end_ind, int init_length, double segwidth)
 {
-
-      cmplx I(0.0, 1.0);
+      // cmplx I = cmplx(0.0, 1.0);
 
       #ifdef __CUDACC__
 
@@ -537,8 +537,10 @@ void get_waveform(cmplx *waveform, double* interp_array,
               double delta_t, double *h_t){
 
     // arrays for determining spline windows for new arrays
-    int start_inds[init_len];
-    int unit_length[init_len-1];
+    int *start_inds, *unit_length;
+    start_inds = (int*)malloc(init_len * sizeof(int));
+    unit_length = (int*)malloc((init_len-1) * sizeof(int));
+
 
     int number_of_old_spline_points = init_len;
 
@@ -594,4 +596,7 @@ void get_waveform(cmplx *waveform, double* interp_array,
             cudaStreamDestroy(streams[i]);
         }
       #endif
+
+      free(unit_length);
+      free(start_inds);
 }

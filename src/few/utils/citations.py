@@ -276,9 +276,12 @@ def build_citation_registry() -> CitationRegistry:
     import pathlib
     import yaml
 
-    from few import __file__ as _few_root_file
+    from few import __file__ as _few_root_file, _is_editable as is_editable
 
-    citation_cff_path = pathlib.Path(_few_root_file).parent / "CITATION.cff"
+    few_root = pathlib.Path(_few_root_file).parent
+    cff_root = few_root.parent.parent if is_editable else few_root
+    citation_cff_path = cff_root / "CITATION.cff"
+
     with open(citation_cff_path, "rt") as fid:
         cff = yaml.safe_load(fid)
 
