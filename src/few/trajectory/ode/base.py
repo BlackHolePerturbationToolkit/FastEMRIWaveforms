@@ -20,7 +20,7 @@ class ODEBase:
 
     """
     _flux_output_convention = "pex"
-    def __init__(self, *args, use_ELQ=False, **kwargs):
+    def __init__(self, *args, use_ELQ=False, integrate_backwards=False, **kwargs):
         self.flux_output_convention = "pex"
         if use_ELQ:
             assert self.supports_ELQ, "This ODE does not support ELQ evaluation."
@@ -31,6 +31,9 @@ class ODEBase:
         self.num_add_args = 0
         """int: Number of additional arguments being passed to the ODE function."""
 
+        self.integrate_backwards = integrate_backwards
+        """bool: If True, the ODE corresponds to integrating backwards in time. Defaults to False."""
+        
     @property
     def convert_Y(self):
         """
@@ -294,6 +297,9 @@ class ODEBase:
 
         if scale_by_eps:
             out[:3] *= self.epsilon
+
+        if self.integrate_backwards:
+            out *= -1.
 
         return out
 

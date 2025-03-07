@@ -16,6 +16,7 @@ from few.utils.mappings.kerrecceq import (kerrecceq_flux_forward_map,
 from few.utils.mappings.jacobian import ELdot_to_PEdot_Jacobian
 
 from few.utils.utility import _brentq_jit, _get_separatrix_kernel_inner
+from few.utils.exceptions import TrajectoryOffGridException
 
 import h5py
 
@@ -335,7 +336,7 @@ class KerrEccEqFlux(ODEBase):
         return True
     
     def isvalid_x(self, x):
-        if np.any(np.abs(x) > 1):
+        if np.any(np.abs(x) != 1):
             raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
         
     def isvalid_e(self, e):
@@ -437,13 +438,19 @@ class KerrEccEqFlux(ODEBase):
         u, w, _, z, in_region_A = kerrecceq_flux_forward_map(
             a_in, p, e, 1.0, self.p_sep_cache
         )
-
+        
         if u < 0 or u > 1 + 1e-8 or np.isnan(u):
             raise ValueError("Interpolation: p out of bounds.")
-        if w < 0 or w > 1 + 1e-8:
-            raise ValueError("Interpolation: e out of bounds.")
+        if w < 0:
+            raise TrajectoryOffGridException("Interpolation: e out of bounds.")
+        if w > 1 + 1e-8:
+            if self.integrate_backwards:
+                raise ValueError("Interpolation: e out of bounds.")
+            else:
+                raise TrajectoryOffGridException("Interpolation: e out of bounds.")
+
         if z < 0 or z > 1 + 1e-8:
-            raise ValueError("Interpolation: a out of bounds.")
+            raise TrajectoryOffGridException("Interpolation: a out of bounds.")
 
         if self.flux_output_convention == "ELQ":
             EdotPN, LdotPN = _PN_alt(p, e)
