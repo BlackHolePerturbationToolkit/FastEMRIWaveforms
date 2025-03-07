@@ -83,8 +83,9 @@ class Integrate:
         self,
         func: Type[ODEBase],
         integrate_constants_of_motion: bool = False,
-        buffer_length: int = 1000,
+        buffer_length: int = 2000,
         enforce_schwarz_sep: bool = False,
+        max_iter: Optional[int] = None,
         **kwargs,
     ):
         self.buffer_length = buffer_length
@@ -106,6 +107,11 @@ class Integrate:
             tmax=1e9,
             max_step=1e6,
         )
+
+        if max_iter is None:
+            self.max_iter = buffer_length
+        else:
+            self.max_iter = max_iter
 
         # assert np.all(self.backgrounds == self.backgrounds[0])
         # assert np.all(self.equatorial == self.equatorial[0])
@@ -232,7 +238,11 @@ class Integrate:
         self._integrator_t_cache[0] = t0
 
         # run
+        niter = 0
         while t < self.tmax_dimensionless:
+            if niter >= self.max_iter:
+                raise ValueError("Integration did not converge within max_iter.")
+
             try:
                 # take a step
                 t_old = t
@@ -326,6 +336,8 @@ class Integrate:
 
             t_prev = t
             y_prev[:] = y[:]
+
+            niter += 1
 
         if hasattr(self, "finishing_function"):
             self.finishing_function(t, y)
