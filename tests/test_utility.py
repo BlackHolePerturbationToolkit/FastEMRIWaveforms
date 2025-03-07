@@ -1,6 +1,6 @@
 import unittest
 
-from few.utils.utility import ELQ_to_pex,get_kerr_geo_constants_of_motion,get_mu_at_t,get_p_at_t,get_separatrix
+from few.utils.utility import ELQ_to_pex,get_kerr_geo_constants_of_motion,get_mu_at_t,get_p_at_t,get_separatrix, get_fundamental_frequencies
 from few.trajectory.inspiral import EMRIInspiral
 from few.utils.constants import YRSID_SI
 from few.trajectory.ode import KerrEccEqFlux
@@ -90,6 +90,39 @@ class UtilityTest(unittest.TestCase):
             diff = p_sep_KerrGeo - p_sep
 
             self.assertLess(abs(diff), 1e-14)
+    def test_get_separatrix_Schwarz(self):
+        
+            a= 0.0
+            e = 0.5
+            x = 0.5
+
+            p_sep = get_separatrix(a, e, x)
+
+            p_sep_KerrGeo = 4.100908189793339
+
+            diff = p_sep - (6.+ 2.*e)
+
+            self.assertLess(abs(diff), 1e-14)
+
+    def test_get_fundamental_frequencies(self):
+        
+            a= 0.9
+            e = 0.3
+            p = 10.
+            x = 0.5
+
+            OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p, e, x)
+            
+            # Taken from the KerrGeodesics Mathematica package
+            OmegaPhiKerrGeo, OmegaThetaKerrGeo, OmegaRKerrGeo = 0.028478026708595002, 0.027032450748133277, 0.020053165349083846 
+
+            [abs(OmegaPhi - OmegaPhiKerrGeo), abs(OmegaTheta - OmegaThetaKerrGeo), abs(OmegaR - OmegaRKerrGeo)]
+
+            self.assertLess(abs(OmegaPhi - OmegaPhiKerrGeo), 1e-13)
+            self.assertLess(abs(OmegaTheta - OmegaThetaKerrGeo), 1e-13)
+            self.assertLess(abs(OmegaR - OmegaRKerrGeo), 1e-13)
+
+    
 
     
 

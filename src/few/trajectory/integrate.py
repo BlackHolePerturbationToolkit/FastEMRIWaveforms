@@ -233,7 +233,6 @@ class Integrate:
 
         # run
         while t < self.tmax_dimensionless:
-            print(y[-1])
             try:
                 # take a step
                 t_old = t
