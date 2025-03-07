@@ -345,8 +345,13 @@ class SphericalHarmonic(ParallelModuleBase):
             self.index_map_arr[l, m, n] = i
             # special map that gives m < 0 indices as m > 0 indices
             sp_i = i if i < self.num_modes else i - self.num_m_1_up
-            self.special_index_map[(l, m, n)] = sp_i
-            self.special_index_map_arr[l, m, n] = sp_i
+
+            if m >= 0:
+                self.special_index_map[(l, m, n)] = sp_i
+                self.special_index_map_arr[l, m, n] = sp_i
+            else:
+                self.special_index_map[(l, m, -n)] = sp_i
+                self.special_index_map_arr[l, m, -n] = sp_i      
 
     def sanity_check_viewing_angles(self, theta: float, phi: float):
         """Sanity check on viewing angles.

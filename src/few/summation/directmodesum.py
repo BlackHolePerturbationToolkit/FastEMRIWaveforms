@@ -50,6 +50,7 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
         ylms,
         phase_interp_t,
         phases_in,
+        l_arr,
         m_arr,
         n_arr,
         *args,
@@ -74,6 +75,7 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
                 (:math:`\Phi_\phi`).
             Phi_r (1D double np.ndarray): Array of radial phase values
                  (:math:`\Phi_r`).
+            l_arr (1D int np.ndarray): :math:`\ell` values associated with each mode.
             m_arr (1D int np.ndarray): :math:`m` values associated with each mode.
             n_arr (1D int np.ndarray): :math:`n` values associated with each mode.
             *args (list, placeholder): Added for future flexibility.
@@ -92,6 +94,7 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
         ylms = self.xp.asarray(ylms)
         Phi_phi = self.xp.asarray(Phi_phi)
         Phi_r = self.xp.asarray(Phi_r)
+        l_arr = self.xp.asarray(l_arr)
         m_arr = self.xp.asarray(m_arr)
         n_arr = self.xp.asarray(n_arr)
 
@@ -121,6 +124,7 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
         # waveform sum where m < 0
         w2 = self.xp.sum(
             (m_arr[self.xp.newaxis, inds] > 0)
+            * (-1) ** l_arr[self.xp.newaxis, inds]
             * ylms[self.xp.newaxis, teuk_modes.shape[1] :][:, inds]
             * self.xp.conj(teuk_modes[:, inds])
             * self.xp.exp(

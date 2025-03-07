@@ -302,6 +302,7 @@ class InterpolatedModeSum(SummationBase):
         ylms: np.ndarray,
         phase_interp_t: np.ndarray,
         phase_interp_coeffs: np.ndarray,
+        l_arr: np.ndarray,
         m_arr: np.ndarray,
         n_arr: np.ndarray,
         *args,
@@ -326,6 +327,7 @@ class InterpolatedModeSum(SummationBase):
                 (:math:`\Phi_\phi`).
             Phi_r: Array of radial phase values
                  (:math:`\Phi_r`).
+            l_arr: :math:`\ell` values associated with each mode.
             m_arr: :math:`m` values associated with each mode.
             n_arr: :math:`n` values associated with each mode.
             *args: Added for future flexibility.
@@ -363,6 +365,10 @@ class InterpolatedModeSum(SummationBase):
         phase_interp_coeffs_in = self.xp.transpose(
             self.xp.asarray(phase_interp_coeffs), [2, 0, 1]
         ).flatten()
+
+        # for ylm with negative m, need to multiply by (-1)**l as this is assumed to have happened by the kernel
+        ylms = ylms.copy()
+        ylms[num_teuk_modes:] *= (-1) ** l_arr
 
         self.get_waveform(
             self.waveform,

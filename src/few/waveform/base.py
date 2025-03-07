@@ -384,7 +384,7 @@ class SphericalHarmonicWaveformBase(
                 if isinstance(teuk_modes, dict):
                     teuk_modes_in = self.xp.asarray(
                         [
-                            teuk_modes[lmn] if lmn[1] >= 0 else teuk_modes[lmn].conj()
+                            teuk_modes[lmn] if lmn[1] >= 0 else (-1)**lmn[0] * teuk_modes[lmn].conj()  # here, we reverse the symmetry transformation due to later assumptions.
                             for lmn in mode_selection
                         ]
                     ).T
@@ -399,7 +399,10 @@ class SphericalHarmonicWaveformBase(
                         l, m, n = tuple(lmn)
 
                         # keep modes only works with m>=0
-                        lmn_in = (l, abs(m), n)
+                        if m < 0:
+                            lmn_in = (l, -m, -n)
+                        else:
+                            lmn_in = (l, m, n)
                         keep_modes[jj] = self.xp.int32(self.lmn_indices[lmn_in])
 
                         if not include_minus_m:
@@ -509,6 +512,7 @@ class SphericalHarmonicWaveformBase(
                 ylms_in,
                 phase_t_in,
                 phase_information_in,
+                self.ls,
                 self.ms,
                 self.ns,
                 M,
