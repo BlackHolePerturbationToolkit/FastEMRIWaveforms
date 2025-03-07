@@ -118,47 +118,74 @@ it provides abstraction layers to make the compilation independent from the curr
 operating system and thus makes the building steps of FEW working on both Linux, macOS,
 and Windows (though that last OS has not been tested thoroughly).
 
-CMake is unfortunately also known having convoluted syntaxes and for having many
-examples that make use of outdated/legacy syntaxes. This is why, for FEW, most of
-CMake complexity is "hidden" from developers.
-
-When [declaring a compiled module with CMake](feat.md#add-a-new-module-to-cpu-and-cuda-backends) with a declaration like
+When [declaring a compiled module with CMake](feat.md#add-a-new-module-to-cpu-and-cuda-backends)
+with a declaration like
 
 ```cmake
-few_add_lib_to_cuda_cpu_backends(
-  NAME pyinterp
-  PYX_SOURCES pyinterp.pyx
-  CU_SOURCES interpolate.cu CPU_LINK PUBLIC "lapacke;lapack"
-  HEADERS cuda_complex.hpp global.h matmul.hh
-  INCLUDE PRIVATE ${Python_NumPy_INCLUDE_DIR})
+# ----------------
+# --- pymatmul ---
+# ----------------
+
+# I. Process pymatmul.pyx into a C++ file
+add_custom_command(
+  OUTPUT "pymatmul.cxx"
+  COMMENT "Cythonize pymatmul.pyx into pymatmul.cxx"
+  COMMAND
+    Python::Interpreter -m cython "${CMAKE_CURRENT_SOURCE_DIR}/pymatmul.pyx"
+    --output-file "${CMAKE_CURRENT_BINARY_DIR}/pymatmul.cxx" -3 -+ --module-name
+    "pymatmul" -I "${CMAKE_CURRENT_SOURCE_DIR}"
+  DEPENDS "pymatmul.pyx"
+  VERBATIM)
+
+# II. Declare the CPU backend
+if(FEW_WITH_CPU)
+  add_custom_command(
+    OUTPUT "matmul.cxx"
+    COMMENT "Copy matmul.cu to matmul.cxx"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/matmul.cu"
+            "${CMAKE_CURRENT_BINARY_DIR}/matmul.cxx"
+    DEPENDS "matmul.cu"
+    VERBATIM)
+
+  python_add_library(few_cpu_pymatmul MODULE WITH_SOABI pymatmul.cxx matmul.cxx)
+  apply_cpu_backend_common_options(pymatmul)
+
+  target_sources(few_cpu_pymatmul PUBLIC FILE_SET HEADERS FILES
+                                         cuda_complex.hpp global.h matmul.hh)
+endif()
+
+# III. Declare the GPU backend
+if(FEW_WITH_GPU)
+  python_add_library(few_gpu_pymatmul MODULE WITH_SOABI pymatmul.cxx matmul.cu)
+  apply_gpu_backend_common_options(pymatmul)
+  target_sources(few_gpu_pymatmul PUBLIC FILE_SET HEADERS FILES
+                                         cuda_complex.hpp global.h matmul.hh)
+endif()
 ```
 
-The following steps are executed:
+The steps are clearly decomposed into three partsexecuted:
 
-- CMake calls the following command to process the Cython file `pyinterp.pyx` into a C++ file:
+1. CMake calls the equivalent of following command to process the Cython file
+  `pymatmul.pyx` into a C++ file:
 
 ```bash
-$ python -m cython pyinterp.pyx \
-    --output-file pyinterp.cpp \
+$ python -m cython pymatmul.pyx \
+    --output-file pymatmul.cxx \
     -3 \ # Select Python 3 syntax
     -+ \  # Build C++ output instead of C
-    --module-name pyinterp \
+    --module-name pymatmul \
     -I ./  # Search for header files in local directory
 ```
 
-- If the CPU backend needs to be built, declare that a dynamic library `few_backend_cpu/pyinterp.cpython-3X-${arch}.so` must be built with:
-  - C++ source files (or interpreted as such): `pyinterp.cpp` and `interpolate.cu`
+- If the CPU backend needs to be built, declare that a dynamic library `few_backend_cpu/pymatmul.cpython-3X-${arch}.so` must be built with:
+  - C++ source files: `pymatmul.cxx` and a copy of `matmul.cu` named `matmul.cxx`
   - Header files: `cuda_complex.hpp`, `global.h` and `matmul.hh`
-  - Linking to the libraries referenced by the CMake targets `lapacke` and `lapack` (equivalent to the compilation flags `-L/path/to/lapack/lib -llapacke -llapack`)
+  - The call to `apply_cpu_backend_common_options(pymatmul)` mainly ensures
+  that the library will be installed in the right directory and can properly include NumPy header files
 
-- If a GPU backend needs to be build, declare that a dynamic library `few_backend_cuda12x/pyinterp.cpython-3X-${arch}.so` must be built with:
-  - C++ source files: `pyinterp.cpp``
-  - CUDA source file (compiled with nvcc): `interpolate.cu`
+- If a GPU backend needs to be build, declare that a dynamic library `few_backend_cuda12x/pymatmul.cpython-3X-${arch}.so` must be built with:
+  - C++ source files: `pymatmul.cxx``
+  - CUDA source file (compiled with nvcc): `matmul.cu`
   - The same headers files that for the CPU backend
-  - Link to CUDA libraries (`-lcudart -lcublas -lcusparse`)
-  - Specific compilation flags related to device linking, CUDA architecture, ...
-
-All that machinery is implemented in `cmake/FEW.cmake` and actually makes uses of filename manipulation,
-temporary directories, file copying to differentiate compiling the same file in C++ mode and in CUDA
-mode, etc... But these are implementation details, only elements declared in the call to `few_add_lib_to_cuda_cpu_backends`
-should be of importance as detailed in the [dedicated section](feat.md#add-a-new-module-to-cpu-and-cuda-backends).
+  - The call to `apply_gpu_backend_common_options(pymatmul)` also make sure that the library is installed in the right directory.
+  It also applies compilations flags specific to the CUDA compiler.
