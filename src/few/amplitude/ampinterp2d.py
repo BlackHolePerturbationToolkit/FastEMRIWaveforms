@@ -392,6 +392,7 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
         )  # either all prograde or all retrograde
         assert np.all(np.abs(xI) == 1.0) # all equatorial
 
+        # symmetry of flipping the sign of the spin to keep xI positive
         if np.all(xI < 0.0):
             m_mode_sign = -1
         else:
@@ -479,6 +480,10 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
             for i, lmn in enumerate(specific_modes):
                 temp[lmn] = z[:, i]
                 l, m, n = lmn
+
+                # apply spin flip symmetry
+                if m_mode_sign < 0:
+                    temp[lmn] = (-1)**l * temp[lmn]
 
                 # apply +/- m symmetry
                 if m < 0:
