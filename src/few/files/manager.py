@@ -462,9 +462,24 @@ class FileManager:
             (file.name for file in self._registry.get_files_by_tag(tag))
         )
 
-    def prefetch_all_files(self):
+    def prefetch_all_files(self, discarded_tags: typing.Optional[list[str]] = None):
         """Ensure all files defined in registry are locally present (or raise errors)"""
-        self.prefetch_files_by_list((file.name for file in self._registry.files))
+
+        def keep_file(file: File, discarded_tags: typing.Optional[list[str]] = None):
+            if discarded_tags is None:
+                return True
+            for discarded_tag in discarded_tags:
+                if discarded_tag in file.tags:
+                    return False
+            return True
+
+        self.prefetch_files_by_list(
+            (
+                file.name
+                for file in self._registry.files
+                if keep_file(file, discarded_tags)
+            )
+        )
 
     def open(self, file: os.PathLike, mode="r", **kwargs):
         """Wrapper for open() built-in with automatic file download if needed."""

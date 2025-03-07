@@ -31,7 +31,7 @@ def few_files_fetch(args: argparse.Namespace):
                 file_manager.download_dir
             )
         )
-        file_manager.prefetch_all_files()
+        file_manager.prefetch_all_files(discarded_tags=["deprecated"])
     else:
         logger.info(
             "Downloading all missing files tagged '{}' into '{}'\n".format(
