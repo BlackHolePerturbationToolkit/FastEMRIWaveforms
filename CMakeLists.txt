@@ -66,9 +66,21 @@ set_property(CACHE FEW_LAPACKE_FETCH PROPERTY STRINGS "AUTO" "ON" "OFF")
 
 # FEW_LAPACKE_EXTRA_LIBS sets extra libraries that must be linked when linking
 # LAPACKE. For example, if importing the CPU backend fails and complains about
-# missing "gfortran" symbols, set FEW_LAPACKE_EXTRA_LIBS=gfortran
-set(FEW_LAPACKE_EXTRA_LIBS "gfortran" CACHE STRING "Extra libs to link to when\
+# missing "gfortran" symbols, set FEW_LAPACKE_EXTRA_LIBS=gfortran. Note that if
+# this option is unset, it will be automatically set to "gfortran" if that
+# library in linkable.
+include(CheckLinkerFlag)
+check_linker_flag(CXX "-lgfortran" GFORTRAN_AVAILABLE)
+if(GFORTRAN_AVAILABLE)
+  set(DEFAULT_EXTRA_LIBS "gfortran")
+else()
+  set(DEFAULT_EXTRA_LIBS "")
+endif()
+set(FEW_LAPACKE_EXTRA_LIBS "${DEFAULT_EXTRA_LIBS}"
+    CACHE STRING "Extra libs to link to when\
 linking against LAPACKE.")
+unset(GFORTRAN_AVAILABLE)
+unset(DEFAULT_EXTRA_LIBS)
 
 # ---- Phony target for project specific properties ----
 add_library(fastemriwaveforms INTERFACE)
