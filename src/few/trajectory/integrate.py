@@ -83,7 +83,7 @@ class Integrate:
         self,
         func: Type[ODEBase],
         integrate_constants_of_motion: bool = False,
-        buffer_length: int = 2000,
+        buffer_length: int = 10000,
         enforce_schwarz_sep: bool = False,
         max_iter: Optional[int] = None,
         **kwargs,
@@ -163,8 +163,6 @@ class Integrate:
 
     def _dopr_ode_wrap(self, t, y, ydot, additionalArgs):
         self.func(y[:, 0], out=ydot[:, 0])
-        if self.integrate_backwards:
-            ydot *= -1
         return ydot
 
     def take_step(
@@ -371,7 +369,8 @@ class Integrate:
         self.dopr.abstol = err
         self.dopr.fix_step = DENSE_STEPPING
         self.integrate_backwards = integrate_backwards
-
+        self.func.integrate_backwards = integrate_backwards
+        
         self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
         self._integrator_t_cache = np.zeros((self.buffer_length,))
         self.dopr_spline_output = np.zeros(

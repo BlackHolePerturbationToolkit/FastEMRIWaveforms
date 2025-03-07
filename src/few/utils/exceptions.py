@@ -76,3 +76,8 @@ class FileDownloadConnectionError(FileDownloadException):
 
 class FileDownloadIntegrityError(FileDownloadException):
     """Exception raised in case of integrity error after download."""
+
+
+### Trajectory-related exceptions
+class TrajectoryOffGridException(Exception):
+    """Exception raised when a trajectory goes off-grid (except for the lower boundary in p)."""
