@@ -517,7 +517,42 @@ class KerrEccEqFlux(ODEBase):
         else:
             Qdot = np.zeros(Edot.shape)
 
+<<<<<<< HEAD
         return Edot, Ldot, Qdot
+=======
+        return Edot, Ldot
+    
+    def interpolate_EL_flux(self, a: float, p: float, e: float, x: float) -> tuple[float]:
+        # handle xI = -1 case
+        if np.abs(x) != 1:
+            raise ValueError(f"Interpolation: x of {x} out of bounds for equatorial orbit.")
+
+        if x == -1:
+            a_in = -a
+        else:
+            a_in = a
+
+        u, w, _, z, in_region_A = kerrecceq_forward_map(
+            a_in, p, e, 1.0, pLSO=self.p_sep_cache, kind="flux", return_mask=True
+        )
+
+        if u < 0 or u > 1 + 1e-8 or np.isnan(u):
+            raise ValueError("Interpolation: p out of bounds.")
+        if w < 0 or w > 1 + 1e-8:
+            raise ValueError("Interpolation: e out of bounds.")
+
+        if in_region_A:
+            Edot = -self.Edot_interp_A(u, w, z) * _EdotPN_alt(p, e)
+            Ldot = -self.Ldot_interp_A(u, w, z) * _LdotPN_alt(p, e)
+        else:
+            Edot = -self.Edot_interp_B(u, w, z) * _EdotPN_alt(p, e)
+            Ldot = -self.Ldot_interp_B(u, w, z) * _LdotPN_alt(p, e)
+
+        if a_in < 0:
+            Ldot *= -1
+
+        return Edot, Ldot
+>>>>>>> f869449 (Can now evaluate interpolants in KerrEccEqFlux but it gives the wrong answer)
 
     def evaluate_rhs(
         self, y: Union[list[float], np.ndarray]
