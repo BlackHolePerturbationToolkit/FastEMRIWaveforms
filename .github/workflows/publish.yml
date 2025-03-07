@@ -144,7 +144,6 @@ jobs:
           CIBW_CONFIG_SETTINGS: >
             cmake.define.FEW_LAPACKE_FETCH=OFF
             cmake.define.FEW_LAPACKE_DETECT_WITH=PKGCONFIG
-            cmake.define.FEW_LAPACKE_EXTRA_LIBS=gfortran
             cmake.define.FEW_WITH_GPU=OFF
           CIBW_BEFORE_ALL: >
             git clone https://github.com/Reference-LAPACK/lapack &&
