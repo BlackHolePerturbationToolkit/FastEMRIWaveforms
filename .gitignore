@@ -172,6 +172,7 @@ cython_debug/
 
 # Version file
 src/*/_version.py
+src/*/git_version.py
 
 # Ignore symlink in editable mode
 src/few/CITATION.cff
