@@ -23,6 +23,8 @@ from .elliptic import EllipK, EllipE, EllipPi
 from numba import njit, cuda
 from math import sqrt, pow, cos, acos
 
+from few.utils.exceptions import TrajectoryOffGridException
+
 from few.utils.globals import get_logger, get_first_backend
 
 from .constants import YRSID_SI, PI
@@ -1845,15 +1847,22 @@ def get_p_at_t(
     # Prevent the rootfinder from starting at infinity
     if bounds[1] == float("inf"):
         bounds[1] = upper_bound_maximum
+
     # With the varying bounds of eccentricity used for KerrEccEqFlux, 
     # it is possible to have no solution within the bounds of the interpolants
-    # We now add a check to see if the bounds are valid
-    traj_pars = [traj_args[0],traj_args[1],traj_args[index_of_a], bounds[0],traj_args[index_of_e],traj_args[index_of_x]]
-    
-    t, p, e, xI, Phi_phi, Phi_theta, Phi_r = traj_module(*traj_pars, T=t_out*1.001)
-    if t[-1] >= t_out*YRSID_SI:
-        raise ValueError("No solution found within the bounds of the interpolants.")
-    
+    # It might also be possible for the trajectory to evolve off of the grid
+    while bounds[0] < bounds[1]:
+        try:
+            traj_pars = [traj_args[0],traj_args[1],traj_args[index_of_a], bounds[0],traj_args[index_of_e],traj_args[index_of_x]]
+            t, p, e, xI, Phi_phi, Phi_theta, Phi_r = traj_module(*traj_pars, T=t_out*1.001)
+            if t[-1] >= t_out*YRSID_SI:
+                raise ValueError("No solution found within the bounds of the interpolants.")
+            break
+        except TrajectoryOffGridException:
+            # Trajectory is off the grid
+            # Increase lower bound and try again
+            bounds[0] += 1e-2
+
     root = get_at_t(traj_module, traj_args, bounds, t_out, index_of_p, **kwargs)
     return root
 
