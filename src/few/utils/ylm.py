@@ -20,7 +20,7 @@ import numpy as np
 # base classes
 from ..utils.baseclasses import ParallelModuleBase
 
-from typing import Optional
+from typing import Optional, Union
 from numba import njit
 from cmath import exp
 from math import pow, cos, sin, sqrt
@@ -294,13 +294,12 @@ class GetYlms(ParallelModuleBase):
     r"""(-2) Spin-weighted Spherical Harmonics
 
     The class generates (-2) spin-weighted spherical harmonics,
-    :math:`Y_{lm}(\Theta,\phi)`. **Important Note**: this class also applies
-    the parity operator (:math:`-1^l`) to modes with :math:`m<0`.
+    :math:`Y_{lm}(\Theta,\phi)`.
 
     args:
         assume_positive_m: Set true if only providing :math:`m\geq0`,
-            it will return twice the number of requested modes with the seconds
-            half as modes with :math:`m<0`. **Warning**: It will also duplicate
+            it will return twice the number of requested modes with the second
+            half as modes with :math:`m<0` for array inputs of :math:`l,m`. **Warning**: It will also duplicate
             the :math:`m=0` modes. Default is False.
         **kwargs: Optional keyword arguments for the base class:
             :class:`few.utils.baseclasses.ParallelModuleBase`.
@@ -314,9 +313,9 @@ class GetYlms(ParallelModuleBase):
     def supported_backends(cls):
         return cls.GPU_RECOMMENDED()
 
-    # These are the spin-weighted spherical harmonics with s=2
+    # These are the spin-weighted spherical harmonics with s=-2
     def __call__(
-        self, l_in: np.ndarray, m_in: np.ndarray, theta: float, phi: float
+        self, l_in: Union[int, np.ndarray], m_in: Union[int, np.ndarray], theta: float, phi: float
     ) -> np.ndarray:
         """Call method for Ylms.
 
@@ -332,7 +331,10 @@ class GetYlms(ParallelModuleBase):
         Returns:
             Complex array of Ylm values.
         """
-
+        if isinstance(l_in, int) or isinstance(m_in, int):
+            assert isinstance(l_in, int) and isinstance(m_in, int)
+            return _ylm_kernel_inner(l_in, m_in, theta, phi)
+            
         # if assuming positive m, repeat entries for negative m
         # this will duplicate m = 0
         if self.assume_positive_m:
