@@ -210,6 +210,7 @@ class Integrate:
 
         # Initialize step size based on the problem's scale
         scale = self.dopr.abstol
+        
         d0 = np.linalg.norm(y0 / scale)
         d1 = np.linalg.norm(self.func(y0) / scale)
         if d0 < 1e-5 or d1 < 1e-5:

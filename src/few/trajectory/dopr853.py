@@ -455,7 +455,7 @@ class DOPR853:
         scale[acceptable] = (
             safe * err[acceptable] ** (-alpha) * errOld[acceptable] ** beta
         )
-        scale[acceptable] = self.xp.clip(scale[acceptable], minscale, maxscale)
+        scale[acceptable] = min(maxscale,scale[acceptable]) # self.xp.clip(scale[acceptable], minscale, maxscale)
         scale[err == 0.0] = maxscale
 
         if self.xp.any(h == 0.0):
@@ -485,9 +485,10 @@ class DOPR853:
         # The error was too big, we need to make the step size smaller
         unacceptable = ~acceptable
         # Reduce the size of the step
-        scale[unacceptable] = self.xp.clip(
-            safe * (err[unacceptable] ** -alpha), minscale, 1e300
-        )
+        # scale[unacceptable] = self.xp.clip(
+        #     safe * (err[unacceptable] ** -alpha), minscale, 1e300
+        # )
+        scale[unacceptable] = max(minscale,safe * (err[unacceptable] ** -alpha))
         htmp = h.copy()
 
         h[unacceptable] = h[unacceptable] * scale[unacceptable]
