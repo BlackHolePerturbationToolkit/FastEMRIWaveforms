@@ -72,7 +72,7 @@ We will instead use the `lapack_rc` package, in version `v3.11.0` which does wor
 First, install a C++ compiler and the LAPACK package:
 
 ```sh
-(few2.0rc1) $ conda install conda-forge::cxx-compiler conda-forge/label/lapack_dev::lapack
+(few2.0rc1) $ conda install cxx-compiler pkgconfig conda-forge/label/lapack_rc::liblapacke
 ```
 
 Then run FEW installation from source:
@@ -157,7 +157,7 @@ Like for [Mac OS](#on-mac-os-with-apple-silicon-cpu-m1-to-m4), we force here the
 Install the required dependencies in the conda environment:
 
 ```sh
-(few2.0rc1) $ conda install conda-forge/label/lapack_rc::liblapacke pkgconfig
+(few2.0rc1) $ conda install cxx-compiler conda-forge/label/lapack_rc::liblapacke pkgconfig
 ```
 
 ### Perform a from-source install
@@ -174,7 +174,7 @@ time `v2.0.0rc1` was released):
 Then run FEW installation from source:
 
 ```sh
-(few2.0rc1) $ pip install -e '.[testing]' --config-settings=cmake.define.FEW_LAPACKE_DETECT_WITH=PKGCONFIG
+(few2.0rc1) $ pip install -e '.[testing]'
 Successfully installed [...] fastemriwaveforms-2.0.0rc1.post1.dev1+ge0c124b.d20250304 [...]
 ```
 
@@ -414,7 +414,8 @@ The installation command line is thus:
 ```sh
 (few2.0rc1) $ CXX=g++ CC=gcc FC=gfortran pip install -e '.[testing]' \
                 --config-settings=cmake.define.FEW_WITH_GPU=ON \
-                --config-settings=cmake.define.FEW_LAPACKE_FETCH=ON
+                --config-settings=cmake.define.FEW_LAPACKE_FETCH=ON \
+                --config-settings=cmake.define.FEW_LAPACKE_EXTRA_LIBS=gfortran
 ...
 Successfully installed fastemriwaveforms-2.0.0rc1
 (few2.0rc1) $ pip install cupy-cuda12x nvidia-cuda-runtime-cu12==12.4.* # Must be installed manually when installed from source
