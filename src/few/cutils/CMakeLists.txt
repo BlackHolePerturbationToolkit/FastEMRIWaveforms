@@ -106,9 +106,7 @@ function(few_try_get_lapacke_with_cpm)
             "CMAKE_UNITY_BUILD_BATCH_SIZE"
             64)
   set(LAPACKE_WITH_CPM_SUCCESS ON PARENT_SCOPE)
-  set(LAPACKE_WITH_CPM_LIBS lapacke lapack
-                            ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
-      PARENT_SCOPE)
+  set(LAPACKE_WITH_CPM_LIBS lapacke lapack PARENT_SCOPE)
   message(CHECK_PASS "done")
 endfunction()
 
