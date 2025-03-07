@@ -15,59 +15,60 @@ find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # ---- Define project specific options ----
-set(FEW_WITH_GPU AUTO CACHE STRING "Enable GPU support")
-set_property(
-  CACHE FEW_WITH_GPU
-  PROPERTY STRINGS
-           AUTO
-           ON
-           OFF
-           ONLY
-           HELPSTRING
-           "Whether to enable GPU support"
-           TYPE
-           "STRING"
-           VALUE
-           "AUTO")
-set(FEW_CUDA_ARCH
+
+# FEW_WITH_GPU controls the activation of both GPU and CPU backend compilations.
+# Its allowed values are:
+#
+# * AUTO: enable CPU backend, and enable GPU backend if CUDA toolchain is found
+#   in environment, otherwise disable it
+# * ON: enable CPU backend, and enable GPU backend, fail if CUDA toolchain is
+#   not available
+# * OFF: enable CPU backend and disable GPU backend
+# * ONLY: disable CPU backend and enable GPU backend (used in plugin wheel build
+#   process)
+# * BARE: disable both CPU and GPU backends
+set(FEW_WITH_GPU "AUTO" CACHE STRING "Whether to compile GPU backend")
+set_property(CACHE FEW_WITH_GPU PROPERTY STRINGS "AUTO" "ON" "OFF" "ONLY"
+                                         "BARE")
+
+# FEW_CUDA_ARCH will be passed as the CUDA_ARCHITECTURES property for the CUDA
+# backend if it is compiled. See the documentation of CUDA_ARCHITECTURES:
+# https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html
+set(FEW_CUDA_ARCH "native"
     CACHE STRING "CUDA Architecture targetted for FEW compilation (see doc of \
-          CMAKE_CUDA_ARCHITECTURE).")
+          CMAKE_CUDA_ARCHITECTURES).")
 
-set(FEW_LAPACKE_FETCH AUTO CACHE STRING
-                                 "Download and compile LAPACK (with LAPACKE)")
-set_property(
-  CACHE FEW_LAPACKE_FETCH
-  PROPERTY STRINGS
-           AUTO
-           ON
-           OFF
-           HELPSTRING
-           "Whether to download and compile LAPACK(E)"
-           TYPE
-           "STRING"
-           VALUE
-           "AUTO")
+# FEW_LAPACKE_DETECT_WITH sets the tool used to try to detect LAPACKE locally.
+# Possible values are:
+#
+# * AUTO: attempts PKGCONFIG and, in case of failure, CMAKE
+# * CMAKE: use CMake find_package() mechanism (try to find
+#   'lapacke-config.cmake' in CMAKE_PREFIX_PATH or in standard system locations)
+# * PKGCONFIG: use pkgconfig (which must be installed), try to find 'lapacke.pc'
+#   and its dependencies in standard system locations or in PKG_CONFIG_PATH
+# * DISABLE (or any other value): disable detection of local lapacke
+#   installation
+set(FEW_LAPACKE_DETECT_WITH "AUTO" CACHE STRING "Tool used to locate LAPACKE.")
+set_property(CACHE FEW_LAPACKE_DETECT_WITH PROPERTY STRINGS "AUTO" "CMAKE"
+                                                    "PKGCONFIG" "DISABLE")
 
+# FEW_LAPACKE_FETCH controls whether LAPACKE sources will be downloaded and
+# compiled with FEW backends. Possible values are:
+#
+# * AUTO: will try to locate LAPACKE locally and, in case of failure, will
+#   enable the fetch mechanism
+# * ON: will always fetch LAPACKE sources and compile them, even if already
+#   present locally
+# * OFF: will disable LAPACKE fetching mechanism
+set(FEW_LAPACKE_FETCH "AUTO" CACHE STRING
+                                   "Whether to download and compile LAPACK(E)")
+set_property(CACHE FEW_LAPACKE_FETCH PROPERTY STRINGS "AUTO" "ON" "OFF")
+
+# FEW_LAPACKE_EXTRA_LIBS sets extra libraries that must be linked when linking
+# LAPACKE. For example, if importing the CPU backend fails and complains about
+# missing "gfortran" symbols, set FEW_LAPACKE_EXTRA_LIBS=gfortran
 set(FEW_LAPACKE_EXTRA_LIBS "" CACHE STRING "Extra libs to link to when linking \
 against LAPACKE.")
-set_property(
-  CACHE FEW_LAPACKE_EXTRA_LIBS
-  PROPERTY HELPSTRING "Extra libs to link to when linking against LAPACKE." 
-  TYPE "STRING")
-
-set(FEW_LAPACKE_DETECT_WITH "AUTO" CACHE STRING "Tool used to locate LAPACKE.")
-set_property(
-  CACHE FEW_LAPACKE_DETECT_WITH
-  PROPERTY STRINGS
-           AUTO
-           CMAKE
-           PKGCONFIG
-           HELPSTRING
-           "Tool used to locate LAPACKE."
-           TYPE
-           "STRING"
-           VALUE
-           "CMAKE")
 
 # ---- Phony target for project specific properties ----
 add_library(fastemriwaveforms INTERFACE)

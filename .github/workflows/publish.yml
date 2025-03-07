@@ -166,6 +166,7 @@ jobs:
           CIBW_CONFIG_SETTINGS: >
             cmake.define.FEW_LAPACKE_FETCH=OFF
             cmake.define.FEW_WITH_GPU=ONLY
+            cmake.define.FEW_CUDA_ARCH=all
           CIBW_BEFORE_ALL: >
             yum install -y devtoolset-11-gcc-c++ &&
             yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo &&

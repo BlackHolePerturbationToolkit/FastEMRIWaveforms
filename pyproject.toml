@@ -144,33 +144,6 @@ wheel.exclude = [
 few = "src/few"       #@SKIP_PLUGIN@
 "few/tests" = "tests" #@SKIP_PLUGIN@
 
-[tool.scikit-build.cmake.define]
-# Default values for CMake options used when building FEW.
-# These can be tuned on CLI as follows:
-#   $ pip install . --config-settings=cmake.define.FEW_LAPACKE_FETCH=OFF
-
-# Whether LAPACK should be automatically fetched and compiled.
-#  note: for now this option is ignored and LAPACK is always fetched
-FEW_LAPACKE_FETCH = "AUTO"
-
-# Whether to search for LIBNAME-config.cmake file or for libname.pc file
-# To detect and link LAPACK(E)
-FEW_LAPACKE_DETECT_WITH = "AUTO" # or "PKGCONFIG" or "CMAKE"
-
-# List of libs that must be linked to build against LAPACKE
-# FEW_LAPACKE_LIBS = "lapack;lapacke;gfortran"
-
-# Whether GPU support should be enabled
-#  NO: GPU support is disabled
-#  YES: GPU support is mandatory, install will fail if prerequisites are
-#       not met (missing CUDA and CUDAToolKit in environment)
-#  AUTO: GPU support enabled only if CUDA and CUDAToolKit are found
-FEW_WITH_GPU = "AUTO" # ON | OFF | AUTO
-
-# What CUDA architectures to target.
-# See https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html
-FEW_CUDA_ARCH = "all"
-
 [tool.ruff]
 
 extend-include = [

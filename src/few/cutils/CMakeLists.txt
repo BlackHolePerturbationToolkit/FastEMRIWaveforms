@@ -54,7 +54,6 @@ endfunction()
 #   * LAPACKE_WITH_PKGCONFIG_REASON to
 #
 #     * "MISSING_PKGCONFIG" if PKGCONFIG is not available
-#     * "MISSING_LAPACK" if lapack.pc is not found
 #     * "MISSING_LAPACKE" if lapacke.pc is not found
 function(few_try_get_lapacke_with_pkgconfig)
   message(CHECK_START "Trying with PkgConfig")
@@ -77,15 +76,14 @@ function(few_try_get_lapacke_with_pkgconfig)
   message(CHECK_PASS
           "success! Found LAPACKE ${lapacke_VERSION} in ${lapacke_LIBDIR}")
   set(LAPACKE_WITH_PKGCONFIG_SUCCESS ON PARENT_SCOPE)
-  set(LAPACKE_WITH_PKGCONFIG_LIBS PkgConfig::lapacke
-      PARENT_SCOPE)
+  set(LAPACKE_WITH_PKGCONFIG_LIBS PkgConfig::lapacke PARENT_SCOPE)
 endfunction()
 
 # few_try_get_lapacke_with_cpm
 # ----------------------------
 #
 # This method will use CPM (CMake Package Manager) to fetch LAPACK sources and
-# and them to the build tree with LAPACKE support.
+# add them to the build tree with enabled LAPACKE support.
 #
 # This function sets to following variables in the parent scope:
 #
@@ -123,11 +121,15 @@ endfunction()
 # * CMAKE: use the function "few_try_get_lapacke_with_cmake"
 # * FETCH: use the function "few_try_get_lapacke_with_cpm"
 #
-# The PKGCONFIG strategy is only attempted if FEW_LAPACKE_DETECT_WITH is "AUTO"
-# or "PKGCONFIG". The CMAKE strategy is only attempted if
-# FEW_LAPACKE_DETECT_WITH is "AUTO" or "CMAKE". The FETCH strategy is only
-# attempted if FEW_LAPACKE_FETCH is "AUTO" or "ON". The CMAKE and PKGCONFIG
-# strategies are forcefully disabled if FEW_LAPACKE_FETCH is "ON"
+# The following rules are applied to select the attempted strategies:
+#
+# * The PKGCONFIG strategy is only attempted if FEW_LAPACKE_DETECT_WITH is
+#   "AUTO" or "PKGCONFIG"
+# * The CMAKE strategy is only attempted if FEW_LAPACKE_DETECT_WITH is "AUTO" or
+#   "CMAKE".
+# * The FETCH strategy is only attempted if FEW_LAPACKE_FETCH is "AUTO" or "ON".
+# * The CMAKE and PKGCONFIG strategies are forcefully disabled if
+#   FEW_LAPACKE_FETCH is "ON"
 #
 # If no strategy is attempted, the function raises a warning and does not set
 # any variable in parent scope. In this case, it is the user responsibility to
@@ -275,6 +277,10 @@ function(few_get_lapacke)
       "variable).")
 endfunction()
 
+# * * * * * * * * * * * * * * * * * * * * * * * * *
+# * * Helper functions to define backend option * *
+# * * * * * * * * * * * * * * * * * * * * * * * * *
+
 # In the project root CMakeLists.txt, we defined a "fastemriwaveforms" interface
 # target with properties WITH_CPU and WITH_GPU defining whether the CPU and a
 # GPU backend need to be compiled. Let's retrieve these information here:
@@ -300,6 +306,7 @@ endif()
 # * Defines the OUTPUT_NAME property
 # * Installs the target in the CPU backend directory
 # * Ensures the target includes the NumPy header directory
+# * Disable NumPy deprecated API
 #
 # Usage example: apply_cpu_backend_common_options(pymatmul)
 function(apply_cpu_backend_common_options libname)
@@ -313,6 +320,8 @@ function(apply_cpu_backend_common_options libname)
   install(TARGETS ${target_name} DESTINATION few_backend_cpu)
 
   target_include_directories(${target_name} PRIVATE ${Python_NumPy_INCLUDE_DIR})
+  target_compile_definitions(${target_name}
+                             PRIVATE NPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION)
 endfunction()
 
 # apply_gpu_backend_common_options
@@ -327,6 +336,7 @@ endfunction()
 # * Installs the target in the GPU backend directory (e.g.
 #   'few_backend_cuda12x')
 # * Ensures the target includes the NumPy header directory
+# * Disable NumPy deprecated API
 # * Ensures the target links against CUDA libraries (cuBLAS, cuSPARSE, ...)
 # * Defines the CUDA_ARCHITECTURE property
 #
@@ -343,11 +353,17 @@ function(apply_gpu_backend_common_options libname)
   install(TARGETS ${target_name} DESTINATION ${backend_name})
 
   target_include_directories(${target_name} PRIVATE ${Python_NumPy_INCLUDE_DIR})
+  target_compile_definitions(${target_name}
+                             PRIVATE NPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION)
   target_link_libraries(${target_name} PUBLIC CUDA::cudart CUDA::cublas
                                               CUDA::cusparse)
   set_property(TARGET ${target_name} PROPERTY CUDA_ARCHITECTURES
                                               ${FEW_CUDA_ARCH})
 endfunction()
+
+# * * * * * * * * * * * * * * * * * * * *
+# * * Definition of compiled backends * *
+# * * * * * * * * * * * * * * * * * * * *
 
 # ----------------
 # --- pymatmul ---
@@ -364,10 +380,6 @@ add_custom_command(
   DEPENDS "pymatmul.pyx"
   VERBATIM)
 
-set_source_files_properties(
-  "${CMAKE_CURRENT_BINARY_DIR}/pymatmul.cxx"
-  PROPERTIES COMPILE_DEFINITIONS "NPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION")
-
 # II. Declare the CPU backend
 if(FEW_WITH_CPU)
   add_custom_command(
@@ -381,28 +393,16 @@ if(FEW_WITH_CPU)
   python_add_library(few_cpu_pymatmul MODULE WITH_SOABI pymatmul.cxx matmul.cxx)
   apply_cpu_backend_common_options(pymatmul)
 
-  target_sources(
-    few_cpu_pymatmul
-    PUBLIC FILE_SET
-           HEADERS
-           FILES
-           cuda_complex.hpp
-           global.h
-           matmul.hh)
+  target_sources(few_cpu_pymatmul PUBLIC FILE_SET HEADERS FILES
+                                         cuda_complex.hpp global.h matmul.hh)
 endif()
 
 # III. Declare the GPU backend
 if(FEW_WITH_GPU)
   python_add_library(few_gpu_pymatmul MODULE WITH_SOABI pymatmul.cxx matmul.cu)
   apply_gpu_backend_common_options(pymatmul)
-  target_sources(
-    few_gpu_pymatmul
-    PUBLIC FILE_SET
-           HEADERS
-           FILES
-           cuda_complex.hpp
-           global.h
-           matmul.hh)
+  target_sources(few_gpu_pymatmul PUBLIC FILE_SET HEADERS FILES
+                                         cuda_complex.hpp global.h matmul.hh)
 endif()
 
 # ----------------
@@ -420,10 +420,6 @@ add_custom_command(
   DEPENDS "pyinterp.pyx"
   VERBATIM)
 
-set_source_files_properties(
-  "${CMAKE_CURRENT_BINARY_DIR}/pyinterp.cxx"
-  PROPERTIES COMPILE_DEFINITIONS "NPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION")
-
 # II. Declare the CPU backend
 if(FEW_WITH_CPU)
   add_custom_command(
@@ -439,13 +435,8 @@ if(FEW_WITH_CPU)
                      interpolate.cxx)
   apply_cpu_backend_common_options(pyinterp)
   target_sources(
-    few_cpu_pyinterp
-    PUBLIC FILE_SET
-           HEADERS
-           FILES
-           cuda_complex.hpp
-           global.h
-           interpolate.hh)
+    few_cpu_pyinterp PUBLIC FILE_SET HEADERS FILES cuda_complex.hpp global.h
+                            interpolate.hh)
 
   # pyinterp needs to link against LAPACKE. USe the following method to detect
   # it and obtain ${FEW_LAPACKE_LIBS}. In case of failure, it will stop the
@@ -453,7 +444,8 @@ if(FEW_WITH_CPU)
   few_get_lapacke()
   # Now, link against ${FEW_LAPACKE_LIBS} to link against liblapacke.so and
   # include lapacke.h
-  target_link_libraries(few_cpu_pyinterp LINK_PUBLIC ${FEW_LAPACKE_LIBS} ${FEW_LAPACKE_EXTRA_LIBS})
+  target_link_libraries(few_cpu_pyinterp LINK_PUBLIC ${FEW_LAPACKE_LIBS}
+                        ${FEW_LAPACKE_EXTRA_LIBS})
 
 endif()
 
@@ -463,13 +455,8 @@ if(FEW_WITH_GPU)
                      interpolate.cu)
   apply_gpu_backend_common_options(pyinterp)
   target_sources(
-    few_gpu_pyinterp
-    PUBLIC FILE_SET
-           HEADERS
-           FILES
-           cuda_complex.hpp
-           global.h
-           interpolate.hh)
+    few_gpu_pyinterp PUBLIC FILE_SET HEADERS FILES cuda_complex.hpp global.h
+                            interpolate.hh)
 endif()
 
 # -------------
@@ -487,10 +474,6 @@ add_custom_command(
   DEPENDS "gpuAAKWrap.pyx"
   VERBATIM)
 
-set_source_files_properties(
-  "${CMAKE_CURRENT_BINARY_DIR}/gpuAAKWrap.cxx"
-  PROPERTIES COMPILE_DEFINITIONS "NPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION")
-
 # II. Declare the CPU backend
 if(FEW_WITH_CPU)
   add_custom_command(
@@ -503,14 +486,8 @@ if(FEW_WITH_CPU)
 
   python_add_library(few_cpu_pyAAK MODULE WITH_SOABI gpuAAKWrap.cxx gpuAAK.cxx)
   apply_cpu_backend_common_options(pyAAK)
-  target_sources(
-    few_cpu_pyAAK
-    PUBLIC FILE_SET
-           HEADERS
-           FILES
-           cuda_complex.hpp
-           global.h
-           gpuAAK.hh)
+  target_sources(few_cpu_pyAAK PUBLIC FILE_SET HEADERS FILES cuda_complex.hpp
+                                      global.h gpuAAK.hh)
 
 endif()
 
@@ -518,14 +495,8 @@ endif()
 if(FEW_WITH_GPU)
   python_add_library(few_gpu_pyAAK MODULE WITH_SOABI gpuAAKWrap.cxx gpuAAK.cu)
   apply_gpu_backend_common_options(pyAAK)
-  target_sources(
-    few_gpu_pyAAK
-    PUBLIC FILE_SET
-           HEADERS
-           FILES
-           cuda_complex.hpp
-           global.h
-           gpuAAK.hh)
+  target_sources(few_gpu_pyAAK PUBLIC FILE_SET HEADERS FILES cuda_complex.hpp
+                                      global.h gpuAAK.hh)
 
 endif()
 
@@ -545,10 +516,6 @@ add_custom_command(
   DEPENDS "pyampinterp2D.pyx"
   VERBATIM)
 
-set_source_files_properties(
-  "${CMAKE_CURRENT_BINARY_DIR}/pyampinterp2D.cxx"
-  PROPERTIES COMPILE_DEFINITIONS "NPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION")
-
 # II. Declare the CPU backend
 if(FEW_WITH_CPU)
   add_custom_command(
@@ -565,13 +532,8 @@ if(FEW_WITH_CPU)
   apply_cpu_backend_common_options(pyAmpInterp2D)
 
   target_sources(
-    few_cpu_pyAmpInterp2D
-    PUBLIC FILE_SET
-           HEADERS
-           FILES
-           cuda_complex.hpp
-           global.h
-           AmpInterp2D.hh)
+    few_cpu_pyAmpInterp2D PUBLIC FILE_SET HEADERS FILES cuda_complex.hpp
+                                 global.h AmpInterp2D.hh)
 
 endif()
 
@@ -581,11 +543,6 @@ if(FEW_WITH_GPU)
                      AmpInterp2D.cu)
   apply_gpu_backend_common_options(pyAmpInterp2D)
   target_sources(
-    few_gpu_pyAmpInterp2D
-    PUBLIC FILE_SET
-           HEADERS
-           FILES
-           cuda_complex.hpp
-           global.h
-           AmpInterp2D.hh)
+    few_gpu_pyAmpInterp2D PUBLIC FILE_SET HEADERS FILES cuda_complex.hpp
+                                 global.h AmpInterp2D.hh)
 endif()
