@@ -21,10 +21,13 @@ repos:
     rev: v0.15.0
     hooks:
       - id: yamlfmt
+        args: [-formatter, scan_folded_as_literal=true]
   - repo: https://github.com/cheshirekow/cmake-format-precommit
     rev: v0.6.13
     hooks:
       - id: cmake-format
+        additional_dependencies: ['PyYAML']
+      - id: cmake-lint
         additional_dependencies: ['PyYAML']
   - repo: https://github.com/tox-dev/pyproject-fmt
     rev: "v2.5.0"

@@ -10,18 +10,33 @@ except (ImportError, ModuleNotFoundError):
 import numpy as np
 
 
+def obj_to_ptr(obj):
+    if gpu and isinstance(obj, cp.ndarray):
+        return obj.data.mem.ptr
+
+    if isinstance(obj, np.ndarray):
+        return obj.__array_interface__["data"][0]
+
+    try:
+        # cython classes
+        return obj.ptr
+    except AttributeError:
+        # regular argument
+        return obj
+
+
 def wrapper(*args, **kwargs):
     """Function to convert array and C/C++ class arguments to ptrs
 
     This function checks the object type. If it is a cupy or numpy array,
-    it will determine its pointer by calling the proper attributes. If you design
-    a Cython class to be passed through python, it must have a :code:`ptr`
+    it will determine its pointer by calling the proper attributes. If you
+    design a Cython class to be passed through python, it must have a :code:`ptr`
     attribute.
 
-    If you use this function, you must convert input arrays to size_t data type in Cython and
-    then properly cast the pointer as it enters the c++ function. See the
-    Cython codes
-    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/few/cutils/src>`_
+    If you use this function, you must convert input arrays to size_t data type
+    in Cython and then properly cast the pointer as it enters the c++ function.
+    See the Cython codes
+    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/src/few/cutils>`_
     for examples.
 
     args:
@@ -34,50 +49,8 @@ def wrapper(*args, **kwargs):
 
     """
     # declare target containers
-    targs = []
-    tkwargs = {}
-
-    # args first
-    for arg in args:
-        if gpu:
-            # cupy arrays
-            if isinstance(arg, cp.ndarray):
-                targs.append(arg.data.mem.ptr)
-                continue
-
-        # numpy arrays
-        if isinstance(arg, np.ndarray):
-            targs.append(arg.__array_interface__["data"][0])
-            continue
-
-        try:
-            # cython classes
-            targs.append(arg.ptr)
-            continue
-        except AttributeError:
-            # regular argument
-            targs.append(arg)
-
-    # kwargs next
-    for key, arg in kwargs.items():
-        if gpu:
-            # cupy arrays
-            if isinstance(arg, cp.ndarray):
-                tkwargs[key] = arg.data.mem.ptr
-                continue
-
-        if isinstance(arg, np.ndarray):
-            # numpy arrays
-            tkwargs[key] = arg.__array_interface__["data"][0]
-            continue
-
-        try:
-            # cython classes
-            tkwargs[key] = arg.ptr
-            continue
-        except AttributeError:
-            # other arguments
-            tkwargs[key] = arg
+    targs = [obj_to_ptr(arg) for arg in args]
+    tkwargs = {key: obj_to_ptr(arg) for key, arg in kwargs.items()}
 
     return (targs, tkwargs)
 

@@ -6,76 +6,87 @@
 cmake_minimum_required(VERSION 3.23...3.31)
 
 # ---- Main project definition ----
-project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION}
-        LANGUAGES CXX)
-
-# ---- Phony target for project specific properties ----
-add_library(${SKBUILD_PROJECT_NAME} INTERFACE)
+project(fastemriwaveforms VERSION ${SKBUILD_PROJECT_VERSION} LANGUAGES CXX)
 
 # ---- Find required dependencies ----
 find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 
 # ---- Import project-specific CMake functions ----
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-include(FEW)
 
 # ---- Define project specific options ----
-set(FEW_WITH_GPU AUTO CACHE STRING "Enable GPU support")
-set_property(
-  CACHE FEW_WITH_GPU
-  PROPERTY STRINGS
-           AUTO
-           ON
-           OFF
-           ONLY
-           HELPSTRING
-           "Whether to enable GPU support"
-           TYPE
-           "STRING"
-           VALUE
-           "AUTO")
-set(FEW_CUDA_ARCH
-    CACHE
-      STRING
-      "CUDA Architecture targetted for FEW compilation (see doc of CMAKE_CUDA_ARCHITECTURE)."
-)
 
-set(FEW_LAPACKE_FETCH AUTO CACHE STRING
-                                 "Download and compile LAPACK (with LAPACKE)")
-set_property(
-  CACHE FEW_LAPACKE_FETCH
-  PROPERTY STRINGS
-           AUTO
-           ON
-           OFF
-           HELPSTRING
-           "Whether to download and compile LAPACK(E)"
-           TYPE
-           "STRING"
-           VALUE
-           "AUTO")
+# FEW_WITH_GPU controls the activation of both GPU and CPU backend compilations.
+# Its allowed values are:
+#
+# * AUTO: enable CPU backend, and enable GPU backend if CUDA toolchain is found
+#   in environment, otherwise disable it
+# * ON: enable CPU backend, and enable GPU backend, fail if CUDA toolchain is
+#   not available
+# * OFF: enable CPU backend and disable GPU backend
+# * ONLY: disable CPU backend and enable GPU backend (used in plugin wheel build
+#   process)
+# * BARE: disable both CPU and GPU backends
+set(FEW_WITH_GPU "AUTO" CACHE STRING "Whether to compile GPU backend")
+set_property(CACHE FEW_WITH_GPU PROPERTY STRINGS "AUTO" "ON" "OFF" "ONLY"
+                                         "BARE")
 
-set(FEW_LAPACKE_LIBS "" CACHE STRING "Libs to link to build against LAPACKE.")
-set_property(
-  CACHE FEW_LAPACKE_LIBS
-  PROPERTY HELPSTRING "Libs to link to build against LAPACKE." TYPE "STRING")
+# FEW_CUDA_ARCH will be passed as the CUDA_ARCHITECTURES property for the CUDA
+# backend if it is compiled. See the documentation of CUDA_ARCHITECTURES:
+# https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html
+set(FEW_CUDA_ARCH "native"
+    CACHE STRING "CUDA Architecture targetted for FEW compilation (see doc of \
+          CMAKE_CUDA_ARCHITECTURES).")
 
+# FEW_LAPACKE_DETECT_WITH sets the tool used to try to detect LAPACKE locally.
+# Possible values are:
+#
+# * AUTO: attempts PKGCONFIG and, in case of failure, CMAKE
+# * CMAKE: use CMake find_package() mechanism (try to find
+#   'lapacke-config.cmake' in CMAKE_PREFIX_PATH or in standard system locations)
+# * PKGCONFIG: use pkgconfig (which must be installed), try to find 'lapacke.pc'
+#   and its dependencies in standard system locations or in PKG_CONFIG_PATH
+# * DISABLE (or any other value): disable detection of local lapacke
+#   installation
 set(FEW_LAPACKE_DETECT_WITH "AUTO" CACHE STRING "Tool used to locate LAPACKE.")
-set_property(
-  CACHE FEW_LAPACKE_DETECT_WITH
-  PROPERTY STRINGS
-           AUTO
-           CMAKE
-           PKGCONFIG
-           HELPSTRING
-           "Tool used to locate LAPACKE."
-           TYPE
-           "STRING"
-           VALUE
-           "CMAKE")
+set_property(CACHE FEW_LAPACKE_DETECT_WITH PROPERTY STRINGS "AUTO" "CMAKE"
+                                                    "PKGCONFIG" "DISABLE")
+
+# FEW_LAPACKE_FETCH controls whether LAPACKE sources will be downloaded and
+# compiled with FEW backends. Possible values are:
+#
+# * AUTO: will try to locate LAPACKE locally and, in case of failure, will
+#   enable the fetch mechanism
+# * ON: will always fetch LAPACKE sources and compile them, even if already
+#   present locally
+# * OFF: will disable LAPACKE fetching mechanism
+set(FEW_LAPACKE_FETCH "AUTO" CACHE STRING
+                                   "Whether to download and compile LAPACK(E)")
+set_property(CACHE FEW_LAPACKE_FETCH PROPERTY STRINGS "AUTO" "ON" "OFF")
+
+# FEW_LAPACKE_EXTRA_LIBS sets extra libraries that must be linked when linking
+# LAPACKE. For example, if importing the CPU backend fails and complains about
+# missing "gfortran" symbols, set FEW_LAPACKE_EXTRA_LIBS=gfortran. Note that if
+# this option is unset, it will be automatically set to "gfortran" if that
+# library in linkable.
+include(CheckLinkerFlag)
+check_linker_flag(CXX "-lgfortran" GFORTRAN_AVAILABLE)
+if(GFORTRAN_AVAILABLE)
+  set(DEFAULT_EXTRA_LIBS "gfortran")
+else()
+  set(DEFAULT_EXTRA_LIBS "")
+endif()
+set(FEW_LAPACKE_EXTRA_LIBS "${DEFAULT_EXTRA_LIBS}"
+    CACHE STRING "Extra libs to link to when\
+linking against LAPACKE.")
+unset(GFORTRAN_AVAILABLE)
+unset(DEFAULT_EXTRA_LIBS)
+
+# ---- Phony target for project specific properties ----
+add_library(fastemriwaveforms INTERFACE)
 
 # ---- Enable building the CPU version of backends by default ----
-set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_CPU ON)
+set_target_properties(fastemriwaveforms PROPERTIES WITH_CPU ON)
 
 # ---- Optionnally check if GPU is supported ----
 if(FEW_WITH_GPU STREQUAL "AUTO")
@@ -95,47 +106,40 @@ if(FEW_WITH_GPU STREQUAL "AUTO")
   if(CMAKE_CUDA_COMPILER AND CUDAToolkit_FOUND)
     message(
       STATUS
-        "FEW GPU support was set to AUTO and will be turned ON as CUDA and CUDA Toolkit are available with CUDA version ${CUDAToolkit_VERSION_MAJOR}."
-    )
-    set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU ON)
+        "FEW GPU support was set to AUTO and will be turned ON as CUDA and \
+        CUDA Toolkit are available with CUDA version \
+        ${CUDAToolkit_VERSION_MAJOR}.")
+    set_target_properties(fastemriwaveforms PROPERTIES WITH_GPU ON)
   else()
     message(
       STATUS
-        "FEW GPU support was set to AUTO and will be turned OFF as CUDA and CUDA Toolkit are not found (CMAKE_CUDA_COMPILER:${CMAKE_CUDA_COMPILER} CUDAToolkit_FOUND:${CUDAToolkit_FOUND})."
-    )
-    set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU OFF)
+        "FEW GPU support was set to AUTO and will be turned OFF as CUDA and \
+        CUDA Toolkit are not found (CMAKE_CUDA_COMPILER:${CMAKE_CUDA_COMPILER} \
+        CUDAToolkit_FOUND:${CUDAToolkit_FOUND}).")
+    set_target_properties(fastemriwaveforms PROPERTIES WITH_GPU OFF)
   endif()
 elseif(FEW_WITH_GPU STREQUAL "ONLY")
   message(
     STATUS
-      "FEW GPU support is set to ON and CPU support is set to OFF (use only to build a standalone plugin)."
-  )
-  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU ON)
-  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_CPU OFF)
+      "FEW GPU support is set to ON and CPU support is set to OFF (use only to \
+      build a standalone plugin).")
+  set_target_properties(fastemriwaveforms PROPERTIES WITH_GPU ON)
+  set_target_properties(fastemriwaveforms PROPERTIES WITH_CPU OFF)
 elseif(FEW_WITH_GPU STREQUAL "BARE")
-  message(
-    STATUS
-      "FEW GPU and CPU support are disabled (use only to build a non-functional pure-python release)."
-  )
-  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU OFF)
-  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_CPU OFF)
+  message(STATUS "FEW GPU and CPU support are disabled (use only to build a \
+      non-functional pure-python release).")
+  set_target_properties(fastemriwaveforms PROPERTIES WITH_GPU OFF)
+  set_target_properties(fastemriwaveforms PROPERTIES WITH_CPU OFF)
 else()
   message(STATUS "FEW GPU support is set to ${FEW_WITH_GPU}.")
-  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES WITH_GPU
-                                                           ${FEW_WITH_GPU})
+  set_target_properties(fastemriwaveforms PROPERTIES WITH_GPU ${FEW_WITH_GPU})
 endif()
 
 # ---- Handle GPU support ----
-get_target_property(_FEW_WITH_GPU ${SKBUILD_PROJECT_NAME} WITH_GPU)
+get_target_property(_FEW_WITH_GPU fastemriwaveforms WITH_GPU)
 if(_FEW_WITH_GPU)
   enable_language(CUDA)
   find_package(CUDAToolkit REQUIRED)
-  set_target_properties(
-    ${SKBUILD_PROJECT_NAME} PROPERTIES FAST_BACKEND
-                                       "cuda${CUDAToolkit_VERSION_MAJOR}x")
-  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES CU_LANGUAGE "CUDA")
-else()
-  set_target_properties(${SKBUILD_PROJECT_NAME} PROPERTIES CU_LANGUAGE "CXX")
 endif()
 unset(_FEW_WITH_GPU)
 

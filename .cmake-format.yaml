@@ -58,7 +58,7 @@ format:
   use_tabchars: false
   fractional_tab_policy: use-space
   max_subgroups_hwrap: 3
-  max_pargs_hwrap: 5
+  max_pargs_hwrap: 7
   max_rows_cmdline: 2
   separate_ctrl_name_with_space: false
   separate_fn_name_with_space: false
