@@ -1,6 +1,6 @@
 # few: Fast EMRI Waveforms
 
-This package contains the highly modular framework for fast and accurate extreme mass ratio inspiral (EMRI) waveforms from [arxiv.org/2104.04582](https://arxiv.org/abs/2104.04582) and [arxiv.org/2008.06071](https://arxiv.org/abs/2008.06071). The waveforms in this package combine a variety of separately accessible modules to form EMRI waveforms on both CPUs and GPUs. Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the [documentation](https://bhptoolkit.org/FastEMRIWaveforms/) for further information on these modules. The code can be found on Github [here](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms). The data necessary for various modules in this package will automatically download the first time it is needed. If you would like to view the data, it can be found on [Zenodo](https://zenodo.org/record/3981654#.XzS_KRNKjlw). The current and all past code release zip files can also be found on Zenodo [here](https://zenodo.org/record/3969004). Please see the [citation](#citation) section below for information on citing FEW.
+This package contains the highly modular framework for fast and accurate extreme mass ratio inspiral (EMRI) waveforms from [arxiv.org/2104.04582](https://arxiv.org/abs/2104.04582) and [arxiv.org/2008.06071](https://arxiv.org/abs/2008.06071). The waveforms in this package combine a variety of separately accessible modules to form EMRI waveforms on both CPUs and GPUs. Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the [documentation](https://bhptoolkit.org/FastEMRIWaveforms/) for further information on these modules. The code can be found on Github [here](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms). The data necessary for various modules in this package will automatically download the first time it is needed. If you would like to view the data, it can be found on [Zenodo](https://zenodo.org/record/3981654). The current and all past code release zip files can also be found on Zenodo [here](https://zenodo.org/record/3969004). Please see the [citation](#citation) section below for information on citing FEW.
 
 This package is a part of the [Black Hole Perturbation Toolkit](https://bhptoolkit.org/).
 
@@ -85,9 +85,9 @@ Once FEW is working and the expected backends are selected, you may see
 [examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb)
 on how to start with this software.
 
-### Installing from sources
+## Installing from sources
 
-#### Prerequisites
+### Prerequisites
 
 To install this software from source, you will need:
 
@@ -106,7 +106,78 @@ libraries `CUDA Runtime Library`, `cuBLAS` and `cuSPARSE`).
 
 There are a set of files required for total use of this package. They will download automatically the first time they are needed. Files are generally under 10MB. However, there is a 100MB file needed for the slow waveform and the bicubic amplitude interpolation. This larger file will only download if you run either of those two modules. The files are hosted on the [Black Hole Perturbation Toolkit Download Server](https://download.bhptoolkit.org/few/data).
 
-#### Running the installation
+### Installation instructions using conda
+
+We recommend to install FEW using conda in order to have the compilers all within an environment. First clone the repo
+```
+git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
+cd FastEMRIWaveforms
+git checkout Kerr_Equatorial_Eccentric
+```
+
+Now create an environment (here Mac OSX arm M chip)
+```
+conda create -n few_env -y -c conda-forge -y python=3.12 clangxx_osx-arm64 clang_osx-arm64 h5py wget gsl liblapacke lapack openblas fortran-compiler scipy numpy matplotlib jupyter
+```
+
+Instead for MACOS:
+```
+conda create -n few_env -c conda-forge -y clangxx_osx-64 clang_osx-64 h5py wget gsl liblapacke lapack openblas fortran-compiler scipy numpy matplotlib jupyter python=3.12
+```
+
+And activate the environment
+```
+conda activate few_env
+```
+
+You should have now installed the packages that allow FEW to be compiled but let's enforce the compilers by running
+```
+export CXXFLAGS="-march=native"
+export CFLAGS="-march=native"
+```
+
+Find the clang compiler by running
+```
+ls ${CONDA_PREFIX}/bin/*clang
+ls ${CONDA_PREFIX}/bin/*clang++
+```
+
+Then export and define the compilers, on my laptop it looks like
+```
+export CC=/opt/miniconda3/envs/few_env/bin/arm64-apple-darwin20.0.0-clang
+export CXX=/opt/miniconda3/envs/few_env/bin/arm64-apple-darwin20.0.0-clang++
+```
+
+Then we can install locally for development:
+```
+pip install -e '.[dev, testing]'
+```
+
+### Installation instructions using conda on GPUs and linux
+Below is a quick set of instructions to install the Fast EMRI Waveform package on GPUs and linux.
+
+```sh
+conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.12 pandas fortran-compiler
+conda activate few_env
+```
+
+Locate where the `nvcc` compile is located and add it to the path, in my case it is located in `/usr/local/cuda-12.5/bin/`
+```
+export PATH=$PATH:/usr/local/cuda-12.5/bin/
+```
+
+Check the version of your compiler by running `nvcc --version` and install the corresponding FEW cuda version for running on GPUs:
+```
+pip install --pre fastemriwaveforms-cuda12x
+```
+
+Test the installation device by running python
+```python
+import few
+few.get_backend("cuda12x")
+```
+
+### Running the installation
 
 To start the from-source installation, ensure the pre-requisite are met, clone the repository, and then simply run a `pip install` command:
 
@@ -174,7 +245,7 @@ To run the tests, open a terminal in a directory containing the sources of FEW a
 ```sh
 $ git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
 $ cd FastEMRIWaveforms
-$ python -m unittest discover
+$ python -m few.tests  # or "python -m unittest discover"
 ...
 ----------------------------------------------------------------------
 Ran 20 tests in 71.514s

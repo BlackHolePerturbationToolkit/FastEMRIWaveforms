@@ -62,7 +62,7 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
     Args:
         waveform_class: String with the name of the waveform class to use.
             See the `pre-built waveform models
-            <https://bhptoolkit.org/FastEMRIWaveforms/html/user/main.html#prebuilt-waveform-models>`_.
+            <https://bhptoolkit.org/FastEMRIWaveforms/user/main.html#prebuilt-waveform-models>`_.
             If an object is provided, must be a waveform class.
         *args: Arguments for the instantiation of
             the waveform generation class.
@@ -424,7 +424,10 @@ class FastKerrEccentricEquatorialFlux(
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
-        inspiral_kwargs["func"] = KerrEccEqFlux
+
+        if "func" not in inspiral_kwargs.keys():
+            inspiral_kwargs["func"] = KerrEccEqFlux
+
         # inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 
         if sum_kwargs is None:
@@ -582,8 +585,8 @@ class FastSchwarzschildEccentricFlux(
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
-        inspiral_kwargs["func"] = SchwarzEccFlux
-        # inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
+        if "func" not in inspiral_kwargs.keys():
+            inspiral_kwargs["func"] = SchwarzEccFlux
 
         if sum_kwargs is None:
             sum_kwargs = {}
@@ -730,8 +733,8 @@ class FastSchwarzschildEccentricFluxBicubic(
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
-        inspiral_kwargs["func"] = SchwarzEccFlux
-        # inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
+        if "func" not in inspiral_kwargs.keys():
+            inspiral_kwargs["func"] = SchwarzEccFlux
 
         if sum_kwargs is None:
             sum_kwargs = {}
@@ -889,7 +892,8 @@ class SlowSchwarzschildEccentricFlux(
             inspiral_kwargs = {}
         # declare specific properties
         inspiral_kwargs["DENSE_STEPPING"] = 1
-        inspiral_kwargs["func"] = SchwarzEccFlux
+        if "func" not in inspiral_kwargs.keys():
+            inspiral_kwargs["func"] = SchwarzEccFlux
 
         SchwarzschildEccentric.__init__(
             self,
@@ -1021,7 +1025,8 @@ class Pn5AAKWaveform(AAKWaveformBase):
     ):
         if inspiral_kwargs is None:
             inspiral_kwargs = {}
-        inspiral_kwargs["func"] = PN5
+        if "func" not in inspiral_kwargs.keys():
+            inspiral_kwargs["func"] = PN5
 
         AAKWaveformBase.__init__(
             self,

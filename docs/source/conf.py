@@ -89,7 +89,11 @@ doctest_global_cleanup = """
 few.utils.globals.reset(True)
 """
 
-intersphinx_mapping = {"python": ("https://docs.python.org/3.11", None)}
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3.11", None),
+}
+
+linkcheck_ignore = [r"https://dx.doi.org/"]
 
 myst_heading_anchors = 2
 myst_url_schemes = {

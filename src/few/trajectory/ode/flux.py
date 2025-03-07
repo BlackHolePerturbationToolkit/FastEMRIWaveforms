@@ -2,7 +2,9 @@ from .base import ODEBase
 from ...utils.utility import get_fundamental_frequencies, get_separatrix, ELQ_to_pex
 from ...utils.globals import get_file_manager
 from numba import njit
-from few.utils.mappings import kerrecceq_forward_map, apex_of_uwyz, apex_of_UWYZ, z_of_a, w_of_euz, p_of_u, u_where_w_is_unity
+from few.utils.mappings import kerrecceq_flux_forward_map, apex_of_uwyz, apex_of_UWYZ, z_of_a, w_of_euz, p_of_u, u_where_w_is_unity, e_of_uwz, u_of_p, ELdot_to_PEdot_Jacobian
+
+from few.utils.utility import _brentq_jit, _get_separatrix_kernel_inner
 
 import h5py
 
@@ -42,6 +44,8 @@ class SchwarzEccFlux(ODEBase):
         # construct the BicubicSpline object from the expected file
         fp = "FluxNewMinusPNScaled_fixed_y_order.dat"
 
+        self.flux_output_convention = "ELQ"
+
         data = np.loadtxt(get_file_manager().get_file(fp))
         x = np.unique(data[:, 0])
         y = np.unique(data[:, 1])
@@ -70,7 +74,7 @@ class SchwarzEccFlux(ODEBase):
 
     def max_p(self, e, x, a=None):
         return np.exp(3.817712325956905) + 2.1 + 2.0 * e
-    
+
     def distance_to_outer_boundary(self, y):
         p, e, x = self.get_pex(y)
         dist_p = 3.817 - np.log((p - 2.0 * e - 2.1))
@@ -123,31 +127,32 @@ class SchwarzEccFlux(ODEBase):
         return [Edot, Ldot, 0.0, Omega_phi, Omega_theta, Omega_r]
 
 
-@njit
-def _EdotPN_alt(p, e):
+@njit 
+def _PN_alt(p, e):
     """
     https://arxiv.org/pdf/2201.07044.pdf
     eq 91
     """
-    pdot_V = (
+    oneme2 = (1 - e**2)**1.5
+    Edot = (
         32.0
         / 5.0
         * p ** (-5)
-        * (1 - e**2) ** 1.5
+        * oneme2
         * (1 + 73 / 24 * e**2 + 37 / 96 * e**4)
     )
-    return pdot_V
-
+    Ldot = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5 * (1 + 7.0 / 8.0 * e**2)
+    return Edot, Ldot
 
 @njit
-def _LdotPN_alt(p, e):
-    """
-    https://arxiv.org/pdf/2201.07044.pdf
-    eq 91
-    """
-    pdot_V = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5 * (1 + 7.0 / 8.0 * e**2)
-    return pdot_V
-
+def _emax_w(e, args):
+    a = args[0]
+    p = args[1]
+    z = args[2]
+    psep = _get_separatrix_kernel_inner(a, e, 1)
+    u = u_of_p(p, psep)
+    w = w_of_euz(e, u, z)
+    return w-1
 
 class KerrEccEqFlux(ODEBase):
     """
@@ -159,8 +164,10 @@ class KerrEccEqFlux(ODEBase):
         refers to the inner grid, the second to the outer. Useful for testing error convergence. Defaults to None (no downsampling).
     """
 
-    def __init__(self, *args, use_ELQ: bool = False, downsample=None, **kwargs):
+    def __init__(self, *args, use_ELQ: bool = False, downsample=None, flux_output_convention="pex", **kwargs):
         super().__init__(*args, use_ELQ=use_ELQ, **kwargs)
+
+        self.flux_output_convention = flux_output_convention
 
         fp = "KerrEccEqFluxData.h5"
 
@@ -185,8 +192,6 @@ class KerrEccEqFlux(ODEBase):
             agrid, pgrid, egrid, xgrid = apex_of_uwyz(
                 ugrid, wgrid, np.ones_like(zgrid), zgrid
             )
-            EdotPN = _EdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
-            LdotPN = _LdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
 
             # normalise by PN contribution
             Edot = (
@@ -195,7 +200,6 @@ class KerrEccEqFlux(ODEBase):
                     :: downsample_inner[1],
                     :: downsample_inner[2],
                 ]
-                / EdotPN
             )
             Ldot = (
                 regionA["Ldot"][()][
@@ -203,11 +207,42 @@ class KerrEccEqFlux(ODEBase):
                     :: downsample_inner[1],
                     :: downsample_inner[2],
                 ]
-                / LdotPN
             )
 
-            self.Edot_interp_A = TricubicSpline(u, w, z, Edot)
-            self.Ldot_interp_A = TricubicSpline(u, w, z, Ldot)
+            if flux_output_convention == "pex":
+                # calculate pdot and edot from Edot and Ldot
+                Edothere = (Edot).flatten()
+                Ldothere = (Ldot).flatten()
+                xgrid = np.sign(agrid)
+                xgrid[xgrid == 0] = 1
+                
+                Ldothere = Ldothere * xgrid
+                agrid = np.abs(agrid)
+
+                out_pdot_edot = np.asarray([ELdot_to_PEdot_Jacobian(agrid[i], pgrid[i], egrid[i], xgrid[i], Edothere[i], Ldothere[i]) for i in range(Edothere.size)])
+                    
+                # check whether there are no nans in the output and Edot and Ldot
+                if np.isnan(out_pdot_edot).any() or np.isnan(Edot).any() or np.isnan(Ldot).any():
+                    raise ValueError("Interpolation: nans in pdot, edot or Edot, Ldot.")
+                
+                pdot = out_pdot_edot[:, 0].reshape(u.size, w.size, z.size)
+                edot = out_pdot_edot[:, 1].reshape(u.size, w.size, z.size)
+
+                risco = get_separatrix(agrid.flatten(), np.zeros_like(agrid.flatten()), xgrid.flatten())
+                psep = get_separatrix(agrid.flatten(), egrid.flatten(), xgrid.flatten())
+                pdot_pn = _pdot_PN(pgrid.flatten(), egrid.flatten(), risco, psep).reshape(u.size, w.size, z.size)
+                edot_pn = _edot_PN(pgrid.flatten(), egrid.flatten(), risco, psep).reshape(u.size, w.size, z.size)
+
+                self.pdot_interp_A = TricubicSpline(u, w, z, pdot / pdot_pn)
+                self.edot_interp_A = TricubicSpline(u, w, z, edot / edot_pn)
+                
+            else:
+                EdotPN, LdotPN = _PN_alt(pgrid, egrid)
+                EdotPN = EdotPN.reshape(u.size, w.size, z.size)
+                LdotPN = LdotPN.reshape(u.size, w.size, z.size)
+
+                self.Edot_interp_A = TricubicSpline(u, w, z, Edot / EdotPN)
+                self.Ldot_interp_A = TricubicSpline(u, w, z, Ldot / LdotPN)
 
             regionB = fluxData["regionB"]
             u = np.linspace(0, 1, regionB.attrs["NU"])[:: downsample_outer[0]]
@@ -221,9 +256,6 @@ class KerrEccEqFlux(ODEBase):
                 ugrid, wgrid, np.ones_like(zgrid), zgrid, True
             )
 
-            EdotPN = _EdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
-            LdotPN = _LdotPN_alt(pgrid, egrid).reshape(u.size, w.size, z.size)
-
             # normalise by PN contribution
             Edot = (
                 regionB["Edot"][()][
@@ -231,7 +263,6 @@ class KerrEccEqFlux(ODEBase):
                     :: downsample_outer[1],
                     :: downsample_outer[2],
                 ]
-                / EdotPN
             )
             Ldot = (
                 regionB["Ldot"][()][
@@ -239,11 +270,41 @@ class KerrEccEqFlux(ODEBase):
                     :: downsample_outer[1],
                     :: downsample_outer[2],
                 ]
-                / LdotPN
             )
 
-            self.Edot_interp_B = TricubicSpline(u, w, z, Edot)
-            self.Ldot_interp_B = TricubicSpline(u, w, z, Ldot)
+            if self.flux_output_convention == "pex":
+                # calculate pdot and edot from Edot and Ldot
+                Edothere = (Edot).flatten()
+                Ldothere = (Ldot).flatten()
+                xgrid = np.sign(agrid)
+                xgrid[xgrid == 0] = 1
+                
+                Ldothere = Ldothere * xgrid
+                agrid = np.abs(agrid)
+
+                out_pdot_edot = np.asarray([ELdot_to_PEdot_Jacobian(agrid[i], pgrid[i], egrid[i], xgrid[i], Edothere[i], Ldothere[i]) for i in range(Edothere.size)])
+                
+                # check whether there are no nans in the output and Edot and Ldot
+                if np.isnan(out_pdot_edot).any() or np.isnan(Edot).any() or np.isnan(Ldot).any():
+                    raise ValueError("Interpolation: nans in pdot, edot or Edot, Ldot.")
+                
+                pdot = out_pdot_edot[:, 0].reshape(u.size, w.size, z.size)
+                edot = out_pdot_edot[:, 1].reshape(u.size, w.size, z.size)
+
+                risco = get_separatrix(agrid.flatten(), np.zeros_like(agrid.flatten()), xgrid.flatten())
+                psep = get_separatrix(agrid.flatten(), egrid.flatten(), xgrid.flatten())
+                pdot_pn = _pdot_PN(pgrid.flatten(), egrid.flatten(), risco, psep).reshape(u.size, w.size, z.size)
+                edot_pn = _edot_PN(pgrid.flatten(), egrid.flatten(), risco, psep).reshape(u.size, w.size, z.size)
+
+                self.pdot_interp_B = TricubicSpline(u, w, z, pdot / pdot_pn)
+                self.edot_interp_B = TricubicSpline(u, w, z, edot / edot_pn)
+            else:
+                EdotPN, LdotPN = _PN_alt(pgrid, egrid)
+                EdotPN = EdotPN.reshape(u.size, w.size, z.size)
+                LdotPN = LdotPN.reshape(u.size, w.size, z.size)
+
+                self.Edot_interp_B = TricubicSpline(u, w, z, Edot / EdotPN)
+                self.Ldot_interp_B = TricubicSpline(u, w, z, Ldot / LdotPN)
 
     @property
     def equatorial(self):
@@ -257,13 +318,13 @@ class KerrEccEqFlux(ODEBase):
     def supports_ELQ(self):
         return True
 
-    @property
-    def flux_output_convention(self):
-        return "ELQ"
-
-    def min_p(self, e, x, a=None):
+    def min_p(self, e, x=None, a=None):
         if a is None:
             a = self.a
+
+        if x is not None:
+            if np.abs(x) > 1:
+                raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
 
         if x == -1:
             a_in = -a
@@ -280,8 +341,51 @@ class KerrEccEqFlux(ODEBase):
 
         return max(p_of_u(u_min, p_sep), p_sep + self.separatrix_buffer_dist) + 1e-5
 
-    def max_p(self, e, x, a=None):
+    def max_p(self, e, x=None, a=None):
+        if x is not None:
+            if np.abs(x) > 1:
+                raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
+        
         return 200. - 1e-5
+    
+    def min_e(self, p, x=None, a=None):
+        if x is not None:
+            if np.abs(x) > 1:
+                raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
+            
+        return 0.0
+    
+    def max_e(self, p, x=None, a=None):
+        if x is not None:
+            if np.abs(x) > 1:
+                raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
+            
+        if a is None:
+            a = self.a
+
+        if x == -1:
+            a_in = -a
+        else:
+            a_in = a
+
+        p_sep_min_buffer = get_separatrix(a_in, 0, 1) + self.separatrix_buffer_dist
+        if p < p_sep_min_buffer:
+            raise ValueError(f"Interpolation: p out of bounds. Must be greater than innermost stable circular orbit + buffer = {p_sep_min_buffer}.")
+        
+        p_min = self.min_p(0.9, x, a)
+        if p > p_min:
+            emax = 0.9
+        else:
+            tol = 1e-13
+            z = z_of_a(a_in)
+            emax = _brentq_jit(_emax_w, 0, 0.9, (a_in, p, z), tol)
+        return emax
+    
+    def bounds_p(self, e, x=None, a=None):
+        return [self.min_p(e, x, a), self.max_p(e, x, a)]
+    
+    def bounds_e(self, p, x=None, a=None):
+        return [self.min_e(p, x, a), self.max_e(p, x, a)]
 
     def interpolate_flux_grids(self, p: float, e: float, x: float) -> tuple[float]:
         # handle xI = -1 case
@@ -290,8 +394,8 @@ class KerrEccEqFlux(ODEBase):
         else:
             a_in = self.a
 
-        u, w, _, z, in_region_A = kerrecceq_forward_map(
-            a_in, p, e, 1.0, pLSO=self.p_sep_cache, kind="flux"
+        u, w, _, z, in_region_A = kerrecceq_flux_forward_map(
+            a_in, p, e, 1.0, self.p_sep_cache
         )
 
         if u < 0 or u > 1 + 1e-8 or np.isnan(u):
@@ -299,17 +403,33 @@ class KerrEccEqFlux(ODEBase):
         if w < 0 or w > 1 + 1e-8:
             raise ValueError("Interpolation: e out of bounds.")
 
-        if in_region_A:
-            Edot = -self.Edot_interp_A(u, w, z) * _EdotPN_alt(p, e)
-            Ldot = -self.Ldot_interp_A(u, w, z) * _LdotPN_alt(p, e)
+        if self.flux_output_convention == "ELQ":
+            EdotPN, LdotPN = _PN_alt(p, e)
+            if in_region_A:
+                Edot = -self.Edot_interp_A(u, w, z) * EdotPN
+                Ldot = -self.Ldot_interp_A(u, w, z) * LdotPN
+            else:
+                Edot = -self.Edot_interp_B(u, w, z) * EdotPN
+                Ldot = -self.Ldot_interp_B(u, w, z) * LdotPN
+
+            if a_in < 0:
+                Ldot *= -1
+
+            return Edot, Ldot
+
         else:
-            Edot = -self.Edot_interp_B(u, w, z) * _EdotPN_alt(p, e)
-            Ldot = -self.Ldot_interp_B(u, w, z) * _LdotPN_alt(p, e)
+            risco = get_separatrix(a_in, 0.0, 1.0)
+            p_sep = self.p_sep_cache
+            pdotPN = _pdot_PN(p, e, risco, p_sep)
+            edotPN = _edot_PN(p, e, risco, p_sep)
+            if in_region_A:
+                pdot = self.pdot_interp_A(u, w, z) * pdotPN
+                edot = self.edot_interp_A(u, w, z) * edotPN
+            else:
+                pdot = self.pdot_interp_B(u, w, z) * pdotPN
+                edot = self.edot_interp_B(u, w, z) * edotPN
 
-        if a_in < 0:
-            Ldot *= -1
-
-        return Edot, Ldot
+            return -pdot, -edot
 
     def evaluate_rhs(
         self, y: Union[list[float], np.ndarray]
@@ -327,16 +447,15 @@ class KerrEccEqFlux(ODEBase):
         return [Edot, Ldot, 0.0, Omega_phi, Omega_theta, Omega_r]
 
 
-@njit(fastmath=True)
+@njit
 def _pdot_PN(p, e, risco, p_sep):
-    return (8.0 * pow(1.0 - (e * e), 1.5) * (8.0 + 7.0 * (e * e))) / (
+    return (8.0 * (1.0 - (e * e))** 1.5 * (8.0 + 7.0 * (e * e))) / (
         5.0 * p * (((p - risco) * (p - risco)) - ((-risco + p_sep) * (-risco + p_sep)))
     )
 
-
-@njit(fastmath=True)
+@njit
 def _edot_PN(p, e, risco, p_sep):
-    return (pow(1.0 - (e * e), 1.5) * (304.0 + 121.0 * (e * e))) / (
+    return (((1.0 - (e * e)) ** 1.5) * (304.0 + 121.0 * (e * e))) / (
         15.0
         * (p * p)
         * (((p - risco) * (p - risco)) - ((-risco + p_sep) * (-risco + p_sep)))

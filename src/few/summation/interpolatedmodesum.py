@@ -32,10 +32,10 @@ class CubicSplineInterpolant(ParallelModuleBase):
     conditions.
 
     This class can be run out of Python similar to
-    `scipy.interpolate.CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html#scipy-interpolate-cubicspline>`_.
+    `scipy.interpolate.CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html#cubicspline>`_.
     However, the most efficient way to use this method is in a customized
     cuda kernel. See the
-    `source code for the interpolated summation <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/src/interpolate.cu>`_
+    `source code for the interpolated summation <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/few/cutils/src/interpolate.cu>`_
     in cuda for an example of this.
 
     This class can be run on GPUs and CPUs.

@@ -12,6 +12,7 @@
    user/sum
    user/cfg
    user/util
+   user/install
 
 .. toctree::
    :maxdepth: 4

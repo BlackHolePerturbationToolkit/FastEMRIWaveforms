@@ -228,7 +228,7 @@ class Integrate:
                     t_old, h_old, y, self.tmax_dimensionless, None
                 )
 
-            except ValueError or TrajectoryOutsideLowerLimitError or TrajectoryOutsideUpperLimitError as e:
+            except ValueError as e:
                 t = t_prev
                 y[:] = y_prev[:]
                 h = h_old / 2
@@ -239,6 +239,19 @@ class Integrate:
                 t = t_prev
                 y[:] = y_prev[:]
                 h = h_old / 2
+
+                self.log_failed_step(ValueError)
+                continue
+
+            # or if any quantity is nan, step back and take a smaller step.
+            if np.any(
+                np.isnan(y)
+            ):  # an Elliptic function returned a nan and it raised an exception
+                # self.integrator.reset_solver()
+                t = t_prev
+                y[:] = y_prev[:]
+                h /= 2
+
                 self.log_failed_step(ValueError)
                 continue
 

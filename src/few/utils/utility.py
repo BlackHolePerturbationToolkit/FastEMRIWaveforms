@@ -1563,14 +1563,14 @@ def _get_separatrix_kernel_inner(a: float, e: float, x: float, tol: float = 1e-1
         # Schwarzschild
         return 6 + 2 * e
 
-    elif x == 1.0:  # Eccentric Prograde Equatorial
+    elif np.abs(x) == 1.0 and a*x > 0:  # Eccentric Prograde Equatorial
         x_lo = 1.0 + e
         x_hi = 6.0 + 2.0 * e
 
         p_sep = _brentq_jit(_separatrix_polynomial_equat, x_lo, x_hi, (a, e), tol)
         return p_sep
 
-    elif x == -1.0:  # Eccentric Retrograde Equatorial
+    elif np.abs(x) == 1.0 and a*x < 0:  # Eccentric Retrograde Equatorial
         x_lo = 6 + 2.0 * e
         x_hi = 5 + e + 4 * sqrt(1 + e)
 
@@ -1650,45 +1650,44 @@ def get_separatrix(
         Separatrix value with shape based on input shapes.
 
     """
+    # determines shape of input
+    if isinstance(e, float) or isinstance(e, int):
+        return _get_separatrix_kernel_inner(a, e, x, tol=tol)
+
     if use_gpu:
         import cupy as xp
     else:
         import numpy as xp
 
-    # determines shape of input
-    if isinstance(e, float):
-        separatrix = _get_separatrix_kernel_inner(a, e, x, tol=tol)
+    e_in = xp.atleast_1d(e)
 
+    if isinstance(x, float) or isinstance(x, int):
+        x_in = xp.full_like(e_in, x)
     else:
-        e_in = xp.atleast_1d(e)
+        x_in = xp.atleast_1d(x)
 
-        if isinstance(x, float):
-            x_in = xp.full_like(e_in, x)
-        else:
-            x_in = xp.atleast_1d(x)
+    # cast spin values if necessary
+    if isinstance(a, float) or isinstance(a, int):
+        a_in = xp.full_like(e_in, a)
+    else:
+        a_in = xp.atleast_1d(a)
 
-        # cast spin values if necessary
-        if isinstance(a, float):
-            a_in = xp.full_like(e_in, a)
-        else:
-            a_in = xp.atleast_1d(a)
+    if isinstance(x, float) or isinstance(x, int):
+        x_in = xp.full_like(e_in, x)
+    else:
+        x_in = xp.atleast_1d(x)
 
-        if isinstance(x, float):
-            x_in = xp.full_like(e_in, x)
-        else:
-            x_in = xp.atleast_1d(x)
+    assert len(a_in) == len(e_in) == len(x_in)
 
-        assert len(a_in) == len(e_in) == len(x_in)
-
-        separatrix = xp.empty_like(e_in)
-        if use_gpu:
-            threadsperblock = 256
-            blockspergrid = (len(a_in) + (threadsperblock - 1)) // threadsperblock
-            _get_separatrix_kernel_gpu[blockspergrid, threadsperblock](
-                separatrix, a_in, e_in, x_in, tol
-            )
-        else:
-            _get_separatrix_kernel_cpu(separatrix, a_in, e_in, x_in, tol=tol)
+    separatrix = xp.empty_like(e_in)
+    if use_gpu:
+        threadsperblock = 256
+        blockspergrid = (len(a_in) + (threadsperblock - 1)) // threadsperblock
+        _get_separatrix_kernel_gpu[blockspergrid, threadsperblock](
+            separatrix, a_in, e_in, x_in, tol
+        )
+    else:
+        _get_separatrix_kernel_cpu(separatrix, a_in, e_in, x_in, tol=tol)
 
     return separatrix
 
@@ -1820,12 +1819,23 @@ def get_p_at_t(
 
     if bounds[0] is None:
         if not enforce_schwarz_sep:
-            bounds[0] = traj_module.func.min_p(traj_args[index_of_e], traj_args[index_of_x], a=traj_args[index_of_a])
+            bounds[0] = traj_module.func.min_p(
+                traj_args[index_of_e], traj_args[index_of_x], a=traj_args[index_of_a]
+            )
         else:
-            bounds[0] = min(traj_module.func.min_p(traj_args[index_of_e], traj_args[index_of_x], a=traj_args[index_of_a]), 6 + 2*traj_args[index_of_e])
+            bounds[0] = min(
+                traj_module.func.min_p(
+                    traj_args[index_of_e],
+                    traj_args[index_of_x],
+                    a=traj_args[index_of_a],
+                ),
+                6 + 2 * traj_args[index_of_e],
+            )
 
     if bounds[1] is None:
-        bounds[1] = traj_module.func.max_p(traj_args[index_of_e], traj_args[index_of_x], a=traj_args[index_of_a])
+        bounds[1] = traj_module.func.max_p(
+            traj_args[index_of_e], traj_args[index_of_x], a=traj_args[index_of_a]
+        )
 
     root = get_at_t(traj_module, traj_args, bounds, t_out, index_of_p, **kwargs)
     return root
@@ -1931,7 +1941,7 @@ def wrapper(*args, **kwargs):
     If you use this function, you must convert input arrays to size_t data type in Cython and
     then properly cast the pointer as it enters the c++ function. See the
     Cython codes
-    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/src>`_
+    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/few/cutils/src>`_
     for examples.
 
     args:
@@ -2003,7 +2013,7 @@ def pointer_adjust(func):
     If you use this decorator, you must convert input arrays to size_t data type in Cython and
     then properly cast the pointer as it enters the c++ function. See the
     Cython codes
-    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/src>`_
+    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/few/cutils/src>`_
     for examples.
 
     """
