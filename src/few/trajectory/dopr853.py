@@ -420,7 +420,7 @@ class DOPR853:
             self.abstol + 0.0 * self.xp.max(self.xp.array([solOld, solNew]), axis=0)
         )
 
-        err2 = (((temp - bhh1 * k1 - bhh2 * k9 - bhh3 * k3) * sk) ** n).sum(axis=0)
+        err2 = (((temp - bhh1 * k1 - bhh2 * k9 - bhh3 * k3) * sk) ** 2).sum(axis=0)
         err[:] = (
             (
                 (
@@ -434,8 +434,7 @@ class DOPR853:
                     + er12 * k3
                 )
                 * sk
-            )
-            ** n
+            ) ** 2
         ).sum(axis=0)
 
         # Now calculate the denominator and return the error

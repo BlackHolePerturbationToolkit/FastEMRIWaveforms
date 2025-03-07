@@ -186,6 +186,7 @@ class Integrate:
         """
         # check for number of tries to fix this
         self.bad_num += 1
+        self.bad_num_total += 1
         self.last_error = lastError
         if self.bad_num >= 100:
             raise self.last_error
@@ -213,6 +214,8 @@ class Integrate:
 
         # setup integrator
         self.bad_num = 0
+        self.bad_num_total = 0
+
         # add the first point
         self.save_point(t0, y)
         self._integrator_t_cache[0] = t0
