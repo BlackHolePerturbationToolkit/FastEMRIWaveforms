@@ -141,12 +141,14 @@ if(_FEW_WITH_GPU)
   enable_language(CUDA)
   find_package(CUDAToolkit REQUIRED)
 endif()
-unset(_FEW_WITH_GPU)
 
 # ---- Include sources ----
 add_subdirectory(src)
 
 # ---- Let CMake handle copying CITATION.cff into wheel ----
 if(SKBUILD_STATE STREQUAL "sdist" OR SKBUILD_STATE STREQUAL "wheel")
-  install(FILES CITATION.cff DESTINATION few)
+  if(_FEW_WITH_CPU)
+    # A bare install does not need to embed CITATION.cff
+    install(FILES CITATION.cff DESTINATION few)
+  endif()
 endif()
