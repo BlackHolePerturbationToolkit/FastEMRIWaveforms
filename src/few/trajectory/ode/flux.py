@@ -2,7 +2,7 @@ from .base import ODEBase
 from ...utils.utility import get_fundamental_frequencies, get_separatrix, ELQ_to_pex
 from ...utils.globals import get_file_manager
 from numba import njit
-from few.utils.mappings.kerrecceq import (kerrecceq_flux_forward_map, 
+from few.utils.mappings.kerrecceq import (_kerrecceq_flux_forward_map, 
                                 apex_of_uwyz, 
                                 apex_of_UWYZ, 
                                 z_of_a, 
@@ -435,7 +435,7 @@ class KerrEccEqFlux(ODEBase):
         else:
             a_in = a
 
-        u, w, _, z, in_region_A = kerrecceq_flux_forward_map(
+        u, w, _, z, in_region_A = _kerrecceq_flux_forward_map(
             a_in, p, e, 1.0, self.p_sep_cache
         )
         
@@ -479,45 +479,6 @@ class KerrEccEqFlux(ODEBase):
                 edot = -self.edot_interp_B(u, w, z) * edotPN
 
             return pdot, edot
-    
-    def interpolate_ELQ_flux(self, p: float, e: float, x: float = 1, a: float = 0) -> tuple[float]:
-        # handle xI = -1 case
-        if np.any(np.abs(x) != 1):
-            raise ValueError(f"Interpolation: x out of bounds for equatorial orbit.")
-
-        if x == -1:
-            a_in = -a
-        else:
-            a_in = a
-
-        u, w, _, z, in_region_A = kerrecceq_flux_forward_map(
-            a_in, p, e, 1.0, pLSO=self.p_sep_cache
-        )
-
-        if u < 0 or u > 1 + 1e-8 or np.isnan(u):
-            raise ValueError(f"Interpolation: p={p} out of bounds.")
-        if w < 0 or w > 1 + 1e-8:
-            raise ValueError(f"Interpolation: e={e} out of bounds.")
-        if z < 0 or z > 1 + 1e-8:
-            raise ValueError(f"Interpolation: a={a} out of bounds.")
-
-        EdotPN, LdotPN = _PN_alt(p, e)
-        if in_region_A:
-            Edot = self.Edot_interp_A(u, w, z) * EdotPN
-            Ldot = self.Ldot_interp_A(u, w, z) * LdotPN
-        else:
-            Edot = self.Edot_interp_B(u, w, z) * EdotPN
-            Ldot = self.Ldot_interp_B(u, w, z) * LdotPN
-
-        if a_in < 0:
-            Ldot *= -1
-        
-        if isinstance(Edot, float):
-            Qdot = 0.0
-        else:
-            Qdot = np.zeros(Edot.shape)
-
-        return Edot, Ldot, Qdot
 
     def evaluate_rhs(
         self, y: Union[list[float], np.ndarray]
