@@ -43,7 +43,7 @@ def kerrecceq_legacy_p_to_u(a, p, e, xI, use_gpu=False):
         import numpy as xp
 
     scalar = False
-    if isinstance(a, float):
+    if not hasattr(p, "__len__"):
         scalar = True
 
     delta_p = 0.05
@@ -65,13 +65,16 @@ def kerrecceq_legacy_p_to_u(a, p, e, xI, use_gpu=False):
     return u
 
 @njit
-def kerrecceq_flux_forward_map(
+def _kerrecceq_flux_forward_map(
         a: float,
         p: float,
         e: float,
         xI: float,
         pLSO: float,
 ):
+    """
+    A jit-compiled forward mapping for the flux grids, optimised for fast ODE evaluations.
+    """
     if p <= pLSO + DELTAPMAX:
         return *_uwyz_of_apex_kernel(
             a, p, e, xI, pLSO, ALPHA_FLUX, BETA_FLUX
@@ -118,9 +121,11 @@ def kerrecceq_forward_map(
         raise ValueError("Only xI = 1 is supported.")
 
     if kind == "flux":
+        is_flux = True
         alpha = ALPHA_FLUX
         beta = BETA_FLUX
     elif kind == "amplitude":
+        is_flux = False
         alpha = ALPHA_AMP
         beta = BETA_AMP
     else:
@@ -159,7 +164,7 @@ def kerrecceq_forward_map(
 
     far = np.bitwise_not(near)
     if xp.any(far):
-        out = _UWYZ_of_apex_kernel(a[far], p[far], e[far], xI[far], pLSO[far], False)
+        out = _UWYZ_of_apex_kernel(a[far], p[far], e[far], xI[far], pLSO[far], is_flux)
         u[far] = out[0]
         w[far] = out[1]
         y[far] = out[2]
@@ -215,7 +220,7 @@ def kerrecceq_backward_map(
         raise ValueError
 
     # if scalar directly evaluate the kernel for speed
-    if isinstance(u, float) or isinstance(u, int):
+    if not hasattr(u, "__len__"):
         if regionA:
             return apex_of_uwyz(u, w, y, z, alpha=alpha, beta=beta)
         else:
@@ -235,15 +240,17 @@ def kerrecceq_backward_map(
 
 @njit
 def u_of_p(p, pLSO, alpha):
-    return np.abs(
-        (np.log(p - pLSO + DELTAPMAX - 2 * DELTAPMIN) - log(DELTAPMAX - DELTAPMIN)) / log(2)
-    ) ** (alpha)
+    check_term = (np.log(p - pLSO + DELTAPMAX - 2 * DELTAPMIN) - log(DELTAPMAX - DELTAPMIN)) / log(2)
+    sgn = np.sign(check_term)
+    return sgn * (sgn * check_term)**alpha
 
 @njit
 def u_of_p_flux(p, pLSO):
-    return np.abs(
-        (np.log(p - pLSO + DELTAPMAX - 2 * DELTAPMIN) - log(DELTAPMAX - DELTAPMIN)) / log(2)
-    ) ** (ALPHA_FLUX)
+    check_term = (np.log(p - pLSO + DELTAPMAX - 2 * DELTAPMIN) - log(DELTAPMAX - DELTAPMIN)) / log(2)
+    if check_term < 0:
+        return -(-check_term)**ALPHA_FLUX
+    else:
+        return check_term**ALPHA_FLUX
 
 @njit
 def y_of_x(x):
@@ -276,9 +283,10 @@ def Secc_of_uz(
     u,
     z,
     beta,
-):
-    return ESEP + (EMAX - ESEP) * np.sqrt(np.abs(z + u**beta * (1 - z)))
-
+):  
+    check_part = z + u**beta * (1 - z)
+    sgn = np.sign(check_part)
+    return ESEP + (EMAX - ESEP) * sgn * np.sqrt(sgn*check_part)
 
 @njit
 def w_of_euz(e, u, z, beta):
@@ -393,32 +401,27 @@ def apex_of_uwyz(
 
 @njit
 def U_of_p_flux(p, pLSO):
-    pmin = pLSO + DELTAPMIN_REGIONB
-    return ((pmin - pLSO) ** (-0.5) - (p - pLSO) ** (-0.5)) / (
-        (pmin - pLSO) ** (-0.5) - (PMAX_REGIONB - pLSO) ** (-0.5)
+    return ((DELTAPMIN_REGIONB) ** (-0.5) - (p - pLSO) ** (-0.5)) / (
+        (DELTAPMIN_REGIONB) ** (-0.5) - (PMAX_REGIONB - pLSO) ** (-0.5)
     )
 
 
 @njit
 def p_of_U_flux(U, pLSO):
-    pmin = pLSO + DELTAPMIN_REGIONB
     return (
-        (pmin - pLSO) ** (-0.5)
-        - U * ((pmin - pLSO) ** (-0.5) - (PMAX_REGIONB - pLSO) ** (-0.5))
+        (DELTAPMIN_REGIONB) ** (-0.5)
+        - U * ((DELTAPMIN_REGIONB) ** (-0.5) - (PMAX_REGIONB - pLSO) ** (-0.5))
     ) ** (-2) + pLSO
 
-
 @njit
-def U_of_p_amplitude(p, pmin):
-    pc = pmin
-    pmax = PMAX_REGIONB + pc
-    return (pc ** (-0.5) - p ** (-0.5)) / (pc ** (-0.5) - pmax ** (-0.5))
+def U_of_p_amplitude(p, pLSO):
+    pc = pLSO + DPC_REGIONB
+    return (pc ** (-0.5) - p ** (-0.5)) / (pc ** (-0.5) - PMAX_REGIONB ** (-0.5))
 
 
 @njit
-def p_of_U_amplitude(U, pmin):
-    pc = pmin
-    pmax += pc
+def p_of_U_amplitude(U, pLSO):
+    pc = pLSO + DPC_REGIONB
     return (pc ** (-0.5) - U * (pc ** (-0.5) - PMAX_REGIONB ** (-0.5))) ** (-2)
 
 
@@ -428,8 +431,8 @@ def W_of_e(e):
 
 
 @njit
-def e_of_W(y):
-    return y * EMAX_REGIONB
+def e_of_W(w):
+    return w * EMAX_REGIONB
 
 
 @njit
@@ -469,8 +472,7 @@ def _UWYZ_of_apex_kernel(
     if is_flux:
         u = U_of_p_flux(p, pLSO)
     else:
-        pmin = pLSO + DPC_REGIONB
-        u = U_of_p_amplitude(p, pmin)
+        u = U_of_p_amplitude(p, pLSO)
     y = Y_of_x(x)
     z = Z_of_a(a)
     w = W_of_e(e)
@@ -497,6 +499,5 @@ def apex_of_UWYZ(
     if is_flux:
         p = p_of_U_flux(u, pLSO)
     else:
-        pmin = pLSO + DPC_REGIONB
-        p = p_of_U_amplitude(u, pmin)
+        p = p_of_U_amplitude(u, pLSO)
     return a, p, e, x
