@@ -158,6 +158,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
         ylms,
         phase_interp_t,
         phase_interp_coeffs,
+        l_arr,
         m_arr,
         n_arr,
         M,
@@ -195,6 +196,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
                 (:math:`\Phi_\phi`).
             Phi_r (1D double self.xp.ndarray): Array of radial phase values
                  (:math:`\Phi_r`).
+            l_arr (1D int self.xp.ndarray): :math:`l` values associated with each mode.
             m_arr (1D int self.xp.ndarray): :math:`m` values associated with each mode.
             n_arr (1D int self.xp.ndarray): :math:`n` values associated with each mode.
             M (double): Total mass in solar masses.
@@ -491,6 +493,10 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
         phase_interp_coeffs_in = self.xp.transpose(
             self.xp.asarray(phase_interp_coeffs), [2, 1, 0]
         ).flatten()
+
+        # for ylm with negative m, need to multiply by (-1)**l as this is assumed to have happened by the kernel
+        ylms = ylms.copy()
+        ylms[num_teuk_modes:] *= (-1) ** l_arr
 
         # run GPU kernel
         self.get_waveform_fd(
