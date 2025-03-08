@@ -310,7 +310,7 @@ def ELQ_to_pex(
         Tuple of (OmegaPhi, OmegaTheta, OmegaR). These are 1D arrays or scalar values depending on inputs.
     """
     # check if inputs are scalar or array
-    if isinstance(E, float):
+    if not hasattr(E, '__len__'):
         # get frequencies
         p, e, x = _ELQ_to_pex_kernel_inner(a, E, Lz, Q)
 
@@ -320,7 +320,7 @@ def ELQ_to_pex(
         Q_in = np.atleast_1d(Q)
 
         # cast the spin to the same size array as p
-        if isinstance(a, float):
+        if not hasattr(a, '__len__'):
             a_in = np.full_like(E_in, a)
         else:
             a_in = np.atleast_1d(a)
@@ -681,7 +681,7 @@ def get_fundamental_frequencies(
         import numpy as xp
 
     # check if inputs are scalar or array
-    if isinstance(p, float):
+    if not hasattr(p, '__len__'):
         OmegaPhi, OmegaTheta, OmegaR = _KerrGeoCoordinateFrequencies_kernel_inner(
             a, p, e, x
         )
@@ -691,7 +691,7 @@ def get_fundamental_frequencies(
         x_in = xp.atleast_1d(x)
 
         # cast the spin to the same size array as p
-        if isinstance(a, float):
+        if not hasattr(a, '__len__'):
             a_in = xp.full_like(p_in, a)
         else:
             a_in = xp.atleast_1d(a)
@@ -1048,7 +1048,7 @@ def get_fundamental_frequencies_spin_corrections(
     assert np.all(np.abs(x) == 1.0), "Currently only supported for equatorial orbits."
 
     # check if inputs are scalar or array
-    if isinstance(p, float):
+    if not hasattr(p, '__len__'):
         OmegaPhi, OmegaTheta, OmegaR = _KerrEqSpinFrequenciesCorrections_kernel_inner(
             a, p, e, x
         )
@@ -1058,7 +1058,7 @@ def get_fundamental_frequencies_spin_corrections(
         x_in = np.atleast_1d(x)
 
         # cast the spin to the same size array as p
-        if isinstance(a, float):
+        if not hasattr(a, '__len__'):
             a_in = np.full_like(p_in, a)
         else:
             a_in = np.atleast_1d(a)
@@ -1273,7 +1273,7 @@ def get_kerr_geo_constants_of_motion(
     """
 
     # check if inputs are scalar or array
-    if isinstance(p, float):
+    if not hasattr(p, '__len__'):
         E, L, Q = _KerrGeoConstantsOfMotion_kernel_inner(a, p, e, x)
     else:
         p_in = np.atleast_1d(p)
@@ -1281,7 +1281,7 @@ def get_kerr_geo_constants_of_motion(
         x_in = np.atleast_1d(x)
 
         # cast the spin to the same size array as p
-        if isinstance(a, float):
+        if not hasattr(a, '__len__'):
             a_in = np.full_like(p_in, a)
         else:
             a_in = np.atleast_1d(a)
@@ -1652,7 +1652,7 @@ def get_separatrix(
 
     """
     # determines shape of input
-    if isinstance(e, float) or isinstance(e, int):
+    if not hasattr(e, '__len__'):
         return _get_separatrix_kernel_inner(a, e, x, tol=tol)
 
     if use_gpu:
@@ -1662,21 +1662,16 @@ def get_separatrix(
 
     e_in = xp.atleast_1d(e)
 
-    if isinstance(x, float) or isinstance(x, int):
+    if not hasattr(x, '__len__'):
         x_in = xp.full_like(e_in, x)
     else:
         x_in = xp.atleast_1d(x)
 
     # cast spin values if necessary
-    if isinstance(a, float) or isinstance(a, int):
+    if not hasattr(a, '__len__'):
         a_in = xp.full_like(e_in, a)
     else:
         a_in = xp.atleast_1d(a)
-
-    if isinstance(x, float) or isinstance(x, int):
-        x_in = xp.full_like(e_in, x)
-    else:
-        x_in = xp.atleast_1d(x)
 
     assert len(a_in) == len(e_in) == len(x_in)
 
