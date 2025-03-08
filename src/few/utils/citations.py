@@ -318,20 +318,27 @@ def build_citation_registry() -> CitationRegistry:
     return CitationRegistry(**references, **{cff["title"]: to_reference(cff)})
 
 
-CITATIONS_REGISTRY = build_citation_registry()
-
 COMMON_REFERENCES = [REFERENCE.FEW, REFERENCE.LARGER_FEW, REFERENCE.FEW_SOFTWARE]
 
 
 class Citable:
     """Base class for classes associated with specific citations."""
 
+    registry: Optional[CitationRegistry] = None
+
     @classmethod
     def citation(cls) -> str:
         """Return the module references as a printable BibTeX string."""
         references = cls.module_references()
+
+        if Citable.registry is None:
+            from few import get_logger
+
+            get_logger().debug("Building the Citation Registry from CITATION.cff")
+            Citable.registry = build_citation_registry()
+
         bibtex_entries = [
-            CITATIONS_REGISTRY.get(str(key)).to_bibtex() for key in references
+            Citable.registry.get(str(key)).to_bibtex() for key in references
         ]
         return "\n\n".join(bibtex_entries)
 

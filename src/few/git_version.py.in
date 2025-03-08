@@ -1,0 +1,7 @@
+"""Metadata deduced from git at build time."""
+
+id: str
+short_id: str
+
+id = "@FEW_GIT_COMMIT_ID@"
+short_id = "@FEW_GIT_COMMIT_SHORT_ID@"
