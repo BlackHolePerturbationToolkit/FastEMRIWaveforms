@@ -180,7 +180,7 @@ def amplitude_test(amp_class):
 
     first_check = np.allclose(specific_teuk_modes[(2, 2, 0)], teuk_modes[:, inds[0]])
     second_check = np.allclose(
-        specific_teuk_modes[(7, -3, 1)], np.conj(teuk_modes[:, inds[1]])
+        specific_teuk_modes[(7, -3, 1)], (-1)**7 * np.conj(teuk_modes[:, inds[1]])
     )
     return first_check, second_check
 
