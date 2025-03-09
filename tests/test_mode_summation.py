@@ -6,6 +6,7 @@ from scipy.interpolate import CubicSpline, interp1d
 from few.summation.directmodesum import DirectModeSum
 from few.trajectory.inspiral import EMRIInspiral
 from few.utils.globals import get_logger, get_first_backend
+from few.utils.constants import YRSID_SI
 
 few_logger = get_logger()
 
@@ -90,7 +91,7 @@ class SummationTest(unittest.TestCase):
         phasors = amplitude * np.exp(-1j * mode_phase_values)
         manual_sum = phasors.sum(-1)
 
-        few_sum = summation(t_spl, amplitude_spl, ylms, t_spl, coeff_spl, l_arr, m_arr, n_arr, dt=dt)
+        few_sum = summation(t_spl, amplitude_spl, ylms, t_spl, coeff_spl, l_arr, m_arr, n_arr, T=t_spl[-1] / YRSID_SI, dt=dt)
 
         if best_backend.uses_gpu:
             few_sum = few_sum.get()
