@@ -55,7 +55,7 @@ class SummationTest(unittest.TestCase):
         # check that the directmodesum accurately computes a dummy case
         summation = DirectModeSum(force_backend=best_backend)
 
-        t_eval = np.linspace(0, 100, 10001)
+        t_eval = np.linspace(0, 1000, 10001)
 
         num_modes = 10
         # dummy amplitudes: linearly ramping in real and imaginary part
@@ -63,8 +63,8 @@ class SummationTest(unittest.TestCase):
         amplitude = (amp_temp[0] + 1j*amp_temp[1]).T
 
         # dummy phases: linear ramp
-        Phi_phi_temp = np.pi/3 + 1e-4 * t_eval
-        Phi_r_temp = np.pi/4 + 3e-5 * t_eval
+        Phi_phi_temp = np.pi/3 + 1e-2 * t_eval
+        Phi_r_temp = np.pi/4 + 3e-3 * t_eval
 
         phases_in = np.asarray([Phi_phi_temp, Phi_phi_temp.copy(), Phi_r_temp])
 
@@ -88,4 +88,3 @@ class SummationTest(unittest.TestCase):
             few_sum = few_sum.get()
 
         np.testing.assert_allclose(manual_sum, few_sum, rtol=1e-10)
-        
