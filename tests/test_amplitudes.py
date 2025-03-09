@@ -1,61 +1,70 @@
-# python -m unittest few/tests/test_traj.py
 import unittest
 import numpy as np
-import time
 
-from few.trajectory.inspiral import EMRIInspiral
-from few.utils.constants import YRSID_SI
-from few.trajectory.ode import KerrEccEqFlux, PN5, SchwarzEccFlux
-
-from few.utils.globals import get_logger
+from few.amplitude.ampinterp2d import AmpInterpKerrEccEq, AmpInterpSchwarzEcc
+from few.utils.globals import get_logger, get_first_backend
 
 few_logger = get_logger()
 
-few_logger.warning("Traj Test is running")
+best_backend = get_first_backend(AmpInterpKerrEccEq.supported_backends())
+few_logger.warning(
+    "Amplitudes test is running with backend '{}'".format(best_backend.name)
+)
 
-T = 1000.0
-dt = 1.0
-# set initial parameters
-M = 1e5
-mu = 1e1
-x0 = 1.0
+KERRECCEQ_AMP_TEST_POINTS = [
+    {
+        'lmn' : (3, 2, 4),
+        'ape' : (0.94071396, 3.03167504, 0.23666111),
+        'Almn' : 0.002753336140076555+0.004143260615912325j,
+    },
+    {
+        'lmn' : (2, -2, 5),
+        'ape' : (0.77593827, 5.44830674, 0.39950367),
+        'Almn' : -0.0001975310651632842+4.806588136412258e-05j,
+    },
+    {
+        'lmn' : (2, 2, 0),
+        'ape' : (0.99090693, 1.81708312, 0.25313127),
+        'Almn' : -0.09712303568244392+0.0004771647068539275j,
+    },
+    {
+        'lmn' : (4, -3, 1),
+        'ape' : (0.87600927, 43.70360964,  0.478125),
+        'Almn' : -9.89242565478408e-07+1.750469365836169e-05j,    
+    },
+    # {
+    #     'lmn' : (3, 3, 0),
+    #     'ape' : (0.36158837, 72.94420732,  0.39375),
+    #     'Almn' : 5.869887391976143e-05+0.00136010620358342j,    
+    # }
+]
+class AmplitudesTest(unittest.TestCase):
+    def test_kerrecceq(self):
+        amp_module = AmpInterpKerrEccEq(force_backend=best_backend)
 
-insp_kw = {
-    "T": T,
-    "dt": dt,
-    "err": 1e-10,
-    "DENSE_STEPPING": 0,
-    "buffer_length": int(1e4),
-    "upsample": False,
-}
+        # test if amplitude generation gives same values for scalar vs array inputs
+        a = 0.3
+        p = 8
+        e = 0.4
+        xI = 1.
+        amplitudes = amp_module(a, p, e, xI)
+        amplitudes_array = amp_module(a, np.array([p]), np.array([e]), np.array([xI]))
+        if best_backend.uses_gpu:
+            np.testing.assert_allclose(amplitudes.get(), amplitudes_array.get(), rtol=1e-10)
+        else:
+            np.testing.assert_allclose(amplitudes, amplitudes_array, rtol=1e-10)
 
-np.random.seed(42)
+        # test the amplitudes at some random points against their numerical values
+        for test_point in KERRECCEQ_AMP_TEST_POINTS:
+            a, p, e = test_point['ape']
+            mode_interp = amp_module(a, p, e, xI, specific_modes=[test_point['lmn']])[test_point['lmn']].item()
+        np.testing.assert_allclose(mode_interp, test_point['Almn'], atol=1e-6)
 
-def run_forward_back(traj_module, M, mu, a, p0, e0, xI0, forwards_kwargs):
-    """
-    Run a trajectory forward, then run a trajectory backward from the finish point and return both result sets.
-    """
-
-    forwards_result = traj_module(M, mu, a, p0, e0, xI0, **forwards_kwargs)
-
-    # Now test backwards integration
-    final_p = forwards_result[1][-1]
-    final_e = forwards_result[2][-1]
-    final_x = forwards_result[3][-1]
-
-    insp_kw_back = forwards_kwargs.copy()
-    insp_kw_back.update({"integrate_backwards": True})
-    insp_kw_back.update({"T": forwards_result[0][-1] / YRSID_SI})
-
-    backwards_result = traj_module(M, mu, a, final_p, final_e, final_x, **insp_kw_back)
-
-    return forwards_result, backwards_result
-
-N_TESTS = 10
-
-class ModuleTest(unittest.TestCase):
-    def test_amplitude(self):
-        l,m,n = 2,2,0
-        # amp1 =
-        # amp2 = 
-        # self.assertAlmostEqual(amp1, np.conj(amp2), places=6)
+        # test the mode symmetry
+        specific_modes = [(3, 2, 1), (3, -2, -1)]
+        specific_amplitudes = amp_module(a, p, e, xI, specific_modes=specific_modes)
+        if best_backend.uses_gpu:
+            np.testing.assert_allclose(specific_amplitudes[(3, 2, 1)].get(), -specific_amplitudes[(3, -2, -1)].conj().get(), rtol=1e-10)
+        else:
+            np.testing.assert_allclose(specific_amplitudes[(3, 2, 1)], -specific_amplitudes[(3, -2, -1)].conj(), rtol=1e-10)
+        
