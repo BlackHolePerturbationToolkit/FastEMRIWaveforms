@@ -213,7 +213,7 @@ class SphericalHarmonicWaveformBase(
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
 
         a, xI0 = self.sanity_check_init(M, mu, a, p0, e0, xI0)
-
+        
         # get trajectory
         (t, p, e, xI, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
             M,
@@ -232,7 +232,7 @@ class SphericalHarmonicWaveformBase(
         )
         # makes sure p and e are generally within the model
         self.sanity_check_traj(a, p, e, xI)
-
+     
         if self.normalize_amps:
             # get the vector norm
             amp_norm = self.amplitude_generator.amp_norm_spline.ev(
@@ -297,9 +297,7 @@ class SphericalHarmonicWaveformBase(
                 amp_norm_temp = amp_norm[inds_in]
 
             # if we aren't requesting a subset of modes, compute them all now
-            if not isinstance(mode_selection, list) and not isinstance(
-                mode_selection, self.xp.ndarray
-            ):
+            if not isinstance(mode_selection, (list, self.xp.ndarray)):
                 # amplitudes
                 teuk_modes = self.xp.asarray(
                     self.amplitude_generator(a, p_temp, e_temp, xI0)
@@ -344,9 +342,7 @@ class SphericalHarmonicWaveformBase(
                     raise ValueError("If mode selection is a string, must be `all`.")
 
             # get a specific subset of modes
-            elif isinstance(mode_selection, list) or isinstance(
-                mode_selection, self.xp.ndarray
-            ):
+            elif isinstance(mode_selection, (list, self.xp.ndarray)):
                 if len(mode_selection) == 0:
                     raise ValueError("If mode selection is a list, cannot be empty.")
 

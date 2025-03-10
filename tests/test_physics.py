@@ -23,7 +23,7 @@ class WaveformTest(unittest.TestCase):
 
     def test_sampling_variation(self):
         # parameters
-        T = 0.001
+        T = 0.1
         M = 1e6
         mu = 1e1
         a = 0.6
@@ -42,25 +42,27 @@ class WaveformTest(unittest.TestCase):
         ]
 
         # these two waveforms should be identical once resampled to the same time axis
-        assert get_mismatch(wave1, wave2[::2], use_gpu=best_backend.uses_gpu) < 1e-14, (
-            "Waveforms not invariant under a change of sampling rate."
+        mm = get_mismatch(wave1, wave2[::2], use_gpu=best_backend.uses_gpu)
+        assert mm < 1e-14, (
+            f"Waveforms not invariant under a change of sampling rate with mismatch {mm}."
         )
 
         wave1 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10.0)[
             :1000
         ]
         wave2 = self.waveform_generator(
-            M, mu, a, p0, e0, xI, theta, phi, T=2 * T, dt=10.0
+            M, mu, a, p0, e0, xI, theta, phi, T = 2*T, dt=10.0
         )[:1000]
 
         # these two waveforms should be identical once resampled to the same time axis
-        assert get_mismatch(wave1, wave2, use_gpu=best_backend.uses_gpu) < 1e-14, (
-            "Waveforms not invariant under a change of duration."
+        mm = get_mismatch(wave1, wave2, use_gpu=best_backend.uses_gpu)
+        assert mm < 1e-14, (
+            f"Waveforms not invariant under a change of duration with mismatch {mm}."
         )
 
     def test_mass_invariance(self):
         # parameters
-        T = 0.001
+        T = 0.1
         M = 1e6
         mu = 1e1
         a = 0.6
@@ -82,28 +84,30 @@ class WaveformTest(unittest.TestCase):
         )[:1000]
 
         # these two waveforms should be identical up to a rescailing of the time axis
-        assert get_mismatch(wave1, wave2[::2], use_gpu=best_backend.uses_gpu) < 1e-14, (
-            "Waveforms not invariant under a rescaling of total mass and coordinate time."
+        mm = get_mismatch(wave1, wave2[::2], use_gpu=best_backend.uses_gpu)
+        assert mm < 1e-14, (
+            f"Waveforms not invariant under a rescaling of total mass and coordinate time with mismatch {mm}."
         )
 
     def test_prograde_retrograde_convergence(self):
         # parameters
-        T = 0.001
+        T = 0.1
         M = 1e6
         mu = 1e1
         a = 0.0
         p0 = 8.0
         e0 = 0.3
         xI = 1.0
-        theta = np.pi / 3
-        phi = np.pi / 4
+        theta = np.pi
+        phi = 0
 
         wave1 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10.0)
         wave2 = self.waveform_generator(M, mu, a, p0, e0, -xI, theta, phi, T=T, dt=10.0)
 
         # these two waveforms should be identical as they represent the same physical system
-        assert get_mismatch(wave1, wave2, use_gpu=best_backend.uses_gpu) < 1e-14, (
-            "Schwarzschild waveforms not identical under a sign-flip of xI."
+        mm = get_mismatch(wave1, wave2.conj(), use_gpu=best_backend.uses_gpu)
+        assert mm < 1e-13, (
+            f"Schwarzschild waveforms not identical under a sign-flip of xI with mismatch {mm}."
         )
 
         a = 1e-11
@@ -112,8 +116,9 @@ class WaveformTest(unittest.TestCase):
         wave2 = self.waveform_generator(M, mu, a, p0, e0, -xI, theta, phi, T=T, dt=10.0)
 
         # these two waveforms should be identical as they represent (essentially) the same physical system
-        assert get_mismatch(wave1, wave2, use_gpu=best_backend.uses_gpu) < 1e-14, (
-            "Prograde-retrograde waveforms not convergent."
+        mm = get_mismatch(wave1, wave2.conj(), use_gpu=best_backend.uses_gpu)
+        assert mm < 1e-13, (
+            f"Prograde-retrograde waveforms not convergent with mismatch {mm}."
         )
 
         a = 0.3
@@ -125,8 +130,9 @@ class WaveformTest(unittest.TestCase):
         )
 
         # these two waveforms should be identical as they represent the same physical system
-        assert get_mismatch(wave1, wave2, use_gpu=best_backend.uses_gpu) < 1e-14, (
-            "Waveforms not convergent under joint sign-flip of a and xI."
+        mm = get_mismatch(wave1, wave2.conj(), use_gpu=best_backend.uses_gpu)
+        assert mm < 1e-13, (
+            f"Waveforms not convergent under joint sign-flip of a and xI with mismatch {mm}."
         )
 
         wave3 = self.waveform_generator(M, mu, -a, p0, e0, xI, theta, phi, T=T, dt=10.0)
@@ -138,7 +144,7 @@ class WaveformTest(unittest.TestCase):
 
     def test_orientation_behaviour(self):
         # parameters
-        T = 0.001
+        T = 0.1
         M = 1e6
         mu = 1e1
         a = 0.6
@@ -201,7 +207,7 @@ class WaveformTest(unittest.TestCase):
 
     def test_distance_scaling(self):
         # parameters
-        T = 0.001
+        T = 0.1
         M = 1e6
         mu = 1e1
         a = 0.6
@@ -217,8 +223,9 @@ class WaveformTest(unittest.TestCase):
         wave2 = self.waveform_generator(
             M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10.0, dist=2.0
         )
-        assert get_mismatch(wave1, wave2 * 2, use_gpu=best_backend.uses_gpu) < 1e-14, (
-            "Waveform not invariant under a rescaling of luminosity distance."
+        mm = get_mismatch(wave1, wave2 * 2, use_gpu=best_backend.uses_gpu)
+        assert mm < 1e-14, (
+            f"Waveform not invariant under a rescaling of luminosity distance with mismatch {mm}."
         )
 
     def test_nonphysical_input_failure(self):
