@@ -2,7 +2,7 @@ from .base import ODEBase
 from ...utils.utility import get_fundamental_frequencies, get_separatrix, ELQ_to_pex
 from ...utils.globals import get_file_manager
 from numba import njit
-from few.utils.mappings.kerrecceq import (kerrecceq_flux_forward_map, 
+from few.utils.mappings.kerrecceq import (_kerrecceq_flux_forward_map, 
                                 apex_of_uwyz, 
                                 apex_of_UWYZ, 
                                 z_of_a, 
@@ -22,7 +22,7 @@ import h5py
 
 from multispline.spline import BicubicSpline, TricubicSpline
 import os
-from typing import Union
+from typing import Union, Optional
 import numpy as np
 from math import pow, log
 
@@ -103,8 +103,11 @@ class SchwarzEccFlux(ODEBase):
         return dist
 
     def interpolate_flux_grids(
-        self, p: float, e: float, Omega_phi: float
+        self, p: float, e: float, Omega_phi: float, pLSO: float = None
     ) -> tuple[float]:
+        if pLSO is None:
+            pLSO = 6.0 + 2.0 * e
+        
         if e > 0.755:
             raise ValueError("Interpolation: e out of bounds.")
 
@@ -136,7 +139,7 @@ class SchwarzEccFlux(ODEBase):
 
         Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(self.a, p, e, x)
 
-        Edot, Ldot = self.interpolate_flux_grids(p, e, Omega_phi)
+        Edot, Ldot = self.interpolate_flux_grids(p, e, Omega_phi, pLSO=self.p_sep_cache)
 
         return [Edot, Ldot, 0.0, Omega_phi, Omega_theta, Omega_r]
 
@@ -193,9 +196,6 @@ class KerrEccEqFlux(ODEBase):
 
         fm = get_file_manager()
         file_path = fm.get_file(fp)
-
-        # set cache of separatrix to None as placeholder
-        self.p_sep_cache = None
 
         with h5py.File(file_path, "r") as fluxData:
             regionA = fluxData["regionA"]
@@ -428,15 +428,18 @@ class KerrEccEqFlux(ODEBase):
         self.isvalid_a(a)
         return [self._min_e(p, x, a), self._max_e(p, x, a)]
 
-    def interpolate_flux_grids(self, p: float, e: float, x: float = 1, a: float = 0) -> tuple[float]:
+    def interpolate_flux_grids(self, p: float, e: float, x: float = 1, a: float = 0, pLSO: Optional[float] = None) -> tuple[float]:
+        if pLSO is None:
+            pLSO = get_separatrix(a, e, x)
+
         # handle xI = -1 case
         if x == -1:
             a_in = -a
         else:
             a_in = a
 
-        u, w, _, z, in_region_A = kerrecceq_flux_forward_map(
-            a_in, p, e, 1.0, self.p_sep_cache
+        u, w, _, z, in_region_A = _kerrecceq_flux_forward_map(
+            a_in, p, e, 1.0, pLSO
         )
         
         if u < 0 or u > 1 + 1e-8 or np.isnan(u):
@@ -468,7 +471,7 @@ class KerrEccEqFlux(ODEBase):
 
         else:
             risco = get_separatrix(a_in, 0.0, 1.0)
-            p_sep = self.p_sep_cache
+            p_sep = pLSO
             pdotPN = _pdot_PN(p, e, risco, p_sep)
             edotPN = _edot_PN(p, e, risco, p_sep)
             if in_region_A:
@@ -479,44 +482,6 @@ class KerrEccEqFlux(ODEBase):
                 edot = -self.edot_interp_B(u, w, z) * edotPN
 
             return pdot, edot
-    
-    def interpolate_ELQ_flux(self, p: float, e: float, x: float = 1, a: float = 0) -> tuple[float]:
-        # handle xI = -1 case
-        self.isvalid_x(x)
-
-        if x == -1:
-            a_in = -a
-        else:
-            a_in = a
-
-        u, w, _, z, in_region_A = kerrecceq_flux_forward_map(
-            a_in, p, e, 1.0, pLSO=self.p_sep_cache
-        )
-
-        if u < 0 or u > 1 + 1e-8 or np.isnan(u):
-            raise ValueError(f"Interpolation: p={p} out of bounds.")
-        if w < 0 or w > 1 + 1e-8:
-            raise ValueError(f"Interpolation: e={e} out of bounds.")
-        if z < 0 or z > 1 + 1e-8:
-            raise ValueError(f"Interpolation: a={a} out of bounds.")
-
-        EdotPN, LdotPN = _PN_alt(p, e)
-        if in_region_A:
-            Edot = self.Edot_interp_A(u, w, z) * EdotPN
-            Ldot = self.Ldot_interp_A(u, w, z) * LdotPN
-        else:
-            Edot = self.Edot_interp_B(u, w, z) * EdotPN
-            Ldot = self.Ldot_interp_B(u, w, z) * LdotPN
-
-        if a_in < 0:
-            Ldot *= -1
-        
-        if isinstance(Edot, float):
-            Qdot = 0.0
-        else:
-            Qdot = np.zeros(Edot.shape)
-
-        return Edot, Ldot, Qdot
 
     def evaluate_rhs(
         self, y: Union[list[float], np.ndarray]
@@ -529,7 +494,7 @@ class KerrEccEqFlux(ODEBase):
 
         Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(self.a, p, e, x)
 
-        Edot, Ldot = self.interpolate_flux_grids(p, e, x, a=self.a)
+        Edot, Ldot = self.interpolate_flux_grids(p, e, x, a=self.a, pLSO=self.p_sep_cache)
 
         return [Edot, Ldot, 0.0, Omega_phi, Omega_theta, Omega_r]
 

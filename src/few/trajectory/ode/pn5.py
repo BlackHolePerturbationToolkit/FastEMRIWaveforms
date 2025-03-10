@@ -30,7 +30,6 @@ class PN5(ODEBase):
     def separatrix_buffer_dist(self):
         return 0.1
     
-    
     def max_p(self, e, x, a):
         return float("inf")
     
