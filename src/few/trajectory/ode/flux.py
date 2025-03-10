@@ -111,12 +111,12 @@ class SchwarzEccFlux(ODEBase):
     def bounds_p(self, e, x = 1, a = 0):
         return [self.min_p(e, x, a), self.max_p(e, x, a)]
 
-    def isvalid_pex(self, p = 20, e = 0, x = 1, a = 0):
+    def isvalid_pex(self, p = 20, e = 0, x = 1, a = 0, p_safety=1e-6):
         self.isvalid_x(x)
         self.isvalid_e(e)
         self.isvalid_a(a)
         pmin, pmax = self.bounds_p(e, x, a)
-        assert (p >= pmin and p <= pmax), f"Interpolation: p out of bounds. Must be between {pmin} and {pmax}."
+        assert (p >= pmin - p_safety and p <= pmax), f"Interpolation: p out of bounds. Must be between {pmin} and {pmax}."
 
     def distance_to_outer_boundary(self, y):
         p, e, x = self.get_pex(y)
@@ -394,7 +394,7 @@ class KerrEccEqFlux(ODEBase):
         else:
             u_min = 0.
 
-        return max(p_of_u_flux(u_min, p_sep), p_sep + self.separatrix_buffer_dist) + 1e-5
+        return max(p_of_u_flux(u_min, p_sep), p_sep + self.separatrix_buffer_dist)
 
     def _max_p(self, e, x, a):        
         return PMAX
@@ -457,12 +457,12 @@ class KerrEccEqFlux(ODEBase):
         self.isvalid_a(a)
         return [self._min_e(p, x, a), self._max_e(p, x, a)]
     
-    def isvalid_pex(self, p = 20, e = 0, x = 1, a = 0):
+    def isvalid_pex(self, p = 20, e = 0, x = 1, a = 0, p_safety=1e-6):
         self.isvalid_x(x)
         self.isvalid_e(e)
         self.isvalid_a(a)
         pmin, pmax = self.bounds_p(e, x, a)
-        assert (p >= pmin and p <= pmax), f"Interpolation: p out of bounds. Must be between {pmin} and {pmax}."
+        assert (p >= pmin - p_safety and p <= pmax), f"Interpolation: p {p} out of bounds. Must be between {pmin} and {pmax}."
 
     def interpolate_flux_grids(self, p: float, e: float, x: float = 1, a: float = 0, pLSO: Optional[float] = None) -> tuple[float]:
         if pLSO is None:

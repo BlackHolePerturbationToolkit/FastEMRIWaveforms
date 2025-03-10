@@ -29,18 +29,38 @@ class PN5(ODEBase):
     @property
     def separatrix_buffer_dist(self):
         return 0.1
-    
+
     def max_p(self, e, x, a):
         return float("inf")
     
     def min_p(self, e, x, a):
-        if np.abs(x) > 1:
-                raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
-        if np.abs(e) > 1:
-            raise ValueError("Interpolation: e out of bounds. Must be either 1 or -1.")
-        
-
         return get_separatrix(a,e,x) + self.separatrix_buffer_dist
+
+    def isvalid_x(self, x):
+        if np.any(np.abs(x) > 1):
+            raise ValueError("Y out of bounds. Must be between -1 and 1.")
+        
+    def isvalid_e(self, e):
+        if np.any(e > 1) or np.any(e < 0):
+            raise ValueError(f"e out of bounds. Must be between 0 and 1.")
+    
+    def isvalid_p(self, p):
+        if np.any(p < 1. + self.separatrix_buffer_dist):
+            raise ValueError(f"p out of bounds. Must be greater than {1 + self.separatrix_buffer_dist}.")
+    
+    def isvalid_a(self, a):
+        if np.any(np.abs(a) > 1):
+            raise ValueError(f"a out of bounds. Must be between -1 and 1.")
+
+    def bounds_p(self, e, x = 1, a = 0):
+        return [self.min_p(e, x, a), self.max_p(e, x, a)]
+
+    def isvalid_pex(self, p = 20, e = 0, x = 1, a = 0, p_safety=1e-6):
+        self.isvalid_x(x)
+        self.isvalid_e(e)
+        self.isvalid_a(a)
+        pmin, pmax = self.bounds_p(e, x, a)
+        assert (p >= pmin - p_safety and p <= pmax), f"Interpolation: p out of bounds. Must be between {pmin} and {pmax}."
 
     def evaluate_rhs(
         self, y: Union[list[float], np.ndarray]
