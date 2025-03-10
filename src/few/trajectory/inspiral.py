@@ -194,6 +194,8 @@ class EMRIInspiral(TrajectoryBase):
         e0 = y2
         x0 = y3
 
+        self.func.isvalid_pex(p=p0, e=e0, x=x0, a=a)
+
         if background == "Schwarzschild":
             a = 0.0
         elif a < fill_value:
