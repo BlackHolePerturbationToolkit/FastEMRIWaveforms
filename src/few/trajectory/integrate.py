@@ -416,13 +416,28 @@ class Integrate:
         self.traj_step = 0
 
     @property
+    def tolerance(self) -> float:
+        """Absolute tolerance of the integrator."""
+        return self.dopr.abstol
+    
+    @property
+    def dense_stepping(self) -> bool:
+        """If ``True``, trajectory is using fixed stepping."""
+        return self.dopr.fix_step
+
+    @property
+    def npoints(self) -> int:
+        """Number of points in the trajectory."""
+        return self.traj_step
+
+    @property
     def trajectory(self) -> np.ndarray:
         """Trajectory array."""
         return self.trajectory_arr[: self.traj_step]
 
     @property
     def integrator_t_cache(self) -> np.ndarray:
-        """Time array."""
+        """Spline coefficient time array."""
         return self._integrator_t_cache[: self.traj_step]
 
     @property
