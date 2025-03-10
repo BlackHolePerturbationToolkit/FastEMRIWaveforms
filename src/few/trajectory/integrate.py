@@ -35,7 +35,7 @@ from .ode import _STOCK_TRAJECTORY_OPTIONS
 from .dopr853 import DOPR853
 
 
-INNER_THRESHOLD = 1e-8
+INNER_THRESHOLD = 1e-10
 PERCENT_STEP = 0.25
 MAX_ITER = 1000
 
@@ -274,8 +274,9 @@ class Integrate:
         # run
         niter = 0
         while t < self.tmax_dimensionless:
-            if niter >= self.max_iter:
-                raise ValueError("Integration did not converge within max_iter.")
+            if not self.dopr.fix_step:
+                if niter >= self.max_iter:
+                    raise ValueError("Integration did not converge within max_iter.")
 
             try:
                 # take a step
@@ -574,7 +575,7 @@ class Integrate:
                 p_sep = get_separatrix(self.a, orb_params[1], orb_params[2])
             else:
                 p_sep = 6 + 2 * orb_params[1]
-            if (orb_params[0] - p_sep) < self.separatrix_buffer_dist - INNER_THRESHOLD:
+            if (orb_params[0] - p_sep) < self.separatrix_buffer_dist - 1e-6:
                 # Raise a warning
                 raise ValueError(
                     f"p_f is too close to separatrix. It must start above p_sep + {self.separatrix_buffer_dist}. Started at {orb_params[0]}, separatrix {p_sep}, starting p {orb_params[0]} should be larger than {p_sep + self.separatrix_buffer_dist - INNER_THRESHOLD}."
