@@ -23,6 +23,8 @@ from .elliptic import EllipK, EllipE, EllipPi
 from numba import njit, cuda
 from math import sqrt, pow, cos, acos
 
+from few.utils.exceptions import TrajectoryOffGridException
+
 from few.utils.globals import get_logger, get_first_backend
 
 from .constants import YRSID_SI, PI
@@ -308,7 +310,7 @@ def ELQ_to_pex(
         Tuple of (OmegaPhi, OmegaTheta, OmegaR). These are 1D arrays or scalar values depending on inputs.
     """
     # check if inputs are scalar or array
-    if isinstance(E, float):
+    if not hasattr(E, '__len__'):
         # get frequencies
         p, e, x = _ELQ_to_pex_kernel_inner(a, E, Lz, Q)
 
@@ -318,7 +320,7 @@ def ELQ_to_pex(
         Q_in = np.atleast_1d(Q)
 
         # cast the spin to the same size array as p
-        if isinstance(a, float):
+        if not hasattr(a, '__len__'):
             a_in = np.full_like(E_in, a)
         else:
             a_in = np.atleast_1d(a)
@@ -679,7 +681,7 @@ def get_fundamental_frequencies(
         import numpy as xp
 
     # check if inputs are scalar or array
-    if isinstance(p, float):
+    if not hasattr(p, '__len__'):
         OmegaPhi, OmegaTheta, OmegaR = _KerrGeoCoordinateFrequencies_kernel_inner(
             a, p, e, x
         )
@@ -689,7 +691,7 @@ def get_fundamental_frequencies(
         x_in = xp.atleast_1d(x)
 
         # cast the spin to the same size array as p
-        if isinstance(a, float):
+        if not hasattr(a, '__len__'):
             a_in = xp.full_like(p_in, a)
         else:
             a_in = xp.atleast_1d(a)
@@ -1046,7 +1048,7 @@ def get_fundamental_frequencies_spin_corrections(
     assert np.all(np.abs(x) == 1.0), "Currently only supported for equatorial orbits."
 
     # check if inputs are scalar or array
-    if isinstance(p, float):
+    if not hasattr(p, '__len__'):
         OmegaPhi, OmegaTheta, OmegaR = _KerrEqSpinFrequenciesCorrections_kernel_inner(
             a, p, e, x
         )
@@ -1056,7 +1058,7 @@ def get_fundamental_frequencies_spin_corrections(
         x_in = np.atleast_1d(x)
 
         # cast the spin to the same size array as p
-        if isinstance(a, float):
+        if not hasattr(a, '__len__'):
             a_in = np.full_like(p_in, a)
         else:
             a_in = np.atleast_1d(a)
@@ -1271,7 +1273,7 @@ def get_kerr_geo_constants_of_motion(
     """
 
     # check if inputs are scalar or array
-    if isinstance(p, float):
+    if not hasattr(p, '__len__'):
         E, L, Q = _KerrGeoConstantsOfMotion_kernel_inner(a, p, e, x)
     else:
         p_in = np.atleast_1d(p)
@@ -1279,7 +1281,7 @@ def get_kerr_geo_constants_of_motion(
         x_in = np.atleast_1d(x)
 
         # cast the spin to the same size array as p
-        if isinstance(a, float):
+        if not hasattr(a, '__len__'):
             a_in = np.full_like(p_in, a)
         else:
             a_in = np.atleast_1d(a)
@@ -1650,7 +1652,7 @@ def get_separatrix(
 
     """
     # determines shape of input
-    if isinstance(e, float) or isinstance(e, int):
+    if not hasattr(e, '__len__'):
         return _get_separatrix_kernel_inner(a, e, x, tol=tol)
 
     if use_gpu:
@@ -1660,21 +1662,16 @@ def get_separatrix(
 
     e_in = xp.atleast_1d(e)
 
-    if isinstance(x, float) or isinstance(x, int):
+    if not hasattr(x, '__len__'):
         x_in = xp.full_like(e_in, x)
     else:
         x_in = xp.atleast_1d(x)
 
     # cast spin values if necessary
-    if isinstance(a, float) or isinstance(a, int):
+    if not hasattr(a, '__len__'):
         a_in = xp.full_like(e_in, a)
     else:
         a_in = xp.atleast_1d(a)
-
-    if isinstance(x, float) or isinstance(x, int):
-        x_in = xp.full_like(e_in, x)
-    else:
-        x_in = xp.atleast_1d(x)
 
     assert len(a_in) == len(e_in) == len(x_in)
 
@@ -1845,15 +1842,22 @@ def get_p_at_t(
     # Prevent the rootfinder from starting at infinity
     if bounds[1] == float("inf"):
         bounds[1] = upper_bound_maximum
+
     # With the varying bounds of eccentricity used for KerrEccEqFlux, 
     # it is possible to have no solution within the bounds of the interpolants
-    # We now add a check to see if the bounds are valid
-    traj_pars = [traj_args[0],traj_args[1],traj_args[index_of_a], bounds[0],traj_args[index_of_e],traj_args[index_of_x]]
-    
-    t, p, e, xI, Phi_phi, Phi_theta, Phi_r = traj_module(*traj_pars, T=t_out*1.001)
-    if t[-1] >= t_out*YRSID_SI:
-        raise ValueError("No solution found within the bounds of the interpolants.")
-    
+    # It might also be possible for the trajectory to evolve off of the grid
+    while bounds[0] < bounds[1]:
+        try:
+            traj_pars = [traj_args[0],traj_args[1],traj_args[index_of_a], bounds[0],traj_args[index_of_e],traj_args[index_of_x]]
+            t, p, e, xI, Phi_phi, Phi_theta, Phi_r = traj_module(*traj_pars, T=t_out*1.001)
+            if t[-1] >= t_out*YRSID_SI:
+                raise ValueError("No solution found within the bounds of the interpolants.")
+            break
+        except TrajectoryOffGridException:
+            # Trajectory is off the grid
+            # Increase lower bound and try again
+            bounds[0] += 1e-2
+
     root = get_at_t(traj_module, traj_args, bounds, t_out, index_of_p, **kwargs)
     return root
 

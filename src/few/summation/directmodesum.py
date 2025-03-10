@@ -15,15 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# Necessary base classes
-from ..utils.baseclasses import (
-    SchwarzschildEccentric,
-    ParallelModuleBase,
-)
 from .base import SummationBase
 
-
-class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
+class DirectModeSum(SummationBase):
     """Create waveform by direct summation.
 
     This class sums the amplitude and phase information as received.
@@ -35,8 +29,6 @@ class DirectModeSum(SummationBase, SchwarzschildEccentric, ParallelModuleBase):
     """
 
     def __init__(self, *args, **kwargs):
-        ParallelModuleBase.__init__(self, *args, **kwargs)
-        SchwarzschildEccentric.__init__(self, *args, **kwargs)
         SummationBase.__init__(self, *args, **kwargs)
 
     @classmethod

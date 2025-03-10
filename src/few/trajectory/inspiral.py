@@ -124,6 +124,26 @@ class EMRIInspiral(TrajectoryBase):
         return [REFERENCE.KERR_SEPARATRIX] + super().module_references()
 
     @property
+    def npoints(self):
+        """Number of points in the trajectory."""
+        return self.inspiral_generator.npoints
+
+    @property
+    def tolerance(self) -> float:
+        """Absolute tolerance of the integrator."""
+        return self.inspiral_generator.npoints
+    
+    @property
+    def dense_stepping(self) -> bool:
+        """If ``True``, trajectory is using fixed stepping."""
+        return self.inspiral_generator.dense_stepping
+
+    @property
+    def integrate_backwards(self) -> bool:
+        """If ``True``, integrate backwards."""
+        return self.inspiral_generator.integrate_backwards
+
+    @property
     def trajectory(self):
         return self.inspiral_generator.trajectory
 

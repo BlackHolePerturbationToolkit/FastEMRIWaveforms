@@ -469,32 +469,29 @@ class SphericalHarmonicWaveformBase(
             self.num_modes_kept = teuk_modes_in.shape[1]
 
             # prepare phases for summation modules
-            if not self.inspiral_generator.inspiral_generator.dopr.fix_step:
+            if not self.inspiral_generator.dense_stepping:
                 # prepare phase spline coefficients
-                phase_spline_coeff = self.xp.asarray(
-                    self.inspiral_generator.inspiral_generator.integrator_spline_coeff
-                )  # TODO make these accessible from EMRIInspiral
-
-                # scale coefficients here by the mass ratio
-                phase_information_in = phase_spline_coeff[:, [3, 5], :] / (mu / M)
+                phase_information_in = self.xp.asarray(
+                    self.inspiral_generator.integrator_spline_phase_coeff
+                )[:, [0,2], :]
 
                 # flip azimuthal phase for retrograde inspirals
                 if a > 0:
                     phase_information_in[:, 0] *= self.xp.sign(xI0)
 
-                if self.inspiral_generator.inspiral_generator.integrate_backwards:
+                if self.inspiral_generator.integrate_backwards:
                     phase_information_in[:, :, 0] += self.xp.array(
                         [Phi_phi[-1] + Phi_phi[0], Phi_r[-1] + Phi_r[0]]
                     )
 
                 phase_t_in = (
-                    self.inspiral_generator.inspiral_generator.integrator_t_cache
+                    self.inspiral_generator.integrator_spline_t
                 )
             else:
                 phase_information_in = self.xp.asarray(
                     [Phi_phi_temp, Phi_theta_temp, Phi_r_temp]
                 )
-                if self.inspiral_generator.inspiral_generator.integrate_backwards:
+                if self.inspiral_generator.integrate_backwards:
                     phase_information_in[0] += self.xp.array([Phi_phi[-1] + Phi_phi[0]])
                     phase_information_in[1] += self.xp.array(
                         [Phi_theta[-1] + Phi_theta[0]]
@@ -525,7 +522,7 @@ class SphericalHarmonicWaveformBase(
                 dt=dt,
                 T=T,
                 include_minus_m=include_minus_m,
-                integrate_backwards=self.inspiral_generator.inspiral_generator.integrate_backwards,
+                integrate_backwards=self.inspiral_generator.integrate_backwards,
                 **kwargs,
             )
 
@@ -759,14 +756,14 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumMod
 
         # prepare phase spline coefficients
         traj_spline_coeff = self.xp.asarray(
-            self.inspiral_generator.inspiral_generator.integrator_spline_coeff
-        )  # TODO make these accessible from EMRIInspiral
+            self.inspiral_generator.integrator_spline_coeff
+        )
 
         # scale coefficients here by the mass ratio
         traj_spline_coeff_in = traj_spline_coeff.copy()
         traj_spline_coeff_in[:, 3:, :] /= mu / M
 
-        if self.inspiral_generator.inspiral_generator.integrate_backwards:
+        if self.inspiral_generator.integrate_backwards:
             traj_spline_coeff_in[:, 3:, 0] += self.xp.array(
                 [
                     Phi_phi[-1] + Phi_phi[0],
@@ -786,12 +783,12 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumMod
             qK,
             phiK,
             self.nmodes,
-            self.inspiral_generator.inspiral_generator.integrator_t_cache,
+            self.inspiral_generator.integrator_spline_t,
             traj_spline_coeff_in,
             mich=mich,
             dt=dt,
             T=T,
-            integrate_backwards=self.inspiral_generator.inspiral_generator.integrate_backwards,
+            integrate_backwards=self.inspiral_generator.integrate_backwards,
         )
 
         return waveform

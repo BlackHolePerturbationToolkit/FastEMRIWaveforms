@@ -35,7 +35,7 @@ from .ode import _STOCK_TRAJECTORY_OPTIONS
 from .dopr853 import DOPR853
 
 
-INNER_THRESHOLD = 1e-8
+INNER_THRESHOLD = 1e-10
 PERCENT_STEP = 0.25
 MAX_ITER = 1000
 
@@ -195,6 +195,48 @@ class Integrate:
         if self.bad_num >= 100:
             raise self.last_error
 
+    def tune_initial_step_size(self, t0: float, y0: np.ndarray, h_max: float) -> float:
+        """Tune the initial step size of the integrator if using adaptive stepping.
+
+        Adapted from SciPy: https://github.com/scipy/scipy/blob/main/scipy/integrate/_ivp/common.py#L68
+
+        Args:
+            t0: Initial time.
+            y0: Initial state.
+            h_max: Largest step size permitted.
+
+        Returns:
+            Initial step size.
+
+        """
+
+        # Initialize step size based on the problem's scale
+        scale = self.dopr.abstol
+        
+        f0 = self.func(y0)
+        interval_length = self.tmax_dimensionless - t0
+
+        d0 = np.linalg.norm(y0 / scale) / self.nparams**0.5
+        d1 = np.linalg.norm(f0 / scale) / self.nparams**0.5
+        
+        if d0 < 1e-5 or d1 < 1e-5:
+            h0 = 1e-6
+        else:
+            h0 = 0.01 * d0 / d1
+        
+        h0 = min(h0, interval_length)
+
+        y1 = y0 + h0 * f0
+        f1 = self.func(y1)
+        d2 = np.linalg.norm((f1 - f0) / scale) / h0 / self.nparams**0.5
+
+        if d1 <= 1e-15 and d2 <= 1e-15:
+            h1 = max(1e-6, h0 * 1e-3)
+        else:
+            h1 = (0.01 / max(d1, d2)) ** (1 / 8)
+
+        return min(100 * h0, h1, interval_length, h_max)
+
     def integrate(self, t0: float, y0: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """Integrate from (t0, y0).
 
@@ -212,16 +254,10 @@ class Integrate:
         t = t0
         h = self.dt_dimensionless
 
-        # Initialize step size based on the problem's scale
-        scale = self.dopr.abstol
-        
-        d0 = np.linalg.norm(y0 / scale)
-        d1 = np.linalg.norm(self.func(y0) / scale)
-        if d0 < 1e-5 or d1 < 1e-5:
-            h0 = 1e-6
-        else:
-            h0 = 0.01 * d0 / d1
-        h = h0
+        if not self.dopr.fix_step:
+            # we do not allow an initial step larger than ~10% of the interval to ensure there are a few steps taken
+            # this is necessary for later in waveform generation (computing cubic splines).
+            h = self.tune_initial_step_size(t0, y0, self.tmax_dimensionless / 10)
 
         t_prev = t0
         y_prev = y0.copy()
@@ -238,8 +274,9 @@ class Integrate:
         # run
         niter = 0
         while t < self.tmax_dimensionless:
-            if niter >= self.max_iter:
-                raise ValueError("Integration did not converge within max_iter.")
+            if not self.dopr.fix_step:
+                if niter >= self.max_iter:
+                    raise ValueError("Integration did not converge within max_iter.")
 
             try:
                 # take a step
@@ -379,13 +416,28 @@ class Integrate:
         self.traj_step = 0
 
     @property
+    def tolerance(self) -> float:
+        """Absolute tolerance of the integrator."""
+        return self.dopr.abstol
+    
+    @property
+    def dense_stepping(self) -> bool:
+        """If ``True``, trajectory is using fixed stepping."""
+        return self.dopr.fix_step
+
+    @property
+    def npoints(self) -> int:
+        """Number of points in the trajectory."""
+        return self.traj_step
+
+    @property
     def trajectory(self) -> np.ndarray:
         """Trajectory array."""
         return self.trajectory_arr[: self.traj_step]
 
     @property
     def integrator_t_cache(self) -> np.ndarray:
-        """Time array."""
+        """Spline coefficient time array."""
         return self._integrator_t_cache[: self.traj_step]
 
     @property
@@ -538,7 +590,7 @@ class Integrate:
                 p_sep = get_separatrix(self.a, orb_params[1], orb_params[2])
             else:
                 p_sep = 6 + 2 * orb_params[1]
-            if (orb_params[0] - p_sep) < self.separatrix_buffer_dist - INNER_THRESHOLD:
+            if (orb_params[0] - p_sep) < self.separatrix_buffer_dist - 1e-6:
                 # Raise a warning
                 raise ValueError(
                     f"p_f is too close to separatrix. It must start above p_sep + {self.separatrix_buffer_dist}. Started at {orb_params[0]}, separatrix {p_sep}, starting p {orb_params[0]} should be larger than {p_sep + self.separatrix_buffer_dist - INNER_THRESHOLD}."

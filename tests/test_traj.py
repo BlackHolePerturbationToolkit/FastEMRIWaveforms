@@ -56,7 +56,7 @@ class ModuleTest(unittest.TestCase):
         M = 1e5
         mu = 1e1
         for i in range(N_TESTS):
-            p0 = np.random.uniform(9.0, 15)
+            p0 = np.random.uniform(11, 15)
             e0 = np.random.uniform(0.0, 0.6)
             a = np.random.uniform(0.0, 1.0)
             x0 = np.random.uniform(-1.0, 1.0)

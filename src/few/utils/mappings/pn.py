@@ -187,7 +187,7 @@ def _PN_C(q, p, e, Y):
 
 @njit(fastmath=False)
 def _Y_to_xI_kernel_inner(a, p, e, Y):
-    if abs(Y) == 1:
+    if abs(Y) == 1 or Y == 0.0:
         return Y
 
     E = _PN_E(a, p, e, Y)
@@ -206,7 +206,11 @@ def _Y_to_xI_kernel_inner(a, p, e, Y):
 @njit
 def _Y_to_xI_kernel(xI, a, p, e, Y):
     for i in range(len(xI)):
-        xI[i] = _Y_to_xI_kernel_inner(a[i], p[i], e[i], Y[i])
+        Y_h = Y[i]
+        if Y_h != 0.:
+            xI[i] = _Y_to_xI_kernel_inner(a[i], p[i], e[i], Y_h)
+        else:
+            xI[i] = 0.
 
 
 def Y_to_xI(
@@ -237,7 +241,7 @@ def Y_to_xI(
     """
 
     # determines shape of input
-    if isinstance(e, float):
+    if not hasattr(p, "__len__"):
         x = _Y_to_xI_kernel_inner(a, p, e, Y)
     else:
         p_in = np.atleast_1d(p)
@@ -245,7 +249,7 @@ def Y_to_xI(
         Y_in = np.atleast_1d(Y)
 
         # cast spin values if necessary
-        if isinstance(a, float):
+        if not hasattr(a, "__len__"):
             a_in = np.full_like(e_in, a)
         else:
             a_in = np.atleast_1d(a)
