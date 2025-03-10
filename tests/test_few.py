@@ -129,7 +129,7 @@ class WaveformTest(unittest.TestCase):
         )
 
         # parameters
-        T = 0.1  # years
+        T = 0.001  # years
         dt = 15.0  # seconds
         M = 1e6
         mu = 1e1

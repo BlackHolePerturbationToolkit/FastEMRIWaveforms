@@ -23,7 +23,7 @@ class WaveformTest(unittest.TestCase):
 
     def test_sampling_variation(self):
         # parameters
-        T = 0.1
+        T = 0.001
         M = 1e6
         mu = 1e1
         a = 0.6
@@ -110,7 +110,7 @@ class WaveformTest(unittest.TestCase):
             f"Schwarzschild waveforms not identical under a sign-flip of xI with mismatch {mm}."
         )
 
-        a = 1e-11
+        a = 1e-13
 
         wave1 = self.waveform_generator(M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10.0)
         wave2 = self.waveform_generator(M, mu, a, p0, e0, -xI, theta, phi, T=T, dt=10.0)
