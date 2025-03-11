@@ -10,6 +10,7 @@ from few.utils.mappings.kerrecceq import (_kerrecceq_flux_forward_map,
                                 p_of_u_flux, 
                                 u_where_w_is_unity, 
                                 u_of_p_flux,
+                                DELTAPMIN,
                                 EMAX,
                                 PMAX_REGIONB,
                                 AMAX)
@@ -26,8 +27,8 @@ from typing import Union, Optional
 import numpy as np
 from math import pow, log
 
-PMAX = PMAX_REGIONB - 1e-5
-PISCO_MIN = get_separatrix(AMAX, 0, 1) + 1e-5
+PMAX = PMAX_REGIONB
+PISCO_MIN = get_separatrix(AMAX, 0, 1)
 
 PISCO_MIN_SCHW = get_separatrix(0, 0, 1) + 1e-5
 PMAX_SCHW = np.exp(3.817712325956905) + 2.1
@@ -90,13 +91,17 @@ class SchwarzEccFlux(ODEBase):
         if np.any(x != 1):
             raise ValueError("Interpolation: x out of bounds. Must be 1.")
         
-    def isvalid_e(self, e):
-        if np.any(e > EMAX_SCHW) or np.any(e < 0):
-            raise ValueError(f"Interpolation: e out of bounds. Must be between 0 and {EMAX_SCHW}.")
+    def isvalid_e(self, e, e_buffer=[0,0]):
+        emax = EMAX_SCHW - e_buffer[1]
+        emin = e_buffer[0]
+        if np.any(e > emax) or np.any(e < emin):
+            raise ValueError(f"Interpolation: e out of bounds. Must be between {emin} and {emax}.")
     
-    def isvalid_p(self, p):
-        if np.any(p > PMAX) or np.any(p < PISCO_MIN_SCHW + self.separatrix_buffer_dist):
-            raise ValueError(f"Interpolation: p out of bounds. Must be between {PISCO_MIN_SCHW + self.separatrix_buffer_dist} and {PMAX}.")
+    def isvalid_p(self, p, p_buffer=[0,0]):
+        pmax = PMAX_SCHW - p_buffer[1]
+        pmin = PISCO_MIN_SCHW + self.separatrix_buffer_dist + p_buffer[0]
+        if np.any(p > pmax) or np.any(p < pmin):
+            raise ValueError(f"Interpolation: p out of bounds. Must be between {pmin} and {pmax}.")
     
     def isvalid_a(self, a):
         if np.any(a != 0.0):
@@ -108,15 +113,15 @@ class SchwarzEccFlux(ODEBase):
     def max_p(self, e, x = 1, a = 0):
         return PMAX_SCHW + 2.0 * e
     
-    def bounds_p(self, e, x = 1, a = 0):
-        return [self.min_p(e, x, a), self.max_p(e, x, a)]
+    def bounds_p(self, e, x = 1, a = 0, p_buffer=[0,0]):
+        return [self.min_p(e, x, a) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
 
-    def isvalid_pex(self, p = 20, e = 0, x = 1, a = 0, p_safety=1e-6):
+    def isvalid_pex(self, p = 20, e = 0, x = 1, a = 0, p_buffer=[0, 0], e_buffer=[0,0]):
         self.isvalid_x(x)
-        self.isvalid_e(e)
+        self.isvalid_e(e, e_buffer=e_buffer)
         self.isvalid_a(a)
-        pmin, pmax = self.bounds_p(e, x, a)
-        assert (p >= pmin - p_safety and p <= pmax), f"Interpolation: p out of bounds. Must be between {pmin} and {pmax}."
+        pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer)
+        assert (p >= pmin and p <= pmax), f"Interpolation: p out of bounds. Must be between {pmin + p_buffer[0]} and {pmax - p_buffer[1]}."
 
     def distance_to_outer_boundary(self, y):
         p, e, x = self.get_pex(y)
@@ -358,7 +363,11 @@ class KerrEccEqFlux(ODEBase):
 
     @property
     def separatrix_buffer_dist(self):
-        return 2e-3
+        return 2*DELTAPMIN
+    
+    @property
+    def separatrix_buffer_dist_grid(self):
+        return DELTAPMIN
 
     @property
     def supports_ELQ(self):
@@ -368,17 +377,23 @@ class KerrEccEqFlux(ODEBase):
         if np.any(np.abs(x) != 1):
             raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
         
-    def isvalid_e(self, e):
-        if np.any(e > EMAX) or np.any(e < 0):
-            raise ValueError(f"Interpolation: e out of bounds. Must be between 0 and {EMAX}.")
+    def isvalid_e(self, e, e_buffer=[0,0]):
+        emax = EMAX - e_buffer[1]
+        emin = e_buffer[0]
+        if np.any(e > emax) or np.any(e < emin):
+            raise ValueError(f"Interpolation: e out of bounds. Must be between {emin} and {emax}.")
     
-    def isvalid_p(self, p):
-        if np.any(p > PMAX) or np.any(p < PISCO_MIN + self.separatrix_buffer_dist):
-            raise ValueError(f"Interpolation: p out of bounds. Must be between {PISCO_MIN + self.separatrix_buffer_dist} and {PMAX}.")
+    def isvalid_p(self, p, p_buffer=[0,0]):
+        pmax = PMAX - p_buffer[1]
+        pmin = PISCO_MIN + self.separatrix_buffer_dist_grid + p_buffer[0]
+        if np.any(p > pmax) or np.any(p < pmin):
+            raise ValueError(f"Interpolation: p out of bounds. Must be between {pmin} and {pmax}.")
     
-    def isvalid_a(self, a):
-        if np.any(np.abs(a) > AMAX):
-            raise ValueError(f"Interpolation: a out of bounds. Must be between {-AMAX} and {AMAX}.")
+    def isvalid_a(self, a, a_buffer=[0,0]):
+        amax = AMAX - a_buffer[1]
+        amin = -AMAX + a_buffer[0]
+        if np.any(a > amax) or np.any(a < amin):
+            raise ValueError(f"Interpolation: a out of bounds. Must be between {amin} and {amax}.")
 
     def _min_p(self, e, x, a):
         if x == -1:
@@ -394,7 +409,7 @@ class KerrEccEqFlux(ODEBase):
         else:
             u_min = 0.
 
-        return max(p_of_u_flux(u_min, p_sep), p_sep + self.separatrix_buffer_dist)
+        return max(p_of_u_flux(u_min, p_sep), p_sep + self.separatrix_buffer_dist_grid)
 
     def _max_p(self, e, x, a):        
         return PMAX
@@ -445,28 +460,54 @@ class KerrEccEqFlux(ODEBase):
         self.isvalid_a(a)
         return self._max_e(p, x, a)
     
-    def bounds_p(self, e = 0, x = 1, a = 0):
+    def _min_a(self, p, e, x):
+        return -AMAX
+    
+    def _max_a(self, p, e, x):
+        return AMAX
+    
+    def min_a(self, p = 20, e = 0, x = 1):
+        self.isvalid_x(x)
+        self.isvalid_p(p)
+        self.isvalid_e(e)
+        return self._min_a(p,e,x)
+    
+    def max_a(self, p = 20, e = 0, x = 1):
+        self.isvalid_x(x)
+        self.isvalid_p(p)
+        self.isvalid_e(e)
+        return self._max_a(p,e,x)
+    
+    def bounds_a(self, p = 20, e = 0, x = 1, a_buffer = [0,0]):
+        self.isvalid_x(x)
+        self.isvalid_p(p)
+        self.isvalid_e(e)
+        return [self._min_a(p, e, x) + a_buffer[0], self._max_a(p, e, x) - a_buffer[1]]
+    
+    def bounds_p(self, e = 0, x = 1, a = 0, p_buffer = [0,0]):
         self.isvalid_x(x)
         self.isvalid_e(e)
         self.isvalid_a(a)
-        return [self._min_p(e, x, a), self._max_p(e, x, a)]
+        return [self._min_p(e, x, a) + p_buffer[0], self._max_p(e, x, a) - p_buffer[1]]
     
-    def bounds_e(self, p = 20, x = 1, a = 0):
+    def bounds_e(self, p = 20, x = 1, a = 0, e_buffer = [0,0]):
         self.isvalid_x(x)
         self.isvalid_p(p)
         self.isvalid_a(a)
-        return [self._min_e(p, x, a), self._max_e(p, x, a)]
+        return [self._min_e(p, x, a) + e_buffer[0], self._max_e(p, x, a) - e_buffer[1]]
     
-    def isvalid_pex(self, p = 20, e = 0, x = 1, a = 0, p_safety=1e-6):
+    def isvalid_pex(self, p = 20, e = 0, x = 1, a = 0, p_buffer = [0,0], e_buffer=[0,0], a_buffer=[0,0]):
         self.isvalid_x(x)
-        self.isvalid_e(e)
-        self.isvalid_a(a)
-        pmin, pmax = self.bounds_p(e, x, a)
-        assert (p >= pmin - p_safety and p <= pmax), f"Interpolation: p {p} out of bounds. Must be between {pmin} and {pmax}."
+        self.isvalid_e(e, e_buffer=e_buffer)
+        self.isvalid_a(a, a_buffer=a_buffer)
+        pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer)
+        assert (p >= pmin and p <= pmax), f"Interpolation: p {p} out of bounds. Must be between {pmin} and {pmax}."
 
     def interpolate_flux_grids(self, p: float, e: float, x: float = 1, a: float = 0, pLSO: Optional[float] = None) -> tuple[float]:
         if pLSO is None:
             pLSO = get_separatrix(a, e, x)
+
+        edge_buffer = -1e-8
 
         # handle xI = -1 case
         if x == -1:
@@ -478,17 +519,17 @@ class KerrEccEqFlux(ODEBase):
             a_in, p, e, 1.0, pLSO
         )
         
-        if u < 0 or u > 1 + 1e-8 or np.isnan(u):
+        if u < edge_buffer or u > 1 - edge_buffer or np.isnan(u):
             raise ValueError("Interpolation: p out of bounds.")
-        if w < 0:
+        if w < edge_buffer:
             raise TrajectoryOffGridException("Interpolation: e out of bounds.")
-        if w > 1 + 1e-8:
+        if w > 1 - edge_buffer:
             if self.integrate_backwards:
                 raise ValueError("Interpolation: e out of bounds.")
             else:
                 raise TrajectoryOffGridException("Interpolation: e out of bounds.")
 
-        if z < 0 or z > 1 + 1e-8:
+        if z < edge_buffer or z > 1 - edge_buffer:
             raise TrajectoryOffGridException("Interpolation: a out of bounds.")
 
         if self.flux_output_convention == "ELQ":
