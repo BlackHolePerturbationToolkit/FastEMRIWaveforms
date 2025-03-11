@@ -385,7 +385,7 @@ class KerrEccEqFlux(ODEBase):
     
     def isvalid_p(self, p, p_buffer=[0,0]):
         pmax = PMAX - p_buffer[1]
-        pmin = PISCO_MIN + self.separatrix_buffer_dist_grid + p_buffer[0]
+        pmin = PISCO_MIN + self.separatrix_buffer_dist + p_buffer[0]
         if np.any(p > pmax) or np.any(p < pmin):
             raise ValueError(f"Interpolation: p out of bounds. Must be between {pmin} and {pmax}.")
     
