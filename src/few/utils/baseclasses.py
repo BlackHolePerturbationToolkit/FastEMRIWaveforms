@@ -351,7 +351,15 @@ class SphericalHarmonic(ParallelModuleBase):
                 self.special_index_map_arr[l, m, n] = sp_i
             else:
                 self.special_index_map[(l, m, -n)] = sp_i
-                self.special_index_map_arr[l, m, -n] = sp_i      
+                self.special_index_map_arr[l, m, -n] = sp_i
+
+        # TODO make this more efficient
+        # mode indices for all positive m-modes
+        self.mode_indexes = self.xp.linspace(0, self.num_teuk_modes-1, self.num_teuk_modes, dtype=int) 
+        # mode indices for all negative m-modes
+        self.negative_mode_indexes = self.xp.linspace(0, self.num_teuk_modes-1, self.num_teuk_modes, dtype=int)
+        for i, (l, m, n) in enumerate(zip(self.l_arr_no_mask, self.m_arr_no_mask, self.n_arr_no_mask)):
+            self.negative_mode_indexes[i] = self.special_index_map[(l, -m, n)]
 
     def sanity_check_viewing_angles(self, theta: float, phi: float):
         """Sanity check on viewing angles.
@@ -401,8 +409,8 @@ class SphericalHarmonic(ParallelModuleBase):
         if np.any(p < 0.0):
             raise ValueError("Members of p array are less than zero.")
 
-        if np.any((a < 0.0) | (a > 1.0)):
-            raise ValueError("Members of a array are not within the range [0, 1].")
+        if np.any(abs(a) > 1.0):
+            raise ValueError("Members of a array have a magnitude greater than one.")
 
         if np.any(abs(xI) > 1.0):
             raise ValueError("Members of xI array have a magnitude greater than one.")
@@ -587,10 +595,10 @@ class KerrEccentricEquatorial(SphericalHarmonic):
             if test:
                 raise ValueError("{} is negative. It must be positive.".format(key))
 
-        if a < 0:
+        if xI < 0:
             # flip convention
             get_logger().warning(
-                "Negative spin magnitude detected. Flipping sign of a and xI to match convention."
+                "Negative inclination detected. Flipping sign of a and xI to match convention."
             )
             a = -a
             xI = -xI

@@ -180,12 +180,12 @@ class ODEBase:
         Trajectory models implementing their own interpolants should override this function to return the minimum value
         corresponding to the precomputed grid boundaries. 
 
-        By default, this function assumes things are rectilinear and returns `p_sep + self.separatrix_buffer_dist`.
+        By default, this function assumes minimal eccentricity corresponds to circular orbits and returns 0.
         """
         if isinstance(p, float):
             return 0
         else:
-            return np.full_like(p, 0)
+            return np.zeros_like(p)
 
     def max_e(
         self, p: Union[float, np.ndarray], x: Union[float, np.ndarray] = 1, a: Optional[Union[float, np.ndarray]] = 0
@@ -195,7 +195,7 @@ class ODEBase:
         Trajectory models implementing their own interpolants should override this function to return the minimum value
         corresponding to the precomputed grid boundaries. 
 
-        By default, this function assumes things are rectilinear and returns `p_sep + self.separatrix_buffer_dist`.
+        By default, this function assumes no orbital bounds on eccentricity and returns np.inf.
         """
         if isinstance(p, float):
             return np.inf

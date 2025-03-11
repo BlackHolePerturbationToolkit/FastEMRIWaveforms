@@ -29,18 +29,45 @@ class PN5(ODEBase):
     @property
     def separatrix_buffer_dist(self):
         return 0.1
-    
+
     def max_p(self, e, x, a):
         return float("inf")
     
     def min_p(self, e, x, a):
-        if np.abs(x) > 1:
-                raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
-        if np.abs(e) > 1:
-            raise ValueError("Interpolation: e out of bounds. Must be either 1 or -1.")
-        
-
         return get_separatrix(a,e,x) + self.separatrix_buffer_dist
+
+    def isvalid_x(self, x, x_buffer = [0,0]):
+        xmin = -1 + x_buffer[0]
+        xmax = 1 - x_buffer[1]
+        if np.any(x < xmin) or np.any(x > xmax):
+            raise ValueError(f"X out of bounds. Must be between {xmin} and {xmax}.")
+        
+    def isvalid_e(self, e, e_buffer = [0,0]):
+        emin = 0 + e_buffer[0]
+        emax = 1 - e_buffer[1]
+        if np.any(e < emin) or np.any(e > emax):
+            raise ValueError(f"e out of bounds. Must be between {emin} and {emax}.")
+    
+    def isvalid_p(self, p, p_buffer = [0,0]):
+        pmin = 1 + self.separatrix_buffer_dist + p_buffer[0]
+        if np.any(p < pmin):
+            raise ValueError(f"p out of bounds. Must be greater than {pmin}.")
+    
+    def isvalid_a(self, a, a_buffer = [0,0]):
+        amin = -1 + a_buffer[0]
+        amax = 1 - a_buffer[1]
+        if np.any(a < amin) or np.any(a > amax):
+            raise ValueError(f"a out of bounds. Must be between {amin} and {amax}.")
+
+    def bounds_p(self, e, x = 1, a = 0, p_buffer=[0,0]):
+        return [self.min_p(e, x, a) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
+
+    def isvalid_pex(self, p = 20, e = 0, x = 1, a = 0, p_buffer=[0,0], e_buffer=[0,0], x_buffer=[0,0], a_buffer=[0,0]):
+        self.isvalid_x(x, x_buffer=x_buffer)
+        self.isvalid_e(e, e_buffer=e_buffer)
+        self.isvalid_a(a, a_buffer=a_buffer)
+        pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer)
+        assert (p >= pmin and p <= pmax), f"Interpolation: p out of bounds. Must be between {pmin} and {pmax}."
 
     def evaluate_rhs(
         self, y: Union[list[float], np.ndarray]

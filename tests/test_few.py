@@ -133,7 +133,7 @@ class WaveformTest(unittest.TestCase):
         dt = 15.0  # seconds
         M = 1e6
         mu = 1e1
-        p0 = 8.0
+        p0 = 7.0
         e0 = 0.2
         theta = np.pi / 3  # polar viewing angle
         phi = np.pi / 4  # azimuthal viewing angle

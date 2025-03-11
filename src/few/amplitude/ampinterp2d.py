@@ -367,35 +367,50 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
 
         # prograde: spin pos, xI pos
         # retrograde: spin pos, xI neg - >  spin neg, xI pos
-        assert isinstance(a, float)
+        # assert isinstance(a, float)
 
         try:
+            a = a.get()
             p = p.get()
             e = e.get()
             xI = xI.get()
         except AttributeError:
             pass
 
+        a = np.atleast_1d(a)
         p = np.atleast_1d(p)
         e = np.atleast_1d(e)
         xI = np.atleast_1d(xI)
 
-        assert np.all(xI == 1.0) or np.all(
-            xI == -1.0
+        lengths = [len(arr) for arr in (a, p, e, xI)]
+        non_one_lengths = {l for l in lengths if l > 1}  # Collect lengths greater than 1
+    
+        assert len(non_one_lengths) <= 1, f"Arrays must be length one or, if larger, have the same length. Found lengths: {lengths}"
+
+        assert np.all(a*xI <= 0.0) or np.all(
+            a*xI >= 0.0
         )  # either all prograde or all retrograde
+        assert np.all(np.abs(xI) == 1.0) # all equatorial
+
+        # symmetry of flipping the sign of the spin to keep xI positive
+        if np.all(xI < 0.0):
+            m_mode_sign = -1
+        else:
+            m_mode_sign = 1
+
         xI_in = np.ones_like(p) * xI
 
-        signed_spin = a * xI_in[0].item()
+        signed_spin = a * xI_in
         a_in = np.full_like(p, signed_spin)
         xI_in = np.abs(xI_in)
 
         if specific_modes is not None:
             self.num_modes_eval = len(specific_modes)
-            if isinstance(specific_modes, list):
+            if isinstance(specific_modes, (list, self.xp.ndarray)):
                 specific_modes_arr = self.xp.asarray(specific_modes)
                 mode_indexes = self.special_index_map_arr[
                     specific_modes_arr[:, 0],
-                    specific_modes_arr[:, 1],
+                    m_mode_sign*specific_modes_arr[:, 1],
                     specific_modes_arr[:, 2],
                 ]
                 if self.xp.any(mode_indexes == -1):
@@ -408,7 +423,10 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
             else:
                 mode_indexes = specific_modes
         else:
-            mode_indexes = self.xp.arange(self.num_teuk_modes)
+            if m_mode_sign < 0:
+                mode_indexes = self.negative_mode_indexes
+            else:
+                mode_indexes = self.mode_indexes
             self.num_modes_eval = self.num_teuk_modes
 
         u, w, y, z, region_mask = kerrecceq_forward_map(
@@ -432,7 +450,7 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
         if z_check in self.z_values:
             ind_1 = np.where(self.z_values == z_check)[0][0]
 
-            z = self.evaluate_interpolant_at_index(
+            Amp_z = self.evaluate_interpolant_at_index(
                 ind_1, region_mask, w, u, mode_indexes=mode_indexes
             )
 
@@ -452,23 +470,46 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
                 ind_below, region_mask, w, u, mode_indexes
             )
 
-            z = ((Amp_above - Amp_below) / (z_above - z_below)) * (
+            Amp_z = ((Amp_above - Amp_below) / (z_above - z_below)) * (
                 z_check - z_below
             ) + Amp_below
 
-        if not isinstance(specific_modes, list):
-            return z
+        if not isinstance(specific_modes, (list, self.xp.ndarray)):
+            # apply xI flip symmetry
+            if m_mode_sign < 0:
+                # this requires a sign flip of the m mode because the default is to return only m > 0 modes
+                return self.xp.conj(Amp_z)
+            return Amp_z
 
+        elif isinstance(specific_modes, self.xp.ndarray):
+            temp = {}
+            for i, lmn in enumerate(specific_modes):
+                l, m, n = lmn
+                temp[(l,m,n)] = Amp_z[:, i]
+
+                # apply xI flip symmetry
+                if m_mode_sign < 0:
+                    temp[(l,m,n)] = (-1)**l * temp[(l,m,n)]
+
+                # apply +/- m symmetry
+                if m_mode_sign*m < 0:
+                    temp[(l,m,n)] = (-1)**l * self.xp.conj(temp[(l,m,n)])
+
+            return temp
         # dict containing requested modes
         else:
             temp = {}
             for i, lmn in enumerate(specific_modes):
-                temp[lmn] = z[:, i]
+                temp[lmn] = Amp_z[:, i]
                 l, m, n = lmn
 
+                # apply xI flip symmetry
+                if m_mode_sign < 0:
+                    temp[lmn] = (-1)**l * temp[lmn]
+
                 # apply +/- m symmetry
-                if m < 0:
-                    temp[lmn] = (-1) ** l * self.xp.conj(temp[lmn])
+                if m_mode_sign*m < 0:
+                    temp[lmn] = (-1)**l * self.xp.conj(temp[lmn])
 
             return temp
 
