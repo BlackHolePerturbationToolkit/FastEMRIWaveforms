@@ -628,7 +628,9 @@ def _KerrGeoCoordinateFrequencies_kernel_inner(a, p, e, x):
             UpsilonPhi = x*UpsilonPhi
         return UpsilonPhi / Gamma, UpsilonTheta / Gamma, UpsilonR / Gamma
     else:
-        return _SchwarzschildGeoCoordinateFrequencies_kernel(p, e)
+        sgnx = 1 if x > 0 else -1
+        OmegaPhi, OmegaPhi, OmegaR = _SchwarzschildGeoCoordinateFrequencies_kernel(p, e)
+        return sgnx*OmegaPhi, OmegaPhi, OmegaR
 
 
 @njit(fastmath=False)
