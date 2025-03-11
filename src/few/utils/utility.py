@@ -611,7 +611,7 @@ def _KerrGeoEquatorialMinoFrequencies_kernel(a, p, e, x):
 
 @njit(fastmath=False)
 def _KerrGeoCoordinateFrequencies_kernel_inner(a, p, e, x):
-    if a > 0:
+    if a != 0:
         if e > 0 or abs(x) < 1:
             if abs(x) < 1:
                 Gamma, UpsilonPhi, UpsilonTheta, UpsilonR = (
