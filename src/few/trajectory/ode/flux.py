@@ -409,7 +409,7 @@ class KerrEccEqFlux(ODEBase):
         else:
             u_min = 0.
 
-        return max(p_of_u_flux(u_min, p_sep), p_sep + self.separatrix_buffer_dist_grid)
+        return max(p_of_u_flux(u_min, p_sep), p_sep + self.separatrix_buffer_dist)
 
     def _max_p(self, e, x, a):        
         return PMAX
