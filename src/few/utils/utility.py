@@ -438,7 +438,7 @@ def _KerrGeoMinoFrequencies_kernel(a, p, e, x):
             )
         )
     )
-    return CapitalGamma, CapitalUpsilonPhi, CapitalUpsilonTheta, CapitalUpsilonR
+    return CapitalGamma, CapitalUpsilonPhi, abs(CapitalUpsilonTheta), CapitalUpsilonR
 
 
 @njit(fastmath=False)
@@ -623,8 +623,9 @@ def _KerrGeoCoordinateFrequencies_kernel_inner(a, p, e, x):
                 )
         else:
             Gamma, UpsilonPhi, UpsilonTheta, UpsilonR = (
-                _KerrCircularMinoFrequencies_kernel(a, p)
+                _KerrCircularMinoFrequencies_kernel(a*x, p)
             )
+            UpsilonPhi = x*UpsilonPhi
         return UpsilonPhi / Gamma, UpsilonTheta / Gamma, UpsilonR / Gamma
     else:
         return _SchwarzschildGeoCoordinateFrequencies_kernel(p, e)
@@ -1130,6 +1131,7 @@ def _ddot(r, a, zm):
 @njit(fastmath=False)
 def _KerrGeoEnergy(a, p, e, x):
     zm = sqrt(1.0 - x * x)
+    sgnax = 1 if a*x > 0 else -1
     if (
         e < 1e-10
     ):  # switch to spherical formulas A13-A17 (2102.02713) to avoid instability
@@ -1153,7 +1155,7 @@ def _KerrGeoEnergy(a, p, e, x):
                 -3
                 - (e * e)
                 + p
-                - x
+                - sgnax
                 * 2
                 * sqrt(
                     (
@@ -1187,7 +1189,7 @@ def _KerrGeoEnergy(a, p, e, x):
         (
             Kappa * Rho
             + 2.0 * Epsilon * Sigma
-            - x
+            - sgnax
             * 2.0
             * sqrt(
                 Sigma
@@ -1196,7 +1198,6 @@ def _KerrGeoEnergy(a, p, e, x):
                     + Rho * Epsilon * Kappa
                     - Eta * Kappa * Kappa
                 )
-                / (x * x)
             )
         )
         / (Rho * Rho + 4.0 * Eta * Sigma)
@@ -1209,15 +1210,16 @@ def _KerrGeoAngularMomentum(a, p, e, x, En):
 
     zm = sqrt(1 - (x * x))
 
+    sgnx = 1 if x > 0 else -1
+
     return (
         -En * _g(r1, a, zm)
-        + x
-        * sqrt(
+        + sgnx *
+        sqrt(
             (
                 -_d(r1, a, zm) * _h(r1, a, zm)
                 + (En * En) * (pow(_g(r1, a, zm), 2) + _f(r1, a, zm) * _h(r1, a, zm))
             )
-            / (x * x)
         )
     ) / _h(r1, a, zm)
 
