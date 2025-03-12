@@ -124,6 +124,26 @@ class EMRIInspiral(TrajectoryBase):
         return [REFERENCE.KERR_SEPARATRIX] + super().module_references()
 
     @property
+    def npoints(self):
+        """Number of points in the trajectory."""
+        return self.inspiral_generator.npoints
+
+    @property
+    def tolerance(self) -> float:
+        """Absolute tolerance of the integrator."""
+        return self.inspiral_generator.npoints
+    
+    @property
+    def dense_stepping(self) -> bool:
+        """If ``True``, trajectory is using fixed stepping."""
+        return self.inspiral_generator.dense_stepping
+
+    @property
+    def integrate_backwards(self) -> bool:
+        """If ``True``, integrate backwards."""
+        return self.inspiral_generator.integrate_backwards
+
+    @property
     def trajectory(self):
         return self.inspiral_generator.trajectory
 
@@ -183,6 +203,14 @@ class EMRIInspiral(TrajectoryBase):
 
         """
 
+        # transfer kwargs from parent class
+        temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
+        args_in = np.asarray(args)
+
+        # correct for issue in Cython pass
+        if len(args_in) == 0:
+            args_in = np.array([0.0])
+
         fill_value = 1e-6
 
         # fix for specific requirements of different odes
@@ -193,6 +221,11 @@ class EMRIInspiral(TrajectoryBase):
         p0 = y1
         e0 = y2
         x0 = y3
+
+        if temp_kwargs["integrate_backwards"]:
+            self.func.isvalid_pex(p=p0, e=e0, x=x0, a=a, p_buffer=[-1e-6,0])
+        else:
+            self.func.isvalid_pex(p=p0, e=e0, x=x0, a=a)
 
         if background == "Schwarzschild":
             a = 0.0
@@ -220,14 +253,6 @@ class EMRIInspiral(TrajectoryBase):
             if self.inspiral_generator.convert_Y:
                 x0 = Y_to_xI(a, p0, e0, x0)
             y1, y2, y3 = get_kerr_geo_constants_of_motion(a, p0, e0, x0)
-
-        # transfer kwargs from parent class
-        temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
-        args_in = np.asarray(args)
-
-        # correct for issue in Cython pass
-        if len(args_in) == 0:
-            args_in = np.array([0.0])
 
         # flip initial phases if integrating backwards
         if temp_kwargs["integrate_backwards"]:

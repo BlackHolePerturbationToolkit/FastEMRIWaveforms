@@ -421,8 +421,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
                 (self.xp.arange(-(Len // 2), 0), self.xp.arange(0, (Len - 1) // 2 + 1))
             ) / (Len * dt)
 
-        self.frequency
-        """np.ndarray: Frequency array for the waveform."""
+
 
         # make sure there is one value of frequency at 0.0
         assert 1 == np.sum(self.frequency == 0.0)

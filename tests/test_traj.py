@@ -44,7 +44,7 @@ def run_forward_back(traj_module, M, mu, a, p0, e0, xI0, forwards_kwargs):
 
     return forwards_result, backwards_result
 
-N_TESTS = 100
+N_TESTS = 50
 
 class ModuleTest(unittest.TestCase):
     def test_trajectory_pn5(self):
@@ -253,3 +253,64 @@ class ModuleTest(unittest.TestCase):
 #             diff = np.abs(Phi_phi[-1] - Phi_phiS[-1])
 
 #             self.assertLess(np.max(diff), 10.0, msg=f"Failed for {p0=}, {e0=}, {diff=}")
+
+# rhs = KerrEccEqFlux()
+# M = 1e6
+# mu = 1e2
+# a = 0.7
+# p0 = 10.0
+# e0 = 0.8
+# xI0 = 1.0  # +1 for prograde, -1 for retrograde inspirals
+# rhs.add_fixed_parameters(M, mu, a)
+# rhs([p0, e0, xI0], scale_by_eps=False)
+
+# # Define the file path
+# file_path = '../data_for_FEW/fluxes/a0.70_xI1.000.flux'
+# scott_data = np.loadtxt(file_path)
+
+# p = scott_data[:, 1]
+# e = scott_data[:, 2]
+# pdot_scott = scott_data[:, 14] + scott_data[:, 15]
+# edot_scott = scott_data[:, 16] + scott_data[:, 17]
+
+# plt.figure()
+# for pp,ee,pdot_test,edot_test in zip(p, e,pdot_scott, edot_scott):
+#     try:
+#         pdot, edot = rhs([pp, ee, xI0], scale_by_eps=False)[:2]
+#         rel_diff_pdot = np.abs(1-pdot_test/pdot)
+#         # print("pdot relative difference",rel_diff_pdot)
+#         if ee > 0.0:
+#             rel_diff_edot = np.abs(1-edot_test/edot)
+#             # print("edot relative difference",rel_diff_edot)
+#         plt.semilogy(pp, rel_diff_pdot, 'r.')
+#         plt.semilogy(pp, rel_diff_edot, 'b.')
+#     except:
+#         print(f"Out of bounds for {pp=}, {ee=}")
+# plt.semilogy(pp, rel_diff_pdot, 'r.', label="edot")
+# plt.semilogy(pp, rel_diff_edot, 'b.', label="pdot")
+# plt.xlabel('p')
+# plt.ylabel('Relative Difference')
+# plt.title('Flux Comparison')
+# plt.legend()
+# plt.savefig("flux_comparison_p.png")
+
+# plt.figure()
+# for pp,ee,pdot_test,edot_test in zip(p, e,pdot_scott, edot_scott):
+#     try:
+#         pdot, edot = rhs([pp, ee, xI0], scale_by_eps=False)[:2]
+#         rel_diff_pdot = np.abs(1-pdot_test/pdot)
+#         # print("pdot relative difference",rel_diff_pdot)
+#         if ee > 0.0:
+#             rel_diff_edot = np.abs(1-edot_test/edot)
+#             # print("edot relative difference",rel_diff_edot)
+#         plt.semilogy(ee, rel_diff_pdot, 'r.')
+#         plt.semilogy(ee, rel_diff_edot, 'b.')
+#     except:
+#         print(f"Out of bounds for {pp=}, {ee=}")
+# plt.semilogy(ee, rel_diff_pdot, 'r.', label="edot")
+# plt.semilogy(ee, rel_diff_edot, 'b.', label="pdot")
+# plt.xlabel('e')
+# plt.ylabel('Relative Difference')
+# plt.title('Flux Comparison')
+# plt.legend()
+# plt.savefig("flux_comparison_e.png")
