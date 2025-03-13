@@ -359,7 +359,7 @@ class SphericalHarmonic(ParallelModuleBase):
         # mode indices for all negative m-modes
         self.negative_mode_indexes = self.xp.linspace(0, self.num_teuk_modes-1, self.num_teuk_modes, dtype=int)
         for i, (l, m, n) in enumerate(zip(self.l_arr_no_mask, self.m_arr_no_mask, self.n_arr_no_mask)):
-            self.negative_mode_indexes[i] = self.special_index_map[(l, -m, n)]
+            self.negative_mode_indexes[i] = self.special_index_map[(l.item(), -m.item(), n.item())]
 
     def sanity_check_viewing_angles(self, theta: float, phi: float):
         """Sanity check on viewing angles.
