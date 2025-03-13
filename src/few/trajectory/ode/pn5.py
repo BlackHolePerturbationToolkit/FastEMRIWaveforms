@@ -62,6 +62,9 @@ class PN5(ODEBase):
     def bounds_p(self, e, x = 1, a = 0, p_buffer=[0,0]):
         return [self.min_p(e, x, a) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
 
+    def max_e(self, p, x, a):
+        return 1
+
     def isvalid_pex(self, p = 20, e = 0, x = 1, a = 0, p_buffer=[0,0], e_buffer=[0,0], x_buffer=[0,0], a_buffer=[0,0]):
         self.isvalid_x(x, x_buffer=x_buffer)
         self.isvalid_e(e, e_buffer=e_buffer)

@@ -31,7 +31,7 @@ PMAX = PMAX_REGIONB
 PISCO_MIN = get_separatrix(AMAX, 0, 1)
 
 PISCO_MIN_SCHW = get_separatrix(0, 0, 1) + 1e-5
-PMAX_SCHW = np.exp(3.817712325956905) + 2.1
+PMAX_SCHW = 47.6
 EMAX_SCHW = 0.755
 
 @njit
@@ -116,6 +116,9 @@ class SchwarzEccFlux(ODEBase):
     def bounds_p(self, e, x = 1, a = 0, p_buffer=[0,0]):
         return [self.min_p(e, x, a) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
 
+    def max_e(self, p, x = 1, a = 0):
+        return EMAX_SCHW
+
     def isvalid_pex(self, p = 20, e = 0, x = 1, a = 0, p_buffer=[0, 0], e_buffer=[0,0]):
         self.isvalid_x(x)
         self.isvalid_e(e, e_buffer=e_buffer)
@@ -150,7 +153,7 @@ class SchwarzEccFlux(ODEBase):
         if (
             y1 < 1.3686394258811698 or y1 > 3.817712325956905
         ):  # bounds described in 2104.04582
-            raise ValueError("Interpolation: p out of bounds.")
+            raise ValueError(f"Interpolation: p={p} out of bounds.")
 
         yPN = Omega_phi ** (2 / 3)
 

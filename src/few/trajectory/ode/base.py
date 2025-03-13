@@ -155,7 +155,7 @@ class ODEBase:
 
         By default, this function assumes things are rectilinear and returns `p_sep + self.separatrix_buffer_dist`.
         """
-        return get_separatrix(self.a, e, x) + self.separatrix_buffer_dist
+        return get_separatrix(a, e, x) + self.separatrix_buffer_dist
 
     def max_p(
         self, e: Union[float, np.ndarray], x: Union[float, np.ndarray] = 1, a: Optional[Union[float, np.ndarray]] = 0
@@ -201,6 +201,29 @@ class ODEBase:
             return np.inf
         else:
             return np.full_like(p, np.inf)
+
+    def isvalid_x(self, x: float):
+        pass
+
+    def isvalid_e(self, e: float, e_buffer=[0,0]):
+        pass
+
+    def isvalid_a(self, a: float, a_buffer=[0,0]):
+        pass
+
+    def bounds_p(self, e = 0, x = 1, a = 0, p_buffer = [0,0]):
+        self.isvalid_x(x)
+        self.isvalid_e(e)
+        self.isvalid_a(a)
+        return [self.min_p(e, x, a) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
+    
+    def isvalid_pex(self, p = 20, e = 0, x = 1, a = 0, p_buffer = [0,0], e_buffer=[0,0], a_buffer=[0,0]):
+        self.isvalid_x(x)
+        self.isvalid_e(e, e_buffer=e_buffer)
+        self.isvalid_a(a, a_buffer=a_buffer)
+        pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer)
+        assert (p >= pmin and p <= pmax), f"Interpolation: p {p} out of bounds. Must be between {pmin} and {pmax}."
+
 
     def modify_rhs(self, ydot: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
         """
