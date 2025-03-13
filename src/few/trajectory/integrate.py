@@ -227,7 +227,14 @@ class Integrate:
         h0 = min(h0, interval_length)
 
         y1 = y0 + h0 * f0
-        f1 = self.func(y1)
+
+        # It is possible for the trajectory to have already stepped past any boundaries, leading to error
+        # In this case it is hard to determine a good step size, so we just return the first estimate for h0
+        try:
+            f1 = self.func(y1)
+        except ValueError:
+            return h0
+
         d2 = np.linalg.norm((f1 - f0) / scale) / h0 / self.nparams**0.5
 
         if d1 <= 1e-15 and d2 <= 1e-15:
