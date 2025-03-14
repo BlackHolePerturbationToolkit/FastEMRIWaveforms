@@ -1,5 +1,6 @@
 import numpy as np
 from tqdm import tqdm
+import warnings
 
 from ..utils.baseclasses import Pn5AAK, ParallelModuleBase, BackendLike
 
@@ -137,7 +138,7 @@ class SphericalHarmonicWaveformBase(
         show_progress: bool = False,
         batch_size: int = -1,
         mode_selection: Optional[Union[str, list, np.ndarray]] = None,
-        include_minus_m: bool = True,
+        include_minus_mkn: bool = True,
         **kwargs: Optional[dict],
     ) -> np.ndarray:
         r"""Call function for waveform models built in the spherical harmonic basis.
@@ -182,7 +183,7 @@ class SphericalHarmonicWaveformBase(
                 (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
                 provided, it will return those modes combined into a
                 single waveform.
-            include_minus_m: If True, then include -m modes when
+            include_minus_mkn: If True, then include -m modes when
                 computing a mode with m. This only effects modes if :code:`mode_selection`
                 is a list of specific modes. Default is True.
 
@@ -194,6 +195,7 @@ class SphericalHarmonicWaveformBase(
 
         """
 
+        # switch to internal convention of xI > 0
         if xI0 < 0.0:
             a = -a
             xI0 = -xI0
@@ -208,6 +210,8 @@ class SphericalHarmonicWaveformBase(
 
         else:
             dist_dimensionless = 1.0
+
+        # check for mode_selection
 
         # makes sure viewing angles are allowable
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
@@ -257,6 +261,8 @@ class SphericalHarmonicWaveformBase(
         # if mode selector is predictive, run now to avoid generating amplitudes that are not required
         if self.mode_selector.is_predictive:
             # overwrites mode_selection so it's now a list of modes to keep, ready to feed into amplitudes
+            if mode_selection is not None:
+                warnings.warn("Mode selector is predictive. Overwriting mode_selection.")
             mode_selection = self.mode_selector(
                 M, mu, a * xI0, p0, e0, 1.0, theta, phi, T, eps
             )  # TODO: update this if more arguments are required
@@ -342,9 +348,20 @@ class SphericalHarmonicWaveformBase(
                     raise ValueError("If mode selection is a string, must be `all`.")
 
             # get a specific subset of modes
-            elif isinstance(mode_selection, (list, self.xp.ndarray)):
+            elif isinstance(mode_selection, list):
                 if len(mode_selection) == 0:
                     raise ValueError("If mode selection is a list, cannot be empty.")
+                
+                # warn if mode selection is large and user provides a list of tuples
+                if len(mode_selection) > 50:
+                    warnings.warn("Mode selection is large. Provide mode_selection as ndarray for better performance.")
+                
+                mode_arr = self.xp.asarray(mode_selection)
+
+                if np.any(mode_arr[:, 1] < 0):
+                    raise ValueError(
+                        "Waveform generator only supports mode_selection with m > 0. The user can only access m < 0 modes by setting include_minus_mkn=True."
+                    )
 
                 if self.normalize_amps:
                     assert isinstance(mode_selection, list)
@@ -395,7 +412,7 @@ class SphericalHarmonicWaveformBase(
 
                 # for removing opposite m modes
                 fix_include_ms = self.xp.full(2 * len(mode_selection), False)
-                if isinstance(mode_selection, list):
+                if isinstance(mode_selection, (list, self.xp.ndarray)):
                     keep_modes = self.xp.zeros(len(mode_selection), dtype=self.xp.int32)
                     for jj, lmn in enumerate(mode_selection):
                         l, m, n = tuple(lmn)
@@ -407,7 +424,7 @@ class SphericalHarmonicWaveformBase(
                             lmn_in = (l, m, n)
                         keep_modes[jj] = self.xp.int32(self.lmn_indices[lmn_in])
 
-                        if not include_minus_m:
+                        if not include_minus_mkn:
                             if m > 0:
                                 # minus m modes blocked
                                 fix_include_ms[len(mode_selection) + jj] = True
@@ -418,7 +435,7 @@ class SphericalHarmonicWaveformBase(
                     keep_modes = mode_selection
                     m_temp = abs(self.m_arr[mode_selection])
                     for jj, m_here in enumerate(m_temp):
-                        if not include_minus_m:
+                        if not include_minus_mkn:
                             if m_here > 0:
                                 # minus m modes blocked
                                 fix_include_ms[len(mode_selection) + jj] = True
@@ -521,7 +538,7 @@ class SphericalHarmonicWaveformBase(
                 xI,
                 dt=dt,
                 T=T,
-                include_minus_m=include_minus_m,
+                include_minus_mkn=include_minus_mkn,
                 integrate_backwards=self.inspiral_generator.integrate_backwards,
                 **kwargs,
             )
