@@ -289,6 +289,7 @@ class SphericalHarmonicWaveformBase(
             t_temp = t[inds_in]
             p_temp = p[inds_in]
             e_temp = e[inds_in]
+            xI_temp = xI[inds_in]
             Phi_phi_temp = Phi_phi[inds_in]
             Phi_theta_temp = Phi_theta[inds_in]
             Phi_r_temp = Phi_r[inds_in]
@@ -300,7 +301,7 @@ class SphericalHarmonicWaveformBase(
             if not isinstance(mode_selection, (list, self.xp.ndarray)):
                 # amplitudes
                 teuk_modes = self.xp.asarray(
-                    self.amplitude_generator(a, p_temp, e_temp, xI0)
+                    self.amplitude_generator(a, p_temp, e_temp, xI_temp)
                 )
 
                 # normalize by flux produced in trajectory
@@ -351,7 +352,7 @@ class SphericalHarmonicWaveformBase(
 
                     # compute all amplitudes
                     teuk_modes = self.xp.asarray(
-                        self.amplitude_generator(a, p_temp, e_temp, xI0)
+                        self.amplitude_generator(a, p_temp, e_temp, xI_temp)
                     )
 
                     amp_for_norm = self.xp.sum(
@@ -379,7 +380,7 @@ class SphericalHarmonicWaveformBase(
                 else:
                     # generate only the required modes with the amplitude module
                     teuk_modes = self.amplitude_generator(
-                        a, p_temp, e_temp, xI0, specific_modes=mode_selection
+                        a, p_temp, e_temp, xI_temp, specific_modes=mode_selection
                     )
 
                 # unpack the dictionary
