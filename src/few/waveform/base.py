@@ -118,6 +118,22 @@ class SphericalHarmonicWaveformBase(
             kwargs=mode_selector_kwargs,
         )
 
+        if "mode_selection" in mode_selector_kwargs:
+            self.mode_selector.default_modes = mode_selector_kwargs["mode_selection"]
+            if isinstance(self.mode_selector.default_modes, list):
+                mode_arr = np.asarray(self.mode_selector.default_modes)
+                if np.any(mode_arr[:, 1] < 0):
+                    raise ValueError(
+                        "Waveform generator only supports mode_selection with m > 0. The user can only access m < 0 modes by setting include_minus_mkn=True."
+                    )
+            elif isinstance(self.mode_selector.default_modes, self.xp.ndarray):
+                if len(self.mode_selector.default_modes.shape) > 1:
+                    raise ValueError(
+                        "Waveform generator only supports mode_selection when it is a list of (m,k,n) tuples or a ndarray of mode map indices as given by self.waveform_generator.special_index_map[(m,k,n)]."
+                    )
+        else:
+            self.mode_selector.default_modes = None
+
     def _generate_waveform(
         self,
         M: float,
@@ -183,8 +199,8 @@ class SphericalHarmonicWaveformBase(
                 (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
                 provided, it will return those modes combined into a
                 single waveform.
-            include_minus_mkn: If True, then include -m modes when
-                computing a mode with m. This only effects modes if :code:`mode_selection`
+            include_minus_mkn: If True, then include (-m, -k, -n) mode when
+                computing a (m, k, n) mode. This only effects modes if :code:`mode_selection`
                 is a list of specific modes. Default is True.
 
         Returns:
@@ -212,6 +228,8 @@ class SphericalHarmonicWaveformBase(
             dist_dimensionless = 1.0
 
         # check for mode_selection
+        if mode_selection is None:
+            mode_selection = self.mode_selector.default_modes
 
         # makes sure viewing angles are allowable
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
@@ -357,11 +375,12 @@ class SphericalHarmonicWaveformBase(
                     warnings.warn("Mode selection is large. Provide mode_selection as ndarray for better performance.")
                 
                 mode_arr = self.xp.asarray(mode_selection)
-
-                if np.any(mode_arr[:, 1] < 0):
-                    raise ValueError(
-                        "Waveform generator only supports mode_selection with m > 0. The user can only access m < 0 modes by setting include_minus_mkn=True."
-                    )
+                if self.mode_selector.default_modes is not None:
+                    # check that specified modes obey mode_selection rules
+                    if np.any(mode_arr[:, 1] < 0):
+                        raise ValueError(
+                            "Waveform generator only supports mode_selection with m > 0. The user can only access m < 0 modes by setting include_minus_mkn=True."
+                        )
 
                 if self.normalize_amps:
                     assert isinstance(mode_selection, list)
