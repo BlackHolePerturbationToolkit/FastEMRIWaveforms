@@ -7,6 +7,7 @@ from few.utils.mappings.kerrecceq import (_kerrecceq_flux_forward_map,
                                 apex_of_UWYZ, 
                                 z_of_a, 
                                 w_of_euz_flux, 
+                                e_of_uwz_flux,
                                 p_of_u_flux, 
                                 u_where_w_is_unity, 
                                 u_of_p_flux,
@@ -197,6 +198,9 @@ def _PN_alt(p, e):
 
 @njit
 def _emax_w(e, args):
+    """
+    Function for root-finding the maximum e-value on the domain for a given a, p, x = 1.
+    """
     a = args[0]
     p = args[1]
     z = args[2]
@@ -204,6 +208,16 @@ def _emax_w(e, args):
     u = u_of_p_flux(p, psep)
     w = w_of_euz_flux(e, u, z)
     return w-1
+
+@njit
+def _emax_sep(e, args):
+    """
+    Function for foot-finding the e-value on the separatrix for a given a, p, x = 1.
+    """
+    a = args[0]
+    p = args[1]
+    psep = _get_separatrix_kernel_inner(a, e, 1)
+    return p - psep
 
 class KerrEccEqFlux(ODEBase):
     """
@@ -439,6 +453,10 @@ class KerrEccEqFlux(ODEBase):
         if p < p_sep_min_buffer:
             raise ValueError(f"Interpolation: p out of bounds. Must be greater than innermost stable circular orbit + buffer = {p_sep_min_buffer}.")
         
+        z = z_of_a(a_in)
+        e_max_min = e_of_uwz_flux(0, 1, z)
+        p_sep_max_min = get_separatrix(a_in, e_max_min, 1)
+
         p_min = self._min_p(EMAX, x, a)
         if p > p_min:
             emax = EMAX
@@ -446,6 +464,10 @@ class KerrEccEqFlux(ODEBase):
             tol = 1e-13
             z = z_of_a(a_in)
             emax = _brentq_jit(_emax_w, 0, EMAX, (a_in, p, z), tol)
+
+            # if you lie below the separatrix, then you are limited by the max e-value on the separatrix
+            if get_separatrix(a_in, emax, 1) > p: 
+                emax = _brentq_jit(_emax_sep, 0, emax, (a_in, p - self.separatrix_buffer_dist), tol)
         return emax
 
     def min_e(self, p = 20, x = 1, a = 0):
