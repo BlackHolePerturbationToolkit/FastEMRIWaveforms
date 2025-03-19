@@ -308,6 +308,7 @@ class InterpolatedModeSum(SummationBase):
         *args,
         dt: float = 10.0,
         integrate_backwards: bool = False,
+        include_minus_mkn: bool = True,
         **kwargs,
     ):
         r"""Interpolated summation function.
@@ -345,7 +346,8 @@ class InterpolatedModeSum(SummationBase):
         y_all = self.xp.zeros((ninterps, length))
 
         y_all[:num_teuk_modes] = teuk_modes.T.real
-        y_all[num_teuk_modes : 2 * num_teuk_modes] = teuk_modes.T.imag
+        if include_minus_mkn:
+            y_all[num_teuk_modes : 2 * num_teuk_modes] = teuk_modes.T.imag
 
         spline = self.build_with_same_backend(CubicSplineInterpolant, args=[t, y_all])
 

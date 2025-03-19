@@ -350,27 +350,6 @@ class SphericalHarmonicWaveformBase(
                 factor = amp_norm_temp / amp_for_norm
                 teuk_modes = teuk_modes * factor[:, np.newaxis]
 
-            # # different types of mode selection
-            # # sets up ylm and teuk_modes properly for summation
-            # if isinstance(mode_selection, str):
-            #     # use all modes
-            #     if mode_selection == "all":
-            #         self.ls = self.l_arr[: teuk_modes.shape[1]]
-            #         self.ms = self.m_arr[: teuk_modes.shape[1]]
-            #         self.ns = self.n_arr[: teuk_modes.shape[1]]
-
-            #         keep_modes = self.xp.arange(teuk_modes.shape[1])
-            #         temp2 = keep_modes * (keep_modes < self.num_m0) + (
-            #             keep_modes + self.num_m_1_up
-            #         ) * (keep_modes >= self.num_m0)
-
-            #         ylmkeep = self.xp.concatenate([keep_modes, temp2])
-            #         ylms_in = ylms[ylmkeep]
-            #         teuk_modes_in = teuk_modes
-
-            #     else:
-            #         raise ValueError("If mode selection is a string, must be `all`.")
-
             # # get a specific subset of modes
             # elif isinstance(mode_selection, list):
             #     if len(mode_selection) == 0:
@@ -482,39 +461,16 @@ class SphericalHarmonicWaveformBase(
             #     # remove modes if include_minus_m is False
             #     ylms_in[fix_include_ms] = 0.0 + 1j * 0.0
 
-            # # mode selection based on input module
-            # else:
-                # fund_freq_args = (
-                #     M,
-                #     0.0,
-                #     p_temp,
-                #     e_temp,
-                #     self.xp.zeros_like(e_temp),
-                #     t_temp,
-                # )
-                # modeinds = [self.l_arr, self.m_arr, self.n_arr]
-                # (
-                #     teuk_modes_in,
-                #     ylms_in,
-                #     self.ls,
-                #     self.ms,
-                #     self.ns,
-                # ) = self.mode_selector(
-                #     teuk_modes,
-                #     ylms,
-                #     modeinds,
-                #     fund_freq_args=fund_freq_args,
-                #     eps=eps,
-                # )
             fund_freq_args = (
                     M,
-                    0.0,
+                    a,
                     p_temp,
                     e_temp,
                     self.xp.zeros_like(e_temp),
                     t_temp,
                 )
             modeinds = [self.l_arr, self.m_arr, self.n_arr]
+            modeinds_map=self.special_index_map_arr
             (
                 teuk_modes_in,
                 ylms_in,
@@ -527,7 +483,7 @@ class SphericalHarmonicWaveformBase(
                 modeinds,
                 fund_freq_args=fund_freq_args,
                 mode_selection=mode_selection,
-                modeinds_map=self.special_index_map_arr,
+                modeinds_map=modeinds_map,
                 eps=eps,
             )
 
