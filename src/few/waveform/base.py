@@ -118,22 +118,6 @@ class SphericalHarmonicWaveformBase(
             kwargs=mode_selector_kwargs,
         )
 
-        if "mode_selection" in mode_selector_kwargs:
-            self.mode_selector.default_modes = mode_selector_kwargs["mode_selection"]
-            if isinstance(self.mode_selector.default_modes, list):
-                mode_arr = np.asarray(self.mode_selector.default_modes)
-                if np.any(mode_arr[:, 1] < 0):
-                    raise ValueError(
-                        "Waveform generator only supports mode_selection with m > 0. The user can only access m < 0 modes by setting include_minus_mkn=True."
-                    )
-            elif isinstance(self.mode_selector.default_modes, self.xp.ndarray):
-                if len(self.mode_selector.default_modes.shape) > 1:
-                    raise ValueError(
-                        "Waveform generator only supports mode_selection when it is a list of (m,k,n) tuples or a ndarray of mode map indices as given by self.waveform_generator.special_index_map[(m,k,n)]."
-                    )
-        else:
-            self.mode_selector.default_modes = None
-
     def _generate_waveform(
         self,
         M: float,
@@ -198,9 +182,10 @@ class SphericalHarmonicWaveformBase(
                 tuples (or lists) of mode indices
                 (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
                 provided, it will return those modes combined into a
-                single waveform.
-            include_minus_mkn: If True, then include (-m, -k, -n) mode when
-                computing a (m, k, n) mode. This only effects modes if :code:`mode_selection`
+                single waveform. We require that :math:`m \geq 0` for this list.
+                This option can also be set when instantiating the class. Default is None.
+            include_minus_mkn: If True, then include :math:`(-m, -k, -n)` mode when
+                computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
                 is a list of specific modes. Default is True.
 
         Returns:
@@ -227,9 +212,9 @@ class SphericalHarmonicWaveformBase(
         else:
             dist_dimensionless = 1.0
 
-        # check for mode_selection
-        if mode_selection is None:
-            mode_selection = self.mode_selector.default_modes
+        # # check for mode_selection
+        # if mode_selection is None:
+        #     mode_selection = self.mode_selector.mode_selection
 
         # makes sure viewing angles are allowable
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
@@ -320,165 +305,208 @@ class SphericalHarmonicWaveformBase(
             if self.normalize_amps:
                 amp_norm_temp = amp_norm[inds_in]
 
-            # if we aren't requesting a subset of modes, compute them all now
-            if not isinstance(mode_selection, (list, self.xp.ndarray)):
-                # amplitudes
-                teuk_modes = self.xp.asarray(
-                    self.amplitude_generator(a, p_temp, e_temp, xI0)
-                )
+            # # if we aren't requesting a subset of modes, compute them all now
+            # if not isinstance(mode_selection, (list, self.xp.ndarray)):
+            #     # amplitudes
+            #     teuk_modes = self.xp.asarray(
+            #         self.amplitude_generator(a, p_temp, e_temp, xI0)
+            #     )
 
-                # normalize by flux produced in trajectory
-                if self.normalize_amps:
-                    amp_for_norm = self.xp.sum(
-                        self.xp.abs(
-                            self.xp.concatenate(
-                                [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
-                                axis=1,
-                            )
+            #     # normalize by flux produced in trajectory
+            #     if self.normalize_amps:
+            #         amp_for_norm = self.xp.sum(
+            #             self.xp.abs(
+            #                 self.xp.concatenate(
+            #                     [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
+            #                     axis=1,
+            #                 )
+            #             )
+            #             ** 2,
+            #             axis=1,
+            #         ) ** (1 / 2)
+
+            #         # normalize
+            #         factor = amp_norm_temp / amp_for_norm
+            #         teuk_modes = teuk_modes * factor[:, np.newaxis]
+            # amplitudes
+            teuk_modes = self.xp.asarray(
+                self.amplitude_generator(a, p_temp, e_temp, xI0)
+            )
+
+            # normalize by flux produced in trajectory
+            if self.normalize_amps:
+                amp_for_norm = self.xp.sum(
+                    self.xp.abs(
+                        self.xp.concatenate(
+                            [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
+                            axis=1,
                         )
-                        ** 2,
-                        axis=1,
-                    ) ** (1 / 2)
+                    )
+                    ** 2,
+                    axis=1,
+                ) ** (1 / 2)
 
-                    # normalize
-                    factor = amp_norm_temp / amp_for_norm
-                    teuk_modes = teuk_modes * factor[:, np.newaxis]
+                # normalize
+                factor = amp_norm_temp / amp_for_norm
+                teuk_modes = teuk_modes * factor[:, np.newaxis]
 
-            # different types of mode selection
-            # sets up ylm and teuk_modes properly for summation
-            if isinstance(mode_selection, str):
-                # use all modes
-                if mode_selection == "all":
-                    self.ls = self.l_arr[: teuk_modes.shape[1]]
-                    self.ms = self.m_arr[: teuk_modes.shape[1]]
-                    self.ns = self.n_arr[: teuk_modes.shape[1]]
+            # # different types of mode selection
+            # # sets up ylm and teuk_modes properly for summation
+            # if isinstance(mode_selection, str):
+            #     # use all modes
+            #     if mode_selection == "all":
+            #         self.ls = self.l_arr[: teuk_modes.shape[1]]
+            #         self.ms = self.m_arr[: teuk_modes.shape[1]]
+            #         self.ns = self.n_arr[: teuk_modes.shape[1]]
 
-                    keep_modes = self.xp.arange(teuk_modes.shape[1])
-                    temp2 = keep_modes * (keep_modes < self.num_m0) + (
-                        keep_modes + self.num_m_1_up
-                    ) * (keep_modes >= self.num_m0)
+            #         keep_modes = self.xp.arange(teuk_modes.shape[1])
+            #         temp2 = keep_modes * (keep_modes < self.num_m0) + (
+            #             keep_modes + self.num_m_1_up
+            #         ) * (keep_modes >= self.num_m0)
 
-                    ylmkeep = self.xp.concatenate([keep_modes, temp2])
-                    ylms_in = ylms[ylmkeep]
-                    teuk_modes_in = teuk_modes
+            #         ylmkeep = self.xp.concatenate([keep_modes, temp2])
+            #         ylms_in = ylms[ylmkeep]
+            #         teuk_modes_in = teuk_modes
 
-                else:
-                    raise ValueError("If mode selection is a string, must be `all`.")
+            #     else:
+            #         raise ValueError("If mode selection is a string, must be `all`.")
 
-            # get a specific subset of modes
-            elif isinstance(mode_selection, list):
-                if len(mode_selection) == 0:
-                    raise ValueError("If mode selection is a list, cannot be empty.")
+            # # get a specific subset of modes
+            # elif isinstance(mode_selection, list):
+            #     if len(mode_selection) == 0:
+            #         raise ValueError("If mode selection is a list, cannot be empty.")
                 
-                # warn if mode selection is large and user provides a list of tuples
-                if len(mode_selection) > 50:
-                    warnings.warn("Mode selection is large. Provide mode_selection as ndarray for better performance.")
+            #     # warn if mode selection is large and user provides a list of tuples
+            #     if len(mode_selection) > 50:
+            #         warnings.warn("Mode selection is large. Instantiate class with mode selection rather than providing it at call time for better performance.")
                 
-                mode_arr = self.xp.asarray(mode_selection)
-                if self.mode_selector.default_modes is not None:
-                    # check that specified modes obey mode_selection rules
-                    if np.any(mode_arr[:, 1] < 0):
-                        raise ValueError(
-                            "Waveform generator only supports mode_selection with m > 0. The user can only access m < 0 modes by setting include_minus_mkn=True."
-                        )
+            #     mode_arr = self.xp.asarray(mode_selection)
+            #     if self.mode_selector.default_modes is not None:
+            #         # check that specified modes obey mode_selection rules
+            #         if np.any(mode_arr[:, 1] < 0):
+            #             raise ValueError(
+            #                 "Waveform generator only supports mode_selection with m >= 0. The user can only access m < 0 modes by setting include_minus_mkn=True."
+            #             )
 
-                if self.normalize_amps:
-                    assert isinstance(mode_selection, list)
+            #     if self.normalize_amps:
+            #         assert isinstance(mode_selection, list)
 
-                    # compute all amplitudes
-                    teuk_modes = self.xp.asarray(
-                        self.amplitude_generator(a, p_temp, e_temp, xI0)
-                    )
+            #         # compute all amplitudes
+            #         teuk_modes = self.xp.asarray(
+            #             self.amplitude_generator(a, p_temp, e_temp, xI0)
+            #         )
 
-                    amp_for_norm = self.xp.sum(
-                        self.xp.abs(
-                            self.xp.concatenate(
-                                [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
-                                axis=1,
-                            )
-                        )
-                        ** 2,
-                        axis=1,
-                    ) ** (1 / 2)
+            #         amp_for_norm = self.xp.sum(
+            #             self.xp.abs(
+            #                 self.xp.concatenate(
+            #                     [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
+            #                     axis=1,
+            #                 )
+            #             )
+            #             ** 2,
+            #             axis=1,
+            #         ) ** (1 / 2)
 
-                    keep_inds = self.xp.asarray(
-                        [
-                            self.amplitude_generator.special_index_map[md]
-                            for md in mode_selection
-                        ]
-                    )
+            #         keep_inds = self.xp.asarray(
+            #             [
+            #                 self.amplitude_generator.special_index_map[md]
+            #                 for md in mode_selection
+            #             ]
+            #         )
 
-                    # filter modes and normalize
-                    factor = amp_norm_temp / amp_for_norm
-                    teuk_modes = teuk_modes[:, keep_inds] * factor[:, np.newaxis]
+            #         # filter modes and normalize
+            #         factor = amp_norm_temp / amp_for_norm
+            #         teuk_modes = teuk_modes[:, keep_inds] * factor[:, np.newaxis]
 
-                else:
-                    # generate only the required modes with the amplitude module
-                    teuk_modes = self.amplitude_generator(
-                        a, p_temp, e_temp, xI0, specific_modes=mode_selection
-                    )
+            #     else:
+            #         # generate only the required modes with the amplitude module
+            #         teuk_modes = self.amplitude_generator(
+            #             a, p_temp, e_temp, xI0, specific_modes=mode_selection
+            #         )
 
-                # unpack the dictionary
-                if isinstance(teuk_modes, dict):
-                    teuk_modes_in = self.xp.asarray(
-                        [
-                            teuk_modes[lmn] if lmn[1] >= 0 else (-1)**lmn[0] * teuk_modes[lmn].conj()  # here, we reverse the symmetry transformation due to later assumptions.
-                            for lmn in mode_selection
-                        ]
-                    ).T
-                else:
-                    teuk_modes_in = teuk_modes
+            #     # unpack the dictionary
+            #     if isinstance(teuk_modes, dict):
+            #         teuk_modes_in = self.xp.asarray(
+            #             [
+            #                 teuk_modes[lmn] if lmn[1] >= 0 else (-1)**lmn[0] * teuk_modes[lmn].conj()  # here, we reverse the symmetry transformation due to later assumptions.
+            #                 for lmn in mode_selection
+            #             ]
+            #         ).T
+            #     else:
+            #         teuk_modes_in = teuk_modes
 
-                # for removing opposite m modes
-                fix_include_ms = self.xp.full(2 * len(mode_selection), False)
-                if isinstance(mode_selection, (list, self.xp.ndarray)):
-                    keep_modes = self.xp.zeros(len(mode_selection), dtype=self.xp.int32)
-                    for jj, lmn in enumerate(mode_selection):
-                        l, m, n = tuple(lmn)
+            #     # for removing opposite m modes
+            #     fix_include_ms = self.xp.full(2 * len(mode_selection), False)
+            #     if isinstance(mode_selection, (list, self.xp.ndarray)): # I think this is always true and can be removed
+            #         keep_modes = self.xp.zeros(len(mode_selection), dtype=self.xp.int32)
+            #         for jj, lmn in enumerate(mode_selection):
+            #             l, m, n = tuple(lmn)
 
-                        # keep modes only works with m>=0
-                        if m < 0:
-                            lmn_in = (l, -m, -n)
-                        else:
-                            lmn_in = (l, m, n)
-                        keep_modes[jj] = self.xp.int32(self.lmn_indices[lmn_in])
+            #             # keep modes only works with m>=0
+            #             if m < 0:
+            #                 lmn_in = (l, -m, -n)
+            #             else:
+            #                 lmn_in = (l, m, n)
+            #             keep_modes[jj] = self.xp.int32(self.lmn_indices[lmn_in])
 
-                        if not include_minus_mkn:
-                            if m > 0:
-                                # minus m modes blocked
-                                fix_include_ms[len(mode_selection) + jj] = True
-                            elif m < 0:
-                                # positive m modes blocked
-                                fix_include_ms[jj] = True
-                else:
-                    keep_modes = mode_selection
-                    m_temp = abs(self.m_arr[mode_selection])
-                    for jj, m_here in enumerate(m_temp):
-                        if not include_minus_mkn:
-                            if m_here > 0:
-                                # minus m modes blocked
-                                fix_include_ms[len(mode_selection) + jj] = True
-                            elif m_here < 0:
-                                # positive m modes blocked
-                                fix_include_ms[jj] = True
+            #             if not include_minus_mkn:
+            #                 if m > 0:
+            #                     # minus m modes blocked
+            #                     fix_include_ms[len(mode_selection) + jj] = True
+            #                 elif m < 0:
+            #                     # positive m modes blocked
+            #                     fix_include_ms[jj] = True
+            #     else:
+            #         keep_modes = mode_selection
+            #         m_temp = abs(self.m_arr[mode_selection])
+            #         for jj, m_here in enumerate(m_temp):
+            #             if not include_minus_mkn:
+            #                 if m_here > 0:
+            #                     # minus m modes blocked
+            #                     fix_include_ms[len(mode_selection) + jj] = True
+            #                 elif m_here < 0:
+            #                     # positive m modes blocked
+            #                     fix_include_ms[jj] = True
 
-                self.ls = self.l_arr[keep_modes]
-                self.ms = self.m_arr[keep_modes]
-                self.ns = self.n_arr[keep_modes]
+            #     self.ls = self.l_arr[keep_modes]
+            #     self.ms = self.m_arr[keep_modes]
+            #     self.ns = self.n_arr[keep_modes]
 
-                temp2 = keep_modes * (keep_modes < self.num_m0) + (
-                    keep_modes + self.num_m_1_up
-                ) * (keep_modes >= self.num_m0)
+            #     temp2 = keep_modes * (keep_modes < self.num_m0) + (
+            #         keep_modes + self.num_m_1_up
+            #     ) * (keep_modes >= self.num_m0)
 
-                ylmkeep = self.xp.concatenate([keep_modes, temp2])
-                ylms_in = ylms[ylmkeep]
+            #     ylmkeep = self.xp.concatenate([keep_modes, temp2])
+            #     ylms_in = ylms[ylmkeep]
 
-                # remove modes if include_minus_m is False
-                ylms_in[fix_include_ms] = 0.0 + 1j * 0.0
+            #     # remove modes if include_minus_m is False
+            #     ylms_in[fix_include_ms] = 0.0 + 1j * 0.0
 
-            # mode selection based on input module
-            else:
-                fund_freq_args = (
+            # # mode selection based on input module
+            # else:
+                # fund_freq_args = (
+                #     M,
+                #     0.0,
+                #     p_temp,
+                #     e_temp,
+                #     self.xp.zeros_like(e_temp),
+                #     t_temp,
+                # )
+                # modeinds = [self.l_arr, self.m_arr, self.n_arr]
+                # (
+                #     teuk_modes_in,
+                #     ylms_in,
+                #     self.ls,
+                #     self.ms,
+                #     self.ns,
+                # ) = self.mode_selector(
+                #     teuk_modes,
+                #     ylms,
+                #     modeinds,
+                #     fund_freq_args=fund_freq_args,
+                #     eps=eps,
+                # )
+            fund_freq_args = (
                     M,
                     0.0,
                     p_temp,
@@ -486,20 +514,22 @@ class SphericalHarmonicWaveformBase(
                     self.xp.zeros_like(e_temp),
                     t_temp,
                 )
-                modeinds = [self.l_arr, self.m_arr, self.n_arr]
-                (
-                    teuk_modes_in,
-                    ylms_in,
-                    self.ls,
-                    self.ms,
-                    self.ns,
-                ) = self.mode_selector(
-                    teuk_modes,
-                    ylms,
-                    modeinds,
-                    fund_freq_args=fund_freq_args,
-                    eps=eps,
-                )
+            modeinds = [self.l_arr, self.m_arr, self.n_arr]
+            (
+                teuk_modes_in,
+                ylms_in,
+                self.ls,
+                self.ms,
+                self.ns,
+            ) = self.mode_selector(
+                teuk_modes,
+                ylms,
+                modeinds,
+                fund_freq_args=fund_freq_args,
+                mode_selection=mode_selection,
+                modeinds_map=self.special_index_map_arr,
+                eps=eps,
+            )
 
             # store number of modes for external information
             self.num_modes_kept = teuk_modes_in.shape[1]
