@@ -169,7 +169,7 @@ class CubicSplineInterpolant(ParallelModuleBase):
 
         if np.any(inds < 0) or np.any(inds >= self.t.shape[1]):
             get_logger().warning(
-                "New t array outside bounds of input t array. These points are filled with edge values."
+                "(CubicSplineInterpolant) Warning: New t array outside bounds of input t array. These points are filled with edge values."
             )
         return inds, inds_bad_left, inds_bad_right
 
@@ -308,7 +308,6 @@ class InterpolatedModeSum(SummationBase):
         *args,
         dt: float = 10.0,
         integrate_backwards: bool = False,
-        include_minus_mkn: bool = True,
         **kwargs,
     ):
         r"""Interpolated summation function.
@@ -346,8 +345,7 @@ class InterpolatedModeSum(SummationBase):
         y_all = self.xp.zeros((ninterps, length))
 
         y_all[:num_teuk_modes] = teuk_modes.T.real
-        if include_minus_mkn:
-            y_all[num_teuk_modes : 2 * num_teuk_modes] = teuk_modes.T.imag
+        y_all[num_teuk_modes : 2 * num_teuk_modes] = teuk_modes.T.imag
 
         spline = self.build_with_same_backend(CubicSplineInterpolant, args=[t, y_all])
 
