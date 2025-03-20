@@ -328,7 +328,7 @@ class SphericalHarmonicWaveformBase(
                     a,
                     p_temp,
                     e_temp,
-                    self.xp.zeros_like(e_temp),
+                    xI,
                     t_temp,
                 )
             modeinds = [self.l_arr, self.m_arr, self.n_arr]
