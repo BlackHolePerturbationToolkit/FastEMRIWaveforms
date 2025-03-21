@@ -34,7 +34,7 @@ class WaveformTest(unittest.TestCase):
 
         # keyword arguments for Ylm generator (GetYlms)
         Ylm_kwargs = {
-            "assume_positive_m": False  # if we assume positive m, it will generate negative m for all m>0
+            "include_minus_m": False  # if we include positive m, it will generate negative m for all m>0
         }
 
         # keyword arguments for summation generator (InterpolatedModeSum)

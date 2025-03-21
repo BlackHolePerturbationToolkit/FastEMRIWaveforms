@@ -207,6 +207,8 @@ class ModeSelector(ParallelModuleBase):
                     "(ModeSelector) Warning: Only supports mode_selection with m < 0 if include_minus_mkn = False. May lead to error during evaluation."
                 )
                 self.negative_m_flag = True
+            if self.xp.any(self.xp.abs(self.mode_arr[:, 1]) > self.mode_arr[:, 0]):
+                raise ValueError("Mode selection has unphysical |m| > l mode(s).")
             
         else:
             self.mode_arr = None
@@ -316,6 +318,8 @@ class ModeSelector(ParallelModuleBase):
                     raise ValueError(
                         "Only supports mode_selection with m >= 0 when include_minus_mkn = True."
                     )
+            if self.xp.any(self.xp.abs(mode_arr[:, 1]) > mode_arr[:, 0]):
+                raise ValueError("Mode selection has unphysical |m| > l mode(s).")
             
             if modeinds_map is None:
                 raise ValueError("If mode_selection is a list, modeinds_map must be provided.")

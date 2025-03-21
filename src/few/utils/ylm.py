@@ -297,7 +297,7 @@ class GetYlms(ParallelModuleBase):
     :math:`Y_{lm}(\Theta,\phi)`.
 
     args:
-        include_minus_m: Set true if only providing :math:`m\geq0`,
+        include_minus_m: Set True if only providing :math:`m\geq0`,
             it will return twice the number of requested modes with the second
             half as modes with :math:`m<0` for array inputs of :math:`l,m`. **Warning**: It will also duplicate
             the :math:`m=0` modes. Default is False.
