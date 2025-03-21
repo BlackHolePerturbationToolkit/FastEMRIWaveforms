@@ -209,6 +209,8 @@ class ModeSelector(ParallelModuleBase):
                 self.negative_m_flag = True
             if self.xp.any(self.xp.abs(self.mode_arr[:, 1]) > self.mode_arr[:, 0]):
                 raise ValueError("Mode selection has unphysical |m| > l mode(s).")
+            if self.xp.any(self.mode_arr[:, 0] < 2):
+                raise ValueError("Mode selection has unphysical l < 2 mode(s).")
             
         else:
             self.mode_arr = None
@@ -320,6 +322,8 @@ class ModeSelector(ParallelModuleBase):
                     )
             if self.xp.any(self.xp.abs(mode_arr[:, 1]) > mode_arr[:, 0]):
                 raise ValueError("Mode selection has unphysical |m| > l mode(s).")
+            if self.xp.any(mode_arr[:, 0] < 2):
+                raise ValueError("Mode selection has unphysical l < 2 mode(s).")
             
             if modeinds_map is None:
                 raise ValueError("If mode_selection is a list, modeinds_map must be provided.")
