@@ -323,7 +323,7 @@ class FileManager:
         import requests
 
         try:
-            response = requests.get(url, stream=True)
+            response = requests.get(url, stream=True, timeout=5)
             response.raise_for_status()
         except requests.exceptions.ConnectionError as e:
             raise exceptions.FileDownloadConnectionError() from e
