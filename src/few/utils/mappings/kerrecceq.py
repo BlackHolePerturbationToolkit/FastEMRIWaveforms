@@ -152,7 +152,7 @@ def kerrecceq_forward_map(
     pLSO = get_separatrix(a_sep_in, e, xI_sep_in)
 
     # handle regions A and B
-    near = p < pLSO + DELTAPMAX
+    near = p <= pLSO + DELTAPMAX
     if xp.any(near):
         out = _uwyz_of_apex_kernel(
             a[near], p[near], e[near], xI[near], pLSO[near], alpha, beta

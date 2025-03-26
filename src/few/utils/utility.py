@@ -1588,7 +1588,7 @@ def _get_separatrix_kernel_inner(a: float, e: float, x: float, tol: float = 1e-1
         x_hi = 8.0
 
         polar_p_sep = _brentq_jit(_separatrix_polynomial_polar, x_lo, x_hi, (a, e), tol)
-
+    
         if x == 0.0:
             return polar_p_sep
 
@@ -1679,7 +1679,7 @@ def get_separatrix(
 
     assert len(a_in) == len(e_in) == len(x_in)
 
-    separatrix = xp.empty_like(e_in)
+    separatrix = xp.empty_like(e_in, dtype=float)
     if use_gpu:
         threadsperblock = 256
         blockspergrid = (len(a_in) + (threadsperblock - 1)) // threadsperblock
