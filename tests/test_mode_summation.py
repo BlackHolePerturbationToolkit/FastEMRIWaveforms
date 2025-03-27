@@ -75,7 +75,7 @@ class SummationTest(unittest.TestCase):
         # we need to provide these values at the spline knots for InterpolatedModeSum
         # easy to do here as we are just ramping them linearly
         amplitude_spl_temp = interp1d(t_eval, amp_temp, axis=-1, kind='linear', assume_sorted=True)(t_spl)
-        amplitude_spl = (amplitude_spl_temp[0] + 1j*amplitude_spl_temp[1]).T
+        amplitude_spl = summation.xp.asarray((amplitude_spl_temp[0] + 1j*amplitude_spl_temp[1]).T)
 
         # dummy mode indices
         l_arr = np.ones(num_modes) * 2  # not used in this fictitious summation
@@ -83,7 +83,7 @@ class SummationTest(unittest.TestCase):
         n_arr = np.random.randint(-4, 4, num_modes)
 
         # dummy 'spherical harmonics'
-        ylms = np.ones(2 * num_modes)
+        ylms = summation.xp.ones(2 * num_modes)
         ylms[num_modes:] = 0   # disable the mode symmetry
 
         # perform the summation manually
@@ -91,7 +91,12 @@ class SummationTest(unittest.TestCase):
         phasors = amplitude * np.exp(-1j * mode_phase_values)
         manual_sum = phasors.sum(-1)
 
-        few_sum = summation(t_spl, amplitude_spl, ylms, t_spl, coeff_spl, l_arr, m_arr, n_arr, T=t_spl[-1] / YRSID_SI, dt=dt)
+        l_arr = summation.xp.asarray(l_arr)
+        m_arr = summation.xp.asarray(m_arr)
+        n_arr = summation.xp.asarray(n_arr)
+
+
+        few_sum = summation(summation.xp.asarray(t_spl), amplitude_spl, ylms, t_spl, coeff_spl, l_arr, m_arr, n_arr, T=t_spl[-1] / YRSID_SI, dt=dt)
 
         if best_backend.uses_gpu:
             few_sum = few_sum.get()

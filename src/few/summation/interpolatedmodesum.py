@@ -382,6 +382,6 @@ class InterpolatedModeSum(SummationBase):
             num_teuk_modes,
             ylms.astype(self.xp.complex128),
             dt,
-            h_t,
+            h_t, 
             dev,
         )
