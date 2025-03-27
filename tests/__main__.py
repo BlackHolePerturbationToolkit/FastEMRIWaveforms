@@ -11,4 +11,11 @@ class TestFew(TestProgram):
 
 
 if __name__ == "__main__":
+    from few import get_file_manager, get_logger, get_config_setter
+
+    get_config_setter().set_log_level("INFO")
+    get_logger().info("Ensuring that all files required by tests are present.")
+    get_file_manager().prefetch_files_by_tag("unittest")
+    get_logger().info("Done... Now run the tests!")
+    get_config_setter(reset=True)
     TestFew()

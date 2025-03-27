@@ -217,7 +217,14 @@ class SphericalHarmonicWaveformBase(
 
         a, xI0 = self.sanity_check_init(M, mu, a, p0, e0, xI0)
         
+        # Ensure kwargs['inspiral_kwargs'] exists and is a dictionary
+        # Essential if inspiral_kwargs passed into waveform generator
+        kwargs_inspiral = kwargs.get('inspiral_kwargs', {})
+        # Merge kwargs_inspiral into self.inspiral_kwargs
+        self.inspiral_kwargs.update(kwargs_inspiral)
         # get trajectory
+        self.inspiral_kwargs.setdefault('err', 1e-11) # Will only set default if "err" is not supplied
+
         (t, p, e, xI, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
             M,
             mu,
@@ -294,6 +301,7 @@ class SphericalHarmonicWaveformBase(
             t_temp = t[inds_in]
             p_temp = p[inds_in]
             e_temp = e[inds_in]
+            xI_temp = xI[inds_in]
             Phi_phi_temp = Phi_phi[inds_in]
             Phi_theta_temp = Phi_theta[inds_in]
             Phi_r_temp = Phi_r[inds_in]

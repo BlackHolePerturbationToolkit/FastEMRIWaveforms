@@ -349,7 +349,12 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
         return z_out
 
     def get_amplitudes(
-        self, a, p, e, xI, specific_modes=None
+        self, 
+        a: float, 
+        p: Union[float, np.ndarray], 
+        e: Union[float, np.ndarray], 
+        xI: Union[float, np.ndarray], 
+        specific_modes: Optional[Union[list, np.ndarray]]=None
     ) -> Union[dict, np.ndarray]:
         """
         Generate Teukolsky amplitudes for a given set of parameters.
@@ -370,7 +375,6 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
         # assert isinstance(a, float)
 
         try:
-            a = a.get()
             p = p.get()
             e = e.get()
             xI = xI.get()
@@ -387,7 +391,9 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
     
         assert len(non_one_lengths) <= 1, f"Arrays must be length one or, if larger, have the same length. Found lengths: {lengths}"
 
-        assert self.xp.all(a*xI <= 0.0) or self.xp.all(
+        assert np.all(a == a[0]), "All spins must be the same value."
+
+        assert np.all(a*xI <= 0.0) or np.all(
             a*xI >= 0.0
         )  # either all prograde or all retrograde
         assert self.xp.all(self.xp.abs(xI) == 1.0) # all equatorial
