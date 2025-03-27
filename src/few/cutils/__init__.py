@@ -243,7 +243,11 @@ class _CudaBackend(Backend):
                 conda_deps=[],
             ) from e
 
-        cupy_cuda_ver = cupy.cuda.get_local_runtime_version() // 1000
+        try:
+            cupy_cuda_ver = cupy.cuda.get_local_runtime_version() // 1000
+        except RuntimeError as e:
+            raise SoftwareException("CuPy could not detect runtime version") from e
+
         if cupy_cuda_ver != cuda_major:
             raise MissingDependencies(
                 "CuPy is installed but supports CUDA {} instead of {}".format(
@@ -255,6 +259,7 @@ class _CudaBackend(Backend):
 
         try:
             _ = cupy.arange(1)
+            _ = cupy.cuda.runtime.getDevice()
         except cupy.cuda.compiler.CompileException as e:
             raise MissingDependencies(
                 "CuPy fails to run due to missing CUDA Runtime.",
