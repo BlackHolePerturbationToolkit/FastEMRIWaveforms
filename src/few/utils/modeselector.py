@@ -22,6 +22,7 @@ import os
 from ..utils.utility import get_fundamental_frequencies
 from ..utils.constants import MTSUN_SI, PI
 from ..utils.baseclasses import ParallelModuleBase, BackendLike
+from ..utils.globals import get_logger
 import sys
 
 # pytorch
@@ -30,7 +31,7 @@ try:
 except (ImportError, ModuleNotFoundError):
     pass  #  we can catch this later
 
-from typing import Optional
+from typing import Optional, Union
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -103,8 +104,29 @@ class ModeSelector(ParallelModuleBase):
 
     args:
         l_arr: The l-mode indices for each mode index.
-        m_arr: The m-mode indices for each mode index.
+        m_arr: The m-mode indices for each mode index. Requires all :math:`m \geq 0`.
         n_arr: The n-mode indices for each mode index.
+        mode_selection: Determines the type of mode
+            filtering to perform. If None, use default mode filtering provided
+            by :code:`mode_selector`. If 'all', it will run all modes without 
+            filtering. If 'eps' it will override other options to filter by the
+            threshold value set by :code:`eps`. If a list of tuples (or lists) of 
+            mode indices (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
+            provided, it will return those modes combined into a
+            single waveform.
+            Default is None.
+        include_minus_mkn: If True, then include :math:`(-m, -k, -n)` mode when
+            computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
+            is a list of specific modes when the class is called. If True, this list of modes 
+            provided at call time must only contain :math:`m\geq 0`. Default is True.   
+        eps: Fractional accuracy of the total power used
+            to determine the contributing modes. Lowering this value will
+            calculate more modes slower the waveform down, but generally
+            improving accuracy. Increasing this value removes modes from
+            consideration and can have a considerable affect on the speed of
+            the waveform, albeit at the cost of some accuracy (usually an
+            acceptable loss). Default that gives good mismatch qualities is
+            1e-5.
         sensitivity_fn: Sensitivity curve function that takes
             a frequency (Hz) array as input and returns the Power Spectral Density (PSD)
             of the sensitivity curve. Default is None. If this is not none, this
@@ -121,10 +143,16 @@ class ModeSelector(ParallelModuleBase):
         l_arr: np.ndarray,
         m_arr: np.ndarray,
         n_arr: np.ndarray,
+        mode_selection: Optional[Union[str, list, np.ndarray]] = None,
+        include_minus_mkn: Optional[bool] = True,
+        eps: float = 1e-5,
         sensitivity_fn: Optional[object] = None,
         force_backend: BackendLike = None,
+        **kwargs
     ):
-        ParallelModuleBase.__init__(self, force_backend=force_backend)
+        ParallelModuleBase.__init__(self, force_backend=force_backend, **kwargs)
+
+        assert self.xp.all(m_arr >= 0), "ModeSelector only supports m >= 0."
 
         # store information releated to m values
         # the order is m = 0, m > 0, m < 0
@@ -138,8 +166,57 @@ class ModeSelector(ParallelModuleBase):
         self.num_m0 = len(self.xp.arange(len(m0mask))[~m0mask])
         """int: Number of modes with :math:`m=0`."""
 
+        self.l_arr = l_arr
+        """array: l-mode indices for each mode index."""
+        self.m_arr = m_arr
+        """array: m-mode indices for each mode index."""
+        self.n_arr = n_arr
+        """array: n-mode indices for each mode index."""
+
         self.sensitivity_fn = sensitivity_fn
         """object: sensitivity generating function for power-weighting."""
+
+        self.include_minus_mkn = include_minus_mkn
+        """bool: Whether to include modes with m < 0 in the output."""
+        """Note that the module always outputs m>=0 Teukolsky amplitudes, but +m and -m Ylms.
+        Instead m<0 Teukolsky amplitudes are included in the mode sum via mode symmetry. 
+        Therefore, to include m<0 Teukolsky amplitudes in the waveform
+        but NOT m>0, we set the m>0 Ylm to zero."""
+
+        self.mode_selection = mode_selection
+        self.negative_m_flag = False # flag to check if m < 0 modes are included
+        """bool: Specifies whether there are negative m-modes in mode_selection."""
+
+        if isinstance(self.mode_selection, str) and self.mode_selection not in ["all", "eps"]:
+            raise ValueError(
+                "If mode_selection is a string, it must be either 'all', 'eps', or None."
+            )
+        elif isinstance(self.mode_selection, list):
+            # Do not allow empty lists
+            if len(self.mode_selection) == 0:
+                raise ValueError("If mode selection is a list, cannot be empty.")
+            
+            # Do not allow duplicate modes
+            if self.xp.any(self.xp.unique(mode_selection, return_counts = True, axis = 0)[1] > 1):
+                raise ValueError("Mode selection has duplicate modes.")
+            
+            # Check if m < 0 modes are included. Warn user of potential errors this might cause if true.
+            self.mode_arr = self.xp.asarray(self.mode_selection)
+            if self.xp.any(self.mode_arr[:, 1] < 0):
+                get_logger().warning(
+                    "(ModeSelector) Warning: Only supports mode_selection with m < 0 if include_minus_mkn = False. May lead to error during evaluation."
+                )
+                self.negative_m_flag = True
+            if self.xp.any(self.xp.abs(self.mode_arr[:, 1]) > self.mode_arr[:, 0]):
+                raise ValueError("Mode selection has unphysical |m| > l mode(s).")
+            if self.xp.any(self.mode_arr[:, 0] < 2):
+                raise ValueError("Mode selection has unphysical l < 2 mode(s).")
+            
+        else:
+            self.mode_arr = None
+
+        self.eps = eps
+        """float: Default threshold."""
 
     @classmethod
     def supported_backends(cls):
@@ -156,7 +233,10 @@ class ModeSelector(ParallelModuleBase):
         ylms: np.ndarray,
         modeinds: list[np.ndarray],
         fund_freq_args: Optional[tuple] = None,
-        eps: float = 1e-5,
+        mode_selection: Optional[Union[str, list, np.ndarray]] = None,
+        modeinds_map: Optional[np.ndarray] = None,
+        include_minus_mkn: Optional[bool] = None,
+        eps: float = None,
     ) -> np.ndarray:
         r"""Call to sort and filer teukolsky modes.
 
@@ -180,6 +260,20 @@ class ModeSelector(ParallelModuleBase):
                 :math:`(M, a, e, p, \cos\iota)` where the large black hole mass (:math:`M`)
                 and spin (:math:`a`) are scalar and the other three quantities are self.xp.ndarrays.
                 This must be provided if sensitivity weighting is used. Default is None.
+            mode_selection: Determines the type of mode
+                filtering to perform. If None, use default mode filtering provided
+                by :code:`mode_selector`. If 'all', it will run all modes without 
+                filtering. If 'eps' it will override other options to filter by the
+                threshold value set by :code:`eps`. If a list of tuples (or lists) of 
+                mode indices (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
+                provided, it will return those modes combined into a
+                single waveform. If :code:`include_minus_mkn = True`, we require that :math:`m \geq 0` for this list.
+                Default is None.
+            modeinds_map: Map of mode indices to Teukolsky amplitude data. Only required if :code:`mode_selection` is a list of specific mode.
+                Default is None. 
+            include_minus_mkn: If True, then include :math:`(-m, -k, -n)` mode when
+                computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
+                is a list of specific modes. Default is True.       
             eps: Fractional accuracy of the total power used
                 to determine the contributing modes. Lowering this value will
                 calculate more modes slower the waveform down, but generally
@@ -190,89 +284,174 @@ class ModeSelector(ParallelModuleBase):
                 1e-5.
 
         """
-        #  zero_modes_mask = (modeinds[1] == 0) * (modeinds[2] == 0)
+        if include_minus_mkn is None:
+            include_minus_mkn = self.include_minus_mkn
 
-        # get the power contribution of each mode including m < 0
-        # if self.sensitivity_fn is None:
-        power = (
-            self.xp.abs(
-                self.xp.concatenate(
-                    [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])], axis=1
-                )
-                * ylms
-            )
-            ** 2
-        )
-
-        # if noise weighting
-        if self.sensitivity_fn is not None:
-            if fund_freq_args is None:
+        # If mode_selection is None, default to values specified at instantiation
+        if mode_selection is None:
+            mode_selection = self.mode_selection
+            mode_arr = self.mode_arr
+            if self.negative_m_flag and include_minus_mkn:
                 raise ValueError(
-                    "If sensitivity weighting is desired, the fund_freq_args kwarg must be provided."
+                    "Only supports mode_selection with m >= 0 when include_minus_mkn = True."
+                )
+        # if it is a string, check if it is 'all' or 'eps'. If so, return all modes
+        elif isinstance(mode_selection, str) and mode_selection not in ["all", "eps"]:
+            raise ValueError(
+                "If mode_selection is a string, it must be either 'all', 'eps', or None."
+            )
+        # if it is a list of modes, make sure it passes checks
+        elif isinstance(mode_selection, list):
+            if len(mode_selection) == 0:
+                raise ValueError("If mode selection is a list, cannot be empty.")
+            
+            # warn if mode selection is large and user provides a list of tuples
+            if len(mode_selection) > 50:
+                # warnings.warn("Mode selection is large. Instantiate class with mode selection rather than providing it at call time for better performance.")
+                get_logger().warning("(ModeSelector) Warning: Mode selection is large. Instantiate class with mode selection rather than providing it at call time for better performance.")
+
+
+            if self.xp.any(self.xp.unique(mode_selection, return_counts = True, axis = 0)[1] > 1):
+                raise ValueError("Mode selection has duplicate modes.")
+
+            mode_arr = self.xp.asarray(mode_selection)
+            if include_minus_mkn:
+                if self.xp.any(mode_arr[:, 1] < 0):
+                    raise ValueError(
+                        "Only supports mode_selection with m >= 0 when include_minus_mkn = True."
+                    )
+            if self.xp.any(self.xp.abs(mode_arr[:, 1]) > mode_arr[:, 0]):
+                raise ValueError("Mode selection has unphysical |m| > l mode(s).")
+            if self.xp.any(mode_arr[:, 0] < 2):
+                raise ValueError("Mode selection has unphysical l < 2 mode(s).")
+            
+            if modeinds_map is None:
+                raise ValueError("If mode_selection is a list, modeinds_map must be provided.")
+            elif len(modeinds_map.shape) != len(modeinds):
+                raise ValueError("modeinds_map must have the same length as modeinds.")
+            
+        if eps is None:
+            eps = self.eps
+
+        if not include_minus_mkn and not isinstance(mode_selection, list):
+            get_logger().warning(
+                "(ModeSelector) Warning: Overriding include_minus_mkn to True as mode_selection is not a list."
+            )
+
+        if mode_selection == "all":
+            keep_modes = self.xp.arange(teuk_modes.shape[1])
+            temp2 = keep_modes * (keep_modes < self.num_m0) + (
+                keep_modes + self.num_m_1_up
+            ) * (keep_modes >= self.num_m0)
+
+            ylmkeep = self.xp.concatenate([keep_modes, temp2])
+            ylms_out = ylms[ylmkeep]
+            teuk_modes_out = teuk_modes
+            return teuk_modes_out, ylms_out, modeinds[0][:teuk_modes_out.shape[1]], modeinds[1][:teuk_modes_out.shape[1]], modeinds[2][:teuk_modes_out.shape[1]]
+        
+        elif isinstance(mode_selection, list):
+            try:
+                temp = modeinds_map[mode_arr[:, 0], mode_arr[:, 1], mode_arr[:, 2]]
+            except IndexError:
+                raise ValueError("Mode selection indices are out of bounds.")
+        
+        else:
+            # get the power contribution of each mode including m < 0
+            # if self.sensitivity_fn is None:
+            power = (
+                self.xp.abs(
+                    self.xp.concatenate(
+                        [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])], axis=1
+                    )
+                    * ylms
+                )
+                ** 2
+            )
+
+            # if noise weighting
+            if self.sensitivity_fn is not None:
+                if fund_freq_args is None:
+                    raise ValueError(
+                        "If sensitivity weighting is desired, the fund_freq_args kwarg must be provided."
+                    )
+
+                M = fund_freq_args[0]
+                Msec = M * MTSUN_SI
+
+                a_fr, p_fr, e_fr, x_fr = fund_freq_args[1:-1]
+
+                if self.backend.uses_cupy:  # fundamental frequencies only defined on CPU
+                    p_fr = p_fr.get()
+                    e_fr = e_fr.get()
+                    x_fr = x_fr.get()
+                # get dimensionless fundamental frequency
+                OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(
+                    a_fr, p_fr, e_fr, x_fr
                 )
 
-            M = fund_freq_args[0]
-            Msec = M * MTSUN_SI
+                # get frequencies in Hz
+                f_Phi, _f_omega, f_r = OmegaPhi, OmegaTheta, OmegaR = (
+                    self.xp.asarray(OmegaPhi) / (Msec * 2 * PI),
+                    self.xp.asarray(OmegaTheta) / (Msec * 2 * PI),
+                    self.xp.asarray(OmegaR) / (Msec * 2 * PI),
+                )
 
-            a_fr, p_fr, e_fr, x_fr = fund_freq_args[1:-1]
+                # TODO: update when in kerr
+                freqs = (
+                    modeinds[1][self.xp.newaxis, :] * f_Phi[:, self.xp.newaxis]
+                    + modeinds[2][self.xp.newaxis, :] * f_r[:, self.xp.newaxis]
+                )
 
-            if self.backend.uses_cupy:  # fundamental frequencies only defined on CPU
-                p_fr = p_fr.get()
-                e_fr = e_fr.get()
-                x_fr = x_fr.get()
-            # get dimensionless fundamental frequency
-            OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(
-                a_fr, p_fr, e_fr, x_fr
+                freqs_shape = freqs.shape
+
+                # make all frequencies positive
+                freqs_in = self.xp.abs(freqs)
+                PSD = self.sensitivity_fn(freqs_in.flatten()).reshape(freqs_shape)
+
+                power /= PSD
+
+            # sort the power for a cumulative summation
+            inds_sort = self.xp.argsort(power, axis=1)[:, ::-1]
+            power = self.xp.sort(power, axis=1)[:, ::-1]
+            cumsum = self.xp.cumsum(power, axis=1)
+
+            # initialize and indices array for keeping modes
+            inds_keep = self.xp.full(cumsum.shape, True)
+
+            # keep modes that add to within the fractional power (1 - eps)
+            inds_keep[:, 1:] = cumsum[:, :-1] < cumsum[:, -1][:, self.xp.newaxis] * (
+                1 - eps
             )
 
-            # get frequencies in Hz
-            f_Phi, _f_omega, f_r = OmegaPhi, OmegaTheta, OmegaR = (
-                self.xp.asarray(OmegaPhi) / (Msec * 2 * PI),
-                self.xp.asarray(OmegaTheta) / (Msec * 2 * PI),
-                self.xp.asarray(OmegaR) / (Msec * 2 * PI),
+            # finds indices of each mode to be kept
+            temp = inds_sort[inds_keep]
+
+            # adjust the index arrays to make -m indices equal to +m indices
+            # if +m or -m contributes, we keep both because of structure of CUDA kernel
+            temp = temp * (temp < self.num_m_zero_up) + (temp - self.num_m_1_up) * (
+                temp >= self.num_m_zero_up
             )
-
-            # TODO: update when in kerr
-            freqs = (
-                modeinds[1][self.xp.newaxis, :] * f_Phi[:, self.xp.newaxis]
-                + modeinds[2][self.xp.newaxis, :] * f_r[:, self.xp.newaxis]
-            )
-
-            freqs_shape = freqs.shape
-
-            # make all frequencies positive
-            freqs_in = self.xp.abs(freqs)
-            PSD = self.sensitivity_fn(freqs_in.flatten()).reshape(freqs_shape)
-
-            power /= PSD
-
-        # sort the power for a cumulative summation
-        inds_sort = self.xp.argsort(power, axis=1)[:, ::-1]
-        power = self.xp.sort(power, axis=1)[:, ::-1]
-        cumsum = self.xp.cumsum(power, axis=1)
-
-        # initialize and indices array for keeping modes
-        inds_keep = self.xp.full(cumsum.shape, True)
-
-        # keep modes that add to within the fractional power (1 - eps)
-        inds_keep[:, 1:] = cumsum[:, :-1] < cumsum[:, -1][:, self.xp.newaxis] * (
-            1 - eps
-        )
-
-        # finds indices of each mode to be kept
-        temp = inds_sort[inds_keep]
-
-        # adjust the index arrays to make -m indices equal to +m indices
-        # if +m or -m contributes, we keep both because of structure of CUDA kernel
-        temp = temp * (temp < self.num_m_zero_up) + (temp - self.num_m_1_up) * (
-            temp >= self.num_m_zero_up
-        )
 
         # if +m or -m contributes, we keep both because of structure of CUDA kernel
-        keep_modes = self.xp.unique(temp)
+        keep_modes, indices, counts = self.xp.unique(temp, return_index=True, return_counts=True)
+
+        # find minus mkn modes that need to be removed
+        if include_minus_mkn or not isinstance(mode_selection, list): # if true then we do not want to exclude any modes
+            exclude_minus_mkn = []
+        else:
+            # check if the mode_selection array includes both (m,k,n) and (-m,-k,-n) modes
+            # if it does, we keep all of these modes and only search for (m,k,n) modes without
+            # their negative counterparts
+            indices_count_1 = indices[counts == 1]
+
+            # exclude m > 0 modes if m < 0 is selected
+            exclude_positive = self.xp.where((mode_arr[:, 1] < 0)[indices_count_1])[0]
+            # exclude m < 0 modes if m > 0 is selected
+            exclude_negative = self.xp.where((mode_arr[:, 1] > 0)[indices_count_1])[0] + len(keep_modes)
+            # concatenate the two arrays
+            exclude_minus_mkn = self.xp.concatenate([exclude_positive, exclude_negative])
 
         # set ylms
-
         # adust temp arrays specific to ylm setup
         temp2 = keep_modes * (keep_modes < self.num_m0) + (
             keep_modes + self.num_m_1_up
@@ -280,9 +459,13 @@ class ModeSelector(ParallelModuleBase):
 
         # ylm duplicates the m = 0 unlike teuk_modes
         ylmkeep = self.xp.concatenate([keep_modes, temp2])
+        ylms_out = ylms[ylmkeep]
+
+        # throw out minus mkn modes if required
+        ylms_out[exclude_minus_mkn] = 0. + 0.j
 
         # setup up teuk mode and ylm returns
-        out1 = (teuk_modes[:, keep_modes], ylms[ylmkeep])
+        out1 = (teuk_modes[:, keep_modes], ylms_out)
 
         # setup up mode values that have been kept
         out2 = tuple([arr[keep_modes] for arr in modeinds])
@@ -329,9 +512,6 @@ class NeuralModeSelector(ParallelModuleBase):
         if mode_selector_location is None:
             raise ValueError("mode_selector_location kwarg cannot be none.")
         elif not os.path.isdir(mode_selector_location):
-            raise ValueError(
-                f"mode_selector location path ({mode_selector_location}) does not point to an existing directory."
-            )
             raise ValueError(
                 f"mode_selector location path ({mode_selector_location}) does not point to an existing directory."
             )

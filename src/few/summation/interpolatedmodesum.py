@@ -169,7 +169,7 @@ class CubicSplineInterpolant(ParallelModuleBase):
 
         if np.any(inds < 0) or np.any(inds >= self.t.shape[1]):
             get_logger().warning(
-                "New t array outside bounds of input t array. These points are filled with edge values."
+                "(CubicSplineInterpolant) Warning: New t array outside bounds of input t array. These points are filled with edge values."
             )
         return inds, inds_bad_left, inds_bad_right
 

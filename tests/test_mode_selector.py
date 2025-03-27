@@ -25,7 +25,7 @@ class ModeSelectorTest(unittest.TestCase):
     def test_mode_selector(self):
         # first, lets get amplitudes for a trajectory
         traj = EMRIInspiral(func=SchwarzEccFlux)
-        ylm_gen = GetYlms(assume_positive_m=True, force_backend="cpu")
+        ylm_gen = GetYlms(include_minus_m=True, force_backend="cpu")
 
         # parameters
         M = 1e5

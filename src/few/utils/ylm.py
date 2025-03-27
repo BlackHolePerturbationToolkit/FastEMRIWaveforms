@@ -297,7 +297,7 @@ class GetYlms(ParallelModuleBase):
     :math:`Y_{lm}(\Theta,\phi)`.
 
     args:
-        assume_positive_m: Set true if only providing :math:`m\geq0`,
+        include_minus_m: Set True if only providing :math:`m\geq0`,
             it will return twice the number of requested modes with the second
             half as modes with :math:`m<0` for array inputs of :math:`l,m`. **Warning**: It will also duplicate
             the :math:`m=0` modes. Default is False.
@@ -305,9 +305,9 @@ class GetYlms(ParallelModuleBase):
             :class:`few.utils.baseclasses.ParallelModuleBase`.
     """
 
-    def __init__(self, assume_positive_m: bool = False, **kwargs: Optional[dict]):
+    def __init__(self, include_minus_m: bool = False, **kwargs: Optional[dict]):
         ParallelModuleBase.__init__(self, **kwargs)
-        self.assume_positive_m = assume_positive_m
+        self.include_minus_m = include_minus_m
 
     @classmethod
     def supported_backends(cls):
@@ -337,7 +337,7 @@ class GetYlms(ParallelModuleBase):
             
         # if assuming positive m, repeat entries for negative m
         # this will duplicate m = 0
-        if self.assume_positive_m:
+        if self.include_minus_m:
             l = self.xp.zeros(2 * l_in.shape[0], dtype=int)
             m = self.xp.zeros(2 * l_in.shape[0], dtype=int)
 
