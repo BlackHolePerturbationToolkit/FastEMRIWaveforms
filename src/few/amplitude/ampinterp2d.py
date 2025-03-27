@@ -446,7 +446,7 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
         z_check = z[0]
 
         for elem in [u, w, z]:
-            if xp.any((elem < 0) | (elem > 1)):
+            if self.xp.any((elem < 0) | (elem > 1)):
                 raise ValueError("Amplitude interpolant accessed out-of-bounds.")
 
         region_mask = self.xp.asarray(region_mask)
