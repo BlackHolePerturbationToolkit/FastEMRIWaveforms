@@ -83,6 +83,7 @@ class Integrate:
         self,
         func: Type[ODEBase],
         integrate_constants_of_motion: bool = False,
+        downsample = None,
         buffer_length: int = 10000,
         enforce_schwarz_sep: bool = False,
         max_iter: Optional[int] = None,
@@ -95,7 +96,7 @@ class Integrate:
         self.base_func = func
 
         # load func
-        self.func = func(use_ELQ=integrate_constants_of_motion, **kwargs)
+        self.func = func(use_ELQ=integrate_constants_of_motion,downsample=downsample, **kwargs)
 
         self.ode_info = get_ode_properties(self.func)
 

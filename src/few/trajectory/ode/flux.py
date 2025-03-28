@@ -233,7 +233,7 @@ class KerrEccEqFlux(ODEBase):
     """
 
     def __init__(self, *args, use_ELQ: bool = False, downsample=None, flux_output_convention="pex", **kwargs):
-        super().__init__(*args, use_ELQ=use_ELQ, **kwargs)
+        super().__init__(*args, use_ELQ=use_ELQ, downsample=downsample, **kwargs)
 
         self.flux_output_convention = flux_output_convention
 
