@@ -407,7 +407,7 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
         xI_in = self.xp.ones_like(p) * xI
 
         signed_spin = a * xI_in
-        a_in = self.xp.full_like(p, signed_spin)
+        a_in = self.xp.ones(p.size) * signed_spin
         xI_in = self.xp.abs(xI_in)
 
         if specific_modes is not None:
