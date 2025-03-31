@@ -138,10 +138,9 @@ class WaveformTest(unittest.TestCase):
         theta = np.pi / 3  # polar viewing angle
         phi = np.pi / 4  # azimuthal viewing angle
         dist = 1.0  # distance
-        batch_size = int(1e4)
 
         slow_wave = slow(
-            M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt, batch_size=batch_size
+            M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt
         )
 
         fast_wave = fast(M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
@@ -149,6 +148,14 @@ class WaveformTest(unittest.TestCase):
         mm = get_mismatch(slow_wave, fast_wave, use_gpu=best_backend.uses_gpu)
 
         self.assertLess(mm, 1e-4)
+
+        # check that batching the slow waveform gives the same result
+        batch_size = int(1e2)
+        slow_wave_batched = slow(
+            M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt, batch_size=batch_size
+        )
+
+        self.assertTrue(np.allclose(slow_wave, slow_wave_batched, atol=0, rtol=1e-13))
 
     def test_kerr_model(self):
         """

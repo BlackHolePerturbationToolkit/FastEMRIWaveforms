@@ -418,14 +418,13 @@ class SphericalHarmonicWaveformBase(
                 **kwargs,
             )
 
-            # if batching, need to add the waveform (block if/else disabled since waveform is not already defined)
-            # if i > 0:
-            #     waveform = self.xp.concatenate([waveform, waveform_temp])
+            # if batching, need to add the waveform
+            if i > 0:
+                waveform = self.xp.concatenate([waveform, waveform_temp])
 
-            # # return entire waveform
-            # else:
-            #     waveform = waveform_temp
-            waveform = waveform_temp
+            # return entire waveform
+            else:
+                waveform = waveform_temp
 
         return waveform / dist_dimensionless
 
