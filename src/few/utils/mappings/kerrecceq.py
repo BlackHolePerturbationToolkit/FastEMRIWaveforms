@@ -422,7 +422,7 @@ def U_of_p_amplitude(p, pLSO):
 @njit
 def p_of_U_amplitude(U, pLSO):
     pc = pLSO + DPC_REGIONB
-    return (pc ** (-0.5) - U * (pc ** (-0.5) - PMAX_REGIONB ** (-0.5))) ** (-2)
+    return (pc ** (-0.5) - U * (pc ** (-0.5) - (PMAX_REGIONB + pc) ** (-0.5))) ** (-2)
 
 
 @njit
