@@ -32,11 +32,11 @@ KERRECCEQ_AMP_TEST_POINTS = [
         'ape' : (0.87600927, 43.70360964,  0.478125),
         'Almn' : -9.89242565478408e-07+1.750469365836169e-05j,    
     },
-    # {
-    #     'lmn' : (3, 3, 0),
-    #     'ape' : (0.36158837, 72.94420732,  0.39375),
-    #     'Almn' : 5.869887391976143e-05+0.00136010620358342j,    
-    # }
+    {
+        'lmn' : (3, 3, 0),
+        'ape' : (0.36158837, 72.94420732,  0.39375),
+        'Almn' : 5.869887391976143e-05+0.00136010620358342j,    
+    }
 ]
 class AmplitudesTest(unittest.TestCase):
     def test_kerrecceq(self):
@@ -58,7 +58,7 @@ class AmplitudesTest(unittest.TestCase):
         for test_point in KERRECCEQ_AMP_TEST_POINTS:
             a, p, e = test_point['ape']
             mode_interp = amp_module(a, p, e, xI, specific_modes=[test_point['lmn']])[test_point['lmn']].item()
-        np.testing.assert_allclose(mode_interp, test_point['Almn'], atol=1e-6)
+        np.testing.assert_allclose(mode_interp, test_point['Almn'], rtol=0, atol=1e-9)
 
         # test the mode symmetry
         specific_modes = [(3, 2, 1), (3, -2, -1)]

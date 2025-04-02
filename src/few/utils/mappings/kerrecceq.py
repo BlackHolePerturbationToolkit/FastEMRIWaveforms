@@ -416,13 +416,13 @@ def p_of_U_flux(U, pLSO):
 @njit
 def U_of_p_amplitude(p, pLSO):
     pc = pLSO + DPC_REGIONB
-    return (pc ** (-0.5) - p ** (-0.5)) / (pc ** (-0.5) - PMAX_REGIONB ** (-0.5))
+    return (pc ** (-0.5) - p ** (-0.5)) / (pc ** (-0.5) - (PMAX_REGIONB + pc) ** (-0.5))
 
 
 @njit
 def p_of_U_amplitude(U, pLSO):
     pc = pLSO + DPC_REGIONB
-    return (pc ** (-0.5) - U * (pc ** (-0.5) - PMAX_REGIONB ** (-0.5))) ** (-2)
+    return (pc ** (-0.5) - U * (pc ** (-0.5) - (PMAX_REGIONB + pc) ** (-0.5))) ** (-2)
 
 
 @njit
