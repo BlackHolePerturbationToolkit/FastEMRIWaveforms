@@ -23,6 +23,11 @@
 #ifdef __CUDACC__
 #include "cusparse.h"
 #else
+#if defined(_MSC_VER)
+#include <complex>
+#define lapack_complex_float std::complex<float>
+#define lapack_complex_double std::complex<double>
+#endif
 #include "lapacke.h"
 #endif
 

@@ -1,5 +1,3 @@
-#include "stdio.h"
-
 #include "global.h"
 
 #define  NUM_THREADS 32
@@ -158,16 +156,16 @@ void d_RotCoeff(double* rot, double* n, double* L, double* S, double* nxL, doubl
 
   double norm=d_vec_norm(nxL)*d_vec_norm(nxS);
   double dot,cosrot,sinrot;
-  
+
   dot = d_dot_product(nxL,nxS);
 
   if (norm < 1e-6) norm = 1e-6;
 
   cosrot=dot/norm;
-  
+
   dot = d_dot_product(L,nxS);
   sinrot=dot;
-  
+
   dot = d_dot_product(S,nxL);
   sinrot-=dot;
   sinrot/=norm;
@@ -186,7 +184,7 @@ void make_waveform(cmplx *waveform,
               double M_phys, double S_phys, double mu, double qS, double phiS, double qK, double phiK, double dist,
               int nmodes, bool mich,
               double delta_t, double start_t, int old_ind, int start_ind, int end_ind, int init_length, double segwidth)
-{ 
+{
 
       #ifdef __CUDACC__
 
@@ -271,9 +269,9 @@ void make_waveform(cmplx *waveform,
       double sinphiK=sin(phiK);
       double halfsqrt3=sqrt(3.)/2.;
 
-      // Defined in global.h file 
+      // Defined in global.h file
       double mu_sec = mu * MTSUN_SI;
-      double zeta=mu_sec/dist/GPCINSEC; 
+      double zeta=mu_sec/dist/GPCINSEC;
 
       #ifdef __CUDACC__
 
@@ -354,9 +352,9 @@ void make_waveform(cmplx *waveform,
           double Ldotn2=Ldotn*Ldotn;
           double Sdotn=cosqK*cosqS+sinqK*sinqS*cos(phiK-phiS);
           double beta;
-          if (S_phys == 0.0 || lam < 1e-10 || lam > (M_PI - 1e-10)) // Useful fix to make AAK match Kerr. 
+          if (S_phys == 0.0 || lam < 1e-10 || lam > (M_PI - 1e-10)) // Useful fix to make AAK match Kerr.
           {
-              beta = 0.0; 
+              beta = 0.0;
           }
           else
           {
@@ -386,7 +384,7 @@ void make_waveform(cmplx *waveform,
           double sin2phi=sin(2.*phiw);
           double cos2psi=cos(2.*psi);
           double sin2psi=sin(2.*psi);
-          // antenna patterns, detector frame 
+          // antenna patterns, detector frame
           FplusI=cosq1*cos2phi*cos2psi-cosq*sin2phi*sin2psi;
           FcrosI=cosq1*cos2phi*sin2psi+cosq*sin2phi*cos2psi;
           FplusII=cosq1*sin2phi*cos2psi+cosq*cos2phi*sin2psi;
@@ -394,7 +392,7 @@ void make_waveform(cmplx *waveform,
         }
         else
         {
-            // Antenna patterns, source frame 
+            // Antenna patterns, source frame
             FplusI = 1.0;
             FcrosI = 0.0;
             FplusII = 0.0;
