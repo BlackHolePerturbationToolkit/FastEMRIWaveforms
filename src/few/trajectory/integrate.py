@@ -75,6 +75,7 @@ class Integrate:
         buffer_length: Initial buffer length for trajectory. Will adjust itself if needed.
         enforce_schwarz_sep: If ``True``, enforce the Schwarzschild separatrix as the separatrix.
             :math:`p_s = 6 + 2e`.
+        max_iter: Maximum number of iterations for the integrator.
         **kwargs: Keyword arguments for the ODE function, ``func``.
 
     """
@@ -88,7 +89,7 @@ class Integrate:
         enforce_schwarz_sep: bool = False,
         max_iter: Optional[int] = None,
         **kwargs,
-    ):
+    ):  
         self.buffer_length = buffer_length
 
         func = digest_func(func)
@@ -265,7 +266,7 @@ class Integrate:
         if not self.dopr.fix_step:
             # we do not allow an initial step larger than ~10% of the interval to ensure there are a few steps taken
             # this is necessary for later in waveform generation (computing cubic splines).
-            h = self.tune_initial_step_size(t0, y0, self.tmax_dimensionless / 10)
+            h = self.tune_initial_step_size(t0, y0, min(self.max_step_size, self.tmax_dimensionless / 10))
 
         t_prev = t0
         y_prev = y0.copy()
@@ -307,6 +308,14 @@ class Integrate:
                 y[:] = y_prev[:]
                 h = h_old / 2
 
+                self.log_failed_step(ValueError)
+                continue
+
+            if h > self.max_step_size:
+                # if the step size is larger than the maximum, reduce the initial guess
+                t = t_prev
+                y[:] = y_prev[:]
+                h = h_old / 2
                 self.log_failed_step(ValueError)
                 continue
 
@@ -400,6 +409,7 @@ class Integrate:
         err: float = 1e-11,
         DENSE_STEPPING: bool = False,
         integrate_backwards: bool = False,
+        max_step_size: Optional[float] = None,
         **kwargs,
     ):
         """Setup the integrator.
@@ -415,7 +425,12 @@ class Integrate:
         self.dopr.fix_step = DENSE_STEPPING
         self.integrate_backwards = integrate_backwards
         self.func.integrate_backwards = integrate_backwards
-        
+
+        if max_step_size is None:
+            self.max_step_size = np.inf
+        else:
+            self.max_step_size = max_step_size
+
         self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
         self._integrator_t_cache = np.zeros((self.buffer_length,))
         self.dopr_spline_output = np.zeros(

@@ -109,6 +109,7 @@ class EMRIInspiral(TrajectoryBase):
             "DENSE_STEPPING",
             "buffer_length",
             "integrate_backwards",
+            "max_step_size",
         ]
         """dict: Specific keywords that need to transferred to the inspiral function that can be adjusted with each call."""
 

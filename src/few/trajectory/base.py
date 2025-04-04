@@ -45,6 +45,7 @@ class TrajectoryBase(Citable, abc.ABC):
         err: float = 1e-11,
         fix_t: bool = False,
         integrate_backwards: bool = False,
+        max_step_size: Optional[float] = None,
         **kwargs,
     ) -> tuple[np.ndarray]:
         """Call function for trajectory interface.
@@ -91,6 +92,11 @@ class TrajectoryBase(Citable, abc.ABC):
                 points in the t array. If True, it will shave any excess on the
                 trajectories arrays where the time is greater than the overall
                 time of the trajectory requested.
+            integrate_backwards: If True, the integrator will
+                run backwards in time. Default is False.
+            max_step_size: If given, this will set the maximum step size for
+                the integrator (matching the convention according to `in_coordinate_time`).
+                Default is None (no maximum step size).
             **kwargs: kwargs passed to trajectory module.
                 Default is {}.
 
@@ -115,6 +121,20 @@ class TrajectoryBase(Citable, abc.ABC):
         # convert from years to seconds
         T = T * YRSID_SI
 
+        # M, mu must be the first arguments
+        M, mu = args[:2]
+        Msec = M * MTSUN_SI
+
+        if max_step_size is None:
+            max_step_size = np.inf
+        
+        if in_coordinate_time:
+            kwargs["max_step_size"] = max_step_size * (mu / M) / Msec
+        else:
+            # convert max_step_size to coordinate time
+            if max_step_size is not None:
+                kwargs["max_step_size"] = max_step_size * (mu / M)
+
         # inspiral generator that must be added to each trajectory class
         out = self.get_inspiral(*args, **kwargs)
 
@@ -124,9 +144,6 @@ class TrajectoryBase(Citable, abc.ABC):
 
         # convert to dimensionless time
         if in_coordinate_time is False:
-            # M must be the first argument
-            M = args[0]
-            Msec = M * MTSUN_SI
             t = t / Msec
 
         if not upsample:
