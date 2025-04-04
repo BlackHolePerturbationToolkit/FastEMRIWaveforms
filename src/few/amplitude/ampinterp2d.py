@@ -435,15 +435,25 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
                 mode_indexes = self.mode_indexes
             self.num_modes_eval = self.num_teuk_modes
 
-        u, w, y, z, region_mask = kerrecceq_forward_map(
-            a_in,
-            p,
-            e,
-            xI_in,
-            return_mask=True,
-            kind="amplitude",
-        )
-        z_check = z[0]
+        try:
+            u, w, y, z, region_mask = kerrecceq_forward_map(
+                a_in.get(),
+                p.get(),
+                e.get(),
+                xI_in.get(),
+                return_mask=True,
+                kind="amplitude",
+            )
+        except AttributeError:
+            u, w, y, z, region_mask = kerrecceq_forward_map(
+                a_in,
+                p,
+                e,
+                xI_in,
+                return_mask=True,
+                kind="amplitude",
+            )
+        z_check = z[0].item()
 
         for elem in [u, w, z]:
             if self.xp.any((elem < 0) | (elem > 1)):
