@@ -444,6 +444,7 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
                 return_mask=True,
                 kind="amplitude",
             )
+            
         except AttributeError:
             u, w, y, z, region_mask = kerrecceq_forward_map(
                 a_in,
@@ -454,24 +455,32 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
                 kind="amplitude",
             )
         z_check = z[0].item()
-
+        
+        region_mask = self.xp.asarray(region_mask)
+        u = self.xp.asarray(u)
+        w = self.xp.asarray(w)
+        z = self.xp.asarray(z)
+        self.z_values = self.xp.asarray(self.z_values)
+        
         for elem in [u, w, z]:
             if self.xp.any((elem < 0) | (elem > 1)):
                 raise ValueError("Amplitude interpolant accessed out-of-bounds.")
 
-        region_mask = self.xp.asarray(region_mask)
-        u = self.xp.asarray(u)
-        w = self.xp.asarray(w)
-
         if z_check in self.z_values:
-            ind_1 = self.xp.where(self.z_values == z_check)[0][0]
+            try:
+                ind_i = self.xp.where(self.z_values > z_check)[0].get()[0]
+            except:
+                ind_1 = self.xp.where(self.z_values == z_check)[0][0]
 
             Amp_z = self.evaluate_interpolant_at_index(
                 ind_1, region_mask, w, u, mode_indexes=mode_indexes
             )
 
         else:
-            ind_above = self.xp.where(self.z_values > z_check)[0][0]
+            try:
+                ind_above = self.xp.where(self.z_values > z_check)[0].get()[0]
+            except:
+                ind_above = self.xp.where(self.z_values > z_check)[0][0]
             ind_below = ind_above - 1
             assert ind_above < len(self.z_values)
             assert ind_below >= 0
