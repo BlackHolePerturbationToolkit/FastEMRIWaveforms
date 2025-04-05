@@ -311,7 +311,7 @@ class ModeSelector(ParallelModuleBase):
                 get_logger().warning("(ModeSelector) Warning: Mode selection is large. Instantiate class with mode selection rather than providing it at call time for better performance.")
 
 
-            if self.xp.any(self.xp.unique(mode_selection, return_counts = True, axis = 0)[1] > 1):
+            if self.xp.any(self.xp.unique(self.xp.asarray(mode_selection), return_counts = True, axis = 0)[1] > 1):
                 raise ValueError("Mode selection has duplicate modes.")
 
             mode_arr = self.xp.asarray(mode_selection)
