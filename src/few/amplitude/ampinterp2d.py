@@ -468,7 +468,7 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
 
         if z_check in self.z_values:
             try:
-                ind_i = self.xp.where(self.z_values > z_check)[0].get()[0]
+                ind_1 = self.xp.where(self.z_values == z_check)[0].get()[0]
             except:
                 ind_1 = self.xp.where(self.z_values == z_check)[0][0]
 
