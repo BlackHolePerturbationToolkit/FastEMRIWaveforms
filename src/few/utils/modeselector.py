@@ -197,7 +197,7 @@ class ModeSelector(ParallelModuleBase):
                 raise ValueError("If mode selection is a list, cannot be empty.")
             
             # Do not allow duplicate modes
-            if self.xp.any(self.xp.unique(xp.asarray(mode_selection), return_counts = True, axis = 0)[1] > 1):
+            if self.xp.any(self.xp.unique(self.xp.asarray(mode_selection), return_counts = True, axis = 0)[1] > 1):
                 raise ValueError("Mode selection has duplicate modes.")
             
             # Check if m < 0 modes are included. Warn user of potential errors this might cause if true.
