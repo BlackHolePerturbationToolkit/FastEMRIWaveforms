@@ -2,8 +2,10 @@
 add_subdirectory(cutils)
 
 # Handle Git Metadata
-message(CHECK_START "Building few.git_version metadata")
+get_target_property(_FEW_WITH_CPU fastemriwaveforms WITH_CPU)
+get_target_property(_FEW_WITH_GPU fastemriwaveforms WITH_GPU)
 
+message(CHECK_START "Building few.git_version metadata")
 message(CHECK_START "Find Git executable")
 find_package(Git)
 if(Git_FOUND)
@@ -30,7 +32,15 @@ if(Git_FOUND)
 
     configure_file(git_version.py.in git_version.py @ONLY)
 
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/git_version.py DESTINATION few)
+    if(_FEW_WITH_CPU)
+      install(FILES ${CMAKE_CURRENT_BINARY_DIR}/git_version.py DESTINATION few)
+      install(FILES ${CMAKE_CURRENT_BINARY_DIR}/git_version.py
+              DESTINATION few_backend_cpu)
+    endif()
+    if(_FEW_WITH_GPU)
+      install(FILES ${CMAKE_CURRENT_BINARY_DIR}/git_version.py
+              DESTINATION few_backend_cuda${CUDAToolkit_VERSION_MAJOR}x)
+    endif()
 
     message(CHECK_PASS "done")
   else()
