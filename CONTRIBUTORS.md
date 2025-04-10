@@ -5,7 +5,8 @@ Below is a list of those who have contributed code or data to the releases of FE
 
 - FEW v2.0 (Kerr eccentric equatorial waveforms added)
 	* [Ollie Burke](https://github.com/OllieBurke)
-	* [Christian Chapman-Bird](https://github.com/cchapmanbird)
+	* [Christian Chapman-Bird](https://github.com/cchapmanbird) </br>
+	  	Development and testing of trajectory and amplitude modules, refactoring of package structure, upgrading of existing framework for Kerr and elliptic, utility and mapping functions with numba.
 	* [Michael Katz](https://github.com/mikekatz04)
 	* [Shubham Kejriwal](https://github.com/perturber)
 	* [Lorenzo Speri](https://github.com/lorenzsp)
@@ -13,14 +14,16 @@ Below is a list of those who have contributed code or data to the releases of FE
 	* [Maxime Pigou](https://github.com/mpigou)
 		
 - FEW [v1.5.1](https://github.com/znasipak/FastEMRIWaveforms-Soton-Hackathon-2025/tree/v1.5.1) (Frequency domain waveform added)
-	* [Christian Chapman-Bird](https://github.com/cchapmanbird)
+	* [Christian Chapman-Bird](https://github.com/cchapmanbird) </br>
+		Kernel efficiency improvements and bug fixes
 	* [Michael Katz](https://github.com/mikekatz04)
 	* [Philip Lynch](https://github.com/Philip-Lynch)
 	* Monica Rizzo
 	* [Lorenzo Speri](https://github.com/lorenzsp)
 		
 - FEW [v1.4.4](https://github.com/znasipak/FastEMRIWaveforms-Soton-Hackathon-2025/tree/v1.4.4)
-	* [Christian Chapman-Bird](https://github.com/cchapmanbird)
+	* [Christian Chapman-Bird](https://github.com/cchapmanbird) </br>
+		Numerical root-finding for get_at_t functions
 	* Ryuichi Fujita
 	* Soichiro Isoyama
 	* [Michael Katz](https://github.com/mikekatz04)
