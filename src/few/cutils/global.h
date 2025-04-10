@@ -1,21 +1,17 @@
 #ifndef _GLOBAL_HEADER_
 #define _GLOBAL_HEADER_
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <complex>
-#include "cuda_complex.hpp"
-
 #if defined(_MSC_VER)
-    #define LAPACK_COMPLEX_CUSTOM
-    #define lapack_complex_float _Fcomplex
-    #define lapack_complex_double _Dcomplex
     #define _USE_MATH_DEFINES
     #define FEW_INLINE __inline
 #else
     #define FEW_INLINE __inline__
 #endif
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <complex>
+#include "cuda_complex.hpp"
 #include <cmath>
 
 // Definitions needed for Mathematicas CForm output
