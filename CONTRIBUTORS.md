@@ -9,7 +9,8 @@ Below is a list of those who have contributed code or data to the releases of FE
 	  	Development and testing of trajectory and amplitude modules, refactoring of package structure, upgrading of existing framework for Kerr and elliptic, utility and mapping functions with numba.
 	* [Michael Katz](https://github.com/mikekatz04)
 	* [Shubham Kejriwal](https://github.com/perturber)
-	* [Lorenzo Speri](https://github.com/lorenzsp)
+	* [Lorenzo Speri](https://github.com/lorenzsp)  </br>
+	  	Initial development of trajectory.
 	* [Zachary Nasipak](https://github.com/znasipak)
 	* [Maxime Pigou](https://github.com/mpigou)
 		
@@ -19,7 +20,8 @@ Below is a list of those who have contributed code or data to the releases of FE
 	* [Michael Katz](https://github.com/mikekatz04)
 	* [Philip Lynch](https://github.com/Philip-Lynch)
 	* Monica Rizzo
-	* [Lorenzo Speri](https://github.com/lorenzsp)
+	* [Lorenzo Speri](https://github.com/lorenzsp) </br>
+	  	Developer of the frequency domain model, testing of its efficiency and accuracy against the time domain model.
 		
 - FEW [v1.4.4](https://github.com/znasipak/FastEMRIWaveforms-Soton-Hackathon-2025/tree/v1.4.4)
 	* [Christian Chapman-Bird](https://github.com/cchapmanbird) </br>
