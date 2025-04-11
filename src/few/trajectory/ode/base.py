@@ -5,7 +5,7 @@ Contains the ODEBase baseclass that handles evaluating the ODE
 from typing import Optional, Type, Union
 import numpy as np
 import os
-from ...utils.utility import ELQ_to_pex, get_separatrix
+from ...utils.geodesic import ELQ_to_pex, get_separatrix
 from ...utils.mappings.jacobian import ELdot_to_PEdot_Jacobian
 from ...utils.mappings.pn import Y_to_xI
 
@@ -116,8 +116,8 @@ class ODEBase:
             self.flux_output_convention == "ELQ" and not self.use_ELQ
         )
 
-    def add_fixed_parameters(self, M: float, mu: float, a: float, additional_args=None):
-        self.epsilon = mu / M
+    def add_fixed_parameters(self, m1: float, m2: float, a: float, additional_args=None):
+        self.massratio = m1 * m2 / (m1 + m2) ** 2
         self.a = a
         self.additional_args = additional_args
 
@@ -298,7 +298,6 @@ class ODEBase:
         self,
         y: Union[list, np.ndarray],
         out: Optional[np.ndarray] = None,
-        scale_by_eps=False,
         **kwargs: Optional[dict],
     ) -> np.ndarray:
         in_bounds = self.cache_values_and_check_bounds(y)
@@ -317,9 +316,6 @@ class ODEBase:
             out[:2] = ELdot_to_PEdot_Jacobian(self.a, *y[:3], *out[:2])
 
         self.modify_rhs(out, y, **kwargs)
-
-        if scale_by_eps:
-            out[:3] *= self.epsilon
 
         if self.integrate_backwards:
             out *= -1.

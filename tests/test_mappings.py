@@ -1,10 +1,8 @@
 import numpy as np
-
 from few.tests.base import FewTest
 from few.utils.mappings.kerrecceq import kerrecceq_backward_map, kerrecceq_forward_map
 from few.utils.mappings.pn import Y_to_xI, xI_to_Y
-from few.utils.utility import get_separatrix
-
+from few.utils.geodesic import get_separatrix
 
 class MappingsTest(FewTest):
     @classmethod

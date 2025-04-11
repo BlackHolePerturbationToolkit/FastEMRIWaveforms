@@ -120,8 +120,8 @@ class SphericalHarmonicWaveformBase(
 
     def _generate_waveform(
         self,
-        M: float,
-        mu: float,
+        m1: float,
+        m2: float,
         a: float,
         p0: float,
         e0: float,
@@ -134,7 +134,7 @@ class SphericalHarmonicWaveformBase(
         Phi_r0: float = 0.0,
         dt: float = 10.0,
         T: float = 1.0,
-        eps: float = 1e-5,
+        mode_selection_threshold: float = 1e-5,
         show_progress: bool = False,
         batch_size: int = -1,
         mode_selection: Optional[Union[str, list, np.ndarray]] = None,
@@ -147,8 +147,8 @@ class SphericalHarmonicWaveformBase(
         compute desired outputs.
 
         args:
-            M: Mass of larger black hole in solar masses.
-            mu: Mass of compact object in solar masses.
+            m1: Mass of larger black hole in solar masses.
+            m2: Mass of compact object in solar masses.
             a: Dimensionless spin parameter of larger black hole.
             p0: Initial (osculating) semilatus rectum of inspiral trajectory.
             e0: Initial (osculating) eccentricity of inspiral trajectory.
@@ -165,7 +165,7 @@ class SphericalHarmonicWaveformBase(
                 sampling frequency). Default is 10.0.
             T: Total observation time in years.
                 Default is 1.0.
-            eps: Controls the fractional accuracy during mode
+            mode_selection_threshold: Controls the fractional accuracy during mode
                 filtering. Raising this parameter will remove modes. Lowering
                 this parameter will add modes. Default that gives a good overalp
                 is 1e-5.
@@ -203,6 +203,10 @@ class SphericalHarmonicWaveformBase(
             theta = np.pi - theta
             phi = -phi
 
+        # define total mass and reduced mass
+        M = m1 + m2
+        mu = m1 * m2 / (m1 + m2)
+
         if dist is not None:
             if dist <= 0.0:
                 raise ValueError("Luminosity distance must be greater than zero.")
@@ -215,7 +219,7 @@ class SphericalHarmonicWaveformBase(
         # makes sure viewing angles are allowable
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
 
-        a, xI0 = self.sanity_check_init(M, mu, a, p0, e0, xI0)
+        a, xI0 = self.sanity_check_init(m1, m2, a, p0, e0, xI0)
         
         # Ensure kwargs['inspiral_kwargs'] exists and is a dictionary
         # Essential if inspiral_kwargs passed into waveform generator
@@ -226,8 +230,8 @@ class SphericalHarmonicWaveformBase(
         self.inspiral_kwargs.setdefault('err', 1e-11) # Will only set default if "err" is not supplied
 
         (t, p, e, xI, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
-            M,
-            mu,
+            m1,
+            m2,
             a,
             p0,
             e0,
@@ -270,7 +274,7 @@ class SphericalHarmonicWaveformBase(
             if mode_selection is not None:
                 get_logger().warning("(SphericalHarmonicWaveformBase) Warning: Mode selector is predictive. Overwriting mode_selection.")
             mode_selection = self.mode_selector(
-                M, mu, a * xI0, p0, e0, 1.0, theta, phi, T, eps
+                m1, m2, a * xI0, p0, e0, 1.0, theta, phi, T, mode_selection_threshold
             )  # TODO: update this if more arguments are required
 
         # split into batches
@@ -332,7 +336,8 @@ class SphericalHarmonicWaveformBase(
                 teuk_modes = teuk_modes * factor[:, np.newaxis]
 
             fund_freq_args = (
-                    M,
+                    m1,
+                    m2,
                     a,
                     p_temp,
                     e_temp,
@@ -355,7 +360,7 @@ class SphericalHarmonicWaveformBase(
                 mode_selection=mode_selection,
                 modeinds_map=modeinds_map,
                 include_minus_mkn=include_minus_mkn,
-                eps=eps,
+                mode_selection_threshold=mode_selection_threshold,
             )
 
             # store number of modes for external information
@@ -407,7 +412,7 @@ class SphericalHarmonicWaveformBase(
                 self.ls,
                 self.ms,
                 self.ns,
-                M,
+                M, # waveform generation will also be done with respect to total mass
                 a,
                 p,
                 e,
@@ -536,8 +541,8 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumMod
 
     def __call__(
         self,
-        M: float,
-        mu: float,
+        m1: float,
+        m2: float,
         a: float,
         p0: float,
         e0: float,
@@ -561,8 +566,8 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumMod
         This function will take input parameters and produce AAK waveforms with 5PN trajectories in generic Kerr.
 
         args:
-            M: Mass of larger black hole in solar masses.
-            mu: Mass of compact object in solar masses.
+            m1: Mass of larger black hole in solar masses.
+            m2: Mass of compact object in solar masses.
             a: Dimensionless spin of massive black hole.
             p0: Initial semilatus rectum (Must be greater than
                 the separatrix at the the given e0 and Y0).
@@ -607,12 +612,16 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumMod
         # makes sure angular extrinsic parameters are allowable
         qS, phiS, qK, phiK = self.sanity_check_angles(qS, phiS, qK, phiK)
 
-        a, Y0 = self.sanity_check_init(M, mu, a, p0, e0, Y0)
+        a, Y0 = self.sanity_check_init(m1, m2, a, p0, e0, Y0)
+
+        # define total mass and reduced mass
+        M = m1 + m2
+        mu = m1 * m2 / (m1 + m2)
 
         # get trajectory
         t, p, e, Y, Phi_phi, Phi_theta, Phi_r = self.inspiral_generator(
-            M,
-            mu,
+            m1,
+            m2,
             a,
             p0,
             e0,
@@ -650,7 +659,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumMod
             self.inspiral_generator.integrator_spline_coeff
         )
 
-        # scale coefficients here by the mass ratio
+        # scale coefficients here by the (symmetric) mass ratio
         traj_spline_coeff_in = traj_spline_coeff.copy()
         traj_spline_coeff_in[:, 3:, :] /= mu / M
 
@@ -663,12 +672,13 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumMod
                 ]
             )
 
+        # TODO: Check that the mass conventions here are consistent with adiabatic model
         waveform = self.create_waveform(
             t,
-            M,
+            m1,
             a,
             dist,
-            mu,
+            m2,
             qS,
             phiS,
             qK,

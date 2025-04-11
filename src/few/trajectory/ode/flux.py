@@ -1,8 +1,8 @@
 from .base import ODEBase
-from ...utils.utility import get_fundamental_frequencies, get_separatrix, ELQ_to_pex
+from ...utils.geodesic import get_fundamental_frequencies, get_separatrix, ELQ_to_pex, _get_separatrix_kernel_inner
 from ...utils.globals import get_file_manager
 from numba import njit
-from few.utils.mappings.kerrecceq import (_kerrecceq_flux_forward_map, 
+from ...utils.mappings.kerrecceq import (_kerrecceq_flux_forward_map, 
                                 apex_of_uwyz, 
                                 apex_of_UWYZ, 
                                 z_of_a, 
@@ -15,15 +15,13 @@ from few.utils.mappings.kerrecceq import (_kerrecceq_flux_forward_map,
                                 EMAX,
                                 PMAX_REGIONB,
                                 AMAX)
-from few.utils.mappings.jacobian import ELdot_to_PEdot_Jacobian
-
-from few.utils.utility import _brentq_jit, _get_separatrix_kernel_inner
-from few.utils.exceptions import TrajectoryOffGridException
+from ...utils.mappings.jacobian import ELdot_to_PEdot_Jacobian
+from ...utils.utility import _brentq_jit
+from ...utils.exceptions import TrajectoryOffGridException
 
 import h5py
 
 from multispline.spline import BicubicSpline, TricubicSpline
-import os
 from typing import Union, Optional
 import numpy as np
 from math import pow, log

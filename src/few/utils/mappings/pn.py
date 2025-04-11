@@ -1,6 +1,6 @@
 from math import sqrt
 from numba import njit
-from ..utility import get_kerr_geo_constants_of_motion
+from ..geodesic import get_kerr_geo_constants_of_motion
 import numpy as np
 from typing import Union
 

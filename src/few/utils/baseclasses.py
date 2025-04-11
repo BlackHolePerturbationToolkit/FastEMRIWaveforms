@@ -460,15 +460,15 @@ class SchwarzschildEccentric(SphericalHarmonic):
         return cls.GPU_RECOMMENDED()
 
     def sanity_check_init(
-        self, M: float, mu: float, a: float, p0: float, e0: float, xI: float
+        self, m1: float, m2: float, a: float, p0: float, e0: float, xI: float
     ) -> tuple[float, float]:
         r"""Sanity check initial parameters.
 
         Make sure parameters are within allowable ranges.
 
         args:
-            M: Massive black hole mass in solar masses.
-            mu: compact object mass in solar masses.
+            m1: Massive black hole mass in solar masses.
+            m2: compact object mass in solar masses.
             a: Dimensionless spin of massive black hole :math:`(a = 0)`.
             p0: Initial semilatus rectum (dimensionless)
                 :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
@@ -483,10 +483,17 @@ class SchwarzschildEccentric(SphericalHarmonic):
             ValueError: If any of the parameters are not allowed.
 
         """
-        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"]]:
+        for val, key in [[m1, "m1"], [p0, "p0"], [e0, "e0"], [m2, "m2"]]:
             test = val < 0.0
             if test:
                 raise ValueError("{} is negative. It must be positive.".format(key))
+            
+        if m1 < m2:
+            raise ValueError(
+                "Massive black hole mass must be larger than the compact object mass. (m1={}, m2={})".format(
+                    m1, m2
+                )
+            )
 
         if e0 > 0.75:
             raise ValueError(
@@ -565,15 +572,15 @@ class KerrEccentricEquatorial(SphericalHarmonic):
         return cls.GPU_RECOMMENDED()
 
     def sanity_check_init(
-        self, M: float, mu: float, a: float, p0: float, e0: float, xI: float
+        self, m1: float, m2: float, a: float, p0: float, e0: float, xI: float
     ) -> tuple[float, float]:
         r"""Sanity check initial parameters.
 
         Make sure parameters are within allowable ranges.
 
         args:
-            M: Massive black hole mass in solar masses.
-            mu: compact object mass in solar masses.
+            m1: Massive black hole mass in solar masses.
+            m2: compact object mass in solar masses.
             a: Dimensionless spin of massive black hole.
             p0: Initial semilatus rectum (dimensionless)
                 :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
@@ -590,10 +597,17 @@ class KerrEccentricEquatorial(SphericalHarmonic):
         """
         # TODO: update function when grids replaced
 
-        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"]]:
+        for val, key in [[m1, "m1"], [p0, "p0"], [e0, "e0"], [m2, "m2"]]:
             test = val < 0.0
             if test:
                 raise ValueError("{} is negative. It must be positive.".format(key))
+        
+        if m1 < m2:
+            raise ValueError(
+                "Massive black hole mass must be larger than the compact object mass. (m1={}, m2={})".format(
+                    m1, m2
+                )
+            )
 
         if xI < 0:
             # flip convention
@@ -721,15 +735,15 @@ class Pn5AAK(Citable):
             )
 
     def sanity_check_init(
-        self, M: float, mu: float, a: float, p0: float, e0: float, Y0: float
+        self, m1: float, m2: float, a: float, p0: float, e0: float, Y0: float
     ):
         r"""Sanity check initial parameters.
 
         Make sure parameters are within allowable ranges.
 
         args:
-            M: Massive black hole mass in solar masses.
-            m: compact object mass in solar masses.
+            m1: Massive black hole mass in solar masses.
+            m2: compact object mass in solar masses.
             a: Dimensionless spin of massive black hole :math:`(0 \leq a \leq 1)`.
             p0: Initial semilatus rectum (dimensionless)
                 :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
@@ -742,11 +756,18 @@ class Pn5AAK(Citable):
 
         """
 
-        for val, key in [[M, "M"], [p0, "p0"], [e0, "e0"], [mu, "mu"]]:
+        for val, key in [[m1, "m1"], [p0, "p0"], [e0, "e0"], [m2, "m2"]]:
             test = val < 0.0
             if test:
                 raise ValueError("{} is negative. It must be positive.".format(key))
-
+        
+        if m1 < m2:
+            raise ValueError(
+                "Massive black hole mass must be larger than the compact object mass. (m1={}, m2={})".format(
+                    m1, m2
+                )
+            )
+        
         if a < 0:
             # flip convention
             get_logger().warning(
@@ -755,10 +776,10 @@ class Pn5AAK(Citable):
             a = -a
             Y0 = -Y0
 
-        if mu / M > 1e-4:
+        if m2 / m1 > 1e-4:
             get_logger().warning(
                 "Mass ratio is outside of generally accepted range for an extreme mass ratio (1e-4). (q={})".format(
-                    mu / M
+                    m2 / m1
                 )
             )
 

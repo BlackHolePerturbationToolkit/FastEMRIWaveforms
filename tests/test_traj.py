@@ -6,9 +6,9 @@ from scipy.integrate import solve_ivp
 
 from few.tests.base import FewTest
 from few.trajectory.inspiral import EMRIInspiral
-from few.trajectory.ode import PN5, KerrEccEqFlux, SchwarzEccFlux
+from few.trajectory.ode import KerrEccEqFlux, PN5, SchwarzEccFlux
 from few.utils.constants import MTSUN_SI, YRSID_SI
-from few.utils.utility import get_separatrix
+from few.utils.geodesic import get_separatrix
 
 np.random.seed(42)
 

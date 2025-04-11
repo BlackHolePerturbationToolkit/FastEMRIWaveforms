@@ -228,8 +228,8 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
 
     def __call__(
         self,
-        M: float,
-        mu: float,
+        m1: float,
+        m2: float,
         a: float,
         p0: float,
         e0: float,
@@ -248,8 +248,8 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
         r"""Generate the waveform with the given parameters.
 
         Args:
-            M: Mass of larger black hole in solar masses.
-            mu: Mass of compact object in solar masses.
+            m1: Mass of larger black hole in solar masses.
+            m2: Mass of compact object in solar masses.
             a: Dimensionless spin of massive black hole.
             p0: Initial semilatus rectum (Must be greater than
                 the separatrix at the the given e0 and x0).
@@ -288,8 +288,8 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
             Phi_phi0 = Phi_phi0 + np.pi
 
         args_all = (
-            M,
-            mu,
+            m1,
+            m2,
             a,
             p0,
             e0,
@@ -317,6 +317,9 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
 
         # pick out the phases to be used
         initial_phases = {key: args_all[i] for key, i in self.phases_needed.items()}
+
+        # define reduced mass for scaling waveform amplitude
+        mu = m1 * m2 / (m1 + m2)
 
         # generate waveform in source frame
         if self.waveform_generator.frame == "source":
@@ -495,8 +498,8 @@ class FastKerrEccentricEquatorialFlux(
 
     def __call__(
         self,
-        M: float,
-        mu: float,
+        m1: float,
+        m2: float,
         a: float,
         p0: float,
         e0: float,
@@ -510,8 +513,8 @@ class FastKerrEccentricEquatorialFlux(
         Generate the waveform.
 
         Args:
-            M: Mass of larger black hole in solar masses.
-            mu: Mass of compact object in solar masses.
+            m1: Mass of larger black hole in solar masses.
+            m2: Mass of compact object in solar masses.
             a: Dimensionless spin of massive black hole.
             p0: Initial semilatus rectum of inspiral trajectory.
             e0: Initial eccentricity of inspiral trajectory.
@@ -526,8 +529,8 @@ class FastKerrEccentricEquatorialFlux(
 
         """
         return self._generate_waveform(
-            M,
-            mu,
+            m1,
+            m2,
             a,
             p0,
             e0,
@@ -646,8 +649,8 @@ class FastSchwarzschildEccentricFlux(
 
     def __call__(
         self,
-        M: float,
-        mu: float,
+        m1: float,
+        m2: float,
         p0: float,
         e0: float,
         theta: float,
@@ -659,8 +662,8 @@ class FastSchwarzschildEccentricFlux(
         Generate the waveform.
 
         Args:
-            M: Mass of larger black hole in solar masses.
-            mu: Mass of compact object in solar masses.
+            m1: Mass of larger black hole in solar masses.
+            m2: Mass of compact object in solar masses.
             p0: Initial semilatus rectum of inspiral trajectory.
             e0: Initial eccentricity of inspiral trajectory.
             theta: Polar angle of observer.
@@ -674,8 +677,8 @@ class FastSchwarzschildEccentricFlux(
         """
         # insert missing arguments for this waveform class
         return self._generate_waveform(
-            M,
-            mu,
+            m1,
+            m2,
             0.0,
             p0,
             e0,
@@ -795,8 +798,8 @@ class FastSchwarzschildEccentricFluxBicubic(
 
     def __call__(
         self,
-        M: float,
-        mu: float,
+        m1: float,
+        m2: float,
         p0: float,
         e0: float,
         theta: float,
@@ -808,8 +811,8 @@ class FastSchwarzschildEccentricFluxBicubic(
         Generate the waveform.
 
         Args:
-            M: Mass of larger black hole in solar masses.
-            mu: Mass of compact object in solar masses.
+            m1: Mass of larger black hole in solar masses.
+            m2: Mass of compact object in solar masses.
             p0: Initial semilatus rectum of inspiral trajectory.
             e0: Initial eccentricity of inspiral trajectory.
             theta: Polar angle of observer.
@@ -822,8 +825,8 @@ class FastSchwarzschildEccentricFluxBicubic(
         """
         # insert missing arguments for this waveform class
         return self._generate_waveform(
-            M,
-            mu,
+            m1,
+            m2,
             0.0,
             p0,
             e0,
@@ -927,8 +930,8 @@ class SlowSchwarzschildEccentricFlux(
 
     def __call__(
         self,
-        M: float,
-        mu: float,
+        m1: float,
+        m2: float,
         p0: float,
         e0: float,
         theta: float,
@@ -940,8 +943,8 @@ class SlowSchwarzschildEccentricFlux(
         Generate the waveform.
 
         Args:
-            M: Mass of larger black hole in solar masses.
-            mu: Mass of compact object in solar masses.
+            m1: Mass of larger black hole in solar masses.
+            m2: Mass of compact object in solar masses.
             p0: Initial semilatus rectum of inspiral trajectory.
             e0: Initial eccentricity of inspiral trajectory.
             theta: Polar angle of observer.
@@ -957,8 +960,8 @@ class SlowSchwarzschildEccentricFlux(
             kwargs = {}
         kwargs.update(dict(mode_selection="all"))
         return self._generate_waveform(
-            M,
-            mu,
+            m1,
+            m2,
             0.0,
             p0,
             e0,

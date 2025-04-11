@@ -1,6 +1,6 @@
 from numba import njit
 from math import sqrt
-from ..utility import (
+from ..geodesic import (
     _KerrGeoEnergy,
     _KerrGeoAngularMomentum,
 )

@@ -1,7 +1,7 @@
 import numpy as np
 from numba import njit
 from math import log
-from ..utility import get_separatrix
+from ..geodesic import get_separatrix
 from typing import Optional, Union
 
 XMIN = 0.05
