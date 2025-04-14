@@ -12,8 +12,9 @@ Below is a list of those who have contributed code or data to the releases of FE
 	* [Lorenzo Speri](https://github.com/lorenzsp)  </br>
 	  	Initial development of trajectory.
 	* [Zachary Nasipak](https://github.com/znasipak)
-	* [Maxime Pigou](https://github.com/mpigou)
-		
+	* [Maxime Pigou](https://github.com/mpigou) </br>
+	   Refactoring of build procedure; automation in CI of tests execution, wheels deployment to PyPI and documentation build (github page/readthedocs); development of config and file management utilities
+
 - FEW [v1.5.1](https://github.com/znasipak/FastEMRIWaveforms-Soton-Hackathon-2025/tree/v1.5.1) (Frequency domain waveform added)
 	* [Christian Chapman-Bird](https://github.com/cchapmanbird) </br>
 		Kernel efficiency improvements and bug fixes
@@ -22,7 +23,7 @@ Below is a list of those who have contributed code or data to the releases of FE
 	* Monica Rizzo
 	* [Lorenzo Speri](https://github.com/lorenzsp) </br>
 	  	Developer of the frequency domain model, testing of its efficiency and accuracy against the time domain model.
-		
+
 - FEW [v1.4.4](https://github.com/znasipak/FastEMRIWaveforms-Soton-Hackathon-2025/tree/v1.4.4)
 	* [Christian Chapman-Bird](https://github.com/cchapmanbird) </br>
 		Numerical root-finding for get_at_t functions
@@ -30,7 +31,7 @@ Below is a list of those who have contributed code or data to the releases of FE
 	* Soichiro Isoyama
 	* [Michael Katz](https://github.com/mikekatz04)
 	* [Lorenzo Speri](https://github.com/lorenzsp)
-		
+
 - FEW [v1.0.0](https://github.com/znasipak/FastEMRIWaveforms-Soton-Hackathon-2025/tree/v1.0.0) (Initial release)
 	* Alvin Chu
 	* [Michael Katz](https://github.com/mikekatz04)
