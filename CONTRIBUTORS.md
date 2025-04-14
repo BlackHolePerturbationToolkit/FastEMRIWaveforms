@@ -14,7 +14,7 @@ Below is a list of those who have contributed code or data to the releases of FE
 	* [Zachary Nasipak](https://github.com/znasipak)
 	* [Maxime Pigou](https://github.com/mpigou) </br>
 	   Refactoring of build procedure; automation in CI of tests execution, wheels deployment to PyPI and documentation build (github page/readthedocs); development of config and file management utilities
-   	* [Scott Hughes] </br>
+   	* Scott Hughes </br>
     		Generation of flux/amplitude data for cross-validation.
 
 - FEW [v1.5.1](https://github.com/znasipak/FastEMRIWaveforms-Soton-Hackathon-2025/tree/v1.5.1) (Frequency domain waveform added)
@@ -25,7 +25,7 @@ Below is a list of those who have contributed code or data to the releases of FE
 	* Monica Rizzo
 	* [Lorenzo Speri](https://github.com/lorenzsp) </br>
 	  	Developer of the frequency domain model, testing of its efficiency and accuracy against the time domain model.
-   	* [Scott Hughes] </br>
+   	* Scott Hughes </br>
     		Writing of second-order SPA mathematical framework for frequency-domain waveform generation.
 
 - FEW [v1.4.4](https://github.com/znasipak/FastEMRIWaveforms-Soton-Hackathon-2025/tree/v1.4.4)
