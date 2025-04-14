@@ -161,7 +161,7 @@ class EMRIInspiral(TrajectoryBase):
     def integrator_spline_phase_coeff(self):
         return (
             self.inspiral_generator.integrator_spline_coeff[:, 3:6]
-            / self.inspiral_generator.epsilon
+            / self.inspiral_generator.massratio
         )
 
     def get_inspiral(

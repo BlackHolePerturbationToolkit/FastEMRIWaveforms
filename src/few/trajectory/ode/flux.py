@@ -194,8 +194,34 @@ def _PN_alt(p, e):
         * oneme2
         * (1 + 73 / 24 * e**2 + 37 / 96 * e**4)
     )
-    Ldot = 32.0 / 5.0 * p ** (-7 / 2) * (1 - e**2) ** 1.5 * (1 + 7.0 / 8.0 * e**2)
+    Ldot = 32.0 / 5.0 * p ** (-7 / 2) * oneme2 * (1 + 7.0 / 8.0 * e**2)
     return Edot, Ldot
+
+@njit 
+def _EdotPN_alt(p, e):
+    """
+    https://arxiv.org/pdf/2201.07044.pdf
+    eq 91
+    """
+    oneme2 = (1 - e**2)**1.5
+    Edot = (
+        32.0
+        / 5.0
+        * p ** (-5)
+        * oneme2
+        * (1 + 73 / 24 * e**2 + 37 / 96 * e**4)
+    )
+    return Edot
+
+@njit 
+def _LdotPN_alt(p, e):
+    """
+    https://arxiv.org/pdf/2201.07044.pdf
+    eq 91
+    """
+    oneme2 = (1 - e**2)**1.5
+    Ldot = 32.0 / 5.0 * p ** (-7 / 2) * oneme2 * (1 + 7.0 / 8.0 * e**2)
+    return Ldot
 
 @njit
 def _emax_w(e, args):

@@ -54,8 +54,8 @@ class WaveformTest(FewBackendTest):
         # parameters
         T = 1.0  # years
         dt = 10.0  # seconds
-        M = 1000000.0
-        mu = 50.0
+        m1 = 1000000.0
+        m2 = 50.0
         p0 = 12.510272236947417
         e0 = 0.4
         theta = np.pi / 3  # polar viewing angle
@@ -65,7 +65,7 @@ class WaveformTest(FewBackendTest):
         _N = int(T * YRSID_SI / dt)
 
         _fast_wave = extracted_gen(
-            M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-3
+            m1, m2, p0, e0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-3
         )
 
     def test_fast_and_slow_schwarzschild(self):
@@ -89,8 +89,8 @@ class WaveformTest(FewBackendTest):
         # parameters
         T = 1.0  # years
         dt = 10.0  # seconds
-        M = 1000000.0
-        mu = 50.0
+        m1 = 1000000.0
+        m2 = 50.0
         p0 = 12.510272236947417
         e0 = 0.4
         theta = np.pi / 3  # polar viewing angle
@@ -98,8 +98,8 @@ class WaveformTest(FewBackendTest):
         dist = 1.0  # distance
 
         slow_wave = slow(
-            M,
-            mu,
+            m1,
+            m2,
             p0,
             e0,
             theta,
@@ -115,7 +115,7 @@ class WaveformTest(FewBackendTest):
         kwargs = dict(f_arr=f_in)
 
         fast_wave = fast(
-            M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-3, **kwargs
+            m1, m2, p0, e0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-3, **kwargs
         )
 
         # process FD
@@ -164,8 +164,8 @@ class WaveformTest(FewBackendTest):
         # parameters
         T = 1.0  # years
         dt = 10.0  # seconds
-        M = 1000000.0
-        mu = 50.0
+        m1 = 1000000.0
+        m2 = 50.0
         a = 0.5
         p0 = 12.510272236947417
         e0 = 0.4
@@ -174,8 +174,8 @@ class WaveformTest(FewBackendTest):
         dist = 1.0  # distance
 
         slow_wave = slow(
-            M,
-            mu,
+            m1,
+            m2,
             a,
             p0,
             e0,
@@ -193,7 +193,7 @@ class WaveformTest(FewBackendTest):
         kwargs = dict(f_arr=f_in)
 
         fast_wave = fast(
-            M, mu, a, p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-3, **kwargs
+            m1, m2, a, p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-3, **kwargs
         )
 
         # process FD

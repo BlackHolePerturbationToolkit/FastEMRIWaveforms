@@ -32,8 +32,8 @@ class KerrWaveformTest(FewBackendTest):
         )
 
         # parameters
-        M = 1e6
-        mu = 1e1
+        m1 = 1e6
+        m2 = 1e1
         p0 = 10.0
         e0 = 0.4
 
@@ -51,8 +51,8 @@ class KerrWaveformTest(FewBackendTest):
         T = 0.1
 
         Kerr_wave = wave_generator_Kerr(
-            M,
-            mu,
+            m1,
+            m2,
             0.0,
             p0,
             e0,
@@ -69,8 +69,8 @@ class KerrWaveformTest(FewBackendTest):
             dt=dt,
         )
         Schwarz_wave = wave_generator_Schwarz(
-            M,
-            mu,
+            m1,
+            m2,
             0.0,
             p0,
             e0,
@@ -103,8 +103,8 @@ class KerrWaveformTest(FewBackendTest):
         )
 
         # parameters
-        M = 1e6
-        mu = 1e1
+        m1 = 1e6
+        m2 = 1e1
         a = 0.7
         p0 = 11.0
         e0 = 0.4
@@ -123,8 +123,8 @@ class KerrWaveformTest(FewBackendTest):
         T = 0.1
 
         Kerr_wave_retrograde = wave_generator_Kerr(
-            M,
-            mu,
+            m1,
+            m2,
             abs(a),
             p0,
             e0,
@@ -141,8 +141,8 @@ class KerrWaveformTest(FewBackendTest):
             dt=dt,
         )
         Kerr_wave_prograde = wave_generator_Kerr(
-            M,
-            mu,
+            m1,
+            m2,
             abs(a),
             p0,
             e0,

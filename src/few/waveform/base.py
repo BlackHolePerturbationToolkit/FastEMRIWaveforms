@@ -675,10 +675,10 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumMod
         # TODO: Check that the mass conventions here are consistent with adiabatic model
         waveform = self.create_waveform(
             t,
-            m1,
+            M, # for the AAK waveform this parameter sets the dimensionless frequency with which to scale the amplitude
             a,
             dist,
-            m2,
+            mu, # this is also used to scale the amplitude, so we want to scale with reduced mass
             qS,
             phiS,
             qK,

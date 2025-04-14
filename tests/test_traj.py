@@ -21,33 +21,32 @@ insp_kw = {
 }
 
 
-def compute_traj_1_2(traj_1, traj_2, M, mu, a, p0, e0, xI0, T=0.01):
+def compute_traj_1_2(traj_1,traj_2, m1, m2, a, p0, e0, xI0, T=0.01):
     """
     Inputs: primary mass M, secondary mass mu, primary spin a, eccentricity e0,
             observation time T (optional)
 
     outputs: two separate trajectories from two specified trajectory modules
     """
-
-    _traj_args = [M, mu, a, e0, xI0]
+    
+    traj_args = [m1, m2, a, e0, xI0]
     # Compute value of p to give T year inspiral
 
     # Compute trajectories for ELQ and pex
-    out_1 = traj_1(M, mu, a, p0, e0, 1.0, T=T)  # trajectory module 1
+    out_1 = traj_1(m1, m2, a, p0, e0, 1.0, T=T)  # trajectory module 1
     out_2 = traj_2(
-        M, mu, a, p0, e0, 1.0, T=T, new_t=out_1[0], upsample=True
+        m1, m2, a, p0, e0, 1.0, T=T, new_t=out_1[0], upsample=True
     )  # trajectory module 2
     # NOTE: using out_1 time array.
 
     return out_1, out_2
 
-
-def run_forward_back(traj_module, M, mu, a, p0, e0, xI0, forwards_kwargs):
+def run_forward_back(traj_module, m1, m2, a, p0, e0, xI0, forwards_kwargs):
     """
     Run a trajectory forward, then run a trajectory backward from the finish point and return both result sets.
     """
 
-    forwards_result = traj_module(M, mu, a, p0, e0, xI0, **forwards_kwargs)
+    forwards_result = traj_module(m1, m2, a, p0, e0, xI0, **forwards_kwargs)
 
     # Now test backwards integration
     final_p = forwards_result[1][-1]
@@ -58,7 +57,7 @@ def run_forward_back(traj_module, M, mu, a, p0, e0, xI0, forwards_kwargs):
     insp_kw_back.update({"integrate_backwards": True})
     insp_kw_back.update({"T": forwards_result[0][-1] / YRSID_SI})
 
-    backwards_result = traj_module(M, mu, a, final_p, final_e, final_x, **insp_kw_back)
+    backwards_result = traj_module(m1, m2, a, final_p, final_e, final_x, **insp_kw_back)
 
     return forwards_result, backwards_result
 
@@ -77,8 +76,8 @@ class ModuleTest(FewTest):
         traj = EMRIInspiral(func=PN5)
 
         # set initial parameters
-        M = 1e5
-        mu = 1e1
+        m1 = 1e5
+        m2 = 1e1
         for i in range(N_TESTS):
             p0 = np.random.uniform(11, 15)
             e0 = np.random.uniform(0.0, 0.6)
@@ -90,7 +89,7 @@ class ModuleTest(FewTest):
                 x0 = np.sign(x0) * 1e-1
             self.logger.info(f" Test {i}/{N_TESTS} with {p0=}, {e0=}, {a=} and {x0=}")
             forwards, backwards = run_forward_back(
-                traj, M, mu, a, p0, e0, x0, forwards_kwargs=insp_kw
+                traj, m1, m2, a, p0, e0, x0, forwards_kwargs=insp_kw
             )
             for i in range(1, 3):
                 self.assertAlmostEqual(
@@ -106,8 +105,8 @@ class ModuleTest(FewTest):
         traj = EMRIInspiral(func=KerrEccEqFlux)
 
         # set initial parameters
-        M = 1e5
-        mu = 1e1
+        m1 = 1e5
+        m2 = 1e1
         for i in range(N_TESTS):
             p0 = np.random.uniform(9.0, 15)
             e0 = np.random.uniform(0.0, 0.6)
@@ -116,7 +115,7 @@ class ModuleTest(FewTest):
 
             self.logger.info(f" Test {i}/{N_TESTS} with {p0=}, {e0=}, {a=} and {x0=}")
             forwards, backwards = run_forward_back(
-                traj, M, mu, a, p0, e0, x0, forwards_kwargs=insp_kw
+                traj, m1, m2, a, p0, e0, x0, forwards_kwargs=insp_kw
             )
             for i in range(1, 6):
                 self.assertAlmostEqual(
@@ -132,8 +131,8 @@ class ModuleTest(FewTest):
         traj = EMRIInspiral(func=SchwarzEccFlux)
 
         # set initial parameters
-        M = 1e5
-        mu = 1e1
+        m1 = 1e5
+        m2 = 1e1
         for i in range(N_TESTS):
             p0 = np.random.uniform(9.0, 15)
             e0 = np.random.uniform(0.0, 0.6)
@@ -142,7 +141,7 @@ class ModuleTest(FewTest):
 
             self.logger.info(f" Test {i}/{N_TESTS} with {p0=}, {e0=}, {a=} and {x0=}")
             forwards, backwards = run_forward_back(
-                traj, M, mu, a, p0, e0, x0, forwards_kwargs=insp_kw
+                traj, m1, m2, a, p0, e0, x0, forwards_kwargs=insp_kw
             )
             for i in range(1, 6):
                 self.assertAlmostEqual(
@@ -174,32 +173,32 @@ class ModuleTest(FewTest):
             T_obs = np.random.uniform(0.01, 1.0)  # Observation time
 
             # set initial intrinsic parameters
-            M = np.random.uniform(5e5, 5e6)
-            mu = np.random.uniform(5, 100)
+            m1 = np.random.uniform(5e5, 5e6)
+            m2 = np.random.uniform(5,100)
             p0 = np.random.uniform(9.0, 15)
             e0 = np.random.uniform(0.01, 0.6)
             a = np.random.uniform(0.0, 0.999)
             xI0 = np.random.choice([1.0, -1.0])
 
             self.logger.info(
-                f" Test {i}/{N_TESTS} with {M=}, {mu=},, {p0=}, {e0=}, {a=} and {xI0=} for T = {T_obs} yr observation"
+                f" Test {i}/{N_TESTS} with {m1=}, {m2=},, {p0=}, {e0=}, {a=} and {xI0=} for T = {T_obs} yr observation"
             )
 
             # Compute trajectory modules for ELQ and pex
             out_ELQ, out_pex = compute_traj_1_2(
-                traj_ELQ, traj_pex, M, mu, a, p0, e0, xI0, T=T_obs
+                traj_ELQ, traj_pex, m1, m2, a, p0, e0, xI0, T=T_obs
             )
 
             # Test trajectories
+            nu = m1 * m2 / (m1 + m2)**2
             for j in range(1, 4):
                 # Test (p, e, xI0) <-- orbital parameters
                 self.assertAlmostEqual(
                     out_ELQ[j][-1],
                     out_pex[j][-1],
-                    delta=mu / M,  # Condition on (p,e,x_I)
+                    delta=nu,  # Condition on (p,e,x_I)
                     msg=f"for parameter {labels[j]}, End points: Values differ: {out_ELQ[j][-1]} vs {out_pex[j][-1]}",
                 )
-                # Test (Phi_phi0, Phi_theta0, Phi_r0) <-- BL action angles
                 self.assertAlmostEqual(
                     out_ELQ[3 + j][-1],
                     out_pex[3 + j][-1],
@@ -215,18 +214,21 @@ class ModuleTest(FewTest):
         for i in range(10):
             self.logger.info(f" Test {i}/{N_TESTS}")
             # set initial parameters
-            M = 1e6
-            mu = 1e1
+            m1 = 1e6
+            m2 = 1e1
             a = np.random.uniform(0.0, 0.999)
             p0 = np.random.uniform(9.0, 15)
             e0 = np.random.uniform(0.0, 0.6)
             x0 = 1.0
 
+            nu = m1 * m2 / (m1 + m2)**2
+            M = m1 + m2
+
             self.logger.info(f" Test {i}/{N_TESTS} with {p0=}, {e0=}, {a=} and {x0=}")
 
             # Define ODE flux and parameters
             ode_flux = KerrEccEqFlux()
-            pars = [M, mu, a, p0, e0, x0]
+            pars = [m1, m2, a, p0, e0, x0]
             ode_flux.add_fixed_parameters(*pars[:3])
 
             def sep_stop(t, y):
@@ -236,41 +238,36 @@ class ModuleTest(FewTest):
             sep_stop.terminal = True
 
             start_time_traj = time.time()
-            forwards_result = traj(M, mu, a, p0, e0, x0, **insp_kw)
+            forwards_result = traj(m1, m2, a, p0, e0, x0, **insp_kw)
             end_time_traj = time.time()
             traj_duration = end_time_traj - start_time_traj
             self.logger.info(f"Trajectory module duration: {traj_duration:.4f} seconds")
 
             # Solve using scipy solve_ivp
-            final_t = (
-                pars[1] * forwards_result[0][-1] / (pars[0] ** 2 * MTSUN_SI)
-            )  # pars[1] * 4. * YRSID_SI / (pars[0]**2*MTSUN_SI)
-            _start_time_scipy = time.time()
 
-            def tmp(t, y):
-                return ode_flux(y)
-
+            final_t = nu * forwards_result[0][-1]/ (M*MTSUN_SI) #pars[1] * 4. * YRSID_SI / (pars[0]**2*MTSUN_SI)
+            start_time_scipy = time.time()
             res = solve_ivp(
-                tmp,
-                (0, final_t),
-                np.asarray([pars[3], pars[4], pars[5], 0.0, 0.0, 0.0]),
-                atol=insp_kw["err"],
-                rtol=0.0,
-                method="DOP853",
-                dense_output=True,
-                events=sep_stop,
+                lambda t, y: ode_flux(y), 
+                (0, final_t), 
+                np.asarray([pars[3], pars[4], pars[5], 0., 0., 0.]), 
+                atol=insp_kw["err"], 
+                rtol=0.0, 
+                method='DOP853', 
+                dense_output=True, 
+                events=sep_stop
             )
-            # end_time_scipy = time.time()
-            # scipy_duration = end_time_scipy - start_time_scipy
+            end_time_scipy = time.time()
+            scipy_duration = end_time_scipy - start_time_scipy
             # print(f"Scipy solve_ivp duration: {scipy_duration:.4f} seconds")
             # print(f"Ratio scipy/traj: {scipy_duration/traj_duration:.4f}")
             # print(f"Number of steps scipy: {res.t.size}, Number of steps traj: {len(forwards_result[0])}, Ratio: {res.t.size/len(forwards_result[0]):.4f}")
-            new_time = pars[1] * forwards_result[0] / (pars[0] ** 2 * MTSUN_SI)
-
-            _abs_diff_p = np.abs(res.sol(new_time)[0] - forwards_result[1])
-            _abs_diff_e = np.abs(res.sol(new_time)[1] - forwards_result[2])
-            _abs_diff_phi = np.abs(res.sol(new_time)[3] / (mu / M) - forwards_result[4])
-            abs_diff_phir = np.abs(res.sol(new_time)[5] / (mu / M) - forwards_result[6])
+            new_time = nu * forwards_result[0]/ (M*MTSUN_SI)
+            
+            abs_diff_p = np.abs(res.sol(new_time)[0] - forwards_result[1])
+            abs_diff_e = np.abs(res.sol(new_time)[1] - forwards_result[2])
+            abs_diff_phi = np.abs(res.sol(new_time)[3]/nu - forwards_result[4])
+            abs_diff_phir = np.abs(res.sol(new_time)[5]/nu - forwards_result[6])
 
             # plot delta p of the two integrators
             # plt.figure()
@@ -353,7 +350,7 @@ class ModuleTest(FewTest):
             # self.assertAlmostEqual(res.y[3][-1]/(mu/M), forwards_result[4][-1], places=2, msg=f"Failed for scipy solve_ivp vs trajectory kerr with {p0=}, {e0=}, {a=}, {x0=}")
             # self.assertAlmostEqual(res.y[5][-1]/(mu/M), forwards_result[6][-1], places=2, msg=f"Failed for scipy solve_ivp vs trajectory kerr with {p0=}, {e0=}, {a=}, {x0=}")
             self.assertLess(
-                abs_diff_phir[-1],
+                abs_diff_phi[-1],
                 0.01,
                 msg=f"Failed for scipy solve_ivp vs trajectory kerr with {p0=}, {e0=}, {a=}, {x0=}",
             )

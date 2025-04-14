@@ -60,15 +60,15 @@ class WaveformTest(FewBackendTest):
         # parameters
         T = 0.001  # years
         dt = 15.0  # seconds
-        M = 1e6
-        mu = 1e1
+        m1 = 1e6
+        m2 = 1e1
         p0 = 8.0
         e0 = 0.2
         theta = np.pi / 3  # polar viewing angle
         phi = np.pi / 4  # azimuthal viewing angle
         dist = 1.0  # distance
 
-        _fast_wave = extracted_gen(M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
+        _fast_wave = extracted_gen(m1, m2, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
 
     def test_fast_and_slow(self):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
@@ -133,17 +133,17 @@ class WaveformTest(FewBackendTest):
         # parameters
         T = 0.001  # years
         dt = 15.0  # seconds
-        M = 1e6
-        mu = 1e1
+        m1 = 1e6
+        m2 = 1e1
         p0 = 7.0
         e0 = 0.2
         theta = np.pi / 3  # polar viewing angle
         phi = np.pi / 4  # azimuthal viewing angle
         dist = 1.0  # distance
 
-        slow_wave = slow(M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
+        slow_wave = slow(m1, m2, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
 
-        fast_wave = fast(M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
+        fast_wave = fast(m1, m2, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
 
         mm = get_mismatch(slow_wave, fast_wave, use_gpu=self.backend.uses_gpu)
 
@@ -152,7 +152,7 @@ class WaveformTest(FewBackendTest):
         # check that batching the slow waveform gives the same result
         batch_size = int(1e2)
         slow_wave_batched = slow(
-            M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt, batch_size=batch_size
+            m1, m2, p0, e0, theta, phi, dist=dist, T=T, dt=dt, batch_size=batch_size
         )
 
         self.assertTrue(np.allclose(slow_wave, slow_wave_batched, atol=0, rtol=1e-13))
@@ -202,13 +202,13 @@ class ModuleTest(FewTest):
         traj = EMRIInspiral(func=SchwarzEccFlux)
 
         # set initial parameters
-        M = 1e5
-        mu = 1e1
+        m1 = 1e5
+        m2 = 1e1
         p0 = 10.0
         e0 = 0.7
 
         # run trajectory
-        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, 0.0, p0, e0, 1.0)
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(m1, m2, 0.0, p0, e0, 1.0)
 
     def test_amplitudes(self):
         amp = RomanAmplitude(force_backend="cpu")

@@ -59,10 +59,10 @@ class AAKSummation(Pn5AAK, SummationBase):
     def sum(
         self,
         tvec: np.ndarray,
-        M: float,
+        m1: float,
         a: float,
         dist: float,
-        mu: float,
+        m2: float,
         qS: float,
         phiS: float,
         qK: float,
@@ -88,7 +88,7 @@ class AAKSummation(Pn5AAK, SummationBase):
         args:
             tvec: Array containing the time values
                 associated with the sparse trajectory.
-            M: Mass of massive black hole in solar masses.
+            m1: Mass of massive black hole in solar masses.
             a: Dimensionless spin of massive black hole.
             p: Array containing the trajectory for values of
                 the semi-latus rectum.
@@ -104,7 +104,7 @@ class AAKSummation(Pn5AAK, SummationBase):
                 :math:`\Phi_\theta`.
             Phi_r: Array containing the trajectory for
                 :math:`\Phi_r`.
-            mu: Mass of compact object in solar masses.
+            m2: Mass of compact object in solar masses.
             qS: Sky location polar angle in ecliptic
                 coordinates.
             phiS: Sky location azimuthal angle in
@@ -169,9 +169,9 @@ class AAKSummation(Pn5AAK, SummationBase):
         self.waveform_generator(
             self.waveform,
             interp_coeffs_in,
-            M,
+            m1,
             a,
-            mu,
+            m2,
             qS,
             phiS,
             qK,
