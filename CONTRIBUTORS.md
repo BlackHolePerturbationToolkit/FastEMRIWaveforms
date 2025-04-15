@@ -9,6 +9,8 @@ Below is a list of those who have contributed code or data to the releases of FE
 	  	Development and testing of trajectory and amplitude modules, refactoring of package structure, upgrading of existing framework for Kerr and elliptic, utility and mapping functions with numba.
 	* [Michael Katz](https://github.com/mikekatz04)
 	* [Shubham Kejriwal](https://github.com/perturber)
+ 	* [Philip Lynch](https://github.com/Philip-Lynch)  </br>
+  		Testing and debugging of trajectory module and utility functions.
 	* [Lorenzo Speri](https://github.com/lorenzsp)  </br>
 	  	Initial development of trajectory.
 	* [Zachary Nasipak](https://github.com/znasipak)
@@ -21,7 +23,8 @@ Below is a list of those who have contributed code or data to the releases of FE
 	* [Christian Chapman-Bird](https://github.com/cchapmanbird) </br>
 		Kernel efficiency improvements and bug fixes
 	* [Michael Katz](https://github.com/mikekatz04)
-	* [Philip Lynch](https://github.com/Philip-Lynch)
+	* [Philip Lynch](https://github.com/Philip-Lynch)  </br>
+  		Added limiting cases of frequencies and separatrix functions
 	* Monica Rizzo
 	* [Lorenzo Speri](https://github.com/lorenzsp) </br>
 	  	Developer of the frequency domain model, testing of its efficiency and accuracy against the time domain model.
