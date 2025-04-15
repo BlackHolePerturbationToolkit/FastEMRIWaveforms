@@ -121,8 +121,10 @@ class TrajectoryBase(Citable, abc.ABC):
         # convert from years to seconds
         T = T * YRSID_SI
 
-        # M, mu must be the first arguments
-        M, mu = args[:2]
+        # m1, m2 must be the first arguments
+        m1, m2 = args[:2]
+        mu = m1 * m2 / (m1 + m2)
+        M = m1 + m2
         Msec = M * MTSUN_SI
 
         if max_step_size is None:
