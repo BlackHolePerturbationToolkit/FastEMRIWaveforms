@@ -428,23 +428,23 @@ def get_p_at_t(
     return root
 
 
-def get_mu_at_t(
+def get_m2_at_t(
     traj_module: object,
     t_out: float,
     traj_args: list[float],
-    index_of_mu: int = 1,
+    index_of_m2: int = 1,
     bounds: list[Optional[float]] = None,
     **kwargs,
 ) -> float:
-    """Find the value of mu that will give a specific length inspiral using Brent's method.
+    """Find the value of m2 that will give a specific length inspiral using Brent's method.
 
     If you want to generate an inspiral that is a specific length, you
-    can adjust mu accordingly. This function tells you what that value of mu
+    can adjust m2 accordingly. This function tells you what that value of m2
     is based on the trajectory module and other input parameters at a
     desired time of observation.
 
     This function uses scipy's brentq routine to find the (presumed only)
-    value of mu that gives a trajectory of duration t_out.
+    value of m2 that gives a trajectory of duration t_out.
 
     arguments:
         traj_module: Instantiated trajectory module. It must output
@@ -454,15 +454,15 @@ def get_mu_at_t(
         traj_args: List of arguments for the trajectory function.
             p is removed. **Note**: It must be a list, not a tuple because the
             new p values are inserted into the argument list.
-        index_of_mu: Index where to insert the new p values in
+        index_of_m2: Index where to insert the new p values in
             the :code:`traj_args` list. Default is 1.
-        bounds: Minimum and maximum values of p over which brentq will search for a root.
+        bounds: Minimum and maximum values of m2 over which brentq will search for a root.
             If not given, will be set to [1e-1, m1]. To supply only one of these two limits, set the
             other limit to None.
         **kwargs: Keyword arguments for :func:`get_at_t`.
 
     returns:
-        Value of mu that creates the proper length trajectory.
+        Value of m2 that creates the proper length trajectory.
 
     """
 
@@ -489,7 +489,7 @@ def get_mu_at_t(
         raise ValueError("No solution found within the bounds for secondary mass.")
    
 
-    root = get_at_t(traj_module, traj_args, bounds, t_out, index_of_mu, **kwargs)
+    root = get_at_t(traj_module, traj_args, bounds, t_out, index_of_m2, **kwargs)
     return root
 
 
