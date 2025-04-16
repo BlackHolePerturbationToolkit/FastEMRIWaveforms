@@ -1,6 +1,7 @@
 """Definition of baseclass for FEW tests"""
 
 import abc
+import gc
 import logging
 import typing as t
 import unittest
@@ -31,7 +32,12 @@ class FewTest(unittest.TestCase, abc.ABC):
     def tearDownClass(cls):
         cls.logger.warning("\n  Test '%s': done.", cls.name())
         del cls.logger
+        gc.collect()
         super().tearDownClass()
+
+    def tearDown(self):
+        gc.collect()
+        return super().tearDown()
 
 
 class FewBackendTest(FewTest):

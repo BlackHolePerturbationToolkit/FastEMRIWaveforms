@@ -22,6 +22,7 @@ class UtilityTest(FewTest):
 
     def tearDown(self):
         del self.traj_module
+        super().tearDown()
 
     def test_Constants_of_Motion(self):
         a = 0.9

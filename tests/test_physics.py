@@ -21,6 +21,7 @@ class WaveformTest(FewBackendTest):
 
     def tearDown(self):
         del self.waveform_generator
+        super().tearDown()
 
     def test_sampling_variation(self):
         # parameters
