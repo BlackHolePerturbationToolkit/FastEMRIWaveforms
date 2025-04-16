@@ -50,7 +50,7 @@ class UtilityTest(FewTest):
 
         traj_args = [m1, a, p0, e0, x0]
         traj_kwargs = {}
-        index_of_mu = 1
+        index_of_m2 = 1
 
         t_out = 1.0
 
@@ -58,7 +58,7 @@ class UtilityTest(FewTest):
             self.traj_module,
             t_out,
             traj_args,
-            index_of_mu=index_of_mu,
+            index_of_m2=index_of_m2,
             traj_kwargs=traj_kwargs,
         )
 
