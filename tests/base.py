@@ -8,7 +8,7 @@ import unittest
 
 from few.cutils import Backend
 from few.utils.baseclasses import ParallelModuleBase
-from few.utils.globals import get_first_backend, get_logger
+from few.utils.globals import get_config, get_first_backend, get_logger
 
 
 class FewTest(unittest.TestCase, abc.ABC):
@@ -24,6 +24,7 @@ class FewTest(unittest.TestCase, abc.ABC):
 
     @classmethod
     def setUpClass(cls):
+        _ = get_config()  # Forge config to be finalized
         cls.logger = get_logger()
         cls.logger.warning("Test '%s' is starting.", cls.name())
         super().setUpClass()

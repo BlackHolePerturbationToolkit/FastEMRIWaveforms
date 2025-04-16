@@ -87,7 +87,7 @@ def SPAFunc(x, th=7.0):
 
 
 class ModeSelector(ParallelModuleBase):
-    """Filter teukolsky amplitudes based on power contribution.
+    r"""Filter teukolsky amplitudes based on power contribution.
 
     This module takes teukolsky modes, combines them with their associated ylms,
     and determines the power contribution from each mode. It then filters the
