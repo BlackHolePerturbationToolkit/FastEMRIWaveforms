@@ -54,7 +54,7 @@ class UtilityTest(FewTest):
         traj_module = get_traj_module()
 
         m2 = get_m2_at_t(
-            self.traj_module,
+            traj_module,
             t_out,
             traj_args,
             index_of_m2=index_of_m2,
