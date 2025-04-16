@@ -69,23 +69,6 @@ class WaveformTest(FewBackendTest):
         )
 
     def test_fast_and_slow_schwarzschild(self):
-        # keyword arguments for summation generator (InterpolatedModeSum)
-        sum_kwargs = dict(pad_output=True, output_type="fd")
-
-        generator = FastSchwarzschildEccentricFlux
-        fast = generator(
-            sum_kwargs=sum_kwargs,
-            force_backend=self.backend,
-        )
-
-        # setup td
-        sum_kwargs = dict(pad_output=True)
-
-        slow = generator(
-            sum_kwargs=sum_kwargs,
-            force_backend=self.backend,
-        )
-
         # parameters
         T = 1.0  # years
         dt = 10.0  # seconds
@@ -97,6 +80,12 @@ class WaveformTest(FewBackendTest):
         phi = np.pi / 4  # azimuthal viewing angle
         dist = 1.0  # distance
 
+        # setup td
+        generator = FastSchwarzschildEccentricFlux
+        slow = generator(
+            sum_kwargs=dict(pad_output=True),
+            force_backend=self.backend,
+        )
         slow_wave = slow(
             m1,
             m2,
@@ -108,18 +97,25 @@ class WaveformTest(FewBackendTest):
             T=T,
             dt=dt,
         )
+        del slow  # Free up memory
 
         # make sure frequencies will be equivalent
         xp = self.backend.xp
         f_in = xp.array(np.linspace(-1 / (2 * dt), +1 / (2 * dt), num=len(slow_wave)))
         kwargs = dict(f_arr=f_in)
 
+        # Build Fast
+        fast = generator(
+            sum_kwargs=dict(pad_output=True, output_type="fd"),
+            force_backend=self.backend,
+        )
         fast_wave = fast(
             m1, m2, p0, e0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-3, **kwargs
         )
-
         # process FD
         freq = fast.create_waveform.frequency
+        del fast  # Free up memory
+
         mask = freq >= 0.0
 
         # take fft of TD
@@ -144,23 +140,6 @@ class WaveformTest(FewBackendTest):
         self.assertLess(1 - result, 1e-2)
 
     def test_fast_and_slow_kerr(self):
-        # keyword arguments for summation generator (InterpolatedModeSum)
-        sum_kwargs = dict(pad_output=True, output_type="fd")
-
-        generator = FastKerrEccentricEquatorialFlux
-        fast = generator(
-            sum_kwargs=sum_kwargs,
-            force_backend=self.backend,
-        )
-
-        # setup td
-        sum_kwargs = dict(pad_output=True)
-
-        slow = generator(
-            sum_kwargs=sum_kwargs,
-            force_backend=self.backend,
-        )
-
         # parameters
         T = 1.0  # years
         dt = 10.0  # seconds
@@ -172,6 +151,14 @@ class WaveformTest(FewBackendTest):
         theta = np.pi / 3  # polar viewing angle
         phi = np.pi / 4  # azimuthal viewing angle
         dist = 1.0  # distance
+
+        generator = FastKerrEccentricEquatorialFlux
+
+        # setup td
+        slow = generator(
+            sum_kwargs=dict(pad_output=True),
+            force_backend=self.backend,
+        )
 
         slow_wave = slow(
             m1,
@@ -186,18 +173,25 @@ class WaveformTest(FewBackendTest):
             T=T,
             dt=dt,
         )
+        del slow  # Free up memory
 
         # make sure frequencies will be equivalent
         xp = self.backend.xp
         f_in = xp.array(np.linspace(-1 / (2 * dt), +1 / (2 * dt), num=len(slow_wave)))
         kwargs = dict(f_arr=f_in)
 
+        fast = generator(
+            sum_kwargs=dict(pad_output=True, output_type="fd"),
+            force_backend=self.backend,
+        )
         fast_wave = fast(
             m1, m2, a, p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-3, **kwargs
         )
 
         # process FD
         freq = fast.create_waveform.frequency
+        del fast  # Free up memory
+
         mask = freq >= 0.0
 
         # take fft of TD
