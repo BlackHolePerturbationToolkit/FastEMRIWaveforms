@@ -4,7 +4,7 @@ from few.trajectory.ode import KerrEccEqFlux
 from few.utils.constants import YRSID_SI
 from few.utils.utility import (
     ELQ_to_pex,
-    get_mu_at_t,
+    get_m2_at_t,
     get_p_at_t,
 )
 from few.utils.geodesic import (
@@ -40,7 +40,7 @@ class UtilityTest(FewTest):
         self.assertLess(abs(e_new - e), 1e-13)
         self.assertLess(abs(x_new - x), 1e-13)
 
-    def test_get_mu_at_t(self):
+    def test_get_m2_at_t(self):
         m1 = 1e6
 
         a = 0.9
@@ -54,7 +54,7 @@ class UtilityTest(FewTest):
 
         t_out = 1.0
 
-        m2 = get_mu_at_t(
+        m2 = get_m2_at_t(
             self.traj_module,
             t_out,
             traj_args,
