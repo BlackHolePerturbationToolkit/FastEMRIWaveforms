@@ -3,11 +3,11 @@ from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode import KerrEccEqFlux
 from few.utils.constants import YRSID_SI
 from few.utils.utility import (
-    ELQ_to_pex,
     get_m2_at_t,
     get_p_at_t,
 )
 from few.utils.geodesic import (
+    ELQ_to_pex,
     get_fundamental_frequencies,
     get_kerr_geo_constants_of_motion,
     get_separatrix,   
