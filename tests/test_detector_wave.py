@@ -28,9 +28,9 @@ class WaveformTest(FewBackendTest):
         # parameters
         T = 0.001  # years
         dt = 15.0  # seconds
-        M = 1e6
+        m1 = 1e6
         a = 0.1  # will be ignored in Schwarz waveform
-        mu = 1e1
+        m2 = 1e1
         p0 = 12.0
         e0 = 0.2
         Y0 = 1.0
@@ -55,8 +55,8 @@ class WaveformTest(FewBackendTest):
             extracted_gen_wave_aak = gen_wave_aak
 
         _ = extracted_gen_wave(
-            M,
-            mu,
+            m1,
+            m2,
             a,
             p0,
             e0,
@@ -74,8 +74,8 @@ class WaveformTest(FewBackendTest):
         )
 
         _ = extracted_gen_wave_aak(
-            M,
-            mu,
+            m1,
+            m2,
             a,
             p0,
             e0,

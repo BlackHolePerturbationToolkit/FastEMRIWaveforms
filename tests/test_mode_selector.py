@@ -27,14 +27,14 @@ class ModeSelectorTest(FewBackendTest):
         ylm_gen = GetYlms(include_minus_m=True, force_backend="cpu")
 
         # parameters
-        M = 1e5
-        mu = 1e1
+        m1 = 1e5
+        m2 = 1e1
         p0 = 10.0
         e0 = 0.3
         theta = np.pi / 3.0
         phi = np.pi / 2.0
 
-        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(M, mu, 0.0, p0, e0, 1.0, T=10.0)
+        t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(m1, m2, 0.0, p0, e0, 1.0, T=10.0)
 
         # get amplitudes along trajectory
         amp = RomanAmplitude(force_backend="cpu")
@@ -54,7 +54,7 @@ class ModeSelectorTest(FewBackendTest):
 
         modeinds = [amp.l_arr, amp.m_arr, amp.n_arr]
         (teuk_modes_in, ylms_in, ls, ms, ns) = mode_selector(
-            teuk_modes, ylms, modeinds, eps=eps
+            teuk_modes, ylms, modeinds, mode_selection_threshold=eps
         )
 
         # print("We reduced the mode content from {} modes to {} modes.".format(teuk_modes.shape[1], teuk_modes_in.shape[1]))
@@ -89,11 +89,11 @@ class ModeSelectorTest(FewBackendTest):
         # Schwarzschild
         a = 0.0
         Y = np.zeros_like(p)  # equatorial / cos iota
-        fund_freq_args = (M, a, p, e, Y, t)
+        fund_freq_args = (m1, m2, a, p, e, Y, t)
 
         modeinds = [amp.l_arr, amp.m_arr, amp.n_arr]
         (teuk_modes_in, ylms_in, ls, ms, ns) = mode_selector_noise_weighted(
-            teuk_modes, ylms, modeinds, fund_freq_args=fund_freq_args, eps=eps
+            teuk_modes, ylms, modeinds, fund_freq_args=fund_freq_args, mode_selection_threshold=eps
         )
 
         # print("We reduced the mode content from {} modes to {} modes when using noise-weighting.".format(teuk_modes.shape[1], teuk_modes_in.shape[1]))
@@ -107,8 +107,8 @@ class ModeSelectorTest(FewBackendTest):
 
         few_base = FastSchwarzschildEccentricFluxBicubic(force_backend=self.backend)
 
-        M = 1e6
-        mu = 1e1
+        m1 = 1e6
+        m2 = 1e1
         p0 = 12.0
         e0 = 0.3
         theta = np.pi / 3.0
@@ -118,11 +118,11 @@ class ModeSelectorTest(FewBackendTest):
         T = 0.001
         mode_selection = [(ll, mm, nn) for ll, mm, nn in zip(ls_orig, ms_orig, ns_orig)]
         wave_base = few_base(
-            M, mu, p0, e0, theta, phi, dist, dt=dt, T=T, mode_selection=mode_selection
+            m1, m2, p0, e0, theta, phi, dist, dt=dt, T=T, mode_selection=mode_selection
         )
         mode_selection = [(ll, mm, nn) for ll, mm, nn in zip(ls, ms, ns)]
         wave_weighted = few_base(
-            M, mu, p0, e0, theta, phi, dist, dt=dt, T=T, mode_selection=mode_selection
+            m1, m2, p0, e0, theta, phi, dist, dt=dt, T=T, mode_selection=mode_selection
         )
 
         self.logger.info(

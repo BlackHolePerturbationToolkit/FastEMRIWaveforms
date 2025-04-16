@@ -19,10 +19,10 @@
 import numpy as np
 
 import os
-from ..utils.utility import get_fundamental_frequencies
-from ..utils.constants import MTSUN_SI, PI
-from ..utils.baseclasses import ParallelModuleBase, BackendLike
-from ..utils.globals import get_logger
+from .geodesic import get_fundamental_frequencies
+from .constants import MTSUN_SI, PI
+from .baseclasses import ParallelModuleBase, BackendLike
+from .globals import get_logger
 import sys
 
 # pytorch
@@ -109,8 +109,8 @@ class ModeSelector(ParallelModuleBase):
         mode_selection: Determines the type of mode
             filtering to perform. If None, use default mode filtering provided
             by :code:`mode_selector`. If 'all', it will run all modes without 
-            filtering. If 'eps' it will override other options to filter by the
-            threshold value set by :code:`eps`. If a list of tuples (or lists) of 
+            filtering. If 'threshold' it will override other options to filter by the
+            threshold value set by :code:`mode_selection_threshold`. If a list of tuples (or lists) of 
             mode indices (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
             provided, it will return those modes combined into a
             single waveform.
@@ -119,7 +119,7 @@ class ModeSelector(ParallelModuleBase):
             computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
             is a list of specific modes when the class is called. If True, this list of modes 
             provided at call time must only contain :math:`m\geq 0`. Default is True.   
-        eps: Fractional accuracy of the total power used
+        mode_selection_threshold: Fractional accuracy of the total power used
             to determine the contributing modes. Lowering this value will
             calculate more modes slower the waveform down, but generally
             improving accuracy. Increasing this value removes modes from
@@ -145,7 +145,7 @@ class ModeSelector(ParallelModuleBase):
         n_arr: np.ndarray,
         mode_selection: Optional[Union[str, list, np.ndarray]] = None,
         include_minus_mkn: Optional[bool] = True,
-        eps: float = 1e-5,
+        mode_selection_threshold: float = 1e-5,
         sensitivity_fn: Optional[object] = None,
         force_backend: BackendLike = None,
         **kwargs
@@ -187,9 +187,9 @@ class ModeSelector(ParallelModuleBase):
         self.negative_m_flag = False # flag to check if m < 0 modes are included
         """bool: Specifies whether there are negative m-modes in mode_selection."""
 
-        if isinstance(self.mode_selection, str) and self.mode_selection not in ["all", "eps"]:
+        if isinstance(self.mode_selection, str) and self.mode_selection not in ["all", "threshold"]:
             raise ValueError(
-                "If mode_selection is a string, it must be either 'all', 'eps', or None."
+                "If mode_selection is a string, it must be either 'all', 'threshold', or None."
             )
         elif isinstance(self.mode_selection, list):
             # Do not allow empty lists
@@ -215,7 +215,7 @@ class ModeSelector(ParallelModuleBase):
         else:
             self.mode_arr = None
 
-        self.eps = eps
+        self.mode_selection_threshold = mode_selection_threshold
         """float: Default threshold."""
 
     @classmethod
@@ -236,7 +236,7 @@ class ModeSelector(ParallelModuleBase):
         mode_selection: Optional[Union[str, list, np.ndarray]] = None,
         modeinds_map: Optional[np.ndarray] = None,
         include_minus_mkn: Optional[bool] = None,
-        eps: float = None,
+        mode_selection_threshold: float = None,
     ) -> np.ndarray:
         r"""Call to sort and filer teukolsky modes.
 
@@ -257,14 +257,15 @@ class ModeSelector(ParallelModuleBase):
                 :math:`(l,m,k,n)` arrays. e.g. [l_arr, m_arr, n_arr].
             fund_freq_args: Args necessary to determine
                 fundamental frequencies along trajectory. The tuple will represent
-                :math:`(M, a, e, p, \cos\iota)` where the large black hole mass (:math:`M`)
-                and spin (:math:`a`) are scalar and the other three quantities are self.xp.ndarrays.
+                :math:`(m1, m2, a, p, e, \cos\iota)` where the primary mass (:math:`m_1`),
+                secondary mass (:math:`m_2`), and dimensionless spin (:math:`a`),
+                are scalar and the other three quantities are self.xp.ndarrays.
                 This must be provided if sensitivity weighting is used. Default is None.
             mode_selection: Determines the type of mode
                 filtering to perform. If None, use default mode filtering provided
                 by :code:`mode_selector`. If 'all', it will run all modes without 
-                filtering. If 'eps' it will override other options to filter by the
-                threshold value set by :code:`eps`. If a list of tuples (or lists) of 
+                filtering. If 'threshold' it will override other options to filter by the
+                threshold value set by :code:`mode_selection_threshold`. If a list of tuples (or lists) of 
                 mode indices (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
                 provided, it will return those modes combined into a
                 single waveform. If :code:`include_minus_mkn = True`, we require that :math:`m \geq 0` for this list.
@@ -274,7 +275,7 @@ class ModeSelector(ParallelModuleBase):
             include_minus_mkn: If True, then include :math:`(-m, -k, -n)` mode when
                 computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
                 is a list of specific modes. Default is True.       
-            eps: Fractional accuracy of the total power used
+            mode_selection_threshold: Fractional accuracy of the total power used
                 to determine the contributing modes. Lowering this value will
                 calculate more modes slower the waveform down, but generally
                 improving accuracy. Increasing this value removes modes from
@@ -296,9 +297,9 @@ class ModeSelector(ParallelModuleBase):
                     "Only supports mode_selection with m >= 0 when include_minus_mkn = True."
                 )
         # if it is a string, check if it is 'all' or 'eps'. If so, return all modes
-        elif isinstance(mode_selection, str) and mode_selection not in ["all", "eps"]:
+        elif isinstance(mode_selection, str) and mode_selection not in ["all", "threshold"]:
             raise ValueError(
-                "If mode_selection is a string, it must be either 'all', 'eps', or None."
+                "If mode_selection is a string, it must be either 'all', 'threshold', or None."
             )
         # if it is a list of modes, make sure it passes checks
         elif isinstance(mode_selection, list):
@@ -330,8 +331,8 @@ class ModeSelector(ParallelModuleBase):
             elif len(modeinds_map.shape) != len(modeinds):
                 raise ValueError("modeinds_map must have the same length as modeinds.")
             
-        if eps is None:
-            eps = self.eps
+        if mode_selection_threshold is None:
+            mode_selection_threshold = self.mode_selection_threshold
 
         if not include_minus_mkn and not isinstance(mode_selection, list):
             get_logger().warning(
@@ -375,19 +376,22 @@ class ModeSelector(ParallelModuleBase):
                         "If sensitivity weighting is desired, the fund_freq_args kwarg must be provided."
                     )
 
-                M = fund_freq_args[0]
+                m1, m2 = fund_freq_args[0:2]
+                M = m1 + m2
                 Msec = M * MTSUN_SI
 
-                a_fr, p_fr, e_fr, x_fr = fund_freq_args[1:-1]
+                a_fr, p_fr, e_fr, x_fr = fund_freq_args[2:-1]
 
                 if self.backend.uses_cupy:  # fundamental frequencies only defined on CPU
                     p_fr = p_fr.get()
                     e_fr = e_fr.get()
                     x_fr = x_fr.get()
+                
                 # get dimensionless fundamental frequency
                 OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(
                     a_fr, p_fr, e_fr, x_fr
                 )
+                # NOTE: These frequencies may differ from waveform frequencies at 1PA order
 
                 # get frequencies in Hz
                 f_Phi, _f_omega, f_r = OmegaPhi, OmegaTheta, OmegaR = (
@@ -420,7 +424,7 @@ class ModeSelector(ParallelModuleBase):
 
             # keep modes that add to within the fractional power (1 - eps)
             inds_keep[:, 1:] = cumsum[:, :-1] < cumsum[:, -1][:, self.xp.newaxis] * (
-                1 - eps
+                1 - mode_selection_threshold
             )
 
             # finds indices of each mode to be kept
@@ -622,7 +626,7 @@ class NeuralModeSelector(ParallelModuleBase):
         self.model.to(self.device)
         self.model.eval()
 
-    def __call__(self, M, mu, a, p0, e0, xI, theta, phi, T, eps):
+    def __call__(self, m1, m2, a, p0, e0, xI, theta, phi, T, mode_selection_threshold):
         """Call to predict the mode content of the waveform.
 
         This is the call function that takes the waveform parameters, applies a
@@ -630,8 +634,8 @@ class NeuralModeSelector(ParallelModuleBase):
         neural network classifier.
 
         args:
-            M (double): Mass of larger black hole in solar masses.
-            mu (double): Mass of compact object in solar masses.
+            m1 (double): Mass of larger black hole in solar masses.
+            m2 (double): Mass of compact object in solar masses.
             p0 (double): Initial semilatus rectum (Must be greater than
                 the separatrix at the the given e0 and x0).
                 See documentation for more information on :math:`p_0<10`.
@@ -639,7 +643,7 @@ class NeuralModeSelector(ParallelModuleBase):
             theta (double): Polar viewing angle.
             phi (double): Azimuthal viewing angle.
             T (double): Duration of waveform in years.
-            eps (double): Mode selection threshold power.
+            mode_selection_threshold (double): Mode selection threshold power.
         """
 
         if not hasattr(self, "model"):
@@ -655,10 +659,10 @@ class NeuralModeSelector(ParallelModuleBase):
             theta = 1.39
 
         inputs = np.asarray(
-            [[np.log(M), mu, a, p0, e0, xI, T, theta, phi, np.log10(eps)]]
+            [[np.log(m1), m2, a, p0, e0, xI, T, theta, phi, np.log10(mode_selection_threshold)]]
         )[:, np.asarray(self.keep_inds)]  # throw away the params we dont need
         inputs = np.asarray(
-            [[np.log(M), mu, a, p0, e0, xI, T, theta, phi, np.log10(eps)]]
+            [[np.log(m1), m2, a, p0, e0, xI, T, theta, phi, np.log10(mode_selection_threshold)]]
         )[:, np.asarray(self.keep_inds)]  # throw away the params we dont need
         # rescale network input from pre-computed
         inputs = (

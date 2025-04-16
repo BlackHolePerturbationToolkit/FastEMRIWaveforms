@@ -29,8 +29,8 @@ class AAKWaveformTest(FewBackendTest):
         sum_kwargs = {"pad_output": False}
 
         # set initial parameters
-        M = 1e6
-        mu = 1e1
+        m1 = 1e6
+        m2 = 1e1
         a = 0.2
         p0 = 14.0
         e0 = 0.2
@@ -49,7 +49,7 @@ class AAKWaveformTest(FewBackendTest):
         wave_cpu = Pn5AAKWaveform(inspiral_kwargs, sum_kwargs, force_backend="cpu")
 
         waveform_cpu = wave_cpu(
-            M, mu, a, p0, e0, Y0, qS, phiS, qK, phiK, dist, mich=mich, dt=dt, T=T
+            m1, m2, a, p0, e0, Y0, qS, phiS, qK, phiK, dist, mich=mich, dt=dt, T=T
         )
 
         self.assertTrue(
@@ -60,7 +60,7 @@ class AAKWaveformTest(FewBackendTest):
             wave_gpu = Pn5AAKWaveform(inspiral_kwargs, sum_kwargs)
 
             waveform = wave_gpu(
-                M, mu, a, p0, e0, Y0, qS, phiS, qK, phiK, dist, mich=mich, dt=dt, T=T
+                m1, m2, a, p0, e0, Y0, qS, phiS, qK, phiK, dist, mich=mich, dt=dt, T=T
             )
 
             mm = get_mismatch(waveform, waveform_cpu, use_gpu=self.backend.uses_gpu)
@@ -74,8 +74,8 @@ class AAKWaveformTest(FewBackendTest):
         Phi_theta0 = 0.0
         Phi_r0 = np.pi / 2
         h_p_c_phase = few_gen(
-            M,
-            mu,
+            m1,
+            m2,
             a,
             p0,
             e0,
@@ -92,8 +92,8 @@ class AAKWaveformTest(FewBackendTest):
             dt=dt,
         )
         h_p_c_phase2 = few_gen(
-            M,
-            mu,
+            m1,
+            m2,
             a,
             p0,
             e0,
@@ -128,8 +128,8 @@ class AAKWaveformTest(FewBackendTest):
 
         traj_module = EMRIInspiral(func=PN5)
         # set initial parameters
-        M = 1e6
-        mu = 1e1
+        m1 = 1e6
+        m2 = 1e1
         a = 0.2
         p0 = 14.0
         e0 = 0.2
@@ -146,7 +146,7 @@ class AAKWaveformTest(FewBackendTest):
         T = 0.001
 
         _, p_forward, e_forward, Y_forward, _, _, _ = traj_module(
-            M, mu, a, p0, e0, Y0, T=T, dt=dt, **inspiral_kwargs_forward
+            m1, m2, a, p0, e0, Y0, T=T, dt=dt, **inspiral_kwargs_forward
         )
 
         p_f = p_forward[-1]
@@ -164,11 +164,11 @@ class AAKWaveformTest(FewBackendTest):
         )
 
         waveform_cpu_forward = wave_cpu_forward(
-            M, mu, a, p0, e0, Y0, qS, phiS, qK, phiK, dist, mich=mich, dt=dt, T=T
+            m1, m2, a, p0, e0, Y0, qS, phiS, qK, phiK, dist, mich=mich, dt=dt, T=T
         )
 
         waveform_cpu_backward = wave_cpu_backward(
-            M, mu, a, p_f, e_f, Y_f, qS, phiS, qK, phiK, dist, mich=mich, dt=dt, T=T
+            m1, m2, a, p_f, e_f, Y_f, qS, phiS, qK, phiK, dist, mich=mich, dt=dt, T=T
         )
 
         mm = get_mismatch(

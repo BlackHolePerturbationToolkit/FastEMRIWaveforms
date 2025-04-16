@@ -24,7 +24,7 @@ import numpy as np
 from scipy.optimize import brentq
 
 # Python imports
-from ..utils.utility import (
+from ..utils.geodesic import (
     ELQ_to_pex,
     get_separatrix,
 )
@@ -534,7 +534,7 @@ class Integrate:
         )
 
         if not self.generating_trajectory:
-            result[:, 3:6] /= self.epsilon
+            result[:, 3:6] /= self.massratio
 
         # backwards integration requires an additional adjustment to match forwards phase conventions
         if self.integrate_backwards and not self.generating_trajectory:
@@ -558,14 +558,14 @@ class Integrate:
         )
 
         if not self.generating_trajectory:
-            result[:, 3:6] /= self.epsilon
+            result[:, 3:6] /= self.massratio
 
         return result
 
     def run_inspiral(
         self,
-        M: float,
-        mu: float,
+        m1: float,
+        m2: float,
         a: float,
         y0: np.ndarray,
         additional_args: list | np.ndarray,
@@ -576,8 +576,8 @@ class Integrate:
         """Run inspiral integration.
 
         Args:
-            M: Larger mass in solar masses.
-            mu: Small mass in solar masses.
+            m1: Larger mass in solar masses.
+            m2: Small mass in solar masses.
             a: Dimensionless spin of central black hole.
             y0: Initial set of coordinates for integration.
 
@@ -591,15 +591,17 @@ class Integrate:
 
         self.moves_check = 0
         self.initialize_integrator(**kwargs)
-        self.epsilon = mu / M
+        mu = m1 * m2 / (m1 + m2)
+        M = m1 + m2
+        self.massratio = mu / M
         # Compute the adimensionalized time steps and max time
-        self.tmax_dimensionless = T * YRSID_SI / (M * MTSUN_SI) * self.epsilon
-        self.dt_dimensionless = dt / (M * MTSUN_SI) * self.epsilon
-        self.Msec = MTSUN_SI * M / self.epsilon
+        self.tmax_dimensionless = T * YRSID_SI / (M * MTSUN_SI) * self.massratio
+        self.dt_dimensionless = dt / (M * MTSUN_SI) * self.massratio
+        self.Msec = MTSUN_SI * M / self.massratio
         self.a = a
         assert self.nparams == len(y0)
 
-        self.func.add_fixed_parameters(M, mu, a, additional_args=additional_args)
+        self.func.add_fixed_parameters(m1, m2, a, additional_args=additional_args)
 
         self.integrate(0.0, y0)
 
@@ -620,7 +622,7 @@ class Integrate:
                 )
 
         # scale phases here by the mass ratio so the cache is accurate
-        self.trajectory_arr[:, 4:7] /= self.epsilon
+        self.trajectory_arr[:, 4:7] /= self.massratio
 
         # backwards integration requires an additional manipulation to match forwards phase convention
         if self.integrate_backwards:

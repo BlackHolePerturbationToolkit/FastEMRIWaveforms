@@ -26,7 +26,7 @@ from ..utils.baseclasses import (
 )
 from .base import SummationBase
 from ..utils.citations import REFERENCE
-from ..utils.utility import get_fundamental_frequencies
+from ..utils.geodesic import get_fundamental_frequencies
 from ..utils.constants import MTSUN_SI
 from ..summation.interpolatedmodesum import CubicSplineInterpolant
 
@@ -200,7 +200,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
             m_arr (1D int self.xp.ndarray): :math:`m` values associated with each mode.
             n_arr (1D int self.xp.ndarray): :math:`n` values associated with each mode.
             M (double): Total mass in solar masses.
-            p (1D int self.xp.ndarray): Semi-latus rectum in units of M along trajectory.
+            p (1D int self.xp.ndarray): Semi-latus rectum along trajectory.
             e (1D int self.xp.ndarray): Eccentricity value along trajectory.
             *args (list, placeholder): Added for flexibility.
             include_minus_m (bool, optional): Include the values for :math:`-m`. This is

@@ -3,12 +3,14 @@ from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode import KerrEccEqFlux
 from few.utils.constants import YRSID_SI
 from few.utils.utility import (
+    get_m2_at_t,
+    get_p_at_t,
+)
+from few.utils.geodesic import (
     ELQ_to_pex,
     get_fundamental_frequencies,
     get_kerr_geo_constants_of_motion,
-    get_mu_at_t,
-    get_p_at_t,
-    get_separatrix,
+    get_separatrix,   
 )
 
 
@@ -38,7 +40,7 @@ class UtilityTest(FewTest):
         self.assertLess(abs(e_new - e), 1e-13)
         self.assertLess(abs(x_new - x), 1e-13)
 
-    def test_get_mu_at_t(self):
+    def test_get_m2_at_t(self):
         m1 = 1e6
 
         a = 0.9
@@ -48,15 +50,15 @@ class UtilityTest(FewTest):
 
         traj_args = [m1, a, p0, e0, x0]
         traj_kwargs = {}
-        index_of_mu = 1
+        index_of_m2 = 1
 
         t_out = 1.0
 
-        m2 = get_mu_at_t(
+        m2 = get_m2_at_t(
             self.traj_module,
             t_out,
             traj_args,
-            index_of_mu=index_of_mu,
+            index_of_m2=index_of_m2,
             traj_kwargs=traj_kwargs,
         )
 

@@ -1,11 +1,10 @@
 from .base import ODEBase
-from ...utils.utility import get_fundamental_frequencies
+from ...utils.geodesic import get_fundamental_frequencies, get_separatrix
 
 from numba import njit
 from math import sqrt, log, cosh, sinh, pow
 import numpy as np
 from typing import Union
-from few.utils.utility import get_separatrix
 
 from few.utils.mappings.jacobian import ELdot_to_PEdot_Jacobian
 

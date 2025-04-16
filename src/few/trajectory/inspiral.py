@@ -22,9 +22,10 @@ import numpy as np
 
 # Python imports
 from .base import TrajectoryBase
-from ..utils.utility import (
+from ..utils.geodesic import (
     ELQ_to_pex,
     get_kerr_geo_constants_of_motion,
+    get_fundamental_frequencies
 )
 from ..utils.mappings.pn import Y_to_xI
 from ..utils.citations import REFERENCE
@@ -34,8 +35,8 @@ from .integrate import get_integrator
 from typing import Type, Union
 from .ode.base import ODEBase
 
-from few.utils.globals import get_logger
-
+from ..utils.globals import get_logger
+from ..utils.constants import MTSUN_SI, PI
 
 class EMRIInspiral(TrajectoryBase):
     """EMRI trajectory module.
@@ -160,13 +161,13 @@ class EMRIInspiral(TrajectoryBase):
     def integrator_spline_phase_coeff(self):
         return (
             self.inspiral_generator.integrator_spline_coeff[:, 3:6]
-            / self.inspiral_generator.epsilon
+            / self.inspiral_generator.massratio
         )
 
     def get_inspiral(
         self,
-        M: float,
-        mu: float,
+        m1: float,
+        m2: float,
         a: float,
         y1: float,
         y2: float,
@@ -183,8 +184,8 @@ class EMRIInspiral(TrajectoryBase):
         Inputs define the output time spacing.
 
         args:
-            M: Mass of massive black hole in solar masses.
-            mu: Mass of compact object in solar masses.
+            m1: Mass of massive black hole in solar masses.
+            m2: Mass of compact object in solar masses.
             a: Dimensionless spin of massive black hole.
             p0: Initial semi-latus rectum in terms units of M (p/M).
             e0: Initial eccentricity (dimensionless).
@@ -261,12 +262,15 @@ class EMRIInspiral(TrajectoryBase):
             Phi_theta0 = -1 * Phi_theta0
             Phi_r0 = -1 * Phi_r0
 
+        mu = m1 * m2 / (m1 + m2)
+        M = m1 + m2
+
         y0 = np.array(
             [y1, y2, y3, Phi_phi0 * (mu / M), Phi_theta0 * (mu / M), Phi_r0 * (mu / M)]
         )
 
         # this will return in coordinate time
-        out = self.inspiral_generator.run_inspiral(M, mu, a, y0, args_in, **temp_kwargs)
+        out = self.inspiral_generator.run_inspiral(m1, m2, a, y0, args_in, **temp_kwargs)
         if self.integrate_constants_of_motion and self.convert_to_pex:
             out_ELQ = out.copy()
             pex = ELQ_to_pex(a, out[:, 1].copy(), out[:, 2].copy(), out[:, 3].copy())
@@ -282,8 +286,8 @@ class EMRIInspiral(TrajectoryBase):
 
     def get_rhs_ode(
         self,
-        M: float,
-        mu: float,
+        m1: float,
+        m2: float,
         a: float,
         y1: float,
         y2: float,
@@ -299,8 +303,8 @@ class EMRIInspiral(TrajectoryBase):
         This is a convenience function for interfacing with the call method of the ODE class.
 
         args:
-            M: Mass of massive black hole in solar masses.
-            mu: Mass of compact object in solar masses.
+            m1: Mass of massive black hole in solar masses.
+            m2: Mass of compact object in solar masses.
             a: Dimensionless spin of massive black hole.
             p0: Initial semi-latus rectum in terms units of M (p/M).
             e0: Initial eccentricity (dimensionless).
@@ -326,7 +330,7 @@ class EMRIInspiral(TrajectoryBase):
         equatorial = self.inspiral_generator.equatorial
         circular = self.inspiral_generator.circular
 
-        self.inspiral_generator.func.add_fixed_parameters(M, mu, a, False)
+        self.inspiral_generator.func.add_fixed_parameters(m1, m2, a, False)
 
         p0 = y1
         e0 = y2
@@ -366,3 +370,41 @@ class EMRIInspiral(TrajectoryBase):
         # out = self.inspiral_generator.func(np.r_[y0, *args])
 
         return out
+
+def get_0PA_frequencies(
+    m1: float,
+    m2: float,
+    a: Union[float, np.ndarray],
+    p: Union[float, np.ndarray],
+    e: Union[float, np.ndarray],
+    x: Union[float, np.ndarray],
+    use_gpu: bool = False,
+) -> tuple[Union[float, np.ndarray]]:
+    r"""Get frequencies for 0PA phase evolution in Hertz
+
+    arguments:
+        m1: Mass of the massive black hole in solar masses. 
+        m2: Mass of the secondary body in solar masses.
+        a: Dimensionless spin of massive
+            black hole. If other parameters are arrays and the spin is scalar,
+            it will be cast to a 1D array.
+        p: Values of separation,
+            :math:`p`.
+        e: Values of eccentricity,
+            :math:`e`.
+        x: Values of cosine of the
+            inclination, :math:`x=\cos{I}`. Please note this is different from
+            :math:`Y=\cos{\iota}`.
+
+    returns:
+        Tuple of (OmegaPhi, OmegaTheta, OmegaR). These are 1D arrays or scalar values depending on inputs.
+
+    """
+    # we have m1 \Omega_geo = M \Omega_0PA
+    OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p, e, x, use_gpu=use_gpu)
+    M = m1 + m2
+    OmegaPhi = OmegaPhi / (M * MTSUN_SI) / (2 * PI)
+    OmegaTheta = OmegaTheta / (M * MTSUN_SI) / (2 * PI)
+    OmegaR = OmegaR / (M * MTSUN_SI) / (2 * PI)
+
+    return (OmegaPhi, OmegaTheta, OmegaR)
