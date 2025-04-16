@@ -1,23 +1,31 @@
-import unittest
-
-from few.utils.utility import ELQ_to_pex,get_kerr_geo_constants_of_motion,get_mu_at_t,get_p_at_t,get_separatrix, get_fundamental_frequencies
+from few.tests.base import FewTest
 from few.trajectory.inspiral import EMRIInspiral
-from few.utils.constants import YRSID_SI
 from few.trajectory.ode import KerrEccEqFlux
-
-traj_module = EMRIInspiral(func=KerrEccEqFlux)
-
-from few.utils.globals import get_logger, get_first_backend
-
-few_logger = get_logger()
-
-few_logger.warning(
-    "Utility tests are running"
+from few.utils.constants import YRSID_SI
+from few.utils.utility import (
+    ELQ_to_pex,
+    get_fundamental_frequencies,
+    get_kerr_geo_constants_of_motion,
+    get_mu_at_t,
+    get_p_at_t,
+    get_separatrix,
 )
-class UtilityTest(unittest.TestCase):
+
+
+class UtilityTest(FewTest):
+    @classmethod
+    def name(self) -> str:
+        return "Utility"
+
+    def setUp(self):
+        self.traj_module = EMRIInspiral(func=KerrEccEqFlux)
+
+    def tearDown(self):
+        del self.traj_module
+
     def test_Constants_of_Motion(self):
         a = 0.9
-        p = 10.
+        p = 10.0
         e = 0.3
         x = 0.5
 
@@ -33,24 +41,28 @@ class UtilityTest(unittest.TestCase):
         m1 = 1e6
 
         a = 0.9
-        p0 = 10.
+        p0 = 10.0
         e0 = 0.3
-        x0 = 1.
+        x0 = 1.0
 
         traj_args = [m1, a, p0, e0, x0]
         traj_kwargs = {}
         index_of_mu = 1
 
-        t_out = 1.
+        t_out = 1.0
 
-        m2 = get_mu_at_t(traj_module,t_out,traj_args,index_of_mu=index_of_mu,traj_kwargs=traj_kwargs)
-
-
+        m2 = get_mu_at_t(
+            self.traj_module,
+            t_out,
+            traj_args,
+            index_of_mu=index_of_mu,
+            traj_kwargs=traj_kwargs,
+        )
 
         traj_args = [m1, m2, a, p0, e0, x0]
 
-        t, p, e, xI, Phi_phi, Phi_theta, Phi_r = traj_module(*traj_args, T=t_out)
-        diff = 1 - t[-1]/ (t_out*YRSID_SI)
+        t, p, e, xI, Phi_phi, Phi_theta, Phi_r = self.traj_module(*traj_args, T=t_out)
+        diff = 1 - t[-1] / (t_out * YRSID_SI)
 
         self.assertLess(abs(diff), 1e-10)
 
@@ -59,74 +71,76 @@ class UtilityTest(unittest.TestCase):
         m2 = 10
         a = 0.9
         e0 = 0.3
-        x0 = 1.
+        x0 = 1.0
 
-        traj_args = [m1,m2,a, e0, x0]
+        traj_args = [m1, m2, a, e0, x0]
         traj_kwargs = {}
         index_of_p = 3
 
-        t_out = 1.
+        t_out = 1.0
 
-        p0 = get_p_at_t(traj_module,t_out,traj_args,index_of_p=index_of_p,traj_kwargs=traj_kwargs)
-
-
+        p0 = get_p_at_t(
+            self.traj_module,
+            t_out,
+            traj_args,
+            index_of_p=index_of_p,
+            traj_kwargs=traj_kwargs,
+        )
 
         traj_args = [m1, m2, a, p0, e0, x0]
 
-        t, p, e, xI, Phi_phi, Phi_theta, Phi_r = traj_module(*traj_args, T=t_out)
-        diff = 1 - t[-1]/ (t_out*YRSID_SI)
+        t, p, e, xI, Phi_phi, Phi_theta, Phi_r = self.traj_module(*traj_args, T=t_out)
+        diff = 1 - t[-1] / (t_out * YRSID_SI)
 
         self.assertLess(abs(diff), 1e-10)
+
     def test_get_separatrix_generic(self):
-        
-            a= 0.9
-            e = 0.3
-            x = 0.5
+        a = 0.9
+        e = 0.3
+        x = 0.5
 
-            p_sep = get_separatrix(a, e, x)
+        p_sep = get_separatrix(a, e, x)
 
-            p_sep_KerrGeo = 4.100908189793339
+        p_sep_KerrGeo = 4.100908189793339
 
-            diff = p_sep_KerrGeo - p_sep
+        diff = p_sep_KerrGeo - p_sep
 
-            self.assertLess(abs(diff), 1e-14)
+        self.assertLess(abs(diff), 1e-14)
+
     def test_get_separatrix_Schwarz(self):
-        
-            a= 0.0
-            e = 0.5
-            x = 0.5
+        a = 0.0
+        e = 0.5
+        x = 0.5
 
-            p_sep = get_separatrix(a, e, x)
+        p_sep = get_separatrix(a, e, x)
 
-            p_sep_KerrGeo = 4.100908189793339
+        # p_sep_KerrGeo = 4.100908189793339
 
-            diff = p_sep - (6.+ 2.*e)
+        diff = p_sep - (6.0 + 2.0 * e)
 
-            self.assertLess(abs(diff), 1e-14)
+        self.assertLess(abs(diff), 1e-14)
 
     def test_get_fundamental_frequencies(self):
-        
-            a= 0.9
-            e = 0.3
-            p = 10.
-            x = 0.5
+        a = 0.9
+        e = 0.3
+        p = 10.0
+        x = 0.5
 
-            OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p, e, x)
-            
-            # Taken from the KerrGeodesics Mathematica package
-            OmegaPhiKerrGeo, OmegaThetaKerrGeo, OmegaRKerrGeo = 0.028478026708595002, 0.027032450748133277, 0.020053165349083846 
+        OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p, e, x)
 
-            [abs(OmegaPhi - OmegaPhiKerrGeo), abs(OmegaTheta - OmegaThetaKerrGeo), abs(OmegaR - OmegaRKerrGeo)]
+        # Taken from the KerrGeodesics Mathematica package
+        OmegaPhiKerrGeo, OmegaThetaKerrGeo, OmegaRKerrGeo = (
+            0.028478026708595002,
+            0.027032450748133277,
+            0.020053165349083846,
+        )
 
-            self.assertLess(abs(OmegaPhi - OmegaPhiKerrGeo), 1e-13)
-            self.assertLess(abs(OmegaTheta - OmegaThetaKerrGeo), 1e-13)
-            self.assertLess(abs(OmegaR - OmegaRKerrGeo), 1e-13)
+        [
+            abs(OmegaPhi - OmegaPhiKerrGeo),
+            abs(OmegaTheta - OmegaThetaKerrGeo),
+            abs(OmegaR - OmegaRKerrGeo),
+        ]
 
-    
-
-    
-
-    
-
-
-
+        self.assertLess(abs(OmegaPhi - OmegaPhiKerrGeo), 1e-13)
+        self.assertLess(abs(OmegaTheta - OmegaThetaKerrGeo), 1e-13)
+        self.assertLess(abs(OmegaR - OmegaRKerrGeo), 1e-13)

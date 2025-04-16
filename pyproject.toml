@@ -164,6 +164,7 @@ extend-include = [
 ]
 
 lint.extend-select = [
+  "I",
   "T201", # Fail when "print" is used, to be replaced with logger calls
 ]
 

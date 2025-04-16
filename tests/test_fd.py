@@ -1,21 +1,21 @@
-import unittest
 import pickle
+
 import numpy as np
 
-from few.waveform import FastSchwarzschildEccentricFlux, FastKerrEccentricEquatorialFlux
-from few.waveform import GenerateEMRIWaveform
+from few.tests.base import FewBackendTest
 from few.utils.constants import YRSID_SI
-
-from few.utils.globals import get_logger, get_first_backend
-
-few_logger = get_logger()
-
-best_backend = get_first_backend(FastSchwarzschildEccentricFlux.supported_backends())
-xp = best_backend.xp
-few_logger.warning("FD Test is running with backend {}".format(best_backend.name))
+from few.waveform import FastKerrEccentricEquatorialFlux, FastSchwarzschildEccentricFlux
 
 
-class WaveformTest(unittest.TestCase):
+class WaveformTest(FewBackendTest):
+    @classmethod
+    def name(self) -> str:
+        return "FD"
+
+    @classmethod
+    def parallel_class(self):
+        return FastSchwarzschildEccentricFlux
+
     def test_pickle(self):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
         inspiral_kwargs = {
@@ -45,7 +45,7 @@ class WaveformTest(unittest.TestCase):
             amplitude_kwargs=amplitude_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             sum_kwargs=sum_kwargs,
-            force_backend=best_backend,
+            force_backend=self.backend,
         )
 
         check_pickle = pickle.dumps(fast)
@@ -75,7 +75,7 @@ class WaveformTest(unittest.TestCase):
         generator = FastSchwarzschildEccentricFlux
         fast = generator(
             sum_kwargs=sum_kwargs,
-            force_backend=best_backend,
+            force_backend=self.backend,
         )
 
         # setup td
@@ -83,7 +83,7 @@ class WaveformTest(unittest.TestCase):
 
         slow = generator(
             sum_kwargs=sum_kwargs,
-            force_backend=best_backend,
+            force_backend=self.backend,
         )
 
         # parameters
@@ -97,9 +97,20 @@ class WaveformTest(unittest.TestCase):
         phi = np.pi / 4  # azimuthal viewing angle
         dist = 1.0  # distance
 
-        slow_wave = slow(M,mu,p0,e0,theta,phi,dist,T=T,dt=dt,)
+        slow_wave = slow(
+            M,
+            mu,
+            p0,
+            e0,
+            theta,
+            phi,
+            dist,
+            T=T,
+            dt=dt,
+        )
 
         # make sure frequencies will be equivalent
+        xp = self.backend.xp
         f_in = xp.array(np.linspace(-1 / (2 * dt), +1 / (2 * dt), num=len(slow_wave)))
         kwargs = dict(f_arr=f_in)
 
@@ -139,7 +150,7 @@ class WaveformTest(unittest.TestCase):
         generator = FastKerrEccentricEquatorialFlux
         fast = generator(
             sum_kwargs=sum_kwargs,
-            force_backend=best_backend,
+            force_backend=self.backend,
         )
 
         # setup td
@@ -147,7 +158,7 @@ class WaveformTest(unittest.TestCase):
 
         slow = generator(
             sum_kwargs=sum_kwargs,
-            force_backend=best_backend,
+            force_backend=self.backend,
         )
 
         # parameters
@@ -162,13 +173,28 @@ class WaveformTest(unittest.TestCase):
         phi = np.pi / 4  # azimuthal viewing angle
         dist = 1.0  # distance
 
-        slow_wave = slow(M,mu,a,p0,e0,1.0,theta,phi,dist,T=T,dt=dt,)
+        slow_wave = slow(
+            M,
+            mu,
+            a,
+            p0,
+            e0,
+            1.0,
+            theta,
+            phi,
+            dist,
+            T=T,
+            dt=dt,
+        )
 
         # make sure frequencies will be equivalent
+        xp = self.backend.xp
         f_in = xp.array(np.linspace(-1 / (2 * dt), +1 / (2 * dt), num=len(slow_wave)))
         kwargs = dict(f_arr=f_in)
 
-        fast_wave = fast(M, mu, a,  p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-3, **kwargs)
+        fast_wave = fast(
+            M, mu, a, p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-3, **kwargs
+        )
 
         # process FD
         freq = fast.create_waveform.frequency
