@@ -1,27 +1,26 @@
-import unittest
 import numpy as np
 
-from few.trajectory.inspiral import EMRIInspiral
-from few.utils.ylm import GetYlms
-from few.utils.modeselector import ModeSelector
-from few.summation.interpolatedmodesum import CubicSplineInterpolant
 from few.amplitude.romannet import RomanAmplitude
-from few.waveform import FastSchwarzschildEccentricFluxBicubic
-from few.utils.utility import get_mismatch
+from few.summation.interpolatedmodesum import CubicSplineInterpolant
+from few.tests.base import FewBackendTest
+from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode import SchwarzEccFlux
-from few.utils.globals import get_logger, get_first_backend, get_file_manager
-
-few_logger = get_logger()
-
-best_backend = get_first_backend(
-    FastSchwarzschildEccentricFluxBicubic.supported_backends()
-)
-few_logger.warning(
-    "ModeSelector Test is running with backend {}".format(best_backend.name)
-)
+from few.utils.globals import get_file_manager
+from few.utils.modeselector import ModeSelector
+from few.utils.utility import get_mismatch
+from few.utils.ylm import GetYlms
+from few.waveform import FastSchwarzschildEccentricFluxBicubic
 
 
-class ModeSelectorTest(unittest.TestCase):
+class ModeSelectorTest(FewBackendTest):
+    @classmethod
+    def name(self) -> str:
+        return "ModeSelector"
+
+    @classmethod
+    def parallel_class(self):
+        return FastSchwarzschildEccentricFluxBicubic
+
     def test_mode_selector(self):
         # first, lets get amplitudes for a trajectory
         traj = EMRIInspiral(func=SchwarzEccFlux)
@@ -106,7 +105,7 @@ class ModeSelectorTest(unittest.TestCase):
 
         # noise_weighted_mode_selector_kwargs = dict(sensitivity_fn=sens_fn)
 
-        few_base = FastSchwarzschildEccentricFluxBicubic(force_backend=best_backend)
+        few_base = FastSchwarzschildEccentricFluxBicubic(force_backend=self.backend)
 
         M = 1e6
         mu = 1e1
@@ -126,10 +125,10 @@ class ModeSelectorTest(unittest.TestCase):
             M, mu, p0, e0, theta, phi, dist, dt=dt, T=T, mode_selection=mode_selection
         )
 
-        get_logger().info(
+        self.logger.info(
             "  mismatch: {}".format(
                 mismatch := get_mismatch(
-                    wave_base, wave_weighted, use_gpu=best_backend.uses_gpu
+                    wave_base, wave_weighted, use_gpu=self.backend.uses_gpu
                 )
             )
         )

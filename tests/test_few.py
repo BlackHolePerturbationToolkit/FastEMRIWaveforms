@@ -1,23 +1,25 @@
-import unittest
 import pickle
+
 import numpy as np
 
+from few.amplitude.ampinterp2d import AmpInterpSchwarzEcc
+from few.amplitude.romannet import RomanAmplitude
+from few.tests.base import FewBackendTest, FewTest
 from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode import SchwarzEccFlux
-from few.amplitude.romannet import RomanAmplitude
-from few.amplitude.ampinterp2d import AmpInterpSchwarzEcc
+from few.utils.utility import get_mismatch, get_overlap
 from few.waveform import FastSchwarzschildEccentricFlux, SlowSchwarzschildEccentricFlux
-from few.utils.utility import get_overlap, get_mismatch
-
-from few.utils.globals import get_logger, get_first_backend
-
-few_logger = get_logger()
-
-best_backend = get_first_backend(FastSchwarzschildEccentricFlux.supported_backends())
-few_logger.warning("FEW Test is running with backend {}".format(best_backend.name))
 
 
-class WaveformTest(unittest.TestCase):
+class WaveformTest(FewBackendTest):
+    @classmethod
+    def name(self) -> str:
+        return "FEW"
+
+    @classmethod
+    def parallel_class(self):
+        return FastSchwarzschildEccentricFlux
+
     def test_pickle(self):
         # test ability to pickle class
 
@@ -49,7 +51,7 @@ class WaveformTest(unittest.TestCase):
             amplitude_kwargs=amplitude_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             sum_kwargs=sum_kwargs,
-            force_backend=best_backend,
+            force_backend=self.backend,
         )
 
         check_pickle = pickle.dumps(fast)
@@ -97,7 +99,7 @@ class WaveformTest(unittest.TestCase):
             amplitude_kwargs=amplitude_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             sum_kwargs=sum_kwargs,
-            force_backend=best_backend,
+            force_backend=self.backend,
         )
 
         # setup slow
@@ -125,7 +127,7 @@ class WaveformTest(unittest.TestCase):
             amplitude_kwargs=amplitude_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             sum_kwargs=sum_kwargs,
-            force_backend=best_backend,
+            force_backend=self.backend,
         )
 
         # parameters
@@ -139,13 +141,11 @@ class WaveformTest(unittest.TestCase):
         phi = np.pi / 4  # azimuthal viewing angle
         dist = 1.0  # distance
 
-        slow_wave = slow(
-            M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt
-        )
+        slow_wave = slow(M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
 
         fast_wave = fast(M, mu, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
 
-        mm = get_mismatch(slow_wave, fast_wave, use_gpu=best_backend.uses_gpu)
+        mm = get_mismatch(slow_wave, fast_wave, use_gpu=self.backend.uses_gpu)
 
         self.assertLess(mm, 1e-4)
 
@@ -187,12 +187,16 @@ def amplitude_test(amp_class):
 
     first_check = np.allclose(specific_teuk_modes[(2, 2, 0)], teuk_modes[:, inds[0]])
     second_check = np.allclose(
-        specific_teuk_modes[(7, -3, 1)], (-1)**7 * np.conj(teuk_modes[:, inds[1]])
+        specific_teuk_modes[(7, -3, 1)], (-1) ** 7 * np.conj(teuk_modes[:, inds[1]])
     )
     return first_check, second_check
 
 
-class ModuleTest(unittest.TestCase):
+class ModuleTest(FewTest):
+    @classmethod
+    def name(self) -> str:
+        return "FEW Module"
+
     def test_trajectory(self):
         # initialize trajectory class
         traj = EMRIInspiral(func=SchwarzEccFlux)

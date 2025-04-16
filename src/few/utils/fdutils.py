@@ -39,22 +39,18 @@ def get_convolution(a: np.ndarray, b: np.ndarray) -> np.ndarray:
             "One array is cupy and one array is numpy. Need to be the same."
         )
 
-    # Handle the case where both arrays are cupy.ndarray
-    import few
+    # Handle both np and cp cases
+    if isinstance(a, np.ndarray):
+        xp = np
+        from scipy.signal import convolve
+    else:
+        from few import has_backend
 
-    if few.has_backend("cuda"):
-        import cupy as cp
+        assert has_backend("cuda")
+        import cupy as xp
+        from cupyx.scipy.signal import convolve
 
-        if isinstance(a, cp.ndarray):
-            from cupyx.scipy.signal import convolve
-
-            return convolve(cp.hstack((a[1:], a)), b, mode="valid") / len(b)
-
-    # Handle the case where both arrays are numpy.ndarray
-    assert isinstance(a, np.ndarray)
-    from scipy.signal import convolve
-
-    return convolve(np.hstack((a[1:], a)), b, mode="valid") / len(b)
+    return convolve(xp.hstack((a[1:], a)), b, mode="valid") / len(b)
 
 
 def get_fft_td_windowed(
@@ -79,15 +75,13 @@ def get_fft_td_windowed(
         )
 
     # Handle the case where arrays are cupy.ndarray
-    xp = np
+    if isinstance(signal, np.ndarray):
+        xp = np
+    else:
+        from few import has_backend
 
-    import few
-
-    if few.has_backend("cuda"):
-        import cupy as cp
-
-        if isinstance(signal, cp.ndarray):
-            xp = cp
+        assert has_backend("cuda")
+        import cupy as xp
 
     # Compute the FFT of the windowed signals
     fft_td_wave_p = xp.fft.fftshift(xp.fft.fft(signal[0] * window)) * dt
@@ -117,14 +111,13 @@ def get_fd_windowed(
             "One array is cupy and one array is numpy. Need to be the same."
         )
 
-    import few
+    if isinstance(window, np.ndarray):
+        xp = np
+    else:
+        from few import has_backend
 
-    xp = np
-    if few.has_backend("cuda"):
-        import cupy as cp
-
-        if isinstance(window, cp.ndarray):
-            xp = cp
+        assert has_backend("cuda")
+        import cupy as xp
 
     # apply no window
     if window is None:

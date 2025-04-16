@@ -1,18 +1,8 @@
-import unittest
-
 # from few.waveform import FastSchwarzschildEccentricFlux
-from few.waveform import GenerateEMRIWaveform
-
-from few.utils.utility import get_mismatch
-from few.waveform import FastKerrEccentricEquatorialFlux
+from few.tests.base import FewBackendTest
 from few.trajectory.ode import KerrEccEqFlux
-
-from few.utils.globals import get_logger, get_first_backend
-
-few_logger = get_logger()
-
-best_backend = get_first_backend(FastKerrEccentricEquatorialFlux.supported_backends())
-few_logger.warning("Kerr Test is running with backend {}".format(best_backend.name))
+from few.utils.utility import get_mismatch
+from few.waveform import FastKerrEccentricEquatorialFlux, GenerateEMRIWaveform
 
 # keyword arguments for inspiral generator (Kerr Waveform)
 inspiral_kwargs_Kerr = {
@@ -22,15 +12,23 @@ inspiral_kwargs_Kerr = {
 }
 
 
-class KerrWaveformTest(unittest.TestCase):
+class KerrWaveformTest(FewBackendTest):
+    @classmethod
+    def name(self) -> str:
+        return "Kerr"
+
+    @classmethod
+    def parallel_class(self):
+        return FastKerrEccentricEquatorialFlux
+
     def test_Kerr_vs_Schwarzchild(self):
         # Test whether the Kerr and Schwarzschild waveforms agree.
 
         wave_generator_Kerr = GenerateEMRIWaveform(
-            "FastKerrEccentricEquatorialFlux", force_backend=best_backend
+            "FastKerrEccentricEquatorialFlux", force_backend=self.backend
         )
         wave_generator_Schwarz = GenerateEMRIWaveform(
-            "FastSchwarzschildEccentricFlux", force_backend=best_backend
+            "FastSchwarzschildEccentricFlux", force_backend=self.backend
         )
 
         # parameters
@@ -89,7 +87,7 @@ class KerrWaveformTest(unittest.TestCase):
             dt=dt,
         )
 
-        mm = get_mismatch(Kerr_wave, Schwarz_wave, use_gpu=best_backend.uses_gpu)
+        mm = get_mismatch(Kerr_wave, Schwarz_wave, use_gpu=self.backend.uses_gpu)
 
         self.assertLess(mm, 1e-4)
 
@@ -98,10 +96,10 @@ class KerrWaveformTest(unittest.TestCase):
         Here we test that retrograde orbits and prograde orbits for a = \pm 0.7
         have large mismatches.
         """
-        few_logger.info("Testing retrograde orbits")
+        self.logger.info("Testing retrograde orbits")
 
         wave_generator_Kerr = GenerateEMRIWaveform(
-            "FastKerrEccentricEquatorialFlux", force_backend=best_backend
+            "FastKerrEccentricEquatorialFlux", force_backend=self.backend
         )
 
         # parameters
@@ -162,6 +160,6 @@ class KerrWaveformTest(unittest.TestCase):
         )
 
         mm = get_mismatch(
-            Kerr_wave_retrograde, Kerr_wave_prograde, use_gpu=best_backend.uses_gpu
+            Kerr_wave_retrograde, Kerr_wave_prograde, use_gpu=self.backend.uses_gpu
         )
         self.assertGreater(mm, 1e-3)

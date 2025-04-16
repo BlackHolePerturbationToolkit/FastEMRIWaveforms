@@ -1,22 +1,21 @@
-import unittest
 import numpy as np
 
-from few.waveform import Pn5AAKWaveform, GenerateEMRIWaveform
+from few.tests.base import FewBackendTest
 from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode import PN5
 from few.utils.utility import get_mismatch, get_overlap
-
-from few.utils.globals import get_logger, get_first_backend
-
-few_logger = get_logger()
-
-best_backend = get_first_backend(Pn5AAKWaveform.supported_backends())
-few_logger.warning(
-    "AAKWaveform test is running with backend '{}'".format(best_backend.name)
-)
+from few.waveform import GenerateEMRIWaveform, Pn5AAKWaveform
 
 
-class AAKWaveformTest(unittest.TestCase):
+class AAKWaveformTest(FewBackendTest):
+    @classmethod
+    def name(self) -> str:
+        return "AAKWaveformTest"
+
+    @classmethod
+    def parallel_class(self):
+        return Pn5AAKWaveform
+
     def test_aak(self):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
         inspiral_kwargs = {
@@ -57,14 +56,14 @@ class AAKWaveformTest(unittest.TestCase):
             np.all(np.abs(waveform_cpu) > 0.0) and not np.any(np.isnan(waveform_cpu))
         )
 
-        if best_backend.uses_gpu:
+        if self.backend.uses_gpu:
             wave_gpu = Pn5AAKWaveform(inspiral_kwargs, sum_kwargs)
 
             waveform = wave_gpu(
                 M, mu, a, p0, e0, Y0, qS, phiS, qK, phiK, dist, mich=mich, dt=dt, T=T
             )
 
-            mm = get_mismatch(waveform, waveform_cpu, use_gpu=best_backend.uses_gpu)
+            mm = get_mismatch(waveform, waveform_cpu, use_gpu=self.backend.uses_gpu)
             self.assertLess(mm, 1e-10)
 
         few_gen = GenerateEMRIWaveform(
@@ -111,9 +110,9 @@ class AAKWaveformTest(unittest.TestCase):
             dt=dt,
         )
 
-        few_logger.info(
+        self.logger.info(
             "  Overlap is: {}".format(
-                get_overlap(h_p_c_phase, h_p_c_phase2, use_gpu=best_backend.uses_gpu)
+                get_overlap(h_p_c_phase, h_p_c_phase2, use_gpu=self.backend.uses_gpu)
             )
         )
 

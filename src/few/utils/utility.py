@@ -58,28 +58,13 @@ def get_overlap(
     # adjust arrays based on GPU usage
     if use_gpu:
         import cupy as xp
-
-        if isinstance(time_series_1, np.ndarray):
-            time_series_1 = xp.asarray(time_series_1)
-        if isinstance(time_series_2, np.ndarray):
-            time_series_2 = xp.asarray(time_series_2)
-
     else:
         xp = np
 
-        try:
-            if isinstance(time_series_1, cp.ndarray):
-                time_series_1 = xp.asarray(time_series_1)
-
-        except NameError:
-            pass
-
-        try:
-            if isinstance(time_series_2, cp.ndarray):
-                time_series_2 = xp.asarray(time_series_2)
-
-        except NameError:
-            pass
+    if not isinstance(time_series_1, xp.ndarray):
+        time_series_1 = xp.asarray(time_series_1)
+    if not isinstance(time_series_2, xp.ndarray):
+        time_series_2 = xp.asarray(time_series_2)
 
     # get the lesser of the two lengths
     min_len = int(np.min([len(time_series_1), len(time_series_2)]))
@@ -106,9 +91,7 @@ def get_overlap(
     )
 
     # if using cupy, it will return a dimensionless array
-    if use_gpu:
-        return ac.item().real
-    return ac.real
+    return ac.item().real if use_gpu else ac.real
 
 
 def get_mismatch(
