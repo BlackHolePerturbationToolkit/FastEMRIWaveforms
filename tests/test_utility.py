@@ -14,17 +14,14 @@ from few.utils.geodesic import (
 )
 
 
+def get_traj_module() -> EMRIInspiral:
+    return EMRIInspiral(func=KerrEccEqFlux)
+
+
 class UtilityTest(FewTest):
     @classmethod
     def name(self) -> str:
         return "Utility"
-
-    def setUp(self):
-        self.traj_module = EMRIInspiral(func=KerrEccEqFlux)
-
-    def tearDown(self):
-        del self.traj_module
-        super().tearDown()
 
     def test_Constants_of_Motion(self):
         a = 0.9
@@ -54,6 +51,8 @@ class UtilityTest(FewTest):
 
         t_out = 1.0
 
+        traj_module = get_traj_module()
+
         m2 = get_m2_at_t(
             self.traj_module,
             t_out,
@@ -64,7 +63,7 @@ class UtilityTest(FewTest):
 
         traj_args = [m1, m2, a, p0, e0, x0]
 
-        t, p, e, xI, Phi_phi, Phi_theta, Phi_r = self.traj_module(*traj_args, T=t_out)
+        t, p, e, xI, Phi_phi, Phi_theta, Phi_r = traj_module(*traj_args, T=t_out)
         diff = 1 - t[-1] / (t_out * YRSID_SI)
 
         self.assertLess(abs(diff), 1e-10)
@@ -82,8 +81,10 @@ class UtilityTest(FewTest):
 
         t_out = 1.0
 
+        traj_module = get_traj_module()
+
         p0 = get_p_at_t(
-            self.traj_module,
+            traj_module,
             t_out,
             traj_args,
             index_of_p=index_of_p,
@@ -92,7 +93,7 @@ class UtilityTest(FewTest):
 
         traj_args = [m1, m2, a, p0, e0, x0]
 
-        t, p, e, xI, Phi_phi, Phi_theta, Phi_r = self.traj_module(*traj_args, T=t_out)
+        t, p, e, xI, Phi_phi, Phi_theta, Phi_r = traj_module(*traj_args, T=t_out)
         diff = 1 - t[-1] / (t_out * YRSID_SI)
 
         self.assertLess(abs(diff), 1e-10)
