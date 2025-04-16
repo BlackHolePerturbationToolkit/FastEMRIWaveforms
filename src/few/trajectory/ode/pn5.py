@@ -7,6 +7,8 @@ import numpy as np
 from typing import Union
 from few.utils.utility import get_separatrix
 
+from few.utils.mappings.jacobian import ELdot_to_PEdot_Jacobian
+
 #    PostNewtonian fluxes (5PN, e^10; arbitrary inclinations)
 
 #    -- N. Sago and R. Fujita:
@@ -78,9 +80,19 @@ class PN5(ODEBase):
     ) -> list[Union[float, np.ndarray]]:
         p, e, Y = y[:3]
 
-        pdot = dpdt8H_5PNe10(self.a, p, e, Y, 10, 10)
-        edot = dedt8H_5PNe10(self.a, p, e, Y, 10, 8)
-        Ydot = dYdt8H_5PNe10(self.a, p, e, Y, 7, 10)
+        if Y==1:
+
+            Edot = dEdt8H_5PNe10(self.a, p, e, Y, 10, 10)
+            Lzdot = dLdt8H_5PNe10(self.a, p, e, Y, 10, 10)
+    
+            pdot, edot = ELdot_to_PEdot_Jacobian(abs(self.a), p, e, np.sign(self.a), Edot, Lzdot)
+            Ydot = 0
+
+        else:
+
+            pdot = dpdt8H_5PNe10(self.a, p, e, Y, 10, 10)
+            edot = dedt8H_5PNe10(self.a, p, e, Y, 10, 8)
+            Ydot = dYdt8H_5PNe10(self.a, p, e, Y, 7, 10)
 
         frequencies = get_fundamental_frequencies(self.a, p, e, self.xI_cache)
 
