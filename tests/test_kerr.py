@@ -15,7 +15,7 @@ inspiral_kwargs_Kerr = {
 class KerrWaveformTest(FewBackendTest):
     @classmethod
     def name(self) -> str:
-        return "FD"
+        return "Kerr"
 
     @classmethod
     def parallel_class(self):
