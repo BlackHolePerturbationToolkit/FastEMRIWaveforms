@@ -1,6 +1,6 @@
 {
     "os": [
-        "ubuntu-24.04"
+        "macos-13"
     ],
     "python-version": [
         "3.9",
