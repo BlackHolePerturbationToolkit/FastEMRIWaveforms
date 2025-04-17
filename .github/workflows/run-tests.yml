@@ -34,20 +34,24 @@ jobs:
         with:
           path: local_cache
           key: ${{ hashFiles('src/few/files/registry.yml') }}
+  select_matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.read-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: read-matrix
+        run: |
+          echo matrix=$(jq -c . .github/workflows/tests.matrix.${{ github.event.repository.visibility }}.json) >> $GITHUB_OUTPUT
   install_and_run_tests:
     name: Install and run non-GPU tests
     runs-on: ${{ matrix.os }}
     needs:
       - cache_files
-    # defaults:
-    #   run:
-    #     shell: bash -el {0}
+      - select_matrix
     strategy:
       fail-fast: false
-      matrix:
-        os: ["ubuntu-24.04", "ubuntu-22.04", "macos-13", "macos-14", "macos-15", "ubuntu-24.04-arm"] #, "windows-latest"]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-        # cuda-version: ["12.4.0"]
+      matrix: ${{ fromJson(needs.select_matrix.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
       - name: Restore the cache
