@@ -17,18 +17,18 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import numpy as np
 import h5py
-
-# Python imports
-from ..utils.baseclasses import SchwarzschildEccentric, BackendLike
-from .base import AmplitudeBase
-from ..utils.globals import get_file_manager
-from ..utils.citations import REFERENCE
-from ..utils.mappings.schwarzecc import schwarzecc_p_to_y
+import numpy as np
 from scipy.interpolate import RectBivariateSpline
 
 from few.utils.globals import get_logger
+
+# Python imports
+from ..utils.baseclasses import BackendLike, SchwarzschildEccentric
+from ..utils.citations import REFERENCE
+from ..utils.globals import get_file_manager
+from ..utils.mappings.schwarzecc import schwarzecc_p_to_y
+from .base import AmplitudeBase
 
 
 class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
@@ -236,9 +236,9 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         # if so reset the buffers and update the attribute
         if input_len > self.buffer_length:
             get_logger().warning(
-                "Input length {} is larger than initial buffer_length ({}). Reallocating preallocated arrays for this size.".format(
-                    input_len, self.buffer_length
-                )
+                "Input length %u is larger than initial buffer_length (%u). Reallocating preallocated arrays for this size.",
+                input_len,
+                self.buffer_length,
             )
             self.buffer_length = input_len
 
@@ -315,6 +315,8 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
                 if emm >= 0:
                     temp[lmn] = teuk_modes[:, self.special_index_map_arr[ell, emm, enn]]
                 else:
-                    temp[lmn] = (-1)**ell * self.xp.conj(teuk_modes[:, self.special_index_map_arr[ell, emm, enn]])
+                    temp[lmn] = (-1) ** ell * self.xp.conj(
+                        teuk_modes[:, self.special_index_map_arr[ell, emm, enn]]
+                    )
 
             return temp
