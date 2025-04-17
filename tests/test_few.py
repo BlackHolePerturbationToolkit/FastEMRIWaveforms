@@ -107,7 +107,7 @@ class WaveformTest(FewBackendTest):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
         inspiral_kwargs = {
             "DENSE_STEPPING": 1,  # we want a sparsely sampled trajectory
-            "buffer_length": int(1e7),  # dense stepping trajectories
+            "buffer_length": int(3e3),  # dense stepping trajectories
         }
 
         # keyword arguments for amplitude generator (AmpInterpSchwarzEcc)
@@ -165,7 +165,7 @@ class WaveformTest(FewBackendTest):
 
 def amplitude_test(amp_class):
     # initialize ROMAN class
-    amp = RomanAmplitude(buffer_length=5000)  # buffer_length creates memory buffers
+    amp = RomanAmplitude(buffer_length=1000)  # buffer_length creates memory buffers
 
     p = np.linspace(10.0, 14.0, 10)
     e = np.linspace(0.1, 0.7, 10)
