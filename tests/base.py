@@ -2,9 +2,12 @@
 
 import abc
 import gc
+import inspect
 import logging
 import typing as t
 import unittest
+
+import wrapt
 
 from few.cutils import Backend
 from few.utils.baseclasses import ParallelModuleBase
@@ -64,3 +67,74 @@ class FewBackendTest(FewTest):
     def tearDownClass(cls):
         del cls.backend
         super().tearDownClass()
+
+
+@wrapt.decorator
+def high_memory(wrapped, instance, args, kwargs):
+    if instance is None:
+        if inspect.isclass(wrapped):
+            # Decorator was applied to a class.
+            get_logger().warning("TestSuite '%s' uses large memory", wrapped.__name__)
+            return wrapped(*args, **kwargs)
+        else:
+            # Decorator was applied to a function or staticmethod.
+            get_logger().warning("Test '%s' uses large memory", wrapped.__name__)
+            return wrapped(*args, **kwargs)
+    else:
+        if inspect.isclass(instance):
+            # Decorator was applied to a classmethod.
+            raise NotImplementedError(
+                "high_memory decorator should not be applied to classmethod."
+            )
+        else:
+            # Decorator was applied to an instancemethod.
+            class_name = type(instance).__name__
+            test_name = wrapped.__name__
+            get_logger().warning(
+                "Test %s of class %s uses large memory", test_name, class_name
+            )
+            return wrapped(*args, **kwargs)
+
+
+class need_files:
+    _files: t.Sequence[str]
+
+    def __init__(self, *files: str):
+        self._files = files
+
+    def apply_skip(self, wrapped, instance, reason):
+        if instance is None and inspect.isclass(wrapped):
+            # decorator applied on class
+            for item in inspect.getmembers(wrapped):
+                if inspect.isfunction(item[1]) and item[0].startswith("test_"):
+                    setattr(wrapped, item[0], need_files(*self._files)(item[1]))
+            return wrapped
+
+        if instance is not None and not inspect.isclass(instance):
+            # decorator applied on instance method
+            def skipped_wrapped(*args, **kwargs):
+                raise unittest.SkipTest(reason)
+
+            return skipped_wrapped
+
+        raise NotImplementedError
+
+    @wrapt.decorator
+    def __call__(self, wrapped, instance, args, kwargs):
+        from few import get_file_manager
+
+        file_manager = get_file_manager()
+        for file in self._files:
+            if file_manager.try_get_file(file) is None:
+                wrapped = self.apply_skip(
+                    wrapped, instance, f"File '{file}' is not available"
+                )
+                break
+
+        return wrapped(*args, **kwargs)
+
+
+@wrapt.decorator
+def no_file(wrapped, instance, args, kwargs):
+    """No-op decorator to indicate explicitely that test does not need file"""
+    wrapped(*args, **kwargs)

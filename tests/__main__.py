@@ -13,13 +13,14 @@ class TestFew(TestProgram):
 if __name__ == "__main__":
     import logging
 
-    from few import get_config_setter, get_file_manager, get_logger
+    from few import get_config, get_config_setter, get_file_manager, get_logger
 
     if get_logger().getEffectiveLevel() > logging.INFO:
         get_config_setter(reset=True).set_log_level("INFO")
 
-    get_logger().info("Ensuring that all files required by tests are present.")
-    get_file_manager().prefetch_files_by_tag("unittest")
-    get_logger().info("Done... Now run the tests!")
+    if get_config().file_allow_download:
+        get_logger().info("Ensuring that all files required by tests are present.")
+        get_file_manager().prefetch_files_by_tag("unittest")
+        get_logger().info("Done... Now run the tests!")
     get_config_setter(reset=True)
     TestFew()

@@ -10,9 +10,9 @@ import typing
 import pydantic
 import rich.progress
 
-from .registry import FileRegistry, File
 from ..utils import exceptions
 from ..utils.config import Configuration
+from .registry import File, FileRegistry
 
 
 class FileIntegrityCheckMode(enum.Enum):
@@ -440,6 +440,13 @@ class FileManager:
     def get_file(self, file_name: str) -> pathlib.Path:
         """Get file locally and return its path"""
         return self._ensure_file(file_name=file_name).path
+
+    def try_get_file(self, file_name: str) -> typing.Optional[pathlib.Path]:
+        """Get file and, if no strategy works, return None"""
+        try:
+            return self.get_file(file_name)
+        except exceptions.FileManagerException:
+            return None
 
     def prefetch_files_by_list(self, file_names: typing.Iterable[str]):
         """Ensure all files in the given list are present (or raise errors for missing files)"""
