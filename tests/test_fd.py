@@ -1,3 +1,4 @@
+import gc
 import pickle
 
 import numpy as np
@@ -98,6 +99,7 @@ class WaveformTest(FewBackendTest):
             dt=dt,
         )
         del slow  # Free up memory
+        gc.collect()
 
         # make sure frequencies will be equivalent
         xp = self.backend.xp
@@ -174,6 +176,7 @@ class WaveformTest(FewBackendTest):
             dt=dt,
         )
         del slow  # Free up memory
+        gc.collect()  # and recover it
 
         # make sure frequencies will be equivalent
         xp = self.backend.xp
@@ -185,7 +188,19 @@ class WaveformTest(FewBackendTest):
             force_backend=self.backend,
         )
         fast_wave = fast(
-            m1, m2, a, p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-3, **kwargs
+            m1,
+            m2,
+            a,
+            p0,
+            e0,
+            1.0,
+            theta,
+            phi,
+            dist=dist,
+            T=T,
+            dt=dt,
+            eps=1e-3,
+            **kwargs,
         )
 
         # process FD
