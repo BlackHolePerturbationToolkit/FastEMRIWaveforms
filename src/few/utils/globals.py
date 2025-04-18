@@ -7,17 +7,17 @@ import logging.handlers
 import os
 import typing
 
-from .exceptions import FewException
+from ..cutils import Backend, BackendsManager
+from ..files import FileManager
 from .config import (
-    ConfigSource,
-    ConfigEntry,
     ConfigConsumer,
-    InitialConfigConsumer,
+    ConfigEntry,
+    ConfigSource,
     Configuration,
+    InitialConfigConsumer,
     detect_cfg_file,
 )
-from ..cutils import BackendsManager, Backend
-from ..files import FileManager
+from .exceptions import FewException
 
 
 class Singleton(type):
@@ -105,6 +105,10 @@ class ConfigurationSetter:
     def set_file_integrity_check(self, when: str) -> ConfigurationSetter:
         """Define when integrity checks should be performed (never, once, always)"""
         return self._convert_and_set("file_integrity_check", when)
+
+    def disable_file_tags(self, *tags: str) -> ConfigurationSetter:
+        """Disable files associated to given tags"""
+        return self._convert_and_set("file_disabled_tags", tags)
 
     def add_file_extra_paths(
         self, *paths: typing.List[os.PathLike]
