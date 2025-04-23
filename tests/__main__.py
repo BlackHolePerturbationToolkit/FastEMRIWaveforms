@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     if get_config().file_allow_download:
         get_logger().info("Ensuring that all files required by tests are present.")
-        get_file_manager().prefetch_files_by_tag("unittest", skip_disabled=True)
+        get_file_manager().prefetch_files_by_tag("testfile", skip_disabled=True)
         get_logger().info("Done... Now run the tests!")
 
     config_setter = get_config_setter(reset=True)

@@ -27,7 +27,7 @@ jobs:
         if: ${{ steps.file_cache.outputs.cache-hit != 'true' }}
         run: |
           mkdir -p local_cache
-          few_files fetch --download-dir $(pwd)/local_cache --tag unittest
+          few_files fetch --download-dir $(pwd)/local_cache --tag testfile
       - name: Save the cache
         uses: actions/cache/save@v4
         if: ${{ steps.file_cache.outputs.cache-hit != 'true' }}

@@ -13,7 +13,7 @@ files:
     checksums:
       - algorithm: sha256
         value: df04fd629353703d140fad80b6877e0b51e0944f1ba60c50412d66df422752e1
-    tags: [unittest]
+    tags: [testfile]
   - name: FluxNewMinusPNScaled_fixed_y_order.dat
     repositories:
       - bhptk
@@ -21,7 +21,7 @@ files:
     checksums:
       - algorithm: sha256
         value: c551ace42fbc79febbda132a78868e20900a0a97a06fa4f4d4bf23b12cc1517c
-    tags: [unittest]
+    tags: [testfile]
   - name: SchwarzschildEccentricInput.hdf5
     repositories:
       - bhptk
@@ -29,7 +29,7 @@ files:
     checksums:
       - algorithm: sha256
         value: edb90365f3a5ee39b92ea1ebeb96c916d059f0835234b768087d9b7e80d1bede
-    tags: [unittest]
+    tags: [testfile]
   - name: Teuk_amps_a0.0_lmax_10_nmax_30_new.h5
     repositories:
       - bhptk
@@ -37,7 +37,7 @@ files:
     checksums:
       - algorithm: sha256
         value: b3e7d7b215dd2ac472b598e6fee762935dd9909a23a321b894c7b372bc0ca247
-    tags: [unittest]
+    tags: [testfile]
   - name: KerrEqEccAmpCoeffs_a0.000.h5
     repositories: [bhptk_kerreq]
     checksums:
@@ -241,13 +241,13 @@ files:
     checksums:
       - algorithm: sha256
         value: db332e617223a650eb9f890c610e928afd095edea1454b544ad06651c03a5014
-    tags: [unittest]
+    tags: [testfile]
   - name: ZNAmps_l10_m10_n55_DS2Outer.h5
     repositories: [bhptk_kerreq]
     checksums:
       - algorithm: sha256
         value: 3236d8b5eff618242291e9eeb24638dbbbb82fac464ae575dc3f2ba158c54834
-    tags: [unittest]
+    tags: [testfile]
   - name: ZNAmps_l10_m10_n55.h5
     repositories: [bhptk_kerreq]
     checksums:
@@ -264,4 +264,4 @@ files:
     checksums:
       - algorithm: sha256
         value: a0aa28e9accfd05b8b2aceb6799b471bcb8d1756fb7b0bff61957a985a40c6c1
-    tags: [unittest]
+    tags: [testfile]
