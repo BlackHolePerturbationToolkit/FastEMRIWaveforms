@@ -13,7 +13,8 @@ Below is a list of those who have contributed code or data to the releases of FE
   		Testing and debugging of trajectory module and utility functions.
 	* [Lorenzo Speri](https://github.com/lorenzsp)  </br>
 	  	Initial development of trajectory.
-	* [Zachary Nasipak](https://github.com/znasipak)
+	* [Zachary Nasipak](https://github.com/znasipak)  </br>
+ 		Generation of flux/amplitude data, transition to symmetric mass ratio convention, refactoring of mode handling and mode selection
 	* [Maxime Pigou](https://github.com/mpigou) </br>
 	   Refactoring of build procedure; automation in CI of tests execution, wheels deployment to PyPI and documentation build (github page/readthedocs); development of config and file management utilities
    	* Scott Hughes </br>
