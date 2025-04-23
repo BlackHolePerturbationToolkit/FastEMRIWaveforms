@@ -4,9 +4,9 @@ import time
 import numpy as np
 from scipy.integrate import solve_ivp
 
-from few.tests.base import FewTest
+from few.tests.base import FewTest, tagged_test
 from few.trajectory.inspiral import EMRIInspiral
-from few.trajectory.ode import KerrEccEqFlux, PN5, SchwarzEccFlux
+from few.trajectory.ode import PN5, KerrEccEqFlux, SchwarzEccFlux
 from few.utils.constants import MTSUN_SI, YRSID_SI
 from few.utils.geodesic import get_separatrix
 
@@ -21,16 +21,13 @@ insp_kw = {
 }
 
 
-def compute_traj_1_2(traj_1,traj_2, m1, m2, a, p0, e0, xI0, T=0.01):
+def compute_traj_1_2(traj_1, traj_2, m1, m2, a, p0, e0, xI0, T=0.01):
     """
     Inputs: primary mass M, secondary mass mu, primary spin a, eccentricity e0,
             observation time T (optional)
 
     outputs: two separate trajectories from two specified trajectory modules
     """
-    
-    traj_args = [m1, m2, a, e0, xI0]
-    # Compute value of p to give T year inspiral
 
     # Compute trajectories for ELQ and pex
     out_1 = traj_1(m1, m2, a, p0, e0, 1.0, T=T)  # trajectory module 1
@@ -40,6 +37,7 @@ def compute_traj_1_2(traj_1,traj_2, m1, m2, a, p0, e0, xI0, T=0.01):
     # NOTE: using out_1 time array.
 
     return out_1, out_2
+
 
 def run_forward_back(traj_module, m1, m2, a, p0, e0, xI0, forwards_kwargs):
     """
@@ -174,7 +172,7 @@ class ModuleTest(FewTest):
 
             # set initial intrinsic parameters
             m1 = np.random.uniform(5e5, 5e6)
-            m2 = np.random.uniform(5,100)
+            m2 = np.random.uniform(5, 100)
             p0 = np.random.uniform(9.0, 15)
             e0 = np.random.uniform(0.01, 0.6)
             a = np.random.uniform(0.0, 0.999)
@@ -190,7 +188,7 @@ class ModuleTest(FewTest):
             )
 
             # Test trajectories
-            nu = m1 * m2 / (m1 + m2)**2
+            nu = m1 * m2 / (m1 + m2) ** 2
             for j in range(1, 4):
                 # Test (p, e, xI0) <-- orbital parameters
                 self.assertAlmostEqual(
@@ -206,6 +204,7 @@ class ModuleTest(FewTest):
                     msg=f"for parameter {labels[3 + j]}, End points: Values differ: {out_ELQ[3 + j][-1]} vs {out_pex[3 + j][-1]}",
                 )
 
+    @tagged_test(slow=True)
     def test_scipy_solve_ivp_vs_trajectory_kerr(self):
         self.logger.info("Testing scipy solve_ivp vs trajectory kerr")
         # initialize trajectory class
@@ -221,7 +220,7 @@ class ModuleTest(FewTest):
             e0 = np.random.uniform(0.0, 0.6)
             x0 = 1.0
 
-            nu = m1 * m2 / (m1 + m2)**2
+            nu = m1 * m2 / (m1 + m2) ** 2
             M = m1 + m2
 
             self.logger.info(f" Test {i}/{N_TESTS} with {p0=}, {e0=}, {a=} and {x0=}")
@@ -245,29 +244,37 @@ class ModuleTest(FewTest):
 
             # Solve using scipy solve_ivp
 
-            final_t = nu * forwards_result[0][-1]/ (M*MTSUN_SI) #pars[1] * 4. * YRSID_SI / (pars[0]**2*MTSUN_SI)
+            final_t = (
+                nu * forwards_result[0][-1] / (M * MTSUN_SI)
+            )  # pars[1] * 4. * YRSID_SI / (pars[0]**2*MTSUN_SI)
             start_time_scipy = time.time()
             res = solve_ivp(
-                lambda t, y: ode_flux(y), 
-                (0, final_t), 
-                np.asarray([pars[3], pars[4], pars[5], 0., 0., 0.]), 
-                atol=insp_kw["err"], 
-                rtol=0.0, 
-                method='DOP853', 
-                dense_output=True, 
-                events=sep_stop
+                lambda t, y: ode_flux(y),
+                (0, final_t),
+                np.asarray([pars[3], pars[4], pars[5], 0.0, 0.0, 0.0]),
+                atol=insp_kw["err"],
+                rtol=0.0,
+                method="DOP853",
+                dense_output=True,
+                events=sep_stop,
             )
             end_time_scipy = time.time()
             scipy_duration = end_time_scipy - start_time_scipy
-            # print(f"Scipy solve_ivp duration: {scipy_duration:.4f} seconds")
-            # print(f"Ratio scipy/traj: {scipy_duration/traj_duration:.4f}")
-            # print(f"Number of steps scipy: {res.t.size}, Number of steps traj: {len(forwards_result[0])}, Ratio: {res.t.size/len(forwards_result[0]):.4f}")
-            new_time = nu * forwards_result[0]/ (M*MTSUN_SI)
-            
-            abs_diff_p = np.abs(res.sol(new_time)[0] - forwards_result[1])
-            abs_diff_e = np.abs(res.sol(new_time)[1] - forwards_result[2])
-            abs_diff_phi = np.abs(res.sol(new_time)[3]/nu - forwards_result[4])
-            abs_diff_phir = np.abs(res.sol(new_time)[5]/nu - forwards_result[6])
+            self.logger.debug("Scipy solve_ivp duration: %.4f seconds", scipy_duration)
+            self.logger.debug("Ratio scipy/traj: %.4f", scipy_duration / traj_duration)
+            self.logger.debug(
+                "Number of steps scipy: %u, Number of steps traj: %u, Ratio: %.4f",
+                res.t.size,
+                len(forwards_result[0]),
+                res.t.size / len(forwards_result[0]),
+            )
+
+            new_time = nu * forwards_result[0] / (M * MTSUN_SI)
+
+            # abs_diff_p = np.abs(res.sol(new_time)[0] - forwards_result[1])
+            # abs_diff_e = np.abs(res.sol(new_time)[1] - forwards_result[2])
+            abs_diff_phi = np.abs(res.sol(new_time)[3] / nu - forwards_result[4])
+            abs_diff_phir = np.abs(res.sol(new_time)[5] / nu - forwards_result[6])
 
             # plot delta p of the two integrators
             # plt.figure()

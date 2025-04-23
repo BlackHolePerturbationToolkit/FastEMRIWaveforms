@@ -4,7 +4,7 @@ import numpy as np
 
 from few.amplitude.ampinterp2d import AmpInterpSchwarzEcc
 from few.amplitude.romannet import RomanAmplitude
-from few.tests.base import FewBackendTest, FewTest
+from few.tests.base import FewBackendTest, FewTest, tagged_test
 from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode import SchwarzEccFlux
 from few.utils.utility import get_mismatch, get_overlap
@@ -70,6 +70,7 @@ class WaveformTest(FewBackendTest):
 
         _fast_wave = extracted_gen(m1, m2, p0, e0, theta, phi, dist=dist, T=T, dt=dt)
 
+    @tagged_test(slow=True)
     def test_fast_and_slow(self):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
         inspiral_kwargs = {
@@ -156,11 +157,6 @@ class WaveformTest(FewBackendTest):
         )
 
         self.assertTrue(np.allclose(slow_wave, slow_wave_batched, atol=0, rtol=1e-13))
-
-    def test_kerr_model(self):
-        """
-        Unit test to determine whether the Kerr models are working or not.
-        """
 
 
 def amplitude_test(amp_class):

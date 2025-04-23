@@ -1,6 +1,6 @@
 import numpy as np
 
-from few.tests.base import FewBackendTest
+from few.tests.base import FewBackendTest, tagged_test
 from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode import PN5
 from few.utils.utility import get_mismatch, get_overlap
@@ -16,6 +16,7 @@ class AAKWaveformTest(FewBackendTest):
     def parallel_class(self):
         return Pn5AAKWaveform
 
+    @tagged_test(slow=True)
     def test_aak(self):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
         inspiral_kwargs = {
