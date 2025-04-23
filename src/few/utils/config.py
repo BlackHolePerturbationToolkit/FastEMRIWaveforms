@@ -464,7 +464,7 @@ def userinput_to_strlist(user_input) -> List[str]:
     if user_input is None:
         return []
     if isinstance(user_input, str):
-        return user_input.split(";")
+        return user_input.replace(" ", ";").split(";")
     if compatibility_isinstance(user_input, List[str]):
         return user_input
     if compatibility_isinstance(user_input, Sequence[str]):

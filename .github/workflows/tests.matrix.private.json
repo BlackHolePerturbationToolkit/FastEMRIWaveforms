@@ -1,4 +1,7 @@
 {
+    "disabled_tags": [
+        "slow"
+    ],
     "doctest": [
         "false"
     ],
@@ -8,8 +11,5 @@
     "python-version": [
         "3.9",
         "3.13"
-    ],
-    "test-args": [
-        "--durations 0 --disable slow"
     ]
 }
