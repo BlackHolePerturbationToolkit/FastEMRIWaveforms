@@ -131,6 +131,7 @@ sdist.exclude = [
   "TODO.txt",
   "Tutorial_interpolation.ipynb",
   "src/few/_editable.py",
+  "src/few/tests/base.py",
   "src/few/git_version.py.in",
 ]
 
