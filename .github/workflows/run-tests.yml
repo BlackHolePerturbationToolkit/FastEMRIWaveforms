@@ -102,8 +102,9 @@ jobs:
           python -m pip install coverage[toml]
       - name: Run module tests
         run: |
-          coverage run --source=few -m few.tests
+          coverage run --source=few -m few.tests ${{ matrix.test-args }}
       - name: Run doc tests
+        if: ${{ matrix.doctest == 'true' }}
         run: |
           coverage run --source=few -m sphinx.cmd.build -M doctest docs/source docs/build --define nbsphinx_execute=never
       - name: Show coverage results
