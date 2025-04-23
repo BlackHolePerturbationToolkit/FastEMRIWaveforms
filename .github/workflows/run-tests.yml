@@ -91,11 +91,11 @@ jobs:
       - name: Build list of disabled tags
         if: matrix.disabled_tags
         run: |
-          echo ENV_DISABLED_TAGS='FEW_DISABLED_TAGS=${{ matrix.disabled_tags }}' >> "$GITHUB_ENV"
+          echo "FEW_DISABLED_TAGS=${{ matrix.disabled_tags }}" >> "$GITHUB_ENV"
       - name: Enable test duration measurments
         if: matrix.python-version == '3.12' || matrix.python-version == '3.13'
         run: |
-          echo ENV_TEST_ARGS='--durations 0' >> "$GITHUB_ENV"
+          echo FEWTEST_OTHER_ARGS='--durations 0' >> "$GITHUB_ENV"
       - name: Install package
         run: |
           which python
@@ -110,7 +110,8 @@ jobs:
           python -m pip install coverage[toml]
       - name: Run module tests
         run: |
-          ${ENV_DISABLED_TAGS} coverage run --source=few -m few.tests ${ENV_TEST_ARGS}
+          echo "coverage run --source=few -m few.tests ${FEWTEST_OTHER_ARGS}"
+          coverage run --source=few -m few.tests ${FEWTEST_OTHER_ARGS}
       - name: Run doc tests
         if: matrix.doctest == 'true'
         run: |
