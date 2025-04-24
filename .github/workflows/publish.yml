@@ -69,6 +69,9 @@ jobs:
       # = I - Retrieve sources  =
       # =========================
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       # ========================
       # = II - Update sources  =
       # ========================
@@ -131,7 +134,7 @@ jobs:
             cmake.define.FEW_LAPACKE_FETCH=ON
             cmake.define.FEW_WITH_GPU=OFF
             cmake.define.CMAKE_Fortran_COMPILER=${{ steps.setup-fortran.outputs.fc }}
-          CIBW_TEST_COMMAND: python -c "import few; few.get_backend('cpu')"
+          CIBW_TEST_COMMAND: python -m few.tests --disable testfile
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.macos_ver }}
       - name: Build core wheels (Linux)
         if: runner.os == 'Linux' && matrix.kind == 'core'
@@ -154,7 +157,7 @@ jobs:
             rm -Rf lapack
           CIBW_ENVIRONMENT: >
             PKG_CONFIG_PATH="/opt/lapack/lib64/pkgconfig/:${PKG_CONFIG_PATH}"
-          CIBW_TEST_COMMAND: python -c "import few; few.get_backend('cpu')"
+          CIBW_TEST_COMMAND: python -m few.tests --disable testfile
       - name: Build cuda plugin wheels (Linux)
         if: runner.os == 'Linux' && matrix.kind == 'cuda_plugin' && matrix.arch == 'x86_64'
         uses: pypa/cibuildwheel@v2.22.0
