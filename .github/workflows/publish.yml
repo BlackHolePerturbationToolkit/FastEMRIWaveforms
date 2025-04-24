@@ -1,14 +1,13 @@
 name: Build and publish wheels
 on:
   push:
-    tags:
-      - 'v*.*.**'
 permissions:
   contents: read
 jobs:
-  cibw_build:
+  build:
     name: few-${{ matrix.release }} on ${{ matrix.os }}-${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
+    if: startsWith(github.event.ref, 'refs/tags/v') || contains(github.event.head_commit.message, '[ci:build-wheels]')
     environment: pypiconf
     strategy:
       fail-fast: false
@@ -194,11 +193,12 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     environment: pypiconf
+    if: startsWith(github.event.ref, 'refs/tags/v')
     defaults:
       run:
         shell: bash
     needs:
-      - cibw_build
+      - build
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
