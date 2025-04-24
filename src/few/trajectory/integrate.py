@@ -18,22 +18,23 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
-from typing import Tuple, Type, Optional
+
+from typing import Optional, Tuple, Type
 
 import numpy as np
 from scipy.optimize import brentq
+
+from ..utils.constants import MTSUN_SI, YRSID_SI
 
 # Python imports
 from ..utils.geodesic import (
     ELQ_to_pex,
     get_separatrix,
 )
-from ..utils.constants import YRSID_SI, MTSUN_SI
-
-from .ode.base import ODEBase, get_ode_properties
-from .ode import _STOCK_TRAJECTORY_OPTIONS
+from ..utils.globals import get_logger
 from .dopr853 import DOPR853
-
+from .ode import _STOCK_TRAJECTORY_OPTIONS
+from .ode.base import ODEBase, get_ode_properties
 
 INNER_THRESHOLD = 1e-10
 PERCENT_STEP = 0.25
@@ -84,12 +85,18 @@ class Integrate:
         self,
         func: Type[ODEBase],
         integrate_constants_of_motion: bool = False,
-        downsample = None,
+        downsample=None,
         buffer_length: int = 10000,
         enforce_schwarz_sep: bool = False,
         max_iter: Optional[int] = None,
         **kwargs,
-    ):  
+    ):
+        get_logger().debug(
+            "Initializing integrator with func=%s, downsample=%s, buffer_length=%s",
+            func,
+            downsample,
+            buffer_length,
+        )
         self.buffer_length = buffer_length
 
         func = digest_func(func)
@@ -97,7 +104,9 @@ class Integrate:
         self.base_func = func
 
         # load func
-        self.func = func(use_ELQ=integrate_constants_of_motion,downsample=downsample, **kwargs)
+        self.func = func(
+            use_ELQ=integrate_constants_of_motion, downsample=downsample, **kwargs
+        )
 
         self.ode_info = get_ode_properties(self.func)
 
@@ -214,18 +223,18 @@ class Integrate:
 
         # Initialize step size based on the problem's scale
         scale = self.dopr.abstol
-        
+
         f0 = self.func(y0)
         interval_length = self.tmax_dimensionless - t0
 
         d0 = np.linalg.norm(y0 / scale) / self.nparams**0.5
         d1 = np.linalg.norm(f0 / scale) / self.nparams**0.5
-        
+
         if d0 < 1e-5 or d1 < 1e-5:
             h0 = 1e-6
         else:
             h0 = 0.01 * d0 / d1
-        
+
         h0 = min(h0, interval_length)
 
         y1 = y0 + h0 * f0
@@ -266,7 +275,9 @@ class Integrate:
         if not self.dopr.fix_step:
             # we do not allow an initial step larger than ~10% of the interval to ensure there are a few steps taken
             # this is necessary for later in waveform generation (computing cubic splines).
-            h = self.tune_initial_step_size(t0, y0, min(self.max_step_size, self.tmax_dimensionless / 10))
+            h = self.tune_initial_step_size(
+                t0, y0, min(self.max_step_size, self.tmax_dimensionless / 10)
+            )
 
         t_prev = t0
         y_prev = y0.copy()
@@ -442,7 +453,7 @@ class Integrate:
     def tolerance(self) -> float:
         """Absolute tolerance of the integrator."""
         return self.dopr.abstol
-    
+
     @property
     def dense_stepping(self) -> bool:
         """If ``True``, trajectory is using fixed stepping."""
@@ -491,6 +502,11 @@ class Integrate:
         if self.traj_step >= self.buffer_length:
             # increase by 100
             buffer_increment = 100
+            get_logger().debug(
+                "trajectory buffer full [size: %d], increasing by %d",
+                self.buffer_length,
+                buffer_increment,
+            )
 
             self.trajectory_arr = np.concatenate(
                 [self.trajectory_arr, np.zeros((buffer_increment, self.nparams + 1))],

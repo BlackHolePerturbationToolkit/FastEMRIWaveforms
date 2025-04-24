@@ -1,6 +1,6 @@
 import pickle
 
-from few.tests.base import FewBackendTest
+from few.tests.base import FewBackendTest, tagged_test
 from few.waveform import FastSchwarzschildEccentricFlux, GenerateEMRIWaveform
 
 
@@ -92,8 +92,10 @@ class WaveformTest(FewBackendTest):
             dt=dt,
         )
 
+    @tagged_test(slow=True)
     def test_pickle(self):
         self.run_detector_frame_test(test_pickle=True)
 
+    @tagged_test(slow=True)
     def test_detector_frame(self):
         self.run_detector_frame_test(test_pickle=False)

@@ -10,9 +10,9 @@ import typing
 import pydantic
 import rich.progress
 
-from .registry import FileRegistry, File
 from ..utils import exceptions
 from ..utils.config import Configuration
+from .registry import File, FileRegistry
 
 
 class FileIntegrityCheckMode(enum.Enum):
@@ -343,10 +343,29 @@ class FileManager:
             ):
                 file.write(chunk)
 
+    @staticmethod
+    def _assert_not_disabled_entry(file_entry: File):
+        from few import get_config
+
+        disabled_tags = get_config().file_disabled_tags
+        if disabled_tags is None:
+            return
+
+        for tag in file_entry.tags:
+            if tag in disabled_tags:
+                raise exceptions.FileManagerDisabledAccess(
+                    "File %s is disabled by tag %s" % (file_entry.name, tag),
+                    file_name=file_entry.name,
+                    disabled_tag=tag,
+                )
+
     def _ensure_known_file(self, file_entry: File) -> FileCacheEntry:
         """Applies allowed strategies to obtain a file cache entry of declared file"""
 
-        # 1 - Try to get file from existing cache
+        # 1 - Check file is not disabled
+        self._assert_not_disabled_entry(file_entry)
+
+        # 2 - Try to get file from existing cache
         if (
             cache_entry := self._try_get_file_from_local_cache(
                 file_name=file_entry.name
@@ -358,13 +377,13 @@ class FileManager:
             else:
                 return cache_entry
 
-        # 2 - Try to find file locally
+        # 3 - Try to find file locally
         if (
             cache_entry := self._try_add_local_file_to_cache(file_name=file_entry.name)
         ) is not None:
             return cache_entry
 
-        # 3 - Raise error if download is disabled
+        # 4 - Raise error if download is disabled
         if self._options.on_missing_file == FileMissingAction.FAIL:
             raise exceptions.FileNotFoundLocally(
                 "File '{}' is not found locally and download is disabled.".format(
@@ -372,7 +391,7 @@ class FileManager:
                 )
             )
 
-        # 4 - Try to download file
+        # 5 - Try to download file
         return self._download_file_from_repos(file_entry.name, file_entry.repositories)
 
     def _ensure_unknown_file(self, file_name: str) -> FileCacheEntry:
@@ -441,12 +460,33 @@ class FileManager:
         """Get file locally and return its path"""
         return self._ensure_file(file_name=file_name).path
 
-    def prefetch_files_by_list(self, file_names: typing.Iterable[str]):
+    def try_get_file(self, file_name: str) -> typing.Optional[pathlib.Path]:
+        """Get file and, if no strategy works, return None"""
+        try:
+            return self.get_file(file_name)
+        except exceptions.FileManagerException:
+            return None
+
+    def prefetch_files_by_list(
+        self, file_names: typing.Iterable[str], skip_disabled: bool = False
+    ):
         """Ensure all files in the given list are present (or raise errors for missing files)"""
+        from few import get_logger
+
         errors = []
         for file_name in file_names:
             try:
                 self._ensure_file(file_name=file_name)
+            except exceptions.FileManagerDisabledAccess as e:
+                if skip_disabled:
+                    get_logger().debug(
+                        "Skipping fetching file '%s': tag '%s' is disabled",
+                        file_name,
+                        e.disabled_tag,
+                    )
+                else:
+                    errors.append(e)
+
             except exceptions.FileManagerException as e:
                 errors.append(e)
         if errors:
@@ -456,13 +496,17 @@ class FileManager:
                 "The following exceptions were raised while prefetching files.", errors
             )
 
-    def prefetch_files_by_tag(self, tag: str):
+    def prefetch_files_by_tag(self, tag: str, skip_disabled: bool = False):
         """Ensure all files matching a given tag are locally present (or raise errors)"""
         self.prefetch_files_by_list(
-            (file.name for file in self._registry.get_files_by_tag(tag))
+            (file.name for file in self._registry.get_files_by_tag(tag)), skip_disabled
         )
 
-    def prefetch_all_files(self, discarded_tags: typing.Optional[list[str]] = None):
+    def prefetch_all_files(
+        self,
+        discarded_tags: typing.Optional[list[str]] = None,
+        skip_disabled: bool = False,
+    ):
         """Ensure all files defined in registry are locally present (or raise errors)"""
 
         def keep_file(file: File, discarded_tags: typing.Optional[list[str]] = None):
@@ -478,7 +522,8 @@ class FileManager:
                 file.name
                 for file in self._registry.files
                 if keep_file(file, discarded_tags)
-            )
+            ),
+            skip_disabled,
         )
 
     def open(self, file: os.PathLike, mode="r", **kwargs):

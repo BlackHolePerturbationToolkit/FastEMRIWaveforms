@@ -11,19 +11,20 @@ import os
 import pathlib
 from typing import (
     Any,
-    TypeVar,
-    Generic,
-    Optional,
-    List,
-    Union,
-    Sequence,
-    Mapping,
-    Dict,
     Callable,
+    Dict,
+    Generic,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
     Tuple,
+    TypeVar,
+    Union,
 )
-from . import exceptions
+
 from ..cutils import KNOWN_BACKENDS
+from . import exceptions
 
 
 class ConfigSource(enum.Enum):
@@ -463,7 +464,7 @@ def userinput_to_strlist(user_input) -> List[str]:
     if user_input is None:
         return []
     if isinstance(user_input, str):
-        return user_input.split(";")
+        return user_input.replace(" ", ";").split(";")
     if compatibility_isinstance(user_input, List[str]):
         return user_input
     if compatibility_isinstance(user_input, Sequence[str]):
@@ -550,6 +551,7 @@ class Configuration(ConfigConsumer):
     file_allow_download: bool
     file_integrity_check: str
     file_extra_paths: List[pathlib.Path]
+    file_disabled_tags: Optional[List[str]]
     enabled_backends: Optional[List[str]]
 
     @staticmethod
@@ -648,6 +650,17 @@ class Configuration(ConfigConsumer):
                 overwrite=lambda old, new: old + new
                 if old is not None
                 else new,  # concatenate extra path lists
+            ),
+            ConfigEntry(
+                label="file_disabled_tags",
+                description="Tags for which access to associated files is disabled",
+                type=Optional[List[str]],
+                default=None,
+                env_var="DISABLED_TAGS",
+                convert=userinput_to_strlist,
+                overwrite=lambda old, new: old + new
+                if old is not None
+                else new,  # concatenate tag lists
             ),
             ConfigEntry(
                 label="enabled_backends",
@@ -759,6 +772,7 @@ class Configuration(ConfigConsumer):
 def detect_cfg_file() -> Optional[pathlib.Path]:
     """Test common path locations for config and return highest-priority existing one (if any)."""
     import platformdirs
+
     from .. import __version_tuple__
 
     LOCATIONS = [

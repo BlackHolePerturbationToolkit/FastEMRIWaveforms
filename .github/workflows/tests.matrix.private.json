@@ -1,0 +1,15 @@
+{
+    "disabled_tags": [
+        "slow"
+    ],
+    "doctest": [
+        "false"
+    ],
+    "os": [
+        "macos-15"
+    ],
+    "python-version": [
+        "3.9",
+        "3.13"
+    ]
+}

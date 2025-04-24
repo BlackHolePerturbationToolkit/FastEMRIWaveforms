@@ -109,8 +109,8 @@ Now, you may run the folowwing command to pre-download all files required for te
 If you don't run this command, files will still be downloaded during test execution:
 
 ```sh
-(few2.0rc1) $ few_files fetch --tag unittest
-Downloading all missing files tagged 'unittest' into '/Users/my_user_name/few/download'
+(few2.0rc1) $ few_files fetch --tag testfile
+Downloading all missing files tagged 'testfile' into '/Users/my_user_name/few/download'
 Downloading 'AmplitudeVectorNorm.dat'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
 Downloading 'FluxNewMinusPNScaled_fixed_y_order.dat'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
 ...
@@ -315,8 +315,8 @@ Note that you can also pre-download the files before running the tests with:
 
 ```sh
 # Predownload the files requires by tests (not necessary, they will be pulled during tests in all cases)
-$ few_files fetch --tag unittest
-Downloading all missing files tagged 'unittest' into '/work/LISA/my_user_name/few_files/download'
+$ few_files fetch --tag testfile
+Downloading all missing files tagged 'testfile' into '/work/LISA/my_user_name/few_files/download'
 
 Downloading 'AmplitudeVectorNorm.dat'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
 Downloading 'FluxNewMinusPNScaled_fixed_y_order.dat'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
@@ -446,8 +446,8 @@ Now, you may run the folowwing command to pre-download all files required for te
 If you don't run this command, files will still be downloaded during test execution:
 
 ```sh
-(few2.0rc1) $ few_files fetch --tag unittest
-Downloading all missing files tagged 'unittest' into '/sps/lisaf/your_username/few_files'
+(few2.0rc1) $ few_files fetch --tag testfile
+Downloading all missing files tagged 'testfile' into '/sps/lisaf/your_username/few_files'
 Downloading 'AmplitudeVectorNorm.dat'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
 Downloading 'FluxNewMinusPNScaled_fixed_y_order.dat'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
 ...

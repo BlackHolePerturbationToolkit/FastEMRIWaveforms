@@ -1,8 +1,9 @@
+import gc
 import pickle
 
 import numpy as np
 
-from few.tests.base import FewBackendTest
+from few.tests.base import FewBackendTest, tagged_test
 from few.utils.constants import YRSID_SI
 from few.waveform import FastKerrEccentricEquatorialFlux, FastSchwarzschildEccentricFlux
 
@@ -16,6 +17,7 @@ class WaveformTest(FewBackendTest):
     def parallel_class(self):
         return FastSchwarzschildEccentricFlux
 
+    @tagged_test(slow=True)
     def test_pickle(self):
         # keyword arguments for inspiral generator (RunSchwarzEccFluxInspiral)
         inspiral_kwargs = {
@@ -68,6 +70,7 @@ class WaveformTest(FewBackendTest):
             m1, m2, p0, e0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-3
         )
 
+    @tagged_test(slow=True)
     def test_fast_and_slow_schwarzschild(self):
         # parameters
         T = 1.0  # years
@@ -98,6 +101,7 @@ class WaveformTest(FewBackendTest):
             dt=dt,
         )
         del slow  # Free up memory
+        gc.collect()
 
         # make sure frequencies will be equivalent
         xp = self.backend.xp
@@ -139,6 +143,7 @@ class WaveformTest(FewBackendTest):
         result = ac.item().real
         self.assertLess(1 - result, 1e-2)
 
+    @tagged_test(slow=True)
     def test_fast_and_slow_kerr(self):
         # parameters
         T = 1.0  # years
@@ -174,6 +179,7 @@ class WaveformTest(FewBackendTest):
             dt=dt,
         )
         del slow  # Free up memory
+        gc.collect()  # and recover it
 
         # make sure frequencies will be equivalent
         xp = self.backend.xp
@@ -185,7 +191,19 @@ class WaveformTest(FewBackendTest):
             force_backend=self.backend,
         )
         fast_wave = fast(
-            m1, m2, a, p0, e0, 1.0, theta, phi, dist=dist, T=T, dt=dt, eps=1e-3, **kwargs
+            m1,
+            m2,
+            a,
+            p0,
+            e0,
+            1.0,
+            theta,
+            phi,
+            dist=dist,
+            T=T,
+            dt=dt,
+            eps=1e-3,
+            **kwargs,
         )
 
         # process FD

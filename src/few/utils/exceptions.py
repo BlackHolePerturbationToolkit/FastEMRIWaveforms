@@ -78,6 +78,18 @@ class FileDownloadIntegrityError(FileDownloadException):
     """Exception raised in case of integrity error after download."""
 
 
+class FileManagerDisabledAccess(FileManagerException):
+    """Exception raised when trying to access a file whose tags are disabled"""
+
+    disabled_tag: str
+    file_name: str
+
+    def __init__(self, /, *args, disabled_tag: str, file_name: str, **kwargs):
+        self.disabled_tag = disabled_tag
+        self.file_name = file_name
+        super().__init__(*args, **kwargs)
+
+
 ### Trajectory-related exceptions
 class TrajectoryOffGridException(Exception):
     """Exception raised when a trajectory goes off-grid (except for the lower boundary in p)."""

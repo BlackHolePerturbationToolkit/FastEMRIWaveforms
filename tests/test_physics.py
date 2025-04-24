@@ -1,6 +1,6 @@
 import numpy as np
 
-from few.tests.base import FewBackendTest
+from few.tests.base import FewBackendTest, tagged_test
 from few.utils.utility import get_mismatch
 from few.waveform import FastKerrEccentricEquatorialFlux
 
@@ -144,6 +144,7 @@ class WaveformTest(FewBackendTest):
             "Waveforms not divergent under a sign-flip of xI."
         )
 
+    @tagged_test(slow=True)
     def test_orientation_behaviour(self):
         # parameters
         T = 0.1
