@@ -34,7 +34,7 @@ jobs:
         run: |
           echo "build=$FEWWHL_BUILD" >> $GITHUB_OUTPUT
           echo "publish=$FEWWHL_PUBLISH" >> $GITHUB_OUTPUT
-          echo "core-suffix=$FEWWHFEWWHL_CORE_SUFFIXL_BUILD" >> $GITHUB_OUTPUT
+          echo "core-suffix=$FEWWHL_CORE_SUFFIX" >> $GITHUB_OUTPUT
   build:
     name: few-${{ matrix.release }} on ${{ matrix.os }}-${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
@@ -150,6 +150,7 @@ jobs:
       # = IV. Build wheels  =
       # =====================
       - uses: fortran-lang/setup-fortran@v1
+        if: matrix.kind == 'core'
         id: setup-fortran
         with:
           compiler: gcc
@@ -245,7 +246,7 @@ jobs:
         run: |
           ls -al wheelhouse/*
       - name: Install twine from PyPI
-        uses: install-pinned/twine@e0e1034852ffdf3e7867300539b1065f1bff2a87 # 6.0.1
+        uses: install-pinned/twine@c7ca21f7f66fc895b73cba784dc1d0e302e3b4a3 # 6.1.0
       - name: Publish release distributions to registry
         env:
           TWINE_NON_INTERACTIVE: "yes"
