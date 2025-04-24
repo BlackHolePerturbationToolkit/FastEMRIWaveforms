@@ -5,7 +5,7 @@ import logging
 import sys
 import typing
 
-from few.utils.globals import Globals, get_logger, get_file_manager
+from few.utils.globals import Globals, get_file_manager, get_logger
 
 
 def few_files_fetch(args: argparse.Namespace):
@@ -31,14 +31,16 @@ def few_files_fetch(args: argparse.Namespace):
                 file_manager.download_dir
             )
         )
-        file_manager.prefetch_all_files(discarded_tags=["deprecated"])
+        file_manager.prefetch_all_files(
+            discarded_tags=["deprecated"], skip_disabled=args["skip_disabled"]
+        )
     else:
         logger.info(
             "Downloading all missing files tagged '{}' into '{}'\n".format(
                 tag, file_manager.download_dir
             )
         )
-        file_manager.prefetch_files_by_tag(tag=tag)
+        file_manager.prefetch_files_by_tag(tag=tag, skip_disabled=args["skip_disabled"])
     logger.info("\nDone.")
 
 
@@ -55,6 +57,7 @@ def _few_files_fetch(subparsers):
         action="store_true",
         help="Print list of available tags",
     )
+    parser.add_argument("--skip-disabled", dest="skip_disabled", action="store_true")
 
     parser.set_defaults(callback=few_files_fetch)
 
