@@ -4,11 +4,43 @@ on:
 permissions:
   contents: read
 jobs:
+  select:
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.select.outputs.build }}
+      publish: ${{ steps.select.outputs.publish }}
+      core-suffix: ${{ steps.select.outputs.core-suffix }}
+    steps:
+      - name: initialize
+        run: |
+          echo "FEWWHL_BUILD=false" >> "$GITHUB_ENV"
+          echo "FEWWHL_PUBLISH=false" >> "$GITHUB_ENV"
+          echo "FEWWHL_CORE_SUFFIX=false" >> "$GITHUB_ENV"
+      - name: build on commit message
+        if: contains(github.event.head_commit.message, '[ci:build-wheels]')
+        run: |
+          echo "FEWWHL_BUILD=true" >> "$GITHUB_ENV"
+      - name: build and publish on tag 'v*'
+        if: startsWith(github.event.ref, 'refs/tags/v')
+        run: |
+          echo "FEWWHL_BUILD=true" >> "$GITHUB_ENV"
+          echo "FEWWHL_PUBLISH=true" >> "$GITHUB_ENV"
+      - name: add core-suffix on non-official repo
+        if: ${{ github.event.repository.full_name != 'BlackHolePerturbationToolkit/FastEMRIWaveforms' }}
+        run: |
+          echo "FEWWHL_CORE_SUFFIX=true" >> "$GITHUB_ENV"
+      - name: output results
+        id: select
+        run: |
+          echo "build=$FEWWHL_BUILD" >> $GITHUB_OUTPUT
+          echo "publish=$FEWWHL_PUBLISH" >> $GITHUB_OUTPUT
+          echo "core-suffix=$FEWWHFEWWHL_CORE_SUFFIXL_BUILD" >> $GITHUB_OUTPUT
   build:
     name: few-${{ matrix.release }} on ${{ matrix.os }}-${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
-    if: startsWith(github.event.ref, 'refs/tags/v') || contains(github.event.head_commit.message, '[ci:build-wheels]')
-    environment: pypiconf
+    needs:
+      - select
+    if: needs.select.outputs.build == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -84,7 +116,7 @@ jobs:
         run: |
           sed -i'' -e 's|" #@NAMESUFFIX@|-${{ matrix.release }}"|g' pyproject.toml
       - name: Add release suffix to core package for TestPyPI
-        if: matrix.kind == 'core' && vars.TWINE_REPOSITORY == 'testpypi'
+        if: matrix.kind == 'core' && needs.select.outputs.core-suffix == 'true'
         run: |
           sed -i'' -e 's|" #@NAMESUFFIX@|-${{ matrix.release }}"|g' pyproject.toml
       # Add CuPy dependency
@@ -94,11 +126,11 @@ jobs:
           sed -i'' -e 's|#@DEPS_CUPYCUDA@|"cupy-cuda${{ matrix.cuda_major }}x"|g' pyproject.toml
       # Add Core project dependency
       - name: Add core project dependency on plugin
-        if: matrix.kind != 'core' && vars.TWINE_REPOSITORY == 'testpypi'
+        if: matrix.kind != 'core' && needs.select.outputs.core-suffix == 'true'
         run: |
           sed -i'' -e 's|#@DEPS_FEWCORE@|"fastemriwaveforms-cpu==${{ github.ref_name }}"|g' pyproject.toml
       - name: Add core project dependency on plugin
-        if: matrix.kind != 'core' && vars.TWINE_REPOSITORY != 'testpypi'
+        if: matrix.kind != 'core' && needs.select.outputs.core-suffix == 'true'
         run: |
           sed -i'' -e 's|#@DEPS_FEWCORE@|"fastemriwaveforms==${{ github.ref_name }}"|g' pyproject.toml
       # Remove base sources from plugin wheels
@@ -193,12 +225,13 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     environment: pypiconf
-    if: startsWith(github.event.ref, 'refs/tags/v')
     defaults:
       run:
         shell: bash
     needs:
       - build
+      - select
+    if: needs.select.outputs.publish == 'true'
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
