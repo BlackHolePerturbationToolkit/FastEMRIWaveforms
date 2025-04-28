@@ -75,7 +75,7 @@ def get_fft_td_windowed(
         )
 
     # Handle the case where arrays are cupy.ndarray
-    if isinstance(signal, np.ndarray):
+    if isinstance(window, np.ndarray):
         xp = np
     else:
         from few import has_backend
