@@ -552,8 +552,10 @@ class KerrEccEqFlux(ODEBase):
         p, e, x = self.get_pex(y)
 
         e_max = self._max_e(p, x, self.a)
-        dist_p = PMAX - p
-        dist_e = e_max - e
+
+        # Subtract a small value to avoid numerical issues at the boundary
+        dist_p = (PMAX - 1e-9) - p
+        dist_e = (e_max - 1e-9) - e
 
         if dist_p < 0 or dist_e < 0:
             mult = -1
