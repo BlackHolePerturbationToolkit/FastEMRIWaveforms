@@ -479,10 +479,6 @@ class KerrEccEqFlux(ODEBase):
         p_sep_min_buffer = get_separatrix(a_in, 0, 1) + self.separatrix_buffer_dist
         if p < p_sep_min_buffer:
             raise ValueError(f"Interpolation: p out of bounds. Must be greater than innermost stable circular orbit + buffer = {p_sep_min_buffer}.")
-        
-        z = z_of_a(a_in)
-        e_max_min = e_of_uwz_flux(0, 1, z)
-        p_sep_max_min = get_separatrix(a_in, e_max_min, 1)
 
         p_min = self._min_p(EMAX, x, a)
         if p > p_min:
@@ -551,6 +547,23 @@ class KerrEccEqFlux(ODEBase):
         self.isvalid_a(a, a_buffer=a_buffer)
         pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer)
         assert (p >= pmin and p <= pmax), f"Interpolation: p {p} out of bounds. Must be between {pmin} and {pmax}."
+
+    def distance_to_outer_boundary(self, y):
+        p, e, x = self.get_pex(y)
+
+        e_max = self._max_e(p, x, self.a)
+
+        # Subtract a small value to avoid numerical issues at the boundary
+        dist_p = (PMAX - 1e-9) - p
+        dist_e = (e_max - 1e-9) - e
+
+        if dist_p < 0 or dist_e < 0:
+            mult = -1
+        else:
+            mult = 1
+
+        dist = mult * min(abs(dist_p), abs(dist_e))
+        return dist
 
     def interpolate_flux_grids(self, p: float, e: float, x: float = 1, a: float = 0, pLSO: Optional[float] = None) -> tuple[float]:
         if pLSO is None:
