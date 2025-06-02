@@ -209,7 +209,7 @@ class Integrate:
     def tune_initial_step_size(self, t0: float, y0: np.ndarray, h_max: float) -> float:
         """Tune the initial step size of the integrator if using adaptive stepping.
 
-        Adapted from SciPy: https://github.com/scipy/scipy/blob/main/scipy/integrate/_ivp/common.py#L68
+        Adapted from scipy.integrate._ivp.common.select_initial_step
 
         Args:
             t0: Initial time.
