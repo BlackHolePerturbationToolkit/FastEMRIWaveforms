@@ -8,21 +8,18 @@ If you use all or any parts of this code, please cite [arxiv.org/2104.04582](htt
 
 ## Getting started
 
-To install the latest pre-compiled version of `fastemriwaveforms`, simply run:
+To install the latest version of `fastemriwaveforms` using `pip`, simply run:
 
 ```sh
 # For CPU-only version
-pip install --pre fastemriwaveforms
+pip install fastemriwaveforms
 
 # For GPU-enabled versions with CUDA 11.Y.Z
-pip install --pre fastemriwaveforms-cuda11x
+pip install fastemriwaveforms-cuda11x
 
 # For GPU-enabled versions with CUDA 12.Y.Z
-pip install --pre fastemriwaveforms-cuda12x
+pip install fastemriwaveforms-cuda12x
 ```
-
-The `--pre` flag means that you are installing a pre-release version of the project.
-This flag will not be necessary once version 2.0 is officially released.
 
 To know your CUDA version, run the tool `nvidia-smi` in a terminal a check the CUDA version reported in the table header:
 
@@ -33,6 +30,30 @@ $ nvidia-smi
 |-----------------------------------------+------------------------+----------------------+
 ...
 ```
+
+You may also install `fastemriwaveforms` directly using conda (including on Windows)
+as well as its CUDA 12.x plugin (only on Linux). It is strongly advised to:
+
+1. Ensure that your conda environment makes only use of the `conda-forge` channel
+2. Install `fastemriwaveforms` directly when building your conda environment, not afterward:
+
+```sh
+# To run only once to ensure you only use the conda-forge channel
+conda config --set channel_priority strict
+
+# For CPU-only version, on either Linux, macOS or Windows:
+conda create --name few_cpu python=3.12 fastemriwaveforms
+conda activate few_cpu
+
+# For CUDA 12.x version, only on Linux
+conda create --name few_cuda python=3.12 fastemriwaveforms-cuda12x
+conda activate few_cuda
+```
+
+Note that this conda support might take a few days/weeks after FEW 2.0 official
+official release to be available. When support for conda is achieved,
+[this page](https://anaconda.org/conda-forge/fastemriwaveforms) will work without
+redirecting you to the "Sign in to Anaconda.org" page.
 
 Now, in a python file or notebook:
 
