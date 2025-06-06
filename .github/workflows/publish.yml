@@ -35,11 +35,38 @@ jobs:
           echo "build=$FEWWHL_BUILD" >> $GITHUB_OUTPUT
           echo "publish=$FEWWHL_PUBLISH" >> $GITHUB_OUTPUT
           echo "core-suffix=$FEWWHL_CORE_SUFFIX" >> $GITHUB_OUTPUT
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.setuptools_scm.outputs.value }}
+    steps:
+      # =========================
+      # = I - Retrieve sources  =
+      # =========================
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      # ===================================
+      # = II - Prepare Python environment =
+      # ===================================
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          pip install setuptools_scm
+      # ========================
+      # = III - Detect version =
+      # ========================
+      - id: setuptools_scm
+        run: |
+          echo "value=$(python -m setuptools_scm)" >> $GITHUB_OUTPUT
   build:
     name: few-${{ matrix.release }} on ${{ matrix.os }}-${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     needs:
       - select
+      - version
     if: needs.select.outputs.build == 'true'
     strategy:
       fail-fast: false
@@ -100,9 +127,6 @@ jobs:
       # = I - Retrieve sources  =
       # =========================
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
       # ========================
       # = II - Update sources  =
       # ========================
@@ -110,7 +134,7 @@ jobs:
         run: |
           sed -i'' -e 's|version_scheme = "no-guess-dev"|version_scheme = "only-version"|g' pyproject.toml
           sed -i'' -e 's|local_scheme = "node-and-date"|local_scheme = "no-local-version"|g' pyproject.toml
-          sed -i'' -e 's|#@FALLBACK_VERSION@|fallback_version = "${{ github.ref_name }}"|g' pyproject.toml
+          sed -i'' -e 's|#@FALLBACK_VERSION@|fallback_version = "${{ needs.version.outputs.version }}"|g' pyproject.toml
       - name: Add release suffix to project name
         if: matrix.kind != 'core'
         run: |
@@ -128,11 +152,11 @@ jobs:
       - name: Add core project dependency on plugin
         if: matrix.kind != 'core' && needs.select.outputs.core-suffix == 'true'
         run: |
-          sed -i'' -e 's|#@DEPS_FEWCORE@|"fastemriwaveforms-cpu==${{ github.ref_name }}"|g' pyproject.toml
+          sed -i'' -e 's|#@DEPS_FEWCORE@|"fastemriwaveforms-cpu==${{ needs.version.outputs.version }}"|g' pyproject.toml
       - name: Add core project dependency on plugin
-        if: matrix.kind != 'core' && needs.select.outputs.core-suffix == 'true'
+        if: matrix.kind != 'core' && needs.select.outputs.core-suffix == 'false'
         run: |
-          sed -i'' -e 's|#@DEPS_FEWCORE@|"fastemriwaveforms==${{ github.ref_name }}"|g' pyproject.toml
+          sed -i'' -e 's|#@DEPS_FEWCORE@|"fastemriwaveforms==${{ needs.version.outputs.version }}"|g' pyproject.toml
       # Remove base sources from plugin wheels
       - name: Exclude core package from plugins
         if: matrix.kind != 'core'
