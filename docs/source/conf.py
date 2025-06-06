@@ -14,8 +14,8 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-import pathlib
 import os
+import pathlib
 
 import few
 
@@ -93,7 +93,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3.11", None),
 }
 
-linkcheck_ignore = [r"https://dx.doi.org/"]
+linkcheck_ignore = [r"https://dx.doi.org/", r"https://hpc.pages.cnes.fr/.*"]
 
 myst_heading_anchors = 2
 myst_url_schemes = {
