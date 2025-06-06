@@ -60,7 +60,9 @@ jobs:
       # ========================
       - id: setuptools_scm
         run: |
-          echo "value=$(python -m setuptools_scm)" >> $GITHUB_OUTPUT
+          VERSION="$(python -m setuptools_scm)"
+          echo "Detected version: ${VERSION}"
+          echo "value=${VERSION}" >> $GITHUB_OUTPUT
   build:
     name: few-${{ matrix.release }} on ${{ matrix.os }}-${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
