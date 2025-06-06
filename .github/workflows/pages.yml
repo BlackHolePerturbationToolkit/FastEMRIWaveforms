@@ -7,15 +7,21 @@ jobs:
     outputs:
       build: ${{ steps.select.outputs.build }}
       publish: ${{ steps.select.outputs.publish }}
+      notebooks: ${{ steps.select.outputs.notebooks }}
     steps:
       - name: initialize
         run: |
           echo "FEWPAGE_BUILD=false" >> "$GITHUB_ENV"
           echo "FEWPAGE_PUBLISH=false" >> "$GITHUB_ENV"
+          echo "FEWPAGE_NOTEBOOK=never" >> "$GITHUB_ENV"
       - name: build on commit message
         if: contains(github.event.head_commit.message, '[ci:build-pages]')
         run: |
           echo "FEWPAGE_BUILD=true" >> "$GITHUB_ENV"
+      - name: execute notebooks on request
+        if: contains(github.event.head_commit.message, '[doc:run-notebooks]')
+        run: |
+          echo "FEWPAGE_NOTEBOOK=always" >> "$GITHUB_ENV"
       - name: build and publish on tag 'v*'
         if: startsWith(github.event.ref, 'refs/tags/v')
         run: |
@@ -26,6 +32,7 @@ jobs:
         run: |
           echo "build=$FEWPAGE_BUILD" >> $GITHUB_OUTPUT
           echo "publish=$FEWPAGE_PUBLISH" >> $GITHUB_OUTPUT
+          echo "notebooks=$FEWPAGE_NOTEBOOK" >> $GITHUB_OUTPUT
   build_doc:
     name: Build documentation
     runs-on: "ubuntu-24.04"
@@ -72,7 +79,7 @@ jobs:
       - name: Build documentation
         run: |
           sphinx-build -M html docs/source docs/build \
-              --define nbsphinx_execute=never
+              --define nbsphinx_execute=${{ needs.select.outputs.notebooks }}
       - name: Upload static files as artifact
         id: deployment
         uses: actions/upload-pages-artifact@v3
