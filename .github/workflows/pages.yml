@@ -13,7 +13,7 @@ jobs:
         run: |
           echo "FEWPAGE_BUILD=false" >> "$GITHUB_ENV"
           echo "FEWPAGE_PUBLISH=false" >> "$GITHUB_ENV"
-          echo "FEWPAGE_NOTEBOOK=never" >> "$GITHUB_ENV"
+          echo "FEWPAGE_NOTEBOOK=false" >> "$GITHUB_ENV"
       - name: build on commit message
         if: contains(github.event.head_commit.message, '[ci:build-pages]')
         run: |
@@ -21,7 +21,7 @@ jobs:
       - name: execute notebooks on request
         if: contains(github.event.head_commit.message, '[doc:run-notebooks]')
         run: |
-          echo "FEWPAGE_NOTEBOOK=always" >> "$GITHUB_ENV"
+          echo "FEWPAGE_NOTEBOOK=true" >> "$GITHUB_ENV"
       - name: build and publish on tag 'v*'
         if: startsWith(github.event.ref, 'refs/tags/v')
         run: |
@@ -76,10 +76,21 @@ jobs:
         run: |
           sphinx-build -M linkcheck docs/source docs/build_checklinks \
               --define nbsphinx_execute=never
+      - name: Run notebook examples
+        if: needs.select.outputs.notebooks == 'true'
+        run: |
+          jupyter nbconvert --execute --clear-output examples/Trajectory_tutorial.ipynb
+          jupyter nbconvert --execute --clear-output examples/Amplitude_tutorial.ipynb
+          jupyter nbconvert --execute --clear-output examples/modeselect.ipynb
+          jupyter nbconvert --execute --clear-output examples/modesummation.ipynb
+          jupyter nbconvert --execute --clear-output examples/cubicspline.ipynb
+          jupyter nbconvert --execute --clear-output examples/swsh.ipynb
+          jupyter nbconvert --execute --clear-output examples/utility.ipynb
+          jupyter nbconvert --execute --clear-output examples/waveform.ipynb
       - name: Build documentation
         run: |
           sphinx-build -M html docs/source docs/build \
-              --define nbsphinx_execute=${{ needs.select.outputs.notebooks }}
+              --define nbsphinx_execute=never
       - name: Upload static files as artifact
         id: deployment
         uses: actions/upload-pages-artifact@v3
