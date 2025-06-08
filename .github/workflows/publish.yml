@@ -14,8 +14,8 @@ jobs:
       - name: initialize
         run: |
           echo "FEWWHL_BUILD=false" >> "$GITHUB_ENV"
-          echo "FEWWHL_PUBLISH=false" >> "$GITHUB_ENV"
           echo "FEWWHL_CORE_SUFFIX=false" >> "$GITHUB_ENV"
+          echo "FEWWHL_PUBLISH=false" >> "$GITHUB_ENV"
       - name: build on commit message
         if: contains(github.event.head_commit.message, '[ci:build-wheels]')
         run: |
@@ -35,11 +35,46 @@ jobs:
           echo "build=$FEWWHL_BUILD" >> $GITHUB_OUTPUT
           echo "publish=$FEWWHL_PUBLISH" >> $GITHUB_OUTPUT
           echo "core-suffix=$FEWWHL_CORE_SUFFIX" >> $GITHUB_OUTPUT
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.setuptools_scm.outputs.value }}
+    steps:
+      # =========================
+      # = I - Retrieve sources  =
+      # =========================
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      # ===================================
+      # = II - Prepare Python environment =
+      # ===================================
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          pip install setuptools_scm
+      # ========================
+      # = III - Detect version =
+      # ========================
+      - name: Update version scheme
+        run: |
+          sed -i'' -e 's|version_scheme = "no-guess-dev"|version_scheme = "only-version"|g' pyproject.toml
+          sed -i'' -e 's|local_scheme = "node-and-date"|local_scheme = "no-local-version"|g' pyproject.toml
+      - name: Detect current version
+        id: setuptools_scm
+        run: |
+          VERSION="$(python -m setuptools_scm)"
+          echo "notice:: Detected version: ${VERSION}"
+          echo "value=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version: ${VERSION}" >> $GITHUB_STEP_SUMMARY
   build:
     name: few-${{ matrix.release }} on ${{ matrix.os }}-${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     needs:
       - select
+      - version
     if: needs.select.outputs.build == 'true'
     strategy:
       fail-fast: false
@@ -100,17 +135,9 @@ jobs:
       # = I - Retrieve sources  =
       # =========================
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
       # ========================
       # = II - Update sources  =
       # ========================
-      - name: Update version scheme
-        run: |
-          sed -i'' -e 's|version_scheme = "no-guess-dev"|version_scheme = "only-version"|g' pyproject.toml
-          sed -i'' -e 's|local_scheme = "node-and-date"|local_scheme = "no-local-version"|g' pyproject.toml
-          sed -i'' -e 's|#@FALLBACK_VERSION@|fallback_version = "${{ github.ref_name }}"|g' pyproject.toml
       - name: Add release suffix to project name
         if: matrix.kind != 'core'
         run: |
@@ -128,11 +155,11 @@ jobs:
       - name: Add core project dependency on plugin
         if: matrix.kind != 'core' && needs.select.outputs.core-suffix == 'true'
         run: |
-          sed -i'' -e 's|#@DEPS_FEWCORE@|"fastemriwaveforms-cpu==${{ github.ref_name }}"|g' pyproject.toml
+          sed -i'' -e 's|#@DEPS_FEWCORE@|"fastemriwaveforms-cpu==${{ needs.version.outputs.version }}"|g' pyproject.toml
       - name: Add core project dependency on plugin
-        if: matrix.kind != 'core' && needs.select.outputs.core-suffix == 'true'
+        if: matrix.kind != 'core' && needs.select.outputs.core-suffix == 'false'
         run: |
-          sed -i'' -e 's|#@DEPS_FEWCORE@|"fastemriwaveforms==${{ github.ref_name }}"|g' pyproject.toml
+          sed -i'' -e 's|#@DEPS_FEWCORE@|"fastemriwaveforms==${{ needs.version.outputs.version }}"|g' pyproject.toml
       # Remove base sources from plugin wheels
       - name: Exclude core package from plugins
         if: matrix.kind != 'core'
@@ -167,6 +194,8 @@ jobs:
             cmake.define.FEW_WITH_GPU=OFF
             cmake.define.CMAKE_Fortran_COMPILER=${{ steps.setup-fortran.outputs.fc }}
           CIBW_TEST_COMMAND: python -m few.tests --disable testfile
+          CIBW_ENVIRONMENT: >
+            SETUPTOOLS_SCM_PRETEND_VERSION="${{ needs.version.outputs.version }}"
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.macos_ver }}
       - name: Build core wheels (Linux)
         if: runner.os == 'Linux' && matrix.kind == 'core'
@@ -189,6 +218,7 @@ jobs:
             rm -Rf lapack
           CIBW_ENVIRONMENT: >
             PKG_CONFIG_PATH="/opt/lapack/lib64/pkgconfig/:${PKG_CONFIG_PATH}"
+            SETUPTOOLS_SCM_PRETEND_VERSION="${{ needs.version.outputs.version }}"
           CIBW_TEST_COMMAND: python -m few.tests --disable testfile
       - name: Build cuda plugin wheels (Linux)
         if: runner.os == 'Linux' && matrix.kind == 'cuda_plugin' && matrix.arch == 'x86_64'
@@ -215,6 +245,7 @@ jobs:
             CUDADIR=/usr/local/cuda
             CC=gcc
             CXX=g++
+            SETUPTOOLS_SCM_PRETEND_VERSION="${{ needs.version.outputs.version }}"
           CIBW_REPAIR_WHEEL_COMMAND: auditwheel repair -w {dest_dir} {wheel} --exclude "libcudart.so.${{ matrix.cuda_major }}" --exclude "libcusparse.so.${{ matrix.cuda_major }}" --exclude "libcublas.so.${{ matrix.cuda_major }}" --exclude "libnvJitLink.so.${{ matrix.cuda_major }}" --exclude "libcublasLt.so.${{ matrix.cuda_major }}"
       # =====================
       # = V. Upload wheels  =

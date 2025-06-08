@@ -14,7 +14,7 @@ from few.utils.baseclasses import *
 from few.trajectory.inspiral import EMRIInspiral
 from few.summation.aakwave import AAKSummation
 from few.utils.utility import get_mismatch, get_separatrix, _get_separatrix_kernel_inner, get_fundamental_frequencies, _KerrGeoCoordinateFrequencies_kernel_inner
-from few.utils.pn_map import Y_to_xI, _Y_to_xI_kernel_inner
+from few.utils.mappings.pn import Y_to_xI, _Y_to_xI_kernel_inner
 
 # define trajectory RHS class
 

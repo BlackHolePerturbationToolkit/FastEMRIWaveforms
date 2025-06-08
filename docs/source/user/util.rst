@@ -49,7 +49,7 @@ Elliptic integrals (Legendre and Carlson symmetric forms)
 PN Parameter Mapping Utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: few.utils.pn_map
+.. automodule:: few.utils.mappings.pn
     :members:
     :show-inheritance:
     :inherited-members:

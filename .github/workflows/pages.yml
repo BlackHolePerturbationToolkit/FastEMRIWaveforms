@@ -7,25 +7,33 @@ jobs:
     outputs:
       build: ${{ steps.select.outputs.build }}
       publish: ${{ steps.select.outputs.publish }}
+      notebooks: ${{ steps.select.outputs.notebooks }}
     steps:
       - name: initialize
         run: |
           echo "FEWPAGE_BUILD=false" >> "$GITHUB_ENV"
           echo "FEWPAGE_PUBLISH=false" >> "$GITHUB_ENV"
+          echo "FEWPAGE_NOTEBOOK=false" >> "$GITHUB_ENV"
       - name: build on commit message
         if: contains(github.event.head_commit.message, '[ci:build-pages]')
         run: |
           echo "FEWPAGE_BUILD=true" >> "$GITHUB_ENV"
+      - name: execute notebooks on request
+        if: contains(github.event.head_commit.message, '[doc:run-notebooks]')
+        run: |
+          echo "FEWPAGE_NOTEBOOK=true" >> "$GITHUB_ENV"
       - name: build and publish on tag 'v*'
         if: startsWith(github.event.ref, 'refs/tags/v')
         run: |
           echo "FEWPAGE_BUILD=true" >> "$GITHUB_ENV"
           echo "FEWPAGE_PUBLISH=true" >> "$GITHUB_ENV"
+          echo "FEWPAGE_NOTEBOOK=true" >> "$GITHUB_ENV"
       - name: output results
         id: select
         run: |
           echo "build=$FEWPAGE_BUILD" >> $GITHUB_OUTPUT
           echo "publish=$FEWPAGE_PUBLISH" >> $GITHUB_OUTPUT
+          echo "notebooks=$FEWPAGE_NOTEBOOK" >> $GITHUB_OUTPUT
   build_doc:
     name: Build documentation
     runs-on: "ubuntu-24.04"
@@ -69,6 +77,17 @@ jobs:
         run: |
           sphinx-build -M linkcheck docs/source docs/build_checklinks \
               --define nbsphinx_execute=never
+      - name: Run notebook examples
+        if: needs.select.outputs.notebooks == 'true'
+        run: |
+          jupyter nbconvert --execute --clear-output examples/Trajectory_tutorial.ipynb
+          jupyter nbconvert --execute --clear-output examples/Amplitude_tutorial.ipynb
+          jupyter nbconvert --execute --clear-output examples/modeselect.ipynb
+          jupyter nbconvert --execute --clear-output examples/modesummation.ipynb
+          jupyter nbconvert --execute --clear-output examples/cubicspline.ipynb
+          jupyter nbconvert --execute --clear-output examples/swsh.ipynb
+          jupyter nbconvert --execute --clear-output examples/utility.ipynb
+          jupyter nbconvert --execute --clear-output examples/waveform.ipynb
       - name: Build documentation
         run: |
           sphinx-build -M html docs/source docs/build \
