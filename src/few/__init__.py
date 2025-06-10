@@ -1,38 +1,42 @@
 """Fast and accurate EMRI Waveforms."""
 
+# ruff: noqa: E402
 try:
-    from few._version import __version__, __version_tuple__  # pylint: disable=E0401,E0611
+    from few._version import (  # pylint: disable=E0401,E0611
+        __version__,
+        __version_tuple__,
+    )
 
 except ModuleNotFoundError:
     from importlib.metadata import PackageNotFoundError, version  # pragma: no cover
 
     try:
         __version__ = version(__name__)
-        __version_tuple__ = __version__.split(".")
+        __version_tuple__ = tuple(__version__.split("."))
     except PackageNotFoundError:  # pragma: no cover
         __version__ = "unknown"
         __version_tuple__ = (0, 0, 0, "unknown")
     finally:
         del version, PackageNotFoundError
 
+_is_editable: bool
 try:
     from . import _editable
 
-    _is_editable: bool = True
+    _is_editable = True
     del _editable
 except (ModuleNotFoundError, ImportError):
-    _is_editable: bool = False
-
-from .utils.globals import (
-    get_logger,
-    get_backend,
-    get_config,
-    get_file_manager,
-    get_config_setter,
-    has_backend,
-)
+    _is_editable = False
 
 from . import amplitude, cutils, files, summation, trajectory, utils, waveform
+from .utils.globals import (
+    get_backend,
+    get_config,
+    get_config_setter,
+    get_file_manager,
+    get_logger,
+    has_backend,
+)
 
 __all__ = [
     "__version__",
@@ -45,7 +49,6 @@ __all__ = [
     "trajectory",
     "utils",
     "waveform",
-    "log",
     "get_logger",
     "get_config",
     "get_config_setter",

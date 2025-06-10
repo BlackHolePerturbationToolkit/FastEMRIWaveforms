@@ -1,7 +1,8 @@
-from ..utils.citations import Citable
+from typing import Optional, Union
 
 import numpy as np
-from typing import Optional, Union
+
+from ..utils.citations import Citable
 
 
 class AmplitudeBase(Citable):

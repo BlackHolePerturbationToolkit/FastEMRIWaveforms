@@ -1,8 +1,10 @@
+from math import log
+from typing import Optional, Union
+
 import numpy as np
 from numba import njit
-from math import log
+
 from ..geodesic import get_separatrix
-from typing import Optional, Union
 
 XMIN = 0.05
 AMAX = 0.999
@@ -23,6 +25,7 @@ AMAX_REGIONB = 0.999
 AMIN_REGIONB = -AMAX_REGIONB
 EMAX_REGIONB = 0.9
 DELTAPMIN_REGIONB = 9
+
 
 def kerrecceq_legacy_p_to_u(a, p, e, xI, use_gpu=False):
     """Convert from separation :math:`p` to :math:`y` coordinate
@@ -64,24 +67,28 @@ def kerrecceq_legacy_p_to_u(a, p, e, xI, use_gpu=False):
 
     return u
 
+
 @njit
 def _kerrecceq_flux_forward_map(
-        a: float,
-        p: float,
-        e: float,
-        xI: float,
-        pLSO: float,
+    a: float,
+    p: float,
+    e: float,
+    xI: float,
+    pLSO: float,
 ):
     """
     A jit-compiled forward mapping for the flux grids, optimised for fast ODE evaluations.
     """
     if p <= pLSO + DELTAPMAX:
-        return *_uwyz_of_apex_kernel(
-            a, p, e, xI, pLSO, ALPHA_FLUX, BETA_FLUX
-        ), True
+        return *_uwyz_of_apex_kernel(a, p, e, xI, pLSO, ALPHA_FLUX, BETA_FLUX), True
     else:
         return *_UWYZ_of_apex_kernel(
-            a, p, e, xI, pLSO, True, 
+            a,
+            p,
+            e,
+            xI,
+            pLSO,
+            True,
         ), False
 
 
@@ -130,7 +137,7 @@ def kerrecceq_forward_map(
         beta = BETA_AMP
     else:
         raise ValueError
- 
+
     a = xp.atleast_1d(xp.asarray(a))
     p = xp.atleast_1d(xp.asarray(p))
     e = xp.atleast_1d(xp.asarray(e))
@@ -174,7 +181,8 @@ def kerrecceq_forward_map(
         return u, w, y, z, near
     else:
         return u, w, y, z
-    
+
+
 def kerrecceq_backward_map(
     u: Union[float, np.ndarray],
     w: Union[float, np.ndarray],
@@ -208,8 +216,8 @@ def kerrecceq_backward_map(
     if np.any(np.asarray(y) != 1):
         raise ValueError("Only xI = 1 is supported.")
 
-    is_flux = (kind == "flux")
-    is_amp = (kind == "amplitude")
+    is_flux = kind == "flux"
+    is_amp = kind == "amplitude"
     if is_flux:
         alpha = ALPHA_FLUX
         beta = BETA_FLUX
@@ -240,17 +248,23 @@ def kerrecceq_backward_map(
 
 @njit
 def u_of_p(p, pLSO, alpha):
-    check_term = (np.log(p - pLSO + DELTAPMAX - 2 * DELTAPMIN) - log(DELTAPMAX - DELTAPMIN)) / log(2)
+    check_term = (
+        np.log(p - pLSO + DELTAPMAX - 2 * DELTAPMIN) - log(DELTAPMAX - DELTAPMIN)
+    ) / log(2)
     sgn = np.sign(check_term)
-    return sgn * (sgn * check_term)**alpha
+    return sgn * (sgn * check_term) ** alpha
+
 
 @njit
 def u_of_p_flux(p, pLSO):
-    check_term = (np.log(p - pLSO + DELTAPMAX - 2 * DELTAPMIN) - log(DELTAPMAX - DELTAPMIN)) / log(2)
+    check_term = (
+        np.log(p - pLSO + DELTAPMAX - 2 * DELTAPMIN) - log(DELTAPMAX - DELTAPMIN)
+    ) / log(2)
     if check_term < 0:
-        return -(-check_term)**ALPHA_FLUX
+        return -((-check_term) ** ALPHA_FLUX)
     else:
         return check_term**ALPHA_FLUX
+
 
 @njit
 def y_of_x(x):
@@ -266,11 +280,13 @@ def chi_of_a(a):
 def chi2_of_a(a):
     return (1 - a) ** (2 / 3)
 
+
 @njit
 def z_of_a(a):
     chimax = chi_of_a(AMIN)
     chimin = chi_of_a(AMAX)
     return (chi_of_a(a) - chimin) / (chimax - chimin)
+
 
 @njit
 def z2_of_a(a):
@@ -278,19 +294,22 @@ def z2_of_a(a):
     chimin = chi2_of_a(AMAX)
     return (chi2_of_a(a) - chimin) / (chimax - chimin)
 
+
 @njit
 def Secc_of_uz(
     u,
     z,
     beta,
-):  
+):
     check_part = z + u**beta * (1 - z)
     sgn = np.sign(check_part)
-    return ESEP + (EMAX - ESEP) * sgn * np.sqrt(sgn*check_part)
+    return ESEP + (EMAX - ESEP) * sgn * np.sqrt(sgn * check_part)
+
 
 @njit
 def w_of_euz(e, u, z, beta):
     return e / Secc_of_uz(u, z, beta)
+
 
 @njit
 def w_of_euz_flux(e, u, z):
@@ -299,11 +318,17 @@ def w_of_euz_flux(e, u, z):
 
 @njit
 def p_of_u(u, pLSO, alpha):
-    return (pLSO + DELTAPMIN) + (DELTAPMAX - DELTAPMIN) * (np.exp(u ** (1 / alpha) * log(2)) - 1)
+    return (pLSO + DELTAPMIN) + (DELTAPMAX - DELTAPMIN) * (
+        np.exp(u ** (1 / alpha) * log(2)) - 1
+    )
+
 
 @njit
 def p_of_u_flux(u, pLSO):
-    return (pLSO + DELTAPMIN) + (DELTAPMAX - DELTAPMIN) * (np.exp(u ** (1 / ALPHA_FLUX) * log(2)) - 1)
+    return (pLSO + DELTAPMIN) + (DELTAPMAX - DELTAPMIN) * (
+        np.exp(u ** (1 / ALPHA_FLUX) * log(2)) - 1
+    )
+
 
 @njit
 def x_of_y(y):
@@ -338,26 +363,29 @@ def a_of_z(z):
 def e_of_uwz(u, w, z, beta):
     return Secc_of_uz(u, z, beta) * w
 
+
 @njit
 def e_of_uwz_flux(u, w, z):
     return Secc_of_uz(u, z, BETA_FLUX) * w
 
+
 @njit
-def u_where_w_is_unity(e, z, kind = "flux"):
+def u_where_w_is_unity(e, z, kind="flux"):
     if kind == "flux":
         beta = BETA_FLUX
     elif kind == "amplitude":
         beta = BETA_AMP
-    
+
     if z == 1:
-        return 0.
+        return 0.0
 
     if e < ESEP:
         return np.nan
 
-    part = ((e - ESEP) / (EMAX - ESEP))**2
-    inside_root =  (part - z) / (1 - z)
-    return inside_root**(1/beta)
+    part = ((e - ESEP) / (EMAX - ESEP)) ** 2
+    inside_root = (part - z) / (1 - z)
+    return inside_root ** (1 / beta)
+
 
 @njit
 def _uwyz_of_apex_kernel(
@@ -368,7 +396,7 @@ def _uwyz_of_apex_kernel(
     pLSO,
     alpha,
     beta,
-):  
+):
     u = u_of_p(p, pLSO, alpha)
     y = y_of_x(x)
     z = z_of_a(a)
@@ -386,7 +414,12 @@ def apex_of_uwyz(
 ):
     a = a_of_z(z)
     x = x_of_y(y)
-    e = e_of_uwz(u, w, z, beta,)
+    e = e_of_uwz(
+        u,
+        w,
+        z,
+        beta,
+    )
     a = np.asarray(a)
     a_in = np.abs(a)
     x_in = np.sign(a)
@@ -398,6 +431,7 @@ def apex_of_uwyz(
 
 
 # # Region B
+
 
 @njit
 def U_of_p_flux(p, pLSO):
@@ -412,6 +446,7 @@ def p_of_U_flux(U, pLSO):
         (DELTAPMIN_REGIONB) ** (-0.5)
         - U * ((DELTAPMIN_REGIONB) ** (-0.5) - (PMAX_REGIONB - pLSO) ** (-0.5))
     ) ** (-2) + pLSO
+
 
 @njit
 def U_of_p_amplitude(p, pLSO):
@@ -457,7 +492,6 @@ def a_of_Z(z):
     chimax = chi_of_a(AMIN_REGIONB)
     chimin = chi_of_a(AMAX_REGIONB)
     return a_of_chi(chimin + z * (chimax - chimin))
-
 
 
 @njit

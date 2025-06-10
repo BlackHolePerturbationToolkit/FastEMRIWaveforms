@@ -2,11 +2,11 @@
 
 import numpy as np
 
-# Python imports
-from ..utils.baseclasses import ParallelModuleBase, BackendLike
-from .base import SummationBase
-
 from few.utils.globals import get_logger
+
+# Python imports
+from ..utils.baseclasses import BackendLike, ParallelModuleBase
+from .base import SummationBase
 
 
 class CubicSplineInterpolant(ParallelModuleBase):
@@ -351,7 +351,7 @@ class InterpolatedModeSum(SummationBase):
             self.xp.asarray(phase_interp_coeffs), [2, 0, 1]
         ).flatten()
 
-        # for ylm with negative m, need to multiply by (-1)**l as this is assumed to have happened by the kernel
+        # for ylm with negative m, need to multiply by (-1)**l as this is assumed to have happened by the kernel
         ylms = ylms.copy()
         ylms[num_teuk_modes:] *= (-1) ** l_arr
 
@@ -367,6 +367,6 @@ class InterpolatedModeSum(SummationBase):
             num_teuk_modes,
             ylms.astype(self.xp.complex128),
             dt,
-            h_t, 
+            h_t,
             dev,
         )

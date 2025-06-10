@@ -3,8 +3,9 @@ Contains the ODEBase baseclass that handles evaluating the ODE
 """
 
 from typing import Optional, Type, Union
+
 import numpy as np
-import os
+
 from ...utils.geodesic import ELQ_to_pex, get_separatrix
 from ...utils.mappings.jacobian import ELdot_to_PEdot_Jacobian
 from ...utils.mappings.pn import Y_to_xI
@@ -19,7 +20,9 @@ class ODEBase:
     See the documentation for examples on how to do this.
 
     """
+
     _flux_output_convention = "pex"
+
     def __init__(self, *args, use_ELQ=False, integrate_backwards=False, **kwargs):
         self.flux_output_convention = "pex"
         if use_ELQ:
@@ -33,7 +36,7 @@ class ODEBase:
 
         self.integrate_backwards = integrate_backwards
         """bool: If True, the ODE corresponds to integrating backwards in time. Defaults to False."""
-        
+
     @property
     def convert_Y(self):
         """
@@ -116,7 +119,9 @@ class ODEBase:
             self.flux_output_convention == "ELQ" and not self.use_ELQ
         )
 
-    def add_fixed_parameters(self, m1: float, m2: float, a: float, additional_args=None):
+    def add_fixed_parameters(
+        self, m1: float, m2: float, a: float, additional_args=None
+    ):
         self.massratio = m1 * m2 / (m1 + m2) ** 2
         self.a = a
         self.additional_args = additional_args
@@ -144,26 +149,32 @@ class ODEBase:
         By default, this function returns the input right-hand side unchanged.
         """
         return ydot
-    
+
     def min_p(
-        self, e: Union[float, np.ndarray], x: Union[float, np.ndarray] = 1, a: Optional[Union[float, np.ndarray]] = 0
+        self,
+        e: Union[float, np.ndarray],
+        x: Union[float, np.ndarray] = 1,
+        a: Optional[Union[float, np.ndarray]] = 0,
     ) -> Union[float, np.ndarray]:
         """
         Computes the minimum value of the radial coordinate p for a given eccentricity and inclination for this model.
         Trajectory models implementing their own interpolants should override this function to return the minimum value
-        corresponding to the precomputed grid boundaries. 
+        corresponding to the precomputed grid boundaries.
 
         By default, this function assumes things are rectilinear and returns `p_sep + self.separatrix_buffer_dist`.
         """
         return get_separatrix(a, e, x) + self.separatrix_buffer_dist
 
     def max_p(
-        self, e: Union[float, np.ndarray], x: Union[float, np.ndarray] = 1, a: Optional[Union[float, np.ndarray]] = 0
+        self,
+        e: Union[float, np.ndarray],
+        x: Union[float, np.ndarray] = 1.0,
+        a: Optional[Union[float, np.ndarray]] = 0.0,
     ) -> Union[float, np.ndarray]:
         """
         Computes the maximum value of the semilatus rectum p for a given eccentricity and inclination for this model.
         Trajectory models implementing their own interpolants should override this function to return the maximum value
-        corresponding to the precomputed grid boundaries. 
+        corresponding to the precomputed grid boundaries.
 
         By default, this function returns `np.inf` (assumes no bound on p).
         """
@@ -171,14 +182,17 @@ class ODEBase:
             return np.inf
         else:
             return np.full_like(e, np.inf)
-        
+
     def min_e(
-        self, p: Union[float, np.ndarray], x: Union[float, np.ndarray] = 1, a: Optional[Union[float, np.ndarray]] = 0
+        self,
+        p: Union[float, np.ndarray],
+        x: Union[float, np.ndarray] = 1.0,
+        a: Optional[Union[float, np.ndarray]] = 0.0,
     ) -> Union[float, np.ndarray]:
         """
         Computes the minimum value of the eccentricity e for a given semilatus rectum and inclination for this model.
         Trajectory models implementing their own interpolants should override this function to return the minimum value
-        corresponding to the precomputed grid boundaries. 
+        corresponding to the precomputed grid boundaries.
 
         By default, this function assumes minimal eccentricity corresponds to circular orbits and returns 0.
         """
@@ -188,12 +202,15 @@ class ODEBase:
             return np.zeros_like(p)
 
     def max_e(
-        self, p: Union[float, np.ndarray], x: Union[float, np.ndarray] = 1, a: Optional[Union[float, np.ndarray]] = 0
+        self,
+        p: Union[float, np.ndarray],
+        x: Union[float, np.ndarray] = 1,
+        a: Optional[Union[float, np.ndarray]] = 0,
     ) -> Union[float, np.ndarray]:
         """
         Computes the maximum value of the eccentricity e for a given semilatus rectum and inclination for this model.
         Trajectory models implementing their own interpolants should override this function to return the minimum value
-        corresponding to the precomputed grid boundaries. 
+        corresponding to the precomputed grid boundaries.
 
         By default, this function assumes no orbital bounds on eccentricity and returns np.inf.
         """
@@ -205,25 +222,28 @@ class ODEBase:
     def isvalid_x(self, x: float):
         pass
 
-    def isvalid_e(self, e: float, e_buffer=[0,0]):
+    def isvalid_e(self, e: float, e_buffer=[0, 0]):
         pass
 
-    def isvalid_a(self, a: float, a_buffer=[0,0]):
+    def isvalid_a(self, a: float, a_buffer=[0, 0]):
         pass
 
-    def bounds_p(self, e = 0, x = 1, a = 0, p_buffer = [0,0]):
+    def bounds_p(self, e=0, x=1, a=0, p_buffer=[0, 0]):
         self.isvalid_x(x)
         self.isvalid_e(e)
         self.isvalid_a(a)
         return [self.min_p(e, x, a) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
-    
-    def isvalid_pex(self, p = 20, e = 0, x = 1, a = 0, p_buffer = [0,0], e_buffer=[0,0], a_buffer=[0,0]):
+
+    def isvalid_pex(
+        self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], e_buffer=[0, 0], a_buffer=[0, 0]
+    ):
         self.isvalid_x(x)
         self.isvalid_e(e, e_buffer=e_buffer)
         self.isvalid_a(a, a_buffer=a_buffer)
         pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer)
-        assert (p >= pmin and p <= pmax), f"Interpolation: p {p} out of bounds. Must be between {pmin} and {pmax}."
-
+        assert p >= pmin and p <= pmax, (
+            f"Interpolation: p {p} out of bounds. Must be between {pmin} and {pmax}."
+        )
 
     def modify_rhs(self, ydot: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
         """
@@ -303,7 +323,7 @@ class ODEBase:
         in_bounds = self.cache_values_and_check_bounds(y)
 
         if out is None:
-            out = np.zeros(6) 
+            out = np.zeros(6)
 
         if in_bounds:
             out[:] = self.evaluate_rhs(y, **kwargs)
@@ -318,7 +338,7 @@ class ODEBase:
         self.modify_rhs(out, y, **kwargs)
 
         if self.integrate_backwards:
-            out *= -1.
+            out *= -1.0
 
         return out
 

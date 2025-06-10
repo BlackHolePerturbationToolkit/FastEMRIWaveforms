@@ -1,14 +1,13 @@
+from math import acos, cos, pow, sqrt
+from typing import Union
 
 import numpy as np
-from ..utils.elliptic import EllipK, EllipE, EllipPi
-
-from numba import njit, cuda
-from math import sqrt, pow, cos, acos
+from numba import cuda, njit
 
 from ..utils.constants import PI
-from ..utils.utility import _solveCubic, _brentq_jit
+from ..utils.elliptic import EllipE, EllipK, EllipPi
+from ..utils.utility import _brentq_jit, _solveCubic
 
-from typing import Union
 
 @njit(fastmath=False)
 def _ELQ_to_pex_kernel_inner(a, E, Lz, Q):
@@ -128,7 +127,7 @@ def ELQ_to_pex(
         Tuple of (OmegaPhi, OmegaTheta, OmegaR). These are 1D arrays or scalar values depending on inputs.
     """
     # check if inputs are scalar or array
-    if not hasattr(E, '__len__'):
+    if not hasattr(E, "__len__"):
         # get frequencies
         p, e, x = _ELQ_to_pex_kernel_inner(a, E, Lz, Q)
 
@@ -138,7 +137,7 @@ def ELQ_to_pex(
         Q_in = np.atleast_1d(Q)
 
         # cast the spin to the same size array as p
-        if not hasattr(a, '__len__'):
+        if not hasattr(a, "__len__"):
             a_in = np.full_like(E_in, a)
         else:
             a_in = np.atleast_1d(a)
@@ -441,14 +440,14 @@ def _KerrGeoCoordinateFrequencies_kernel_inner(a, p, e, x):
                 )
         else:
             Gamma, UpsilonPhi, UpsilonTheta, UpsilonR = (
-                _KerrCircularMinoFrequencies_kernel(a*x, p)
+                _KerrCircularMinoFrequencies_kernel(a * x, p)
             )
-            UpsilonPhi = x*UpsilonPhi
+            UpsilonPhi = x * UpsilonPhi
         return UpsilonPhi / Gamma, UpsilonTheta / Gamma, UpsilonR / Gamma
     else:
         sgnx = 1 if x > 0 else -1
         OmegaPhi, OmegaPhi, OmegaR = _SchwarzschildGeoCoordinateFrequencies_kernel(p, e)
-        return sgnx*OmegaPhi, OmegaPhi, OmegaR
+        return sgnx * OmegaPhi, OmegaPhi, OmegaR
 
 
 @njit(fastmath=False)
@@ -502,7 +501,7 @@ def get_fundamental_frequencies(
         import numpy as xp
 
     # check if inputs are scalar or array
-    if not hasattr(p, '__len__'):
+    if not hasattr(p, "__len__"):
         OmegaPhi, OmegaTheta, OmegaR = _KerrGeoCoordinateFrequencies_kernel_inner(
             a, p, e, x
         )
@@ -512,7 +511,7 @@ def get_fundamental_frequencies(
         x_in = xp.atleast_1d(x)
 
         # cast the spin to the same size array as p
-        if not hasattr(a, '__len__'):
+        if not hasattr(a, "__len__"):
             a_in = xp.full_like(p_in, a)
         else:
             a_in = xp.atleast_1d(a)
@@ -534,6 +533,7 @@ def get_fundamental_frequencies(
             )
 
     return (OmegaPhi, OmegaTheta, OmegaR)
+
 
 @njit(fastmath=False)
 def _P(r, a, En, xi):
@@ -868,7 +868,7 @@ def get_fundamental_frequencies_spin_corrections(
     assert np.all(np.abs(x) == 1.0), "Currently only supported for equatorial orbits."
 
     # check if inputs are scalar or array
-    if not hasattr(p, '__len__'):
+    if not hasattr(p, "__len__"):
         OmegaPhi, OmegaTheta, OmegaR = _KerrEqSpinFrequenciesCorrections_kernel_inner(
             a, p, e, x
         )
@@ -878,7 +878,7 @@ def get_fundamental_frequencies_spin_corrections(
         x_in = np.atleast_1d(x)
 
         # cast the spin to the same size array as p
-        if not hasattr(a, '__len__'):
+        if not hasattr(a, "__len__"):
             a_in = np.full_like(p_in, a)
         else:
             a_in = np.atleast_1d(a)
@@ -950,7 +950,7 @@ def _ddot(r, a, zm):
 @njit(fastmath=False)
 def _KerrGeoEnergy(a, p, e, x):
     zm = sqrt(1.0 - x * x)
-    sgnax = 1 if a*x > 0 else -1
+    sgnax = 1 if a * x > 0 else -1
     if (
         e < 1e-10
     ):  # switch to spherical formulas A13-A17 (2102.02713) to avoid instability
@@ -1033,8 +1033,8 @@ def _KerrGeoAngularMomentum(a, p, e, x, En):
 
     return (
         -En * _g(r1, a, zm)
-        + sgnx *
-        sqrt(
+        + sgnx
+        * sqrt(
             (
                 -_d(r1, a, zm) * _h(r1, a, zm)
                 + (En * En) * (pow(_g(r1, a, zm), 2) + _f(r1, a, zm) * _h(r1, a, zm))
@@ -1094,7 +1094,7 @@ def get_kerr_geo_constants_of_motion(
     """
 
     # check if inputs are scalar or array
-    if not hasattr(p, '__len__'):
+    if not hasattr(p, "__len__"):
         E, L, Q = _KerrGeoConstantsOfMotion_kernel_inner(a, p, e, x)
     else:
         p_in = np.atleast_1d(p)
@@ -1102,7 +1102,7 @@ def get_kerr_geo_constants_of_motion(
         x_in = np.atleast_1d(x)
 
         # cast the spin to the same size array as p
-        if not hasattr(a, '__len__'):
+        if not hasattr(a, "__len__"):
             a_in = np.full_like(p_in, a)
         else:
             a_in = np.atleast_1d(a)
@@ -1303,14 +1303,14 @@ def _get_separatrix_kernel_inner(a: float, e: float, x: float, tol: float = 1e-1
         # Schwarzschild
         return 6 + 2 * e
 
-    elif np.abs(x) == 1.0 and a*x > 0:  # Eccentric Prograde Equatorial
+    elif np.abs(x) == 1.0 and a * x > 0:  # Eccentric Prograde Equatorial
         x_lo = 1.0 + e
         x_hi = 6.0 + 2.0 * e
 
         p_sep = _brentq_jit(_separatrix_polynomial_equat, x_lo, x_hi, (a, e), tol)
         return p_sep
 
-    elif np.abs(x) == 1.0 and a*x < 0:  # Eccentric Retrograde Equatorial
+    elif np.abs(x) == 1.0 and a * x < 0:  # Eccentric Retrograde Equatorial
         x_lo = 6 + 2.0 * e
         x_hi = 5 + e + 4 * sqrt(1 + e)
 
@@ -1323,7 +1323,7 @@ def _get_separatrix_kernel_inner(a: float, e: float, x: float, tol: float = 1e-1
         x_hi = 8.0
 
         polar_p_sep = _brentq_jit(_separatrix_polynomial_polar, x_lo, x_hi, (a, e), tol)
-    
+
         if x == 0.0:
             return polar_p_sep
 
@@ -1391,7 +1391,7 @@ def get_separatrix(
 
     """
     # determines shape of input
-    if not hasattr(e, '__len__'):
+    if not hasattr(e, "__len__"):
         return _get_separatrix_kernel_inner(a, e, x, tol=tol)
 
     if use_gpu:
@@ -1401,13 +1401,13 @@ def get_separatrix(
 
     e_in = xp.atleast_1d(e)
 
-    if not hasattr(x, '__len__'):
+    if not hasattr(x, "__len__"):
         x_in = xp.full_like(e_in, x)
     else:
         x_in = xp.atleast_1d(x)
 
     # cast spin values if necessary
-    if not hasattr(a, '__len__'):
+    if not hasattr(a, "__len__"):
         a_in = xp.full_like(e_in, a)
     else:
         a_in = xp.atleast_1d(a)

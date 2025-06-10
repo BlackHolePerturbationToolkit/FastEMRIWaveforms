@@ -1,9 +1,12 @@
-from numba import njit
 from math import sqrt
+
+from numba import njit
+
 from ..geodesic import (
-    _KerrGeoEnergy,
     _KerrGeoAngularMomentum,
+    _KerrGeoEnergy,
 )
+
 
 @njit
 def _schwarz_jac_kernel(p, e, Edot, Ldot):

@@ -434,7 +434,8 @@ class DOPR853:
                     + er12 * k3
                 )
                 * sk
-            ) ** 2
+            )
+            ** 2
         ).sum(axis=0)
 
         # Now calculate the denominator and return the error
@@ -461,7 +462,7 @@ class DOPR853:
         if self.xp.any(h == 0.0):
             breakpoint()
 
-        accept_and_prev_reject = previousReject & acceptable
+        # accept_and_prev_reject = previousReject & acceptable
 
         # TODO: do we want this to fix the adjustment if the last was rejected
         # h[accept_and_prev_reject] = h[accept_and_prev_reject] * self.xp.clip(
@@ -488,7 +489,7 @@ class DOPR853:
         scale[unacceptable] = self.xp.clip(
             safe * (err[unacceptable] ** -alpha), minscale, 1e300
         )
-        htmp = h.copy()
+        # htmp = h.copy()
 
         h[unacceptable] = h[unacceptable] * scale[unacceptable]
         previousReject[unacceptable] = True
@@ -868,7 +869,7 @@ class DOPR853:
 
         assert spline_coeffs.ndim == 3 and spline_coeffs.shape[-1] == 8
 
-        rcont1 = tmp_coeffs[:, :, 0]
+        # rcont1 = tmp_coeffs[:, :, 0]
         rcont2 = tmp_coeffs[:, :, 1]
         rcont3 = tmp_coeffs[:, :, 2]
         rcont4 = tmp_coeffs[:, :, 3]
@@ -1042,14 +1043,14 @@ class DOPR853:
         if hInit is None:
             hInit = 0.01
 
-        hInit_orig = self.xp.full(numSys, hInit)
+        # hInit_orig = self.xp.full(numSys, hInit)
         h = self.xp.full_like(x, hInit)
 
         # xOld = self.xp.zeros_like(x)
         # hOld = self.xp.zeros_like(h)
 
         # Set pointers to these that can be swapped
-        solNew = self.xp.zeros_like(solOld)
+        # solNew = self.xp.zeros_like(solOld)
 
         # Loop while true
         loopFlag = True
@@ -1063,10 +1064,10 @@ class DOPR853:
         previousReject[:] = False
 
         # Current output step
-        denseCurrent = 0
+        # denseCurrent = 0
 
         # Current output location
-        denseCurrentLoc = 0.0  # denseOutputLoc[denseCurrent * eqNUM + eqSysNum]
+        # denseCurrentLoc = 0.0  # denseOutputLoc[denseCurrent * eqNUM + eqSysNum]
 
         # Calculate the max and min of a window
         # We need to do this to account for whether we're moving forwards or backwards in the domain
@@ -1092,53 +1093,53 @@ class DOPR853:
 
         individual_loop_flag = self.xp.ones_like(step_num, dtype=bool)
 
-        ii = 0
+        # ii = 0
         jj = 0
 
         stop = self.xp.ones_like(x, dtype=bool)
         self.stop_info = self.xp.zeros_like(x, dtype=int)
         while loopFlag:
-            num_current = np.sum(individual_loop_flag)
+            # num_current = np.sum(individual_loop_flag)
             xTemp = x[individual_loop_flag]
             hTemp = h[individual_loop_flag]
             # xOldTemp = self.xp.zeros_like(xTemp)
-            hOldTemp = self.xp.zeros_like(hTemp)
+            # hOldTemp = self.xp.zeros_like(hTemp)
             solOldTemp = solOld[:, individual_loop_flag]  # .flatten()
-            solNewTemp = solNew[:, individual_loop_flag]  # .flatten()
+            # solNewTemp = solNew[:, individual_loop_flag]  # .flatten()
             errOldTemp = errOld[individual_loop_flag]
             previousRejectTemp = previousReject[individual_loop_flag]
             additionalArgsTemp = additionalArgs[:, individual_loop_flag]  # .flatten()
 
             numSysTemp = xTemp.shape[0]
-            (
-                k1,
-                k2,
-                k3,
-                k4,
-                k5,
-                k6,
-                k7,
-                k8,
-                k9,
-                k10,
-            ) = [self.xp.zeros((nODE, numSysTemp)) for _ in range(10)]
-            err = self.xp.zeros(numSysTemp)
+            # (
+            #     k1,
+            #     k2,
+            #     k3,
+            #     k4,
+            #     k5,
+            #     k6,
+            #     k7,
+            #     k8,
+            #     k9,
+            #     k10,
+            # ) = [self.xp.zeros((nODE, numSysTemp)) for _ in range(10)]
+            # err = self.xp.zeros(numSysTemp)
             flagSuccess = self.xp.zeros(numSysTemp, dtype=bool)
             # 0.000857
 
-            xCurrent_buffer = self.xp.zeros_like(xTemp)
-            arg_buffer = self.xp.zeros_like(solOldTemp)
-            ak_term_buffer = self.xp.zeros_like(solOldTemp)
-            err = self.xp.zeros_like(xTemp)
+            # xCurrent_buffer = self.xp.zeros_like(xTemp)
+            # arg_buffer = self.xp.zeros_like(solOldTemp)
+            # ak_term_buffer = self.xp.zeros_like(solOldTemp)
+            # err = self.xp.zeros_like(xTemp)
 
-            nargs = nODE
-            numEq = numSysTemp
-            num_add_args = additionalArgs.shape[0]
+            # nargs = nODE
+            # numEq = numSysTemp
+            # num_add_args = additionalArgs.shape[0]
             # Compute the steps to iterate to the next timestep
 
-            index_here = self.xp.arange(individual_loop_flag.shape[0])[
-                individual_loop_flag
-            ].astype(self.xp.int32)
+            # index_here = self.xp.arange(individual_loop_flag.shape[0])[
+            #     individual_loop_flag
+            # ].astype(self.xp.int32)
 
             if fix_step:
                 raise NotImplementedError

@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import enum
 import os
+from typing import Dict, Iterator, List, Optional
+
 import pydantic
 
-from ..utils.exceptions import InvalidInputFile, FileInvalidChecksum, ExceptionGroup
-from typing import Dict, List, Optional, Iterator
+from ..utils.exceptions import ExceptionGroup, FileInvalidChecksum, InvalidInputFile
 
 
 class Repository(pydantic.BaseModel):
@@ -164,9 +165,10 @@ class FileRegistry(pydantic.BaseModel):
     @staticmethod
     def load_and_validate(registry_path: Optional[os.PathLike] = None) -> FileRegistry:
         import json
+        import pathlib
+
         import jsonschema
         import yaml
-        import pathlib
 
         try:
             from yaml import CLoader as Loader

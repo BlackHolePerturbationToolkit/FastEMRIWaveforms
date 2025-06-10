@@ -10,8 +10,10 @@ attribute.
 
 import abc
 import enum
+from typing import List, Optional, Union
+
 from pydantic import BaseModel
-from typing import Union, Optional, List
+
 from few.utils.exceptions import InvalidInputFile
 
 
@@ -257,11 +259,13 @@ class CitationRegistry:
 def build_citation_registry() -> CitationRegistry:
     """Read the package CITATION.cff and build the corresponding registry."""
     import json
-    import jsonschema
     import pathlib
+
+    import jsonschema
     import yaml
 
-    from few import __file__ as _few_root_file, _is_editable as is_editable
+    from few import __file__ as _few_root_file
+    from few import _is_editable as is_editable
 
     few_root = pathlib.Path(_few_root_file).parent
     cff_root = few_root.parent.parent if is_editable else few_root

@@ -5,7 +5,8 @@ the duplication theorem to compute Carlson's symmetric forms.
 Derived from Carlson's algorithms in the SLATEC library.
 """
 
-from math import sqrt, acosh, acos, log
+from math import acos, acosh, log, sqrt
+
 from numba import njit
 
 

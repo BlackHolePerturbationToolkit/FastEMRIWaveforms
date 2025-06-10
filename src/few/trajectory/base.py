@@ -1,9 +1,10 @@
 import abc
-from few.utils.citations import Citable
-from few.utils.constants import YRSID_SI, MTSUN_SI
+from typing import Optional
+
 import numpy as np
 
-from typing import Optional
+from few.utils.citations import Citable
+from few.utils.constants import MTSUN_SI, YRSID_SI
 
 
 class TrajectoryBase(Citable, abc.ABC):
@@ -129,7 +130,7 @@ class TrajectoryBase(Citable, abc.ABC):
 
         if max_step_size is None:
             max_step_size = np.inf
-        
+
         if in_coordinate_time:
             kwargs["max_step_size"] = max_step_size * (mu / M) / Msec
         else:

@@ -1,7 +1,5 @@
+from ..utils.baseclasses import BackendLike, ParallelModuleBase
 from ..utils.constants import YRSID_SI
-
-
-from ..utils.baseclasses import ParallelModuleBase, BackendLike
 
 
 class SummationBase(ParallelModuleBase):

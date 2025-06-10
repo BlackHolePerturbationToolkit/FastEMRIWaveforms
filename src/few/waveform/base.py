@@ -1,17 +1,16 @@
+from typing import Generic, Optional, TypeVar, Union
+
 import numpy as np
 from tqdm import tqdm
 
-from ..utils.baseclasses import Pn5AAK, ParallelModuleBase, BackendLike
-
+from ..utils.baseclasses import BackendLike, ParallelModuleBase, Pn5AAK
+from ..utils.citations import REFERENCE
+from ..utils.constants import MRSUN_SI, Gpc
+from ..utils.globals import get_logger
 from ..utils.mappings.schwarzecc import (
     schwarzecc_p_to_y,
 )
 from ..utils.ylm import GetYlms
-from ..utils.constants import MRSUN_SI, Gpc
-from ..utils.citations import REFERENCE
-from ..utils.globals import get_logger
-
-from typing import Union, Optional, TypeVar, Generic
 
 InspiralModule = TypeVar("InspiralModule", bound=ParallelModuleBase)
 """Used for type hinting the Inspiral generator classes."""
@@ -177,9 +176,9 @@ class SphericalHarmonicWaveformBase(
                 batching in sizes of batch_size. Default is -1.
             mode_selection: Determines the type of mode
                 filtering to perform. If None, use default mode filtering provided
-                by :code:`mode_selector`. If 'all', it will run all modes without 
+                by :code:`mode_selector`. If 'all', it will run all modes without
                 filtering. If 'eps' it will override other options to filter by the
-                threshold value set by :code:`eps`. If a list of tuples (or lists) of 
+                threshold value set by :code:`eps`. If a list of tuples (or lists) of
                 mode indices (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
                 provided, it will return those modes combined into a
                 single waveform. If :code:`include_minus_mkn = True`, we require that :math:`m \geq 0` for this list.
@@ -220,14 +219,16 @@ class SphericalHarmonicWaveformBase(
         theta, phi = self.sanity_check_viewing_angles(theta, phi)
 
         a, xI0 = self.sanity_check_init(m1, m2, a, p0, e0, xI0)
-        
+
         # Ensure kwargs['inspiral_kwargs'] exists and is a dictionary
         # Essential if inspiral_kwargs passed into waveform generator
-        kwargs_inspiral = kwargs.get('inspiral_kwargs', {})
+        kwargs_inspiral = kwargs.get("inspiral_kwargs", {})
         # Merge kwargs_inspiral into self.inspiral_kwargs
         self.inspiral_kwargs.update(kwargs_inspiral)
         # get trajectory
-        self.inspiral_kwargs.setdefault('err', 1e-11) # Will only set default if "err" is not supplied
+        self.inspiral_kwargs.setdefault(
+            "err", 1e-11
+        )  # Will only set default if "err" is not supplied
 
         (t, p, e, xI, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
             m1,
@@ -246,7 +247,7 @@ class SphericalHarmonicWaveformBase(
         )
         # makes sure p and e are generally within the model
         self.sanity_check_traj(a, p, e, xI)
-     
+
         if self.normalize_amps:
             # get the vector norm
             amp_norm = self.amplitude_generator.amp_norm_spline.ev(
@@ -272,7 +273,9 @@ class SphericalHarmonicWaveformBase(
         if self.mode_selector.is_predictive:
             # overwrites mode_selection so it's now a list of modes to keep, ready to feed into amplitudes
             if mode_selection is not None:
-                get_logger().warning("(SphericalHarmonicWaveformBase) Warning: Mode selector is predictive. Overwriting mode_selection.")
+                get_logger().warning(
+                    "(SphericalHarmonicWaveformBase) Warning: Mode selector is predictive. Overwriting mode_selection."
+                )
             mode_selection = self.mode_selector(
                 m1, m2, a * xI0, p0, e0, 1.0, theta, phi, T, mode_selection_threshold
             )  # TODO: update this if more arguments are required
@@ -305,7 +308,7 @@ class SphericalHarmonicWaveformBase(
             t_temp = t[inds_in]
             p_temp = p[inds_in]
             e_temp = e[inds_in]
-            xI_temp = xI[inds_in]
+            # xI_temp = xI[inds_in]
             Phi_phi_temp = Phi_phi[inds_in]
             Phi_theta_temp = Phi_theta[inds_in]
             Phi_r_temp = Phi_r[inds_in]
@@ -336,16 +339,16 @@ class SphericalHarmonicWaveformBase(
                 teuk_modes = teuk_modes * factor[:, np.newaxis]
 
             fund_freq_args = (
-                    m1,
-                    m2,
-                    a,
-                    p_temp,
-                    e_temp,
-                    xI,
-                    t_temp,
-                )
+                m1,
+                m2,
+                a,
+                p_temp,
+                e_temp,
+                xI,
+                t_temp,
+            )
             modeinds = [self.l_arr, self.m_arr, self.n_arr]
-            modeinds_map=self.special_index_map_arr
+            modeinds_map = self.special_index_map_arr
             (
                 teuk_modes_in,
                 ylms_in,
@@ -371,7 +374,7 @@ class SphericalHarmonicWaveformBase(
                 # prepare phase spline coefficients
                 phase_information_in = self.xp.asarray(
                     self.inspiral_generator.integrator_spline_phase_coeff
-                )[:, [0,2], :]
+                )[:, [0, 2], :]
 
                 # flip azimuthal phase for retrograde inspirals
                 if a > 0:
@@ -382,9 +385,7 @@ class SphericalHarmonicWaveformBase(
                         [Phi_phi[-1] + Phi_phi[0], Phi_r[-1] + Phi_r[0]]
                     )
 
-                phase_t_in = (
-                    self.inspiral_generator.integrator_spline_t
-                )
+                phase_t_in = self.inspiral_generator.integrator_spline_t
             else:
                 phase_information_in = self.xp.asarray(
                     [Phi_phi_temp, Phi_theta_temp, Phi_r_temp]
@@ -412,7 +413,7 @@ class SphericalHarmonicWaveformBase(
                 self.ls,
                 self.ms,
                 self.ns,
-                M, # waveform generation will also be done with respect to total mass
+                M,  # waveform generation will also be done with respect to total mass
                 a,
                 p,
                 e,
@@ -425,7 +426,7 @@ class SphericalHarmonicWaveformBase(
 
             # if batching, need to add the waveform
             if i > 0:
-                waveform = self.xp.concatenate([waveform, waveform_temp])
+                waveform = self.xp.concatenate([waveform, waveform_temp])  # noqa: F821
 
             # return entire waveform
             else:
@@ -675,10 +676,10 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumMod
         # TODO: Check that the mass conventions here are consistent with adiabatic model
         waveform = self.create_waveform(
             t,
-            M, # for the AAK waveform this parameter sets the dimensionless frequency with which to scale the amplitude
+            M,  # for the AAK waveform this parameter sets the dimensionless frequency with which to scale the amplitude
             a,
             dist,
-            mu, # this is also used to scale the amplitude, so we want to scale with reduced mass
+            mu,  # this is also used to scale the amplitude, so we want to scale with reduced mass
             qS,
             phiS,
             qK,

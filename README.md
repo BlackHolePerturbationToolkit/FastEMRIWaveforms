@@ -5,10 +5,10 @@
 
 This package contains a highly modular framework for the rapid generation of accurate extreme-mass-ratio inspiral (EMRI) waveforms. FEW combines a variety of separately accessible modules to construct EMRI waveform models for both CPUs and GPUs.
 
-* Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the [documentation](https://fastemriwaveforms.readthedocs.io/en/latest) for further information on these modules. 
-* The code can be found on Github [here](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms). 
-* The data necessary for various modules in this package will automatically download the first time it is needed. If you would like to view the data, it can be found on [Zenodo](https://zenodo.org/record/3981654). 
-* The current and all past code release zip files can also be found on Zenodo [here](https://zenodo.org/record/3969004). 
+* Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the [documentation](https://fastemriwaveforms.readthedocs.io/en/latest) for further information on these modules.
+* The code can be found on Github [here](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms).
+* The data necessary for various modules in this package will automatically download the first time it is needed. If you would like to view the data, it can be found on [Zenodo](https://zenodo.org/record/3981654).
+* The current and all past code release zip files can also be found on Zenodo [here](https://zenodo.org/record/3969004).
 
 **Please see the [citation](#citation) section below for information on citing FEW.** This package is part of the [Black Hole Perturbation Toolkit](https://bhptoolkit.org/).
 

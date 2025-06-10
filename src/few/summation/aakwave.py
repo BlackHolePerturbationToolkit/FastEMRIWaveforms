@@ -2,11 +2,11 @@
 
 import numpy as np
 
-# Python imports
-from ..utils.baseclasses import Pn5AAK, BackendLike
-from .base import SummationBase
-
 from few.utils.globals import get_logger
+
+# Python imports
+from ..utils.baseclasses import BackendLike, Pn5AAK
+from .base import SummationBase
 
 
 class AAKSummation(Pn5AAK, SummationBase):

@@ -1,24 +1,24 @@
 # Pn5-based Generic Kerr trajectory module for Fast EMRI Waveforms
 
+from typing import Type, Union
+
 import numpy as np
+
+from ..utils.citations import REFERENCE
+from ..utils.constants import MTSUN_SI, PI
+from ..utils.geodesic import (
+    ELQ_to_pex,
+    get_fundamental_frequencies,
+    get_kerr_geo_constants_of_motion,
+)
+from ..utils.globals import get_logger
+from ..utils.mappings.pn import Y_to_xI
 
 # Python imports
 from .base import TrajectoryBase
-from ..utils.geodesic import (
-    ELQ_to_pex,
-    get_kerr_geo_constants_of_motion,
-    get_fundamental_frequencies
-)
-from ..utils.mappings.pn import Y_to_xI
-from ..utils.citations import REFERENCE
-
 from .integrate import get_integrator
-
-from typing import Type, Union
 from .ode.base import ODEBase
 
-from ..utils.globals import get_logger
-from ..utils.constants import MTSUN_SI, PI
 
 class EMRIInspiral(TrajectoryBase):
     """EMRI trajectory module.
@@ -116,7 +116,7 @@ class EMRIInspiral(TrajectoryBase):
     def tolerance(self) -> float:
         """Absolute tolerance of the integrator."""
         return self.inspiral_generator.npoints
-    
+
     @property
     def dense_stepping(self) -> bool:
         """If ``True``, trajectory is using fixed stepping."""
@@ -207,7 +207,7 @@ class EMRIInspiral(TrajectoryBase):
         x0 = y3
 
         if temp_kwargs["integrate_backwards"]:
-            self.func.isvalid_pex(p=p0, e=e0, x=x0, a=a, p_buffer=[-1e-6,0])
+            self.func.isvalid_pex(p=p0, e=e0, x=x0, a=a, p_buffer=[-1e-6, 0])
         else:
             self.func.isvalid_pex(p=p0, e=e0, x=x0, a=a)
 
@@ -252,7 +252,9 @@ class EMRIInspiral(TrajectoryBase):
         )
 
         # this will return in coordinate time
-        out = self.inspiral_generator.run_inspiral(m1, m2, a, y0, args_in, **temp_kwargs)
+        out = self.inspiral_generator.run_inspiral(
+            m1, m2, a, y0, args_in, **temp_kwargs
+        )
         if self.integrate_constants_of_motion and self.convert_to_pex:
             out_ELQ = out.copy()
             pex = ELQ_to_pex(a, out[:, 1].copy(), out[:, 2].copy(), out[:, 3].copy())
@@ -353,6 +355,7 @@ class EMRIInspiral(TrajectoryBase):
 
         return out
 
+
 def get_0PA_frequencies(
     m1: float,
     m2: float,
@@ -365,7 +368,7 @@ def get_0PA_frequencies(
     r"""Get frequencies for 0PA phase evolution in Hertz
 
     arguments:
-        m1: Mass of the massive black hole in solar masses. 
+        m1: Mass of the massive black hole in solar masses.
         m2: Mass of the secondary body in solar masses.
         a: Dimensionless spin of massive
             black hole. If other parameters are arrays and the spin is scalar,
@@ -383,7 +386,9 @@ def get_0PA_frequencies(
 
     """
     # we have m1 \Omega_geo = M \Omega_0PA
-    OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(a, p, e, x, use_gpu=use_gpu)
+    OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(
+        a, p, e, x, use_gpu=use_gpu
+    )
     M = m1 + m2
     OmegaPhi = OmegaPhi / (M * MTSUN_SI) / (2 * PI)
     OmegaTheta = OmegaTheta / (M * MTSUN_SI) / (2 * PI)

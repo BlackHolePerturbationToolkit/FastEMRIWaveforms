@@ -1,12 +1,13 @@
-from .base import ODEBase
-from ...utils.geodesic import get_fundamental_frequencies, get_separatrix
-
-from numba import njit
-from math import sqrt, log, cosh, sinh, pow
-import numpy as np
+from math import cosh, log, pow, sinh, sqrt
 from typing import Union
 
+import numpy as np
+from numba import njit
+
 from few.utils.mappings.jacobian import ELdot_to_PEdot_Jacobian
+
+from ...utils.geodesic import get_fundamental_frequencies, get_separatrix
+from .base import ODEBase
 
 #    PostNewtonian fluxes (5PN, e^10; arbitrary inclinations)
 
@@ -27,68 +28,80 @@ class PN5(ODEBase):
     @property
     def supports_ELQ(self):
         return False
-    
+
     @property
     def separatrix_buffer_dist(self):
         return 0.1
 
     def max_p(self, e, x, a):
         return float("inf")
-    
-    def min_p(self, e, x, a):
-        return get_separatrix(a,e,x) + self.separatrix_buffer_dist
 
-    def isvalid_x(self, x, x_buffer = [0,0]):
+    def min_p(self, e, x, a):
+        return get_separatrix(a, e, x) + self.separatrix_buffer_dist
+
+    def isvalid_x(self, x, x_buffer=[0, 0]):
         xmin = -1 + x_buffer[0]
         xmax = 1 - x_buffer[1]
         if np.any(x < xmin) or np.any(x > xmax):
             raise ValueError(f"X out of bounds. Must be between {xmin} and {xmax}.")
-        
-    def isvalid_e(self, e, e_buffer = [0,0]):
+
+    def isvalid_e(self, e, e_buffer=[0, 0]):
         emin = 0 + e_buffer[0]
         emax = 1 - e_buffer[1]
         if np.any(e < emin) or np.any(e > emax):
             raise ValueError(f"e out of bounds. Must be between {emin} and {emax}.")
-    
-    def isvalid_p(self, p, p_buffer = [0,0]):
+
+    def isvalid_p(self, p, p_buffer=[0, 0]):
         pmin = 1 + self.separatrix_buffer_dist + p_buffer[0]
         if np.any(p < pmin):
             raise ValueError(f"p out of bounds. Must be greater than {pmin}.")
-    
-    def isvalid_a(self, a, a_buffer = [0,0]):
+
+    def isvalid_a(self, a, a_buffer=[0, 0]):
         amin = -1 + a_buffer[0]
         amax = 1 - a_buffer[1]
         if np.any(a < amin) or np.any(a > amax):
             raise ValueError(f"a out of bounds. Must be between {amin} and {amax}.")
 
-    def bounds_p(self, e, x = 1, a = 0, p_buffer=[0,0]):
+    def bounds_p(self, e, x=1, a=0, p_buffer=[0, 0]):
         return [self.min_p(e, x, a) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
 
     def max_e(self, p, x, a):
         return 1
 
-    def isvalid_pex(self, p = 20, e = 0, x = 1, a = 0, p_buffer=[0,0], e_buffer=[0,0], x_buffer=[0,0], a_buffer=[0,0]):
+    def isvalid_pex(
+        self,
+        p=20,
+        e=0,
+        x=1,
+        a=0,
+        p_buffer=[0, 0],
+        e_buffer=[0, 0],
+        x_buffer=[0, 0],
+        a_buffer=[0, 0],
+    ):
         self.isvalid_x(x, x_buffer=x_buffer)
         self.isvalid_e(e, e_buffer=e_buffer)
         self.isvalid_a(a, a_buffer=a_buffer)
         pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer)
-        assert (p >= pmin and p <= pmax), f"Interpolation: p out of bounds. Must be between {pmin} and {pmax}."
+        assert p >= pmin and p <= pmax, (
+            f"Interpolation: p out of bounds. Must be between {pmin} and {pmax}."
+        )
 
     def evaluate_rhs(
         self, y: Union[list[float], np.ndarray]
     ) -> list[Union[float, np.ndarray]]:
         p, e, Y = y[:3]
 
-        if Y==1:
-
+        if Y == 1:
             Edot = dEdt8H_5PNe10(self.a, p, e, Y, 10, 10)
             Lzdot = dLdt8H_5PNe10(self.a, p, e, Y, 10, 10)
-    
-            pdot, edot = ELdot_to_PEdot_Jacobian(abs(self.a), p, e, np.sign(self.a), Edot, Lzdot)
+
+            pdot, edot = ELdot_to_PEdot_Jacobian(
+                abs(self.a), p, e, np.sign(self.a), Edot, Lzdot
+            )
             Ydot = 0
 
         else:
-
             pdot = dpdt8H_5PNe10(self.a, p, e, Y, 10, 10)
             edot = dedt8H_5PNe10(self.a, p, e, Y, 10, 8)
             Ydot = dYdt8H_5PNe10(self.a, p, e, Y, 7, 10)
@@ -724,7 +737,7 @@ def dLdt8H_5PNe10(q, p, e, Y, Nv, ne):
     t29 = t3 * t3
     t31 = t1 * t1
     t57 = sinh(t13)
-    a[10][4]=0.182075326948090868e-12 * (-0.436750906215112834e15 * Y * ((t1 + 0.148148148148148148e0) * t3 - 0.112777777777777778e2 * t1 - 0.422222222222222222e1) * q * t15 + 0.29200823130904425e17 * (-0.966687736668728191e1 * Y * (t19 - 0.824584504725509851e0 * t1 + 0.585157464081907400e1) + 0.781432326426546158e1 * (0.562557871961432141e0 - 0.824355432780847145e0 * t1 + t19) * Y + 0.549052020264045358e2 * Y + t29 * Y * t31 - 0.283186545756290362e1 * t29 * t1 * q - 0.100861603790934754e1 * t1 * (t1 - 0.416979753844179331e1 + 0.497558209013053063e0 * lnv) * t3 * Y + 0.276348483211269311e1 * (t1 + 0.255052014698484365e1) * q * t3 + (0.257487941007481677e0 * t31 + (-0.310492984449329137e1 + 0.401064066580251487e0 * lnv) * t1 - 0.127958564670838440e2 + 0.911708488316419183e0 * lnv) * Y - 0.428680656636706025e0 * (t1 + 0.632275907040848381e1) * q) * t57 * t14 + 0.194111513873383482e15 * Y * (0.333333333333333333e0 + t1) * q * (t3 - 0.13e2)) / t57 / t14 + (6075/4)*Y 
+    a[10][4]=0.182075326948090868e-12 * (-0.436750906215112834e15 * Y * ((t1 + 0.148148148148148148e0) * t3 - 0.112777777777777778e2 * t1 - 0.422222222222222222e1) * q * t15 + 0.29200823130904425e17 * (-0.966687736668728191e1 * Y * (t19 - 0.824584504725509851e0 * t1 + 0.585157464081907400e1) + 0.781432326426546158e1 * (0.562557871961432141e0 - 0.824355432780847145e0 * t1 + t19) * Y + 0.549052020264045358e2 * Y + t29 * Y * t31 - 0.283186545756290362e1 * t29 * t1 * q - 0.100861603790934754e1 * t1 * (t1 - 0.416979753844179331e1 + 0.497558209013053063e0 * lnv) * t3 * Y + 0.276348483211269311e1 * (t1 + 0.255052014698484365e1) * q * t3 + (0.257487941007481677e0 * t31 + (-0.310492984449329137e1 + 0.401064066580251487e0 * lnv) * t1 - 0.127958564670838440e2 + 0.911708488316419183e0 * lnv) * Y - 0.428680656636706025e0 * (t1 + 0.632275907040848381e1) * q) * t57 * t14 + 0.194111513873383482e15 * Y * (0.333333333333333333e0 + t1) * q * (t3 - 0.13e2)) / t57 / t14 + (6075/4)*Y
     t1 = q * q
     t3 = Y * Y
     t10 = sqrt(-0.1e1 * t1 + 0.1e1)
@@ -735,7 +748,7 @@ def dLdt8H_5PNe10(q, p, e, Y, Nv, ne):
     t20 = t3 * t1
     t34 = t3 * t3
     t36 = t1 * t1
-    a[10][6]=0.965550976239875818e-13 * (0.343161426311874370e14 * Y * ((t1 + 0.148148148148148148e0) * t3 + 0.972222222222222222e2 * t1 + 0.377777777777777778e2) * q * t15 + 0.24345867233027340e17 * t19 * (0.212525399597929202e3 * Y * (t20 - 0.874175228749855956e0 * t1 + 0.780952485242749774e1) - 0.891297659957906779e2 * (-0.870590406344361201e1 - 0.871876658316833378e0 * t1 + t20) * Y - 0.127087168422357203e3 * (0.157438605516838593e2 - 0.873182082606166376e0 * t1 + t20) * Y - 0.426236229029053920e3 * Y + t34 * Y * t36 - 0.242934442020358661e1 * t34 * t1 * q - 0.108614689532789932e1 * (t1 - 0.435957093084234428e1 + 0.365009364798999689e0 * lnv) * t1 * t3 * Y + 0.216018283439036884e1 * q * (t1 + 0.356082819144714318e1) * t3 + (0.283616319112916520e0 * t36 + (-0.310335343993954763e1 + 0.275749764623347603e0 * lnv) * t1 - 0.172487520477111701e2 + 0.166952889971759632e1 * lnv) * Y - 0.252154170647060724e0 * (t1 + 0.160905206179557926e2) * q) * t14 - 0.152516189471944164e14 * Y * (t3 + 0.113e3) * (0.333333333333333333e0 + t1) * q) / t19 / t14 - (6075/2)*Y 
+    a[10][6]=0.965550976239875818e-13 * (0.343161426311874370e14 * Y * ((t1 + 0.148148148148148148e0) * t3 + 0.972222222222222222e2 * t1 + 0.377777777777777778e2) * q * t15 + 0.24345867233027340e17 * t19 * (0.212525399597929202e3 * Y * (t20 - 0.874175228749855956e0 * t1 + 0.780952485242749774e1) - 0.891297659957906779e2 * (-0.870590406344361201e1 - 0.871876658316833378e0 * t1 + t20) * Y - 0.127087168422357203e3 * (0.157438605516838593e2 - 0.873182082606166376e0 * t1 + t20) * Y - 0.426236229029053920e3 * Y + t34 * Y * t36 - 0.242934442020358661e1 * t34 * t1 * q - 0.108614689532789932e1 * (t1 - 0.435957093084234428e1 + 0.365009364798999689e0 * lnv) * t1 * t3 * Y + 0.216018283439036884e1 * q * (t1 + 0.356082819144714318e1) * t3 + (0.283616319112916520e0 * t36 + (-0.310335343993954763e1 + 0.275749764623347603e0 * lnv) * t1 - 0.172487520477111701e2 + 0.166952889971759632e1 * lnv) * Y - 0.252154170647060724e0 * (t1 + 0.160905206179557926e2) * q) * t14 - 0.152516189471944164e14 * Y * (t3 + 0.113e3) * (0.333333333333333333e0 + t1) * q) / t19 / t14 - (6075/2)*Y
     t1 = q * q
     t3 = Y * Y
     t10 = sqrt(-0.1e1 * t1 + 0.1e1)
@@ -746,7 +759,7 @@ def dLdt8H_5PNe10(q, p, e, Y, Nv, ne):
     t20 = t3 * t1
     t34 = t3 * t3
     t36 = t1 * t1
-    a[10][8]=    0.560364405853499358e-15 * (0.258690921373566833e16 * Y * ((t1 + 0.148148148148148148e0) * t3 + 0.766666666666666667e1 * t1 + 0.311111111111111111e1) * q * t15 + 0.374667224091237000e18 * t19 * (-0.145463262706882240e5 * (t20 - 0.926900897458706597e0 * t1 + 0.141269652360599106e2) * Y - 0.161997293941716948e4 * (0.925885872358809914e2 - 0.881301089319640971e0 * t1 + t20) * Y + 0.161452532295551519e5 * (0.119571834893013171e2 - 0.922545117793329744e0 * t1 + t20) * Y + 0.162496383234938963e6 * Y + t34 * Y * t36 - 0.106543469805479457e1 * t34 * t1 * q - 0.970004131233331830e0 * t1 * (t1 - 0.257572066820737153e2 + 0.164716717644381314e0 * lnv) * t3 * Y + 0.777411611576840727e0 * q * (t1 - 0.301967866350511519e2) * t3 + (0.168644046298192401e0 * t36 + (-0.166709553264042048e2 + 0.871685872327551118e-1 * lnv) * t1 - 0.586435323751234779e2 + 0.836114649911200046e0 * lnv) * Y - 0.570784961737127645e-1 * (t1 + 0.593298137942271139e1) * q) * t14 - 0.114973742832696370e16 * Y * (0.333333333333333333e0 + t1) * q * (t3 + 0.9e1)) / t19 / t14 + (6075/4)*Y 
+    a[10][8]=    0.560364405853499358e-15 * (0.258690921373566833e16 * Y * ((t1 + 0.148148148148148148e0) * t3 + 0.766666666666666667e1 * t1 + 0.311111111111111111e1) * q * t15 + 0.374667224091237000e18 * t19 * (-0.145463262706882240e5 * (t20 - 0.926900897458706597e0 * t1 + 0.141269652360599106e2) * Y - 0.161997293941716948e4 * (0.925885872358809914e2 - 0.881301089319640971e0 * t1 + t20) * Y + 0.161452532295551519e5 * (0.119571834893013171e2 - 0.922545117793329744e0 * t1 + t20) * Y + 0.162496383234938963e6 * Y + t34 * Y * t36 - 0.106543469805479457e1 * t34 * t1 * q - 0.970004131233331830e0 * t1 * (t1 - 0.257572066820737153e2 + 0.164716717644381314e0 * lnv) * t3 * Y + 0.777411611576840727e0 * q * (t1 - 0.301967866350511519e2) * t3 + (0.168644046298192401e0 * t36 + (-0.166709553264042048e2 + 0.871685872327551118e-1 * lnv) * t1 - 0.586435323751234779e2 + 0.836114649911200046e0 * lnv) * Y - 0.570784961737127645e-1 * (t1 + 0.593298137942271139e1) * q) * t14 - 0.114973742832696370e16 * Y * (0.333333333333333333e0 + t1) * q * (t3 + 0.9e1)) / t19 / t14 + (6075/4)*Y
     t1 = q * q
     t3 = Y * Y
     t4 = t3 * t1

@@ -1,15 +1,15 @@
 # Function for ylm generation for FastEMRIWaveforms Packages
 
+from cmath import exp
+from math import cos, pow, sin, sqrt
+from math import pi as PI
+from typing import Optional, Union
+
 import numpy as np
+from numba import njit
 
 # base classes
 from ..utils.baseclasses import ParallelModuleBase
-
-from typing import Optional, Union
-from numba import njit
-from cmath import exp
-from math import pow, cos, sin, sqrt
-from math import pi as PI
 
 I = 1j
 
@@ -300,7 +300,11 @@ class GetYlms(ParallelModuleBase):
 
     # These are the spin-weighted spherical harmonics with s=-2
     def __call__(
-        self, l_in: Union[int, np.ndarray], m_in: Union[int, np.ndarray], theta: float, phi: float
+        self,
+        l_in: Union[int, np.ndarray],
+        m_in: Union[int, np.ndarray],
+        theta: float,
+        phi: float,
     ) -> np.ndarray:
         """Call method for Ylms.
 
@@ -319,7 +323,7 @@ class GetYlms(ParallelModuleBase):
         if isinstance(l_in, int) or isinstance(m_in, int):
             assert isinstance(l_in, int) and isinstance(m_in, int)
             return _ylm_kernel_inner(l_in, m_in, theta, phi)
-            
+
         # if assuming positive m, repeat entries for negative m
         # this will duplicate m = 0
         if self.include_minus_m:

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def schwarzecc_p_to_y(p, e, use_gpu=False):
     """Convert from separation :math:`p` to :math:`y` coordinate
 

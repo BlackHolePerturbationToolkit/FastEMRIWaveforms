@@ -1,8 +1,10 @@
 from math import sqrt
-from numba import njit
-from ..geodesic import get_kerr_geo_constants_of_motion
-import numpy as np
 from typing import Union
+
+import numpy as np
+from numba import njit
+
+from ..geodesic import get_kerr_geo_constants_of_motion
 
 
 @njit(fastmath=False)
@@ -207,10 +209,10 @@ def _Y_to_xI_kernel_inner(a, p, e, Y):
 def _Y_to_xI_kernel(xI, a, p, e, Y):
     for i in range(len(xI)):
         Y_h = Y[i]
-        if Y_h != 0.:
+        if Y_h != 0.0:
             xI[i] = _Y_to_xI_kernel_inner(a[i], p[i], e[i], Y_h)
         else:
-            xI[i] = 0.
+            xI[i] = 0.0
 
 
 def Y_to_xI(

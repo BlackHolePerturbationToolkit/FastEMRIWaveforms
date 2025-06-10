@@ -2,6 +2,7 @@
 
 from .base import SummationBase
 
+
 class DirectModeSum(SummationBase):
     """Create waveform by direct summation.
 

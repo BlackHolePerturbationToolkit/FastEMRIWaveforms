@@ -1,15 +1,17 @@
-import numpy as np
 from typing import Union
 
+import numpy as np
+
+
 def m1m2_to_muM(
-        m1: Union[float, np.ndarray], m2: Union[float, np.ndarray]
-    ) -> tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
+    m1: Union[float, np.ndarray], m2: Union[float, np.ndarray]
+) -> tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
     """
     Convert the individual masses of a binary system to the reduced mass and total mass.
     Args:
         m1: Mass of the first body.
         m2: Mass of the second body.
-        
+
     Returns:
         mu: Reduced mass.
         M: Total mass.
@@ -19,15 +21,16 @@ def m1m2_to_muM(
     M = m1 + m2
     return mu, M
 
+
 def muM_to_m1m2(
-        mu: Union[float, np.ndarray], M: Union[float, np.ndarray]
-        ) -> tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
+    mu: Union[float, np.ndarray], M: Union[float, np.ndarray]
+) -> tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
     """
     Convert the reduced mass and total mass of a binary system to the individual masses, assuming m1 >= m2.
     Args:
         mu: Reduced mass.
         M: Total mass.
-        
+
     Returns:
         m1: Mass of the first body.
         m2: Mass of the second body.

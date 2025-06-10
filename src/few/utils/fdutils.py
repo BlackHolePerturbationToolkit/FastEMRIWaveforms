@@ -1,8 +1,8 @@
 # Interpolated summation of modes in python for the FastEMRIWaveforms Package
 
-import numpy as np
-
 from typing import Optional
+
+import numpy as np
 
 
 def get_convolution(a: np.ndarray, b: np.ndarray) -> np.ndarray:

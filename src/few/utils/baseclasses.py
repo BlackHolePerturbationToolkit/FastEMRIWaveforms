@@ -8,16 +8,16 @@ a common interface and pass information related to each model.
 
 from __future__ import annotations
 
-import numpy as np
-
 import types
 from typing import Optional, Sequence, TypeVar, Union
 
+import numpy as np
+
 # Python imports
 from ..cutils import Backend
-from ..utils.citations import Citable, REFERENCE
+from ..utils.citations import REFERENCE, Citable
+from ..utils.globals import get_backend, get_first_backend, get_logger
 from ..utils.mappings.kerrecceq import kerrecceq_forward_map
-from ..utils.globals import get_logger, get_backend, get_first_backend
 
 xp_ndarray = TypeVar("xp_ndarray")
 """Generic alias for backend ndarray"""
@@ -340,11 +340,19 @@ class SphericalHarmonic(ParallelModuleBase):
 
         # TODO make this more efficient
         # mode indices for all positive m-modes
-        self.mode_indexes = self.xp.linspace(0, self.num_teuk_modes-1, self.num_teuk_modes, dtype=int) 
+        self.mode_indexes = self.xp.linspace(
+            0, self.num_teuk_modes - 1, self.num_teuk_modes, dtype=int
+        )
         # mode indices for all negative m-modes
-        self.negative_mode_indexes = self.xp.linspace(0, self.num_teuk_modes-1, self.num_teuk_modes, dtype=int)
-        for i, (l, m, n) in enumerate(zip(self.l_arr_no_mask, self.m_arr_no_mask, self.n_arr_no_mask)):
-            self.negative_mode_indexes[i] = self.special_index_map[(l.item(), -m.item(), n.item())]
+        self.negative_mode_indexes = self.xp.linspace(
+            0, self.num_teuk_modes - 1, self.num_teuk_modes, dtype=int
+        )
+        for i, (l, m, n) in enumerate(
+            zip(self.l_arr_no_mask, self.m_arr_no_mask, self.n_arr_no_mask)
+        ):
+            self.negative_mode_indexes[i] = self.special_index_map[
+                (l.item(), -m.item(), n.item())
+            ]
 
     def sanity_check_viewing_angles(self, theta: float, phi: float):
         """Sanity check on viewing angles.
@@ -472,7 +480,7 @@ class SchwarzschildEccentric(SphericalHarmonic):
             test = val < 0.0
             if test:
                 raise ValueError("{} is negative. It must be positive.".format(key))
-            
+
         if m1 < m2:
             raise ValueError(
                 "Massive black hole mass must be larger than the compact object mass. (m1={}, m2={})".format(
@@ -586,7 +594,7 @@ class KerrEccentricEquatorial(SphericalHarmonic):
             test = val < 0.0
             if test:
                 raise ValueError("{} is negative. It must be positive.".format(key))
-        
+
         if m1 < m2:
             raise ValueError(
                 "Massive black hole mass must be larger than the compact object mass. (m1={}, m2={})".format(
@@ -745,14 +753,14 @@ class Pn5AAK(Citable):
             test = val < 0.0
             if test:
                 raise ValueError("{} is negative. It must be positive.".format(key))
-        
+
         if m1 < m2:
             raise ValueError(
                 "Massive black hole mass must be larger than the compact object mass. (m1={}, m2={})".format(
                     m1, m2
                 )
             )
-        
+
         if a < 0:
             # flip convention
             get_logger().warning(

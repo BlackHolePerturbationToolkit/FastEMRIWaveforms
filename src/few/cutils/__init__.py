@@ -1,7 +1,7 @@
 import dataclasses
 import enum
-import typing
 import types
+import typing
 
 from ..utils.exceptions import FewException
 
@@ -291,6 +291,7 @@ class _CudaBackend(Backend):
         import ctypes
         import importlib
         import pathlib
+
         from ..utils.exceptions import ExceptionGroup
 
         try:
