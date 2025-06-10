@@ -1,7 +1,0 @@
-A summary of flux data at each orbit in the grid.  There are 20 columns in this file:
-
-1: a  2: p  3: e  4: xI  5: E  6: Lz  7: Q  8: plso
-9: EdotI  10: EdotH  11: LzdotI  12: LzdotH  13: QdotI  14: QdotH
-15: pdotI  16: pdotH  17: edotI  18: edotH  19: xIdotI  20: xIdotH
-
-Columns 9 — 14 are determined from the Teukolsky data; columns 15 — 20 come from applying the Jacobian for Kerr orbits to those fluxes, and are only “correct” in an orbit-averaged (ie adiabatic) sense.
