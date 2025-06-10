@@ -1,10 +1,16 @@
-# few: Fast EMRI Waveforms
+# few: FastEMRIWaveforms
 
-This package contains the highly modular framework for fast and accurate extreme mass ratio inspiral (EMRI) waveforms from [arxiv.org/2104.04582](https://arxiv.org/abs/2104.04582) and [arxiv.org/2008.06071](https://arxiv.org/abs/2008.06071). The waveforms in this package combine a variety of separately accessible modules to form EMRI waveforms on both CPUs and GPUs. Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the [documentation](https://bhptoolkit.org/FastEMRIWaveforms/) for further information on these modules. The code can be found on Github [here](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms). The data necessary for various modules in this package will automatically download the first time it is needed. If you would like to view the data, it can be found on [Zenodo](https://zenodo.org/record/3981654). The current and all past code release zip files can also be found on Zenodo [here](https://zenodo.org/record/3969004). Please see the [citation](#citation) section below for information on citing FEW.
+[![Documentation Status](https://app.readthedocs.org/projects/fastemriwaveforms/badge/?version=latest)](https://fastemriwaveforms.readthedocs.io/en/latest/)
+[![DOI](https://zenodo.org/badge/223486766.svg)](https://doi.org/10.5281/zenodo.3969004)
 
-This package is a part of the [Black Hole Perturbation Toolkit](https://bhptoolkit.org/).
+This package contains a highly modular framework for the rapid generation of accurate extreme-mass-ratio inspiral (EMRI) waveforms. FEW combines a variety of separately accessible modules to construct EMRI waveform models for both CPUs and GPUs.
 
-If you use all or any parts of this code, please cite [arxiv.org/2104.04582](https://arxiv.org/abs/2104.04582) and [arxiv.org/2008.06071](https://arxiv.org/abs/2008.06071). See the [documentation](https://bhptoolkit.org/FastEMRIWaveforms/) to properly cite specific modules.
+* Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the [documentation](https://fastemriwaveforms.readthedocs.io/en/latest) for further information on these modules. 
+* The code can be found on Github [here](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms). 
+* The data necessary for various modules in this package will automatically download the first time it is needed. If you would like to view the data, it can be found on [Zenodo](https://zenodo.org/record/3981654). 
+* The current and all past code release zip files can also be found on Zenodo [here](https://zenodo.org/record/3969004). 
+
+**Please see the [citation](#citation) section below for information on citing FEW.** This package is part of the [Black Hole Perturbation Toolkit](https://bhptoolkit.org/).
 
 ## Getting started
 
@@ -34,8 +40,8 @@ $ nvidia-smi
 You may also install `fastemriwaveforms` directly using conda (including on Windows)
 as well as its CUDA 12.x plugin (only on Linux). It is strongly advised to:
 
-1. Ensure that your conda environment makes only use of the `conda-forge` channel
-2. Install `fastemriwaveforms` directly when building your conda environment, not afterward:
+1. Ensure that your conda environment makes sole use of the `conda-forge` channel
+2. Install `fastemriwaveforms` directly when building your conda environment, not afterwards
 
 ```sh
 # To run only once to ensure you only use the conda-forge channel
@@ -102,8 +108,7 @@ The above exception was the direct cause of the following exception:
 few.cutils.BackendAccessException: Backend 'cuda12x' is unavailable. See previous error messages.
 ```
 
-Once FEW is working and the expected backends are selected, you may see
-[examples notebook](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/FastEMRIWaveforms_tutorial.ipynb)
+Once FEW is working and the expected backends are selected, check out the [examples notebooks](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/)
 on how to start with this software.
 
 ## Installing from sources
@@ -291,29 +296,15 @@ pip install -e '.[dev, testing]'
 
 This will install necessary packages for building the documentation (`sphinx`, `pypandoc`, `sphinx_rtd_theme`, `nbsphinx`) and to run the tests.
 
-The documentation source files are in `docs/source`. To compile the documentation, change to the `docs` directory and run `make html`.
+The documentation source files are in `docs/source`. To compile the documentation locally, change to the `docs` directory and run `make html`.
 
 ## Versioning
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags).
 
-## Authors/Developers
+## Contributors
 
-* **Michael Katz**
-* Lorenzo Speri
-* Christian Chapman-Bird
-* Alvin J. K. Chua
-* Niels Warburton
-* Scott Hughes
-
-### Contributors
-
-* Philip Lynch
-* Soichiro Isoyama
-* Ryuichi Fujita
-* Monica Rizzo
-* Ollie Burke
-* Maxime Pigou
+A (non-exhaustive) list of contributors to the FEW code can be found in [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 ## License
 
