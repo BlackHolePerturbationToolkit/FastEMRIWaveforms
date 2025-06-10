@@ -1,0 +1,271 @@
+repositories:
+  - name: bhptk
+    url_pattern: "https://download.bhptoolkit.org/few/data/15624459/%(filename)s"
+  - name: bhptk_kerreq
+    url_pattern: "https://download.bhptoolkit.org/few/data/KerrEq/%(filename)s"
+  - name: zenodo
+    url_pattern: "https://zenodo.org/record/15624459/files/%(filename)s"
+files:
+  - name: AmplitudeVectorNorm.dat
+    repositories:
+      - bhptk
+      - zenodo
+    checksums:
+      - algorithm: sha256
+        value: df04fd629353703d140fad80b6877e0b51e0944f1ba60c50412d66df422752e1
+    tags: [testfile]
+  - name: FluxNewMinusPNScaled_fixed_y_order.dat
+    repositories:
+      - bhptk
+      - zenodo
+    checksums:
+      - algorithm: sha256
+        value: c551ace42fbc79febbda132a78868e20900a0a97a06fa4f4d4bf23b12cc1517c
+    tags: [testfile]
+  - name: SchwarzschildEccentricInput.hdf5
+    repositories:
+      - bhptk
+      - zenodo
+    checksums:
+      - algorithm: sha256
+        value: edb90365f3a5ee39b92ea1ebeb96c916d059f0835234b768087d9b7e80d1bede
+    tags: [testfile]
+  - name: Teuk_amps_a0.0_lmax_10_nmax_30_new.h5
+    repositories:
+      - bhptk
+      - zenodo
+    checksums:
+      - algorithm: sha256
+        value: b3e7d7b215dd2ac472b598e6fee762935dd9909a23a321b894c7b372bc0ca247
+    tags: [testfile]
+  - name: KerrEqEccAmpCoeffs_a0.000.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 9375192d46b956dbcff659d62ba3e1c19b6c9fefe07d220c14cc8de378da30fa
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a-0.100.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 71e141a9b7c6d097ff0f10abff071b5fd4945b98f08754e32321a56b9a545ada
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a0.100.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: f7ba5bddbe96e27b33aa399e0d0ba5a38da1d39d12b695b372204b928dab98ee
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a-0.200.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: e4abd4f6ca32a06bdbcdac3ff8922a052c42febcd51570699d0e9cd075623ac5
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a0.200.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: ea23f63fc09422530b5dc7477e86fb5d4894f1afb2740054898c4dd1c733fdf8
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a-0.300.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 39e97dca5860022a17dbdc9e15e807ab11adb26de121d20b0b18d86b262b0eb5
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a0.300.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 5156660332fc35f78d8135d50db0f73b7c391c2d48debca26989c8d8feb17c77
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a-0.400.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 0574813b6b700f13f95b79b365fd9bf3a2bd915624843ddd57c77bd1335126cb
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a0.400.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 1cd5f2f8ec0e7349eaeecd2239955971c011ac6ef84e101fc55409e6dce04cf6
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a-0.500.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: b298e10375db60e3aa54e6df5b8a7c5de22951321ea21f2b90868b8aea309df2
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a0.500.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 357d18906d1d95cd31f3ca0f131d6efabd5c229dec3fa2c286d57e99077c6b8c
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a-0.600.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 1242c221160c7230f126415b5da0df42d5c89ff47850de8291f568ae69f79041
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a0.600.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 133c6302d20dc04b19d8f9fab47e60ebdc8c1e47283457015c93648180f98dda
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a-0.700.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: eb8c627848d7fddbda0a073b22c98af4017d3cfd66e6410a82f98aebbbda21a8
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a0.700.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 5c00df8ffb8e8fbd231dd78dcd3e8432f5639fa6a0440c4f13ea14d209c37fdb
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a-0.800.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: a66ef6a9e3ffa6c18cd4ca219487d7abbaef659574976a526c6e888ebbd3a2c6
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a0.800.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 17fd3f5eecce4293dfab0b8873ba8c3ab3a79ee634c70ce6efd3e7475aa82d73
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a-0.900.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 769fb69991a3e086eba0aaba5a4d3b19beee9d1ea3e09dc93e9511568a370ed6
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a0.900.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 0f78c7eb1c600d3113e8205d7a2a841f457401925af2ebf4fcccf6d2e913180e
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a-0.950.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 064d6e1b9daa1e53cb3b785c4d00607a7ea6412ab94265d51669860c8c47f55f
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a0.950.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 1fbae563d164d79c1383460d7c6b57d0200dbed9a6c6212bf6748218f42463a9
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a-0.990.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 9c5aaab602840decae01281e80ca93d223506711f35ab1c3b473b428521729e8
+    tags: [deprecated]
+  - name: KerrEqEccAmpCoeffs_a0.990.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: b033737b4e0cdc4a9ba14a9f735700e89314e5d1553ef48ff0831bb9cf7c9b2e
+    tags: [deprecated]
+  - name: KerrEqEcc_Endot.dat
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: fee807fbdf7779096ce15712784464929ae4163ea252c8e2f869cf0d5522fec1
+    tags: [deprecated]
+  - name: KerrEqEcc_Ldot.dat
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 3c4b5ad70079c3fe6b108e4c086351d964aa5748d696a3b595131658245bcfd8
+    tags: [deprecated]
+  - name: KerrEqEcc_edot.dat
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 1032cab2fa2f68a4377f7eeda62d6981ca87b137db39ac5334245005a16f4692
+    tags: [deprecated]
+  - name: KerrEqEcc_pdot.dat
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 9ca4f76f5c98e0ada9c68d772fc028c65bd5c46a35a1581ff786942d3d1cdf42
+    tags: [deprecated]
+  - name: KerrEqEcc_x0.dat
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 43ca7fb0eecbd4f77a509be9a16342293961037b3ae35f837e6756a0f9e5bf26
+    tags: [deprecated]
+  - name: KerrEqEcc_x1.dat
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 7a55fddc2d8d28d4d4196f9748a68fe791b96870c8af74112e1abad209b39adb
+    tags: [deprecated]
+  - name: KerrEqEcc_x2.dat
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 9a1d871ff9dd9fb9acf5a8632142f070222fff0a1fb3a57cebc625a87e486589
+    tags: [deprecated]
+  - name: Separatrix_psep.dat
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 136c21380ddea50790ae979a76338abd05116117290f488bcd9fdd3794d6933a
+    tags: [deprecated]
+  - name: Separatrix_x0.dat
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 0459528b0f20ce6718443f80eb54a81a0e52104d3cd42eba0a041788f681e2a6
+    tags: [deprecated]
+  - name: Separatrix_x1.dat
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: 29600eaeabe5d0e5a8c9a4f477e7f56444e4407f880cc2b554cb6ed8aedb8a86
+    tags: [deprecated]
+  - name: KerrEccEqFluxData.h5
+    repositories:
+      - bhptk
+      - zenodo
+    checksums:
+      - algorithm: sha256
+        value: db332e617223a650eb9f890c610e928afd095edea1454b544ad06651c03a5014
+    tags: [testfile]
+  - name: ZNAmps_l10_m10_n55_DS2Outer.h5
+    repositories:
+      - bhptk
+      - zenodo
+    checksums:
+      - algorithm: sha256
+        value: 3236d8b5eff618242291e9eeb24638dbbbb82fac464ae575dc3f2ba158c54834
+    tags: [testfile, high_memory, kerr]
+  - name: ZNAmps_l10_m10_n55.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: e3a40557038a32ca86e42a862dbb1a8d8cf0138915a1e28eeba96e438d20dc6f
+    tags: [deprecated, high_memory, kerr]
+  - name: ZNAmps_l10_m10_n55_DS2.h5
+    repositories: [bhptk_kerreq]
+    checksums:
+      - algorithm: sha256
+        value: ca29bde00dac996a579445aa996e98da7666d8da32fbaa429adb81dfc687b08d
+    tags: [deprecated, high_memory, kerr]
+  - name: LPA.txt
+    checksums:
+      - algorithm: sha256
+        value: a0aa28e9accfd05b8b2aceb6799b471bcb8d1756fb7b0bff61957a985a40c6c1
+    tags: [testfile]

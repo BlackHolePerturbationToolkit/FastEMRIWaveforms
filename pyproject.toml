@@ -1,0 +1,180 @@
+[build-system]
+build-backend = "scikit_build_core.build"
+
+requires = [ "cython", "numpy", "scikit-build-core" ]
+
+[project]
+name = "fastemriwaveforms" #@NAMESUFFIX@
+
+description = "Fast and accurate EMRI Waveforms."
+
+readme = "README.md"
+
+maintainers = [
+  { name = "Michael Katz", email = "mikekatz04@gmail.com" },
+  { name = "Christian Chapman-Bird", email = "c.chapmanbird@gmail.com" },
+]
+
+authors = [
+  { name = "Michael Katz" },
+  { name = "Lorenzo Speri" },
+  { name = "Christian Chapman-Bird" },
+  { name = "Alvin J. K. Chua" },
+  { name = "Niels Warburton" },
+  { name = "Scott Hughes" },
+]
+requires-python = ">=3.9"
+
+classifiers = [
+  "Environment :: GPU :: NVIDIA CUDA",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: English",
+  "Programming Language :: C++",
+  "Programming Language :: Cython",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+# version is deduced from the lattest git tag
+# description is the docstring at the top of src/few/__init__.py
+dynamic = [ "version" ]
+
+dependencies = [
+  "exceptiongroup; python_version<'3.11'", # To access ExceptionGroup with Python 3.9 and 3.10
+  "h5py",
+  "jsonschema",                            # To validate content of file registry
+  "lisaconstants",
+  "multispline",
+  "numba",
+  "numpy",
+  "nvidia-ml-py",                          # To detect CUDA version if any
+  "platformdirs",                          # To locate config and data dir on all platforms
+  "pydantic",                              # To handle citations and references with advanced dataclasses
+  "pyyaml",                                # To read file registry
+  "requests",                              # To download files automatically
+  "rich",                                  # To display downlaod progress bar
+  "scipy",
+  "tqdm",
+  "wrapt",
+  #@DEPS_CUPYCUDA@,
+  #@DEPS_FEWCORE@,
+]
+
+optional-dependencies.doc = [
+  "ipykernel",
+  "ipython",
+  "ipywidgets",
+  "myst-parser",
+  "nbsphinx",
+  "pypandoc",
+  "sphinx",
+  "sphinx-rtd-theme",
+  "sphinx-tippy",
+]
+
+optional-dependencies.sampling = [
+  "eryn",
+  "fastlisaresponse",
+  "lisaanalysistools",
+  "lisatools",
+]
+
+optional-dependencies.testing = [
+  "matplotlib",
+]
+
+urls.Documentation = "https://bhptoolkit.org/FastEMRIWaveforms/html/index.html"
+urls.Download = "https://pypi.org/project/fastemriwaveforms/#files"
+urls.Homepage = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms"
+urls.Source = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms"
+urls.Tracker = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/issues"
+
+scripts.few_citations = "few.cmd.citations:main" #@SKIP_PLUGIN@
+scripts.few_files = "few.cmd.files:main"         #@SKIP_PLUGIN@
+
+[tool.setuptools_scm]
+version_scheme = "no-guess-dev"
+local_scheme = "node-and-date"
+version_file = "src/few/_version.py"
+#@FALLBACK_VERSION@
+
+[tool.scikit-build]
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+sdist.include = [
+  "src/few/_version.py",
+  "src/few/git_version.py",                 #@SKIP_PLUGIN@
+  "src/few_backend_cuda11x/git_version.py",
+  "src/few_backend_cuda12x/git_version.py",
+  "tests/",
+]
+sdist.exclude = [
+  ".devcontainer/",
+  ".github/",
+  "dataset-preprocessing/",
+  "docs/",
+  "examples/",
+  ".cmake-format.yaml",
+  ".gitignore",
+  ".pre-commit-config.yaml",
+  "src/few/_editable.py",
+  "src/few/tests/base.py",
+  "src/few/git_version.py.in",
+]
+
+wheel.exclude = [
+  "**.pyx",
+  "**.cu",
+  "**.cxx",
+  "**.hh",
+  "**.h",
+  "**.hpp",
+  "**/CMakeLists.txt",
+  "lib/pkgconfig",
+  "lib/cmake",
+  "lib/*.so",
+  "lib/*.a",
+]
+
+[tool.scikit-build.wheel.packages]
+few = "src/few"       #@SKIP_PLUGIN@
+"few/tests" = "tests" #@SKIP_PLUGIN@
+
+[tool.ruff]
+
+extend-include = [
+  "!*.py",
+  # Enable Ruff on a white-list approach for now
+  "!src/few/files/manager.py",
+  "!src/few/files/registry.py",
+  "!src/few/utils/config.py",
+  "!src/few/utils/exceptions.py",
+  "!src/few/utils/globals.py",
+]
+
+lint.extend-select = [
+  "I",
+  "T201", # Fail when "print" is used, to be replaced with logger calls
+]
+
+lint.ignore = [ "E741" ]
+
+lint.extend-per-file-ignores."*.ipynb" = [ "T201" ] # Allow "print" statements in notebooks
+
+[tool.pyproject-fmt]
+max_supported_python = "3.13"
+
+[tool.coverage]
+paths.source = [
+  "src/",
+  "**/site-packages/",
+]
+
+report.omit = [
+  "*/few/_version.py",
+  "*/few/tests/*.py",
+  "*/few/git_version.py",
+  "*/few_backend_*/git_version.py",
+]

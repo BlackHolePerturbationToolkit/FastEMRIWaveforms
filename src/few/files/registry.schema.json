@@ -1,0 +1,168 @@
+{
+    "$defs": {
+        "checksum": {
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "algorithm": {
+                                "const": "sha256"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "value": {
+                                "$ref": "#/$defs/checksum_value_64"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "algorithm": {
+                                "const": "sha1"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "value": {
+                                "$ref": "#/$defs/checksum_value_40"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "algorithm": {
+                                "const": "md5"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "value": {
+                                "$ref": "#/$defs/checksum_value_32"
+                            }
+                        }
+                    }
+                }
+            ],
+            "properties": {
+                "algorithm": {
+                    "$ref": "#/$defs/checksum_algorithm"
+                }
+            },
+            "required": [
+                "algorithm",
+                "value"
+            ],
+            "type": "object"
+        },
+        "checksum_algorithm": {
+            "enum": [
+                "sha256",
+                "sha1",
+                "md5"
+            ],
+            "type": "string"
+        },
+        "checksum_value_32": {
+            "pattern": "^[0-9a-fA-F]{32}$",
+            "type": "string"
+        },
+        "checksum_value_40": {
+            "pattern": "^[0-9a-fA-F]{40}$",
+            "type": "string"
+        },
+        "checksum_value_64": {
+            "pattern": "^[0-9a-fA-F]{64}$",
+            "type": "string"
+        },
+        "file": {
+            "properties": {
+                "checksums": {
+                    "items": {
+                        "$ref": "#/$defs/checksum"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                },
+                "name": {
+                    "$ref": "#/$defs/file_name"
+                },
+                "repositories": {
+                    "items": {
+                        "$ref": "#/$defs/repository_name"
+                    },
+                    "minItems": 0,
+                    "type": "array"
+                },
+                "tags": {
+                    "items": {
+                        "$ref": "#/$defs/file_tag"
+                    },
+                    "type": "array"
+                }
+            },
+            "required": [
+                "name"
+            ],
+            "type": "object"
+        },
+        "file_name": {
+            "type": "string"
+        },
+        "file_tag": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*",
+            "type": "string"
+        },
+        "repository": {
+            "properties": {
+                "name": {
+                    "$ref": "#/$defs/repository_name"
+                },
+                "url_pattern": {
+                    "$ref": "#/$defs/repository_url_pattern"
+                }
+            },
+            "required": [
+                "name",
+                "url_pattern"
+            ],
+            "type": "object"
+        },
+        "repository_name": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*",
+            "type": "string"
+        },
+        "repository_url_pattern": {
+            "type": "string"
+        }
+    },
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "properties": {
+        "files": {
+            "items": {
+                "$ref": "#/$defs/file"
+            },
+            "type": "array"
+        },
+        "repositories": {
+            "items": {
+                "$ref": "#/$defs/repository"
+            },
+            "minItems": 1,
+            "type": "array"
+        }
+    },
+    "required": [
+        "repositories",
+        "files"
+    ],
+    "title": "FastEMRIWaveforms file registry",
+    "type": "object"
+}

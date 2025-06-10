@@ -6,8 +6,10 @@ Amplitude Package
 
 .. automodule:: few.amplitude
 
-Schwarzschild Eccentric Amplitudes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: few.amplitude.base.AmplitudeBase
+    :members:
+    :show-inheritance:
+    :inherited-members:
 
 ROMAN Network
 ^^^^^^^^^^^^^^
@@ -20,7 +22,7 @@ ROMAN Network
 2D Cubic Spline Interpolation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automodule:: few.amplitude.interp2dcubicspline
+.. automodule:: few.amplitude.ampinterp2d
     :members:
     :show-inheritance:
     :inherited-members:

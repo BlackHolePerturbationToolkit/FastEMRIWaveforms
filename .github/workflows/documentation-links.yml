@@ -1,0 +1,15 @@
+name: readthedocs/actions
+on:
+  pull_request_target:
+    types:
+      - opened
+permissions:
+  pull-requests: write
+jobs:
+  documentation-links:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.base.repo.full_name == 'BlackHolePerturbationToolkit/FastEMRIWaveforms'
+    steps:
+      - uses: readthedocs/actions/preview@v1
+        with:
+          project-slug: "fastemriwaveforms"

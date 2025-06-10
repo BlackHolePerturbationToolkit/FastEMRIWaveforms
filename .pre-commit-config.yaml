@@ -1,0 +1,44 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks.git
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-ast
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-xml
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: ['--fix=auto']
+      - id: pretty-format-json
+        args: [--autofix, --indent, "4"]
+      - id: requirements-txt-fixer
+      - id: trailing-whitespace
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.15.0
+    hooks:
+      - id: yamlfmt
+        args: [-formatter, scan_folded_as_literal=true]
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+        additional_dependencies: ['PyYAML']
+      - id: cmake-lint
+        additional_dependencies: ['PyYAML']
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: "v2.5.0"
+    hooks:
+      - id: pyproject-fmt
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.9.2
+    hooks:
+      # Run the linter.
+      - id: ruff
+        args: [--fix]
+      # Run the formatter.
+      - id: ruff-format

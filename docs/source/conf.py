@@ -14,6 +14,10 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+import os
+import pathlib
+
+import few
 
 # -- Project information -----------------------------------------------------
 
@@ -22,69 +26,100 @@ copyright = "2020, Michael Katz, Alvin Chua, Niels Warburton"
 author = "Michael Katz, Alvin Chua, Niels Warburton"
 
 # The full version, including alpha/beta/rc tags
-release = "0.1.0"
+release = few.__version__
 
-import pypandoc
 
-output = pypandoc.convert_file("../../README.md", "rst")
-with open("README.rst", "w") as fp:
-    fp.write(output)
+# -- Copy example notebook --
+root_dir = pathlib.Path(__file__).parent.parent.parent
+src_dir = root_dir / "examples"
+trg_dir = root_dir / "docs" / "source" / "tutorial"
+trg_dir.mkdir(parents=True, exist_ok=True)
 
-import sys, os
-
-dir_path = os.path.dirname(os.path.realpath(__file__)) + "/../../"
-
-sys.path.insert(0, os.path.abspath(dir_path))
-sys.path.insert(0, os.path.abspath(dir_path + "few/"))
-sys.path.insert(0, os.path.abspath(dir_path + "few/amplitude/"))
-sys.path.insert(0, os.path.abspath(dir_path + "few/trajectory/"))
-
-import shutil
-
-shutil.copy(
-    dir_path + "examples/FastEMRIWaveforms_tutorial.ipynb",
-    dir_path + "docs/source/tutorial/FastEMRIWaveforms_tutorial.ipynb",
-)
-
-shutil.copy(
-    dir_path + "examples/Tutorial_FD_construction_single_mode.ipynb",
-    dir_path + "docs/source/tutorial/Tutorial_FD_construction_single_mode.ipynb",
-)
-
-shutil.copy(
-    dir_path + "examples/Tutorial_FrequencyDomain_Waveforms.ipynb",
-    dir_path + "docs/source/tutorial/Tutorial_FrequencyDomain_Waveforms.ipynb",
-)
-
+for example in (
+    "Trajectory_tutorial",
+    "Amplitude_tutorial",
+    "modeselect",
+    "modesummation",
+    "cubicspline",
+    "swsh",
+    "utility",
+    "waveform",
+):
+    filename = example + ".ipynb"
+    if not (trg_dir / filename).is_file():
+        os.symlink(src_dir / filename, trg_dir / filename)
+try:
+    os.symlink(src_dir / "files", trg_dir / "files", target_is_directory=True)
+except FileExistsError:
+    pass
 
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-html_theme = "sphinx_rtd_theme"
 extensions = [
+    "myst_parser",
     "sphinx.ext.autodoc",
+    "sphinx.ext.doctest",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "sphinx_rtd_theme",
+    "sphinx_tippy",
     "nbsphinx",
     "sphinx.ext.mathjax",
+    "IPython.sphinxext.ipython_console_highlighting",
 ]
 
-source_suffix = [".rst"]
-
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
-
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+source_suffix = [".rst", ".md"]
+templates_path = []
 
-import sphinx_rtd_theme
+
+# -- Extensions configuration ---------------------------------------------------
 
 autodoc_member_order = "bysource"
+autodoc_typehints = "description"
+
+doctest_global_setup = """
+import few
+"""
+doctest_global_cleanup = """
+few.utils.globals.reset(True)
+"""
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3.11", None),
+}
+
+linkcheck_ignore = [r"https://dx.doi.org/", r"https://hpc.pages.cnes.fr/.*"]
+
+myst_heading_anchors = 2
+myst_url_schemes = {
+    "http": None,
+    "https": None,
+    "mailto": None,
+    "ftp": None,
+    "vscode": None,
+}
+
+
+nbsphinx_allow_errors = True
+nbsphinx_execute = "auto"
+nbsphinx_kernel_name = "python3"
+nbsphinx_requirejs_path = ""
+
+if os.getenv("READTHEDOCS", None) is not None:
+    nbsphinx_execute = "never"
+    nbsphinx_allow_errors = False
+
+tippy_add_class = "has-tippy"
+tippy_js = (
+    "https://unpkg.com/@popperjs/core@2",
+    "https://unpkg.com/tippy.js@6",
+    "https://unpkg.com/requirejs@2",
+)
 
 
 def skip(app, what, name, obj, would_skip, options):
@@ -93,28 +128,33 @@ def skip(app, what, name, obj, would_skip, options):
     return would_skip
 
 
+reftarget_aliases = {"CITATION.cff": "CITATION"}
+
+
+def substitute_ref_targets(_, doctree):
+    from sphinx.addnodes import pending_xref
+
+    for node in doctree.traverse(condition=pending_xref):
+        if (alias := node.get("reftarget", None)) in reftarget_aliases:
+            node["reftarget"] = reftarget_aliases[alias]
+
+
 def setup(app):
     app.connect("autodoc-skip-member", skip)
+    app.connect("doctree-read", substitute_ref_targets)
 
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
 html_theme = "sphinx_rtd_theme"
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+html_css_file = ["tippy.css"]
 
 html_theme_options = {
-    "display_version": True,
     "prev_next_buttons_location": "both",
     "style_nav_header_background": "coral",
     # Toc options
-    "collapse_navigation": True,
+    "collapse_navigation": False,
     "sticky_navigation": True,
     "navigation_depth": 4,
 }

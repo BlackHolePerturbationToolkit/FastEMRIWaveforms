@@ -6,7 +6,7 @@ Summation Package
 
 .. automodule:: few.summation
 
-.. autoclass:: few.utils.baseclasses.SummationBase
+.. autoclass:: few.summation.base.SummationBase
     :members:
     :show-inheritance:
     :inherited-members:

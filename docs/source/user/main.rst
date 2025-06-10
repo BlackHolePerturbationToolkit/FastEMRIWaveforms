@@ -6,7 +6,7 @@ The Fast EMRI Waveform (few) package provides multiple complete models/waveforms
 Generic Waveform Generator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: few.waveform.GenerateEMRIWaveform
+.. autoclass:: few.waveform.waveform.GenerateEMRIWaveform
     :members:
     :show-inheritance:
     :inherited-members:
@@ -14,10 +14,23 @@ Generic Waveform Generator
 Prebuilt Waveform Models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Fast Kerr Eccentric Equatorial Flux-based Waveform
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: few.waveform.waveform.FastKerrEccentricEquatorialFlux
+    :members:
+    :show-inheritance:
+    :inherited-members:
+
 Fast Schwarzschild Eccentric Flux-based Waveform
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: few.waveform.FastSchwarzschildEccentricFlux
+.. autoclass:: few.waveform.waveform.FastSchwarzschildEccentricFlux
+    :members:
+    :show-inheritance:
+    :inherited-members:
+
+.. autoclass:: few.waveform.waveform.FastSchwarzschildEccentricFluxBicubic
     :members:
     :show-inheritance:
     :inherited-members:
@@ -25,7 +38,7 @@ Fast Schwarzschild Eccentric Flux-based Waveform
 Slow Schwarzschild Eccentric Flux-based Waveform
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: few.waveform.SlowSchwarzschildEccentricFlux
+.. autoclass:: few.waveform.waveform.SlowSchwarzschildEccentricFlux
     :members:
     :show-inheritance:
     :inherited-members:
@@ -33,13 +46,26 @@ Slow Schwarzschild Eccentric Flux-based Waveform
 Generic Kerr AAK with 5PN Trajectory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: few.waveform.Pn5AAKWaveform
+.. autoclass:: few.waveform.waveform.Pn5AAKWaveform
     :members:
     :show-inheritance:
     :inherited-members:
 
 Base Classes
 ~~~~~~~~~~~~~
+
+Spherical Harmonic (Flux-based) Waveforms
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: few.utils.baseclasses.SphericalHarmonic
+    :members:
+    :show-inheritance:
+    :inherited-members:
+
+.. autoclass:: few.waveform.base.SphericalHarmonicWaveformBase
+    :members:
+    :show-inheritance:
+    :inherited-members:
 
 Schwarzschild Eccentric
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -49,7 +75,10 @@ Schwarzschild Eccentric
     :show-inheritance:
     :inherited-members:
 
-.. autoclass:: few.waveform.SchwarzschildEccentricWaveformBase
+Kerr Eccentric Equatorial
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: few.utils.baseclasses.KerrEccentricEquatorial
     :members:
     :show-inheritance:
     :inherited-members:
@@ -62,7 +91,7 @@ Schwarzschild Eccentric
     :show-inheritance:
     :inherited-members:
 
-.. autoclass:: few.waveform.AAKWaveformBase
+.. autoclass:: few.waveform.waveform.AAKWaveformBase
     :members:
     :show-inheritance:
     :inherited-members:
