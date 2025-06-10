@@ -18,7 +18,8 @@ Below is a list of those who have contributed code or data to the releases of FE
 	* [Maxime Pigou](https://github.com/mpigou) </br>
 	   Refactoring of build procedure; automation in CI of tests execution, wheels deployment to PyPI and documentation build (github page/readthedocs); development of config and file management utilities
    	* Scott Hughes </br>
-    		Generation of flux/amplitude data for cross-validation.
+    		Generation of flux/amplitude data for cross-validation and investigations of data-grid structure.
+	* Maurice Meus
 
 - FEW [v1.5.1](https://github.com/znasipak/FastEMRIWaveforms-Soton-Hackathon-2025/tree/v1.5.1) (Frequency domain waveform added)
 	* [Christian Chapman-Bird](https://github.com/cchapmanbird) </br>
