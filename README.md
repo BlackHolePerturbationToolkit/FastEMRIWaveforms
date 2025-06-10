@@ -312,7 +312,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Citation
 
-Please make sure to cite FEW papers and the FEW software on [Zenodo](https://zenodo.org/record/3969004). There are other papers that require citation based on the classes used. For most classes this applies to, you can find these by checking the `citation` attribute for that class. All references are detailed in the [CITATION.cff](CITATION.cff) file.
+Please make sure to cite FEW papers and the FEW software on [Zenodo](https://zenodo.org/record/3969004).
+We provide a set of prepared references in [PAPERS.bib](PAPERS.bib). There are other papers that require citation based on the classes used. For most classes this applies to, you can find these by checking the `citation` attribute for that class.  All references are detailed in the [CITATION.cff](CITATION.cff) file.
 
 ## Acknowledgments
 
