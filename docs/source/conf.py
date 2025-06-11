@@ -93,7 +93,12 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3.11", None),
 }
 
-linkcheck_ignore = [r"https://dx.doi.org/", r"https://hpc.pages.cnes.fr/.*"]
+linkcheck_ignore = [
+    r"https://dx.doi.org/",
+    r"https://hpc.pages.cnes.fr/.*",
+    r"https://jupyterhub.cnes.fr/.*",
+    r"https://bhptoolkit.org/FastEMRIWaveforms/.*",
+]
 
 myst_heading_anchors = 2
 myst_url_schemes = {

@@ -108,7 +108,7 @@ The above exception was the direct cause of the following exception:
 few.cutils.BackendAccessException: Backend 'cuda12x' is unavailable. See previous error messages.
 ```
 
-Once FEW is working and the expected backends are selected, check out the [examples notebooks](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/)
+Once FEW is working and the expected backends are selected, check out the [examples notebooks](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/examples/)
 on how to start with this software.
 
 ## Installing from sources
