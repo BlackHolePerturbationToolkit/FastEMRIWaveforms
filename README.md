@@ -7,8 +7,8 @@ This package contains a highly modular framework for the rapid generation of acc
 
 * Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the [documentation](https://fastemriwaveforms.readthedocs.io/en/latest) for further information on these modules.
 * The code can be found on Github [here](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms).
-* The data necessary for various modules in this package will automatically download the first time it is needed. If you would like to view the data, it can be found on [Zenodo](https://zenodo.org/record/3981654).
-* The current and all past code release zip files can also be found on Zenodo [here](https://zenodo.org/record/3969004).
+* The data necessary for various modules in this package will automatically download the first time it is needed. If you would like to view the data, it can be found on [Zenodo](https://zenodo.org/records/3981654).
+* The current and all past code release zip files can also be found on Zenodo [here](https://zenodo.org/records/3969004).
 
 **Please see the [citation](#citation) section below for information on citing FEW.** This package is part of the [Black Hole Perturbation Toolkit](https://bhptoolkit.org/).
 
@@ -108,7 +108,7 @@ The above exception was the direct cause of the following exception:
 few.cutils.BackendAccessException: Backend 'cuda12x' is unavailable. See previous error messages.
 ```
 
-Once FEW is working and the expected backends are selected, check out the [examples notebooks](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/examples/)
+Once FEW is working and the expected backends are selected, check out the [examples notebooks](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/examples/)
 on how to start with this software.
 
 ## Installing from sources
@@ -312,7 +312,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Citation
 
-Please make sure to cite FEW papers and the FEW software on [Zenodo](https://zenodo.org/record/3969004).
+Please make sure to cite FEW papers and the FEW software on [Zenodo](https://zenodo.org/records/3969004).
 We provide a set of prepared references in [PAPERS.bib](PAPERS.bib). There are other papers that require citation based on the classes used. For most classes this applies to, you can find these by checking the `citation` attribute for that class.  All references are detailed in the [CITATION.cff](CITATION.cff) file.
 
 ## Acknowledgments

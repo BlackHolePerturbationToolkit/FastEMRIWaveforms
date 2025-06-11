@@ -20,7 +20,7 @@ class CubicSplineInterpolant(ParallelModuleBase):
     `scipy.interpolate.CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html#cubicspline>`_.
     However, the most efficient way to use this method is in a customized
     cuda kernel. See the
-    `source code for the interpolated summation <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/few/cutils/src/interpolate.cu>`_
+    `source code for the interpolated summation <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/src/few/cutils/interpolate.cu>`_
     in cuda for an example of this.
 
     This class can be run on GPUs and CPUs.

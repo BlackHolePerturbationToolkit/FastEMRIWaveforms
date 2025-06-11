@@ -4,7 +4,7 @@ repositories:
   - name: bhptk_kerreq
     url_pattern: "https://download.bhptoolkit.org/few/data/KerrEq/%(filename)s"
   - name: zenodo
-    url_pattern: "https://zenodo.org/record/15624459/files/%(filename)s"
+    url_pattern: "https://zenodo.org/records/15624459/files/%(filename)s"
 files:
   - name: AmplitudeVectorNorm.dat
     repositories:
