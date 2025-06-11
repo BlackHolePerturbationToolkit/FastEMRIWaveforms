@@ -18,6 +18,11 @@ jobs:
         if: contains(github.event.head_commit.message, '[ci:build-pages]')
         run: |
           echo "FEWPAGE_BUILD=true" >> "$GITHUB_ENV"
+      - name: build on commit message
+        if: contains(github.event.head_commit.message, '[ci:publish-pages]')
+        run: |
+          echo "FEWPAGE_BUILD=true" >> "$GITHUB_ENV"
+          echo "FEWPAGE_PUBLISH=true" >> "$GITHUB_ENV"
       - name: execute notebooks on request
         if: contains(github.event.head_commit.message, '[doc:run-notebooks]')
         run: |
