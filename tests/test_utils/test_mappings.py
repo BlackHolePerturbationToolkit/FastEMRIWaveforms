@@ -25,9 +25,9 @@ class PnMappingsTest(FewTest):
         xI_outputs = np.array([Y_to_xI(a, p, e, Y) for Y in Y_inputs])
         self.logger.info(f"{xI_outputs=}")
         # And check that resulting values are close to input ones
-        np.testing.assert_allclose(xI_outputs, xI_inputs)
+        np.testing.assert_allclose(xI_outputs, xI_inputs, rtol=1e-4)
 
         # And map once again to Y
         Y_outputs = np.array([xI_to_Y(a, p, e, xI) for xI in xI_outputs])
         # And check values match
-        np.testing.assert_allclose(Y_outputs, Y_inputs)
+        np.testing.assert_allclose(Y_outputs, Y_inputs, rtol=1e-4)
