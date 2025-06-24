@@ -75,7 +75,7 @@ class ArticleReference(ReferenceABC):
     abbreviation: str
     authors: List[Author]
     title: str
-    journal: str
+    journal: Optional[str] = None
     year: int
     month: Optional[int] = None
     issue: Optional[int] = None
@@ -138,7 +138,8 @@ class ArticleReference(ReferenceABC):
             )
         )
         lines.append(format_line("title", "{" + self.title + "}"))
-        lines.append(format_line("journal", self.journal))
+        if self.journal is not None:
+            lines.append(format_line("journal", self.journal))
         lines.append(format_line("year", str(self.year)))
         if self.month is not None:
             lines.append(format_line("month", str(self.month)))
@@ -245,7 +246,7 @@ class REFERENCE(enum.Enum):
     AAK2 = "Chua:2017ujo"
     AK = "Barack:2003fp"
     FD = "Speri:2023jte"
-    FEW2 = "Chapman-Bird:2025xtd"
+    KERR_ECC_EQ = "Chapman-Bird:2025xtd"
 
     def __str__(self) -> str:
         return str(self.value)
@@ -318,7 +319,12 @@ def build_citation_registry() -> CitationRegistry:
     return CitationRegistry(**references, **{cff["title"]: to_reference(cff)})
 
 
-COMMON_REFERENCES = [REFERENCE.FEW, REFERENCE.LARGER_FEW, REFERENCE.FEW_SOFTWARE]
+COMMON_REFERENCES = [
+    REFERENCE.KERR_ECC_EQ,
+    REFERENCE.FEW,
+    REFERENCE.LARGER_FEW,
+    REFERENCE.FEW_SOFTWARE,
+]
 
 
 class Citable:
