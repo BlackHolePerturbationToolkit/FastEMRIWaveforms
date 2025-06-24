@@ -175,7 +175,8 @@ def _PN_L(q, p, e, Y):
     rhs_first_term = -_g2(q, p, e, Y) * E / h2
     rhs_sqrt = rhs_first_term**2 + (_f2(q, p, e, Y) * E * E - _d2(q, p, e, Y)) / h2
 
-    return rhs_first_term + sqrt(rhs_sqrt)
+    sgnY = 1 if Y > 0 else -1
+    return rhs_first_term + sgnY * sqrt(rhs_sqrt)
 
 
 @njit(fastmath=False)
