@@ -10,21 +10,22 @@ attribute.
 
 import abc
 import enum
-from typing import List, Optional, Sequence, Union
+from typing import Iterable, List, Optional, Union
 
 from pydantic import BaseModel
 
 from few.utils.exceptions import InvalidInputFile
 
 
+def _hyphen_replace(field: str) -> str:
+    return field.replace("_", "-")
+
+
 class HyphenUnderscoreAliasModel(BaseModel):
     """Pydantic model were hyphen replace underscore in field names."""
 
     class Config:
-        def hyphen_replace(field: str) -> str:
-            return field.replace("_", "-")
-
-        alias_generator = hyphen_replace
+        alias_generator = _hyphen_replace
         extra = "ignore"
         frozen = True
 
@@ -97,6 +98,9 @@ class ArticleReference(ReferenceABC):
           - The arXiv reference (e.g. "arxiv:1912.07609")
           - The primary class followed by '/' and the reference (e.g. "arxiv:gr-qc/1912.07609")
         """
+        if self.identifiers is None:
+            return None
+
         for identifier in self.identifiers:
             if identifier.type != "other":
                 continue
@@ -181,6 +185,9 @@ class SoftwareReference(ReferenceABC):
     @property
     def doi(self) -> Optional[str]:
         """Return the first DOI in identifiers if any"""
+        if self.identifiers is None:
+            return None
+
         for identifier in self.identifiers:
             if identifier.type == "doi":
                 return identifier.value
@@ -256,7 +263,7 @@ class CitationRegistry:
         """Return a Reference object from its key."""
         return self.registry[key if isinstance(key, str) else key.value]
 
-    def all(self) -> Sequence[Reference]:
+    def all(self) -> Iterable[Reference]:
         return self.registry.values()
 
 
@@ -338,7 +345,7 @@ class Citable:
         return "\n\n".join(bibtex_entries)
 
     @classmethod
-    def module_references(cls) -> List[Union[REFERENCE, str]]:
+    def module_references(cls) -> Iterable[Union[REFERENCE, str]]:
         """Method implemented by each class to define its list of references"""
         return COMMON_REFERENCES
 
