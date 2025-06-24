@@ -10,7 +10,7 @@ attribute.
 
 import abc
 import enum
-from typing import List, Optional, Union
+from typing import List, Optional, Sequence, Union
 
 from pydantic import BaseModel
 
@@ -256,6 +256,9 @@ class CitationRegistry:
         """Return a Reference object from its key."""
         return self.registry[key if isinstance(key, str) else key.value]
 
+    def all(self) -> Sequence[Reference]:
+        return self.registry.values()
+
 
 def build_citation_registry() -> CitationRegistry:
     """Read the package CITATION.cff and build the corresponding registry."""
@@ -321,18 +324,29 @@ class Citable:
         """Return the module references as a printable BibTeX string."""
         references = cls.module_references()
 
-        if Citable.registry is None:
-            from few import get_logger
+        registry = cls._get_registry()
 
-            get_logger().debug("Building the Citation Registry from CITATION.cff")
-            Citable.registry = build_citation_registry()
+        bibtex_entries = [registry.get(str(key)).to_bibtex() for key in references]
+        return "\n\n".join(bibtex_entries)
 
-        bibtex_entries = [
-            Citable.registry.get(str(key)).to_bibtex() for key in references
-        ]
+    @classmethod
+    def all_citations(cls) -> str:
+        """Return all the citations from the registry as printable BibTeX string"""
+        registry = cls._get_registry()
+
+        bibtex_entries = [entry.to_bibtex() for entry in registry.all()]
         return "\n\n".join(bibtex_entries)
 
     @classmethod
     def module_references(cls) -> List[Union[REFERENCE, str]]:
         """Method implemented by each class to define its list of references"""
         return COMMON_REFERENCES
+
+    @classmethod
+    def _get_registry(cls) -> CitationRegistry:
+        if Citable.registry is None:
+            from few import get_logger
+
+            get_logger().debug("Building the Citation Registry from CITATION.cff")
+            Citable.registry = build_citation_registry()
+        return Citable.registry
