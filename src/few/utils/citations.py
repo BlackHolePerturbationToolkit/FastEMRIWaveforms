@@ -10,21 +10,22 @@ attribute.
 
 import abc
 import enum
-from typing import List, Optional, Union
+from typing import Iterable, List, Optional, Union
 
 from pydantic import BaseModel
 
 from few.utils.exceptions import InvalidInputFile
 
 
+def _hyphen_replace(field: str) -> str:
+    return field.replace("_", "-")
+
+
 class HyphenUnderscoreAliasModel(BaseModel):
     """Pydantic model were hyphen replace underscore in field names."""
 
     class Config:
-        def hyphen_replace(field: str) -> str:
-            return field.replace("_", "-")
-
-        alias_generator = hyphen_replace
+        alias_generator = _hyphen_replace
         extra = "ignore"
         frozen = True
 
@@ -74,7 +75,7 @@ class ArticleReference(ReferenceABC):
     abbreviation: str
     authors: List[Author]
     title: str
-    journal: str
+    journal: Optional[str] = None
     year: int
     month: Optional[int] = None
     issue: Optional[int] = None
@@ -97,6 +98,9 @@ class ArticleReference(ReferenceABC):
           - The arXiv reference (e.g. "arxiv:1912.07609")
           - The primary class followed by '/' and the reference (e.g. "arxiv:gr-qc/1912.07609")
         """
+        if self.identifiers is None:
+            return None
+
         for identifier in self.identifiers:
             if identifier.type != "other":
                 continue
@@ -134,7 +138,8 @@ class ArticleReference(ReferenceABC):
             )
         )
         lines.append(format_line("title", "{" + self.title + "}"))
-        lines.append(format_line("journal", self.journal))
+        if self.journal is not None:
+            lines.append(format_line("journal", self.journal))
         lines.append(format_line("year", str(self.year)))
         if self.month is not None:
             lines.append(format_line("month", str(self.month)))
@@ -181,6 +186,9 @@ class SoftwareReference(ReferenceABC):
     @property
     def doi(self) -> Optional[str]:
         """Return the first DOI in identifiers if any"""
+        if self.identifiers is None:
+            return None
+
         for identifier in self.identifiers:
             if identifier.type == "doi":
                 return identifier.value
@@ -238,6 +246,7 @@ class REFERENCE(enum.Enum):
     AAK2 = "Chua:2017ujo"
     AK = "Barack:2003fp"
     FD = "Speri:2023jte"
+    KERR_ECC_EQ = "Chapman-Bird:2025xtd"
 
     def __str__(self) -> str:
         return str(self.value)
@@ -254,6 +263,9 @@ class CitationRegistry:
     def get(self, key: Union[str, REFERENCE]) -> Reference:
         """Return a Reference object from its key."""
         return self.registry[key if isinstance(key, str) else key.value]
+
+    def all(self) -> Iterable[Reference]:
+        return self.registry.values()
 
 
 def build_citation_registry() -> CitationRegistry:
@@ -307,7 +319,12 @@ def build_citation_registry() -> CitationRegistry:
     return CitationRegistry(**references, **{cff["title"]: to_reference(cff)})
 
 
-COMMON_REFERENCES = [REFERENCE.FEW, REFERENCE.LARGER_FEW, REFERENCE.FEW_SOFTWARE]
+COMMON_REFERENCES = [
+    REFERENCE.KERR_ECC_EQ,
+    REFERENCE.FEW,
+    REFERENCE.LARGER_FEW,
+    REFERENCE.FEW_SOFTWARE,
+]
 
 
 class Citable:
@@ -320,18 +337,29 @@ class Citable:
         """Return the module references as a printable BibTeX string."""
         references = cls.module_references()
 
+        registry = cls._get_registry()
+
+        bibtex_entries = [registry.get(str(key)).to_bibtex() for key in references]
+        return "\n\n".join(bibtex_entries)
+
+    @classmethod
+    def all_citations(cls) -> str:
+        """Return all the citations from the registry as printable BibTeX string"""
+        registry = cls._get_registry()
+
+        bibtex_entries = [entry.to_bibtex() for entry in registry.all()]
+        return "\n\n".join(bibtex_entries)
+
+    @classmethod
+    def module_references(cls) -> Iterable[Union[REFERENCE, str]]:
+        """Method implemented by each class to define its list of references"""
+        return COMMON_REFERENCES
+
+    @classmethod
+    def _get_registry(cls) -> CitationRegistry:
         if Citable.registry is None:
             from few import get_logger
 
             get_logger().debug("Building the Citation Registry from CITATION.cff")
             Citable.registry = build_citation_registry()
-
-        bibtex_entries = [
-            Citable.registry.get(str(key)).to_bibtex() for key in references
-        ]
-        return "\n\n".join(bibtex_entries)
-
-    @classmethod
-    def module_references(cls) -> List[Union[REFERENCE, str]]:
-        """Method implemented by each class to define its list of references"""
-        return COMMON_REFERENCES
+        return Citable.registry

@@ -12,8 +12,18 @@ def main():
         prog="few_citations",
         description="Export the citations associated to a given module of the FastEMRIWaveforms package",
     )
-    parser.add_argument("module")
+    parser.add_argument("module", nargs="?")
+    parser.add_argument(
+        "--all", action="store_true", dest="all", help="Print all available citations"
+    )
+
     args = parser.parse_args(sys.argv[1:])
+
+    arg_all: bool = args.all
+
+    if arg_all:
+        print(Citable.all_citations())  # noqa T201
+        return
 
     few_class: str = args.module
 
