@@ -38,6 +38,9 @@ set(FEW_CUDA_ARCH "native"
     CACHE STRING "CUDA Architecture targetted for FEW compilation (see doc of \
           CMAKE_CUDA_ARCHITECTURES).")
 
+set(FEW_MARCH "native"
+    CACHE STRING "Value of the -march compiler option if supported by compiler")
+
 # FEW_LAPACKE_DETECT_WITH sets the tool used to try to detect LAPACKE locally.
 # Possible values are:
 #
@@ -87,6 +90,20 @@ add_library(fastemriwaveforms INTERFACE)
 
 # ---- Enable building the CPU version of backends by default ----
 set_target_properties(fastemriwaveforms PROPERTIES WITH_CPU ON)
+
+# ---- Test whether the FEW_MARCH option is supported by CXX compiler ----
+include(CheckCXXCompilerFlag)
+set(FEW_MARCH_CXX_OPT "-march=${FEW_MARCH}")
+check_cxx_compiler_flag("${FEW_MARCH_CXX_OPT}" CXX_COMPILER_SUPPORTS_FEW_MARCH)
+if(CXX_COMPILER_SUPPORTS_FEW_MARCH)
+  set_property(TARGET fastemriwaveforms PROPERTY CXX_MARCH
+                                                 "${FEW_MARCH_CXX_OPT}")
+  message(STATUS "The CXX compiler supports option '${FEW_MARCH_CXX_OPT}'.")
+else()
+  message(
+    WARNING "The CXX compiler does not support option '${FEW_MARCH_CXX_OPT}'. \
+      It will be ignored.")
+endif()
 
 # ---- Optionnally check if GPU is supported ----
 if(FEW_WITH_GPU STREQUAL "AUTO")
