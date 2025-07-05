@@ -75,12 +75,12 @@ class SummationTest(FewBackendTest):
         nu = m1 * m2 / (m1 + m2)**2
         traj = traj_module(m1, m2, 0.4, 20., 0.6, 1., T=0.1, err=1e-15)
         t_spl = traj_module.inspiral_generator.integrator_t_cache
-        coeff_spl = traj_module.inspiral_generator.integrator_spline_coeff[:,[3,5],:] / nu
+        coeff_spl = traj_module.inspiral_generator.integrator_spline_coeff[:,3:6,:] / nu
 
         t_eval = np.linspace(0, t_spl[-1], 10001)
         dt = t_eval[1] - t_eval[0]
         phases_eval = traj_module.inspiral_generator.eval_integrator_spline(t_eval)[
-            :, [3, 5]
+            :, 3:6
         ].T
 
         # now we make up the rest
@@ -107,6 +107,7 @@ class SummationTest(FewBackendTest):
         # dummy mode indices
         l_arr = np.ones(num_modes) * 2  # not used in this fictitious summation
         m_arr = np.random.randint(2, 5, num_modes)
+        k_arr = np.random.randint(0, 2, num_modes)
         n_arr = np.random.randint(-4, 4, num_modes)
 
         # dummy 'spherical harmonics'
@@ -116,13 +117,15 @@ class SummationTest(FewBackendTest):
         # perform the summation manually
         mode_phase_values = (
             phases_eval[0, :, None] * m_arr[None, :]
-            + phases_eval[1, :, None] * n_arr[None, :]
+            + phases_eval[1, :, None] * k_arr[None, :]
+            + phases_eval[2, :, None] * n_arr[None, :]
         )
         phasors = amplitude * np.exp(-1j * mode_phase_values)
         manual_sum = phasors.sum(-1)
 
         l_arr = summation.xp.asarray(l_arr)
         m_arr = summation.xp.asarray(m_arr)
+        k_arr = summation.xp.asarray(k_arr)
         n_arr = summation.xp.asarray(n_arr)
 
         few_sum = summation(
@@ -133,6 +136,7 @@ class SummationTest(FewBackendTest):
             coeff_spl,
             l_arr,
             m_arr,
+            k_arr,
             n_arr,
             T=t_spl[-1] / YRSID_SI,
             dt=dt,
@@ -164,13 +168,15 @@ class SummationTest(FewBackendTest):
 
         # dummy phases: linear ramp
         Phi_phi_temp = np.pi / 3 + 1e-2 * t_eval
+        Phi_theta_temp = np.pi / 6 + 2e-2 * t_eval
         Phi_r_temp = np.pi / 4 + 3e-3 * t_eval
 
-        phases_in = np.asarray([Phi_phi_temp, Phi_phi_temp.copy(), Phi_r_temp])
+        phases_in = np.asarray([Phi_phi_temp, Phi_theta_temp, Phi_r_temp])
 
         # dummy mode indices
         l_arr = np.ones(num_modes) * 2  # not used in this fictitious summation
         m_arr = np.random.randint(2, 5, num_modes)
+        k_arr = np.random.randint(0, 2, num_modes)
         n_arr = np.random.randint(-3, 3, num_modes)
 
         # dummy 'spherical harmonics'
@@ -180,13 +186,14 @@ class SummationTest(FewBackendTest):
         # perform the summation manually
         mode_phase_values = (
             Phi_phi_temp[:, None] * m_arr[None, :]
+            + Phi_theta_temp[:, None] * k_arr[None, :]
             + Phi_r_temp[:, None] * n_arr[None, :]
         )
         phasors = amplitude * np.exp(-1j * mode_phase_values)
         manual_sum = phasors.sum(-1)
 
         few_sum = summation(
-            t_eval, amplitude, ylms, t_eval, phases_in, l_arr, m_arr, n_arr
+            t_eval, amplitude, ylms, t_eval, phases_in, l_arr, m_arr, k_arr, n_arr
         )
 
         if self.backend.uses_gpu:

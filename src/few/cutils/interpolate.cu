@@ -444,7 +444,7 @@ __device__ void atomicAddComplex(cmplx *a, cmplx b)
 CUDA_KERNEL
 void make_waveform(cmplx *waveform,
                    double *interp_array, double *phase_interp_coeffs,
-                   int *m_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
+                   int *m_arr_in, int *k_arr_in, int *n_arr_in, int num_teuk_modes, cmplx *Ylms_in,
                    double delta_t, double start_t, int old_ind, int start_ind, int end_ind, int init_length,
                    double phase_interp_t_here, double phase_interp_segwidth)
 {
@@ -459,10 +459,11 @@ void make_waveform(cmplx *waveform,
   cmplx mode_val;
   cmplx partial_mode;
   cmplx trans_plus_m(0.0, 0.0), trans_minus_m(0.0, 0.0);
-  double Phi_phi_i, Phi_r_i, t, x, x2, x3, mode_val_re, mode_val_im, s, s1;
+  double Phi_phi_i, Phi_theta_i, Phi_r_i, t, x, x2, x3, mode_val_re, mode_val_im, s, s1;
   int lm_i, num_teuk_here;
   double re_y, re_c1, re_c2, re_c3, im_y, im_c1, im_c2, im_c3;
   CUDA_SHARED double pp_y, pp_c1, pp_c2, pp_c3, pp_c4, pp_c5, pp_c6, pp_c7;
+  CUDA_SHARED double pt_y, pt_c1, pt_c2, pt_c3, pt_c4, pt_c5, pt_c6, pt_c7;
   CUDA_SHARED double pr_y, pr_c1, pr_c2, pr_c3, pr_c4, pr_c5, pr_c6, pr_c7;
 
   // declare all the shared memory
@@ -479,12 +480,13 @@ void make_waveform(cmplx *waveform,
   CUDA_SHARED double mode_im_c3[MAX_MODES_BLOCK];
 
   CUDA_SHARED int m_arr[MAX_MODES_BLOCK];
+  CUDA_SHARED int k_arr[MAX_MODES_BLOCK];
   CUDA_SHARED int n_arr[MAX_MODES_BLOCK];
 
   // number of splines
   // int num_base = init_length * (2 * num_teuk_modes + num_pars);
   int num_base = init_length * (2 * num_teuk_modes);
-  int num_phase_spline = (init_length - 1) * 2;
+  int num_phase_spline = (init_length - 1) * 3;
 
   CUDA_SYNC_THREADS;
 
@@ -511,8 +513,9 @@ void make_waveform(cmplx *waveform,
   //   pr_c2 = interp_array[2 * num_base + ind_Phi_r];
   //   pr_c3 = interp_array[3 * num_base + ind_Phi_r];
 
-    int ind_Phi_phi = old_ind * 2 + 0;
-    int ind_Phi_r = old_ind * 2 + 1;
+    int ind_Phi_phi = old_ind * 3 + 0;
+    int ind_Phi_theta = old_ind * 3 + 1;
+    int ind_Phi_r = old_ind * 3 + 2;
 
     pp_y = phase_interp_coeffs[0 * num_phase_spline + ind_Phi_phi];
     pp_c1 = phase_interp_coeffs[1 * num_phase_spline + ind_Phi_phi];
@@ -522,6 +525,15 @@ void make_waveform(cmplx *waveform,
     pp_c5 = phase_interp_coeffs[5 * num_phase_spline + ind_Phi_phi];
     pp_c6 = phase_interp_coeffs[6 * num_phase_spline + ind_Phi_phi];
     pp_c7 = phase_interp_coeffs[7 * num_phase_spline + ind_Phi_phi];
+
+    pt_y = phase_interp_coeffs[0 * num_phase_spline + ind_Phi_theta];
+    pt_c1 = phase_interp_coeffs[1 * num_phase_spline + ind_Phi_theta];
+    pt_c2 = phase_interp_coeffs[2 * num_phase_spline + ind_Phi_theta];
+    pt_c3 = phase_interp_coeffs[3 * num_phase_spline + ind_Phi_theta];
+    pt_c4 = phase_interp_coeffs[4 * num_phase_spline + ind_Phi_theta];
+    pt_c5 = phase_interp_coeffs[5 * num_phase_spline + ind_Phi_theta];
+    pt_c6 = phase_interp_coeffs[6 * num_phase_spline + ind_Phi_theta];
+    pt_c7 = phase_interp_coeffs[7 * num_phase_spline + ind_Phi_theta];
 
     pr_y = phase_interp_coeffs[0 * num_phase_spline + ind_Phi_r];
     pr_c1 = phase_interp_coeffs[1 * num_phase_spline + ind_Phi_r];
@@ -536,7 +548,7 @@ void make_waveform(cmplx *waveform,
 
   CUDA_SYNC_THREADS;
 
-  int m, n, actual_mode_index;
+  int m, k, n, actual_mode_index;
   cmplx Ylm_plus_m, Ylm_minus_m;
 
   int num_breaks = (num_teuk_modes / MAX_MODES_BLOCK) + 1;
@@ -580,6 +592,7 @@ void make_waveform(cmplx *waveform,
       mode_im_c3[i] = interp_array[3 * num_base + ind_im];
 
       m_arr[i] = m_arr_in[init_ind + i];
+      k_arr[i] = k_arr_in[init_ind + i];
       n_arr[i] = n_arr_in[init_ind + i];
       Ylms[2 * i] = Ylms_in[(init_ind + i)];
       Ylms[2 * i + 1] = Ylms_in[num_teuk_modes + (init_ind + i)];
@@ -627,6 +640,7 @@ void make_waveform(cmplx *waveform,
       // printf("%d %f %f %f %f %f %f %f %f \n", old_ind, s, pp_y, pp_c1, pp_c2, pp_c3, pp_c4, pp_c5, pp_c6, pp_c7);
 
       Phi_phi_i = pp_y + s * (pp_c1 + s1 * ( pp_c2 + s * (pp_c3 + s1 * (pp_c4 + s * (pp_c5 + s1 * (pp_c6 + s * pp_c7))))));
+      Phi_theta_i = pt_y + s * (pt_c1 + s1 * ( pt_c2 + s * (pt_c3 + s1 * (pt_c4 + s * (pt_c5 + s1 * (pt_c6 + s * pt_c7))))));
       Phi_r_i = pr_y + s * (pr_c1 + s1 * ( pr_c2 + s * (pr_c3 + s1 * (pr_c4 + s * (pr_c5 + s1 * (pr_c6 + s * pr_c7))))));
 
       // calculate all modes at this timestep
@@ -636,6 +650,7 @@ void make_waveform(cmplx *waveform,
         Ylm_plus_m = Ylms[2 * j];
 
         m = m_arr[j];
+        k = k_arr[j];
         n = n_arr[j];
 
         // mode_val_re = mode_re_y[j] + mode_re_c1[j] * x + mode_re_c2[j] * x2 + mode_re_c3[j] * x3;
@@ -644,7 +659,7 @@ void make_waveform(cmplx *waveform,
 
         // fod phase = m * Phi_phi_i + n * Phi_r_i;
         // partial_mode = mode_val * gcmplx::exp(minus_I * phase);
-        partial_mode = gcmplx::exp(minus_I * (m * Phi_phi_i + n * Phi_r_i)) * (mode_re_y[j] + mode_re_c1[j] * x + mode_re_c2[j] * x2 + mode_re_c3[j] * x3 + complexI * (mode_im_y[j] + mode_im_c1[j] * x + mode_im_c2[j] * x2 + mode_im_c3[j] * x3));
+        partial_mode = gcmplx::exp(minus_I * (m * Phi_phi_i + k * Phi_theta_i + n * Phi_r_i)) * (mode_re_y[j] + mode_re_c1[j] * x + mode_re_c2[j] * x2 + mode_re_c3[j] * x3 + complexI * (mode_im_y[j] + mode_im_c1[j] * x + mode_im_c2[j] * x2 + mode_im_c3[j] * x3));
         trans_plus_m = partial_mode * Ylm_plus_m;
 
         // minus m if m > 0
@@ -709,7 +724,7 @@ void find_start_inds(int start_inds[], int unit_length[], double *t_arr, double 
 
 // function for building interpolated EMRI waveform from python
 void get_waveform(cmplx *d_waveform, double *interp_array, double *phase_interp_t, double *phase_interp_coeffs,
-                  int *d_m, int *d_n, int init_len, int out_len, int num_teuk_modes, cmplx *d_Ylms,
+                  int *d_m, int *d_k, int *d_n, int init_len, int out_len, int num_teuk_modes, cmplx *d_Ylms,
                   double delta_t, double *h_t, int dev)
 {
 
@@ -749,7 +764,7 @@ void get_waveform(cmplx *d_waveform, double *interp_array, double *phase_interp_
     // launch one worker kernel per stream
     make_waveform<<<gridDim, NUM_THREADS, 0, streams[i]>>>(d_waveform,
                                                            interp_array, phase_interp_coeffs,
-                                                           d_m, d_n, num_teuk_modes, d_Ylms,
+                                                           d_m, d_k, d_n, num_teuk_modes, d_Ylms,
                                                            delta_t, h_t[i], i, start_inds[i], start_inds[i + 1], init_len,
                                                            phase_interp_t[i], phase_interp_t[i+1] - phase_interp_t[i]);
     cudaDeviceSynchronize();
@@ -760,7 +775,7 @@ void get_waveform(cmplx *d_waveform, double *interp_array, double *phase_interp_
     // CPU waveform generation
     make_waveform(d_waveform,
                   interp_array, phase_interp_coeffs,
-                  d_m, d_n, num_teuk_modes, d_Ylms,
+                  d_m, d_k, d_n, num_teuk_modes, d_Ylms,
                   delta_t, h_t[i], i, start_inds[i], start_inds[i + 1], init_len,
                   phase_interp_t[i], phase_interp_t[i+1] - phase_interp_t[i]);
 #endif
@@ -1133,7 +1148,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
               cmplx *Ylm_all, int zero_index, bool include_minus_m, bool separate_modes)
 {
 
-    int num_pars = 2;
+    int num_pars = 3;
 
     const cmplx complexI(0.0, 1.0);
 
@@ -1160,6 +1175,15 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
     double Phi_phi_c6;
     double Phi_phi_c7;
 
+    double Phi_theta_y;
+    double Phi_theta_c1;
+    double Phi_theta_c2;
+    double Phi_theta_c3;
+    double Phi_theta_c4;
+    double Phi_theta_c5;
+    double Phi_theta_c6;
+    double Phi_theta_c7;
+
     double Phi_r_y;
     double Phi_r_c1;
     double Phi_r_c2;
@@ -1174,6 +1198,11 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
     double f_phi_c2;
     double f_phi_c3;
 
+    double f_theta_y;
+    double f_theta_c1;
+    double f_theta_c2;
+    double f_theta_c3;
+
     double f_r_y;
     double f_r_c1;
     double f_r_c2;
@@ -1183,7 +1212,7 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
 
     // number of splines
     int num_base = (2 * num_teuk_modes + num_pars) * init_length;
-    int num_phase_spline = (init_length - 1) * 2;
+    int num_phase_spline = (init_length - 1) * 3;
 
     #ifdef __CUDACC__
 
@@ -1252,14 +1281,23 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
             Phi_phi_c6 = phase_interp_coeffs[6 * num_phase_spline + seg_i];
             Phi_phi_c7 = phase_interp_coeffs[7 * num_phase_spline + seg_i];
 
-            Phi_r_y = phase_interp_coeffs[0 * num_phase_spline + init_length - 1 + seg_i];
-            Phi_r_c1 = phase_interp_coeffs[1 * num_phase_spline + init_length - 1  + seg_i];
-            Phi_r_c2 = phase_interp_coeffs[2 * num_phase_spline + init_length - 1 + seg_i];
-            Phi_r_c3 = phase_interp_coeffs[3 * num_phase_spline + init_length - 1 + seg_i];
-            Phi_r_c4 = phase_interp_coeffs[4 * num_phase_spline + init_length - 1 + seg_i];
-            Phi_r_c5 = phase_interp_coeffs[5 * num_phase_spline + init_length - 1 + seg_i];
-            Phi_r_c6 = phase_interp_coeffs[6 * num_phase_spline + init_length - 1 + seg_i];
-            Phi_r_c7 = phase_interp_coeffs[7 * num_phase_spline + init_length - 1 + seg_i];
+            Phi_theta_y = phase_interp_coeffs[0 * num_phase_spline + init_length - 1 + seg_i];
+            Phi_theta_c1 = phase_interp_coeffs[1 * num_phase_spline + init_length - 1 + seg_i];
+            Phi_theta_c2 = phase_interp_coeffs[2 * num_phase_spline + init_length - 1 + seg_i];
+            Phi_theta_c3 = phase_interp_coeffs[3 * num_phase_spline + init_length - 1 + seg_i];
+            Phi_theta_c4 = phase_interp_coeffs[4 * num_phase_spline + init_length - 1 + seg_i];
+            Phi_theta_c5 = phase_interp_coeffs[5 * num_phase_spline + init_length - 1 + seg_i];
+            Phi_theta_c6 = phase_interp_coeffs[6 * num_phase_spline + init_length - 1 + seg_i];
+            Phi_theta_c7 = phase_interp_coeffs[7 * num_phase_spline + init_length - 1 + seg_i];
+
+            Phi_r_y = phase_interp_coeffs[0 * num_phase_spline + 2*init_length - 2 + seg_i];
+            Phi_r_c1 = phase_interp_coeffs[1 * num_phase_spline + 2*init_length - 2  + seg_i];
+            Phi_r_c2 = phase_interp_coeffs[2 * num_phase_spline + 2*init_length - 2 + seg_i];
+            Phi_r_c3 = phase_interp_coeffs[3 * num_phase_spline + 2*init_length - 2 + seg_i];
+            Phi_r_c4 = phase_interp_coeffs[4 * num_phase_spline + 2*init_length - 2 + seg_i];
+            Phi_r_c5 = phase_interp_coeffs[5 * num_phase_spline + 2*init_length - 2 + seg_i];
+            Phi_r_c6 = phase_interp_coeffs[6 * num_phase_spline + 2*init_length - 2 + seg_i];
+            Phi_r_c7 = phase_interp_coeffs[7 * num_phase_spline + 2*init_length - 2 + seg_i];
 
             double seg_width_here = phase_interp_t[seg_i + 1] - phase_interp_t[seg_i];
 
@@ -1281,6 +1319,17 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
             c1_ind = 1 * num_base + (1 + 2 * num_teuk_modes) * init_length + seg_i;
             c2_ind = 2 * num_base + (1 + 2 * num_teuk_modes) * init_length + seg_i;
             c3_ind = 3 * num_base + (1 + 2 * num_teuk_modes) * init_length + seg_i;
+
+            f_theta_y = interp_array[y_ind];
+            double f_theta_y2 = interp_array[y_ind + 1];
+            f_theta_c1 = interp_array[c1_ind];
+            f_theta_c2 = interp_array[c2_ind];
+            f_theta_c3 = interp_array[c3_ind];
+
+            y_ind = 0 * num_base + (2 + 2 * num_teuk_modes) * init_length + seg_i;
+            c1_ind = 1 * num_base + (2 + 2 * num_teuk_modes) * init_length + seg_i;
+            c2_ind = 2 * num_base + (2 + 2 * num_teuk_modes) * init_length + seg_i;
+            c3_ind = 3 * num_base + (2 + 2 * num_teuk_modes) * init_length + seg_i;
 
             f_r_y = interp_array[y_ind];
             double f_r_y2 = interp_array[y_ind + 1];
@@ -1319,11 +1368,11 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                 }//= int((-f - start_freq) / df) + 1;
 
                 //double f_y2 = m * f_phi_y[ind_i + 1] + n * f_r_y[ind_i + 1];
-                double f_y = m * f_phi_y + n * f_r_y;
-                double f_y2 = m * f_phi_y2 + n * f_r_y2;
-                double f_c1 = m * f_phi_c1 + n * f_r_c1;
-                double f_c2 = m * f_phi_c2 + n * f_r_c2;
-                double f_c3 = m * f_phi_c3 + n * f_r_c3;
+                double f_y = m * f_phi_y + k * f_theta_y + n * f_r_y;
+                double f_y2 = m * f_phi_y2 + k * f_theta_y2 + n * f_r_y2;
+                double f_c1 = m * f_phi_c1 + k * f_theta_c1 + n * f_r_c1;
+                double f_c2 = m * f_phi_c2 + k * f_theta_c2 + n * f_r_c2;
+                double f_c3 = m * f_phi_c3 + k * f_theta_c3 + n * f_r_c3;
 
                 cmplx root1 = -1e300;
                 cmplx root2 = -1e300;
@@ -1386,18 +1435,15 @@ void make_generic_kerr_waveform_fd(cmplx *waveform,
                         //   printf("seg_i: %d %f \n", seg_i, s);
 
                         double Phi_phi_i = Phi_phi_y + s * (Phi_phi_c1 + s1 * ( Phi_phi_c2 + s * (Phi_phi_c3 + s1 * (Phi_phi_c4 + s * (Phi_phi_c5 + s1 * (Phi_phi_c6 + s * Phi_phi_c7))))));
-                        //double Phi_theta_i = pt_y + pt_c1 * x + pt_c2 * x2 + pt_c3 * x3;
-                        double Phi_theta_i = 0.0;
+                        double Phi_theta_i = Phi_theta_y + s * (Phi_theta_c1 + s1 * ( Phi_theta_c2 + s * (Phi_theta_c3 + s1 * (Phi_theta_c4 + s * (Phi_theta_c5 + s1 * (Phi_theta_c6 + s * Phi_theta_c7))))));
                         double Phi_r_i = Phi_r_y + s * (Phi_r_c1 + s1 * ( Phi_r_c2 + s * (Phi_r_c3 + s1 * (Phi_r_c4 + s * (Phi_r_c5 + s1 * (Phi_r_c6 + s * Phi_r_c7))))));
 
                         double fdot_phi_i = (-2. * Phi_phi_c2 + Phi_phi_c3 * (2. - 6.*s) + Phi_phi_c4 * (2. - 12.*s + 12.*s2) + Phi_phi_c5 * (6.*s - 24.*s2 + 20.*s3) + Phi_phi_c6*(6.*s - 36.*s2 + 60.*s3 - 30.*s4) + Phi_phi_c7 * (12.*s2 - 60.*s3 + 90.*s4 - 42.*s5)) / (2. * M_PI * segwidth2);
-                        //double Phi_theta_i = pt_y + pt_c1 * x + pt_c2 * x2 + pt_c3 * x3;
-                        double fdot_theta_i = 0.0;  // ft_c1 + 2 * ft_c2 * x  + 3 * ft_c3 * x2;
+                        double fdot_theta_i = (-2. * Phi_theta_c2 + Phi_theta_c3 * (2. - 6.*s) + Phi_theta_c4 * (2. - 12.*s + 12.*s2) + Phi_theta_c5 * (6.*s - 24.*s2 + 20.*s3) + Phi_theta_c6*(6.*s - 36.*s2 + 60.*s3 - 30.*s4) + Phi_theta_c7 * (12.*s2 - 60.*s3 + 90.*s4 - 42.*s5)) / (2. * M_PI * segwidth2);
                         double fdot_r_i = (-2. * Phi_r_c2 + Phi_r_c3 * (2. - 6.*s) + Phi_r_c4 * (2. - 12.*s + 12.*s2) + Phi_r_c5 * (6.*s - 24.*s2 + 20.*s3) + Phi_r_c6*(6.*s - 36.*s2 + 60.*s3 - 30.*s4) + Phi_r_c7 * (12.*s2 - 60.*s3 + 90.*s4 - 42.*s5)) / (2. * M_PI * segwidth2);
 
                         double fddot_phi_i = (-6. * Phi_phi_c3 +  Phi_phi_c4 * (-12. + 24.*s) + Phi_phi_c5 * (6. - 48.*s + 60.*s2) + Phi_phi_c6 * (6. - 72.*s + 180.*s2 - 120.*s3) + Phi_phi_c7 * (24.*s - 180.*s2 + 360.*s3 - 210.*s4)) / (2. * M_PI * segwidth3);
-                        //double Phi_theta_i = pt_y + pt_c1 * x + pt_c2 * x2 + pt_c3 * x3;
-                        double fddot_theta_i = 0.0;  // 2 * ft_c2 * x  + 6 * ft_c3 * x;
+                        double fddot_theta_i = (-6. * Phi_theta_c3 +  Phi_theta_c4 * (-12. + 24.*s) + Phi_theta_c5 * (6. - 48.*s + 60.*s2) + Phi_theta_c6 * (6. - 72.*s + 180.*s2 - 120.*s3) + Phi_theta_c7 * (24.*s - 180.*s2 + 360.*s3 - 210.*s4)) / (2. * M_PI * segwidth3);
                         double fddot_r_i = (-6. * Phi_r_c3 +  Phi_r_c4 * (-12. + 24.*s) + Phi_r_c5 * (6. - 48.*s + 60.*s2) + Phi_r_c6 * (6. - 72.*s + 180.*s2 - 120.*s3) + Phi_r_c7 * (24.*s - 180.*s2 + 360.*s3 - 210.*s4)) / (2. * M_PI * segwidth3);
 
                         double phase_term = m * Phi_phi_i + k * Phi_theta_i + n * Phi_r_i;

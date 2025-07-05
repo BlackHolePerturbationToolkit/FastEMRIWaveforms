@@ -47,19 +47,20 @@ class ModeSelectorTest(FewBackendTest):
         # select modes
 
         mode_selector = ModeSelector(
-            amp.l_arr_no_mask, amp.m_arr_no_mask, amp.n_arr_no_mask, force_backend="cpu"
+            amp.l_arr_no_mask, amp.m_arr_no_mask, amp.k_arr_no_mask, amp.n_arr_no_mask, force_backend="cpu"
         )
 
         eps = 1e-2  # tolerance on mode contribution to total power
 
-        modeinds = [amp.l_arr, amp.m_arr, amp.n_arr]
-        (teuk_modes_in, ylms_in, ls, ms, ns) = mode_selector(
+        modeinds = [amp.l_arr, amp.m_arr, amp.k_arr, amp.n_arr]
+        (teuk_modes_in, ylms_in, ls, ms, ks, ns) = mode_selector(
             teuk_modes, ylms, modeinds, mode_selection_threshold=eps
         )
 
         # print("We reduced the mode content from {} modes to {} modes.".format(teuk_modes.shape[1], teuk_modes_in.shape[1]))
         ls_orig = ls
         ms_orig = ms
+        ks_orig = ks
         ns_orig = ns
 
         # produce sensitivity function
@@ -81,6 +82,7 @@ class ModeSelectorTest(FewBackendTest):
         mode_selector_noise_weighted = ModeSelector(
             amp.l_arr_no_mask,
             amp.m_arr_no_mask,
+            amp.k_arr_no_mask,
             amp.n_arr_no_mask,
             sensitivity_fn=sens_fn,
             force_backend="cpu",
@@ -91,8 +93,8 @@ class ModeSelectorTest(FewBackendTest):
         Y = np.zeros_like(p)  # equatorial / cos iota
         fund_freq_args = (m1, m2, a, p, e, Y, t)
 
-        modeinds = [amp.l_arr, amp.m_arr, amp.n_arr]
-        (teuk_modes_in, ylms_in, ls, ms, ns) = mode_selector_noise_weighted(
+        modeinds = [amp.l_arr, amp.m_arr, amp.k_arr, amp.n_arr]
+        (teuk_modes_in, ylms_in, ls, ms, ks, ns) = mode_selector_noise_weighted(
             teuk_modes, ylms, modeinds, fund_freq_args=fund_freq_args, mode_selection_threshold=eps
         )
 
@@ -116,11 +118,11 @@ class ModeSelectorTest(FewBackendTest):
         dist = 1.0
         dt = 10.0
         T = 0.001
-        mode_selection = [(ll, mm, nn) for ll, mm, nn in zip(ls_orig, ms_orig, ns_orig)]
+        mode_selection = [(ll, mm, kk, nn) for ll, mm, kk, nn in zip(ls_orig, ms_orig, ks_orig, ns_orig)]
         wave_base = few_base(
             m1, m2, p0, e0, theta, phi, dist, dt=dt, T=T, mode_selection=mode_selection
         )
-        mode_selection = [(ll, mm, nn) for ll, mm, nn in zip(ls, ms, ns)]
+        mode_selection = [(ll, mm, kk, nn) for ll, mm, kk, nn in zip(ls, ms, ks, ns)]
         wave_weighted = few_base(
             m1, m2, p0, e0, theta, phi, dist, dt=dt, T=T, mode_selection=mode_selection
         )

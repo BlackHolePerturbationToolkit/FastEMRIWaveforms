@@ -113,7 +113,7 @@ class SphericalHarmonicWaveformBase(
         # selecting modes that contribute at threshold to the waveform
         self.mode_selector = self.build_with_same_backend(
             mode_selector_module,
-            args=[self.l_arr_no_mask, self.m_arr_no_mask, self.n_arr_no_mask],
+            args=[self.l_arr_no_mask, self.m_arr_no_mask, self.k_arr_no_mask, self.n_arr_no_mask],
             kwargs=mode_selector_kwargs,
         )
 
@@ -130,6 +130,7 @@ class SphericalHarmonicWaveformBase(
         *args: Optional[tuple],
         dist: Optional[float] = None,
         Phi_phi0: float = 0.0,
+        Phi_theta0: float = 0.0,
         Phi_r0: float = 0.0,
         dt: float = 10.0,
         T: float = 1.0,
@@ -239,7 +240,7 @@ class SphericalHarmonicWaveformBase(
             xI0,
             *args,
             Phi_phi0=Phi_phi0,
-            Phi_theta0=0.0,
+            Phi_theta0=Phi_theta0,
             Phi_r0=Phi_r0,
             T=T,
             dt=dt,
@@ -308,7 +309,7 @@ class SphericalHarmonicWaveformBase(
             t_temp = t[inds_in]
             p_temp = p[inds_in]
             e_temp = e[inds_in]
-            # xI_temp = xI[inds_in]
+            xI_temp = xI[inds_in]
             Phi_phi_temp = Phi_phi[inds_in]
             Phi_theta_temp = Phi_theta[inds_in]
             Phi_r_temp = Phi_r[inds_in]
@@ -318,7 +319,7 @@ class SphericalHarmonicWaveformBase(
 
             # amplitudes
             teuk_modes = self.xp.asarray(
-                self.amplitude_generator(a, p_temp, e_temp, xI0)
+                self.amplitude_generator(a, p_temp, e_temp, xI_temp)
             )
 
             # normalize by flux produced in trajectory
@@ -347,13 +348,14 @@ class SphericalHarmonicWaveformBase(
                 xI,
                 t_temp,
             )
-            modeinds = [self.l_arr, self.m_arr, self.n_arr]
+            modeinds = [self.l_arr, self.m_arr, self.k_arr, self.n_arr]
             modeinds_map = self.special_index_map_arr
             (
                 teuk_modes_in,
                 ylms_in,
                 self.ls,
                 self.ms,
+                self.ks,
                 self.ns,
             ) = self.mode_selector(
                 teuk_modes,
@@ -374,7 +376,7 @@ class SphericalHarmonicWaveformBase(
                 # prepare phase spline coefficients
                 phase_information_in = self.xp.asarray(
                     self.inspiral_generator.integrator_spline_phase_coeff
-                )[:, [0, 2], :]
+                )
 
                 # flip azimuthal phase for retrograde inspirals
                 if a > 0:
@@ -382,7 +384,7 @@ class SphericalHarmonicWaveformBase(
 
                 if self.inspiral_generator.integrate_backwards:
                     phase_information_in[:, :, 0] += self.xp.array(
-                        [Phi_phi[-1] + Phi_phi[0], Phi_r[-1] + Phi_r[0]]
+                        [Phi_phi[-1] + Phi_phi[0], Phi_theta[-1] + Phi_theta[0], Phi_r[-1] + Phi_r[0]]
                     )
 
                 phase_t_in = self.inspiral_generator.integrator_spline_t
@@ -392,9 +394,7 @@ class SphericalHarmonicWaveformBase(
                 )
                 if self.inspiral_generator.integrate_backwards:
                     phase_information_in[0] += self.xp.array([Phi_phi[-1] + Phi_phi[0]])
-                    phase_information_in[1] += self.xp.array(
-                        [Phi_theta[-1] + Phi_theta[0]]
-                    )
+                    phase_information_in[1] += self.xp.array([Phi_theta[-1] + Phi_theta[0]])
                     phase_information_in[2] += self.xp.array([Phi_r[-1] + Phi_r[0]])
 
                 # flip azimuthal phase for retrograde inspirals
@@ -412,6 +412,7 @@ class SphericalHarmonicWaveformBase(
                 phase_information_in,
                 self.ls,
                 self.ms,
+                self.ks,
                 self.ns,
                 M,  # waveform generation will also be done with respect to total mass
                 a,

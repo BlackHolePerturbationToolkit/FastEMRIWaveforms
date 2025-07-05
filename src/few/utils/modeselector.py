@@ -90,6 +90,7 @@ class ModeSelector(ParallelModuleBase):
     args:
         l_arr: The l-mode indices for each mode index.
         m_arr: The m-mode indices for each mode index. Requires all :math:`m \geq 0`.
+        k_arr: The k-mode indices for each mode index.
         n_arr: The n-mode indices for each mode index.
         mode_selection: Determines the type of mode
             filtering to perform. If None, use default mode filtering provided
@@ -127,6 +128,7 @@ class ModeSelector(ParallelModuleBase):
         self,
         l_arr: np.ndarray,
         m_arr: np.ndarray,
+        k_arr: np.ndarray,
         n_arr: np.ndarray,
         mode_selection: Optional[Union[str, list, np.ndarray]] = None,
         include_minus_mkn: Optional[bool] = True,
@@ -155,6 +157,8 @@ class ModeSelector(ParallelModuleBase):
         """array: l-mode indices for each mode index."""
         self.m_arr = m_arr
         """array: m-mode indices for each mode index."""
+        self.k_arr = k_arr
+        """array: k-mode indices for each mode index."""
         self.n_arr = n_arr
         """array: n-mode indices for each mode index."""
 
@@ -245,9 +249,8 @@ class ModeSelector(ParallelModuleBase):
                 including m<0. Shape is (num of m==0,) + (num of m>0,)
                 + (num of m<0). Number of m<0 and m>0 is the same, but they are
                 ordered as (m==0) first then m>0 then m<0.
-            modeinds: List containing the mode index arrays. If in an
-                equatorial model, need :math:`(l,m,n)` arrays. If generic,
-                :math:`(l,m,k,n)` arrays. e.g. [l_arr, m_arr, n_arr].
+            modeinds: List containing the mode index :math:`(l,m,k,n)` arrays,
+                e.g. [l_arr, m_arr, k_arr, n_arr].
             fund_freq_args: Args necessary to determine
                 fundamental frequencies along trajectory. The tuple will represent
                 :math:`(m1, m2, a, p, e, \cos\iota)` where the primary mass (:math:`m_1`),
@@ -358,11 +361,12 @@ class ModeSelector(ParallelModuleBase):
                 modeinds[0][: teuk_modes_out.shape[1]],
                 modeinds[1][: teuk_modes_out.shape[1]],
                 modeinds[2][: teuk_modes_out.shape[1]],
+                modeinds[3][: teuk_modes_out.shape[1]],
             )
 
         elif isinstance(mode_selection, list):
             try:
-                temp = modeinds_map[mode_arr[:, 0], mode_arr[:, 1], mode_arr[:, 2]]
+                temp = modeinds_map[mode_arr[:, 0], mode_arr[:, 1], mode_arr[:,2], mode_arr[:, 3]]
             except IndexError:
                 raise ValueError("Mode selection indices are out of bounds.")
 

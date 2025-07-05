@@ -162,7 +162,7 @@ class WaveformTest(FewBackendTest):
         # Then h -> h^* (-1)^m for all \ell modes
 
         # choose modes with even m
-        modes_check = [(ell, 2, enn) for ell in range(2, 11) for enn in range(-50, 51)]
+        modes_check = [(ell, 2, 0, enn) for ell in range(2, 11) for enn in range(-50, 51)]
         wave1 = self.waveform_generator(
             M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10.0, mode_selection=modes_check
         )
@@ -185,7 +185,7 @@ class WaveformTest(FewBackendTest):
         ), "Even ell-mode waveform not convergent under a parity transformation."
 
         # choose modes with odd m
-        modes_check = [(ell, 3, enn) for ell in range(3, 11) for enn in range(-50, 51)]
+        modes_check = [(ell, 3, 0, enn) for ell in range(3, 11) for enn in range(-50, 51)]
 
         wave1 = self.waveform_generator(
             M, mu, a, p0, e0, xI, theta, phi, T=T, dt=10.0, mode_selection=modes_check

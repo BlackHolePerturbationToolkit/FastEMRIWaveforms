@@ -17,47 +17,14 @@ from ..utils.baseclasses import (
     KerrEccentricEquatorial,
     ParallelModuleBase,
     SchwarzschildEccentric,
+    KerrGeneric,
     xp_ndarray,
 )
 from ..utils.citations import REFERENCE
+from ..utils.geodesic import get_separatrix
 from ..utils.mappings.kerrecceq import kerrecceq_forward_map
 from ..utils.mappings.schwarzecc import schwarzecc_p_to_y
 from .base import AmplitudeBase
-
-# get path to this file
-dir_path = os.path.dirname(os.path.realpath(__file__))
-
-# TODO: handle multiple waveform models
-_DEFAULT_SPINS = [
-    -0.99,
-    -0.95,
-    -0.9,
-    -0.8,
-    -0.7,
-    -0.6,
-    -0.5,
-    -0.4,
-    -0.3,
-    -0.2,
-    -0.1,
-    0.0,
-    0.1,
-    0.2,
-    0.3,
-    0.4,
-    0.5,
-    0.6,
-    0.7,
-    0.8,
-    0.9,
-    0.95,
-    0.99,
-]
-
-_DEFAULT_AMPLITUDE_FILENAMES = [
-    f"KerrEqEccAmpCoeffs_a{spin:.3f}.h5" for spin in _DEFAULT_SPINS
-]
-
 
 class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
     r"""Calculate Teukolsky amplitudes with a bicubic spline interpolation.
@@ -77,6 +44,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         coefficients: The Teukolsky mode amplitudes to be interpolated.
         l_arr: Array of :math:`\ell` mode indices.
         m_arr: Array of :math:`m` mode indices.
+        k_arr: Array of :math:`k` mode indices.
         n_arr: Array of :math:`n` mode indices.
         **kwargs: Optional keyword arguments for the base class:
             :class:`few.utils.baseclasses.AmplitudeBase`,
@@ -87,6 +55,8 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
     """1D Array of :math:`l` mode indices."""
     m_arr: xp_ndarray
     """1D Array of :math:`m` mode indices."""
+    k_arr: xp_ndarray
+    """1D Array of :math:`k` mode indices."""
     n_arr: xp_ndarray
     """1D Array of :math:`n` mode indices."""
 
@@ -109,6 +79,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         coefficients: np.ndarray,
         l_arr: np.ndarray,
         m_arr: np.ndarray,
+        k_arr: np.ndarray,
         n_arr: np.ndarray,
         force_backend: BackendLike = None,
     ):
@@ -117,6 +88,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
 
         self.l_arr = l_arr
         self.m_arr = m_arr
+        self.k_arr = k_arr
         self.n_arr = n_arr
 
         self.num_teuk_modes = coefficients.shape[0]
@@ -277,6 +249,7 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
                         coeffsA[i],
                         self.l_arr,
                         self.m_arr,
+                        self.k_arr,
                         self.n_arr,
                     ],
                 )
@@ -304,6 +277,7 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
                             coeffsB[i],
                             self.l_arr,
                             self.m_arr,
+                            self.k_arr,
                             self.n_arr,
                         ],
                     )
@@ -405,13 +379,14 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
                     specific_modes_arr[:, 0],
                     m_mode_sign * specific_modes_arr[:, 1],
                     specific_modes_arr[:, 2],
+                    specific_modes_arr[:, 3],
                 ]
                 if self.xp.any(mode_indexes == -1):
                     failed_mode = specific_modes_arr[
                         self.xp.where(mode_indexes == -1)[0][0]
                     ]
                     raise ValueError(
-                        f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]})."
+                        f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]},{failed_mode[3]})."
                     )
             else:
                 mode_indexes = specific_modes
@@ -495,33 +470,33 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
 
         elif isinstance(specific_modes, self.xp.ndarray):
             temp = {}
-            for i, lmn in enumerate(specific_modes):
-                l, m, n = lmn
-                temp[(l, m, n)] = Amp_z[:, i]
+            for i, lmkn in enumerate(specific_modes):
+                l, m, k, n = lmkn
+                temp[(l, m, k, n)] = Amp_z[:, i]
 
                 # apply xI flip symmetry
                 if m_mode_sign < 0:
-                    temp[(l, m, n)] = (-1) ** l * temp[(l, m, n)]
+                    temp[(l, m, k, n)] = (-1) ** l * temp[(l, m, k, n)]
 
                 # apply +/- m symmetry
                 if m_mode_sign * m < 0:
-                    temp[(l, m, n)] = (-1) ** l * self.xp.conj(temp[(l, m, n)])
+                    temp[(l, m, k, n)] = (-1) ** l * self.xp.conj(temp[(l, m, k, n)])
 
             return temp
         # dict containing requested modes
         else:
             temp = {}
-            for i, lmn in enumerate(specific_modes):
-                temp[lmn] = Amp_z[:, i]
-                l, m, n = lmn
+            for i, lmkn in enumerate(specific_modes):
+                temp[lmkn] = Amp_z[:, i]
+                l, m, k, n = lmkn
 
                 # apply xI flip symmetry
                 if m_mode_sign < 0:
-                    temp[lmn] = (-1) ** l * temp[lmn]
+                    temp[lmkn] = (-1) ** l * temp[lmkn]
 
                 # apply +/- m symmetry
                 if m_mode_sign * m < 0:
-                    temp[lmn] = (-1) ** l * self.xp.conj(temp[lmn])
+                    temp[lmkn] = (-1) ** l * self.xp.conj(temp[lmkn])
 
             return temp
 
@@ -711,13 +686,14 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
                     specific_modes_arr[:, 0],
                     specific_modes_arr[:, 1],
                     specific_modes_arr[:, 2],
+                    specific_modes_arr[:, 3],
                 ]
                 if self.xp.any(mode_indexes == -1):
                     failed_mode = specific_modes_arr[
                         self.xp.where(mode_indexes == -1)[0][0]
                     ]
                     raise ValueError(
-                        f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]})."
+                        f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]},{failed_mode[3]})."
                     )
 
         # TODO: perform this in the kernel
@@ -742,18 +718,221 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
         # dict containing requested modes
         else:
             temp = {}
-            for i, lmn in enumerate(specific_modes):
-                temp[lmn] = z[:, i]
-                l, m, n = lmn
+            for i, lmkn in enumerate(specific_modes):
+                temp[lmkn] = z[:, i]
+                l, m, k, n = lmkn
 
                 # apply +/- m symmetry
                 if m < 0:
-                    temp[lmn] = (-1) ** l * np.conj(temp[lmn])
+                    temp[lmkn] = (-1) ** l * np.conj(temp[lmkn])
 
             return temp
 
     def __reduce__(self):
         return (self.__class__, (self.filename,))
+
+
+class AmpInterpKerrGeneric(AmplitudeBase, KerrGeneric):
+    def __init__(
+        self,
+        force_backend = None,
+        **kwargs,
+    ):
+        AmplitudeBase.__init__(self)
+        KerrGeneric.__init__(self, force_backend=force_backend, **kwargs)
+
+        self.filename = (
+            "ScottGenericAmps_1.h5"
+        )
+
+        from few import get_file_manager
+
+        file_path = get_file_manager().get_file(self.filename)
+
+        # with h5py.File(file_path, "r") as f:
+        with h5py.File('./ScottGenericAmps_1.h5') as f:
+            coeffsA = f["CoeffsRegionA"][()]
+            w_knots = f["w_knots"][()]
+            u_knots = f["u_knots"][()]
+            x_knots = f["x_knots"][()]
+
+            self.spin_information_holder_A = [
+                self.build_with_same_backend(
+                    AmpInterp2D,
+                    args=[
+                        w_knots,
+                        u_knots,
+                        coeffsA[i],
+                        self.l_arr,
+                        self.m_arr,
+                        self.k_arr,
+                        self.n_arr,
+                    ],
+                )
+                for i in range(x_knots.size)
+            ]
+
+        self.x_values = x_knots
+
+    def get_amplitudes(
+        self,
+        a: float,
+        p,
+        e,
+        xI,
+        specific_modes = None,
+    ):
+        """
+        Generate Teukolsky amplitudes for a given set of parameters.
+
+        Args:
+            a: Dimensionless spin parameter of MBH. Must be 0.7.
+            p: Dimensionless semi-latus rectum.
+            e: Eccentricity.
+            xI: Cosine of orbital inclination.
+            specific_modes: Either indices or mode index tuples of modes to be generated (optional; defaults to all modes).
+        Returns:
+            If specific_modes is a list of tuples, returns a dictionary of complex mode amplitudes.
+            Else, returns an array of complex mode amplitudes.
+        """
+
+        try:
+            p = p.get()
+            e = e.get()
+            xI = xI.get()
+        except AttributeError:
+            pass
+
+        a = self.xp.atleast_1d(a)
+        p = self.xp.atleast_1d(p)
+        e = self.xp.atleast_1d(e)
+        xI = self.xp.atleast_1d(xI)
+
+        lengths = [len(arr) for arr in (a, p, e, xI)]
+        non_one_lengths = {
+            l for l in lengths if l > 1
+        }  # Collect lengths greater than 1
+
+        assert len(non_one_lengths) <= 1, (
+            f"Arrays must be length one or, if larger, have the same length. Found lengths: {lengths}"
+        )
+
+        assert np.all(a == a[0]), "All spins must be the same value."
+
+        assert np.all(a * xI <= 0.0) or np.all(
+            a * xI >= 0.0
+        )  # either all prograde or all retrograde
+        assert np.all(a == 0.7)
+
+        # symmetry of flipping the sign of the spin to keep xI positive
+        if self.xp.all(xI < 0.0):
+            m_mode_sign = -1
+        else:
+            m_mode_sign = 1
+
+        if specific_modes is not None:
+            self.num_modes_eval = len(specific_modes)
+            if isinstance(specific_modes, (list, self.xp.ndarray)):
+                specific_modes_arr = self.xp.asarray(specific_modes)
+                mode_indexes = self.special_index_map_arr[
+                    specific_modes_arr[:, 0],
+                    m_mode_sign * specific_modes_arr[:, 1],
+                    specific_modes_arr[:, 2],
+                    specific_modes_arr[:, 3],
+                ]
+                if self.xp.any(mode_indexes == -1):
+                    failed_mode = specific_modes_arr[
+                        self.xp.where(mode_indexes == -1)[0][0]
+                    ]
+                    raise ValueError(
+                        f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]},{failed_mode[3]})."
+                    )
+            else:
+                mode_indexes = specific_modes
+        else:
+            if m_mode_sign < 0:
+                mode_indexes = self.negative_mode_indexes
+            else:
+                mode_indexes = self.mode_indexes
+            self.num_modes_eval = self.num_teuk_modes
+
+        pLSO = self.xp.asarray(get_separatrix(a.item(), e, xI))
+        # print(pLSO)
+        u = self.xp.log2((p - pLSO + 8.999)/9)**0.25
+        w = (e / (0.25 + 0.25 * u**2))**0.5
+        # print(p[np.where(np.isnan(u))])
+        # print(e[np.where(np.isnan(u))])
+        x_check = xI[0].item()  # assume xI doesnt cross a boundary 
+
+        u = self.xp.asarray(u)
+        w = self.xp.asarray(w)
+        xI = self.xp.asarray(xI)
+
+        self.x_values = self.xp.asarray(self.x_values)
+
+        try:
+            ind_above = self.xp.where(self.x_values > x_check)[0].get()[0]
+        except AttributeError:
+            ind_above = self.xp.where(self.x_values > x_check)[0][0]
+        ind_below = ind_above - 1
+        assert ind_above < len(self.x_values)
+        assert ind_below >= 0
+
+        assert self.xp.all(xI < self.x_values[ind_above])
+        assert self.xp.all(xI > self.x_values[ind_below])
+
+        x_above = self.x_values[ind_above]
+        Amp_above = self.spin_information_holder_A[ind_above](
+            w, u, mode_indexes=mode_indexes
+        )
+
+        x_below = self.x_values[ind_below]
+        Amp_below = self.spin_information_holder_A[ind_below](
+            w, u, mode_indexes=mode_indexes
+        )
+
+        Amp_z = ((Amp_above - Amp_below) / (x_above - x_below)) * (
+            xI[:,None] - x_below
+        ) + Amp_below
+
+        if not isinstance(specific_modes, (list, self.xp.ndarray)):
+            # apply xI flip symmetry
+            if m_mode_sign < 0:
+                # this requires a sign flip of the m mode because the default is to return only m > 0 modes
+                return self.xp.conj(Amp_z)
+            return Amp_z
+
+        elif isinstance(specific_modes, self.xp.ndarray):
+            temp = {}
+            for i, lmkn in enumerate(specific_modes):
+                l, m, k, n = lmkn
+                temp[(l, m, k, n)] = Amp_z[:, i]
+
+                # apply xI flip symmetry
+                if m_mode_sign < 0:
+                    temp[(l, m, k, n)] = (-1) ** l * temp[(l, m, k, n)]
+
+                # apply +/- m symmetry
+                if m_mode_sign * m < 0:
+                    temp[(l, m, k, n)] = (-1) ** l * self.xp.conj(temp[(l, m, k, n)])
+
+            return temp
+        # dict containing requested modes
+        else:
+            temp = {}
+            for i, lmkn in enumerate(specific_modes):
+                temp[lmkn] = Amp_z[:, i]
+                l, m, k, n = lmkn
+
+                # apply xI flip symmetry
+                if m_mode_sign < 0:
+                    temp[lmkn] = (-1) ** l * temp[lmkn]
+
+                # apply +/- m symmetry
+                if m_mode_sign * m < 0:
+                    temp[lmkn] = (-1) ** l * self.xp.conj(temp[lmkn])
+
+            return temp
 
 
 def _spline_coefficients_to_file(
