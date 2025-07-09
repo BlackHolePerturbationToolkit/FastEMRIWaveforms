@@ -305,6 +305,7 @@ class GetYlms(ParallelModuleBase):
         m_in: Union[int, np.ndarray],
         theta: float,
         phi: float,
+        include_minus_m: Optional[bool] = None,
     ) -> np.ndarray:
         """Call method for Ylms.
 
@@ -320,13 +321,20 @@ class GetYlms(ParallelModuleBase):
         Returns:
             Complex array of Ylm values.
         """
+        if include_minus_m is None:
+            include_minus_m = self.include_minus_m
+        
         if isinstance(l_in, int) or isinstance(m_in, int):
             assert isinstance(l_in, int) and isinstance(m_in, int)
-            return _ylm_kernel_inner(l_in, m_in, theta, phi)
+            ylm_pos = _ylm_kernel_inner(l_in, m_in, theta, phi)
+            if include_minus_m:
+                return ylm_pos, _ylm_kernel_inner(l_in, -m_in, theta, phi)
+            else:
+                return ylm_pos
 
         # if assuming positive m, repeat entries for negative m
         # this will duplicate m = 0
-        if self.include_minus_m:
+        if include_minus_m:
             l = self.xp.zeros(2 * l_in.shape[0], dtype=int)
             m = self.xp.zeros(2 * l_in.shape[0], dtype=int)
 
