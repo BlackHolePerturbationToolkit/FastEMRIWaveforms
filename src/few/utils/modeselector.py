@@ -487,7 +487,15 @@ def get_selected_modes_from_initial_conditions(mode_selector_module, traj_module
         mode_selector_kwargs = {}
 
     t, p, e, x, _, _, _ = traj_module(m1, m2, a, p0, e0, xI0, **traj_kwargs)
+
+    freqs = traj_module.inspiral_generator.eval_integrator_derivative_spline(t, order=1)[:,3:6] / 2 / np.pi
+
+    online_mode_selection_args = dict(
+        f_phi = freqs[:,0],
+        f_theta = freqs[:,1],
+        f_r = freqs[:,2],
+    )
     teuk_modes_out, ylms_out, ls, ms, ks, ns = mode_selector_module(
-        t, a, p, e, x, theta, phi, **mode_selector_kwargs
+        t, a, p, e, x, theta, phi, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
     )
     return teuk_modes_out, ylms_out, ls, ms, ks, ns
