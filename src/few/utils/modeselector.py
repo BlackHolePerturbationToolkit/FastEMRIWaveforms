@@ -1,18 +1,16 @@
 # Online mode selection for FastEMRIWaveforms Packages
 
-import os
-import sys
-
 import numpy as np
 
 from .baseclasses import BackendLike, ParallelModuleBase
-from .constants import MTSUN_SI, PI
-from .geodesic import get_fundamental_frequencies
 from .globals import get_logger
 
 from .ylm import GetYlms
 
-from typing import Optional, Union, Callable
+from typing import Optional, Union
+
+def get_mode_frequencies(f_phi, f_theta, f_r, m, k, n):
+    return f_phi[:,None] * m[None,:] + f_theta[:,None] * k[None,:] + f_r[:,None] * n[None,:]
 
 class ModeSelector(ParallelModuleBase):
     r"""Filter teukolsky amplitudes based on power contribution.
@@ -92,6 +90,8 @@ class ModeSelector(ParallelModuleBase):
         """array: l-mode indices for each mode index, given by amplitude module."""
         self.m_arr = self.amplitude_generator.m_arr_no_mask
         """array: m-mode indices for each mode index, given by amplitude module."""
+        self.k_arr = self.amplitude_generator.k_arr_no_mask
+        """array: k-mode indices for each mode index, given by amplitude module."""
         self.n_arr = self.amplitude_generator.n_arr_no_mask
         """array: n-mode indices for each mode index, given by amplitude module."""
 
@@ -169,6 +169,7 @@ class ModeSelector(ParallelModuleBase):
             self.modeinds_map = self.amplitude_generator.special_index_map_arr
         else:
             self.modeinds_map = self.xp.asarray(modeinds_map)
+            assert self.modeinds_map.ndim == 4, "Modeinds map must be a 4D array."
 
     @classmethod
     def supported_backends(cls):
@@ -225,6 +226,8 @@ class ModeSelector(ParallelModuleBase):
                 raise ValueError("Mode selection has unphysical |m| > l mode(s).")
             if self.xp.any(mode_arr[:, 0] < 2):
                 raise ValueError("Mode selection has unphysical l < 2 mode(s).")
+        else:
+            mode_arr = None
 
         if mode_selection_threshold is None:
             mode_selection_threshold = self.mode_selection_threshold
@@ -306,7 +309,7 @@ class ModeSelector(ParallelModuleBase):
             teuk_modes = self.amplitude_generator(a, p, e, xI)
             
             # get ylms
-            ylms = self.ylm_generator(self.l_arr, self.m_arr, theta, phi)
+            ylms = self.ylm_generator(self.unique_l, self.unique_m, theta, phi)[self.inverse_lm]
 
             # get mode indices
             keep_modes = self.xp.arange(teuk_modes.shape[1])
@@ -327,19 +330,38 @@ class ModeSelector(ParallelModuleBase):
                 self.n_arr,
             )
 
+        # if mode selection is a list, compute only these modes for efficiency
         elif isinstance(mode_selection, list):
             try:
-                keep_modes_temp = self.modeinds_map[mode_arr[:, 0], mode_arr[:, 1], mode_arr[:, 2], mode_arr[:,3]]
+                keep_modes = self.modeinds_map[mode_arr[:, 0], mode_arr[:, 1], mode_arr[:, 2], mode_arr[:,3]]
             except IndexError:
                 raise ValueError("Mode selection indices are out of bounds.")
 
-            # pass array of mode indexes (most efficient)
-            teuk_modes_out = self.amplitude_generator(a, p, e, xI, specific_modes=keep_modes_temp)
+            # pass array of mode indexes (most efficient, returns an array)
+            teuk_modes = self.amplitude_generator(a, p, e, xI, specific_modes=keep_modes)
 
             # get ylms, only for the desired modes (needs to include -m modes in general, so we pass the kwarg)
-            ylms = self.ylm_generator(mode_arr[:, 0], mode_arr[:,1], theta, phi, include_minus_m=True)
+            ylms_out = self.ylm_generator(mode_arr[:, 0], mode_arr[:,1], theta, phi, include_minus_m=True)
+            
+            # if include_minus_mkn is False, we need to zero out the latter half of this array
+            if not include_minus_mkn:
+                # zero out the -m modes
+                # ylms[keep_modes >= self.num_m_zero_up] = 0.0 + 0.0j
+                ylms_out[teuk_modes.shape[1]:] = 0.0 + 0.0j
+
+            return (
+                teuk_modes, 
+                ylms_out,
+                self.l_arr[keep_modes],
+                self.m_arr[keep_modes],
+                self.k_arr[keep_modes],
+                self.n_arr[keep_modes],
+            )
 
         else:
+            # get teuk modes
+            teuk_modes = self.amplitude_generator(a, p, e, xI)
+
             # get ylms
             ylms = self.ylm_generator(self.unique_l, self.unique_m, theta, phi)[self.inverse_lm]
 
@@ -360,8 +382,21 @@ class ModeSelector(ParallelModuleBase):
             if self.sensitivity_fn is None:
                 mode_psds = 1.  # no weights applied
             else:
-                # obtain the PSDs of the modes TODO
-                pass
+                # obtain the PSD for each mode in each time segment
+                
+                mode_freqs = self.xp.abs(
+                    get_mode_frequencies(
+                        online_mode_selection_args["f_phi"],
+                        online_mode_selection_args["f_theta"],
+                        online_mode_selection_args["f_r"],
+                        self.m_arr,
+                        self.k_arr,
+                        self.n_arr
+                    )
+                )
+                mode_psds = self.sensitivity_fn(
+                    mode_freqs.flatten()
+                ).reshape(mode_freqs.shape)
             
             # duration of each trajectory segment, used to estimate the SNR per segment
             node_times = self.xp.diff(online_mode_selection_args["t"])
@@ -369,15 +404,15 @@ class ModeSelector(ParallelModuleBase):
             mode_snr2_ests = ((power / mode_psds)[:-1]*node_times[:,None]).sum(0)
 
             # sort the power for a cumulative summation
-            inds_sort = self.xp.argsort(mode_snr2_ests, axis=1)[:, ::-1]
-            mode_snr2_ests = self.xp.sort(mode_snr2_ests, axis=1)[:, ::-1]
-            cumsum = self.xp.cumsum(mode_snr2_ests, axis=1)
+            inds_sort = self.xp.argsort(mode_snr2_ests)[::-1]
+            mode_snr2_ests = self.xp.sort(mode_snr2_ests)[::-1]
+            cumsum = self.xp.cumsum(mode_snr2_ests)
 
             # initialize and indices array for keeping modes
             inds_keep = self.xp.full(cumsum.shape, True)
 
             # keep modes that add to within the fractional square SNR (1 - kappa)^2
-            inds_keep[:, 1:] = cumsum[:, :-1] < cumsum[:, -1][:, self.xp.newaxis] * (
+            inds_keep[1:] = cumsum[:-1] < cumsum[-1] * (
                 1 - mode_selection_threshold
             )**2
 
@@ -390,54 +425,53 @@ class ModeSelector(ParallelModuleBase):
                 keep_modes_temp >= self.num_m_zero_up
             )
 
-        # if +m or -m contributes, we keep both because of structure of CUDA kernel
-        keep_modes, indices, counts = self.xp.unique(
-            keep_modes_temp, return_index=True, return_counts=True
-        )
-
-        # find minus mkn modes that need to be removed
-        if include_minus_mkn or not isinstance(
-            mode_selection, list
-        ):  # if true then we do not want to exclude any modes
-            exclude_minus_mkn = []
-        else:
-            # check if the mode_selection array includes both (m,k,n) and (-m,-k,-n) modes
-            # if it does, we keep all of these modes and only search for (m,k,n) modes without
-            # their negative counterparts
-            indices_count_1 = indices[counts == 1]
-
-            # exclude m > 0 modes if m < 0 is selected
-            exclude_positive = self.xp.where((mode_arr[:, 1] < 0)[indices_count_1])[0]
-            # exclude m < 0 modes if m > 0 is selected
-            exclude_negative = self.xp.where((mode_arr[:, 1] > 0)[indices_count_1])[
-                0
-            ] + len(keep_modes)
-            # concatenate the two arrays
-            exclude_minus_mkn = self.xp.concatenate(
-                [exclude_positive, exclude_negative]
+            # if +m or -m contributes, we keep both because of structure of CUDA kernel
+            keep_modes, indices, counts = self.xp.unique(
+                keep_modes_temp, return_index=True, return_counts=True
             )
 
-        # set ylms
-        # adust temp arrays specific to ylm setup
-        temp2 = keep_modes * (keep_modes < self.num_m0) + (
-            keep_modes + self.num_m_1_up
-        ) * (keep_modes >= self.num_m0)
+            # find minus mkn modes that need to be removed
+            if include_minus_mkn:  # if true then we do not want to exclude any modes
+                exclude_minus_mkn = []
+            else:
+                # check if the mode_selection array includes both (m,k,n) and (-m,-k,-n) modes
+                # if it does, we keep all of these modes and only search for (m,k,n) modes without
+                # their negative counterparts
+                indices_count_1 = indices[counts == 1]
 
-        # ylm duplicates the m = 0 unlike teuk_modes
-        ylmkeep = self.xp.concatenate([keep_modes, temp2])
-        ylms_out = ylms[ylmkeep]
+                # exclude m > 0 modes if m < 0 is selected
+                exclude_positive = self.xp.where((mode_arr[:, 1] < 0)[indices_count_1])[0]
+                # exclude m < 0 modes if m > 0 is selected
+                exclude_negative = self.xp.where((mode_arr[:, 1] > 0)[indices_count_1])[
+                    0
+                ] + len(keep_modes)
+                # concatenate the two arrays
+                exclude_minus_mkn = self.xp.concatenate(
+                    [exclude_positive, exclude_negative]
+                )
 
-        # throw out minus mkn modes if required
-        ylms_out[exclude_minus_mkn] = 0.0 + 0.0j
+            # set ylms
+            # adust temp arrays specific to ylm setup
+            temp2 = keep_modes * (keep_modes < self.num_m0) + (
+                keep_modes + self.num_m_1_up
+            ) * (keep_modes >= self.num_m0)
 
-        # setup up teuk mode and ylm returns
-        out1 = (teuk_modes[:, keep_modes], ylms_out)
+            # ylm duplicates the m = 0 unlike teuk_modes
+            ylmkeep = self.xp.concatenate([keep_modes, temp2])
+            ylms_out = ylms[ylmkeep]
 
-        # setup up mode values that have been kept
-        out2 = tuple(
-            self.l_arr[keep_modes],
-            self.m_arr[keep_modes],
-            self.n_arr[keep_modes],
-        )
+            # throw out minus mkn modes if required
+            ylms_out[exclude_minus_mkn] = 0.0 + 0.0j
 
-        return out1 + out2
+            # setup up teuk mode and ylm returns
+            out1 = (teuk_modes[:, keep_modes], ylms_out)
+
+            # setup up mode values that have been kept
+            out2 = tuple([
+                self.l_arr[keep_modes],
+                self.m_arr[keep_modes],
+                self.k_arr[keep_modes],
+                self.n_arr[keep_modes],
+            ])
+
+            return out1 + out2
