@@ -241,6 +241,7 @@ class ModeSelector(ParallelModuleBase):
 
     def __call__(
         self,
+        t,
         a,
         p,
         e,
@@ -399,7 +400,7 @@ class ModeSelector(ParallelModuleBase):
                 ).reshape(mode_freqs.shape)
             
             # duration of each trajectory segment, used to estimate the SNR per segment
-            node_times = self.xp.diff(online_mode_selection_args["t"])
+            node_times = self.xp.diff(t)
 
             mode_snr2_ests = ((power / mode_psds)[:-1]*node_times[:,None]).sum(0)
 
