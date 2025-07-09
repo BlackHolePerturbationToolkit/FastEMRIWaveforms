@@ -476,3 +476,18 @@ class ModeSelector(ParallelModuleBase):
             ])
 
             return out1 + out2
+
+
+def get_selected_modes_from_initial_conditions(mode_selector_module, traj_module, m1, m2, a, p0, e0, xI0, theta, phi, traj_args=None,traj_kwargs=None, mode_selector_kwargs=None):
+    if traj_args is None:
+        traj_args = []
+    if traj_kwargs is None:
+        traj_kwargs = {}
+    if mode_selector_kwargs is None:
+        mode_selector_kwargs = {}
+
+    t, p, e, x, _, _, _ = traj_module(m1, m2, a, p0, e0, xI0, **traj_kwargs)
+    teuk_modes_out, ylms_out, ls, ms, ks, ns = mode_selector_module(
+        t, a, p, e, x, theta, phi, **mode_selector_kwargs
+    )
+    return teuk_modes_out, ylms_out, ls, ms, ks, ns
