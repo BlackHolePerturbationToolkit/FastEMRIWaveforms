@@ -109,12 +109,15 @@ class SphericalHarmonicWaveformBase(
             sum_module, kwargs=sum_kwargs
         )
         self.ylm_gen = self.build_with_same_backend(GetYlms, kwargs=Ylm_kwargs)
+        
+        mode_selector_kwargs_copy = mode_selector_kwargs.copy()
+        mode_selector_kwargs_copy.update(dict(ylm_generator=self.ylm_gen))
 
         # selecting modes that contribute at threshold to the waveform
         self.mode_selector = self.build_with_same_backend(
             mode_selector_module,
-            args=[self.l_arr_no_mask, self.m_arr_no_mask, self.k_arr_no_mask, self.n_arr_no_mask],
-            kwargs=mode_selector_kwargs,
+            args=[self.amplitude_generator],
+            kwargs=mode_selector_kwargs_copy,
         )
 
     def _generate_waveform(
@@ -249,12 +252,13 @@ class SphericalHarmonicWaveformBase(
         # makes sure p and e are generally within the model
         self.sanity_check_traj(a, p, e, xI)
 
-        if self.normalize_amps:
-            # get the vector norm
-            amp_norm = self.amplitude_generator.amp_norm_spline.ev(
-                schwarzecc_p_to_y(p, e), e
-            )  # TODO: handle this grid parameter change, fix to Schwarzschild for now
-            amp_norm = self.xp.asarray(amp_norm)
+        # TODO: add to ROMAN module directly
+        # if self.normalize_amps:
+        #     # get the vector norm
+        #     amp_norm = self.amplitude_generator.amp_norm_spline.ev(
+        #         schwarzecc_p_to_y(p, e), e
+        #     )  # TODO: handle this grid parameter change, fix to Schwarzschild for now
+        #     amp_norm = self.xp.asarray(amp_norm)
 
         self.end_time = t[-1]
 
@@ -267,22 +271,7 @@ class SphericalHarmonicWaveformBase(
         Phi_theta = self.xp.asarray(Phi_theta)
         Phi_r = self.xp.asarray(Phi_r)
 
-        # get ylms only for unique (l,m) pairs
-        # then expand to all (lmn with self.inverse_lm)
-        ylms = self.ylm_gen(self.unique_l, self.unique_m, theta, phi)[self.inverse_lm]
-        # if mode selector is predictive, run now to avoid generating amplitudes that are not required
-        if self.mode_selector.is_predictive:
-            # overwrites mode_selection so it's now a list of modes to keep, ready to feed into amplitudes
-            if mode_selection is not None:
-                get_logger().warning(
-                    "(SphericalHarmonicWaveformBase) Warning: Mode selector is predictive. Overwriting mode_selection."
-                )
-            mode_selection = self.mode_selector(
-                m1, m2, a * xI0, p0, e0, 1.0, theta, phi, T, mode_selection_threshold
-            )  # TODO: update this if more arguments are required
-
         # split into batches
-
         if batch_size == -1 or self.allow_batching is False:
             inds_split_all = [self.xp.arange(len(t))]
         else:
@@ -314,42 +303,39 @@ class SphericalHarmonicWaveformBase(
             Phi_theta_temp = Phi_theta[inds_in]
             Phi_r_temp = Phi_r[inds_in]
 
-            if self.normalize_amps:
-                amp_norm_temp = amp_norm[inds_in]
-
-            # amplitudes
-            teuk_modes = self.xp.asarray(
-                self.amplitude_generator(a, p_temp, e_temp, xI_temp)
-            )
+            # if self.normalize_amps:
+            #     amp_norm_temp = amp_norm[inds_in]
 
             # normalize by flux produced in trajectory
-            if self.normalize_amps:
-                amp_for_norm = self.xp.sum(
-                    self.xp.abs(
-                        self.xp.concatenate(
-                            [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
-                            axis=1,
-                        )
-                    )
-                    ** 2,
-                    axis=1,
-                ) ** (1 / 2)
+            # TODO: move to ROMAN
+            # if self.normalize_amps:
+            #     amp_for_norm = self.xp.sum(
+            #         self.xp.abs(
+            #             self.xp.concatenate(
+            #                 [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
+            #                 axis=1,
+            #             )
+            #         )
+            #         ** 2,
+            #         axis=1,
+            #     ) ** (1 / 2)
 
-                # normalize
-                factor = amp_norm_temp / amp_for_norm
-                teuk_modes = teuk_modes * factor[:, np.newaxis]
+            #     # normalize
+            #     factor = amp_norm_temp / amp_for_norm
+            #     teuk_modes = teuk_modes * factor[:, np.newaxis]
 
-            fund_freq_args = (
-                m1,
-                m2,
-                a,
-                p_temp,
-                e_temp,
-                xI,
-                t_temp,
+            # get frequencies to pass to mode selection
+            # TODO: write a method that just returns the derivatives at each spline knot (vectorises easier).
+            freqs = self.inspiral_generator.inspiral_generator.eval_integrator_derivative_spline(t_temp, order=1)[:,3:6] / 2 / np.pi
+
+            online_mode_selection_args = dict(
+                t = t_temp,
+                f_phi = freqs[:,0],
+                f_theta = freqs[:,1],
+                f_r = freqs[:,2],
             )
-            modeinds = [self.l_arr, self.m_arr, self.k_arr, self.n_arr]
-            modeinds_map = self.special_index_map_arr
+
+            # get amplitudes that have been selected / sorted to user requirements
             (
                 teuk_modes_in,
                 ylms_in,
@@ -358,16 +344,17 @@ class SphericalHarmonicWaveformBase(
                 self.ks,
                 self.ns,
             ) = self.mode_selector(
-                teuk_modes,
-                ylms,
-                modeinds,
-                fund_freq_args=fund_freq_args,
+                a,
+                p_temp,
+                e_temp,
+                xI_temp,
+                theta,
+                phi,
+                online_mode_selection_args=online_mode_selection_args,
                 mode_selection=mode_selection,
-                modeinds_map=modeinds_map,
                 include_minus_mkn=include_minus_mkn,
                 mode_selection_threshold=mode_selection_threshold,
             )
-
             # store number of modes for external information
             self.num_modes_kept = teuk_modes_in.shape[1]
 

@@ -373,11 +373,13 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
 
         if specific_modes is not None:
             self.num_modes_eval = len(specific_modes)
-            if isinstance(specific_modes, (list, self.xp.ndarray)):
+            if isinstance(specific_modes, self.xp.ndarray):
+                mode_indexes = specific_modes
+            if isinstance(specific_modes, list):
                 specific_modes_arr = self.xp.asarray(specific_modes)
                 mode_indexes = self.special_index_map_arr[
                     specific_modes_arr[:, 0],
-                    m_mode_sign * specific_modes_arr[:, 1],
+                    m_mode_sign * specific_modes_arr[:, 1],  # may need fix for array mode index input?
                     specific_modes_arr[:, 2],
                     specific_modes_arr[:, 3],
                 ]
@@ -461,29 +463,13 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
                 z_check - z_below
             ) + Amp_below
 
-        if not isinstance(specific_modes, (list, self.xp.ndarray)):
+        if not isinstance(specific_modes, list):
             # apply xI flip symmetry
             if m_mode_sign < 0:
                 # this requires a sign flip of the m mode because the default is to return only m > 0 modes
                 return self.xp.conj(Amp_z)
             return Amp_z
 
-        elif isinstance(specific_modes, self.xp.ndarray):
-            temp = {}
-            for i, lmkn in enumerate(specific_modes):
-                l, m, k, n = lmkn
-                temp[(l, m, k, n)] = Amp_z[:, i]
-
-                # apply xI flip symmetry
-                if m_mode_sign < 0:
-                    temp[(l, m, k, n)] = (-1) ** l * temp[(l, m, k, n)]
-
-                # apply +/- m symmetry
-                if m_mode_sign * m < 0:
-                    temp[(l, m, k, n)] = (-1) ** l * self.xp.conj(temp[(l, m, k, n)])
-
-            return temp
-        # dict containing requested modes
         else:
             temp = {}
             for i, lmkn in enumerate(specific_modes):
