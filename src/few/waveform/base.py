@@ -329,7 +329,6 @@ class SphericalHarmonicWaveformBase(
             freqs = self.inspiral_generator.inspiral_generator.eval_integrator_derivative_spline(t_temp, order=1)[:,3:6] / 2 / np.pi
 
             online_mode_selection_args = dict(
-                t = t_temp,
                 f_phi = freqs[:,0],
                 f_theta = freqs[:,1],
                 f_r = freqs[:,2],
@@ -344,6 +343,7 @@ class SphericalHarmonicWaveformBase(
                 self.ks,
                 self.ns,
             ) = self.mode_selector(
+                t_temp,
                 a,
                 p_temp,
                 e_temp,
