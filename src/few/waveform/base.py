@@ -53,13 +53,7 @@ class SphericalHarmonicWaveformBase(
         sum_kwargs: Optional kwargs to pass to the sum module during instantiation. Default is {}.
         Ylm_kwargs: Optional kwargs to pass to the Ylm generator. Default is {}.
         mode_selector_kwargs: Optional kwargs to pass to the mode selector module. Default is {}.
-        normalize_amps: If True, normalize the amplitudes at each step of the trajectory. This option should
-            be used alongside ROMAN networks that have been trained with normalized amplitudes.
-            Default is False.
     """
-
-    normalize_amps: bool
-    """Whether to normalize amplitudes to flux at each step from trajectory"""
 
     inspiral_kwargs: dict
     """Keyword arguments passed to the inspiral generator call function"""
@@ -91,12 +85,10 @@ class SphericalHarmonicWaveformBase(
         sum_kwargs: Optional[dict] = None,
         Ylm_kwargs: Optional[dict] = None,
         mode_selector_kwargs: Optional[dict] = None,
-        normalize_amps: bool = False,
         force_backend: BackendLike = None,
     ):
         ParallelModuleBase.__init__(self, force_backend=force_backend)
 
-        self.normalize_amps = normalize_amps
         self.inspiral_kwargs = {} if inspiral_kwargs is None else inspiral_kwargs
         self.inspiral_generator = inspiral_module(
             **self.inspiral_kwargs
@@ -109,15 +101,12 @@ class SphericalHarmonicWaveformBase(
             sum_module, kwargs=sum_kwargs
         )
         self.ylm_gen = self.build_with_same_backend(GetYlms, kwargs=Ylm_kwargs)
-        
-        mode_selector_kwargs_copy = mode_selector_kwargs.copy()
-        mode_selector_kwargs_copy.update(dict(ylm_generator=self.ylm_gen))
 
         # selecting modes that contribute at threshold to the waveform
         self.mode_selector = self.build_with_same_backend(
             mode_selector_module,
-            args=[self.amplitude_generator],
-            kwargs=mode_selector_kwargs_copy,
+            args=[self.amplitude_generator, self.ylm_gen],
+            kwargs=mode_selector_kwargs,
         )
 
     def _generate_waveform(
@@ -252,14 +241,6 @@ class SphericalHarmonicWaveformBase(
         # makes sure p and e are generally within the model
         self.sanity_check_traj(a, p, e, xI)
 
-        # TODO: add to ROMAN module directly
-        # if self.normalize_amps:
-        #     # get the vector norm
-        #     amp_norm = self.amplitude_generator.amp_norm_spline.ev(
-        #         schwarzecc_p_to_y(p, e), e
-        #     )  # TODO: handle this grid parameter change, fix to Schwarzschild for now
-        #     amp_norm = self.xp.asarray(amp_norm)
-
         self.end_time = t[-1]
 
         # convert for gpu
@@ -303,36 +284,19 @@ class SphericalHarmonicWaveformBase(
             Phi_theta_temp = Phi_theta[inds_in]
             Phi_r_temp = Phi_r[inds_in]
 
-            # if self.normalize_amps:
-            #     amp_norm_temp = amp_norm[inds_in]
-
-            # normalize by flux produced in trajectory
-            # TODO: move to ROMAN
-            # if self.normalize_amps:
-            #     amp_for_norm = self.xp.sum(
-            #         self.xp.abs(
-            #             self.xp.concatenate(
-            #                 [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
-            #                 axis=1,
-            #             )
-            #         )
-            #         ** 2,
-            #         axis=1,
-            #     ) ** (1 / 2)
-
-            #     # normalize
-            #     factor = amp_norm_temp / amp_for_norm
-            #     teuk_modes = teuk_modes * factor[:, np.newaxis]
-
             # get frequencies to pass to mode selection
             # TODO: write a method that just returns the derivatives at each spline knot (vectorises easier).
-            freqs = self.inspiral_generator.inspiral_generator.eval_integrator_derivative_spline(t_temp, order=1)[:,3:6] / 2 / np.pi
+            if self.mode_selector.mode_selection != "all":
+                freqs = self.inspiral_generator.inspiral_generator.eval_integrator_derivative_spline(t_temp, order=1)[:,3:6] / 2 / np.pi
 
-            online_mode_selection_args = dict(
-                f_phi = freqs[:,0],
-                f_theta = freqs[:,1],
-                f_r = freqs[:,2],
-            )
+                online_mode_selection_args = dict(
+                    f_phi = freqs[:,0],
+                    f_theta = freqs[:,1],
+                    f_r = freqs[:,2],
+                )
+            else:
+                # handles slow waveform
+                online_mode_selection_args = None
 
             # get amplitudes that have been selected / sorted to user requirements
             (
