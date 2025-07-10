@@ -22,7 +22,7 @@ class ModeSelectorTest(FewBackendTest):
         return FastSchwarzschildEccentricFluxBicubic
 
     def test_mode_selector(self):
-        # first, lets get amplitudes for a trajectory
+        # first, lets make a trajectory
         traj = EMRIInspiral(func=SchwarzEccFlux)
         ylm_gen = GetYlms(include_minus_m=True, force_backend="cpu")
 
@@ -36,30 +36,27 @@ class ModeSelectorTest(FewBackendTest):
 
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(m1, m2, 0.0, p0, e0, 1.0, T=10.0)
 
-        # get amplitudes along trajectory
+        # instantiate amplitude module
         amp = RomanAmplitude(force_backend="cpu")
-
-        teuk_modes = amp(0.0, p, e, x)
-
-        # get ylms
-        ylms = ylm_gen(amp.unique_l, amp.unique_m, theta, phi).copy()[amp.inverse_lm]
 
         # select modes
 
+        # instantiate mode selector
         mode_selector = ModeSelector(
-            amp.l_arr_no_mask, amp.m_arr_no_mask, amp.n_arr_no_mask, force_backend="cpu"
+            amp, 
+            ylm_generator=ylm_gen,
+            force_backend="cpu"
         )
 
         eps = 1e-2  # tolerance on mode contribution to total power
 
-        modeinds = [amp.l_arr, amp.m_arr, amp.n_arr]
-        (teuk_modes_in, ylms_in, ls, ms, ns) = mode_selector(
-            teuk_modes, ylms, modeinds, mode_selection_threshold=eps
+        (teuk_modes_in, ylms_in, ls, ms, ks, ns) = mode_selector(
+            t, 0.0, p, e, x, theta, phi, mode_selection_threshold=eps
         )
 
-        # print("We reduced the mode content from {} modes to {} modes.".format(teuk_modes.shape[1], teuk_modes_in.shape[1]))
         ls_orig = ls
         ms_orig = ms
+        ks_orig = ks
         ns_orig = ns
 
         # produce sensitivity function
@@ -79,31 +76,25 @@ class ModeSelectorTest(FewBackendTest):
 
         # provide sensitivity function kwarg
         mode_selector_noise_weighted = ModeSelector(
-            amp.l_arr_no_mask,
-            amp.m_arr_no_mask,
-            amp.n_arr_no_mask,
+            amp,
+            ylm_generator=ylm_gen, 
             sensitivity_fn=sens_fn,
             force_backend="cpu",
         )
 
-        # Schwarzschild
-        a = 0.0
-        Y = np.zeros_like(p)  # equatorial / cos iota
-        fund_freq_args = (m1, m2, a, p, e, Y, t)
+        freqs = traj.inspiral_generator.eval_integrator_derivative_spline(t, order=1)[:,3:6] / 2 / np.pi
 
-        modeinds = [amp.l_arr, amp.m_arr, amp.n_arr]
-        (teuk_modes_in, ylms_in, ls, ms, ns) = mode_selector_noise_weighted(
-            teuk_modes, ylms, modeinds, fund_freq_args=fund_freq_args, mode_selection_threshold=eps
+        online_mode_selection_args = dict(
+            f_phi = freqs[:,0],
+            f_theta = freqs[:,1],
+            f_r = freqs[:,2],
         )
 
-        # print("We reduced the mode content from {} modes to {} modes when using noise-weighting.".format(teuk_modes.shape[1], teuk_modes_in.shape[1]))
-        # import matplotlib.pyplot as plt
-        # plt.figure(); plt.title(f'Mode selection comparison \n M={M:.1e},mu={mu:.1e},e0={e0},p0={p0},eps={eps:.2e}');
-        # plt.plot(ms,ns,'o',label=f'new select, N={len(ms)}', ms=10); plt.plot(ms_orig,ns_orig,'P',label=f'old select, N={len(ms_orig)}', ms=5); plt.legend(); plt.ylabel('n'); plt.xlabel('m'); plt.show()
-
-        # mode_selector_kwargs = {}
-
-        # noise_weighted_mode_selector_kwargs = dict(sensitivity_fn=sens_fn)
+        (teuk_modes_in, ylms_in, ls_nw, ms_nw, ks_nw, ns_nw) = mode_selector_noise_weighted(
+            t, 0.0, p, e, x, theta, phi,
+            online_mode_selection_args=online_mode_selection_args, 
+            mode_selection_threshold=eps
+        )
 
         few_base = FastSchwarzschildEccentricFluxBicubic(force_backend=self.backend)
 
@@ -116,11 +107,11 @@ class ModeSelectorTest(FewBackendTest):
         dist = 1.0
         dt = 10.0
         T = 0.001
-        mode_selection = [(ll, mm, nn) for ll, mm, nn in zip(ls_orig, ms_orig, ns_orig)]
+        mode_selection = [(ll, mm, kk, nn) for ll, mm, kk, nn in zip(ls_orig, ms_orig, ks_orig, ns_orig)]
         wave_base = few_base(
             m1, m2, p0, e0, theta, phi, dist, dt=dt, T=T, mode_selection=mode_selection
         )
-        mode_selection = [(ll, mm, nn) for ll, mm, nn in zip(ls, ms, ns)]
+        mode_selection = [(ll, mm, kk, nn) for ll, mm, kk, nn in zip(ls, ms, ks, ns)]
         wave_weighted = few_base(
             m1, m2, p0, e0, theta, phi, dist, dt=dt, T=T, mode_selection=mode_selection
         )

@@ -30,6 +30,7 @@ class DirectModeSum(SummationBase):
         phases_in,
         l_arr,
         m_arr,
+        k_arr,
         n_arr,
         *args,
         dt=10.0,
@@ -55,6 +56,7 @@ class DirectModeSum(SummationBase):
                  (:math:`\Phi_r`).
             l_arr (1D int np.ndarray): :math:`\ell` values associated with each mode.
             m_arr (1D int np.ndarray): :math:`m` values associated with each mode.
+            k_arr (1D int np.ndarray): :math:`k` values associated with each mode.
             n_arr (1D int np.ndarray): :math:`n` values associated with each mode.
             *args (list, placeholder): Added for future flexibility.
             **kwargs (dict, placeholder): Added for future flexibility.
@@ -71,9 +73,11 @@ class DirectModeSum(SummationBase):
         teuk_modes = self.xp.asarray(teuk_modes)
         ylms = self.xp.asarray(ylms)
         Phi_phi = self.xp.asarray(Phi_phi)
+        Phi_theta = self.xp.asarray(Phi_theta)
         Phi_r = self.xp.asarray(Phi_r)
         l_arr = self.xp.asarray(l_arr)
         m_arr = self.xp.asarray(m_arr)
+        k_arr = self.xp.asarray(k_arr)
         n_arr = self.xp.asarray(n_arr)
 
         if integrate_backwards:
@@ -91,6 +95,7 @@ class DirectModeSum(SummationBase):
                 -1j
                 * (
                     m_arr[self.xp.newaxis, :] * Phi_phi[:, self.xp.newaxis]
+                    + k_arr[self.xp.newaxis, :] * Phi_theta[:, self.xp.newaxis]
                     + n_arr[self.xp.newaxis, :] * Phi_r[:, self.xp.newaxis]
                 )
             ),
@@ -109,6 +114,7 @@ class DirectModeSum(SummationBase):
                 -1j
                 * (
                     -m_arr[self.xp.newaxis, inds] * Phi_phi[:, self.xp.newaxis]
+                    - k_arr[self.xp.newaxis, inds] * Phi_theta[:, self.xp.newaxis]
                     - n_arr[self.xp.newaxis, inds] * Phi_r[:, self.xp.newaxis]
                 )
             ),
