@@ -29,10 +29,18 @@ class ModeSelector(ParallelModuleBase):
     will in order of :math:`m=0`, :math:`m>0`, and then :math:`m<0`.
 
     args:
-        l_arr: The l-mode indices for each mode index.
-        m_arr: The m-mode indices for each mode index. Requires all :math:`m \geq 0`.
-        k_arr: The k-mode indices for each mode index.
-        n_arr: The n-mode indices for each mode index.
+        amplitude_generator: Object that generates the teukolsky amplitudes
+            for the modes. This should be an instance of a class that has a
+            :code:`__call__` method that takes the parameters :math:`(a, p, e, xI)`
+            and returns the teukolsky amplitudes for the modes.
+            It should also have mode-related attributes obtained from subclassing
+            `few.utils.baseclasses.SphericalHarmonic`.
+        ylm_generator: Object that generates the Ylm values for the modes.
+            This should be an instance of a class that has a
+            :code:`__call__` method that takes the parameters :math:`(l, m, \theta, \phi)`
+            and returns the Ylm values for the modes.
+            Default is :class:`few.utils.ylm.GetYlms`, which generates Ylm values
+            for the modes based on the l and m indices.
         mode_selection: Determines the type of mode
             filtering to perform. If None, use default mode filtering provided
             by :code:`mode_selector`. If 'all', it will run all modes without
@@ -60,6 +68,11 @@ class ModeSelector(ParallelModuleBase):
             sennsitivity is used to weight the mode values when determining which
             modes to keep. **Note**: if the sensitivity function is provided,
             and GPUs are used, then this function must accept CuPy arrays as input.
+        modeinds_map: Map of mode indices to Teukolsky amplitude data.
+            This is a 4D array of shape (l, m, k, n) that maps the mode indices
+            to one-dimensional indices from the amplitude module output.
+            This is used to efficiently select the modes from the amplitude module output.
+            By default this is obtained from the supplied amplitude module.
         **kwargs: Optional keyword arguments for the base class:
             :class:`few.utils.baseclasses.ParallelModuleBase`.
 
@@ -252,29 +265,25 @@ class ModeSelector(ParallelModuleBase):
         mode_selection: Optional[Union[str, list, np.ndarray]] = None,
         include_minus_mkn: Optional[bool] = None,
         mode_selection_threshold: float = None,
-    ) -> np.ndarray:
+    ) -> tuple[np.ndarray]:
         r"""Call to sort and filer teukolsky modes.
 
-        This is the call function that takes the teukolsky modes, ylms,
-        mode indices and fractional accuracy of the total power and returns
-        filtered teukolsky modes and ylms.
+        This is the call function that takes an inspiral trajectory and
+        returns the teukolsky modes and ylms required to produce a waveform
+        of either a given mismatch or the requested mode content.
 
         args:
-            teuk_modes: Complex teukolsky amplitudes
-                from the amplitude modules.
-                Shape: (number of trajectory points, number of modes).
-            ylms: Array of ylm values for each mode,
-                including m<0. Shape is (num of m==0,) + (num of m>0,)
-                + (num of m<0). Number of m<0 and m>0 is the same, but they are
-                ordered as (m==0) first then m>0 then m<0.
-            modeinds: List containing the mode index :math:`(l,m,k,n)` arrays,
-                e.g. [l_arr, m_arr, k_arr, n_arr].
-            fund_freq_args: Args necessary to determine
-                fundamental frequencies along trajectory. The tuple will represent
-                :math:`(m1, m2, a, p, e, \cos\iota)` where the primary mass (:math:`m_1`),
-                secondary mass (:math:`m_2`), and dimensionless spin (:math:`a`),
-                are scalar and the other three quantities are self.xp.ndarrays.
-                This must be provided if sensitivity weighting is used. Default is None.
+            t: Time array for the input trajectory.
+            a: Dimensionless spin parameter of the primary black hole.
+            p: Semi-latus rectum of the trajectory.
+            e: Eccentricity of the trajectory.
+            xI: Initial cosine(inclination) for the trajectory.
+            theta: Polar source-frame viewing angle.
+            phi: Azimuthal source-frame viewing angle.
+            online_mode_selection_args: Dictionary of arguments necessary to
+                determine the mode frequencies along the trajectory. This should
+                contain the keys 'f_phi', 'f_theta', and 'f_r', which are
+                the fundamental frequencies of the modes along the trajectory.
             mode_selection: Determines the type of mode
                 filtering to perform. If None, use default mode filtering provided
                 by :code:`mode_selector`. If 'all', it will run all modes without
@@ -289,15 +298,14 @@ class ModeSelector(ParallelModuleBase):
             include_minus_mkn: If True, then include :math:`(-m, -k, -n)` mode when
                 computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
                 is a list of specific modes. Default is True.
-            mode_selection_threshold: Fractional accuracy of the total power used
+            mode_selection_threshold: Target waveform mismatch used
                 to determine the contributing modes. Lowering this value will
-                calculate more modes slower the waveform down, but generally
+                calculate more modes, slowing the waveform generation down, but generally
                 improving accuracy. Increasing this value removes modes from
                 consideration and can have a considerable affect on the speed of
                 the waveform, albeit at the cost of some accuracy (usually an
                 acceptable loss). Default that gives good mismatch qualities is
                 1e-5.
-
         """
 
         # set defaults, check inputs are consistent, etc.
