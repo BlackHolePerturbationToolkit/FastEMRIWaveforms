@@ -432,17 +432,6 @@ class FastKerrEccentricEquatorialFlux(
         if mode_selector_kwargs is None:
             mode_selector_kwargs = {}
         mode_selection_module = ModeSelector
-        if "mode_selection_type" in mode_selector_kwargs:
-            if mode_selector_kwargs["mode_selection_type"] == "neural":
-                mode_selection_module = NeuralModeSelector
-                if "mode_selector_location" not in mode_selector_kwargs:
-                    mode_selector_kwargs["mode_selector_location"] = os.path.join(
-                        dir_path,
-                        "./files/modeselector_files/KerrEccentricEquatorialFlux/",
-                    )
-                mode_selector_kwargs["keep_inds"] = np.array(
-                    [0, 1, 2, 3, 4, 6, 7, 8, 9]
-                )
 
         KerrEccentricEquatorial.__init__(
             self,
@@ -464,9 +453,6 @@ class FastKerrEccentricEquatorialFlux(
             sum_kwargs=sum_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             mode_selector_kwargs=mode_selector_kwargs,
-            **{
-                key: value for key, value in kwargs.items() if key in ["normalize_amps"]
-            },
             force_backend=force_backend,
         )
 
@@ -590,15 +576,6 @@ class FastSchwarzschildEccentricFlux(
         if mode_selector_kwargs is None:
             mode_selector_kwargs = {}
         mode_selection_module = ModeSelector
-        if "mode_selection_type" in mode_selector_kwargs:
-            if mode_selector_kwargs["mode_selection_type"] == "neural":
-                mode_selection_module = NeuralModeSelector
-                if "mode_selector_location" not in mode_selector_kwargs:
-                    mode_selector_kwargs["mode_selector_location"] = os.path.join(
-                        dir_path,
-                        "./files/modeselector_files/KerrEccentricEquatorialFlux/",
-                    )
-                mode_selector_kwargs["keep_inds"] = np.array([0, 1, 3, 4, 6, 7, 8, 9])
 
         SchwarzschildEccentric.__init__(
             self,
@@ -617,7 +594,6 @@ class FastSchwarzschildEccentricFlux(
             sum_kwargs=sum_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             mode_selector_kwargs=mode_selector_kwargs,
-            normalize_amps=True,
             force_backend=force_backend,
         )
 
@@ -738,15 +714,6 @@ class FastSchwarzschildEccentricFluxBicubic(
         if mode_selector_kwargs is None:
             mode_selector_kwargs = {}
         mode_selection_module = ModeSelector
-        if "mode_selection_type" in mode_selector_kwargs:
-            if mode_selector_kwargs["mode_selection_type"] == "neural":
-                mode_selection_module = NeuralModeSelector
-                if "mode_selector_location" not in mode_selector_kwargs:
-                    mode_selector_kwargs["mode_selector_location"] = os.path.join(
-                        dir_path,
-                        "./files/modeselector_files/KerrEccentricEquatorialFlux/",
-                    )
-                mode_selector_kwargs["keep_inds"] = np.array([0, 1, 3, 4, 6, 7, 8, 9])
 
         SchwarzschildEccentric.__init__(
             self,
@@ -764,9 +731,6 @@ class FastSchwarzschildEccentricFluxBicubic(
             sum_kwargs=sum_kwargs,
             Ylm_kwargs=Ylm_kwargs,
             mode_selector_kwargs=mode_selector_kwargs,
-            **{
-                key: value for key, value in kwargs.items() if key in ["normalize_amps"]
-            },
             force_backend=force_backend,
         )
 
@@ -877,6 +841,7 @@ class SlowSchwarzschildEccentricFlux(
         amplitude_kwargs: Optional[dict] = None,
         sum_kwargs: Optional[dict] = None,
         Ylm_kwargs: Optional[dict] = None,
+        mode_selector_kwargs: Optional[dict] = None,
         force_backend: BackendLike = None,
         **kwargs: dict,
     ):
@@ -892,6 +857,13 @@ class SlowSchwarzschildEccentricFlux(
             **{k: v for k, v in kwargs.items() if k in ["lmax", "ndim", "nmax"]},
             force_backend=force_backend,
         )
+    
+        if mode_selector_kwargs is None:
+            mode_selector_kwargs = {}
+        if "mode_selection" in mode_selector_kwargs.keys():
+            if mode_selector_kwargs["mode_selection"] != "all":
+                raise ValueError("Mode selection must be 'all' for slow waveform.")
+        mode_selector_kwargs.update(dict(mode_selection="all"))
         SphericalHarmonicWaveformBase.__init__(
             self,
             inspiral_module=EMRIInspiral,
@@ -902,11 +874,7 @@ class SlowSchwarzschildEccentricFlux(
             amplitude_kwargs=amplitude_kwargs,
             sum_kwargs=sum_kwargs,
             Ylm_kwargs=Ylm_kwargs,
-            **{
-                key: value
-                for key, value in kwargs.items()
-                if key in ["mode_selector_kwargs", "normalize_amps"]
-            },
+            mode_selector_kwargs=mode_selector_kwargs,
             force_backend=force_backend,
         )
 
