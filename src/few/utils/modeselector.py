@@ -6,6 +6,7 @@ from .baseclasses import BackendLike, ParallelModuleBase
 from .globals import get_logger
 
 from .ylm import GetYlms
+from ..trajectory.inspiral import EMRIInspiral
 
 from typing import Optional, Union
 
@@ -15,18 +16,15 @@ def get_mode_frequencies(f_phi, f_theta, f_r, m, k, n):
 class ModeSelector(ParallelModuleBase):
     r"""Filter teukolsky amplitudes based on power contribution.
 
-    This module takes teukolsky modes, combines them with their associated ylms,
-    and determines the power contribution from each mode. It then filters the
-    modes bases on the fractional accuracy on the total power (eps) parameter.
-    Additionally, if a sensitivity curve is provided, the mode power is also
-    weighted according to the PSD of the sensitivity.
+    This module generates teukolsky modes and their associated ylms given an input
+    trajectory, then filters these modes according to either a list of requested modes or the
+    the power contribution from each mode. Mode filtering is performed to (roughly) achieve the
+    requested mismatch with the minimum number of modes. If a sensitivity curve is provided, mode filtering
+    is weighted according to this sensitivity curve.
 
-    The mode filtering is a major contributing factor to the speed of these
-    waveforms as it removes large numbers of useles modes from the final
+    The mode filtering is a major contributing factor to the speed of FEW
+    waveforms, as it removes large numbers of useless modes from the final
     summation calculation.
-
-    Be careful as this is built based on the construction that input mode arrays
-    will in order of :math:`m=0`, :math:`m>0`, and then :math:`m<0`.
 
     args:
         amplitude_generator: Object that generates the teukolsky amplitudes
@@ -486,7 +484,43 @@ class ModeSelector(ParallelModuleBase):
             return out1 + out2
 
 
-def get_selected_modes_from_initial_conditions(mode_selector_module, traj_module, m1, m2, a, p0, e0, xI0, theta, phi, traj_args=None,traj_kwargs=None, mode_selector_kwargs=None):
+def get_selected_modes_from_initial_conditions(
+        mode_selector_module: ModeSelector, 
+        traj_module: EMRIInspiral, 
+        m1: float, 
+        m2: float, 
+        a: float, 
+        p0: float, 
+        e0: float, 
+        xI0: float, 
+        theta: float, 
+        phi: float, 
+        traj_args: Optional[list]=None,
+        traj_kwargs: Optional[dict]=None, 
+        mode_selector_kwargs: Optional[dict]=None
+    ) -> tuple[np.ndarray]:
+    """
+    Get the selected modes from the initial conditions of an EMRI trajectory.
+    This function uses the provided trajectory module to generate the trajectory
+    and the mode selector module to select the modes based on the trajectory.
+
+    args:
+        mode_selector_module: Instance of the ModeSelector class.
+        traj_module: Instance of the EMRIInspiral class.
+        m1: Mass of the primary black hole in solar masses.
+        m2: Mass of the secondary black hole in solar masses.
+        a: Dimensionless spin parameter of the primary black hole.
+        p0: Initial semi-latus rectum of the trajectory.
+        e0: Initial eccentricity of the trajectory.
+        xI0: Initial cosine(inclination) for the trajectory.
+        theta: Polar source-frame viewing angle.
+        phi: Azimuthal source-frame viewing angle.
+        traj_args: Additional arguments to pass to the trajectory module.
+        traj_kwargs: Additional keyword arguments to pass to the trajectory module.
+        mode_selector_kwargs: Additional keyword arguments to pass to the mode selector module.
+    returns:
+        tuple: A tuple containing the selected teukolsky modes, ylms, and their indices (l, m, k, n).
+    """
     if traj_args is None:
         traj_args = []
     if traj_kwargs is None:
