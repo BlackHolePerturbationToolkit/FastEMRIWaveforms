@@ -263,6 +263,7 @@ class ModeSelector(ParallelModuleBase):
         mode_selection: Optional[Union[str, list, np.ndarray]] = None,
         include_minus_mkn: Optional[bool] = None,
         mode_selection_threshold: float = None,
+        return_sort_inds: bool = False
     ) -> tuple[np.ndarray]:
         r"""Call to sort and filer teukolsky modes.
 
@@ -304,6 +305,9 @@ class ModeSelector(ParallelModuleBase):
                 the waveform, albeit at the cost of some accuracy (usually an
                 acceptable loss). Default that gives good mismatch qualities is
                 1e-5.
+            return_sort_inds: If True, also return the indices sorting the modes according
+                to their contribution. Only used when filtering in this mode. Default is False.
+            
         """
 
         # set defaults, check inputs are consistent, etc.
@@ -328,7 +332,7 @@ class ModeSelector(ParallelModuleBase):
             ylms_out = ylms[ylmkeep]
             teuk_modes_out = teuk_modes
 
-            return (
+            out_tuple = (
                 teuk_modes_out,
                 ylms_out,
                 self.l_arr,
@@ -356,14 +360,14 @@ class ModeSelector(ParallelModuleBase):
                 # ylms[keep_modes >= self.num_m_zero_up] = 0.0 + 0.0j
                 ylms_out[teuk_modes.shape[1]:] = 0.0 + 0.0j
 
-            return (
+            out_tuple = (
                 teuk_modes, 
                 ylms_out,
                 self.l_arr[keep_modes],
                 self.m_arr[keep_modes],
                 self.k_arr[keep_modes],
                 self.n_arr[keep_modes],
-            )
+            )     
 
         else:
             # get teuk modes
@@ -433,8 +437,8 @@ class ModeSelector(ParallelModuleBase):
             )
 
             # if +m or -m contributes, we keep both because of structure of CUDA kernel
-            keep_modes, indices, counts = self.xp.unique(
-                keep_modes_temp, return_index=True, return_counts=True
+            keep_modes, indices, inv_inds, counts = self.xp.unique(
+                keep_modes_temp, return_index=True, return_counts=True, return_inverse=True,
             )
 
             # find minus mkn modes that need to be removed
@@ -481,8 +485,12 @@ class ModeSelector(ParallelModuleBase):
                 self.n_arr[keep_modes],
             ])
 
-            return out1 + out2
+            out_tuple = out1 + out2
+        
+            if return_sort_inds:
+                out_tuple += (inv_inds,)
 
+        return out_tuple
 
 def get_selected_modes_from_initial_conditions(
         mode_selector_module: ModeSelector, 
@@ -519,7 +527,7 @@ def get_selected_modes_from_initial_conditions(
         traj_kwargs: Additional keyword arguments to pass to the trajectory module.
         mode_selector_kwargs: Additional keyword arguments to pass to the mode selector module.
     returns:
-        tuple: A tuple containing the selected teukolsky modes, ylms, and their indices (l, m, k, n).
+        dict: A dict containing the selected teuk_modes, ylms, their indices (ls, ms, ks, ns), the trajectory `traj` and the `online_mode_selection_args`.
     """
     if traj_args is None:
         traj_args = []
@@ -528,16 +536,36 @@ def get_selected_modes_from_initial_conditions(
     if mode_selector_kwargs is None:
         mode_selector_kwargs = {}
 
-    t, p, e, x, _, _, _ = traj_module(m1, m2, a, p0, e0, xI0, **traj_kwargs)
+    traj = traj_module(m1, m2, a, p0, e0, xI0, **traj_kwargs)
 
-    freqs = traj_module.inspiral_generator.eval_integrator_derivative_spline(t, order=1)[:,3:6] / 2 / np.pi
+    freqs = traj_module.inspiral_generator.eval_integrator_derivative_spline(traj[0], order=1)[:,3:6] / 2 / np.pi
 
     online_mode_selection_args = dict(
         f_phi = freqs[:,0],
         f_theta = freqs[:,1],
         f_r = freqs[:,2],
     )
-    teuk_modes_out, ylms_out, ls, ms, ks, ns = mode_selector_module(
-        t, a, p, e, x, theta, phi, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
+
+    if mode_selector_kwargs.get("return_sort_inds", False):
+        teuk_modes_out, ylms_out, ls, ms, ks, ns, inds_sort = mode_selector_module(
+            traj[0], a, traj[1], traj[2], traj[3], theta, phi, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
+        )
+    else:
+        teuk_modes_out, ylms_out, ls, ms, ks, ns = mode_selector_module(
+            traj[0], a, traj[1], traj[2], traj[3], theta, phi, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
+        )    
+        inds_sort = None
+
+    return_dict = dict(
+        teuk_modes = teuk_modes_out,
+        ylms = ylms_out,
+        ls = ls,
+        ms = ms,
+        ks = ks,
+        ns = ns,
+        trajectory=traj,
+        online_mode_selection_args=online_mode_selection_args,
+        inds_sort = inds_sort,
     )
-    return teuk_modes_out, ylms_out, ls, ms, ks, ns
+
+    return return_dict
