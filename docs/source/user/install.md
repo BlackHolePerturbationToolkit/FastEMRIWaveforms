@@ -136,7 +136,7 @@ To install FEW from source in any environment, follow these steps:
     source few_env/bin/activate
     ```
 
-3. **Install FEW in editable mode:**
+4. **Install FEW in editable mode:**
   ```sh
   pip install -e '.[testing]'
   ```
@@ -151,7 +151,7 @@ To install FEW from source in any environment, follow these steps:
   - Many options can be passed to the `pip install` command, see [below](#advanced-installation-options)
     for more details.
 
-4. **(Optional) For advanced debugging, in case of compilation errors, add:**
+5. **(Optional) For advanced debugging, in case of compilation errors, add:**
   ```sh
   pip install -e . -v -Cbuild.verbose=true -Clogging.level=INFO
   ```
@@ -482,8 +482,9 @@ in the `argv` field by replacing `.../bin/python` with `.../bin/wpython`.
 The kernel should be available in the Jupyter Hub interface and FEW should
 work correctly in this environment.
 
+## Knowledge base
 
-## Advanced installation options
+### Advanced installation options
 
 Many options are available to change the installation behaviour. These can be set by adding `--config-settings=cmake.define.OPTION_NAME=OPTION_VALUE` to the `pip` command. Available options are:
 
@@ -513,3 +514,28 @@ pip install . \
 If you enabled `GPU` support (or it was automatically enabled by the `AUTO` mode), you will also need to install the `nvidia-cuda-runtime`
 package corresponding to the CUDA version detected by `nvidia-smi` as explained in the *Getting Started* section above.
 You will also need to manually install `cupy-cuda11x` or `cupy-cuda12x` according to your CUDA version.
+
+### conda vs pip installation
+
+Both `conda` and `pip+venv` installations are supported, but they have different
+advantages and disadvantages:
+
+- **conda**:
+  - Pros:
+    - Automatically manages compilers and dependencies which makes it easier to
+      define a build-from-source environment.
+    - Provides a consistent environment across different platforms.
+    - On some platforms, `conda` will automatically detect the capabilities of
+      your CPU and will install a package optimized for it (for x86_64 architectures on linux/macOS).
+  - Cons:
+    - May not always have the latest version of FEW available immediately.
+    - Requires conda/mamba/micromamba to be installed.
+- **pip+venv**:
+  - Pros:
+    - More flexible in terms of package versions and dependencies.
+    - Can be used in any Python environment without requiring conda.
+    - Allows for more control over the installation process.
+  - Cons:
+    - Requires manual installation of compilers and dependencies.
+    - May install non-optimized builds of the package to allow for broader
+      hardware compatibility.
