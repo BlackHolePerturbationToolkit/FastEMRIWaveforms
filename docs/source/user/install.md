@@ -1,128 +1,213 @@
 # Installation guide
 
-This page is a guide for installing and executing FEW tests on most platforms and some clusters available to members of the user community.
+This page is a guide for installing and executing FEW tests on most platforms and
+some clusters available to members of the user community.
 
-Last updated in March 2025 just after the release of `FastEMRIWaveforms v2.0.0rc1`.
+:::{important}
+Last updated in July 2025, after the release of `FastEMRIWaveforms v2.0.0` and the
+publication of a conda package on `conda-forge`.
 If you read this page at a significantly latter date, note that these instructions might be outdated.
+:::
 
-Note that most instructions are common for both package installations (using the wheels available on
-[PyPI](https://pypi.org/project/fastemriwaveforms/2.0.0rc1/)) and from-source installations (using a
-local copy of sources). In following instructions, from-source installations are always made in *editable mode*
-where you can modify sources on the fly and these changes are taken into account in the python environment.
-To disable this *editable mode* (and thus be able to delete the source directory whilst keeping access to FEW
-in python), simply remove the `-e` option from the `pip install` commands in the from-source installation instructions.
 
-If the from-source installation instructions do not work in your environment, retry by adding the options
-`-v -Cbuild.verbose=true -Clogging.level=INFO` to the `pip install -e .` command to obtain detailed
-information about the cause of failure.
+## How to use this installation guide
 
-## On Mac OS with Apple Silicon CPU (M1 to M4)
+To quickly find the right installation instructions for your needs, follow these steps:
 
-The preferred way to install `FastEMRIWaveforms` on a Mac OSX workstation is by using a `conda` environment.
-Following instructions were tested with a MacBook Pro with a Apple M4 Pro CPU on macOS Sequoia 15.3.
-`conda` was installed using `brew install miniconda`.
+1. **Identify your user type:**
+  - If you want to modify the source code, follow the **from source** installation instructions.
+  - If you just want to use the package, follow the **pip** or **conda** installation instructions.
 
-### Preliminary steps
+2. **Select your platform:**
+  - **Linux** (including Ubuntu and most clusters)
+  - **Mac OS**
+  - **Windows**
+  - **HPC/Cluster** (e.g., CNES, CC-IN2P3)
 
-Create a new conda environment `few2.0rc1` and activate it:
+3. **Decide if you need GPU support:**
+  - Look for instructions mentioning CUDA or GPU backends if you require GPU
+    acceleration.
+  - Otherwise, follow the standard CPU installation steps.
 
-```sh
-$ conda create -n few2.0rc1 python=3.12 --channel conda-forge --override-channels
-$ conda activate few2.0rc1
-(few2.0rc1) $ conda config --env --add channels conda-forge
-```
+4. **Choose your environment manager:**
+  - Use the **conda** instructions if you prefer conda/mamba/micromamba.
+  - Use the **pip** instructions if you prefer pip/venv.
 
-Note that, to ensure having up-to-date compilers, we force the use of the `conda-forge` channel.
+5. **Jupyter Hub integration:**
+  - If you need to use FEW in Jupyter Hub on a cluster, refer to the dedicated Jupyter Hub section in the relevant cluster instructions.
 
-### Perform a from-source install
+---
 
-Clone FEW and checkout the `v2.0.0rc1` tag:
+**Quick navigation table:**
 
-```sh
-(few2.0rc1) $ git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
-(few2.0rc1) $ cd FastEMRIWaveforms
-(few2.0rc1) $ git checkout v2.0.0rc1
-```
+| User Type / Platform      | Linux / Cluster | Mac OS | Windows | CNES Cluster | CC-IN2P3 Cluster |
+|--------------------------|-----------------|--------|---------|--------------|------------------|
+| **Install via pip (user)**      | [Generic pip](#using-pip) | [Generic pip](#using-pip) | Not available | [Generic pip](#using-pip) | [CC-IN2P3 pip](#on-the-cc-in2p3-cluster-with-gpu-support) |
+| **Install via conda (user)**    | [Generic conda](#using-conda) | [Generic conda](#using-conda) | [Windows conda](#on-windows) | [Generic conda](#using-conda) | [CC-IN2P3 conda](#on-the-cc-in2p3-cluster-with-gpu-support) |
+| **From source (developper)**          | [Generic source](#from-source) | [Mac source](#on-mac-os-from-sources) | [Windows source](#on-windows) | [CNES source](#on-cnes-cluster-with-gpu-and-jupyter-hub-supports) | [CC-IN2P3 source](#on-the-cc-in2p3-cluster-with-gpu-support) |
+| **GPU support**          | [See Generic](#generic-installation-instructions) | Not available | Not available | [CNES GPU](#on-cnes-cluster-with-gpu-and-jupyter-hub-supports) | [CC-IN2P3 GPU](#on-the-cc-in2p3-cluster-with-gpu-support) |
+| **Jupyter Hub**          | N/A | N/A | N/A | [CNES Jupyter](#make-the-conda-environment-available-as-a-jupyter-hub-kernel) | [CC-IN2P3 Jupyter](#enable-the-jupyter-hub-kernel) |
 
-#### With automatic LAPACK(E) fetching
+:::{tip}
+Use the navigation table above to jump to the section that matches your needs.
+Each section provides both package and from-source installation instructions, as
+well as notes on GPU support and Jupyter Hub integration where relevant.
+:::
 
-This first method will automatically download the sources of LAPACK and LAPACKE, and compile
-them along with FEW. For that, you will need a Fortran compiler as well as a C++ compiler:
+## Generic installation instructions
 
-```sh
-(few2.0rc1) $ conda install cxx-compiler fortran-compiler
-```
+### Using pip
 
-By default, the FEW installation process will try to detect LAPACK in your environment using
-the CMake `FindLapack` feature which, on macOS, can link to the XCode *Accelerated* framework.
-This results in a non-working FEW installation. To prevent that, disable completely LAPACK
-detection:
-
-```sh
-(few2.0rc1) $ pip install -e '.[testing]' -Ccmake.define.FEW_LAPACKE_DETECT_WITH=NONE
-Successfully installed [...] fastemriwaveforms-2.0.0rc1 [...]
-```
-
-#### With conda-installed LAPACK
-
-As of March 2025, the default `conda-forge::lapack` package has version `v3.9.0` and does not
-install the development files required for FEW compilation.
-We will instead use the `lapack_rc` package, in version `v3.11.0` which does work as expected.
-
-First, install a C++ compiler and the LAPACK package:
+You may install FEW in your environment with
 
 ```sh
-(few2.0rc1) $ conda install cxx-compiler pkgconfig conda-forge/label/lapack_rc::liblapacke
+pip install fastemriwaveforms
 ```
 
-Then run FEW installation from source:
+If NVIDIA GPUs are available in your environment, you may install the GPU
+backend with
 
 ```sh
-(few2.0rc1) $ pip install -e '.[testing]'
-Successfully installed [...] fastemriwaveforms-2.0.0rc1 [...]
+pip install fastemriwaveforms-cuda12x  # For CUDA 12.x support
+# or
+pip install fastemriwaveforms-cuda11x  # For CUDA 11.x support
 ```
 
+:::{attention}
+Be sure to select the right version of the package according to your CUDA driver
+version. Use `nvidia-smi` to check the version of your CUDA driver. Nothing will
+happen if you install the wrong version, but you will not be able to use the GPU
+backend.
+:::
 
-### Perform a package install
+### Using conda
 
-To install the package directly from PyPI, simply run:
+When possible, we recommend using a `conda` distribution which defaults to the
+`conda-forge` channel, like `mamba` or `micromamba`.
+
+:::{important}
+In following instructions,
+you can replace `mamba create` by `conda create -c conda-forge --override-channels`
+if you only have the base `conda` distribution available.
+:::
+
+To install the CPU version of FEW in a new conda environment, run:
 
 ```sh
-(few2.0rc1) $ pip install --pre fastemriwaveforms==2.0.0rc1
-...
-Successfully installed [...] fastemriwaveforms-2.0.0rc1 [...]
+mamba create -n few_env python=3.12 fastemriwaveforms  # You may use any python version >=3.10,<3.14
 ```
+
+If your environment supports CUDA 12.x, you can install the GPU version with:
+
+```sh
+mamba create -n few_env python=3.12 fastemriwaveforms-cuda12x
+```
+
+:::{caution}
+There is no CUDA 11.x support for conda-based installations.
+:::
+
+### From source
+
+To install FEW from source in any environment, follow these steps:
+
+1. **Clone the repository:**
+  ```sh
+  git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
+  cd FastEMRIWaveforms
+  ```
+
+2. **(Optional) Checkout a specific release:**
+  ```sh
+  git checkout v2.0.0
+  ```
+
+3. **Create and activate a specific environment:**
+  - If you use `conda`, create a new environment named `few_env` with the required
+    compilers and libraries:
+    ```sh
+    conda create -n few_env python=3.12 cxx-compiler pkgconfig conda-forge/label/lapack_rc::liblapacke
+    conda activate few_env
+    ```
+  - If you prefer `virtualenv`, create a virtual environment, your environment will
+    need a C++ compiler, and either a Fortran compiler or `liblapacke` library:
+    ```sh
+    python3 -m venv few_env
+    source few_env/bin/activate
+    ```
+
+3. **Install FEW in editable mode:**
+  ```sh
+  pip install -e '.[testing]'
+  ```
+
+  - To enable GPU support (if available), add the CMake option and install manually
+    the required GPU dependencies:
+    ```sh
+    pip install -e '.[testing]' --config-settings=cmake.define.FEW_WITH_GPU=ON
+    pip install cupy-cuda12x 'nvidia-cuda-runtime-cu12==12.4.*' # Replace 12.4 by the CUDA driver version returned by nvidia-smi, keep the '.*' at the end
+    ```
+
+  - Many options can be passed to the `pip install` command, see [below](#advanced-installation-options)
+    for more details.
+
+4. **(Optional) For advanced debugging, in case of compilation errors, add:**
+  ```sh
+  pip install -e . -v -Cbuild.verbose=true -Clogging.level=INFO
+  ```
+
+This will build and install FEW from source, allowing you to modify the code and
+have changes reflected immediately in your environment.
 
 ### Configure file storage
 
-Execute the following command to write a configuration file in `~/Library/Application Support/few.ini` which specifies that FEW files must be downloaded in `~/few`:
+To configure where FEW stores its required data files, you need to create a
+configuration file specifying the storage directory. The location and content of
+this file depend on your operating system:
 
-```sh
-(few2.0rc1) $ cat << EOC > ~/Library/Application\ Support/few.ini
+- **Linux:** `~/.config/few.ini`
+- **Mac OS:** `~/Library/Application Support/few.ini`
+- **Windows:** `%APPDATA%\few.ini`
+
+Example configuration for Linux:
+
+```ini
 [few]
-file-storage-dir=/Users/${USER}/few
-file-extra-paths=/Users/${USER}/few;/Users/${USER}/few/download
-EOC
+file-storage-dir=/home/${USER}/few
+file-extra-paths=/home/${USER}/few;/home/${USER}/few/download
 ```
 
-Now, you may run the folowwing command to pre-download all files required for test execution.
-If you don't run this command, files will still be downloaded during test execution:
+:::{seealso}
+Available options and their descriptions can be found [here](cfg.md#summary-of-configuration-options).
+:::
+
+Replace the paths as needed for your environment or storage preferences.
+
+After creating the configuration file, you can pre-download all required files
+for testing with:
 
 ```sh
-(few2.0rc1) $ few_files fetch --tag testfile
-Downloading all missing files tagged 'testfile' into '/Users/my_user_name/few/download'
-Downloading 'AmplitudeVectorNorm.dat'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-Downloading 'FluxNewMinusPNScaled_fixed_y_order.dat'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-...
-Downloading 'ZNAmps_l10_m10_n55_DS2Outer.h5'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+few_files fetch --tag testfile
 ```
 
-### Run tests
+This ensures all necessary files are available before running tests or using FEW.
 
-Execute the package tests suite to ensure that everything works as expected:
+### Test FEW is working correctly
+
+To verify your FEW installation, run the test suite provided with the package.
+This ensures that all dependencies are correctly installed and the code is
+functioning as expected.
+
+Simply execute, in the environment where FEW is installed:
 
 ```sh
-(few2.0rc1) $ python -m few.tests
+python3 -m few.tests
+```
+
+You should see output indicating the backend in use (e.g., `cpu` or `cuda12x`)
+and a summary of the tests run. For example:
+
+```
 AAKWaveform test is running with backend 'cpu'
 [...]
 .......
@@ -131,71 +216,90 @@ Ran 27 tests in 87.305s
 
 OK
 ```
+
+If you want to restrict FEW to use only the CPU backend, set the environment
+variable before running the tests:
+
+```sh
+FEW_ENABLED_BACKENDS="cpu" python -m few.tests
+```
+
+To force the use of the GPU backend (and thus fail the test if it is not available),
+set the environment variable accordingly:
+
+```sh
+FEW_ENABLED_BACKENDS="cpu;cuda12x" python -m few.tests
+```
+
+If any test fails, review the error messages for missing dependencies or
+configuration issues. Refer to the relevant installation section above for
+troubleshooting tips.
+
+## Platform-specific installation instructions
+
+### On Mac OS, from sources
+
+The recommended way to install `FastEMRIWaveforms` on a Mac OSX workstation
+from-sources is by using a `conda` environment to obtain the necessary
+compilers and dependencies.
+
+We recommend using the `micromamba` conda distribution which can be installed
+using `brew`:
+
+```sh
+brew install micromamba
+```
+
+Then, create a new conda environment `few_env` with the required compilers and
+a specific version of `liblapacke`:
+
+```sh
+micromamba create -n few_env python=3.12 cxx-compiler pkgconfig conda-forge/label/lapack_rc::liblapacke
+```
+
+Then activate this environment and proceed with the installation of FEW
+as described [above](#from-source).
+
 
 ## On Windows
 
 ```{attention}
-For now, only from-source installations are possible on Microsoft Windows.
-The compilation of backends on Windows is less stable than on other platforms. Try at your own risk!
+For now, only from-source and conda installations are supported on Windows.
+The PyPI package is not available for Windows users.
 ```
 
-### Preliminary steps
-
-Ensure you have a recent [Microsoft Visual Studio](https://visualstudio.microsoft.com/fr/downloads/) release installed locally.
-Tests were performed with *Visual Studio 2022 Community Edition*.
-
-Create a new conda environment `few2.0rc1` and activate it:
+To install FEW from sources, ensure you have a recent
+[Microsoft Visual Studio](https://visualstudio.microsoft.com/fr/downloads/)
+release installed locally. Tests were performed with *Visual Studio 2022 Community Edition*.
+Install the required dependencies in a new conda environment:
 
 ```sh
-$ conda create -n few2.0rc1 python=3.12 --channel conda-forge --override-channels
-$ conda activate few2.0rc1
-(few2.0rc1) $ conda config --env --add channels conda-forge
+$ conda create -n few_env -c conda-forge --override-channels \
+    python=3.12 cxx-compiler pkgconfig conda-forge/label/lapack_rc::liblapacke
 ```
 
-Like for [Mac OS](#on-mac-os-with-apple-silicon-cpu-m1-to-m4), we force here the use of the `conda-forge` channel.
+Then proceed with the installation of FEW as described [above](#from-source).
 
-Install the required dependencies in the conda environment:
+
+You may also directly install the package from conda with:
 
 ```sh
-(few2.0rc1) $ conda install cxx-compiler conda-forge/label/lapack_rc::liblapacke pkgconfig
+$ conda install -n few_env -c conda-forge --override-channels fastemriwaveforms
 ```
 
-### Perform a from-source install
+:::{attention}
+Only the CPU backend is available on Windows using conda packages.
+If you manage to compile the GPU backend using from-source install, please let
+us know so we can update this documentation.
+:::
 
-Clone FEW and checkout the `Kerr_Equatorial_Eccentric` branch (Windows installation using MSVC was not working at the
-time `v2.0.0rc1` was released):
-
-```sh
-(few2.0rc1) $ git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
-(few2.0rc1) $ cd FastEMRIWaveforms
-(few2.0rc1) $ git checkout Kerr_Equatorial_Eccentric
-```
-
-Then run FEW installation from source:
-
-```sh
-(few2.0rc1) $ pip install -e '.[testing]'
-Successfully installed [...] fastemriwaveforms-2.0.0rc1.post1.dev1+ge0c124b.d20250304 [...]
-```
-
-### Run tests
-
-Execute the package tests suite to ensure that everything works as expected:
-
-```sh
-(few2.0rc1) $ python -m few.tests
-AAKWaveform test is running with backend 'cpu'
-[...]
-.......
-----------------------------------------------------------------------
-Ran 27 tests in 87.305s
-
-OK
-```
 
 ## On CNES cluster, with GPU and jupyter hub supports
 
-### Preliminary steps
+To install FEW on the CNES cluster, you need to use a GPU node in an interactive
+session. Following instructions assume you have access to the `lisa` project but
+can be easily adapted to any other project you have access to.
+
 
 First, log into the TREX cluster and request an interactive session on a GPU node:
 
@@ -204,60 +308,38 @@ First, log into the TREX cluster and request an interactive session on a GPU nod
 $ sinter -A lisa -p gpu_std -q gpu_all --gpus 1 --time=01:00:00 --pty bash
 ```
 
-On the GPU node, load the `conda` module and create a new conda environment named `few2.0rc1`, then activate it:
+On the GPU node, load the `conda` module and create a new conda environment named `few_env`,
+then activate it:
 
 ```sh
 $ module load conda/24.3.0
-$ conda create -n few2.0rc1 python=3.12
-$ conda activate few2.0rc1
-```
-
-### Perform a from-source install
-
-Clone FEW and checkout the `v2.0.0rc1` tag:
-
-```sh
-(few2.0rc1) $ git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
-(few2.0rc1) $ cd FastEMRIWaveforms
-(few2.0rc1) $ git checkout v2.0.0rc1
+$ conda create -n few_env -c conda-forge --override-channels python=3.12
+$ conda activate few_env
 ```
 
 Load the `nvhpc` modules access the CUDA compiler, as well as the `cuda` module:
-
-```sh
-(few2.0rc1) $ module load cuda/12.4.1
-(few2.0rc1) $ module load nvhpc/22.9
+ ```sh
+(few_env) $ module load cuda/12.4.1
+(few_env) $ module load nvhpc/22.9
 ```
 
-Install FEW and force the CUDA backend compilation with the option `FEW_WITH_GPU=ON`:
+Then follow the instructions for from-source installation as [described above](#from-source)
+but replace the `pip install` command with:
 
 ```sh
-(few2.0rc1) $ CXX=g++ CC=gcc pip install -e '.[testing]' --config-settings=cmake.define.FEW_WITH_GPU=ON
-...
-Successfully installed fastemriwaveforms-2.0.0rc1
-(few2.0rc1) $ pip install cupy-cuda12x nvidia-cuda-runtime-cu12==12.4.* # Must be installed manually when installed from source
+(few_env) $ CXX=g++ CC=gcc pip install -e '.[testing]' --config-settings=cmake.define.FEW_WITH_GPU=ON
 ```
 
-### Perform a package install
+### Configure file storage
 
-To install the package directly from PyPI, simply run:
-
-```sh
-(few2.0rc1) $ pip install --pre fastemriwaveforms-cuda12x==2.0.0rc1
-(few2.0rc1) $ pip install nvidia-cuda-runtime-cu12==12.4.*
-```
-
-### Test FEW is working correctly
-
-Check that the code is properly installed and working by running the tests.
-Note that the tests will automatically download required files. It is then advised
-create a configuration file to specify where the files should be downloaded.
-It is strongly advised to use a high-volumetry storage space for that purpose,
+As [explained previously](#configure-file-storage), it is advised
+to create a configuration file to specify where the files should be downloaded.
+Use a high-volumetry storage space for that purpose,
 like [project shared-spaces on `/work/`](https://hpc.pages.cnes.fr/wiki-hpc-sphinx/page-stockage-work.html)
 If you have access to the LISA project, you can for example use the following:
 
 ```sh
-$ mkdir /work/LISA/${USER}/few_files
+$ mkdir -p /work/LISA/${USER}/few_files
 # Write FEW configuration into ~/.config/few.ini
 $ cat << EOC > ~/.config/few.ini
 [few]
@@ -265,93 +347,21 @@ file-storage-dir=/work/LISA/${USER}/few_files
 EOC
 ```
 
-Then actually run the tests:
-
-```sh
-(few2.0rc1) $ python -m few.tests
-AAKWaveform test is running with backend 'cuda12x'
-DetectorWave test is running with backend 'cuda12x'
-...
-----------------------------------------------------------------------
-Ran 20 tests in 198.041s
-```
-
-The messages should indicate that they use the `cuda12x` backend. If that's not the case,
-but instead use the `cpu` backend. Run the following command to get the reason why the
-`cuda12x` backend cannot be loaded:
-
-```sh
-$ python
->>> import few
->>> few.get_backend("cuda12x")
-# Example of possible output:
-Traceback (most recent call last):
-...
-cupy_backends.cuda.libs.nvrtc.NVRTCError: NVRTC_ERROR_COMPILATION (6)
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-...
-cupy.cuda.compiler.CompileException: /work/scratch/.../few2.0rc1/lib/python3.12/site-packages/cupy/_core/include/cupy/_cuda/cuda-12.4/cuda_fp16.h(129): catastrophic error: cannot open source file "vector_types.h"
-  #include "vector_types.h"
-                           ^
-
-1 catastrophic error detected in the compilation of "/tmp/slurm-33342263/tmpq7dhwrdi/359445603dea8ee27f67d9bc57b875940bbb321b.cubin.cu".
-Compilation terminated.
-
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-...
-few.cutils.MissingDependencies: CuPy fails to run due to missing CUDA Runtime.
-    If you are using few in an environment managed using pip, run:
-        $ pip install nvidia-cuda-runtime-cu12
-```
-
-Note that you can also pre-download the files before running the tests with:
-
-```sh
-# Predownload the files requires by tests (not necessary, they will be pulled during tests in all cases)
-$ few_files fetch --tag testfile
-Downloading all missing files tagged 'testfile' into '/work/LISA/my_user_name/few_files/download'
-
-Downloading 'AmplitudeVectorNorm.dat'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-Downloading 'FluxNewMinusPNScaled_fixed_y_order.dat'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-Downloading 'SchwarzschildEccentricInput.hdf5'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:03
-Downloading 'Teuk_amps_a0.0_lmax_10_nmax_30_new.h5'... ━━━━━━╸━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  17% 0:00:24
-...
-```
-
-You may also restrict FEW to the `cpu` backend with:
-
-```sh
-(few2.0rc1) $ FEW_ENABLED_BACKENDS="cpu" python -m few.tests
-AAKWaveform test is running with backend 'cpu'
-DetectorWave test is running with backend 'cpu'
-...
-----------------------------------------------------------------------
-Ran 27 tests in 405.23s
-```
-
 ### Make the conda environment available as a Jupyter Hub kernel
-
-Now that `few` is working as expected, let's enable support for [Jupyter Hub](https://jupyterhub.cnes.fr/).
-First install `ipykernel` and declare a new kernel named `few2.0rc1`:
+After ensuring that `few` is working as expected, enable support for [Jupyter Hub](https://jupyterhub.cnes.fr/).
+First install `ipykernel` and declare a new kernel named `few_env`:
 
 ```sh
-(few2.0rc1) $ conda install ipykernel
-(few2.0rc1) $ python -m ipykernel install --user --name few2.0rc1
-Installed kernelspec few2.0rc1 in ~/.local/share/jupyter/kernels/few2.0rc1
+(few_env) $ conda install ipykernel
+(few_env) $ python -m ipykernel install --user --name few_env
+Installed kernelspec few_env in ~/.local/share/jupyter/kernels/few_env
 ```
 
-Next, we need to create a python wrapper to preload the modules in the Python context:
+Next, create a python wrapper to preload the modules in the Python context:
 
 ```sh
-(few2.0rc1) $ python_wrapper_path=$(dirname $(which python))/wpython
-(few2.0rc1)$ cat << EOC > ${python_wrapper_path}
+(few_env) $ python_wrapper_path=$(dirname $(which python))/wpython
+(few_env)$ cat << EOC > ${python_wrapper_path}
 #!/bin/bash
 
 # Load the necessary modules
@@ -365,15 +375,13 @@ EOC
 $ chmod +x ${python_wrapper_path}
 ```
 
-And change the kernel start command to use this wrapper: edit the file `~/.local/share/jupyter/kernels/few2.0rc1/kernel.json` and
+And change the kernel start command to use this wrapper: edit the file `~/.local/share/jupyter/kernels/few_env/kernel.json` and
 replace the first item in the `argv` field by replacing `.../bin/python` with `.../bin/wpython`.
 
-Now, when connected to the [CNES Jupyter Hub](https://jupyterhub.cnes.fr/), you should have access to the `few2.0rc1` kernel and FEW
-should work correctly in it.
+Now, when connected to the [CNES Jupyter Hub](https://jupyterhub.cnes.fr/), you
+should have access to the `few_env` kernel and FEW should work correctly in it.
 
 ## On the CC-IN2P3 cluster with GPU support
-
-### Preliminary steps
 
 First log into the CC-IN2P3 cluster and request an interactive session on a GPU node:
 
@@ -382,102 +390,126 @@ First log into the CC-IN2P3 cluster and request an interactive session on a GPU 
 $ srun -p gpu_interactive -t 0-02:00 --mem 64G --gres=gpu:v100:1 --pty bash -i
 ```
 
-On the GPU node, load the python module and create a virtual environment named `few2.0rc1`, then activate it:
+All installation methods described [above](#generic-installation-instructions)
+are available on the CC-IN2P3 cluster but need little adjustements.
+
+- For a **conda installation**, you can use the `anaconda` module available on the cluster.
+  Load it and create a new environment named `few_env` with `fastemriwaveforms-cuda12x`:
+
+  ```sh
+  $ module load Programming_Languages/anaconda/3.11
+  $ conda create -n few_env -c conda-forge --override-channels \
+      python=3.13 fastemriwaveforms-cuda12x
+  $ conda activate few_env
+  ```
+
+- From a **pip installation**, you can use the `Programming_Languages/python/3.12.2` module
+  available on the cluster. Load it and create a new virtual environment named `few_env`:
+
+  ```sh
+  $ module load Programming_Languages/python/3.12.2
+  $ python -m venv few_env
+  $ source ./few_env/bin/activate
+  $ pip install fastemriwaveforms-cuda12x
+  ```
+
+- For a **from-source installation**, follow the instructions from [above](#from-source)
+  but first load the `nvhpc` module to get access to the CUDA compilers and use
+  the following `pip install` command:
+
+  ```sh
+  # Create and activate a conda or venv environment named `few_env`
+  (few_env) $ module load HPC_GPU/nvhpc/24.5  # Load the NVHPC module
+  # ... Clone sources
+  (few_env) $ CXX=g++ CC=gcc FC=gfortran pip install -e '.[testing]' \
+                  --config-settings=cmake.define.FEW_WITH_GPU=ON \
+                  --config-settings=cmake.define.FEW_LAPACKE_FETCH=ON
+  ```
+
+On this cluster, it is recommended to configure the file storage directory
+to a large storage volume you have access to, such as `/sps/lisaf/${USER}/few_files`.
+(you may use any large storage volume
+[you have access to](https://doc.cc.in2p3.fr/fr/Data-storage/storage-areas.html)).
+
+You can do this by creating a configuration file in `~/.config/few.ini`
+[as explained before](#configure-file-storage):
 
 ```sh
-$ module load Programming_Languages/python/3.12.2
-$ python -m venv few2.0rc1
-$ source ./few2.0rc1/bin/activate
-```
-
-### Perform a from-source install
-
-Clone FEW and checkout the `v2.0.0rc1` tag:
-
-```sh
-(few2.0rc1) $ git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
-(few2.0rc1) $ cd FastEMRIWaveforms
-(few2.0rc1) $ git checkout v2.0.0rc1
-```
-
-Load the `nvhpc` module to get access to CUDA compilers:
-
-```sh
-(few2.0rc1) $ module load HPC_GPU/nvhpc/24.5
-```
-
-Install FEW and force the CUDA backend compilation with the option `FEW_WITH_GPU=ON`.
-We also force fetching and compiling LAPACK(E), otherwise CMake will detect the system
-LAPACK library (`/lib64/liblapack.so.3`) which makes somes tests fails with a segmentation fault error.
-The installation command line is thus:
-
-```sh
-(few2.0rc1) $ CXX=g++ CC=gcc FC=gfortran pip install -e '.[testing]' \
-                --config-settings=cmake.define.FEW_WITH_GPU=ON \
-                --config-settings=cmake.define.FEW_LAPACKE_FETCH=ON
-...
-Successfully installed fastemriwaveforms-2.0.0rc1
-(few2.0rc1) $ pip install cupy-cuda12x nvidia-cuda-runtime-cu12==12.4.* # Must be installed manually when installed from source
-```
-
-### Perform a package install
-
-To install the package directly from PyPI, simply run:
-
-```sh
-(few2.0rc1) $ pip install --pre fastemriwaveforms-cuda12x==2.0.0rc1
-```
-
-### Configure file storage
-
-Execute the following command to write a configuration file in `~/.config/few.ini` which specifies that FEW files must be downloaded in `/sps/lisaf/${USER}}/few_files` (adapt to any large storage volume
-[you have access to](https://doc.cc.in2p3.fr/fr/Data-storage/storage-areas.html)):
-
-```sh
-(few2.0rc1) $ cat << EOC > ~/.config/few.ini
+(few_env) $ cat << EOC > ~/.config/few.ini
 [few]
 file-storage-dir=/sps/lisaf/${USER}/few_files
 file-download-dir=/sps/lisaf/${USER}/few_files
 EOC
-(few2.0rc1) $ mkdir /sps/lisaf/${USER}/few_files
+(few_env) $ mkdir /sps/lisaf/${USER}/few_files
 ```
 
-Now, you may run the folowwing command to pre-download all files required for test execution.
-If you don't run this command, files will still be downloaded during test execution:
+### Enable the Jupyter Hub kernel
+
+If you installed FEW in a conda environment, you may enable support for
+[Jupyter Hub](https://notebook.cc.in2p3.fr/) by first adding the `ipykernel` package
+and then declaring a new kernel named `few_env`:
 
 ```sh
-(few2.0rc1) $ few_files fetch --tag testfile
-Downloading all missing files tagged 'testfile' into '/sps/lisaf/your_username/few_files'
-Downloading 'AmplitudeVectorNorm.dat'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-Downloading 'FluxNewMinusPNScaled_fixed_y_order.dat'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-...
-Downloading 'ZNAmps_l10_m10_n55_DS2Outer.h5'... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+(few_env) $ conda install -c conda-forge --override-channels ipykernel
+(few_env) $ python -m ipykernel install --user --name few_env
+Installed kernelspec few_env in ~/.local/share/jupyter/kernels/few_env
 ```
 
-### Run tests
-
-Execute the package tests suite to ensure that everything works as expected:
+Next, create a python wrapper to preload the modules in the Python context:
 
 ```sh
-(few2.0rc1) $ python -m few.tests
-AAKWaveform test is running with backend 'cuda12x'
-[...]
-.......
-----------------------------------------------------------------------
-Ran 27 tests in 231.381s
+(few_env) $ python_wrapper_path=$(dirname $(which python))/wpython
+(few_env) $ cat << EOC > ${python_wrapper_path}
+#!/bin/bash
+# Load the necessary modules
+source /usr/share/Modules/init/bash
+module load Programming_Languages/anaconda/3.11
 
-OK
+conda activate few_env
+
+unset PYTHONPATH
+
+# Run the python command
+exec $(which python) \$@
+EOC
+$ chmod +x ${python_wrapper_path}
 ```
 
-You may also force FEW to run only on the `cpu` backend with:
+And change the kernel start command to use this wrapper: edit the file
+`~/.local/share/jupyter/kernels/few_env/kernel.json` and replace the first item
+in the `argv` field by replacing `.../bin/python` with `.../bin/wpython`.
+
+The kernel should be available in the Jupyter Hub interface and FEW should
+work correctly in this environment.
+
+
+## Advanced installation options
+
+Many options are available to change the installation behaviour. These can be set by adding `--config-settings=cmake.define.OPTION_NAME=OPTION_VALUE` to the `pip` command. Available options are:
+
+- `FEW_LAPACKE_FETCH=ON|OFF|[AUTO]`: Whether `LAPACK` and `LAPACKE` should be automatically fetched from internet.
+  - `ON`: ignore pre-installed `LAPACK(E)` and always fetch and compile their sources
+  - `OFF`: disable `LAPACK(E)` fetching and only use pre-installed library and headers (install will fail if pre-installed lib and headers are not available)
+  - `AUTO` (default): try to detect pre-installed `LAPACK(E)` and their headers. If found, use them, otherwise fetch `LAPACK(E)`.
+- `FEW_LAPACKE_DETECT_WITH=[CMAKE]|PKGCONFIG`: How `LAPACK(E)` should be detected
+  - `CMAKE`: `LAPACK(E)` will be detected using the cmake `FindPackage` command. If your `LAPACK(E)` install provides `lapacke-config.cmake` in a non-standard location, add its path to the `CMAKE_PREFIX_PATH` environment variable.
+  - `PKGCONFIG`: `LAPACK(E)` will be detected using `pkg-config` by searching for the files `lapack.pc` and `lapacke.pc` . If these files are provided by your `LAPACK(E)` install in a non-standard location, add their path to the environment variable `PKG_CONFIG_PATH`
+  - `AUTO` (default): attempt both CMake and PkgConfig approaches
+- `FEW_WITH_GPU=ON|OFF|[AUTO]`: Whether GPU-support must be enabled
+  - `ON`: Forcefully enable GPU support (install will fail if GPU prerequisites are not met)
+  - `OFF`: Disable GPU support
+  - `AUTO` (default): Check whether `nvcc` and the `CUDA Toolkit` are available in environment and enable/disable GPU support accordingly.
+- `FEW_CUDA_ARCH`: List of CUDA architectures that will be targeted by the CUDA compiler using [CMake CUDA_ARCHITECTURES](https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html) syntax. (Default = `all`).
+
+Example of custom install with specific options to forcefully enable GPU support with support for the host's GPU only (`native` architecture) using LAPACK fetched from internet:
 
 ```sh
-(few2.0rc1) $ FEW_ENABLED_BACKENDS="cpu" python -m few.tests
-AAKWaveform test is running with backend 'cpu'
-[...]
-.......
-----------------------------------------------------------------------
-Ran 27 tests in 512.101s
-
-OK
+pip install . \
+  --config-settings=cmake.define.FEW_WITH_GPU=ON \
+  --config-settings=cmake.define.FEW_CUDA_ARCH="native" \
+  --config-settings=cmake.define.FEW_LAPACKE_FETCH=ON
 ```
+
+If you enabled `GPU` support (or it was automatically enabled by the `AUTO` mode), you will also need to install the `nvidia-cuda-runtime`
+package corresponding to the CUDA version detected by `nvidia-smi` as explained in the *Getting Started* section above.
+You will also need to manually install `cupy-cuda11x` or `cupy-cuda12x` according to your CUDA version.

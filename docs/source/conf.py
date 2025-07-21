@@ -100,6 +100,10 @@ linkcheck_ignore = [
     r"https://bhptoolkit.org/FastEMRIWaveforms/.*",
 ]
 
+myst_enable_extensions = [
+    "colon_fence",
+]
+
 myst_heading_anchors = 2
 myst_url_schemes = {
     "http": None,
