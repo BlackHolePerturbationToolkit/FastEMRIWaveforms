@@ -17,6 +17,7 @@
 import os
 import pathlib
 import typing
+from textwrap import dedent
 
 import few
 
@@ -133,6 +134,20 @@ tippy_js = (
     "https://unpkg.com/tippy.js@6",
     "https://unpkg.com/requirejs@2",
 )
+tippy_doi_api = "https://api.datacite.org/dois/"
+tippy_doi_template = dedent(
+    """\
+        {% set attrs = data.data.attributes %}
+        <div>
+            <h3>{{ attrs.titles[0].title }}</h3>
+            {% if attrs.creators is defined %}
+            <p><b>Authors:</b> {{ attrs.creators | map_join('givenName', 'familyName') | join(', ')  }}</p>
+            {% endif %}
+            <p><b>Publisher:</b> {{ attrs.publisher }}</p>
+            <p><b>Published:</b> {{ attrs.created[:10] }}</p>
+        </div>
+        """
+)
 
 
 def skip(app, what, name, obj, would_skip, options):
@@ -223,11 +238,7 @@ def process_sources(
 
         import re
 
-        n = max(
-            len(str(len(rendered.splitlines()))),
-            3,  # Ensure at least 3 digits for line numbers
-        )
-        line_counter = repl(n)
+        line_counter = repl(len(str(rendered.count("\n") + 1)))
         print(re.sub(r"(?m)^", line_counter, rendered))  # noqa: T201
 
 
