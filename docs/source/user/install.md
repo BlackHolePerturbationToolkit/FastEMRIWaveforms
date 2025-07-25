@@ -119,7 +119,7 @@ To install FEW from source in any environment, follow these steps:
 
 2. **(Optional) Checkout a specific release:**
   ```sh
-  git checkout v2.0.0
+  git checkout v{{ few_short_version }}
   ```
 
 3. **Create and activate a specific environment:**
