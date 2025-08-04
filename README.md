@@ -14,6 +14,9 @@ This package contains a highly modular framework for the rapid generation of acc
 
 ## Getting started
 
+Detailed installation instructions can be found in the [documentation](https://fastemriwaveforms.readthedocs.io/en/latest/user/install.html).
+Below is a quick set of instructions to install the FastEMRIWaveform package on CPUs and GPUs.
+
 To install the latest version of `fastemriwaveforms` using `pip`, simply run:
 
 ```sh
@@ -44,22 +47,14 @@ as well as its CUDA 12.x plugin (only on Linux). It is strongly advised to:
 2. Install `fastemriwaveforms` directly when building your conda environment, not afterwards
 
 ```sh
-# To run only once to ensure you only use the conda-forge channel
-conda config --set channel_priority strict
-
 # For CPU-only version, on either Linux, macOS or Windows:
-conda create --name few_cpu python=3.12 fastemriwaveforms
+conda create --name few_cpu -c conda-forge --override-channels python=3.12 fastemriwaveforms
 conda activate few_cpu
 
 # For CUDA 12.x version, only on Linux
-conda create --name few_cuda python=3.12 fastemriwaveforms-cuda12x
+conda create --name few_cuda -c conda-forge --override-channels python=3.12 fastemriwaveforms-cuda12x
 conda activate few_cuda
 ```
-
-Note that this conda support might take a few days/weeks after FEW 2.0 official
-official release to be available. When support for conda is achieved,
-[this page](https://anaconda.org/conda-forge/fastemriwaveforms) will work without
-redirecting you to the "Sign in to Anaconda.org" page.
 
 Now, in a python file or notebook:
 
@@ -134,47 +129,27 @@ There are a set of files required for total use of this package. They will downl
 
 ### Installation instructions using conda
 
-We recommend to install FEW using conda in order to have the compilers all within an environment. First clone the repo
+We recommend to install FEW using conda in order to have the compilers all within an environment.
+First clone the repo
+
 ```
 git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
 cd FastEMRIWaveforms
-git checkout Kerr_Equatorial_Eccentric
 ```
 
-Now create an environment (here Mac OSX arm M chip)
+Now create an environment (these instructions work for all platforms but some
+adjustements can be needed, refer to the
+[detailed installation documentation](https://fastemriwaveforms.readthedocs.io/en/latest/user/install.html) for more information):
+
 ```
-conda create -n few_env -y -c conda-forge -y python=3.12 clangxx_osx-arm64 clang_osx-arm64 h5py wget gsl liblapacke lapack openblas fortran-compiler scipy numpy matplotlib jupyter
+conda create -n few_env -y -c conda-forge --override-channels |
+    cxx-compiler pkgconfig conda-forge/label/lapack_rc::liblapacke
 ```
 
-Instead for MACOS:
-```
-conda create -n few_env -c conda-forge -y clangxx_osx-64 clang_osx-64 h5py wget gsl liblapacke lapack openblas fortran-compiler scipy numpy matplotlib jupyter python=3.12
-```
 activate the environment
+
 ```
 conda activate few_env
-```
-and finally remember to install lisaconstants
-```
-pip install lisaconstants
-```
-
-You should have now installed the packages that allow FEW to be compiled but let's enforce the compilers by running
-```
-export CXXFLAGS="-march=native"
-export CFLAGS="-march=native"
-```
-
-Find the clang compiler by running
-```
-ls ${CONDA_PREFIX}/bin/*clang
-ls ${CONDA_PREFIX}/bin/*clang++
-```
-
-Then export and define the compilers, on my laptop it looks like
-```
-export CC=/opt/miniconda3/envs/few_env/bin/arm64-apple-darwin20.0.0-clang
-export CXX=/opt/miniconda3/envs/few_env/bin/arm64-apple-darwin20.0.0-clang++
 ```
 
 Then we can install locally for development:
@@ -186,19 +161,8 @@ pip install -e '.[dev, testing]'
 Below is a quick set of instructions to install the Fast EMRI Waveform package on GPUs and linux.
 
 ```sh
-conda create -n few_env -c conda-forge gcc_linux-64 gxx_linux-64 wget gsl lapack=3.6.1 hdf5 numpy Cython scipy tqdm jupyter ipython h5py requests matplotlib python=3.12 pandas fortran-compiler
+conda create -n few_env -c conda-forge fastemriwaveforms-cuda12x python=3.12
 conda activate few_env
-pip install lisaconstants
-```
-
-Locate where the `nvcc` compile is located and add it to the path, in my case it is located in `/usr/local/cuda-12.5/bin/`
-```
-export PATH=$PATH:/usr/local/cuda-12.5/bin/
-```
-
-Check the version of your compiler by running `nvcc --version` and install the corresponding FEW cuda version for running on GPUs:
-```
-pip install --pre fastemriwaveforms-cuda12x
 ```
 
 Test the installation device by running python
@@ -209,7 +173,8 @@ few.get_backend("cuda12x")
 
 ### Running the installation
 
-To start the from-source installation, ensure the pre-requisite are met, clone the repository, and then simply run a `pip install` command:
+To start the from-source installation, ensure the pre-requisite are met, clone
+the repository, and then simply run a `pip install` command:
 
 ```sh
 # Clone the repository
@@ -220,36 +185,12 @@ cd FastEMRIWaveforms
 pip install .
 ```
 
-Many options are available to change the installation behaviour. These can be set by adding `--config-settings=cmake.define.OPTION_NAME=OPTION_VALUE` to the `pip` command. Available options are:
+If the installation does not work, first check the [detailed installation
+documentation](https://fastemriwaveforms.readthedocs.io/en/latest/user/install.html). If
+it still does not work, please open an issue on the
+[GitHub repository](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/issues)
+or contact the developers through other means.
 
-- `FEW_LAPACKE_FETCH=ON|OFF|[AUTO]`: Whether `LAPACK` and `LAPACKE` should be automatically fetched from internet.
-  - `ON`: ignore pre-installed `LAPACK(E)` and always fetch and compile their sources
-  - `OFF`: disable `LAPACK(E)` fetching and only use pre-installed library and headers (install will fail if pre-installed lib and headers are not available)
-  - `AUTO` (default): try to detect pre-installed `LAPACK(E)` and their headers. If found, use them, otherwise fetch `LAPACK(E)`.
-- `FEW_LAPACKE_DETECT_WITH=[CMAKE]|PKGCONFIG`: How `LAPACK(E)` should be detected
-  - `CMAKE`: `LAPACK(E)` will be detected using the cmake `FindPackage` command. If your `LAPACK(E)` install provides `lapacke-config.cmake` in a non-standard location, add its path to the `CMAKE_PREFIX_PATH` environment variable.
-  - `PKGCONFIG`: `LAPACK(E)` will be detected using `pkg-config` by searching for the files `lapack.pc` and `lapacke.pc` . If these files are provided by your `LAPACK(E)` install in a non-standard location, add their path to the environment variable `PKG_CONFIG_PATH`
-  - `AUTO` (default): attempt both CMake and PkgConfig approaches
-- `FEW_WITH_GPU=ON|OFF|[AUTO]`: Whether GPU-support must be enabled
-  - `ON`: Forcefully enable GPU support (install will fail if GPU prerequisites are not met)
-  - `OFF`: Disable GPU support
-  - `AUTO` (default): Check whether `nvcc` and the `CUDA Toolkit` are available in environment and enable/disable GPU support accordingly.
-- `FEW_CUDA_ARCH`: List of CUDA architectures that will be targeted by the CUDA compiler using [CMake CUDA_ARCHITECTURES](https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html) syntax. (Default = `all`).
-
-Example of custom install with specific options to forcefully enable GPU support with support for the host's GPU only (`native` architecture) using LAPACK fetched from internet:
-
-```sh
-pip install . \
-  --config-settings=cmake.define.FEW_WITH_GPU=ON \
-  --config-settings=cmake.define.FEW_CUDA_ARCH="native" \
-  --config-settings=cmake.define.FEW_LAPACKE_FETCH=ON
-```
-
-If you enabled `GPU` support (or it was automatically enabled by the `AUTO` mode), you will also need to install the `nvidia-cuda-runtime`
-package corresponding to the CUDA version detected by `nvidia-smi` as explained in the *Getting Started* section above.
-You will also need to manually install `cupy-cuda11x` or `cupy-cuda12x` according to your CUDA version.
-
-Please contact the developers if the installation does not work.
 
 
 ### Running the Tests
