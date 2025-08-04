@@ -180,7 +180,7 @@ class SphericalHarmonicWaveformBase(
                 by :code:`mode_selector`. If 'all', it will run all modes without
                 filtering. If 'eps' it will override other options to filter by the
                 threshold value set by :code:`eps`. If a list of tuples (or lists) of
-                mode indices (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
+                mode indices (e.g. [(:math:`l_1,m_1,k_1,n_1`), (:math:`l_2,m_2,k_2,n_2`)]) is
                 provided, it will return those modes combined into a
                 single waveform. If :code:`include_minus_mkn = True`, we require that :math:`m \geq 0` for this list.
                 Default is None.
