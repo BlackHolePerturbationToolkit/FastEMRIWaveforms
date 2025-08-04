@@ -371,16 +371,16 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
         a_in = self.xp.ones(p.size) * signed_spin
         xI_in = self.xp.abs(xI_in)
 
-        if specific_modes is not None:
+        if specific_modes is not None: # if the user has specified modes
             self.num_modes_eval = len(specific_modes)
-            if isinstance(specific_modes, (list, self.xp.ndarray)):
+            if isinstance(specific_modes, (list, self.xp.ndarray)): # if the user has specified modes as a list or array
                 specific_modes_arr = self.xp.asarray(specific_modes)
                 mode_indexes = self.special_index_map_arr[
                     specific_modes_arr[:, 0],
                     m_mode_sign * specific_modes_arr[:, 1],
                     specific_modes_arr[:, 2],
                     specific_modes_arr[:, 3],
-                ]
+                ] # find locations of the modes in the special index map array
                 if self.xp.any(mode_indexes == -1):
                     failed_mode = specific_modes_arr[
                         self.xp.where(mode_indexes == -1)[0][0]
@@ -390,9 +390,9 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
                     )
             else:
                 mode_indexes = specific_modes
-        else:
-            if m_mode_sign < 0:
-                mode_indexes = self.negative_mode_indexes
+        else: # if the user has not specified modes
+            if m_mode_sign < 0: # check to see whether xI is negative
+                mode_indexes = self.negative_mode_indexes # if so, use negative m-modes. Note this is defined in SphericalHarmonic base class
             else:
                 mode_indexes = self.mode_indexes
             self.num_modes_eval = self.num_teuk_modes
@@ -480,7 +480,7 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
 
                 # apply +/- m symmetry
                 if m_mode_sign * m < 0:
-                    temp[(l, m, k, n)] = (-1) ** l * self.xp.conj(temp[(l, m, k, n)])
+                    temp[(l, m, k, n)] = (-1) ** (l + k) * self.xp.conj(temp[(l, m, k, n)])
 
             return temp
         # dict containing requested modes
@@ -496,7 +496,7 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
 
                 # apply +/- m symmetry
                 if m_mode_sign * m < 0:
-                    temp[lmkn] = (-1) ** l * self.xp.conj(temp[lmkn])
+                    temp[lmkn] = (-1) ** (l + k) * self.xp.conj(temp[lmkn])
 
             return temp
 
@@ -914,7 +914,7 @@ class AmpInterpKerrGeneric(AmplitudeBase, KerrGeneric):
 
                 # apply +/- m symmetry
                 if m_mode_sign * m < 0:
-                    temp[(l, m, k, n)] = (-1) ** l * self.xp.conj(temp[(l, m, k, n)])
+                    temp[(l, m, k, n)] = (-1) ** (l + k) * self.xp.conj(temp[(l, m, k, n)])
 
             return temp
         # dict containing requested modes
@@ -930,7 +930,7 @@ class AmpInterpKerrGeneric(AmplitudeBase, KerrGeneric):
 
                 # apply +/- m symmetry
                 if m_mode_sign * m < 0:
-                    temp[lmkn] = (-1) ** l * self.xp.conj(temp[lmkn])
+                    temp[lmkn] = (-1) ** (l + k) * self.xp.conj(temp[lmkn])
 
             return temp
 

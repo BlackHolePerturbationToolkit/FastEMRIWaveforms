@@ -299,7 +299,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
                 if emm >= 0:
                     temp[lmkn] = teuk_modes[:, self.special_index_map_arr[ell, emm, k, enn]]
                 else:
-                    temp[lmkn] = (-1) ** ell * self.xp.conj(
+                    temp[lmkn] = (-1) ** (ell + k) * self.xp.conj(
                         teuk_modes[:, self.special_index_map_arr[ell, emm, k, enn]]
                     )
 
