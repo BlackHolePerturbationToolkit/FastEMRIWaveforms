@@ -170,7 +170,7 @@ def amplitude_test(amp_class):
 
     teuk_modes = amp_class(0.0, p_all, e_all, np.ones_like(p_all) * 1.0)
 
-    # (2, 2, 0) and (7, -3, 1) modes
+    # (2, 2, 0, 0) and (7, -3, 0, 1) modes
     specific_modes = [(2, 2, 0, 0), (7, -3, 0, 1)]
 
     # notice this returns a dictionary with keys as the mode tuple and values as the mode values at all trajectory points
