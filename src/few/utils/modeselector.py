@@ -97,7 +97,7 @@ class ModeSelector(ParallelModuleBase):
             by :code:`mode_selector`. If 'all', it will run all modes without
             filtering. If 'threshold' it will override other options to filter by the
             threshold value set by :code:`mode_selection_threshold`. If a list of tuples (or lists) of
-            mode indices (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
+            mode indices (e.g. [(:math:`l_1,m_1,k_1,n_1`), (:math:`l_2,m_2,k_2,n_2`)]) is
             provided, it will return those modes combined into a
             single waveform.
             Default is None.
@@ -262,7 +262,7 @@ class ModeSelector(ParallelModuleBase):
                 by :code:`mode_selector`. If 'all', it will run all modes without
                 filtering. If 'threshold' it will override other options to filter by the
                 threshold value set by :code:`mode_selection_threshold`. If a list of tuples (or lists) of
-                mode indices (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
+                mode indices (e.g. [(:math:`l_1,m_1,k_1,n_1`), (:math:`l_2,m_2,k_2,n_2`)]) is
                 provided, it will return those modes combined into a
                 single waveform. If :code:`include_minus_mkn = True`, we require that :math:`m \geq 0` for this list.
                 Default is None.
@@ -410,16 +410,16 @@ class ModeSelector(ParallelModuleBase):
                 # NOTE: These frequencies may differ from waveform frequencies at 1PA order
 
                 # get frequencies in Hz
-                f_Phi, _f_omega, f_r = OmegaPhi, OmegaTheta, OmegaR = (
+                f_Phi, f_omega, f_r = OmegaPhi, OmegaTheta, OmegaR = (
                     self.xp.asarray(OmegaPhi) / (Msec * 2 * PI),
                     self.xp.asarray(OmegaTheta) / (Msec * 2 * PI),
                     self.xp.asarray(OmegaR) / (Msec * 2 * PI),
                 )
 
-                # TODO: update when in kerr
                 freqs = (
                     modeinds[1][self.xp.newaxis, :] * f_Phi[:, self.xp.newaxis]
-                    + modeinds[2][self.xp.newaxis, :] * f_r[:, self.xp.newaxis]
+                    + modeinds[2][self.xp.newaxis, :] * f_omega[:, self.xp.newaxis]
+                    + modeinds[3][self.xp.newaxis, :] * f_r[:, self.xp.newaxis]
                 )
 
                 freqs_shape = freqs.shape
