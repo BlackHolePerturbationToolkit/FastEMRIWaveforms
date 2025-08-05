@@ -125,13 +125,8 @@ class SphericalHarmonic(ParallelModuleBase):
     This class creates shared traits between different implementations of the
     same model. Particularly, this class includes descriptive traits as well as
     the sanity check class method that should be used in all implementations of
-    this model. This method can be overwritten if necessary. Here we describe
-    the overall qualities of this base class.
+    this model. This method can be overwritten if necessary.
 
-    Currently, Eq. :eq:`emri_wave_eq` is reduced to the equatorial plane.
-    Therefore, we only concerned with :math:`(l,m,n)` indices and
-    the parameters :math:`(a, p,e)` because :math:`k=|\iota|=0`. Therefore, in this
-    model we calculate :math:`A_{lmn}` and :math:`\Phi_{mn}=m\Phi_\phi+n\Phi_r`.
     As we assume the amplitudes have been remapped to a spherical harmonic basis,
     we use -2 spin-weighted spherical harmonics (:math:`(s=-2)Y_{l,m}`) in place
     of the more generic angular function from Eq. :eq:`emri_wave_eq`.
@@ -203,7 +198,7 @@ class SphericalHarmonic(ParallelModuleBase):
     """Array mapping mode tuple to mode index with m > 0 - used for fast indexing. Returns -1 if mode does not exist."""
 
     def __init__(
-        self, lmax: int = 10, kmax: int = 0, nmax: int = 30, force_backend: BackendLike = None
+        self, lmax: int = 10, kmax: int = 0, nmax: int = 0, force_backend: BackendLike = None
     ):
         ParallelModuleBase.__init__(self, force_backend=force_backend)
 
