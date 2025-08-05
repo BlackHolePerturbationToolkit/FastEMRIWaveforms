@@ -164,9 +164,6 @@ class SphericalHarmonic(ParallelModuleBase):
     n_arr_no_mask: xp_ndarray
     """1D Array of n values for each mode before masking."""
 
-    lmn_indices: dict[int, int]
-    """Dictionary of mode indices to mode number."""
-
     m0mask: xp_ndarray
     """1D Array Mask for m != 0."""
 
@@ -253,14 +250,6 @@ class SphericalHarmonic(ParallelModuleBase):
         self.m_arr_no_mask = md[1]
         self.k_arr_no_mask = md[2]  # k is always 0 for equatorial orbits
         self.n_arr_no_mask = md[3]
-
-        # adjust with .get method for cupy
-        if self.backend.uses_cupy:
-            lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T.get())}
-        else:
-            lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
-
-        self.lmn_indices = lmn_indices
 
         # store the mask as m != 0 is True
         self.m0mask = self.m_arr_no_mask != 0
