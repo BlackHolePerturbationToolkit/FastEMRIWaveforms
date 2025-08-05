@@ -118,7 +118,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
         """Return citations related to this module"""
-        return [REFERENCE.ROMANNET] + super().module_references()
+        return super().module_references()
 
     @classmethod
     def supported_backends(cls):
@@ -133,14 +133,14 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         **kwargs,
     ) -> xp_ndarray:
         """
-        Evaluate the spline or its derivatives at given positions.
+        Evaluate the spline at given positions.
 
         Args:
-            w: Eccentricity interpolation parameter.
-            u: Dimensionless semi-latus rectum interpolation parameter.
-            mode_indexes: Array indices of modes to be generated (optional; defaults to all modes).
+            w: First interpolation parameter.
+            u: Second interpolation parameter.
+            mode_indexes: Array indices of grids to be interpolated (optional; defaults to all grids).
         Returns:
-            Complex Teukolsky mode amplitudes at the requested points.
+            Complex interpolated values at the requested points.
         """
         w = self.xp.asarray(w)
         u = self.xp.asarray(u)
