@@ -114,7 +114,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
             **{
                 key: value
                 for key, value in kwargs.items()
-                if key in ["lmax", "nmax", "ndim"]
+                if key in ["lmax", "kmax", "nmax"]
             },
             force_backend=force_backend,
         )
@@ -145,6 +145,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
         phase_interp_coeffs,
         l_arr,
         m_arr,
+        k_arr,
         n_arr,
         M,
         a,
@@ -183,6 +184,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
                  (:math:`\Phi_r`).
             l_arr (1D int self.xp.ndarray): :math:`l` values associated with each mode.
             m_arr (1D int self.xp.ndarray): :math:`m` values associated with each mode.
+            k_arr (1D int self.xp.ndarray): :math:`k` values associated with each mode.
             n_arr (1D int self.xp.ndarray): :math:`n` values associated with each mode.
             M (double): Total mass in solar masses.
             p (1D int self.xp.ndarray): Semi-latus rectum along trajectory.
@@ -210,7 +212,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
 
         length = init_len
         # number of quantities to be interp in time domain
-        ninterps = (self.ndim) + 2 * num_teuk_modes  # 2 for re and im
+        ninterps = 3 + 2 * num_teuk_modes  # 2 for re and im
         y_all = self.xp.zeros((ninterps, length))
 
         # fill interpolant information in y
@@ -232,20 +234,22 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
         )
 
         # convert from dimensionless frequencies
-        f_phi, f_r = (
+        f_phi, f_theta, f_r = (
             abs(
                 self.xp.asarray(Omega_phi / (2 * np.pi * M * MTSUN_SI))
             ),  # positive frequency to be consistent with amplitude generator for retrograde inspirals  # TODO get to the bottom of this!
+            self.xp.asarray(Omega_theta / (2 * np.pi * M * MTSUN_SI)),
             self.xp.asarray(Omega_r / (2 * np.pi * M * MTSUN_SI)),
         )
 
         # add them for splines
-        y_all[-2] = f_phi
+        y_all[-3] = f_phi
+        y_all[-2] = f_theta
         y_all[-1] = f_r
 
         # for a frequency-only spline because you
         # have to evaluate all splines when you evaluate the spline class
-        y_all_freqs = self.xp.asarray([f_phi, f_r])
+        y_all_freqs = self.xp.asarray([f_phi, f_theta, f_r])
 
         # create two splines
         # spline: freqs, phases, and amplitudes for the summation kernel
@@ -265,7 +269,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
         new_freqs = freqs_spline(t_new)
 
         # mode frequencies along the sparse trajectory
-        seg_freqs = m_arr[:, None] * f_phi[None, :] + n_arr[:, None] * f_r[None, :]
+        seg_freqs = m_arr[:, None] * f_phi[None, :] + k_arr[:,None] * f_theta[None,:] + n_arr[:, None] * f_r[None, :]
 
         # properly orders each segment without absolute value
         tmp_freqs_base_sorted_segs = self.xp.sort(
@@ -276,7 +280,8 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
         # denser mode frequencies
         new_freqs_per_mode = (
             m_arr[:, None] * new_freqs[0][None, :]
-            + n_arr[:, None] * new_freqs[1][None, :]
+            + k_arr[:, None] * new_freqs[1][None, :]
+            + n_arr[:, None] * new_freqs[2][None, :]
         )
 
         # max/min frequency along dense array
@@ -315,19 +320,23 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
 
             a = (
                 m_arr[check_turnover] * (freqs_spline.c3[(0, fix_turnover_seg_ind)])
-                + n_arr[check_turnover] * freqs_spline.c3[(1, fix_turnover_seg_ind)]
+                + k_arr[check_turnover] * freqs_spline.c3[(1, fix_turnover_seg_ind)]
+                + n_arr[check_turnover] * freqs_spline.c3[(2, fix_turnover_seg_ind)]
             )
             b = (
                 m_arr[check_turnover] * (freqs_spline.c2[(0, fix_turnover_seg_ind)])
-                + n_arr[check_turnover] * freqs_spline.c2[(1, fix_turnover_seg_ind)]
+                + k_arr[check_turnover] * freqs_spline.c2[(1, fix_turnover_seg_ind)]
+                + n_arr[check_turnover] * freqs_spline.c2[(2, fix_turnover_seg_ind)]
             )
             c = (
                 m_arr[check_turnover] * (freqs_spline.c1[(0, fix_turnover_seg_ind)])
-                + n_arr[check_turnover] * freqs_spline.c1[(1, fix_turnover_seg_ind)]
+                + k_arr[check_turnover] * freqs_spline.c1[(1, fix_turnover_seg_ind)]
+                + n_arr[check_turnover] * freqs_spline.c1[(2, fix_turnover_seg_ind)]
             )
             d = (
                 m_arr[check_turnover] * (freqs_spline.y[(0, fix_turnover_seg_ind)])
-                + n_arr[check_turnover] * freqs_spline.y[(1, fix_turnover_seg_ind)]
+                + k_arr[check_turnover] * freqs_spline.y[(1, fix_turnover_seg_ind)]
+                + n_arr[check_turnover] * freqs_spline.y[(2, fix_turnover_seg_ind)]
             )
 
             inner_part = (2 * b) ** 2 - 4 * (3 * a) * c
@@ -453,7 +462,6 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
         _freq_check = self.frequency[inds_fin]
 
         # place holder for k array
-        k_arr = self.xp.zeros_like(m_arr)
         data_length = len(self.frequency)
 
         # prepare spline for GPU evaluation
