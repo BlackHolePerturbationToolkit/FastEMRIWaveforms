@@ -373,13 +373,9 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
 
         if specific_modes is not None: # if the user has specified modes
             self.num_modes_eval = len(specific_modes)
-<<<<<<< HEAD
-            if isinstance(specific_modes, (list, self.xp.ndarray)): # if the user has specified modes as a list or array
-=======
             if isinstance(specific_modes, self.xp.ndarray):
                 mode_indexes = specific_modes
             if isinstance(specific_modes, list):
->>>>>>> 2f8769ea (new mode selection fully implemented)
                 specific_modes_arr = self.xp.asarray(specific_modes)
                 mode_indexes = self.special_index_map_arr[
                     specific_modes_arr[:, 0],
