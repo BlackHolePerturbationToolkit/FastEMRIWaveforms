@@ -177,7 +177,7 @@ class ModeSelector(ParallelModuleBase):
         """float: Target mismatch threshold for mode selection. Modes will be selected such that the mismatch is approximately equal to this value."""
 
         if modeinds_map is None:
-            self.modeinds_map = self.amplitude_generator.special_index_map_arr
+            self.modeinds_map = self.amplitude_generator.index_map_arr
         else:
             self.modeinds_map = self.xp.asarray(modeinds_map)
             assert self.modeinds_map.ndim == 4, "Modeinds map must be a 4D array."

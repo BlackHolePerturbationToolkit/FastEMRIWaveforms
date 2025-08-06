@@ -374,7 +374,11 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
         if specific_modes is not None: # if the user has specified modes
             self.num_modes_eval = len(specific_modes)
             if isinstance(specific_modes, self.xp.ndarray):
-                mode_indexes = specific_modes
+                mode_indexes = specific_modes.copy()
+                # Identify requested negative mkn modes, the conjugate relation must be applied at the end
+                conj_mode_mask = mode_indexes >= self.num_teuk_modes
+                mode_indexes[conj_mode_mask] -= self.num_m_1_up
+
             if isinstance(specific_modes, list):
                 specific_modes_arr = self.xp.asarray(specific_modes)
                 mode_indexes = self.special_index_map_arr[
@@ -395,8 +399,11 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
         else: # if the user has not specified modes
             if m_mode_sign < 0: # check to see whether xI is negative
                 mode_indexes = self.negative_mode_indexes # if so, use negative m-modes. Note this is defined in SphericalHarmonic base class
+                conj_mode_mask = self.xp.ones_like(mode_indexes, dtype=bool) # Identify requested negative mkn modes
+
             else:
                 mode_indexes = self.mode_indexes
+                conj_mode_mask = self.xp.zeros_like(mode_indexes, dtype=bool) # Identify requested negative mkn modes
             self.num_modes_eval = self.num_teuk_modes
 
         try:
@@ -467,7 +474,14 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
             # apply xI flip symmetry
             if m_mode_sign < 0:
                 # this requires a sign flip of the m mode because the default is to return only m > 0 modes
-                return self.xp.conj(Amp_z)
+                Amp_z = self.xp.conj(Amp_z)
+            if self.xp.any(conj_mode_mask):
+                # apply +/- m symmetry
+                Amp_z[:, conj_mode_mask] = (
+                    (-1) ** (self.l_arr + self.k_arr)[mode_indexes[conj_mode_mask]]
+                    * self.xp.conj(Amp_z[:, conj_mode_mask])
+                )
+            
             return Amp_z
 
         else:
@@ -662,10 +676,15 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
 
         if specific_modes is None:
             mode_indexes = self.xp.arange(self.num_teuk_modes)
+            conj_mode_mask = self.xp.zeros_like(mode_indexes, dtype=bool) # Identify requested negative mkn modes
 
         else:
             if isinstance(specific_modes, self.xp.ndarray):
-                mode_indexes = specific_modes
+                mode_indexes = specific_modes.copy()
+                # Identify requested negative mkn modes, the conjugate relation must be applied at the end
+                conj_mode_mask = mode_indexes >= self.num_teuk_modes
+                mode_indexes[conj_mode_mask] -= self.num_m_1_up
+
             elif isinstance(specific_modes, list):
                 specific_modes_arr = self.xp.asarray(specific_modes)
                 mode_indexes = self.special_index_map_arr[
@@ -699,6 +718,11 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
         z = z[:, 0] + 1j * z[:, 1]
 
         if not isinstance(specific_modes, list):
+            if self.xp.any(conj_mode_mask):
+                z[:, conj_mode_mask] = (
+                    (-1) ** (self.l_arr)[mode_indexes[conj_mode_mask]]
+                    * self.xp.conj(z[:, conj_mode_mask])
+                )
             return z
 
         # dict containing requested modes
@@ -888,22 +912,6 @@ class AmpInterpKerrGeneric(AmplitudeBase, KerrGeneric):
                 return self.xp.conj(Amp_z)
             return Amp_z
 
-        elif isinstance(specific_modes, self.xp.ndarray):
-            temp = {}
-            for i, lmkn in enumerate(specific_modes):
-                l, m, k, n = lmkn
-                temp[(l, m, k, n)] = Amp_z[:, i]
-
-                # apply xI flip symmetry
-                if m_mode_sign < 0:
-                    temp[(l, m, k, n)] = (-1) ** l * temp[(l, m, k, n)]
-
-                # apply +/- m symmetry
-                if m_mode_sign * m < 0:
-                    temp[(l, m, k, n)] = (-1) ** (l + k) * self.xp.conj(temp[(l, m, k, n)])
-
-            return temp
-        # dict containing requested modes
         else:
             temp = {}
             for i, lmkn in enumerate(specific_modes):

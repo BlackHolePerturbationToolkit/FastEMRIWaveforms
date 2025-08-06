@@ -315,14 +315,29 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
 
         # return dictionary of requested modes
         else:
-            temp = {}
-            for lmkn in specific_modes:
-                ell, emm, k, enn = lmkn
-                if emm >= 0:
-                    temp[lmkn] = teuk_modes[:, self.special_index_map_arr[ell, emm, k, enn]]
-                else:
-                    temp[lmkn] = (-1) ** (ell + k) * self.xp.conj(
-                        teuk_modes[:, self.special_index_map_arr[ell, emm, k, enn]]
+            if isinstance(specific_modes, list):
+                temp = {}
+                for lmkn in specific_modes:
+                    ell, emm, k, enn = lmkn
+                    if emm >= 0:
+                        temp[lmkn] = teuk_modes[:, self.special_index_map_arr[ell, emm, k, enn]]
+                    else:
+                        temp[lmkn] = (-1) ** (ell + k) * self.xp.conj(
+                            teuk_modes[:, self.special_index_map_arr[ell, emm, k, enn]]
+                        )
+                return temp
+
+            elif isinstance(specific_modes, self.xp.ndarray):
+                mode_indexes = specific_modes.copy()
+                # Identify requested negative mkn modes, the conjugate relation must be applied at the end
+                conj_mode_mask = mode_indexes >= self.num_teuk_modes
+                mode_indexes[conj_mode_mask] -= self.num_m_1_up
+
+                if self.xp.any(conj_mode_mask):
+                    # apply +/- m symmetry
+                    teuk_modes[:, conj_mode_mask] = (
+                        (-1) ** (self.l_arr + self.k_arr)[mode_indexes[conj_mode_mask]]
+                        * self.xp.conj(teuk_modes[:, conj_mode_mask])
                     )
 
-            return temp
+                return teuk_modes
