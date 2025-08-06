@@ -1,6 +1,6 @@
 import numpy as np
 
-from few.amplitude.romannet import RomanAmplitude
+from few.amplitude.ampinterp2d import AmpInterpSchwarzEcc
 from few.summation.interpolatedmodesum import CubicSplineInterpolant
 from few.tests.base import FewBackendTest
 from few.trajectory.inspiral import EMRIInspiral
@@ -37,7 +37,7 @@ class ModeSelectorTest(FewBackendTest):
         t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(m1, m2, 0.0, p0, e0, 1.0, T=10.0)
 
         # instantiate amplitude module
-        amp = RomanAmplitude(force_backend="cpu")
+        amp = AmpInterpSchwarzEcc(force_backend="cpu")
 
         # select modes
 
@@ -124,3 +124,9 @@ class ModeSelectorTest(FewBackendTest):
             )
         )
         self.assertLess(mismatch, eps)
+
+        mode_selection = [(3,3,0,1), (3, -3, 0, -1)]
+        (teuk_modes, ylms, ls, ms, ks, ns) = mode_selector(
+            t, 0.0, p, e, x, theta, phi, mode_selection = mode_selection, include_minus_mkn=False
+        )
+        self.assertTrue(np.all(teuk_modes[:,0] == -teuk_modes[:,1].conj()))

@@ -363,10 +363,10 @@ class ModeSelector(ParallelModuleBase):
             out_tuple = (
                 teuk_modes, 
                 ylms_out,
-                self.l_arr[keep_modes],
-                self.m_arr[keep_modes],
-                self.k_arr[keep_modes],
-                self.n_arr[keep_modes],
+                mode_arr[:,0],
+                mode_arr[:,1],
+                mode_arr[:,2],
+                mode_arr[:,3],
             )     
 
         else:
