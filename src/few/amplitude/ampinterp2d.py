@@ -377,9 +377,9 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
                 mode_indexes = specific_modes.copy()
                 # Identify requested negative mkn modes, the conjugate relation must be applied at the end
                 conj_mode_mask = mode_indexes >= self.num_teuk_modes
-                mode_indexes[conj_mode_mask] -= self.num_m_1_up
+                mode_indexes[conj_mode_mask] = self.negative_mode_indexes[mode_indexes[conj_mode_mask] - self.num_m_1_up]
 
-            if isinstance(specific_modes, list):
+            elif isinstance(specific_modes, list):
                 specific_modes_arr = self.xp.asarray(specific_modes)
                 mode_indexes = self.special_index_map_arr[
                     specific_modes_arr[:, 0],
@@ -683,7 +683,7 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
                 mode_indexes = specific_modes.copy()
                 # Identify requested negative mkn modes, the conjugate relation must be applied at the end
                 conj_mode_mask = mode_indexes >= self.num_teuk_modes
-                mode_indexes[conj_mode_mask] -= self.num_m_1_up
+                mode_indexes[conj_mode_mask] = self.negative_mode_indexes[mode_indexes[conj_mode_mask] - self.num_m_1_up]
 
             elif isinstance(specific_modes, list):
                 specific_modes_arr = self.xp.asarray(specific_modes)
