@@ -664,12 +664,6 @@ class AmpInterpKerrGeneric(AmplitudeBase, KerrGeneric):
         )  # either all prograde or all retrograde
         assert self.xp.all(a == 0.7)
 
-        # symmetry of flipping the sign of the spin to keep xI positive
-        if self.xp.all(xI < 0.0):
-            m_mode_sign = -1
-        else:
-            m_mode_sign = 1
-
         pLSO = self.xp.asarray(get_separatrix(a.item(), e, xI))
         # print(pLSO)
         u = self.xp.log2((p - pLSO + 8.999)/9)**0.25
@@ -697,40 +691,19 @@ class AmpInterpKerrGeneric(AmplitudeBase, KerrGeneric):
 
         x_above = self.x_values[ind_above]
         Amp_above = self.spin_information_holder_A[ind_above](
-            w, u, mode_indexes=mode_indexes
+            w, u, mode_indexes=specific_modes
         )
 
         x_below = self.x_values[ind_below]
         Amp_below = self.spin_information_holder_A[ind_below](
-            w, u, mode_indexes=mode_indexes
+            w, u, mode_indexes=specific_modes
         )
 
         Amp_z = ((Amp_above - Amp_below) / (x_above - x_below)) * (
             xI[:,None] - x_below
         ) + Amp_below
-
-        if not isinstance(specific_modes, (list, self.xp.ndarray)):
-            # apply xI flip symmetry
-            if m_mode_sign < 0:
-                # this requires a sign flip of the m mode because the default is to return only m > 0 modes
-                return self.xp.conj(Amp_z)
-            return Amp_z
-
-        else:
-            temp = {}
-            for i, lmkn in enumerate(specific_modes):
-                temp[lmkn] = Amp_z[:, i]
-                l, m, k, n = lmkn
-
-                # apply xI flip symmetry
-                if m_mode_sign < 0:
-                    temp[lmkn] = (-1) ** l * temp[lmkn]
-
-                # apply +/- m symmetry
-                if m_mode_sign * m < 0:
-                    temp[lmkn] = (-1) ** (l + k) * self.xp.conj(temp[lmkn])
-
-            return temp
+        
+        return Amp_z
 
 
 def _spline_coefficients_to_file(
