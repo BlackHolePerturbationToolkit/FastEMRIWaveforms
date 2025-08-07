@@ -288,7 +288,7 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
 
         self.z_values = z_knots
 
-    def evaluate_interpolant_at_index(self, index, region_A_mask, w, u, mode_indexes):
+    def _evaluate_interpolant_at_index(self, index, region_A_mask, w, u, mode_indexes):
         z_out = self.xp.zeros(
             (region_A_mask.size, self.num_modes_eval), dtype=self.xp.complex128
         )
@@ -311,8 +311,8 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
         p: Union[float, np.ndarray],
         e: Union[float, np.ndarray],
         xI: Union[float, np.ndarray],
-        specific_modes: Optional[Union[list, np.ndarray]] = None,
-    ) -> Union[dict, np.ndarray]:
+        specific_modes: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """
         Generate Teukolsky amplitudes for a given set of parameters.
 
@@ -321,81 +321,24 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
             p: Dimensionless semi-latus rectum.
             e: Eccentricity.
             xI: Cosine of orbital inclination. Only :math:`|x_I| = 1` is currently supported.
-            specific_modes: Either indices or mode index tuples of modes to be generated (optional; defaults to all modes).
+            specific_modes: Indices of modes to be generated (optional; defaults to all modes).
         Returns:
-            If specific_modes is a list of tuples, returns a dictionary of complex mode amplitudes.
-            Else, returns an array of complex mode amplitudes.
+            An array of complex mode amplitudes.
         """
+        if specific_modes is None:
+            specific_modes = self.xp.arange(self.num_teuk_modes)
 
-        # prograde: spin pos, xI pos
-        # retrograde: spin pos, xI neg - >  spin neg, xI pos
-        # assert isinstance(a, float)
-
-        try:
-            p = p.get()
-            e = e.get()
-            xI = xI.get()
-        except AttributeError:
-            pass
-
-        a = self.xp.atleast_1d(a)
-        p = self.xp.atleast_1d(p)
-        e = self.xp.atleast_1d(e)
-        xI = self.xp.atleast_1d(xI)
-
-        lengths = [len(arr) for arr in (a, p, e, xI)]
-        non_one_lengths = {
-            l for l in lengths if l > 1
-        }  # Collect lengths greater than 1
-
-        assert len(non_one_lengths) <= 1, (
-            f"Arrays must be length one or, if larger, have the same length. Found lengths: {lengths}"
-        )
-
-        assert np.all(a == a[0]), "All spins must be the same value."
-
-        assert np.all(a * xI <= 0.0) or np.all(
+        assert self.xp.all(a == a[0]), "All spins must be the same value."
+        assert self.xp.all(a * xI <= 0.0) or self.xp.all(
             a * xI >= 0.0
         )  # either all prograde or all retrograde
         assert self.xp.all(self.xp.abs(xI) == 1.0)  # all equatorial
-
-        # symmetry of flipping the sign of the spin to keep xI positive
-        if self.xp.all(xI < 0.0):
-            m_mode_sign = -1
-        else:
-            m_mode_sign = 1
 
         xI_in = self.xp.ones_like(p) * xI
 
         signed_spin = a * xI_in
         a_in = self.xp.ones(p.size) * signed_spin
         xI_in = self.xp.abs(xI_in)
-
-        if specific_modes is not None: # if the user has specified modes
-            self.num_modes_eval = len(specific_modes)
-            if isinstance(specific_modes, (list, self.xp.ndarray)): # if the user has specified modes as a list or array
-                specific_modes_arr = self.xp.asarray(specific_modes)
-                mode_indexes = self.special_index_map_arr[
-                    specific_modes_arr[:, 0],
-                    m_mode_sign * specific_modes_arr[:, 1],
-                    specific_modes_arr[:, 2],
-                    specific_modes_arr[:, 3],
-                ] # find locations of the modes in the special index map array
-                if self.xp.any(mode_indexes == -1):
-                    failed_mode = specific_modes_arr[
-                        self.xp.where(mode_indexes == -1)[0][0]
-                    ]
-                    raise ValueError(
-                        f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]},{failed_mode[3]})."
-                    )
-            else:
-                mode_indexes = specific_modes
-        else: # if the user has not specified modes
-            if m_mode_sign < 0: # check to see whether xI is negative
-                mode_indexes = self.negative_mode_indexes # if so, use negative m-modes. Note this is defined in SphericalHarmonic base class
-            else:
-                mode_indexes = self.mode_indexes
-            self.num_modes_eval = self.num_teuk_modes
 
         try:
             u, w, y, z, region_mask = kerrecceq_forward_map(
@@ -434,8 +377,8 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
             except AttributeError:
                 ind_1 = self.xp.where(self.z_values == z_check)[0][0]
 
-            Amp_z = self.evaluate_interpolant_at_index(
-                ind_1, region_mask, w, u, mode_indexes=mode_indexes
+            Amp_z = self._evaluate_interpolant_at_index(
+                ind_1, region_mask, w, u, mode_indexes=specific_modes
             )
 
         else:
@@ -448,57 +391,20 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
             assert ind_below >= 0
 
             z_above = self.z_values[ind_above]
-            Amp_above = self.evaluate_interpolant_at_index(
-                ind_above, region_mask, w, u, mode_indexes
+            Amp_above = self._evaluate_interpolant_at_index(
+                ind_above, region_mask, w, u, specific_modes
             )
 
             z_below = self.z_values[ind_below]
-            Amp_below = self.evaluate_interpolant_at_index(
-                ind_below, region_mask, w, u, mode_indexes
+            Amp_below = self._evaluate_interpolant_at_index(
+                ind_below, region_mask, w, u, specific_modes
             )
 
             Amp_z = ((Amp_above - Amp_below) / (z_above - z_below)) * (
                 z_check - z_below
             ) + Amp_below
 
-        if not isinstance(specific_modes, (list, self.xp.ndarray)):
-            # apply xI flip symmetry
-            if m_mode_sign < 0:
-                # this requires a sign flip of the m mode because the default is to return only m > 0 modes
-                return self.xp.conj(Amp_z)
-            return Amp_z
-
-        elif isinstance(specific_modes, self.xp.ndarray):
-            temp = {}
-            for i, lmkn in enumerate(specific_modes):
-                l, m, k, n = lmkn
-                temp[(l, m, k, n)] = Amp_z[:, i]
-
-                # apply xI flip symmetry
-                if m_mode_sign < 0:
-                    temp[(l, m, k, n)] = (-1) ** l * temp[(l, m, k, n)]
-
-                # apply +/- m symmetry
-                if m_mode_sign * m < 0:
-                    temp[(l, m, k, n)] = (-1) ** (l + k) * self.xp.conj(temp[(l, m, k, n)])
-
-            return temp
-        # dict containing requested modes
-        else:
-            temp = {}
-            for i, lmkn in enumerate(specific_modes):
-                temp[lmkn] = Amp_z[:, i]
-                l, m, k, n = lmkn
-
-                # apply xI flip symmetry
-                if m_mode_sign < 0:
-                    temp[lmkn] = (-1) ** l * temp[lmkn]
-
-                # apply +/- m symmetry
-                if m_mode_sign * m < 0:
-                    temp[lmkn] = (-1) ** (l + k) * self.xp.conj(temp[lmkn])
-
-            return temp
+        return Amp_z
 
 
 class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
@@ -636,17 +542,13 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
             p: Dimensionless semi-latus rectum.
             e: Eccentricity.
             xI: Cosine of orbital inclination. Only :math:`x_I = 1` is currently supported.
-            specific_modes: Either indices or mode index tuples of modes to be generated (optional; defaults to all modes).
+            specific_modes: Indices of modes to be generated (optional; defaults to all modes).
         Returns:
-            If specific_modes is a list of tuples, returns a dictionary of complex mode amplitudes.
-            Else, returns an array of complex mode amplitudes.
+            An array of complex mode amplitudes.
         """
         assert a == 0.0
 
-        assert np.all(xI == 1.0)
-
-        p = self.xp.asarray(p)
-        e = self.xp.asarray(e)
+        assert self.xp.all(xI == 1.0)
 
         u = self.xp.asarray(schwarzecc_p_to_y(p, e, use_gpu=self.backend.uses_gpu))
         w = e.copy()
@@ -672,61 +574,21 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
 
         assert mw == mu
 
-        # TODO: adjustable
-
-        if specific_modes is None:
-            mode_indexes = self.xp.arange(self.num_teuk_modes)
-
-        else:
-            if isinstance(specific_modes, self.xp.ndarray):
-                mode_indexes = specific_modes
-            elif isinstance(specific_modes, list):
-                specific_modes_arr = self.xp.asarray(specific_modes)
-                mode_indexes = self.special_index_map_arr[
-                    specific_modes_arr[:, 0],
-                    specific_modes_arr[:, 1],
-                    specific_modes_arr[:, 2],
-                    specific_modes_arr[:, 3],
-                ]
-                if self.xp.any(mode_indexes == -1):
-                    failed_mode = specific_modes_arr[
-                        self.xp.where(mode_indexes == -1)[0][0]
-                    ]
-                    raise ValueError(
-                        f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]},{failed_mode[3]})."
-                    )
-
         # TODO: perform this in the kernel
-        c_in = c[mode_indexes].flatten()
+        c_in = c[specific_modes].flatten()
 
-        num_indiv_c = 2 * len(mode_indexes)  # Re and Im
-        len_indiv_c = self.len_indiv_c
-
+        num_indiv_c = 2 * len(specific_modes)  # Re and Im
         z = self.xp.zeros((num_indiv_c * mw))
 
         self.interp2D(
-            z, tw, nw, tu, nu, c_in, kw, ku, w, mw, u, mu, num_indiv_c, len_indiv_c
+            z, tw, nw, tu, nu, c_in, kw, ku, w, mw, u, mu, num_indiv_c, self.len_indiv_c
         )
 
         z = z.reshape(num_indiv_c // 2, 2, mw).transpose(2, 1, 0)
 
         z = z[:, 0] + 1j * z[:, 1]
 
-        if not isinstance(specific_modes, list):
-            return z
-
-        # dict containing requested modes
-        else:
-            temp = {}
-            for i, lmkn in enumerate(specific_modes):
-                temp[lmkn] = z[:, i]
-                l, m, k, n = lmkn
-
-                # apply +/- m symmetry
-                if m < 0:
-                    temp[lmkn] = (-1) ** l * np.conj(temp[lmkn])
-
-            return temp
+        return z
 
     def __reduce__(self):
         return (self.__class__, (self.filename,))
@@ -795,66 +657,12 @@ class AmpInterpKerrGeneric(AmplitudeBase, KerrGeneric):
             If specific_modes is a list of tuples, returns a dictionary of complex mode amplitudes.
             Else, returns an array of complex mode amplitudes.
         """
+        assert self.xp.all(a == a[0]), "All spins must be the same value."
 
-        try:
-            p = p.get()
-            e = e.get()
-            xI = xI.get()
-        except AttributeError:
-            pass
-
-        a = self.xp.atleast_1d(a)
-        p = self.xp.atleast_1d(p)
-        e = self.xp.atleast_1d(e)
-        xI = self.xp.atleast_1d(xI)
-
-        lengths = [len(arr) for arr in (a, p, e, xI)]
-        non_one_lengths = {
-            l for l in lengths if l > 1
-        }  # Collect lengths greater than 1
-
-        assert len(non_one_lengths) <= 1, (
-            f"Arrays must be length one or, if larger, have the same length. Found lengths: {lengths}"
-        )
-
-        assert np.all(a == a[0]), "All spins must be the same value."
-
-        assert np.all(a * xI <= 0.0) or np.all(
+        assert self.xp.all(a * xI <= 0.0) or self.xp.all(
             a * xI >= 0.0
         )  # either all prograde or all retrograde
-        assert np.all(a == 0.7)
-
-        # symmetry of flipping the sign of the spin to keep xI positive
-        if self.xp.all(xI < 0.0):
-            m_mode_sign = -1
-        else:
-            m_mode_sign = 1
-
-        if specific_modes is not None:
-            self.num_modes_eval = len(specific_modes)
-            if isinstance(specific_modes, (list, self.xp.ndarray)):
-                specific_modes_arr = self.xp.asarray(specific_modes)
-                mode_indexes = self.special_index_map_arr[
-                    specific_modes_arr[:, 0],
-                    m_mode_sign * specific_modes_arr[:, 1],
-                    specific_modes_arr[:, 2],
-                    specific_modes_arr[:, 3],
-                ]
-                if self.xp.any(mode_indexes == -1):
-                    failed_mode = specific_modes_arr[
-                        self.xp.where(mode_indexes == -1)[0][0]
-                    ]
-                    raise ValueError(
-                        f"Could not find mode index ({failed_mode[0]},{failed_mode[1]},{failed_mode[2]},{failed_mode[3]})."
-                    )
-            else:
-                mode_indexes = specific_modes
-        else:
-            if m_mode_sign < 0:
-                mode_indexes = self.negative_mode_indexes
-            else:
-                mode_indexes = self.mode_indexes
-            self.num_modes_eval = self.num_teuk_modes
+        assert self.xp.all(a == 0.7)
 
         pLSO = self.xp.asarray(get_separatrix(a.item(), e, xI))
         # print(pLSO)
@@ -883,56 +691,19 @@ class AmpInterpKerrGeneric(AmplitudeBase, KerrGeneric):
 
         x_above = self.x_values[ind_above]
         Amp_above = self.spin_information_holder_A[ind_above](
-            w, u, mode_indexes=mode_indexes
+            w, u, mode_indexes=specific_modes
         )
 
         x_below = self.x_values[ind_below]
         Amp_below = self.spin_information_holder_A[ind_below](
-            w, u, mode_indexes=mode_indexes
+            w, u, mode_indexes=specific_modes
         )
 
         Amp_z = ((Amp_above - Amp_below) / (x_above - x_below)) * (
             xI[:,None] - x_below
         ) + Amp_below
-
-        if not isinstance(specific_modes, (list, self.xp.ndarray)):
-            # apply xI flip symmetry
-            if m_mode_sign < 0:
-                # this requires a sign flip of the m mode because the default is to return only m > 0 modes
-                return self.xp.conj(Amp_z)
-            return Amp_z
-
-        elif isinstance(specific_modes, self.xp.ndarray):
-            temp = {}
-            for i, lmkn in enumerate(specific_modes):
-                l, m, k, n = lmkn
-                temp[(l, m, k, n)] = Amp_z[:, i]
-
-                # apply xI flip symmetry
-                if m_mode_sign < 0:
-                    temp[(l, m, k, n)] = (-1) ** l * temp[(l, m, k, n)]
-
-                # apply +/- m symmetry
-                if m_mode_sign * m < 0:
-                    temp[(l, m, k, n)] = (-1) ** (l + k) * self.xp.conj(temp[(l, m, k, n)])
-
-            return temp
-        # dict containing requested modes
-        else:
-            temp = {}
-            for i, lmkn in enumerate(specific_modes):
-                temp[lmkn] = Amp_z[:, i]
-                l, m, k, n = lmkn
-
-                # apply xI flip symmetry
-                if m_mode_sign < 0:
-                    temp[lmkn] = (-1) ** l * temp[lmkn]
-
-                # apply +/- m symmetry
-                if m_mode_sign * m < 0:
-                    temp[lmkn] = (-1) ** (l + k) * self.xp.conj(temp[lmkn])
-
-            return temp
+        
+        return Amp_z
 
 
 def _spline_coefficients_to_file(
