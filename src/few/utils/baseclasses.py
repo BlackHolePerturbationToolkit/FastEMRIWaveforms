@@ -125,13 +125,8 @@ class SphericalHarmonic(ParallelModuleBase):
     This class creates shared traits between different implementations of the
     same model. Particularly, this class includes descriptive traits as well as
     the sanity check class method that should be used in all implementations of
-    this model. This method can be overwritten if necessary. Here we describe
-    the overall qualities of this base class.
+    this model. This method can be overwritten if necessary.
 
-    Currently, Eq. :eq:`emri_wave_eq` is reduced to the equatorial plane.
-    Therefore, we only concerned with :math:`(l,m,n)` indices and
-    the parameters :math:`(a, p,e)` because :math:`k=|\iota|=0`. Therefore, in this
-    model we calculate :math:`A_{lmn}` and :math:`\Phi_{mn}=m\Phi_\phi+n\Phi_r`.
     As we assume the amplitudes have been remapped to a spherical harmonic basis,
     we use -2 spin-weighted spherical harmonics (:math:`(s=-2)Y_{l,m}`) in place
     of the more generic angular function from Eq. :eq:`emri_wave_eq`.
@@ -163,9 +158,6 @@ class SphericalHarmonic(ParallelModuleBase):
     """1D Array of k values for each mode before masking."""
     n_arr_no_mask: xp_ndarray
     """1D Array of n values for each mode before masking."""
-
-    lmn_indices: dict[int, int]
-    """Dictionary of mode indices to mode number."""
 
     m0mask: xp_ndarray
     """1D Array Mask for m != 0."""
@@ -206,7 +198,7 @@ class SphericalHarmonic(ParallelModuleBase):
     """Array mapping mode tuple to mode index with m > 0 - used for fast indexing. Returns -1 if mode does not exist."""
 
     def __init__(
-        self, lmax: int = 10, kmax: int = 0, nmax: int = 30, force_backend: BackendLike = None
+        self, lmax: int = 10, kmax: int = 0, nmax: int = 0, force_backend: BackendLike = None
     ):
         ParallelModuleBase.__init__(self, force_backend=force_backend)
 
@@ -253,14 +245,6 @@ class SphericalHarmonic(ParallelModuleBase):
         self.m_arr_no_mask = md[1]
         self.k_arr_no_mask = md[2]  # k is always 0 for equatorial orbits
         self.n_arr_no_mask = md[3]
-
-        # adjust with .get method for cupy
-        if self.backend.uses_cupy:
-            lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T.get())}
-        else:
-            lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
-
-        self.lmn_indices = lmn_indices
 
         # store the mask as m != 0 is True
         self.m0mask = self.m_arr_no_mask != 0

@@ -6,6 +6,7 @@ from .baseclasses import BackendLike, ParallelModuleBase
 from .globals import get_logger
 
 from .ylm import GetYlms
+from ..trajectory.inspiral import EMRIInspiral
 
 from typing import Optional, Union
 
@@ -15,18 +16,15 @@ def get_mode_frequencies(f_phi, f_theta, f_r, m, k, n):
 class ModeSelector(ParallelModuleBase):
     r"""Filter teukolsky amplitudes based on power contribution.
 
-    This module takes teukolsky modes, combines them with their associated ylms,
-    and determines the power contribution from each mode. It then filters the
-    modes bases on the fractional accuracy on the total power (eps) parameter.
-    Additionally, if a sensitivity curve is provided, the mode power is also
-    weighted according to the PSD of the sensitivity.
+    This module generates teukolsky modes and their associated ylms given an input
+    trajectory, then filters these modes according to either a list of requested modes or the
+    the power contribution from each mode. Mode filtering is performed to (roughly) achieve the
+    requested mismatch with the minimum number of modes. If a sensitivity curve is provided, mode filtering
+    is weighted according to this sensitivity curve.
 
-    The mode filtering is a major contributing factor to the speed of these
-    waveforms as it removes large numbers of useles modes from the final
+    The mode filtering is a major contributing factor to the speed of FEW
+    waveforms, as it removes large numbers of useless modes from the final
     summation calculation.
-
-    Be careful as this is built based on the construction that input mode arrays
-    will in order of :math:`m=0`, :math:`m>0`, and then :math:`m<0`.
 
     args:
         amplitude_generator: Object that generates the teukolsky amplitudes
@@ -46,7 +44,7 @@ class ModeSelector(ParallelModuleBase):
             by :code:`mode_selector`. If 'all', it will run all modes without
             filtering. If 'threshold' it will override other options to filter by the
             threshold value set by :code:`mode_selection_threshold`. If a list of tuples (or lists) of
-            mode indices (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
+            mode indices (e.g. [(:math:`l_1,m_1,k_1,n_1`), (:math:`l_2,m_2,k_2,n_2`)]) is
             provided, it will return those modes combined into a
             single waveform.
             Default is None.
@@ -179,7 +177,7 @@ class ModeSelector(ParallelModuleBase):
         """float: Target mismatch threshold for mode selection. Modes will be selected such that the mismatch is approximately equal to this value."""
 
         if modeinds_map is None:
-            self.modeinds_map = self.amplitude_generator.special_index_map_arr
+            self.modeinds_map = self.amplitude_generator.index_map_arr
         else:
             self.modeinds_map = self.xp.asarray(modeinds_map)
             assert self.modeinds_map.ndim == 4, "Modeinds map must be a 4D array."
@@ -265,6 +263,7 @@ class ModeSelector(ParallelModuleBase):
         mode_selection: Optional[Union[str, list, np.ndarray]] = None,
         include_minus_mkn: Optional[bool] = None,
         mode_selection_threshold: float = None,
+        return_sort_inds: bool = False
     ) -> tuple[np.ndarray]:
         r"""Call to sort and filer teukolsky modes.
 
@@ -289,7 +288,7 @@ class ModeSelector(ParallelModuleBase):
                 by :code:`mode_selector`. If 'all', it will run all modes without
                 filtering. If 'threshold' it will override other options to filter by the
                 threshold value set by :code:`mode_selection_threshold`. If a list of tuples (or lists) of
-                mode indices (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
+                mode indices (e.g. [(:math:`l_1,m_1,k_1,n_1`), (:math:`l_2,m_2,k_2,n_2`)]) is
                 provided, it will return those modes combined into a
                 single waveform. If :code:`include_minus_mkn = True`, we require that :math:`m \geq 0` for this list.
                 Default is None.
@@ -306,6 +305,9 @@ class ModeSelector(ParallelModuleBase):
                 the waveform, albeit at the cost of some accuracy (usually an
                 acceptable loss). Default that gives good mismatch qualities is
                 1e-5.
+            return_sort_inds: If True, also return the indices sorting the modes according
+                to their contribution. Only used when filtering in this mode. Default is False.
+            
         """
 
         # set defaults, check inputs are consistent, etc.
@@ -330,7 +332,7 @@ class ModeSelector(ParallelModuleBase):
             ylms_out = ylms[ylmkeep]
             teuk_modes_out = teuk_modes
 
-            return (
+            out_tuple = (
                 teuk_modes_out,
                 ylms_out,
                 self.l_arr,
@@ -358,14 +360,14 @@ class ModeSelector(ParallelModuleBase):
                 # ylms[keep_modes >= self.num_m_zero_up] = 0.0 + 0.0j
                 ylms_out[teuk_modes.shape[1]:] = 0.0 + 0.0j
 
-            return (
+            out_tuple = (
                 teuk_modes, 
                 ylms_out,
-                self.l_arr[keep_modes],
-                self.m_arr[keep_modes],
-                self.k_arr[keep_modes],
-                self.n_arr[keep_modes],
-            )
+                mode_arr[:,0],
+                mode_arr[:,1],
+                mode_arr[:,2],
+                mode_arr[:,3],
+            )     
 
         else:
             # get teuk modes
@@ -435,8 +437,8 @@ class ModeSelector(ParallelModuleBase):
             )
 
             # if +m or -m contributes, we keep both because of structure of CUDA kernel
-            keep_modes, indices, counts = self.xp.unique(
-                keep_modes_temp, return_index=True, return_counts=True
+            keep_modes, indices, inv_inds, counts = self.xp.unique(
+                keep_modes_temp, return_index=True, return_counts=True, return_inverse=True,
             )
 
             # find minus mkn modes that need to be removed
@@ -483,10 +485,50 @@ class ModeSelector(ParallelModuleBase):
                 self.n_arr[keep_modes],
             ])
 
-            return out1 + out2
+            out_tuple = out1 + out2
+        
+            if return_sort_inds:
+                out_tuple += (inv_inds,)
 
+        return out_tuple
 
-def get_selected_modes_from_initial_conditions(mode_selector_module, traj_module, m1, m2, a, p0, e0, xI0, theta, phi, traj_args=None,traj_kwargs=None, mode_selector_kwargs=None):
+def get_selected_modes_from_initial_conditions(
+        mode_selector_module: ModeSelector, 
+        traj_module: EMRIInspiral, 
+        m1: float, 
+        m2: float, 
+        a: float, 
+        p0: float, 
+        e0: float, 
+        xI0: float, 
+        theta: float, 
+        phi: float, 
+        traj_args: Optional[list]=None,
+        traj_kwargs: Optional[dict]=None, 
+        mode_selector_kwargs: Optional[dict]=None
+    ) -> tuple[np.ndarray]:
+    """
+    Get the selected modes from the initial conditions of an EMRI trajectory.
+    This function uses the provided trajectory module to generate the trajectory
+    and the mode selector module to select the modes based on the trajectory.
+
+    args:
+        mode_selector_module: Instance of the ModeSelector class.
+        traj_module: Instance of the EMRIInspiral class.
+        m1: Mass of the primary black hole in solar masses.
+        m2: Mass of the secondary black hole in solar masses.
+        a: Dimensionless spin parameter of the primary black hole.
+        p0: Initial semi-latus rectum of the trajectory.
+        e0: Initial eccentricity of the trajectory.
+        xI0: Initial cosine(inclination) for the trajectory.
+        theta: Polar source-frame viewing angle.
+        phi: Azimuthal source-frame viewing angle.
+        traj_args: Additional arguments to pass to the trajectory module.
+        traj_kwargs: Additional keyword arguments to pass to the trajectory module.
+        mode_selector_kwargs: Additional keyword arguments to pass to the mode selector module.
+    returns:
+        dict: A dict containing the selected teuk_modes, ylms, their indices (ls, ms, ks, ns), the trajectory `traj` and the `online_mode_selection_args`.
+    """
     if traj_args is None:
         traj_args = []
     if traj_kwargs is None:
@@ -494,16 +536,36 @@ def get_selected_modes_from_initial_conditions(mode_selector_module, traj_module
     if mode_selector_kwargs is None:
         mode_selector_kwargs = {}
 
-    t, p, e, x, _, _, _ = traj_module(m1, m2, a, p0, e0, xI0, **traj_kwargs)
+    traj = traj_module(m1, m2, a, p0, e0, xI0, **traj_kwargs)
 
-    freqs = traj_module.inspiral_generator.eval_integrator_derivative_spline(t, order=1)[:,3:6] / 2 / np.pi
+    freqs = traj_module.inspiral_generator.eval_integrator_derivative_spline(traj[0], order=1)[:,3:6] / 2 / np.pi
 
     online_mode_selection_args = dict(
         f_phi = freqs[:,0],
         f_theta = freqs[:,1],
         f_r = freqs[:,2],
     )
-    teuk_modes_out, ylms_out, ls, ms, ks, ns = mode_selector_module(
-        t, a, p, e, x, theta, phi, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
+
+    if mode_selector_kwargs.get("return_sort_inds", False):
+        teuk_modes_out, ylms_out, ls, ms, ks, ns, inds_sort = mode_selector_module(
+            traj[0], a, traj[1], traj[2], traj[3], theta, phi, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
+        )
+    else:
+        teuk_modes_out, ylms_out, ls, ms, ks, ns = mode_selector_module(
+            traj[0], a, traj[1], traj[2], traj[3], theta, phi, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
+        )    
+        inds_sort = None
+
+    return_dict = dict(
+        teuk_modes = teuk_modes_out,
+        ylms = ylms_out,
+        ls = ls,
+        ms = ms,
+        ks = ks,
+        ns = ns,
+        trajectory=traj,
+        online_mode_selection_args=online_mode_selection_args,
+        inds_sort = inds_sort,
     )
-    return teuk_modes_out, ylms_out, ls, ms, ks, ns
+
+    return return_dict

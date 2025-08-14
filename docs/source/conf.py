@@ -16,8 +16,13 @@
 
 import os
 import pathlib
+import typing
+from textwrap import dedent
 
 import few
+
+if typing.TYPE_CHECKING:
+    import sphinx.application
 
 # -- Project information -----------------------------------------------------
 
@@ -100,6 +105,10 @@ linkcheck_ignore = [
     r"https://bhptoolkit.org/FastEMRIWaveforms/.*",
 ]
 
+myst_enable_extensions = [
+    "colon_fence",
+]
+
 myst_heading_anchors = 2
 myst_url_schemes = {
     "http": None,
@@ -125,6 +134,20 @@ tippy_js = (
     "https://unpkg.com/tippy.js@6",
     "https://unpkg.com/requirejs@2",
 )
+tippy_doi_api = "https://api.datacite.org/dois/"
+tippy_doi_template = dedent(
+    """\
+        {% set attrs = data.data.attributes %}
+        <div>
+            <h3>{{ attrs.titles[0].title }}</h3>
+            {% if attrs.creators is defined %}
+            <p><b>Authors:</b> {{ attrs.creators | map_join('givenName', 'familyName') | join(', ')  }}</p>
+            {% endif %}
+            <p><b>Publisher:</b> {{ attrs.publisher }}</p>
+            <p><b>Published:</b> {{ attrs.created[:10] }}</p>
+        </div>
+        """
+)
 
 
 def skip(app, what, name, obj, would_skip, options):
@@ -135,6 +158,89 @@ def skip(app, what, name, obj, would_skip, options):
 
 reftarget_aliases = {"CITATION.cff": "CITATION"}
 
+with open("../../PAPERS.bib", "r") as f:
+    papers_bib = f.read()
+
+JINJA_ENV_PER_DOC = {
+    "user/install": {
+        "context": {
+            "few_short_version": ".".join(str(v) for v in few.__version_tuple__[:3]),
+        },
+    },
+    "readme": {
+        "substitutions": {
+            "(PAPERS.bib)": "(PAPERS.md)",
+            "https://fastemriwaveforms.readthedocs.io/en/latest/user/install.html": "user/install.md",
+            " Please see the [documentation](https://fastemriwaveforms.readthedocs.io/en/latest) for further information on these modules.": "",
+        }
+    },
+    "PAPERS": {
+        "context": {
+            "inject_papers_bib": papers_bib,
+        },
+    },
+}
+
+
+def process_sources(
+    app: sphinx.application.Sphinx, docname: str, source: list[str]
+) -> None:
+    """
+    Render pages whose name is in JINJA_ENV_PER_DOC with Jinja2.
+
+    This allows to use Jinja2 templating in RST/MD files without using specific
+    directives.
+    """
+
+    if docname not in JINJA_ENV_PER_DOC:
+        if app.verbosity > 0:
+            print(f"process_jinja: ignoring '{docname}'")  # noqa: T201
+        return
+
+    import jinja2
+
+    env = JINJA_ENV_PER_DOC[docname]
+    context = env.get("context", {})
+    filters = env.get("filters", {})
+    substitutions = env.get("substitutions", {})
+
+    jinja_env = jinja2.Environment()
+    jinja_env.filters.update(filters)
+
+    # Get page source
+    src = source[0]
+
+    # Apply substitutions
+    for old, new in substitutions.items():
+        if app.verbosity > 0:
+            print(f"process_jinja: substituting '{old}' with '{new}' in '{docname}'")  # noqa: T201
+        src = src.replace(old, new)
+
+    # Apply Jinja2 rendering
+    template = jinja_env.from_string(src)
+    rendered = template.render(**context)
+    source[0] = rendered
+
+    if app.verbosity > 0:
+        print(f"Rendered '{docname}' with Jinja2:")  # noqa: T201
+
+        class repl:
+            n: int  # Number of digits to use for line numbering
+            cnt: int  # Current line number, increases with each call
+
+            def __init__(self, n=3) -> None:
+                self.cnt = 0
+                self.n = n
+
+            def __call__(self, *args) -> str:
+                self.cnt += 1
+                return f"  {self.cnt:0{self.n}d}: "
+
+        import re
+
+        line_counter = repl(len(str(rendered.count("\n") + 1)))
+        print(re.sub(r"(?m)^", line_counter, rendered))  # noqa: T201
+
 
 def substitute_ref_targets(_, doctree):
     from sphinx.addnodes import pending_xref
@@ -144,9 +250,20 @@ def substitute_ref_targets(_, doctree):
             node["reftarget"] = reftarget_aliases[alias]
 
 
-def setup(app):
+def process_includes(
+    app: sphinx.application.Sphinx, path, docname: str, source: list[str]
+) -> None:
+    if app.verbosity > 0:
+        print(f"process_includes: processing '{docname}' with path '{path}'")  # noqa: T201
+
+    process_sources(app, docname, source)
+
+
+def setup(app: sphinx.application.Sphinx) -> None:
     app.connect("autodoc-skip-member", skip)
     app.connect("doctree-read", substitute_ref_targets)
+    app.connect("source-read", process_sources)
+    app.connect("include-read", process_includes)
 
 
 # -- Options for HTML output -------------------------------------------------

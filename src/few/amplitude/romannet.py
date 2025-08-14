@@ -309,20 +309,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
             factor = amp_norm / amp_for_norm
             teuk_modes = teuk_modes * factor[:, None]
 
-        # return array of all modes
-        if specific_modes is None:
-            return teuk_modes
-
-        # return dictionary of requested modes
+        if specific_modes is not None:
+            return teuk_modes[:, specific_modes]
         else:
-            temp = {}
-            for lmkn in specific_modes:
-                ell, emm, k, enn = lmkn
-                if emm >= 0:
-                    temp[lmkn] = teuk_modes[:, self.special_index_map_arr[ell, emm, k, enn]]
-                else:
-                    temp[lmkn] = (-1) ** ell * self.xp.conj(
-                        teuk_modes[:, self.special_index_map_arr[ell, emm, k, enn]]
-                    )
-
-            return temp
+            return teuk_modes
