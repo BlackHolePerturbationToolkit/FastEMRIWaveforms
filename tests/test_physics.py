@@ -81,8 +81,9 @@ class WaveformTest(FewBackendTest):
 
         M2 = M * 2
         mu2 = mu * 2
+        T2 = T * 2
         wave2 = self.waveform_generator(
-            M2, mu2, a, p0, e0, xI, theta, phi, T=T, dt=10.0
+            M2, mu2, a, p0, e0, xI, theta, phi, T=T2, dt=10.0
         )[:1000]
 
         # these two waveforms should be identical up to a rescailing of the time axis

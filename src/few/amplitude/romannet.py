@@ -188,7 +188,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         self.run_relu_arr = np.ones(self.num_layers, dtype=int)
         self.run_relu_arr[-1] = 0
 
-    def get_amplitudes(self, a, p, e, xI, *args, specific_modes=None, **kwargs):
+    def get_amplitudes(self, a, p, e, xI, *args, specific_modes=None, renormalize_amps=True, **kwargs):
         """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
 
         This function takes the inputs the trajectory in :math:`(p,e)` as arrays
@@ -204,6 +204,10 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
                 amplitude modules. It is not used.
             specific_modes (list, optional): List of tuples for (l, m, n) values
                 desired modes. Default is None.
+            renormalize_amps (bool, optional): If True, the amplitudes are
+                renormalized with respect to the flux interpolated by a
+                bicubic spline. This should slightly improve the accuracy
+                of the mode amplitudes. Default is True.
             **kwargs (dict, placeholder): Added to create flexibility when calling different
                 amplitude modules. It is not used.
 
@@ -287,20 +291,25 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         # reshape the teukolsky modes
         teuk_modes = teuk_modes.reshape(self.num_teuk_modes, input_len).T
 
-        # return array of all modes
-        if specific_modes is None:
-            return teuk_modes
-
-        # return dictionary of requested modes
-        else:
-            temp = {}
-            for lmkn in specific_modes:
-                ell, emm, k, enn = lmkn
-                if emm >= 0:
-                    temp[lmkn] = teuk_modes[:, self.special_index_map_arr[ell, emm, k, enn]]
-                else:
-                    temp[lmkn] = (-1) ** (ell + k) * self.xp.conj(
-                        teuk_modes[:, self.special_index_map_arr[ell, emm, k, enn]]
+        # norm with respect to the flux interpolated by the bicubic spline
+        if renormalize_amps:
+            amp_norm = self.amp_norm_spline.ev(y, e)
+            amp_for_norm = self.xp.sum(
+                self.xp.abs(
+                    self.xp.concatenate(
+                        [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])],
+                        axis=1,
                     )
+                )
+                ** 2,
+                axis=1,
+            ) ** (1 / 2)
 
-            return temp
+            # normalize
+            factor = amp_norm / amp_for_norm
+            teuk_modes = teuk_modes * factor[:, None]
+
+        if specific_modes is not None:
+            return teuk_modes[:, specific_modes]
+        else:
+            return teuk_modes
