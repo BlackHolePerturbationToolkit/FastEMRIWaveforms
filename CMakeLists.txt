@@ -90,6 +90,7 @@ endif()
 set(FEW_LAPACKE_EXTRA_LIBS "${DEFAULT_EXTRA_LIBS}"
     CACHE STRING "Extra libs to link to when\
 linking against LAPACKE.")
+set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_LAPACKE_EXTRA_LIBS)
 unset(GFORTRAN_AVAILABLE)
 unset(DEFAULT_EXTRA_LIBS)
 
@@ -180,20 +181,16 @@ endif()
 
 # ---- Print the list of options used for this build ----
 get_property(ALL_FEW_OPTION_NAMES GLOBAL PROPERTY FEW_OPTION_NAMES)
-if(ALL_FEW_OPTION_NAMES)
-  message(STATUS "FEW options used for this build:")
-  foreach(few_option_name ${ALL_FEW_OPTION_NAMES})
-    if(DEFINED CACHE{${few_option_name}})
-      get_property(FEW_OPTION_VALUE CACHE ${few_option_name} PROPERTY VALUE)
-      if(DEFINED FEW_OPTION_VALUE)
-        message(STATUS "  ${few_option_name}: ${FEW_OPTION_VALUE}")
-      else()
-        message(STATUS "  ${few_option_name}: not set")
-      endif()
-    else()
-      message(AUTHOR_WARNING "  ${few_option_name}: not defined in cache")
-    endif()
-  endforeach()
-else()
-  message(STATUS "No FEW options were set for this build.")
-endif()
+
+# We assume here that:
+#
+# 1. The list of options is not empty (at least one FEW option was registered)
+# 2. All registered options exist as cache variables (since they are all defined
+#    in this same file before being registered)
+# 3. All cache variables have values (CMake cache variables always have a value,
+#    even if it's an empty string)
+message(STATUS "FEW options used for this build:")
+foreach(few_option_name ${ALL_FEW_OPTION_NAMES})
+  get_property(FEW_OPTION_VALUE CACHE ${few_option_name} PROPERTY VALUE)
+  message(STATUS "  ${few_option_name}: ${FEW_OPTION_VALUE}")
+endforeach()
