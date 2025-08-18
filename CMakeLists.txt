@@ -14,6 +14,9 @@ find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 # ---- Import project-specific CMake functions ----
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+# ---- Define a list of FEW specific options ----
+set_property(GLOBAL PROPERTY FEW_OPTION_NAMES)
+
 # ---- Define project specific options ----
 
 # FEW_WITH_GPU controls the activation of both GPU and CPU backend compilations.
@@ -30,6 +33,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(FEW_WITH_GPU "AUTO" CACHE STRING "Whether to compile GPU backend")
 set_property(CACHE FEW_WITH_GPU PROPERTY STRINGS "AUTO" "ON" "OFF" "ONLY"
                                          "BARE")
+set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_WITH_GPU)
 
 # FEW_CUDA_ARCH will be passed as the CUDA_ARCHITECTURES property for the CUDA
 # backend if it is compiled. See the documentation of CUDA_ARCHITECTURES:
@@ -37,9 +41,11 @@ set_property(CACHE FEW_WITH_GPU PROPERTY STRINGS "AUTO" "ON" "OFF" "ONLY"
 set(FEW_CUDA_ARCH "native"
     CACHE STRING "CUDA Architecture targetted for FEW compilation (see doc of \
           CMAKE_CUDA_ARCHITECTURES).")
+set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_CUDA_ARCH)
 
 set(FEW_MARCH "native"
     CACHE STRING "Value of the -march compiler option if supported by compiler")
+set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_MARCH)
 
 # FEW_LAPACKE_DETECT_WITH sets the tool used to try to detect LAPACKE locally.
 # Possible values are:
@@ -54,6 +60,7 @@ set(FEW_MARCH "native"
 set(FEW_LAPACKE_DETECT_WITH "AUTO" CACHE STRING "Tool used to locate LAPACKE.")
 set_property(CACHE FEW_LAPACKE_DETECT_WITH PROPERTY STRINGS "AUTO" "CMAKE"
                                                     "PKGCONFIG" "DISABLE")
+set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_LAPACKE_DETECT_WITH)
 
 # FEW_LAPACKE_FETCH controls whether LAPACKE sources will be downloaded and
 # compiled with FEW backends. Possible values are:
@@ -66,6 +73,7 @@ set_property(CACHE FEW_LAPACKE_DETECT_WITH PROPERTY STRINGS "AUTO" "CMAKE"
 set(FEW_LAPACKE_FETCH "AUTO" CACHE STRING
                                    "Whether to download and compile LAPACK(E)")
 set_property(CACHE FEW_LAPACKE_FETCH PROPERTY STRINGS "AUTO" "ON" "OFF")
+set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_LAPACKE_FETCH)
 
 # FEW_LAPACKE_EXTRA_LIBS sets extra libraries that must be linked when linking
 # LAPACKE. For example, if importing the CPU backend fails and complains about
@@ -82,6 +90,7 @@ endif()
 set(FEW_LAPACKE_EXTRA_LIBS "${DEFAULT_EXTRA_LIBS}"
     CACHE STRING "Extra libs to link to when\
 linking against LAPACKE.")
+set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_LAPACKE_EXTRA_LIBS)
 unset(GFORTRAN_AVAILABLE)
 unset(DEFAULT_EXTRA_LIBS)
 
@@ -169,3 +178,19 @@ if(SKBUILD_STATE STREQUAL "sdist" OR SKBUILD_STATE STREQUAL "wheel")
     install(FILES CITATION.cff DESTINATION few)
   endif()
 endif()
+
+# ---- Print the list of options used for this build ----
+get_property(ALL_FEW_OPTION_NAMES GLOBAL PROPERTY FEW_OPTION_NAMES)
+
+# We assume here that:
+#
+# 1. The list of options is not empty (at least one FEW option was registered)
+# 2. All registered options exist as cache variables (since they are all defined
+#    in this same file before being registered)
+# 3. All cache variables have values (CMake cache variables always have a value,
+#    even if it's an empty string)
+message(STATUS "FEW options used for this build:")
+foreach(few_option_name ${ALL_FEW_OPTION_NAMES})
+  get_property(FEW_OPTION_VALUE CACHE ${few_option_name} PROPERTY VALUE)
+  message(STATUS "  ${few_option_name}: ${FEW_OPTION_VALUE}")
+endforeach()
