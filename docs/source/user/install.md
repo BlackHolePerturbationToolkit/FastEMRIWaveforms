@@ -44,7 +44,7 @@ To quickly find the right installation instructions for your needs, follow these
 |--------------------------|-----------------|--------|---------|--------------|------------------|
 | **Install via pip (user)**      | [Generic pip](#using-pip) | [Generic pip](#using-pip) | Not available | [Generic pip](#using-pip) | [CC-IN2P3 pip](#on-the-cc-in2p3-cluster-with-gpu-support) |
 | **Install via conda (user)**    | [Generic conda](#using-conda) | [Generic conda](#using-conda) | [Windows conda](#on-windows) | [Generic conda](#using-conda) | [CC-IN2P3 conda](#on-the-cc-in2p3-cluster-with-gpu-support) |
-| **From source (developper)**          | [Generic source](#from-source) | [Mac source](#on-mac-os-from-sources) | [Windows source](#on-windows) | [CNES source](#on-cnes-cluster-with-gpu-and-jupyter-hub-supports) | [CC-IN2P3 source](#on-the-cc-in2p3-cluster-with-gpu-support) |
+| **From source (developer)**          | [Generic source](#from-source) | [Mac source](#on-mac-os-from-sources) | [Windows source](#on-windows) | [CNES source](#on-cnes-cluster-with-gpu-and-jupyter-hub-supports) | [CC-IN2P3 source](#on-the-cc-in2p3-cluster-with-gpu-support) |
 | **GPU support**          | [See Generic](#generic-installation-instructions) | Not available | Not available | [CNES GPU](#on-cnes-cluster-with-gpu-and-jupyter-hub-supports) | [CC-IN2P3 GPU](#on-the-cc-in2p3-cluster-with-gpu-support) |
 | **Jupyter Hub**          | N/A | N/A | N/A | [CNES Jupyter](#make-the-conda-environment-available-as-a-jupyter-hub-kernel) | [CC-IN2P3 Jupyter](#enable-the-jupyter-hub-kernel) |
 
@@ -391,7 +391,7 @@ $ srun -p gpu_interactive -t 0-02:00 --mem 64G --gres=gpu:v100:1 --pty bash -i
 ```
 
 All installation methods described [above](#generic-installation-instructions)
-are available on the CC-IN2P3 cluster but need little adjustements.
+are available on the CC-IN2P3 cluster but need little adjustments.
 
 - For a **conda installation**, you can use the `anaconda` module available on the cluster.
   Load it and create a new environment named `few_env` with `fastemriwaveforms-cuda12x`:

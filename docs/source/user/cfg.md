@@ -42,7 +42,7 @@ The default log level is `logging.WARNING` but this can be modified through the 
 ### Backends management
 
 Backends are plugin-like entities which can be used to delegate heavy computations to specific hardware like GPUs.
-By default, FEW will try to use the best available backend for each class that the user instanciates. It is however
+By default, FEW will try to use the best available backend for each class that the user instantiates. It is however
 possible to enforce or prevent the use of specific backends through the `enabled_backends` options.
 
 The list of available backends is:
@@ -51,7 +51,7 @@ The list of available backends is:
 - `cuda11x`: Use a NVIDIA GPU with CUDA 11.x drivers
 - `cuda12x`: Use a NVIDIA GPU with CUDA 12.x drivers
 
-By default, all these backends can be used provided they are installed and have required sotware and hardware available.
+By default, all these backends can be used provided they are installed and have required software and hardware available.
 A class that supports only CPU will only attempt to use he `cpu` backend, whilst a class with hybrid GPU/CPU support will
 (usually) first attempt to use the `cuda12x` backend, in case of failure it will attempt using the `cuda11x` and finally
 fallback to the `cpu` one.
@@ -108,7 +108,7 @@ through the `file_registry_path` option.
 By default, the first time a file is requested to the `FileManager`, its integrity is checked and cached so that future request to that
 file are fast.
 
-This behaviour can be tuned to disable entirely integrity checks, or to perform these checks each and everytime a given file is requested.
+This behaviour can be tuned to disable entirely integrity checks, or to perform these checks each and every time a given file is requested.
 
 The `file_integrity_check` option can thus take on the following values:
 
@@ -131,7 +131,7 @@ General configuration options:
 |---|---|---|---|---|---|
 | `log_level` | `log-level` | `FEW_LOG_LEVEL` | `--log-level` | `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |  |
 | `log_format` | `log-format` | `FEW_LOG_FORMAT` | `--log-format` | Any format string supported by [`logging.Formatter`](https://docs.python.org/3/library/logging.html#logging.Formatter) |  |
-| `enabled_backends` | `enbaled-backends` | `FEW_ENABLED_BACKENDS` | `--enable-backend` | `cpu`, `cuda11x`, `cuda12x` | ";"-separated list of values. The CLI parameter can be used multiple time for each enabled backend. |
+| `enabled_backends` | `enabled-backends` | `FEW_ENABLED_BACKENDS` | `--enable-backend` | `cpu`, `cuda11x`, `cuda12x` | ";"-separated list of values. The CLI parameter can be used multiple time for each enabled backend. |
 | `file_registry_path` | `file-registry` | `FEW_FILE_REGISTRY` | `--file-registry` | Path to a `registry.yml` file |  |
 | `file_storage_path` | `file-storage-dir` | `FEW_FILE_STORAGE_DIR` | `--storage-dir` | Absolute path, or relative to current working directory | Directory must already exist |
 | `file_download_path` | `file-download-dir` | `FEW_FILE_DOWNLOAD_DIR` | `--download-dir` | Absolute path, or relative to the storage directory |  |
@@ -202,7 +202,7 @@ immediately by calling the `finalize()` method like:
     few.get_config_setter().set_log_level("info").finalize()
 ```
 
-But if `finalize()` is not explicitely called, the options set will still be taken into account
+But if `finalize()` is not explicitly called, the options set will still be taken into account
 automatically at a latter stage:
 
 ```{eval-rst}
