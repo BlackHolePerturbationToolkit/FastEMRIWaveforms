@@ -170,8 +170,8 @@ JINJA_ENV_PER_DOC = {
     "readme": {
         "substitutions": {
             "(PAPERS.bib)": "(PAPERS.md)",
-            "https://fastemriwaveforms.readthedocs.io/en/latest/user/install.html": "user/install.md",
-            " Please see the [documentation](https://fastemriwaveforms.readthedocs.io/en/latest) for further information on these modules.": "",
+            "https://fastemriwaveforms.readthedocs.io/en/stable/user/install.html": "user/install.md",
+            " Please see the [documentation](https://fastemriwaveforms.readthedocs.io/en/stable) for further information on these modules.": "",
         }
     },
     "PAPERS": {
