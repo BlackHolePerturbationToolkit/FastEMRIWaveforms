@@ -173,6 +173,7 @@ jobs:
       - name: Set documentation tag in Readme
         run: |
           sed -i'' -e 's|en/stable|en/${{ needs.select.outputs.doc-tag }}|g' README.md
+          sed -i'' -e 's|en/stable|en/${{ needs.select.outputs.doc-tag }}|g' pyproject.toml
       # ===================================
       # = III. Prepare build environment  =
       # ===================================
