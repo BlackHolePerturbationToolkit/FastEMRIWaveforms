@@ -86,7 +86,7 @@ optional-dependencies.testing = [
   "matplotlib",
 ]
 
-urls.Documentation = "https://bhptoolkit.org/FastEMRIWaveforms/html/index.html"
+urls.Documentation = "https://fastemriwaveforms.readthedocs.io/en/stable"
 urls.Download = "https://pypi.org/project/fastemriwaveforms/#files"
 urls.Homepage = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms"
 urls.Source = "https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms"
