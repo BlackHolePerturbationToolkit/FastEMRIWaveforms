@@ -1,11 +1,11 @@
 # few: FastEMRIWaveforms
 
-[![Documentation Status](https://app.readthedocs.org/projects/fastemriwaveforms/badge/?version=latest)](https://fastemriwaveforms.readthedocs.io/en/latest/)
+[![Documentation Status](https://app.readthedocs.org/projects/fastemriwaveforms/badge/?version=stable)](https://fastemriwaveforms.readthedocs.io/en/stable/)
 [![DOI](https://zenodo.org/badge/223486766.svg)](https://doi.org/10.5281/zenodo.3969004)
 
 This package contains a highly modular framework for the rapid generation of accurate extreme-mass-ratio inspiral (EMRI) waveforms. FEW combines a variety of separately accessible modules to construct EMRI waveform models for both CPUs and GPUs.
 
-* Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the [documentation](https://fastemriwaveforms.readthedocs.io/en/latest) for further information on these modules.
+* Generally, the modules fall into four categories: trajectory, amplitudes, summation, and utilities. Please see the [documentation](https://fastemriwaveforms.readthedocs.io/en/stable) for further information on these modules.
 * The code can be found on Github [here](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms).
 * The data necessary for various modules in this package will automatically download the first time it is needed. If you would like to view the data, it can be found on [Zenodo](https://zenodo.org/records/3981654).
 * The current and all past code release zip files can also be found on Zenodo [here](https://zenodo.org/records/3969004).
@@ -14,7 +14,7 @@ This package contains a highly modular framework for the rapid generation of acc
 
 ## Getting started
 
-Detailed installation instructions can be found in the [documentation](https://fastemriwaveforms.readthedocs.io/en/latest/user/install.html).
+Detailed installation instructions can be found in the [documentation](https://fastemriwaveforms.readthedocs.io/en/stable/user/install.html).
 Below is a quick set of instructions to install the FastEMRIWaveform package on CPUs and GPUs.
 
 To install the latest version of `fastemriwaveforms` using `pip`, simply run:
@@ -139,7 +139,7 @@ cd FastEMRIWaveforms
 
 Now create an environment (these instructions work for all platforms but some
 adjustements can be needed, refer to the
-[detailed installation documentation](https://fastemriwaveforms.readthedocs.io/en/latest/user/install.html) for more information):
+[detailed installation documentation](https://fastemriwaveforms.readthedocs.io/en/stable/user/install.html) for more information):
 
 ```
 conda create -n few_env -y -c conda-forge --override-channels |
@@ -186,7 +186,7 @@ pip install .
 ```
 
 If the installation does not work, first check the [detailed installation
-documentation](https://fastemriwaveforms.readthedocs.io/en/latest/user/install.html). If
+documentation](https://fastemriwaveforms.readthedocs.io/en/stable/user/install.html). If
 it still does not work, please open an issue on the
 [GitHub repository](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/issues)
 or contact the developers through other means.

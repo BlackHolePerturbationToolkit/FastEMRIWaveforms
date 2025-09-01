@@ -10,12 +10,14 @@ jobs:
       build: ${{ steps.select.outputs.build }}
       publish: ${{ steps.select.outputs.publish }}
       core-suffix: ${{ steps.select.outputs.core-suffix }}
+      doc-tag: ${{ steps.select.outputs.doc-tag }}
     steps:
       - name: initialize
         run: |
           echo "FEWWHL_BUILD=false" >> "$GITHUB_ENV"
           echo "FEWWHL_CORE_SUFFIX=false" >> "$GITHUB_ENV"
           echo "FEWWHL_PUBLISH=false" >> "$GITHUB_ENV"
+          echo "FEWWHL_DOC_TAG=stable" >> "$GITHUB_ENV"
       - name: build on commit message
         if: contains(github.event.head_commit.message, '[ci:build-wheels]')
         run: |
@@ -25,6 +27,7 @@ jobs:
         run: |
           echo "FEWWHL_BUILD=true" >> "$GITHUB_ENV"
           echo "FEWWHL_PUBLISH=true" >> "$GITHUB_ENV"
+          echo "FEWWHL_DOC_TAG=${GITHUB_REF#refs/tags/}" >> "$GITHUB_ENV"
       - name: add core-suffix on non-official repo
         if: github.event.repository.full_name != 'BlackHolePerturbationToolkit/FastEMRIWaveforms'
         run: |
@@ -35,6 +38,7 @@ jobs:
           echo "build=$FEWWHL_BUILD" >> $GITHUB_OUTPUT
           echo "publish=$FEWWHL_PUBLISH" >> $GITHUB_OUTPUT
           echo "core-suffix=$FEWWHL_CORE_SUFFIX" >> $GITHUB_OUTPUT
+          echo "doc-tag=$FEWWHL_DOC_TAG" >> $GITHUB_OUTPUT
   version:
     runs-on: ubuntu-latest
     outputs:
@@ -165,6 +169,11 @@ jobs:
         if: matrix.kind != 'core'
         run: |
           sed -i'' -e '/@SKIP_PLUGIN@/d' pyproject.toml
+      # Set documentation tag in Readme
+      - name: Set documentation tag in Readme
+        run: |
+          sed -i'' -e 's|en/stable|en/${{ needs.select.outputs.doc-tag }}|g' README.md
+          sed -i'' -e 's|en/stable|en/${{ needs.select.outputs.doc-tag }}|g' pyproject.toml
       # ===================================
       # = III. Prepare build environment  =
       # ===================================
