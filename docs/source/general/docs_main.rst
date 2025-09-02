@@ -13,7 +13,7 @@ where :math:`h_+ + ih_x` is the two polarizations of the gravitational wave; :ma
 
 .. math:: A_{lmkn} = -2Z_{lmkn}(a, p, e, x_I)/\omega_{mkn}^2,
 
-where :math:`Z_{lmkn}(a, p, e, x_I)` is the teukolsky amplitudes associated with a geodesic with spin, :math:`a`; semilatus rectum, :math:`p`p; eccentricity, :math:`e`; and inclination, :math:`x_I`. :math:`\omega_{mkn}` is the summation of fundamental frequencies of the geodesic with integer weights equivalent to the mode indices. The angular function, :math:`V_{lmkn}` is given by,
+where :math:`Z_{lmkn}(a, p, e, x_I)` is the Teukolsky amplitudes associated with a geodesic with spin, :math:`a`; semilatus rectum, :math:`p`; eccentricity, :math:`e`; and inclination, :math:`x_I`. :math:`\omega_{mkn}` is the summation of fundamental frequencies of the geodesic with integer weights equivalent to the mode indices. The angular function, :math:`V_{lmkn}` is given by,
 
 .. math:: V_{lmkn}(\theta, \phi) = (s=-2)S_{lmkn}(\theta)e^{im\phi},
 
