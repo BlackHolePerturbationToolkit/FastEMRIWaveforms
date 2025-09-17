@@ -5,7 +5,7 @@ import sys
 
 import numpy as np
 
-from .baseclasses import BackendLike, ParallelModuleBase
+from .baseclasses import BackendLike, FEWParallelModule
 from .constants import MTSUN_SI, PI
 from .geodesic import get_fundamental_frequencies
 from .globals import get_logger
@@ -71,7 +71,7 @@ def SPAFunc(x, th=7.0):
 # fmt: on
 
 
-class ModeSelector(ParallelModuleBase):
+class ModeSelector(FEWParallelModule):
     r"""Filter teukolsky amplitudes based on power contribution.
 
     This module takes teukolsky modes, combines them with their associated ylms,
@@ -120,7 +120,7 @@ class ModeSelector(ParallelModuleBase):
             modes to keep. **Note**: if the sensitivity function is provided,
             and GPUs are used, then this function must accept CuPy arrays as input.
         **kwargs: Optional keyword arguments for the base class:
-            :class:`few.utils.baseclasses.ParallelModuleBase`.
+            :class:`few.utils.baseclasses.FEWParallelModule`.
 
     """
 
@@ -137,7 +137,7 @@ class ModeSelector(ParallelModuleBase):
         force_backend: BackendLike = None,
         **kwargs,
     ):
-        ParallelModuleBase.__init__(self, force_backend=force_backend, **kwargs)
+        FEWParallelModule.__init__(self, force_backend=force_backend, **kwargs)
 
         assert self.xp.all(m_arr >= 0), "ModeSelector only supports m >= 0."
 
@@ -501,7 +501,7 @@ class ModeSelector(ParallelModuleBase):
         return out1 + out2
 
 
-class NeuralModeSelector(ParallelModuleBase):
+class NeuralModeSelector(FEWParallelModule):
     """Filter teukolsky amplitudes based on power contribution.
 
     This module uses a combination of a pre-computed mask and a feed-forward neural
@@ -521,7 +521,7 @@ class NeuralModeSelector(ParallelModuleBase):
             minimising missed modes but slowing down the waveform computation. Defaults to 0.5 (the optimal value for accuracy).
 
         **kwargs (dict, optional): Keyword arguments for the base classes:
-            :class:`few.utils.baseclasses.ParallelModuleBase`.
+            :class:`few.utils.baseclasses.FEWParallelModule`.
             Default is {}.
     """
 
@@ -544,7 +544,7 @@ class NeuralModeSelector(ParallelModuleBase):
                 f"mode_selector location path ({mode_selector_location}) does not point to an existing directory."
             )
 
-        ParallelModuleBase.__init__(self, force_backend=force_backend)
+        FEWParallelModule.__init__(self, force_backend=force_backend)
 
         # we set the pytorch device here for use with the neural network
         if self.backend.uses_cuda:

@@ -15,7 +15,7 @@ from scipy.interpolate import RectBivariateSpline
 from ..utils.baseclasses import (
     BackendLike,
     KerrEccentricEquatorial,
-    ParallelModuleBase,
+    FEWParallelModule,
     SchwarzschildEccentric,
     KerrGeneric,
     xp_ndarray,
@@ -26,7 +26,7 @@ from ..utils.mappings.kerrecceq import kerrecceq_forward_map
 from ..utils.mappings.schwarzecc import schwarzecc_p_to_y
 from .base import AmplitudeBase
 
-class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
+class AmpInterp2D(AmplitudeBase, FEWParallelModule):
     r"""Calculate Teukolsky amplitudes with a bicubic spline interpolation.
 
     This class is initialised by providing mode index arrays and a corresponding spline coefficients array.
@@ -48,7 +48,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         n_arr: Array of :math:`n` mode indices.
         **kwargs: Optional keyword arguments for the base class:
             :class:`few.utils.baseclasses.AmplitudeBase`,
-            :class:`few.utils.baseclasses.ParallelModuleBase`.
+            :class:`few.utils.baseclasses.FEWParallelModule`.
     """
 
     l_arr: xp_ndarray
@@ -84,7 +84,7 @@ class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
         force_backend: BackendLike = None,
     ):
         AmplitudeBase.__init__(self)
-        ParallelModuleBase.__init__(self, force_backend=force_backend)
+        FEWParallelModule.__init__(self, force_backend=force_backend)
 
         self.l_arr = l_arr
         self.m_arr = m_arr

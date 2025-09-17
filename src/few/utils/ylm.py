@@ -9,7 +9,7 @@ import numpy as np
 from numba import njit
 
 # base classes
-from ..utils.baseclasses import ParallelModuleBase
+from ..utils.baseclasses import FEWParallelModule
 
 I = 1j
 
@@ -275,7 +275,7 @@ def _ylm_kernel(
     return out
 
 
-class GetYlms(ParallelModuleBase):
+class GetYlms(FEWParallelModule):
     r"""(-2) Spin-weighted Spherical Harmonics
 
     The class generates (-2) spin-weighted spherical harmonics,
@@ -287,11 +287,11 @@ class GetYlms(ParallelModuleBase):
             half as modes with :math:`m<0` for array inputs of :math:`l,m`. **Warning**: It will also duplicate
             the :math:`m=0` modes. Default is False.
         **kwargs: Optional keyword arguments for the base class:
-            :class:`few.utils.baseclasses.ParallelModuleBase`.
+            :class:`few.utils.baseclasses.FEWParallelModule`.
     """
 
     def __init__(self, include_minus_m: bool = False, **kwargs: Optional[dict]):
-        ParallelModuleBase.__init__(self, **kwargs)
+        FEWParallelModule.__init__(self, **kwargs)
         self.include_minus_m = include_minus_m
 
     @classmethod

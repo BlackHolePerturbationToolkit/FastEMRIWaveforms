@@ -10,10 +10,10 @@ import unittest
 
 import wrapt
 
-from few.cutils import Backend
+from few.cutils import FEWBackend
 from few.utils import exceptions
-from few.utils.baseclasses import ParallelModuleBase
-from few.utils.globals import get_config, get_first_backend, get_logger
+from few.utils.baseclasses import FEWParallelModule
+from few.utils.globals import get_config, get_logger
 
 
 class FewTestDecorator:
@@ -172,14 +172,16 @@ class FewTest(unittest.TestCase, abc.ABC):
         super().__init_subclass__()
 
 
+# TODO: fix this!!!!!
+
 class FewBackendTest(FewTest):
     """Base class for FEW tests with backend"""
 
-    backend: Backend
+    backend: FEWBackend
 
     @classmethod
     @abc.abstractmethod
-    def parallel_class(cls) -> t.Type[ParallelModuleBase]:
+    def parallel_class(cls) -> t.Type[FEWParallelModule]:
         """Class to be used as reference for the test backend selection"""
         raise NotImplementedError
 

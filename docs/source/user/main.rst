@@ -99,7 +99,7 @@ Kerr Eccentric Equatorial
 GPU Module Base Class
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: few.utils.baseclasses.ParallelModuleBase
+.. autoclass:: few.utils.baseclasses.FEWParallelModule
     :members:
     :show-inheritance:
     :inherited-members:

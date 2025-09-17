@@ -3,7 +3,7 @@ from typing import Generic, Optional, TypeVar, Union
 import numpy as np
 from tqdm import tqdm
 
-from ..utils.baseclasses import BackendLike, ParallelModuleBase, Pn5AAK
+from ..utils.baseclasses import BackendLike, FEWParallelModule, Pn5AAK
 from ..utils.citations import REFERENCE
 from ..utils.constants import MRSUN_SI, Gpc
 from ..utils.globals import get_logger
@@ -12,24 +12,24 @@ from ..utils.mappings.schwarzecc import (
 )
 from ..utils.ylm import GetYlms
 
-InspiralModule = TypeVar("InspiralModule", bound=ParallelModuleBase)
+InspiralModule = TypeVar("InspiralModule", bound=FEWParallelModule)
 """Used for type hinting the Inspiral generator classes."""
 
-AmplitudeModule = TypeVar("AmplitudeModule", bound=ParallelModuleBase)
+AmplitudeModule = TypeVar("AmplitudeModule", bound=FEWParallelModule)
 """Used for type hinting the Amplitude generator classes."""
 
-SumModule = TypeVar("SumModule", bound=ParallelModuleBase)
+SumModule = TypeVar("SumModule", bound=FEWParallelModule)
 """Used for type hinting the Sum classes."""
 
-ModeSelectorModule = TypeVar("ModeSelectorModule", bound=ParallelModuleBase)
+ModeSelectorModule = TypeVar("ModeSelectorModule", bound=FEWParallelModule)
 """Used for type hinting the Mode selector classes."""
 
-WaveformModule = TypeVar("WaveformModule", bound=ParallelModuleBase)
+WaveformModule = TypeVar("WaveformModule", bound=FEWParallelModule)
 """Used for type hinting Waveform Generator classes"""
 
 
 class SphericalHarmonicWaveformBase(
-    ParallelModuleBase,
+    FEWParallelModule,
     Generic[InspiralModule, AmplitudeModule, SumModule, ModeSelectorModule],
 ):
     """Base class for waveforms built with amplitudes expressed in a spherical harmonic basis.
@@ -94,7 +94,7 @@ class SphericalHarmonicWaveformBase(
         normalize_amps: bool = False,
         force_backend: BackendLike = None,
     ):
-        ParallelModuleBase.__init__(self, force_backend=force_backend)
+        FEWParallelModule.__init__(self, force_backend=force_backend)
 
         self.normalize_amps = normalize_amps
         self.inspiral_kwargs = {} if inspiral_kwargs is None else inspiral_kwargs
@@ -436,7 +436,7 @@ class SphericalHarmonicWaveformBase(
         return waveform / dist_dimensionless
 
 
-class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumModule]):
+class AAKWaveformBase(Pn5AAK, FEWParallelModule, Generic[InspiralModule, SumModule]):
     r"""Waveform generation class for AAK with arbitrary trajectory.
 
     This class generates waveforms based on the Augmented Analytic Kludge
@@ -510,7 +510,7 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumMod
         force_backend: BackendLike = None,
     ):
         Pn5AAK.__init__(self)
-        ParallelModuleBase.__init__(self, force_backend=force_backend)
+        FEWParallelModule.__init__(self, force_backend=force_backend)
 
         self.inspiral_kwargs = {} if inspiral_kwargs is None else inspiral_kwargs
         self.inspiral_generator = inspiral_module(

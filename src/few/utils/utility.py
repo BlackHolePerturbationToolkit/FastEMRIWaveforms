@@ -7,10 +7,13 @@ import numpy as np
 from numba import njit
 from scipy.optimize import brentq
 
-from few.utils.exceptions import TrajectoryOffGridException
-from few.utils.globals import get_first_backend, get_logger
+from .exceptions import TrajectoryOffGridException
+from .globals import get_logger
 
 from .constants import PI, YRSID_SI
+
+# TODO: need to make sure this works
+from gpubackendtools import get_first_backend
 
 
 def get_overlap(
@@ -537,6 +540,8 @@ def get_m2_at_t(
 #     "1.5.1": 3981654,
 # }
 
+
+# TODO: deal with this and make sure it is in gpubackendtools and import what is needed. 
 
 def wrapper(*args, **kwargs):
     """Function to convert array and C/C++ class arguments to ptrs

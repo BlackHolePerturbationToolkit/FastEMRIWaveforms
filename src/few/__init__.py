@@ -29,14 +29,21 @@ except (ModuleNotFoundError, ImportError):
     _is_editable = False
 
 from . import amplitude, cutils, files, summation, trajectory, utils, waveform
-from .utils.globals import (
-    get_backend,
-    get_config,
-    get_config_setter,
-    get_file_manager,
-    get_logger,
-    has_backend,
-)
+
+
+from gpubackendtools.utils.globals import Globals
+
+
+from .cutils import FEWCpuBackend, FEWCuda11xBackend, FEWCuda12xBackend
+
+add_backends = {
+    "few_cpu": FEWCpuBackend,
+    "few_cuda11x": FEWCuda11xBackend,
+    "few_cuda12x": FEWCuda12xBackend,
+}
+
+Globals().backends_manager.add_backends(add_backends)
+
 
 __all__ = [
     "__version__",
