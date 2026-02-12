@@ -163,8 +163,9 @@ def _PN_E(q, p, e, Y):
     )
     rhs_numer = kappa * rho + 2.0 * epsilon * sigma
     rhs_denom = rho * rho + 4.0 * eta * sigma
-
-    E_square = (rhs_numer - 2.0 * sqrt(rhs_sqrt)) / rhs_denom
+    # Determine if orbit is prograde (1) or retrograde (-1)
+    grade = - 1 if (Y < 0) ^ (q < 0)   else 1 # Retrograde if (Y<0) xor (q<0), else prograde
+    E_square = (rhs_numer -grade* 2.0 * sqrt(rhs_sqrt)) / rhs_denom
     return sqrt(E_square)
 
 

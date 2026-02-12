@@ -199,7 +199,7 @@ The list of action to take to add a new configuration option is thus:
 The recommended way to print messages in FEW is to use the package [logger](logging.Logger).
 [pre-commit](./ide.md#pre-commit-apply-common-guidelines-to-your-code) will, by default, complain about the use of [`print`](print) statements which should be replaced by calls to the logger methods:
 
-- `few_logger.debug(message)`: should contain detailed information about the innerworking of a piece of code to guide a user or developper during debugging phases
+- `few_logger.debug(message)`: should contain detailed information about the inner working of a piece of code to guide a user or developer during debugging phases
 - `few_logger.info(message)`: should replace most print statements directed to the user
 - `few_logger.warning(message)`: should warn the user about unexpected states which are recoverable
 - `few_logger.error(message)`: should warn the user about unexpected state which are unrecoverable
