@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from .baseclasses import BackendLike, ParallelModuleBase
+from .baseclasses import BackendLike, FEWBackendConsumer
 from .globals import get_logger
 
 from .ylm import GetYlms
@@ -13,7 +13,7 @@ from typing import Optional, Union
 def get_mode_frequencies(f_phi, f_theta, f_r, m, k, n):
     return f_phi[:,None] * m[None,:] + f_theta[:,None] * k[None,:] + f_r[:,None] * n[None,:]
 
-class ModeSelector(ParallelModuleBase):
+class ModeSelector(FEWBackendConsumer):
     r"""Filter teukolsky amplitudes based on power contribution.
 
     This module generates teukolsky modes and their associated ylms given an input
@@ -72,7 +72,7 @@ class ModeSelector(ParallelModuleBase):
             This is used to efficiently select the modes from the amplitude module output.
             By default this is obtained from the supplied amplitude module.
         **kwargs: Optional keyword arguments for the base class:
-            :class:`few.utils.baseclasses.ParallelModuleBase`.
+            :class:`few.utils.baseclasses.FEWBackendConsumer`.
 
     """
 
@@ -88,7 +88,7 @@ class ModeSelector(ParallelModuleBase):
         force_backend: BackendLike = None,
         **kwargs,
     ):
-        ParallelModuleBase.__init__(self, force_backend=force_backend, **kwargs)
+        FEWBackendConsumer.__init__(self, force_backend=force_backend, **kwargs)
         
         self.amplitude_generator = amplitude_generator
 

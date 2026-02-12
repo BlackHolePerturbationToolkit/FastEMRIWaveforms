@@ -5,11 +5,11 @@ import numpy as np
 from few.utils.globals import get_logger
 
 # Python imports
-from ..utils.baseclasses import BackendLike, FEWParallelModule
+from ..utils.baseclasses import BackendLike, FEWBackendConsumer
 from .base import SummationBase
 
 
-class CubicSplineInterpolant(FEWParallelModule):
+class CubicSplineInterpolant(FEWBackendConsumer):
     """GPU-accelerated Multiple Cubic Splines
 
     This class produces multiple cubic splines on a GPU. It has a CPU option
@@ -29,11 +29,11 @@ class CubicSplineInterpolant(FEWParallelModule):
         t: t values as input for the spline. If 2D, must have shape (ninterps, length).
         y_all: y values for the spline; shape is (length,) or (ninterps, length).
         **kwargs: Optional keyword arguments for the base class:
-            :class:`few.utils.baseclasses.FEWParallelModule`.
+            :class:`few.utils.baseclasses.FEWBackendConsumer`.
     """
 
     def __init__(self, t: np.ndarray, y_all: np.ndarray, **kwargs):
-        FEWParallelModule.__init__(self, **kwargs)
+        FEWBackendConsumer.__init__(self, **kwargs)
 
         y_all = self.xp.atleast_2d(y_all)
 

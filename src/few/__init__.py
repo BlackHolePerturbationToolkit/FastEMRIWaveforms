@@ -31,7 +31,7 @@ except (ModuleNotFoundError, ImportError):
 from . import amplitude, cutils, files, summation, trajectory, utils, waveform
 
 
-from gpubackendtools.utils.globals import Globals
+from gpubackendtools.globals import Globals
 
 
 from .cutils import FEWCpuBackend, FEWCuda11xBackend, FEWCuda12xBackend

@@ -1,8 +1,8 @@
-from ..utils.baseclasses import BackendLike, FEWParallelModule
+from ..utils.baseclasses import BackendLike, FEWBackendConsumer
 from ..utils.constants import YRSID_SI
 
 
-class SummationBase(FEWParallelModule):
+class SummationBase(FEWBackendConsumer):
     """Base class used for summation modules.
 
     This class provides a common flexible interface to various summation
@@ -27,7 +27,7 @@ class SummationBase(FEWParallelModule):
         odd_len: bool = False,
         force_backend: BackendLike = None,
     ):
-        FEWParallelModule.__init__(self, force_backend=force_backend)
+        FEWBackendConsumer.__init__(self, force_backend=force_backend)
 
         self.pad_output = pad_output
         self.odd_len = odd_len

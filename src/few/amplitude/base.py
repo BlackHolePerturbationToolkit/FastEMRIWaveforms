@@ -2,10 +2,10 @@ from typing import Optional, Union
 
 import numpy as np
 
-from ..utils.baseclasses import ParallelModuleBase
+from ..utils.baseclasses import FEWBackendConsumer
 
 
-class AmplitudeBase(ParallelModuleBase):
+class AmplitudeBase(FEWBackendConsumer):
     """Base class used for amplitude modules.
 
     This class provides a common flexible interface to various amplitude

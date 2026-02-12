@@ -12,7 +12,7 @@ import wrapt
 
 from few.cutils import FEWBackend
 from few.utils import exceptions
-from few.utils.baseclasses import FEWParallelModule
+from few.utils.baseclasses import FEWBackendConsumer
 from few.utils.globals import get_config, get_logger
 
 
@@ -181,7 +181,7 @@ class FewBackendTest(FewTest):
 
     @classmethod
     @abc.abstractmethod
-    def parallel_class(cls) -> t.Type[FEWParallelModule]:
+    def parallel_class(cls) -> t.Type[FEWBackendConsumer]:
         """Class to be used as reference for the test backend selection"""
         raise NotImplementedError
 

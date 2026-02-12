@@ -24,17 +24,17 @@ xp_ndarray = TypeVar("xp_ndarray")
 BackendLike = Union[str, FEWBackend, None]
 """Type hint to declare a backend in constructor."""
 
-
+# TODO: will change this to BackendConsumer in GBT 
 from gpubackendtools.parallelbase import ParallelModuleBase
 
 
-class FEWParallelModule(ParallelModuleBase):
+class FEWBackendConsumer(ParallelModuleBase):
     def __init__(self, force_backend=None):
         force_backend_in = ('few', force_backend) if isinstance(force_backend, str) else force_backend
         super().__init__(force_backend=force_backend_in)
 
 
-class SphericalHarmonic(FEWParallelModule):
+class SphericalHarmonic(FEWBackendConsumer):
     r"""Base class for waveforms constructed in a spherical harmonic basis.
 
     This class creates shared traits between different implementations of the
@@ -115,7 +115,7 @@ class SphericalHarmonic(FEWParallelModule):
     def __init__(
         self, lmax: int = 10, kmax: int = 0, nmax: int = 0, force_backend: BackendLike = None
     ):
-        FEWParallelModule.__init__(self, force_backend=force_backend)
+        FEWBackendConsumer.__init__(self, force_backend=force_backend)
 
         self.lmax = lmax
         self.kmax = kmax
