@@ -22,6 +22,8 @@ from ..utils.constants import MRSUN_SI, Gpc
 from ..utils.mappings.pn import xI_to_Y
 from ..utils.modeselector import ModeSelector
 from .base import AAKWaveformBase, SphericalHarmonicWaveformBase, WaveformModule
+from ..utils.utility import get_viewing_angles, get_polarization_angle
+
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -140,60 +142,10 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
     def stock_waveform_options(self) -> list[str]:
         return list(self._stock_waveform_definitions.keys())
 
-    def _get_viewing_angles(self, qS, phiS, qK, phiK):
-        """Transform from the detector frame to the source frame"""
-
-        cqS = np.cos(qS)
-        sqS = np.sin(qS)
-
-        cphiS = np.cos(phiS)
-        sphiS = np.sin(phiS)
-
-        cqK = np.cos(qK)
-        sqK = np.sin(qK)
-
-        cphiK = np.cos(phiK)
-        sphiK = np.sin(phiK)
-
-        # sky location vector
-        R = np.array([sqS * cphiS, sqS * sphiS, cqS])
-
-        # spin vector
-        S = np.array([sqK * cphiK, sqK * sphiK, cqK])
-
-        # get viewing angles
-        phi = -np.pi / 2.0  # by definition of source frame
-
-        theta = np.arccos(-np.dot(R, S))  # normalized vector
-
-        return (theta, phi)
-
     def _to_SSB_frame(self, hp, hc, qS, phiS, qK, phiK):
         """Transform to SSB frame"""
 
-        cqS = np.cos(qS)
-        sqS = np.sin(qS)
-
-        # cphiS = np.cos(phiS)
-        # sphiS = np.sin(phiS)
-
-        cqK = np.cos(qK)
-        sqK = np.sin(qK)
-
-        # cphiK = np.cos(phiK)
-        # sphiK = np.sin(phiK)
-
-        # get polarization angle
-
-        up_ldc = cqS * sqK * np.cos(phiS - phiK) - cqK * sqS
-        dw_ldc = sqK * np.sin(phiS - phiK)
-
-        if dw_ldc != 0.0:
-            psi_ldc = -np.arctan2(up_ldc, dw_ldc)
-
-        else:
-            psi_ldc = 0.5 * np.pi
-
+        psi_ldc = get_polarization_angle(qS, phiS, qK, phiK)
         c2psi_ldc = np.cos(2.0 * psi_ldc)
         s2psi_ldc = np.sin(2.0 * psi_ldc)
 
@@ -312,7 +264,7 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
             (
                 theta_source,
                 phi_source,
-            ) = self._get_viewing_angles(qS, phiS, qK, phiK)
+            ) = get_viewing_angles(qS, phiS, qK, phiK)
 
             args += (theta_source, phi_source)
 

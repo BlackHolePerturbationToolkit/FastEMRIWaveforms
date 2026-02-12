@@ -6,7 +6,7 @@ import typing
 from ..utils.exceptions import FewException
 
 from gpubackendtools.gpubackendtools import BackendMethods, CpuBackend, Cuda11xBackend, Cuda12xBackend
-from gpubackendtools.utils.exceptions import *
+from gpubackendtools.exceptions import *
 
 @dataclasses.dataclass
 class FewBackendMethods(BackendMethods):

@@ -1,9 +1,10 @@
 from typing import Generic, Optional, TypeVar, Union
+import dataclasses
 
 import numpy as np
 from tqdm import tqdm
 
-from ..utils.baseclasses import BackendLike, FEWBackendConsumer, Pn5AAK
+from ..utils.baseclasses import BackendLike, FewBackendConsumer, Pn5AAK
 from ..utils.citations import REFERENCE
 from ..utils.constants import MRSUN_SI, Gpc
 from ..utils.globals import get_logger
@@ -12,24 +13,37 @@ from ..utils.mappings.schwarzecc import (
 )
 from ..utils.ylm import GetYlms
 
-InspiralModule = TypeVar("InspiralModule", bound=FEWBackendConsumer)
+InspiralModule = TypeVar("InspiralModule", bound=FewBackendConsumer)
 """Used for type hinting the Inspiral generator classes."""
 
-AmplitudeModule = TypeVar("AmplitudeModule", bound=FEWBackendConsumer)
+AmplitudeModule = TypeVar("AmplitudeModule", bound=FewBackendConsumer)
 """Used for type hinting the Amplitude generator classes."""
 
-SumModule = TypeVar("SumModule", bound=FEWBackendConsumer)
+SumModule = TypeVar("SumModule", bound=FewBackendConsumer)
 """Used for type hinting the Sum classes."""
 
-ModeSelectorModule = TypeVar("ModeSelectorModule", bound=FEWBackendConsumer)
+ModeSelectorModule = TypeVar("ModeSelectorModule", bound=FewBackendConsumer)
 """Used for type hinting the Mode selector classes."""
 
-WaveformModule = TypeVar("WaveformModule", bound=FEWBackendConsumer)
+WaveformModule = TypeVar("WaveformModule", bound=FewBackendConsumer)
 """Used for type hinting Waveform Generator classes"""
+
+@dataclasses.dataclass
+class SparseInfoHolder:
+    t_arr: np.ndarray
+    teuk_modes: np.ndarray
+    phases: np.ndarray
+    freqs: np.ndarray
+    ylms: np.ndarray
+    ls: np.ndarray
+    ms: np.ndarray
+    ks: np.ndarray
+    ns: np.ndarray
+    integrate_backwards: bool
 
 
 class SphericalHarmonicWaveformBase(
-    FEWBackendConsumer,
+    FewBackendConsumer,
     Generic[InspiralModule, AmplitudeModule, SumModule, ModeSelectorModule],
 ):
     """Base class for waveforms built with amplitudes expressed in a spherical harmonic basis.
@@ -87,7 +101,7 @@ class SphericalHarmonicWaveformBase(
         mode_selector_kwargs: Optional[dict] = None,
         force_backend: BackendLike = None,
     ):
-        FEWBackendConsumer.__init__(self, force_backend=force_backend)
+        FewBackendConsumer.__init__(self, force_backend=force_backend)
 
         self.inspiral_kwargs = {} if inspiral_kwargs is None else inspiral_kwargs
         self.inspiral_generator = inspiral_module(
@@ -131,6 +145,7 @@ class SphericalHarmonicWaveformBase(
         batch_size: int = -1,
         mode_selection: Optional[Union[str, list, np.ndarray]] = None,
         include_minus_mkn: bool = None,
+        return_sparse_holder: Optional[bool] = False,
         **kwargs: Optional[dict],
     ) -> np.ndarray:
         r"""Call function for waveform models built in the spherical harmonic basis.
@@ -179,6 +194,7 @@ class SphericalHarmonicWaveformBase(
             include_minus_mkn: If True, then include :math:`(-m, -k, -n)` mode when
                 computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
                 is a list of specific modes. Default is True.
+            return_sparse_holder: If True, return :class:`SparseInfoHolder` instead of a waveform. Default is False.
 
         Returns:
             The output waveform.
@@ -337,7 +353,6 @@ class SphericalHarmonicWaveformBase(
                     phase_information_in[:, :, 0] += self.xp.array(
                         [Phi_phi[-1] + Phi_phi[0], Phi_theta[-1] + Phi_theta[0], Phi_r[-1] + Phi_r[0]]
                     )
-
                 phase_t_in = self.inspiral_generator.integrator_spline_t
             else:
                 phase_information_in = self.xp.asarray(
@@ -353,6 +368,28 @@ class SphericalHarmonicWaveformBase(
                     phase_information_in[0] *= self.xp.sign(xI0)
 
                 phase_t_in = None
+
+            if return_sparse_holder:
+                try:
+                    freqs
+                except NameError:
+                    freqs = self.inspiral_generator.inspiral_generator.eval_integrator_derivative_spline(t_temp, order=1)[:,3:6] / 2 / np.pi
+
+                assert len(inds_split_all) == 1
+                phases = self.xp.array([Phi_phi, Phi_theta, Phi_r]).T
+
+                return SparseInfoHolder(
+                    t_temp,
+                    teuk_modes_in / dist_dimensionless,
+                    phases,
+                    freqs,
+                    ylms_in,
+                    self.ls,
+                    self.ms,
+                    self.ks,
+                    self.ns,
+                    self.inspiral_generator.integrate_backwards
+                )
 
             # create waveform
             waveform_temp = self.create_waveform(
@@ -387,7 +424,7 @@ class SphericalHarmonicWaveformBase(
         return waveform / dist_dimensionless
 
 
-class AAKWaveformBase(Pn5AAK, FEWBackendConsumer, Generic[InspiralModule, SumModule]):
+class AAKWaveformBase(Pn5AAK, FewBackendConsumer, Generic[InspiralModule, SumModule]):
     r"""Waveform generation class for AAK with arbitrary trajectory.
 
     This class generates waveforms based on the Augmented Analytic Kludge
@@ -461,7 +498,7 @@ class AAKWaveformBase(Pn5AAK, FEWBackendConsumer, Generic[InspiralModule, SumMod
         force_backend: BackendLike = None,
     ):
         Pn5AAK.__init__(self)
-        FEWBackendConsumer.__init__(self, force_backend=force_backend)
+        FewBackendConsumer.__init__(self, force_backend=force_backend)
 
         self.inspiral_kwargs = {} if inspiral_kwargs is None else inspiral_kwargs
         self.inspiral_generator = inspiral_module(

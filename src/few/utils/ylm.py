@@ -9,7 +9,7 @@ import numpy as np
 from numba import njit
 
 # base classes
-from ..utils.baseclasses import FEWBackendConsumer
+from ..utils.baseclasses import FewBackendConsumer
 
 I = 1j
 
@@ -275,7 +275,7 @@ def _ylm_kernel(
     return out
 
 
-class GetYlms(FEWBackendConsumer):
+class GetYlms(FewBackendConsumer):
     r"""(-2) Spin-weighted Spherical Harmonics
 
     The class generates (-2) spin-weighted spherical harmonics,
@@ -287,11 +287,11 @@ class GetYlms(FEWBackendConsumer):
             half as modes with :math:`m<0` for array inputs of :math:`l,m`. **Warning**: It will also duplicate
             the :math:`m=0` modes. Default is False.
         **kwargs: Optional keyword arguments for the base class:
-            :class:`few.utils.baseclasses.FEWBackendConsumer`.
+            :class:`few.utils.baseclasses.FewBackendConsumer`.
     """
 
     def __init__(self, include_minus_m: bool = False, **kwargs: Optional[dict]):
-        FEWBackendConsumer.__init__(self, **kwargs)
+        FewBackendConsumer.__init__(self, **kwargs)
         self.include_minus_m = include_minus_m
 
     @classmethod

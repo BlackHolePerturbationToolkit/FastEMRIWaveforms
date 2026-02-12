@@ -28,13 +28,25 @@ BackendLike = Union[str, FEWBackend, None]
 from gpubackendtools.parallelbase import ParallelModuleBase
 
 
-class FEWBackendConsumer(ParallelModuleBase):
-    def __init__(self, force_backend=None):
-        force_backend_in = ('few', force_backend) if isinstance(force_backend, str) else force_backend
+class FewBackendConsumer(ParallelModuleBase):
+    """Few Backend Setup
+    
+    Args:
+        force_backend: Backend for GPU Backend Tools Backend Consumer. 
+
+    """
+    def __init__(self, force_backend: Optional[str | FEWBackend] =  None):
+        if isinstance(force_backend, str) and "few" not in force_backend:
+            force_backend_in = ('few', force_backend)
+        elif isinstance(force_backend, str) and "few" in force_backend:
+            assert force_backend[:4] == "few_" and len(force_backend.split("few_")) == 2
+            force_backend_in = ('few', force_backend.split("few_")[-1])
+        else:
+            force_backend_in = force_backend
         super().__init__(force_backend=force_backend_in)
 
 
-class SphericalHarmonic(FEWBackendConsumer):
+class SphericalHarmonic(FewBackendConsumer):
     r"""Base class for waveforms constructed in a spherical harmonic basis.
 
     This class creates shared traits between different implementations of the
@@ -115,7 +127,7 @@ class SphericalHarmonic(FEWBackendConsumer):
     def __init__(
         self, lmax: int = 10, kmax: int = 0, nmax: int = 0, force_backend: BackendLike = None
     ):
-        FEWBackendConsumer.__init__(self, force_backend=force_backend)
+        FewBackendConsumer.__init__(self, force_backend=force_backend)
 
         self.lmax = lmax
         self.kmax = kmax

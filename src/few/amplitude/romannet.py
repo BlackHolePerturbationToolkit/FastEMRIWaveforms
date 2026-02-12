@@ -45,7 +45,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         **kwargs (dict, optional): Keyword arguments for the base classes:
             :class:`few.utils.baseclasses.SchwarzschildEccentric`,
             :class:`few.utils.baseclasses.AmplitudeBase`,
-            :class:`few.utils.baseclasses.FEWBackendConsumer`.
+            :class:`few.utils.baseclasses.FewBackendConsumer`.
             Default is {}.
 
     """

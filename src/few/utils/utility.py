@@ -1,7 +1,7 @@
 # Utilities to aid in FastEMRIWaveforms Packages
 
 from math import acos, cos, sqrt
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
 from numba import njit
@@ -76,6 +76,96 @@ def get_overlap(
 
     # if using cupy, it will return a dimensionless array
     return ac.item().real if use_gpu else ac.real
+
+
+def get_viewing_angles(qS: float, phiS: float, qK: float, phiK: float) -> Tuple[float, float]:
+        """Transform from the detector frame to the source frame
+        
+        Args:
+            qS: Sky location polar angle in ecliptic
+                coordinates.
+            phiS: Sky location azimuthal angle in
+                ecliptic coordinates.
+            qK: Initial BH spin polar angle in ecliptic
+                coordinates.
+            phiK: Initial BH spin azimuthal angle in
+                ecliptic coordinates.
+
+        Returns:
+            (Polar viewing angle, Azimuthal viewing angle).
+        
+            
+        """
+
+        cqS = np.cos(qS)
+        sqS = np.sin(qS)
+
+        cphiS = np.cos(phiS)
+        sphiS = np.sin(phiS)
+
+        cqK = np.cos(qK)
+        sqK = np.sin(qK)
+
+        cphiK = np.cos(phiK)
+        sphiK = np.sin(phiK)
+
+        # sky location vector
+        R = np.array([sqS * cphiS, sqS * sphiS, cqS])
+
+        # spin vector
+        S = np.array([sqK * cphiK, sqK * sphiK, cqK])
+
+        # get viewing angles
+        phi = -np.pi / 2.0  # by definition of source frame
+
+        theta = np.arccos(-np.dot(R, S))  # normalized vector
+
+        return (theta, phi)
+
+
+def get_polarization_angle(qS: float, phiS: float, qK: float, phiK: float) -> float:
+        """Transform from the detector frame to the source frame
+        
+        Args:
+            qS: Sky location polar angle in ecliptic
+                coordinates.
+            phiS: Sky location azimuthal angle in
+                ecliptic coordinates.
+            qK: Initial BH spin polar angle in ecliptic
+                coordinates.
+            phiK: Initial BH spin azimuthal angle in
+                ecliptic coordinates.
+
+        Returns:
+            Polarization angle.
+        
+            
+        """
+
+        cqS = np.cos(qS)
+        sqS = np.sin(qS)
+
+        # cphiS = np.cos(phiS)
+        # sphiS = np.sin(phiS)
+
+        cqK = np.cos(qK)
+        sqK = np.sin(qK)
+
+        # cphiK = np.cos(phiK)
+        # sphiK = np.sin(phiK)
+
+        # get polarization angle
+
+        up_ldc = cqS * sqK * np.cos(phiS - phiK) - cqK * sqS
+        dw_ldc = sqK * np.sin(phiS - phiK)
+
+        if dw_ldc != 0.0:
+            psi_ldc = -np.arctan2(up_ldc, dw_ldc)
+
+        else:
+            psi_ldc = 0.5 * np.pi
+
+        return psi_ldc
 
 
 def get_mismatch(

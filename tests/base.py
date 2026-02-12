@@ -10,9 +10,12 @@ import unittest
 
 import wrapt
 
+# TODO: need to make sure this works
+from gpubackendtools import get_first_backend
+
 from few.cutils import FEWBackend
 from few.utils import exceptions
-from few.utils.baseclasses import FEWBackendConsumer
+from few.utils.baseclasses import FewBackendConsumer
 from few.utils.globals import get_config, get_logger
 
 
@@ -181,7 +184,7 @@ class FewBackendTest(FewTest):
 
     @classmethod
     @abc.abstractmethod
-    def parallel_class(cls) -> t.Type[FEWBackendConsumer]:
+    def parallel_class(cls) -> t.Type[FewBackendConsumer]:
         """Class to be used as reference for the test backend selection"""
         raise NotImplementedError
 

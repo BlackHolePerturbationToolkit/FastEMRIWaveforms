@@ -44,6 +44,12 @@ add_backends = {
 
 Globals().backends_manager.add_backends(add_backends)
 
+from .utils.globals import (
+    get_config,
+    get_config_setter,
+    get_file_manager,
+    get_logger,
+)
 
 __all__ = [
     "__version__",
@@ -59,7 +65,5 @@ __all__ = [
     "get_logger",
     "get_config",
     "get_config_setter",
-    "get_backend",
     "get_file_manager",
-    "has_backend",
 ]
