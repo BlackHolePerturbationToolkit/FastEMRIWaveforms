@@ -121,49 +121,49 @@ endfunction()
 #
 # The following rules are applied to select the attempted strategies:
 #
-# * The PKGCONFIG strategy is only attempted if FEW_LAPACKE_DETECT_WITH is
+# * The PKGCONFIG strategy is only attempted if GBT_LAPACKE_DETECT_WITH is
 #   "AUTO" or "PKGCONFIG"
-# * The CMAKE strategy is only attempted if FEW_LAPACKE_DETECT_WITH is "AUTO" or
+# * The CMAKE strategy is only attempted if GBT_LAPACKE_DETECT_WITH is "AUTO" or
 #   "CMAKE".
-# * The FETCH strategy is only attempted if FEW_LAPACKE_FETCH is "AUTO" or "ON".
+# * The FETCH strategy is only attempted if GBT_LAPACKE_FETCH is "AUTO" or "ON".
 # * The CMAKE and PKGCONFIG strategies are forcefully disabled if
-#   FEW_LAPACKE_FETCH is "ON"
+#   GBT_LAPACKE_FETCH is "ON"
 #
 # If no strategy is attempted, the function raises a warning and does not set
 # any variable in parent scope. In this case, it is the user responsibility to
-# set FEW_LAPACKE_LIBS to any relevant value.
+# set GBT_LAPACKE_LIBS to any relevant value.
 #
 # If at least one strategy is attempted and if no strategy succeeds, the method
 # fails with a fatal error explaining how to help attempted strategies to work.
 #
 # If one strategy succeeds, the following variables are set in parent scope:
 #
-# * FEW_LAPACKE_LIBS: list of libraries to link against to use LAPACKE
-# * FEW_LAPACKE_GET_SUCCESS: ON
-# * FEW_LAPACKE_GET_STRATEGY: strategy that succeeded (PKGCONFIG|CMAKE|FETCH )
+# * GBT_LAPACKE_LIBS: list of libraries to link against to use LAPACKE
+# * GBT_LAPACKE_GET_SUCCESS: ON
+# * GBT_LAPACKE_GET_STRATEGY: strategy that succeeded (PKGCONFIG|CMAKE|FETCH )
 function(few_get_lapacke)
   # cmake-lint: disable=R0912,R0915
   message(CHECK_START "Locating LAPACKE")
 
   # I. Detect enabled strategies
-  if(FEW_LAPACKE_DETECT_WITH STREQUAL "AUTO" OR FEW_LAPACKE_DETECT_WITH
+  if(GBT_LAPACKE_DETECT_WITH STREQUAL "AUTO" OR GBT_LAPACKE_DETECT_WITH
                                                 STREQUAL "PKGCONFIG")
     set(pkgconfig_strategy_enabled ON)
   else()
     set(pkgconfig_strategy_enabled OFF)
   endif()
-  if(FEW_LAPACKE_DETECT_WITH STREQUAL "AUTO" OR FEW_LAPACKE_DETECT_WITH
+  if(GBT_LAPACKE_DETECT_WITH STREQUAL "AUTO" OR GBT_LAPACKE_DETECT_WITH
                                                 STREQUAL "CMAKE")
     set(cmake_strategy_enabled ON)
   else()
     set(cmake_strategy_enabled OFF)
   endif()
-  if(FEW_LAPACKE_FETCH STREQUAL "AUTO" OR FEW_LAPACKE_FETCH STREQUAL "ON")
+  if(GBT_LAPACKE_FETCH STREQUAL "AUTO" OR GBT_LAPACKE_FETCH STREQUAL "ON")
     set(fetch_strategy_enabled ON)
   else()
     set(fetch_strategy_enabled OFF)
   endif()
-  if(FEW_LAPACKE_FETCH STREQUAL "ON")
+  if(GBT_LAPACKE_FETCH STREQUAL "ON")
     set(pkgconfig_strategy_enabled OFF)
     set(cmake_strategy_enabled OFF)
   endif()
@@ -179,9 +179,9 @@ function(few_get_lapacke)
   if(pkgconfig_strategy_enabled)
     few_try_get_lapacke_with_pkgconfig()
     if(LAPACKE_WITH_PKGCONFIG_SUCCESS)
-      set(FEW_LAPACKE_LIBS "${LAPACKE_WITH_PKGCONFIG_LIBS}" PARENT_SCOPE)
-      set(FEW_LAPACKE_GET_SUCCESS ON PARENT_SCOPE)
-      set(FEW_LAPACKE_GET_STRATEGY "PKGCONFIG" PARENT_SCOPE)
+      set(GBT_LAPACKE_LIBS "${LAPACKE_WITH_PKGCONFIG_LIBS}" PARENT_SCOPE)
+      set(GBT_LAPACKE_GET_SUCCESS ON PARENT_SCOPE)
+      set(GBT_LAPACKE_GET_STRATEGY "PKGCONFIG" PARENT_SCOPE)
       message(CHECK_PASS "found with pkgconfig")
       return()
     endif()
@@ -191,9 +191,9 @@ function(few_get_lapacke)
   if(cmake_strategy_enabled)
     few_try_get_lapacke_with_cmake()
     if(LAPACKE_WITH_CMAKE_SUCCESS)
-      set(FEW_LAPACKE_LIBS "${LAPACKE_WITH_CMAKE_LIBS}" PARENT_SCOPE)
-      set(FEW_LAPACKE_GET_SUCCESS ON PARENT_SCOPE)
-      set(FEW_LAPACKE_GET_STRATEGY "CMAKE" PARENT_SCOPE)
+      set(GBT_LAPACKE_LIBS "${LAPACKE_WITH_CMAKE_LIBS}" PARENT_SCOPE)
+      set(GBT_LAPACKE_GET_SUCCESS ON PARENT_SCOPE)
+      set(GBT_LAPACKE_GET_STRATEGY "CMAKE" PARENT_SCOPE)
       message(CHECK_PASS "found with find_package()")
       return()
     endif()
@@ -203,9 +203,9 @@ function(few_get_lapacke)
   if(fetch_strategy_enabled)
     few_try_get_lapacke_with_cpm()
     if(LAPACKE_WITH_CPM_SUCCESS)
-      set(FEW_LAPACKE_LIBS "${LAPACKE_WITH_CPM_LIBS}" PARENT_SCOPE)
-      set(FEW_LAPACKE_GET_SUCCESS ON PARENT_SCOPE)
-      set(FEW_LAPACKE_GET_STRATEGY "FETCH" PARENT_SCOPE)
+      set(GBT_LAPACKE_LIBS "${LAPACKE_WITH_CPM_LIBS}" PARENT_SCOPE)
+      set(GBT_LAPACKE_GET_SUCCESS ON PARENT_SCOPE)
+      set(GBT_LAPACKE_GET_STRATEGY "FETCH" PARENT_SCOPE)
       message(CHECK_PASS "added to build tree with automatic fetching")
       return()
     endif()
@@ -261,13 +261,13 @@ function(few_get_lapacke)
 
   # VI. Add message if lapacke detection is ignored
   message(CHECK_PASS "ignored \
-   (FEW_LAPACKE_DETECT_WITH=${FEW_LAPACKE_DETECT_WITH} \
-   and FEW_LAPACKE_FETCH=${FEW_LAPACKE_FETCH})")
+   (GBT_LAPACKE_DETECT_WITH=${GBT_LAPACKE_DETECT_WITH} \
+   and GBT_LAPACKE_FETCH=${GBT_LAPACKE_FETCH})")
   message(
     WARNING
       "LAPACKE detection strategies were disabled.\n"
-      "Manually define FEW_LAPACKE_LIBS using pip "
-      "--config-settings=cmake.define.FEW_LAPACKE_LIBS=value\n\n"
+      "Manually define GBT_LAPACKE_LIBS using pip "
+      "--config-settings=cmake.define.GBT_LAPACKE_LIBS=value\n\n"
       "Make sure that the compiler can locate lapacke libraries (usually by "
       "adding their directory to "
       "the LIBRARY_PATH environment variable) and the header 'lapacke.h' "
@@ -442,13 +442,13 @@ if(FEW_WITH_CPU)
                             interpolate.hh)
 
   # pyinterp needs to link against LAPACKE. USe the following method to detect
-  # it and obtain ${FEW_LAPACKE_LIBS}. In case of failure, it will stop the
+  # it and obtain ${GBT_LAPACKE_LIBS}. In case of failure, it will stop the
   # processing execution.
   few_get_lapacke()
-  # Now, link against ${FEW_LAPACKE_LIBS} to link against liblapacke.so and
+  # Now, link against ${GBT_LAPACKE_LIBS} to link against liblapacke.so and
   # include lapacke.h
-  target_link_libraries(few_cpu_pyinterp LINK_PUBLIC ${FEW_LAPACKE_LIBS}
-                        ${FEW_LAPACKE_EXTRA_LIBS})
+  target_link_libraries(few_cpu_pyinterp LINK_PUBLIC ${GBT_LAPACKE_LIBS}
+                        ${GBT_LAPACKE_EXTRA_LIBS})
 
 endif()
 

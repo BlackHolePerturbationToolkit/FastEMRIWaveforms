@@ -47,7 +47,7 @@ set(FEW_MARCH "native"
     CACHE STRING "Value of the -march compiler option if supported by compiler")
 set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_MARCH)
 
-# FEW_LAPACKE_DETECT_WITH sets the tool used to try to detect LAPACKE locally.
+#  GBT_LAPACKE_DETECT_WITH sets the tool used to try to detect LAPACKE locally.
 # Possible values are:
 #
 # * AUTO: attempts PKGCONFIG and, in case of failure, CMAKE
@@ -57,12 +57,12 @@ set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_MARCH)
 #   and its dependencies in standard system locations or in PKG_CONFIG_PATH
 # * DISABLE (or any other value): disable detection of local lapacke
 #   installation
-set(FEW_LAPACKE_DETECT_WITH "AUTO" CACHE STRING "Tool used to locate LAPACKE.")
-set_property(CACHE FEW_LAPACKE_DETECT_WITH PROPERTY STRINGS "AUTO" "CMAKE"
+set( GBT_LAPACKE_DETECT_WITH "AUTO" CACHE STRING "Tool used to locate LAPACKE.")
+set_property(CACHE  GBT_LAPACKE_DETECT_WITH PROPERTY STRINGS "AUTO" "CMAKE"
                                                     "PKGCONFIG" "DISABLE")
-set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_LAPACKE_DETECT_WITH)
+set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES  GBT_LAPACKE_DETECT_WITH)
 
-# FEW_LAPACKE_FETCH controls whether LAPACKE sources will be downloaded and
+#  GBT_LAPACKE_FETCH controls whether LAPACKE sources will be downloaded and
 # compiled with FEW backends. Possible values are:
 #
 # * AUTO: will try to locate LAPACKE locally and, in case of failure, will
@@ -70,14 +70,14 @@ set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_LAPACKE_DETECT_WITH)
 # * ON: will always fetch LAPACKE sources and compile them, even if already
 #   present locally
 # * OFF: will disable LAPACKE fetching mechanism
-set(FEW_LAPACKE_FETCH "AUTO" CACHE STRING
+set(GBT_LAPACKE_FETCH "AUTO" CACHE STRING
                                    "Whether to download and compile LAPACK(E)")
-set_property(CACHE FEW_LAPACKE_FETCH PROPERTY STRINGS "AUTO" "ON" "OFF")
-set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_LAPACKE_FETCH)
+set_property(CACHE  GBT_LAPACKE_FETCH PROPERTY STRINGS "AUTO" "ON" "OFF")
+set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES  GBT_LAPACKE_FETCH)
 
-# FEW_LAPACKE_EXTRA_LIBS sets extra libraries that must be linked when linking
+#  GBT_LAPACKE_EXTRA_LIBS sets extra libraries that must be linked when linking
 # LAPACKE. For example, if importing the CPU backend fails and complains about
-# missing "gfortran" symbols, set FEW_LAPACKE_EXTRA_LIBS=gfortran. Note that if
+# missing "gfortran" symbols, set  GBT_LAPACKE_EXTRA_LIBS=gfortran. Note that if
 # this option is unset, it will be automatically set to "gfortran" if that
 # library in linkable.
 include(CheckLinkerFlag)
@@ -87,10 +87,10 @@ if(GFORTRAN_AVAILABLE)
 else()
   set(DEFAULT_EXTRA_LIBS "")
 endif()
-set(FEW_LAPACKE_EXTRA_LIBS "${DEFAULT_EXTRA_LIBS}"
+set( GBT_LAPACKE_EXTRA_LIBS "${DEFAULT_EXTRA_LIBS}"
     CACHE STRING "Extra libs to link to when\
 linking against LAPACKE.")
-set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_LAPACKE_EXTRA_LIBS)
+set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES  GBT_LAPACKE_EXTRA_LIBS)
 unset(GFORTRAN_AVAILABLE)
 unset(DEFAULT_EXTRA_LIBS)
 

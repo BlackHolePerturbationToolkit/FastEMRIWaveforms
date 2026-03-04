@@ -98,7 +98,7 @@ Note that this mode requires to pre-install all of the project build dependencie
 # Make the install verbose since this mode is more likely to fail since it is still experimental
 # Note that the building steps will be performed in ./build/editable
 #  Do not delete that directory, it is used by the build system
-(few-venv) FastEMRIWaveforms$ pip install --no-build-isolation -Ceditable.mode=redirect -Ceditable.rebuild=true  -Cbuild-dir=./build/editable -Ccmake.verbose=true -Clogging.level=INFO -Ccmake.define.FEW_LAPACKE_FETCH=OFF -v -e '.[testing, doc]'
+(few-venv) FastEMRIWaveforms$ pip install --no-build-isolation -Ceditable.mode=redirect -Ceditable.rebuild=true  -Cbuild-dir=./build/editable -Ccmake.verbose=true -Clogging.level=INFO -Ccmake.define.GBT_LAPACKE_FETCH=OFF -v -e '.[testing, doc]'
 ...
   *** Making editable...
   *** Created fastemriwaveforms-1.6.3.post1.dev47+g5a3a237.d20250217-cp312-cp312-linux_aarch64.whl

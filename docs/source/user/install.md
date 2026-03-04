@@ -423,7 +423,7 @@ are available on the CC-IN2P3 cluster but need little adjustments.
   # ... Clone sources
   (few_env) $ CXX=g++ CC=gcc FC=gfortran pip install -e '.[testing]' \
                   --config-settings=cmake.define.FEW_WITH_GPU=ON \
-                  --config-settings=cmake.define.FEW_LAPACKE_FETCH=ON
+                  --config-settings=cmake.define.GBT_LAPACKE_FETCH=ON
   ```
 
 On this cluster, it is recommended to configure the file storage directory
@@ -488,11 +488,11 @@ work correctly in this environment.
 
 Many options are available to change the installation behaviour. These can be set by adding `--config-settings=cmake.define.OPTION_NAME=OPTION_VALUE` to the `pip` command. Available options are:
 
-- `FEW_LAPACKE_FETCH=ON|OFF|[AUTO]`: Whether `LAPACK` and `LAPACKE` should be automatically fetched from internet.
+- `GBT_LAPACKE_FETCH=ON|OFF|[AUTO]`: Whether `LAPACK` and `LAPACKE` should be automatically fetched from internet.
   - `ON`: ignore pre-installed `LAPACK(E)` and always fetch and compile their sources
   - `OFF`: disable `LAPACK(E)` fetching and only use pre-installed library and headers (install will fail if pre-installed lib and headers are not available)
   - `AUTO` (default): try to detect pre-installed `LAPACK(E)` and their headers. If found, use them, otherwise fetch `LAPACK(E)`.
-- `FEW_LAPACKE_DETECT_WITH=[CMAKE]|PKGCONFIG`: How `LAPACK(E)` should be detected
+- `GBT_LAPACKE_DETECT_WITH=[CMAKE]|PKGCONFIG`: How `LAPACK(E)` should be detected
   - `CMAKE`: `LAPACK(E)` will be detected using the cmake `FindPackage` command. If your `LAPACK(E)` install provides `lapacke-config.cmake` in a non-standard location, add its path to the `CMAKE_PREFIX_PATH` environment variable.
   - `PKGCONFIG`: `LAPACK(E)` will be detected using `pkg-config` by searching for the files `lapack.pc` and `lapacke.pc` . If these files are provided by your `LAPACK(E)` install in a non-standard location, add their path to the environment variable `PKG_CONFIG_PATH`
   - `AUTO` (default): attempt both CMake and PkgConfig approaches
@@ -508,7 +508,7 @@ Example of custom install with specific options to forcefully enable GPU support
 pip install . \
   --config-settings=cmake.define.FEW_WITH_GPU=ON \
   --config-settings=cmake.define.FEW_CUDA_ARCH="native" \
-  --config-settings=cmake.define.FEW_LAPACKE_FETCH=ON
+  --config-settings=cmake.define.GBT_LAPACKE_FETCH=ON
 ```
 
 If you enabled `GPU` support (or it was automatically enabled by the `AUTO` mode), you will also need to install the `nvidia-cuda-runtime`
