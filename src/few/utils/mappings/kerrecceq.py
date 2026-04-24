@@ -177,6 +177,12 @@ def kerrecceq_forward_map(
         y[far] = out[2]
         z[far] = out[3]
 
+    for coord in [u, w, z]:
+        near_one_mask = xp.abs(coord - 1) < 1e-12
+        near_zero_mask = xp.abs(coord) < 1e-12
+        coord[near_one_mask] = 1.0
+        coord[near_zero_mask] = 0.0
+
     if return_mask:
         return u, w, y, z, near
     else:

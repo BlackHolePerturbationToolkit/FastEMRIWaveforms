@@ -38,7 +38,7 @@ PISCO_MIN = get_separatrix(AMAX, 0, 1)
 PISCO_MIN_SCHW = get_separatrix(0, 0, 1) + 1e-5
 PMAX_SCHW = 47.6
 EMAX_SCHW = 0.755
-
+EMAX_BUFFER = 1e-2
 
 @njit
 def _Edot_PN(e, yPN):
@@ -118,23 +118,25 @@ class SchwarzEccFlux(ODEBase):
         if np.any(a != 0.0):
             raise ValueError("Interpolation: a out of bounds. Must be 0.")
 
-    def min_p(self, e, x=1, a=0):
-        return 6 + 2 * e + self.separatrix_buffer_dist
+    def min_p(self, e, x=1, a=0, separatrix_buffer = None):
+        if separatrix_buffer is None:
+            separatrix_buffer = self.separatrix_buffer_dist
+        return 6 + 2 * e + separatrix_buffer
 
     def max_p(self, e, x=1, a=0):
         return PMAX_SCHW + 2.0 * e
 
-    def bounds_p(self, e, x=1, a=0, p_buffer=[0, 0]):
-        return [self.min_p(e, x, a) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
+    def bounds_p(self, e, x=1, a=0, p_buffer=[0, 0], separatrix_buffer = None):
+        return [self.min_p(e, x, a, separatrix_buffer=separatrix_buffer) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
 
     def max_e(self, p, x=1, a=0):
         return EMAX_SCHW
 
-    def isvalid_pex(self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], e_buffer=[0, 0]):
+    def isvalid_pex(self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], e_buffer=[0, 0], sepatrix_buffer = None):
         self.isvalid_x(x)
         self.isvalid_e(e, e_buffer=e_buffer)
         self.isvalid_a(a)
-        pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer)
+        pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer, separatrix_buffer=sepatrix_buffer)
         assert p >= pmin and p <= pmax, (
             f"Interpolation: p out of bounds. Must be between {pmin + p_buffer[0]} and {pmax - p_buffer[1]}."
         )
@@ -492,30 +494,41 @@ class KerrEccEqFlux(ODEBase):
                 f"Interpolation: a out of bounds. Must be between {amin} and {amax}."
             )
 
-    def _min_p(self, e, x, a):
+    def _min_p(self, e, x, a, separatrix_buffer = None, max_e_buffer = 0):
+        if separatrix_buffer is None:
+            separatrix_buffer = self.separatrix_buffer_dist_grid
         if x == -1:
             a_in = -a
         else:
             a_in = a
 
         z = z_of_a(a_in)
-        p_sep = _get_separatrix_kernel_inner(a, e, x)
+        
+        # this is how far away we want our e value to be from the maximum e value supported by the interpolation grid
+        # if e > 0:
+        #     e_bound = e + max_e_buffer
+        # else:
+        #     e_bound = 0
+        e_bound = e/(1 - max_e_buffer)
+        p_sep = _get_separatrix_kernel_inner(a, e_bound, x)
 
-        if w_of_euz_flux(e, 0.0, z) > 1:
-            u_min = u_where_w_is_unity(e, z, kind="flux")
+        if w_of_euz_flux(e_bound, 0.0, z) > 1:
+            if e_bound > EMAX:
+                e_bound = EMAX
+            u_min = u_where_w_is_unity(e_bound, z, kind="flux")
         else:
             u_min = 0.0
 
-        return max(p_of_u_flux(u_min, p_sep), p_sep + self.separatrix_buffer_dist)
+        return max(p_of_u_flux(u_min, p_sep), p_sep + separatrix_buffer)
 
     def _max_p(self, e, x, a):
         return PMAX
 
-    def min_p(self, e=0, x=1, a=0):
+    def min_p(self, e=0, x=1, a=0, separatrix_buffer = None, max_e_buffer = 0):
         self.isvalid_x(x)
         self.isvalid_e(e)
         self.isvalid_a(a)
-        return self._min_p(e, x, a)
+        return self._min_p(e, x, a, separatrix_buffer=separatrix_buffer, max_e_buffer = max_e_buffer)
 
     def max_p(self, e=0, x=1, a=0):
         self.isvalid_x(x)
@@ -526,13 +539,16 @@ class KerrEccEqFlux(ODEBase):
     def _min_e(self, p, x, a):
         return 0.0
 
-    def _max_e(self, p, x, a):
+    def _max_e(self, p, x, a, separatrix_buffer = None, max_e_buffer = 0):
+        if separatrix_buffer is None:
+            separatrix_buffer = self.separatrix_buffer_dist_grid
+
         if x == -1:
             a_in = -a
         else:
             a_in = a
 
-        p_sep_min_buffer = get_separatrix(a_in, 0, 1) + self.separatrix_buffer_dist
+        p_sep_min_buffer = get_separatrix(a_in, 0, 1) + separatrix_buffer
         if p < p_sep_min_buffer:
             raise ValueError(
                 f"Interpolation: p out of bounds. Must be greater than innermost stable circular orbit + buffer = {p_sep_min_buffer}."
@@ -544,14 +560,15 @@ class KerrEccEqFlux(ODEBase):
         else:
             tol = 1e-13
             z = z_of_a(a_in)
-            emax = _brentq_jit(_emax_w, 0, EMAX, (a_in, p, z), tol)
+            emax = _brentq_jit(_emax_w, 0, EMAX, (a_in, p, z), tol) - tol
 
             # if you lie below the separatrix, then you are limited by the max e-value on the separatrix
-            if get_separatrix(a_in, emax, 1) > p:
+            if get_separatrix(a_in, emax, 1) + separatrix_buffer > p:
                 emax = _brentq_jit(
-                    _emax_sep, 0, emax, (a_in, p - self.separatrix_buffer_dist), tol
+                    _emax_sep, 0, emax, (a_in, p - separatrix_buffer - tol), tol
                 )
-        return emax
+        e_out = emax * (1 - max_e_buffer)
+        return e_out
 
     def min_e(self, p=20, x=1, a=0):
         self.isvalid_x(x)
@@ -559,11 +576,11 @@ class KerrEccEqFlux(ODEBase):
         self.isvalid_a(a)
         return self._min_e(p, x, a)
 
-    def max_e(self, p=20, x=1, a=0):
+    def max_e(self, p=20, x=1, a=0, separatrix_buffer = None, max_e_buffer = 0):
         self.isvalid_x(x)
         self.isvalid_p(p)
         self.isvalid_a(a)
-        return self._max_e(p, x, a)
+        return self._max_e(p, x, a, separatrix_buffer=separatrix_buffer, max_e_buffer = max_e_buffer)
 
     def _min_a(self, p, e, x):
         return -AMAX
@@ -589,27 +606,27 @@ class KerrEccEqFlux(ODEBase):
         self.isvalid_e(e)
         return [self._min_a(p, e, x) + a_buffer[0], self._max_a(p, e, x) - a_buffer[1]]
 
-    def bounds_p(self, e=0, x=1, a=0, p_buffer=[0, 0]):
+    def bounds_p(self, e=0, x=1, a=0, p_buffer=[0, 0], separatrix_buffer = None, max_e_buffer = 0):
         self.isvalid_x(x)
         self.isvalid_e(e)
         self.isvalid_a(a)
-        return [self._min_p(e, x, a) + p_buffer[0], self._max_p(e, x, a) - p_buffer[1]]
+        return [self._min_p(e, x, a, separatrix_buffer=separatrix_buffer, max_e_buffer=max_e_buffer) + p_buffer[0], self._max_p(e, x, a) - p_buffer[1]]
 
-    def bounds_e(self, p=20, x=1, a=0, e_buffer=[0, 0]):
+    def bounds_e(self, p=20, x=1, a=0, e_buffer=[0, 0], separatrix_buffer = None, max_e_buffer = 0):
         self.isvalid_x(x)
         self.isvalid_p(p)
         self.isvalid_a(a)
-        return [self._min_e(p, x, a) + e_buffer[0], self._max_e(p, x, a) - e_buffer[1]]
+        return [self._min_e(p, x, a) + e_buffer[0], self._max_e(p, x, a, separatrix_buffer=separatrix_buffer, max_e_buffer=max_e_buffer) - e_buffer[1]]
 
     def isvalid_pex(
-        self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], e_buffer=[0, 0], a_buffer=[0, 0]
+        self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], e_buffer=[0, 0], a_buffer=[0, 0], separatrix_buffer = None, max_e_buffer = 0
     ):
         self.isvalid_x(x)
         self.isvalid_e(e, e_buffer=e_buffer)
         self.isvalid_a(a, a_buffer=a_buffer)
-        pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer)
+        pmin, pmax = self.bounds_p(e=e, x=x, a=a, p_buffer=p_buffer, separatrix_buffer=separatrix_buffer, max_e_buffer=max_e_buffer)
         assert p >= pmin and p <= pmax, (
-            f"Interpolation: p {p} out of bounds. Must be between {pmin} and {pmax}."
+            f"Interpolation: p={p} out of bounds for (a,e,x)=({a},{e},{x}). Must be between {pmin} and {pmax}."
         )
 
     def distance_to_outer_boundary(self, y):
@@ -640,7 +657,7 @@ class KerrEccEqFlux(ODEBase):
         if pLSO is None:
             pLSO = get_separatrix(a, e, x)
 
-        edge_buffer = -1e-8
+        edge_buffer = -5e-8
 
         # handle xI = -1 case
         if x == -1:
@@ -651,7 +668,7 @@ class KerrEccEqFlux(ODEBase):
         u, w, _, z, in_region_A = _kerrecceq_flux_forward_map(a_in, p, e, 1.0, pLSO)
 
         if u < edge_buffer or u > 1 - edge_buffer or np.isnan(u):
-            raise ValueError("Interpolation: p out of bounds.")
+            raise ValueError(f"Interpolation: p out of bounds. u = {u}.")
         if w < edge_buffer:
             raise TrajectoryOffGridException("Interpolation: e out of bounds.")
         if w > 1 - edge_buffer:
