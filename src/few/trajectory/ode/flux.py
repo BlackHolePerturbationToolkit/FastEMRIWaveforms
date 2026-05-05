@@ -505,16 +505,12 @@ class KerrEccEqFlux(ODEBase):
         z = z_of_a(a_in)
         
         # this is how far away we want our e value to be from the maximum e value supported by the interpolation grid
-        # if e > 0:
-        #     e_bound = e + max_e_buffer
-        # else:
-        #     e_bound = 0
         e_bound = e/(1 - max_e_buffer)
         p_sep = _get_separatrix_kernel_inner(a, e_bound, x)
 
         if w_of_euz_flux(e_bound, 0.0, z) > 1:
-            if e_bound > EMAX:
-                e_bound = EMAX
+            if e_bound > EMAX / (1 - max_e_buffer):
+                e_bound = EMAX / (1 - max_e_buffer)
             u_min = u_where_w_is_unity(e_bound, z, kind="flux")
         else:
             u_min = 0.0

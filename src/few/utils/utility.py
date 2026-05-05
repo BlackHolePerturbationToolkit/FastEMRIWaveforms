@@ -367,25 +367,21 @@ def get_p_at_t(
     if bounds is None:
         bounds = [None, None]
 
+    traj_bounds = traj_module.bounds_p0(
+        e0 = traj_args[index_of_e], x0 = traj_args[index_of_x], a = traj_args[index_of_a]
+        )
+
     if bounds[0] is None:
         if not enforce_schwarz_sep:
-            bounds[0] = traj_module.func.min_p(
-                traj_args[index_of_e], x=traj_args[index_of_x], a=traj_args[index_of_a]
-            )
+            bounds[0] = traj_bounds[0]
         else:
             bounds[0] = min(
-                traj_module.func.min_p(
-                    traj_args[index_of_e],
-                    x=traj_args[index_of_x],
-                    a=traj_args[index_of_a],
-                ),
+                traj_bounds[0],
                 6 + 2 * traj_args[index_of_e],
             )
 
     if bounds[1] is None:
-        bounds[1] = traj_module.func.max_p(
-            traj_args[index_of_e], x=traj_args[index_of_x], a=traj_args[index_of_a]
-        )
+        bounds[1] = traj_bounds[1]
     # Adding a buffer to prevent starting trajectories on the separatrix
     bounds[0] += lower_bound_buffer
 

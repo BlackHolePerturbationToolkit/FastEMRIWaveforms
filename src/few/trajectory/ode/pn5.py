@@ -36,8 +36,10 @@ class PN5(ODEBase):
     def max_p(self, e, x, a):
         return float("inf")
 
-    def min_p(self, e, x, a):
-        return get_separatrix(a, e, x) + self.separatrix_buffer_dist
+    def min_p(self, e, x, a, separatrix_buffer=None):
+        if separatrix_buffer is None:
+            separatrix_buffer = self.separatrix_buffer_dist
+        return get_separatrix(a, e, x) + separatrix_buffer
 
     def isvalid_x(self, x, x_buffer=[0, 0]):
         xmin = -1 + x_buffer[0]
@@ -51,8 +53,10 @@ class PN5(ODEBase):
         if np.any(e < emin) or np.any(e > emax):
             raise ValueError(f"e out of bounds. Must be between {emin} and {emax}.")
 
-    def isvalid_p(self, p, p_buffer=[0, 0]):
-        pmin = 1 + self.separatrix_buffer_dist + p_buffer[0]
+    def isvalid_p(self, p, p_buffer=[0, 0], separatrix_buffer=None):
+        if separatrix_buffer is None:
+            separatrix_buffer = self.separatrix_buffer_dist
+        pmin = 1 + separatrix_buffer + p_buffer[0]
         if np.any(p < pmin):
             raise ValueError(f"p out of bounds. Must be greater than {pmin}.")
 
@@ -62,8 +66,8 @@ class PN5(ODEBase):
         if np.any(a < amin) or np.any(a > amax):
             raise ValueError(f"a out of bounds. Must be between {amin} and {amax}.")
 
-    def bounds_p(self, e, x=1, a=0, p_buffer=[0, 0]):
-        return [self.min_p(e, x, a) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
+    def bounds_p(self, e, x=1, a=0, p_buffer=[0, 0], separatrix_buffer=None):
+        return [self.min_p(e, x, a, separatrix_buffer=separatrix_buffer) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
 
     def max_e(self, p, x, a):
         return 1
@@ -78,11 +82,13 @@ class PN5(ODEBase):
         e_buffer=[0, 0],
         x_buffer=[0, 0],
         a_buffer=[0, 0],
+        separatrix_buffer=None,
+        **kwargs
     ):
         self.isvalid_x(x, x_buffer=x_buffer)
         self.isvalid_e(e, e_buffer=e_buffer)
         self.isvalid_a(a, a_buffer=a_buffer)
-        pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer)
+        pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer, separatrix_buffer=separatrix_buffer)
         assert p >= pmin and p <= pmax, (
             f"Interpolation: p out of bounds. Must be between {pmin} and {pmax}."
         )
