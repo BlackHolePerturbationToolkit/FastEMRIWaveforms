@@ -115,7 +115,7 @@ class EMRIInspiral(TrajectoryBase):
     @property
     def tolerance(self) -> float:
         """Absolute tolerance of the integrator."""
-        return self.inspiral_generator.npoints
+        return self.inspiral_generator.tolerance
 
     @property
     def dense_stepping(self) -> bool:
