@@ -145,6 +145,42 @@ class EMRIInspiral(TrajectoryBase):
             self.inspiral_generator.integrator_spline_coeff[:, 3:6]
             / self.inspiral_generator.massratio
         )
+    
+    @property
+    def separatrix_buffer_dist(self):
+        return self.func.separatrix_buffer_dist
+    
+    @property
+    def separatrix_buffer_dist_integrate(self):
+        return self.func.separatrix_buffer_dist + 1e-3
+    
+    @property
+    def max_e_buffer(self):
+        return 1e-2
+
+    def bounds_p0(self, e0, x0, a, integrate_backwards=False):
+        """Get bounds on p for given e, x, a."""
+        if integrate_backwards:
+            separatrix_buffer = self.separatrix_buffer_dist
+        else:
+            separatrix_buffer = self.separatrix_buffer_dist_integrate
+        return self.func.bounds_p(e=e0, x=x0, a=a, separatrix_buffer=separatrix_buffer, max_e_buffer=self.max_e_buffer)
+    
+    def bounds_e0(self, p0, x0, a, integrate_backwards=False):
+        """Get bounds on e for given p, x, a."""
+        if integrate_backwards:
+            separatrix_buffer = self.separatrix_buffer_dist
+        else:
+            separatrix_buffer = self.separatrix_buffer_dist_integrate
+        return self.func.bounds_e(p=p0, x=x0, a=a, separatrix_buffer=separatrix_buffer, max_e_buffer = self.max_e_buffer)
+    
+    def bounds_x0(self, p0, e0, a):
+        """Get bounds on x for given p, e, a."""
+        return self.func.bounds_x(p=p0, e=e0, a=a)
+    
+    def bounds_a(self, p0, e0, x0):
+        """Get bounds on a for given p, e, x."""
+        return self.func.bounds_a(p=p0, e=e0, x=x0)
 
     def get_inspiral(
         self,
@@ -207,9 +243,9 @@ class EMRIInspiral(TrajectoryBase):
         x0 = y3
 
         if temp_kwargs["integrate_backwards"]:
-            self.func.isvalid_pex(p=p0, e=e0, x=x0, a=a, p_buffer=[-1e-6, 0])
+            self.func.isvalid_pex(p=p0, e=e0, x=x0, a=a, p_buffer = [-1e-6, 0], separatrix_buffer=self.separatrix_buffer_dist, max_e_buffer = self.max_e_buffer)
         else:
-            self.func.isvalid_pex(p=p0, e=e0, x=x0, a=a)
+            self.func.isvalid_pex(p=p0, e=e0, x=x0, a=a, separatrix_buffer=self.separatrix_buffer_dist_integrate, max_e_buffer = self.max_e_buffer)
 
         if background == "Schwarzschild":
             a = 0.0

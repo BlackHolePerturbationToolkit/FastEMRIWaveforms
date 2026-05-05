@@ -451,7 +451,7 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
 
         for elem in [u, w, z]:
             if self.xp.any((elem < 0) | (elem > 1)):
-                raise ValueError("Amplitude interpolant accessed out-of-bounds.")
+                raise ValueError("Amplitude interpolant accessed out-of-bounds with element {0}.".format(elem[0]))
 
         if z_check in self.z_values:
             try:
