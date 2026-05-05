@@ -1,5 +1,12 @@
 import numpy as np
 
+"""
+The following coefficients are derived from E. Hairer, S. Nørsett, and G. Wanner, Solving Or-
+dinary Differential Equations I: Nonstiff Problems,
+ser. Springer Series in Computational Mathematics.
+Springer Berlin Heidelberg, 1993, pp. 173–195. doi: 10.1007/978-3-540-78862-1. --- IGNORE ---
+"""
+
 # Coefficients for using in Dormand Prince Solver
 c2 = 0.526001519587677318785587544488e-01
 c3 = 0.789002279381515978178381316732e-01
@@ -186,6 +193,24 @@ maxscale = 6.0
 
 
 class DOPR853:
+    """
+    Stepper class for performing Dormand Prince 8(5,3) integration of ODEs. This is a 12 stage embedded Runge-Kutta method 
+    with an error estimate that can be used for adaptive step size control. The class controls steps and error estimates 
+    for a system of ODEs, and can be used to take single steps or multiple steps. The class also has a method for preparing the 
+    coefficients needed for dense output interpolation, which can be used to evaluate the solution at intermediate points within a step.
+
+    The explicit methods employed within this class are described in: 
+    E. Hairer, S. Nørsett, and G. Wanner, Solving Ordinary Differential Equations I: Nonstiff Problems, 
+    ser. Springer Series in Computational Mathematics. Springer Berlin Heidelberg, 1993, pp. 173–195. 
+    doi: 10.1007/978-3-540-78862-1.
+
+    Arguments:
+        ode: A function that evaluates the derivatives of the system of ODEs. The function should have the signature 
+        ode(x, y, dydx, additionalArgs), where x is the independent variable, y is the dependent variable(s), 
+        dydx is an array to store the derivatives, and additionalArgs is a dictionary of any additional arguments 
+        needed for the ODE evaluation.
+    """
+
     def __init__(
         self,
         ode,
