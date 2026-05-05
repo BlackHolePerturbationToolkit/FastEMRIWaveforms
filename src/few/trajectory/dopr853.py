@@ -1,28 +1,11 @@
 import numpy as np
 
-# try:
-#     import cupy as xp
-#     from .pydopr853 import dormandPrinceSteps as dormandPrinceSteps_gpu
-#     from .pydopr853 import error as error_gpu
-#     from .pydopr853 import controllerSuccess as controllerSuccess_gpu
-#     gpu_available = True
-#     from cupy.cuda.runtime import setDevice
-#     #setDevice(4)
-
-# except ModuleNotFoundError:
-#     import numpy as xp
-#     gpu_available = False
-
-"""from .pydopr853_cpu import dormandPrinceSteps as dormandPrinceSteps_cpu
-from .pydopr853_cpu import error as error_cpu
-from .pydopr853_cpu import controllerSuccess as controllerSuccess_cpu
 """
-
-np.random.seed(5)
-
-# Tolerances
-# rtol = 0#1e-17
-# abstol = 1e-12
+The following coefficients are derived from E. Hairer, S. Nørsett, and G. Wanner, Solving Or-
+dinary Differential Equations I: Nonstiff Problems,
+ser. Springer Series in Computational Mathematics.
+Springer Berlin Heidelberg, 1993, pp. 173–195. doi: 10.1007/978-3-540-78862-1. --- IGNORE ---
+"""
 
 # Coefficients for using in Dormand Prince Solver
 c2 = 0.526001519587677318785587544488e-01
@@ -209,48 +192,37 @@ minscale = 1.0 / 3.0
 maxscale = 6.0
 
 
-def ODE_pendulum(x, arg, k, additionalArgs):
-    b = additionalArgs[0]
-    c = additionalArgs[1]
-    theta, omega = arg[0], arg[1]
-    k[0] = omega
-    k[1] = -b * omega - c * xp.sin(theta)
-
-
 class DOPR853:
+    """
+    Stepper class for performing Dormand Prince 8(5,3) integration of ODEs. This is a 12 stage embedded Runge-Kutta method 
+    with an error estimate that can be used for adaptive step size control. The class controls steps and error estimates 
+    for a system of ODEs, and can be used to take single steps or multiple steps. The class also has a method for preparing the 
+    coefficients needed for dense output interpolation, which can be used to evaluate the solution at intermediate points within a step.
+
+    The explicit methods employed within this class are described in: 
+    E. Hairer, S. Nørsett, and G. Wanner, Solving Ordinary Differential Equations I: Nonstiff Problems, 
+    ser. Springer Series in Computational Mathematics. Springer Berlin Heidelberg, 1993, pp. 173–195. 
+    doi: 10.1007/978-3-540-78862-1.
+
+    Arguments:
+        ode: A function that evaluates the derivatives of the system of ODEs. The function should have the signature 
+        ode(x, y, dydx, additionalArgs), where x is the independent variable, y is the dependent variable(s), 
+        dydx is an array to store the derivatives, and additionalArgs is a dictionary of any additional arguments 
+        needed for the ODE evaluation.
+    """
+
     def __init__(
         self,
         ode,
-        stopping_criterion=None,
-        tmax=1e300,
-        max_step=int(1e6),
-        use_gpu=False,
-        read_out_to_cpu=True,
     ):
         self.ode = ode
-        self.stopping_criterion = stopping_criterion
-        self.tmax, self.max_step = tmax, max_step
-        self.use_gpu = use_gpu
-        self.read_out_to_cpus = read_out_to_cpu
-
-        # self.dormandPrinceSteps2 = dormandPrinceSteps_gpu
-        # self.error2 = error_gpu
-        # self.controllerSuccess2 = controllerSuccess_gpu
-
-        # self.dormandPrinceSteps2 = dormandPrinceSteps_cpu
-        # self.error2 = error_cpu
-        # self.controllerSuccess2 = controllerSuccess_cpu
 
         self.fix_step = False
         self.abstol = 1e-10
 
     @property
     def xp(self):
-        return xp if self.use_gpu else np
-
-    @property
-    def xp_read_out(self):
-        return np if self.read_out_to_cpus else xp
+        return np
 
     def dormandPrinceSteps(
         self,
@@ -412,10 +384,6 @@ class DOPR853:
 
         solNew[:] = solOld + h * temp
 
-        # sk = 1.0 / (
-        #     abstol + rtol * self.xp.max(self.xp.array([solOld, solNew]), axis=0)
-        # )
-
         sk = 1.0 / (
             self.abstol + 0.0 * self.xp.max(self.xp.array([solOld, solNew]), axis=0)
         )
@@ -462,14 +430,6 @@ class DOPR853:
         if self.xp.any(h == 0.0):
             breakpoint()
 
-        # accept_and_prev_reject = previousReject & acceptable
-
-        # TODO: do we want this to fix the adjustment if the last was rejected
-        # h[accept_and_prev_reject] = h[accept_and_prev_reject] * self.xp.clip(
-        #     scale[accept_and_prev_reject], 0.0, 1.0
-        # )
-        # h[accept_and_prev_reject] = h[accept_and_prev_reject] * min(scale[accept_and_prev_reject] * scale[accept_and_prev_reject], 1.0)
-
         accept_and_prev_accept = ~previousReject & acceptable
         h[accept_and_prev_accept] = (
             h[accept_and_prev_accept] * scale[accept_and_prev_accept]
@@ -502,7 +462,6 @@ class DOPR853:
         x,
         h,
         y,
-        tmax_dimensionless,
         additional_args,
     ):
         xTemp = np.array([x])
@@ -514,7 +473,6 @@ class DOPR853:
             xTemp,
             hTemp,
             solOldTemp,
-            tmax_dimensionless,
             additionalArgsTemp,
             inds=None,
         )
@@ -528,7 +486,6 @@ class DOPR853:
         xTemp,
         hTemp,
         solOldTemp,
-        tmax_dimensionless,
         additionalArgsTemp,
         inds=None,
     ):
@@ -842,7 +799,6 @@ class DOPR853:
                 * (rcont4 + s1 * (rcont5 + s * (rcont6 + s1 * (rcont7 + s * rcont8))))
             )
         )
-        # output = rcont1 + s*rcont2 + rcont3 * (s - s**2)  + rcont4 * (s**2 - s**3) + rcont5 * (s**4 - s**5) + rcont6 * (s**5 - s**6) + rcont7 * (s**6 - s**7) + rcont8 * (s**7 - s**8)
 
         return output
 
@@ -919,503 +875,3 @@ class DOPR853:
         derivative = d_by_ds / diffs[:, None] ** order
 
         return derivative
-
-    #                         denseOutput[indexOut] = rcont1 + s * (rcont2 + s1 * (rcont3 + s * (rcont4 + s1 * (rcont5 + s * (rcont6 + s1 * (rcont7 + s * rcont8))))))
-
-    #                             denseDerivOutput[indexOut] = (rcont2 + rcont3 - 2*rcont3*s + rcont4*(2 - 3*s)*s - (-1 + s)*s*(rcont5*(2 - 4*s) + rcont6*(3 - 5*s)*s + (-1 + s)*s*(rcont7*(-3 + 6*s) + rcont8*s*(-4 + 7*s))))/h
-
-    # Solver
-    def integrate(
-        self,
-        condBound,  # Initial condition stored as a vector
-        argsData,
-        hInit=None,  # Initial spacing
-        step_num=None,
-        denseOutput=None,
-        denseOutputLoc=None,
-        fix_step=False,
-    ):
-        """
-        # Declare all shared memory
-        # Vectors for current solution
-        CUDA_SHARED double solOldData[BLOCK * NMAX]
-        CUDA_SHARED double solNewData[BLOCK * NMAX]
-
-        # Vectors to store current position and spacing
-        CUDA_SHARED double x[BLOCK]
-        CUDA_SHARED double h[BLOCK]
-
-        # Arguements for use in ODE
-        CUDA_SHARED double additionalArgs[BLOCK * MAXARGS]
-
-        # Vectors for use in stepping
-        CUDA_SHARED double k1[BLOCK * NMAX]
-        CUDA_SHARED double k2[BLOCK * NMAX]
-        CUDA_SHARED double k3[BLOCK * NMAX]
-        CUDA_SHARED double k4[BLOCK * NMAX]
-        CUDA_SHARED double k5[BLOCK * NMAX]
-        CUDA_SHARED double k6[BLOCK * NMAX]
-        CUDA_SHARED double k7[BLOCK * NMAX]
-        CUDA_SHARED double k8[BLOCK * NMAX]
-        CUDA_SHARED double k9[BLOCK * NMAX]
-        CUDA_SHARED double k10[BLOCK * NMAX]
-
-        # Vectors for recovering dense output
-        CUDA_SHARED double rcont1[BLOCK * NMAX]
-        CUDA_SHARED double rcont2[BLOCK * NMAX]
-        CUDA_SHARED double rcont3[BLOCK * NMAX]
-        CUDA_SHARED double rcont4[BLOCK * NMAX]
-        CUDA_SHARED double rcont5[BLOCK * NMAX]
-        CUDA_SHARED double rcont6[BLOCK * NMAX]
-        CUDA_SHARED double rcont7[BLOCK * NMAX]
-        CUDA_SHARED double rcont8[BLOCK * NMAX]
-
-        # Vectors used for temp values
-        CUDA_SHARED double arg[BLOCK * NMAX]
-        CUDA_SHARED double xCurrent[BLOCK]
-        CUDA_SHARED double newDer[BLOCK * NMAX]
-
-        # Error tracking
-        CUDA_SHARED double err[BLOCK]
-        CUDA_SHARED double errOld[BLOCK]
-
-        # Flag to determine if the step made was a success
-        CUDA_SHARED bool flagSuccess[BLOCK]
-
-        # Temporary values for x and h, need these for dense storage
-        CUDA_SHARED double xOld[BLOCK], hOld[BLOCK]
-
-        # Check if the previous step was rejected
-        CUDA_SHARED bool previousReject[BLOCK]
-        """
-        if (
-            denseOutput is not None
-            or denseOutput is not None
-            or denseOutput is not None
-        ):
-            if denseOutput is None:
-                raise ValueError(
-                    "If providing denseOutputLoc/denseOutput/step_num, must provide all."
-                )
-
-        if denseOutput is None:
-            solOld = self.xp.asarray(condBound)  # boundary conditions
-            nODE, numSys = solOld.shape
-            denseOutput = self.xp_read_out.zeros((self.max_step, nODE, numSys))
-            denseOutputLoc = self.xp_read_out.zeros((self.max_step, numSys))
-            step_num = self.xp.zeros(numSys, dtype=int)
-            x = self.xp.zeros(numSys)
-            if self.use_gpu and self.read_out_to_cpu:
-                denseOutput[0, :, :] = solOld.get()
-                denseOutputLoc[0, :] = x.get()
-            else:
-                denseOutput[0, :, :] = solOld
-                denseOutputLoc[0, :] = x
-
-        else:
-            assert denseOutput.ndim == 3
-            max_steps, nODE, numSys = denseOutput.shape
-            # adjust max_steps
-            self.max_steps = max_steps
-            assert denseOutputLoc.shape == (self.max_step, numSys)
-            assert step_num.shape[0] == numSys
-            x = denseOutputLoc[(step_num, self.xp.arange(numSys))]
-
-            solOld = (
-                denseOutput[
-                    (
-                        self.xp.repeat(step_num, nODE),
-                        self.xp.tile(self.xp.arange(4), (numSys, 1)).flatten(),
-                        self.xp.repeat(self.xp.arange(numSys), nODE),
-                    )
-                ]
-                .reshape(numSys, nODE)
-                .T
-            )
-
-        if self.stopping_criterion is not None and hasattr(
-            self.stopping_criterion, "setup"
-        ):
-            self.stopping_criterion.setup(numSys)
-
-        additionalArgs = self.xp.asarray(argsData)
-
-        if hInit is None:
-            hInit = 0.01
-
-        # hInit_orig = self.xp.full(numSys, hInit)
-        h = self.xp.full_like(x, hInit)
-
-        # xOld = self.xp.zeros_like(x)
-        # hOld = self.xp.zeros_like(h)
-
-        # Set pointers to these that can be swapped
-        # solNew = self.xp.zeros_like(solOld)
-
-        # Loop while true
-        loopFlag = True
-
-        # Set an initial error value
-        errOld = self.xp.zeros_like(x)
-        errOld[:] = 1e-04
-
-        # Check if the previous step was rejected
-        previousReject = self.xp.zeros_like(x, dtype=bool)
-        previousReject[:] = False
-
-        # Current output step
-        # denseCurrent = 0
-
-        # Current output location
-        # denseCurrentLoc = 0.0  # denseOutputLoc[denseCurrent * eqNUM + eqSysNum]
-
-        # Calculate the max and min of a window
-        # We need to do this to account for whether we're moving forwards or backwards in the domain
-        # double windowMax
-        # double windowMin
-
-        # numDensePointsHere = (numDensePoints + 1)/2
-
-        # TODO: dense sampling
-        # Dense output variables
-        # double s, s1
-
-        # Indexing for output
-        # indexOut
-        # index
-
-        # for (j = 0 j < N j++)
-        # {
-        #    denseOutput[j * max_step + step_num] = solOld[j * BLOCK + i]
-        # }
-        # denseOutputLoc[step_num] = x[i]
-        # Use a while loop as it is easier to keep stepping regardless of
-
-        individual_loop_flag = self.xp.ones_like(step_num, dtype=bool)
-
-        # ii = 0
-        jj = 0
-
-        stop = self.xp.ones_like(x, dtype=bool)
-        self.stop_info = self.xp.zeros_like(x, dtype=int)
-        while loopFlag:
-            # num_current = np.sum(individual_loop_flag)
-            xTemp = x[individual_loop_flag]
-            hTemp = h[individual_loop_flag]
-            # xOldTemp = self.xp.zeros_like(xTemp)
-            # hOldTemp = self.xp.zeros_like(hTemp)
-            solOldTemp = solOld[:, individual_loop_flag]  # .flatten()
-            # solNewTemp = solNew[:, individual_loop_flag]  # .flatten()
-            errOldTemp = errOld[individual_loop_flag]
-            previousRejectTemp = previousReject[individual_loop_flag]
-            additionalArgsTemp = additionalArgs[:, individual_loop_flag]  # .flatten()
-
-            numSysTemp = xTemp.shape[0]
-            # (
-            #     k1,
-            #     k2,
-            #     k3,
-            #     k4,
-            #     k5,
-            #     k6,
-            #     k7,
-            #     k8,
-            #     k9,
-            #     k10,
-            # ) = [self.xp.zeros((nODE, numSysTemp)) for _ in range(10)]
-            # err = self.xp.zeros(numSysTemp)
-            flagSuccess = self.xp.zeros(numSysTemp, dtype=bool)
-            # 0.000857
-
-            # xCurrent_buffer = self.xp.zeros_like(xTemp)
-            # arg_buffer = self.xp.zeros_like(solOldTemp)
-            # ak_term_buffer = self.xp.zeros_like(solOldTemp)
-            # err = self.xp.zeros_like(xTemp)
-
-            # nargs = nODE
-            # numEq = numSysTemp
-            # num_add_args = additionalArgs.shape[0]
-            # Compute the steps to iterate to the next timestep
-
-            # index_here = self.xp.arange(individual_loop_flag.shape[0])[
-            #     individual_loop_flag
-            # ].astype(self.xp.int32)
-
-            if fix_step:
-                raise NotImplementedError
-
-            flagSuccess = self.take_step(
-                xTemp,
-                hTemp,
-                solOldTemp,
-                tMax,
-                additionalArgsTemp,
-                fix_step=fix_step,
-                inds=np.arange(numSys)[individual_loop_flag],
-            )
-
-            if fix_step:
-                raise NotImplementedError
-
-            """
-            self.dormandPrinceSteps(xTemp, solOldTemp, hTemp, additionalArgsTemp, *ks)
-
-
-        # 0.00344 (~0.00258)
-            # TODO: improve
-            ks_error = [ks[i - 1] for i in [1, 2, 3, 6, 7, 8, 9, 10]]
-
-            # Compute the error
-            self.error(err, solOldTemp, solNewTemp, hTemp, *ks_error)
-        # 0.00427 (0.000808)
-
-            # Store the old values
-
-
-            # # Check if the error was acceptable
-            self.controllerSuccess(flagSuccess, err, errOldTemp, previousRejectTemp, hTemp, xTemp)
-
-        # 0.00648 (0.00221)
-            """
-            x[individual_loop_flag] = xTemp
-            h[individual_loop_flag] = hTemp
-            solOld[:, individual_loop_flag] = solOldTemp
-            errOld[individual_loop_flag] = errOldTemp
-            previousReject[individual_loop_flag] = previousRejectTemp
-
-            # 0.00749475707532838 (0.001)
-
-            index_update = self.xp.arange(individual_loop_flag.shape[0])[
-                individual_loop_flag
-            ][flagSuccess]
-
-            step_num[index_update] += 1
-
-            read_out_step = self.xp.tile(step_num[index_update], nODE)
-            read_out_index_update = self.xp.tile(index_update, nODE)
-            read_out_ode_dim = self.xp.repeat(self.xp.arange(nODE), len(index_update))
-
-            # 0.007710501374676823 (0.00022)
-            if self.use_gpu and self.read_out_to_cpu:
-                denseOutput[
-                    (
-                        read_out_step.get(),
-                        read_out_ode_dim.get(),
-                        read_out_index_update.get(),
-                    )
-                ] = solOld[:, index_update].flatten().get()
-                denseOutputLoc[(step_num[index_update].get(), index_update.get())] = x[
-                    index_update
-                ].get()
-            else:
-                denseOutput[
-                    (read_out_step, read_out_ode_dim, read_out_index_update)
-                ] = solOld[:, index_update].flatten()
-                denseOutputLoc[(step_num[index_update], index_update)] = x[index_update]
-
-            if self.stopping_criterion is not None and len(index_update) > 0:
-                stop_temp = self.xp.asarray(
-                    self.stopping_criterion(
-                        step_num,
-                        solOld[:, index_update],
-                        additionalArgs[:, index_update],
-                        index_update,
-                    )
-                )
-            else:
-                stop_temp = self.xp.zeros(len(index_update), dtype=bool)
-
-            # TODO: add max step size 0.05
-            # for checking how it stopped
-            self.stop_info[index_update] = stop_temp.copy()
-            stop[index_update] = stop_temp.astype(bool)
-
-            individual_loop_flag[
-                (x >= self.tmax) | (step_num >= self.max_step - 1) | stop
-            ] = False  #  | (solNew[0] < 6.0)] = False
-            # self.xp.cuda.runtime.deviceSynchronize()
-            if self.xp.all(~individual_loop_flag):
-                loopFlag = False
-
-            jj += 1
-            # print("CHECKING", jj)
-            # if jj >= 281:
-            #    break
-            # if ii % 1 == 0:
-            # et = time.perf_counter()
-            # print((et - st)/ ii)
-            # print(ii)
-            # 0.008480359460227191 (0.0.00077)
-
-        if self.stopping_criterion is not None and hasattr(
-            self.stopping_criterion, "reset"
-        ):
-            self.stopping_criterion.reset()
-
-        return (denseOutputLoc, denseOutput, step_num)  # denseDerivOutput
-
-
-def stopping_criterion(step_num, denseOutput):
-    stop = xp.zeros_like(step_num, dtype=bool)
-    num_diff = 10
-    for i, step in enumerate(step_num):
-        if step > num_diff:
-            if xp.all(
-                xp.abs(
-                    denseOutput[step - num_diff : step, :, i]
-                    / xp.abs(denseOutput[:, :, i]).max(axis=0)
-                )
-                < 1e-3
-            ):
-                stop[i] = True
-    return stop
-
-
-"""
-        # If check if we accept the step
-        if (flagSuccess[i])
-
-        {
-            windowMax = max(xOld[i], xOld[i] + h0)
-            windowMin = min(xOld[i], xOld[i] + h0)
-
-            /*
-            # Check if our current dense output is in range - we have this here to avoid computing extra steps when not needed
-            if (denseCurrentLoc > windowMin && denseCurrentLoc < windowMax)
-            {
-                # Prepare dense output variables
-                densePrepare(arg, xCurrent, newDer, rcont1, rcont2, rcont3, rcont4, rcont5, rcont6, rcont7, rcont8, k1, k2, k3, k6, k7, k8, k9, k10, solOld, solNew, xOld, hOld, additionalArgs)
-
-                # Loop over the current range of xOld to x to fill any dense entries
-
-                while (denseCurrentLoc > windowMin && denseCurrentLoc < windowMax)
-                {
-                    # Output the data to the desired location
-                    double h = h0
-                    s = (denseCurrentLoc - xOld[i]) / h
-                    s1 = 1.0 - s
-
-                    for (j = 0 j < N j++)
-                    {
-                        index = j * BLOCK + i
-                        indexOut = (denseCurrent * N * eqNUM) + j * eqNUM + eqSysNum
-
-                        # evaluating solution to the 4 ODES at densely sampled points in the libration region
-                        denseOutput[indexOut] = rcont1[index] + s * (rcont2[index] + s1 * (rcont3[index] + s * (rcont4[index] + s1 * (rcont5[index] + s * (rcont6[index] + s1 * (rcont7[index] + s * rcont8[index]))))))
-
-                        denseDerivOutput[indexOut] = (rcont2[index] + rcont3[index] - 2*rcont3[index]*s + rcont4[index]*(2 - 3*s)*s - (-1 + s)*s*(rcont5[index]*(2 - 4*s) + rcont6[index]*(3 - 5*s)*s + (-1 + s)*s*(rcont7[index]*(-3 + 6*s) + rcont8[index]*s*(-4 + 7*s))))/h
-
-                        if ((eqSysNum == 0) && ((j == 0) || (j == 2)) && (denseCurrent == 0)) printf("CHECK %d %d %d %.18e, %.18e, %.18e\n", j, eqSysNum, denseCurrent, denseCurrentLoc, denseOutput[indexOut], denseDerivOutput[indexOut])
-                        #if ((denseCurrent == 5) && (eqSysNum == 10)) printf("%d, %d, %e %e %e %e %e %e %e %e %e %e %e %e %e %e\n", i, j, denseOutput[indexOut], solOld[index], solNew[index], deriv_out, k1[index], k2[index], k3[index], k4[index], k5[index], k6[index], k7[index], k8[index], k9[index], k10[index])
-                    }
-
-                    # Move to next position
-                    denseCurrent++
-
-                    if (denseCurrent < numDensePointsHere)
-                    {
-                        denseCurrentLoc = denseOutputLoc[denseCurrent * eqNUM + eqSysNum]
-                    }
-                    else
-                    {
-                        break
-                    }
-                }
-            }*/
-
-
-            # Update values to the next step
-            swap(&solOld, &solNew)
-            solOld[:] = solNew
-
-            x[:] = xOld + hOld
-
-            denseOutput[step_num] = solNew
-
-            denseOutputLoc[step_num] = x
-        }
-        # If we don't accept the step then keep going
-        else
-        {
-            continue
-        }
-
-
-        # If all output now complete we're done
-        #if (denseCurrent >= numDensePointsHere)
-        if ((x[i] >= tMax) || (step_num >= max_step - 1) || (solNew[0 * BLOCK + i] < 6.0))
-        {
-            num_steps[eqSysNum] = step_num
-            loopFlag = false
-            break
-        }
-        step_num += 1
-    }
-}
-    """
-
-
-if __name__ == "__main__":
-    numSys = 100
-    nODE = 2
-
-    xp = np  # xp if gpu_available else np
-
-    x = xp.zeros(numSys)
-
-    b = xp.full(numSys, 0.25)
-    c = xp.full(numSys, 5.0)
-    additionalArgs = xp.array([b, c])
-    solOld = xp.array([xp.random.rand(numSys) * xp.pi - xp.pi / 2.0, xp.zeros(numSys)])
-    # self.ode(x, arg, solOld, additionalArgs)
-    h = xp.full(numSys, 0.01)
-
-    """
-    ks = [xp.zeros((nODE, numSys)) for _ in range(10)]
-    dormandPrinceSteps(
-        arg,
-        x,
-        solOld,
-        h,
-        additionalArgs,
-        *ks
-    )
-
-    errOld = xp.zeros(numSys)
-
-    err = xp.zeros(numSys)
-    solNew = xp.zeros_like(solOld)
-    ks_error = [ks[i - 1] for i in [1, 2, 3, 6, 7, 8, 9, 10]]
-    error(
-        err,
-        solOld,
-        solNew,
-        h,
-        *ks_error
-    )
-
-    flagSuccess = xp.zeros(numSys, dtype=bool)
-    previousReject = xp.zeros(numSys, dtype=bool)
-    controllerSuccess(flagSuccess, err, errOld, previousReject, h, x)
-    """
-    tMax = 10000.0
-    max_step = 2000
-
-    # TODO: grow this array as needed might be better
-
-    num_steps = xp.zeros(numSys, dtype=int)
-
-    solOld_check = solOld.copy()
-
-    dopr = DOPR853(
-        ODE_pendulum,
-        stopping_criterion=None,  # stopping_criterion,
-        tmax=tMax,
-        max_step=max_step,
-    )
-    denseOutputLoc, denseOutput, step_num = dopr.integrate(
-        solOld,  # Initial condition stored as a vector
-        additionalArgs,
-    )
-
-    breakpoint()

@@ -243,7 +243,7 @@ class EMRIInspiral(TrajectoryBase):
         x0 = y3
 
         if temp_kwargs["integrate_backwards"]:
-            self.func.isvalid_pex(p=p0, e=e0, x=x0, a=a, p_buffer = [-1e-6, 0], separatrix_buffer=self.separatrix_buffer_dist, max_e_buffer = self.max_e_buffer)
+            self.func.isvalid_pex(p=p0, e=e0, x=x0, a=a, p_buffer = [-1e-6, 0], separatrix_buffer=self.separatrix_buffer_dist, max_e_buffer = 0.0)
         else:
             self.func.isvalid_pex(p=p0, e=e0, x=x0, a=a, separatrix_buffer=self.separatrix_buffer_dist_integrate, max_e_buffer = self.max_e_buffer)
 

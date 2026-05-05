@@ -126,17 +126,17 @@ class SchwarzEccFlux(ODEBase):
     def max_p(self, e, x=1, a=0):
         return PMAX_SCHW + 2.0 * e
 
-    def bounds_p(self, e, x=1, a=0, p_buffer=[0, 0], separatrix_buffer = None):
+    def bounds_p(self, e, x=1, a=0, p_buffer=[0, 0], separatrix_buffer = None, max_e_buffer = None):
         return [self.min_p(e, x, a, separatrix_buffer=separatrix_buffer) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
 
     def max_e(self, p, x=1, a=0):
         return EMAX_SCHW
 
-    def isvalid_pex(self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], e_buffer=[0, 0], sepatrix_buffer = None):
+    def isvalid_pex(self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], e_buffer=[0, 0], separatrix_buffer = None, max_e_buffer = None):
         self.isvalid_x(x)
         self.isvalid_e(e, e_buffer=e_buffer)
         self.isvalid_a(a)
-        pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer, separatrix_buffer=sepatrix_buffer)
+        pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer, separatrix_buffer=separatrix_buffer, max_e_buffer=max_e_buffer)
         assert p >= pmin and p <= pmax, (
             f"Interpolation: p out of bounds. Must be between {pmin + p_buffer[0]} and {pmax - p_buffer[1]}."
         )
@@ -505,16 +505,12 @@ class KerrEccEqFlux(ODEBase):
         z = z_of_a(a_in)
         
         # this is how far away we want our e value to be from the maximum e value supported by the interpolation grid
-        # if e > 0:
-        #     e_bound = e + max_e_buffer
-        # else:
-        #     e_bound = 0
         e_bound = e/(1 - max_e_buffer)
         p_sep = _get_separatrix_kernel_inner(a, e_bound, x)
 
         if w_of_euz_flux(e_bound, 0.0, z) > 1:
-            if e_bound > EMAX:
-                e_bound = EMAX
+            if e_bound > EMAX / (1 - max_e_buffer):
+                e_bound = EMAX / (1 - max_e_buffer)
             u_min = u_where_w_is_unity(e_bound, z, kind="flux")
         else:
             u_min = 0.0
