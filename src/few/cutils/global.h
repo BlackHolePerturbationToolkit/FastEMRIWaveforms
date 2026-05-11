@@ -41,6 +41,10 @@ typedef gcmplx::complex<double> cmplx;
 #define CUDA_SYNC_THREADS
 #endif
 
+/** 
+gpuErrchk is used by AmpInterp2D.cu, gpuAAK.cu, and matmul.cu to check for CUDA errors
+**/  
+
 #ifdef __CUDACC__
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -54,6 +58,10 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 
 #endif
 
+/** 
+The following structs are deprecated and no longer used for waveform generation or interpolation. They will be removed in future
+versions of FEW.
+**/  
 typedef struct tagInterpContainer{
   fod *y;
   fod *c1;
