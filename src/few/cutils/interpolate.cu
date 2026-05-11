@@ -728,7 +728,6 @@ void get_waveform(cmplx *d_waveform, double *interp_array, double *phase_interp_
   // prepare streams for CUDA
   int NUM_THREADS = 256;
   cudaStream_t streams[number_of_old_spline_points - 1];
-  int num_breaks = num_teuk_modes / MAX_MODES_BLOCK;
 
 #endif
 
