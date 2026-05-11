@@ -188,11 +188,7 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
         up_ldc = cqS * sqK * np.cos(phiS - phiK) - cqK * sqS
         dw_ldc = sqK * np.sin(phiS - phiK)
 
-        if dw_ldc != 0.0:
-            psi_ldc = -np.arctan2(up_ldc, dw_ldc)
-
-        else:
-            psi_ldc = 0.5 * np.pi
+        psi_ldc = -np.arctan2(up_ldc, dw_ldc)
 
         c2psi_ldc = np.cos(2.0 * psi_ldc)
         s2psi_ldc = np.sin(2.0 * psi_ldc)
