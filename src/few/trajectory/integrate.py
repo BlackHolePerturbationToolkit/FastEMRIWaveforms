@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import Optional, Tuple, Type
 
 import numpy as np
@@ -48,7 +49,7 @@ def digest_func(func):
     return func
 
 
-class Integrate:
+class Integrate(ABC):
     """Custom integrator class.
 
     Flexible integration options. # TODO: discuss options
@@ -792,7 +793,7 @@ class Integrate:
             self.tmax_dimensionless * self.Msec, y_finish, spline_output=None
         )  # adds time in seconds
 
-    @classmethod
+    @abstractmethod
     def get_pex(self, y: np.ndarray) -> np.ndarray:
         """Handles integrator-specific conversion from y to pex and returns the result."""
         raise NotImplementedError
