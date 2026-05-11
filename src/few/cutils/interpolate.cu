@@ -272,9 +272,9 @@ void fill_final_derivs(double *t_arr, double *interp_array,
             double final_c2 = (2. * c2 + 6. * c3 * x)/2.;
             double final_c3 = c3;
 
-            interp_array[(1 * ninterps +  interp_i) * length + length - 1] = c1;
-            interp_array[(2 * ninterps +  interp_i) * length + length - 1] = c2;
-            interp_array[(3 * ninterps +  interp_i) * length + length - 1] = c3;
+            interp_array[(1 * ninterps +  interp_i) * length + length - 1] = final_c1;
+            interp_array[(2 * ninterps +  interp_i) * length + length - 1] = final_c2;
+            interp_array[(3 * ninterps +  interp_i) * length + length - 1] = final_c3;
 
         }
 }
