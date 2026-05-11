@@ -724,18 +724,26 @@ class KerrEccEqFlux(ODEBase):
 
 @njit
 def _pdot_PN(p, e, risco, p_sep):
+    """
+    https://arxiv.org/pdf/2201.07044.pdf
+    eq 91
+    """
     return (8.0 * (1.0 - (e * e)) ** 1.5 * (8.0 + 7.0 * (e * e))) / (
         5.0 * p * (((p - risco) * (p - risco)) - ((-risco + p_sep) * (-risco + p_sep)))
-    )
+    ) # (* Eq.(91e) of Skoupý & Lukes-Gerakopoulos [arXiv:2201.07044] *)
 
 
 @njit
 def _edot_PN(p, e, risco, p_sep):
+    """
+    https://arxiv.org/pdf/2201.07044.pdf
+    eq 91
+    """
     return (((1.0 - (e * e)) ** 1.5) * (304.0 + 121.0 * (e * e))) / (
         15.0
         * (p * p)
         * (((p - risco) * (p - risco)) - ((-risco + p_sep) * (-risco + p_sep)))
-    )
+    ) # (* Eq.(91f) of Skoupý & Lukes-Gerakopoulos [arXiv:2201.07044] *)
 
 
 @njit(fastmath=True)
