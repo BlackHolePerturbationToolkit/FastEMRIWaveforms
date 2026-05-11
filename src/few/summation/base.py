@@ -113,7 +113,12 @@ class SummationBase(ParallelModuleBase):
         if self.output_type == "fd":
             if "f_arr" in kwargs:
                 frequency = kwargs["f_arr"]
-                dt = float(self.xp.max(frequency) * 2)
+                dt = float(self.xp.max(frequency) / 2)
+                if not self.xp.all(frequency == self.xp.sort(frequency)):
+                    raise ValueError("Frequency array must be sorted in ascending order.")
+                if not self.xp.all(self.xp.diff(frequency) == self.xp.diff(frequency)[0]):
+                    raise ValueError("Frequency array must be equally spaced.")
+                
                 Nf = len(frequency)
                 # total
                 waveform = self.xp.zeros(Nf, dtype=self.xp.complex128)
