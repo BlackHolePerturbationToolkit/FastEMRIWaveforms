@@ -230,7 +230,7 @@ class ModeSelector(ParallelModuleBase):
         modeinds_map: Optional[np.ndarray] = None,
         include_minus_mkn: Optional[bool] = None,
         mode_selection_threshold: float = None,
-    ) -> np.ndarray:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         r"""Call to sort and filer teukolsky modes.
 
         This is the call function that takes the teukolsky modes, ylms,
@@ -276,6 +276,13 @@ class ModeSelector(ParallelModuleBase):
                 the waveform, albeit at the cost of some accuracy (usually an
                 acceptable loss). Default that gives good mismatch qualities is
                 1e-5.
+
+        outputs:
+            teuk_modes_out: Filtered teukolsky amplitudes.
+            ylms_out: Filtered ylm values.
+            l_arr_out: Filtered l-mode indices.
+            m_arr_out: Filtered m-mode indices.
+            n_arr_out: Filtered n-mode indices.
 
         """
         if include_minus_mkn is None:
