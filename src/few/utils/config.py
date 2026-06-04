@@ -262,7 +262,6 @@ class ConfigConsumer(abc.ABC):
         """Get the value of a config entry via attributes."""
         if attr in self._items:
             return self._items[attr].value
-        return self.__getattribute__(attr)
 
     def get_item(self, key: str) -> Tuple[ConfigItem, ConfigEntry]:
         return self._items[key], self._entries[key]
