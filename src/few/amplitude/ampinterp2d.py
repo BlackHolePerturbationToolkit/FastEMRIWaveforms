@@ -27,37 +27,6 @@ from .base import AmplitudeBase
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-# TODO: handle multiple waveform models
-_DEFAULT_SPINS = [
-    -0.99,
-    -0.95,
-    -0.9,
-    -0.8,
-    -0.7,
-    -0.6,
-    -0.5,
-    -0.4,
-    -0.3,
-    -0.2,
-    -0.1,
-    0.0,
-    0.1,
-    0.2,
-    0.3,
-    0.4,
-    0.5,
-    0.6,
-    0.7,
-    0.8,
-    0.9,
-    0.95,
-    0.99,
-]
-
-_DEFAULT_AMPLITUDE_FILENAMES = [
-    f"KerrEqEccAmpCoeffs_a{spin:.3f}.h5" for spin in _DEFAULT_SPINS
-]
-
 
 class AmpInterp2D(AmplitudeBase, ParallelModuleBase):
     r"""Calculate Teukolsky amplitudes with a bicubic spline interpolation.
@@ -312,7 +281,7 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
             except KeyError:
                 pass
 
-        self.z_values = z_knots
+        self.z_values = self.xp.asarray(z_knots)
 
     def evaluate_interpolant_at_index(self, index, region_A_mask, w, u, mode_indexes):
         z_out = self.xp.zeros(
@@ -447,11 +416,10 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
         u = self.xp.asarray(u)
         w = self.xp.asarray(w)
         z = self.xp.asarray(z)
-        self.z_values = self.xp.asarray(self.z_values)
 
         for elem in [u, w, z]:
             if self.xp.any((elem < 0) | (elem > 1)):
-                raise ValueError("Amplitude interpolant accessed out-of-bounds with element {0}.".format(elem[0]))
+                raise ValueError("Amplitude interpolant accessed out-of-bounds with element {0}.".format(elem[(elem < 0) | (elem > 1)][0]))
 
         if z_check in self.z_values:
             try:
@@ -846,28 +814,3 @@ def _spline_coefficients_to_file(
     outfile.close()
 
     return out_filepath
-
-
-if __name__ == "__main__":
-    # try and instantiate the amplitude class
-    spin_values = np.r_[np.linspace(0.0, 0.9, 10), 0.95, 0.99]
-    spin_values = np.r_[-np.flip(spin_values)[:-1], spin_values]
-
-    base_path = "Teuk_amps_a{:.2f}_{}lmax_10_nmax_50_new_m+.h5"
-    filepaths = []
-    for spin in spin_values:
-        part1 = abs(spin)
-        if spin < 0:
-            part2 = "r_"
-        elif spin > 0:
-            part2 = "p_"
-        elif spin == 0:
-            part2 = ""
-        filepaths.append(base_path.format(part1, part2))
-
-    # running this should auto-produce coefficients files
-    AmpInterpKerrEccEq(filenames=filepaths)
-    from few import get_logger
-
-    amp = AmpInterpKerrEccEq()
-    get_logger().info(amp(0.0, np.array([10.0]), np.array([0.3]), np.array([1.0])))
