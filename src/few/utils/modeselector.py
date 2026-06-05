@@ -10,12 +10,6 @@ from .constants import MTSUN_SI, PI
 from .geodesic import get_fundamental_frequencies
 from .globals import get_logger
 
-# pytorch
-try:
-    import torch
-except (ImportError, ModuleNotFoundError):
-    pass  #  we can catch this later
-
 from typing import Optional, Union
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -226,11 +220,11 @@ class ModeSelector(ParallelModuleBase):
         ylms: np.ndarray,
         modeinds: list[np.ndarray],
         fund_freq_args: Optional[tuple] = None,
-        mode_selection: Optional[Union[str, list, np.ndarray]] = None,
+        mode_selection: Optional[Union[str, list]] = None,
         modeinds_map: Optional[np.ndarray] = None,
         include_minus_mkn: Optional[bool] = None,
         mode_selection_threshold: float = None,
-    ) -> np.ndarray:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         r"""Call to sort and filer teukolsky modes.
 
         This is the call function that takes the teukolsky modes, ylms,
@@ -277,6 +271,13 @@ class ModeSelector(ParallelModuleBase):
                 acceptable loss). Default that gives good mismatch qualities is
                 1e-5.
 
+        outputs:
+            teuk_modes_out: Filtered teukolsky amplitudes.
+            ylms_out: Filtered ylm values.
+            l_arr_out: Filtered l-mode indices.
+            m_arr_out: Filtered m-mode indices.
+            n_arr_out: Filtered n-mode indices.
+
         """
         if include_minus_mkn is None:
             include_minus_mkn = self.include_minus_mkn
@@ -289,7 +290,7 @@ class ModeSelector(ParallelModuleBase):
                 raise ValueError(
                     "Only supports mode_selection with m >= 0 when include_minus_mkn = True."
                 )
-        # if it is a string, check if it is 'all' or 'eps'. If so, return all modes
+        # if it is a string, check if it is 'all' or 'threshold'. If so, return all modes
         elif isinstance(mode_selection, str) and mode_selection not in [
             "all",
             "threshold",
@@ -368,7 +369,6 @@ class ModeSelector(ParallelModuleBase):
 
         else:
             # get the power contribution of each mode including m < 0
-            # if self.sensitivity_fn is None:
             power = (
                 self.xp.abs(
                     self.xp.concatenate(
