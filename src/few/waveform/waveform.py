@@ -20,7 +20,7 @@ from ..utils.baseclasses import (
 )
 from ..utils.constants import MRSUN_SI, Gpc
 from ..utils.mappings.pn import xI_to_Y
-from ..utils.modeselector import ModeSelector, NeuralModeSelector
+from ..utils.modeselector import ModeSelector
 from .base import AAKWaveformBase, SphericalHarmonicWaveformBase, WaveformModule
 
 # get path to this file
