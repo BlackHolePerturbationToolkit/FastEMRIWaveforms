@@ -36,7 +36,7 @@ def muM_to_m1m2(
         m2: Mass of the second body.
     """
 
-    sqrdet = np.sqrt(M**2 - 4 * mu**2)
+    sqrdet = np.sqrt(M**2 - 4 * M * mu)
     m1 = (M + sqrdet) / 2
     m2 = (M - sqrdet) / 2
     return m1, m2
