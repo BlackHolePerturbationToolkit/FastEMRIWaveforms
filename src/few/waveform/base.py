@@ -165,7 +165,8 @@ class SphericalHarmonicWaveformBase(
             T: Total observation time in years.
                 Default is 1.0.
             mode_selection_threshold: Controls the fractional accuracy during mode
-                filtering. Raising this parameter will remove modes. Lowering
+                filtering (as described in Sec IIIC of https://doi.org/10.48550/arXiv.2506.09470). 
+                Raising this parameter will remove modes. Lowering
                 this parameter will add modes. Default that gives a good overalp
                 is 1e-5.
             show_progress: If True, show progress through
