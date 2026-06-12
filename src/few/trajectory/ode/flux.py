@@ -685,7 +685,9 @@ class KerrEccEqFlux(ODEBase):
                 Edot = -self.Edot_interp_B(u, w, z) * EdotPN
                 Ldot = -self.Ldot_interp_B(u, w, z) * LdotPN
 
-            if a_in < 0:
+            # interpolation assumes x = 1. Use symmetries Ldot(a, p, e, x) = - Ldot(-a, p, e, -x)
+            # and Edot(a, p, e, x) = Edot(-a, p, e, -x) to get the correct sign for x = -1
+            if x < 0:
                 Ldot *= -1
 
             return Edot, Ldot
