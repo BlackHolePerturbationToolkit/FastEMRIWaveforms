@@ -169,7 +169,7 @@ def _brentq_jit(f, a, b, args, tol):
         return a if fa == 0.0 else b
 
     if fa * fb > 0.0:
-        raise ValueError("f(a) and f(b) must have different signs.")
+        raise ValueError("f(a) and f(b) have the same sign. Either no root or multiple roots exist within the specified interval [a, b]. Consider extending / decreasing the bounds. ")
 
     c = a
     fc = fa
