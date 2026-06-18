@@ -738,6 +738,9 @@ def _edot_PN(p, e, risco, p_sep):
     """
     https://arxiv.org/pdf/2201.07044.pdf
     eq 91
+
+    Note we remove a leading factor of e to avoid a singularity at e=0, since we
+    use this function to normalize the edot flux grid.
     """
     return (((1.0 - (e * e)) ** 1.5) * (304.0 + 121.0 * (e * e))) / (
         15.0
