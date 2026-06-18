@@ -94,66 +94,48 @@ def get_mismatch(
     overlap = get_overlap(time_series_1, time_series_2, use_gpu=use_gpu)
     return 1.0 - overlap
 
+import math
+
+@njit(fastmath=False)
+def _cbrt(x):
+    return math.copysign(abs(x) ** (1/3), x)
 
 @njit(fastmath=False)
 def _solveCubic(A2, A1, A0):
-    # Coefficients
-    a = 1.0  # coefficient of r^3
-    b = A2  # coefficient of r^2
-    c = A1  # coefficient of r^1
-    d = A0  # coefficient of r^0
+    """
+    Solve the cubic equation x^3 + A2*x^2 + A1*x + A0 = 0 for real roots.
 
-    # Calculate p and q
-    p = (3.0 * a * c - b * b) / (3.0 * a * a)
-    q = (2.0 * b * b * b - 9.0 * a * b * c + 27.0 * a * a * d) / (27.0 * a * a * a)
+    This function uses Cardano's method to find the roots of the cubic equation. It returns
+    the three roots in descending order. If there are complex roots, it returns the real part of the complex roots.
+    """
 
-    # Calculate discriminant
+    # Transform to depressed cubic t^3 + pt + q = 0 with t = x + A2/3
+    p = A1 - A2 * A2 / 3.0
+    q = 2.0 * A2**3 / 27.0 - A1 * A2 / 3.0 + A0
+
     discriminant = q * q / 4.0 + p * p * p / 27.0
 
     if discriminant >= 0:
-        # One real root and two complex conjugate roots
-        u = (-q / 2.0 + sqrt(discriminant)) ** (1 / 3)
-        v = (-q / 2.0 - sqrt(discriminant)) ** (1 / 3)
-        root = u + v - b / (3.0 * a)
-        # cout << "Real Root: " << root << endl
-
-        # imaginaryPart(-sqrt(3.0) / 2.0 * (u - v), 0.5 * (u + v))
-        imaginaryPart = 0.5 * (u + v)
-        root2 = -0.5 * (u + v) - b / (3.0 * a) + imaginaryPart
-        root3 = -0.5 * (u + v) - b / (3.0 * a) - imaginaryPart
-        # cout << "Complex Root 1: " << root2 << endl
-        # cout << "Complex Root 2: " << root3 << endl
-        ra = -0.5 * (u + v) - b / (3.0 * a)
-        rp = -0.5 * (u + v) - b / (3.0 * a)
-        r3 = root
-    # } else if (discriminant == 0) {
-    #     # All roots are real and at least two are equal
-    #     u = cbrt(-q/2.)
-    #     v = cbrt(-q/2.)
-    #     root = u + v - b/(3.*a)
-    #     # cout << "Real Root: " << root << endl
-    #     # cout << "Real Root (equal to above): " << root << endl
-    #     # complex<double> root2 = -0.5 * (u + v) - b / (3 * a)
-    #     # cout << "Complex Root: " << root2 << endl
-    #     *ra = -0.5 * (u + v) - b / (3. * a)
-    #     *rp = -0.5 * (u + v) - b / (3. * a)
-    #     *r3 = root
+        # One real root and two complex roots
+        u = _cbrt(-q / 2.0 + sqrt(discriminant))
+        v = _cbrt(-q / 2.0 - sqrt(discriminant))
+        real_part = -0.5 * (u + v)
+        # Only return real part
+        t1 = real_part
+        t2 = real_part
+        t3 = u + v 
     else:
-        # All three roots are real and different
         r = sqrt(-p / 3.0)
         theta = acos(-q / (2.0 * r * r * r))
-        root1 = 2.0 * r * cos(theta / 3.0) - b / (3.0 * a)
-        root2 = 2.0 * r * cos((theta + 2.0 * PI) / 3.0) - b / (3.0 * a)
-        root3 = 2.0 * r * cos((theta - 2.0 * PI) / 3.0) - b / (3.0 * a)
+        t1  = 2.0 * r * cos((theta - 2.0 * PI) / 3.0) 
+        t3  = 2.0 * r * cos((theta + 2.0 * PI) / 3.0) 
+        t2  = 2.0 * r * cos(theta / 3.0) 
 
-        ra = root1
-        rp = root3
-        r3 = root2
+    x1 = t1 - A2 / 3.0
+    x2 = t2 - A2 / 3.0
+    x3 = t3 - A2 / 3.0
 
-    return rp, ra, r3
-    # cout << "ra: " << *ra << endl
-    # cout << "rp: " << *rp << endl
-    # cout << "r3: " << *r3 << endl
+    return x2, x1, x3
 
 
 @njit(fastmath=False)

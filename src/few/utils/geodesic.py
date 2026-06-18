@@ -24,7 +24,7 @@ def _ELQ_to_pex_kernel_inner(a, E, Lz, Q):
         A1 = a * a - Lz * Lz / E2m1
         A0 = 2.0 * (a * E - Lz) * (a * E - Lz) / E2m1
 
-        rp, ra, r3 = _solveCubic(A2, A1, A0)
+        ra, rp, r3 = _solveCubic(A2, A1, A0)
 
         p = 2.0 * ra * rp / (ra + rp)
         e = (ra - rp) / (ra + rp)
