@@ -425,9 +425,9 @@ def get_m2_at_t(
             output value in the tuple.
         t_out: The desired length of time for the waveform.
         traj_args: List of arguments for the trajectory function.
-            p is removed. **Note**: It must be a list, not a tuple because the
-            new p values are inserted into the argument list.
-        index_of_m2: Index where to insert the new p values in
+            m2 is removed. **Note**: It must be a list, not a tuple because the
+            new m2 values are inserted into the argument list.
+        index_of_m2: Index where to insert the new m2 values in
             the :code:`traj_args` list. Default is 1.
         bounds: Minimum and maximum values of m2 over which brentq will search for a root.
             If not given, will be set to [1e-1, m1]. To supply only one of these two limits, set the
@@ -525,10 +525,7 @@ def wrapper(*args, **kwargs):
     attribute.
 
     If you use this function, you must convert input arrays to size_t data type in Cython and
-    then properly cast the pointer as it enters the c++ function. See the
-    Cython codes
-    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/few/cutils/src>`_
-    for examples.
+    then properly cast the pointer as it enters the c++ function.
 
     args:
         *args (list): list of the arguments for a function.
@@ -597,10 +594,7 @@ def pointer_adjust(func):
     via the decorator construction.
 
     If you use this decorator, you must convert input arrays to size_t data type in Cython and
-    then properly cast the pointer as it enters the c++ function. See the
-    Cython codes
-    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/few/cutils/src>`_
-    for examples.
+    then properly cast the pointer as it enters the c++ function.
 
     """
 
