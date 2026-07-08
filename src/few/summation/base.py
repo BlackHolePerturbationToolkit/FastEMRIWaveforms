@@ -116,7 +116,7 @@ class SummationBase(ParallelModuleBase):
                 dt = float(self.xp.max(frequency) / 2)
                 if not self.xp.all(frequency == self.xp.sort(frequency)):
                     raise ValueError("Frequency array must be sorted in ascending order.")
-                if not self.xp.all(self.xp.diff(frequency) == self.xp.diff(frequency)[0]):
+                if not self.xp.allclose(self.xp.diff(frequency), self.xp.diff(frequency)[0], 1e-10):
                     raise ValueError("Frequency array must be equally spaced.")
                 
                 Nf = len(frequency)
