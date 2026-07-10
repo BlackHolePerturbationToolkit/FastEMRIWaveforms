@@ -26,10 +26,9 @@ When installing `few` from sources, or simply building a wheel package, the main
 
 By default, CMake will always compile at least the `CPU` backend, and will try to also compile the `GPU` backend if required dependencies are available. This results in a single wheel which contains (1) the pure-python core package, (2) the compiled `CPU` backend and optionally (3) a compiled `GPU` CUDA backend.
 
-This is ideal for local development and installation from source, but different from how FEW is released on PyPI where 3 packages are deployed:
+This is ideal for local development and installation from source, but different from how FEW is released on PyPI where 2 packages are deployed:
 
 - `fastemriwaveforms`: contains the python code and the CPU backend
-- `fastemriwaveforms-cuda11x`: contains only the `cuda11x` GPU backend
 - `fastemriwaveforms-cuda12x`: contains only the `cuda12x` GPU backend
 
 The process for building these differenciated wheels is defined in `.github/workflows/publish.yml` which handles this build process and package deployment to PyPI.
@@ -70,10 +69,10 @@ The `manylinux` wheels will be put into `./wheelhouse`.
 To build GPU plugin packages, multiple modifications to `pyproject.toml` must be applied:
 
 ```sh
-# Change the project name to add the `-cuda11x` or `-cuda12x` suffix
+# Change the project name to add the `-cuda12x` suffix
 sed -i 's|" #@NAMESUFFIX@|-cuda12x"|g' pyproject.toml
 
-# Add `cupy-cuda11x` or `cupy-cuda12x` to the project dependencies
+# Add `cupy-cuda12x` to the project dependencies
 sed -i 's|#@DEPS_CUPYCUDA@|"cupy-cuda12x"|g' pyproject.toml
 
 # Add a dependency of the project core package
@@ -107,7 +106,6 @@ for whl in ./dist/*.whl; do
         --exclude "libnvJitLink.so.12" \
         --exclude "libcublasLt.so.12"
 done
-# Replace the .so.12 extension by .so.11 if you are building the cuda11x plugin
 ```
 
 ## Understanding the CMake compilation mechanism

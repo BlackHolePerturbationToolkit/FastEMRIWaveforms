@@ -89,13 +89,6 @@ jobs:
             arch: x86_64
             kind: core
             reqpython: '>=3.12'
-          - release: cuda11x
-            os: ubuntu-latest
-            arch: x86_64
-            kind: cuda_plugin
-            cuda_major: 11
-            cuda_minor: 8
-            reqpython: '>=3.12'
           - release: cuda12x
             os: ubuntu-latest
             arch: x86_64
@@ -108,13 +101,6 @@ jobs:
             arch: aarch64
             kind: core
             reqpython: '>=3.12'
-          # - release: cuda11x
-          #   os: ubuntu-latest
-          #   arch: aarch64
-          #   target: manylinux
-          #   kind: cuda_plugin
-          #   cuda_major: 11
-          #   cuda_minor: 8
           # - release: cuda12x
           #   os: ubuntu-latest
           #   arch: aarch64

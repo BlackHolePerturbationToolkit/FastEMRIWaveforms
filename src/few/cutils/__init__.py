@@ -413,104 +413,6 @@ class _CudaBackend(Backend):
         setDevice(dev)
 
 
-class Cuda11xBackend(_CudaBackend):
-    """Implementation of CUDA 11.x backend"""
-
-    @staticmethod
-    def cuda11x_module_loader():
-        try:
-            import few_backend_cuda11x.pyAAK
-            import few_backend_cuda11x.pyAmpInterp2D
-            import few_backend_cuda11x.pyinterp
-            import few_backend_cuda11x.pymatmul
-        except (ModuleNotFoundError, ImportError) as e:
-            raise BackendUnavailableException(
-                "'cuda11x' backend could not be imported."
-            ) from e
-
-        try:
-            import cupy
-        except (ModuleNotFoundError, ImportError) as e:
-            raise MissingDependencies(
-                "'cuda11x' backend requires cupy", pip_deps=["cupy-cuda11x"]
-            ) from e
-
-        return BackendMethods(
-            pyWaveform=few_backend_cuda11x.pyAAK.pyWaveform,
-            interp2D=few_backend_cuda11x.pyAmpInterp2D.interp2D,
-            interpolate_arrays_wrap=few_backend_cuda11x.pyinterp.interpolate_arrays_wrap,
-            get_waveform_wrap=few_backend_cuda11x.pyinterp.get_waveform_wrap,
-            get_waveform_generic_fd_wrap=few_backend_cuda11x.pyinterp.get_waveform_generic_fd_wrap,
-            neural_layer_wrap=few_backend_cuda11x.pymatmul.neural_layer_wrap,
-            transform_output_wrap=few_backend_cuda11x.pymatmul.transform_output_wrap,
-            xp=cupy,
-        )
-
-    @staticmethod
-    def cuda11x_dynlib_loader():
-        import sys
-
-        if sys.platform == "linux":
-            cuda11x_solibs = [
-                _CudaBackend.NvidiaSoLib(
-                    soname="libcudart.so.11",
-                    module_name="cuda_runtime",
-                    pip_pkg="nvidia-cuda-runtime-cu11",
-                    conda_pkg=None,
-                ),
-                _CudaBackend.NvidiaSoLib(
-                    soname="libcublas.so.11",
-                    module_name="cublas",
-                    pip_pkg="nvidia-cublas-cu11",
-                    conda_pkg=None,
-                ),
-                _CudaBackend.NvidiaSoLib(
-                    soname="libnvJitLink.so.11",
-                    module_name="nvjitlink",
-                    pip_pkg="nvidia-nvjitlink-cu11",
-                    conda_pkg=None,
-                ),
-                _CudaBackend.NvidiaSoLib(
-                    soname="libcusparse.so.11",
-                    module_name="cusparse",
-                    pip_pkg="nvidia-cusparse-cu11",
-                    conda_pkg=None,
-                ),
-                _CudaBackend.NvidiaSoLib(
-                    soname="libnvrtc.so.11",
-                    module_name="cuda_nvrtc",
-                    pip_pkg="nvidia-cuda-nvrtc-cu11",
-                    conda_pkg=None,
-                ),
-                _CudaBackend.NvidiaSoLib(
-                    soname="libcufftw.so.11",
-                    module_name="cufft",
-                    pip_pkg="nvidia-cufft-cu11",
-                    conda_pkg=None,
-                ),
-            ]
-            _CudaBackend._try_import_nvidia_solib(cuda11x_solibs)
-
-    def __init__(self):
-        """Initialize the CPU backend"""
-        name = "cuda11x"
-        methods = self.check_cuda_backend(
-            name=name,
-            backend_module_name="few_backend_cuda11x",
-            cuda_min=(11, 2),
-            cuda_max=(12, 0),
-            module_loader=Cuda11xBackend.cuda11x_module_loader,
-            dynlib_loader=Cuda11xBackend.cuda11x_dynlib_loader,
-        )
-        Feature = Backend.Feature
-
-        super().__init__(
-            name=name,
-            methods=methods,
-            features=Feature.CUPY | Feature.CUDA | Feature.GPU,
-        )
-
-
 class Cuda12xBackend(_CudaBackend):
     """Implementation of CUDA 12.x backend"""
 
@@ -611,7 +513,6 @@ class Cuda12xBackend(_CudaBackend):
 
 KNOWN_BACKENDS = {
     "cuda12x": Cuda12xBackend,
-    "cuda11x": Cuda11xBackend,
     "cpu": CpuBackend,
 }
 """List of existing backends, per default order of preference."""

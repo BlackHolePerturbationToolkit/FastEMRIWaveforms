@@ -504,7 +504,7 @@ def wrapper(*args, **kwargs):
     targs = []
     tkwargs = {}
 
-    best_backend = get_first_backend(["cuda12x", "cuda11x", "cpu"])
+    best_backend = get_first_backend(["cuda12x", "cpu"])
 
     # args first
     for arg in args:
