@@ -432,7 +432,7 @@ class Cuda11xBackend(_CudaBackend):
             import cupy
         except (ModuleNotFoundError, ImportError) as e:
             raise MissingDependencies(
-                "'cuda11x' backend requires cupy", pip_deps=["cupy-cuda11x"]
+                "'cuda11x' backend requires cupy", pip_deps=["cupy-cuda11x"], conda_deps=[]
             ) from e
 
         return BackendMethods(
@@ -530,7 +530,7 @@ class Cuda12xBackend(_CudaBackend):
             import cupy
         except (ModuleNotFoundError, ImportError) as e:
             raise MissingDependencies(
-                "'cuda12x' backend requires cupy", pip_deps=["cupy-cuda12x"]
+                "'cuda12x' backend requires cupy", pip_deps=["cupy-cuda12x"], conda_deps=[]
             ) from e
 
         return BackendMethods(
@@ -608,8 +608,95 @@ class Cuda12xBackend(_CudaBackend):
             features=Feature.CUPY | Feature.CUDA | Feature.GPU,
         )
 
+class Cuda13xBackend(_CudaBackend):
+    """Implementation of CUDA 12.x backend"""
+
+    @staticmethod
+    def cuda13x_module_loader():
+        try:
+            import few_backend_cuda13x.pyAAK
+            import few_backend_cuda13x.pyAmpInterp2D
+            import few_backend_cuda13x.pyinterp
+            import few_backend_cuda13x.pymatmul
+        except (ModuleNotFoundError, ImportError) as e:
+            raise BackendUnavailableException(
+                "'cuda13x' backend could not be imported."
+            ) from e
+
+        try:
+            import cupy
+        except (ModuleNotFoundError, ImportError) as e:
+            raise MissingDependencies(
+                "'cuda13x' backend requires cupy", pip_deps=["cupy-cuda13x"], conda_deps=[]
+            ) from e
+
+        return BackendMethods(
+            pyWaveform=few_backend_cuda13x.pyAAK.pyWaveform,
+            interp2D=few_backend_cuda13x.pyAmpInterp2D.interp2D,
+            interpolate_arrays_wrap=few_backend_cuda13x.pyinterp.interpolate_arrays_wrap,
+            get_waveform_wrap=few_backend_cuda13x.pyinterp.get_waveform_wrap,
+            get_waveform_generic_fd_wrap=few_backend_cuda13x.pyinterp.get_waveform_generic_fd_wrap,
+            neural_layer_wrap=few_backend_cuda13x.pymatmul.neural_layer_wrap,
+            transform_output_wrap=few_backend_cuda13x.pymatmul.transform_output_wrap,
+            xp=cupy,
+        )
+
+    @staticmethod
+    def cuda13x_dynlib_loader():
+        import sys
+
+        if sys.platform == "linux":
+            cuda13x_solibs = [
+                _CudaBackend.NvidiaSoLib(
+                    soname="libcudart.so.13",
+                    module_name="cuda_runtime",
+                    pip_pkg="nvidia-cuda-runtime",
+                    conda_pkg=None,
+                ),
+                _CudaBackend.NvidiaSoLib(
+                    soname="libcublas.so.13",
+                    module_name="cublas",
+                    pip_pkg="nvidia-cublas",
+                    conda_pkg=None,
+                ),
+                _CudaBackend.NvidiaSoLib(
+                    soname="libnvJitLink.so.13",
+                    module_name="nvjitlink",
+                    pip_pkg="nvidia-nvjitlink",
+                    conda_pkg=None,
+                ),
+                _CudaBackend.NvidiaSoLib(
+                    soname="libcusparse.so.13",
+                    module_name="cusparse",
+                    pip_pkg="nvidia-cusparse",
+                    conda_pkg=None,
+                ),
+            ]
+            _CudaBackend._try_import_nvidia_solib(cuda13x_solibs)
+
+    def __init__(self):
+        """Initialize the CPU backend"""
+        name = "cuda13x"
+        methods = self.check_cuda_backend(
+            name=name,
+            backend_module_name="few_backend_cuda13x",
+            cuda_min=(13, 0),
+            cuda_max=(14, 0),
+            module_loader=Cuda13xBackend.cuda13x_module_loader,
+            dynlib_loader=Cuda13xBackend.cuda13x_dynlib_loader,
+        )
+        Feature = Backend.Feature
+
+        super().__init__(
+            name=name,
+            methods=methods,
+            features=Feature.CUPY | Feature.CUDA | Feature.GPU,
+        )
+
+
 
 KNOWN_BACKENDS = {
+    "cuda13x": Cuda13xBackend,
     "cuda12x": Cuda12xBackend,
     "cuda11x": Cuda11xBackend,
     "cpu": CpuBackend,

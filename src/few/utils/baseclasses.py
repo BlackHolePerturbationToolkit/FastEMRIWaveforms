@@ -67,17 +67,17 @@ class ParallelModuleBase(Citable):
     @staticmethod
     def GPU_RECOMMENDED() -> list[str]:
         """List of supported backends for GPU-recommended class with CPU support"""
-        return ["cuda12x", "cuda11x", "cpu"]
+        return ["cuda13x", "cuda12x", "cuda11x", "cpu"]
 
     @staticmethod
     def CPU_RECOMMENDED_WITH_GPU_SUPPORT() -> list[str]:
         """List of supported backends for CPU-recommended class with GPU support"""
-        return ["cpu", "cuda12x", "cuda11x"]
+        return ["cpu", "cuda13x", "cuda12x", "cuda11x"]
 
     @staticmethod
     def GPU_ONLY() -> list[str]:
         """List of supported backends for GPU-only class"""
-        return ["cuda12x", "cuda11x"]
+        return ["cuda13x", "cuda12x", "cuda11x"]
 
     @property
     def xp(self) -> types.ModuleType:
