@@ -119,12 +119,6 @@ jobs:
           #   cuda_major: 12
           #   cuda_minor: 6
           - release: cpu
-            os: macos-13
-            kind: core
-            reqpython: '>=3.9'
-            arch: x86_64
-            macos_ver: 13.0
-          - release: cpu
             os: macos-14
             kind: core
             reqpython: '>=3.9'
