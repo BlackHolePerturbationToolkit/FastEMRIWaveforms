@@ -338,7 +338,7 @@ Ran 27 tests in 405.23s
 
 ### Make the conda environment available as a Jupyter Hub kernel
 
-Now that `few` is working as expected, let's enable support for [Jupyter Hub](https://jupyterhub.cnes.fr/).
+Now that `few` is working as expected, let's enable support for Jupyter Hub.
 First install `ipykernel` and declare a new kernel named `few2.0rc1`:
 
 ```sh
@@ -368,7 +368,7 @@ $ chmod +x ${python_wrapper_path}
 And change the kernel start command to use this wrapper: edit the file `~/.local/share/jupyter/kernels/few2.0rc1/kernel.json` and
 replace the first item in the `argv` field by replacing `.../bin/python` with `.../bin/wpython`.
 
-Now, when connected to the [CNES Jupyter Hub](https://jupyterhub.cnes.fr/), you should have access to the `few2.0rc1` kernel and FEW
+Now, when connected to the CNES Jupyter Hub, you should have access to the `few2.0rc1` kernel and FEW
 should work correctly in it.
 
 ## On the CC-IN2P3 cluster with GPU support

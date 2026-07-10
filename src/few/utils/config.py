@@ -70,7 +70,7 @@ class ConfigEntry(Generic[T]):
     """Name of the entry in a config file"""
 
     env_var: Optional[str] = None
-    """Entry corresponding env var (uppercase, without FEW_ prefix)"""
+    """Entry corresponding env var (uppercase, without FEW\_ prefix)"""
 
     cli_flags: Optional[Union[str, List[str]]] = None
     """Flag(s) for CLI arguments of this entry (e.g. "-f")"""

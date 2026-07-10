@@ -10,8 +10,8 @@ The `few` package can be tuned through the use of optional configuration options
 The `few.ini` file is searched, in priority order:
 
 - In your current working directory
-- In your [`platformdirs.user_config_path()`](https://github.com/tox-dev/platformdirs/blob/main/README.rst) (e.g. `~/.config/few.ini`)
-- In your [`platformdirs.site_config_path()`](https://github.com/tox-dev/platformdirs/blob/main/README.rst) (e.g. `/etc/xdg/few/v1.5/few.ini`)
+- In your [`platformdirs.user_config_path()`](https://github.com/tox-dev/platformdirs/) (e.g. `~/.config/few.ini`)
+- In your [`platformdirs.site_config_path()`](https://github.com/tox-dev/platformdirs/) (e.g. `/etc/xdg/few/v1.5/few.ini`)
 
 The path to `few.ini` can be enforced by the `FEW_CONFIG_FILE` environment variable, or in command-line contexts, by the `-C` or `--config-file` argument.
 
@@ -80,7 +80,7 @@ This `FileManager` is highly tunable and propose the following options:
 
 The *storage path* is the directory where the `FileManager` will first look for files.
 
-Its default value is built relative to [`platformdirs.user_data_dir()`](https://github.com/tox-dev/platformdirs/blob/main/README.rst)
+Its default value is built relative to [`platformdirs.user_data_dir()`](https://github.com/tox-dev/platformdirs/)
 (e.g. `~/.local/share/few/v1.5.1` on Linux systems)
 
 #### `file_download_path`
