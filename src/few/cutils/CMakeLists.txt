@@ -317,6 +317,11 @@ function(apply_cpu_backend_common_options libname)
 
   install(TARGETS ${target_name} DESTINATION few_backend_cpu)
 
+  get_target_property(FEW_CXX_MARCH_OPT fastemriwaveforms CXX_MARCH)
+  if(FEW_CXX_MARCH_OPT)
+    target_compile_options(${target_name} PRIVATE "${FEW_CXX_MARCH_OPT}")
+  endif()
+
   target_include_directories(${target_name} PRIVATE ${Python_NumPy_INCLUDE_DIR})
   target_compile_definitions(${target_name}
                              PRIVATE NPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION)

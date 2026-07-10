@@ -20,7 +20,7 @@ class CubicSplineInterpolant(ParallelModuleBase):
     `scipy.interpolate.CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html#cubicspline>`_.
     However, the most efficient way to use this method is in a customized
     cuda kernel. See the
-    `source code for the interpolated summation <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/few/cutils/src/interpolate.cu>`_
+    `source code for the interpolated summation <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/blob/master/src/few/cutils/interpolate.cu>`_
     in cuda for an example of this.
 
     This class can be run on GPUs and CPUs.
@@ -289,6 +289,7 @@ class InterpolatedModeSum(SummationBase):
         phase_interp_coeffs: np.ndarray,
         l_arr: np.ndarray,
         m_arr: np.ndarray,
+        k_arr: np.ndarray,
         n_arr: np.ndarray,
         *args,
         dt: float = 10.0,
@@ -314,6 +315,7 @@ class InterpolatedModeSum(SummationBase):
                  (:math:`\Phi_r`).
             l_arr: :math:`\ell` values associated with each mode.
             m_arr: :math:`m` values associated with each mode.
+            k_arr: :math:`k` values associated with each mode.
             n_arr: :math:`n` values associated with each mode.
             *args: Added for future flexibility.
             dt: Time spacing between observations (inverse of sampling
@@ -361,6 +363,7 @@ class InterpolatedModeSum(SummationBase):
             phase_interp_t,
             phase_interp_coeffs_in,
             m_arr.astype(self.xp.int32),
+            k_arr.astype(self.xp.int32),
             n_arr.astype(self.xp.int32),
             init_len,
             num_pts,

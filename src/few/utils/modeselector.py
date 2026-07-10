@@ -1,96 +1,50 @@
 # Online mode selection for FastEMRIWaveforms Packages
 
-import os
-import sys
-
 import numpy as np
 
 from .baseclasses import BackendLike, ParallelModuleBase
-from .constants import MTSUN_SI, PI
-from .geodesic import get_fundamental_frequencies
 from .globals import get_logger
+
+from .ylm import GetYlms
+from ..trajectory.inspiral import EMRIInspiral
 
 from typing import Optional, Union
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-
-
-# fmt: off
-@np.vectorize
-def SPAFunc(x, th=7.0):
-    II = 0.0 + 1.0j
-    Gamp13 = 2.67893853470774763  # Gamma(1/3)
-    Gamm13 = -4.06235381827920125  # Gamma(-1/3)
-
-    if np.abs(x) <= th:
-        xx = complex(x)
-        pref1 = np.exp(-2. * np.pi * II / 3.) * pow(xx, 5. / 6.) * Gamm13 / pow(2., 1. / 3.)
-        pref2 = np.exp(-np.pi * II / 3.) * pow(xx, 1. / 6.) * Gamp13 / pow(2., 2. / 3.)
-        x2 = x * x
-
-        c1_0, c1_2, c1_4, c1_6, c1_8, c1_10, c1_12, c1_14, c1_16, c1_18, c1_20, c1_22, c1_24, c1_26 = (
-            0.5, -0.09375, 0.0050223214285714285714, -0.00012555803571428571429, 1.8109332074175824176e-6,
-            -1.6977498819539835165e-8, 1.1169407118118312608e-10, -5.4396463237589184781e-13,
-            2.0398673714095944293e-15, -6.0710338434809358015e-18, 1.4687985105195812423e-20,
-            -2.9454515585285720100e-23, 4.9754249299469121790e-26, -7.1760936489618925658e-29
-        )
-
-        ser1 = c1_0 + x2*(c1_2 + x2*(c1_4 + x2*(c1_6 + x2*(c1_8 + x2*(c1_10 + x2*(c1_12 + x2*(c1_14 + x2*(c1_16 + x2*(c1_18 + x2*(c1_20 + x2*(c1_22 + x2*(c1_24 + x2*c1_26))))))))))))
-
-        c2_0, c2_2, c2_4, c2_6, c2_8, c2_10, c2_12, c2_14, c2_16, c2_18, c2_20, c2_22, c2_24, c2_26 = (
-            1., -0.375, 0.028125, -0.00087890625, 0.000014981356534090909091, -1.6051453429383116883e-7,
-            1.1802539286311115355e-9, -6.3227889033809546546e-12, 2.5772237377911499951e-14,
-            -8.2603324929203525483e-17, 2.1362928861000911763e-19, -4.5517604107246260858e-22,
-            8.1281435905796894390e-25, -1.2340298973552160079e-27
-        )
-
-        ser2 = c2_0 + x2*(c2_2 + x2*(c2_4 + x2*(c2_6 + x2*(c2_8 + x2*(c2_10 + x2*(c2_12 + x2*(c2_14 + x2*(c2_16 + x2*(c2_18 + x2*(c2_20 + x2*(c2_22 + x2*(c2_24 + x2*c2_26))))))))))))
-
-        ans = np.exp(-II * x) * (pref1 * ser1 + pref2 * ser2)
-    else:
-        y = 1. / x
-        pref = np.exp(-0.75 * II * np.pi) * np.sqrt(0.5 * np.pi)
-
-        c_0, c_1, c_2, c_3, c_4, c_5, c_6, c_7, c_8 = (
-            II, 0.069444444444444444444, -0.037133487654320987654 * II, -0.037993059127800640146,
-            0.057649190412669721333 * II, 0.11609906402551541102, -0.29159139923075051147 * II,
-            -0.87766696951001691647, 3.0794530301731669934 * II
-        )
-
-        ser = c_0 + y * (c_1 + y * (c_2 + y * (c_3 + y * (c_4 + y * (c_5 + y * (c_6 + y * (c_7 + y * c_8)))))))
-
-        ans = pref * ser
-
-    return ans
-# fmt: on
-
+def get_mode_frequencies(f_phi, f_theta, f_r, m, k, n):
+    return f_phi[:,None] * m[None,:] + f_theta[:,None] * k[None,:] + f_r[:,None] * n[None,:]
 
 class ModeSelector(ParallelModuleBase):
     r"""Filter teukolsky amplitudes based on power contribution.
 
-    This module takes teukolsky modes, combines them with their associated ylms,
-    and determines the power contribution from each mode. It then filters the
-    modes bases on the fractional accuracy on the total power (eps) parameter.
-    Additionally, if a sensitivity curve is provided, the mode power is also
-    weighted according to the PSD of the sensitivity.
+    This module generates teukolsky modes and their associated ylms given an input
+    trajectory, then filters these modes according to either a list of requested modes or the
+    the power contribution from each mode. Mode filtering is performed to (roughly) achieve the
+    requested mismatch with the minimum number of modes. If a sensitivity curve is provided, mode filtering
+    is weighted according to this sensitivity curve.
 
-    The mode filtering is a major contributing factor to the speed of these
-    waveforms as it removes large numbers of useles modes from the final
+    The mode filtering is a major contributing factor to the speed of FEW
+    waveforms, as it removes large numbers of useless modes from the final
     summation calculation.
 
-    Be careful as this is built based on the construction that input mode arrays
-    will in order of :math:`m=0`, :math:`m>0`, and then :math:`m<0`.
-
     args:
-        l_arr: The l-mode indices for each mode index.
-        m_arr: The m-mode indices for each mode index. Requires all :math:`m \geq 0`.
-        n_arr: The n-mode indices for each mode index.
+        amplitude_generator: Object that generates the teukolsky amplitudes
+            for the modes. This should be an instance of a class that has a
+            :code:`__call__` method that takes the parameters :math:`(a, p, e, xI)`
+            and returns the teukolsky amplitudes for the modes.
+            It should also have mode-related attributes obtained from subclassing
+            `few.utils.baseclasses.SphericalHarmonic`.
+        ylm_generator: Object that generates the Ylm values for the modes.
+            This should be an instance of a class that has a
+            :code:`__call__` method that takes the parameters :math:`(l, m, \theta, \phi)`
+            and returns the Ylm values for the modes.
+            Default is :class:`few.utils.ylm.GetYlms`, which generates Ylm values
+            for the modes based on the l and m indices.
         mode_selection: Determines the type of mode
             filtering to perform. If None, use default mode filtering provided
             by :code:`mode_selector`. If 'all', it will run all modes without
             filtering. If 'threshold' it will override other options to filter by the
             threshold value set by :code:`mode_selection_threshold`. If a list of tuples (or lists) of
-            mode indices (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
+            mode indices (e.g. [(:math:`l_1,m_1,k_1,n_1`), (:math:`l_2,m_2,k_2,n_2`)]) is
             provided, it will return those modes combined into a
             single waveform.
             Default is None.
@@ -112,6 +66,11 @@ class ModeSelector(ParallelModuleBase):
             sennsitivity is used to weight the mode values when determining which
             modes to keep. **Note**: if the sensitivity function is provided,
             and GPUs are used, then this function must accept CuPy arrays as input.
+        modeinds_map: Map of mode indices to Teukolsky amplitude data.
+            This is a 4D array of shape (l, m, k, n) that maps the mode indices
+            to one-dimensional indices from the amplitude module output.
+            This is used to efficiently select the modes from the amplitude module output.
+            By default this is obtained from the supplied amplitude module.
         **kwargs: Optional keyword arguments for the base class:
             :class:`few.utils.baseclasses.ParallelModuleBase`.
 
@@ -119,23 +78,43 @@ class ModeSelector(ParallelModuleBase):
 
     def __init__(
         self,
-        l_arr: np.ndarray,
-        m_arr: np.ndarray,
-        n_arr: np.ndarray,
+        amplitude_generator: object,
+        ylm_generator: Optional[object] = None,
         mode_selection: Optional[Union[str, list, np.ndarray]] = None,
         include_minus_mkn: Optional[bool] = True,
         mode_selection_threshold: float = 1e-5,
         sensitivity_fn: Optional[object] = None,
+        modeinds_map: Optional[np.ndarray] = None,
         force_backend: BackendLike = None,
         **kwargs,
     ):
         ParallelModuleBase.__init__(self, force_backend=force_backend, **kwargs)
+        
+        self.amplitude_generator = amplitude_generator
 
-        assert self.xp.all(m_arr >= 0), "ModeSelector only supports m >= 0."
+        if ylm_generator is None:
+            self.ylm_generator = GetYlms()
+        else:
+            self.ylm_generator = ylm_generator
+
+        self.l_arr = self.amplitude_generator.l_arr_no_mask
+        """array: l-mode indices for each mode index, given by amplitude module."""
+        self.m_arr = self.amplitude_generator.m_arr_no_mask
+        """array: m-mode indices for each mode index, given by amplitude module."""
+        self.k_arr = self.amplitude_generator.k_arr_no_mask
+        """array: k-mode indices for each mode index, given by amplitude module."""
+        self.n_arr = self.amplitude_generator.n_arr_no_mask
+        """array: n-mode indices for each mode index, given by amplitude module."""
+
+        self.unique_l = self.amplitude_generator.unique_l
+        self.unique_m = self.amplitude_generator.unique_m
+        self.inverse_lm = self.amplitude_generator.inverse_lm
+
+        assert self.xp.all(self.m_arr >= 0), "ModeSelector only supports m >= 0."
 
         # store information releated to m values
         # the order is m = 0, m > 0, m < 0
-        m0mask = m_arr != 0
+        m0mask = self.m_arr != 0
         self.m0mask = m0mask
         """array: Mask for m=0 modes."""
         self.num_m_zero_up = len(m0mask)
@@ -144,14 +123,6 @@ class ModeSelector(ParallelModuleBase):
         r"""int: Number of modes with :math:`m\geq1`."""
         self.num_m0 = len(self.xp.arange(len(m0mask))[~m0mask])
         """int: Number of modes with :math:`m=0`."""
-
-        self.l_arr = l_arr
-        """array: l-mode indices for each mode index."""
-        self.m_arr = m_arr
-        """array: m-mode indices for each mode index."""
-        self.n_arr = n_arr
-        """array: n-mode indices for each mode index."""
-
         self.sensitivity_fn = sensitivity_fn
         """object: sensitivity generating function for power-weighting."""
 
@@ -203,82 +174,19 @@ class ModeSelector(ParallelModuleBase):
             self.mode_arr = None
 
         self.mode_selection_threshold = mode_selection_threshold
-        """float: Default threshold."""
+        """float: Target mismatch threshold for mode selection. Modes will be selected such that the mismatch is approximately equal to this value."""
+
+        if modeinds_map is None:
+            self.modeinds_map = self.amplitude_generator.index_map_arr
+        else:
+            self.modeinds_map = self.xp.asarray(modeinds_map)
+            assert self.modeinds_map.ndim == 4, "Modeinds map must be a 4D array."
 
     @classmethod
     def supported_backends(cls):
         return cls.GPU_RECOMMENDED()
 
-    @property
-    def is_predictive(self):
-        """Whether this mode selector should be used before or after amplitude generation"""
-        return False
-
-    def __call__(
-        self,
-        teuk_modes: np.ndarray,
-        ylms: np.ndarray,
-        modeinds: list[np.ndarray],
-        fund_freq_args: Optional[tuple] = None,
-        mode_selection: Optional[Union[str, list]] = None,
-        modeinds_map: Optional[np.ndarray] = None,
-        include_minus_mkn: Optional[bool] = None,
-        mode_selection_threshold: float = None,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        r"""Call to sort and filer teukolsky modes.
-
-        This is the call function that takes the teukolsky modes, ylms,
-        mode indices and fractional accuracy of the total power and returns
-        filtered teukolsky modes and ylms.
-
-        args:
-            teuk_modes: Complex teukolsky amplitudes
-                from the amplitude modules.
-                Shape: (number of trajectory points, number of modes).
-            ylms: Array of ylm values for each mode,
-                including m<0. Shape is (num of m==0,) + (num of m>0,)
-                + (num of m<0). Number of m<0 and m>0 is the same, but they are
-                ordered as (m==0) first then m>0 then m<0.
-            modeinds: List containing the mode index arrays. If in an
-                equatorial model, need :math:`(l,m,n)` arrays. If generic,
-                :math:`(l,m,k,n)` arrays. e.g. [l_arr, m_arr, n_arr].
-            fund_freq_args: Args necessary to determine
-                fundamental frequencies along trajectory. The tuple will represent
-                :math:`(m1, m2, a, p, e, \cos\iota)` where the primary mass (:math:`m_1`),
-                secondary mass (:math:`m_2`), and dimensionless spin (:math:`a`),
-                are scalar and the other three quantities are self.xp.ndarrays.
-                This must be provided if sensitivity weighting is used. Default is None.
-            mode_selection: Determines the type of mode
-                filtering to perform. If None, use default mode filtering provided
-                by :code:`mode_selector`. If 'all', it will run all modes without
-                filtering. If 'threshold' it will override other options to filter by the
-                threshold value set by :code:`mode_selection_threshold`. If a list of tuples (or lists) of
-                mode indices (e.g. [(:math:`l_1,m_1,n_1`), (:math:`l_2,m_2,n_2`)]) is
-                provided, it will return those modes combined into a
-                single waveform. If :code:`include_minus_mkn = True`, we require that :math:`m \geq 0` for this list.
-                Default is None.
-            modeinds_map: Map of mode indices to Teukolsky amplitude data. Only required if :code:`mode_selection` is a list of specific mode.
-                Default is None.
-            include_minus_mkn: If True, then include :math:`(-m, -k, -n)` mode when
-                computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
-                is a list of specific modes. Default is True.
-            mode_selection_threshold: Fractional accuracy of the total power used
-                to determine the contributing modes. Lowering this value will
-                calculate more modes slower the waveform down, but generally
-                improving accuracy. Increasing this value removes modes from
-                consideration and can have a considerable affect on the speed of
-                the waveform, albeit at the cost of some accuracy (usually an
-                acceptable loss). Default that gives good mismatch qualities is
-                1e-5.
-
-        outputs:
-            teuk_modes_out: Filtered teukolsky amplitudes.
-            ylms_out: Filtered ylm values.
-            l_arr_out: Filtered l-mode indices.
-            m_arr_out: Filtered m-mode indices.
-            n_arr_out: Filtered n-mode indices.
-
-        """
+    def _set_defaults_and_check_inputs(self, mode_selection, mode_selection_threshold, include_minus_mkn,):
         if include_minus_mkn is None:
             include_minus_mkn = self.include_minus_mkn
 
@@ -290,7 +198,8 @@ class ModeSelector(ParallelModuleBase):
                 raise ValueError(
                     "Only supports mode_selection with m >= 0 when include_minus_mkn = True."
                 )
-        # if it is a string, check if it is 'all' or 'threshold'. If so, return all modes
+
+        # if it is a string, check if it is 'all' or 'eps'. If so, return all modes
         elif isinstance(mode_selection, str) and mode_selection not in [
             "all",
             "threshold",
@@ -328,13 +237,8 @@ class ModeSelector(ParallelModuleBase):
                 raise ValueError("Mode selection has unphysical |m| > l mode(s).")
             if self.xp.any(mode_arr[:, 0] < 2):
                 raise ValueError("Mode selection has unphysical l < 2 mode(s).")
-
-            if modeinds_map is None:
-                raise ValueError(
-                    "If mode_selection is a list, modeinds_map must be provided."
-                )
-            elif len(modeinds_map.shape) != len(modeinds):
-                raise ValueError("modeinds_map must have the same length as modeinds.")
+        else:
+            mode_arr = None
 
         if mode_selection_threshold is None:
             mode_selection_threshold = self.mode_selection_threshold
@@ -344,7 +248,81 @@ class ModeSelector(ParallelModuleBase):
                 "(ModeSelector) Warning: Overriding include_minus_mkn to True as mode_selection is not a list."
             )
 
+        return mode_selection, mode_selection_threshold, include_minus_mkn, mode_arr
+
+    def __call__(
+        self,
+        t,
+        a,
+        p,
+        e,
+        xI,
+        theta,
+        phi,
+        online_mode_selection_args: Optional[dict] = None,
+        mode_selection: Optional[Union[str, list, np.ndarray]] = None,
+        include_minus_mkn: Optional[bool] = None,
+        mode_selection_threshold: float = None,
+        return_sort_inds: bool = False
+    ) -> tuple[np.ndarray]:
+        r"""Call to sort and filer teukolsky modes.
+
+        This is the call function that takes an inspiral trajectory and
+        returns the teukolsky modes and ylms required to produce a waveform
+        of either a given mismatch or the requested mode content.
+
+        args:
+            t: Time array for the input trajectory.
+            a: Dimensionless spin parameter of the primary black hole.
+            p: Semi-latus rectum of the trajectory.
+            e: Eccentricity of the trajectory.
+            xI: Initial cosine(inclination) for the trajectory.
+            theta: Polar source-frame viewing angle.
+            phi: Azimuthal source-frame viewing angle.
+            online_mode_selection_args: Dictionary of arguments necessary to
+                determine the mode frequencies along the trajectory. This should
+                contain the keys 'f_phi', 'f_theta', and 'f_r', which are
+                the fundamental frequencies of the modes along the trajectory.
+            mode_selection: Determines the type of mode
+                filtering to perform. If None, use default mode filtering provided
+                by :code:`mode_selector`. If 'all', it will run all modes without
+                filtering. If 'threshold' it will override other options to filter by the
+                threshold value set by :code:`mode_selection_threshold`. If a list of tuples (or lists) of
+                mode indices (e.g. [(:math:`l_1,m_1,k_1,n_1`), (:math:`l_2,m_2,k_2,n_2`)]) is
+                provided, it will return those modes combined into a
+                single waveform. If :code:`include_minus_mkn = True`, we require that :math:`m \geq 0` for this list.
+                Default is None.
+            modeinds_map: Map of mode indices to Teukolsky amplitude data. Only required if :code:`mode_selection` is a list of specific mode.
+                Default is None.
+            include_minus_mkn: If True, then include :math:`(-m, -k, -n)` mode when
+                computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
+                is a list of specific modes. Default is True.
+            mode_selection_threshold: Target waveform mismatch used
+                to determine the contributing modes. Lowering this value will
+                calculate more modes, slowing the waveform generation down, but generally
+                improving accuracy. Increasing this value removes modes from
+                consideration and can have a considerable affect on the speed of
+                the waveform, albeit at the cost of some accuracy (usually an
+                acceptable loss). Default that gives good mismatch qualities is
+                1e-5.
+            return_sort_inds: If True, also return the indices sorting the modes according
+                to their contribution. Only used when filtering in this mode. Default is False.
+            
+        """
+
+        # set defaults, check inputs are consistent, etc.
+        mode_selection, mode_selection_threshold, include_minus_mkn, mode_arr = self._set_defaults_and_check_inputs(
+            mode_selection, mode_selection_threshold, include_minus_mkn
+        )
+        
         if mode_selection == "all":
+            # get teuk modes
+            teuk_modes = self.amplitude_generator(a, p, e, xI)
+            
+            # get ylms
+            ylms = self.ylm_generator(self.unique_l, self.unique_m, theta, phi)[self.inverse_lm]
+
+            # get mode indices
             keep_modes = self.xp.arange(teuk_modes.shape[1])
             temp2 = keep_modes * (keep_modes < self.num_m0) + (
                 keep_modes + self.num_m_1_up
@@ -353,145 +331,241 @@ class ModeSelector(ParallelModuleBase):
             ylmkeep = self.xp.concatenate([keep_modes, temp2])
             ylms_out = ylms[ylmkeep]
             teuk_modes_out = teuk_modes
-            return (
+
+            out_tuple = (
                 teuk_modes_out,
                 ylms_out,
-                modeinds[0][: teuk_modes_out.shape[1]],
-                modeinds[1][: teuk_modes_out.shape[1]],
-                modeinds[2][: teuk_modes_out.shape[1]],
+                self.l_arr,
+                self.m_arr,
+                self.k_arr,
+                self.n_arr,
             )
 
+        # if mode selection is a list, compute only these modes for efficiency
         elif isinstance(mode_selection, list):
             try:
-                temp = modeinds_map[mode_arr[:, 0], mode_arr[:, 1], mode_arr[:, 2]]
+                keep_modes = self.modeinds_map[mode_arr[:, 0], mode_arr[:, 1], mode_arr[:, 2], mode_arr[:,3]]
             except IndexError:
                 raise ValueError("Mode selection indices are out of bounds.")
 
+            # pass array of mode indexes (most efficient, returns an array)
+            teuk_modes = self.amplitude_generator(a, p, e, xI, specific_modes=keep_modes)
+
+            # get ylms, only for the desired modes (needs to include -m modes in general, so we pass the kwarg)
+            ylms_out = self.ylm_generator(mode_arr[:, 0], mode_arr[:,1], theta, phi, include_minus_m=True)
+            
+            # if include_minus_mkn is False, we need to zero out the latter half of this array
+            if not include_minus_mkn:
+                # zero out the -m modes
+                # ylms[keep_modes >= self.num_m_zero_up] = 0.0 + 0.0j
+                ylms_out[teuk_modes.shape[1]:] = 0.0 + 0.0j
+
+            out_tuple = (
+                teuk_modes, 
+                ylms_out,
+                mode_arr[:,0],
+                mode_arr[:,1],
+                mode_arr[:,2],
+                mode_arr[:,3],
+            )     
+
         else:
-            # get the power contribution of each mode including m < 0
+            # get teuk modes
+            teuk_modes = self.amplitude_generator(a, p, e, xI)
+
+            # get ylms
+            ylms = self.ylm_generator(self.unique_l, self.unique_m, theta, phi)[self.inverse_lm]
+
+            # get the power contribution of each mode including m < 0 --- make more efficient?
             power = (
                 self.xp.abs(
-                    self.xp.concatenate(
-                        [teuk_modes, self.xp.conj(teuk_modes[:, self.m0mask])], axis=1
-                    )
-                    * ylms
+                    teuk_modes * ylms[:teuk_modes.shape[1]]
                 )
                 ** 2
+
+            )
+            power[:,self.m0mask] += (
+                self.xp.abs(
+                    self.xp.conj(teuk_modes[:, self.m0mask]) * ylms[teuk_modes.shape[1]:]
+                )** 2
             )
 
-            # if noise weighting
-            if self.sensitivity_fn is not None:
-                if fund_freq_args is None:
-                    raise ValueError(
-                        "If sensitivity weighting is desired, the fund_freq_args kwarg must be provided."
+            if self.sensitivity_fn is None:
+                mode_psds = 1.  # no weights applied
+            else:
+                # obtain the PSD for each mode in each time segment
+                
+                mode_freqs = self.xp.abs(
+                    get_mode_frequencies(
+                        online_mode_selection_args["f_phi"],
+                        online_mode_selection_args["f_theta"],
+                        online_mode_selection_args["f_r"],
+                        self.m_arr,
+                        self.k_arr,
+                        self.n_arr
                     )
-
-                m1, m2 = fund_freq_args[0:2]
-                M = m1 + m2
-                Msec = M * MTSUN_SI
-
-                a_fr, p_fr, e_fr, x_fr = fund_freq_args[2:-1]
-
-                if (
-                    self.backend.uses_cupy
-                ):  # fundamental frequencies only defined on CPU
-                    p_fr = p_fr.get()
-                    e_fr = e_fr.get()
-                    x_fr = x_fr.get()
-
-                # get dimensionless fundamental frequency
-                OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(
-                    a_fr, p_fr, e_fr, x_fr
                 )
-                # NOTE: These frequencies may differ from waveform frequencies at 1PA order
+                mode_psds = self.sensitivity_fn(
+                    mode_freqs.flatten()
+                ).reshape(mode_freqs.shape)
+            
+            # duration of each trajectory segment, used to estimate the SNR per segment
+            node_times = self.xp.diff(t)
 
-                # get frequencies in Hz
-                f_Phi, _f_omega, f_r = OmegaPhi, OmegaTheta, OmegaR = (
-                    self.xp.asarray(OmegaPhi) / (Msec * 2 * PI),
-                    self.xp.asarray(OmegaTheta) / (Msec * 2 * PI),
-                    self.xp.asarray(OmegaR) / (Msec * 2 * PI),
-                )
-
-                # TODO: update when in kerr
-                freqs = (
-                    modeinds[1][self.xp.newaxis, :] * f_Phi[:, self.xp.newaxis]
-                    + modeinds[2][self.xp.newaxis, :] * f_r[:, self.xp.newaxis]
-                )
-
-                freqs_shape = freqs.shape
-
-                # make all frequencies positive
-                freqs_in = self.xp.abs(freqs)
-                PSD = self.sensitivity_fn(freqs_in.flatten()).reshape(freqs_shape)
-
-                power /= PSD
+            mode_snr2_ests = ((power / mode_psds)[:-1]*node_times[:,None]).sum(0)
 
             # sort the power for a cumulative summation
-            inds_sort = self.xp.argsort(power, axis=1)[:, ::-1]
-            power = self.xp.sort(power, axis=1)[:, ::-1]
-            cumsum = self.xp.cumsum(power, axis=1)
+            inds_sort = self.xp.argsort(mode_snr2_ests)[::-1]
+            mode_snr2_ests = self.xp.sort(mode_snr2_ests)[::-1]
+            cumsum = self.xp.cumsum(mode_snr2_ests)
 
             # initialize and indices array for keeping modes
             inds_keep = self.xp.full(cumsum.shape, True)
 
-            # keep modes that add to within the fractional power (1 - eps)
-            inds_keep[:, 1:] = cumsum[:, :-1] < cumsum[:, -1][:, self.xp.newaxis] * (
+            # keep modes that add to within the fractional square SNR (1 - kappa)^2
+            inds_keep[1:] = cumsum[:-1] < cumsum[-1] * (
                 1 - mode_selection_threshold
-            )
+            )**2
 
             # finds indices of each mode to be kept
-            temp = inds_sort[inds_keep]
+            keep_modes_temp = inds_sort[inds_keep]
 
             # adjust the index arrays to make -m indices equal to +m indices
             # if +m or -m contributes, we keep both because of structure of CUDA kernel
-            temp = temp * (temp < self.num_m_zero_up) + (temp - self.num_m_1_up) * (
-                temp >= self.num_m_zero_up
+            keep_modes_temp = keep_modes_temp * (keep_modes_temp < self.num_m_zero_up) + (keep_modes_temp - self.num_m_1_up) * (
+                keep_modes_temp >= self.num_m_zero_up
             )
 
-        # if +m or -m contributes, we keep both because of structure of CUDA kernel
-        keep_modes, indices, counts = self.xp.unique(
-            temp, return_index=True, return_counts=True
+            # if +m or -m contributes, we keep both because of structure of CUDA kernel
+            keep_modes, indices, inv_inds, counts = self.xp.unique(
+                keep_modes_temp, return_index=True, return_counts=True, return_inverse=True,
+            )
+
+            # find minus mkn modes that need to be removed
+            if include_minus_mkn:  # if true then we do not want to exclude any modes
+                exclude_minus_mkn = []
+            else:
+                # check if the mode_selection array includes both (m,k,n) and (-m,-k,-n) modes
+                # if it does, we keep all of these modes and only search for (m,k,n) modes without
+                # their negative counterparts
+                indices_count_1 = indices[counts == 1]
+
+                # exclude m > 0 modes if m < 0 is selected
+                exclude_positive = self.xp.where((mode_arr[:, 1] < 0)[indices_count_1])[0]
+                # exclude m < 0 modes if m > 0 is selected
+                exclude_negative = self.xp.where((mode_arr[:, 1] > 0)[indices_count_1])[
+                    0
+                ] + len(keep_modes)
+                # concatenate the two arrays
+                exclude_minus_mkn = self.xp.concatenate(
+                    [exclude_positive, exclude_negative]
+                )
+
+            # set ylms
+            # adust temp arrays specific to ylm setup
+            temp2 = keep_modes * (keep_modes < self.num_m0) + (
+                keep_modes + self.num_m_1_up
+            ) * (keep_modes >= self.num_m0)
+
+            # ylm duplicates the m = 0 unlike teuk_modes
+            ylmkeep = self.xp.concatenate([keep_modes, temp2])
+            ylms_out = ylms[ylmkeep]
+
+            # throw out minus mkn modes if required
+            ylms_out[exclude_minus_mkn] = 0.0 + 0.0j
+
+            # setup up teuk mode and ylm returns
+            out1 = (teuk_modes[:, keep_modes], ylms_out)
+
+            # setup up mode values that have been kept
+            out2 = tuple([
+                self.l_arr[keep_modes],
+                self.m_arr[keep_modes],
+                self.k_arr[keep_modes],
+                self.n_arr[keep_modes],
+            ])
+
+            out_tuple = out1 + out2
+        
+            if return_sort_inds:
+                out_tuple += (inv_inds,)
+
+        return out_tuple
+
+def get_selected_modes_from_initial_conditions(
+        mode_selector_module: ModeSelector, 
+        traj_module: EMRIInspiral, 
+        m1: float, 
+        m2: float, 
+        a: float, 
+        p0: float, 
+        e0: float, 
+        xI0: float, 
+        theta: float, 
+        phi: float, 
+        traj_args: Optional[list]=None,
+        traj_kwargs: Optional[dict]=None, 
+        mode_selector_kwargs: Optional[dict]=None
+    ) -> tuple[np.ndarray]:
+    """
+    Get the selected modes from the initial conditions of an EMRI trajectory.
+    This function uses the provided trajectory module to generate the trajectory
+    and the mode selector module to select the modes based on the trajectory.
+
+    args:
+        mode_selector_module: Instance of the ModeSelector class.
+        traj_module: Instance of the EMRIInspiral class.
+        m1: Mass of the primary black hole in solar masses.
+        m2: Mass of the secondary black hole in solar masses.
+        a: Dimensionless spin parameter of the primary black hole.
+        p0: Initial semi-latus rectum of the trajectory.
+        e0: Initial eccentricity of the trajectory.
+        xI0: Initial cosine(inclination) for the trajectory.
+        theta: Polar source-frame viewing angle.
+        phi: Azimuthal source-frame viewing angle.
+        traj_args: Additional arguments to pass to the trajectory module.
+        traj_kwargs: Additional keyword arguments to pass to the trajectory module.
+        mode_selector_kwargs: Additional keyword arguments to pass to the mode selector module.
+    returns:
+        dict: A dict containing the selected teuk_modes, ylms, their indices (ls, ms, ks, ns), the trajectory `traj` and the `online_mode_selection_args`.
+    """
+    if traj_args is None:
+        traj_args = []
+    if traj_kwargs is None:
+        traj_kwargs = {}
+    if mode_selector_kwargs is None:
+        mode_selector_kwargs = {}
+
+    traj = traj_module(m1, m2, a, p0, e0, xI0, **traj_kwargs)
+
+    freqs = traj_module.inspiral_generator.eval_integrator_derivative_spline(traj[0], order=1)[:,3:6] / 2 / np.pi
+
+    online_mode_selection_args = dict(
+        f_phi = freqs[:,0],
+        f_theta = freqs[:,1],
+        f_r = freqs[:,2],
+    )
+
+    if mode_selector_kwargs.get("return_sort_inds", False):
+        teuk_modes_out, ylms_out, ls, ms, ks, ns, inds_sort = mode_selector_module(
+            traj[0], a, traj[1], traj[2], traj[3], theta, phi, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
         )
+    else:
+        teuk_modes_out, ylms_out, ls, ms, ks, ns = mode_selector_module(
+            traj[0], a, traj[1], traj[2], traj[3], theta, phi, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
+        )    
+        inds_sort = None
 
-        # find minus mkn modes that need to be removed
-        if include_minus_mkn or not isinstance(
-            mode_selection, list
-        ):  # if true then we do not want to exclude any modes
-            exclude_minus_mkn = []
-        else:
-            # check if the mode_selection array includes both (m,k,n) and (-m,-k,-n) modes
-            # if it does, we keep all of these modes and only search for (m,k,n) modes without
-            # their negative counterparts
-            indices_count_1 = indices[counts == 1]
+    return_dict = dict(
+        teuk_modes = teuk_modes_out,
+        ylms = ylms_out,
+        ls = ls,
+        ms = ms,
+        ks = ks,
+        ns = ns,
+        trajectory=traj,
+        online_mode_selection_args=online_mode_selection_args,
+        inds_sort = inds_sort,
+    )
 
-            # exclude m > 0 modes if m < 0 is selected
-            exclude_positive = self.xp.where((mode_arr[:, 1] < 0)[indices_count_1])[0]
-            # exclude m < 0 modes if m > 0 is selected
-            exclude_negative = self.xp.where((mode_arr[:, 1] > 0)[indices_count_1])[
-                0
-            ] + len(keep_modes)
-            # concatenate the two arrays
-            exclude_minus_mkn = self.xp.concatenate(
-                [exclude_positive, exclude_negative]
-            )
-
-        # set ylms
-        # adust temp arrays specific to ylm setup
-        temp2 = keep_modes * (keep_modes < self.num_m0) + (
-            keep_modes + self.num_m_1_up
-        ) * (keep_modes >= self.num_m0)
-
-        # ylm duplicates the m = 0 unlike teuk_modes
-        ylmkeep = self.xp.concatenate([keep_modes, temp2])
-        ylms_out = ylms[ylmkeep]
-
-        # throw out minus mkn modes if required
-        ylms_out[exclude_minus_mkn] = 0.0 + 0.0j
-
-        # setup up teuk mode and ylm returns
-        out1 = (teuk_modes[:, keep_modes], ylms_out)
-
-        # setup up mode values that have been kept
-        out2 = tuple([arr[keep_modes] for arr in modeinds])
-
-        return out1 + out2
+    return return_dict

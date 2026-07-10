@@ -170,8 +170,8 @@ def amplitude_test(amp_class):
 
     teuk_modes = amp_class(0.0, p_all, e_all, np.ones_like(p_all) * 1.0)
 
-    # (2, 2, 0) and (7, -3, 1) modes
-    specific_modes = [(2, 2, 0), (7, -3, 1)]
+    # (2, 2, 0, 0) and (7, -3, 0, 1) modes
+    specific_modes = [(2, 2, 0, 0), (7, -3, 0, 1)]
 
     # notice this returns a dictionary with keys as the mode tuple and values as the mode values at all trajectory points
     specific_teuk_modes = amp_class(
@@ -181,9 +181,9 @@ def amplitude_test(amp_class):
     # we can find the index to these modes to check
     inds = np.array([amp.special_index_map[lmn] for lmn in specific_modes])
 
-    first_check = np.allclose(specific_teuk_modes[(2, 2, 0)], teuk_modes[:, inds[0]])
+    first_check = np.allclose(specific_teuk_modes[(2, 2, 0, 0)], teuk_modes[:, inds[0]])
     second_check = np.allclose(
-        specific_teuk_modes[(7, -3, 1)], (-1) ** 7 * np.conj(teuk_modes[:, inds[1]])
+        specific_teuk_modes[(7, -3, 0, 1)], (-1) ** 7 * np.conj(teuk_modes[:, inds[1]])
     )
     return first_check, second_check
 

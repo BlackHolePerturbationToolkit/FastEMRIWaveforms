@@ -58,6 +58,51 @@ keywords:
   - Waveform
 license: MIT
 references:
+  - abbreviation: "Chapman-Bird:2025xtd"
+    authors:
+      - family-names: Chapman-Bird
+        given-names: Christian E. A.
+      - family-names: Speri
+        given-names: Lorenzo
+      - family-names: Nazipak
+        given-names: Zachary
+      - family-names: Burke
+        given-names: Ollie
+      - family-names: Katz
+        given-names: Michael L.
+      - family-names: Santini
+        given-names: Alessandro
+      - family-names: Kejriwal
+        given-names: Shubham
+      - family-names: Lynch
+        given-names: Philip
+      - family-names: Mathews
+        given-names: Josh
+      - family-names: Khalvati
+        given-names: Hassan
+      - family-names: Thompson
+        given-names: Jonathan E.
+      - family-names: Isoyama
+        given-names: Soichiro
+      - family-names: Hughes
+        given-names: Scott A.
+      - family-names: Warburton
+        given-names: Niels
+      - family-names: Chua
+        given-names: Alvin J. K.
+      - family-names: Pigou
+        given-names: Maxime
+    doi: 10.48550/arXiv.2506.09470
+    year: 2025
+    month: 6
+    title: >-
+      The Fast and the Frame-Dragging: Efficient waveforms for asymmetric-mass
+      eccentric equatorial inspirals into rapidly-spinning black holes
+    identifiers:
+      - type: other
+        value: 'arXiv:gr-qc/2506.09470'
+        description: arXiv preprint of this article
+    type: article
   - abbreviation: "Chua:2020stf"
     authors:
       - family-names: Chua
