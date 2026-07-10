@@ -22,6 +22,8 @@ authors = [
   { name = "Alvin J. K. Chua" },
   { name = "Niels Warburton" },
   { name = "Scott Hughes" },
+  { name = "Maxime Pigou" },
+  { name = "Zach Nasipak" }
 ]
 requires-python = ">=3.12"
 
