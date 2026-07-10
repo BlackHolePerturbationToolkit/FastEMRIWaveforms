@@ -303,7 +303,16 @@ class SphericalHarmonicWaveformBase(
             # get frequencies to pass to mode selection
             # TODO: write a method that just returns the derivatives at each spline knot (vectorises easier).
             if self.mode_selector.mode_selection != "all":
-                freqs = self.inspiral_generator.inspiral_generator.eval_integrator_derivative_spline(t_temp, order=1)[:,3:6] / 2 / np.pi
+                # eval_integrator_derivative_spline runs on the integrator's
+                # cached knots/coeffs, which are always host (numpy) arrays --
+                # the DOPR integrator is CPU-only. On the hybrid CPU-trajectory
+                # / GPU-sum path t_temp is a device array, so evaluate on host
+                # and move the frequencies back to the waveform backend for the
+                # (GPU) mode selector.
+                t_temp_host = t_temp.get() if hasattr(t_temp, "get") else t_temp
+                freqs = self.xp.asarray(
+                    self.inspiral_generator.inspiral_generator.eval_integrator_derivative_spline(t_temp_host, order=1)[:, 3:6]
+                ) / 2 / np.pi
 
                 online_mode_selection_args = dict(
                     f_phi = freqs[:,0],
@@ -373,7 +382,12 @@ class SphericalHarmonicWaveformBase(
                 try:
                     freqs
                 except NameError:
-                    freqs = self.inspiral_generator.inspiral_generator.eval_integrator_derivative_spline(t_temp, order=1)[:,3:6] / 2 / np.pi
+                    # Host eval on the CPU integrator, result on the waveform
+                    # backend (see the mode-selection branch above).
+                    t_temp_host = t_temp.get() if hasattr(t_temp, "get") else t_temp
+                    freqs = self.xp.asarray(
+                        self.inspiral_generator.inspiral_generator.eval_integrator_derivative_spline(t_temp_host, order=1)[:, 3:6]
+                    ) / 2 / np.pi
 
                 assert len(inds_split_all) == 1
                 phases = self.xp.array([Phi_phi, Phi_theta, Phi_r]).T
