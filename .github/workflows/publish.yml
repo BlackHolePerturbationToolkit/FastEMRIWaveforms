@@ -219,6 +219,7 @@ jobs:
             cmake.define.FEW_LAPACKE_DETECT_WITH=PKGCONFIG
             cmake.define.FEW_WITH_GPU=OFF
           CIBW_BEFORE_ALL: >
+            yum install -y hdf5-devel &&
             git clone https://github.com/Reference-LAPACK/lapack &&
             git -C lapack reset --hard 6ec7f2bc4ecf4c4a93496aa2fa519575bc0e39ca &&
             cmake -B lapack/build -S lapack -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DLAPACKE=ON -DCMAKE_INSTALL_PREFIX=/opt/lapack &&
