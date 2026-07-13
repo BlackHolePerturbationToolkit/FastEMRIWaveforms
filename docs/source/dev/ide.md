@@ -1,10 +1,10 @@
 # Development Environment
 
-Developping on FEW requires the following:
+Developing on FEW requires the following:
 
 - A Python 3.9+ interpreter (ideally in a dedicated virtualenv, or conda environment)
 - A C++ compiler to build the CPU backend
-- An IDE you are confortable with
+- An IDE you are comfortable with
 
 If you have a local GPU available and want to also develop for the GPU backend, you will also need:
 
@@ -15,7 +15,7 @@ If you have a local GPU available and want to also develop for the GPU backend, 
 To develop into FEW, the project must be installed from sources in editable mode.
 
 - If you will only develop Python code, it is advised to use [standard editable](#install-the-project-in-standard-editable-mode) installation.
-- If tou will also develop C++/CUDA code, backends will need to be recompiled after each change. This can be done automatically
+- If you will also develop C++/CUDA code, backends will need to be recompiled after each change. This can be done automatically
   using the [*rebuild editable* install](#install-the-project-with-backend-recompilation-rebuild-editable-mode)
 
 ## Installation steps
@@ -36,7 +36,7 @@ To create a dedicated virtualenv, run the following command:
 
 ```bash
 FastEMRIWaveforms$ python3 -m venv build/few-venv
-FastEMRIWaveforms$ source build/venv/bin/activate
+FastEMRIWaveforms$ source build/few-venv/bin/activate
 (few-venv) FastEMRIWaveforms$
 ```
 
@@ -53,7 +53,7 @@ Obtaining file:///workspaces/FastEMRIWaveforms
 Successfully installed ... fastemriwaveforms-1.5.1.post1.dev47+g5a3a237.d20250217 ...
 ```
 
-Note that this command also installd the dependencies required to run the tests and to build the documentation.
+Note that this command also installs the dependencies required to run the tests and to build the documentation.
 
 Whenever you want to check tests are correctly running, simply run:
 

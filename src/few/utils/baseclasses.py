@@ -125,13 +125,8 @@ class SphericalHarmonic(ParallelModuleBase):
     This class creates shared traits between different implementations of the
     same model. Particularly, this class includes descriptive traits as well as
     the sanity check class method that should be used in all implementations of
-    this model. This method can be overwritten if necessary. Here we describe
-    the overall qualities of this base class.
+    this model. This method can be overwritten if necessary.
 
-    Currently, Eq. :eq:`emri_wave_eq` is reduced to the equatorial plane.
-    Therefore, we only concerned with :math:`(l,m,n)` indices and
-    the parameters :math:`(a, p,e)` because :math:`k=|\iota|=0`. Therefore, in this
-    model we calculate :math:`A_{lmn}` and :math:`\Phi_{mn}=m\Phi_\phi+n\Phi_r`.
     As we assume the amplitudes have been remapped to a spherical harmonic basis,
     we use -2 spin-weighted spherical harmonics (:math:`(s=-2)Y_{l,m}`) in place
     of the more generic angular function from Eq. :eq:`emri_wave_eq`.
@@ -139,6 +134,9 @@ class SphericalHarmonic(ParallelModuleBase):
 
     lmax: int
     """Maximum l value for the model."""
+
+    kmax: int
+    """Maximum k value for the model. Currently always 0 for equatorial orbits."""
 
     nmax: int
     """Maximum n value for the model."""
@@ -156,11 +154,10 @@ class SphericalHarmonic(ParallelModuleBase):
     """1D Array of l values for each mode before masking."""
     m_arr_no_mask: xp_ndarray
     """1D Array of m values for each mode before masking."""
+    k_arr_no_mask: xp_ndarray
+    """1D Array of k values for each mode before masking."""
     n_arr_no_mask: xp_ndarray
     """1D Array of n values for each mode before masking."""
-
-    lmn_indices: dict[int, int]
-    """Dictionary of mode indices to mode number."""
 
     m0mask: xp_ndarray
     """1D Array Mask for m != 0."""
@@ -176,6 +173,8 @@ class SphericalHarmonic(ParallelModuleBase):
     """1D Array of l values for each mode."""
     m_arr: xp_ndarray
     """1D Array of m values for each mode."""
+    k_arr: xp_ndarray
+    """1D Array of k values for each mode. Currently always 0 for equatorial orbits."""
     n_arr: xp_ndarray
     """1D Array of n values for each mode."""
 
@@ -189,9 +188,9 @@ class SphericalHarmonic(ParallelModuleBase):
     num_unique_lm: int
     """Number of unique (l,m) values."""
 
-    index_map: dict[tuple[int, int, int], int]
+    index_map: dict[tuple[int, int, int, int], int]
     """Maps mode index to mode tuple."""
-    special_index_map: dict[tuple[int, int, int], int]
+    special_index_map: dict[tuple[int, int, int, int], int]
     """Maps mode index to mode tuple with m > 0."""
     index_map_arr: xp_ndarray
     """Array mapping mode tuple to mode index - used for fast indexing. Returns -1 if mode does not exist."""
@@ -199,19 +198,21 @@ class SphericalHarmonic(ParallelModuleBase):
     """Array mapping mode tuple to mode index with m > 0 - used for fast indexing. Returns -1 if mode does not exist."""
 
     def __init__(
-        self, lmax: int = 10, nmax: int = 30, force_backend: BackendLike = None
+        self, lmax: int = 10, kmax: int = 0, nmax: int = 0, force_backend: BackendLike = None
     ):
         ParallelModuleBase.__init__(self, force_backend=force_backend)
 
         self.lmax = lmax
+        self.kmax = kmax
         self.nmax = nmax
 
         # fill all lmn mode values
         md = []
         for l in range(2, self.lmax + 1):
             for m in range(0, l + 1):
-                for n in range(-self.nmax, self.nmax + 1):
-                    md.append([l, m, n])
+                for k in range(-self.kmax, self.kmax + 1):
+                    for n in range(-self.nmax, self.nmax + 1):
+                        md.append([l, m, k, n])
 
         # total number of modes in the model
         self.num_modes = len(md)
@@ -223,6 +224,7 @@ class SphericalHarmonic(ParallelModuleBase):
                 m == 0
                 for l in range(2, self.lmax + 1)
                 for m in range(0, l + 1)
+                for k in range(-self.kmax, self.kmax + 1)
                 for n in range(-self.nmax, self.nmax + 1)
             ]
         )
@@ -241,15 +243,8 @@ class SphericalHarmonic(ParallelModuleBase):
         # store l m and n values
         self.l_arr_no_mask = md[0]
         self.m_arr_no_mask = md[1]
-        self.n_arr_no_mask = md[2]
-
-        # adjust with .get method for cupy
-        if self.backend.uses_cupy:
-            lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T.get())}
-        else:
-            lmn_indices = {tuple(md_i): i for i, md_i in enumerate(md.T)}
-
-        self.lmn_indices = lmn_indices
+        self.k_arr_no_mask = md[2]  # k is always 0 for equatorial orbits
+        self.n_arr_no_mask = md[3]
 
         # store the mask as m != 0 is True
         self.m0mask = self.m_arr_no_mask != 0
@@ -269,6 +264,9 @@ class SphericalHarmonic(ParallelModuleBase):
         )
         self.m_arr = self.xp.concatenate(
             [self.m_arr_no_mask, -self.m_arr_no_mask[self.m0mask]]
+        )
+        self.k_arr = self.xp.concatenate(
+            [self.k_arr_no_mask, self.k_arr_no_mask[self.m0mask]]
         )
         self.n_arr = self.xp.concatenate(
             [self.n_arr_no_mask, self.n_arr_no_mask[self.m0mask]]
@@ -304,39 +302,40 @@ class SphericalHarmonic(ParallelModuleBase):
         self.special_index_map = {}  # maps the minus m values to positive m
         self.index_map_arr = (
             self.xp.zeros(
-                (self.lmax + 1, self.lmax * 2 + 1, self.nmax * 2 + 1),
+                (self.lmax + 1, self.lmax * 2 + 1, self.kmax * 2 + 1, self.nmax * 2 + 1),
                 dtype=self.xp.int32,
             )
             - 1
         )
         self.special_index_map_arr = (
             self.xp.zeros(
-                (self.lmax + 1, self.lmax * 2 + 1, self.nmax * 2 + 1),
+                (self.lmax + 1, self.lmax * 2 + 1, self.kmax * 2 + 1, self.nmax * 2 + 1),
                 dtype=self.xp.int32,
             )
             - 1
         )
-        for i, (l, m, n) in enumerate(zip(self.l_arr, self.m_arr, self.n_arr)):
+        for i, (l, m, k, n) in enumerate(zip(self.l_arr, self.m_arr, self.k_arr, self.n_arr)):
             try:
                 l = l.item()
                 m = m.item()
+                k = k.item()
                 n = n.item()
 
             except AttributeError:
                 pass
 
             # regular index to mode tuple
-            self.index_map[(l, m, n)] = i
-            self.index_map_arr[l, m, n] = i
+            self.index_map[(l, m, k, n)] = i
+            self.index_map_arr[l, m, k, n] = i
             # special map that gives m < 0 indices as m > 0 indices
             sp_i = i if i < self.num_modes else i - self.num_m_1_up
 
             if m >= 0:
-                self.special_index_map[(l, m, n)] = sp_i
-                self.special_index_map_arr[l, m, n] = sp_i
+                self.special_index_map[(l, m, k, n)] = sp_i
+                self.special_index_map_arr[l, m, k, n] = sp_i
             else:
-                self.special_index_map[(l, m, -n)] = sp_i
-                self.special_index_map_arr[l, m, -n] = sp_i
+                self.special_index_map[(l, m, -k, -n)] = sp_i
+                self.special_index_map_arr[l, m, -k, -n] = sp_i
 
         # TODO make this more efficient
         # mode indices for all positive m-modes
@@ -347,11 +346,11 @@ class SphericalHarmonic(ParallelModuleBase):
         self.negative_mode_indexes = self.xp.linspace(
             0, self.num_teuk_modes - 1, self.num_teuk_modes, dtype=int
         )
-        for i, (l, m, n) in enumerate(
-            zip(self.l_arr_no_mask, self.m_arr_no_mask, self.n_arr_no_mask)
+        for i, (l, m, k, n) in enumerate(
+            zip(self.l_arr_no_mask, self.m_arr_no_mask, self.k_arr_no_mask, self.n_arr_no_mask)
         ):
             self.negative_mode_indexes[i] = self.special_index_map[
-                (l.item(), -m.item(), n.item())
+                (l.item(), -m.item(), k.item(), n.item())
             ]
 
     def sanity_check_viewing_angles(self, theta: float, phi: float):
@@ -416,7 +415,6 @@ class SchwarzschildEccentric(SphericalHarmonic):
     Args:
         lmax: Maximum l value for the model. Default is 10.
         nmax: Maximum n value for the model. Default is 30.
-        ndim: Number of phases in the model. Default is 2.
     """
 
     background: str = "Schwarzschild"
@@ -431,22 +429,16 @@ class SchwarzschildEccentric(SphericalHarmonic):
     needs_Y: bool = False
     """If True, model expects inclination parameter Y (rather than xI)."""
 
-    ndim: int
-    """Number of phases in the model."""
-
     def __init__(
         self,
         /,
         lmax: int = 10,
         nmax: int = 30,
-        ndim: int = 2,
         force_backend: BackendLike = None,
     ):
         SphericalHarmonic.__init__(
             self, lmax=lmax, nmax=nmax, force_backend=force_backend
         )
-
-        self.ndim = ndim
 
     @classmethod
     def supported_backends(cls):
@@ -529,7 +521,6 @@ class KerrEccentricEquatorial(SphericalHarmonic):
     Args:
         lmax: Maximum l value for the model. Default is 10.
         nmax: Maximum n value for the model. Default is 55.
-        ndim: Number of phases in the model. Default is 2.
     """
 
     background: str = "Kerr"
@@ -544,21 +535,15 @@ class KerrEccentricEquatorial(SphericalHarmonic):
     needs_Y: bool = False
     """If True, model expects inclination parameter Y (rather than xI)."""
 
-    ndim: int
-    """Number of phases in the model."""
-
     def __init__(
         self,
         lmax: int = 10,
         nmax: int = 55,
-        ndim: int = 2,
         force_backend: BackendLike = None,
     ):
         SphericalHarmonic.__init__(
             self, lmax=lmax, nmax=nmax, force_backend=force_backend
         )
-
-        self.ndim = ndim
 
     @classmethod
     def supported_backends(cls):
@@ -635,6 +620,99 @@ class KerrEccentricEquatorial(SphericalHarmonic):
 
         if abs(xI) != 1.0:
             raise ValueError("For equatorial orbits, xI must be either 1 or -1.")
+
+        return a, xI
+
+class KerrGeneric(SphericalHarmonic):
+    """
+    Kerr generic base class example.
+
+    Args:
+        lmax: Maximum l value for the model. Default is 6.
+        kmax: Maximum k value for the model. Default is 6.
+        nmax: Maximum n value for the model. Default is 30.
+    """
+
+    background: str = "Kerr"
+    """The spacetime background for this model."""
+
+    descriptor: str = "generic"
+    """Description of the inspiral trajectory properties for this model."""
+
+    frame: str = "source"
+    """Frame in which source is generated. Is source frame."""
+
+    needs_Y: bool = False
+    """If True, model expects inclination parameter Y (rather than xI)."""
+
+    def __init__(
+        self,
+        lmax: int = 6,
+        kmax: int = 6,
+        nmax: int = 30,
+        force_backend: BackendLike = None,
+    ):
+        SphericalHarmonic.__init__(
+            self, lmax=lmax, kmax=kmax, nmax=nmax, force_backend=force_backend
+        )
+
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
+
+    def sanity_check_init(
+        self, m1: float, m2: float, a: float, p0: float, e0: float, xI: float
+    ) -> tuple[float, float]:
+        r"""Sanity check initial parameters.
+
+        Make sure parameters are within allowable ranges.
+
+        args:
+            m1: Massive black hole mass in solar masses.
+            m2: compact object mass in solar masses.
+            a: Dimensionless spin of massive black hole.
+            p0: Initial semilatus rectum (dimensionless)
+                :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
+                more information on :math:`p_0 \leq 10.0`.
+            e0: Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
+            xI: Initial cosine(inclination) :math:`(|x_I| = 1)`.
+
+        Returns:
+            (a_fix, xI_fix): a and xI in the correct convention (a >= 0).
+
+        Raises:
+            ValueError: If any of the parameters are not allowed.
+
+        """
+        # TODO: update function when grids replaced
+
+        for val, key in [[m1, "m1"], [p0, "p0"], [e0, "e0"], [m2, "m2"]]:
+            test = val < 0.0
+            if test:
+                raise ValueError("{} is negative. It must be positive.".format(key))
+
+        if m1 < m2:
+            raise ValueError(
+                "Massive black hole mass must be larger than the compact object mass. (m1={}, m2={})".format(
+                    m1, m2
+                )
+            )
+
+        if xI < 0:
+            # flip convention
+            get_logger().warning(
+                "Negative inclination detected. Flipping sign of a and xI to match convention."
+            )
+            a = -a
+            xI = -xI
+
+        if a != 0.7:
+            raise ValueError(
+                "Model currently only supports spin 0.7"
+            )
+
+        if abs(xI) > 1.0:
+            raise ValueError("xI must be between 1 or -1.")
 
         return a, xI
 
