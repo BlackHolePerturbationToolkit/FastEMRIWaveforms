@@ -155,6 +155,7 @@ class ODEBase:
         e: Union[float, np.ndarray],
         x: Union[float, np.ndarray] = 1,
         a: Optional[Union[float, np.ndarray]] = 0,
+        separatrix_buffer = None,
     ) -> Union[float, np.ndarray]:
         """
         Computes the minimum value of the radial coordinate p for a given eccentricity and inclination for this model.
@@ -163,7 +164,9 @@ class ODEBase:
 
         By default, this function assumes things are rectilinear and returns `p_sep + self.separatrix_buffer_dist`.
         """
-        return get_separatrix(a, e, x) + self.separatrix_buffer_dist
+        if separatrix_buffer is None:
+            separatrix_buffer = self.separatrix_buffer_dist
+        return get_separatrix(a, e, x) + separatrix_buffer
 
     def max_p(
         self,
@@ -228,21 +231,16 @@ class ODEBase:
     def isvalid_a(self, a: float, a_buffer=[0, 0]):
         pass
 
-    def bounds_p(self, e=0, x=1, a=0, p_buffer=[0, 0]):
-        self.isvalid_x(x)
-        self.isvalid_e(e)
-        self.isvalid_a(a)
-        return [self.min_p(e, x, a) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
+    def bounds_p(self, e, x=1, a=0, p_buffer=[0, 0], separatrix_buffer = None, max_e_buffer = None):
+        return [self.min_p(e, x, a, separatrix_buffer=separatrix_buffer) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
 
-    def isvalid_pex(
-        self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], e_buffer=[0, 0], a_buffer=[0, 0]
-    ):
+    def isvalid_pex(self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], e_buffer=[0, 0], separatrix_buffer = None, max_e_buffer = None):
         self.isvalid_x(x)
         self.isvalid_e(e, e_buffer=e_buffer)
-        self.isvalid_a(a, a_buffer=a_buffer)
-        pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer)
+        self.isvalid_a(a)
+        pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer, separatrix_buffer=separatrix_buffer, max_e_buffer=max_e_buffer)
         assert p >= pmin and p <= pmax, (
-            f"Interpolation: p {p} out of bounds. Must be between {pmin} and {pmax}."
+            f"Interpolation: p out of bounds. Must be between {pmin + p_buffer[0]} and {pmax - p_buffer[1]}."
         )
 
     def modify_rhs(self, ydot: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:

@@ -6,66 +6,36 @@ from numba import njit
 
 from ..geodesic import get_separatrix
 
-XMIN = 0.05
-AMAX = 0.999
-AMIN = -AMAX
-DELTAPMIN = 0.001
-DELTAPMAX = 9 + DELTAPMIN
-EMAX = 0.9
-ESEP = 0.25
+"""
+Parameter mappings for KerrEccEq model.
+Below are the fixed parameters used to map from phyiscal parameters (a, p, e, xI) to interpolation coordinates (u, w, y, z) for the KerrEccEq model.
+The mapping is split into two regions, A and B, with region A covering the area close to the separatrix and region B covering the area further away. 
+The parameters below are used to define the mapping in both regions, with some parameters specific to each region. The mapping is designed to ensure that 
+the interpolation coordinates are defined on the range [0, 1] and there is a small overlap between the two regions.
 
-ALPHA_FLUX = 1.0 / 2.0
-BETA_FLUX = 2.0
-ALPHA_AMP = 1.0 / 3.0
+See Appendix B of
+https://doi.org/10.48550/arXiv.2506.09470 for more details on the mapping and the choice of parameters.
+"""
+
+XMIN = 0.05 # minimum x value for mapping, though it is not used in the equatorial model with xI = 1.
+AMAX = 0.999 # maximum spin value on the computational grid
+AMIN = -AMAX # minimum spin value on the computational grid
+DELTAPMIN = 0.001 # minimum distance from the separatrix on the computational grid, defining the start of region A
+DELTAPMAX = 9 + DELTAPMIN # sets outer boundary of region A
+EMAX = 0.9 # maximum eccentricity on the computational grid, defining the outer boundary of the grid in eccentricity
+ESEP = 0.25 # maximum eccentricity at the separatrix for a = AMAX
+
+ALPHA_FLUX = 1.0 / 2.0 # tuning parameter for how many points to concentrate near the separatrix for flux interpolation
+BETA_FLUX = 2.0 # tuning parameter related to the relationship between p and emax in regionA. We keep beta = 1/alpha in this model
+ALPHA_AMP = 1.0 / 3.0 # same as above but for amplitude interpoation
 BETA_AMP = 3.0
 
-DPC_REGIONB = DELTAPMAX - 0.001
-PMAX_REGIONB = 200
-AMAX_REGIONB = 0.999
-AMIN_REGIONB = -AMAX_REGIONB
-EMAX_REGIONB = 0.9
-DELTAPMIN_REGIONB = 9
-
-
-def kerrecceq_legacy_p_to_u(a, p, e, xI, use_gpu=False):
-    """Convert from separation :math:`p` to :math:`y` coordinate
-
-    Conversion from the semilatus rectum or separation :math:`p` to :math:`y`.
-
-    arguments:
-        p (double scalar or 1D xp.ndarray): Values of separation,
-            :math:`p`, to convert.
-        e (double scalar or 1D xp.ndarray): Associated eccentricity values
-            of :math:`p` necessary for conversion.
-        use_gpu (bool, optional): If True, use Cupy/GPUs. Default is False.
-
-    """
-    if use_gpu:
-        import cupy as xp
-    else:
-        import numpy as xp
-
-    scalar = False
-    if not hasattr(p, "__len__"):
-        scalar = True
-
-    delta_p = 0.05
-    alpha = 4.0
-
-    pLSO = get_separatrix(a, e, xI)
-    beta = alpha - delta_p
-    u = xp.log((p + beta - pLSO) / alpha)
-
-    if xp.any(u < -1e9):
-        raise ValueError("u values are too far below zero.")
-
-    # numerical errors
-    if scalar:
-        u = max(u, 0)
-    else:
-        u[u < 0.0] = 0.0
-
-    return u
+DPC_REGIONB = DELTAPMAX - 0.001 # sets inner boundary of region B for amplitudes, which starts just before the outer boundary of region A to ensure a small overlap between the two regions
+PMAX_REGIONB = 200 # sets outer boundary of region B
+AMAX_REGIONB = 0.999 # maximum spin value on the computational grid for region B. We allow the same range of spins in both regions, but this parameter could be adjusted if desired. Note that the mapping in region B becomes very difficult to evaluate close to a = 1, so we set this to 0.999 to avoid numerical issues.
+AMIN_REGIONB = -AMAX_REGIONB # mimimum spin value on the computational grid for region B
+EMAX_REGIONB = 0.9 # maximum eccentricity on the computational grid for region B. We allow the same range of eccentricities in both regions, but this parameter could be adjusted if desired. Note that the mapping in region B becomes very difficult to evaluate close to e = 1, so we set this to 0.9 to avoid numerical issues.
+DELTAPMIN_REGIONB = 9 # sets inner boundary of region B for the fluxes. Same as the amplitude boundary above.
 
 
 @njit
@@ -156,7 +126,14 @@ def kerrecceq_forward_map(
     xI_sep_in = asign * xI
 
     # compute separatrix at all points
-    pLSO = get_separatrix(a_sep_in, e, xI_sep_in)
+    if pLSO is None:
+        pLSO = get_separatrix(a_sep_in, e, xI_sep_in)
+    else:
+        pLSO = xp.atleast_1d(xp.asarray(pLSO))
+        if pLSO.shape != a.shape:
+            raise ValueError("pLSO must have the same shape as a, p, e, and xI.")
+        if xp.any(pLSO <= 0):
+            raise ValueError("All values of pLSO must be positive.")
 
     # handle regions A and B
     near = p <= pLSO + DELTAPMAX
@@ -176,6 +153,12 @@ def kerrecceq_forward_map(
         w[far] = out[1]
         y[far] = out[2]
         z[far] = out[3]
+
+    for coord in [u, w, z]:
+        near_one_mask = xp.abs(coord - 1) < 1e-12
+        near_zero_mask = xp.abs(coord) < 1e-12
+        coord[near_one_mask] = 1.0
+        coord[near_zero_mask] = 0.0
 
     if return_mask:
         return u, w, y, z, near
@@ -202,11 +185,10 @@ def kerrecceq_backward_map(
     parameters. The default is flux interpolation, but amplitude interpolation can be selected by setting kind="amplitude".
 
     Arguments:
-        a (float or np.ndarray): Spin parameter of the massive black hole.
-        p (float or np.ndarray): Semi-latus rectum of inspiral.
-        e (float or np.ndarray): Eccentricity of inspiral.
-        xI (float or np.ndarray): Cosine of inclination of inspiral. Only a value of 1 is supported.
-        pLSO (float or np.ndarray, optional): Separatrix value for the given parameters. If not provided, it will be computed.
+        u (float or np.ndarray): Interpolation coordinate corresponding to the semi-latus rectum of inspiral.
+        w (float or np.ndarray): Interpolation coordinate corresponding to the eccentricity of inspiral.
+        y (float or np.ndarray): Interpolation coordinate corresponding to the inclination of inspiral.
+        z (float or np.ndarray): Interpolation coordinate corresponding to the spin of the massive black hole.
         regionA (bool, optional): If True, perform the transformation in RegionA. If False, perform transformation in RegionB.
             Default is True.
         kind (str, optional): Type of mapping to perform. Default is "flux".
@@ -248,6 +230,9 @@ def kerrecceq_backward_map(
 
 @njit
 def u_of_p(p, pLSO, alpha):
+    """
+    See Eq. (B7a) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     check_term = (
         np.log(p - pLSO + DELTAPMAX - 2 * DELTAPMIN) - log(DELTAPMAX - DELTAPMIN)
     ) / log(2)
@@ -257,6 +242,9 @@ def u_of_p(p, pLSO, alpha):
 
 @njit
 def u_of_p_flux(p, pLSO):
+    """
+    u_of_p for flux interpolation, with alpha = ALPHA_FLUX. See Eq. (B7a) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     check_term = (
         np.log(p - pLSO + DELTAPMAX - 2 * DELTAPMIN) - log(DELTAPMAX - DELTAPMIN)
     ) / log(2)
@@ -268,31 +256,28 @@ def u_of_p_flux(p, pLSO):
 
 @njit
 def y_of_x(x):
+    """
+    See Eq. (B7c) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     return (x - XMIN) / (1 - XMIN)
 
 
 @njit
 def chi_of_a(a):
+    """
+    See Eq. (B7)-(B8) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     return (1 - a) ** (1 / 3)
 
 
 @njit
-def chi2_of_a(a):
-    return (1 - a) ** (2 / 3)
-
-
-@njit
 def z_of_a(a):
+    """
+    See Eq. (B7d) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     chimax = chi_of_a(AMIN)
     chimin = chi_of_a(AMAX)
     return (chi_of_a(a) - chimin) / (chimax - chimin)
-
-
-@njit
-def z2_of_a(a):
-    chimax = chi2_of_a(AMIN)
-    chimin = chi2_of_a(AMAX)
-    return (chi2_of_a(a) - chimin) / (chimax - chimin)
 
 
 @njit
@@ -301,6 +286,9 @@ def Secc_of_uz(
     z,
     beta,
 ):
+    """
+    See Eq. (B8) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     check_part = z + u**beta * (1 - z)
     sgn = np.sign(check_part)
     return ESEP + (EMAX - ESEP) * sgn * np.sqrt(sgn * check_part)
@@ -308,16 +296,25 @@ def Secc_of_uz(
 
 @njit
 def w_of_euz(e, u, z, beta):
+    """
+    See Eq. (B7b) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     return e / Secc_of_uz(u, z, beta)
 
 
 @njit
 def w_of_euz_flux(e, u, z):
+    """
+    w_of_euz for flux interpolation, with beta = BETA_FLUX. See Eq. (B7b) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     return e / Secc_of_uz(u, z, BETA_FLUX)
 
 
 @njit
 def p_of_u(u, pLSO, alpha):
+    """
+    Inverse of u_of_p. See Eq. (B7a) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     return (pLSO + DELTAPMIN) + (DELTAPMAX - DELTAPMIN) * (
         np.exp(u ** (1 / alpha) * log(2)) - 1
     )
@@ -325,6 +322,9 @@ def p_of_u(u, pLSO, alpha):
 
 @njit
 def p_of_u_flux(u, pLSO):
+    """
+    Inverse of u_of_p_flux. See Eq. (B7a) of https://doi.org/10.48550/arXiv.2506.09470 with alpha = ALPHA_FLUX
+    """
     return (pLSO + DELTAPMIN) + (DELTAPMAX - DELTAPMIN) * (
         np.exp(u ** (1 / ALPHA_FLUX) * log(2)) - 1
     )
@@ -332,28 +332,24 @@ def p_of_u_flux(u, pLSO):
 
 @njit
 def x_of_y(y):
+    """
+    Inverse of y_of_x. See Eq. (B7c) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     return y * (1 - XMIN) + XMIN
-
-
-@njit
-def a_of_chi2(chi):
-    return 1 - chi ** (1.5)
-
-
-@njit
-def a_of_z2(z):
-    chimax = chi2_of_a(AMIN)
-    chimin = chi2_of_a(AMAX)
-    return a_of_chi2(chimin + z * (chimax - chimin))
-
 
 @njit
 def a_of_chi(chi):
+    """
+    Inverse of chi_of_a. See Eq. (B7)-(B8) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     return 1 - chi**3
 
 
 @njit
 def a_of_z(z):
+    """
+    Inverse of z_of_a. See Eq. (B7d) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     chimax = chi_of_a(AMIN)
     chimin = chi_of_a(AMAX)
     return a_of_chi(chimin + z * (chimax - chimin))
@@ -361,16 +357,26 @@ def a_of_z(z):
 
 @njit
 def e_of_uwz(u, w, z, beta):
+    """
+    Inverse of w_of_euz. See Eq. (B7b) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     return Secc_of_uz(u, z, beta) * w
 
 
 @njit
 def e_of_uwz_flux(u, w, z):
+    """
+    Inverse of w_of_euz_flux. See Eq. (B7b) of https://doi.org/10.48550/arXiv.2506.09470 with beta = BETA_FLUX
+    """
     return Secc_of_uz(u, z, BETA_FLUX) * w
 
 
 @njit
 def u_where_w_is_unity(e, z, kind="flux"):
+    """
+    Utility function for determining u value where w = 1, which corresponds to e = Secc. This is used in the backward mapping to determine whether a 
+    point is in region A or B based on the value of w, since w = 1 corresponds to the boundary between the two regions. See Eq. (B7b) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     if kind == "flux":
         beta = BETA_FLUX
     elif kind == "amplitude":
@@ -435,6 +441,9 @@ def apex_of_uwyz(
 
 @njit
 def U_of_p_flux(p, pLSO):
+    """
+    See Eq. (B14) of https://doi.org/10.48550/arXiv.2506.09470 with 
+    """
     return ((DELTAPMIN_REGIONB) ** (-0.5) - (p - pLSO) ** (-0.5)) / (
         (DELTAPMIN_REGIONB) ** (-0.5) - (PMAX_REGIONB - pLSO) ** (-0.5)
     )
@@ -442,6 +451,9 @@ def U_of_p_flux(p, pLSO):
 
 @njit
 def p_of_U_flux(U, pLSO):
+    """
+    Inverse of U_of_p_flux. See Eq. (B14) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     return (
         (DELTAPMIN_REGIONB) ** (-0.5)
         - U * ((DELTAPMIN_REGIONB) ** (-0.5) - (PMAX_REGIONB - pLSO) ** (-0.5))
@@ -450,18 +462,27 @@ def p_of_U_flux(U, pLSO):
 
 @njit
 def U_of_p_amplitude(p, pLSO):
+    """
+    See Eq. (B19) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     pc = pLSO + DPC_REGIONB
     return (pc ** (-0.5) - p ** (-0.5)) / (pc ** (-0.5) - (PMAX_REGIONB + pc) ** (-0.5))
 
 
 @njit
 def p_of_U_amplitude(U, pLSO):
+    """
+    Inverse of U_of_p_amplitude. See Eq. (B19) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     pc = pLSO + DPC_REGIONB
     return (pc ** (-0.5) - U * (pc ** (-0.5) - (PMAX_REGIONB + pc) ** (-0.5))) ** (-2)
 
 
 @njit
 def W_of_e(e):
+    """
+    See Eqs. (B15) and (B20) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     return e / EMAX_REGIONB
 
 
@@ -472,16 +493,25 @@ def e_of_W(w):
 
 @njit
 def Y_of_x(x):
+    """
+    See Eqs. (B16) and (B21) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     return y_of_x(x)
 
 
 @njit
 def x_of_Y(y):
+    """
+    Inverse of Y_of_x. See Eqs. (B16) and (B21) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     return x_of_y(y)
 
 
 @njit
 def Z_of_a(a):
+    """
+    See Eqs. (B17) and (B22) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     chimax = chi_of_a(AMIN_REGIONB)
     chimin = chi_of_a(AMAX_REGIONB)
     return (chi_of_a(a) - chimin) / (chimax - chimin)
@@ -489,6 +519,9 @@ def Z_of_a(a):
 
 @njit
 def a_of_Z(z):
+    """
+    Inverse of Z_of_a. See Eqs. (B17) and (B22) of https://doi.org/10.48550/arXiv.2506.09470
+    """
     chimax = chi_of_a(AMIN_REGIONB)
     chimin = chi_of_a(AMAX_REGIONB)
     return a_of_chi(chimin + z * (chimax - chimin))

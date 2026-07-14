@@ -11,15 +11,6 @@ message: >-
   and the documentation).
 type: software
 authors:
-  - given-names: Michael
-    family-names: Katz
-    orcid: 'https://orcid.org/0000-0002-7605-5767'
-    affiliation: NASA Marshall Space Flight Center
-    email: mikekatz04@gmail.com
-  - given-names: Lorenzo
-    family-names: Speri
-    orcid: 'https://orcid.org/0000-0002-5442-7267'
-    affiliation: European Space Research Technology Center
   - given-names: Christian
     family-names: Chapman-Bird
     affiliation: University of Birmingham
@@ -27,14 +18,32 @@ authors:
   - given-names: Alvin J. K.
     family-names: Chua
     affiliation: National University of Singapore
-  - given-names: Niels
-    family-names: Warburton
-    affiliation: University College Dublin
-    orcid: 'https://orcid.org/0000-0003-0914-8645'
+	orcid: https://orcid.org/0000-0001-5242-8269
   - given-names: Scott
     family-names: Hughes
     affiliation: Massachusetts Institute of Technology
     orcid: 'https://orcid.org/0000-0001-6211-1388'
+  - given-names: Michael
+    family-names: Katz
+    affiliation: NASA Marshall Space Flight Center
+    orcid: 'https://orcid.org/0000-0002-7605-5767'
+    email: mikekatz04@gmail.com
+  - given-names: Zach
+    family-names: Nasipak
+	affiliation: University of Southampton
+	orcid: https://orcid.org/0000-0002-5109-9704
+  - given-names: Maxime
+    family-names: Pigou
+	affiliation: Laboratoire des 2 Infinis Toulouse
+	orcid: https://orcid.org/0000-0001-6997-2500
+  - given-names: Lorenzo
+    family-names: Speri
+    affiliation: European Space Research Technology Center
+    orcid: 'https://orcid.org/0000-0002-5442-7267'
+  - given-names: Niels
+    family-names: Warburton
+    affiliation: University College Dublin
+    orcid: 'https://orcid.org/0000-0003-0914-8645'
 identifiers:
   - type: doi
     value: 10.5281/zenodo.3969004

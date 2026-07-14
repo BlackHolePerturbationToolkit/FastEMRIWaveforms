@@ -24,7 +24,7 @@ def _ELQ_to_pex_kernel_inner(a, E, Lz, Q):
         A1 = a * a - Lz * Lz / E2m1
         A0 = 2.0 * (a * E - Lz) * (a * E - Lz) / E2m1
 
-        rp, ra, r3 = _solveCubic(A2, A1, A0)
+        ra, rp, r3 = _solveCubic(A2, A1, A0)
 
         p = 2.0 * ra * rp / (ra + rp)
         e = (ra - rp) / (ra + rp)
@@ -124,10 +124,10 @@ def ELQ_to_pex(
             :math:`Q`.
 
     returns:
-        Tuple of (OmegaPhi, OmegaTheta, OmegaR). These are 1D arrays or scalar values depending on inputs.
+        Tuple of (p, e, x). These are 1D arrays or scalar values depending on inputs.
     """
     # check if inputs are scalar or array
-    if not hasattr(E, "__len__"):
+    if not hasattr(a, "__len__") and not hasattr(E, "__len__") and not hasattr(Lz, "__len__") and not hasattr(Q, "__len__"):
         # get frequencies
         p, e, x = _ELQ_to_pex_kernel_inner(a, E, Lz, Q)
 
@@ -136,13 +136,13 @@ def ELQ_to_pex(
         Lz_in = np.atleast_1d(Lz)
         Q_in = np.atleast_1d(Q)
 
-        # cast the spin to the same size array as p
+        # cast the spin to the same size array as E
         if not hasattr(a, "__len__"):
             a_in = np.full_like(E_in, a)
         else:
             a_in = np.atleast_1d(a)
 
-        assert len(a_in) == len(E_in)
+        assert len(a_in) == len(E_in) == len(Lz_in) == len(Q_in)
 
         p = np.empty_like(E_in)
         e = np.empty_like(E_in)
@@ -190,18 +190,18 @@ def _KerrGeoMinoFrequencies_kernel(a, p, e, x):
         / ((a * a) * (-1 + (En * En)) * (-1 + zm))
     )
 
-    kr = sqrt((r1 - r2) / (r1 - r3) * (r3 - r4) / (r2 - r4))  # (*Eq.(13)*)
-    kTheta = sqrt(zmOverZp)  # (*Eq.(13)*)
+    kr = sqrt((r1 - r2) / (r1 - r3) * (r3 - r4) / (r2 - r4))  # (* Eq.(13) of Fujita & Hikida [arXiv:0906.1420] *)
+    kTheta = sqrt(zmOverZp)  # (* Eq.(13) of Fujita & Hikida [arXiv:0906.1420] *)
 
     EllipK_kr = EllipK(kr)
     EllipK_ktheta = EllipK(kTheta)
 
     CapitalUpsilonTheta = (PI * L * sqrt(Epsilon0zp)) / (
         2 * EllipK_ktheta
-    )  # (*Eq.(15)*)
+    )  # (* Eq.(13) of Fujita & Hikida [arXiv:0906.1420] *)
     CapitalUpsilonR = (PI * sqrt((1 - (En * En)) * (r1 - r3) * (r2 - r4))) / (
         2 * EllipK_kr
-    )  # (*Eq.(15)*)
+    )  # (* Eq.(15) of Fujita & Hikida [arXiv:0906.1420] *)
 
     rp = M + sqrt(1.0 - (a * a))
     rm = M - sqrt(1.0 - (a * a))
@@ -501,7 +501,7 @@ def get_fundamental_frequencies(
         import numpy as xp
 
     # check if inputs are scalar or array
-    if not hasattr(p, "__len__"):
+    if not hasattr(a, "__len__") and not hasattr(p, "__len__") and not hasattr(e, "__len__") and not hasattr(x, "__len__"):
         OmegaPhi, OmegaTheta, OmegaR = _KerrGeoCoordinateFrequencies_kernel_inner(
             a, p, e, x
         )
@@ -516,7 +516,7 @@ def get_fundamental_frequencies(
         else:
             a_in = xp.atleast_1d(a)
 
-        assert len(a_in) == len(p_in)
+        assert len(a_in) == len(p_in) == len(e_in) == len(x_in)
 
         OmegaPhi = xp.empty_like(p_in)
         OmegaTheta = xp.empty_like(p_in)
@@ -868,7 +868,7 @@ def get_fundamental_frequencies_spin_corrections(
     assert np.all(np.abs(x) == 1.0), "Currently only supported for equatorial orbits."
 
     # check if inputs are scalar or array
-    if not hasattr(p, "__len__"):
+    if not hasattr(a, "__len__") and not hasattr(p, "__len__") and not hasattr(e, "__len__") and not hasattr(x, "__len__"):
         OmegaPhi, OmegaTheta, OmegaR = _KerrEqSpinFrequenciesCorrections_kernel_inner(
             a, p, e, x
         )
@@ -883,7 +883,7 @@ def get_fundamental_frequencies_spin_corrections(
         else:
             a_in = np.atleast_1d(a)
 
-        assert len(a_in) == len(p_in)
+        assert len(a_in) == len(p_in) == len(e_in) == len(x_in)
 
         OmegaPhi = np.empty_like(p_in)
         OmegaTheta = np.zeros_like(p_in)
@@ -953,7 +953,7 @@ def _KerrGeoEnergy(a, p, e, x):
     sgnax = 1 if a * x > 0 else -1
     if (
         e < 1e-10
-    ):  # switch to spherical formulas A13-A17 (2102.02713) to avoid instability
+    ):  # switch to spherical formulas A13-A17 (2102.02713) to avoid instability; cutoff determined from trial and error comparing with the circular limit
         r = p
 
         Kappa = _d(r, a, zm) * _hdot(r, a, zm) - _h(r, a, zm) * _ddot(r, a, zm)
@@ -1094,7 +1094,7 @@ def get_kerr_geo_constants_of_motion(
     """
 
     # check if inputs are scalar or array
-    if not hasattr(p, "__len__"):
+    if not hasattr(a, "__len__") and not hasattr(p, "__len__") and not hasattr(e, "__len__") and not hasattr(x, "__len__"):
         E, L, Q = _KerrGeoConstantsOfMotion_kernel_inner(a, p, e, x)
     else:
         p_in = np.atleast_1d(p)
@@ -1107,7 +1107,7 @@ def get_kerr_geo_constants_of_motion(
         else:
             a_in = np.atleast_1d(a)
 
-        assert len(a_in) == len(p_in)
+        assert len(a_in) == len(p_in) == len(e_in) == len(x_in)
 
         E = np.empty_like(p_in)
         L = np.empty_like(p_in)
@@ -1391,7 +1391,7 @@ def get_separatrix(
 
     """
     # determines shape of input
-    if not hasattr(e, "__len__"):
+    if not hasattr(a, "__len__") and not hasattr(e, "__len__") and not hasattr(x, "__len"):
         return _get_separatrix_kernel_inner(a, e, x, tol=tol)
 
     if use_gpu:
@@ -1401,10 +1401,7 @@ def get_separatrix(
 
     e_in = xp.atleast_1d(e)
 
-    if not hasattr(x, "__len__"):
-        x_in = xp.full_like(e_in, x)
-    else:
-        x_in = xp.atleast_1d(x)
+    x_in = xp.atleast_1d(x)
 
     # cast spin values if necessary
     if not hasattr(a, "__len__"):

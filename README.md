@@ -23,9 +23,6 @@ To install the latest version of `fastemriwaveforms` using `pip`, simply run:
 # For CPU-only version
 pip install fastemriwaveforms
 
-# For GPU-enabled versions with CUDA 11.Y.Z
-pip install fastemriwaveforms-cuda11x
-
 # For GPU-enabled versions with CUDA 12.Y.Z
 pip install fastemriwaveforms-cuda12x
 ```
@@ -65,16 +62,15 @@ import few
 You may check the currently available backends:
 
 ```py3
->>> for backend in ["cpu", "cuda11x", "cuda12x", "cuda", "gpu"]:
+>>> for backend in ["cpu", "cuda12x", "cuda", "gpu"]:
 ...     print(f" - Backend '{backend}': {"available" if few.has_backend(backend) else "unavailable"}")
  - Backend 'cpu': available
- - Backend 'cuda11x': unavailable
  - Backend 'cuda12x': unavailable
  - Backend 'cuda': unavailable
  - Backend 'gpu': unavailable
 ```
 
-Note that the `cuda` backend is an alias for either `cuda11x` or `cuda12x`. If any is available, then the `cuda` backend is available.
+Note that the `cuda` backend is an alias for `cuda12x` (and soon, `cuda13x`). If any is available, then the `cuda` backend is available.
 Similarly, the `gpu` backend is (for now) an alias for `cuda`.
 
 If you expected a backend to be available but it is not, run the following command to obtain an error

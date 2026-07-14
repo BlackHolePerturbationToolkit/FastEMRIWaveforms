@@ -3,6 +3,26 @@
 
 Below is a list of those who have contributed code or data to the releases of FEW. Note this is not an exhaustive list of those who have contributed to FEW development for each version, as often people are also involved via extensive discussion and paper writing.
 
+- FEW v2.1 (Kerr eccentric equatorial review update)
+    * [Christian Chapman-Bird](https://github.com/cchapmanbird) </br>
+		Patched bugs and updated documentation based on review recommendations
+    * [Bert Depoorter](https://github.com/BertDepoorter) </br>
+		External reviewer of Kerr eccentric equatorial model
+    * [Aldo Gamboa](https://github.com/aldogamboa) </br>
+		External reviewer of Kerr eccentric equatorial model
+    * [Robrecht Keijzer](https://github.com/RobrechtKeijzer) </br>
+		External reviewer of Kerr eccentric equatorial model
+    * [Benjamin Leather](https://github.com/bleather) </br>
+		External reviewer of Kerr eccentric equatorial model
+    * [Philip Lynch](https://github.com/Philip-Lynch)  </br>
+		Patched bugs and updated documentation based on review recommendations
+    * [Zachary Nasipak](https://github.com/znasipak)  </br>
+		Patched bugs and updated documentation based on review recommendations
+    * [Jonathan Thompson](https://github.com/thompsonphys) </br>
+		External reviewer of Kerr eccentric equatorial model
+    * [Barry Wardell](https://github.com/barrywardell) </br>
+		External reviewer of Kerr eccentric equatorial model
+
 - FEW v2.0 (Kerr eccentric equatorial waveforms added)
 	* [Ollie Burke](https://github.com/OllieBurke)
 	* [Christian Chapman-Bird](https://github.com/cchapmanbird) </br>

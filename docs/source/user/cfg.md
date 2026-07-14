@@ -10,8 +10,8 @@ The `few` package can be tuned through the use of optional configuration options
 The `few.ini` file is searched, in priority order:
 
 - In your current working directory
-- In your [`platformdirs.user_config_path()`](https://github.com/tox-dev/platformdirs/blob/main/README.rst) (e.g. `~/.config/few.ini`)
-- In your [`platformdirs.site_config_path()`](https://github.com/tox-dev/platformdirs/blob/main/README.rst) (e.g. `/etc/xdg/few/v1.5/few.ini`)
+- In your [`platformdirs.user_config_path()`](https://github.com/tox-dev/platformdirs/) (e.g. `~/.config/few.ini`)
+- In your [`platformdirs.site_config_path()`](https://github.com/tox-dev/platformdirs/) (e.g. `/etc/xdg/few/v1.5/few.ini`)
 
 The path to `few.ini` can be enforced by the `FEW_CONFIG_FILE` environment variable, or in command-line contexts, by the `-C` or `--config-file` argument.
 
@@ -48,13 +48,11 @@ possible to enforce or prevent the use of specific backends through the `enabled
 The list of available backends is:
 
 - `cpu`: Use the CPU itself for accelerated computations
-- `cuda11x`: Use a NVIDIA GPU with CUDA 11.x drivers
 - `cuda12x`: Use a NVIDIA GPU with CUDA 12.x drivers
 
 By default, all these backends can be used provided they are installed and have required software and hardware available.
 A class that supports only CPU will only attempt to use he `cpu` backend, whilst a class with hybrid GPU/CPU support will
-(usually) first attempt to use the `cuda12x` backend, in case of failure it will attempt using the `cuda11x` and finally
-fallback to the `cpu` one.
+(usually) first attempt to use the `cuda12x` backend, in case of failure it will fallback to the `cpu` one.
 
 When setting the `enabled_backends` option, all items present in that list will be loaded (and FEW will fail initializing
 if any in not loadable) while other items will be strictly disabled.
@@ -62,7 +60,7 @@ if any in not loadable) while other items will be strictly disabled.
 Example:
 
 - On a computer with only a CPU, setting `enabled_backends = ['cpu']` will speed-up FEW loading process by disabling
-  the `cuda11x` and `cuda12x` backends and not even try loading them
+  the `cuda12x` backend and not even try loading it
 - On a computer with a NVIDIA GPU and CUDA 12.x drivers, setting `enabled_backends = ['cuda12x', 'cpu']` ensures that
   the CUDA 12.x backend will be loaded and that CPU only classes are still supported. If for any reason, the CUDA 12.x backend
   cannot be loaded, FEW will fail to run (and the message error should explain the failure and suggest mitigation strategies).
@@ -82,7 +80,7 @@ This `FileManager` is highly tunable and propose the following options:
 
 The *storage path* is the directory where the `FileManager` will first look for files.
 
-Its default value is built relative to [`platformdirs.user_data_dir()`](https://github.com/tox-dev/platformdirs/blob/main/README.rst)
+Its default value is built relative to [`platformdirs.user_data_dir()`](https://github.com/tox-dev/platformdirs/)
 (e.g. `~/.local/share/few/v1.5.1` on Linux systems)
 
 #### `file_download_path`
@@ -131,7 +129,7 @@ General configuration options:
 |---|---|---|---|---|---|
 | `log_level` | `log-level` | `FEW_LOG_LEVEL` | `--log-level` | `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |  |
 | `log_format` | `log-format` | `FEW_LOG_FORMAT` | `--log-format` | Any format string supported by [`logging.Formatter`](https://docs.python.org/3/library/logging.html#logging.Formatter) |  |
-| `enabled_backends` | `enabled-backends` | `FEW_ENABLED_BACKENDS` | `--enable-backend` | `cpu`, `cuda11x`, `cuda12x` | ";"-separated list of values. The CLI parameter can be used multiple time for each enabled backend. |
+| `enabled_backends` | `enabled-backends` | `FEW_ENABLED_BACKENDS` | `--enable-backend` | `cpu`, `cuda12x` | ";"-separated list of values. The CLI parameter can be used multiple time for each enabled backend. |
 | `file_registry_path` | `file-registry` | `FEW_FILE_REGISTRY` | `--file-registry` | Path to a `registry.yml` file |  |
 | `file_storage_path` | `file-storage-dir` | `FEW_FILE_STORAGE_DIR` | `--storage-dir` | Absolute path, or relative to current working directory | Directory must already exist |
 | `file_download_path` | `file-download-dir` | `FEW_FILE_DOWNLOAD_DIR` | `--download-dir` | Absolute path, or relative to the storage directory |  |

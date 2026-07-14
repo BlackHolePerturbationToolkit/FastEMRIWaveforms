@@ -70,7 +70,7 @@ class ConfigEntry(Generic[T]):
     """Name of the entry in a config file"""
 
     env_var: Optional[str] = None
-    """Entry corresponding env var (uppercase, without FEW_ prefix)"""
+    """Entry corresponding env var (uppercase, without FEW\_ prefix)"""
 
     cli_flags: Optional[Union[str, List[str]]] = None
     """Flag(s) for CLI arguments of this entry (e.g. "-f")"""
@@ -262,7 +262,6 @@ class ConfigConsumer(abc.ABC):
         """Get the value of a config entry via attributes."""
         if attr in self._items:
             return self._items[attr].value
-        return self.__getattribute__(attr)
 
     def get_item(self, key: str) -> Tuple[ConfigItem, ConfigEntry]:
         return self._items[key], self._entries[key]

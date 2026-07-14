@@ -174,20 +174,16 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
         cqS = np.cos(qS)
         sqS = np.sin(qS)
 
-        # cphiS = np.cos(phiS)
-        # sphiS = np.sin(phiS)
-
         cqK = np.cos(qK)
         sqK = np.sin(qK)
-
-        # cphiK = np.cos(phiK)
-        # sphiK = np.sin(phiK)
 
         # get polarization angle
 
         up_ldc = cqS * sqK * np.cos(phiS - phiK) - cqK * sqS
         dw_ldc = sqK * np.sin(phiS - phiK)
 
+        #TODO: understand why this is needed, but it is in the original code
+        # and leads to discontinuity in polarization angle otherwise
         if dw_ldc != 0.0:
             psi_ldc = -np.arctan2(up_ldc, dw_ldc)
 

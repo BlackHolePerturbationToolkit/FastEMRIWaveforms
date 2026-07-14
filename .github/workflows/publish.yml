@@ -88,33 +88,19 @@ jobs:
             os: ubuntu-latest
             arch: x86_64
             kind: core
-            reqpython: '>=3.9'
-          - release: cuda11x
-            os: ubuntu-latest
-            arch: x86_64
-            kind: cuda_plugin
-            cuda_major: 11
-            cuda_minor: 8
-            reqpython: '>=3.9'
+            reqpython: '>=3.12'
           - release: cuda12x
             os: ubuntu-latest
             arch: x86_64
             kind: cuda_plugin
             cuda_major: 12
             cuda_minor: 4
-            reqpython: '>=3.9'
+            reqpython: '>=3.12'
           - release: cpu
             os: ubuntu-24.04-arm
             arch: aarch64
             kind: core
-            reqpython: '>=3.10'
-          # - release: cuda11x
-          #   os: ubuntu-latest
-          #   arch: aarch64
-          #   target: manylinux
-          #   kind: cuda_plugin
-          #   cuda_major: 11
-          #   cuda_minor: 8
+            reqpython: '>=3.12'
           # - release: cuda12x
           #   os: ubuntu-latest
           #   arch: aarch64
@@ -123,15 +109,9 @@ jobs:
           #   cuda_major: 12
           #   cuda_minor: 6
           - release: cpu
-            os: macos-13
-            kind: core
-            reqpython: '>=3.9'
-            arch: x86_64
-            macos_ver: 13.0
-          - release: cpu
             os: macos-14
             kind: core
-            reqpython: '>=3.9'
+            reqpython: '>=3.12'
             arch: arm64
             macos_ver: 14.0
     steps:
@@ -213,6 +193,7 @@ jobs:
           CIBW_PROJECT_REQUIRES_PYTHON: ${{ matrix.reqpython }}
           CIBW_ARCHS_LINUX: ${{ matrix.arch }}
           CIBW_SKIP: pp* *musllinux*
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
           CIBW_CONFIG_SETTINGS: >
             cmake.define.FEW_LAPACKE_FETCH=OFF
@@ -236,15 +217,18 @@ jobs:
           CIBW_PROJECT_REQUIRES_PYTHON: ${{ matrix.reqpython }}
           CIBW_ARCHS_LINUX: ${{ matrix.arch }}
           CIBW_SKIP: pp* *musllinux*
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_CONFIG_SETTINGS: >
             cmake.define.FEW_LAPACKE_FETCH=OFF
             cmake.define.FEW_WITH_GPU=ONLY
             cmake.define.FEW_CUDA_ARCH=all
           CIBW_BEFORE_ALL: >
-            yum install -y devtoolset-11-gcc-c++ &&
-            yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo &&
-            yum install -y cuda-compiler-${{ matrix.cuda_major }}-${{ matrix.cuda_minor }}.${{ matrix.arch }} cuda-libraries-${{ matrix.cuda_major }}-${{ matrix.cuda_minor }} cuda-libraries-devel-${{ matrix.cuda_major }}-${{ matrix.cuda_minor }}
-          CIBW_BEFORE_BUILD: source /opt/rh/devtoolset-11/enable
+            yum install -y gcc gcc-c++ make &&
+            yum install -y yum-utils &&
+            yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo &&
+            yum install -y cuda-compiler-${{ matrix.cuda_major }}-${{ matrix.cuda_minor }} cuda-libraries-${{ matrix.cuda_major }}-${{ matrix.cuda_minor }} cuda-libraries-devel-${{ matrix.cuda_major }}-${{ matrix.cuda_minor }}
+          CIBW_BEFORE_BUILD: >
+            gcc --version && g++ --version && nvcc --version
           CIBW_ENVIRONMENT: >
             PATH="/usr/local/cuda/bin:${PATH}"
             LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"

@@ -31,7 +31,7 @@ class ParallelModuleBase(Citable):
     Base class for modules that can use a GPU (or revert back to CPU).
 
     This class mainly handles backend selection. Each backend offers accelerated
-    computations on a specific device (cpu, CUDA 11.x enabled GPU, CUDA 12.x enabled GPU).
+    computations on a specific device (cpu, CUDA 12.x enabled GPU).
 
     args:
         force_backend (str, optional): Name of the backend to use
@@ -67,17 +67,17 @@ class ParallelModuleBase(Citable):
     @staticmethod
     def GPU_RECOMMENDED() -> list[str]:
         """List of supported backends for GPU-recommended class with CPU support"""
-        return ["cuda12x", "cuda11x", "cpu"]
+        return ["cuda12x", "cpu"]
 
     @staticmethod
     def CPU_RECOMMENDED_WITH_GPU_SUPPORT() -> list[str]:
         """List of supported backends for CPU-recommended class with GPU support"""
-        return ["cpu", "cuda12x", "cuda11x"]
+        return ["cpu", "cuda12x"]
 
     @staticmethod
     def GPU_ONLY() -> list[str]:
         """List of supported backends for GPU-only class"""
-        return ["cuda12x", "cuda11x"]
+        return ["cuda12x"]
 
     @property
     def xp(self) -> types.ModuleType:

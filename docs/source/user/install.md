@@ -348,7 +348,8 @@ EOC
 ```
 
 ### Make the conda environment available as a Jupyter Hub kernel
-After ensuring that `few` is working as expected, enable support for [Jupyter Hub](https://jupyterhub.cnes.fr/).
+
+After ensuring that `few` is working as expected, enable support for Jupyter Hub.
 First install `ipykernel` and declare a new kernel named `few_env`:
 
 ```sh
@@ -378,7 +379,7 @@ $ chmod +x ${python_wrapper_path}
 And change the kernel start command to use this wrapper: edit the file `~/.local/share/jupyter/kernels/few_env/kernel.json` and
 replace the first item in the `argv` field by replacing `.../bin/python` with `.../bin/wpython`.
 
-Now, when connected to the [CNES Jupyter Hub](https://jupyterhub.cnes.fr/), you
+Now, when connected to the CNES Jupyter Hub, you
 should have access to the `few_env` kernel and FEW should work correctly in it.
 
 ## On the CC-IN2P3 cluster with GPU support

@@ -198,8 +198,7 @@ class ModeSelector(ParallelModuleBase):
                 raise ValueError(
                     "Only supports mode_selection with m >= 0 when include_minus_mkn = True."
                 )
-
-        # if it is a string, check if it is 'all' or 'eps'. If so, return all modes
+        # if it is a string, check if it is 'all' or 'threshold'. If so, return all modes
         elif isinstance(mode_selection, str) and mode_selection not in [
             "all",
             "threshold",

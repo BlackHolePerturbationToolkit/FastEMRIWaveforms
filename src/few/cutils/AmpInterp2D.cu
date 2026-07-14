@@ -34,21 +34,14 @@ void fpbisp(
              int kx, int ky, const double x, int mx,
              const double y, int my)
 {
-  int i, i1, j, j1, kx1, ky1, l, l1, l2, m, nkx1, nky1;
+  int i1, j1, kx1, ky1, l, l1, l2, nkx1, nky1;
   double arg, sp, tb, te;
 
     double wx[6] = {0.};
     double wy[6] = {0.};
     int lx, ly;
 
-  //int* lx = new int[mx];
-  //int* ly = new int[my];
-  // mx * kx1 in size
-  //wx = new double*[mx];
   kx1 = kx + 1;
-  //wx[0] = new double[mx * kx1];
-  //for (i = 1; i < mx; i++)
-  //  wx[i] = &wx[0][i * kx1];
   nkx1 = nx - kx1;
   tb = tx[kx1 - 1];
   te = tx[nkx1];
@@ -62,14 +55,8 @@ void fpbisp(
         l++;
     fpbspl(tx, kx, arg, l, wx);
     lx = l - kx1;
-    //for (j = 0; j < kx1; ++j)
-    //  wx[j] = h[j];
 
   ky1 = ky + 1;
-  //wy = new double*[my];
-  //wy[0] = new double[my * ky1];
-  //for (i = 1; i < my; i++)
-  //  wy[i] = &wy[0][i * ky1];
   nky1 = ny - ky1;
   tb = ty[ky1 - 1];
   te = ty[nky1];
@@ -82,34 +69,18 @@ void fpbisp(
     while (!(arg < ty[l] || l == nky1))
       l++;
     fpbspl(ty, ky, arg, l, wy);
-    //printf("%d %d %d %d %e %e %e %e %e %e %d\n", i, l, ky1, l - ky1, arg, y[i], tb, te, ty_shared[l], ty_shared[nky1], nky1);
     ly = l - ky1;
-    //for (j = 0; j < ky1; ++j)
-    //  wy[i * ky1 + j] = h[j];
 
-  //m = 0;
-  //for (i = 0; i < mx; i++) {
     l = lx * nky1;
-    //for (i1 = 0; i1 < kx1; i1++)
-      //h[i1] = wx[i][i1];
-    //for (j = 0; j < my; j++) {
-      l1 = l + ly;
-      sp = 0;
-      for (i1 = 0; i1 < kx1; i1++) {
-        l2 = l1;
-        for (j1 = 0; j1 < ky1; j1++)
-          sp += c[l2++] * wx[i1] * wy[j1];
-        l1 += nky1;
-      }
-      *z = sp;
-    //}
-  //}
-  //delete [] wy[0];
-  //delete [] wy;
-  //delete [] wx[0];
-  //delete [] wx;
-  //delete [] ly;
-  //delete [] lx;
+    l1 = l + ly;
+    sp = 0;
+    for (i1 = 0; i1 < kx1; i1++) {
+      l2 = l1;
+      for (j1 = 0; j1 < ky1; j1++)
+        sp += c[l2++] * wx[i1] * wy[j1];
+      l1 += nky1;
+    }
+    *z = sp;
 }
 
 CUDA_KERNEL
@@ -132,7 +103,7 @@ void interp2D(double* z, const double* tx, int nx, const double* ty, int ny,
     extern __shared__  unsigned char shared_mem[];
     double *shared_mem_in = (double*) shared_mem;
     #else
-    double* shared_mem_in = new double[nx * ny * len_indiv_c];
+    double* shared_mem_in = new double[nx + ny + len_indiv_c];
     #endif
 
     double *tx_shared = &shared_mem_in[0];
@@ -162,9 +133,6 @@ void interp2D(double* z, const double* tx, int nx, const double* ty, int ny,
     int full_loop_inc = 1;
     #endif
 
-
-    //double h[6] = {0.};
-    // TODO: add omp?
     for (int c_i = start_block; c_i < num_indiv_c; c_i += block_inc)
     {
         for (int i = start_thread; i < nx; i += thread_inc)
@@ -217,7 +185,7 @@ void interp2D_wrap(double* z, const double* tx, int nx, const double* ty, int ny
         cudaFuncAttributeMaxDynamicSharedMemorySize,
         shared_memory_size));
 
-    int num_blocks = std::ceil((mx + NUM_THREADS -1)/NUM_THREADS);
+    int num_blocks = std::ceil((mx + NUM_THREADS - 1.0)/NUM_THREADS); // 1.0 to ensure floating point division
     dim3 grid(num_blocks, num_indiv_c);
     interp2D<<<grid, NUM_THREADS, shared_memory_size>>>(
         z,

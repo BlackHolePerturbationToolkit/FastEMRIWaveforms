@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import Optional, Tuple, Type
 
 import numpy as np
@@ -48,7 +49,7 @@ def digest_func(func):
     return func
 
 
-class Integrate:
+class Integrate(ABC):
     """Custom integrator class.
 
     Flexible integration options. # TODO: discuss options
@@ -97,9 +98,6 @@ class Integrate:
 
         self.dopr = DOPR853(
             self._dopr_ode_wrap,
-            stopping_criterion=None,  # stopping_criterion,
-            tmax=1e9,
-            max_step=1e6,
         )
 
         if max_iter is None:
@@ -173,7 +171,7 @@ class Integrate:
             (new time, new step size, new position)
 
         """
-        return self.dopr.take_step_single(t, h, y, self.tmax_dimensionless, None)
+        return self.dopr.take_step_single(t, h, y, None)
 
     def log_failed_step(self, lastError: Exception):
         """Add to and check failed step count.
@@ -287,7 +285,7 @@ class Integrate:
                 h_old = h
                 y_old = y.copy()
                 status, t, h = self.dopr.take_step_single(
-                    t_old, h_old, y, self.tmax_dimensionless, None
+                    t_old, h_old, y, None
                 )
 
             except ValueError as e:
@@ -795,7 +793,7 @@ class Integrate:
             self.tmax_dimensionless * self.Msec, y_finish, spline_output=None
         )  # adds time in seconds
 
-    @classmethod
+    @abstractmethod
     def get_pex(self, y: np.ndarray) -> np.ndarray:
         """Handles integrator-specific conversion from y to pex and returns the result."""
         raise NotImplementedError
