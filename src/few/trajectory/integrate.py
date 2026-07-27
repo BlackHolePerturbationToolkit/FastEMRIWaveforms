@@ -94,7 +94,9 @@ class Integrate(ABC):
 
         self.ode_info = get_ode_properties(self.func)
 
-        self.enforce_schwarz_sep = enforce_schwarz_sep
+        # Allow the ODE func to declare enforce_schwarz_sep itself;
+        # constructor argument acts as a fallback override.
+        self.enforce_schwarz_sep = self.func.enforce_schwarz_sep or enforce_schwarz_sep
 
         self.dopr = DOPR853(
             self._dopr_ode_wrap,
@@ -277,7 +279,7 @@ class Integrate(ABC):
         while t < self.tmax_dimensionless:
             if not self.dopr.fix_step:
                 if niter >= self.max_iter:
-                    raise ValueError("Integration did not converge within max_iter.")
+                    raise ValueError(f"Integration did not converge within max_iter = {self.max_iter}.")
 
             try:
                 # take a step
@@ -426,8 +428,8 @@ class Integrate(ABC):
         self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
         self._integrator_t_cache = np.zeros((self.buffer_length,))
         self.dopr_spline_output = np.zeros(
-            (self.buffer_length, 6, 8)
-        )  # 3 parameters + 3 phases, 8 coefficients
+            (self.buffer_length, self.nparams, 8)
+        )  # nparams paramaters, 8 coefficients
         self.traj_step = 0
 
     @property
@@ -531,9 +533,8 @@ class Integrate(ABC):
         except AttributeError:
             on_gpu = False
 
-        result = np.zeros((t_new.size, 6))
+        result = np.zeros((t_new.size, self.nparams))
         t_in_mask = (t_new >= 0.0) & (t_new <= t_old.max())
-
         result[t_in_mask, :] = self.dopr.eval(
             t_new[t_in_mask], t_old, self.integrator_spline_coeff
         )
@@ -638,6 +639,8 @@ class Integrate(ABC):
         if self.integrate_backwards:
             if not self.enforce_schwarz_sep:
                 p_sep = get_separatrix(self.a, orb_params[1], orb_params[2])
+            elif self.enforce_schwarz_sep == "1PAT1R":
+                p_sep = np.max([self.func._min_p, get_separatrix(self.a, orb_params[1], orb_params[2])])
             else:
                 p_sep = 6 + 2 * orb_params[1]
             if (orb_params[0] - p_sep) < self.separatrix_buffer_dist - 1e-6:
@@ -682,6 +685,8 @@ class Integrate(ABC):
             p, e, x = self.get_pex(y)
             if not self.enforce_schwarz_sep:
                 p_sep = get_separatrix(self.a, e, x)
+            elif self.enforce_schwarz_sep == "1PAT1R":
+                p_sep = np.max([self.func._min_p, get_separatrix(self.a, e, x)])
             else:
                 p_sep = 6 + 2 * e
 
@@ -705,6 +710,8 @@ class Integrate(ABC):
         # get the separatrix value at this new step
         if not self.enforce_schwarz_sep:
             p_sep = get_separatrix(self.a, e, x)
+        elif self.enforce_schwarz_sep == "1PAT1R":
+            p_sep = np.max([self.func._min_p, get_separatrix(self.a, e, x)])
         else:
             p_sep = 6 + 2 * e
 

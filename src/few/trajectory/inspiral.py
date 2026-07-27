@@ -227,6 +227,17 @@ class EMRIInspiral(TrajectoryBase):
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
         args_in = np.asarray(args)
 
+        # ensure the user supplied every additional argument this model requires,
+        # before the padding below can silently default a missing value to zero
+        required = self.func.required_add_args
+        if len(args_in) < len(required):
+            missing = "', '".join(required)
+            raise ValueError(
+                f"{type(self.func).__name__} requires the additional argument(s) "
+                f"'{missing}' to be passed, but only {len(args_in)} additional "
+                f"argument(s) were received."
+            )
+
         # correct for issue in Cython pass
         if len(args_in) == 0:
             args_in = np.array([0.0])
@@ -241,6 +252,11 @@ class EMRIInspiral(TrajectoryBase):
         p0 = y1
         e0 = y2
         x0 = y3
+
+        # The 1PAT1R model requires initial values for deltaM and deltaChit1, set them to zero.
+        if type(self.func).__name__ == 'TrajectoryCirc1PAT1R':
+            deltaChit10 = 0.0
+            deltaM0 = 0.0
 
         if temp_kwargs["integrate_backwards"]:
             self.func.isvalid_pex(p=p0, e=e0, x=x0, a=a, p_buffer = [-1e-6, 0], separatrix_buffer=self.separatrix_buffer_dist, max_e_buffer = 0.0)
@@ -287,6 +303,10 @@ class EMRIInspiral(TrajectoryBase):
             [y1, y2, y3, Phi_phi0 * (mu / M), Phi_theta0 * (mu / M), Phi_r0 * (mu / M)]
         )
 
+        # Add deltaM and deltaChit1 to the initial conditions for the 1PAT1R model
+        if type(self.func).__name__ == 'TrajectoryCirc1PAT1R':
+            y0 = np.append(y0, np.array([deltaM0, deltaChit10]))
+
         # this will return in coordinate time
         out = self.inspiral_generator.run_inspiral(
             m1, m2, a, y0, args_in, **temp_kwargs
@@ -301,8 +321,12 @@ class EMRIInspiral(TrajectoryBase):
             else:
                 out[:, 3] = pex[2]
 
-        t, p, e, x, Phi_phi, Phi_theta, Phi_r = out.T.copy()
-        return t, p, e, x, Phi_phi, Phi_theta, Phi_r
+        if type(self.func).__name__ == 'TrajectoryCirc1PAT1R':
+            t, p, e, x, Phi_phi, Phi_theta, Phi_r, delta_M, delta_chit1 = out.T.copy()
+            return t, p, e, x, Phi_phi, Phi_theta, Phi_r, delta_M, delta_chit1
+        else:
+            t, p, e, x, Phi_phi, Phi_theta, Phi_r = out.T.copy()
+            return t, p, e, x, Phi_phi, Phi_theta, Phi_r
 
     def get_rhs_ode(
         self,
@@ -383,7 +407,10 @@ class EMRIInspiral(TrajectoryBase):
                 x0 = Y_to_xI(a, p0, e0, x0)
             y1, y2, y3 = get_kerr_geo_constants_of_motion(a, p0, e0, x0)
 
-        y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
+        if type(self.func).__name__ == 'TrajectoryCirc1PAT1R':
+            y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0, deltaM0, deltaChit10])
+        else:
+            y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
 
         y0_and_args = np.concatenate(([y0], args))
         out = self.inspiral_generator.func(y0_and_args)

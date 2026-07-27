@@ -37,6 +37,9 @@ class ODEBase:
         self.integrate_backwards = integrate_backwards
         """bool: If True, the ODE corresponds to integrating backwards in time. Defaults to False."""
 
+        # Additional keyword arguments that will be set by add_fixed_parameters
+        self.args = {}
+
     @property
     def convert_Y(self):
         """
@@ -79,6 +82,16 @@ class ODEBase:
         return "Kerr"
 
     @property
+    def enforce_schwarz_sep(self):
+        """
+        If True, use the Schwarzschild separatrix (p_sep = 6 + 2e) as the stopping
+        condition rather than the Kerr separatrix. Subclasses can override this to
+        True to avoid Kerr-separatrix issues when the background is effectively
+        Schwarzschild. Defaults to False.
+        """
+        return False
+
+    @property
     def separatrix_buffer_dist(self):
         """
         A float describing the value of "p" at which the trajectory should terminate at,
@@ -95,6 +108,17 @@ class ODEBase:
         Defaults to 6 (three orbital elements, three orbital phases).
         """
         return 6
+
+    @property
+    def required_add_args(self):
+        """
+        A list of names of the additional arguments the user *must* supply for
+        this model (beyond the orbital elements and phases). If fewer than these
+        are provided, the trajectory raises a clear ``ValueError`` naming the
+        missing argument(s), rather than silently defaulting them to zero.
+        Defaults to an empty list (no required additional arguments).
+        """
+        return []
 
     @property
     def flux_output_convention(self):
@@ -122,6 +146,23 @@ class ODEBase:
     def add_fixed_parameters(
         self, m1: float, m2: float, a: float, additional_args=None
     ):
+        self.isvalid_m1(m1)
+        self.isvalid_m2(m2)
+        if m2 > m1:
+            raise ValueError(f"m2 must be less than or equal to m1. Got m1={m1}, m2={m2}.")
+        # ensure every model-required additional argument was supplied. This
+        # backstops direct add_fixed_parameters calls (e.g. with an empty list)
+        # that bypass the equivalent check in EMRIInspiral.get_inspiral, so a
+        # missing argument raises a clear ValueError rather than an IndexError.
+        required = self.required_add_args
+        n_received = 0 if additional_args is None else len(additional_args)
+        if n_received < len(required):
+            missing = "', '".join(required)
+            raise ValueError(
+                f"{type(self).__name__} requires the additional argument(s) "
+                f"'{missing}' to be passed, but only {n_received} additional "
+                f"argument(s) were received."
+            )
         self.massratio = m1 * m2 / (m1 + m2) ** 2
         self.a = a
         self.additional_args = additional_args
@@ -221,6 +262,22 @@ class ODEBase:
             return np.inf
         else:
             return np.full_like(p, np.inf)
+
+    def isvalid_m1(self, m1: float):
+        # `not (m1 > 0)` (rather than `m1 <= 0`) also rejects NaN, for which
+        # every comparison returns False.
+        if not (m1 > 0):
+            raise ValueError(
+                f"Mass of the primary m1 must be positive. Got m1={m1}."
+            )
+
+    def isvalid_m2(self, m2: float):
+        # `not (m2 > 0)` (rather than `m2 <= 0`) also rejects NaN, for which
+        # every comparison returns False.
+        if not (m2 > 0):
+            raise ValueError(
+                f"Mass of the secondary m2 must be positive. Got m2={m2}."
+            )
 
     def isvalid_x(self, x: float):
         pass
