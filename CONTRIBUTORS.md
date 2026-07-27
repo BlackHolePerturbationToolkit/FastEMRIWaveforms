@@ -3,6 +3,10 @@
 
 Below is a list of those who have contributed code or data to the releases of FEW. Note this is not an exhaustive list of those who have contributed to FEW development for each version, as often people are also involved via extensive discussion and paper writing.
 
+- FEW v2.2 (Circular 1PA model added)
+	* [Zachary Nasipak](https://github.com/znasipak)  </br>
+		Internal reviewer of model
+
 - FEW v2.1 (Kerr eccentric equatorial review update)
     * [Christian Chapman-Bird](https://github.com/cchapmanbird) </br>
 		Patched bugs and updated documentation based on review recommendations

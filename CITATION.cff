@@ -11,6 +11,9 @@ message: >-
   and the documentation).
 type: software
 authors:
+  - given-names: Ollie
+    family-names: Burke
+    orcid: 'https://orcid.org/0000-0003-2393-209X'
   - given-names: Christian
     family-names: Chapman-Bird
     affiliation: University of Birmingham
@@ -19,16 +22,42 @@ authors:
     family-names: Chua
     affiliation: National University of Singapore
     orcid: https://orcid.org/0000-0001-5242-8269
+  - given-names: Bert
+    family-names: Depoorter
+    orcid: 'https://orcid.org/0009-0004-7865-7990'
+  - given-names: Ryuichi
+    family-names: Fujita
+    orcid: 'https://orcid.org/0000-0002-8415-8168'
+  - given-names: Aldo
+    family-names: Gamboa
+    orcid: 'https://orcid.org/0000-0001-8391-5596'
   - given-names: Scott
     family-names: Hughes
     affiliation: Massachusetts Institute of Technology
     orcid: 'https://orcid.org/0000-0001-6211-1388'
+  - given-names: Soichiro
+    family-names: Isoyama
+    orcid: 'https://orcid.org/0000-0001-6247-2642'
   - given-names: Michael
     family-names: Katz
     affiliation: NASA Marshall Space Flight Center
     orcid: 'https://orcid.org/0000-0002-7605-5767'
     email: mikekatz04@gmail.com
-  - given-names: Zach
+  - given-names: Robrecht
+    family-names: Keijzer
+    orcid: 'https://orcid.org/0009-0002-4580-3651'
+  - given-names: Shubham
+    family-names: Kejriwal
+    orcid: 'https://orcid.org/0009-0004-5838-1886'
+  - given-names: Benjamin
+    family-names: Leather
+    orcid: 'https://orcid.org/0000-0001-6186-7271'
+  - given-names: Philip
+    family-names: Lynch
+    orcid: 'https://orcid.org/0000-0003-4070-7150'
+  - given-names: Maurice
+    family-names: Meus
+  - given-names: Zachary
     family-names: Nasipak
     affiliation: University of Southampton
     orcid: https://orcid.org/0000-0002-5109-9704
@@ -36,14 +65,24 @@ authors:
     family-names: Pigou
     affiliation: Laboratoire des 2 Infinis Toulouse
     orcid: https://orcid.org/0000-0001-6997-2500
+  - given-names: Monica
+    family-names: Rizzo
   - given-names: Lorenzo
     family-names: Speri
     affiliation: European Space Research Technology Center
     orcid: 'https://orcid.org/0000-0002-5442-7267'
+  - given-names: Jonathan
+    family-names: Thompson
+    affiliation: University of Southampton
+    orcid: 'https://orcid.org/0000-0002-0419-5517'
   - given-names: Niels
     family-names: Warburton
     affiliation: University College Dublin
     orcid: 'https://orcid.org/0000-0003-0914-8645'
+  - given-names: Barry
+    family-names: Wardell
+    affiliation: University College Dublin
+    orcid: 'https://orcid.org/0000-0001-6176-9006'
 identifiers:
   - type: doi
     value: 10.5281/zenodo.3969004
@@ -73,7 +112,7 @@ references:
         given-names: Christian E. A.
       - family-names: Speri
         given-names: Lorenzo
-      - family-names: Nazipak
+      - family-names: Nasipak
         given-names: Zachary
       - family-names: Burke
         given-names: Ollie
@@ -120,7 +159,7 @@ references:
         given-names: Michael L.
       - family-names: Warburton
         given-names: Niels
-      - family-names: Hugues
+      - family-names: Hughes
         given-names: Scott A.
     doi: 10.1103/PhysRevLett.126.051102
     year: 2021
@@ -152,7 +191,7 @@ references:
         given-names: Lorenzo
       - family-names: Warburton
         given-names: Niels
-      - family-names: Hugues
+      - family-names: Hughes
         given-names: Scott A.
     doi: 10.1103/physrevd.104.064047
     year: 2021
@@ -337,7 +376,7 @@ references:
         given-names: Michael L.
       - family-names: Chua
         given-names: Alvin J. K.
-      - family-names: Hugues
+      - family-names: Hughes
         given-names: Scott A.
       - family-names: Warburton
         given-names: Niels
