@@ -19,6 +19,14 @@ ROMAN Network
     :show-inheritance:
     :inherited-members:
 
+1D Cubic Spline Interpolation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: few.amplitude.ampinterp1d
+    :members:
+    :show-inheritance:
+    :inherited-members:
+
+
 2D Cubic Spline Interpolation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

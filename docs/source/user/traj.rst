@@ -40,6 +40,11 @@ ODE Classes
     :show-inheritance:
     :exclude-members: equatorial, background, separatrix_buffer_dist, convert_Y, supports_ELQ_integration
 
+.. autoclass:: few.trajectory.ode.circ1pat1r.TrajectoryCirc1PAT1R
+    :members:
+    :show-inheritance:
+    :exclude-members: equatorial, separatrix_buffer_dist, convert_Y, supports_ELQ_integration
+
 .. automodule:: few.trajectory.ode.pn5
     :members:
     :show-inheritance:
