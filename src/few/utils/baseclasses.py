@@ -534,6 +534,78 @@ class SchwarzschildEccentric(SphericalHarmonic):
 
         return a, xI
 
+class KerrCirc(SphericalHarmonic):
+    """
+    Kerr circular base class.
+
+    Args:
+        lmax: Maximum l value for the model. Default is 5.
+        nmax: Maximum n value for the model. Default is 0.
+    """
+
+    background: str = "Kerr"
+    """The spacetime background for this model."""
+
+    descriptor: str = "Circular"
+    """Description of the inspiral trajectory properties for this model."""
+
+    frame: str = "source"
+    """Frame in which source is generated. Is source frame."""
+
+    needs_Y: bool = False
+    """If True, model expects inclination parameter Y (rather than xI)."""
+
+    ndim: int
+    """Number of phases in the model."""
+
+    def __init__(
+        self,
+        /,
+        lmax: int = 5,
+        nmax: int = 0,
+        ndim: int = 1,
+        force_backend: BackendLike = None,
+    ):
+        SphericalHarmonic.__init__(
+            self, lmax=lmax, nmax=nmax, force_backend=force_backend
+        )
+
+        self.ndim = ndim
+
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
+
+    def sanity_check_init(
+        self, m1: float, m2: float, a: float, p0: float, e0: float, xI: float
+    ) -> tuple[float, float]:
+        """Sanity check initial parameters for Kerr circular orbits."""
+        for val, key in [[m1, "m1"], [m2, "m2"]]:
+            if val < 0.0:
+                raise ValueError("{} is negative. It must be positive.".format(key))
+
+        if m1 < m2:
+            raise ValueError(
+                "Massive black hole mass must be larger than the compact object mass. (m1={}, m2={})".format(
+                    m1, m2
+                )
+            )
+
+        if e0 != 0.0:
+            raise ValueError(
+                "Eccentricity must be zero for circular orbits. (e0={})".format(e0)
+            )
+
+        if abs(a) > 1.0:
+            raise ValueError(
+                "Primary spin magnitude |a| must be <= 1. (a={})".format(a)
+            )
+
+        if abs(xI) != 1.0:
+            raise ValueError("For equatorial orbits, xI must be either 1 or -1.")
+
+        return a, xI
+
 
 class KerrEccentricEquatorial(SphericalHarmonic):
     """

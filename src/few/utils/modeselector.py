@@ -258,6 +258,7 @@ class ModeSelector(ParallelModuleBase):
         xI,
         theta,
         phi,
+        *args,
         online_mode_selection_args: Optional[dict] = None,
         mode_selection: Optional[Union[str, list, np.ndarray]] = None,
         include_minus_mkn: Optional[bool] = None,
@@ -316,7 +317,7 @@ class ModeSelector(ParallelModuleBase):
         
         if mode_selection == "all":
             # get teuk modes
-            teuk_modes = self.amplitude_generator(a, p, e, xI)
+            teuk_modes = self.amplitude_generator(a, p, e, xI, *args)
             
             # get ylms
             ylms = self.ylm_generator(self.unique_l, self.unique_m, theta, phi)[self.inverse_lm]
@@ -348,7 +349,7 @@ class ModeSelector(ParallelModuleBase):
                 raise ValueError("Mode selection indices are out of bounds.")
 
             # pass array of mode indexes (most efficient, returns an array)
-            teuk_modes = self.amplitude_generator(a, p, e, xI, specific_modes=keep_modes)
+            teuk_modes = self.amplitude_generator(a, p, e, xI, *args, specific_modes=keep_modes)
 
             # get ylms, only for the desired modes (needs to include -m modes in general, so we pass the kwarg)
             ylms_out = self.ylm_generator(mode_arr[:, 0], mode_arr[:,1], theta, phi, include_minus_m=True)
@@ -370,7 +371,7 @@ class ModeSelector(ParallelModuleBase):
 
         else:
             # get teuk modes
-            teuk_modes = self.amplitude_generator(a, p, e, xI)
+            teuk_modes = self.amplitude_generator(a, p, e, xI, *args)
 
             # get ylms
             ylms = self.ylm_generator(self.unique_l, self.unique_m, theta, phi)[self.inverse_lm]
@@ -535,7 +536,7 @@ def get_selected_modes_from_initial_conditions(
     if mode_selector_kwargs is None:
         mode_selector_kwargs = {}
 
-    traj = traj_module(m1, m2, a, p0, e0, xI0, **traj_kwargs)
+    traj = traj_module(m1, m2, a, p0, e0, xI0, *traj_args, **traj_kwargs)
 
     freqs = traj_module.inspiral_generator.eval_integrator_derivative_spline(traj[0], order=1)[:,3:6] / 2 / np.pi
 
