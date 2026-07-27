@@ -5,6 +5,7 @@ from typing import Generic, Optional, Union
 
 import numpy as np
 
+from ..amplitude.ampinterp1d import AmplitudeCirc1PAT1R
 from ..amplitude.ampinterp2d import AmpInterpKerrEccEq, AmpInterpSchwarzEcc
 from ..amplitude.romannet import RomanAmplitude
 from ..summation.aakwave import AAKSummation
@@ -12,9 +13,10 @@ from ..summation.directmodesum import DirectModeSum
 from ..summation.fdinterp import FDInterpolatedModeSum
 from ..summation.interpolatedmodesum import InterpolatedModeSum
 from ..trajectory.inspiral import EMRIInspiral
-from ..trajectory.ode import PN5, KerrEccEqFlux, SchwarzEccFlux
+from ..trajectory.ode import PN5, KerrEccEqFlux, SchwarzEccFlux, TrajectoryCirc1PAT1R
 from ..utils.baseclasses import (
     BackendLike,
+    KerrCirc,
     KerrEccentricEquatorial,
     SchwarzschildEccentric,
 )
@@ -25,6 +27,8 @@ from .base import AAKWaveformBase, SphericalHarmonicWaveformBase, WaveformModule
 
 # get path to this file
 dir_path = os.path.dirname(os.path.realpath(__file__))
+
+from copy import deepcopy
 
 
 class GenerateEMRIWaveform(Generic[WaveformModule]):
@@ -71,8 +75,8 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
     flip_output: bool
     """Whether :math:`h_p` and :math:`h_x` output time series (if time-domain) should be reversed"""
 
-    args_remove: list[int]
-    """List of arguments to remove based on the specific waveform"""
+    args_keep: list[int]
+    """List of arguments to keep based on the specific waveform"""
 
     phases_needed: dict[str, int]
     """Phases needed based on specific waveform"""
@@ -102,29 +106,32 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
         self.return_list = return_list
         self.flip_output = flip_output
 
-        # setup arguments to remove based on the specific waveform
-        # also get proper phases
-        self.args_remove = []
-        if self.waveform_generator.descriptor == "eccentric":
-            if self.waveform_generator.background == "Schwarzschild":
-                self.args_remove.append(5)  # prograde vs retrograde 1/-1
-
-            self.phases_needed = {"Phi_phi0": 11, "Phi_r0": 13}
-
+        # setup arguments to __call__ based on the specific waveform
+        if isinstance(self.waveform_generator, Circ1PAT1R):
+            self.args_keep = [0, 1, 2, 3]  # keep m1, m2, a, p
+            self.phases_needed = {"Phi_phi0": 11}
         else:
-            self.phases_needed = {"Phi_phi0": 11, "Phi_theta0": 12, "Phi_r0": 13}
+            args_remove = []
+            if self.waveform_generator.descriptor == "eccentric":
+                if self.waveform_generator.background == "Schwarzschild":
+                    args_remove.append(5)  # prograde vs retrograde 1/-1
 
-        if self.waveform_generator.background == "Schwarzschild":
-            # remove spin
-            self.args_remove.append(2)
+                self.phases_needed = {"Phi_phi0": 11, "Phi_r0": 13}
 
-        # remove sky and orientation parameters
-        if self.waveform_generator.frame == "source":
-            for i in range(6, 11):
-                self.args_remove.append(i)
+            else:
+                self.phases_needed = {"Phi_phi0": 11, "Phi_theta0": 12, "Phi_r0": 13}
 
-        # these are the arguments that go in to the generator
-        self.args_keep = np.delete(np.arange(11), self.args_remove)
+            if self.waveform_generator.background == "Schwarzschild":
+                # remove spin
+                args_remove.append(2)
+
+            # remove sky and orientation parameters
+            if self.waveform_generator.frame == "source":
+                for i in range(6, 11):
+                    args_remove.append(i)
+
+            # these are the arguments that go in to the generator
+            self.args_keep = np.delete(np.arange(11), self.args_remove)
 
     @property
     def _stock_waveform_definitions(self):
@@ -134,6 +141,7 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
             "SlowSchwarzschildEccentricFlux": SlowSchwarzschildEccentricFlux,
             "FastKerrEccentricEquatorialFlux": FastKerrEccentricEquatorialFlux,
             "Pn5AAKWaveform": Pn5AAKWaveform,
+            "Circ1PAT1R": Circ1PAT1R,
         }
 
     @property
@@ -164,7 +172,7 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
         # get viewing angles
         phi = -np.pi / 2.0  # by definition of source frame
 
-        theta = np.arccos(-np.dot(R, S))  # normalized vector
+        theta = np.arctan2(np.linalg.norm(np.cross(R, S)), -np.dot(R, S)) # robust to roundoff error
 
         return (theta, phi)
 
@@ -182,11 +190,8 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
         up_ldc = cqS * sqK * np.cos(phiS - phiK) - cqK * sqS
         dw_ldc = sqK * np.sin(phiS - phiK)
 
-        #TODO: understand why this is needed, but it is in the original code
-        # and leads to discontinuity in polarization angle otherwise
-        if dw_ldc != 0.0:
+        if np.isclose(dw_ldc, 0.0, atol = 1e-10) is False:
             psi_ldc = -np.arctan2(up_ldc, dw_ldc)
-
         else:
             psi_ldc = 0.5 * np.pi
 
@@ -258,6 +263,13 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
 
         """
 
+        # validate masses before any arithmetic: the reduced-mass and distance
+        # scaling below (mu = m1*m2/(m1+m2), dist / (mu * MRSUN_SI)) would raise a
+        # ZeroDivisionError for a zero mass long before the trajectory's own
+        # isvalid_m1/isvalid_m2 checks are reached. `not (m > 0)` also rejects NaN.
+        if not (m1 > 0) or not (m2 > 0):
+            raise ValueError(f"Masses must be positive. Got m1={m1}, m2={m2}.")
+
         if x0 < 0.0:
             a = -a
             x0 = -x0
@@ -321,6 +333,14 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
                 dist_dimensionless = 1.0 / ((dist * Gpc) / (mu * MRSUN_SI))
             else:
                 dist_dimensionless = 1.0
+
+        if isinstance(self.waveform_generator, Circ1PAT1R):
+            if len(add_args) != 1:
+                raise ValueError(
+                    "chi2 (dimensionless spin of the secondary) must be specified for "
+                    "the 1PAT1R waveform model. Pass it as an additional argument, e.g. "
+                    "waveform_generator(*params, chi2, dt=dt, T=T)."
+                )
 
         # add additional arguments to waveform interface
         args += add_args
@@ -410,23 +430,20 @@ class FastKerrEccentricEquatorialFlux(
         force_backend: BackendLike = None,
         **kwargs: dict,
     ):
-        if inspiral_kwargs is None:
-            inspiral_kwargs = {}
+        inspiral_kwargs = {} if inspiral_kwargs is None else deepcopy(inspiral_kwargs)
+        sum_kwargs = {} if sum_kwargs is None else deepcopy(sum_kwargs)
+        mode_selector_kwargs = {} if mode_selector_kwargs is None else deepcopy(mode_selector_kwargs)
 
         if "func" not in inspiral_kwargs.keys():
             inspiral_kwargs["func"] = KerrEccEqFlux
 
         # inspiral_kwargs = augment_ODE_func_name(inspiral_kwargs)
 
-        if sum_kwargs is None:
-            sum_kwargs = {}
         mode_summation_module = InterpolatedModeSum
         if "output_type" in sum_kwargs:
             if sum_kwargs["output_type"] == "fd":
                 mode_summation_module = FDInterpolatedModeSum
 
-        if mode_selector_kwargs is None:
-            mode_selector_kwargs = {}
         mode_selection_module = ModeSelector
 
         KerrEccentricEquatorial.__init__(
@@ -557,20 +574,18 @@ class FastSchwarzschildEccentricFlux(
         force_backend: BackendLike = None,
         **kwargs: dict,
     ):
-        if inspiral_kwargs is None:
-            inspiral_kwargs = {}
+        inspiral_kwargs = {} if inspiral_kwargs is None else deepcopy(inspiral_kwargs)
+        sum_kwargs = {} if sum_kwargs is None else deepcopy(sum_kwargs)
+        mode_selector_kwargs = {} if mode_selector_kwargs is None else deepcopy(mode_selector_kwargs)
+
         if "func" not in inspiral_kwargs.keys():
             inspiral_kwargs["func"] = SchwarzEccFlux
 
-        if sum_kwargs is None:
-            sum_kwargs = {}
         mode_summation_module = InterpolatedModeSum
         if "output_type" in sum_kwargs:
             if sum_kwargs["output_type"] == "fd":
                 mode_summation_module = FDInterpolatedModeSum
 
-        if mode_selector_kwargs is None:
-            mode_selector_kwargs = {}
         mode_selection_module = ModeSelector
 
         SchwarzschildEccentric.__init__(
@@ -694,21 +709,19 @@ class FastSchwarzschildEccentricFluxBicubic(
         mode_selector_kwargs: Optional[dict] = None,
         force_backend: BackendLike = None,
         **kwargs: Optional[dict],
-    ):
-        if inspiral_kwargs is None:
-            inspiral_kwargs = {}
+    ): 
+        inspiral_kwargs = {} if inspiral_kwargs is None else deepcopy(inspiral_kwargs)
+        sum_kwargs = {} if sum_kwargs is None else deepcopy(sum_kwargs)
+        mode_selector_kwargs = {} if mode_selector_kwargs is None else deepcopy(mode_selector_kwargs)
+
         if "func" not in inspiral_kwargs.keys():
             inspiral_kwargs["func"] = SchwarzEccFlux
 
-        if sum_kwargs is None:
-            sum_kwargs = {}
         mode_summation_module = InterpolatedModeSum
         if "output_type" in sum_kwargs:
             if sum_kwargs["output_type"] == "fd":
                 mode_summation_module = FDInterpolatedModeSum
 
-        if mode_selector_kwargs is None:
-            mode_selector_kwargs = {}
         mode_selection_module = ModeSelector
 
         SchwarzschildEccentric.__init__(
@@ -841,8 +854,10 @@ class SlowSchwarzschildEccentricFlux(
         force_backend: BackendLike = None,
         **kwargs: dict,
     ):
-        if inspiral_kwargs is None:
-            inspiral_kwargs = {}
+        inspiral_kwargs = {} if inspiral_kwargs is None else deepcopy(inspiral_kwargs)
+        sum_kwargs = {} if sum_kwargs is None else deepcopy(sum_kwargs)
+        mode_selector_kwargs = {} if mode_selector_kwargs is None else deepcopy(mode_selector_kwargs)
+
         # declare specific properties
         inspiral_kwargs["DENSE_STEPPING"] = 1
         if "func" not in inspiral_kwargs.keys():
@@ -854,8 +869,6 @@ class SlowSchwarzschildEccentricFlux(
             force_backend=force_backend,
         )
     
-        if mode_selector_kwargs is None:
-            mode_selector_kwargs = {}
         if "mode_selection" in mode_selector_kwargs.keys():
             if mode_selector_kwargs["mode_selection"] != "all":
                 raise ValueError("Mode selection must be 'all' for slow waveform.")
@@ -979,8 +992,9 @@ class Pn5AAKWaveform(AAKWaveformBase):
         sum_kwargs: Optional[dict] = None,
         force_backend: BackendLike = None,
     ):
-        if inspiral_kwargs is None:
-            inspiral_kwargs = {}
+        inspiral_kwargs = {} if inspiral_kwargs is None else deepcopy(inspiral_kwargs)
+        sum_kwargs = {} if sum_kwargs is None else deepcopy(sum_kwargs)
+
         if "func" not in inspiral_kwargs.keys():
             inspiral_kwargs["func"] = PN5
 
@@ -996,3 +1010,133 @@ class Pn5AAKWaveform(AAKWaveformBase):
     @classmethod
     def supported_backends(cls):
         return cls.GPU_RECOMMENDED()
+
+
+class Circ1PAT1R(SphericalHarmonicWaveformBase, KerrCirc):
+    """Prebuilt 1PA waveform model for quasi-circular Kerr inspirals.
+
+    This model produces waveforms at 1 post-adiabatic order for circular equatorial orbits, 
+    around a slowly spinning Kerr black hole,including the effects of the primary spin
+    (chi1, passed as ``a``) and secondary spin (chi2).
+
+    The trajectory module used is :class:`few.trajectory.ode.circ1pat1r.TrajectoryCirc1PAT1R`,
+    which integrates a 1PA flux-based trajectory.
+
+    The amplitudes are computed with
+    :class:`few.amplitude.ampinterp1d.AmplitudeCirc1PAT1R` via a 1D cubic spline
+    interpolation over the orbital separation.
+
+    The modes are summed with
+    :class:`few.summation.interpolatedmodesum.InterpolatedModeSum`.
+
+    Args:
+        inspiral_kwargs: Optional kwargs to pass to the inspiral generator.
+            **Important Note**: These kwargs are passed online, not during
+            instantiation. Default is {}.
+        amplitude_kwargs: Optional kwargs to pass to the amplitude generator
+            during instantiation. Default is {}.
+        sum_kwargs: Optional kwargs to pass to the sum module during
+            instantiation. Default is {}.
+        Ylm_kwargs: Optional kwargs to pass to the Ylm generator during
+            instantiation. Default is {}.
+        mode_selector_kwargs: Optional kwargs to pass to the mode selector
+            module during instantiation. Default is {}.
+        force_backend: Backend to use. Default is None (auto-select).
+        **kwargs: Additional kwargs forwarded to :class:`few.utils.baseclasses.KerrCirc`.
+    """
+
+    def __init__(
+        self,
+        /,
+        inspiral_kwargs: Optional[dict] = None,
+        amplitude_kwargs: Optional[dict] = None,
+        sum_kwargs: Optional[dict] = None,
+        Ylm_kwargs: Optional[dict] = None,
+        mode_selector_kwargs: Optional[dict] = None,
+        force_backend: BackendLike = None,
+        **kwargs: dict,
+    ):
+        inspiral_kwargs = {} if inspiral_kwargs is None else deepcopy(inspiral_kwargs)
+        sum_kwargs = {} if sum_kwargs is None else deepcopy(sum_kwargs)
+        mode_selector_kwargs = {} if mode_selector_kwargs is None else deepcopy(mode_selector_kwargs)
+
+        if "func" not in inspiral_kwargs.keys():
+            inspiral_kwargs["func"] = TrajectoryCirc1PAT1R
+
+        mode_summation_module = InterpolatedModeSum
+        if "output_type" in sum_kwargs:
+            if sum_kwargs["output_type"] == "fd":
+                mode_summation_module = FDInterpolatedModeSum
+
+        KerrCirc.__init__(
+            self,
+            **{k: v for k, v in kwargs.items() if k in ["lmax", "nmax", "ndim"]},
+            force_backend=force_backend,
+        )
+        SphericalHarmonicWaveformBase.__init__(
+            self,
+            inspiral_module=EMRIInspiral,
+            amplitude_module=AmplitudeCirc1PAT1R,
+            sum_module=mode_summation_module,
+            mode_selector_module=ModeSelector,
+            inspiral_kwargs=inspiral_kwargs,
+            amplitude_kwargs=amplitude_kwargs,
+            sum_kwargs=sum_kwargs,
+            Ylm_kwargs=Ylm_kwargs,
+            mode_selector_kwargs=mode_selector_kwargs,
+            force_backend=force_backend,
+        )
+
+    @classmethod
+    def supported_backends(cls):
+        return cls.GPU_RECOMMENDED()
+
+    @property
+    def allow_batching(self):
+        return False
+
+
+    def __call__(
+        self,
+        m1: float,
+        m2: float,
+        chi1: float,
+        p0: float,
+        theta: float,
+        phi: float,
+        chi2: float,
+        *args: Optional[tuple],
+        **kwargs: Optional[dict],
+    ) -> np.ndarray:
+        """Generate the waveform.
+
+        Args:
+            m1: Mass of larger black hole in solar masses.
+            m2: Mass of compact object in solar masses.
+            chi1: Dimensionless primary spin of the massive black hole.
+                Must be in [-1, 1].
+            p0: Initial orbital separation (semilatus rectum) in units of M.
+            theta: Polar angle of observer.
+            phi: Azimuthal angle of observer.
+            chi2: Dimensionless spin of the secondary (compact object).
+                Must be in [-1, 1].
+            *args: Placeholder for additional arguments.
+            **kwargs: Placeholder for additional keyword arguments.
+
+        Returns:
+            Complex array containing the generated waveform.
+        """
+
+        return self._generate_waveform(
+            m1,
+            m2,
+            chi1,  # primary spin passed as chi1
+            p0,
+            0.0,   # e0: circular orbit
+            1.0,   # xI: equatorial prograde
+            theta,
+            phi,
+            chi2,
+            *args,
+            **kwargs,
+        )

@@ -89,7 +89,7 @@ class SphericalHarmonicWaveformBase(
     ):
         ParallelModuleBase.__init__(self, force_backend=force_backend)
 
-        self.inspiral_kwargs = {} if inspiral_kwargs is None else inspiral_kwargs
+        self.inspiral_kwargs = {} if inspiral_kwargs is None else inspiral_kwargs.copy()
         self.inspiral_generator = inspiral_module(
             **self.inspiral_kwargs
         )  # The inspiral generator does not rely on backend adjustement
@@ -224,7 +224,7 @@ class SphericalHarmonicWaveformBase(
             "err", 1e-11
         )  # Will only set default if "err" is not supplied
 
-        (t, p, e, xI, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
+        t, p, e, xI, Phi_phi, Phi_theta, Phi_r, *add_inspiral_args = self.inspiral_generator(
             m1,
             m2,
             a,
@@ -252,6 +252,7 @@ class SphericalHarmonicWaveformBase(
         Phi_phi = self.xp.asarray(Phi_phi)
         Phi_theta = self.xp.asarray(Phi_theta)
         Phi_r = self.xp.asarray(Phi_r)
+        add_inspiral_args= self.xp.asarray(add_inspiral_args)
 
         # split into batches
         if batch_size == -1 or self.allow_batching is False:
@@ -284,11 +285,14 @@ class SphericalHarmonicWaveformBase(
             Phi_phi_temp = Phi_phi[inds_in]
             Phi_theta_temp = Phi_theta[inds_in]
             Phi_r_temp = Phi_r[inds_in]
+            add_inspiral_args_temp = self.xp.array([add_inspiral_arg[inds_in] for add_inspiral_arg in add_inspiral_args])
 
             # get frequencies to pass to mode selection
             # TODO: write a method that just returns the derivatives at each spline knot (vectorises easier).
             if self.mode_selector.mode_selection != "all":
-                freqs = self.inspiral_generator.inspiral_generator.eval_integrator_derivative_spline(t_temp, order=1)[:,3:6] / 2 / np.pi
+                freqs = self.inspiral_generator.inspiral_generator.eval_integrator_derivative_spline(
+                    self.xp.asnumpy(t_temp) if hasattr(self.xp, "asnumpy") else t_temp, order=1
+                )[:,3:6] / 2 / np.pi
 
                 online_mode_selection_args = dict(
                     f_phi = freqs[:,0],
@@ -300,26 +304,55 @@ class SphericalHarmonicWaveformBase(
                 online_mode_selection_args = None
 
             # get amplitudes that have been selected / sorted to user requirements
-            (
-                teuk_modes_in,
-                ylms_in,
-                self.ls,
-                self.ms,
-                self.ks,
-                self.ns,
-            ) = self.mode_selector(
-                t_temp,
-                a,
-                p_temp,
-                e_temp,
-                xI_temp,
-                theta,
-                phi,
-                online_mode_selection_args=online_mode_selection_args,
-                mode_selection=mode_selection,
-                include_minus_mkn=include_minus_mkn,
-                mode_selection_threshold=mode_selection_threshold,
-            )
+            from ..trajectory.ode.circ1pat1r import TrajectoryCirc1PAT1R
+            if isinstance(self.inspiral_generator.func, TrajectoryCirc1PAT1R):
+                deltaM, delta_chit1 = add_inspiral_args
+                nu = self.inspiral_generator.func.args['nu']
+                chit1 = delta_chit1 + self.inspiral_generator.func.args['chit1']
+                chit2 = self.inspiral_generator.func.args['chit2']
+                (
+                    teuk_modes_in,
+                    ylms_in,
+                    self.ls,
+                    self.ms,
+                    self.ks,
+                    self.ns,
+                ) = self.mode_selector(
+                    t_temp,
+                    a,
+                    p_temp,
+                    e_temp,
+                    xI_temp,
+                    theta,
+                    phi,
+                    nu, chit1, chit2, deltaM,
+                    online_mode_selection_args=online_mode_selection_args,
+                    mode_selection=mode_selection,
+                    include_minus_mkn=include_minus_mkn,
+                    mode_selection_threshold=mode_selection_threshold,
+                )
+            else:
+                (
+                    teuk_modes_in,
+                    ylms_in,
+                    self.ls,
+                    self.ms,
+                    self.ks,
+                    self.ns,
+                ) = self.mode_selector(
+                    t_temp,
+                    a,
+                    p_temp,
+                    e_temp,
+                    xI_temp,
+                    theta,
+                    phi,
+                    *add_inspiral_args_temp,
+                    online_mode_selection_args=online_mode_selection_args,
+                    mode_selection=mode_selection,
+                    include_minus_mkn=include_minus_mkn,
+                    mode_selection_threshold=mode_selection_threshold,
+                )
             # store number of modes for external information
             self.num_modes_kept = teuk_modes_in.shape[1]
 
