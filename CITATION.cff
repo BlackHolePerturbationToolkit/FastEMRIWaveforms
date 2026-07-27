@@ -18,7 +18,7 @@ authors:
   - given-names: Alvin J. K.
     family-names: Chua
     affiliation: National University of Singapore
-	orcid: https://orcid.org/0000-0001-5242-8269
+    orcid: https://orcid.org/0000-0001-5242-8269
   - given-names: Scott
     family-names: Hughes
     affiliation: Massachusetts Institute of Technology
@@ -30,12 +30,12 @@ authors:
     email: mikekatz04@gmail.com
   - given-names: Zach
     family-names: Nasipak
-	affiliation: University of Southampton
-	orcid: https://orcid.org/0000-0002-5109-9704
+    affiliation: University of Southampton
+    orcid: https://orcid.org/0000-0002-5109-9704
   - given-names: Maxime
     family-names: Pigou
-	affiliation: Laboratoire des 2 Infinis Toulouse
-	orcid: https://orcid.org/0000-0001-6997-2500
+    affiliation: Laboratoire des 2 Infinis Toulouse
+    orcid: https://orcid.org/0000-0001-6997-2500
   - given-names: Lorenzo
     family-names: Speri
     affiliation: European Space Research Technology Center
