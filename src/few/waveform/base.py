@@ -257,6 +257,11 @@ class SphericalHarmonicWaveformBase(
         Phi_r = self.xp.asarray(Phi_r)
         add_inspiral_args= self.xp.asarray(add_inspiral_args)
 
+        if self.xp.isnan(p).any() or self.xp.isnan(e).any() or self.xp.isnan(xI).any():
+            raise ValueError(
+                "Trajectory contains NaN values. Please check the input parameters."
+            )
+
         # split into batches
         if batch_size == -1 or self.allow_batching is False:
             inds_split_all = [self.xp.arange(len(t))]
@@ -356,6 +361,11 @@ class SphericalHarmonicWaveformBase(
                     include_minus_mkn=include_minus_mkn,
                     mode_selection_threshold=mode_selection_threshold,
                 )
+
+            if self.xp.isnan(teuk_modes_in).any():
+                raise ValueError(
+                    "Amplitudes contain NaN values. Please check the input parameters."
+                )
             # store number of modes for external information
             self.num_modes_kept = teuk_modes_in.shape[1]
 
@@ -412,6 +422,11 @@ class SphericalHarmonicWaveformBase(
                 integrate_backwards=self.inspiral_generator.integrate_backwards,
                 **kwargs,
             )
+
+            if self.xp.isnan(waveform_temp).any():
+                raise ValueError(
+                    "Generated waveform contains NaN values. Please check the input parameters."
+                )
 
             # if batching, need to add the waveform
             if i > 0:
