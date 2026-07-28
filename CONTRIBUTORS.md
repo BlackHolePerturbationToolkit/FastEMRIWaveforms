@@ -12,6 +12,8 @@ Below is a list of those who have contributed code or data to the releases of FE
 		Prepared underlying datasets, contributed to implementation of whole model.
 	* [Chris Whittall](https://github.com/cwhittall)</br>
 		Initial implementation of AmplitudeCirc1PAT1R, initial error handling and warning infrastructure, documentation.
+	* [Christian Chapman-Bird](https://github.com/cchapmanbird)</br>
+		Internal reviewer of model, updates to build structure
 
 - FEW v2.1 (Kerr eccentric equatorial review update)
     * [Christian Chapman-Bird](https://github.com/cchapmanbird) </br>
