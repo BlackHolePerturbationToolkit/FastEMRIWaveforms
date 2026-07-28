@@ -7,7 +7,7 @@ Below is a list of those who have contributed code or data to the releases of FE
     * [Loic Honet](https://github.com/honetloic)  </br>
 		Initial development of the Circ1PAT1R trajectory, amplitude, waveform modules. Development of the Circ1PAT1R trajectory module. Importing in FEW 1PAT1R datasets from WaSABI. Internal and external developer of Circ1PAT1R
 	* [Zachary Nasipak](https://github.com/znasipak)  </br>
-		Internal reviewer of model
+		Internal reviewer of model, updated documentation, patched bugs identified in review
 	* [Barry Wardell](https://github.com/barrywardell)</br>
 		Prepared underlying datasets, contributed to implementation of whole model.
 	* [Chris Whittall](https://github.com/cwhittall)</br>
