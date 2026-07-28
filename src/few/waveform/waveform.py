@@ -190,7 +190,7 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
         up_ldc = cqS * sqK * np.cos(phiS - phiK) - cqK * sqS
         dw_ldc = sqK * np.sin(phiS - phiK)
 
-        if np.isclose(dw_ldc, 0.0, atol = 1e-10) is False:
+        if np.isclose(dw_ldc, 0.0, atol = 1e-10) == False: #is False does not work with np.isclose, because it returns np.bool_, so we use == False
             psi_ldc = -np.arctan2(up_ldc, dw_ldc)
         else:
             psi_ldc = 0.5 * np.pi
