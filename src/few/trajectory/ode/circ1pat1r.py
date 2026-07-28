@@ -192,7 +192,6 @@ class TrajectoryCirc1PAT1R(ODEBase):
         self._max_nu = 0.25
         self._min_p = min_p_grid
         self._max_p = max_p_grid
-        self._p_sep_schw = 6.0 # Schwarzschild separatrix for circular orbits
         self._min_chi1 = -1.0
         self._max_chi1 = 1.0
         self._min_chi2 = -1.0
@@ -235,18 +234,11 @@ class TrajectoryCirc1PAT1R(ODEBase):
         return ["chi2"]
 
     @property
-    def separatrix_buffer_dist_grid(self):
-        """
-        The distance from the separatrix for the minimum p value of the grid.
-        """
-        return self._min_p - self._p_sep_schw
-
-    @property
     def separatrix_buffer_dist(self):
         """
-        The distance from the separatrix to truncate ODE integration.
+        The distance from the edge of the supported p grid to truncate ODE integration.
         """
-        return self._min_p - self._p_sep_schw + 0.01
+        return 0.01
     
     
     def isvalid_x(self, x, **kwargs):
@@ -358,17 +350,15 @@ class TrajectoryCirc1PAT1R(ODEBase):
             x (float): Cosine of the inclination angle (ignored since this model is equatorial
             a (float): Primary spin"""
         if separatrix_buffer is None:
-            separatrix_buffer = self.separatrix_buffer_dist_grid
+            separatrix_buffer = self.separatrix_buffer_dist
         self.isvalid_e(e, **kwargs)
         self.isvalid_x(x, **kwargs)
         self._isvalidchi1(a, **kwargs)
 
-        # for retrograde spin we decide to truncate the valid p near the Kerr separatrix when
-        # it is larger than the minimum p of the grid. We subtract the separatrix buffer distance
-        # so that when the integration is performed, the ODE will stop some small distance from 
-        # the separatrix.
-        psep_of_a_minus_buffer = get_separatrix(a, e, x) - self.separatrix_buffer_dist_grid
-        return np.max([self._p_sep_schw, psep_of_a_minus_buffer]) + separatrix_buffer
+        # Return either the minimum of the grid or the separatrix, whichever is larger.
+        # We add the separatrix buffer distance so that when the integration is performed,
+        # the ODE will stop some small distance from the edge.
+        return np.max([self._min_p, get_separatrix(a, e, x)]) + separatrix_buffer
 
     def max_p(self,e=0.0, x = 1.0, a=0.0,
         **kwargs):
