@@ -142,14 +142,17 @@ class SphericalHarmonicWaveformBase(
             m1: Mass of larger black hole in solar masses.
             m2: Mass of compact object in solar masses.
             a: Dimensionless spin parameter of larger black hole.
-            p0: Initial (osculating) semilatus rectum of inspiral trajectory.
-            e0: Initial (osculating) eccentricity of inspiral trajectory.
+            p0: Initial semilatus rectum of inspiral trajectory.
+            e0: Initial eccentricity of inspiral trajectory.
+            xI0: Initial inclination parameter of inspiral trajectory.
             theta: Polar viewing angle in radians (:math:`-\pi/2\leq\Theta\leq\pi/2`).
             phi: Azimuthal viewing angle in radians.
             *args: extra args for trajectory model.
             dist: Luminosity distance in Gpc. Default is None. If None,
                 will return source frame.
             Phi_phi0: Initial phase for :math:`\Phi_\phi`.
+                Default is 0.0.
+            Phi_theta0: Initial phase for :math:`\Phi_\Theta`.
                 Default is 0.0.
             Phi_r0: Initial phase for :math:`\Phi_r`.
                 Default is 0.0.

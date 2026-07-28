@@ -71,6 +71,7 @@ class ModeSelector(ParallelModuleBase):
             to one-dimensional indices from the amplitude module output.
             This is used to efficiently select the modes from the amplitude module output.
             By default this is obtained from the supplied amplitude module.
+        force_backend: Name of the backend to use (e.g., "cpu" or "cuda12x"). If None, the default backend is used. Default is None.
         **kwargs: Optional keyword arguments for the base class:
             :class:`few.utils.baseclasses.ParallelModuleBase`.
 
@@ -291,8 +292,6 @@ class ModeSelector(ParallelModuleBase):
                 mode indices (e.g. [(:math:`l_1,m_1,k_1,n_1`), (:math:`l_2,m_2,k_2,n_2`)]) is
                 provided, it will return those modes combined into a
                 single waveform. If :code:`include_minus_mkn = True`, we require that :math:`m \geq 0` for this list.
-                Default is None.
-            modeinds_map: Map of mode indices to Teukolsky amplitude data. Only required if :code:`mode_selection` is a list of specific mode.
                 Default is None.
             include_minus_mkn: If True, then include :math:`(-m, -k, -n)` mode when
                 computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
