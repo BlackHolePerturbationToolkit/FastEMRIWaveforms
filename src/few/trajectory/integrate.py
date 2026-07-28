@@ -636,15 +636,13 @@ class Integrate(ABC):
         # Error if we start too close to separatrix.
         if self.integrate_backwards:
             if not self.enforce_schwarz_sep:
-                p_sep = get_separatrix(self.a, orb_params[1], orb_params[2])
-            elif self.enforce_schwarz_sep == "1PAT1R":
-                p_sep = np.max([self.func._min_p, get_separatrix(self.a, orb_params[1], orb_params[2])])
+                p_min = self.func.min_p(e=orb_params[1], x=orb_params[2], a=self.a)
             else:
-                p_sep = 6 + 2 * orb_params[1]
-            if (orb_params[0] - p_sep) < self.separatrix_buffer_dist - 1e-6:
+                p_min = 6 + 2 * orb_params[1] + self.separatrix_buffer_dist
+            if (orb_params[0] - p_min) < - 1e-6:
                 # Raise a warning
                 raise ValueError(
-                    f"p_f is too close to separatrix. It must start above p_sep + {self.separatrix_buffer_dist}. Started at {orb_params[0]}, separatrix {p_sep}, starting p {orb_params[0]} should be larger than {p_sep + self.separatrix_buffer_dist - INNER_THRESHOLD}."
+                    f"p_f is too close to separatrix. It must start above p_sep + {self.separatrix_buffer_dist}. Starting p {orb_params[0]} should be larger than {p_min - INNER_THRESHOLD}."
                 )
 
         # scale phases here by the mass ratio so the cache is accurate
