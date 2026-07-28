@@ -82,16 +82,6 @@ class ODEBase:
         return "Kerr"
 
     @property
-    def enforce_schwarz_sep(self):
-        """
-        If True, use the Schwarzschild separatrix (p_sep = 6 + 2e) as the stopping
-        condition rather than the Kerr separatrix. Subclasses can override this to
-        True to avoid Kerr-separatrix issues when the background is effectively
-        Schwarzschild. Defaults to False.
-        """
-        return False
-
-    @property
     def separatrix_buffer_dist(self):
         """
         A float describing the value of "p" at which the trajectory should terminate at,

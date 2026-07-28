@@ -94,9 +94,7 @@ class Integrate(ABC):
 
         self.ode_info = get_ode_properties(self.func)
 
-        # Allow the ODE func to declare enforce_schwarz_sep itself;
-        # constructor argument acts as a fallback override.
-        self.enforce_schwarz_sep = self.func.enforce_schwarz_sep or enforce_schwarz_sep
+        self.enforce_schwarz_sep = enforce_schwarz_sep
 
         self.dopr = DOPR853(
             self._dopr_ode_wrap,
