@@ -149,7 +149,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
 
         self.interpolation_keys = ["Flux/Energy/0PA/Infinity", "Flux/Energy/0PA/Horizon", "Flux/AngularMomentum/0PA/Horizon", "Flux/Energy/1PA/Infinity", "Flux/Energy/1PAchi1/Infinity", "Flux/Energy/1PAchi1/Horizon", "Flux/Energy/1PAchi2/Infinity", "Flux/Energy/1PAchi2/Horizon", "Energy/1PA/dEdOmega"]
         self.default_downsample = {key: 1 for key in self.interpolation_keys}
-        self.interpolant = {}
+        self.interpolant_dict = {}
         
         if downsample is None:
             downsample = self.default_downsample
@@ -176,13 +176,13 @@ class TrajectoryCirc1PAT1R(ODEBase):
                     raise ValueError(f"(TrajectoryCirc1PAT1R) Interpolation: nans in grids or values of interpolating functions of {key}")
                 min_p_grid = max(min_p_grid, np.min(grid))
                 max_p_grid = min(max_p_grid, np.max(grid))
-                self.interpolant[key] = CubicSpline(grid, value)
+                self.interpolant_dict[key] = CubicSpline(grid, value)
                 del grid, value # free memory
 
             # Add derivative of 0PA flux manually
             grid = trajectoryData['Flux/Energy/0PA/Grid'][::max(downsample["Flux/Energy/0PA/Infinity"], downsample["Flux/Energy/0PA/Horizon"])]
             value = trajectoryData['Flux/Energy/0PA/Infinity'][()][::max(downsample["Flux/Energy/0PA/Infinity"], downsample["Flux/Energy/0PA/Horizon"])] + trajectoryData['Flux/Energy/0PA/Horizon'][()][::max(downsample["Flux/Energy/0PA/Infinity"], downsample["Flux/Energy/0PA/Horizon"])]
-            self.interpolant["Flux/Energy/0PA/Deriv"] = CubicSpline(grid, value).deriv
+            self.interpolant_dict["Flux/Energy/0PA/Deriv"] = CubicSpline(grid, value).deriv
             min_p_grid = max(min_p_grid, np.min(grid))
             max_p_grid = min(max_p_grid, np.max(grid))
             del grid, value # free memory
@@ -483,7 +483,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
         Returns:
             float: Numerator of the flux-balance law.
         """
-        return (self.interpolant["Flux/Energy/0PA/Infinity"](p) + self.interpolant["Flux/Energy/0PA/Horizon"](p)) + nu * (self.interpolant["Flux/Energy/1PA/Infinity"](p) + chit1/nu * (self.interpolant["Flux/Energy/1PAchi1/Infinity"](p)+self.interpolant["Flux/Energy/1PAchi1/Horizon"](p)) + chit2/nu * (self.interpolant["Flux/Energy/1PAchi2/Infinity"](p)+ self.interpolant["Flux/Energy/1PAchi2/Horizon"](p)) - deltaM * (2./3.*p) * self.interpolant["Flux/Energy/0PA/Deriv"](p) + EdeltaM(p) * self.interpolant["Flux/Energy/0PA/Horizon"](p) - 2.*(-3.+2.*p)/(3.*(-3.+p)**(3./2.)*p**2.) * self.interpolant["Flux/AngularMomentum/0PA/Horizon"](p))
+        return (self.interpolant_dict["Flux/Energy/0PA/Infinity"](p) + self.interpolant_dict["Flux/Energy/0PA/Horizon"](p)) + nu * (self.interpolant_dict["Flux/Energy/1PA/Infinity"](p) + chit1/nu * (self.interpolant_dict["Flux/Energy/1PAchi1/Infinity"](p)+self.interpolant_dict["Flux/Energy/1PAchi1/Horizon"](p)) + chit2/nu * (self.interpolant_dict["Flux/Energy/1PAchi2/Infinity"](p)+ self.interpolant_dict["Flux/Energy/1PAchi2/Horizon"](p)) - deltaM * (2./3.*p) * self.interpolant_dict["Flux/Energy/0PA/Deriv"](p) + EdeltaM(p) * self.interpolant_dict["Flux/Energy/0PA/Horizon"](p) - 2.*(-3.+2.*p)/(3.*(-3.+p)**(3./2.)*p**2.) * self.interpolant_dict["Flux/AngularMomentum/0PA/Horizon"](p))
 
     def dEdOmega(self, nu, p, chit1, chit2, deltaM):
         """1PA derivative of the binding energy with respect to the orbital frequency.
@@ -498,7 +498,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
         Returns:
             float: dE/dOmega_phi at 1PA order.
         """
-        return (dEdOmega0PA(p) + chit1 * dEdOmega_1PA_chit1(p) + chit2 * dEdOmega_1PA_chit2(p) + nu *  (deltaM * dEdeltaMdOmega(p) + self.interpolant["Energy/1PA/dEdOmega"](p)))
+        return (dEdOmega0PA(p) + chit1 * dEdOmega_1PA_chit1(p) + chit2 * dEdOmega_1PA_chit2(p) + nu *  (deltaM * dEdeltaMdOmega(p) + self.interpolant_dict["Energy/1PA/dEdOmega"](p)))
 
     def evaluate_rhs(self, y: Union[list[float], np.ndarray]
     ) -> list[Union[float, np.ndarray]]:
@@ -539,8 +539,8 @@ class TrajectoryCirc1PAT1R(ODEBase):
 
         Omega_phi = 1/p**(3./2.)
         pdot = -self.Flux(nu, p, chit1, chit2, deltaM)/self.dEdOmega(nu, p, chit1, chit2, deltaM)/dOmegadp(p)
-        chit1dot = nu * self.interpolant["Flux/AngularMomentum/0PA/Horizon"](p) if self.evolve_primary else 0.0
-        deltaMdot = self.interpolant["Flux/Energy/0PA/Horizon"](p) if self.evolve_primary else 0.0
+        chit1dot = nu * self.interpolant_dict["Flux/AngularMomentum/0PA/Horizon"](p) if self.evolve_primary else 0.0
+        deltaMdot = self.interpolant_dict["Flux/Energy/0PA/Horizon"](p) if self.evolve_primary else 0.0
 
         return [pdot, 0.0, 0.0, Omega_phi, 0.0, 0.0, deltaMdot, chit1dot]
     
