@@ -16,6 +16,8 @@ Below is a list of those who have contributed code or data to the releases of FE
 		Internal reviewer of model, updates to build structure
 	* [Philip Lynch](https://github.com/Philip-Lynch)  </br>
 		Initial development of the Circ1PAT1R waveform module. Development of the Circ1PAT1R waveform and trajectory modules. Internal and external developer of Circ1PAT1R.
+	* [Adam Pound](https://github.com/adamrpound)  </br>
+		Contributed to formulation and implementation of Circ1PAT1R. Scripts for 2SF data generation. Validation of data quality. Internal and external reviewee of Circ1PAT1R.
 
 - FEW v2.1 (Kerr eccentric equatorial review update)
     * [Christian Chapman-Bird](https://github.com/cchapmanbird) </br>
