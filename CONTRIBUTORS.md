@@ -14,6 +14,8 @@ Below is a list of those who have contributed code or data to the releases of FE
 		Initial implementation of AmplitudeCirc1PAT1R, initial error handling and warning infrastructure, documentation.
 	* [Christian Chapman-Bird](https://github.com/cchapmanbird)</br>
 		Internal reviewer of model, updates to build structure
+	* [Philip Lynch](https://github.com/Philip-Lynch)  </br>
+		Initial development of the Circ1PAT1R waveform module. Development of the Circ1PAT1R waveform and trajectory modules. Internal and external developer of Circ1PAT1R.
 
 - FEW v2.1 (Kerr eccentric equatorial review update)
     * [Christian Chapman-Bird](https://github.com/cchapmanbird) </br>
