@@ -7,6 +7,7 @@ from scipy.integrate import solve_ivp
 from few.tests.base import FewTest, tagged_test
 from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode import PN5, KerrEccEqFlux, SchwarzEccFlux
+from few.trajectory.ode.base import ODEBase, get_ode_properties
 from few.utils.constants import MTSUN_SI, YRSID_SI
 from few.utils.geodesic import get_separatrix
 
@@ -67,6 +68,21 @@ class ModuleTest(FewTest):
     @classmethod
     def name(self) -> str:
         return "Traj"
+
+    def test_get_ode_properties_uses_instance_state(self):
+        class DemoODE(ODEBase):
+            @property
+            def demo(self):
+                return self._demo
+
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self._demo = 7
+
+        ode = DemoODE()
+        props = get_ode_properties(ode)
+
+        self.assertEqual(props["demo"], 7)
 
     def test_trajectory_pn5(self):
         self.logger.info("Testing pn5")

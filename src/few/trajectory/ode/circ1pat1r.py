@@ -161,6 +161,8 @@ class TrajectoryCirc1PAT1R(ODEBase):
         if not all(k in self.default_downsample for k in downsample.keys()):
             raise ValueError(f"(TrajectoryCirc1PAT1R) Downsample keys must be in the default_downsample keys {self.default_downsample.keys()}.")
 
+        min_p_grid = 0
+        max_p_grid = np.inf
         with h5py.File(file_path, "r") as trajectoryData:
             for key in self.interpolation_keys:
                 grid = trajectoryData[key.rsplit('/', 1)[0] + '/Grid'][::downsample[key]]
@@ -172,7 +174,8 @@ class TrajectoryCirc1PAT1R(ODEBase):
                     or np.isnan(value).any()
                 ):
                     raise ValueError(f"(TrajectoryCirc1PAT1R) Interpolation: nans in grids or values of interpolating functions of {key}")
-
+                min_p_grid = max(min_p_grid, np.min(grid))
+                max_p_grid = min(max_p_grid, np.max(grid))
                 self.interpolant[key] = CubicSpline(grid, value)
                 del grid, value # free memory
 
@@ -180,13 +183,16 @@ class TrajectoryCirc1PAT1R(ODEBase):
             grid = trajectoryData['Flux/Energy/0PA/Grid'][::max(downsample["Flux/Energy/0PA/Infinity"], downsample["Flux/Energy/0PA/Horizon"])]
             value = trajectoryData['Flux/Energy/0PA/Infinity'][()][::max(downsample["Flux/Energy/0PA/Infinity"], downsample["Flux/Energy/0PA/Horizon"])] + trajectoryData['Flux/Energy/0PA/Horizon'][()][::max(downsample["Flux/Energy/0PA/Infinity"], downsample["Flux/Energy/0PA/Horizon"])]
             self.interpolant["Flux/Energy/0PA/Deriv"] = CubicSpline(grid, value).deriv
+            min_p_grid = max(min_p_grid, np.min(grid))
+            max_p_grid = min(max_p_grid, np.max(grid))
             del grid, value # free memory
 
         self.evolve_primary = evolve_primary
         self._min_nu = 0.0
         self._max_nu = 0.25
-        self._min_p = 6.25 #FIXME set it as the max of the grid points
-        self._max_p = 30.0
+        self._min_p = min_p_grid
+        self._max_p = max_p_grid
+        self._p_sep_schw = 6.0 # Schwarzschild separatrix for circular orbits
         self._min_chi1 = -1.0
         self._max_chi1 = 1.0
         self._min_chi2 = -1.0
@@ -229,18 +235,18 @@ class TrajectoryCirc1PAT1R(ODEBase):
         return ["chi2"]
 
     @property
-    def enforce_schwarz_sep(self):
+    def separatrix_buffer_dist_grid(self):
         """
-        Use the Schwarzschild separatrix as the stopping condition. Although the
-        background is 'Kerr' (so chi1 is not zeroed), the amplitude data only covers
-        p >= 6.0 M, so the Schwarzschild separatrix (6M for circular) is the correct
-        termination point regardless of chi1.
+        The distance from the separatrix for the minimum p value of the grid.
         """
-        return "1PAT1R"
+        return self._min_p - self._p_sep_schw
 
     @property
     def separatrix_buffer_dist(self):
-        return 0.01
+        """
+        The distance from the separatrix to truncate ODE integration.
+        """
+        return self._min_p - self._p_sep_schw + 0.01
     
     
     def isvalid_x(self, x, **kwargs):
@@ -352,11 +358,17 @@ class TrajectoryCirc1PAT1R(ODEBase):
             x (float): Cosine of the inclination angle (ignored since this model is equatorial
             a (float): Primary spin"""
         if separatrix_buffer is None:
-            separatrix_buffer = self.separatrix_buffer_dist
+            separatrix_buffer = self.separatrix_buffer_dist_grid
         self.isvalid_e(e, **kwargs)
         self.isvalid_x(x, **kwargs)
         self._isvalidchi1(a, **kwargs)
-        return np.max([self._min_p + separatrix_buffer, get_separatrix(a, e, x) + separatrix_buffer])
+
+        # for retrograde spin we decide to truncate the valid p near the Kerr separatrix when
+        # it is larger than the minimum p of the grid. We subtract the separatrix buffer distance
+        # so that when the integration is performed, the ODE will stop some small distance from 
+        # the separatrix.
+        psep_of_a_minus_buffer = get_separatrix(a, e, x) - self.separatrix_buffer_dist_grid
+        return np.max([self._p_sep_schw, psep_of_a_minus_buffer]) + separatrix_buffer
 
     def max_p(self,e=0.0, x = 1.0, a=0.0,
         **kwargs):

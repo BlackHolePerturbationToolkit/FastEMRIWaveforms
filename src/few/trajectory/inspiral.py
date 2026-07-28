@@ -408,6 +408,8 @@ class EMRIInspiral(TrajectoryBase):
             y1, y2, y3 = get_kerr_geo_constants_of_motion(a, p0, e0, x0)
 
         if type(self.func).__name__ == 'TrajectoryCirc1PAT1R':
+            deltaChit10 = 0.0
+            deltaM0 = 0.0
             y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0, deltaM0, deltaChit10])
         else:
             y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])

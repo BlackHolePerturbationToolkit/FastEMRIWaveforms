@@ -415,9 +415,9 @@ def get_ode_properties(inst_cls: Type[ODEBase]):
     # first get all the properties of ODEBase
     parent = cls.__bases__[0]
     parentprops = _properties(parent)
-    props = {pkey: getattr(parent, pkey).fget(parent) for pkey in parentprops}
+    props = {pkey: getattr(inst_cls, pkey) for pkey in parentprops}
 
     # now update with what is changed by this subclass
     childprops = _properties(cls)
-    props.update({ckey: getattr(cls, ckey).fget(cls) for ckey in childprops})
+    props.update({ckey: getattr(inst_cls, ckey) for ckey in childprops})
     return props

@@ -684,13 +684,11 @@ class Integrate(ABC):
         else:
             p, e, x = self.get_pex(y)
             if not self.enforce_schwarz_sep:
-                p_sep = get_separatrix(self.a, e, x)
-            elif self.enforce_schwarz_sep == "1PAT1R":
-                p_sep = np.max([self.func._min_p, get_separatrix(self.a, e, x)])
+                p_min = self.func.min_p(e=e, x=x, a=self.a, separatrix_buffer=self.separatrix_buffer_dist)
             else:
-                p_sep = 6 + 2 * e
+                p_min = 6 + 2 * e + self.separatrix_buffer_dist
 
-            if p - p_sep < self.separatrix_buffer_dist:
+            if p < p_min:
                 return True
 
     def inner_func_forward(self, t_step):
@@ -707,15 +705,14 @@ class Integrate(ABC):
         )[0]
 
         p, e, x = self.get_pex(self._y_inner_cache)
-        # get the separatrix value at this new step
-        if not self.enforce_schwarz_sep:
-            p_sep = get_separatrix(self.a, e, x)
-        elif self.enforce_schwarz_sep == "1PAT1R":
-            p_sep = np.max([self.func._min_p, get_separatrix(self.a, e, x)])
-        else:
-            p_sep = 6 + 2 * e
 
-        return p - (p_sep + self.separatrix_buffer_dist)  # we want this to go to zero
+        # set minimum p supported by model for integration
+        if not self.enforce_schwarz_sep:
+            p_min = self.func.min_p(e=e, x=x, a=self.a, separatrix_buffer=self.separatrix_buffer_dist)
+        else:
+            p_min = 6 + 2 * e + self.separatrix_buffer_dist
+
+        return p - p_min  # we want this to go to zero
 
     def inner_func_backward(self, t_step):
         """
