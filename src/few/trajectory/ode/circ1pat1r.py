@@ -460,7 +460,6 @@ class TrajectoryCirc1PAT1R(ODEBase):
 
         self.args['chi1'] = chi1
         self.args['chi2'] = float(additional_args[0])
-        self.args['deltaM'] = 0.0
 
         self.args['chit1'], self.args['chit2'] = chi_to_chit(self.args['chi1'], self.args['chi2'], self.args['nu'])
 
