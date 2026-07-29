@@ -318,7 +318,7 @@ class EMRIInspiral(TrajectoryBase):
         # shortened to the duration of the initial run. The integrator sets the max step size
         # to be about 1/10th of the total duration, so this should give us at least 4 points.
         if len(out) < 4:
-            T = out[-1, 0] / YRSID_SI
+            T = out[-1, 0] / YRSID_SI # set duration to the duration of the initial run
             temp_kwargs["T"] = T
             out = self.inspiral_generator.run_inspiral(
                         m1, m2, a, y0, args_in, **temp_kwargs
