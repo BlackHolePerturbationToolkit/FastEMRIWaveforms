@@ -131,7 +131,7 @@ class GenerateEMRIWaveform(Generic[WaveformModule]):
                     args_remove.append(i)
 
             # these are the arguments that go in to the generator
-            self.args_keep = np.delete(np.arange(11), self.args_remove)
+            self.args_keep = np.delete(np.arange(11), args_remove)
 
     @property
     def _stock_waveform_definitions(self):
