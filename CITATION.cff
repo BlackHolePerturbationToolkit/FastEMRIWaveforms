@@ -21,7 +21,7 @@ authors:
   - given-names: Alvin J. K.
     family-names: Chua
     affiliation: National University of Singapore
-    orcid: https://orcid.org/0000-0001-5242-8269
+    orcid: 'https://orcid.org/0000-0001-5242-8269'
   - given-names: Bert
     family-names: Depoorter
     orcid: 'https://orcid.org/0009-0004-7865-7990'
@@ -31,6 +31,9 @@ authors:
   - given-names: Aldo
     family-names: Gamboa
     orcid: 'https://orcid.org/0000-0001-8391-5596'
+  - given-names: Loïc
+    family-names: Honet
+    orcid: 'https://orcid.org/0009-0007-2863-6085'
   - given-names: Scott
     family-names: Hughes
     affiliation: Massachusetts Institute of Technology
@@ -60,11 +63,15 @@ authors:
   - given-names: Zachary
     family-names: Nasipak
     affiliation: University of Southampton
-    orcid: https://orcid.org/0000-0002-5109-9704
+    orcid: 'https://orcid.org/0000-0002-5109-9704'
   - given-names: Maxime
     family-names: Pigou
     affiliation: Laboratoire des 2 Infinis Toulouse
-    orcid: https://orcid.org/0000-0001-6997-2500
+    orcid: 'https://orcid.org/0000-0001-6997-2500'
+  - given-names: Adam
+    family-names: Pound
+    affiliation: University of Southampton
+    orcid: 'https://orcid.org/0000-0001-9446-0638'
   - given-names: Monica
     family-names: Rizzo
   - given-names: Lorenzo
@@ -83,6 +90,9 @@ authors:
     family-names: Wardell
     affiliation: University College Dublin
     orcid: 'https://orcid.org/0000-0001-6176-9006'
+  - given-names: Christopher
+    family-names: Whittall
+    orcid: 'https://orcid.org/0000-0003-2152-6004'
 identifiers:
   - type: doi
     value: 10.5281/zenodo.3969004
