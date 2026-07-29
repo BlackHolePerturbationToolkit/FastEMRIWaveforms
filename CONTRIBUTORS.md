@@ -14,6 +14,8 @@ Below is a list of those who have contributed code or data to the releases of FE
 		Internal reviewer of model, updated documentation, patched bugs identified in review
 	* [Adam Pound](https://github.com/adamrpound)  </br>
 		Contributed to formulation and implementation of Circ1PAT1R. Scripts for 2SF data generation. Validation of data quality. Internal and external reviewee of Circ1PAT1R.
+	* [Jonathan Thompson](https://github.com/thompsonphys)</br>
+		Internal reviewer of model.
 	* [Barry Wardell](https://github.com/barrywardell)</br>
 		Prepared underlying datasets, contributed to implementation of whole model.
 	* [Chris Whittall](https://github.com/cwhittall)</br>
