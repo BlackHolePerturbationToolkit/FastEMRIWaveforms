@@ -380,11 +380,6 @@ class SphericalHarmonicWaveformBase(
                 if a > 0:
                     phase_information_in[:, 0] *= self.xp.sign(xI0)
 
-                # if self.inspiral_generator.integrate_backwards:
-                #     phase_information_in[:, :, 0] += self.xp.array(
-                #         [Phi_phi[-1] + Phi_phi[0], Phi_theta[-1] + Phi_theta[0], Phi_r[-1] + Phi_r[0]]
-                #     )
-
                 phase_t_in = self.inspiral_generator.integrator_spline_t
             else:
                 phase_information_in = self.xp.asarray(
