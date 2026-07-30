@@ -350,7 +350,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
             x (float): Cosine of the inclination angle (ignored since this model is equatorial
             a (float): Primary spin"""
         if separatrix_buffer is None:
-            separatrix_buffer = self.separatrix_buffer_dist
+            separatrix_buffer = 0.0
         self.isvalid_e(e, **kwargs)
         self.isvalid_x(x, **kwargs)
         self._isvalidchi1(a, **kwargs)
