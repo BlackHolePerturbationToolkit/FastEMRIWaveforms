@@ -418,24 +418,6 @@ class TrajectoryCirc1PAT1R(ODEBase):
         pmin, pmax = self.bounds_p(e, x, a, separatrix_buffer=separatrix_buffer, **kwargs)
         if p > pmax or p < pmin:
             raise ValueError(f"(TrajectoryCirc1PAT1R) Interpolation: p = {p} out of bounds. Must be between {pmin} and {pmax}.")
-        
-    # Note: This does not seem to be used. Consider deleting
-    def _isvalidp(self, p, chi1):
-        """Raise ``ValueError`` if p is outside the flux-data grid.
-
-        Args:
-            p (float): Dimensionless semi-latus rectum p/M.
-
-        Raises:
-            ValueError: If ``p`` is outside ``[_min_p, _max_p]``.
-        """
-        pmax = self.max_p(e=0.,x=1.,a=chi1)
-        pmin = self.min_p(e=0.,x=1,a=chi1)
-
-        if p > pmax or p < pmin:
-            raise ValueError(f"(TrajectoryCirc1PAT1R) Interpolation: p = {p} out of bounds. Must be between {pmin} and {pmax}.")
-        
-    
     
     def isvalid_pex(self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], e_buffer=[0, 0], separatrix_buffer=None, **kwargs):
         self.isvalid_x(x, **kwargs)
