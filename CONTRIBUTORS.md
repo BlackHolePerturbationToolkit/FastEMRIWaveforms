@@ -6,6 +6,8 @@ Below is a list of those who have contributed code or data to the releases of FE
 - FEW v2.2 (Circular 1PA model added)
   	* [Christian Chapman-Bird](https://github.com/cchapmanbird)</br>
 		Internal reviewer of model, updates to build structure
+	* [Bert Depoorter](https://github.com/BertDepoorter) </br>
+		Internal reviewer of model, small fixes to GPU version of model.
     * [Loic Honet](https://github.com/honetloic)  </br>
 		Initial development of the Circ1PAT1R trajectory, amplitude, waveform modules. Development of the Circ1PAT1R trajectory module. Importing in FEW 1PAT1R datasets from WaSABI. Internal and external developer of Circ1PAT1R
 	* [Philip Lynch](https://github.com/Philip-Lynch)  </br>
