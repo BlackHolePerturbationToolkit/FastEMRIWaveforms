@@ -380,20 +380,20 @@ class SphericalHarmonicWaveformBase(
                 if a > 0:
                     phase_information_in[:, 0] *= self.xp.sign(xI0)
 
-                if self.inspiral_generator.integrate_backwards:
-                    phase_information_in[:, :, 0] += self.xp.array(
-                        [Phi_phi[-1] + Phi_phi[0], Phi_theta[-1] + Phi_theta[0], Phi_r[-1] + Phi_r[0]]
-                    )
+                # if self.inspiral_generator.integrate_backwards:
+                #     phase_information_in[:, :, 0] += self.xp.array(
+                #         [Phi_phi[-1] + Phi_phi[0], Phi_theta[-1] + Phi_theta[0], Phi_r[-1] + Phi_r[0]]
+                #     )
 
                 phase_t_in = self.inspiral_generator.integrator_spline_t
             else:
                 phase_information_in = self.xp.asarray(
                     [Phi_phi_temp, Phi_theta_temp, Phi_r_temp]
                 )
-                if self.inspiral_generator.integrate_backwards:
-                    phase_information_in[0] += self.xp.array([Phi_phi[-1] + Phi_phi[0]])
-                    phase_information_in[1] += self.xp.array([Phi_theta[-1] + Phi_theta[0]])
-                    phase_information_in[2] += self.xp.array([Phi_r[-1] + Phi_r[0]])
+                # if self.inspiral_generator.integrate_backwards:
+                #     phase_information_in[0] += self.xp.array([Phi_phi[-1] + Phi_phi[0]])
+                #     phase_information_in[1] += self.xp.array([Phi_theta[-1] + Phi_theta[0]])
+                #     phase_information_in[2] += self.xp.array([Phi_r[-1] + Phi_r[0]])
 
                 # flip azimuthal phase for retrograde inspirals
                 if a > 0:
