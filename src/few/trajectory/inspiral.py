@@ -291,12 +291,6 @@ class EMRIInspiral(TrajectoryBase):
                 x0 = Y_to_xI(a, p0, e0, x0)
             y1, y2, y3 = get_kerr_geo_constants_of_motion(a, p0, e0, x0)
 
-        # flip initial phases if integrating backwards
-        # if temp_kwargs["integrate_backwards"]:
-        #     Phi_phi0 = -1 * Phi_phi0
-        #     Phi_theta0 = -1 * Phi_theta0
-        #     Phi_r0 = -1 * Phi_r0
-
         mu = m1 * m2 / (m1 + m2)
         M = m1 + m2
 

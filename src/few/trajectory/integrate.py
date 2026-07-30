@@ -540,9 +540,6 @@ class Integrate(ABC):
         if not self.generating_trajectory:
             result[:, 3:6] /= self.massratio
 
-        # if self.integrate_backwards and not self.generating_trajectory:
-        #     result[:, 3:6] += self.trajectory[0, 4:7] + self.trajectory[-1, 4:7]
-
         if on_gpu:
             import cupy as xp
 
@@ -646,13 +643,6 @@ class Integrate(ABC):
 
         # scale phases here by the mass ratio so the cache is accurate
         self.trajectory_arr[:, 4:7] /= self.massratio
-
-        # backwards integration requires an additional manipulation to match forwards phase convention
-        # if self.integrate_backwards:
-        #     self.trajectory_arr[:, 4:7] -= (
-        #         self.trajectory_arr[0, 4:7]
-        #         + self.trajectory_arr[self.traj_step - 1, 4:7]
-        #     )
 
         # Restore normal spline behaviour
         self.generating_trajectory = False
