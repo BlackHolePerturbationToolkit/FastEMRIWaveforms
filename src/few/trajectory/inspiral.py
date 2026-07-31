@@ -307,11 +307,11 @@ class EMRIInspiral(TrajectoryBase):
             m1, m2, a, y0, args_in, **temp_kwargs
         )
 
-        # if there are less than 4 points, the cubic spline interpolation will fail,
+        # if there are less than 8 points, the cubic spline interpolation will fail,
         # when generating the waveform. Therefore, we rerun the inspiral with the duration
         # shortened to the duration of the initial run. The integrator sets the max step size
-        # to be about 1/10th of the total duration, so this should give us at least 4 points.
-        if len(out) < 4:
+        # to be about 1/10th of the total duration, so this should give us at least 8 points.
+        if len(out) < 8:
             T = out[-1, 0] / YRSID_SI # set duration to the duration of the initial run
             temp_kwargs["T"] = T
             out = self.inspiral_generator.run_inspiral(
