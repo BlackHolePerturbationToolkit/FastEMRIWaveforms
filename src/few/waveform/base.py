@@ -659,15 +659,6 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumMod
         traj_spline_coeff_in = traj_spline_coeff.copy()
         traj_spline_coeff_in[:, 3:, :] /= mu / M
 
-        if self.inspiral_generator.integrate_backwards:
-            traj_spline_coeff_in[:, 3:, 0] += self.xp.array(
-                [
-                    Phi_phi[-1] + Phi_phi[0],
-                    Phi_theta[-1] + Phi_theta[0],
-                    Phi_r[-1] + Phi_r[0],
-                ]
-            )
-
         # TODO: Check that the mass conventions here are consistent with adiabatic model
         waveform = self.create_waveform(
             t,
