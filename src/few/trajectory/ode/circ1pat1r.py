@@ -525,7 +525,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
         nu = self.args['nu']
         chit2 = self.args['chit2']
 
-        assert len(y) == 8, f"State vector y must have length 8, but got length {len(y)}."
+        assert len(y) == self.nparams, f"State vector y must have length {self.nparams}, but got length {len(y)}."
 
         p = y[0]
         e = y[1]
