@@ -37,7 +37,7 @@ def dEdOmega_1PA_chit1(p):
         p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
 
     Returns:
-        float: (dE/dOmega_phi)^(1, delta_chi1).
+        float: dE_1PA_chi1/dOmega_phi.
     """
     return -2./p*(10.-33./p+36./p**2.)/(9.*(1.-3./p)**(5./2.))
 
@@ -53,7 +53,7 @@ def dEdOmega_1PA_chit2(p):
         p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
 
     Returns:
-        float: (dE/dOmega_phi)^(1, delta_chi2).
+        float: dE_1PA_chi2/dOmega_phi.
     """
     return (12./p-5.)/(3.*p*(1.-3./p)**(3./2.))
 
@@ -82,7 +82,7 @@ def dEdeltaMdOmega(p):
         p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
 
     Returns:
-        float: (dE/dOmega_phi)^(1, deltaM).
+        float: dE_1PA_deltaM/dOmega_phi.
     """
     return p**(1./2.)*(-2.+21./p-18./p**2.)/(9.*(1.-3./p)**(5./2.))
 
@@ -94,9 +94,21 @@ def EdeltaM(p):
         p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
 
     Returns:
-        float: E_(deltaM)(p).
+        float: E_1PA_deltaM(p).
     """
     return -(1-6./p)/(3.*p*(1.-3./p)**(3./2.))
+
+@jit
+def Echi1(p):
+    """Coefficient of chit1 in 1PA binding energy, (108c) of 2510.16113.
+
+    Args:
+        p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
+
+    Returns:
+        float: E_1PA_chi1(p). 
+    """
+    return -2.*(-3.+2.*p)/(3.*(-3.+p)**(3./2.)*p**2.)
 
 class TrajectoryCirc1PAT1R(ODEBase):
     """Trajectory of the first-post-adiabatic, slowly-spinning circular inspiral model 1PAT1R of Ref. 2510.16113.
@@ -422,6 +434,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
             raise ValueError(f"(TrajectoryCirc1PAT1R) Interpolation: p = {p} out of bounds. Must be between {pmin} and {pmax}.")
     
     def isvalid_pex(self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], e_buffer=[0, 0], separatrix_buffer=None, **kwargs):
+
         self.isvalid_x(x, **kwargs)
         self.isvalid_e(e, e_buffer=e_buffer, **kwargs)
         self._isvalidchi1(a, **kwargs)
@@ -484,7 +497,16 @@ class TrajectoryCirc1PAT1R(ODEBase):
         Returns:
             float: Numerator of the flux-balance law.
         """
-        return (self.interpolant_dict["Flux/Energy/0PA/Infinity"](p) + self.interpolant_dict["Flux/Energy/0PA/Horizon"](p)) + nu * (self.interpolant_dict["Flux/Energy/1PA/Infinity"](p) + chit1/nu * (self.interpolant_dict["Flux/Energy/1PAchi1/Infinity"](p)+self.interpolant_dict["Flux/Energy/1PAchi1/Horizon"](p)) + chit2/nu * (self.interpolant_dict["Flux/Energy/1PAchi2/Infinity"](p)+ self.interpolant_dict["Flux/Energy/1PAchi2/Horizon"](p)) - deltaM * (2./3.*p) * self.interpolant_dict["Flux/Energy/0PA/Deriv"](p) + EdeltaM(p) * self.interpolant_dict["Flux/Energy/0PA/Horizon"](p) - 2.*(-3.+2.*p)/(3.*(-3.+p)**(3./2.)*p**2.) * self.interpolant_dict["Flux/AngularMomentum/0PA/Horizon"](p))
+        return (self.interpolant_dict["Flux/Energy/0PA/Infinity"](p) 
+                + self.interpolant_dict["Flux/Energy/0PA/Horizon"](p)) \
+                + nu * (self.interpolant_dict["Flux/Energy/1PA/Infinity"](p) 
+                        + chit1/nu * (self.interpolant_dict["Flux/Energy/1PAchi1/Infinity"](p)
+                                        +self.interpolant_dict["Flux/Energy/1PAchi1/Horizon"](p)) 
+                        + chit2/nu * (self.interpolant_dict["Flux/Energy/1PAchi2/Infinity"](p)
+                                        + self.interpolant_dict["Flux/Energy/1PAchi2/Horizon"](p)) 
+                        - deltaM * (2./3.*p) * self.interpolant_dict["Flux/Energy/0PA/Deriv"](p) 
+                        + EdeltaM(p) * self.interpolant_dict["Flux/Energy/0PA/Horizon"](p) 
+                        + Echi1(p) * self.interpolant_dict["Flux/AngularMomentum/0PA/Horizon"](p))
 
     def dEdOmega(self, nu, p, chit1, chit2, deltaM):
         """1PA derivative of the binding energy with respect to the orbital frequency, Eq. (108) of Ref. 2510.16113.
@@ -515,7 +537,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
 
         Args:
             y (array-like): Current state vector of length 8:
-                [p, e, xI, nu*Phi_phi, nu*Phi_theta, nu*Phi_r, deltaM, deltaChit1].
+                [p, e, xI, nu*Phi_phi, nu*Phi_theta, nu*Phi_r, deltaM, delta_chit1].
 
         Returns:
             list[float]: Derivatives
