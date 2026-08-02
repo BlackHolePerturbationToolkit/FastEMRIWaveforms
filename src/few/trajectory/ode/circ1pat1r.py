@@ -16,7 +16,7 @@ def dEdOmega0PA(p):
     frequency at adiabatic order for a circular orbit in a Schwarzschild background.
 
     Args:
-        p (float): Dimensionless semi-latus rectum p/M, with M the total mass.
+        p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3), with Omega_phi=M*Omega_phys the dimensionless frequency.
 
     Returns:
         float: dE_0PA/dOmega_phi.
@@ -32,7 +32,7 @@ def dEdOmega_1PA_chit1(p):
     fixed symmetric mass ratio and total mass.
 
     Args:
-        p (float): Dimensionless semi-latus rectum p/M, with M the total mass.
+        p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
 
     Returns:
         float: (dE/dOmega_phi)^(1, delta_chi1), Ref. 2510.16113.
@@ -48,7 +48,7 @@ def dEdOmega_1PA_chit2(p):
     fixed symmetric mass ratio and total mass.
 
     Args:
-        p (float): Dimensionless semi-latus rectum p/M, with M the total mass.
+        p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
 
     Returns:
         float: (dE/dOmega_phi)^(1, delta_chi2), Ref. 2510.16113.
@@ -62,7 +62,7 @@ def dOmegadp(p):
     For a Schwarzschild circular orbit Omega_phi = p^(-3/2).
 
     Args:
-        p (float): Dimensionless semi-latus rectum p/M, with M the total mass.
+        p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
 
     Returns:
         float: dOmega_phi/dp = -3/2 * p^(-5/2).
@@ -77,7 +77,7 @@ def dEdeltaMdOmega(p):
     Ref. 2510.16113.
 
     Args:
-        p (float): Dimensionless semi-latus rectum p/M, with M the total mass.
+        p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
 
     Returns:
         float: (dE/dOmega_phi)^(1, deltaM), Ref. 2510.16113.
@@ -89,7 +89,7 @@ def EdeltaM(p):
     """Coefficient multiplying deltaM in Eq. (87) of Ref. 2510.16113.
 
     Args:
-        p (float): Dimensionless semi-latus rectum p/M, with M the total mass.
+        p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
 
     Returns:
         float: E_(deltaM)(p).
@@ -406,7 +406,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
         """Raise ``ValueError`` if p is outside the flux-data grid.
 
         Args:
-            p (float): Dimensionless semi-latus rectum p/M.
+            p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
             e (float): Eccentricity (ignored since this model is circular).
             x (float): Cosine of the inclination angle (ignored since this model is equatorial).
             a (float): Primary spin."""
@@ -474,7 +474,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
 
         Args:
             nu (float): Symmetric mass ratio nu = m1*m2/(m1+m2)^2.
-            p (float): Dimensionless semi-latus rectum p/M.
+            p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
             chit1 (float): Primary reduced spin.
             chit2 (float): Secondary reduced spin.
             deltaM (float): Deviation of the total mass from its initial value.
@@ -489,7 +489,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
 
         Args:
             nu (float): Symmetric mass ratio nu = m1*m2/(m1+m2)^2.
-            p (float): Dimensionless semi-latus rectum p/M.
+            p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
             chit1 (float): Primary reduced spin.
             chit2 (float): Secondary reduced spin.
             deltaM (float): Deviation of the total mass from its initial value.
