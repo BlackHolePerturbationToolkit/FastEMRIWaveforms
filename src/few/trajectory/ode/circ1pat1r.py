@@ -453,8 +453,8 @@ class TrajectoryCirc1PAT1R(ODEBase):
         # chi2 (additional_args[0]) is guaranteed to be present here: get_inspiral
         # enforces required_add_args before reaching this point.
         self.num_add_args = len(additional_args)
-        if self.num_add_args != 1:
-            get_logger().warning(f"WARNING (TrajectoryCirc1PAT1R.add_fixed_parameters): Only 1 additional argument (chi2) expected in TrajectoryCirc1PAT1R but {self.num_add_args} received. Excess arguments will be ignored.")
+        if self.num_add_args > 1:
+            get_logger().warning(f"WARNING (TrajectoryCirc1PAT1R.add_fixed_parameters): Only 1 additional argument (chi2) expected in TrajectoryCirc1PAT1R but {self.num_add_args} received. Excess arguments will be ignored.")    
 
         self.args['nu'] = m1 * m2 / (m1 + m2)**2
         if self.args['nu'] < 1e-8:
