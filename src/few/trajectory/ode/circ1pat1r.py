@@ -485,7 +485,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
         return (self.interpolant_dict["Flux/Energy/0PA/Infinity"](p) + self.interpolant_dict["Flux/Energy/0PA/Horizon"](p)) + nu * (self.interpolant_dict["Flux/Energy/1PA/Infinity"](p) + chit1/nu * (self.interpolant_dict["Flux/Energy/1PAchi1/Infinity"](p)+self.interpolant_dict["Flux/Energy/1PAchi1/Horizon"](p)) + chit2/nu * (self.interpolant_dict["Flux/Energy/1PAchi2/Infinity"](p)+ self.interpolant_dict["Flux/Energy/1PAchi2/Horizon"](p)) - deltaM * (2./3.*p) * self.interpolant_dict["Flux/Energy/0PA/Deriv"](p) + EdeltaM(p) * self.interpolant_dict["Flux/Energy/0PA/Horizon"](p) - 2.*(-3.+2.*p)/(3.*(-3.+p)**(3./2.)*p**2.) * self.interpolant_dict["Flux/AngularMomentum/0PA/Horizon"](p))
 
     def dEdOmega(self, nu, p, chit1, chit2, deltaM):
-        """1PA derivative of the binding energy with respect to the orbital frequency.
+        """1PA derivative of the binding energy with respect to the orbital frequency, Eq. (108) of Ref. 2510.16113.
 
         Args:
             nu (float): Symmetric mass ratio nu = m1*m2/(m1+m2)^2.
