@@ -467,8 +467,8 @@ class TrajectoryCirc1PAT1R(ODEBase):
         self._isvalidchi1(self.args['chi1'])
         self._isvalidchi2(self.args['chi2'])
 
-    def Flux(self, nu, p, chit1, chit2, deltaM):
-        """Total 1PA numerator of the flux-balance law, Eq. (83) of Ref. 2510.16113.
+    def balance_law_numerator(self, nu, p, chit1, chit2, deltaM):
+        """Total 1PA numerator of the flux-balance law, Eq. (84) of Ref. 2510.16113.
 
         Returns the numerator of the flux-balance law at 1PA order.
 
@@ -537,7 +537,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
 
 
         Omega_phi = 1/p**(3./2.)
-        pdot = -self.Flux(nu, p, chit1, chit2, deltaM)/self.dEdOmega(nu, p, chit1, chit2, deltaM)/dOmegadp(p)
+        pdot = -self.balance_law_numerator(nu, p, chit1, chit2, deltaM)/self.dEdOmega(nu, p, chit1, chit2, deltaM)/dOmegadp(p)
         chit1dot = nu * self.interpolant_dict["Flux/AngularMomentum/0PA/Horizon"](p) if self.evolve_primary else 0.0
         deltaMdot = self.interpolant_dict["Flux/Energy/0PA/Horizon"](p) if self.evolve_primary else 0.0
 
