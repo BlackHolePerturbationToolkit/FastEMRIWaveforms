@@ -14,6 +14,8 @@ from .base import ODEBase
 def dEdOmega0PA(p):
     """Derivative of the specific binding energy with respect to the orbital
     frequency at adiabatic order for a circular orbit in a Schwarzschild background.
+    
+    Computed from (108a) of 2510.16113.
 
     Args:
         p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3), with Omega_phi=M*Omega_phys the dimensionless frequency.
@@ -29,13 +31,13 @@ def dEdOmega_1PA_chit1(p):
 
     Coefficient of chit1 in the 1PA expansion
     of dE/dOmega_phi for a circular orbit in a Schwarzschild background, at
-    fixed symmetric mass ratio and total mass.
+    fixed symmetric mass ratio and total mass. Computed from (108c) of 2510.16113.
 
     Args:
         p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
 
     Returns:
-        float: (dE/dOmega_phi)^(1, delta_chi1), Ref. 2510.16113.
+        float: (dE/dOmega_phi)^(1, delta_chi1).
     """
     return -2./p*(10.-33./p+36./p**2.)/(9.*(1.-3./p)**(5./2.))
 
@@ -45,13 +47,13 @@ def dEdOmega_1PA_chit2(p):
 
     Coefficient of chit2 in the 1PA expansion
     of dE/dOmega_phi for a circular orbit in a Schwarzschild background, at
-    fixed symmetric mass ratio and total mass.
+    fixed symmetric mass ratio and total mass. Computed from (108e) of 2510.16113.
 
     Args:
         p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
 
     Returns:
-        float: (dE/dOmega_phi)^(1, delta_chi2), Ref. 2510.16113.
+        float: (dE/dOmega_phi)^(1, delta_chi2).
     """
     return (12./p-5.)/(3.*p*(1.-3./p)**(3./2.))
 
@@ -73,20 +75,20 @@ def dOmegadp(p):
 def dEdeltaMdOmega(p):
     """1PA correction to dE/dOmega_phi from the evolution of the primary's mass.
 
-    Coefficient of deltaM in the 1PA expansion of dE/dOmega_phi,
-    Ref. 2510.16113.
+    Coefficient of deltaM in the 1PA expansion of dE/dOmega_phi.
+    Computed from (108d) of 2510.16113.
 
     Args:
         p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
 
     Returns:
-        float: (dE/dOmega_phi)^(1, deltaM), Ref. 2510.16113.
+        float: (dE/dOmega_phi)^(1, deltaM).
     """
     return p**(1./2.)*(-2.+21./p-18./p**2.)/(9.*(1.-3./p)**(5./2.))
 
 @jit
 def EdeltaM(p):
-    """Coefficient multiplying deltaM in Eq. (87) of Ref. 2510.16113.
+    """Coefficient of deltaM in 1PA binding energy, (108d) of 2510.16113.
 
     Args:
         p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
