@@ -12,14 +12,14 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
     This class interpolates precomputed amplitude data stored in HDF5 files using 1D cubic splines.
     The data is organized into different terms in the post-adiabatic (PA) expansion: 0PA, 1PA,
     1PAchi1, 1PAchi2, and 1PAdeltam, corresponding to the amplitudes in Eq. (138) of 2510.16113.
-    Odd azimuthal modes are resummed as described in 2112.12265 (see text description of Fig. 2 therein).
+    Odd azimuthal modes are additionally resummed as described in 2112.12265 (see text description of Fig. 2 therein).
 
     This module is available for GPU and CPU.
 
     args:
         filename: HDF5 file path containing amplitude data. If None, uses default file.
         force_backend: Backend to use for computation (optional).
-        zero_PA_amps_only: If True, only the 0PA amplitudes are computed and all 1PA contributions are set to zero (optional; defaults to False).
+        zero_PA_amps_only: If True, all 1PA contributions are set to zero. Note 0PA odd azimuthal modes are still resummed. (Optional; defaults to False.)
         **kwargs: Optional keyword arguments for the base class:
             :class:`few.utils.baseclasses.KerrCirc`.
     """
@@ -146,7 +146,9 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
 
         This method evaluates the 1D cubic spline interpolant for a specific piece
         of the post-adiabatic expansion (identified by data_key). The 1PAdeltam piece
-        is computed from the derivative of the 0PA piece.
+        is computed from the derivative of the 0PA piece. Note the 0PA piece will
+        differ from the complete waveform amplitude even if zero_PA_amps_only is True,
+        since the odd azimuthal modes are resummed in the complete amplitude.
 
         Args:
             p: Dimensionless semi-latus rectum.
@@ -247,6 +249,7 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
 
         if self.zero_PA_amps_only:
             # Fill all 1PA pieces with zeros of the same shape/type as 0PA
+            # Note 0PA odd azimuthal modes are still resummed
             zero = self.xp.zeros_like(data_pieces["0PA"])
             for key in ["1PA", "1PAchi1", "1PAchi2", "1PAdeltam"]:
                 data_pieces[key] = zero
