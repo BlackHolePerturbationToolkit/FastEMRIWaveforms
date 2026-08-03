@@ -116,6 +116,26 @@ keywords:
   - Waveform
 license: MIT
 references:
+  - abbreviation: "Mathews:2025txc"
+    authors:
+      - family-names: Mathews
+        given-names: Josh
+      - family-names: Wardell
+        given-names: Barry
+      - family-names: Pound
+        given-names: Adam
+      - family-names: Warburton
+        given-names: Niels  
+    doi: 10.1103/ph3p-mscl
+    year: 2026
+    month: 3
+    title: >-
+      Postadiabatic self-force waveforms: Slowly spinning primary and precessing secondary      
+    identifiers:
+      - type: other
+        value: 'arXiv:gr-qc/2510.16113'
+        description: arXiv preprint of this article
+    type: article
   - abbreviation: "Chapman-Bird:2025xtd"
     authors:
       - family-names: Chapman-Bird
