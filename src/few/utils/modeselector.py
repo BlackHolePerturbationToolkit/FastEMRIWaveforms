@@ -14,23 +14,31 @@ def get_mode_frequencies(f_phi, f_theta, f_r, m, k, n):
     return f_phi[:,None] * m[None,:] + f_theta[:,None] * k[None,:] + f_r[:,None] * n[None,:]
 
 class ModeSelector(ParallelModuleBase):
-    r"""Filter teukolsky amplitudes based on power contribution.
+    r"""Filter mode amplitudes based on power contribution.
 
-    This module generates teukolsky modes and their associated ylms given an input
+    This module generates modes and their associated ylms given an input
     trajectory, then filters these modes according to either a list of requested modes or the
     the power contribution from each mode. Mode filtering is performed to (roughly) achieve the
     requested mismatch with the minimum number of modes. If a sensitivity curve is provided, mode filtering
-    is weighted according to this sensitivity curve.
+    is weighted according to this sensitivity curve. 
+    
+    The mode filtering tolerance is set by
+    the :code:`mode_selection_threshold` parameter, :math:`\kappa`, which is the fractional accuracy of the 
+    total power used to determine the contributing modes. The mode filtering is performed by 
+    computing the cumulative sum of the power contribution from each mode, and keeping only those modes that 
+    contribute to the total power within :math:`(1 - \kappa)^2` of the total power.
 
     The mode filtering is a major contributing factor to the speed of FEW
-    waveforms, as it removes large numbers of useless modes from the final
+    waveforms, as it removes large numbers of modes from the final
     summation calculation.
 
+    Mode selection assumes that the input modes are ordered as :math:`m=0`, :math:`m>0`, and then :math:`m<0`.
+
     args:
-        amplitude_generator: Object that generates the teukolsky amplitudes
+        amplitude_generator: Object that generates the amplitudes
             for the modes. This should be an instance of a class that has a
             :code:`__call__` method that takes the parameters :math:`(a, p, e, xI)`
-            and returns the teukolsky amplitudes for the modes.
+            and returns the amplitudes for the modes.
             It should also have mode-related attributes obtained from subclassing
             `few.utils.baseclasses.SphericalHarmonic`.
         ylm_generator: Object that generates the Ylm values for the modes.
@@ -54,8 +62,7 @@ class ModeSelector(ParallelModuleBase):
             provided at call time must only contain :math:`m\geq 0`. Default is True.
         mode_selection_threshold: Fractional accuracy of the total power used
             to determine the contributing modes. Lowering this value will
-            calculate more modes slower the waveform down, but generally
-            improving accuracy. Increasing this value removes modes from
+            calculate more modes. Increasing this value removes modes from
             consideration and can have a considerable affect on the speed of
             the waveform, albeit at the cost of some accuracy (usually an
             acceptable loss). Default that gives good mismatch qualities is
@@ -66,7 +73,7 @@ class ModeSelector(ParallelModuleBase):
             sennsitivity is used to weight the mode values when determining which
             modes to keep. **Note**: if the sensitivity function is provided,
             and GPUs are used, then this function must accept CuPy arrays as input.
-        modeinds_map: Map of mode indices to Teukolsky amplitude data.
+        modeinds_map: Map of mode indices to mode amplitude data.
             This is a 4D array of shape (l, m, k, n) that maps the mode indices
             to one-dimensional indices from the amplitude module output.
             This is used to efficiently select the modes from the amplitude module output.
@@ -129,9 +136,9 @@ class ModeSelector(ParallelModuleBase):
 
         self.include_minus_mkn = include_minus_mkn
         """bool: Whether to include modes with m < 0 in the output."""
-        """Note that the module always outputs m>=0 Teukolsky amplitudes, but +m and -m Ylms.
-        Instead m<0 Teukolsky amplitudes are included in the mode sum via mode symmetry.
-        Therefore, to include m<0 Teukolsky amplitudes in the waveform
+        """Note that the module always outputs m>=0 mode amplitudes, but +m and -m Ylms.
+        Instead m<0 mode amplitudes are included in the mode sum via mode symmetry.
+        Therefore, to include m<0 mode amplitudes in the waveform
         but NOT m>0, we set the m>0 Ylm to zero."""
 
         self.mode_selection = mode_selection
@@ -266,10 +273,10 @@ class ModeSelector(ParallelModuleBase):
         mode_selection_threshold: float = None,
         return_sort_inds: bool = False
     ) -> tuple[np.ndarray]:
-        r"""Call to sort and filer teukolsky modes.
+        r"""Call to sort and filer mode amplitudes.
 
         This is the call function that takes an inspiral trajectory and
-        returns the teukolsky modes and ylms required to produce a waveform
+        returns the mode amplitudes and ylms required to produce a waveform
         of either a given mismatch or the requested mode content.
 
         args:
@@ -297,14 +304,13 @@ class ModeSelector(ParallelModuleBase):
             include_minus_mkn: If True, then include :math:`(-m, -k, -n)` mode when
                 computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
                 is a list of specific modes. Default is True.
-            mode_selection_threshold: Target waveform mismatch used
-                to determine the contributing modes. Lowering this value will
-                calculate more modes, slowing the waveform generation down, but generally
-                improving accuracy. Increasing this value removes modes from
-                consideration and can have a considerable affect on the speed of
-                the waveform, albeit at the cost of some accuracy (usually an
-                acceptable loss). Default that gives good mismatch qualities is
-                1e-5.
+            mode_selection_threshold: Fractional accuracy of the total power used
+            to determine the contributing modes. Lowering this value will
+            calculate more modes. Increasing this value removes modes from
+            consideration and can have a considerable affect on the speed of
+            the waveform, albeit at the cost of some accuracy (usually an
+            acceptable loss). Default that gives good mismatch qualities is
+            1e-5.
             return_sort_inds: If True, also return the indices sorting the modes according
                 to their contribution. Only used when filtering in this mode. Default is False.
             
@@ -316,7 +322,7 @@ class ModeSelector(ParallelModuleBase):
         )
         
         if mode_selection == "all":
-            # get teuk modes
+            # get mode amplitudes
             teuk_modes = self.amplitude_generator(a, p, e, xI, *args)
             
             # get ylms
