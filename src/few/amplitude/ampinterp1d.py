@@ -10,8 +10,9 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
     """Calculate 1PA Teukolsky amplitudes in the slowly-spinning Kerr circular and arbitrary secondary spin regime with 1D cubic spline interpolation.
 
     This class interpolates precomputed amplitude data stored in HDF5 files using 1D cubic splines.
-    The data is organized by different pieces of the post-adiabatic (PA) expansion: 0PA, 1PA,
-    1PAchi1, 1PAchi2, and 1PAdeltam.
+    The data is organized into different terms in the post-adiabatic (PA) expansion: 0PA, 1PA,
+    1PAchi1, 1PAchi2, and 1PAdeltam, corresponding to the amplitudes in Eq. (138) of 2510.16113.
+    Odd azimuthal modes are resummed as described in 2112.12265 (see text description of Fig. 2 therein).
 
     This module is available for GPU and CPU.
 
