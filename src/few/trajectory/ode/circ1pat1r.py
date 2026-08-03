@@ -467,8 +467,8 @@ class TrajectoryCirc1PAT1R(ODEBase):
         """
         # call base to set self.a, self.massratio, self.additional_args, self.num_add_args
         super().add_fixed_parameters(m1, m2, chi1, additional_args)
-        # chi2 (additional_args[0]) is guaranteed to be present here: get_inspiral
-        # enforces required_add_args before reaching this point.
+        # super() call to ODEBase enforces that len(additional_args) >= len(required_add_args),
+        # ensuring at least one additional argument is present.
         self.num_add_args = len(additional_args)
         if self.num_add_args > 1:
             get_logger().warning(f"WARNING (TrajectoryCirc1PAT1R.add_fixed_parameters): Only 1 additional argument (chi2) expected in TrajectoryCirc1PAT1R but {self.num_add_args} received. Excess arguments will be ignored.")    
