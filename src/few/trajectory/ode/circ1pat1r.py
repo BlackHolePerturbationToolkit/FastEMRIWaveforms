@@ -211,6 +211,11 @@ class TrajectoryCirc1PAT1R(ODEBase):
         self._min_chi2 = -1.0
         self._max_chi2 = 1.0
 
+    @classmethod
+    def module_references(cls) -> list[REFERENCE]:
+        """Return citations related to this module"""
+        return [REFERENCE.CIRC_1PAT1R] + super().module_references()
+
     @property
     def equatorial(self):
         """bool: Always ``True``; this model is restricted to equatorial orbits."""

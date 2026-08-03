@@ -249,7 +249,7 @@ class REFERENCE(enum.Enum):
     AK = "Barack:2003fp"
     FD = "Speri:2023jte"
     KERR_ECC_EQ = "Chapman-Bird:2025xtd"
-    Circ1PAT1R = "Mathews:2025txc"
+    CIRC_1PAT1R = "Mathews:2025txc"
 
     def __str__(self) -> str:
         return str(self.value)
