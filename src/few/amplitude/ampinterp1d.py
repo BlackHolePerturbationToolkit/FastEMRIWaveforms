@@ -112,7 +112,9 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
         Returns:
             An array of complex mode amplitudes.
         """
-        # "1PAdeltam" is not a spline key - compute it from the 0PA derivative
+        # "1PAdeltam" is not a spline key. 
+        # Instead the coefficient of deltaM in the 1PA amplitudes is computed from the 0PA amplitudes
+        # using Eq. (120) of 2510.16113 and applying the same reasoning as below Eq. (89) 
         if data_key == "1PAdeltam":
             dA_dp = self._amplitudes_single_piece(
                 p, data_key="0PA", mode_indices=mode_indices, conj_mode_mask=conj_mode_mask, deriv_order=1
