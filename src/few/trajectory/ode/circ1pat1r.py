@@ -235,7 +235,6 @@ class TrajectoryCirc1PAT1R(ODEBase):
     def nparams(self):
         """
         An integer describing the number of parameters this ODE will integrate.
-        Defaults to 6 (three orbital elements, three orbital phases).
         """
         return 8
 
