@@ -85,6 +85,11 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
 
         self.zero_PA_amps_only = zero_PA_amps_only
 
+    @classmethod
+    def module_references(cls) -> list[REFERENCE]:
+        """Return citations related to this module"""
+        return [REFERENCE.CIRC_1PAT1R] + super().module_references()
+
     def _map_coord(self, p, data_key="0PA"):
         return (self.xp.asarray(p) - self.r_min[data_key]) / (self.r_max[data_key] - self.r_min[data_key])
 
