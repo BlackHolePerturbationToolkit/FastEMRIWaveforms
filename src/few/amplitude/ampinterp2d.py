@@ -17,7 +17,6 @@ from ..utils.baseclasses import (
     KerrEccentricEquatorial,
     ParallelModuleBase,
     SchwarzschildEccentric,
-    KerrGeneric,
     xp_ndarray,
 )
 from ..utils.citations import REFERENCE
