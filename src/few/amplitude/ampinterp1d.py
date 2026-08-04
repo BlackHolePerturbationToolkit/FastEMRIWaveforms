@@ -82,8 +82,6 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
                     )
                 self.r_min["1PAdeltam"] = self.r_min["0PA"]
                 self.r_max["1PAdeltam"] = self.r_max["0PA"];
-        self.rmin_max = max(self.r_min.values())
-        self.rmax_min = min(self.r_max.values())
 
         self.zero_PA_amps_only = zero_PA_amps_only
 
@@ -211,14 +209,14 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
         """Generate the 1PA Teukolsky amplitudes.
 
         Args:
-            a: Primary spin
+            a: Primary spin (ignored)
             p: Dimensionless semi-latus rectum.
             e: Eccentricity (must be zero).
             xI: Cosine of orbital inclination (must be 1.0).
-            nu: Symmetric mass ratio (optional; defaults to 0.0).
-            chit2: Secondary reduced dimensionless spin (optional; defaults to 0.0).
-            deltaM: Deviation from initial total mass (optional; defaults to 0.0).
-            chit1: Primary reduced dimensionless spin (optional; defaults to 0.0).
+            nu: Symmetric mass ratio.
+            chit1: Primary reduced dimensionless spin.
+            chit2: Secondary reduced dimensionless spin.
+            deltaM: Deviation from initial total mass.
             specific_modes: Indices of modes to be generated (optional; defaults to all modes).
         """
 

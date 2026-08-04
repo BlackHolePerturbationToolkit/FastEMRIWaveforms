@@ -66,8 +66,8 @@ def chit_to_chi(
     """
     Convert the individual rescaled spins tilde{chi}_i=S_i/(m_i M) back to the standard dimensionless spins chi_i=S_i/m_i^2.
     Args:
-        chit1: rescaled primary spin (m1/M)*chi1.
-        chit2: rescaled secondary spin (m2/M)*chi2.
+        chit1: reduced primary spin (m1/M)*chi1.
+        chit2: reduced secondary spin (m2/M)*chi2.
         nu: symmetric mass-ratio.
 
     Returns:
