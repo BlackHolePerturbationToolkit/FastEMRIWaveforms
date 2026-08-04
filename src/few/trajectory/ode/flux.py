@@ -755,6 +755,9 @@ class KerrEccEqFlux(ODEBase):
             a_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid a range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
             separatrix_buffer (float, optional): Buffer distance from the separatrix. Defaults to None, which uses the class's separatrix_buffer_dist_grid.
             max_e_buffer (float, optional): Buffer for the maximum e value. Defaults to 0.
+
+        Raises:
+            AssertionError: If p is outside the valid range given e, x, and a.  
         """
         self.isvalid_x(x)
         self.isvalid_e(e, e_buffer=e_buffer)

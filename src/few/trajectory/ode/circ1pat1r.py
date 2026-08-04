@@ -481,7 +481,10 @@ class TrajectoryCirc1PAT1R(ODEBase):
             p_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid p range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
             e_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid e range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
             separatrix_buffer (float, optional): Buffer distance to add to the minimum valid p. Defaults to None, which is treated as 0.0.
-            """
+            
+        Raises:
+            AssertionError: If p is outside the valid range given e, x, and a.    
+        """
        
         self.isvalid_x(x, **kwargs)
         self.isvalid_e(e, e_buffer=e_buffer, **kwargs)

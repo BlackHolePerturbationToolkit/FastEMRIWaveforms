@@ -23,37 +23,91 @@ from .base import ODEBase
 class PN5(ODEBase):
     @property
     def convert_Y(self):
+        """bool: Whether to convert Y to xI in the ODE evaluation."""
         return True
 
     @property
     def supports_ELQ(self):
+        """bool: Whether the ODE supports evolution of E, Lz, and Q."""
         return False
 
     @property
     def separatrix_buffer_dist(self):
+        """float: The buffer distance from the separatrix for valid p values."""
         return 0.1
 
     def max_p(self, e, x, a):
+        """
+        Returns the maximum valid value of p for given e, x, and a. For this ODE, there is no upper limit on p, so it returns infinity.
+
+        Args:
+            e (float): Eccentricity.
+            x (float): Cosine of the inclination angle.
+            a (float): Primary spin parameter.
+        """
         return float("inf")
 
     def min_p(self, e, x, a, separatrix_buffer=None):
+        """
+        Returns the minimum valid value of p for given e, x, and a, which is the separatrix value plus a buffer distance.
+
+        Args:
+            e (float): Eccentricity.
+            x (float): Cosine of the inclination angle.
+            a (float): Primary spin parameter.
+            separatrix_buffer (float, optional): The buffer distance from the separatrix. If not provided, it will be computed using self.separatrix_buffer_dist.
+
+        Returns:
+            float: The minimum valid value of p.
+        """
         if separatrix_buffer is None:
             separatrix_buffer = self.separatrix_buffer_dist
         return get_separatrix(a, e, x) + separatrix_buffer
 
     def isvalid_x(self, x, x_buffer=[0, 0]):
+        """
+        Raises a ValueError if x is outside the valid range of [-1 + x_buffer[0], 1 - x_buffer[1]].
+
+        Args:
+            x (float): Cosine of the inclination angle.
+            x_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid x range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+
+        Raises:
+            ValueError: If x is outside the valid range.
+        """
         xmin = -1 + x_buffer[0]
         xmax = 1 - x_buffer[1]
         if np.any(x < xmin) or np.any(x > xmax):
             raise ValueError(f"X out of bounds. Must be between {xmin} and {xmax}.")
 
     def isvalid_e(self, e, e_buffer=[0, 0]):
+        """
+        Raises a ValueError if e is outside the valid range of [0 + e_buffer[0], 1 - e_buffer[1]].
+
+        Args:
+            e (float): Eccentricity.
+            e_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid e range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+
+        Raises:
+            ValueError: If e is outside the valid range.
+        """
         emin = 0 + e_buffer[0]
         emax = 1 - e_buffer[1]
         if np.any(e < emin) or np.any(e > emax):
             raise ValueError(f"e out of bounds. Must be between {emin} and {emax}.")
 
     def isvalid_p(self, p, p_buffer=[0, 0], separatrix_buffer=None):
+        """
+        Raises a ValueError if p is less than the minimum valid value of p.
+
+        Args:
+            p (float): Semi-latus rectum.
+            p_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid p range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+            separatrix_buffer (float, optional): The buffer distance from the separatrix. If not provided, it will be computed using self.separatrix_buffer_dist. 
+
+        Raises:
+            ValueError: If p is less than the minimum valid value of p.
+        """
         if separatrix_buffer is None:
             separatrix_buffer = self.separatrix_buffer_dist
         pmin = 1 + separatrix_buffer + p_buffer[0]
@@ -61,15 +115,38 @@ class PN5(ODEBase):
             raise ValueError(f"p out of bounds. Must be greater than {pmin}.")
 
     def isvalid_a(self, a, a_buffer=[0, 0]):
+        """
+        Raises a ValueError if a is outside the valid range of [-1 + a_buffer[0], 1 - a_buffer[1]].
+
+        Args:
+            a (float): Primary spin parameter.
+            a_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid a range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).   
+
+        Raises:
+            ValueError: If a is outside the valid range.
+        """
         amin = -1 + a_buffer[0]
         amax = 1 - a_buffer[1]
         if np.any(a < amin) or np.any(a > amax):
             raise ValueError(f"a out of bounds. Must be between {amin} and {amax}.")
 
     def bounds_p(self, e, x=1, a=0, p_buffer=[0, 0], separatrix_buffer=None):
+        """
+        Returns the minimum and maximum valid values of p for given e, x, and a, taking into account the specified buffers.
+
+        Args:
+            e (float): Eccentricity.
+            x (float): Cosine of the inclination angle. Defaults to 1.
+            a (float): Primary spin parameter. Defaults to 0.
+            p_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid p range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+            separatrix_buffer (float, optional): The buffer distance from the separatrix. If not provided, it will be computed using self.separatrix_buffer_dist.
+        """
         return [self.min_p(e, x, a, separatrix_buffer=separatrix_buffer) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
 
     def max_e(self, p, x, a):
+        """
+        Returns the maximum valid value of e for given p, x, and a. For this ODE, there is no upper limit on e, so it returns 1.
+        """
         return 1
 
     def isvalid_pex(
@@ -85,6 +162,23 @@ class PN5(ODEBase):
         separatrix_buffer=None,
         **kwargs
     ):
+        """
+        Checks if the given values of p, e, x, and a are valid according to the specified buffers and raises an AssertionError if any of them are invalid.
+
+        Args:
+            p (float): Semi-latus rectum.
+            e (float): Eccentricity.
+            x (float): Cosine of the inclination angle.
+            a (float): Primary spin parameter.
+            p_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid p range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+            e_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid e range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+            x_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid x range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+            a_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid a range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+            separatrix_buffer (float, optional): The buffer distance from the separatrix. If not provided, it will be computed using self.separatrix_buffer_dist.
+
+        Raises:
+            AssertionError: If p is outside the valid range given e, x, and a.  
+        """
         self.isvalid_x(x, x_buffer=x_buffer)
         self.isvalid_e(e, e_buffer=e_buffer)
         self.isvalid_a(a, a_buffer=a_buffer)
@@ -96,6 +190,9 @@ class PN5(ODEBase):
     def evaluate_rhs(
         self, y: Union[list[float], np.ndarray]
     ) -> list[Union[float, np.ndarray]]:
+        """
+        Returns the right-hand side of the ODE system for the given state vector y, which contains the parameters (p, e, Y, Phi_phi, Phi_theta, Phi_r).
+        """
         p, e, Y = y[:3]
 
         if Y == 1:
