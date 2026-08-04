@@ -254,11 +254,6 @@ class EMRIInspiral(TrajectoryBase):
         e0 = y2
         x0 = y3
 
-        # The 1PAT1R model requires initial values for deltaM and deltaChit1, set them to zero.
-        if type(self.func).__name__ == 'TrajectoryCirc1PAT1R':
-            deltaChit10 = 0.0
-            deltaM0 = 0.0
-
         if temp_kwargs["integrate_backwards"]:
             self.func.isvalid_pex(p=p0, e=e0, x=x0, a=a, p_buffer = [-1e-6, 0], separatrix_buffer=self.separatrix_buffer_dist, max_e_buffer = 0.0)
         else:
@@ -299,8 +294,9 @@ class EMRIInspiral(TrajectoryBase):
         )
 
         # Add deltaM and deltaChit1 to the initial conditions for the 1PAT1R model
-        if type(self.func).__name__ == 'TrajectoryCirc1PAT1R':
-            y0 = np.append(y0, np.array([deltaM0, deltaChit10]))
+        if self.func.nparams > len(y0):
+            pad_len = self.func.nparams - len(y0)
+            y0 = np.pad(y0, (0, pad_len), mode='constant')
 
         # this will return in coordinate time
         out = self.inspiral_generator.run_inspiral(
@@ -327,12 +323,8 @@ class EMRIInspiral(TrajectoryBase):
             else:
                 out[:, 3] = pex[2]
 
-        if type(self.func).__name__ == 'TrajectoryCirc1PAT1R':
-            t, p, e, x, Phi_phi, Phi_theta, Phi_r, delta_M, delta_chit1 = out.T.copy()
-            return t, p, e, x, Phi_phi, Phi_theta, Phi_r, delta_M, delta_chit1
-        else:
-            t, p, e, x, Phi_phi, Phi_theta, Phi_r = out.T.copy()
-            return t, p, e, x, Phi_phi, Phi_theta, Phi_r
+        out_T = out.T.copy()
+        return out_T
 
     def get_rhs_ode(
         self,
@@ -413,12 +405,11 @@ class EMRIInspiral(TrajectoryBase):
                 x0 = Y_to_xI(a, p0, e0, x0)
             y1, y2, y3 = get_kerr_geo_constants_of_motion(a, p0, e0, x0)
 
-        if type(self.func).__name__ == 'TrajectoryCirc1PAT1R':
-            deltaChit10 = 0.0
-            deltaM0 = 0.0
-            y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0, deltaM0, deltaChit10])
-        else:
-            y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
+        y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
+
+        if self.func.nparams > len(y0):
+            pad_len = self.func.nparams - len(y0)
+            y0 = np.pad(y0, (0, pad_len), mode='constant')
 
         y0_and_args = np.concatenate(([y0], args))
         out = self.inspiral_generator.func(y0_and_args)
