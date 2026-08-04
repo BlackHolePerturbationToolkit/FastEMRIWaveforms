@@ -1,5 +1,6 @@
 from .base import AmplitudeBase
 from ..utils.baseclasses import KerrCirc, BackendLike, xp_ndarray, Union
+from ..utils.citations import REFERENCE
 from typing import Optional, List
 import h5py
 from ..summation.interpolatedmodesum import CubicSplineInterpolant

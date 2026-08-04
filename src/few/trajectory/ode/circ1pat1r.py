@@ -7,6 +7,7 @@ from typing import Union, Optional
 
 from ...utils.globals import get_file_manager, get_logger
 from ...utils.mappings.common import chi_to_chit, chit1_nu_to_chi1
+from ...utils.citations import REFERENCE
 from ...utils.geodesic import get_separatrix
 from .base import ODEBase
 
