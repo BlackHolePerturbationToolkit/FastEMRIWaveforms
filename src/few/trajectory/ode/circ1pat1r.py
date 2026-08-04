@@ -261,6 +261,12 @@ class TrajectoryCirc1PAT1R(ODEBase):
     
     
     def isvalid_x(self, x, **kwargs):
+        """
+        Raise ``ValueError`` if the cosine of the inclination angle is outside the valid range.
+
+        Args:
+            x (float): Cosine of the inclination angle.
+        """
         if np.any(x != 1):
             raise ValueError("Interpolation: x out of bounds. Must be 1.")
 
@@ -277,6 +283,11 @@ class TrajectoryCirc1PAT1R(ODEBase):
         corresponding to the precomputed grid boundaries.
 
         By default, this function assumes minimal eccentricity corresponds to circular orbits and returns 0.
+
+        Args:
+            p (float or np.ndarray): Semilatus rectum.
+            x (float or np.ndarray): Cosine of the inclination angle.
+            a (float or np.ndarray): Primary spin.
         """
         if isinstance(p, float):
             return 0
@@ -296,6 +307,11 @@ class TrajectoryCirc1PAT1R(ODEBase):
         corresponding to the precomputed grid boundaries.
 
         By default, this function assumes no orbital bounds on eccentricity and returns np.inf.
+
+        Args:
+            p (float or np.ndarray): Semilatus rectum.
+            x (float or np.ndarray): Cosine of the inclination angle.
+            a (float or np.ndarray): Primary spin.
         """
         if isinstance(p, float):
             return 0
@@ -304,6 +320,14 @@ class TrajectoryCirc1PAT1R(ODEBase):
     
     def isvalid_e(self, e, e_buffer=[0, 0],
         **kwargs):
+        """Raise ``ValueError`` if the eccentricity is outside the valid range.
+        
+        Args:
+            e (float): Eccentricity.
+
+        Raises:
+            ValueError: If ``e`` is outside ``[min_e, max_e]``
+        """
         if np.any(e != 0):
             raise ValueError("Interpolation: e out of bounds. Must be 0.")
     
@@ -367,7 +391,10 @@ class TrajectoryCirc1PAT1R(ODEBase):
         Args:
             e (float): Eccentricity (ignored since this model is circular).
             x (float): Cosine of the inclination angle (ignored since this model is equatorial
-            a (float): Primary spin"""
+            a (float): Primary spin
+            separatrix_buffer (float, optional): Buffer distance to add to the minimum valid p. Defaults to None, which is treated as 0.0.
+            
+        """
         if separatrix_buffer is None:
             separatrix_buffer = 0.0
         self.isvalid_e(e, **kwargs)
@@ -410,7 +437,9 @@ class TrajectoryCirc1PAT1R(ODEBase):
             e (float): Eccentricity (ignored since this model is circular).
             x (float): Cosine of the inclination angle (ignored since this model is equatorial).
             a (float): Primary spin.
-            p_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid p range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer)."""
+            p_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid p range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+            separatrix_buffer (float, optional): Buffer distance to add to the minimum valid p. Defaults to None, which is treated as 0.0.
+            """
 
         self._isvalidchi1(a, **kwargs)
         self.isvalid_e(e, **kwargs)
@@ -429,7 +458,9 @@ class TrajectoryCirc1PAT1R(ODEBase):
             p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
             e (float): Eccentricity (ignored since this model is circular).
             x (float): Cosine of the inclination angle (ignored since this model is equatorial).
-            a (float): Primary spin."""
+            a (float): Primary spin.
+            separatrix_buffer (float, optional): Buffer distance to add to the minimum valid p. Defaults to None, which is treated as 0.0.
+            """
         
         self._isvalidchi1(a, **kwargs)
         self.isvalid_e(e, **kwargs)
@@ -448,7 +479,9 @@ class TrajectoryCirc1PAT1R(ODEBase):
             x (float): Cosine of the inclination angle (ignored since this model is equatorial).
             a (float): Dimensionless primary spin.
             p_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid p range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
-            e_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid e range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer)."""
+            e_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid e range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+            separatrix_buffer (float, optional): Buffer distance to add to the minimum valid p. Defaults to None, which is treated as 0.0.
+            """
        
         self.isvalid_x(x, **kwargs)
         self.isvalid_e(e, e_buffer=e_buffer, **kwargs)
