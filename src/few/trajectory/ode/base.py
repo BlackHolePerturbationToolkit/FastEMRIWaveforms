@@ -9,9 +9,10 @@ import numpy as np
 from ...utils.geodesic import ELQ_to_pex, get_separatrix
 from ...utils.mappings.jacobian import ELdot_to_PEdot_Jacobian
 from ...utils.mappings.pn import Y_to_xI
+from ...utils.citations import Citable
 
 
-class ODEBase:
+class ODEBase(Citable):
     """
     A baseclass for handling the evaluation of ODE derivatives in the trajectory module.
 
