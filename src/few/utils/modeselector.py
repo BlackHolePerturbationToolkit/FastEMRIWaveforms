@@ -60,17 +60,16 @@ class ModeSelector(ParallelModuleBase):
             computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
             is a list of specific modes when the class is called. If True, this list of modes
             provided at call time must only contain :math:`m\geq 0`. Default is True.
-        mode_selection_threshold: Fractional accuracy of the total power used
-            to determine the contributing modes. Lowering this value will
-            calculate more modes. Increasing this value removes modes from
-            consideration and can have a considerable affect on the speed of
-            the waveform, albeit at the cost of some accuracy (usually an
-            acceptable loss). Default that gives good mismatch qualities is
-            1e-5.
+        mode_selection_threshold: Target mismatch of the generated waveform after discarding excess modes.
+            Lowering (raising) this value will increase (decrease) the number of modes included in the waveform,
+            significantly impacting generation wall-time. The mismatch is estimated (typically to a factor of a few)
+            by treating waveform modes as orthogonal and approximating their SNRs over each sparse trajectory segment 
+            as that of a monochromatic signal with the frequency of the mode (relevant when passing `sensitivity_fn`).
+            The default threshold value is 1e-5, which is typically conservative.
         sensitivity_fn: Sensitivity curve function that takes
             a frequency (Hz) array as input and returns the Power Spectral Density (PSD)
             of the sensitivity curve. Default is None. If this is not none, this
-            sennsitivity is used to weight the mode values when determining which
+            sennsitivity is used to weight the mode SNRs when determining which
             modes to keep. **Note**: if the sensitivity function is provided,
             and GPUs are used, then this function must accept CuPy arrays as input.
         modeinds_map: Map of mode indices to mode amplitude data.
