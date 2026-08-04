@@ -18,15 +18,15 @@ class ModeSelector(ParallelModuleBase):
 
     This module generates modes and their associated ylms given an input
     trajectory, then filters these modes according to either a list of requested modes or the
-    the power contribution from each mode. Mode filtering is performed to (roughly) achieve the
+    the contribution from each mode to the total waveform match. Mode filtering is performed to (roughly) achieve the
     requested mismatch with the minimum number of modes. If a sensitivity curve is provided, mode filtering
     is weighted according to this sensitivity curve. 
     
     The mode filtering tolerance is set by
-    the :code:`mode_selection_threshold` parameter, :math:`\kappa`, which is the fractional accuracy of the 
-    total power used to determine the contributing modes. The mode filtering is performed by 
-    computing the cumulative sum of the power contribution from each mode, and keeping only those modes that 
-    contribute to the total power within :math:`(1 - \kappa)^2` of the total power.
+    the :code:`mode_selection_threshold` parameter, :math:`\kappa`, which is the desired mismatch to be achieved
+    when selecting the most significant modes. Mode filtering is performed by estimating the signal-to-noise ratio
+    (SNR) of each mode and (assuming approximate mode orthogonality) determining the subset of modes required
+    to achieve a mismatch of :math:`\kappa`.
 
     The mode filtering is a major contributing factor to the speed of FEW
     waveforms, as it removes large numbers of modes from the final
@@ -303,13 +303,12 @@ class ModeSelector(ParallelModuleBase):
             include_minus_mkn: If True, then include :math:`(-m, -k, -n)` mode when
                 computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
                 is a list of specific modes. Default is True.
-            mode_selection_threshold: Fractional accuracy of the total power used
-            to determine the contributing modes. Lowering this value will
-            calculate more modes. Increasing this value removes modes from
-            consideration and can have a considerable affect on the speed of
-            the waveform, albeit at the cost of some accuracy (usually an
-            acceptable loss). Default that gives good mismatch qualities is
-            1e-5.
+            mode_selection_threshold: Target mismatch of the generated waveform after discarding excess modes.
+                Lowering (raising) this value will increase (decrease) the number of modes included in the waveform,
+                significantly impacting generation wall-time. The mismatch is estimated (typically to a factor of a few)
+                by treating waveform modes as orthogonal and approximating their SNRs over each sparse trajectory segment 
+                as that of a monochromatic signal with the frequency of the mode (relevant when passing `sensitivity_fn`).
+                The default threshold value is 1e-5, which is typically conservative.
             return_sort_inds: If True, also return the indices sorting the modes according
                 to their contribution. Only used when filtering in this mode. Default is False.
             
