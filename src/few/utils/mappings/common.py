@@ -60,17 +60,21 @@ def chi_to_chit(
     chit2 = chi2/2.*(1.-np.sqrt(1.-4.*nu))
     return chit1, chit2
 
-
-def chit1_nu_to_chi1(
-    chit1: Union[float, np.ndarray], nu: Union[float, np.ndarray]
+def chit_to_chi(
+    chit1: Union[float, np.ndarray], chit2: Union[float, np.ndarray], nu: Union[float, np.ndarray]
 ) -> tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
     """
-    Convert the individual dimensionless spin tilde{chi}_1=S_1/(m_1 M) to chi_1=S_1/m_1^2.
+    Convert the individual rescaled spins tilde{chi}_i=S_i/(m_i M) back to the standard dimensionless spins chi_i=S_i/m_i^2.
     Args:
-        chit1: (m1/M)*chi1.
+        chit1: rescaled primary spin (m1/M)*chi1.
+        chit2: rescaled secondary spin (m2/M)*chi2.
         nu: symmetric mass-ratio.
 
     Returns:
         chi1: dimensionless kerr parameter of the first body.
+        chi2: dimensionless kerr parameter of the second body.
     """
-    return (2.*chit1) / (1.+np.sqrt(1.- 4.*nu))
+
+    chi1 = 2.*chit1/(1.+np.sqrt(1.-4.*nu))
+    chi2 = 2.*chit2/(1.-np.sqrt(1.-4.*nu))
+    return chi1, chi2
