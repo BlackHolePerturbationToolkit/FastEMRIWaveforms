@@ -318,7 +318,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
         else:
             return np.zeros_like(p)
     
-    def isvalid_e(self, e, e_buffer=[0, 0],
+    def isvalid_e(self, e,
         **kwargs):
         """Raise ``ValueError`` if the eccentricity is outside the valid range.
         
