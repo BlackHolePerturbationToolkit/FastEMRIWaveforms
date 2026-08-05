@@ -340,8 +340,6 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
             )
 
             inner_part = (2 * b) ** 2 - 4 * (3 * a) * c
-            if self.xp.any(inner_part < -1e10):
-                breakpoint()
             inner_part[(inner_part < 0.0)] = 0.0
 
             roots_upper_1 = (-(2 * b) + self.xp.sqrt(inner_part)) / (2 * (3 * a))
