@@ -359,7 +359,7 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
 
             # should only be one root at maximum
             if self.xp.any(keep_root_1 & keep_root_2):
-                breakpoint()
+                raise ValueError("There should only be one 'kept root' at a maximum.")
 
             # sometimes (I think?) neither root is kept
             elif not self.xp.any(keep_root_1 | keep_root_2):
