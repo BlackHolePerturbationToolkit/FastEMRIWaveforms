@@ -1,6 +1,7 @@
 from .base import AmplitudeBase
 from ..utils.baseclasses import KerrCirc, BackendLike, xp_ndarray, Union
 from ..utils.citations import REFERENCE
+from ..utils.mappings.common import chi_to_chit
 from typing import Optional, List
 import h5py
 from ..summation.interpolatedmodesum import CubicSplineInterpolant
@@ -204,18 +205,18 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
         return scale * (combined + odd_m_correction)
 
     def get_amplitudes(
-        self, a, p, e, xI, nu, chit1, chit2, deltaM, specific_modes=None
+        self, a, p, e, xI, nu, chi2, deltachit1, deltaM, specific_modes=None
     ):
         """Generate the 1PA Teukolsky amplitudes.
 
         Args:
-            a: Primary spin (ignored)
+            a: Initial dimensionless primary spin [i.e. chi1(t=0)]
             p: Dimensionless semi-latus rectum.
             e: Eccentricity (must be zero).
             xI: Cosine of orbital inclination (must be 1.0).
             nu: Symmetric mass ratio.
-            chit1: Primary reduced dimensionless spin.
-            chit2: Secondary reduced dimensionless spin.
+            chi2: Secondary dimensionless spin.
+            deltachit1: Deviation from the initial primary reduced spin.
             deltaM: Deviation from initial total mass.
             specific_modes: Indices of modes to be generated (optional; defaults to all modes).
         """
@@ -225,6 +226,10 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
 
         if self.xp.any(self.xp.asarray(nu) < 0.0) or self.xp.any(self.xp.asarray(nu) > 0.25):
             raise ValueError(f"(AmplitudeCirc1PAT1R) nu={nu} is outside the physical range [0, 0.25].")
+
+        # Convert (nu, chi2, deltachit1) -> (chit1(t), chit2)
+        chit1_0, chit2 = chi_to_chit(a, chi2, nu)
+        chit1 = chit1_0 + deltachit1
 
         # select modes. TODO: right now, all modes are ALWAYS computed. Need a better 1-d spline setup.
         if specific_modes is None:

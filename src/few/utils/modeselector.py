@@ -554,7 +554,7 @@ def get_selected_modes_from_initial_conditions(
     # extract and pass additional args to the amplitude module via the mode selector
     from ..trajectory.ode.circ1pat1r import TrajectoryCirc1PAT1R
     if isinstance(traj_module.func, TrajectoryCirc1PAT1R):
-        add_amp_args = [traj_module.func.args['nu'], traj_module.func.args['chit1']+traj[8], traj_module.func.args['chit2'], traj[7]]
+        add_amp_args = [traj_module.func.args['nu'], traj_module.func.args['chi2'], traj[8], traj[7]] #[nu, chi2, deltachit1, deltaM]
     else:
         add_amp_args = []
 

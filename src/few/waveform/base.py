@@ -319,8 +319,8 @@ class SphericalHarmonicWaveformBase(
             if isinstance(self.inspiral_generator.func, TrajectoryCirc1PAT1R):
                 deltaM, delta_chit1 = add_inspiral_args
                 nu = self.inspiral_generator.func.args['nu']
-                chit1 = delta_chit1 + self.inspiral_generator.func.args['chit1']
-                chit2 = self.inspiral_generator.func.args['chit2']
+                chi2 = self.inspiral_generator.func.args['chi2']
+                add_amp_args = [nu, chi2, delta_chit1, deltaM]
                 (
                     teuk_modes_in,
                     ylms_in,
@@ -336,7 +336,7 @@ class SphericalHarmonicWaveformBase(
                     xI_temp,
                     theta,
                     phi,
-                    nu, chit1, chit2, deltaM,
+                    *add_amp_args,
                     online_mode_selection_args=online_mode_selection_args,
                     mode_selection=mode_selection,
                     include_minus_mkn=include_minus_mkn,
