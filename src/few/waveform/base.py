@@ -376,21 +376,17 @@ class SphericalHarmonicWaveformBase(
                     self.inspiral_generator.integrator_spline_phase_coeff
                 )
 
-                # flip azimuthal phase for retrograde inspirals
-                if a > 0:
-                    phase_information_in[:, 0] *= self.xp.sign(xI0)
-
                 phase_t_in = self.inspiral_generator.integrator_spline_t
             else:
                 phase_information_in = self.xp.asarray(
                     [Phi_phi_temp, Phi_theta_temp, Phi_r_temp]
                 )
 
-                # flip azimuthal phase for retrograde inspirals
-                if a > 0:
-                    phase_information_in[0] *= self.xp.sign(xI0)
-
                 phase_t_in = None
+
+            # flip azimuthal phase for retrograde inspirals
+            if a > 0:
+                phase_information_in[0] *= self.xp.sign(xI0)
 
             # create waveform
             waveform_temp = self.create_waveform(
