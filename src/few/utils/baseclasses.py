@@ -538,9 +538,12 @@ class KerrCirc(SphericalHarmonic):
     """
     Kerr circular base class.
 
+    As the model is circular, the polar and radial mode indices are fixed
+    to :math:`k = n = 0`.
+
     Args:
         lmax: Maximum l value for the model. Default is 5.
-        nmax: Maximum n value for the model. Default is 0.
+        force_backend: Backend to use. Default is None (auto-select).
     """
 
     background: str = "Kerr"
@@ -555,22 +558,15 @@ class KerrCirc(SphericalHarmonic):
     needs_Y: bool = False
     """If True, model expects inclination parameter Y (rather than xI)."""
 
-    ndim: int
-    """Number of phases in the model."""
-
     def __init__(
         self,
         /,
         lmax: int = 5,
-        nmax: int = 0,
-        ndim: int = 1,
         force_backend: BackendLike = None,
     ):
         SphericalHarmonic.__init__(
-            self, lmax=lmax, nmax=nmax, force_backend=force_backend
+            self, lmax=lmax, kmax=0, nmax=0, force_backend=force_backend
         )
-
-        self.ndim = ndim
 
     @classmethod
     def supported_backends(cls):

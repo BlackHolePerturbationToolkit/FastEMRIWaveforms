@@ -1070,7 +1070,7 @@ class Circ1PAT1R(SphericalHarmonicWaveformBase, KerrCirc):
 
         KerrCirc.__init__(
             self,
-            **{k: v for k, v in kwargs.items() if k in ["lmax", "nmax", "ndim"]},
+            **{k: v for k, v in kwargs.items() if k in ["lmax"]},
             force_backend=force_backend,
         )
         SphericalHarmonicWaveformBase.__init__(
