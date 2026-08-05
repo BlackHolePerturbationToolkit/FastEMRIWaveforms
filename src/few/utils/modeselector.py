@@ -537,6 +537,7 @@ def get_selected_modes_from_initial_conditions(
         mode_selector_kwargs = {}
 
     traj = traj_module(m1, m2, a, p0, e0, xI0, *traj_args, **traj_kwargs)
+
     freqs = traj_module.inspiral_generator.eval_integrator_derivative_spline(traj[0], order=1)[:,3:6] / 2 / np.pi
 
     online_mode_selection_args = dict(
@@ -555,15 +556,13 @@ def get_selected_modes_from_initial_conditions(
 
     if mode_selector_kwargs.get("return_sort_inds", False):
         teuk_modes_out, ylms_out, ls, ms, ks, ns, inds_sort = mode_selector_module(
-                traj[0], a, traj[1], traj[2], traj[3], theta, phi, *add_amp_args, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
-            )
+            traj[0], a, traj[1], traj[2], traj[3], theta, phi, *add_amp_args, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
+        )
     else:
         teuk_modes_out, ylms_out, ls, ms, ks, ns = mode_selector_module(
-                traj[0], a, traj[1], traj[2], traj[3], theta, phi, *add_amp_args, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
-            )
-  
+            traj[0], a, traj[1], traj[2], traj[3], theta, phi, *add_amp_args, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
+        )    
         inds_sort = None
-
 
     return_dict = dict(
         teuk_modes = teuk_modes_out,
