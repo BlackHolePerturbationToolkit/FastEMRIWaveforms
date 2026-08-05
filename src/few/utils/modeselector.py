@@ -537,7 +537,6 @@ def get_selected_modes_from_initial_conditions(
         mode_selector_kwargs = {}
 
     traj = traj_module(m1, m2, a, p0, e0, xI0, *traj_args, **traj_kwargs)
-    print(len(traj))
     freqs = traj_module.inspiral_generator.eval_integrator_derivative_spline(traj[0], order=1)[:,3:6] / 2 / np.pi
 
     online_mode_selection_args = dict(
