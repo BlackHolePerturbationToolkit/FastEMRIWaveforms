@@ -451,7 +451,7 @@ class FastKerrEccentricEquatorialFlux(
             **{
                 key: value
                 for key, value in kwargs.items()
-                if key in ["lmax", "nmax", "ndim"]
+                if key in ["lmax", "nmax"]
             },
             force_backend=force_backend,
         )
@@ -590,7 +590,7 @@ class FastSchwarzschildEccentricFlux(
 
         SchwarzschildEccentric.__init__(
             self,
-            **{k: v for k, v in kwargs.items() if k in ["lmax", "ndim"]},
+            **{k: v for k, v in kwargs.items() if k in ["lmax"]},
             nmax=kwargs["nmax"] if "nmax" in kwargs else 30,
             force_backend=force_backend,
         )
@@ -726,7 +726,7 @@ class FastSchwarzschildEccentricFluxBicubic(
 
         SchwarzschildEccentric.__init__(
             self,
-            **{k: v for k, v in kwargs.items() if k in ["lmax", "ndim", "nmax"]},
+            **{k: v for k, v in kwargs.items() if k in ["lmax", "nmax"]},
             force_backend=force_backend,
         )
         SphericalHarmonicWaveformBase.__init__(
@@ -865,10 +865,10 @@ class SlowSchwarzschildEccentricFlux(
 
         SchwarzschildEccentric.__init__(
             self,
-            **{k: v for k, v in kwargs.items() if k in ["lmax", "ndim", "nmax"]},
+            **{k: v for k, v in kwargs.items() if k in ["lmax", "nmax"]},
             force_backend=force_backend,
         )
-    
+
         if "mode_selection" in mode_selector_kwargs.keys():
             if mode_selector_kwargs["mode_selection"] != "all":
                 raise ValueError("Mode selection must be 'all' for slow waveform.")
