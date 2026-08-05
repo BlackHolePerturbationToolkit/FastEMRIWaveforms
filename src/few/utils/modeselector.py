@@ -531,7 +531,7 @@ def get_selected_modes_from_initial_conditions(
         traj_kwargs: Additional keyword arguments to pass to the trajectory module.
         mode_selector_kwargs: Additional keyword arguments to pass to the mode selector module.
     returns:
-        dict: A dict containing the selected teuk_modes, ylms, their indices (ls, ms, ks, ns), the trajectory `traj` and the `online_mode_selection_args`.
+        dict: A dict containing the selected modes, ylms, their indices (ls, ms, ks, ns), the trajectory `traj` and the `online_mode_selection_args`.
     """
     if traj_args is None:
         traj_args = []
@@ -569,7 +569,7 @@ def get_selected_modes_from_initial_conditions(
         inds_sort = None
 
     return_dict = dict(
-        teuk_modes = teuk_modes_out,
+        modes = teuk_modes_out,
         ylms = ylms_out,
         ls = ls,
         ms = ms,
