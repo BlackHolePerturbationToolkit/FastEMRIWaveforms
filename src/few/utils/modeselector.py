@@ -17,12 +17,12 @@ class ModeSelector(ParallelModuleBase):
     r"""Filter mode amplitudes based on power contribution.
 
     This module generates modes and their associated ylms given an input
-    trajectory, then filters these modes according to either a list of requested modes or the
-    the contribution from each mode to the total waveform match. Mode filtering is performed to (roughly) achieve the
+    trajectory, then further filters the ylm-weighted modes.
+    The module can produce all available modes in the model, a list of requested modes, or it will filter 
+    and select enough modes so that the resulting waveform matches a waveform that uses all of the modes in the model
+    up to a user-defined mismatch threshold. This adaptive mode filtering aims to (roughly) achieve the
     requested mismatch with the minimum number of modes. If a sensitivity curve is provided, mode filtering
-    is weighted according to this sensitivity curve. 
-    
-    The mode filtering tolerance is set by
+    is weighted according to this sensitivity curve. The adaptive mode filtering tolerance is set by
     the :code:`mode_selection_threshold` parameter, :math:`\kappa`, which is the desired mismatch to be achieved
     when selecting the most significant modes. Mode filtering is performed by estimating the signal-to-noise ratio
     (SNR) of each mode and (assuming approximate mode orthogonality) determining the subset of modes required
