@@ -549,30 +549,21 @@ def get_selected_modes_from_initial_conditions(
     # extract and pass additional args to the amplitude module via the mode selector
     from ..trajectory.ode.circ1pat1r import TrajectoryCirc1PAT1R
     if isinstance(traj_module.func, TrajectoryCirc1PAT1R):
-        is_1PAT1R = True
         add_amp_args = [traj_module.func.args['nu'], traj_module.func.args['chit1']+traj[8], traj_module.func.args['chit2'], traj[7]]
     else:
-        is_1PAT1R = False
+        add_amp_args = []
 
     if mode_selector_kwargs.get("return_sort_inds", False):
-        if is_1PAT1R:
-            teuk_modes_out, ylms_out, ls, ms, ks, ns, inds_sort = mode_selector_module(
+        teuk_modes_out, ylms_out, ls, ms, ks, ns, inds_sort = mode_selector_module(
                 traj[0], a, traj[1], traj[2], traj[3], theta, phi, *add_amp_args, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
-            )
-        else:
-            teuk_modes_out, ylms_out, ls, ms, ks, ns, inds_sort = mode_selector_module(
-                traj[0], a, traj[1], traj[2], traj[3], theta, phi, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
             )
     else:
-        if is_1PAT1R:
-            teuk_modes_out, ylms_out, ls, ms, ks, ns = mode_selector_module(
+        teuk_modes_out, ylms_out, ls, ms, ks, ns = mode_selector_module(
                 traj[0], a, traj[1], traj[2], traj[3], theta, phi, *add_amp_args, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
             )
-        else:
-            teuk_modes_out, ylms_out, ls, ms, ks, ns = mode_selector_module(
-                traj[0], a, traj[1], traj[2], traj[3], theta, phi, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
-            )    
+  
         inds_sort = None
+
 
     return_dict = dict(
         teuk_modes = teuk_modes_out,
