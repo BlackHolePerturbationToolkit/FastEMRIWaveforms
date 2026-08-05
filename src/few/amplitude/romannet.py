@@ -202,8 +202,7 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
                 the eccentricity.
             *args (tuple, placeholder): Added to create flexibility when calling different
                 amplitude modules. It is not used.
-            specific_modes (list, optional): List of tuples for (l, m, n) values
-                desired modes. Default is None.
+            specific_modes (ndarray, optional): Indices of modes to be generated. Default is None, which returns all modes.
             renormalize_amps (bool, optional): If True, the amplitudes are
                 renormalized with respect to the flux interpolated by a
                 bicubic spline. This should slightly improve the accuracy
@@ -315,6 +314,11 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
             teuk_modes = teuk_modes * factor[:, None]
 
         if specific_modes is not None:
-            return teuk_modes[:, specific_modes]
+            if isinstance(specific_modes, self.xp.ndarray):
+                return teuk_modes[:, specific_modes]
+            else:
+                raise TypeError(
+                    f"Expected specific_modes to be an array, got {type(specific_modes)}"
+                )
         else:
             return teuk_modes
