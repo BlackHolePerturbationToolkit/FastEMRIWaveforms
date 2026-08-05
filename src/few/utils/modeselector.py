@@ -280,6 +280,7 @@ class ModeSelector(ParallelModuleBase):
             xI: Initial cosine(inclination) for the trajectory.
             theta: Polar source-frame viewing angle.
             phi: Azimuthal source-frame viewing angle.
+            args: additional positional arguments to pass to amplitude generator
             online_mode_selection_args: Dictionary of arguments necessary to
                 determine the mode frequencies along the trajectory. This should
                 contain the keys 'f_phi', 'f_theta', and 'f_r', which are
@@ -536,7 +537,7 @@ def get_selected_modes_from_initial_conditions(
         mode_selector_kwargs = {}
 
     traj = traj_module(m1, m2, a, p0, e0, xI0, *traj_args, **traj_kwargs)
-
+    print(len(traj))
     freqs = traj_module.inspiral_generator.eval_integrator_derivative_spline(traj[0], order=1)[:,3:6] / 2 / np.pi
 
     online_mode_selection_args = dict(
@@ -545,14 +546,33 @@ def get_selected_modes_from_initial_conditions(
         f_r = freqs[:,2],
     )
 
-    if mode_selector_kwargs.get("return_sort_inds", False):
-        teuk_modes_out, ylms_out, ls, ms, ks, ns, inds_sort = mode_selector_module(
-            traj[0], a, traj[1], traj[2], traj[3], theta, phi, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
-        )
+    # Check whether amplitude module is 1PAT1R, in which case we will have to 
+    # extract and pass additional args to the amplitude module via the mode selector
+    from ..trajectory.ode.circ1pat1r import TrajectoryCirc1PAT1R
+    if isinstance(traj_module.func, TrajectoryCirc1PAT1R):
+        is_1PAT1R = True
+        add_amp_args = [traj_module.func.args['nu'], traj_module.func.args['chit1']+traj[8], traj_module.func.args['chit2'], traj[7]]
     else:
-        teuk_modes_out, ylms_out, ls, ms, ks, ns = mode_selector_module(
-            traj[0], a, traj[1], traj[2], traj[3], theta, phi, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
-        )    
+        is_1PAT1R = False
+
+    if mode_selector_kwargs.get("return_sort_inds", False):
+        if is_1PAT1R:
+            teuk_modes_out, ylms_out, ls, ms, ks, ns, inds_sort = mode_selector_module(
+                traj[0], a, traj[1], traj[2], traj[3], theta, phi, *add_amp_args, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
+            )
+        else:
+            teuk_modes_out, ylms_out, ls, ms, ks, ns, inds_sort = mode_selector_module(
+                traj[0], a, traj[1], traj[2], traj[3], theta, phi, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
+            )
+    else:
+        if is_1PAT1R:
+            teuk_modes_out, ylms_out, ls, ms, ks, ns = mode_selector_module(
+                traj[0], a, traj[1], traj[2], traj[3], theta, phi, *add_amp_args, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
+            )
+        else:
+            teuk_modes_out, ylms_out, ls, ms, ks, ns = mode_selector_module(
+                traj[0], a, traj[1], traj[2], traj[3], theta, phi, online_mode_selection_args=online_mode_selection_args, **mode_selector_kwargs
+            )    
         inds_sort = None
 
     return_dict = dict(
