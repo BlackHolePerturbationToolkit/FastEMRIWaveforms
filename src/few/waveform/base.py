@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Generic, Optional, TypeVar, Union
 
 import numpy as np
@@ -89,7 +90,9 @@ class SphericalHarmonicWaveformBase(
     ):
         ParallelModuleBase.__init__(self, force_backend=force_backend)
 
-        self.inspiral_kwargs = {} if inspiral_kwargs is None else inspiral_kwargs.copy()
+        self.inspiral_kwargs = (
+            {} if inspiral_kwargs is None else deepcopy(inspiral_kwargs)
+        )
         self.inspiral_generator = inspiral_module(
             **self.inspiral_kwargs
         )  # The inspiral generator does not rely on backend adjustement
