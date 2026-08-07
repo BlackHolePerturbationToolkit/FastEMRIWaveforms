@@ -154,7 +154,7 @@ class TrajectoryBase(Citable, abc.ABC):
             t = t / Msec
 
         if not upsample:
-            return np.concatenate(([t], params))
+            return (t,) + params
         else:
             if DENSE_STEPPING:
                 raise NotImplementedError  # TODO: support cubic spline for dense
@@ -174,6 +174,6 @@ class TrajectoryBase(Citable, abc.ABC):
                 trunc_ind = np.where(upsamp_traj[1] == 0)[0][0]
                 upsamp_traj = upsamp_traj[:, :trunc_ind]
                 new_t = new_t[:trunc_ind]
-        out = upsamp_traj
+        out = tuple(upsamp_traj)
 
-        return np.concatenate(([new_t], out))
+        return (new_t,) + out

@@ -324,7 +324,7 @@ class EMRIInspiral(TrajectoryBase):
                 out[:, 3] = pex[2]
 
         out_T = out.T.copy()
-        return out_T
+        return tuple(out_T)
 
     def get_rhs_ode(
         self,
