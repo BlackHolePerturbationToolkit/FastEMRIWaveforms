@@ -49,10 +49,12 @@ The list of available backends is:
 
 - `cpu`: Use the CPU itself for accelerated computations
 - `cuda12x`: Use a NVIDIA GPU with CUDA 12.x drivers
+- `cuda13x`: Use a NVIDIA GPU with CUDA 13.x drivers
 
 By default, all these backends can be used provided they are installed and have required software and hardware available.
 A class that supports only CPU will only attempt to use he `cpu` backend, whilst a class with hybrid GPU/CPU support will
-(usually) first attempt to use the `cuda12x` backend, in case of failure it will fallback to the `cpu` one.
+(usually) first attempt to use a CUDA backend (`cuda13x`, then `cuda12x`), in case of failure it will fallback to
+the `cpu` one.
 
 When setting the `enabled_backends` option, all items present in that list will be loaded (and FEW will fail initializing
 if any in not loadable) while other items will be strictly disabled.
@@ -60,7 +62,7 @@ if any in not loadable) while other items will be strictly disabled.
 Example:
 
 - On a computer with only a CPU, setting `enabled_backends = ['cpu']` will speed-up FEW loading process by disabling
-  the `cuda12x` backend and not even try loading it
+  the `cuda12x` and `cuda13x` backends and not even try loading them
 - On a computer with a NVIDIA GPU and CUDA 12.x drivers, setting `enabled_backends = ['cuda12x', 'cpu']` ensures that
   the CUDA 12.x backend will be loaded and that CPU only classes are still supported. If for any reason, the CUDA 12.x backend
   cannot be loaded, FEW will fail to run (and the message error should explain the failure and suggest mitigation strategies).
@@ -129,7 +131,7 @@ General configuration options:
 |---|---|---|---|---|---|
 | `log_level` | `log-level` | `FEW_LOG_LEVEL` | `--log-level` | `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |  |
 | `log_format` | `log-format` | `FEW_LOG_FORMAT` | `--log-format` | Any format string supported by [`logging.Formatter`](https://docs.python.org/3/library/logging.html#logging.Formatter) |  |
-| `enabled_backends` | `enabled-backends` | `FEW_ENABLED_BACKENDS` | `--enable-backend` | `cpu`, `cuda12x` | ";"-separated list of values. The CLI parameter can be used multiple time for each enabled backend. |
+| `enabled_backends` | `enabled-backends` | `FEW_ENABLED_BACKENDS` | `--enable-backend` | `cpu`, `cuda12x`, `cuda13x` | ";"-separated list of values. The CLI parameter can be used multiple time for each enabled backend. |
 | `file_registry_path` | `file-registry` | `FEW_FILE_REGISTRY` | `--file-registry` | Path to a `registry.yml` file |  |
 | `file_storage_path` | `file-storage-dir` | `FEW_FILE_STORAGE_DIR` | `--storage-dir` | Absolute path, or relative to current working directory | Directory must already exist |
 | `file_download_path` | `file-download-dir` | `FEW_FILE_DOWNLOAD_DIR` | `--download-dir` | Absolute path, or relative to the storage directory |  |

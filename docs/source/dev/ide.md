@@ -2,7 +2,7 @@
 
 Developing on FEW requires the following:
 
-- A Python 3.9+ interpreter (ideally in a dedicated virtualenv, or conda environment)
+- A Python 3.12+ interpreter (ideally in a dedicated virtualenv, or conda environment)
 - A C++ compiler to build the CPU backend
 - An IDE you are comfortable with
 
@@ -91,14 +91,11 @@ Note that this mode requires to pre-install all of the project build dependencie
 # 1. First, install the project build dependencies
 (few-venv) FastEMRIWaveforms$ pip install cython numpy scikit-build-core ninja cmake setuptools_scm
 
-# 2. Also, make sure that LAPACK(E) is properly installed on your system, for example on Ubuntu 24.04:
-(few-venv) FastEMRIWaveforms$ sudo apt-get install liblapacke-dev
-
-# 3. Install the project in rebuild editable mode
+# 2. Install the project in rebuild editable mode
 # Make the install verbose since this mode is more likely to fail since it is still experimental
 # Note that the building steps will be performed in ./build/editable
 #  Do not delete that directory, it is used by the build system
-(few-venv) FastEMRIWaveforms$ pip install --no-build-isolation -Ceditable.mode=redirect -Ceditable.rebuild=true  -Cbuild-dir=./build/editable -Ccmake.verbose=true -Clogging.level=INFO -Ccmake.define.FEW_LAPACKE_FETCH=OFF -v -e '.[testing, doc]'
+(few-venv) FastEMRIWaveforms$ pip install --no-build-isolation -Ceditable.mode=redirect -Ceditable.rebuild=true  -Cbuild-dir=./build/editable -Ccmake.verbose=true -Clogging.level=INFO -v -e '.[testing, doc]'
 ...
   *** Making editable...
   *** Created fastemriwaveforms-1.6.3.post1.dev47+g5a3a237.d20250217-cp312-cp312-linux_aarch64.whl
@@ -190,7 +187,7 @@ Follow the [devcontainer installation steps](https://code.visualstudio.com/docs/
 You can then use the VSCode action `Clone Repository in Container` to clone the repository in a devcontainer
 or you can simply [click here](vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https%3A%2F%2Fgithub.com%2FBlackHolePerturbationToolkit%2FFastEMRIWaveforms.git).
 
-The *FastEMRIWaveforms* devcontainer is configured to use an Ubuntu 24.04 image with GNU compilers 14, system LAPACKE library, pre-configured pre-commit and a pre-loaded virtualenv based on Python 3.12.
+The *FastEMRIWaveforms* devcontainer is configured to use an Ubuntu 24.04 image with GNU compilers 14, pre-configured pre-commit and a pre-loaded virtualenv based on Python 3.12.
 
 To test the compilation of CUDA backends, you can also install the CUDA Toolkit within the devcontainer by
 running the following command:

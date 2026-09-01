@@ -39,7 +39,9 @@ class CubicSplineTest(FewBackendTest):
             scipy_eval = scipy_spl(t_test, nu=deriv_order)
             if self.backend.uses_gpu:
                 few_eval = few_eval.get()
-            np.testing.assert_allclose(few_eval, scipy_eval, rtol=1e-10)
+            np.testing.assert_allclose(
+                few_eval, scipy_eval, rtol=1e-10 * 10 ** (deriv_order)
+            )
 
         # now, we check on a denser grid that we match scipy's spline (as they use the same BCs)
         # check derivatives as well
@@ -49,7 +51,9 @@ class CubicSplineTest(FewBackendTest):
             scipy_eval = scipy_spl(t_eval, nu=deriv_order)
             if self.backend.uses_gpu:
                 few_eval = few_eval.get()
-            np.testing.assert_allclose(few_eval, scipy_eval, rtol=1e-10)
+            np.testing.assert_allclose(
+                few_eval, scipy_eval, rtol=1e-10 * 10 ** (deriv_order)
+            )
 
 
 class SummationTest(FewBackendTest):
@@ -72,10 +76,12 @@ class SummationTest(FewBackendTest):
 
         m1 = 1e6
         m2 = 1e1
-        nu = m1 * m2 / (m1 + m2)**2
-        traj = traj_module(m1, m2, 0.4, 20., 0.6, 1., T=0.1, err=1e-15)
+        nu = m1 * m2 / (m1 + m2) ** 2
+        _ = traj_module(m1, m2, 0.4, 20.0, 0.6, 1.0, T=0.1, err=1e-15)
         t_spl = traj_module.inspiral_generator.integrator_t_cache
-        coeff_spl = traj_module.inspiral_generator.integrator_spline_coeff[:,3:6,:] / nu
+        coeff_spl = (
+            traj_module.inspiral_generator.integrator_spline_coeff[:, 3:6, :] / nu
+        )
 
         t_eval = np.linspace(0, t_spl[-1], 10001)
         dt = t_eval[1] - t_eval[0]

@@ -14,7 +14,7 @@ from typing import Optional, Sequence, TypeVar, Union
 import numpy as np
 
 # Python imports
-from ..cutils import Backend
+from ..cutils import CUDA_BACKENDS, Backend
 from ..utils.citations import REFERENCE, Citable
 from ..utils.globals import get_backend, get_first_backend, get_logger
 from ..utils.mappings.kerrecceq import kerrecceq_forward_map
@@ -67,17 +67,17 @@ class ParallelModuleBase(Citable):
     @staticmethod
     def GPU_RECOMMENDED() -> list[str]:
         """List of supported backends for GPU-recommended class with CPU support"""
-        return ["cuda12x", "cpu"]
+        return [*CUDA_BACKENDS, "cpu"]
 
     @staticmethod
     def CPU_RECOMMENDED_WITH_GPU_SUPPORT() -> list[str]:
         """List of supported backends for CPU-recommended class with GPU support"""
-        return ["cpu", "cuda12x"]
+        return ["cpu", *CUDA_BACKENDS]
 
     @staticmethod
     def GPU_ONLY() -> list[str]:
         """List of supported backends for GPU-only class"""
-        return ["cuda12x"]
+        return [*CUDA_BACKENDS]
 
     @property
     def xp(self) -> types.ModuleType:
@@ -198,7 +198,11 @@ class SphericalHarmonic(ParallelModuleBase):
     """Array mapping mode tuple to mode index with m > 0 - used for fast indexing. Returns -1 if mode does not exist."""
 
     def __init__(
-        self, lmax: int = 10, kmax: int = 0, nmax: int = 0, force_backend: BackendLike = None
+        self,
+        lmax: int = 10,
+        kmax: int = 0,
+        nmax: int = 0,
+        force_backend: BackendLike = None,
     ):
         ParallelModuleBase.__init__(self, force_backend=force_backend)
 
@@ -302,19 +306,31 @@ class SphericalHarmonic(ParallelModuleBase):
         self.special_index_map = {}  # maps the minus m values to positive m
         self.index_map_arr = (
             self.xp.zeros(
-                (self.lmax + 1, self.lmax * 2 + 1, self.kmax * 2 + 1, self.nmax * 2 + 1),
+                (
+                    self.lmax + 1,
+                    self.lmax * 2 + 1,
+                    self.kmax * 2 + 1,
+                    self.nmax * 2 + 1,
+                ),
                 dtype=self.xp.int32,
             )
             - 1
         )
         self.special_index_map_arr = (
             self.xp.zeros(
-                (self.lmax + 1, self.lmax * 2 + 1, self.kmax * 2 + 1, self.nmax * 2 + 1),
+                (
+                    self.lmax + 1,
+                    self.lmax * 2 + 1,
+                    self.kmax * 2 + 1,
+                    self.nmax * 2 + 1,
+                ),
                 dtype=self.xp.int32,
             )
             - 1
         )
-        for i, (l, m, k, n) in enumerate(zip(self.l_arr, self.m_arr, self.k_arr, self.n_arr)):
+        for i, (l, m, k, n) in enumerate(
+            zip(self.l_arr, self.m_arr, self.k_arr, self.n_arr)
+        ):
             try:
                 l = l.item()
                 m = m.item()
@@ -347,7 +363,12 @@ class SphericalHarmonic(ParallelModuleBase):
             0, self.num_teuk_modes - 1, self.num_teuk_modes, dtype=int
         )
         for i, (l, m, k, n) in enumerate(
-            zip(self.l_arr_no_mask, self.m_arr_no_mask, self.k_arr_no_mask, self.n_arr_no_mask)
+            zip(
+                self.l_arr_no_mask,
+                self.m_arr_no_mask,
+                self.k_arr_no_mask,
+                self.n_arr_no_mask,
+            )
         ):
             self.negative_mode_indexes[i] = self.special_index_map[
                 (l.item(), -m.item(), k.item(), n.item())
@@ -623,6 +644,7 @@ class KerrEccentricEquatorial(SphericalHarmonic):
 
         return a, xI
 
+
 class KerrGeneric(SphericalHarmonic):
     """
     Kerr generic base class example.
@@ -707,9 +729,7 @@ class KerrGeneric(SphericalHarmonic):
             xI = -xI
 
         if a != 0.7:
-            raise ValueError(
-                "Model currently only supports spin 0.7"
-            )
+            raise ValueError("Model currently only supports spin 0.7")
 
         if abs(xI) > 1.0:
             raise ValueError("xI must be between 1 or -1.")
