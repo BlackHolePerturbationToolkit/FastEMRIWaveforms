@@ -523,6 +523,14 @@ class Integrate(ABC):
         """
         t_old = self.integrator_t_cache
 
+        # The trajectory spline is always evaluated on the CPU (dopr853 is numpy-only),
+        # so bring a GPU-backend t_new onto the CPU and send the result back afterwards.
+        try:
+            t_new = t_new.get()
+            on_gpu = True
+        except AttributeError:
+            on_gpu = False
+
         result = np.zeros((t_new.size, 6))
         t_in_mask = (t_new >= 0.0) & (t_new <= t_old.max())
 
@@ -536,6 +544,12 @@ class Integrate(ABC):
         # backwards integration requires an additional adjustment to match forwards phase conventions
         if self.integrate_backwards and not self.generating_trajectory:
             result[:, 3:6] += self.trajectory[0, 4:7] + self.trajectory[-1, 4:7]
+
+        if on_gpu:
+            import cupy as xp
+
+            result = xp.asarray(result)
+
         return result
 
     def eval_integrator_derivative_spline(self, t_new: np.ndarray, order: int = 1):
@@ -550,12 +564,26 @@ class Integrate(ABC):
 
         """
         t_old = self.integrator_t_cache
+
+        # The trajectory spline is always evaluated on the CPU (dopr853 is numpy-only),
+        # so bring a GPU-backend t_new onto the CPU and send the result back afterwards.
+        try:
+            t_new = t_new.get()
+            on_gpu = True
+        except AttributeError:
+            on_gpu = False
+
         result = self.dopr.eval_derivative(
             t_new, t_old, self.integrator_spline_coeff, order=order
         )
 
         if not self.generating_trajectory:
             result[:, 3:6] /= self.massratio
+
+        if on_gpu:
+            import cupy as xp
+
+            result = xp.asarray(result)
 
         return result
 

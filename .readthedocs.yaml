@@ -6,8 +6,6 @@ build:
   apt_packages:
     - pandoc
     - g++14
-    - pkg-config
-    - liblapacke-dev
   jobs:
     post_checkout:
       - git fetch --tags

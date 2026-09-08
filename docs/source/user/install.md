@@ -70,7 +70,7 @@ backend with
 ```sh
 pip install fastemriwaveforms-cuda12x  # For CUDA 12.x support
 # or
-pip install fastemriwaveforms-cuda11x  # For CUDA 11.x support
+pip install fastemriwaveforms-cuda13x  # For CUDA 13.x support
 ```
 
 :::{attention}
@@ -126,11 +126,11 @@ To install FEW from source in any environment, follow these steps:
   - If you use `conda`, create a new environment named `few_env` with the required
     compilers and libraries:
     ```sh
-    conda create -n few_env python=3.12 cxx-compiler pkgconfig conda-forge/label/lapack_rc::liblapacke
+    conda create -n few_env python=3.12 cxx-compiler
     conda activate few_env
     ```
-  - If you prefer `virtualenv`, create a virtual environment, your environment will
-    need a C++ compiler, and either a Fortran compiler or `liblapacke` library:
+  - If you prefer `virtualenv`, create a virtual environment; your environment will
+    need a C++ compiler:
     ```sh
     python3 -m venv few_env
     source few_env/bin/activate
@@ -146,6 +146,8 @@ To install FEW from source in any environment, follow these steps:
     ```sh
     pip install -e '.[testing]' --config-settings=cmake.define.FEW_WITH_GPU=ON
     pip install cupy-cuda12x 'nvidia-cuda-runtime-cu12==12.4.*' # Replace 12.4 by the CUDA driver version returned by nvidia-smi, keep the '.*' at the end
+    # With a CUDA 13 driver, use instead (NVIDIA dropped the '-cuXX' suffix in CUDA 13):
+    pip install cupy-cuda13x 'nvidia-cuda-runtime==13.*'
     ```
 
   - Many options can be passed to the `pip install` command, see [below](#advanced-installation-options)
@@ -250,11 +252,10 @@ using `brew`:
 brew install micromamba
 ```
 
-Then, create a new conda environment `few_env` with the required compilers and
-a specific version of `liblapacke`:
+Then, create a new conda environment `few_env` with the required compilers:
 
 ```sh
-micromamba create -n few_env python=3.12 cxx-compiler pkgconfig conda-forge/label/lapack_rc::liblapacke
+micromamba create -n few_env python=3.12 cxx-compiler
 ```
 
 Then activate this environment and proceed with the installation of FEW
@@ -275,7 +276,7 @@ Install the required dependencies in a new conda environment:
 
 ```sh
 $ conda create -n few_env -c conda-forge --override-channels \
-    python=3.12 cxx-compiler pkgconfig conda-forge/label/lapack_rc::liblapacke
+    python=3.12 cxx-compiler
 ```
 
 Then proceed with the installation of FEW as described [above](#from-source).
@@ -422,9 +423,8 @@ are available on the CC-IN2P3 cluster but need little adjustments.
   # Create and activate a conda or venv environment named `few_env`
   (few_env) $ module load HPC_GPU/nvhpc/24.5  # Load the NVHPC module
   # ... Clone sources
-  (few_env) $ CXX=g++ CC=gcc FC=gfortran pip install -e '.[testing]' \
-                  --config-settings=cmake.define.FEW_WITH_GPU=ON \
-                  --config-settings=cmake.define.FEW_LAPACKE_FETCH=ON
+  (few_env) $ CXX=g++ CC=gcc pip install -e '.[testing]' \
+                  --config-settings=cmake.define.FEW_WITH_GPU=ON
   ```
 
 On this cluster, it is recommended to configure the file storage directory
@@ -489,32 +489,23 @@ work correctly in this environment.
 
 Many options are available to change the installation behaviour. These can be set by adding `--config-settings=cmake.define.OPTION_NAME=OPTION_VALUE` to the `pip` command. Available options are:
 
-- `FEW_LAPACKE_FETCH=ON|OFF|[AUTO]`: Whether `LAPACK` and `LAPACKE` should be automatically fetched from internet.
-  - `ON`: ignore pre-installed `LAPACK(E)` and always fetch and compile their sources
-  - `OFF`: disable `LAPACK(E)` fetching and only use pre-installed library and headers (install will fail if pre-installed lib and headers are not available)
-  - `AUTO` (default): try to detect pre-installed `LAPACK(E)` and their headers. If found, use them, otherwise fetch `LAPACK(E)`.
-- `FEW_LAPACKE_DETECT_WITH=[CMAKE]|PKGCONFIG`: How `LAPACK(E)` should be detected
-  - `CMAKE`: `LAPACK(E)` will be detected using the cmake `FindPackage` command. If your `LAPACK(E)` install provides `lapacke-config.cmake` in a non-standard location, add its path to the `CMAKE_PREFIX_PATH` environment variable.
-  - `PKGCONFIG`: `LAPACK(E)` will be detected using `pkg-config` by searching for the files `lapack.pc` and `lapacke.pc` . If these files are provided by your `LAPACK(E)` install in a non-standard location, add their path to the environment variable `PKG_CONFIG_PATH`
-  - `AUTO` (default): attempt both CMake and PkgConfig approaches
 - `FEW_WITH_GPU=ON|OFF|[AUTO]`: Whether GPU-support must be enabled
   - `ON`: Forcefully enable GPU support (install will fail if GPU prerequisites are not met)
   - `OFF`: Disable GPU support
   - `AUTO` (default): Check whether `nvcc` and the `CUDA Toolkit` are available in environment and enable/disable GPU support accordingly.
 - `FEW_CUDA_ARCH`: List of CUDA architectures that will be targeted by the CUDA compiler using [CMake CUDA_ARCHITECTURES](https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html) syntax. (Default = `all`).
 
-Example of custom install with specific options to forcefully enable GPU support with support for the host's GPU only (`native` architecture) using LAPACK fetched from internet:
+Example of custom install with specific options to forcefully enable GPU support with support for the host's GPU only (`native` architecture):
 
 ```sh
 pip install . \
   --config-settings=cmake.define.FEW_WITH_GPU=ON \
-  --config-settings=cmake.define.FEW_CUDA_ARCH="native" \
-  --config-settings=cmake.define.FEW_LAPACKE_FETCH=ON
+  --config-settings=cmake.define.FEW_CUDA_ARCH="native"
 ```
 
 If you enabled `GPU` support (or it was automatically enabled by the `AUTO` mode), you will also need to install the `nvidia-cuda-runtime`
 package corresponding to the CUDA version detected by `nvidia-smi` as explained in the *Getting Started* section above.
-You will also need to manually install `cupy-cuda11x` or `cupy-cuda12x` according to your CUDA version.
+You will also need to manually install `cupy-cuda12x` or `cupy-cuda13x` according to your CUDA version.
 
 ### conda vs pip installation
 

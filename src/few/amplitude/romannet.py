@@ -293,7 +293,12 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
 
         # norm with respect to the flux interpolated by the bicubic spline
         if renormalize_amps:
-            amp_norm = self.amp_norm_spline.ev(y, e)
+            # amp_norm_spline is a scipy spline (CPU-only), so it needs numpy inputs
+            # even when this module is running on the GPU backend.
+            if self.xp is np:
+                amp_norm = self.amp_norm_spline.ev(y, e)
+            else:
+                amp_norm = self.xp.asarray(self.amp_norm_spline.ev(y.get(), e.get()))
             amp_for_norm = self.xp.sum(
                 self.xp.abs(
                     self.xp.concatenate(

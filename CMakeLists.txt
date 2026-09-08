@@ -11,9 +11,6 @@ project(fastemriwaveforms VERSION ${SKBUILD_PROJECT_VERSION} LANGUAGES CXX)
 # ---- Find required dependencies ----
 find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 
-# ---- Import project-specific CMake functions ----
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-
 # ---- Define a list of FEW specific options ----
 set_property(GLOBAL PROPERTY FEW_OPTION_NAMES)
 
@@ -46,53 +43,6 @@ set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_CUDA_ARCH)
 set(FEW_MARCH "native"
     CACHE STRING "Value of the -march compiler option if supported by compiler")
 set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_MARCH)
-
-# FEW_LAPACKE_DETECT_WITH sets the tool used to try to detect LAPACKE locally.
-# Possible values are:
-#
-# * AUTO: attempts PKGCONFIG and, in case of failure, CMAKE
-# * CMAKE: use CMake find_package() mechanism (try to find
-#   'lapacke-config.cmake' in CMAKE_PREFIX_PATH or in standard system locations)
-# * PKGCONFIG: use pkgconfig (which must be installed), try to find 'lapacke.pc'
-#   and its dependencies in standard system locations or in PKG_CONFIG_PATH
-# * DISABLE (or any other value): disable detection of local lapacke
-#   installation
-set(FEW_LAPACKE_DETECT_WITH "AUTO" CACHE STRING "Tool used to locate LAPACKE.")
-set_property(CACHE FEW_LAPACKE_DETECT_WITH PROPERTY STRINGS "AUTO" "CMAKE"
-                                                    "PKGCONFIG" "DISABLE")
-set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_LAPACKE_DETECT_WITH)
-
-# FEW_LAPACKE_FETCH controls whether LAPACKE sources will be downloaded and
-# compiled with FEW backends. Possible values are:
-#
-# * AUTO: will try to locate LAPACKE locally and, in case of failure, will
-#   enable the fetch mechanism
-# * ON: will always fetch LAPACKE sources and compile them, even if already
-#   present locally
-# * OFF: will disable LAPACKE fetching mechanism
-set(FEW_LAPACKE_FETCH "AUTO" CACHE STRING
-                                   "Whether to download and compile LAPACK(E)")
-set_property(CACHE FEW_LAPACKE_FETCH PROPERTY STRINGS "AUTO" "ON" "OFF")
-set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_LAPACKE_FETCH)
-
-# FEW_LAPACKE_EXTRA_LIBS sets extra libraries that must be linked when linking
-# LAPACKE. For example, if importing the CPU backend fails and complains about
-# missing "gfortran" symbols, set FEW_LAPACKE_EXTRA_LIBS=gfortran. Note that if
-# this option is unset, it will be automatically set to "gfortran" if that
-# library in linkable.
-include(CheckLinkerFlag)
-check_linker_flag(CXX "-lgfortran" GFORTRAN_AVAILABLE)
-if(GFORTRAN_AVAILABLE)
-  set(DEFAULT_EXTRA_LIBS "gfortran")
-else()
-  set(DEFAULT_EXTRA_LIBS "")
-endif()
-set(FEW_LAPACKE_EXTRA_LIBS "${DEFAULT_EXTRA_LIBS}"
-    CACHE STRING "Extra libs to link to when\
-linking against LAPACKE.")
-set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_LAPACKE_EXTRA_LIBS)
-unset(GFORTRAN_AVAILABLE)
-unset(DEFAULT_EXTRA_LIBS)
 
 # ---- Phony target for project specific properties ----
 add_library(fastemriwaveforms INTERFACE)

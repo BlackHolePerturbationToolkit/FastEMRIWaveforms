@@ -231,8 +231,32 @@ class _CudaBackend(Backend):
         cuda_minor = (cuda_version % 1000) // 10
         return cuda_major, cuda_minor
 
-    @staticmethod
-    def _check_cupy_works(cuda_major: int):
+    @classmethod
+    def _nvidia_pip_pkg(cls, component: str, cuda_major: int) -> str:
+        """Name of the pip package providing a NVIDIA library component.
+
+        Up to CUDA 12, NVIDIA suffixes its wheels with the CUDA major version
+        (e.g. 'nvidia-cusparse-cu12'). Since CUDA 13, the wheels are unsuffixed
+        and versioned after the library itself (e.g. 'nvidia-cusparse').
+        """
+        if cuda_major < 13:
+            return "nvidia-{}-cu{}".format(component, cuda_major)
+        return "nvidia-{}".format(component)
+
+    @classmethod
+    def _nvidia_lib_dir(cls, component_dir: str, cuda_major: int) -> str:
+        """Directory, relative to the 'nvidia' package, holding a library.
+
+        Up to CUDA 12, each component has its own directory
+        (e.g. 'nvidia/cusparse/lib'). Since CUDA 13, they all share a single
+        one (e.g. 'nvidia/cu13/lib').
+        """
+        if cuda_major < 13:
+            return component_dir
+        return "cu{}".format(cuda_major)
+
+    @classmethod
+    def _check_cupy_works(cls, cuda_major: int):
         try:
             import cupy
             import cupy_backends.cuda
@@ -263,7 +287,7 @@ class _CudaBackend(Backend):
         except cupy.cuda.compiler.CompileException as e:
             raise MissingDependencies(
                 "CuPy fails to run due to missing CUDA Runtime.",
-                pip_deps=["nvidia-cuda-runtime-cu{}".format(cuda_major)],
+                pip_deps=[cls._nvidia_pip_pkg("cuda-runtime", cuda_major)],
                 conda_deps=[],
             ) from e
         except (cupy_backends.cuda.api.runtime.CUDARuntimeError, RuntimeError) as e:
@@ -277,7 +301,7 @@ class _CudaBackend(Backend):
         """Dynamic library name (eg libname.so.1)"""
 
         module_name: str
-        """Name of the nvidia module containing the library"""
+        """Directory, under the 'nvidia' package, containing the library"""
 
         pip_pkg: typing.Optional[str] = None
         """Name of a pip-installable package providing that library"""
@@ -413,94 +437,119 @@ class _CudaBackend(Backend):
         setDevice(dev)
 
 
-class Cuda12xBackend(_CudaBackend):
-    """Implementation of CUDA 12.x backend"""
+class _CudaMajorBackend(_CudaBackend):
+    """Implementation of a CUDA backend targeting a given CUDA major version.
 
-    @staticmethod
-    def cuda12x_module_loader():
+    Subclasses only need to declare the targeted CUDA major version and the
+    soversions of the NVIDIA dynamic libraries shipped by that CUDA release.
+    """
+
+    CUDA_MAJOR: typing.ClassVar[int]
+    """CUDA major version targeted by this backend (e.g. 12 for 'cuda12x')"""
+
+    SOVERSIONS: typing.ClassVar[typing.Dict[str, int]]
+    """Soversion of each required NVIDIA dynamic library.
+
+    These do not all follow the CUDA major version: cuSPARSE, for instance, kept
+    its soversion 12 in CUDA 13 while cuFFT went from 11 to 12.
+    """
+
+    REQUIRED_LIBS: typing.ClassVar[
+        typing.Sequence[typing.Tuple[str, str, str, str]]
+    ] = (
+        # (soversion key, library file name, pip component, CUDA 12 directory)
+        ("cudart", "libcudart.so", "cuda-runtime", "cuda_runtime"),
+        ("cublas", "libcublas.so", "cublas", "cublas"),
+        ("nvjitlink", "libnvJitLink.so", "nvjitlink", "nvjitlink"),
+        ("cusparse", "libcusparse.so", "cusparse", "cusparse"),
+        ("nvrtc", "libnvrtc.so", "cuda-nvrtc", "cuda_nvrtc"),
+        ("cufftw", "libcufftw.so", "cufft", "cufft"),
+    )
+    """NVIDIA dynamic libraries the compiled backend links against.
+
+    Keep the library file names here in sync with external_stems in
+    .github/scripts/repair-cuda-wheel.sh, which excludes these sonames from
+    the built wheel so they stay external. That list is a superset of this
+    one (it also lists libcublasLt, which ships alongside libcublas in the
+    same pip component and so has no separate entry here).
+    """
+
+    @classmethod
+    def backend_name(cls) -> str:
+        """Name of the backend (e.g. 'cuda12x')"""
+        return "cuda{}x".format(cls.CUDA_MAJOR)
+
+    @classmethod
+    def backend_module_name(cls) -> str:
+        """Name of the python module providing the compiled backend"""
+        return "few_backend_cuda{}x".format(cls.CUDA_MAJOR)
+
+    @classmethod
+    def module_loader(cls) -> BackendMethods:
+        import importlib
+
+        name = cls.backend_name()
+        module = cls.backend_module_name()
+
         try:
-            import few_backend_cuda12x.pyAAK
-            import few_backend_cuda12x.pyAmpInterp2D
-            import few_backend_cuda12x.pyinterp
-            import few_backend_cuda12x.pymatmul
+            pyAAK = importlib.import_module(module + ".pyAAK")
+            pyAmpInterp2D = importlib.import_module(module + ".pyAmpInterp2D")
+            pyinterp = importlib.import_module(module + ".pyinterp")
+            pymatmul = importlib.import_module(module + ".pymatmul")
         except (ModuleNotFoundError, ImportError) as e:
             raise BackendUnavailableException(
-                "'cuda12x' backend could not be imported."
+                "'{}' backend could not be imported.".format(name)
             ) from e
 
         try:
             import cupy
         except (ModuleNotFoundError, ImportError) as e:
             raise MissingDependencies(
-                "'cuda12x' backend requires cupy", pip_deps=["cupy-cuda12x"]
+                "'{}' backend requires cupy".format(name),
+                pip_deps=["cupy-cuda{}x".format(cls.CUDA_MAJOR)],
             ) from e
 
         return BackendMethods(
-            pyWaveform=few_backend_cuda12x.pyAAK.pyWaveform,
-            interp2D=few_backend_cuda12x.pyAmpInterp2D.interp2D,
-            interpolate_arrays_wrap=few_backend_cuda12x.pyinterp.interpolate_arrays_wrap,
-            get_waveform_wrap=few_backend_cuda12x.pyinterp.get_waveform_wrap,
-            get_waveform_generic_fd_wrap=few_backend_cuda12x.pyinterp.get_waveform_generic_fd_wrap,
-            neural_layer_wrap=few_backend_cuda12x.pymatmul.neural_layer_wrap,
-            transform_output_wrap=few_backend_cuda12x.pymatmul.transform_output_wrap,
+            pyWaveform=pyAAK.pyWaveform,
+            interp2D=pyAmpInterp2D.interp2D,
+            interpolate_arrays_wrap=pyinterp.interpolate_arrays_wrap,
+            get_waveform_wrap=pyinterp.get_waveform_wrap,
+            get_waveform_generic_fd_wrap=pyinterp.get_waveform_generic_fd_wrap,
+            neural_layer_wrap=pymatmul.neural_layer_wrap,
+            transform_output_wrap=pymatmul.transform_output_wrap,
             xp=cupy,
         )
 
-    @staticmethod
-    def cuda12x_dynlib_loader():
+    @classmethod
+    def dynlib_loader(cls) -> None:
         import sys
 
-        if sys.platform == "linux":
-            cuda12x_solibs = [
-                _CudaBackend.NvidiaSoLib(
-                    soname="libcudart.so.12",
-                    module_name="cuda_runtime",
-                    pip_pkg="nvidia-cuda-runtime-cu12",
-                    conda_pkg=None,
-                ),
-                _CudaBackend.NvidiaSoLib(
-                    soname="libcublas.so.12",
-                    module_name="cublas",
-                    pip_pkg="nvidia-cublas-cu12",
-                    conda_pkg=None,
-                ),
-                _CudaBackend.NvidiaSoLib(
-                    soname="libnvJitLink.so.12",
-                    module_name="nvjitlink",
-                    pip_pkg="nvidia-nvjitlink-cu12",
-                    conda_pkg=None,
-                ),
-                _CudaBackend.NvidiaSoLib(
-                    soname="libcusparse.so.12",
-                    module_name="cusparse",
-                    pip_pkg="nvidia-cusparse-cu12",
-                    conda_pkg=None,
-                ),
-                _CudaBackend.NvidiaSoLib(
-                    soname="libnvrtc.so.12",
-                    module_name="cuda_nvrtc",
-                    pip_pkg="nvidia-cuda-nvrtc-cu12",
-                    conda_pkg=None,
-                ),
-                _CudaBackend.NvidiaSoLib(
-                    soname="libcufftw.so.11",
-                    module_name="cufft",
-                    pip_pkg="nvidia-cufft-cu12",
-                    conda_pkg=None,
-                ),
-            ]
-            _CudaBackend._try_import_nvidia_solib(cuda12x_solibs)
+        if sys.platform != "linux":
+            return
+
+        major = cls.CUDA_MAJOR
+        solibs = [
+            _CudaBackend.NvidiaSoLib(
+                soname="{}.{}".format(libname, cls.SOVERSIONS[key]),
+                module_name=cls._nvidia_lib_dir(component_dir, major),
+                pip_pkg=cls._nvidia_pip_pkg(component, major),
+                conda_pkg=None,
+            )
+            for key, libname, component, component_dir in cls.REQUIRED_LIBS
+        ]
+        _CudaBackend._try_import_nvidia_solib(solibs)
 
     def __init__(self):
-        """Initialize the CPU backend"""
-        name = "cuda12x"
+        """Initialize the CUDA backend"""
+        cls = type(self)
+        name = cls.backend_name()
         methods = self.check_cuda_backend(
             name=name,
-            backend_module_name="few_backend_cuda12x",
-            cuda_min=(12, 0),
-            cuda_max=(13, 0),
-            module_loader=Cuda12xBackend.cuda12x_module_loader,
-            dynlib_loader=Cuda12xBackend.cuda12x_dynlib_loader,
+            backend_module_name=cls.backend_module_name(),
+            cuda_min=(cls.CUDA_MAJOR, 0),
+            cuda_max=(cls.CUDA_MAJOR + 1, 0),
+            module_loader=cls.module_loader,
+            dynlib_loader=cls.dynlib_loader,
         )
         Feature = Backend.Feature
 
@@ -511,11 +560,48 @@ class Cuda12xBackend(_CudaBackend):
         )
 
 
+class Cuda12xBackend(_CudaMajorBackend):
+    """Implementation of CUDA 12.x backend"""
+
+    CUDA_MAJOR = 12
+    SOVERSIONS = {
+        "cudart": 12,
+        "cublas": 12,
+        "nvjitlink": 12,
+        "cusparse": 12,
+        "nvrtc": 12,
+        "cufftw": 11,
+    }
+
+
+class Cuda13xBackend(_CudaMajorBackend):
+    """Implementation of CUDA 13.x backend"""
+
+    CUDA_MAJOR = 13
+    SOVERSIONS = {
+        "cudart": 13,
+        "cublas": 13,
+        "nvjitlink": 13,
+        "cusparse": 12,  # cuSPARSE kept its soversion 12 in CUDA 13
+        "nvrtc": 13,
+        "cufftw": 12,
+    }
+
+
 KNOWN_BACKENDS = {
+    "cuda13x": Cuda13xBackend,
     "cuda12x": Cuda12xBackend,
     "cpu": CpuBackend,
 }
 """List of existing backends, per default order of preference."""
+
+CUDA_BACKENDS: typing.List[str] = [
+    name for name in KNOWN_BACKENDS if name != "cpu"
+]
+"""Names of CUDA backends, per default order of preference (newest CUDA major
+first). Single source of truth for CUDA-backend ordering; other modules
+should derive their backend-preference lists from this instead of
+hard-coding "cuda13x"/"cuda12x" literals."""
 
 
 class BackendStatus:

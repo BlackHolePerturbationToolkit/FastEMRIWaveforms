@@ -1,5 +1,6 @@
 # Utilities to aid in FastEMRIWaveforms Packages
 
+import math
 from math import acos, cos, sqrt
 from typing import Optional
 
@@ -7,6 +8,7 @@ import numpy as np
 from numba import njit
 from scipy.optimize import brentq
 
+from few.cutils import CUDA_BACKENDS
 from few.utils.exceptions import TrajectoryOffGridException
 from few.utils.globals import get_first_backend, get_logger
 
@@ -94,11 +96,11 @@ def get_mismatch(
     overlap = get_overlap(time_series_1, time_series_2, use_gpu=use_gpu)
     return 1.0 - overlap
 
-import math
 
 @njit(fastmath=False)
 def _cbrt(x):
-    return math.copysign(abs(x) ** (1/3), x)
+    return math.copysign(abs(x) ** (1 / 3), x)
+
 
 @njit(fastmath=False)
 def _solveCubic(A2, A1, A0):
@@ -123,13 +125,13 @@ def _solveCubic(A2, A1, A0):
         # Only return real part
         t1 = real_part
         t2 = real_part
-        t3 = u + v 
+        t3 = u + v
     else:
         r = sqrt(-p / 3.0)
         theta = acos(-q / (2.0 * r * r * r))
-        t1  = 2.0 * r * cos((theta - 2.0 * PI) / 3.0) 
-        t3  = 2.0 * r * cos((theta + 2.0 * PI) / 3.0) 
-        t2  = 2.0 * r * cos(theta / 3.0) 
+        t1 = 2.0 * r * cos((theta - 2.0 * PI) / 3.0)
+        t3 = 2.0 * r * cos((theta + 2.0 * PI) / 3.0)
+        t2 = 2.0 * r * cos(theta / 3.0)
 
     x1 = t1 - A2 / 3.0
     x2 = t2 - A2 / 3.0
@@ -151,7 +153,9 @@ def _brentq_jit(f, a, b, args, tol):
         return a if fa == 0.0 else b
 
     if fa * fb > 0.0:
-        raise ValueError("f(a) and f(b) have the same sign. Either no root or multiple roots exist within the specified interval [a, b]. Consider extending / decreasing the bounds. ")
+        raise ValueError(
+            "f(a) and f(b) have the same sign. Either no root or multiple roots exist within the specified interval [a, b]. Consider extending / decreasing the bounds. "
+        )
 
     c = a
     fc = fa
@@ -350,8 +354,8 @@ def get_p_at_t(
         bounds = [None, None]
 
     traj_bounds = traj_module.bounds_p0(
-        e0 = traj_args[index_of_e], x0 = traj_args[index_of_x], a = traj_args[index_of_a]
-        )
+        e0=traj_args[index_of_e], x0=traj_args[index_of_x], a=traj_args[index_of_a]
+    )
 
     if bounds[0] is None:
         if not enforce_schwarz_sep:
@@ -479,7 +483,6 @@ def get_m2_at_t(
     return root
 
 
-
 def wrapper(*args, **kwargs):
     """Function to convert array and C/C++ class arguments to ptrs
 
@@ -504,7 +507,7 @@ def wrapper(*args, **kwargs):
     targs = []
     tkwargs = {}
 
-    best_backend = get_first_backend(["cuda12x", "cpu"])
+    best_backend = get_first_backend([*CUDA_BACKENDS, "cpu"])
 
     # args first
     for arg in args:

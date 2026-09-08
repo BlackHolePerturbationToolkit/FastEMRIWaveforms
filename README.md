@@ -25,6 +25,8 @@ pip install fastemriwaveforms
 
 # For GPU-enabled versions with CUDA 12.Y.Z
 pip install fastemriwaveforms-cuda12x
+# For GPU-enabled versions with CUDA 13.Y.Z
+pip install fastemriwaveforms-cuda13x
 ```
 
 To know your CUDA version, run the tool `nvidia-smi` in a terminal a check the CUDA version reported in the table header:
@@ -62,15 +64,16 @@ import few
 You may check the currently available backends:
 
 ```py3
->>> for backend in ["cpu", "cuda12x", "cuda", "gpu"]:
+>>> for backend in ["cpu", "cuda12x", "cuda13x", "cuda", "gpu"]:
 ...     print(f" - Backend '{backend}': {"available" if few.has_backend(backend) else "unavailable"}")
  - Backend 'cpu': available
  - Backend 'cuda12x': unavailable
+ - Backend 'cuda13x': unavailable
  - Backend 'cuda': unavailable
  - Backend 'gpu': unavailable
 ```
 
-Note that the `cuda` backend is an alias for `cuda12x` (and soon, `cuda13x`). If any is available, then the `cuda` backend is available.
+Note that the `cuda` backend is an alias for `cuda13x` and `cuda12x`. If any is available, then the `cuda` backend is available.
 Similarly, the `gpu` backend is (for now) an alias for `cuda`.
 
 If you expected a backend to be available but it is not, run the following command to obtain an error
@@ -109,13 +112,7 @@ on how to start with this software.
 To install this software from source, you will need:
 
 - A C++ compiler (g++, clang++, ...)
-- A Python version supported by [scikit-build-core](https://github.com/scikit-build/scikit-build-core) (>=3.7 as of Jan. 2025)
-
-Some installation steps require the external library `LAPACK` along with its C-bindings provided by `LAPACKE`.
-If these libraries and their header files (in particular `lapacke.h`) are available on your system, they will be detected
-and used automatically. If they are available on a non-standard location, see below for some options to help detecting them.
-Note that by default, if `LAPACKE` is not available on your system, the installation step will attempt to download its sources
-and add them to the compilation tree. This makes the installation a bit longer but a lot easier.
+- Python 3.12 or newer (wheels are built and tested for 3.12, 3.13 and 3.14)
 
 If you want to enable GPU support in FEW, you will also need the NVIDIA CUDA Compiler `nvcc` in your path as well as
 the [CUDA toolkit](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) (with, in particular, the
@@ -138,8 +135,7 @@ adjustements can be needed, refer to the
 [detailed installation documentation](https://fastemriwaveforms.readthedocs.io/en/stable/user/install.html) for more information):
 
 ```
-conda create -n few_env -y -c conda-forge --override-channels |
-    cxx-compiler pkgconfig conda-forge/label/lapack_rc::liblapacke
+conda create -n few_env -y -c conda-forge --override-channels cxx-compiler
 ```
 
 activate the environment
