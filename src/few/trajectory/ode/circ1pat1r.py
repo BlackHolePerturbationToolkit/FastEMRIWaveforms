@@ -607,9 +607,6 @@ class TrajectoryCirc1PAT1R(ODEBase):
             get_logger().warning(f"WARNING (TrajectoryCirc1PAT1R.add_fixed_parameters): Only 1 additional argument (chi2) expected in TrajectoryCirc1PAT1R but {self.num_add_args} received. Excess arguments will be ignored.")    
 
         self.args['nu'] = m1 * m2 / (m1 + m2)**2
-        if self.args['nu'] < 1e-8:
-            get_logger().warning(f"WARNING (TrajectoryCirc1PAT1R.add_fixed_parameteters): Mass ratio nu = {self.args['nu']:.2e} < 1e-8. Phase error may exceed 1 radian.  ")
-
         self.args['chi1'] = chi1
         self.args['chi2'] = float(additional_args[0])
 
