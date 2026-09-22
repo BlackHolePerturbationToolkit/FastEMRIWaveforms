@@ -482,16 +482,103 @@ class TrajectoryCirc1PAT1R(ODEBase):
             separatrix_buffer (float, optional): Buffer distance to add to the minimum valid p. Defaults to None, which is treated as 0.0.
             
         Raises:
-            AssertionError: If p is outside the valid range given e, x, and a.    
+            ValueError: If p is outside the valid range given e, x, and a.    
         """
        
         self.isvalid_x(x, **kwargs)
         self.isvalid_e(e, **kwargs)
         self._isvalidchi1(a, **kwargs)
         pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer, separatrix_buffer=separatrix_buffer, **kwargs)
-        assert p >= pmin and p <= pmax, (
-            f"(TrajectoryCirc1PAT1R) Interpolation: p = {p} out of bounds. Must be between {pmin} and {pmax}."
-        )
+        if p > pmax or p < pmin:
+            raise ValueError(f"(TrajectoryCirc1PAT1R) Interpolation: p = {p} out of bounds. Must be between {pmin} and {pmax}.")
+
+    def isvalid_pex(self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], separatrix_buffer=None, **kwargs):
+        """Check whether p, e, x, and primary spin are within the valid ranges.
+
+        Args:
+            p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
+            e (float): Eccentricity (ignored since this model is circular).
+            x (float): Cosine of the inclination angle (ignored since this model is equatorial).
+            a (float): Dimensionless primary spin.
+            p_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid p range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+            separatrix_buffer (float, optional): Buffer distance to add to the minimum valid p. Defaults to None, which is treated as 0.0.
+            
+        Raises:
+            ValueError: If p is outside the valid range given e, x, and a.    
+        """
+       
+        self.isvalid_x(x, **kwargs)
+        self.isvalid_e(e, **kwargs)
+        self._isvalidchi1(a, **kwargs)
+        pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer, separatrix_buffer=separatrix_buffer, **kwargs)
+        if p > pmax or p < pmin:
+            raise ValueError(f"(TrajectoryCirc1PAT1R) Interpolation: p = {p} out of bounds. Must be between {pmin} and {pmax}.")
+
+    def recommended_bounds_p0_from_nu(self, nu, Delta_phip=0.1):
+        """
+        Return the recommended range of initial semi-latus rectum p0 (assuming forwards integration) as a function of 
+        symmetric mass ratio for given target phase precision. These bounds are given by
+            pmin = 6 + 1.5 nu^(1/4)         [deduced from the breakdown frequency given in Eq. (30) of Ref. 2208.01049]
+            pmax = 2.2(Delta_phip/nu)^2     [from Eq. (7.3) of the 1PAT1R technical document]
+
+        Args:
+            nu (float): symmetric mass ratio
+            Delta_phip (float): target (absolute) precision for the azimuthal phase phi [default 0.1]
+
+        Returns:
+            pmin, pmax: smallest and largest recommended values of p0
+        
+        Raises:
+            ValueError: If nu is outside its valid range
+        """
+        self._isvalidnu(nu)
+        pmin = 6. + 1.5*nu**0.25
+        pmax = 2.2 * (Delta_phip/nu)**2
+
+        return pmin, pmax
+
+    def recommended_bounds_a0_from_nu(self, nu):
+        """
+        Return the recommended range of the initial dimensionless primary spin a0 (aka chi1, assuming forwards integration) 
+        as a function of symmetric mass ratio. These bounds are obtaned by assessing when a^2 terms in the flux [as computed 
+        using 0PA Kerr fluxes] become comparable to the 1PA flux.
+    
+        Args:
+            nu (float): symmetric mass ratio
+
+        Returns:
+            amin, amax: smallest and largest recommended values of a0
+        
+        Raises:
+            ValueError: If nu is outside its valid range
+        """
+        self._isvalidnu(nu)
+        amax = 25.*nu
+        amin = -amax
+
+        return amin, amax
+
+    def recommended_bounds_chi2_from_nu(self, nu):
+        """
+        Return the recommended range of the fixed dimensionless secondary spin chi2 as a function of symmetric mass ratio. The bounds
+        are given by
+            |chi2| << 1/nu
+        as per Sec. 7 of the 1PAT1R technical document. In practice this exceeds the hard-coded maximum range -1 < chi2 < 1 for all valid nu.
+
+        Args:
+            nu (float): symmetric mass ratio
+
+        Returns:
+            chi2_min, chi2_max: smallest and largest recommended values of chi2 (should have |chi2| << chi2_max = 1/nu)
+        
+        Raises:
+            ValueError: If nu is outside its valid range
+        """
+        self._isvalidnu(nu)
+        chi2_max = 1/nu
+        chi2_min = -1/nu
+
+        return chi2_min, chi2_max
 
     def add_fixed_parameters(self, m1, m2, chi1, additional_args):
         """Store the symmetric mass ratio nu, the spin parameters, and the reduced spins chit1, chit2.
