@@ -32,7 +32,21 @@ Status codes (per system): RHS 0 ok, 1 `e < 0`, 2 inside the separatrix, 3 off t
 * DOPR853 keeps `errOldTemp` / `previousRejectTemp` on the instance across trajectories: use a
   fresh stepper per batch.
 
-## GPU port (not done: needs the CUDA toolkit and a private build env)
+## CPU fan-out (the chosen route, 2026-09-30)
+
+`few.trajectory.pool`: independent trajectories integrated on a small pool of worker
+processes (spawn context by default; any `concurrent.futures.Executor`, e.g.
+`mpi4py.futures.MPIPoolExecutor`), shipped back as compact snapshots (call output + the
+integrator's dense-output state) and served to an unchanged waveform generator by
+`TrajectoryCache`, which stands in for `waveform_gen.inspiral_generator`.
+`TrajectoryCache.precompute(fn, rows, pool)` dry-runs each evaluation up to its inspiral
+call (so every input convention the caller applies is captured exactly), integrates the
+new calls on the pool, and stores them; the real evaluations are then cache hits.
+Workers reset DOPR853's controller state before each trajectory, so a pooled trajectory is
+bit-identical to a freshly built module's. Tests: `tests/test_traj_pool.py`; throughput:
+`examples/bench_traj_pool.py`.
+
+## GPU port (DEFERRED by the 2026-09-30 ruling: CPU fan-out first; needs the CUDA toolkit)
 
 Building FEW's compiled backend in the shared `deving` env would overwrite `few_backend_cpu`
 used by the main checkout. Do this on the cluster in a dedicated env.
