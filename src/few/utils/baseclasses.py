@@ -36,11 +36,22 @@ class FewBackendConsumer(ParallelModuleBase):
 
     """
     def __init__(self, force_backend: Optional[str | FEWBackend] =  None):
-        if isinstance(force_backend, str) and "few" not in force_backend:
-            force_backend_in = ('few', force_backend)
-        elif isinstance(force_backend, str) and "few" in force_backend:
-            assert force_backend[:4] == "few_" and len(force_backend.split("few_")) == 2
-            force_backend_in = ('few', force_backend.split("few_")[-1])
+        if force_backend is None:
+            # the base would take the first backend of ANY package matching FEW's bare
+            # names (e.g. gbt_cpu); pick the first available FEW one instead
+            from gpubackendtools.globals import get_first_backend
+
+            names = [b if b.startswith("few_") else "few_" + b for b in self.supported_backends()]
+            force_backend_in = ("few", get_first_backend(names).name.split("few_", 1)[1])
+        elif isinstance(force_backend, str):
+            if force_backend.startswith("few_"):
+                force_backend_in = ("few", force_backend[len("few_"):])
+            elif "_" in force_backend:
+                # another package's resolved name (e.g. a parent built on gbt_cpu):
+                # keep the device part, use FEW's backend for it
+                force_backend_in = ("few", force_backend.split("_", 1)[1])
+            else:
+                force_backend_in = ("few", force_backend)
         else:
             force_backend_in = force_backend
         super().__init__(force_backend=force_backend_in)
