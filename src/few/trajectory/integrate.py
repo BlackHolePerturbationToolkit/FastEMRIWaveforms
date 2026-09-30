@@ -843,6 +843,18 @@ class BatchedIntegrate:
         self.func = self._scalar.func
         if not hasattr(self.func, "evaluate_rhs_batch"):
             raise NotImplementedError(f"{type(self.func).__name__} has no evaluate_rhs_batch")
+        # evaluate_rhs_batch reproduces ODEBase.__call__ for the STOCK physics only: refuse
+        # subclasses that override the right-hand side or its documented hooks
+        from .ode.base import ODEBase
+        from .ode.flux import KerrEccEqFlux
+
+        cls = type(self.func)
+        if (cls.evaluate_rhs is not KerrEccEqFlux.evaluate_rhs
+                or cls.modify_rhs is not ODEBase.modify_rhs
+                or cls.modify_rhs_before_Jacobian is not ODEBase.modify_rhs_before_Jacobian):
+            raise NotImplementedError(
+                f"{cls.__name__} overrides evaluate_rhs / modify_rhs hooks; BatchedIntegrate "
+                "only reproduces the stock KerrEccEqFlux right-hand side")
         self.err = err
         self.buffer_length = int(buffer_length)
         self.max_step_size = np.inf if max_step_size is None else float(max_step_size)
@@ -878,20 +890,26 @@ class BatchedIntegrate:
     def run(self, m1, m2, a, y0, T: float = 1.0, dt: float = 10.0):
         """Integrate ``S`` systems. ``y0`` is ``(6, S)`` pex + phases (physical phases).
 
+        This is the :meth:`Integrate.run_inspiral`-level contract: ``y0`` is used as given
+        (no ``isvalid_pex`` check, no retrograde ``Phi_phi0`` flip as in
+        ``EMRIInspiral.get_inspiral``); ``m1, m2, a`` broadcast to ``S``; ``dt`` is accepted
+        for signature parity and is inert for adaptive stepping (as in the scalar path).
+
         Returns a namespace with ``trajectories`` (list of ``(n_j, 7)``: t [s], p, e, x,
         Phi_phi, Phi_theta, Phi_r, as :attr:`Integrate.trajectory` after
         :meth:`Integrate.run_inspiral`), ``status`` (-1 separatrix buffer, -2 tmax,
-        -3 failed) and ``nsteps``.
+        -3 step-size collapse (100 failed tries), -4 max_iter reached), ``nsteps``, and the
+        dense output per system: ``spline_t`` (knot times [s]) and ``spline_coeff``
+        (``(n_j - 1, nparams, 8)``, as :attr:`Integrate.integrator_spline_coeff`).
         """
         from types import SimpleNamespace
 
-        m1, m2, a = (np.atleast_1d(np.asarray(v, dtype=float)) for v in (m1, m2, a))
         y0 = np.array(y0, dtype=float, copy=True)
         nparams, S = y0.shape
+        m1, m2, a = (np.broadcast_to(np.asarray(v, dtype=float), (S,)).copy() for v in (m1, m2, a))
         M = m1 + m2
         massratio = m1 * m2 / M ** 2
         tmax = T * YRSID_SI / (M * MTSUN_SI) * massratio
-        dt_dimless = dt / (M * MTSUN_SI) * massratio
         Msec = MTSUN_SI * M / massratio
         sep_buffer = self.func.separatrix_buffer_dist
         y = y0.copy()
@@ -935,8 +953,13 @@ class BatchedIntegrate:
         active = np.ones(S, dtype=bool)
         while np.any(active):
             idx = np.flatnonzero(active)
-            if np.any(niter[idx] >= self.max_iter):
-                raise ValueError("Integration did not converge within max_iter.")
+            over = idx[niter[idx] >= self.max_iter]     # per system: flag, never abort the batch
+            if over.size:
+                status[over] = -4
+                active[over] = False
+                idx = np.flatnonzero(active)
+                if idx.size == 0:
+                    break
             t_old, h_old, y_old = t[idx].copy(), h[idx].copy(), y[:, idx].copy()
             xT, hT, yT = t_old.copy(), h_old.copy(), y_old.copy()
             flag = dopr.take_step(xT, hT, yT, tmax[idx], a[idx], inds=idx)
@@ -992,10 +1015,14 @@ class BatchedIntegrate:
 
         # final point: the scalar finishing functions on each system's own state
         sc = self._scalar
-        trajectories = []
+        trajectories, spline_t, spline_coeff = [], [], []
         for j in range(S):
-            if status[j] == -3:
-                trajectories.append(traj[j, :step[j]].copy())
+            if status[j] in (-3, -4):
+                out = traj[j, :step[j]].copy()
+                out[:, 4:7] /= massratio[j]              # physical phases, as for every system
+                trajectories.append(out)
+                spline_t.append(tcache[j, :step[j]].copy())
+                spline_coeff.append(spl[j, :max(step[j] - 1, 0)].copy())
                 continue
             sc.trajectory_arr = traj[j].copy()
             sc._integrator_t_cache = tcache[j].copy()
@@ -1011,5 +1038,8 @@ class BatchedIntegrate:
             out = sc.trajectory_arr[: sc.traj_step].copy()
             out[:, 4:7] /= massratio[j]
             trajectories.append(out)
+            spline_t.append(sc._integrator_t_cache[: sc.traj_step].copy())
+            spline_coeff.append(sc.dopr_spline_output[: sc.traj_step - 1].copy())
         return SimpleNamespace(trajectories=trajectories, status=status,
-                               nsteps=np.array([tr.shape[0] for tr in trajectories]))
+                               nsteps=np.array([tr.shape[0] for tr in trajectories]),
+                               spline_t=spline_t, spline_coeff=spline_coeff)
