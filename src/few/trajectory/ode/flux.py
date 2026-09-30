@@ -725,8 +725,13 @@ class KerrEccEqFlux(ODEBase):
         y = np.ascontiguousarray(np.asarray(y, dtype=float))
         S = y.shape[1]
         a_arr = np.ascontiguousarray(np.broadcast_to(np.asarray(a, dtype=float), (S,)))
-        grids = (tricubic_grid(self.pdot_interp_A), tricubic_grid(self.edot_interp_A),
-                 tricubic_grid(self.pdot_interp_B), tricubic_grid(self.edot_interp_B))
+        # multispline's .coefficients copies the full array out of C++ on EVERY access
+        # (268 MB per region-A spline): build the four grids once per instance
+        grids = getattr(self, "_tricubic_grids", None)
+        if grids is None:
+            grids = (tricubic_grid(self.pdot_interp_A), tricubic_grid(self.edot_interp_A),
+                     tricubic_grid(self.pdot_interp_B), tricubic_grid(self.edot_interp_B))
+            self._tricubic_grids = grids
         ydot = np.empty((6, S))
         status = np.zeros(S, dtype=np.int64)
         _kerr_ecc_eq_rhs_batch(y, a_arr, ydot, status, *grids)

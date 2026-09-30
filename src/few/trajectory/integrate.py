@@ -818,3 +818,198 @@ class AELQIntegrate(Integrate):
     def get_pex(self, y):
         p, e, x = ELQ_to_pex(self.a, y[0], y[1], y[2])
         return p, e, x
+
+
+class BatchedIntegrate:
+    """Integrate many EMRI trajectories at once: each DOPR853 step advances every active
+    system, with the right-hand side from ``func.evaluate_rhs_batch`` (no Python loop over
+    systems inside a step). The CPU reference of the device-resident integrator.
+
+    Per system it follows :class:`Integrate` exactly: the same initial step tuning,
+    controller, retry-and-halve rules, separatrix-buffer stop and final-point placement.
+    The final point is placed by a scalar :class:`Integrate` loaded with that system's state
+    (once per system), so the result is bit-comparable with the scalar path.
+
+    Scope: forward integration, pex variables (``use_ELQ=False``), adaptive stepping.
+    A fresh DOPR853 is used per :meth:`run` (the scalar DOPR853 keeps controller state
+    across trajectories; compare against a fresh scalar integrator).
+    """
+
+    def __init__(self, func="KerrEccEqFlux", err: float = 1e-11, buffer_length: int = 1000,
+                 max_step_size: Optional[float] = None, max_iter: Optional[int] = None, **kwargs):
+        kwargs.setdefault("force_backend", "cpu")
+        self._scalar = get_integrator(func, integrate_constants_of_motion=False,
+                                      buffer_length=buffer_length, **kwargs)
+        self.func = self._scalar.func
+        if not hasattr(self.func, "evaluate_rhs_batch"):
+            raise NotImplementedError(f"{type(self.func).__name__} has no evaluate_rhs_batch")
+        self.err = err
+        self.buffer_length = int(buffer_length)
+        self.max_step_size = np.inf if max_step_size is None else float(max_step_size)
+        self.max_iter = self.buffer_length if max_iter is None else int(max_iter)
+
+    # --- RHS through the batched ODE ----------------------------------------------------------
+    def _ode(self, t, y, ydot, a_sub):
+        out, _status = self.func.evaluate_rhs_batch(y, a_sub)
+        ydot[:] = out
+        return ydot
+
+    def _rhs(self, y, a):
+        return self.func.evaluate_rhs_batch(y, a)
+
+    def _tune_initial_step(self, y0, a, tmax, h_max):
+        """Vectorised copy of :meth:`Integrate.tune_initial_step_size` (t0 = 0)."""
+        n = y0.shape[0]
+        scale = self.err
+        f0, _ = self._rhs(y0, a)
+        d0 = np.linalg.norm(y0 / scale, axis=0) / n ** 0.5
+        d1 = np.linalg.norm(f0 / scale, axis=0) / n ** 0.5
+        with np.errstate(divide="ignore", invalid="ignore"):
+            h0 = np.where((d0 < 1e-5) | (d1 < 1e-5), 1e-6, 0.01 * d0 / d1)
+        h0 = np.minimum(h0, tmax)
+        f1, st = self._rhs(y0 + h0 * f0, a)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            d2 = np.linalg.norm((f1 - f0) / scale, axis=0) / h0 / n ** 0.5
+            h1 = np.where((d1 <= 1e-15) & (d2 <= 1e-15), np.maximum(1e-6, h0 * 1e-3),
+                          (0.01 / np.maximum(d1, d2)) ** (1 / 8))
+        h = np.minimum.reduce([100 * h0, h1, tmax, h_max])
+        return np.where(st != 0, h0, h)      # scalar: an off-bounds f1 returns h0
+
+    def run(self, m1, m2, a, y0, T: float = 1.0, dt: float = 10.0):
+        """Integrate ``S`` systems. ``y0`` is ``(6, S)`` pex + phases (physical phases).
+
+        Returns a namespace with ``trajectories`` (list of ``(n_j, 7)``: t [s], p, e, x,
+        Phi_phi, Phi_theta, Phi_r, as :attr:`Integrate.trajectory` after
+        :meth:`Integrate.run_inspiral`), ``status`` (-1 separatrix buffer, -2 tmax,
+        -3 failed) and ``nsteps``.
+        """
+        from types import SimpleNamespace
+
+        m1, m2, a = (np.atleast_1d(np.asarray(v, dtype=float)) for v in (m1, m2, a))
+        y0 = np.array(y0, dtype=float, copy=True)
+        nparams, S = y0.shape
+        M = m1 + m2
+        massratio = m1 * m2 / M ** 2
+        tmax = T * YRSID_SI / (M * MTSUN_SI) * massratio
+        dt_dimless = dt / (M * MTSUN_SI) * massratio
+        Msec = MTSUN_SI * M / massratio
+        sep_buffer = self.func.separatrix_buffer_dist
+        y = y0.copy()
+        y[3:6] *= massratio                            # integrated phases carry the mass ratio
+
+        dopr = DOPR853(self._ode, stopping_criterion=None, tmax=1e9, max_step=1e6)
+        dopr.abstol = self.err
+        dopr.fix_step = False
+
+        buf = self.buffer_length
+        traj = np.zeros((S, buf, nparams + 1))
+        tcache = np.zeros((S, buf))
+        spl = np.zeros((S, buf, nparams, 8))
+        step = np.zeros(S, dtype=int)
+        status = np.zeros(S, dtype=int)
+        bad = np.zeros(S, dtype=int)
+        niter = np.zeros(S, dtype=int)
+
+        def save(j, tj, yj, spline_j=None):
+            nonlocal traj, tcache, spl, buf
+            if step[j] >= buf - 1:
+                grow = 100
+                traj = np.concatenate([traj, np.zeros((S, grow, nparams + 1))], axis=1)
+                tcache = np.concatenate([tcache, np.zeros((S, grow))], axis=1)
+                spl = np.concatenate([spl, np.zeros((S, grow, nparams, 8))], axis=1)
+                buf += grow
+            traj[j, step[j], 0] = tj
+            traj[j, step[j], 1:] = yj
+            if spline_j is not None:
+                tcache[j, step[j]] = tj
+                spl[j, step[j] - 1] = spline_j
+            step[j] += 1
+
+        t = np.zeros(S)
+        h = self._tune_initial_step(y, a, tmax, np.minimum(self.max_step_size, tmax / 10))
+        t_prev, y_prev = t.copy(), y.copy()
+        for j in range(S):
+            save(j, 0.0, y[:, j])
+            tcache[j, 0] = 0.0
+
+        active = np.ones(S, dtype=bool)
+        while np.any(active):
+            idx = np.flatnonzero(active)
+            if np.any(niter[idx] >= self.max_iter):
+                raise ValueError("Integration did not converge within max_iter.")
+            t_old, h_old, y_old = t[idx].copy(), h[idx].copy(), y[:, idx].copy()
+            xT, hT, yT = t_old.copy(), h_old.copy(), y_old.copy()
+            flag = dopr.take_step(xT, hT, yT, tmax[idx], a[idx], inds=idx)
+            yT = np.asarray(yT).reshape(nparams, idx.size)
+
+            # scalar order of checks (Integrate.integrate)
+            nan_h = np.isnan(hT)
+            big_h = ~nan_h & (hT > self.max_step_size)
+            nan_y = ~nan_h & ~big_h & np.any(np.isnan(yT), axis=0)
+            retry = nan_h | big_h | nan_y
+            hT = np.where(nan_h | big_h, h_old / 2, np.where(nan_y, hT / 2, hT))
+            xT = np.where(retry, t_prev[idx], xT)
+            yT[:, retry] = y_prev[:, idx][:, retry]
+            bad[idx[retry]] += 1
+            failed = ~retry & ~flag
+            bad[idx[failed]] += 1
+            if np.any(bad[idx] >= 100):
+                status[idx[bad[idx] >= 100]] = -3
+                active[idx[bad[idx] >= 100]] = False
+
+            ok = ~retry & flag
+            t[idx], h[idx], y[:, idx] = xT, hT, yT
+            if not np.any(ok):
+                continue
+            oi = idx[ok]
+            # prep_evaluate reuses the stage coefficients of EVERY column of this take_step:
+            # evaluate on all of them, keep the successful ones
+            with np.errstate(invalid="ignore", over="ignore"):
+                spline_all = dopr.prep_evaluate(t_old, y_old, h_old, t[idx], y[:, idx].copy(), a[idx])
+            spline_info = np.asarray(spline_all)[ok]
+            bad[oi] = 0
+            p, e, x = y[0, oi], y[1, oi], y[2, oi]
+            p_sep = np.array([get_separatrix(float(aj), float(ej), float(xj)) for aj, ej, xj in zip(a[oi], e, x)])
+            stop = (p - p_sep) < sep_buffer
+            for k, j in enumerate(oi):
+                if stop[k]:
+                    spl[j, step[j] - 1] = spline_info[k]
+                    tcache[j, step[j]] = t[j] * Msec[j]
+                    y[:, j] = y_prev[:, j]
+                    t[j] = t_prev[j]
+                    status[j] = -1
+                    active[j] = False
+                elif t[j] > tmax[j]:
+                    spl[j, step[j] - 1] = spline_info[k]
+                    tcache[j, step[j]] = t[j] * Msec[j]
+                    status[j] = -2
+                    active[j] = False
+                else:
+                    save(j, t[j] * Msec[j], y[:, j], spline_info[k])
+                    t_prev[j] = t[j]
+                    y_prev[:, j] = y[:, j]
+                    niter[j] += 1
+
+        # final point: the scalar finishing functions on each system's own state
+        sc = self._scalar
+        trajectories = []
+        for j in range(S):
+            if status[j] == -3:
+                trajectories.append(traj[j, :step[j]].copy())
+                continue
+            sc.trajectory_arr = traj[j].copy()
+            sc._integrator_t_cache = tcache[j].copy()
+            sc.dopr_spline_output = spl[j].copy()
+            sc.traj_step = int(step[j])
+            sc.buffer_length = traj.shape[1]
+            sc.tmax_dimensionless, sc.Msec, sc.massratio, sc.a = tmax[j], Msec[j], massratio[j], a[j]
+            sc.integrate_backwards = False
+            sc.generating_trajectory = True
+            sc.dopr.fix_step = False
+            sc.func.add_fixed_parameters(m1[j], m2[j], a[j])
+            sc.finishing_function(t[j], y[:, j].copy())
+            out = sc.trajectory_arr[: sc.traj_step].copy()
+            out[:, 4:7] /= massratio[j]
+            trajectories.append(out)
+        return SimpleNamespace(trajectories=trajectories, status=status,
+                               nsteps=np.array([tr.shape[0] for tr in trajectories]))
