@@ -727,3 +727,65 @@ def pointer_adjust(func):
         return func(*targs, **tkwargs)
 
     return func_wrapper
+
+
+def brentq_array(f, a, b, args, tol, maxiter=200):
+    """Vectorised bracketed root-finder: one root per element of ``a``/``b``.
+
+    Anderson-Bjorck regula falsi with a bisection safeguard, run on the whole batch with
+    per-element convergence masks (the batched counterpart of the scalar
+    :func:`_brentq_jit` / ``scipy.optimize.brentq`` calls in the trajectory).
+
+    Args:
+        f: ``f(x_array, args) -> array``, evaluated elementwise.
+        a, b: bracket arrays with ``f(a) * f(b) <= 0`` elementwise.
+        args: passed through to ``f`` (e.g. per-element parameters).
+        tol: absolute x tolerance (plus 4 machine epsilons of |x|).
+    Raises:
+        ValueError: an element has no sign change, or the iteration does not converge.
+    """
+    eps = 2.220446049250313e-16
+    a = np.array(a, dtype=float, copy=True)
+    b = np.array(b, dtype=float, copy=True)
+    fa = np.asarray(f(a, args), dtype=float).copy()
+    fb = np.asarray(f(b, args), dtype=float).copy()
+    if np.any(fa * fb > 0.0):
+        raise ValueError("brentq_array: f(a) and f(b) must have different signs for every element.")
+    out = np.where(fa == 0.0, a, np.where(fb == 0.0, b, np.nan))
+    done = (fa == 0.0) | (fb == 0.0)
+    side = np.zeros(a.shape, dtype=int)            # which end was kept last (-1 a, +1 b)
+    for _ in range(maxiter):
+        if np.all(done):
+            return out
+        live = ~done
+        # regula falsi point, bisection where it would be degenerate or outside
+        with np.errstate(divide="ignore", invalid="ignore"):
+            c = (a * fb - b * fa) / (fb - fa)
+        bad = ~np.isfinite(c) | (c <= np.minimum(a, b)) | (c >= np.maximum(a, b))
+        c = np.where(bad, 0.5 * (a + b), c)
+        fc = np.asarray(f(c, args), dtype=float)
+        root = live & (fc == 0.0)
+        out[root] = c[root]
+        done |= root
+        live = ~done
+        left = live & (fa * fc < 0.0)              # root in [a, c]: move b
+        right = live & ~left                       # root in [c, b]: move a
+        # Anderson-Bjorck: scale the retained end's value when the same end is kept twice
+        with np.errstate(divide="ignore", invalid="ignore"):
+            m_ab = 1.0 - fc / fb
+            m_aa = 1.0 - fc / fa
+        m_ab = np.where(m_ab > 0.0, m_ab, 0.5)
+        m_aa = np.where(m_aa > 0.0, m_aa, 0.5)
+        fa = np.where(left & (side == -1), fa * m_ab, fa)
+        fb = np.where(right & (side == 1), fb * m_aa, fb)
+        b = np.where(left, c, b)
+        fb = np.where(left, fc, fb)
+        a = np.where(right, c, a)
+        fa = np.where(right, fc, fa)
+        side = np.where(left, -1, np.where(right, 1, side))
+        conv = live & (np.abs(b - a) <= tol + 4 * eps * np.abs(c))
+        out[conv] = c[conv]
+        done |= conv
+    if not np.all(done):
+        raise ValueError("brentq_array: maximum iterations exceeded.")
+    return out

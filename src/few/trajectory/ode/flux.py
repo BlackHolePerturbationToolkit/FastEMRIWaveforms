@@ -10,6 +10,7 @@ from ...utils.exceptions import TrajectoryOffGridException
 from ...utils.geodesic import (
     ELQ_to_pex,
     _get_separatrix_kernel_inner,
+    _KerrGeoCoordinateFrequencies_kernel_inner,
     get_fundamental_frequencies,
     get_separatrix,
 )
@@ -708,6 +709,31 @@ class KerrEccEqFlux(ODEBase):
 
         return [Edot, Ldot, 0.0, Omega_phi, Omega_theta, Omega_r]
 
+    def evaluate_rhs_batch(self, y: np.ndarray, a) -> tuple:
+        """Batched right-hand side over ``S`` systems (the CPU reference of the device RHS).
+
+        Args:
+            y: ``(6, S)`` states ``(p, e, x, Phi_phi, Phi_theta, Phi_r)`` (pex only).
+            a: spin, scalar or ``(S,)`` (one per system).
+        Returns:
+            ``(ydot (6, S), status (S,))`` with status 0 ok, 1 ``e < 0``, 2 inside the
+            separatrix, 3 off the flux grid; non-zero-status columns are NaN. Equals the
+            scalar ``__call__`` column by column (no exceptions, no Python per-system loop).
+        """
+        if self.use_ELQ or self.flux_output_convention != "pex":
+            raise NotImplementedError("evaluate_rhs_batch: pex convention only")
+        y = np.ascontiguousarray(np.asarray(y, dtype=float))
+        S = y.shape[1]
+        a_arr = np.ascontiguousarray(np.broadcast_to(np.asarray(a, dtype=float), (S,)))
+        grids = (tricubic_grid(self.pdot_interp_A), tricubic_grid(self.edot_interp_A),
+                 tricubic_grid(self.pdot_interp_B), tricubic_grid(self.edot_interp_B))
+        ydot = np.empty((6, S))
+        status = np.zeros(S, dtype=np.int64)
+        _kerr_ecc_eq_rhs_batch(y, a_arr, ydot, status, *grids)
+        if self.integrate_backwards:
+            ydot *= -1.0
+        return ydot, status
+
 
 @njit
 def _pdot_PN(p, e, risco, p_sep):
@@ -802,3 +828,103 @@ class KerrEccEqFluxLegacy(ODEBase):
         pdot, edot = self.interpolate_flux_grids(p, e, x)
 
         return [pdot, edot, 0.0, Omega_phi, Omega_theta, Omega_r]
+
+
+
+# ----------------------------------------------------------------------
+# Batched (numSys) pieces: numba CPU reference of the device kernels
+# ----------------------------------------------------------------------
+
+def tricubic_grid(spline):
+    """``(coeffs, x0, dx, nx, y0, dy, ny, z0, dz, nz)`` of a multispline ``TricubicSpline``.
+
+    ``coeffs`` has shape ``(nx, ny, 64 * nz)`` (cells); cell ``(i, j, k)`` holds the 64
+    monomial coefficients of the local normalised coordinates at ``64 k + 16 mx + 4 my + mz``
+    (verified against ``TricubicSpline.__call__`` to 1.5e-15).
+    """
+    C = np.asarray(spline.coefficients)
+    return (C, float(spline.x0), float(spline.dx), int(C.shape[0]),
+            float(spline.y0), float(spline.dy), int(C.shape[1]),
+            float(spline.z0), float(spline.dz), int(C.shape[2] // 64))
+
+
+@njit(fastmath=False)
+def _tricubic_one(C, x0, dx, nx, y0, dy, ny, z0, dz, nz, x, y, z):
+    fx = (x - x0) / dx
+    fy = (y - y0) / dy
+    fz = (z - z0) / dz
+    i = min(max(int(np.floor(fx)), 0), nx - 1)
+    j = min(max(int(np.floor(fy)), 0), ny - 1)
+    k = min(max(int(np.floor(fz)), 0), nz - 1)
+    tx, ty, tz = fx - i, fy - j, fz - k
+    base = 64 * k
+    out = 0.0
+    txp = 1.0
+    for mx in range(4):
+        typ = 1.0
+        for my in range(4):
+            tzp = 1.0
+            acc = 0.0
+            for mz in range(4):
+                acc += C[i, j, base + 16 * mx + 4 * my + mz] * tzp
+                tzp *= tz
+            out += acc * txp * typ
+            typ *= ty
+        txp *= tx
+    return out
+
+
+@njit(fastmath=False)
+def _tricubic_batch(C, x0, dx, nx, y0, dy, ny, z0, dz, nz, xs, ys, zs, out):
+    for q in range(xs.shape[0]):
+        out[q] = _tricubic_one(C, x0, dx, nx, y0, dy, ny, z0, dz, nz, xs[q], ys[q], zs[q])
+
+
+def tricubic_eval_batch(grid, x, y, z):
+    """Evaluate a :func:`tricubic_grid` at arrays of points (numba, no Python loop)."""
+    x = np.ascontiguousarray(np.asarray(x, dtype=float))
+    out = np.empty(x.shape[0])
+    _tricubic_batch(*grid, x, np.ascontiguousarray(np.asarray(y, dtype=float)),
+                    np.ascontiguousarray(np.asarray(z, dtype=float)), out)
+    return out
+
+
+@njit(fastmath=False)
+def _kerr_ecc_eq_rhs_batch(y, a_arr, ydot, status,
+                           gpa, gea, gpb, geb):
+    edge_buffer = -1e-8
+    for s in range(y.shape[1]):
+        p, e, x = y[0, s], y[1, s], y[2, s]
+        a = a_arr[s]
+        if not (e >= 0.0):
+            status[s] = 1
+            ydot[:, s] = np.nan
+            continue
+        p_sep = _get_separatrix_kernel_inner(a, e, x, 1e-13)
+        if not (p > p_sep):
+            status[s] = 2
+            ydot[:, s] = np.nan
+            continue
+        Om_phi, Om_theta, Om_r = _KerrGeoCoordinateFrequencies_kernel_inner(a, p, e, x)
+        a_in = -a if x == -1 else a
+        u, w, _yy, z, in_region_A = _kerrecceq_flux_forward_map(a_in, p, e, 1.0, p_sep)
+        if (u < edge_buffer or u > 1 - edge_buffer or np.isnan(u) or w < edge_buffer
+                or w > 1 - edge_buffer or z < edge_buffer or z > 1 - edge_buffer):
+            status[s] = 3
+            ydot[:, s] = np.nan
+            continue
+        risco = _get_separatrix_kernel_inner(a_in, 0.0, 1.0, 1e-13)
+        pdotPN = _pdot_PN(p, e, risco, p_sep)
+        edotPN = _edot_PN(p, e, risco, p_sep)
+        if in_region_A:
+            pdot = -_tricubic_one(gpa[0], gpa[1], gpa[2], gpa[3], gpa[4], gpa[5], gpa[6], gpa[7], gpa[8], gpa[9], u, w, z) * pdotPN
+            edot = -_tricubic_one(gea[0], gea[1], gea[2], gea[3], gea[4], gea[5], gea[6], gea[7], gea[8], gea[9], u, w, z) * edotPN
+        else:
+            pdot = -_tricubic_one(gpb[0], gpb[1], gpb[2], gpb[3], gpb[4], gpb[5], gpb[6], gpb[7], gpb[8], gpb[9], u, w, z) * pdotPN
+            edot = -_tricubic_one(geb[0], geb[1], geb[2], geb[3], geb[4], geb[5], geb[6], geb[7], geb[8], geb[9], u, w, z) * edotPN
+        ydot[0, s] = pdot
+        ydot[1, s] = edot
+        ydot[2, s] = 0.0
+        ydot[3, s] = Om_phi
+        ydot[4, s] = Om_theta
+        ydot[5, s] = Om_r
