@@ -115,13 +115,17 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
         """
         # "1PAdeltam" is not a spline key. 
         # Instead the coefficient of deltaM in the 1PA amplitudes is computed from the 0PA amplitudes
-        # using Eq. (120) of 2510.16113 and applying the same reasoning as below Eq. (89) 
+        # using Eq. (120) of 2510.16113 and applying the same reasoning as below Eq. (89). 
+        # Corrected by Eq. (5.1) of the technical document. 
         if data_key == "1PAdeltam":
+            A = self._amplitudes_single_piece(
+                p, data_key="0PA", mode_indices=mode_indices, conj_mode_mask=conj_mode_mask
+            )
             dA_dp = self._amplitudes_single_piece(
                 p, data_key="0PA", mode_indices=mode_indices, conj_mode_mask=conj_mode_mask, deriv_order=1
             )
             chainrule = 1.0 / (self.r_max["0PA"] - self.r_min["0PA"])
-            return -(2./3. * chainrule * self.xp.reshape(p, (-1, 1))) * dA_dp
+            return -(2./3. * chainrule * self.xp.reshape(p, (-1, 1))) * dA_dp - A
 
         if self.xp.any(p > self.r_max[data_key]) or self.xp.any(p < self.r_min[data_key]):
             raise ValueError(f"(AmplitudeCirc1PAT1R) Some values of p lie outside the amplitude data range [{self.r_min[data_key]}, {self.r_max[data_key]}] for the {data_key} piece")
@@ -146,7 +150,7 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
 
         This method evaluates the 1D cubic spline interpolant for a specific piece
         of the post-adiabatic expansion (identified by data_key). The 1PAdeltam piece
-        is computed from the derivative of the 0PA piece. Note the 0PA piece will
+        is computed from the 0PA piece and its first derivative. Note the 0PA piece will
         differ from the complete waveform amplitude even if zero_PA_amps_only is True,
         since the odd azimuthal modes are resummed in the complete amplitude.
 
