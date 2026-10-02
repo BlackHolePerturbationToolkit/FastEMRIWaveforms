@@ -124,6 +124,10 @@ class TrajectoryBase(Citable, abc.ABC):
 
         # m1, m2 must be the first arguments
         m1, m2 = args[:2]
+        # validate masses before any arithmetic so invalid inputs raise a clear
+        # ValueError rather than a ZeroDivisionError from the mass-ratio below
+        self.func.isvalid_m1(m1)
+        self.func.isvalid_m2(m2)
         mu = m1 * m2 / (m1 + m2)
         M = m1 + m2
         Msec = M * MTSUN_SI

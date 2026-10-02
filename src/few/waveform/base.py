@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Generic, Optional, TypeVar, Union
 
 import numpy as np
@@ -89,7 +90,9 @@ class SphericalHarmonicWaveformBase(
     ):
         ParallelModuleBase.__init__(self, force_backend=force_backend)
 
-        self.inspiral_kwargs = {} if inspiral_kwargs is None else inspiral_kwargs
+        self.inspiral_kwargs = (
+            {} if inspiral_kwargs is None else deepcopy(inspiral_kwargs)
+        )
         self.inspiral_generator = inspiral_module(
             **self.inspiral_kwargs
         )  # The inspiral generator does not rely on backend adjustement
@@ -142,14 +145,17 @@ class SphericalHarmonicWaveformBase(
             m1: Mass of larger black hole in solar masses.
             m2: Mass of compact object in solar masses.
             a: Dimensionless spin parameter of larger black hole.
-            p0: Initial (osculating) semilatus rectum of inspiral trajectory.
-            e0: Initial (osculating) eccentricity of inspiral trajectory.
+            p0: Initial semilatus rectum of inspiral trajectory.
+            e0: Initial eccentricity of inspiral trajectory.
+            xI0: Initial inclination parameter of inspiral trajectory.
             theta: Polar viewing angle in radians (:math:`-\pi/2\leq\Theta\leq\pi/2`).
             phi: Azimuthal viewing angle in radians.
             *args: extra args for trajectory model.
             dist: Luminosity distance in Gpc. Default is None. If None,
                 will return source frame.
             Phi_phi0: Initial phase for :math:`\Phi_\phi`.
+                Default is 0.0.
+            Phi_theta0: Initial phase for :math:`\Phi_\Theta`.
                 Default is 0.0.
             Phi_r0: Initial phase for :math:`\Phi_r`.
                 Default is 0.0.
@@ -224,7 +230,7 @@ class SphericalHarmonicWaveformBase(
             "err", 1e-11
         )  # Will only set default if "err" is not supplied
 
-        (t, p, e, xI, Phi_phi, Phi_theta, Phi_r) = self.inspiral_generator(
+        t, p, e, xI, Phi_phi, Phi_theta, Phi_r, *add_inspiral_args = self.inspiral_generator(
             m1,
             m2,
             a,
@@ -252,6 +258,12 @@ class SphericalHarmonicWaveformBase(
         Phi_phi = self.xp.asarray(Phi_phi)
         Phi_theta = self.xp.asarray(Phi_theta)
         Phi_r = self.xp.asarray(Phi_r)
+        add_inspiral_args= self.xp.asarray(add_inspiral_args)
+
+        if self.xp.isnan(p).any() or self.xp.isnan(e).any() or self.xp.isnan(xI).any():
+            raise ValueError(
+                "Trajectory contains NaN values. Please check the input parameters."
+            )
 
         # split into batches
         if batch_size == -1 or self.allow_batching is False:
@@ -284,11 +296,14 @@ class SphericalHarmonicWaveformBase(
             Phi_phi_temp = Phi_phi[inds_in]
             Phi_theta_temp = Phi_theta[inds_in]
             Phi_r_temp = Phi_r[inds_in]
+            add_inspiral_args_temp = self.xp.array([add_inspiral_arg[inds_in] for add_inspiral_arg in add_inspiral_args])
 
             # get frequencies to pass to mode selection
             # TODO: write a method that just returns the derivatives at each spline knot (vectorises easier).
             if self.mode_selector.mode_selection != "all":
-                freqs = self.inspiral_generator.inspiral_generator.eval_integrator_derivative_spline(t_temp, order=1)[:,3:6] / 2 / np.pi
+                freqs = self.inspiral_generator.inspiral_generator.eval_integrator_derivative_spline(
+                    self.xp.asnumpy(t_temp) if hasattr(self.xp, "asnumpy") else t_temp, order=1
+                )[:,3:6] / 2 / np.pi
 
                 online_mode_selection_args = dict(
                     f_phi = freqs[:,0],
@@ -300,26 +315,60 @@ class SphericalHarmonicWaveformBase(
                 online_mode_selection_args = None
 
             # get amplitudes that have been selected / sorted to user requirements
-            (
-                teuk_modes_in,
-                ylms_in,
-                self.ls,
-                self.ms,
-                self.ks,
-                self.ns,
-            ) = self.mode_selector(
-                t_temp,
-                a,
-                p_temp,
-                e_temp,
-                xI_temp,
-                theta,
-                phi,
-                online_mode_selection_args=online_mode_selection_args,
-                mode_selection=mode_selection,
-                include_minus_mkn=include_minus_mkn,
-                mode_selection_threshold=mode_selection_threshold,
-            )
+            from ..trajectory.ode.circ1pat1r import TrajectoryCirc1PAT1R
+            if isinstance(self.inspiral_generator.func, TrajectoryCirc1PAT1R):
+                deltaM, delta_chit1 = add_inspiral_args
+                nu = self.inspiral_generator.func.args['nu']
+                chi2 = self.inspiral_generator.func.args['chi2']
+                add_amp_args = [nu, chi2, delta_chit1, deltaM]
+                (
+                    teuk_modes_in,
+                    ylms_in,
+                    self.ls,
+                    self.ms,
+                    self.ks,
+                    self.ns,
+                ) = self.mode_selector(
+                    t_temp,
+                    a,
+                    p_temp,
+                    e_temp,
+                    xI_temp,
+                    theta,
+                    phi,
+                    *add_amp_args,
+                    online_mode_selection_args=online_mode_selection_args,
+                    mode_selection=mode_selection,
+                    include_minus_mkn=include_minus_mkn,
+                    mode_selection_threshold=mode_selection_threshold,
+                )
+            else:
+                (
+                    teuk_modes_in,
+                    ylms_in,
+                    self.ls,
+                    self.ms,
+                    self.ks,
+                    self.ns,
+                ) = self.mode_selector(
+                    t_temp,
+                    a,
+                    p_temp,
+                    e_temp,
+                    xI_temp,
+                    theta,
+                    phi,
+                    *add_inspiral_args_temp,
+                    online_mode_selection_args=online_mode_selection_args,
+                    mode_selection=mode_selection,
+                    include_minus_mkn=include_minus_mkn,
+                    mode_selection_threshold=mode_selection_threshold,
+                )
+
+            if self.xp.isnan(teuk_modes_in).any():
+                raise ValueError(
+                    "Amplitudes contain NaN values. Please check the input parameters."
+                )
             # store number of modes for external information
             self.num_modes_kept = teuk_modes_in.shape[1]
 
@@ -330,30 +379,17 @@ class SphericalHarmonicWaveformBase(
                     self.inspiral_generator.integrator_spline_phase_coeff
                 )
 
-                # flip azimuthal phase for retrograde inspirals
-                if a > 0:
-                    phase_information_in[:, 0] *= self.xp.sign(xI0)
-
-                if self.inspiral_generator.integrate_backwards:
-                    phase_information_in[:, :, 0] += self.xp.array(
-                        [Phi_phi[-1] + Phi_phi[0], Phi_theta[-1] + Phi_theta[0], Phi_r[-1] + Phi_r[0]]
-                    )
-
                 phase_t_in = self.inspiral_generator.integrator_spline_t
             else:
                 phase_information_in = self.xp.asarray(
                     [Phi_phi_temp, Phi_theta_temp, Phi_r_temp]
                 )
-                if self.inspiral_generator.integrate_backwards:
-                    phase_information_in[0] += self.xp.array([Phi_phi[-1] + Phi_phi[0]])
-                    phase_information_in[1] += self.xp.array([Phi_theta[-1] + Phi_theta[0]])
-                    phase_information_in[2] += self.xp.array([Phi_r[-1] + Phi_r[0]])
-
-                # flip azimuthal phase for retrograde inspirals
-                if a > 0:
-                    phase_information_in[0] *= self.xp.sign(xI0)
 
                 phase_t_in = None
+
+            # flip azimuthal phase for retrograde inspirals
+            if a > 0:
+                phase_information_in[0] *= self.xp.sign(xI0)
 
             # create waveform
             waveform_temp = self.create_waveform(
@@ -376,6 +412,11 @@ class SphericalHarmonicWaveformBase(
                 integrate_backwards=self.inspiral_generator.integrate_backwards,
                 **kwargs,
             )
+
+            if self.xp.isnan(waveform_temp).any():
+                raise ValueError(
+                    "Generated waveform contains NaN values. Please check the input parameters."
+                )
 
             # if batching, need to add the waveform
             if i > 0:
@@ -616,15 +657,6 @@ class AAKWaveformBase(Pn5AAK, ParallelModuleBase, Generic[InspiralModule, SumMod
         # scale coefficients here by the (symmetric) mass ratio
         traj_spline_coeff_in = traj_spline_coeff.copy()
         traj_spline_coeff_in[:, 3:, :] /= mu / M
-
-        if self.inspiral_generator.integrate_backwards:
-            traj_spline_coeff_in[:, 3:, 0] += self.xp.array(
-                [
-                    Phi_phi[-1] + Phi_phi[0],
-                    Phi_theta[-1] + Phi_theta[0],
-                    Phi_r[-1] + Phi_r[0],
-                ]
-            )
 
         # TODO: Check that the mass conventions here are consistent with adiabatic model
         waveform = self.create_waveform(

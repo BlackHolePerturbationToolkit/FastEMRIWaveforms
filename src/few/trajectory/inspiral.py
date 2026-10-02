@@ -13,6 +13,7 @@ from ..utils.geodesic import (
 )
 from ..utils.globals import get_logger
 from ..utils.mappings.pn import Y_to_xI
+from ..utils.constants import YRSID_SI
 
 # Python imports
 from .base import TrajectoryBase
@@ -227,6 +228,17 @@ class EMRIInspiral(TrajectoryBase):
         temp_kwargs = {key: kwargs[key] for key in self.specific_kwarg_keys}
         args_in = np.asarray(args)
 
+        # ensure the user supplied every additional argument this model requires,
+        # before the padding below can silently default a missing value to zero
+        required = self.func.required_add_args
+        if len(args_in) < len(required):
+            missing = "', '".join(required)
+            raise ValueError(
+                f"{type(self.func).__name__} requires the additional argument(s) "
+                f"'{missing}' to be passed, but only {len(args_in)} additional "
+                f"argument(s) were received."
+            )
+
         # correct for issue in Cython pass
         if len(args_in) == 0:
             args_in = np.array([0.0])
@@ -274,12 +286,6 @@ class EMRIInspiral(TrajectoryBase):
                 x0 = Y_to_xI(a, p0, e0, x0)
             y1, y2, y3 = get_kerr_geo_constants_of_motion(a, p0, e0, x0)
 
-        # flip initial phases if integrating backwards
-        if temp_kwargs["integrate_backwards"]:
-            Phi_phi0 = -1 * Phi_phi0
-            Phi_theta0 = -1 * Phi_theta0
-            Phi_r0 = -1 * Phi_r0
-
         mu = m1 * m2 / (m1 + m2)
         M = m1 + m2
 
@@ -287,10 +293,26 @@ class EMRIInspiral(TrajectoryBase):
             [y1, y2, y3, Phi_phi0 * (mu / M), Phi_theta0 * (mu / M), Phi_r0 * (mu / M)]
         )
 
+        # Add deltaM and deltaChit1 to the initial conditions for the 1PAT1R model
+        if self.func.nparams > len(y0):
+            pad_len = self.func.nparams - len(y0)
+            y0 = np.pad(y0, (0, pad_len), mode='constant')
+
         # this will return in coordinate time
         out = self.inspiral_generator.run_inspiral(
             m1, m2, a, y0, args_in, **temp_kwargs
         )
+
+        # if there are less than 8 points, the cubic spline interpolation will fail,
+        # when generating the waveform. Therefore, we rerun the inspiral with the duration
+        # shortened to the duration of the initial run. The integrator sets the max step size
+        # to be about 1/10th of the total duration, so this should give us at least 8 points.
+        if len(out) < 8:
+            T = out[-1, 0] / YRSID_SI # set duration to the duration of the initial run
+            temp_kwargs["T"] = T
+            out = self.inspiral_generator.run_inspiral(
+                        m1, m2, a, y0, args_in, **temp_kwargs
+            )
         if self.integrate_constants_of_motion and self.convert_to_pex:
             out_ELQ = out.copy()
             pex = ELQ_to_pex(a, out[:, 1].copy(), out[:, 2].copy(), out[:, 3].copy())
@@ -301,8 +323,8 @@ class EMRIInspiral(TrajectoryBase):
             else:
                 out[:, 3] = pex[2]
 
-        t, p, e, x, Phi_phi, Phi_theta, Phi_r = out.T.copy()
-        return t, p, e, x, Phi_phi, Phi_theta, Phi_r
+        out_T = out.T.copy()
+        return tuple(out_T)
 
     def get_rhs_ode(
         self,
@@ -384,6 +406,10 @@ class EMRIInspiral(TrajectoryBase):
             y1, y2, y3 = get_kerr_geo_constants_of_motion(a, p0, e0, x0)
 
         y0 = np.array([y1, y2, y3, Phi_phi0, Phi_theta0, Phi_r0])
+
+        if self.func.nparams > len(y0):
+            pad_len = self.func.nparams - len(y0)
+            y0 = np.pad(y0, (0, pad_len), mode='constant')
 
         y0_and_args = np.concatenate(([y0], args))
         out = self.inspiral_generator.func(y0_and_args)

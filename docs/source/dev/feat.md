@@ -92,12 +92,12 @@ You may also query the citations directly on an instance of your class:
 ## Implement access to a file
 
 The FastEMRIWaveforms contain a [File Manager](few.files.FileManager) utility to simplify access to
-files in a way configurable through [configuration options](../user/cfg.md#file-manager).
+files in a way configurable through [configuration options](file-manager).
 
 This file manager should be used to:
 
 - Read a downloadable file
-- Obtain the path to a write-only file (which should be located in the [storage directory](../user/cfg.md#file-storage-path))
+- Obtain the path to a write-only file (which should be located in the [storage directory](file-storage-path))
 
 ### Declare a new downloadable file
 

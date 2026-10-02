@@ -80,6 +80,11 @@ class AmplitudeBase(ParallelModuleBase):
             m_mode_sign = 1
 
         if specific_modes is not None: # if the user has specified modes
+            if not isinstance(specific_modes, list) and not isinstance(specific_modes, self.xp.ndarray):
+                raise TypeError(
+                    f"Expected specific_modes to be a list or an array, got {type(specific_modes)}"
+                )
+
             self.num_modes_eval = len(specific_modes)
             if isinstance(specific_modes, self.xp.ndarray):
                 mode_indexes = specific_modes.copy()

@@ -10,6 +10,7 @@ from .waveform import (
     GenerateEMRIWaveform,
     Pn5AAKWaveform,
     SlowSchwarzschildEccentricFlux,
+    Circ1PAT1R,
 )
 
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "FastSchwarzschildEccentricFluxBicubic",
     "SlowSchwarzschildEccentricFlux",
     "Pn5AAKWaveform",
+    "Circ1PAT1R",
 ]

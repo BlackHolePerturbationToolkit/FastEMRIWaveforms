@@ -269,8 +269,8 @@ def get_at_t(
         """
         inputs = inj_args.copy()
         inputs.insert(ind_interest, val)
-        traj_kwargs["T"] = t_out * 2.0
-        out = traj(*inputs, **traj_kwargs)
+        _kwargs = {**traj_kwargs, "T": t_out * 2.0}  # avoid mutating traj_kwargs in place
+        out = traj(*inputs, **_kwargs)
         try:
             return out[0][-1] - t_out * YRSID_SI
         except IndexError:  # trajectory must have started at p_sep
@@ -387,10 +387,9 @@ def get_p_at_t(
                 bounds[0],
                 traj_args[index_of_e],
                 traj_args[index_of_x],
+                *traj_args[index_of_x + 1:],  # forward any additional_args to models that require them
             ]
-            t, p, e, xI, Phi_phi, Phi_theta, Phi_r = traj_module(
-                *traj_pars, T=t_out * 1.001
-            )
+            t = traj_module( *traj_pars, T=t_out * 1.001)[0]
             if t[-1] >= t_out * YRSID_SI:
                 raise ValueError(
                     "No solution found within the bounds of the interpolants."

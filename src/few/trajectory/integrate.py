@@ -277,7 +277,7 @@ class Integrate(ABC):
         while t < self.tmax_dimensionless:
             if not self.dopr.fix_step:
                 if niter >= self.max_iter:
-                    raise ValueError("Integration did not converge within max_iter.")
+                    raise ValueError(f"Integration did not converge within max_iter = {self.max_iter}.")
 
             try:
                 # take a step
@@ -426,8 +426,8 @@ class Integrate(ABC):
         self.trajectory_arr = np.zeros((self.buffer_length, self.nparams + 1))
         self._integrator_t_cache = np.zeros((self.buffer_length,))
         self.dopr_spline_output = np.zeros(
-            (self.buffer_length, 6, 8)
-        )  # 3 parameters + 3 phases, 8 coefficients
+            (self.buffer_length, self.nparams, 8)
+        )  # nparams paramaters, 8 coefficients
         self.traj_step = 0
 
     @property
@@ -531,19 +531,14 @@ class Integrate(ABC):
         except AttributeError:
             on_gpu = False
 
-        result = np.zeros((t_new.size, 6))
+        result = np.zeros((t_new.size, self.nparams))
         t_in_mask = (t_new >= 0.0) & (t_new <= t_old.max())
-
         result[t_in_mask, :] = self.dopr.eval(
             t_new[t_in_mask], t_old, self.integrator_spline_coeff
         )
 
         if not self.generating_trajectory:
             result[:, 3:6] /= self.massratio
-
-        # backwards integration requires an additional adjustment to match forwards phase conventions
-        if self.integrate_backwards and not self.generating_trajectory:
-            result[:, 3:6] += self.trajectory[0, 4:7] + self.trajectory[-1, 4:7]
 
         if on_gpu:
             import cupy as xp
@@ -637,24 +632,17 @@ class Integrate(ABC):
         # Error if we start too close to separatrix.
         if self.integrate_backwards:
             if not self.enforce_schwarz_sep:
-                p_sep = get_separatrix(self.a, orb_params[1], orb_params[2])
+                p_min = self.func.min_p(e=orb_params[1], x=orb_params[2], a=self.a)
             else:
-                p_sep = 6 + 2 * orb_params[1]
-            if (orb_params[0] - p_sep) < self.separatrix_buffer_dist - 1e-6:
+                p_min = 6 + 2 * orb_params[1] + self.separatrix_buffer_dist
+            if (orb_params[0] - p_min) < - 1e-6:
                 # Raise a warning
                 raise ValueError(
-                    f"p_f is too close to separatrix. It must start above p_sep + {self.separatrix_buffer_dist}. Started at {orb_params[0]}, separatrix {p_sep}, starting p {orb_params[0]} should be larger than {p_sep + self.separatrix_buffer_dist - INNER_THRESHOLD}."
+                    f"p_f is too close to separatrix. It must start above p_sep + {self.separatrix_buffer_dist}. Starting p {orb_params[0]} should be larger than {p_min - INNER_THRESHOLD}."
                 )
 
         # scale phases here by the mass ratio so the cache is accurate
         self.trajectory_arr[:, 4:7] /= self.massratio
-
-        # backwards integration requires an additional manipulation to match forwards phase convention
-        if self.integrate_backwards:
-            self.trajectory_arr[:, 4:7] -= (
-                self.trajectory_arr[0, 4:7]
-                + self.trajectory_arr[self.traj_step - 1, 4:7]
-            )
 
         # Restore normal spline behaviour
         self.generating_trajectory = False
@@ -681,11 +669,11 @@ class Integrate(ABC):
         else:
             p, e, x = self.get_pex(y)
             if not self.enforce_schwarz_sep:
-                p_sep = get_separatrix(self.a, e, x)
+                p_min = self.func.min_p(e=e, x=x, a=self.a, separatrix_buffer=self.separatrix_buffer_dist)
             else:
-                p_sep = 6 + 2 * e
+                p_min = 6 + 2 * e + self.separatrix_buffer_dist
 
-            if p - p_sep < self.separatrix_buffer_dist:
+            if p < p_min:
                 return True
 
     def inner_func_forward(self, t_step):
@@ -702,13 +690,14 @@ class Integrate(ABC):
         )[0]
 
         p, e, x = self.get_pex(self._y_inner_cache)
-        # get the separatrix value at this new step
-        if not self.enforce_schwarz_sep:
-            p_sep = get_separatrix(self.a, e, x)
-        else:
-            p_sep = 6 + 2 * e
 
-        return p - (p_sep + self.separatrix_buffer_dist)  # we want this to go to zero
+        # set minimum p supported by model for integration
+        if not self.enforce_schwarz_sep:
+            p_min = self.func.min_p(e=e, x=x, a=self.a, separatrix_buffer=self.separatrix_buffer_dist)
+        else:
+            p_min = 6 + 2 * e + self.separatrix_buffer_dist
+
+        return p - p_min  # we want this to go to zero
 
     def inner_func_backward(self, t_step):
         """

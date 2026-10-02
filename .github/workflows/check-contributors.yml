@@ -1,0 +1,21 @@
+name: Check contributors are cited
+on:
+  pull_request:
+jobs:
+  check_contributors:
+    name: Check contributors are cited
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PyYAML
+        run: python -m pip install pyyaml
+      # Deliberately runs without --fix: the check never edits files. A failure
+      # names the missing contributors and asks the author to run the script
+      # locally with --fix, so that affiliation and ORCID can be filled in by
+      # hand before committing.
+      - name: Check CONTRIBUTORS.md against CITATION.cff
+        run: python .github/scripts/check_contributors.py
