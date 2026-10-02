@@ -4,7 +4,7 @@ This page is a guide for installing and executing FEW tests on most platforms an
 some clusters available to members of the user community.
 
 :::{important}
-Last updated in July 2025, after the release of `FastEMRIWaveforms v2.0.0` and the
+Last updated in October 2026, after the release of the DDPC version of `FastEMRIWaveforms v2.2.0` and the
 publication of a conda package on `conda-forge`.
 If you read this page at a significantly latter date, note that these instructions might be outdated.
 :::
@@ -134,6 +134,10 @@ To install FEW from source in any environment, follow these steps:
     ```sh
     python3 -m venv few_env
     source few_env/bin/activate
+    ```
+  - If you're using WSL, you will need to run the following:
+    ```
+    conda create -n few_env -y -c conda-forge --override-channels cxx-compiler fortran-compiler python=3.12  pkgconfig conda-forge/label/lapack_rc::liblapacke 
     ```
 
 4. **Install FEW in editable mode:**

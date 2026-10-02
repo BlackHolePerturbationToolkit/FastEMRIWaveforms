@@ -163,6 +163,22 @@ import few
 few.get_backend("cuda12x")
 ```
 
+### Installation instructions using conda on WSL
+
+First clone the repo
+
+```
+git clone https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms.git
+cd FastEMRIWaveforms
+```
+
+Now create an environment
+```
+conda create -n few_env -y -c conda-forge --override-channels cxx-compiler fortran-compiler python=3.12  pkgconfig conda-forge/label/lapack_rc::liblapacke 
+```
+
+and continue with the following instructions of "Installation instructions using conda"
+
 ### Running the installation
 
 To start the from-source installation, ensure the pre-requisite are met, clone
