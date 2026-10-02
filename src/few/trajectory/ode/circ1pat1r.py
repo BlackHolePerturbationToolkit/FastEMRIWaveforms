@@ -517,7 +517,8 @@ class TrajectoryCirc1PAT1R(ODEBase):
     def recommended_bounds_p0_from_nu(self, nu, Delta_phip=0.1):
         """
         Return the recommended range of initial semi-latus rectum p0 (assuming forwards integration) as a function of 
-        symmetric mass ratio for given target phase precision. These bounds are given by
+        symmetric mass ratio for given target phase precision. These bounds are given by::
+
             pmin = 6 + 1.5 nu^(1/4)         [deduced from the breakdown frequency given in Eq. (30) of Ref. 2208.01049]
             pmax = 2.2(Delta_phip/nu)^2     [from Eq. (7.3) of the 1PAT1R technical document]
 
@@ -561,15 +562,17 @@ class TrajectoryCirc1PAT1R(ODEBase):
     def recommended_bounds_chi2_from_nu(self, nu):
         """
         Return the recommended range of the fixed dimensionless secondary spin chi2 as a function of symmetric mass ratio. The bounds
-        are given by
+        are given by::
+
             |chi2| << 1/nu
+
         as per Sec. 7 of the 1PAT1R technical document. In practice this exceeds the hard-coded maximum range -1 < chi2 < 1 for all valid nu.
 
         Args:
             nu (float): symmetric mass ratio
 
         Returns:
-            chi2_min, chi2_max: smallest and largest recommended values of chi2 (should have |chi2| << chi2_max = 1/nu)
+            chi2_min, chi2_max: smallest and largest recommended values of chi2 (should have ``|chi2| << chi2_max = 1/nu``)
         
         Raises:
             ValueError: If nu is outside its valid range
