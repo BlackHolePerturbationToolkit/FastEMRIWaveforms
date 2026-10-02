@@ -534,6 +534,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
 
     def balance_law_numerator(self, nu, p, chit1, chit2, deltaM):
         """Total 1PA numerator of the flux-balance law, Eq. (84) of Ref. 2510.16113.
+            plus an additional correction to the delta M term that is missing in Eq. (84).
 
         Returns the numerator of the flux-balance law at 1PA order.
 
@@ -585,7 +586,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
             y = [p, e, xI, nu*Phi_phi, nu*Phi_theta, nu*Phi_r, deltaM, delta_chit1]
 
         The evolution equations are derived from the 1PA flux-balance law,
-        Eq. (84) of Ref. 2510.16113.
+        Eq. (84) of Ref. 2510.16113 [with an additional correction to the delta M term that is missing in Eq. (84)].
 
         Args:
             y (array-like): Current state vector of length 8:
