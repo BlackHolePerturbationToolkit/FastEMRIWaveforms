@@ -173,11 +173,17 @@ cd FastEMRIWaveforms
 ```
 
 Now create an environment
-```
-conda create -n few_env -y -c conda-forge --override-channels cxx-compiler fortran-compiler python=3.12  pkgconfig conda-forge/label/lapack_rc::liblapacke 
+```sh
+conda create -n few_env python=3.12
+conda activate few_env 
+conda install -c conda-forge --override-channels cxx-compiler pkg-config
+conda install -c conda-forge h5py jsonschema lisaconstants multispline numba nvidia-ml-py platformdirs pydantic pyyaml requests rich scipy tqdm wrapt
 ```
 
-and continue with the following instructions of "Installation instructions using conda"
+Then we can install locally for development:
+```sh
+pip install -e '.[dev, testing]'
+```
 
 ### Running the installation
 
