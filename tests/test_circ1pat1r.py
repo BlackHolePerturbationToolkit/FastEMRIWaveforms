@@ -62,6 +62,20 @@ class Circ1PAT1RWaveformTest(FewBackendTest):
         xp = self.backend.xp
         self.assertTrue(bool(xp.all(xp.isfinite(wave))))
 
+    def test_fd_waveform_runs(self):
+        # Test that the Circ1PAT1R waveform generates in the frequency domain.
+        wave_generator = GenerateEMRIWaveform(
+            "Circ1PAT1R",
+            sum_kwargs={"pad_output": True, "output_type": "fd"},
+            force_backend=self.backend,
+        )
+
+        wave = wave_generator(*params, T=T, dt=dt)
+
+        self.assertGreater(len(wave), 0)
+        xp = self.backend.xp
+        self.assertTrue(bool(xp.all(xp.isfinite(wave))))
+
     def test_no_evolve_primary_zero_PA_amps(self):
         # Test that turning off primary evolution and 1PA amplitude corrections
         # gives a waveform with a small (but nonzero) mismatch from the default.
