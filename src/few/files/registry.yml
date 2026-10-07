@@ -3,6 +3,8 @@ repositories:
     url_pattern: "https://download.bhptoolkit.org/few/data/15624459/%(filename)s"
   - name: bhptk_kerreq
     url_pattern: "https://download.bhptoolkit.org/few/data/KerrEq/%(filename)s"
+  - name: bhptk_1PAT1R
+    url_pattern: "https://download.bhptoolkit.org/few/data/1PAT1R/%(filename)s"
   - name: zenodo
     url_pattern: "https://zenodo.org/records/15624459/files/%(filename)s"
 files:
@@ -268,4 +270,16 @@ files:
     checksums:
       - algorithm: sha256
         value: a0aa28e9accfd05b8b2aceb6799b471bcb8d1756fb7b0bff61957a985a40c6c1
+    tags: [testfile]
+  - name: Trajectory1PAT1R.h5
+    repositories: [bhptk_1PAT1R]
+    checksums:
+      - algorithm: sha256
+        value: 6f4e703ba1b731c8d73c8f582f1711ada44ee5b0bd6a6729afac9529822d4f16
+    tags: [testfile]
+  - name: Amplitudes1PAT1R.h5
+    repositories: [bhptk_1PAT1R]
+    checksums:
+      - algorithm: sha256
+        value: 6af12ea86b5cca1adab1b1051d219ca5ce38427db343b35b4e2e8e01299e68bb
     tags: [testfile]

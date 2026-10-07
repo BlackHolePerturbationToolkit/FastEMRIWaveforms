@@ -14,16 +14,25 @@ Generic Waveform Generator
 Prebuilt Waveform Models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Fast Kerr Eccentric Equatorial Flux-based Waveform
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fast Adiabatic Flux-based waveform for Eccentric Equatorial Inspirals into Kerr
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: few.waveform.waveform.FastKerrEccentricEquatorialFlux
     :members:
     :show-inheritance:
     :inherited-members:
 
-Fast Schwarzschild Eccentric Flux-based Waveform
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fast Post-Adiabatic Flux-based Waveform for Circular Equatorial Inspirals into Slowly-rotating Kerr
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: few.waveform.waveform.Circ1PAT1R
+    :members:
+    :show-inheritance:
+    :inherited-members:
+
+
+Fast Adiabatic Flux-based Waveform for Eccentric Inspirals into Schwarzschild
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: few.waveform.waveform.FastSchwarzschildEccentricFlux
     :members:
@@ -35,8 +44,9 @@ Fast Schwarzschild Eccentric Flux-based Waveform
     :show-inheritance:
     :inherited-members:
 
-Slow Schwarzschild Eccentric Flux-based Waveform
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Slow Adiabatic Flux-based Waveform for Eccentric Inspirals into Schwarzschild
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: few.waveform.waveform.SlowSchwarzschildEccentricFlux
     :members:
@@ -44,7 +54,7 @@ Slow Schwarzschild Eccentric Flux-based Waveform
     :inherited-members:
 
 Generic Kerr AAK with 5PN Trajectory
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: few.waveform.waveform.Pn5AAKWaveform
     :members:

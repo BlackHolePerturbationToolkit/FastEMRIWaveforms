@@ -262,7 +262,8 @@ class KerrEccEqFlux(ODEBase):
     Args:
         use_ELQ: If True, the ODE will output derivatives of the orbital elements of (E, L, Q). Defaults to False.
         downsample: List of two 3-tuples of integers to downsample the flux grid in u, w, z. The first list element
-        refers to the inner grid, the second to the outer. Useful for testing error convergence. Defaults to None (no downsampling).
+            refers to the inner grid, the second to the outer. Useful for testing error convergence. Defaults to None (no downsampling).
+        flux_output_convention: String specifying the output convention for the fluxes. Can be either "pex" (default) or "ELQ".
     """
 
     def __init__(
@@ -452,25 +453,48 @@ class KerrEccEqFlux(ODEBase):
 
     @property
     def equatorial(self):
+        """bool: Always True for Kerr eccentric equatorial flux."""
         return True
 
     @property
     def separatrix_buffer_dist(self):
+        """float: The distance from the separatrix to the minimum p grid to truncate ODE integration."""
         return 2 * DELTAPMIN
 
     @property
     def separatrix_buffer_dist_grid(self):
+        """float: The distance from the separatrix to the minimum p grid value."""
         return DELTAPMIN
 
     @property
     def supports_ELQ(self):
+        """bool: Always True for Kerr eccentric equatorial flux."""
         return True
 
     def isvalid_x(self, x):
+        """
+        Check if x is valid. For Kerr equatorial flux, x must be either 1 or -1.
+        
+        Args:
+            x (float or np.ndarray): Cosine of the inclination angle.
+
+        Raises:
+            ValueError: If any value of x is not 1 or -1.
+        """
         if np.any(np.abs(x) != 1):
             raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
 
     def isvalid_e(self, e, e_buffer=[0, 0]):
+        """
+        Check if e is valid. For Kerr equatorial flux, e must be between emin and emax, where emin is the lower bound and emax is the upper bound adjusted by the buffer.
+
+        Args:
+            e (float or np.ndarray): Eccentricity.
+            e_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid e range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+
+        Raises:
+            ValueError: If any value of e is out of bounds.
+        """
         emax = EMAX - e_buffer[1]
         emin = e_buffer[0]
         if np.any(e > emax) or np.any(e < emin):
@@ -479,6 +503,16 @@ class KerrEccEqFlux(ODEBase):
             )
 
     def isvalid_p(self, p, p_buffer=[0, 0]):
+        """
+        Check if p is valid. For Kerr equatorial flux, p must be between pmin and pmax, where pmin is the lower bound adjusted by the separatrix buffer and pmax is the upper bound adjusted by the buffer.
+
+        Args:
+            p (float or np.ndarray): Semi-latus rectum.
+            p_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid p range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+        
+        Raises:
+            ValueError: If any value of p is out of bounds.
+        """
         pmax = PMAX - p_buffer[1]
         pmin = PISCO_MIN + self.separatrix_buffer_dist_grid + p_buffer[0]
         if np.any(p > pmax) or np.any(p < pmin):
@@ -487,6 +521,16 @@ class KerrEccEqFlux(ODEBase):
             )
 
     def isvalid_a(self, a, a_buffer=[0, 0]):
+        """
+        Check if a is valid. For Kerr equatorial flux, a must be between amin and amax, where amin is the lower bound adjusted by the buffer and amax is the upper bound adjusted by the buffer.
+
+        Args:
+            a (float or np.ndarray): Primary spin parameter.
+            a_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid a range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+
+        Raises:
+            ValueError: If any value of a is out of bounds.
+        """
         amax = AMAX - a_buffer[1]
         amin = -AMAX + a_buffer[0]
         if np.any(a > amax) or np.any(a < amin):
@@ -521,12 +565,30 @@ class KerrEccEqFlux(ODEBase):
         return PMAX
 
     def min_p(self, e=0, x=1, a=0, separatrix_buffer = None, max_e_buffer = 0):
+        """
+        Return the minimum value of p for given e, x, and a, considering the separatrix buffer and maximum e buffer.
+
+        Args:
+            e (float): Eccentricity.
+            x (float): Inclination parameter.
+            a (float): Primary spin parameter.
+            separatrix_buffer (float, optional): Buffer distance from the separatrix. Defaults to None, which uses the class's separatrix_buffer_dist_grid.
+            max_e_buffer (float, optional): Buffer for the maximum e value. Defaults to 0.
+        """
         self.isvalid_x(x)
         self.isvalid_e(e)
         self.isvalid_a(a)
         return self._min_p(e, x, a, separatrix_buffer=separatrix_buffer, max_e_buffer = max_e_buffer)
 
     def max_p(self, e=0, x=1, a=0):
+        """
+        Return the maximum value of p for given e, x, and a.
+
+        Args:
+            e (float): Eccentricity.
+            x (float): Inclination parameter.
+            a (float): Primary spin parameter.
+        """
         self.isvalid_x(x)
         self.isvalid_e(e)
         self.isvalid_a(a)
@@ -567,12 +629,28 @@ class KerrEccEqFlux(ODEBase):
         return e_out
 
     def min_e(self, p=20, x=1, a=0):
+        """
+        Return the minimum value of e for given p, x, and a.
+
+        Args:
+            p (float): Semi-latus rectum.
+            x (float): Inclination parameter.
+            a (float): Primary spin parameter.
+        """
         self.isvalid_x(x)
         self.isvalid_p(p)
         self.isvalid_a(a)
         return self._min_e(p, x, a)
 
     def max_e(self, p=20, x=1, a=0, separatrix_buffer = None, max_e_buffer = 0):
+        """
+        Return the maximum value of e for given p, x, and a.
+
+        Args:
+            p (float): Semi-latus rectum.
+            x (float): Inclination parameter.
+            a (float): Primary spin parameter.
+        """
         self.isvalid_x(x)
         self.isvalid_p(p)
         self.isvalid_a(a)
@@ -585,30 +663,77 @@ class KerrEccEqFlux(ODEBase):
         return AMAX
 
     def min_a(self, p=20, e=0, x=1):
+        """
+        Return the minimum value of a for given p, e, and x.
+
+        Args:
+            p (float): Semi-latus rectum.
+            e (float): Eccentricity.
+            x (float): Inclination parameter.
+        """
         self.isvalid_x(x)
         self.isvalid_p(p)
         self.isvalid_e(e)
         return self._min_a(p, e, x)
 
     def max_a(self, p=20, e=0, x=1):
+        """
+        Return the maximum value of a for given p, e, and x.
+
+        Args:
+            p (float): Semi-latus rectum.
+            e (float): Eccentricity.
+            x (float): Inclination parameter.
+        """
         self.isvalid_x(x)
         self.isvalid_p(p)
         self.isvalid_e(e)
         return self._max_a(p, e, x)
 
     def bounds_a(self, p=20, e=0, x=1, a_buffer=[0, 0]):
+        """
+        Return the minimum and maximum bounds of a for given p, e, and x, considering the buffer.
+
+        Args:
+            p (float): Semi-latus rectum.
+            e (float): Eccentricity.
+            x (float): Inclination parameter.
+            a_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid a range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+        """
         self.isvalid_x(x)
         self.isvalid_p(p)
         self.isvalid_e(e)
         return [self._min_a(p, e, x) + a_buffer[0], self._max_a(p, e, x) - a_buffer[1]]
 
     def bounds_p(self, e=0, x=1, a=0, p_buffer=[0, 0], separatrix_buffer = None, max_e_buffer = 0):
+        """
+        Return the minimum and maximum bounds of p for given e, x, and a, considering the buffer.
+
+        Args:
+            e (float): Eccentricity.
+            x (float): Inclination parameter.
+            a (float): Primary spin parameter.
+            p_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid p range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+            separatrix_buffer (float, optional): Buffer distance from the separatrix. Defaults to None, which uses the class's separatrix_buffer_dist_grid.
+            max_e_buffer (float, optional): Buffer for the maximum e value. Defaults to 0.
+        """
         self.isvalid_x(x)
         self.isvalid_e(e)
         self.isvalid_a(a)
         return [self._min_p(e, x, a, separatrix_buffer=separatrix_buffer, max_e_buffer=max_e_buffer) + p_buffer[0], self._max_p(e, x, a) - p_buffer[1]]
 
     def bounds_e(self, p=20, x=1, a=0, e_buffer=[0, 0], separatrix_buffer = None, max_e_buffer = 0):
+        """
+        Return the minimum and maximum bounds of e for given p, x, and a, considering the buffer.
+
+        Args:
+            p (float): Semi-latus rectum.
+            x (float): Inclination parameter.
+            a (float): Primary spin parameter.
+            e_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid e range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+            separatrix_buffer (float, optional): Buffer distance from the separatrix. Defaults to None, which uses the class's separatrix_buffer_dist_grid.
+            max_e_buffer (float, optional): Buffer for the maximum e value. Defaults to 0.
+        """
         self.isvalid_x(x)
         self.isvalid_p(p)
         self.isvalid_a(a)
@@ -617,6 +742,23 @@ class KerrEccEqFlux(ODEBase):
     def isvalid_pex(
         self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], e_buffer=[0, 0], a_buffer=[0, 0], separatrix_buffer = None, max_e_buffer = 0
     ):
+        """
+        Raise an error if the given (p, e, x, a) values are not valid for interpolation, considering the specified buffers.
+
+        Args:
+            p (float): Semi-latus rectum.
+            e (float): Eccentricity.
+            x (float): Inclination parameter.
+            a (float): Primary spin parameter.
+            p_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid p range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+            e_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid e range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+            a_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid a range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
+            separatrix_buffer (float, optional): Buffer distance from the separatrix. Defaults to None, which uses the class's separatrix_buffer_dist_grid.
+            max_e_buffer (float, optional): Buffer for the maximum e value. Defaults to 0.
+
+        Raises:
+            AssertionError: If p is outside the valid range given e, x, and a.  
+        """
         self.isvalid_x(x)
         self.isvalid_e(e, e_buffer=e_buffer)
         self.isvalid_a(a, a_buffer=a_buffer)
@@ -626,6 +768,9 @@ class KerrEccEqFlux(ODEBase):
         )
 
     def distance_to_outer_boundary(self, y):
+        """
+        Return the distance to the outer boundary of the valid (p, e) region for interpolation, given the state vector y.
+        """
         p, e, x = self.get_pex(y)
 
         e_max = self._max_e(p, x, self.a)
@@ -650,6 +795,16 @@ class KerrEccEqFlux(ODEBase):
         a: float = 0,
         pLSO: Optional[float] = None,
     ) -> tuple[float]:
+        """
+        Return the interpolated fluxes (Edot, Ldot) or (pdot, edot) for given (p, e, x, a), using the precomputed flux grids.
+
+        Args:
+            p (float): Semi-latus rectum.
+            e (float): Eccentricity.
+            x (float): Inclination parameter. Must be either 1 or -1. Defaults to 1.
+            a (float): Primary spin parameter. Defaults to 0.
+            pLSO (float, optional): The value of p at the last stable orbit (LSO) for the given (a, e, x). If not provided, it will be computed using get_separatrix(a, e, x).
+        """
         if pLSO is None:
             pLSO = get_separatrix(a, e, x)
 
@@ -709,6 +864,12 @@ class KerrEccEqFlux(ODEBase):
     def evaluate_rhs(
         self, y: Union[list[float], np.ndarray]
     ) -> list[Union[float, np.ndarray]]:
+        """
+        Returns the right-hand side of the ODE for the Kerr eccentric equatorial flux, given the state vector y. The state vector can be either (p, e, x, Phi_phi, Phi_theta, Phi_r) or (E, L, Q, Phi_phi, Phi_theta, Phi_r) depending on the use_ELQ flag.
+
+        Args:
+            y (list[float] or np.ndarray): The state vector, either (p, e, x, Phi_phi, Phi_theta, Phi_r) or (E, L, Q, Phi_phi, Phi_theta, Phi_r).
+        """
         if self.use_ELQ:
             E, L, Q = y[:3]
             p, e, x = ELQ_to_pex(self.a, E, L, Q)
@@ -754,77 +915,3 @@ def _edot_PN(p, e, risco, p_sep):
 @njit(fastmath=True)
 def _p_to_u(p, p_sep):
     return log((p - p_sep + 4.0 - 0.05) / 4)
-
-
-class KerrEccEqFluxLegacy(ODEBase):
-    """
-    Kerr eccentric equatorial flux ODE.
-
-    Args:
-        use_ELQ: If True, the ODE will output derivatives of the orbital elements of (E, L, Q). Defaults to False.
-    """
-
-    def __init__(self, *args, use_ELQ: bool = False, **kwargs):
-        super().__init__(*args, use_ELQ=use_ELQ, **kwargs)
-        self.files = [
-            "KerrEqEcc_x0.dat",
-            "KerrEqEcc_x1.dat",
-            "KerrEqEcc_x2.dat",
-            "KerrEqEcc_pdot.dat",
-            "KerrEqEcc_edot.dat",
-        ]
-        fm = get_file_manager()
-        fm.prefetch_files_by_list(self.files)
-
-        x = np.loadtxt(fm.get_file(self.files[0]))
-        y = np.loadtxt(fm.get_file(self.files[1]))
-        z = np.loadtxt(fm.get_file(self.files[2]))
-
-        pdot = np.loadtxt(fm.get_file(self.files[3])).reshape(x.size, y.size, z.size)
-        edot = np.loadtxt(fm.get_file(self.files[4])).reshape(x.size, y.size, z.size)
-
-        self.pdot_interp = TricubicSpline(x, y, z, np.log(-pdot))
-        self.edot_interp = TricubicSpline(x, y, z, edot)
-
-    @property
-    def equatorial(self):
-        return True
-
-    @property
-    def separatrix_buffer_dist(self):
-        return 0.05
-
-    @property
-    def supports_ELQ(self):
-        return False
-
-    @property
-    def flux_output_convention(self):
-        return "pex"
-
-    def interpolate_flux_grids(self, p: float, e: float, x: float) -> tuple[float]:
-        risco = get_separatrix(self.a, 0.0, x)
-        u = _p_to_u(p, self.p_sep_cache)
-        w = e**0.5
-        a_sign = self.a * x
-
-        pdot = -np.exp(self.pdot_interp(a_sign, w, u)) * _pdot_PN(
-            p, e, risco, self.p_sep_cache
-        )
-        edot = self.edot_interp(a_sign, w, u) * _edot_PN(p, e, risco, self.p_sep_cache)
-
-        return pdot, edot
-
-    def evaluate_rhs(
-        self, y: Union[list[float], np.ndarray]
-    ) -> list[Union[float, np.ndarray]]:
-        if self.use_ELQ:
-            raise NotImplementedError
-        else:
-            p, e, x = y[:3]
-
-        Omega_phi, Omega_theta, Omega_r = get_fundamental_frequencies(self.a, p, e, x)
-
-        pdot, edot = self.interpolate_flux_grids(p, e, x)
-
-        return [pdot, edot, 0.0, Omega_phi, Omega_theta, Omega_r]

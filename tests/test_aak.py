@@ -4,6 +4,7 @@ from few.tests.base import FewBackendTest, tagged_test
 from few.trajectory.inspiral import EMRIInspiral
 from few.trajectory.ode import PN5
 from few.utils.utility import get_mismatch, get_overlap
+from few.utils.constants import YRSID_SI
 from few.waveform import GenerateEMRIWaveform, Pn5AAKWaveform
 
 
@@ -146,13 +147,17 @@ class AAKWaveformTest(FewBackendTest):
         dt = 10.0
         T = 0.001
 
-        _, p_forward, e_forward, Y_forward, _, _, _ = traj_module(
+        t_forward, p_forward, e_forward, Y_forward, Phi_phi_forward, Phi_theta_forward, Phi_r_forward = traj_module(
             m1, m2, a, p0, e0, Y0, T=T, dt=dt, **inspiral_kwargs_forward
         )
 
         p_f = p_forward[-1]
         e_f = e_forward[-1]
         Y_f = Y_forward[-1]
+        Phi_phi_f = Phi_phi_forward[-1]
+        Phi_theta_f = Phi_theta_forward[-1]
+        Phi_r_f = Phi_r_forward[-1]
+        T = t_forward[-1] / YRSID_SI
 
         wave_cpu_forward = Pn5AAKWaveform(
             inspiral_kwargs=inspiral_kwargs_forward, force_backend="cpu"
@@ -165,11 +170,11 @@ class AAKWaveformTest(FewBackendTest):
         )
 
         waveform_cpu_forward = wave_cpu_forward(
-            m1, m2, a, p0, e0, Y0, qS, phiS, qK, phiK, dist, mich=mich, dt=dt, T=T
+            m1, m2, a, p0, e0, Y0, dist, qS, phiS, qK, phiK, mich=mich, dt=dt, T=T
         )
 
         waveform_cpu_backward = wave_cpu_backward(
-            m1, m2, a, p_f, e_f, Y_f, qS, phiS, qK, phiK, dist, mich=mich, dt=dt, T=T
+            m1, m2, a, p_f, e_f, Y_f, dist, qS, phiS, qK, phiK, Phi_phi0=Phi_phi_f, Phi_theta0=Phi_theta_f, Phi_r0=Phi_r_f, mich=mich, dt=dt, T=T
         )
 
         mm = get_mismatch(

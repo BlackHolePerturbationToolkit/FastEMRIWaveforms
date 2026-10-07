@@ -68,6 +68,7 @@ Example:
   cannot be loaded, FEW will fail to run (and the message error should explain the failure and suggest mitigation strategies).
 
 
+(file-manager)=
 ### File manager
 
 The `few` package requires external files of pre-computed coefficients which are too large to be bundled with the source code.
@@ -78,6 +79,7 @@ The file manager is accessed through `few.get_file_manager()`
 
 This `FileManager` is highly tunable and propose the following options:
 
+(file-storage-path)=
 #### `file_storage_path`
 
 The *storage path* is the directory where the `FileManager` will first look for files.

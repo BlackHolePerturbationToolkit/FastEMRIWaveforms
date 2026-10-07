@@ -49,6 +49,7 @@ for example in (
     "swsh",
     "utility",
     "waveform",
+    "Tutorial_1PAT1R"
 ):
     filename = example + ".ipynb"
     if not (trg_dir / filename).is_file():

@@ -427,9 +427,6 @@ class DOPR853:
         scale[acceptable] = self.xp.clip(scale[acceptable], minscale, maxscale)
         scale[err == 0.0] = maxscale
 
-        if self.xp.any(h == 0.0):
-            breakpoint()
-
         accept_and_prev_accept = ~previousReject & acceptable
         h[accept_and_prev_accept] = (
             h[accept_and_prev_accept] * scale[accept_and_prev_accept]

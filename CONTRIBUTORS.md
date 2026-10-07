@@ -3,6 +3,28 @@
 
 Below is a list of those who have contributed code or data to the releases of FEW. Note this is not an exhaustive list of those who have contributed to FEW development for each version, as often people are also involved via extensive discussion and paper writing.
 
+- FEW v2.2 (Circular 1PA model added)
+  	* [Christian Chapman-Bird](https://github.com/cchapmanbird)</br>
+		Internal reviewer of model, updates to build structure
+	* [Bert Depoorter](https://github.com/BertDepoorter) </br>
+		Internal reviewer of model, small fixes to GPU version of model.
+    * [Loic Honet](https://github.com/honetloic)  </br>
+		Initial development of the Circ1PAT1R trajectory, amplitude, waveform modules. Development of the Circ1PAT1R trajectory module. Importing in FEW 1PAT1R datasets from WaSABI. Internal and external developer of Circ1PAT1R.
+	* [Philip Lynch](https://github.com/Philip-Lynch)  </br>
+		Initial development of the Circ1PAT1R waveform module. Development of the Circ1PAT1R waveform and trajectory modules. Internal and external developer of Circ1PAT1R.
+	* [Zachary Nasipak](https://github.com/znasipak)  </br>
+		Internal reviewer of model, updated documentation, patched bugs identified in review
+	* [Adam Pound](https://github.com/adamrpound)  </br>
+		Contributed to formulation and implementation of Circ1PAT1R. Scripts for 2SF data generation. Validation of data quality. Internal and external reviewee of Circ1PAT1R.
+	* [Jonathan Thompson](https://github.com/thompsonphys)</br>
+		Internal reviewer of model.
+	* [Barry Wardell](https://github.com/barrywardell)</br>
+		Prepared underlying datasets, contributed to implementation of whole model.
+	* [Chris Whittall](https://github.com/cwhittall)</br>
+		Initial implementation of AmplitudeCirc1PAT1R, initial error handling and warning infrastructure, documentation.
+    * [Josh Mathews](https://github.com/joshbmat)  </br>
+		Development of the Circ1PAT1R amplitude and waveform modules. Internal and external developer of Circ1PAT1R.
+
 - FEW v2.1 (Kerr eccentric equatorial review update)
     * [Christian Chapman-Bird](https://github.com/cchapmanbird) </br>
 		Patched bugs and updated documentation based on review recommendations
