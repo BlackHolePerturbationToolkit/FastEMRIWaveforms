@@ -19,12 +19,14 @@
 #define Sqrt(x)         (sqrt((double)(x)))
 
 
-// Constants below from lisaconstants -- all in units of seconds
-#define YRSID_SI 31558149.763545595
-#define MTSUN_SI 4.9254909491978065e-06
-
-#define  GPCINSEC 1.02927125054339e+17
-#define AUsec 499.00478383615643
+// Constants from lisaconstants, via the generated lisaconstants_values.h
+// (regenerate with python -m lisatools.utils.lisaconstants_header, or the
+// generator in tests/test_lisaconstants_values.py) -- all in seconds.
+#include "lisaconstants_values.h"
+#define YRSID_SI LISACONSTANTS_ASTRONOMICAL_YEAR
+#define MTSUN_SI LISACONSTANTS_MTSUN
+#define GPCINSEC LISACONSTANTS_GPC_LIGHT_TIME
+#define AUsec LISACONSTANTS_AU_LIGHT_TIME
 
 typedef double fod;
 typedef gcmplx::complex<double> cmplx;

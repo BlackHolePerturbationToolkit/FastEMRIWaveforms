@@ -46,7 +46,7 @@ dependencies = [
   "exceptiongroup; python_version<'3.11'", # To access ExceptionGroup with Python 3.9 and 3.10
   "h5py",
   "jsonschema",                            # To validate content of file registry
-  "lisaconstants",
+  "lisaconstants==2.0.2",  # pinned like LAT: lisaconstants_values.h is generated from it
   "multispline",
   "numba",
   "numpy",
