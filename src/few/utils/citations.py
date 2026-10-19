@@ -366,3 +366,17 @@ class Citable:
             get_logger().debug("Building the Citation Registry from CITATION.cff")
             Citable.registry = build_citation_registry()
         return Citable.registry
+
+def all_citations() -> str:
+    """Return the complete FEW bibliography as BibTeX.
+
+    Citation metadata are loaded from CITATION.cff. This function returns
+    the software citation, the core FEW papers, and all model-specific
+    references registered in CITATION.cff.
+
+    Returns
+    -------
+    str
+        Complete FEW bibliography in BibTeX format.
+    """
+    return Citable.all_citations()
