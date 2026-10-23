@@ -559,30 +559,6 @@ class TrajectoryCirc1PAT1R(ODEBase):
 
         return amin, amax
 
-    def recommended_bounds_chi2_from_nu(self, nu):
-        """
-        Return the recommended range of the fixed dimensionless secondary spin chi2 as a function of symmetric mass ratio. The bounds
-        are given by::
-
-            |chi2| << 1/nu
-
-        as per Sec. 7 of the 1PAT1R technical document. In practice this exceeds the hard-coded maximum range -1 < chi2 < 1 for all valid nu.
-
-        Args:
-            nu (float): symmetric mass ratio
-
-        Returns:
-            chi2_min, chi2_max: smallest and largest recommended values of chi2 (should have ``|chi2| << chi2_max = 1/nu``)
-        
-        Raises:
-            ValueError: If nu is outside its valid range
-        """
-        self._isvalidnu(nu)
-        chi2_max = 1/nu
-        chi2_min = -1/nu
-
-        return chi2_min, chi2_max
-
     def add_fixed_parameters(self, m1, m2, chi1, additional_args):
         """Store the symmetric mass ratio nu, the spin parameters, and the reduced spins chit1, chit2.
 
