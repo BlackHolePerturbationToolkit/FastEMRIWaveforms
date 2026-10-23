@@ -1,4 +1,17 @@
-"""Definition of FEW package common exceptions"""
+"""Definition of FEW package common exceptions.
+
+- :class:`FewException` and its subclasses: configuration errors (raised by
+  :mod:`few.utils.config`), file-manager and download errors (:mod:`few.files`), invalid
+  input files (citations, file registry).
+- :class:`TrajectoryOffGridException`: raised by the KerrEccEq flux trajectory when it
+  leaves the flux grid; it is not a ``ValueError``, so the integrator does not retry the
+  step and it reaches the caller (LISA Analysis Tools catches it in its EMRI domain
+  guard).
+- ``ExceptionGroup``: the ``exceptiongroup`` backport if installed, else the builtin
+  (Python >= 3.11); raised for several configuration errors at once.
+
+Backend errors come from ``gpubackendtools.exceptions``.
+"""
 
 try:
     from exceptiongroup import ExceptionGroup
@@ -12,18 +25,21 @@ class FewException(Exception):
     pass
 
 
+# TODO check: keep/remove/document -- never raised or caught in FEW
 class CudaException(FewException):
     """Base class for CUDA-related exceptions."""
 
     pass
 
 
+# TODO check: keep/remove/document -- never raised or caught in FEW
 class CuPyException(FewException):
     """Base class for CuPy-related exceptions."""
 
     pass
 
 
+# TODO check: keep/remove/document -- never raised or caught in FEW
 class MissingDependency(FewException):
     """Exception raised when a required dependency is missing."""
 
@@ -79,7 +95,14 @@ class FileDownloadIntegrityError(FileDownloadException):
 
 
 class FileManagerDisabledAccess(FileManagerException):
-    """Exception raised when trying to access a file whose tags are disabled"""
+    """Exception raised when trying to access a file whose tags are disabled.
+
+    Args:
+        *args: Forwarded to :class:`Exception`.
+        disabled_tag: The disabled tag (keyword-only).
+        file_name: The requested file (keyword-only).
+        **kwargs: Forwarded to :class:`Exception`.
+    """
 
     disabled_tag: str
     file_name: str
@@ -92,4 +115,11 @@ class FileManagerDisabledAccess(FileManagerException):
 
 ### Trajectory-related exceptions
 class TrajectoryOffGridException(Exception):
-    """Exception raised when a trajectory goes off-grid (except for the lower boundary in p)."""
+    """Exception raised when a trajectory goes off the flux grid.
+
+    Raised by :meth:`~few.trajectory.ode.flux.KerrEccEqFlux.interpolate_flux_grids` when the
+    eccentricity coordinate leaves the grid (``w < 0``, or ``w > 1`` in a forward
+    integration) or the spin coordinate ``z`` leaves ``[0, 1]``; a ``p`` outside the grid
+    raises ``ValueError`` instead. Derives from :class:`Exception`, not
+    :class:`FewException` or ``ValueError``.
+    """

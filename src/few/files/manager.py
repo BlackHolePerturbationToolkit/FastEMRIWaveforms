@@ -1,4 +1,14 @@
-"""Class implementing the file manager."""
+"""The FEW file manager: find, verify and download the data files listed in the registry.
+
+:class:`FileManager` is the entry point (global instance: :func:`few.get_file_manager`).
+:meth:`FileManager.get_file` resolves a file name in this order: the in-memory cache, the
+local search paths (download directory, storage directory, extra paths) with a checksum
+check, then a download from the file's registry repositories (unless downloads are
+disabled). The behaviour is set by :class:`FileManagerOptions`, built from the FEW
+configuration (``file_storage_path``, ``file_download_path``, ``file_extra_paths``,
+``file_integrity_check``, ``file_allow_download``, ``file_registry_path``,
+``file_disabled_tags``).
+"""
 
 from __future__ import annotations
 
@@ -16,7 +26,11 @@ from .registry import File, FileRegistry
 
 
 class FileIntegrityCheckMode(enum.Enum):
-    """Mode for file-integrity verification."""
+    """Mode for file-integrity (checksum) verification.
+
+    ``ALWAYS``: check at each request; ``ONCE`` (default): check when a file is first found
+    and keep the result in the cache; ``NEVER``: do not check, not even after a download.
+    """
 
     ALWAYS = "always"  # Check file integrity at each request
     ONCE = "once"  # Check file integrity once and keep result in cache
@@ -24,14 +38,25 @@ class FileIntegrityCheckMode(enum.Enum):
 
 
 class FileMissingAction(enum.Enum):
-    """Action to take when file is not in storage path (or its integrity check fails)."""
+    """Action to take when a file is not found locally (or fails its integrity check).
+
+    ``DOWNLOAD`` (default): download it from one of its repositories; ``FAIL``: raise
+    :class:`~few.utils.exceptions.FileNotFoundLocally` (offline mode, set by
+    ``file_allow_download = False``).
+    """
 
     DOWNLOAD = "download"  # Download the file from one of its repos
     FAIL = "fail"  # Fail the program (to be used in offline mode)
 
 
 class FileUnknownAction(enum.Enum):
-    """Action to take when a requested file is not known in the file registry."""
+    """Action to take when a requested file is not in the file registry.
+
+    ``SEARCH_LOCALLY``: look in the search paths only; ``ATTEMPT_ALL_REPOS``: also try every
+    registry repository; ``FAIL`` (default): raise
+    :class:`~few.utils.exceptions.FileNotInRegistry`. No configuration option sets it, so
+    :meth:`FileManagerOptions.from_config` keeps the default.
+    """
 
     SEARCH_LOCALLY = "search_locally"  # Tyy to locate file locally
     ATTEMPT_ALL_REPOS = "attempt_all_repos"  # Try to locate file in known repositories
@@ -39,7 +64,10 @@ class FileUnknownAction(enum.Enum):
 
 
 class FileManagerOptions(pydantic.BaseModel):
-    """Options controling the file manager behavior"""
+    """Options controlling the file manager behaviour (a pydantic model).
+
+    Normally built by :meth:`from_config`; the fields are documented below.
+    """
 
     storage_path: pathlib.Path
     """Base directory for FEW local storage."""
@@ -64,7 +92,10 @@ class FileManagerOptions(pydantic.BaseModel):
 
     @property
     def search_paths(self) -> typing.List[pathlib.Path]:
-        """List of file search paths."""
+        """Search order: the download path, the storage path, then the extra paths.
+
+        Relative extra paths are taken relative to the storage path.
+        """
         return [self.download_path, self.storage_path] + [
             extra_path if extra_path.is_absolute() else self.storage_path / extra_path
             for extra_path in self.extra_paths
@@ -72,7 +103,19 @@ class FileManagerOptions(pydantic.BaseModel):
 
     @staticmethod
     def from_config(few_cfg: Configuration) -> FileManagerOptions:
-        """Build an option instance from FEW config manager entries."""
+        """Build the options from the FEW configuration.
+
+        Defaults: storage path ``platformdirs.user_data_path("few", "v<version>")`` (created
+        if missing); download path ``<storage>/download`` (always created);
+        ``on_missing_file`` ``DOWNLOAD`` unless ``file_allow_download`` is false;
+        ``on_unknown_file`` and ``download_max_attempts`` keep their class defaults.
+
+        Args:
+            few_cfg: The FEW configuration (:func:`few.get_config`).
+
+        Returns:
+            FileManagerOptions: The options.
+        """
         import platformdirs
 
         from few import __version__
@@ -122,6 +165,8 @@ class FileDownloadMetadata(pydantic.BaseModel):
 
 
 class FileCacheEntry(pydantic.BaseModel):
+    """A located file: its name, path and, if it was downloaded, the download metadata."""
+
     name: str
     """File name"""
 
@@ -133,7 +178,28 @@ class FileCacheEntry(pydantic.BaseModel):
 
 
 class FileManager:
-    """File manager: handles file download and integrity checks."""
+    """File manager: locates FEW data files, checks their integrity and downloads them.
+
+    Loads and validates the registry (``config.file_registry_path``, default the packaged
+    ``registry.yml``) and builds :class:`FileManagerOptions` from the configuration. Located
+    files are cached in memory by name. FEW's modules obtain the global instance with
+    :func:`few.get_file_manager` (created at the first FEW globals initialisation).
+
+    Args:
+        config: FEW configuration. Default ``None`` uses :func:`few.get_config`.
+
+    Raises:
+        few.utils.exceptions.InvalidInputFile: If the registry file is invalid.
+
+    Example:
+        .. code-block:: python
+
+            from few import get_file_manager
+
+            fm = get_file_manager()
+            path = fm.get_file("ZNAmps_l10_m10_n55_DS2Outer.h5")  # local path, downloaded if needed
+            fm.prefetch_files_by_tag("testfile")
+    """
 
     _registry: FileRegistry
     _options: FileManagerOptions
@@ -151,28 +217,40 @@ class FileManager:
 
     @property
     def storage_dir(self) -> pathlib.Path:
-        """Directory in which files can be read or written."""
+        """Directory in which files can be read or written (the storage path)."""
         return self._options.storage_path
 
     @property
     def download_dir(self) -> pathlib.Path:
-        """Directory in which downloaded files are written."""
+        """Directory in which downloaded files are written (the download path)."""
         return self._options.download_path
 
     @property
     def options(self) -> FileManagerOptions:
-        """Get options of this file manager"""
+        """The options of this file manager."""
         return self._options
 
     @property
     def registry(self) -> FileRegistry:
-        """Get the registry of this file manager"""
+        """The file registry of this file manager."""
         return self._registry
 
     def _try_add_local_file_to_cache(
         self, file_name: str
     ) -> typing.Optional[FileCacheEntry]:
-        """Try to locate file locally and add it to cache if success"""
+        """Look for a registry file in the search paths; cache and return the first good copy.
+
+        A copy whose checksum does not match is skipped (unless the integrity check mode is
+        ``NEVER``).
+
+        Returns:
+            FileCacheEntry or None: The new cache entry, or ``None`` if no valid copy exists.
+
+        Raises:
+            few.utils.exceptions.FileNotInRegistry: If ``file_name`` is not in the registry
+                (also when called for an unknown file through
+                :meth:`_get_file_if_locally_present`).
+        """
         from ..utils.globals import get_logger
 
         logger = get_logger()
@@ -211,7 +289,7 @@ class FileManager:
     def _try_get_file_from_local_cache(
         self, file_name: str
     ) -> typing.Optional[FileCacheEntry]:
-        """Get a file local cache entry if defined."""
+        """Return the in-memory cache entry of ``file_name``, or ``None``."""
         if file_name in self._cache:
             return self._cache[file_name]
         return None
@@ -219,7 +297,12 @@ class FileManager:
     def _get_file_if_locally_present(
         self, file_name: str
     ) -> typing.Optional[FileCacheEntry]:
-        """Detect if a file is locally present."""
+        """Return the cache entry of a locally present file (cache, then search paths), or ``None``.
+
+        Raises:
+            few.utils.exceptions.FileNotInRegistry: If the file is neither cached nor in the
+                registry (see :meth:`_try_add_local_file_to_cache`).
+        """
         if (
             entry := self._try_get_file_from_local_cache(file_name=file_name)
         ) is not None:
@@ -231,15 +314,22 @@ class FileManager:
         return None
 
     def build_local_cache(self):
-        """Add to cache all local files from the registry."""
+        """Search the local paths for every registry file and cache those found (no download)."""
         for file in self._registry.files:
             self._try_add_local_file_to_cache(file.name)
 
     def _download_file_from_repos(
         self, file_name: str, repository_names: typing.Iterable[str]
     ) -> FileCacheEntry:
-        """
-        Try to download a file from list of repositories.
+        """Download a file, trying each repository in turn, ``download_max_attempts`` rounds.
+
+        Returns:
+            FileCacheEntry: The downloaded file (not added to the cache).
+
+        Raises:
+            few.utils.exceptions.FileDownloadException: If ``repository_names`` is empty or
+                every attempt failed (the individual errors are chained as an exception
+                group).
         """
         if not repository_names:
             raise exceptions.FileDownloadException(
@@ -273,8 +363,15 @@ class FileManager:
     def _download_file_from_repo(
         self, file_name: str, repository_name: str
     ) -> FileCacheEntry:
-        """
-        Try to download a file from a specific repository.
+        """Download a file from one repository into the download directory and verify it.
+
+        Returns:
+            FileCacheEntry: The downloaded file with its download metadata.
+
+        Raises:
+            few.utils.exceptions.FileDownloadException: On a download error.
+            few.utils.exceptions.FileDownloadIntegrityError: If a registry file fails its
+                checksum (unless the integrity check mode is ``NEVER``).
         """
         repo_entry = self._registry.get_repository(repository_name)
         assert repo_entry is not None
@@ -314,11 +411,18 @@ class FileManager:
         description: typing.Optional[str] = None,
         chunk_size: int = 2**15,
     ):
-        """
-        Download file from url to given output path
+        """Stream ``url`` to ``output_path`` with a progress bar (``requests``, 5 s timeout).
 
-        raise a FileDownloadException in case of error:
-          FileDownloadNotFound:
+        Args:
+            url: Source URL.
+            output_path: Destination file (overwritten).
+            description: Progress-bar label. Default ``None`` means ``"Downloading..."``.
+            chunk_size: Stream chunk size in bytes. Default ``2**15``.
+
+        Raises:
+            few.utils.exceptions.FileDownloadConnectionError: On a connection error.
+            few.utils.exceptions.FileDownloadNotFound: On an HTTP 404.
+            few.utils.exceptions.FileDownloadException: On another HTTP error.
         """
         import requests
 
@@ -345,6 +449,12 @@ class FileManager:
 
     @staticmethod
     def _assert_not_disabled_entry(file_entry: File):
+        """Refuse an entry with a disabled tag (``file_disabled_tags`` of the global config).
+
+        Raises:
+            few.utils.exceptions.FileManagerDisabledAccess: If one of the entry's tags is
+                disabled.
+        """
         from few import get_config
 
         disabled_tags = get_config().file_disabled_tags
@@ -360,7 +470,20 @@ class FileManager:
                 )
 
     def _ensure_known_file(self, file_entry: File) -> FileCacheEntry:
-        """Applies allowed strategies to obtain a file cache entry of declared file"""
+        """Obtain a registry file: tag check, cache, search paths, then download if allowed.
+
+        With ``ALWAYS`` integrity checks a cached entry is re-verified; since
+        :meth:`~few.files.registry.File.check_file_matches_checksums` returns ``None`` on
+        success, the lookup then continues with the search paths (a second check), and a
+        checksum failure of the cached copy raises
+        :class:`~few.utils.exceptions.FileInvalidChecksum`.
+
+        Raises:
+            few.utils.exceptions.FileManagerDisabledAccess: If a tag of the file is disabled.
+            few.utils.exceptions.FileNotFoundLocally: If the file is not found locally and
+                downloads are disabled.
+            few.utils.exceptions.FileDownloadException: If the download fails.
+        """
 
         # 1 - Check file is not disabled
         self._assert_not_disabled_entry(file_entry)
@@ -395,7 +518,13 @@ class FileManager:
         return self._download_file_from_repos(file_entry.name, file_entry.repositories)
 
     def _ensure_unknown_file(self, file_name: str) -> FileCacheEntry:
-        """Applies allowed strategies to obtain a file cache entry of unknown file"""
+        """Obtain a file absent from the registry, following ``on_unknown_file``.
+
+        With ``FAIL`` (the default) this raises
+        :class:`~few.utils.exceptions.FileNotInRegistry`. The local lookup of the other two
+        modes goes through :meth:`_try_add_local_file_to_cache`, which itself raises
+        ``FileNotInRegistry`` for an unregistered name unless it is already cached.
+        """
         if self._options.on_unknown_file == FileUnknownAction.FAIL:
             raise exceptions.FileNotInRegistry(
                 "File '{}' is not defined in registry.".format(file_name)
@@ -432,7 +561,7 @@ class FileManager:
             ) from e
 
     def _ensure_file(self, file_name: str) -> FileCacheEntry:
-        """Try all allowed strategies to obtain a file cache entry."""
+        """Obtain a file's cache entry (registry file or unknown file)."""
         # 1 - Check file is in registry
         file_entry = self._registry.get_file(file_name)
 
@@ -442,13 +571,26 @@ class FileManager:
         return self._ensure_unknown_file(file_name)
 
     def get_tags(self) -> typing.List[str]:
-        """Get the list of file tags"""
+        """Return the sorted list of tags used in the registry."""
         return self._registry.get_tags()
 
     def try_get_local_file(
         self, file_name: str, use_cache: bool = False
     ) -> typing.Optional[pathlib.Path]:
-        """Try to get file locally and return its path"""
+        """Return the local path of a file if present, without downloading.
+
+        Args:
+            file_name: File name.
+            use_cache: If ``True``, consult only the in-memory cache; if ``False`` (default),
+                also search the local paths (and cache a hit).
+
+        Returns:
+            pathlib.Path or None: The path, or ``None`` if not found.
+
+        Raises:
+            few.utils.exceptions.FileNotInRegistry: With ``use_cache=False``, for a name that
+                is neither cached nor in the registry.
+        """
         optional_entry = (
             self._try_get_file_from_local_cache(file_name=file_name)
             if use_cache
@@ -457,11 +599,27 @@ class FileManager:
         return optional_entry.path if optional_entry is not None else None
 
     def get_file(self, file_name: str) -> pathlib.Path:
-        """Get file locally and return its path"""
+        """Return the local path of a data file, downloading it if needed and allowed.
+
+        This is how FEW's models load their data (e.g. ``KerrEccEqFluxData.h5``,
+        ``ZNAmps_l10_m10_n55_DS2Outer.h5``). With the default ``ONCE`` integrity mode the
+        checksum is computed the first time a file is located in this process.
+
+        Args:
+            file_name: File name as listed in the registry.
+
+        Returns:
+            pathlib.Path: Path of the verified local file.
+
+        Raises:
+            few.utils.exceptions.FileManagerException: If the file cannot be obtained
+                (subclasses ``FileNotInRegistry``, ``FileNotFoundLocally``,
+                ``FileManagerDisabledAccess``, ``FileDownloadException``, ...).
+        """
         return self._ensure_file(file_name=file_name).path
 
     def try_get_file(self, file_name: str) -> typing.Optional[pathlib.Path]:
-        """Get file and, if no strategy works, return None"""
+        """Like :meth:`get_file`, but return ``None`` instead of raising a file-manager error."""
         try:
             return self.get_file(file_name)
         except exceptions.FileManagerException:
@@ -470,7 +628,19 @@ class FileManager:
     def prefetch_files_by_list(
         self, file_names: typing.Iterable[str], skip_disabled: bool = False
     ):
-        """Ensure all files in the given list are present (or raise errors for missing files)"""
+        """Make sure every listed file is present locally, downloading as needed.
+
+        All files are attempted; the failures are raised together at the end.
+
+        Args:
+            file_names: File names.
+            skip_disabled: If ``True``, skip (with a debug log) files refused because of a
+                disabled tag instead of counting them as failures. Default ``False``.
+
+        Raises:
+            few.utils.exceptions.FileManagerException: If any file could not be obtained
+                (the individual errors are chained as an exception group).
+        """
         from few import get_logger
 
         errors = []
@@ -497,7 +667,14 @@ class FileManager:
             )
 
     def prefetch_files_by_tag(self, tag: str, skip_disabled: bool = False):
-        """Ensure all files matching a given tag are locally present (or raise errors)"""
+        """Make sure every registry file tagged ``tag`` is present locally.
+
+        See :meth:`prefetch_files_by_list`.
+
+        Args:
+            tag: Registry tag (e.g. ``"testfile"``; :meth:`get_tags` lists them).
+            skip_disabled: Skip files refused because of a disabled tag. Default ``False``.
+        """
         self.prefetch_files_by_list(
             (file.name for file in self._registry.get_files_by_tag(tag)), skip_disabled
         )
@@ -507,7 +684,13 @@ class FileManager:
         discarded_tags: typing.Optional[list[str]] = None,
         skip_disabled: bool = False,
     ):
-        """Ensure all files defined in registry are locally present (or raise errors)"""
+        """Make sure every registry file is present (see :meth:`prefetch_files_by_list`).
+
+        Args:
+            discarded_tags: Skip files carrying any of these tags (``few_files fetch`` passes
+                ``["deprecated"]``). Default ``None`` keeps all files.
+            skip_disabled: Skip files refused because of a disabled tag. Default ``False``.
+        """
 
         def keep_file(file: File, discarded_tags: typing.Optional[list[str]] = None):
             if discarded_tags is None:
@@ -527,7 +710,20 @@ class FileManager:
         )
 
     def open(self, file: os.PathLike, mode="r", **kwargs):
-        """Wrapper for open() built-in with automatic file download if needed."""
+        """Wrapper for the built-in ``open`` that fetches registry files on demand.
+
+        An existing file, an absolute path or a path with a directory part is opened as is.
+        A bare name opened for reading is resolved with :meth:`get_file`; for writing it is
+        opened in the storage directory.
+
+        Args:
+            file: File name or path.
+            mode (str): ``open`` mode. Default ``"r"``.
+            **kwargs: Forwarded to ``open``.
+
+        Returns:
+            typing.IO: The open file object.
+        """
         file_path = pathlib.Path(file)
 
         # Do not change behavior of open if file is already defined or absolute

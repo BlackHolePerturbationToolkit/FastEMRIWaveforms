@@ -1,5 +1,18 @@
-# Flux-based Schwarzschild Eccentric amplitude module for Fast EMRI Waveforms
-# performs calculation with a Roman network
+"""Teukolsky amplitudes from spline interpolation of precomputed amplitude grids.
+
+- :class:`AmpInterp2D`: one set of bicubic splines (one per mode, real and imaginary parts)
+  over a 2-D ``(w, u)`` grid, evaluated by the compiled ``interp2D`` kernel of the backend
+  (CUDA on GPU backends).
+- :class:`AmpInterpKerrEccEq`: Kerr eccentric equatorial amplitudes, one
+  :class:`AmpInterp2D` per spin knot and region, linear interpolation in the spin coordinate.
+  The amplitude module of :class:`~few.waveform.waveform.FastKerrEccentricEquatorialFlux`.
+- :class:`AmpInterpSchwarzEcc`: Schwarzschild eccentric amplitudes, bicubic splines over
+  ``(e, y(p, e))``, kept for the Schwarzschild models.
+
+The data files are fetched through :func:`few.get_file_manager`.
+"""
+
+# Spline-interpolated Teukolsky amplitude modules for Fast EMRI Waveforms
 
 import os
 import pathlib
@@ -27,28 +40,29 @@ from ..utils.mappings.schwarzecc import schwarzecc_p_to_y
 from .base import AmplitudeBase
 
 class AmpInterp2D(AmplitudeBase, FewBackendConsumer):
-    r"""Calculate Teukolsky amplitudes with a bicubic spline interpolation.
+    r"""Bicubic spline interpolant of many complex mode-amplitude grids over ``(w, u)``.
 
-    This class is initialised by providing mode index arrays and a corresponding spline coefficients array.
-    These coefficients can be computed for user-supplied data with the TODO METHOD method of this class.
-
-    When called with arguments :math:`(a, p, e, xI)`, these parameters are transformed into a set of
-    interpolation coordinates and the bicubic spline interpolant is evaluated at these coordinates for
-    all sets of coefficients.
+    Holds precomputed B-spline coefficients (degree 3 in both directions) for the real and
+    imaginary parts of every mode on one 2-D grid, and evaluates all of them, or a subset, at
+    a set of ``(w, u)`` points with the backend's ``interp2D`` kernel (FITPACK
+    ``fpbisp`` / ``fpbspl`` B-spline evaluation; CUDA on GPU backends). It works directly in
+    interpolation coordinates; the mapping from :math:`(a, p, e, x_I)` is done by the owning
+    module (:class:`AmpInterpKerrEccEq`, one instance per spin knot and region).
 
     This module is available for GPU and CPU.
 
-    args:
-        w_knots: The knots in the w direction.
-        u_knots: The knots in the u direction.
-        coefficients: The Teukolsky mode amplitudes to be interpolated.
-        l_arr: Array of :math:`\ell` mode indices.
-        m_arr: Array of :math:`m` mode indices.
-        k_arr: Array of :math:`k` mode indices.
-        n_arr: Array of :math:`n` mode indices.
-        **kwargs: Optional keyword arguments for the base class:
-            :class:`few.utils.baseclasses.AmplitudeBase`,
-            :class:`few.utils.baseclasses.FewBackendConsumer`.
+    Args:
+        w_knots: Spline knot vector in the ``w`` direction.
+        u_knots: Spline knot vector in the ``u`` direction.
+        coefficients: Spline coefficients, shape ``(num_modes, 2, n_coeff)``: per mode, the
+            real then the imaginary part, ``n_coeff`` coefficients each (the ``tck[2]`` of a
+            :class:`scipy.interpolate.RectBivariateSpline` with ``kx = ky = 3``).
+        l_arr: :math:`\ell` of each mode, shape ``(num_modes,)``.
+        m_arr: :math:`m` of each mode, shape ``(num_modes,)``.
+        k_arr: :math:`k` of each mode, shape ``(num_modes,)``.
+        n_arr: :math:`n` of each mode, shape ``(num_modes,)``.
+        force_backend: Backend name or object (see
+            :class:`~few.utils.baseclasses.FewBackendConsumer`). Default ``None``.
     """
 
     l_arr: xp_ndarray
@@ -112,16 +126,17 @@ class AmpInterp2D(AmplitudeBase, FewBackendConsumer):
 
     @property
     def interp2D(self) -> callable:
-        """GPU or CPU interp2D"""
+        """The backend's compiled ``interp2D`` kernel wrapper (``pyAmpInterp2D``)."""
         return self.backend.interp2D
 
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
-        """Return citations related to this module"""
+        """Return citations related to this module (the parent classes' references)."""
         return super().module_references()
 
     @classmethod
     def supported_backends(cls):
+        """Backend preference order: ``["cuda13x", "cuda12x", "cuda11x", "cpu"]``."""
         return cls.GPU_RECOMMENDED()
 
     def __call__(
@@ -132,15 +147,19 @@ class AmpInterp2D(AmplitudeBase, FewBackendConsumer):
         mode_indexes: Optional[xp_ndarray] = None,
         **kwargs,
     ) -> xp_ndarray:
-        """
-        Evaluate the spline at given positions.
+        """Evaluate the mode-amplitude splines at the points ``(w, u)``.
 
         Args:
-            w: First interpolation parameter.
-            u: Second interpolation parameter.
-            mode_indexes: Array indices of grids to be interpolated (optional; defaults to all grids).
+            w: First interpolation coordinate, scalar or array (broadcast against ``u``).
+            u: Second interpolation coordinate, scalar or array.
+            *args: Accepted and ignored.
+            mode_indexes: Indices (along the first axis of ``coefficients``) of the modes to
+                evaluate. Default ``None`` means all modes.
+            **kwargs: Accepted and ignored.
+
         Returns:
-            Complex interpolated values at the requested points.
+            xp.ndarray: Complex amplitudes, shape ``(number of points, number of modes)``, on
+            the backend.
         """
         w = self.xp.asarray(w)
         u = self.xp.asarray(u)
@@ -189,21 +208,57 @@ class AmpInterp2D(AmplitudeBase, FewBackendConsumer):
 
 
 class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
-    """Calculate Teukolsky amplitudes in the Kerr eccentric equatorial regime with a bicubic spline + linear
-    interpolation scheme.
+    r"""Kerr eccentric equatorial amplitudes: bicubic splines in ``(w, u)``, linear in spin.
 
-    When called with arguments :math:`(a, p, e, xI)`, these parameters are transformed into a set of
-    interpolation coordinates and the bicubic spline interpolant is evaluated at these coordinates for
-    all sets of coefficients. To interpolate in the :math"`a` direction, the bicubic spline is evaluated at
-    the adjacent grid points and a linear interpolation is performed.
+    When called with :math:`(a, p, e, x_I)` (through
+    :meth:`~few.amplitude.base.AmplitudeBase.__call__`), the parameters are mapped to the
+    interpolation coordinates ``(u, w, z)`` and the region mask of
+    :func:`~few.utils.mappings.kerrecceq.kerrecceq_forward_map` (``kind="amplitude"``; signed
+    spin :math:`a x_I`). The data file holds, for each knot of the spin coordinate ``z``, one
+    bicubic spline set per region (A: close to the separatrix, B: far, when present). The
+    module evaluates the :class:`AmpInterp2D` of the two ``z`` knots bracketing the call's
+    spin (or of the exact knot) and interpolates linearly in ``z``. The default data file
+    ``ZNAmps_l10_m10_n55_DS2Outer.h5`` covers :math:`2 \le l \le 10`, :math:`|n| \le 55`
+    (the :class:`~few.utils.baseclasses.KerrEccentricEquatorial` defaults).
 
-    This module is available for GPU and CPU.
+    This module is available for GPU and CPU; the coefficients live on the backend, the
+    coordinate mapping runs on the host. It is the amplitude module of
+    :class:`~few.waveform.waveform.FastKerrEccentricEquatorialFlux`.
 
-    args:
-        fp: The coefficients file name in `file_directory`.
-        **kwargs: Optional keyword arguments for the base classes:
-            :class:`few.utils.baseclasses.AmplitudeBase`,
-            :class:`few.utils.baseclasses.KerrEccentricEquatorial`.
+    Args:
+        filename: Name of the coefficients file, fetched through the file manager. Default
+            ``None`` means ``"ZNAmps_l10_m10_n55_DS2Outer.h5"``.
+        downsample_Z (int): Keep every ``downsample_Z``-th spin knot. Default ``1``.
+        force_backend: Backend name or object (see
+            :class:`~few.utils.baseclasses.FewBackendConsumer`). Default ``None``.
+        **kwargs: Forwarded to :class:`~few.utils.baseclasses.KerrEccentricEquatorial`
+            (``lmax``, ``nmax``; they must match the file's mode content).
+
+    Attributes:
+        filename (str): Coefficients file name.
+        spin_information_holder_A (list[AmpInterp2D]): Region-A interpolants, one per spin
+            knot.
+        spin_information_holder_B (list[AmpInterp2D]): Region-B interpolants, one per spin
+            knot (absent if the file has no ``regionB`` group).
+        z_values (xp.ndarray): Spin-coordinate knots ``z``.
+
+    Note:
+        ``z_values`` is set from the region-B knots when the file has a region B (from region
+        A otherwise), and the same knot index is used for both regions; this assumes both
+        regions share one ``z`` grid (``regionA/z_knots`` equal to ``regionB/z_knots``). The
+        preparation script ``dataset-preprocessing/KerrEccEq/amplitude-data-preparation.py``
+        writes 33 equally spaced knots on ``[0, 1]`` for both regions, and the two regions
+        map the spin to ``z`` with the same bounds (``AMAX = AMAX_REGIONB = 0.999``).
+
+    Example:
+        .. code-block:: python
+
+            import numpy as np
+            from few.amplitude.ampinterp2d import AmpInterpKerrEccEq
+
+            amp = AmpInterpKerrEccEq(force_backend="cpu")
+            # a, p [M], e, xI; returns shape (2, amp.num_teuk_modes)
+            A = amp(0.9, np.array([10.0, 11.0]), np.array([0.2, 0.2]), np.array([1.0, 1.0]))
     """
 
     filename: str
@@ -289,6 +344,18 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
         self.z_values = z_knots
 
     def _evaluate_interpolant_at_index(self, index, region_A_mask, w, u, mode_indexes):
+        """Evaluate the spin knot ``index`` (region A where the mask is set, B elsewhere).
+
+        Args:
+            index (int): Spin-knot index into the region holders.
+            region_A_mask (xp.ndarray): Boolean, shape ``(N,)``; ``True`` for region A.
+            w (xp.ndarray): Interpolation coordinate ``w``, shape ``(N,)``.
+            u (xp.ndarray): Interpolation coordinate ``u``, shape ``(N,)``.
+            mode_indexes (xp.ndarray): Mode indices to evaluate (length ``num_modes_eval``).
+
+        Returns:
+            xp.ndarray: Complex amplitudes, shape ``(N, num_modes_eval)``.
+        """
         z_out = self.xp.zeros(
             (region_A_mask.size, self.num_modes_eval), dtype=self.xp.complex128
         )
@@ -313,17 +380,28 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
         xI: Union[float, np.ndarray],
         specific_modes: Optional[np.ndarray] = None,
     ) -> np.ndarray:
-        """
-        Generate Teukolsky amplitudes for a given set of parameters.
+        """Interpolate the Teukolsky amplitudes along a trajectory (called by ``__call__``).
+
+        The signed spin :math:`a x_I` and ``(p, e)`` are mapped on the host with
+        :func:`~few.utils.mappings.kerrecceq.kerrecceq_forward_map` (``kind="amplitude"``);
+        the spin coordinate of the first point selects the ``z`` knots.
 
         Args:
-            a: Dimensionless spin parameter of MBH.
-            p: Dimensionless semi-latus rectum.
-            e: Eccentricity.
-            xI: Cosine of orbital inclination. Only :math:`|x_I| = 1` is currently supported.
-            specific_modes: Indices of modes to be generated (optional; defaults to all modes).
+            a: Dimensionless spin, array of one repeated value (all entries must be equal).
+            p: Semi-latus rectum in units of :math:`M`, shape ``(N,)`` (numpy or cupy).
+            e: Eccentricity, shape ``(N,)``.
+            xI: :math:`x_I`, ``+1`` or ``-1`` (all points prograde or all retrograde).
+            specific_modes: Mode indices to evaluate. Default ``None`` means all
+                ``num_teuk_modes`` modes.
+
         Returns:
-            An array of complex mode amplitudes.
+            xp.ndarray: Complex amplitudes, shape ``(N, number of modes)``, on the backend.
+
+        Raises:
+            AssertionError: If the spins differ, the points mix prograde and retrograde, or
+                ``|xI| != 1``.
+            ValueError: If a mapped coordinate is outside ``[0, 1]`` ("Amplitude interpolant
+                accessed out-of-bounds.").
         """
         if specific_modes is None:
             specific_modes = self.xp.arange(self.num_teuk_modes)
@@ -408,22 +486,30 @@ class AmpInterpKerrEccEq(AmplitudeBase, KerrEccentricEquatorial):
 
 
 class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
-    """Calculate Teukolsky amplitudes in the Schwarzschild eccentric regime with a bicubic spline interpolation.
+    """Schwarzschild eccentric Teukolsky amplitudes from bicubic splines over ``(e, y)``.
 
-    When called with arguments :math:`(a, p, e, xI)`, these parameters are transformed into a set of
-    interpolation coordinates and the bicubic spline interpolant is evaluated at these coordinates for
-    all sets of coefficients.
+    At construction the amplitude grid of the data file (modes ``l{l}m{m}/n{n}k0``, grid
+    ``(p, e)``) is fitted with :class:`scipy.interpolate.RectBivariateSpline` (``kx = ky = 3``)
+    over ``w = e`` and ``u = y(p, e)``
+    (:func:`~few.utils.mappings.schwarzecc.schwarzecc_p_to_y`); the spline coefficients go to
+    the backend and are evaluated with the ``interp2D`` kernel when called with
+    :math:`(a, p, e, x_I)` (``a = 0``, ``x_I = 1``).
 
-    This class is retained for legacy compatibility with the original Schwarzschild eccentric models. It is
-    recommended to use `AmpInterpKerrEccEq` instead of this class.
+    This class is retained for legacy compatibility with the original Schwarzschild eccentric
+    models (:class:`~few.waveform.waveform.FastSchwarzschildEccentricFluxBicubic`,
+    :class:`~few.waveform.waveform.SlowSchwarzschildEccentricFlux`). It is recommended to use
+    :class:`AmpInterpKerrEccEq` instead of this class.
 
     This module is available for GPU and CPU.
 
-    args:
-        filenames: The coefficients file names.
-        **kwargs: Optional keyword arguments for the base classes:
-            :class:`few.utils.baseclasses.AmplitudeBase`,
-            :class:`few.utils.baseclasses.SchwarzschildEccentric`.
+    Args:
+        filenames: A list with exactly one data-file name, fetched through the file manager.
+            Default ``None`` means ``"Teuk_amps_a0.0_lmax_10_nmax_30_new.h5"``. (A plain
+            string is indexed with ``[0]``, so pass a list.)
+        force_backend: Backend name or object (see
+            :class:`~few.utils.baseclasses.FewBackendConsumer`). Default ``None``.
+        **kwargs: Forwarded to :class:`~few.utils.baseclasses.SchwarzschildEccentric`
+            (``lmax`` default 10, ``nmax`` default 30).
     """
 
     filename: str
@@ -528,23 +614,27 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
 
     @property
     def interp2D(self) -> callable:
-        """GPU or CPU interp2D"""
+        """The backend's compiled ``interp2D`` kernel wrapper (``pyAmpInterp2D``)."""
         return self.backend.interp2D
 
     def get_amplitudes(
         self, a, p, e, xI, specific_modes=None
     ) -> Union[dict, np.ndarray]:
-        """
-        Generate Teukolsky amplitudes for a given set of parameters.
+        """Interpolate the Teukolsky amplitudes along a trajectory (called by ``__call__``).
 
         Args:
-            a: Dimensionless spin parameter of MBH (must be equal to zero).
-            p: Dimensionless semi-latus rectum.
-            e: Eccentricity.
-            xI: Cosine of orbital inclination. Only :math:`x_I = 1` is currently supported.
-            specific_modes: Indices of modes to be generated (optional; defaults to all modes).
+            a (xp.ndarray): Spin; must equal 0.
+            p (xp.ndarray): Semi-latus rectum in units of :math:`M`, shape ``(N,)``.
+            e (xp.ndarray): Eccentricity, shape ``(N,)``.
+            xI (xp.ndarray): :math:`x_I`; must equal 1.
+            specific_modes (xp.ndarray): Mode indices to evaluate. ``__call__`` always passes
+                an index array (``None`` is not supported here).
+
         Returns:
-            An array of complex mode amplitudes.
+            xp.ndarray: Complex amplitudes, shape ``(N, number of modes)``, on the backend.
+
+        Raises:
+            AssertionError: If ``a != 0`` or ``xI != 1``.
         """
         assert a == 0.0
 
@@ -591,10 +681,20 @@ class AmpInterpSchwarzEcc(AmplitudeBase, SchwarzschildEccentric):
         return z
 
     def __reduce__(self):
+        """Pickle as ``(class, (filename,))``; the backend and ``**kwargs`` are not kept.
+
+        Warning:
+            Unpickling passes the file name string as ``filenames``, whose first character is
+            then taken as the file name, so unpickling raises
+            :class:`~few.utils.exceptions.FileNotInRegistry`.
+        """
         return (self.__class__, (self.filename,))
 
 
+# TODO check: keep/remove/document -- WIP, no callers; ScottGenericAmps_1.h5 not in registry
 class AmpInterpKerrGeneric(AmplitudeBase, KerrGeneric):
+    """Work-in-progress Kerr generic (inclined) amplitudes for spin 0.7, linear in ``x_I``."""
+
     def __init__(
         self,
         force_backend = None,
@@ -706,9 +806,11 @@ class AmpInterpKerrGeneric(AmplitudeBase, KerrGeneric):
         return Amp_z
 
 
+# TODO check: keep/remove/document -- stale data-prep helper, no callers; output read by nothing
 def _spline_coefficients_to_file(
     fp: os.PathLike, l_arr, m_arr, n_arr, output_directory: os.PathLike
 ) -> pathlib.Path:
+    """Fit a Kerr equatorial amplitude grid file with bicubic splines and save the coefficients."""
     data = {}
     # get information about this specific model from the file
     with h5py.File(fp, "r") as f:
@@ -798,6 +900,7 @@ def _spline_coefficients_to_file(
     return out_filepath
 
 
+# TODO check: keep/remove/document -- stale script: AmpInterpKerrEccEq(filenames=...) -> TypeError
 if __name__ == "__main__":
     # try and instantiate the amplitude class
     spin_values = np.r_[np.linspace(0.0, 0.9, 10), 0.95, 0.99]

@@ -1,17 +1,28 @@
+"""Direct mode summation over a dense trajectory (:class:`DirectModeSum`)."""
+
 # Direct summation of modes in python for the FastEMRIWaveforms Package
 
 from .base import SummationBase
 
 
 class DirectModeSum(SummationBase):
-    """Create waveform by direct summation.
+    r"""Create a waveform by direct summation at the trajectory points (no interpolation).
 
-    This class sums the amplitude and phase information as received.
+    This class sums the amplitude and phase information as received:
 
-    args:
-        *args (list, placeholder): Added for flexibility.
-        **kwargs (dict, placeholder):  Added for flexibility.
+    .. math::
 
+        h = \sum_{\rm modes} Y_{lm} A_{lmkn} e^{-i \Phi_{mkn}}
+            + \sum_{m > 0} (-1)^l Y_{l,-m} A^*_{lmkn} e^{+i \Phi_{mkn}},
+        \qquad \Phi_{mkn} = m \Phi_\phi + k \Phi_\theta + n \Phi_r.
+
+    The output has one sample per trajectory point, so the trajectory must already be dense
+    (fixed steps of ``dt``, as in :class:`~few.waveform.waveform.SlowSchwarzschildEccentricFlux`).
+
+    Args:
+        *args: Forwarded to :class:`~few.summation.base.SummationBase` (positionally
+            ``output_type``, ``pad_output``, ``odd_len``, ``force_backend``).
+        **kwargs: Forwarded to :class:`~few.summation.base.SummationBase`.
     """
 
     def __init__(self, *args, **kwargs):
@@ -19,6 +30,7 @@ class DirectModeSum(SummationBase):
 
     @classmethod
     def supported_backends(cls):
+        """Backend preference order: ``["cpu", "cuda13x", "cuda12x", "cuda11x"]``."""
         return cls.CPU_RECOMMENDED_WITH_GPU_SUPPORT()
 
     def sum(
@@ -37,30 +49,30 @@ class DirectModeSum(SummationBase):
         integrate_backwards=False,
         **kwargs,
     ):
-        r"""Direct summation function.
+        r"""Directly sum the modes at the trajectory points; sets :attr:`waveform`.
 
         This function directly sums the amplitude and phase information, as well
-        as the spin-weighted spherical harmonic values.
+        as the spin-weighted spherical harmonic values. Inputs are moved to the backend.
 
-        args:
-            t (1D double np.ndarray): Array of t values.
-            teuk_modes (2D double np.array): Array of complex amplitudes.
-                Shape: (len(t), num_teuk_modes).
-            ylms (1D complex128 self.xp.ndarray): Array of ylm values for each mode,
-                including m<0. Shape is (num of m==0,) + (num of m>0,)
-                + (num of m<0). Number of m<0 and m>0 is the same, but they are
-                ordered as (m==0 first then) m>0 then m<0.
-            Phi_phi (1D double np.ndarray): Array of azimuthal phase values
-                (:math:`\Phi_\phi`).
-            Phi_r (1D double np.ndarray): Array of radial phase values
-                 (:math:`\Phi_r`).
-            l_arr (1D int np.ndarray): :math:`\ell` values associated with each mode.
-            m_arr (1D int np.ndarray): :math:`m` values associated with each mode.
-            k_arr (1D int np.ndarray): :math:`k` values associated with each mode.
-            n_arr (1D int np.ndarray): :math:`n` values associated with each mode.
-            *args (list, placeholder): Added for future flexibility.
-            **kwargs (dict, placeholder): Added for future flexibility.
+        Args:
+            t (xp.ndarray): Trajectory times in seconds, shape ``(N,)``.
+            teuk_modes (xp.ndarray): Complex amplitudes, shape ``(N, K)``.
+            ylms (xp.ndarray): Complex spherical harmonics, shape ``(2 K,)``: :math:`Y_{lm}`
+                of the ``K`` modes, then :math:`Y_{l,-m}` of the same modes.
+            phase_interp_t (xp.ndarray): Not used (``None`` is replaced by a copy of ``t``).
+            phases_in (xp.ndarray): Phases ``(Phi_phi, Phi_theta, Phi_r)`` in rad at the
+                trajectory points, shape ``(3, N)``.
+            l_arr (xp.ndarray): :math:`\ell` of each mode, shape ``(K,)``.
+            m_arr (xp.ndarray): :math:`m` of each mode, shape ``(K,)``.
+            k_arr (xp.ndarray): :math:`k` of each mode, shape ``(K,)``.
+            n_arr (xp.ndarray): :math:`n` of each mode, shape ``(K,)``.
+            *args: Accepted and ignored.
+            dt (float): Not used. Default ``10.0``.
+            integrate_backwards (bool): Must be ``False``. Default ``False``.
+            **kwargs: Accepted and ignored.
 
+        Raises:
+            NotImplementedError: If ``integrate_backwards`` is ``True``.
         """
 
         Phi_phi, Phi_theta, Phi_r = phases_in

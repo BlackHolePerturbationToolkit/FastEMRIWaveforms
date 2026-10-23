@@ -1,3 +1,11 @@
+"""Call interface shared by the trajectory modules.
+
+:class:`TrajectoryBase` turns a call ``traj(m1, m2, ..., T=..., dt=...)`` into a
+``get_inspiral`` call of the concrete module (:class:`few.trajectory.inspiral.EMRIInspiral`),
+handles the units of the output time and of ``max_step_size``, and optionally resamples the
+result on a uniform or user grid through the integrator's dense output.
+"""
+
 import abc
 from typing import Optional
 
@@ -8,12 +16,16 @@ from few.utils.constants import MTSUN_SI, YRSID_SI
 
 
 class TrajectoryBase(Citable, abc.ABC):
-    """Base class used for trajectory modules.
+    """Base class of the trajectory modules.
 
-    This class provides a flexible interface to various trajectory
-    implementations. Specific arguments to each trajectory can be found with
-    each associated trajectory module discussed below.
+    Subclasses implement :meth:`get_inspiral`; :meth:`__call__` provides the common call
+    interface (output time units, step-size limit, optional upsampling). The only concrete
+    subclass in FEW is :class:`few.trajectory.inspiral.EMRIInspiral`, whose docstring lists
+    the model arguments.
 
+    Args:
+        *args: Accepted and ignored.
+        **kwargs: Accepted and ignored.
     """
 
     def __init__(self, *args, **kwargs):
@@ -22,13 +34,23 @@ class TrajectoryBase(Citable, abc.ABC):
     @classmethod
     @abc.abstractmethod
     def get_inspiral(self, *args, **kwargs):
-        """Inspiral Generator
+        """Integrate the inspiral (implemented by subclasses).
 
-        @classmethod that requires a child class to have a get_inspiral method.
+        Called by :meth:`__call__` with the call's positional arguments (``m1``, ``m2`` in
+        solar masses first) and keyword arguments, plus the keys ``dt`` (s), ``T``
+        (years), ``err``, ``DENSE_STEPPING``, ``buffer_length``, ``integrate_backwards`` and
+        ``max_step_size`` (in the integrator's time unit) that :meth:`__call__` adds.
 
-        raises:
-            NotImplementedError: The child class does not have this method.
+        Args:
+            *args: Model parameters.
+            **kwargs: Call keywords (see above).
 
+        Returns:
+            tuple[np.ndarray, ...]: The time array in seconds first, then the trajectory
+            arrays.
+
+        Raises:
+            NotImplementedError: If the subclass does not implement it.
         """
         raise NotImplementedError
 
@@ -49,64 +71,71 @@ class TrajectoryBase(Citable, abc.ABC):
         max_step_size: Optional[float] = None,
         **kwargs,
     ) -> tuple[np.ndarray]:
-        """Call function for trajectory interface.
+        """Integrate a trajectory and return its time and parameter arrays.
 
-        This is the function for calling the creation of the
-        trajectory. Inputs define the output time spacing.
+        Packs the call keywords for :meth:`get_inspiral`, converts ``max_step_size`` to the
+        integrator's time unit, runs the inspiral and converts the output time. With
+        ``upsample=True`` the integrator's dense output is evaluated on ``new_t`` instead of
+        returning the integrator's own (adaptive) knots. Exceptions of :meth:`get_inspiral`
+        propagate (see :meth:`few.trajectory.inspiral.EMRIInspiral.get_inspiral`).
 
-        args:
-            *args: Input of variable number of arguments specific to the
-                inspiral model (see the trajectory class' `get_inspiral` method).
-                **Important Note**: M must be the first parameter of any model
-                that uses this base class.
-            in_coordinate_time: If True, the trajectory will be
-                outputted in coordinate time. If False, the trajectory will be
-                outputted in units of M. Default is True.
-            dt: Time step for output waveform in seconds. Also sets
-                initial step for integrator. Default is 10.0.
-            T: Total observation time in years. Sets the maximum time
-                for the integrator to run. Default is 1.0.
-            new_t: If given, this represents the final
-                time array at which the trajectory is analyzed. This is
-                performed by using a cubic spline on the integrator output.
-                Default is None.
-            spline_kwargs: If using upsampling, spline_kwargs
-                provides the kwargs desired for scipy.interpolate.CubicSpline.
-                Default is {}.
-            DENSE_STEPPING: If True, the trajectory used in the
-                integrator will be densely stepped at steps of :obj:`dt`. If False,
-                the integrator will determine its stepping. Default is False.
-            buffer_length: Sets the allocation of memory for
-                trajectory parameters. This should be the maximum length
-                expected for a trajectory. If it is reached, output arrays will be
-                extended, but this is more expensive than allocating a larger array
-                initially. Trajectories with default settings
-                will be ~100 points. Default is 1000.
-            upsample: If True, upsample, with a cubic spline,
-                the trajectories from 0 to T in steps of dt. Default is False.
-            err: Tolerance for integrator. Default is 1e-10.
-                Decreasing this parameter will give more steps over the
-                trajectory, but if it is too small, memory issues will occur as
-                the trajectory length will blow up. We recommend not adjusting
-                this parameter.
-            fix_T: If upsampling, this will affect excess
-                points in the t array. If True, it will shave any excess on the
-                trajectories arrays where the time is greater than the overall
-                time of the trajectory requested.
-            integrate_backwards: If True, the integrator will
-                run backwards in time. Default is False.
-            max_step_size: If given, this will set the maximum step size for
-                the integrator (matching the convention according to `in_coordinate_time`).
-                Default is None (no maximum step size).
-            **kwargs: kwargs passed to trajectory module.
-                Default is {}.
+        Args:
+            *args: Model parameters, forwarded to :meth:`get_inspiral`. The first two must
+                be the masses ``m1``, ``m2`` in solar masses (they set the time units); for
+                :class:`~few.trajectory.inspiral.EMRIInspiral` the full list is
+                ``(m1, m2, a, p0, e0, xI0, *ode_args)``.
+            in_coordinate_time: If ``True``, return the time in seconds and read
+                ``max_step_size`` in seconds; if ``False``, return the time in units of
+                :math:`M` (``t / (M * MTSUN_SI)`` with ``M = m1 + m2``) and read
+                ``max_step_size`` in units of :math:`M`. Ignored by the ``upsample`` output,
+                which is always in seconds. Default ``True``.
+            dt: Time step in seconds: the fixed integrator step when
+                ``DENSE_STEPPING=True`` and the spacing of the default ``upsample`` grid.
+                With adaptive stepping (the default) the initial step is tuned automatically
+                and ``dt`` does not affect the knots. Default ``10.0``.
+            T: Maximum duration in years (``YRSID_SI``); the integration stops at ``T`` or
+                at the separatrix buffer, whichever comes first. Default ``1.0``.
+            new_t: Times in seconds at which to evaluate the trajectory when
+                ``upsample=True`` (must be a ``numpy.ndarray``). Default ``None`` means
+                ``np.arange(int(T / dt)) * dt`` with ``T`` in seconds. Ignored otherwise.
+            spline_kwargs: Accepted and ignored (upsampling uses the integrator's dense
+                output, not scipy). Default ``None``.
+            DENSE_STEPPING: If ``True``, take fixed steps of ``dt`` without error control
+                (no dense output is built). Default ``False``.
+            buffer_length: Forwarded to :meth:`get_inspiral`. For
+                :class:`~few.trajectory.inspiral.EMRIInspiral` it has no effect: the
+                integrator uses its own buffer length (the
+                :class:`~few.trajectory.integrate.Integrate` constructor value, default 10000
+                rows, grown by 100 rows whenever an integration fills it). Default ``1000``.
+            upsample: If ``True``, return the dense-output trajectory on ``new_t``; samples
+                after the end of the trajectory are zero. Not supported with
+                ``DENSE_STEPPING``. Default ``False``.
+            err: Absolute tolerance of the DOP853 error control. Smaller values give more
+                knots. Default ``1e-11``.
+            fix_t: With ``upsample``, truncate the output at the first sample past the end
+                of the trajectory, detected as the first sample whose second output row
+                (``e`` for :class:`~few.trajectory.inspiral.EMRIInspiral`) is exactly zero;
+                a trajectory whose ``e`` stays exactly zero (circular) is therefore
+                truncated to nothing. Default ``False``.
+            integrate_backwards: If ``True``, integrate backwards in time from the given
+                (final) orbital parameters. Default ``False``.
+            max_step_size: Largest integrator step, in seconds or in units of :math:`M`
+                (see ``in_coordinate_time``). Default ``None`` means no limit.
+            **kwargs: Forwarded to :meth:`get_inspiral` (for
+                :class:`~few.trajectory.inspiral.EMRIInspiral`: ``Phi_phi0``,
+                ``Phi_theta0``, ``Phi_r0``; any other key is ignored there).
 
         Returns:
-            Tuple of (t, p, e, Phi_phi, Phi_r, flux_norm).
+            tuple[np.ndarray, ...]: ``(t,)`` followed by the :meth:`get_inspiral` outputs
+            after its time array. For :class:`~few.trajectory.inspiral.EMRIInspiral`:
+            ``(t, p, e, x, Phi_phi, Phi_theta, Phi_r)``, 1-D arrays of the same length
+            (``t`` in s or :math:`M`, ``p`` in units of :math:`M`, phases in rad); with
+            ``upsample`` the arrays are sampled on ``new_t``.
 
         Raises:
-            ValueError: If input parameters are not allowed in this model.
-
+            ValueError: With ``upsample``, if ``new_t`` is given and is not a
+                ``numpy.ndarray``.
+            NotImplementedError: If ``upsample`` and ``DENSE_STEPPING`` are both set.
         """
         if spline_kwargs is None:
             spline_kwargs = {}

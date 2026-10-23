@@ -1,4 +1,17 @@
-"""Implementation of a centralized configuration management for FEW."""
+"""Centralized configuration management of FEW.
+
+A configuration is built by a :class:`ConfigConsumer` from, in increasing priority, each
+entry's default, a ``few.ini`` file (section ``[few]``), ``FEW_*`` environment variables,
+command-line arguments, and values set through the configuration setter
+(:class:`~few.utils.globals.ConfigurationSetter`); an entry may merge values from several
+sources instead of replacing them (e.g. ``file_extra_paths``). :class:`InitialConfigConsumer`
+is the first pass (whether to ignore the config file or the environment, and which file to
+read; :func:`detect_cfg_file` searches the default locations); :class:`Configuration`
+holds the library options (log level and format, the file-manager paths and policies,
+``enabled_backends``). The global instance is built once by
+:class:`~few.utils.globals.Globals` and returned by :func:`few.get_config`; the user guide
+page ``docs/source/user/cfg.md`` lists the options.
+"""
 
 from __future__ import annotations
 
@@ -48,15 +61,21 @@ class ConfigSource(enum.Enum):
 
 T = TypeVar("T")
 
+# prefix of the environment variables read by the configuration (FEW_LOG_LEVEL, ...)
 ENVVAR_PREFIX: str = "FEW_"
 
 
 @dataclasses.dataclass
 class ConfigEntry(Generic[T]):
-    """Description of a configuration entry."""
+    """Description of one configuration entry (a dataclass).
+
+    The fields are documented below. ``convert`` defaults to calling ``type`` on the input
+    (set in ``__post_init__``); ``validate`` defaults to accepting everything and
+    ``overwrite`` to keeping the newer value.
+    """
 
     label: str
-    """How the entry is referred to in Python code (config.get("label"))"""
+    """How the entry is referred to in Python code (``config["label"]`` or ``config.label``)"""
     description: str
     """Description of the configuration entry"""
 
@@ -70,7 +89,7 @@ class ConfigEntry(Generic[T]):
     """Name of the entry in a config file"""
 
     env_var: Optional[str] = None
-    """Entry corresponding env var (uppercase, without FEW_ prefix)"""
+    """Entry corresponding env var (uppercase, without the ``FEW_`` prefix)"""
 
     cli_flags: Optional[Union[str, List[str]]] = None
     """Flag(s) for CLI arguments of this entry (e.g. "-f")"""
@@ -88,11 +107,27 @@ class ConfigEntry(Generic[T]):
     """Method used to update the value if given by multiple means"""
 
     def __post_init__(self):
+        """Default ``convert`` to ``self.type(value)``."""
         if self.convert is None:
             self.convert = lambda v: self.type(v)
 
 
 def compatibility_isinstance(obj, cls) -> bool:
+    """``isinstance`` that also handles ``Optional`` / ``Union``, ``List[T]``, ``Sequence[T]``.
+
+    Plain classes (and any type on Python >= 3.10 that ``isinstance`` accepts) are checked
+    directly; for the subscripted generics the items are checked recursively.
+
+    Args:
+        obj: Object to test.
+        cls: Class or typing construct.
+
+    Returns:
+        bool: Whether ``obj`` matches ``cls``.
+
+    Raises:
+        NotImplementedError: For another subscripted generic.
+    """
     import sys
     import typing
 
@@ -133,18 +168,41 @@ def compatibility_isinstance(obj, cls) -> bool:
 
 @dataclasses.dataclass
 class ConfigItem(Generic[T]):
-    """Actual configuration entry with its run-time properties (value, source, ...)"""
+    """Actual configuration entry with its run-time properties (a dataclass).
+
+    Attributes:
+        value: The entry's value.
+        source (ConfigSource): Where the current value comes from.
+    """
 
     value: T  # Item value
     source: ConfigSource  # Source of the item current value
 
 
 class ConfigConsumer(abc.ABC):
-    """
-    Base class for actual configs.
+    """Base class of the configurations: builds the entries' values from all sources.
 
-    This class handles building config values from default, file, environment and CLI options.
-    It keeps a list of unused parameters for an other consumer.
+    Subclasses define :meth:`config_entries`. The constructor builds one item per entry
+    from, in increasing priority, the entry's default (only if it matches the entry's
+    type), the config file, the environment, the CLI arguments and the setter values; a
+    later source replaces an earlier value through the entry's ``overwrite`` rule. The
+    options that no entry consumed are kept for another consumer (:meth:`get_extras`).
+    Values are read as ``config["label"]`` or ``config.label``.
+
+    Args:
+        config_file: Path of an INI file (its ``[few]`` section is read) or an
+            already-parsed mapping. Default ``None``.
+        env_vars: Environment, e.g. ``os.environ``; only the ``FEW_``-prefixed keys are
+            used. Default ``None``.
+        cli_args: Command-line arguments. Default ``None``.
+        set_args: Values by label (from the configuration setter), already converted;
+            validated immediately. Default ``None``.
+
+    Raises:
+        few.utils.exceptions.ConfigurationMissing: If an entry has no value.
+        few.utils.exceptions.ConfigurationValidationError: If a value fails its entry's
+            ``validate``.
+        ExceptionGroup: If there are several such errors.
     """
 
     _entries: Dict[str, ConfigEntry]
@@ -157,7 +215,7 @@ class ConfigConsumer(abc.ABC):
     @classmethod
     @abc.abstractmethod
     def config_entries(cls) -> List[ConfigEntry]:
-        """Return the list of the class config entries"""
+        """Return the list of the class config entries (abstract)."""
         raise NotImplementedError(
             "A ConfigConsumer must implement 'config_entries' method."
         )
@@ -235,6 +293,7 @@ class ConfigConsumer(abc.ABC):
         new_items: Dict[str, ConfigItem],
         *other_items,
     ) -> Dict[str, ConfigItem]:
+        """Merge item dicts left to right; shared labels go through the entry's ``overwrite``."""
         merged_items = {}
         for label, old_item in old_items.items():
             if label not in new_items:
@@ -265,13 +324,15 @@ class ConfigConsumer(abc.ABC):
         return self.__getattribute__(attr)
 
     def get_item(self, key: str) -> Tuple[ConfigItem, ConfigEntry]:
+        """Return ``(item, entry)`` of the entry labelled ``key`` (``KeyError`` if unknown)."""
         return self._items[key], self._entries[key]
 
     def get_items(self) -> List[Tuple[ConfigItem, ConfigEntry]]:
+        """Return ``(item, entry)`` for every entry, in entry order."""
         return [(self._items[key], entry) for key, entry in self._entries.items()]
 
     def get_extras(self) -> Tuple[Mapping[str, str], Mapping[str, str], Sequence[str]]:
-        """Return extra file, env and cli entries for other consumer."""
+        """Return the unconsumed ``(file options, environment variables, CLI arguments)``."""
         return self._extra_file, self._extra_env, self._extra_cli
 
     @staticmethod
@@ -342,7 +403,7 @@ class ConfigConsumer(abc.ABC):
     def _build_items_from_env(
         config_entries: Sequence[ConfigEntry], opt_from_env: Mapping[str, str]
     ) -> Tuple[Dict[str, ConfigItem], Dict[str, str]]:
-        """Extract configuration items from file option and build dict of unconsumed extra items."""
+        """Extract the items set by ``FEW_<env_var>`` variables; also return the unused ones."""
         extras_from_env = {**opt_from_env}
         items_from_env = {
             entry.label: ConfigItem(
@@ -361,6 +422,7 @@ class ConfigConsumer(abc.ABC):
         config_entries: Sequence[ConfigEntry],
         parent_parsers: Optional[Sequence[argparse.ArgumentParser]] = None,
     ) -> argparse.ArgumentParser:
+        """Build an ``argparse`` parser (no help, no defaults) of the entries' ``cli_flags``."""
         parser = argparse.ArgumentParser(
             add_help=False,
             argument_default=argparse.SUPPRESS,
@@ -386,7 +448,7 @@ class ConfigConsumer(abc.ABC):
     def _build_items_from_cli(
         config_entries: Sequence[ConfigEntry], opt_from_cli: Sequence[str]
     ) -> Tuple[Dict[str, ConfigItem], List[str]]:
-        """Extract configuration items from file option and build dict of unconsumed extra items."""
+        """Parse the entries' CLI options (``parse_known_args``); also return the leftovers."""
         parser = ConfigConsumer._build_parser(config_entries)
         parsed_options, extras_from_cli = parser.parse_known_args(opt_from_cli)
 
@@ -413,7 +475,11 @@ class ConfigConsumer(abc.ABC):
     def _build_items_from_set(
         config_entries: Sequence[ConfigEntry], set_values: Optional[Dict[str, Any]]
     ) -> Dict[str, ConfigItem]:
-        """Check that provided items match the entries."""
+        """Build the items of the setter values (by label), validating each one.
+
+        Raises:
+            few.utils.exceptions.ConfigurationValidationError: If a value fails ``validate``.
+        """
         set_items = {}
 
         if set_values is None:
@@ -434,7 +500,11 @@ class ConfigConsumer(abc.ABC):
 
 
 def userstr_to_bool(user_str: str) -> Optional[bool]:
-    """Convert a yes/no, on/off or true/false to bool."""
+    """Convert a yes/no, on/off, true/false or 1/0 string to bool (``None`` if unrecognised).
+
+    Matches by prefix, case-insensitively: ``y``, ``t``, ``on``, ``1`` give ``True``;
+    ``n``, ``f``, ``off``, ``0`` give ``False``.
+    """
     if user_str.lower().startswith(("y", "t", "on", "1")):
         return True
     if user_str.lower().startswith(("n", "f", "off", "0")):
@@ -443,7 +513,14 @@ def userstr_to_bool(user_str: str) -> Optional[bool]:
 
 
 def userinput_to_pathlist(user_input) -> List[pathlib.Path]:
-    """Convert a user input to a list of paths"""
+    """Convert a user input to a list of paths.
+
+    ``None`` gives ``[]``; a string is split on ``;``; a sequence of strings is converted to
+    :class:`pathlib.Path`; a sequence of paths is returned as is.
+
+    Raises:
+        ValueError: For any other input.
+    """
     if user_input is None:
         return []
     if isinstance(user_input, str):
@@ -460,7 +537,14 @@ def userinput_to_pathlist(user_input) -> List[pathlib.Path]:
 
 
 def userinput_to_strlist(user_input) -> List[str]:
-    """Convert a user input to a list of paths"""
+    """Convert a user input to a list of strings.
+
+    ``None`` gives ``[]``; a string is split on ``;`` and on spaces; a list of strings is
+    returned as is and another sequence of strings converted to a list.
+
+    Raises:
+        ValueError: For any other input.
+    """
     if user_input is None:
         return []
     if isinstance(user_input, str):
@@ -477,11 +561,24 @@ def userinput_to_strlist(user_input) -> List[str]:
 
 
 class InitialConfigConsumer(ConfigConsumer):
-    """
-    Class implementing first-pass config consumer.
+    """First-pass configuration: whether to ignore the config file / environment, and the file.
 
-    On first pass, we only detect if there are CLI arguments which disable
-    config file or environment variables.
+    Built twice by :meth:`~few.utils.globals.Globals.init`: from the CLI arguments only, then
+    (unless ``ignore_env``) from the environment as well. Its leftovers feed
+    :class:`Configuration`.
+
+    Entries:
+
+    - ``ignore_cfg``: ignore the config file; ``FEW_IGNORE_CFG_FILE`` or
+      ``--ignore-config-file``. Default ``False``.
+    - ``ignore_env``: ignore the environment variables; ``--ignore-env`` only. Default
+      ``False``.
+    - ``config_file``: path of the config file (must exist); ``FEW_CONFIG_FILE`` or
+      ``-C`` / ``--config-file``. Default ``None`` (search with :func:`detect_cfg_file`).
+
+    Args:
+        env_vars: Environment. Default ``None``.
+        cli_args: Command-line arguments. Default ``None``.
     """
 
     ignore_cfg: bool
@@ -490,6 +587,7 @@ class InitialConfigConsumer(ConfigConsumer):
 
     @staticmethod
     def config_entries() -> List[ConfigEntry]:
+        """Return the ``ignore_cfg``, ``ignore_env`` and ``config_file`` entries."""
         return [
             ConfigEntry(
                 label="ignore_cfg",
@@ -533,14 +631,67 @@ class InitialConfigConsumer(ConfigConsumer):
 
 
 def get_package_basepath() -> pathlib.Path:
+    """Return the directory of the installed ``few`` package (its ``data`` subdirectory is
+    the default file location)."""
     import few
 
     return pathlib.Path(few.__file__).parent
 
 
 class Configuration(ConfigConsumer):
-    """
-    Class implementing FEW complete configuration for the library.
+    """The complete FEW configuration (the global one is :func:`few.get_config`).
+
+    Besides the entries below, the constructor consumes the remaining ``-v`` / ``--verbose``
+    (each lowers ``log_level`` by 10, down to ``DEBUG``) and ``-Q`` / ``--quiet``
+    (``CRITICAL``) CLI flags.
+
+    Attributes:
+        log_level (int): Logging level. ``FEW_LOG_LEVEL``, ``--log-level``, file
+            ``log-level``; a level name (case-insensitive; a numeric string is rejected),
+            or an ``int`` through the setter. Default ``logging.WARN``.
+        log_format (str or None): :class:`logging.Formatter` format. ``FEW_LOG_FORMAT``,
+            ``--log-format``, ``log-format``. Default ``None``.
+        file_registry_path (pathlib.Path or None): Custom ``registry.yml`` (must exist).
+            ``FEW_FILE_REGISTRY``, ``--file-registry``, ``file-registry``. Default ``None``
+            (the packaged registry).
+        file_storage_path (pathlib.Path or None): File-manager storage directory (made
+            absolute; must exist). ``FEW_FILE_STORAGE_DIR``, ``--storage-dir``,
+            ``file-storage-dir``. Default ``<package>/data`` in editable installs, else
+            ``None``.
+        file_download_path (pathlib.Path or None): Download directory (absolute, or
+            relative to the storage path). ``FEW_FILE_DOWNLOAD_DIR``, ``--download-dir``,
+            ``file-download-dir``. Default as ``file_storage_path``.
+        file_allow_download (bool): Allow downloading missing files.
+            ``FEW_FILE_ALLOW_DOWNLOAD``, ``--(no-)file-download``, ``file-allow-download``.
+            Default ``True``.
+        file_integrity_check (str): ``"never"``, ``"once"`` (default) or ``"always"``.
+            ``FEW_FILE_INTEGRITY_CHECK``, ``--file-integrity-check``,
+            ``file-integrity-check``.
+        file_extra_paths (list[pathlib.Path]): Extra search directories, accumulated over
+            the sources. ``FEW_FILE_EXTRA_PATHS`` (``;``-separated), ``--extra-path``
+            (repeatable), ``file-extra-paths``. Default ``[<package>/data]``.
+        file_disabled_tags (list[str] or None): Tags of files whose access is disabled,
+            accumulated over the sources. ``FEW_DISABLED_TAGS`` only (or the setter).
+            Default ``None``.
+        enabled_backends (list[str] or None): Backends to enable, validated against the
+            keys of :data:`few.cutils.KNOWN_BACKENDS`. ``FEW_ENABLED_BACKENDS``,
+            ``--enable-backend``, ``enabled-backends``. Default ``None``. No live FEW code
+            reads it (only the uncalled ``Globals._init_backends_manager``): backend
+            selection is done by the ``gpubackendtools`` registry.
+
+    Args:
+        config_file: See :class:`ConfigConsumer`.
+        env_vars: See :class:`ConfigConsumer`.
+        cli_args: See :class:`ConfigConsumer`.
+        set_args: See :class:`ConfigConsumer`.
+
+    Example:
+        .. code-block:: python
+
+            import few
+
+            cfg = few.get_config()
+            cfg.log_level, cfg.file_integrity_check  # (30, "once") with the defaults
     """
 
     log_level: int
@@ -556,6 +707,7 @@ class Configuration(ConfigConsumer):
 
     @staticmethod
     def config_entries() -> List[ConfigEntry]:
+        """Return the library entries (see the class Attributes)."""
         from few import _is_editable as is_editable_mode
 
         return [
@@ -697,6 +849,11 @@ class Configuration(ConfigConsumer):
 
     @staticmethod
     def _str_to_logging_level(input: Union[str, int]) -> int:
+        """Convert a level name (case-insensitive) or an int to a logging level.
+
+        Raises:
+            few.utils.exceptions.ConfigurationValidationError: For an unknown level name.
+        """
         if isinstance(input, int):
             return input
         as_int_level = logging.getLevelName(input.upper())
@@ -707,6 +864,7 @@ class Configuration(ConfigConsumer):
         )
 
     def _apply_verbosity(self, level):
+        """Set ``log_level`` to ``level`` (source: command line)."""
         self._items["log_level"] = ConfigItem(value=level, source=ConfigSource.CLIOPT)
 
     @staticmethod
@@ -732,6 +890,7 @@ class Configuration(ConfigConsumer):
         return parser
 
     def _handle_verbosity(self):
+        """Consume ``-v`` / ``-Q`` from the leftover CLI arguments and adjust ``log_level``."""
         parser = self._build_verbosity_parser()
         parsed_options, self._extra_cli = parser.parse_known_args(self._extra_cli)
 
@@ -757,7 +916,13 @@ class Configuration(ConfigConsumer):
             )
 
     def build_cli_parent_parsers(self) -> List[argparse.ArgumentParser]:
-        """Build a Parser that can be used as parent parser from CLI-specific parsers"""
+        """Build the parent parser of the FEW command-line tools (e.g. ``few_files``).
+
+        Returns:
+            list[argparse.ArgumentParser]: One parser with the options of
+            :class:`InitialConfigConsumer`, :class:`Configuration` and ``-v`` / ``-Q``, to
+            pass as ``parents=`` of a tool's parser.
+        """
         init_parser = ConfigConsumer._build_parser(
             InitialConfigConsumer.config_entries()
         )
@@ -770,7 +935,13 @@ class Configuration(ConfigConsumer):
 
 
 def detect_cfg_file() -> Optional[pathlib.Path]:
-    """Test common path locations for config and return highest-priority existing one (if any)."""
+    """Return the highest-priority existing ``few.ini``, or ``None``.
+
+    Searched in order: ``./few.ini`` (current working directory),
+    ``platformdirs.user_config_path() / "few.ini"``, and
+    ``platformdirs.site_config_path() / "few" / "v<major>.<minor>" / "few.ini"`` (the FEW
+    version). Each probe is logged at debug level.
+    """
     import platformdirs
 
     from .. import __version_tuple__

@@ -1,6 +1,7 @@
 # Batched EMRI trajectories: status and the GPU port
 
-Branch `traj-batch-gpu` (FEW), from `gpu_backend` @ `65a2e0ef`.
+Developed on branch `traj-batch-gpu` (FEW), from `gpu_backend` @ `65a2e0ef`; `gpu_backend` now contains
+all of it (CPU pieces and the trajectory pool, through `68bcda54`).
 
 ## What exists (CPU reference, tested)
 
@@ -12,8 +13,12 @@ Branch `traj-batch-gpu` (FEW), from `gpu_backend` @ `65a2e0ef`.
 | `BatchedIntegrate.run(m1, m2, a, y0 (6,S), T, dt)` | `trajectory/integrate.py` | dense solution within 1-4x the scalar path's own err 1e-11 vs 1e-12 spread; systems bit-independent |
 | `FewBackendConsumer` default backend fix | `utils/baseclasses.py` | `FastKerrEccentricEquatorialFlux()` with no args works |
 
-Status codes (per system): RHS 0 ok, 1 `e < 0`, 2 inside the separatrix, 3 off the flux grid
-(NaN rates instead of exceptions); integrator -1 separatrix buffer, -2 tmax, -3 failed.
+Status codes (per system): RHS 0 ok, 1 `e < 0`, 2 inside the separatrix, 3 off the flux grid,
+4 a scalar kernel raised (e.g. `e >= 1`) (NaN rates instead of exceptions); integrator -1 separatrix
+buffer, -2 tmax, -3 step-size collapse (100 failed tries), -4 `max_iter` reached.
+
+`BatchedIntegrate` is experimental: nothing in FEW or LAT calls it (the waveform models use the scalar
+`Integrate` path); its tests are `tests/test_traj_batch.py`.
 
 ## Facts the port must respect
 
@@ -45,6 +50,11 @@ new calls on the pool, and stores them; the real evaluations are then cache hits
 Workers reset DOPR853's controller state before each trajectory, so a pooled trajectory is
 bit-identical to a freshly built module's. Tests: `tests/test_traj_pool.py`; throughput:
 `examples/bench_traj_pool.py`.
+
+In production, LISAanalysistools' EMRI likelihood (`lisatools.sources.emri.direct_signal_gen`)
+installs a `TrajectoryCache` on its `FastKerrEccentricEquatorialFlux` generator and fans batches of
+at least `EMRI_TRAJ_WORKERS` rows (8 in the global-fit runs) out to a `TrajectoryPool`; smaller
+batches integrate serially. The pool's `precompute(fn, rows, pool)` calls `fn(*row)` for each row.
 
 ## GPU port (DEFERRED by the 2026-09-30 ruling: CPU fan-out first; needs the CUDA toolkit)
 

@@ -1,5 +1,22 @@
 # Function for ylm generation for FastEMRIWaveforms Packages
 
+r"""Spin-weighted (:math:`s = -2`) spherical harmonics :math:`{}_{-2}Y_{lm}(\theta, \phi)`.
+
+:class:`GetYlms` evaluates the harmonics of the FEW mode sums for :math:`2 \le l \le 10`,
+:math:`|m| \le l` from closed forms in :math:`\cos(\theta/2)`, :math:`\sin(\theta/2)` and
+:math:`e^{i m \phi}` (numba on the CPU; the result is moved to the backend). The harmonics
+are normalised to unity over the sphere, e.g.
+
+.. math::
+
+    {}_{-2}Y_{22}(\theta, \phi) = \frac{1}{2}\sqrt{\frac{5}{\pi}}\,
+        \cos^4(\theta/2)\, e^{2 i \phi}
+        = \sqrt{\frac{5}{64\pi}}\,(1 + \cos\theta)^2 e^{2 i \phi}.
+
+:math:`\theta` and :math:`\phi` are the source-frame viewing angles (see
+:func:`~few.utils.utility.get_viewing_angles`).
+"""
+
 from cmath import exp
 from math import cos, pow, sin, sqrt
 from math import pi as PI
@@ -22,6 +39,12 @@ def _ylm_kernel_inner(
     theta: float,
     phi: float
     ) -> complex:
+    r"""Return :math:`{}_{-2}Y_{lm}(\theta, \phi)` for one ``(l, m)`` (closed forms).
+
+    Raises:
+        ValueError: If ``(l, m)`` is not one of the tabulated pairs (``2 <= l <= 10``,
+            ``|m| <= l``).
+    """
     if (l==2) and (m==-2):
         temp = (sqrt(5./PI)*pow(sin(theta/2.),4))/(2.*exp(2.*I*phi))
     elif (l==2 and m==-1):
@@ -269,6 +292,7 @@ def _ylm_kernel_inner(
 def _ylm_kernel(
     out: np.ndarray, l: np.ndarray, m: np.ndarray, theta: float, phi: float
 ):
+    """Fill the complex array ``out`` with the harmonic of each ``(l[k], m[k])``; return it."""
     for k in range(len(out)):
         out[k] = _ylm_kernel_inner(l[k], m[k], theta, phi)
 
@@ -276,18 +300,28 @@ def _ylm_kernel(
 
 
 class GetYlms(FewBackendConsumer):
-    r"""(-2) Spin-weighted Spherical Harmonics
+    r"""(-2) spin-weighted spherical harmonics :math:`{}_{-2}Y_{lm}(\theta, \phi)`.
 
-    The class generates (-2) spin-weighted spherical harmonics,
-    :math:`Y_{lm}(\Theta,\phi)`.
+    Unit-normalised harmonics for :math:`2 \le l \le 10`, :math:`|m| \le l` (see the module
+    docstring for the convention). Used by the spherical-harmonic waveforms and
+    :class:`~few.utils.modeselector.ModeSelector`; the evaluation runs in numba on the CPU
+    and the result is moved to the backend.
 
-    args:
-        include_minus_m: Set True if only providing :math:`m\geq0`,
-            it will return twice the number of requested modes with the second
-            half as modes with :math:`m<0` for array inputs of :math:`l,m`. **Warning**: It will also duplicate
-            the :math:`m=0` modes. Default is False.
-        **kwargs: Optional keyword arguments for the base class:
-            :class:`few.utils.baseclasses.FewBackendConsumer`.
+    Args:
+        include_minus_m: Default of the call option: for array inputs, also return the
+            :math:`-m` harmonics (second half of the output; :math:`m = 0` is duplicated).
+            Default ``False``.
+        **kwargs: Forwarded to :class:`~few.utils.baseclasses.FewBackendConsumer`
+            (``force_backend``).
+
+    Example:
+        >>> import numpy as np
+        >>> from few.utils.ylm import GetYlms
+        >>> ylm = GetYlms()
+        >>> theta, phi = 1.0, 0.3
+        >>> exact = 0.5 * np.sqrt(5 / np.pi) * np.cos(theta / 2) ** 4 * np.exp(2j * phi)
+        >>> bool(np.isclose(ylm(2, 2, theta, phi), exact))
+        True
     """
 
     def __init__(self, include_minus_m: bool = False, **kwargs: Optional[dict]):
@@ -296,6 +330,7 @@ class GetYlms(FewBackendConsumer):
 
     @classmethod
     def supported_backends(cls):
+        """Backend preference: ``GPU_RECOMMENDED()`` (CUDA 13/12/11, then CPU)."""
         return cls.GPU_RECOMMENDED()
 
     # These are the spin-weighted spherical harmonics with s=-2
@@ -307,19 +342,26 @@ class GetYlms(FewBackendConsumer):
         phi: float,
         include_minus_m: Optional[bool] = None,
     ) -> np.ndarray:
-        """Call method for Ylms.
+        r"""Evaluate :math:`{}_{-2}Y_{lm}(\theta, \phi)` for the requested ``(l, m)``.
 
-        This returns ylms based on requested :math:`(l,m)` values and viewing
-        angles.
-
-        args:
-            l_in: :math:`l` values requested.
-            m_in: :math:`m` values requested.
-            theta: Polar viewing angle.
-            phi: Azimuthal viewing angle.
+        Args:
+            l_in: ``l`` values: a Python ``int``, or a 1-D integer array (numpy or cupy;
+                lists and NumPy integer scalars are not accepted).
+            m_in: ``m`` values, same form as ``l_in``.
+            theta: Source-frame polar viewing angle in rad.
+            phi: Source-frame azimuthal viewing angle in rad.
+            include_minus_m: Also return the :math:`(l, -m)` harmonics. ``None`` (default)
+                uses the constructor value.
 
         Returns:
-            Complex array of Ylm values.
+            complex, tuple or xp.ndarray: For ``int`` inputs a complex number, or
+            ``(Y_lm, Y_l,-m)`` with ``include_minus_m``. For arrays a complex128 array on the
+            backend of shape ``(n,)``, or ``(2n,)`` with ``include_minus_m``: the requested
+            harmonics, then those of :math:`(l, -m)` (:math:`m = 0` duplicated).
+
+        Raises:
+            AssertionError: If only one of ``l_in`` / ``m_in`` is an ``int``.
+            ValueError: If an ``(l, m)`` pair is outside ``2 <= l <= 10``, ``|m| <= l``.
         """
         if include_minus_m is None:
             include_minus_m = self.include_minus_m

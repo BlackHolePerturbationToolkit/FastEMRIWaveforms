@@ -1,5 +1,16 @@
 # Online mode selection for FastEMRIWaveforms Packages
 
+r"""Online selection of the Teukolsky modes of a trajectory.
+
+:class:`ModeSelector` evaluates the amplitudes and :math:`{}_{-2}Y_{lm}` of a trajectory and
+returns every mode, a requested list, or (the default) the smallest set of modes whose
+estimated power reaches a threshold fraction of the total; the spherical-harmonic waveforms
+(:class:`~few.waveform.base.SphericalHarmonicWaveformBase`, e.g. the production
+``FastKerrEccentricEquatorialFlux``) call it once per waveform. Also here:
+:func:`get_mode_frequencies` (mode frequencies :math:`m f_\phi + k f_\theta + n f_r`) and
+:func:`get_selected_modes_from_initial_conditions` (trajectory plus selection in one call).
+"""
+
 import numpy as np
 
 from .baseclasses import BackendLike, FewBackendConsumer
@@ -11,69 +22,119 @@ from ..trajectory.inspiral import EMRIInspiral
 from typing import Optional, Union
 
 def get_mode_frequencies(f_phi, f_theta, f_r, m, k, n):
+    r"""Return the mode frequencies :math:`m f_\phi + k f_\theta + n f_r` along a trajectory.
+
+    Args:
+        f_phi (xp.ndarray): Azimuthal orbital frequency at each trajectory point, shape
+            ``(N,)``.
+        f_theta (xp.ndarray): Polar orbital frequency, shape ``(N,)``.
+        f_r (xp.ndarray): Radial orbital frequency, shape ``(N,)``.
+        m (xp.ndarray): ``m`` index of each mode, shape ``(n_modes,)``.
+        k (xp.ndarray): ``k`` index of each mode, shape ``(n_modes,)``.
+        n (xp.ndarray): ``n`` index of each mode, shape ``(n_modes,)``.
+
+    Returns:
+        xp.ndarray: Signed frequencies of shape ``(N, n_modes)``, in the unit of the inputs
+        (Hz for :class:`ModeSelector`, which takes the absolute value).
+    """
     return f_phi[:,None] * m[None,:] + f_theta[:,None] * k[None,:] + f_r[:,None] * n[None,:]
 
 class ModeSelector(FewBackendConsumer):
-    r"""Filter teukolsky amplitudes based on power contribution.
+    r"""Select the Teukolsky modes of a trajectory by their estimated power.
 
-    This module generates teukolsky modes and their associated ylms given an input
-    trajectory, then filters these modes according to either a list of requested modes or the
-    the power contribution from each mode. Mode filtering is performed to (roughly) achieve the
-    requested mismatch with the minimum number of modes. If a sensitivity curve is provided, mode filtering
-    is weighted according to this sensitivity curve.
+    Evaluates the amplitudes of an amplitude module and the :math:`{}_{-2}Y_{lm}` of a Ylm
+    generator along a trajectory and returns every mode (``"all"``), a requested list of
+    modes, or (default, threshold selection) the smallest set of modes that carries the
+    requested fraction of the estimated power. The selection is a major contributor to the
+    speed of the FEW waveforms. Called once per waveform by
+    :meth:`~few.waveform.base.SphericalHarmonicWaveformBase._generate_waveform`.
 
-    The mode filtering is a major contributing factor to the speed of FEW
-    waveforms, as it removes large numbers of useless modes from the final
-    summation calculation.
+    Threshold selection: for each :math:`m \ge 0` mode the power at each trajectory point
+    is :math:`|A_{lmkn} Y_{lm}|^2`, plus :math:`|A^*_{lmkn} Y_{l,-m}|^2` (the
+    :math:`(-m, -k, -n)` partner) for :math:`m > 0`. With ``sensitivity_fn`` it is divided
+    by the PSD at the mode frequency :math:`|m f_\phi + k f_\theta + n f_r|`. The power is
+    summed over the trajectory segments weighted by their durations (left Riemann sum).
+    The modes are sorted by decreasing power, and each is kept while the summed power of
+    the stronger modes is below :math:`(1 - \epsilon)^2` of the total, with
+    :math:`\epsilon` the ``mode_selection_threshold``. The strongest mode is always kept.
 
-    args:
-        amplitude_generator: Object that generates the teukolsky amplitudes
-            for the modes. This should be an instance of a class that has a
-            :code:`__call__` method that takes the parameters :math:`(a, p, e, xI)`
-            and returns the teukolsky amplitudes for the modes.
-            It should also have mode-related attributes obtained from subclassing
-            `few.utils.baseclasses.SphericalHarmonic`.
-        ylm_generator: Object that generates the Ylm values for the modes.
-            This should be an instance of a class that has a
-            :code:`__call__` method that takes the parameters :math:`(l, m, \theta, \phi)`
-            and returns the Ylm values for the modes.
-            Default is :class:`few.utils.ylm.GetYlms`, which generates Ylm values
-            for the modes based on the l and m indices.
-        mode_selection: Determines the type of mode
-            filtering to perform. If None, use default mode filtering provided
-            by :code:`mode_selector`. If 'all', it will run all modes without
-            filtering. If 'threshold' it will override other options to filter by the
-            threshold value set by :code:`mode_selection_threshold`. If a list of tuples (or lists) of
-            mode indices (e.g. [(:math:`l_1,m_1,k_1,n_1`), (:math:`l_2,m_2,k_2,n_2`)]) is
-            provided, it will return those modes combined into a
-            single waveform.
-            Default is None.
-        include_minus_mkn: If True, then include :math:`(-m, -k, -n)` mode when
-            computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
-            is a list of specific modes when the class is called. If True, this list of modes
-            provided at call time must only contain :math:`m\geq 0`. Default is True.
-        mode_selection_threshold: Fractional accuracy of the total power used
-            to determine the contributing modes. Lowering this value will
-            calculate more modes slower the waveform down, but generally
-            improving accuracy. Increasing this value removes modes from
-            consideration and can have a considerable affect on the speed of
-            the waveform, albeit at the cost of some accuracy (usually an
-            acceptable loss). Default that gives good mismatch qualities is
-            1e-5.
-        sensitivity_fn: Sensitivity curve function that takes
-            a frequency (Hz) array as input and returns the Power Spectral Density (PSD)
-            of the sensitivity curve. Default is None. If this is not none, this
-            sennsitivity is used to weight the mode values when determining which
-            modes to keep. **Note**: if the sensitivity function is provided,
-            and GPUs are used, then this function must accept CuPy arrays as input.
-        modeinds_map: Map of mode indices to Teukolsky amplitude data.
-            This is a 4D array of shape (l, m, k, n) that maps the mode indices
-            to one-dimensional indices from the amplitude module output.
-            This is used to efficiently select the modes from the amplitude module output.
-            By default this is obtained from the supplied amplitude module.
-        **kwargs: Optional keyword arguments for the base class:
-            :class:`few.utils.baseclasses.FewBackendConsumer`.
+    Args:
+        amplitude_generator: Amplitude module, e.g.
+            :class:`~few.amplitude.ampinterp2d.AmpInterpKerrEccEq`, called as
+            ``amplitude_generator(a, p, e, xI)`` (with ``specific_modes`` for mode lists). It
+            must carry the mode bookkeeping of :class:`~few.utils.baseclasses.SphericalHarmonic`
+            (``l_arr_no_mask`` ..., ``unique_l``, ``unique_m``, ``inverse_lm``,
+            ``index_map_arr``) for :math:`m \ge 0` modes only.
+        ylm_generator: Ylm generator called as ``ylm_generator(l, m, theta, phi)`` (with
+            ``include_minus_m=True`` for mode lists). Default ``None`` builds
+            :class:`~few.utils.ylm.GetYlms` (on the default backend).
+        mode_selection: Default selection of the calls: ``None`` (default; threshold
+            selection), ``"threshold"``, ``"all"``, or a ``list`` of ``(l, m, k, n)`` tuples
+            or lists (only a ``list`` is treated as a mode list). A list must be non-empty,
+            without duplicates, with ``l >= 2`` and ``|m| <= l``; entries with ``m < 0`` log a
+            warning, and a later call with ``include_minus_mkn=True`` then raises.
+        include_minus_mkn: For mode lists: ``True`` (default) also sums each listed mode's
+            :math:`(-m, -k, -n)` partner (through the second half of the Ylm array; the list
+            must then have :math:`m \ge 0`), ``False`` zeroes that half. ``"all"`` ignores
+            it; threshold selection requires ``True`` (see the Warning).
+        mode_selection_threshold: Default :math:`\epsilon` of the threshold selection, used
+            when a call passes ``None``. Default ``1e-5``. Larger values keep fewer modes.
+            The spherical-harmonic waveforms always pass their own call value (default
+            ``1e-5``), so this constructor value has no effect there.
+        sensitivity_fn: PSD function of frequency: called with a flat array of the mode
+            frequencies in Hz (cupy on GPU backends), it must return the PSD at those
+            frequencies. Default ``None`` (no weighting). Requires
+            ``online_mode_selection_args`` at call time.
+        modeinds_map: 4-D integer array indexed ``[l, m, k, n]`` giving the amplitude column
+            of each mode, used for mode lists. Default ``None`` uses
+            ``amplitude_generator.index_map_arr``.
+        force_backend: See :class:`~few.utils.baseclasses.FewBackendConsumer`.
+        **kwargs: Forwarded to :class:`~few.utils.baseclasses.FewBackendConsumer`, which
+            accepts no other keyword, so this must be empty.
 
+    Attributes:
+        amplitude_generator: The amplitude module.
+        ylm_generator: The Ylm generator.
+        unique_l (xp.ndarray): Unique ``l`` of the amplitude module's full mode arrays.
+        unique_m (xp.ndarray): Matching unique ``m``.
+        inverse_lm (np.ndarray): Index into ``unique_l`` / ``unique_m`` of every entry of the
+            amplitude module's full mode arrays.
+        mode_selection: The constructor's ``mode_selection``.
+        mode_arr (xp.ndarray or None): The constructor's mode list as an ``(n, 4)`` array,
+            ``None`` unless ``mode_selection`` is a list.
+        modeinds_map (xp.ndarray): The 4-D mode-index map.
+
+    Raises:
+        ValueError: If ``mode_selection`` is an unknown string or an invalid list.
+        AssertionError: If the amplitude module has :math:`m < 0` modes, or
+            ``modeinds_map`` is not 4-D.
+
+    Warning:
+        For a selection that is not a mode list, ``include_minus_mkn=False`` logs that it is
+        overridden to ``True`` but it is not; threshold selection then fails with a
+        ``TypeError`` (it reads the mode list, which is ``None``).
+
+    Example:
+        .. code-block:: python
+
+            from few.amplitude.ampinterp2d import AmpInterpSchwarzEcc
+            from few.trajectory.inspiral import EMRIInspiral
+            from few.trajectory.ode import SchwarzEccFlux
+            from few.utils.modeselector import ModeSelector
+            from few.utils.ylm import GetYlms
+
+            traj = EMRIInspiral(func=SchwarzEccFlux)
+            t, p, e, x, Phi_phi, Phi_theta, Phi_r = traj(1e5, 1e1, 0.0, 10.0, 0.7, 1.0)
+
+            # build all three on the same backend
+            selector = ModeSelector(
+                AmpInterpSchwarzEcc(force_backend="cpu"),
+                ylm_generator=GetYlms(force_backend="cpu"),
+                force_backend="cpu",
+            )
+            teuk_modes, ylms, ls, ms, ks, ns = selector(
+                t, 0.0, p, e, x, 1.0, 0.5, mode_selection_threshold=1e-2
+            )
     """
 
     def __init__(
@@ -116,7 +177,7 @@ class ModeSelector(FewBackendConsumer):
         # the order is m = 0, m > 0, m < 0
         m0mask = self.m_arr != 0
         self.m0mask = m0mask
-        """array: Mask for m=0 modes."""
+        """array: True for the m > 0 modes (m != 0) of the amplitude module's m >= 0 list."""
         self.num_m_zero_up = len(m0mask)
         r"""int: Number of modes with :math:`m\geq0`."""
         self.num_m_1_up = len(self.xp.arange(len(m0mask))[m0mask])
@@ -127,7 +188,8 @@ class ModeSelector(FewBackendConsumer):
         """object: sensitivity generating function for power-weighting."""
 
         self.include_minus_mkn = include_minus_mkn
-        """bool: Whether to include modes with m < 0 in the output."""
+        """bool: Default of ``include_minus_mkn``: whether a mode list also sums each mode's
+        (-m, -k, -n) partner."""
         """Note that the module always outputs m>=0 Teukolsky amplitudes, but +m and -m Ylms.
         Instead m<0 Teukolsky amplitudes are included in the mode sum via mode symmetry.
         Therefore, to include m<0 Teukolsky amplitudes in the waveform
@@ -174,7 +236,8 @@ class ModeSelector(FewBackendConsumer):
             self.mode_arr = None
 
         self.mode_selection_threshold = mode_selection_threshold
-        """float: Target mismatch threshold for mode selection. Modes will be selected such that the mismatch is approximately equal to this value."""
+        """float: Default threshold of the power-based selection (modes are kept up to
+        (1 - threshold)**2 of the estimated power)."""
 
         if modeinds_map is None:
             self.modeinds_map = self.amplitude_generator.index_map_arr
@@ -184,9 +247,20 @@ class ModeSelector(FewBackendConsumer):
 
     @classmethod
     def supported_backends(cls):
+        """Backend preference: ``GPU_RECOMMENDED()`` (CUDA 13/12/11, then CPU)."""
         return cls.GPU_RECOMMENDED()
 
     def _set_defaults_and_check_inputs(self, mode_selection, mode_selection_threshold, include_minus_mkn,):
+        """Fill the call's ``None`` options from the constructor and validate a mode list.
+
+        Returns:
+            tuple: ``(mode_selection, mode_selection_threshold, include_minus_mkn, mode_arr)``
+            with ``mode_arr`` the ``(n, 4)`` array of a mode list, else ``None``.
+
+        Raises:
+            ValueError: For an unknown string, an empty / duplicated / unphysical mode list,
+                or :math:`m < 0` entries together with ``include_minus_mkn=True``.
+        """
         if include_minus_mkn is None:
             include_minus_mkn = self.include_minus_mkn
 
@@ -265,49 +339,52 @@ class ModeSelector(FewBackendConsumer):
         mode_selection_threshold: float = None,
         return_sort_inds: bool = False
     ) -> tuple[np.ndarray]:
-        r"""Call to sort and filer teukolsky modes.
+        r"""Select the modes of a trajectory and return their amplitudes and Ylms.
 
-        This is the call function that takes an inspiral trajectory and
-        returns the teukolsky modes and ylms required to produce a waveform
-        of either a given mismatch or the requested mode content.
+        Args:
+            t (xp.ndarray): Trajectory times in s, shape ``(N,)``; threshold selection uses
+                the segment durations ``diff(t)`` as weights.
+            a (float): Dimensionless spin of the primary.
+            p (xp.ndarray): Semi-latus rectum along the trajectory, shape ``(N,)``.
+            e (xp.ndarray): Eccentricity along the trajectory, shape ``(N,)``.
+            xI (xp.ndarray): :math:`x_I` along the trajectory, shape ``(N,)``.
+            theta (float): Source-frame polar viewing angle in rad.
+            phi (float): Source-frame azimuthal viewing angle in rad.
+            online_mode_selection_args: Dict with the keys ``"f_phi"``, ``"f_theta"``,
+                ``"f_r"``: the orbital frequencies in Hz at the trajectory points, shape
+                ``(N,)``. Needed only for threshold selection with ``sensitivity_fn``.
+                Default ``None``.
+            mode_selection: Overrides the constructor's selection: ``"all"``,
+                ``"threshold"``, or a ``list`` of ``(l, m, k, n)`` (:math:`m \ge 0` when
+                ``include_minus_mkn`` is ``True``; a list of more than 50 modes logs a
+                warning). ``None`` (default) uses the constructor value.
+            include_minus_mkn: For mode lists: sum the :math:`(-m, -k, -n)` partners too.
+                ``None`` (default) uses the constructor value.
+            mode_selection_threshold: :math:`\epsilon` of the threshold selection (see the
+                class docstring). ``None`` (default) uses the constructor value.
+            return_sort_inds: Threshold selection only: also return the power ordering of
+                the kept modes. Default ``False``.
 
-        args:
-            t: Time array for the input trajectory.
-            a: Dimensionless spin parameter of the primary black hole.
-            p: Semi-latus rectum of the trajectory.
-            e: Eccentricity of the trajectory.
-            xI: Initial cosine(inclination) for the trajectory.
-            theta: Polar source-frame viewing angle.
-            phi: Azimuthal source-frame viewing angle.
-            online_mode_selection_args: Dictionary of arguments necessary to
-                determine the mode frequencies along the trajectory. This should
-                contain the keys 'f_phi', 'f_theta', and 'f_r', which are
-                the fundamental frequencies of the modes along the trajectory.
-            mode_selection: Determines the type of mode
-                filtering to perform. If None, use default mode filtering provided
-                by :code:`mode_selector`. If 'all', it will run all modes without
-                filtering. If 'threshold' it will override other options to filter by the
-                threshold value set by :code:`mode_selection_threshold`. If a list of tuples (or lists) of
-                mode indices (e.g. [(:math:`l_1,m_1,k_1,n_1`), (:math:`l_2,m_2,k_2,n_2`)]) is
-                provided, it will return those modes combined into a
-                single waveform. If :code:`include_minus_mkn = True`, we require that :math:`m \geq 0` for this list.
-                Default is None.
-            modeinds_map: Map of mode indices to Teukolsky amplitude data. Only required if :code:`mode_selection` is a list of specific mode.
-                Default is None.
-            include_minus_mkn: If True, then include :math:`(-m, -k, -n)` mode when
-                computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
-                is a list of specific modes. Default is True.
-            mode_selection_threshold: Target waveform mismatch used
-                to determine the contributing modes. Lowering this value will
-                calculate more modes, slowing the waveform generation down, but generally
-                improving accuracy. Increasing this value removes modes from
-                consideration and can have a considerable affect on the speed of
-                the waveform, albeit at the cost of some accuracy (usually an
-                acceptable loss). Default that gives good mismatch qualities is
-                1e-5.
-            return_sort_inds: If True, also return the indices sorting the modes according
-                to their contribution. Only used when filtering in this mode. Default is False.
-            
+        Returns:
+            tuple: ``(teuk_modes, ylms, l, m, k, n)``:
+
+            - ``teuk_modes``: complex, shape ``(N, n_modes)``, the :math:`m \ge 0` amplitudes
+              of the selected modes;
+            - ``ylms``: complex, shape ``(2 n_modes,)``: :math:`Y_{lm}` of the selected modes,
+              then :math:`Y_{l,-m}` of their partners (the same :math:`Y_{l0}` again for
+              :math:`m = 0`; zeroed where a partner is excluded);
+            - ``l, m, k, n``: integer index arrays of shape ``(n_modes,)``.
+
+            With ``return_sort_inds=True`` (threshold selection) a seventh entry, an integer
+            array of shape ``(n_modes,)``: its ``i``-th element is the position, in the
+            returned mode arrays, of the ``i``-th strongest kept mode. All arrays are on the
+            backend.
+
+        Raises:
+            ValueError: For an invalid ``mode_selection`` (see
+                :meth:`_set_defaults_and_check_inputs`), or "Mode selection indices are out
+                of bounds." if a listed mode is outside ``modeinds_map`` (negative indices
+                wrap around instead).
         """
 
         # set defaults, check inputs are consistent, etc.
@@ -507,27 +584,48 @@ def get_selected_modes_from_initial_conditions(
         traj_kwargs: Optional[dict]=None, 
         mode_selector_kwargs: Optional[dict]=None
     ) -> tuple[np.ndarray]:
-    """
-    Get the selected modes from the initial conditions of an EMRI trajectory.
-    This function uses the provided trajectory module to generate the trajectory
-    and the mode selector module to select the modes based on the trajectory.
+    r"""Run a trajectory from initial conditions and select its modes.
 
-    args:
-        mode_selector_module: Instance of the ModeSelector class.
-        traj_module: Instance of the EMRIInspiral class.
-        m1: Mass of the primary black hole in solar masses.
-        m2: Mass of the secondary black hole in solar masses.
-        a: Dimensionless spin parameter of the primary black hole.
-        p0: Initial semi-latus rectum of the trajectory.
-        e0: Initial eccentricity of the trajectory.
-        xI0: Initial cosine(inclination) for the trajectory.
-        theta: Polar source-frame viewing angle.
-        phi: Azimuthal source-frame viewing angle.
-        traj_args: Additional arguments to pass to the trajectory module.
-        traj_kwargs: Additional keyword arguments to pass to the trajectory module.
-        mode_selector_kwargs: Additional keyword arguments to pass to the mode selector module.
-    returns:
-        dict: A dict containing the selected teuk_modes, ylms, their indices (ls, ms, ks, ns), the trajectory `traj` and the `online_mode_selection_args`.
+    Runs ``traj_module(m1, m2, a, p0, e0, xI0, **traj_kwargs)``, evaluates the orbital
+    frequencies in Hz at the trajectory times (first derivative of the integrator's phase
+    spline divided by :math:`2\pi`), and calls ``mode_selector_module`` with them as
+    ``online_mode_selection_args`` (so a ``sensitivity_fn`` can be used).
+
+    Args:
+        mode_selector_module: The :class:`ModeSelector`.
+        traj_module: The :class:`~few.trajectory.inspiral.EMRIInspiral` (its
+            ``inspiral_generator`` provides the phase-derivative spline).
+        m1: Primary mass in solar masses.
+        m2: Secondary mass in solar masses.
+        a: Dimensionless spin of the primary.
+        p0: Initial semi-latus rectum in units of :math:`M`.
+        e0: Initial eccentricity.
+        xI0: Initial :math:`x_I`.
+        theta: Source-frame polar viewing angle in rad.
+        phi: Source-frame azimuthal viewing angle in rad.
+        traj_args: Accepted but not used (not passed to the trajectory). Default ``None``.
+        traj_kwargs: Keyword arguments of the trajectory call. Default ``None`` (none).
+        mode_selector_kwargs: Keyword arguments of the selector call, e.g.
+            ``mode_selection_threshold`` or ``return_sort_inds``. Default ``None`` (none).
+
+    Returns:
+        dict: Keys ``"teuk_modes"``, ``"ylms"``, ``"ls"``, ``"ms"``, ``"ks"``, ``"ns"`` (the
+        selector outputs, see :meth:`ModeSelector.__call__`), ``"trajectory"`` (the full
+        trajectory tuple ``(t, p, e, xI, Phi_phi, Phi_theta, Phi_r)``),
+        ``"online_mode_selection_args"`` (the frequency dict) and ``"inds_sort"`` (the
+        power ordering with ``return_sort_inds=True``, else ``None``).
+
+    Example:
+        .. code-block:: python
+
+            from few.utils.modeselector import get_selected_modes_from_initial_conditions
+
+            # selector: a ModeSelector; traj: an EMRIInspiral (see ModeSelector)
+            out = get_selected_modes_from_initial_conditions(
+                selector, traj, 1e5, 1e1, 0.0, 10.0, 0.7, 1.0, 1.0, 0.5,
+                mode_selector_kwargs=dict(mode_selection_threshold=1e-2),
+            )
+            out["ls"], out["ms"], out["ns"]
     """
     if traj_args is None:
         traj_args = []

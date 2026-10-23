@@ -1,3 +1,15 @@
+r"""Jacobian of the flux conversion :math:`(\dot E, \dot L_z) \to (\dot p, \dot e)`.
+
+:func:`ELdot_to_PEdot_Jacobian` converts energy and angular-momentum fluxes of equatorial
+Kerr orbits into rates of change of the semi-latus rectum and eccentricity (via the radial
+turning points :math:`r_a = p/(1 - e)`, :math:`r_p = p/(1 + e)`). On the production path
+:class:`~few.trajectory.ode.flux.KerrEccEqFlux` applies it once per flux-grid node when it
+builds its ``(pdot, edot)`` splines (with ``a >= 0`` and ``x = +-1``);
+:class:`~few.trajectory.ode.base.ODEBase` also uses it for models that output
+``(Edot, Ldot)`` while integrating ``(p, e, x)``, and :class:`~few.trajectory.ode.pn5.PN5`
+for equatorial orbits.
+"""
+
 from math import sqrt
 
 from numba import njit
@@ -10,6 +22,10 @@ from ..geodesic import (
 
 @njit
 def _schwarz_jac_kernel(p, e, Edot, Ldot):
+    """Closed-form Schwarzschild (``a = 0``) Jacobian: returns ``(pdot, edot)``.
+
+    ``edot = 0`` for ``e = 0``; the orbit is taken as prograde (no ``xI`` argument).
+    """
     pdot = (
         -2
         * (
@@ -43,16 +59,26 @@ def _schwarz_jac_kernel(p, e, Edot, Ldot):
 def ELdot_to_PEdot_Jacobian(
     a: float, p: float, ecc: float, xI: float, Edot: float, Lzdot: float
 ):
-    """
-    Jacobian transformation of fluxes from (E, Lz) to (p, ecc) coordinates.
-    As this function is a numba kernel, float inputs are required.
-    Arguments:
-        a (float): Spin parameter of the massive black hole.
-        p (float): Semi-latus rectum of inspiral.
-        ecc (float): Eccentricity of inspiral.
-        xI (float): Cosine of inclination of inspiral. Must have a magnitude of 1.
-        Edot (float): Time derivative of orbital energy.
-        Lzdot (float): Time derivative of orbital angular momentum.
+    """Convert the fluxes ``(Edot, Lzdot)`` of an equatorial orbit to ``(pdot, eccdot)``.
+
+    Differentiates the turning-point conditions at :math:`r_a = p/(1 - e)` and
+    :math:`r_p = p/(1 + e)` (a single radius for ``ecc == 0``) with the Kerr energy and
+    angular momentum of the orbit; ``a == 0`` uses the closed Schwarzschild form
+    (:func:`_schwarz_jac_kernel`). A numba kernel: scalar float inputs only. The output
+    rates are per unit of the time variable of the input fluxes.
+
+    Args:
+        a: Dimensionless spin; the flux-grid and PN5 callers pass ``a >= 0`` with the
+            orbital direction in ``xI``.
+        p: Semi-latus rectum in units of :math:`M`.
+        ecc: Eccentricity.
+        xI: Cosine of the inclination, ``+1`` or ``-1``.
+        Edot: Rate of change of the energy per unit mass.
+        Lzdot: Rate of change of the axial angular momentum per unit mass.
+
+    Returns:
+        tuple[float, float]: ``(pdot, eccdot)``; ``eccdot`` is 0 for ``ecc == 0`` and (for
+        ``a != 0``) set to 0 when ``|eccdot| < 3e-14``.
     """
 
     if a == 0:

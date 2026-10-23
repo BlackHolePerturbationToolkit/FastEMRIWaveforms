@@ -1,3 +1,16 @@
+"""Base classes of the FEW waveform models and the sparse-output container.
+
+- :class:`SphericalHarmonicWaveformBase`: the trajectory -> amplitudes -> mode selection ->
+  mode sum pipeline shared by the spherical-harmonic (flux-based) models of
+  :mod:`few.waveform.waveform`; its :meth:`~SphericalHarmonicWaveformBase._generate_waveform`
+  is the call body of those models.
+- :class:`SparseInfoHolder`: what ``_generate_waveform`` returns with
+  ``return_sparse_holder=True`` (mode-selected amplitudes, harmonics, phases and frequencies
+  at the trajectory knots, no mode sum). LISAanalysistools' direct EMRI likelihood reads it.
+- :class:`AAKWaveformBase`: trajectory + AAK summation for the kludge models
+  (:class:`~few.waveform.waveform.Pn5AAKWaveform`).
+"""
+
 from typing import Generic, Optional, TypeVar, Union
 import dataclasses
 
@@ -30,6 +43,49 @@ WaveformModule = TypeVar("WaveformModule", bound=FewBackendConsumer)
 
 @dataclasses.dataclass
 class SparseInfoHolder:
+    r"""Mode-selected waveform ingredients at the sparse trajectory knots.
+
+    Returned by :meth:`SphericalHarmonicWaveformBase._generate_waveform` with
+    ``return_sparse_holder=True`` in place of the summed waveform: the inputs of the mode sum,
+    at the ``N`` knots of the adaptive trajectory, after mode selection. The arrays live on the
+    waveform backend (``xp.ndarray``: cupy on a GPU backend). ``K`` is the number of kept
+    modes (all with :math:`m \ge 0` for threshold and ``"all"`` selection).
+
+    The source-frame waveform these ingredients define (the sum of
+    :class:`~few.summation.directmodesum.DirectModeSum`) is
+
+    .. math::
+
+        h_+ - i h_\times = \sum_{K} \left[ Y_{lm} A_{lmkn}\, e^{-i \Phi_{mkn}}
+            + (-1)^l Y_{l,-m} A^*_{lmkn}\, e^{+i \Phi_{mkn}} \right],
+        \qquad \Phi_{mkn} = m \Phi_\phi + k \Phi_\theta + n \Phi_r,
+
+    where the second term is summed over the :math:`m > 0` modes only (and vanishes where the
+    second half of ``ylms`` is zero). Neither the ``-1`` factor nor the SSB polarization
+    rotation that :class:`~few.waveform.waveform.GenerateEMRIWaveform` applies to
+    source-frame models is included.
+
+    Attributes:
+        t_arr: Knot times in seconds from the start of the trajectory, shape ``(N,)``.
+        teuk_modes: Complex Teukolsky amplitudes :math:`A_{lmkn}` of the kept modes, shape
+            ``(N, K)``, divided by ``dist * Gpc / (mu * MRSUN_SI)`` when the call passed
+            ``dist`` (no distance scaling otherwise).
+        phases: Trajectory phases ``(Phi_phi, Phi_theta, Phi_r)`` at the knots in rad, shape
+            ``(N, 3)``; the backwards-integration offset of the mode sum is not applied.
+        freqs: Orbital frequencies ``(f_phi, f_theta, f_r)`` in Hz at the knots, shape
+            ``(N, 3)``: the first time derivative of the integrator's dense output divided by
+            :math:`2\pi`.
+        ylms: Complex spin-weighted spherical harmonics, shape ``(2 K,)``:
+            :math:`Y_{lm}(\theta, \phi)` of the kept modes, then :math:`Y_{l,-m}(\theta, \phi)`
+            of the same modes (the second half is zero for a mode list with
+            ``include_minus_mkn=False``).
+        ls: :math:`l` of the kept modes, shape ``(K,)``.
+        ms: :math:`m` of the kept modes, shape ``(K,)``.
+        ks: :math:`k` of the kept modes, shape ``(K,)`` (0 for equatorial models).
+        ns: :math:`n` of the kept modes, shape ``(K,)``.
+        integrate_backwards: Whether the trajectory was integrated backwards in time.
+    """
+
     t_arr: np.ndarray
     teuk_modes: np.ndarray
     phases: np.ndarray
@@ -46,27 +102,50 @@ class SphericalHarmonicWaveformBase(
     FewBackendConsumer,
     Generic[InspiralModule, AmplitudeModule, SumModule, ModeSelectorModule],
 ):
-    """Base class for waveforms built with amplitudes expressed in a spherical harmonic basis.
+    """Base class of the waveform models built from amplitudes in a spherical-harmonic basis.
 
-    This class contains the methods required to build the core waveform for Kerr equatorial eccentric
-    (to be upgraded to Kerr generic once that is available). Stock waveform classes constructed in
-    this basis can subclass this class and implement their own "__call__" method to fill in the
-    relevant data.
+    Builds the trajectory, amplitude, Ylm, mode-selector and summation modules and provides
+    their combined call, :meth:`_generate_waveform`. The stock models
+    (:class:`~few.waveform.waveform.FastKerrEccentricEquatorialFlux` and the Schwarzschild
+    models) subclass it together with a model base class
+    (:class:`~few.utils.baseclasses.KerrEccentricEquatorial` or
+    :class:`~few.utils.baseclasses.SchwarzschildEccentric`, which provide the
+    ``sanity_check_*`` methods and the mode bookkeeping) and implement ``__call__`` by
+    filling in their fixed parameters.
+
+    Construction: the trajectory is built as ``inspiral_module(**inspiral_kwargs)`` with no
+    backend (it runs on the CPU); the amplitude, summation and Ylm modules are built on this
+    object's backend with
+    :meth:`~gpubackendtools.parallelbase.ParallelModuleBase.build_with_same_backend` (which
+    writes ``force_backend`` into the given kwargs dicts); the mode selector is built the same
+    way with ``(amplitude_generator, ylm_gen)`` as positional arguments.
 
     Args:
-        inspiral_module: Class object representing the module for creating the inspiral.
-            This returns the phases and orbital parameters. See :ref:`trajectory-label`.
-        amplitude_module: Class object representing the module for creating the amplitudes.
-            This returns the complex amplitudes of the modes. See :ref:`amplitude-label`.
-        sum_module: Class object representing the module for summing the final waveform from the
-            amplitude and phase information. See :ref:`summation-label`.
-        mode_selector_module: Class object representing the module for selecting modes that contribute
-            to the waveform. See :ref:`utilities-label`.
-        inspiral_kwargs: Optional kwargs to pass to the inspiral generator. Default is {}.
-        amplitude_kwargs: Optional kwargs to pass to the amplitude generator. Default is {}.
-        sum_kwargs: Optional kwargs to pass to the sum module during instantiation. Default is {}.
-        Ylm_kwargs: Optional kwargs to pass to the Ylm generator. Default is {}.
-        mode_selector_kwargs: Optional kwargs to pass to the mode selector module. Default is {}.
+        inspiral_module: Trajectory class (e.g. :class:`~few.trajectory.inspiral.EMRIInspiral`).
+            Its call returns ``(t, p, e, xI, Phi_phi, Phi_theta, Phi_r)``. See
+            :ref:`trajectory-label`.
+        amplitude_module: Amplitude class (an :class:`~few.amplitude.base.AmplitudeBase`
+            subclass) returning the complex mode amplitudes. See :ref:`amplitude-label`.
+        sum_module: Summation class (a :class:`~few.summation.base.SummationBase` subclass).
+            See :ref:`summation-label`.
+        mode_selector_module: Mode-selector class
+            (:class:`~few.utils.modeselector.ModeSelector`). See :ref:`utilities-label`.
+        inspiral_kwargs: Keywords for the trajectory, used for its construction AND merged into
+            every trajectory call. Kept by reference (not copied) as :attr:`inspiral_kwargs`.
+            Default ``None`` means ``{}``.
+        amplitude_kwargs: Constructor keywords for the amplitude module. Default ``None``.
+        sum_kwargs: Constructor keywords for the summation module. Default ``None``.
+        Ylm_kwargs: Constructor keywords for :class:`~few.utils.ylm.GetYlms`. Default ``None``.
+        mode_selector_kwargs: Constructor keywords for the mode selector. Default ``None``.
+        force_backend: Backend of the non-trajectory modules (``"cpu"``, ``"cuda12x"``, ...;
+            see :class:`~few.utils.baseclasses.FewBackendConsumer`). Default ``None`` picks the
+            first available backend of ``supported_backends()``.
+
+    Attributes:
+        end_time (float): Last trajectory time of the last call, in seconds (set by a call).
+        num_modes_kept (int): Number of modes kept by the last mode selection (set by a call).
+        ls (xp.ndarray): :math:`l` of the modes kept by the last call (also ``ms``, ``ks``,
+            ``ns``).
     """
 
     inspiral_kwargs: dict
@@ -148,60 +227,91 @@ class SphericalHarmonicWaveformBase(
         return_sparse_holder: Optional[bool] = False,
         **kwargs: Optional[dict],
     ) -> np.ndarray:
-        r"""Call function for waveform models built in the spherical harmonic basis.
+        r"""Generate a source-frame waveform (the call body of the spherical-harmonic models).
 
-        This function will take input parameters and produce waveforms. It will use all of the modules preloaded to
-        compute desired outputs.
+        Steps:
 
-        args:
-            m1: Mass of larger black hole in solar masses.
-            m2: Mass of compact object in solar masses.
-            a: Dimensionless spin parameter of larger black hole.
-            p0: Initial (osculating) semilatus rectum of inspiral trajectory.
-            e0: Initial (osculating) eccentricity of inspiral trajectory.
-            theta: Polar viewing angle in radians (:math:`-\pi/2\leq\Theta\leq\pi/2`).
-            phi: Azimuthal viewing angle in radians.
-            *args: extra args for trajectory model.
-            dist: Luminosity distance in Gpc. Default is None. If None,
-                will return source frame.
-            Phi_phi0: Initial phase for :math:`\Phi_\phi`.
-                Default is 0.0.
-            Phi_r0: Initial phase for :math:`\Phi_r`.
-                Default is 0.0.
-            dt: Time between samples in seconds (inverse of
-                sampling frequency). Default is 10.0.
-            T: Total observation time in years.
-                Default is 1.0.
-            mode_selection_threshold: Controls the fractional accuracy during mode
-                filtering. Raising this parameter will remove modes. Lowering
-                this parameter will add modes. Default that gives a good overalp
-                is 1e-5.
-            show_progress: If True, show progress through
-                amplitude/waveform batches using
-                `tqdm <https://tqdm.github.io/>`_. Default is False.
-            batch_size (int, optional): If less than 0, create the waveform
-                without batching. If greater than zero, create the waveform
-                batching in sizes of batch_size. Default is -1.
-            mode_selection: Determines the type of mode
-                filtering to perform. If None, use default mode filtering provided
-                by :code:`mode_selector`. If 'all', it will run all modes without
-                filtering. If 'eps' it will override other options to filter by the
-                threshold value set by :code:`eps`. If a list of tuples (or lists) of
-                mode indices (e.g. [(:math:`l_1,m_1,k_1,n_1`), (:math:`l_2,m_2,k_2,n_2`)]) is
-                provided, it will return those modes combined into a
-                single waveform. If :code:`include_minus_mkn = True`, we require that :math:`m \geq 0` for this list.
-                Default is None.
-            include_minus_mkn: If True, then include :math:`(-m, -k, -n)` mode when
-                computing a :math:`(m, k, n)` mode. This only affects modes if :code:`mode_selection`
-                is a list of specific modes. Default is True.
-            return_sparse_holder: If True, return :class:`SparseInfoHolder` instead of a waveform. Default is False.
+        1. ``xI0 < 0`` is mapped to the internal convention
+           ``(a, xI0, theta, phi) -> (-a, -xI0, pi - theta, -phi)``; ``phi`` is wrapped to
+           :math:`[0, 2\pi)` and the initial parameters are checked by the model's
+           ``sanity_check_init``.
+        2. Call-time ``inspiral_kwargs`` are merged into :attr:`inspiral_kwargs` (permanently),
+           ``err`` defaults to ``1e-11``, and the trajectory is integrated (CPU) from the
+           initial phases for at most ``T`` years; the output arrays are moved to the backend.
+        3. For each time batch (one unless batching is allowed and requested): the orbital
+           frequencies at the knots (needed unless the selector's constructor
+           ``mode_selection`` is ``"all"``) are evaluated on the host from the integrator's
+           derivative spline; the mode selector returns the amplitudes, harmonics and mode
+           indices; the phase input of the sum is the DOP853 phase spline
+           (``integrator_spline_phase_coeff`` on the knots ``integrator_spline_t``), or the
+           phase samples with ``DENSE_STEPPING``.
+        4. ``return_sparse_holder=True`` returns a :class:`SparseInfoHolder` here. Otherwise
+           the summation module is called with the batch's ``t``, amplitudes, harmonics,
+           phase knots and coefficients, ``l, m, k, n``, then ``M = m1 + m2``, ``a`` and the
+           full ``p, e, xI`` arrays, with ``dt``, ``T``, ``integrate_backwards`` and
+           ``**kwargs``; the batches are concatenated.
+
+        Args:
+            m1: Primary (massive black hole) mass in solar masses.
+            m2: Secondary mass in solar masses.
+            a: Dimensionless spin of the primary.
+            p0: Initial semi-latus rectum in units of :math:`M = m_1 + m_2`.
+            e0: Initial eccentricity.
+            xI0: Initial :math:`x_I = \cos I` (``+1`` / ``-1`` for equatorial models).
+            theta: Source-frame polar viewing angle in rad, in :math:`[0, \pi]`.
+            phi: Source-frame azimuthal viewing angle in rad.
+            *args: Extra positional trajectory parameters (appended after ``xI0``).
+            dist: Luminosity distance in Gpc. ``None`` (default) means no distance scaling:
+                the output is :math:`r h / \mu` (dimensionless, :math:`\mu` the reduced mass).
+            Phi_phi0: Initial azimuthal phase in rad. Default ``0.0``.
+            Phi_theta0: Initial polar phase in rad. Default ``0.0``.
+            Phi_r0: Initial radial phase in rad. Default ``0.0``.
+            dt: Output sampling interval in seconds (also the fixed trajectory step with
+                ``DENSE_STEPPING``). Default ``10.0``.
+            T: Maximum duration in years; the trajectory stops at ``T`` or at the plunge
+                (separatrix buffer). Default ``1.0``.
+            mode_selection_threshold: Threshold of the power-based mode selection: modes are
+                kept in decreasing order of their estimated power until the kept fraction
+                reaches ``(1 - mode_selection_threshold)**2`` of the total. Larger values keep
+                fewer modes. ``None`` uses the selector's constructor value. Default ``1e-5``.
+            show_progress: Show a `tqdm <https://tqdm.github.io/>`_ bar over the time batches.
+                Default ``False``.
+            batch_size: Number of trajectory points per time batch; ``-1`` (default) means one
+                batch. Used only when the model's ``allow_batching`` is ``True``.
+            mode_selection: ``None`` (default) uses the selector's constructor setting (itself
+                ``None``, i.e. threshold selection, by default); ``"threshold"`` selects by
+                ``mode_selection_threshold``; ``"all"`` keeps every mode; a list of
+                ``(l, m, k, n)`` tuples evaluates exactly those modes (``m >= 0`` required when
+                ``include_minus_mkn`` is ``True``).
+            include_minus_mkn: For a mode list: ``True`` adds each mode's :math:`(-m, -k, -n)`
+                partner to the sum, ``False`` sums only the listed modes. ``None`` (default)
+                uses the selector's constructor value (``True`` by default).
+            return_sparse_holder: If ``True``, return a :class:`SparseInfoHolder` after the mode
+                selection instead of summing; requires a single time batch. Default ``False``.
+            **kwargs: ``inspiral_kwargs`` (dict): trajectory call keywords, merged permanently
+                into :attr:`inspiral_kwargs`. All keywords (``inspiral_kwargs`` included) are
+                also forwarded to the summation call: e.g. ``f_arr``, ``mask_positive``,
+                ``include_minus_m``, ``separate_modes`` for
+                :class:`~few.summation.fdinterp.FDInterpolatedModeSum`; the time-domain sums
+                ignore them.
 
         Returns:
-            The output waveform.
+            xp.ndarray or SparseInfoHolder: On the backend. Time domain: complex
+            :math:`h_+ - i h_\times`, shape ``(n,)`` sampled every ``dt`` (``n`` set by the
+            summation module from ``T``, ``dt``, the trajectory length and ``pad_output`` /
+            ``odd_len``). Frequency domain: shape ``(2, n_f)``, rows :math:`\tilde h_+` and
+            :math:`\tilde h_\times`. Divided by ``dist * Gpc / (mu * MRSUN_SI)`` when
+            ``dist`` is given. With ``return_sparse_holder=True``: the
+            :class:`SparseInfoHolder` (its amplitudes scaled the same way).
 
         Raises:
-            ValueError: user selections are not allowed.
-
+            ValueError: If ``dist <= 0``; if ``sanity_check_init`` or ``sanity_check_traj``
+                rejects the parameters; if ``mode_selection`` is invalid; if a trajectory
+                point maps outside the amplitude grid (``AmpInterpKerrEccEq``).
+            AssertionError: From the trajectory's start-point check (``isvalid_pex``) or the
+                amplitude module's input checks.
+            few.utils.exceptions.TrajectoryOffGridException: If a ``KerrEccEqFlux``
+                trajectory leaves the flux grid.
         """
 
         # switch to internal convention of xI > 0
@@ -446,49 +556,54 @@ class AAKWaveformBase(Pn5AAK, FewBackendConsumer, Generic[InspiralModule, SumMod
     `EMRI Kludge Suite <https://github.com/alvincjk/EMRI_Kludge_Suite/>`_.
     The trajectory is chosen by user or by default in child classes.
 
-    The trajectory is calculated until the orbit reaches
-    within 0.1 of the separatrix, determined from
-    `arXiv:1912.07609 <https://arxiv.org/abs/1912.07609/>`_. The
+    The trajectory is calculated until the orbit reaches the separatrix (determined from
+    `arXiv:1912.07609 <https://arxiv.org/abs/1912.07609/>`_) plus the trajectory model's
+    ``separatrix_buffer_dist`` (0.1 in ``p`` for :class:`~few.trajectory.ode.pn5.PN5`). The
     fundamental frequencies along the trajectory at each point are then
-    calculated from the orbital parameters and the spin value given by (`Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_).
+    calculated from the orbital parameters and the spin value given by
+    (`Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_).
 
     These frequencies along the trajectory are then used to map to the
     frequency basis of the `Analytic Kludge <https://arxiv.org/abs/gr-qc/0310125>`_. This mapping
     takes the form of time evolving large mass and spin parameters, as
     well as the use of phases and frequencies in
-    :math:`(alpha, \Phi, \gamma)`:
+    :math:`(\alpha, \Phi, \gamma)`:
 
     .. math:: \Phi = \Phi_\phi,
 
     .. math:: \gamma = \Phi_\phi + \Phi_\Theta,
 
-    .. math:: alpha = \Phi_\phi + \Phi_\Theta + \Phi_r.
+    .. math:: \alpha = \Phi_\phi + \Phi_\Theta + \Phi_r.
 
     The frequencies in that basis are found by taking the time derivatives
     of each equation above.
 
     This class has GPU capabilities and works from the sparse trajectory
-    methodoligy with cubic spine interpolation of the smoothly varying
-    waveform quantities.
+    methodology with cubic spline interpolation of the smoothly varying
+    waveform quantities. The trajectory runs on the CPU; the summation module on this
+    object's backend. The model is built in the detector (SSB) frame.
 
     **Please note:** the AAK waveform takes the parameter
     :math:`Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}` rather than :math:`x_I` as is accepted
-    for relativistic waveforms and in the generic waveform interface discussed above.
-    The generic waveform interface directly converts :math:`x_I` to :math:`Y`.
+    for relativistic waveforms (see the note in
+    :meth:`~few.waveform.waveform.GenerateEMRIWaveform.__call__` on how the generic interface
+    passes ``x0``).
 
-    args:
-        inspiral_module: Class object representing the module
-            for creating the inspiral. This returns the phases and orbital
-            parameters. See :ref:`trajectory-label`.
-        sum_module: Class object representing the module for summing the
-            final waveform from the amplitude and phase information. See
+    Args:
+        inspiral_module: Trajectory class (e.g. :class:`~few.trajectory.inspiral.EMRIInspiral`).
+            See :ref:`trajectory-label`.
+        sum_module: Summation class (e.g. :class:`~few.summation.aakwave.AAKSummation`). See
             :ref:`summation-label`.
-        inspiral_kwargs: Optional kwargs to pass to the
-            inspiral generator. **Important Note**: These kwargs are passed
-            online, not during instantiation like other kwargs here. Default is
-            {}. This is stored as an attribute.
-        sum_kwargs: Optional kwargs to pass to the
-            sum module during instantiation. Default is {}.
+        inspiral_kwargs: Keywords for the trajectory, used for its construction and at every
+            call; kept by reference as :attr:`inspiral_kwargs`. Default ``None`` means ``{}``.
+        sum_kwargs: Constructor keywords for the summation module. Default ``None``.
+        force_backend: Backend of the summation module (see
+            :class:`~few.utils.baseclasses.FewBackendConsumer`). Default ``None``.
+
+    Attributes:
+        nmodes (int): Number of harmonics used by the last call (equal to
+            :attr:`num_modes_kept`).
+        end_time (float): Last trajectory time of the last call, in seconds.
     """
 
     inspiral_kwargs: dict
@@ -501,7 +616,7 @@ class AAKWaveformBase(Pn5AAK, FewBackendConsumer, Generic[InspiralModule, SumMod
     """Instance of the summation module"""
 
     num_modes_kept: int
-    """Number of modes for final waveform (unset before call). For this model, it is solely determined from the eccentricity."""
+    """Number of harmonics of the last call (``None`` before it); see ``nmodes`` of the call."""
 
     def __init__(
         self,
@@ -526,7 +641,12 @@ class AAKWaveformBase(Pn5AAK, FewBackendConsumer, Generic[InspiralModule, SumMod
 
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
-        """Return citations related to this module"""
+        """Return the citations of the AAK models.
+
+        Returns:
+            list[REFERENCE]: ``FD``, ``AAK1``, ``AAK2``, ``AK``, ``KERR_SEPARATRIX``, then the
+            parent classes' references.
+        """
         return [
             REFERENCE.FD,
             REFERENCE.AAK1,
@@ -537,10 +657,12 @@ class AAKWaveformBase(Pn5AAK, FewBackendConsumer, Generic[InspiralModule, SumMod
 
     @classmethod
     def supported_backends(cls):
+        """Backend preference order: ``["cuda13x", "cuda12x", "cuda11x", "cpu"]``."""
         return cls.GPU_RECOMMENDED()
 
     @property
     def allow_batching(self):
+        """bool: ``False`` (the AAK call has no batching)."""
         return False
 
     def __call__(
@@ -565,52 +687,49 @@ class AAKWaveformBase(Pn5AAK, FewBackendConsumer, Generic[InspiralModule, SumMod
         T: float = 1.0,
         nmodes: Optional[int] = None,
     ) -> np.ndarray:
-        r"""Call function for AAK + 5PN model.
+        r"""Generate an AAK waveform in the detector (SSB) frame.
 
-        This function will take input parameters and produce AAK waveforms with 5PN trajectories in generic Kerr.
+        Checks the angles (``Pn5AAK.sanity_check_angles``: ``qS``, ``qK`` in :math:`[0, \pi]`,
+        ``phiS``, ``phiK`` wrapped) and the initial parameters, integrates the trajectory
+        (CPU), sets the number of harmonics, divides the phase rows of the trajectory spline by
+        the symmetric mass ratio :math:`\mu / M` and calls the AAK summation module with the
+        total mass :math:`M` and the reduced mass :math:`\mu` in the places of its ``m1`` and
+        ``m2`` arguments.
 
-        args:
-            m1: Mass of larger black hole in solar masses.
-            m2: Mass of compact object in solar masses.
-            a: Dimensionless spin of massive black hole.
-            p0: Initial semilatus rectum (Must be greater than
-                the separatrix at the the given e0 and Y0).
-                See documentation for more information.
+        Args:
+            m1: Primary (massive black hole) mass in solar masses.
+            m2: Secondary mass in solar masses (``m2 <= m1``).
+            a: Dimensionless spin of the primary.
+            p0: Initial semi-latus rectum in units of :math:`M = m_1 + m_2`; must be above the
+                separatrix (plus the trajectory buffer) at ``e0`` and ``Y0``.
             e0: Initial eccentricity.
-            Y0: Initial cosine of :math:`\iota`. :math:`Y=\cos{\iota}\equiv L_z/\sqrt{L_z^2 + Q}`
-                in the semi-relativistic formulation.
+            Y0: Initial :math:`Y = \cos\iota \equiv L_z / \sqrt{L_z^2 + Q}`, in ``[-1, 1]``.
             dist: Luminosity distance in Gpc.
-            qS: Sky location polar angle in ecliptic
-                coordinates.
-            phiS: Sky location azimuthal angle in
-                ecliptic coordinates.
-            qK: Initial BH spin polar angle in ecliptic
-                coordinates.
-            phiK: Initial BH spin azimuthal angle in
-                ecliptic coordinates.
-            *args: Any additional arguments required for the
-                trajectory.
-            Phi_phi0 : Initial phase for :math:`\Phi_\phi`.
-                Default is 0.0.
-            Phi_theta0 : Initial phase for :math:`\Phi_\Theta`.
-                Default is 0.0.
-            Phi_r0 : Initial phase for :math:`\Phi_r`.
-                Default is 0.0.
-            mich: If True, produce waveform with
-                long-wavelength response approximation (hI, hII). Please
-                note this is not TDI. If False, return hplus and hcross.
-                Default is False.
-            dt : Time between samples in seconds
-                (inverse of sampling frequency). Default is 10.0.
-            T : Total observation time in years.
-                Default is 1.0.
+            qS: Sky polar angle (colatitude) in rad, SSB ecliptic frame by FEW convention.
+            phiS: Sky azimuthal angle in rad, same frame.
+            qK: Polar angle of the primary's spin direction in rad, same frame.
+            phiK: Azimuthal angle of the primary's spin direction in rad, same frame.
+            *args: Extra positional trajectory parameters.
+            Phi_phi0: Initial phase :math:`\Phi_\phi` in rad. Default ``0.0``.
+            Phi_theta0: Initial phase :math:`\Phi_\theta` in rad. Default ``0.0``.
+            Phi_r0: Initial phase :math:`\Phi_r` in rad. Default ``0.0``.
+            mich: If ``True``, return the long-wavelength response channels
+                :math:`h_I, h_{II}` (not TDI); if ``False`` (default), :math:`h_+, h_\times`.
+                Through :class:`~few.waveform.waveform.GenerateEMRIWaveform` with
+                ``frame="detector"`` either output is rotated by :math:`2\psi` afterwards.
+            dt: Sampling interval in seconds. Default ``10.0``.
+            T: Maximum duration in years. Default ``1.0``.
+            nmodes: Number of harmonics. ``None`` (default) means ``int(30 * e0)`` (``e`` at the
+                last trajectory point for a backwards integration), at least 4.
 
         Returns:
-            The output waveform.
+            xp.ndarray: The summation module's complex output on the backend, shape ``(n,)``
+            sampled every ``dt``; for :class:`~few.summation.aakwave.AAKSummation` the kernel
+            writes ``h_I - i h_II`` (:math:`h_+ - i h_\times` with ``mich=False``).
 
         Raises:
-            ValueError: user selections are not allowed.
-
+            ValueError: If an angle, an initial parameter (negative values, ``m1 < m2``,
+                ``|Y0| > 1``) or a trajectory point is out of range.
         """
 
         # makes sure angular extrinsic parameters are allowable

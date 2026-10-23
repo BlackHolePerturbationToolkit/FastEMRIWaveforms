@@ -1,21 +1,47 @@
 # Interpolated summation of modes in python for the FastEMRIWaveforms Package
 
+"""Frequency-domain helpers for FEW waveforms (windowing, FFTs, convolutions).
+
+- :class:`GetFDWaveformFromTD`: wraps a time-domain waveform generator and returns the
+  windowed FFT of its two polarizations on a frequency mask.
+- :class:`GetFDWaveformFromFD`: wraps a frequency-domain generator (e.g. with
+  :class:`~few.summation.fdinterp.FDInterpolatedModeSum`) and applies a time-domain window
+  as a frequency-domain circular convolution.
+- The underlying functions :func:`get_fft_td_windowed`, :func:`get_fd_windowed` and
+  :func:`get_convolution`.
+
+Not used inside FEW; see the frequency-domain tutorial notebooks.
+
+Warning:
+    The cupy branches import ``has_backend`` from ``few``, which FEW does not define, so
+    cupy inputs raise ``ImportError``; and :func:`get_fd_windowed` (hence
+    :class:`GetFDWaveformFromFD`) raises ``ValueError`` for ``window=None``, because its
+    type check compares the window's type with the signal's before the ``None`` branch.
+"""
+
 from typing import Optional
 
 import numpy as np
 
 
 def get_convolution(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    """
-    Calculate the convolution of two arrays.
+    """Return the circular convolution of ``a`` and ``b`` divided by ``len(b)``.
 
-    arguments:
-        a: First array to convolve.
-        b: First array to convolve.
+    Computed as a "valid" linear convolution of ``a`` extended by its own periodic copy
+    (``scipy.signal.convolve`` / ``cupyx.scipy.signal.convolve``); for ``len(a) == len(b)
+    == N`` the output has length ``N`` and element ``k`` is
+    ``sum_j a[(k - j) mod N] b[j] / N``.
 
-    returns:
-        convolution of the two arrays.
+    Args:
+        a: First array (numpy or cupy).
+        b: Second array, same array type as ``a``.
 
+    Returns:
+        np.ndarray: The normalised circular convolution (cupy for cupy inputs), length
+        ``2 len(a) - len(b)``.
+
+    Raises:
+        ValueError: If ``a`` and ``b`` are of different array types.
     """
 
     # Check a and b are the same type
@@ -41,17 +67,19 @@ def get_convolution(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 def get_fft_td_windowed(
     signal: list, window: np.ndarray, dt: float
 ) -> list[np.ndarray]:
-    """
-    Calculate the Fast Fourier Transform of a windowed time domain signal.
+    """Return the FFT of two windowed time-domain signals, ``fftshift``-ed and scaled by ``dt``.
 
-    arguments:
-        signal: A length-2 list containing the signals plus and cross polarizations.
-        window: Array to be applied in time domain to each signal.
-        dt: Time sampling interval of the signal and window.
+    Args:
+        signal: ``[h_plus, h_cross]`` time series of a common length.
+        window: Time-domain window, same length and array type as the signals.
+        dt: Sampling interval in s.
 
-    returns:
-        Fast Fourier Transform of the windowed time domain signals.
+    Returns:
+        list[np.ndarray]: ``[fftshift(fft(h_plus * window)) * dt, fftshift(fft(h_cross *
+        window)) * dt]`` (frequency order of ``np.fft.fftshift``).
 
+    Raises:
+        ValueError: If ``signal[0]`` and ``window`` are of different array types.
     """
     # Check a and b are the same type
     if type(signal[0]) is not type(window):
@@ -77,19 +105,24 @@ def get_fft_td_windowed(
 def get_fd_windowed(
     signal: list, window: Optional[bool] = None, window_in_fd: bool = False
 ) -> list[np.ndarray]:
-    """
-    Calculate the convolution of a frequency domain signal with a window in time domain.
+    """Apply a window to two frequency-domain signals by circular convolution.
 
-    arguments:
-        signal: A length-2 list containing the signals plus and cross polarizations in frequency domain.
-        window: Array of the time domain window. If ``None``, do not apply window.
-            This is added for flexibility. Default is ``None``.
-        window_in_fd: If ``True``, ``window`` is given in the frequency domain.
-            If ``False``, window is given in the time domain. Default is ``False``.
+    Each polarization is convolved with ``conj(FFT(window))`` (or ``conj(window)`` with
+    ``window_in_fd``) through :func:`get_convolution`.
 
-    returns:
-        convolution of a frequency domain signal with a time domain window.
+    Args:
+        signal: ``[h_plus, h_cross]`` frequency-domain signals.
+        window: Window, same length and array type as the signals: in the time domain, or
+            in the frequency domain with ``window_in_fd``. ``None`` (default) is meant to
+            skip the windowing, but the type check fails first (``ValueError``).
+        window_in_fd: ``window`` is already in the frequency domain. Default ``False``.
 
+    Returns:
+        list[np.ndarray]: The two windowed signals.
+
+    Raises:
+        ValueError: If ``signal[0]`` and ``window`` are of different types (including
+            ``window=None``).
     """
     if type(signal[0]) is not type(window):
         raise ValueError(
@@ -121,21 +154,29 @@ def get_fd_windowed(
 
 
 class GetFDWaveformFromFD:
-    """Generic frequency domain class
+    """Windowed frequency-domain waveform from a frequency-domain FEW generator.
 
-    This class allows to obtain the frequency domain signal given the frequency domain waveform class
-    from the FEW package.
+    Calls the generator, windows its two polarizations with :func:`get_fd_windowed` and
+    keeps the frequencies of ``positive_frequency_mask``.
 
     Args:
-        waveform_generator: FEW waveform class.
-        positive_frequency_mask: boolean array to indicate where the frequencies are positive.
-        dt: time sampling interval of the signal and window.
-        non_zero_mask: boolean array to indicate where the waveform needs to be set to zero.
-        window: Array of the time domain window. If ``None``, do not apply window.
-            This is added for flexibility. Default is ``None``.
-        window_in_fd: If ``True``, ``window`` is given in the frequency domain.
-            If ``False``, window is given in the time domain. Default is ``False``.
+        waveform_generator: Callable returning ``[h_plus, h_cross]`` in the frequency domain
+            (e.g. a :class:`~few.waveform.waveform.GenerateEMRIWaveform` built with
+            ``sum_kwargs=dict(output_type="fd")`` and ``return_list=True``, as in the
+            frequency-domain tutorial).
+        positive_frequency_mask: Boolean mask of the frequencies to return.
+        dt: Sampling interval in s; stored nowhere and not used.
+        non_zero_mask: Boolean mask over the returned frequencies; entries where it is
+            ``False`` are set to zero. Default ``None`` (no zeroing).
+        window: Window for :func:`get_fd_windowed`. Default ``None``, which fails at call
+            time (see :func:`get_fd_windowed`).
+        window_in_fd: ``window`` is given in the frequency domain. Default ``False``.
 
+    Example:
+        .. code-block:: python
+
+            fd_gen = GetFDWaveformFromFD(few_gen, positive_frequency_mask, dt, window=window)
+            h_plus, h_cross = fd_gen(*params, **waveform_kwargs)
     """
 
     def __init__(
@@ -154,15 +195,14 @@ class GetFDWaveformFromFD:
         self.window_in_fd = window_in_fd
 
     def __call__(self, *args, **kwargs) -> list[np.ndarray]:
-        """Run the waveform generator.
+        """Run the waveform generator and return the windowed, masked polarizations.
 
-        args:
-            *args: Arguments passed to waveform generator.
-            **kwargs: Keyword arguments passed to waveform generator.
+        Args:
+            *args: Forwarded to the waveform generator.
+            **kwargs: Forwarded to the waveform generator.
 
-        returns:
-            FD Waveform as [h+, hx]
-
+        Returns:
+            list[np.ndarray]: ``[h_plus, h_cross]`` on the positive-frequency mask.
         """
         data_channels_td = self.waveform_generator(*args, **kwargs)
         list_p_c = get_fd_windowed(
@@ -178,19 +218,28 @@ class GetFDWaveformFromFD:
 
 # conversion
 class GetFDWaveformFromTD:
-    """Generic time domain class
+    """Frequency-domain waveform from a time-domain FEW generator (windowed FFT).
 
-    This class allows to obtain the frequency domain signal given the time domain waveform class
-    from the FEW package.
+    Calls the generator, takes :func:`get_fft_td_windowed` of its two polarizations and
+    keeps the frequencies of ``positive_frequency_mask``.
 
     Args:
-        waveform_generator: FEW waveform class.
-        positive_frequency_mask: boolean array to indicate where the frequencies are positive.
-        dt: time sampling interval of the signal and window.
-        non_zero_mask: boolean array to indicate where the waveform needs to be set to zero.
-        window: Array of the time domain window. If ``None``, do not apply window.
-            This is added for flexibility. Default is ``None``.
+        waveform_generator: Callable returning ``[h_plus, h_cross]`` time series (e.g. a
+            :class:`~few.waveform.waveform.GenerateEMRIWaveform` with ``return_list=True``).
+        positive_frequency_mask: Boolean mask, over the ``fftshift``-ed FFT frequencies, of
+            the frequencies to return.
+        dt: Sampling interval in s (scales the FFT).
+        non_zero_mask: Boolean mask over the returned frequencies; entries where it is
+            ``False`` are set to zero. Default ``None`` (no zeroing).
+        window: Time-domain window, same length and array type as the signals. Default
+            ``None`` uses ``np.ones_like(positive_frequency_mask)`` (no windowing; numpy,
+            so cupy signals then fail the type check).
 
+    Example:
+        .. code-block:: python
+
+            td_fd_gen = GetFDWaveformFromTD(td_gen, positive_frequency_mask, dt, window=window)
+            h_plus, h_cross = td_fd_gen(*params, **waveform_kwargs)
     """
 
     def __init__(
@@ -211,15 +260,14 @@ class GetFDWaveformFromTD:
             self.window = window
 
     def __call__(self, *args, **kwargs) -> list[np.ndarray]:
-        """Run the waveform generator.
+        """Run the waveform generator and return the masked FFTs of its polarizations.
 
-        args:
-            *args: Arguments passed to waveform generator.
-            **kwargs: Keyword arguments passed to waveform generator.
+        Args:
+            *args: Forwarded to the waveform generator.
+            **kwargs: Forwarded to the waveform generator.
 
-        returns:
-            FD Waveform as [h+, hx] (fft from TD)
-
+        Returns:
+            list[np.ndarray]: ``[h_plus, h_cross]`` (windowed FFT times ``dt``) on the mask.
         """
         data_channels_td = self.waveform_generator(*args, **kwargs)
         list_p_c = get_fft_td_windowed(data_channels_td, self.window, self.dt)

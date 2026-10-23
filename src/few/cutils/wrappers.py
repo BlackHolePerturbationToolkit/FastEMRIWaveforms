@@ -1,3 +1,17 @@
+"""Pointer conversion helpers for the FEW Cython extensions.
+
+The compiled modules (``pyAmpInterp2D``, ``pyinterp``, ``pyAAK``, ``pymatmul``; sources
+``cutils/*.pyx``) receive arrays as raw addresses. :func:`wrapper` converts the arguments of
+one call, and :func:`pointer_adjust` is the decorator the ``.pyx`` files apply
+(``interp2D`` in ``pyampinterp2D.pyx`` is decorated; ``pyinterp.pyx``, ``gpuAAKWrap.pyx``
+and ``pymatmul.pyx`` call :func:`wrapper` directly). On the production EMRI path every
+amplitude evaluation (``AmpInterp2D`` -> ``backend.interp2D``) goes through
+:func:`pointer_adjust`.
+
+The module tries ``import cupy`` once at import (module flag ``gpu``); without cupy only
+numpy arrays are recognised.
+"""
+
 # check to see if cupy is available for gpus
 try:
     import cupy as cp
@@ -11,6 +25,23 @@ import numpy as np
 
 
 def obj_to_ptr(obj):
+    """Return the address of an array or Cython object, or the object itself.
+
+    Args:
+        obj (object): A ``cupy.ndarray`` (device address ``obj.data.mem.ptr``; recognised
+            only when cupy imported), a ``numpy.ndarray`` (host address from
+            ``__array_interface__``), an object with a ``ptr`` attribute (Cython classes), or
+            anything else (returned unchanged).
+
+    Returns:
+        int or object: The address as an integer, or ``obj`` unchanged.
+
+    Note:
+        For numpy the address is that of the first element. For cupy it is the base address
+        of the underlying allocation (``data.mem.ptr``, not ``data.ptr``), which differs
+        from the first element for a view with a non-zero offset. Pass contiguous arrays
+        that own their memory, with the dtype the C++ side expects.
+    """
     if gpu and isinstance(obj, cp.ndarray):
         return obj.data.mem.ptr
 
@@ -26,27 +57,23 @@ def obj_to_ptr(obj):
 
 
 def wrapper(*args, **kwargs):
-    """Function to convert array and C/C++ class arguments to ptrs
+    """Convert array and C/C++ class arguments to pointers.
 
-    This function checks the object type. If it is a cupy or numpy array,
-    it will determine its pointer by calling the proper attributes. If you
-    design a Cython class to be passed through python, it must have a :code:`ptr`
-    attribute.
+    Applies :func:`obj_to_ptr` to every positional and keyword argument: cupy and numpy
+    arrays become their integer addresses, objects with a ``ptr`` attribute (Cython
+    classes) become that attribute, everything else passes through unchanged.
 
-    If you use this function, you must convert input arrays to size_t data type
-    in Cython and then properly cast the pointer as it enters the c++ function.
-    See the Cython codes
-    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/src/few/cutils>`_
-    for examples.
+    The receiving Cython function must declare array arguments as ``size_t`` and cast them
+    to the proper pointer type before calling the C++ function; see the ``.pyx`` files in
+    ``src/few/cutils`` (e.g. ``pyinterp.pyx``) for examples.
 
-    args:
-        *args (list): list of the arguments for a function.
-        **kwargs (dict): dictionary of keyword arguments to be converted.
+    Args:
+        *args: Positional arguments of the target function.
+        **kwargs: Keyword arguments of the target function.
 
-    returns:
-        Tuple: (targs, tkwargs) where t indicates target (with pointer values
-            rather than python objects).
-
+    Returns:
+        tuple[list, dict]: ``(targs, tkwargs)``, the converted positional arguments (a list)
+        and keyword arguments.
     """
     # declare target containers
     targs = [obj_to_ptr(arg) for arg in args]
@@ -56,17 +83,22 @@ def wrapper(*args, **kwargs):
 
 
 def pointer_adjust(func):
-    """Decorator function for cupy/numpy agnostic cython
+    """Decorate a Cython function so it accepts numpy / cupy arrays and Cython objects.
 
-    This decorator applies :func:`few.utils.utility.wrapper` to functions
-    via the decorator construction.
+    The returned function converts its arguments with :func:`wrapper` and calls ``func``
+    with the converted values. ``pyampinterp2D.pyx`` decorates ``interp2D`` with it, so
+    :meth:`few.amplitude.ampinterp2d.AmpInterp2D.__call__` can pass arrays directly.
 
-    If you use this decorator, you must convert input arrays to size_t data type in Cython and
-    then properly cast the pointer as it enters the c++ function. See the
-    Cython codes
-    `here <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tree/master/src/few/cutils>`_
-    for examples.
+    The decorated Cython function must declare array arguments as ``size_t`` and cast them
+    to the proper pointer type before calling the C++ function; see
+    ``src/few/cutils/pyampinterp2D.pyx`` for an example.
 
+    Args:
+        func (Callable): Function taking pointer (``size_t``) arguments.
+
+    Returns:
+        Callable: Wrapper with the same positional / keyword interface as ``func`` that
+        returns ``func``'s return value.
     """
 
     def func_wrapper(*args, **kwargs):

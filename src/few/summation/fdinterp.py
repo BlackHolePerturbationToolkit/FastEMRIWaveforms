@@ -1,3 +1,11 @@
+"""Frequency-domain mode sum from the sparse trajectory (:class:`FDInterpolatedModeSum`).
+
+Selected by the fast spherical-harmonic waveform models when
+``sum_kwargs["output_type"] == "fd"``. Each harmonic is built with the stationary-phase
+approximation on the frequency grid; harmonics whose frequency turns over within a
+trajectory segment are handled by locating the turnover on the frequency spline.
+"""
+
 # Interpolated summation of modes in python for the FastEMRIWaveforms Package
 
 import numpy as np
@@ -19,7 +27,9 @@ from .base import SummationBase
 
 
 # added to return element or none in list
+# TODO check: keep/remove/document -- no callers in FEW, its tests, docs or examples
 def find_element_in_list(element, list_element):
+    """Return the index of ``element`` in ``list_element``, or ``None`` if absent."""
     try:
         index_element = list_element.index(element)
         return index_element
@@ -27,7 +37,9 @@ def find_element_in_list(element, list_element):
         return None
 
 
+# TODO check: keep/remove/document -- no callers; module-level function taking self
 def searchsorted2d_vec(self, a, b, batch_size=-1, xp=None, **kwargs):
+    """Row-wise ``searchsorted`` of ``b`` into the rows of a 2-D ``a`` (``xp`` is unused)."""
     if xp is None:
         xp = np
 
@@ -90,13 +102,47 @@ def searchsorted2d_vec(self, a, b, batch_size=-1, xp=None, **kwargs):
 
 
 class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
-    """Create waveform by interpolating sparse trajectory in the frequency domain.
+    r"""Create a frequency-domain waveform from the sparse trajectory (stationary phase).
 
     It interpolates all of the modes of interest and phases at sparse
-    trajectories. Within the summation phase, the values are calculated using
-    the interpolants and summed.
+    trajectories. The mode amplitudes and the orbital frequencies (from
+    :func:`~few.utils.geodesic.get_fundamental_frequencies` at the knots) are fitted with
+    :class:`~few.summation.interpolatedmodesum.CubicSplineInterpolant`; the phases come from
+    the trajectory's DOP853 phase coefficients. For every mode and trajectory segment the
+    backend kernel ``get_waveform_generic_fd_wrap`` fills the frequency bins the harmonic
+    sweeps, and the result is converted to :math:`\tilde h_+, \tilde h_\times`.
 
-    This class can be run on GPUs and CPUs.
+    This class can be run on GPUs and CPUs. It is selected by the waveform models with
+    ``sum_kwargs=dict(output_type="fd")`` (``odd_len`` is then forced).
+
+    Args:
+        force_backend: Backend name or object (see
+            :class:`~few.utils.baseclasses.FewBackendConsumer`). Default ``None``.
+        **kwargs: ``output_type``, ``pad_output``, ``odd_len`` go to
+            :class:`~few.summation.base.SummationBase`; ``lmax``, ``nmax`` (and ``kmax``,
+            which :class:`~few.utils.baseclasses.SchwarzschildEccentric` does not accept:
+            ``TypeError``) go to :class:`~few.utils.baseclasses.SchwarzschildEccentric`;
+            other keys are ignored.
+
+    Attributes:
+        frequency (xp.ndarray): Frequency grid of the last call in Hz: ``f_arr`` if given,
+            else ``n`` bins of width ``1 / (n dt)`` in fft-shifted order (negative
+            frequencies first, one zero bin at the centre). It stays the full grid when
+            ``mask_positive`` trims the output.
+
+    Example:
+        .. code-block:: python
+
+            from few.waveform import GenerateEMRIWaveform
+
+            fd_gen = GenerateEMRIWaveform(
+                "FastKerrEccentricEquatorialFlux",
+                sum_kwargs=dict(pad_output=True, output_type="fd", odd_len=True),
+                return_list=True,
+            )
+            hp, hc = fd_gen(1e6, 10.0, 0.9, 12.0, 0.1, 1.0, 1.0, 0.8, 2.0, 1.2, 0.5,
+                            0.0, 0.0, 0.0, T=1.0, dt=10.0, mask_positive=True)
+            f = fd_gen.waveform_generator.create_waveform.frequency
     """
 
     def __init__(self, /, force_backend: BackendLike = None, **kwargs):
@@ -124,16 +170,17 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
     # eventually the name will change to adapt for the gpu implementantion
     @property
     def get_waveform_fd(self) -> callable:
-        """GPU or CPU waveform generation."""
+        """The backend's frequency-domain kernel (``get_waveform_generic_fd_wrap``)."""
         return self.backend.get_waveform_generic_fd_wrap
 
     @classmethod
     def supported_backends(cls):
+        """Backend preference order: ``["cuda13x", "cuda12x", "cuda11x", "cpu"]``."""
         return cls.GPU_RECOMMENDED()
 
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
-        """Return citations related to this module"""
+        """Return citations related to this module (``FD`` plus the parents')."""
         return [REFERENCE.FD] + super().module_references()
 
     def sum(
@@ -161,49 +208,60 @@ class FDInterpolatedModeSum(SummationBase, SchwarzschildEccentric):
         integrate_backwards=False,
         **kwargs,
     ):
-        r"""Interpolated summation function in Frequency Domain.
+        r"""Interpolated summation in the frequency domain; sets :attr:`waveform`.
 
         This function interpolates the amplitude and phase information, and
         creates the final waveform with the combination of ylm values for each
         mode in the Frequency Domain.
 
-        This turns the waveform array into a 2D array with shape (2, number of points).
-        The 2 represents h+ and hx in that order.
+        This turns the waveform array into a 2D array with shape ``(2, n_f)``: rows
+        :math:`\tilde h_+` and :math:`\tilde h_\times` in that order.
 
-        args:
-            t (1D double self.xp.ndarray): Array of t values.
-            teuk_modes (2D double self.xp.array): Array of complex amplitudes.
-                Shape: (len(t), num_teuk_modes).
-            ylms (1D complex128 self.xp.ndarray): Array of ylm values for each mode,
-                including m<0. Shape is (num of m==0,) + (num of m>0,)
-                + (num of m<0). Number of m<0 and m>0 is the same, but they are
-                ordered as (m==0 first then) m>0 then m<0.
-            Phi_phi (1D double self.xp.ndarray): Array of azimuthal phase values
-                (:math:`\Phi_\phi`).
-            Phi_r (1D double self.xp.ndarray): Array of radial phase values
-                 (:math:`\Phi_r`).
-            l_arr (1D int self.xp.ndarray): :math:`l` values associated with each mode.
-            m_arr (1D int self.xp.ndarray): :math:`m` values associated with each mode.
-            k_arr (1D int self.xp.ndarray): :math:`k` values associated with each mode.
-            n_arr (1D int self.xp.ndarray): :math:`n` values associated with each mode.
-            M (double): Total mass in solar masses.
-            p (1D int self.xp.ndarray): Semi-latus rectum along trajectory.
-            e (1D int self.xp.ndarray): Eccentricity value along trajectory.
-            *args (list, placeholder): Added for flexibility.
+        Args:
+            t (xp.ndarray): Trajectory knot times in seconds, shape ``(N,)``.
+            teuk_modes (xp.ndarray): Complex amplitudes, shape ``(N, K)``.
+            ylms (xp.ndarray): Complex spherical harmonics, shape ``(2 K,)``: :math:`Y_{lm}` of
+                the ``K`` modes, then :math:`Y_{l,-m}` of the same modes.
+            phase_interp_t (xp.ndarray): Knot times of the phase spline in seconds
+                (``integrator_spline_t``), shape ``(N_p,)``.
+            phase_interp_coeffs (xp.ndarray): DOP853 phase coefficients in rad
+                (``integrator_spline_phase_coeff``), shape ``(N_p - 1, 3, 8)``.
+            l_arr (xp.ndarray): :math:`l` of each mode, shape ``(K,)``.
+            m_arr (xp.ndarray): :math:`m` of each mode, shape ``(K,)``.
+            k_arr (xp.ndarray): :math:`k` of each mode, shape ``(K,)``.
+            n_arr (xp.ndarray): :math:`n` of each mode, shape ``(K,)``.
+            M (float): Total mass in solar masses (converts the dimensionless frequencies).
+            a (float): Dimensionless spin of the primary.
+            p (xp.ndarray): Semi-latus rectum along the trajectory, shape ``(N,)``.
+            e (xp.ndarray): Eccentricity along the trajectory, shape ``(N,)``.
+            xI (xp.ndarray): :math:`x_I` along the trajectory, shape ``(N,)``.
+            *args: Accepted and ignored.
             include_minus_m (bool, optional): Include the values for :math:`-m`. This is
                 useful when looking at specific modes. Default is ``True``.
-            separate_modes (bool, optional): Return each harmonic mode separated from each other.
-                Default is ``False``.
-            dt (double, optional): Time spacing between observations (inverse of sampling
-                rate). Default is 10.0.
-            f_arr (1D double self.xp.ndarray, optional): User-provided frequency array. For now,
-                it must be evenly spaced and include both positive and negative frequencies.
+            separate_modes (bool, optional): Return each harmonic mode separated from each
+                other (forces ``include_minus_m=False``). Default is ``False``.
+            dt (float, optional): Sampling interval of the equivalent time series in seconds.
+                Default is 10.0.
+            f_arr (xp.ndarray, optional): User-provided frequency array. For now,
+                it must be evenly spaced and include both positive and negative frequencies
+                with exactly one zero, at index ``len(f_arr) // 2``.
                 If ``None``, the frequency array is built from observation time and time step.
                 Default is ``None``.
-            mask_positive (bool, optional): Only return h+ and hx along positive frequencies.
-                Default is False.
-            **kwargs (dict, placeholder): Added for future flexibility.
+            mask_positive (bool, optional): Only return h+ and hx along positive frequencies
+                (``f >= 0``). Default is False.
+            integrate_backwards (bool, optional): Ignored (backwards integration is not
+                handled here). Default ``False``.
+            **kwargs: Accepted and ignored.
 
+        Raises:
+            ValueError: If ``f_arr`` is empty.
+            AssertionError: If the frequency grid does not have exactly one zero at its
+                centre.
+
+        Warning:
+            If a turnover's discriminant is below ``-1e10`` or both turnover roots fall
+            inside the segment, the code calls ``breakpoint()`` (an interactive debugger
+            stop).
         """
 
         init_len = len(t)  # length of sparse traj

@@ -1,3 +1,5 @@
+"""Common call interface of the FEW amplitude modules (:class:`AmplitudeBase`)."""
+
 from typing import Optional, Union
 
 import numpy as np
@@ -6,22 +8,27 @@ from ..utils.baseclasses import FewBackendConsumer
 
 
 class AmplitudeBase(FewBackendConsumer):
-    """Base class used for amplitude modules.
+    """Base class of the amplitude modules.
 
-    This class provides a common flexible interface to various amplitude
-    implementations. Specific arguments to each amplitude module can be found
-    with each associated module discussed below.
+    Subclasses implement :meth:`get_amplitudes`; :meth:`__call__` provides the common call
+    (input broadcasting, mode-index lookup and the mode symmetries). Concrete modules also
+    derive from a model class of :mod:`few.utils.baseclasses`
+    (:class:`~few.utils.baseclasses.KerrEccentricEquatorial`,
+    :class:`~few.utils.baseclasses.SchwarzschildEccentric`, ...), whose mode bookkeeping
+    (``num_teuk_modes``, ``mode_indexes``, ``negative_mode_indexes``,
+    ``special_index_map_arr``, ``l_arr``, ``k_arr``, ``num_m_1_up``) :meth:`__call__` uses.
+    The stock modules are listed in :mod:`few.amplitude`.
     """
 
     @classmethod
     def get_amplitudes(self, *args, **kwargs):
-        """Amplitude Generator
+        """Compute the amplitudes (implemented by the subclasses).
 
-        @classmethod that requires a child class to have a get_amplitudes method.
+        Called by :meth:`__call__` with the 1-D arrays ``a, p, e, xI``, the extra positional
+        and keyword arguments, and ``specific_modes`` set to an integer index array.
 
-        raises:
-            NotImplementedError: The child class does not have this method.
-
+        Raises:
+            NotImplementedError: Always, in the base class.
         """
         raise NotImplementedError
 
@@ -35,27 +42,35 @@ class AmplitudeBase(FewBackendConsumer):
         specific_modes: Optional[Union[list, np.ndarray]] = None, 
         **kwargs
     ) -> Union[dict, np.ndarray]:
-        """Common call for Teukolsky amplitudes
+        r"""Evaluate the complex Teukolsky amplitudes along a trajectory.
 
-        This function takes the inputs the trajectory in :math:`(p,e)` as arrays
-        and returns the complex amplitude of all modes to adiabatic order at
-        each step of the trajectory.
+        The inputs are made at least 1-D (each must have length 1 or a common length ``N``).
+        If every ``xI`` is negative, the amplitudes are built from the :math:`x_I > 0`
+        convention by the inclination-flip symmetry; requested :math:`m < 0` modes are served
+        from their :math:`m > 0` partners by
+        :math:`A_{l,-m,-k,-n} = (-1)^{l+k} A^*_{lmkn}`. Called by
+        :class:`~few.utils.modeselector.ModeSelector` with the trajectory arrays.
 
         Args:
-            a: Spin parameter of the black hole.
-            p: Semilatus rectum of the orbit.
-            e: Eccentricity of the orbit.
-            xI: Cosine of the inclination angle of the orbit.
-            *args: Added to create future flexibility when calling different
-                amplitude modules. Transfers directly into get_amplitudes function.
-            specific_modes: Either indices or mode index tuples of modes to be generated (optional; defaults to all modes).
-            **kwargs (dict, placeholder): Added to create flexibility when calling different
-                amplitude modules.
+            a: Dimensionless spin of the primary (scalar or array).
+            p: Semi-latus rectum in units of :math:`M`, shape ``(N,)``.
+            e: Eccentricity, shape ``(N,)``.
+            xI: Cosine of the inclination :math:`x_I`, scalar or shape ``(N,)``.
+            *args: Forwarded to :meth:`get_amplitudes`.
+            specific_modes: Modes to evaluate. ``None`` (default): all ``num_teuk_modes``
+                :math:`m \ge 0` modes. An integer array: mode indices into the model's
+                ``l_arr`` / ``m_arr`` ordering (indices ``>= num_teuk_modes`` are :math:`m < 0`
+                modes). A list of ``(l, m, k, n)`` tuples: those modes, returned as a dict.
+            **kwargs: Forwarded to :meth:`get_amplitudes`.
 
         Returns:
-            If specific_modes is a list of tuples, returns a dictionary of complex mode amplitudes.
-            Else, returns an array of complex mode amplitudes.
+            xp.ndarray or dict: Complex amplitudes on the backend. Array of shape
+            ``(N, number of modes)`` for ``specific_modes`` ``None`` or an index array; for a
+            list of tuples, a dict mapping each ``(l, m, k, n)`` tuple to its ``(N,)`` array.
 
+        Raises:
+            AssertionError: If the input lengths are inconsistent.
+            ValueError: If a requested ``(l, m, k, n)`` mode does not exist in the model.
         """
 
         a = self.xp.atleast_1d(a)

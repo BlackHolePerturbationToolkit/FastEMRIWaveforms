@@ -1,3 +1,27 @@
+r"""Flux-interpolated trajectory models: Kerr eccentric equatorial and Schwarzschild eccentric.
+
+- :class:`KerrEccEqFlux`: the trajectory model of
+  :class:`~few.waveform.waveform.FastKerrEccentricEquatorialFlux` (and of the LISA
+  global-fit EMRI path). Tricubic splines (``multispline``) of the adiabatic fluxes of
+  ``KerrEccEqFluxData.h5`` on two grids in the mapped coordinates ``(u, w, z)`` of
+  :mod:`few.utils.mappings.kerrecceq` (region A near the separatrix, region B out to
+  ``p = 200``), normalised by PN-like factors (:func:`_pdot_PN`, :func:`_edot_PN`).
+- :class:`SchwarzEccFlux`: bicubic splines of the Schwarzschild eccentric fluxes of
+  ``FluxNewMinusPNScaled_fixed_y_order.dat`` (arXiv:2104.04582).
+- :class:`KerrEccEqFluxLegacy`: the superseded Kerr eccentric equatorial model (not a stock
+  option; its constructor currently raises ``AttributeError``).
+
+The module also holds the numba pieces of the experimental batched right-hand side
+(:meth:`KerrEccEqFlux.evaluate_rhs_batch`, :func:`tricubic_grid`,
+:func:`tricubic_eval_batch`), the CPU reference used by
+:class:`~few.trajectory.integrate.BatchedIntegrate`.
+
+Module constants: ``PMAX`` (200, the outer ``p`` edge of the Kerr grid), ``PISCO_MIN``
+(the prograde ISCO at the maximum spin ``AMAX = 0.999``, the smallest ``p`` anywhere on the
+Kerr grid), and the Schwarzschild limits ``PISCO_MIN_SCHW``, ``PMAX_SCHW`` (47.6) and
+``EMAX_SCHW`` (0.755).
+"""
+
 from math import log, pow
 from typing import Optional, Union
 
@@ -43,6 +67,7 @@ EMAX_SCHW = 0.755
 
 @njit
 def _Edot_PN(e, yPN):
+    """Peters-Mathews energy flux used by :class:`SchwarzEccFlux` (``yPN = Omega_phi**(2/3)``)."""
     return (
         (96 + 292 * pow(e, 2) + 37 * pow(e, 4))
         / (15.0 * pow(1 - pow(e, 2), 3.5))
@@ -52,17 +77,41 @@ def _Edot_PN(e, yPN):
 
 @njit
 def _Ldot_PN(e, yPN):
+    """Peters-Mathews angular-momentum flux used by :class:`SchwarzEccFlux`."""
     return (
         (4 * (8 + 7 * pow(e, 2))) / (5.0 * pow(-1 + pow(e, 2), 2)) * pow(yPN, 7.0 / 2.0)
     )
 
 
 class SchwarzEccFlux(ODEBase):
-    """
-    Schwarzschild eccentric flux ODE.
+    """Schwarzschild eccentric flux ODE (the trajectory of the Schwarzschild waveform models).
+
+    Bicubic splines in ``(y1, e)``, ``y1 = log(p - 2 e - 2.1)``, of the energy and
+    angular-momentum fluxes minus their Peters-Mathews parts, read from
+    ``FluxNewMinusPNScaled_fixed_y_order.dat`` (33 x 50 grid, arXiv:2104.04582). The
+    fluxes are ``(Edot, Ldot)`` (``flux_output_convention = "ELQ"``), so a pex
+    integration applies the Jacobian to ``(pdot, edot)`` in
+    :meth:`~few.trajectory.ode.base.ODEBase.__call__`. Domain: ``a = 0``, ``x = 1``,
+    ``0 <= e <= 0.755``, ``p`` between ``6 + 2e + 0.1`` (the separatrix buffer is 0.1) and
+    the grid edge ``y1 <= 3.8177``.
 
     Args:
-        use_ELQ: If True, the ODE will output derivatives of the orbital elements of (E, L, Q). Defaults to False.
+        *args: Forwarded to :class:`~few.trajectory.ode.base.ODEBase`.
+        use_ELQ: If ``True``, the ODE takes and returns ``(E, L, Q)``. Default ``False``.
+        **kwargs: Forwarded to :class:`~few.trajectory.ode.base.ODEBase`.
+
+    Raises:
+        few.utils.exceptions.FileManagerException: If the flux file cannot be found or
+            fetched.
+
+    Example:
+        .. code-block:: python
+
+            from few.trajectory.ode import SchwarzEccFlux
+
+            rhs = SchwarzEccFlux()
+            rhs.add_fixed_parameters(1e6, 1e1, 0.0)
+            pdot, edot, xdot, Om_phi, Om_theta, Om_r = rhs([10.0, 0.3, 1.0])
     """
 
     def __init__(self, *args, use_ELQ: bool = False, **kwargs):
@@ -81,25 +130,31 @@ class SchwarzEccFlux(ODEBase):
 
     @property
     def equatorial(self):
+        """bool: ``True`` (equatorial orbits only)."""
         return True
 
     @property
     def background(self):
+        """str: ``"Schwarzschild"``."""
         return "Schwarzschild"
 
     @property
     def separatrix_buffer_dist(self):
+        """float: ``0.1``, the stop distance in ``p`` above the separatrix ``6 + 2e``."""
         return 0.1
 
     @property
     def supports_ELQ(self):
+        """bool: ``True``."""
         return True
 
     def isvalid_x(self, x):
+        """Raise ``ValueError`` unless ``x == 1``."""
         if np.any(x != 1):
             raise ValueError("Interpolation: x out of bounds. Must be 1.")
 
     def isvalid_e(self, e, e_buffer=[0, 0]):
+        """Raise ``ValueError`` unless ``e_buffer[0] <= e <= 0.755 - e_buffer[1]``."""
         emax = EMAX_SCHW - e_buffer[1]
         emin = e_buffer[0]
         if np.any(e > emax) or np.any(e < emin):
@@ -108,6 +163,10 @@ class SchwarzEccFlux(ODEBase):
             )
 
     def isvalid_p(self, p, p_buffer=[0, 0]):
+        """Raise ``ValueError`` unless ``p`` is in the grid range, shrunk by ``p_buffer``.
+
+        The range is ``[PISCO_MIN_SCHW + 0.1, 47.6]``.
+        """
         pmax = PMAX_SCHW - p_buffer[1]
         pmin = PISCO_MIN_SCHW + self.separatrix_buffer_dist + p_buffer[0]
         if np.any(p > pmax) or np.any(p < pmin):
@@ -116,22 +175,28 @@ class SchwarzEccFlux(ODEBase):
             )
 
     def isvalid_a(self, a):
+        """Raise ``ValueError`` unless ``a == 0``."""
         if np.any(a != 0.0):
             raise ValueError("Interpolation: a out of bounds. Must be 0.")
 
     def min_p(self, e, x=1, a=0):
+        """Return the smallest ``p``: the separatrix plus buffer, ``6 + 2e + 0.1``."""
         return 6 + 2 * e + self.separatrix_buffer_dist
 
     def max_p(self, e, x=1, a=0):
+        """Return the largest ``p`` used by the start check, ``47.6 + 2e``."""
         return PMAX_SCHW + 2.0 * e
 
     def bounds_p(self, e, x=1, a=0, p_buffer=[0, 0]):
+        """Return ``[min_p + p_buffer[0], max_p - p_buffer[1]]`` (no ``x``, ``e``, ``a`` checks)."""
         return [self.min_p(e, x, a) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
 
     def max_e(self, p, x=1, a=0):
+        """Return the largest eccentricity, ``0.755``."""
         return EMAX_SCHW
 
     def isvalid_pex(self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], e_buffer=[0, 0]):
+        """Check a start point: ``x``, ``e``, ``a`` (``ValueError``), ``p`` (``AssertionError``)."""
         self.isvalid_x(x)
         self.isvalid_e(e, e_buffer=e_buffer)
         self.isvalid_a(a)
@@ -141,6 +206,14 @@ class SchwarzEccFlux(ODEBase):
         )
 
     def distance_to_outer_boundary(self, y):
+        """Return the signed distance to the grid's outer edge (``y1 = 3.817`` or ``e = 0.75``).
+
+        Args:
+            y (np.ndarray): State.
+
+        Returns:
+            float: ``min(|3.817 - y1|, |0.75 - e|)``, negative if either edge is passed.
+        """
         p, e, x = self.get_pex(y)
         dist_p = 3.817 - np.log((p - 2.0 * e - 2.1))
         dist_e = 0.75 - e
@@ -156,6 +229,22 @@ class SchwarzEccFlux(ODEBase):
     def interpolate_flux_grids(
         self, p: float, e: float, Omega_phi: float, pLSO: float = None
     ) -> tuple[float]:
+        """Interpolate the energy and angular-momentum fluxes at ``(p, e)``.
+
+        Args:
+            p: Semi-latus rectum in units of :math:`M`.
+            e: Eccentricity.
+            Omega_phi: Dimensionless azimuthal frequency (sets ``yPN = Omega_phi**(2/3)``).
+            pLSO: Separatrix; unused apart from its default ``6 + 2e``.
+
+        Returns:
+            tuple[float]: ``(Edot, Ldot)``, negative (energy and angular momentum are lost),
+            per unit of the radiation-reaction time.
+
+        Raises:
+            ValueError: If ``e > 0.755`` or ``y1 = log(p - 2e - 2.1)`` is outside
+                ``[1.3686, 3.8177]``.
+        """
         if pLSO is None:
             pLSO = 6.0 + 2.0 * e
 
@@ -182,6 +271,17 @@ class SchwarzEccFlux(ODEBase):
     def evaluate_rhs(
         self, y: Union[list[float], np.ndarray]
     ) -> list[Union[float, np.ndarray]]:
+        """Return ``[Edot, Ldot, 0, Omega_phi, Omega_theta, Omega_r]`` at the state ``y``.
+
+        The fluxes are in the ELQ convention; :meth:`~few.trajectory.ode.base.ODEBase.__call__`
+        converts them to ``(pdot, edot)`` for a pex integration.
+
+        Args:
+            y: State, ``(p, e, x)`` or ``(E, L, Q)`` first.
+
+        Returns:
+            list: Six values (fluxes, then the dimensionless frequencies).
+        """
         if self.use_ELQ:
             E, L, Q = y[:3]
             p, e, x = ELQ_to_pex(self.a, E, L, Q)
@@ -197,7 +297,8 @@ class SchwarzEccFlux(ODEBase):
 
 @njit
 def _PN_alt(p, e):
-    """
+    """Leading-order ``(Edot, Ldot)`` magnitudes, the normalisation of the ELQ flux grids.
+
     https://arxiv.org/pdf/2201.07044.pdf
     eq 91
     """
@@ -207,6 +308,7 @@ def _PN_alt(p, e):
     return Edot, Ldot
 
 
+# TODO check: keep/remove/document -- no callers (duplicates the Edot half of _PN_alt)
 @njit
 def _EdotPN_alt(p, e):
     """
@@ -218,6 +320,7 @@ def _EdotPN_alt(p, e):
     return Edot
 
 
+# TODO check: keep/remove/document -- no callers (duplicates the Ldot half of _PN_alt)
 @njit
 def _LdotPN_alt(p, e):
     """
@@ -231,8 +334,9 @@ def _LdotPN_alt(p, e):
 
 @njit
 def _emax_w(e, args):
-    """
-    Function for root-finding the maximum e-value on the domain for a given a, p, x = 1.
+    """Root-finding target of :meth:`KerrEccEqFlux._max_e`: ``w(e) - 1`` at fixed ``(a, p, z)``.
+
+    ``args = (a, p, z)``; the root is the largest grid eccentricity at ``p`` (``x = 1``).
     """
     a = args[0]
     p = args[1]
@@ -245,8 +349,9 @@ def _emax_w(e, args):
 
 @njit
 def _emax_sep(e, args):
-    """
-    Function for foot-finding the e-value on the separatrix for a given a, p, x = 1.
+    """Root-finding target of :meth:`KerrEccEqFlux._max_e`: ``p - p_sep(a, e, 1)``.
+
+    ``args = (a, p)``; the root is the eccentricity whose separatrix is ``p`` (``x = 1``).
     """
     a = args[0]
     p = args[1]
@@ -255,13 +360,50 @@ def _emax_sep(e, args):
 
 
 class KerrEccEqFlux(ODEBase):
-    """
-    Kerr eccentric equatorial flux ODE.
+    r"""Kerr eccentric equatorial flux ODE (the trajectory of ``FastKerrEccentricEquatorialFlux``).
+
+    Loads ``KerrEccEqFluxData.h5`` once (through the FEW file manager) and builds four
+    ``multispline`` tricubic splines on the mapped coordinates ``(u, w, z)`` of
+    :mod:`few.utils.mappings.kerrecceq` (``u`` from ``p``, ``w`` from ``e``, ``z`` from the
+    signed spin): region A, ``p <= p_sep + 9.001`` near the separatrix, and region B out to
+    ``p = 200``. With the default ``flux_output_convention="pex"`` the grid fluxes
+    ``(Edot, Ldot)`` are converted to ``(pdot, edot)`` at the nodes and stored divided by the
+    PN-like factors :func:`_pdot_PN` / :func:`_edot_PN`; with ``"ELQ"`` the splines hold
+    ``(Edot, Ldot)`` over :func:`_PN_alt`.
+
+    Domain: :math:`|a| \le 0.999`, ``x = +1`` (prograde) or ``-1`` (retrograde; evaluated
+    as prograde with spin ``-a``), :math:`0 \le e \le 0.9` within the grid's ``w <= 1``
+    edge, ``p`` from :meth:`_min_p` (at least ``p_sep + 0.002``, the separatrix buffer of
+    ``2 * DELTAPMIN``) up to 200. :meth:`interpolate_flux_grids` raises
+    :class:`~few.utils.exceptions.TrajectoryOffGridException` when a trajectory leaves the
+    grid in ``e`` or ``a``, ``ValueError`` in ``p``.
 
     Args:
-        use_ELQ: If True, the ODE will output derivatives of the orbital elements of (E, L, Q). Defaults to False.
-        downsample: List of two 3-tuples of integers to downsample the flux grid in u, w, z. The first list element
-        refers to the inner grid, the second to the outer. Useful for testing error convergence. Defaults to None (no downsampling).
+        *args: Forwarded to :class:`~few.trajectory.ode.base.ODEBase`.
+        use_ELQ: If ``True``, the ODE takes and returns ``(E, L, Q)``. Default ``False``.
+        downsample (list, optional): Two 3-tuples of integer strides ``(u, w, z)`` that
+            downsample the flux grids, region A first, region B second; useful for testing
+            interpolation-error convergence. Default ``None`` (no downsampling).
+        flux_output_convention (str, optional): ``"pex"`` (default; splines of ``pdot``,
+            ``edot``) or ``"ELQ"`` (splines of ``Edot``, ``Ldot``, converted by the Jacobian
+            in :meth:`~few.trajectory.ode.base.ODEBase.__call__`).
+        **kwargs: Forwarded to :class:`~few.trajectory.ode.base.ODEBase` (ignored there).
+
+    Raises:
+        ValueError: If the flux data produce NaNs in the pex conversion, or for an invalid
+            ``flux_output_convention``.
+        few.utils.exceptions.FileManagerException: If the flux file cannot be found or
+            fetched.
+
+    Example:
+        .. code-block:: python
+
+            from few.trajectory.ode import KerrEccEqFlux
+
+            rhs = KerrEccEqFlux()
+            rhs.add_fixed_parameters(1e6, 1e1, 0.9)       # m1, m2 [Msun], a
+            pdot, edot, xdot, Om_phi, Om_theta, Om_r = rhs([10.0, 0.3, 1.0])
+            emax = rhs.max_e(10.0, a=0.9)                  # largest e on the grid at p = 10
     """
 
     def __init__(
@@ -451,25 +593,31 @@ class KerrEccEqFlux(ODEBase):
 
     @property
     def equatorial(self):
+        """bool: ``True`` (``x = +1`` or ``-1`` only)."""
         return True
 
     @property
     def separatrix_buffer_dist(self):
+        """float: ``2 * DELTAPMIN = 0.002``, the stop distance in ``p`` above the separatrix."""
         return 2 * DELTAPMIN
 
     @property
     def separatrix_buffer_dist_grid(self):
+        """float: ``DELTAPMIN = 0.001``, the inner edge of the flux grid above the separatrix."""
         return DELTAPMIN
 
     @property
     def supports_ELQ(self):
+        """bool: ``True``."""
         return True
 
     def isvalid_x(self, x):
+        """Raise ``ValueError`` unless ``|x| == 1``."""
         if np.any(np.abs(x) != 1):
             raise ValueError("Interpolation: x out of bounds. Must be either 1 or -1.")
 
     def isvalid_e(self, e, e_buffer=[0, 0]):
+        """Raise ``ValueError`` unless ``e_buffer[0] <= e <= 0.9 - e_buffer[1]`` (``EMAX``)."""
         emax = EMAX - e_buffer[1]
         emin = e_buffer[0]
         if np.any(e > emax) or np.any(e < emin):
@@ -478,6 +626,11 @@ class KerrEccEqFlux(ODEBase):
             )
 
     def isvalid_p(self, p, p_buffer=[0, 0]):
+        """Raise ``ValueError`` unless ``p`` is within the global grid range.
+
+        The range is ``[PISCO_MIN + 0.002 + p_buffer[0], 200 - p_buffer[1]]``, independent
+        of ``(e, x, a)``; :meth:`bounds_p` gives the ``(e, x, a)``-dependent range.
+        """
         pmax = PMAX - p_buffer[1]
         pmin = PISCO_MIN + self.separatrix_buffer_dist + p_buffer[0]
         if np.any(p > pmax) or np.any(p < pmin):
@@ -486,6 +639,7 @@ class KerrEccEqFlux(ODEBase):
             )
 
     def isvalid_a(self, a, a_buffer=[0, 0]):
+        """Raise ``ValueError`` unless ``-0.999 + a_buffer[0] <= a <= 0.999 - a_buffer[1]``."""
         amax = AMAX - a_buffer[1]
         amin = -AMAX + a_buffer[0]
         if np.any(a > amax) or np.any(a < amin):
@@ -494,6 +648,19 @@ class KerrEccEqFlux(ODEBase):
             )
 
     def _min_p(self, e, x, a):
+        """Smallest ``p`` on the flux grid at ``(e, x, a)`` (no input checks).
+
+        The larger of the grid's inner edge (where ``w = 1`` for large ``e``, else ``u = 0``)
+        and ``p_sep + separatrix_buffer_dist``.
+
+        Args:
+            e (float): Eccentricity.
+            x (float): ``+1`` or ``-1``.
+            a (float): Dimensionless spin.
+
+        Returns:
+            float: The minimum ``p`` in units of :math:`M`.
+        """
         if x == -1:
             a_in = -a
         else:
@@ -510,24 +677,45 @@ class KerrEccEqFlux(ODEBase):
         return max(p_of_u_flux(u_min, p_sep), p_sep + self.separatrix_buffer_dist)
 
     def _max_p(self, e, x, a):
+        """Largest ``p`` on the flux grid: ``PMAX = 200`` for every ``(e, x, a)``."""
         return PMAX
 
     def min_p(self, e=0, x=1, a=0):
+        """Smallest ``p`` on the grid at ``(e, x, a)``, after checking them (``ValueError``)."""
         self.isvalid_x(x)
         self.isvalid_e(e)
         self.isvalid_a(a)
         return self._min_p(e, x, a)
 
     def max_p(self, e=0, x=1, a=0):
+        """Largest ``p`` on the grid (200), after checking ``(e, x, a)`` (``ValueError``)."""
         self.isvalid_x(x)
         self.isvalid_e(e)
         self.isvalid_a(a)
         return self._max_p(e, x, a)
 
     def _min_e(self, p, x, a):
+        """Smallest eccentricity on the grid: ``0.0``."""
         return 0.0
 
     def _max_e(self, p, x, a):
+        """Largest eccentricity on the flux grid at ``(p, x, a)`` (no input checks).
+
+        ``EMAX = 0.9`` where the grid allows it; closer to the separatrix, the root of
+        ``w(e) = 1`` (:func:`_emax_w`), further limited so that ``p`` stays above the
+        separatrix plus buffer (:func:`_emax_sep`).
+
+        Args:
+            p (float): Semi-latus rectum in units of :math:`M`.
+            x (float): ``+1`` or ``-1``.
+            a (float): Dimensionless spin.
+
+        Returns:
+            float: The maximum eccentricity.
+
+        Raises:
+            ValueError: If ``p`` is below the circular separatrix plus buffer.
+        """
         if x == -1:
             a_in = -a
         else:
@@ -555,48 +743,70 @@ class KerrEccEqFlux(ODEBase):
         return emax
 
     def min_e(self, p=20, x=1, a=0):
+        """Smallest eccentricity (0), after checking ``(p, x, a)`` (``ValueError``)."""
         self.isvalid_x(x)
         self.isvalid_p(p)
         self.isvalid_a(a)
         return self._min_e(p, x, a)
 
     def max_e(self, p=20, x=1, a=0):
+        """Largest eccentricity on the grid at ``(p, x, a)`` (:meth:`_max_e`), after checks.
+
+        Raises:
+            ValueError: If ``x``, ``p`` or ``a`` is out of range, or ``p`` is below the
+                circular separatrix plus buffer.
+        """
         self.isvalid_x(x)
         self.isvalid_p(p)
         self.isvalid_a(a)
         return self._max_e(p, x, a)
 
     def _min_a(self, p, e, x):
+        """Smallest spin on the grid: ``-AMAX = -0.999``."""
         return -AMAX
 
     def _max_a(self, p, e, x):
+        """Largest spin on the grid: ``AMAX = 0.999``."""
         return AMAX
 
     def min_a(self, p=20, e=0, x=1):
+        """Smallest spin (-0.999), after checking ``(p, e, x)`` (``ValueError``)."""
         self.isvalid_x(x)
         self.isvalid_p(p)
         self.isvalid_e(e)
         return self._min_a(p, e, x)
 
     def max_a(self, p=20, e=0, x=1):
+        """Largest spin (0.999), after checking ``(p, e, x)`` (``ValueError``)."""
         self.isvalid_x(x)
         self.isvalid_p(p)
         self.isvalid_e(e)
         return self._max_a(p, e, x)
 
     def bounds_a(self, p=20, e=0, x=1, a_buffer=[0, 0]):
+        """Return the spin range ``[-0.999 + a_buffer[0], 0.999 - a_buffer[1]]`` after checks."""
         self.isvalid_x(x)
         self.isvalid_p(p)
         self.isvalid_e(e)
         return [self._min_a(p, e, x) + a_buffer[0], self._max_a(p, e, x) - a_buffer[1]]
 
     def bounds_p(self, e=0, x=1, a=0, p_buffer=[0, 0]):
+        """Return the ``p`` range ``[_min_p + p_buffer[0], 200 - p_buffer[1]]`` at ``(e, x, a)``.
+
+        Raises:
+            ValueError: If ``x``, ``e`` or ``a`` is out of range.
+        """
         self.isvalid_x(x)
         self.isvalid_e(e)
         self.isvalid_a(a)
         return [self._min_p(e, x, a) + p_buffer[0], self._max_p(e, x, a) - p_buffer[1]]
 
     def bounds_e(self, p=20, x=1, a=0, e_buffer=[0, 0]):
+        """Return the ``e`` range ``[e_buffer[0], _max_e - e_buffer[1]]`` at ``(p, x, a)``.
+
+        Raises:
+            ValueError: If ``x``, ``p`` or ``a`` is out of range.
+        """
         self.isvalid_x(x)
         self.isvalid_p(p)
         self.isvalid_a(a)
@@ -605,6 +815,22 @@ class KerrEccEqFlux(ODEBase):
     def isvalid_pex(
         self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], e_buffer=[0, 0], a_buffer=[0, 0]
     ):
+        """Check that a start point lies on the flux grid (called before every trajectory).
+
+        Args:
+            p (float, optional): Semi-latus rectum in units of :math:`M`. Default ``20``.
+            e (float, optional): Eccentricity. Default ``0``.
+            x (float, optional): ``+1`` or ``-1``. Default ``1``.
+            a (float, optional): Dimensionless spin. Default ``0``.
+            p_buffer (list[float], optional): Margins on the ``p`` range (a backwards
+                integration passes ``[-1e-6, 0]``). Default ``[0, 0]``.
+            e_buffer (list[float], optional): Margins on the ``e`` range. Default ``[0, 0]``.
+            a_buffer (list[float], optional): Margins on the ``a`` range. Default ``[0, 0]``.
+
+        Raises:
+            ValueError: If ``x``, ``e`` (against ``EMAX`` only) or ``a`` is out of range.
+            AssertionError: If ``p`` is outside :meth:`bounds_p` (an ``assert``).
+        """
         self.isvalid_x(x)
         self.isvalid_e(e, e_buffer=e_buffer)
         self.isvalid_a(a, a_buffer=a_buffer)
@@ -614,6 +840,15 @@ class KerrEccEqFlux(ODEBase):
         )
 
     def distance_to_outer_boundary(self, y):
+        """Return the signed distance to the grid's outer edge (backwards stop check).
+
+        Args:
+            y (np.ndarray): State.
+
+        Returns:
+            float: ``min(|200 - p|, |e_max(p) - e|)`` (each edge moved in by ``1e-9``),
+            negative once either edge is passed.
+        """
         p, e, x = self.get_pex(y)
 
         e_max = self._max_e(p, x, self.a)
@@ -638,6 +873,34 @@ class KerrEccEqFlux(ODEBase):
         a: float = 0,
         pLSO: Optional[float] = None,
     ) -> tuple[float]:
+        """Interpolate the orbital-element (or ELQ) fluxes at ``(p, e, x, a)``.
+
+        Maps the point to ``(u, w, z)`` (retrograde ``x = -1`` as prograde with spin
+        ``-a``), checks it lies on the grid (with a ``1e-8`` tolerance), picks region A or B,
+        and returns the spline value times the PN-like normalisation, with the sign of a
+        decaying orbit.
+
+        Args:
+            p: Semi-latus rectum in units of :math:`M`.
+            e: Eccentricity.
+            x: ``+1`` or ``-1``. Default ``1``.
+            a: Dimensionless spin. Default ``0``.
+            pLSO: Separatrix ``p_sep(a, e, x)``. Default ``None`` computes it (the RHS
+                passes the cached ``p_sep_cache``).
+
+        Returns:
+            tuple[float]: ``(pdot, edot)`` with ``flux_output_convention="pex"``, or
+            ``(Edot, Ldot)`` with ``"ELQ"``; derivatives with respect to the
+            radiation-reaction time.
+
+        Raises:
+            ValueError: If ``p`` is off the grid (``u`` outside ``[0, 1]`` or NaN), or ``e``
+                is above the grid edge (``w > 1``) during a backwards integration.
+            few.utils.exceptions.TrajectoryOffGridException: If ``w < 0``, if ``w > 1``
+                in a forward integration, or if ``a`` is off the grid (``z`` outside
+                ``[0, 1]``). It is not a ``ValueError``, so the integrator does not retry
+                and it reaches the caller.
+        """
         if pLSO is None:
             pLSO = get_separatrix(a, e, x)
 
@@ -695,6 +958,21 @@ class KerrEccEqFlux(ODEBase):
     def evaluate_rhs(
         self, y: Union[list[float], np.ndarray]
     ) -> list[Union[float, np.ndarray]]:
+        """Return the right-hand side at the state ``y`` (the per-stage call of the integrator).
+
+        Evaluates the scalar Kerr geodesic frequencies
+        (:func:`~few.utils.geodesic.get_fundamental_frequencies`) and the interpolated
+        fluxes (:meth:`interpolate_flux_grids`, using the cached separatrix
+        ``p_sep_cache``).
+
+        Args:
+            y: State, ``(p, e, x)`` (or ``(E, L, Q)`` with ``use_ELQ``) first.
+
+        Returns:
+            list: ``[pdot, edot, 0.0, Omega_phi, Omega_theta, Omega_r]`` in the default
+            "pex" convention (``[Edot, Ldot, ...]`` in "ELQ"); ``xdot = 0`` (equatorial),
+            the frequencies dimensionless.
+        """
         if self.use_ELQ:
             E, L, Q = y[:3]
             p, e, x = ELQ_to_pex(self.a, E, L, Q)
@@ -712,14 +990,23 @@ class KerrEccEqFlux(ODEBase):
     def evaluate_rhs_batch(self, y: np.ndarray, a) -> tuple:
         """Batched right-hand side over ``S`` systems (the CPU reference of the device RHS).
 
+        Equals the scalar :meth:`~few.trajectory.ode.base.ODEBase.__call__` column by
+        column (no exceptions, no Python per-system loop); used by
+        :class:`~few.trajectory.integrate.BatchedIntegrate`. The four spline grids are
+        extracted once per instance (``_tricubic_grids``).
+
         Args:
             y: ``(6, S)`` states ``(p, e, x, Phi_phi, Phi_theta, Phi_r)`` (pex only).
-            a: spin, scalar or ``(S,)`` (one per system).
+            a (float or np.ndarray): Spin, scalar or ``(S,)`` (one per system).
+
         Returns:
-            ``(ydot (6, S), status (S,))`` with status 0 ok, 1 ``e < 0``, 2 inside the
-            separatrix, 3 off the flux grid, 4 a scalar kernel raised (e.g. ``e >= 1``);
-            non-zero-status columns are NaN. Equals the
-            scalar ``__call__`` column by column (no exceptions, no Python per-system loop).
+            tuple: ``(ydot (6, S), status (S,))`` with status 0 ok, 1 ``e < 0``, 2 inside
+            the separatrix, 3 off the flux grid, 4 a scalar kernel raised (e.g.
+            ``e >= 1``); non-zero-status columns are NaN. Negated when
+            ``integrate_backwards``.
+
+        Raises:
+            NotImplementedError: With ``use_ELQ`` or the "ELQ" flux convention.
         """
         if self.use_ELQ or self.flux_output_convention != "pex":
             raise NotImplementedError("evaluate_rhs_batch: pex convention only")
@@ -743,6 +1030,12 @@ class KerrEccEqFlux(ODEBase):
 
 @njit
 def _pdot_PN(p, e, risco, p_sep):
+    """PN-like ``pdot`` normalisation of the :class:`KerrEccEqFlux` splines.
+
+    ``8 (1 - e^2)^1.5 (8 + 7 e^2) / (5 p ((p - risco)^2 - (p_sep - risco)^2))``, with
+    ``risco`` the circular separatrix and ``p_sep`` the separatrix at ``e``; it diverges at
+    the separatrix, so the spline holds a smooth ratio.
+    """
     return (8.0 * (1.0 - (e * e)) ** 1.5 * (8.0 + 7.0 * (e * e))) / (
         5.0 * p * (((p - risco) * (p - risco)) - ((-risco + p_sep) * (-risco + p_sep)))
     )
@@ -750,6 +1043,10 @@ def _pdot_PN(p, e, risco, p_sep):
 
 @njit
 def _edot_PN(p, e, risco, p_sep):
+    """PN-like ``edot`` normalisation of the :class:`KerrEccEqFlux` splines.
+
+    ``(1 - e^2)^1.5 (304 + 121 e^2) / (15 p^2 ((p - risco)^2 - (p_sep - risco)^2))``.
+    """
     return (((1.0 - (e * e)) ** 1.5) * (304.0 + 121.0 * (e * e))) / (
         15.0
         * (p * p)
@@ -759,15 +1056,22 @@ def _edot_PN(p, e, risco, p_sep):
 
 @njit(fastmath=True)
 def _p_to_u(p, p_sep):
+    """Legacy ``p`` -> ``u`` grid map of :class:`KerrEccEqFluxLegacy`."""
     return log((p - p_sep + 4.0 - 0.05) / 4)
 
 
+# TODO check: keep/remove/document -- superseded; no callers; data deprecated; init AttributeError
 class KerrEccEqFluxLegacy(ODEBase):
     """
-    Kerr eccentric equatorial flux ODE.
+    Kerr eccentric equatorial flux ODE (legacy grids, superseded by :class:`KerrEccEqFlux`).
 
     Args:
-        use_ELQ: If True, the ODE will output derivatives of the orbital elements of (E, L, Q). Defaults to False.
+        use_ELQ: Not supported (``supports_ELQ`` is ``False``). Defaults to False.
+
+    Warning:
+        The class cannot be constructed as written: it redefines ``flux_output_convention``
+        as a read-only property, and :class:`~few.trajectory.ode.base.ODEBase` assigns that
+        attribute in its constructor, which raises ``AttributeError``.
     """
 
     def __init__(self, *args, use_ELQ: bool = False, **kwargs):
@@ -847,6 +1151,13 @@ def tricubic_grid(spline):
     ``coeffs`` has shape ``(nx, ny, 64 * nz)`` (cells); cell ``(i, j, k)`` holds the 64
     monomial coefficients of the local normalised coordinates at ``64 k + 16 mx + 4 my + mz``
     (verified against ``TricubicSpline.__call__`` to 1.5e-15).
+
+    Args:
+        spline (multispline.spline.TricubicSpline): The spline. Its ``coefficients`` copy
+            the whole array out of C++ on every access, so call this once per spline.
+
+    Returns:
+        tuple: ``(coeffs, x0, dx, nx, y0, dy, ny, z0, dz, nz)``.
     """
     C = np.asarray(spline.coefficients)
     return (C, float(spline.x0), float(spline.dx), int(C.shape[0]),
@@ -856,6 +1167,7 @@ def tricubic_grid(spline):
 
 @njit(fastmath=False)
 def _tricubic_one(C, x0, dx, nx, y0, dy, ny, z0, dz, nz, x, y, z):
+    """Evaluate a :func:`tricubic_grid` at one point (cell index clamped to the grid)."""
     fx = (x - x0) / dx
     fy = (y - y0) / dy
     fz = (z - z0) / dz
@@ -882,12 +1194,23 @@ def _tricubic_one(C, x0, dx, nx, y0, dy, ny, z0, dz, nz, x, y, z):
 
 @njit(fastmath=False)
 def _tricubic_batch(C, x0, dx, nx, y0, dy, ny, z0, dz, nz, xs, ys, zs, out):
+    """Evaluate a :func:`tricubic_grid` at the points ``(xs, ys, zs)`` into ``out``."""
     for q in range(xs.shape[0]):
         out[q] = _tricubic_one(C, x0, dx, nx, y0, dy, ny, z0, dz, nz, xs[q], ys[q], zs[q])
 
 
 def tricubic_eval_batch(grid, x, y, z):
-    """Evaluate a :func:`tricubic_grid` at arrays of points (numba, no Python loop)."""
+    """Evaluate a :func:`tricubic_grid` at arrays of points (numba, no Python loop).
+
+    Args:
+        grid (tuple): Output of :func:`tricubic_grid`.
+        x (array-like): First coordinates, shape ``(N,)``.
+        y (array-like): Second coordinates, shape ``(N,)``.
+        z (array-like): Third coordinates, shape ``(N,)``.
+
+    Returns:
+        np.ndarray: Spline values, shape ``(N,)``.
+    """
     x = np.ascontiguousarray(np.asarray(x, dtype=float))
     out = np.empty(x.shape[0])
     _tricubic_batch(*grid, x, np.ascontiguousarray(np.asarray(y, dtype=float)),

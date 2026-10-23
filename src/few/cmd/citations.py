@@ -1,4 +1,14 @@
-"""Implementation of the few_citations CLI utility"""
+"""Implementation of the ``few_citations`` CLI utility (console script ``few.cmd.citations:main``).
+
+Prints, in BibTeX, the references of a FEW class (its
+:meth:`~few.utils.citations.Citable.citation`), or all references with ``--all``.
+
+Example:
+    .. code-block:: bash
+
+        few_citations few.amplitude.ampinterp2d.AmpInterp2D
+        few_citations --all
+"""
 
 import argparse
 import importlib
@@ -8,6 +18,17 @@ from few.utils.citations import Citable
 
 
 def main():
+    """Entry point of ``few_citations``.
+
+    Imports the class named by the positional ``module`` argument (a dotted path starting
+    with ``few.``) and prints its citations; a class that is not a
+    :class:`~few.utils.citations.Citable` gets the general FEW references. ``--all`` prints
+    every available citation.
+
+    Raises:
+        ValueError: If the class path does not start with ``few.``.
+        ImportError: If the module or the class cannot be imported.
+    """
     parser = argparse.ArgumentParser(
         prog="few_citations",
         description="Export the citations associated to a given module of the FastEMRIWaveforms package",

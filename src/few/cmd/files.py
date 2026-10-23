@@ -1,4 +1,22 @@
-"""Implementation of the few_files CLI utility"""
+"""Implementation of the ``few_files`` CLI utility (console script ``few.cmd.files:main``).
+
+Subcommands:
+
+- ``few_files fetch [--tag TAG | --list-tags] [--skip-disabled]``: download the missing
+  registry files carrying ``TAG`` (all non-``deprecated`` files without ``--tag``) into the
+  download directory, or list the available tags;
+- ``few_files list``: list the registry files and where they were found locally.
+
+The FEW configuration options are accepted too (e.g. ``--storage-dir``,
+``--download-dir``, ``--no-file-download``, ``--extra-path``, ``--log-level``,
+``-C/--config-file``).
+
+Example:
+    .. code-block:: bash
+
+        few_files fetch --tag testfile
+        few_files list
+"""
 
 import argparse
 import logging
@@ -9,7 +27,18 @@ from few.utils.globals import Globals, get_file_manager, get_logger
 
 
 def few_files_fetch(args: argparse.Namespace):
-    """Run the 'few_files fetch' subcommand."""
+    """Run the ``few_files fetch`` subcommand.
+
+    Raises the logger level to at least INFO, then either logs the available tags
+    (``--list-tags``), prefetches the files of ``--tag``, or prefetches every registry file
+    except the ``deprecated`` ones.
+
+    Args:
+        args: Parsed arguments (``tag``, ``list_tags``, ``skip_disabled``).
+
+    Raises:
+        few.utils.exceptions.FileManagerException: If some files could not be fetched.
+    """
     file_manager = get_file_manager()
 
     args = vars(args)
@@ -45,6 +74,7 @@ def few_files_fetch(args: argparse.Namespace):
 
 
 def _few_files_fetch(subparsers):
+    """Add the ``fetch`` subparser (``--tag`` / ``--list-tags``, ``--skip-disabled``)."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
         "fetch",
         help="Pre-fetch files of given tag (or all known files if no tag is provided)",
@@ -63,7 +93,14 @@ def _few_files_fetch(subparsers):
 
 
 def few_files_list(args: argparse.Namespace):
-    """Run the 'few_files list' subcommand."""
+    """Run the ``few_files list`` subcommand.
+
+    Searches the local paths for every registry file (no download) and logs, per file,
+    the directory it was found in or "not found".
+
+    Args:
+        args: Parsed arguments (none used).
+    """
     file_manager = get_file_manager()
     logger = get_logger()
     if logger.level > logging.INFO:
@@ -83,6 +120,7 @@ def few_files_list(args: argparse.Namespace):
 
 
 def _few_files_list(subparsers):
+    """Add the ``list`` subparser."""
     parser: argparse.ArgumentParser = subparsers.add_parser(
         "list", help="Locate and list files"
     )
@@ -92,7 +130,14 @@ def _few_files_list(subparsers):
 def _few_files_parser(
     parent_parsers: typing.Sequence[argparse.ArgumentParser],
 ) -> argparse.ArgumentParser:
-    """Build the CLI argument parser"""
+    """Build the ``few_files`` parser with its ``fetch`` and ``list`` subcommands.
+
+    Args:
+        parent_parsers: Parent parsers carrying the FEW configuration options.
+
+    Returns:
+        argparse.ArgumentParser: The parser; each subcommand sets ``callback``.
+    """
     parser = argparse.ArgumentParser(prog="few_files", parents=parent_parsers)
     subparsers = parser.add_subparsers()
     _few_files_fetch(subparsers)
@@ -101,6 +146,13 @@ def _few_files_parser(
 
 
 def main():
+    """Entry point of ``few_files``.
+
+    Initialises the FEW globals from the command line (the configuration options are
+    consumed there), parses the remaining arguments and runs the subcommand. A subcommand
+    is required: without one ``args.callback`` is unset and the call raises
+    ``AttributeError``.
+    """
     globals = Globals()
     globals.init(cli_args=sys.argv[1:])
     _, _, extra_args = globals.config.get_extras()

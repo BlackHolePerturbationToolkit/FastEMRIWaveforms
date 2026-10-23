@@ -32,6 +32,10 @@ This is ideal for local development and installation from source, but different 
 - `fastemriwaveforms-cuda11x`: contains only the `cuda11x` GPU backend
 - `fastemriwaveforms-cuda12x`: contains only the `cuda12x` GPU backend
 
+The `cuda13x` backend is registered by the code but no `fastemriwaveforms-cuda13x` wheel is built yet (its matrix entry
+is commented out in `publish.yml`: NVIDIA ships no CUDA >= 13 packages for the rhel7-based build image), so it is
+available from source builds only.
+
 The process for building these differenciated wheels is defined in `.github/workflows/publish.yml` which handles this build process and package deployment to PyPI.
 The core logic is handled by tweaking slightly the `pyproject.toml` file before building each category of wheels.
 
@@ -76,7 +80,7 @@ sed -i 's|" #@NAMESUFFIX@|-cuda12x"|g' pyproject.toml
 # Add `cupy-cuda11x` or `cupy-cuda12x` to the project dependencies
 sed -i 's|#@DEPS_CUPYCUDA@|"cupy-cuda12x"|g' pyproject.toml
 
-# Add a dependency of the project core package
+# Add a dependency of the project core package (publish.yml pins it to the same version: "fastemriwaveforms==X.Y.Z")
 sed -i 's|#@DEPS_FEWCORE@|"fastemriwaveforms"|g' pyproject.toml
 
 # Delete the line containing the falg @SKIP_PLUGIN@ from pyproject.toml
@@ -89,10 +93,12 @@ The wheels are then built for python 3.9 to 3.13 with the command:
 
 ```sh
 pip wheel ./ --no-deps -w ./dist \
-  --config-settings=cmake.define.FEW_WITH_GPU=ONLY
+  --config-settings=cmake.define.FEW_WITH_GPU=ONLY \
+  --config-settings=cmake.define.FEW_CUDA_ARCH=all
 ```
 
 The option `FEW_WITH_GPU=ONLY` instructs CMake to build a GPU backend and to skip the CPU one. therefore, in the end, the wheel contains only the compiled modules for the GPU backend.
+`FEW_CUDA_ARCH=all` targets every CUDA architecture (the default, `native`, targets only the GPU of the build machine).
 
 Just like for the core package, the wheels must be *repaired* to become `manylinux` wheels. Since they have a dependencies on NVIDIA dynamic libraries, they are not strictly-speaking `manylinux` compatible but mechanisms are in place on the core package Python code to detect issues with these dependencies and advise the user about required steps.
 `auditwheel` must be instructed to ignore those external dependencies like so:

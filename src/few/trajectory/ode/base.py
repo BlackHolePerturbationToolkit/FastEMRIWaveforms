@@ -1,5 +1,11 @@
-"""
-Contains the ODEBase baseclass that handles evaluating the ODE
+"""The :class:`ODEBase` base class of the trajectory right-hand sides, and its property reader.
+
+An ODE model maps the integrated state ``y = (p, e, x, nu Phi_phi, nu Phi_theta,
+nu Phi_r)`` (or ``(E, L, Q, ...)``) to its derivative with respect to the
+radiation-reaction time (see :mod:`few.trajectory.integrate`). :meth:`ODEBase.__call__`
+wraps the model's ``evaluate_rhs`` with the bound checks, the optional ELQ-to-pex Jacobian,
+the user hooks ``modify_rhs_before_Jacobian`` / ``modify_rhs`` and the sign flip of a
+backwards integration. :func:`get_ode_properties` reads a model's class-level properties.
 """
 
 from typing import Optional, Type, Union
@@ -12,13 +18,44 @@ from ...utils.mappings.pn import Y_to_xI
 
 
 class ODEBase:
-    """
-    A baseclass for handling the evaluation of ODE derivatives in the trajectory module.
+    r"""Base class of the trajectory ODE models (the right-hand side and its domain).
 
-    To define a new trajectory function, subclass this function and define `evaluate_rhs`.
-    Make sure to update the relevant class attributes as well.
-    See the documentation for examples on how to do this.
+    To define a new trajectory model, subclass it and implement :meth:`evaluate_rhs`;
+    override the properties (:attr:`equatorial`, :attr:`background`,
+    :attr:`separatrix_buffer_dist`, ...) and the bound methods (``min_p``, ``isvalid_*``,
+    :meth:`distance_to_outer_boundary`) that differ from the defaults. Pass the class as
+    ``func`` to :class:`~few.trajectory.inspiral.EMRIInspiral`, which instantiates it.
 
+    The right-hand side is with respect to the radiation-reaction time
+    :math:`\tilde t = \nu t / M`, :math:`\nu = m_1 m_2 / (m_1 + m_2)^2`: the first three
+    entries are :math:`d(p, e, x)/d\tilde t` (or of :math:`(E, L, Q)`), the last three the
+    dimensionless orbital frequencies (the derivative of :math:`\nu \Phi`), as returned by
+    :func:`~few.utils.geodesic.get_fundamental_frequencies`.
+
+    Args:
+        *args: Accepted and ignored.
+        use_ELQ (bool, optional): If ``True``, the model takes and returns the constants of
+            motion ``(E, L, Q)``; requires :attr:`supports_ELQ`. Default ``False``.
+        integrate_backwards (bool, optional): If ``True``, :meth:`__call__` negates the
+            right-hand side. Reset by the integrator on every trajectory. Default ``False``.
+        **kwargs: Accepted and ignored (this is where unused trajectory keywords such as
+            ``rootfind_separatrix``, ``force_backend`` or ``max_init_len`` end up).
+
+    Raises:
+        AssertionError: If ``use_ELQ`` is set and the model does not support ELQ.
+
+    Example:
+        .. code-block:: python
+
+            from few.trajectory.ode import KerrEccEqFlux
+            from few.trajectory.inspiral import EMRIInspiral
+
+            class ModifiedKerrEccEqFlux(KerrEccEqFlux):
+                def modify_rhs(self, ydot, y):
+                    ydot[0] *= 1 + self.additional_args[0]   # modify in place
+
+            traj = EMRIInspiral(func=ModifiedKerrEccEqFlux)
+            out = traj(1e6, 1e1, 0.9, 10.0, 0.3, 1.0, 1e-2, T=1.0)  # extra ODE argument 1e-2
     """
 
     _flux_output_convention = "pex"
@@ -39,72 +76,56 @@ class ODEBase:
 
     @property
     def convert_Y(self):
-        """
-        If True, the inclination coordinate is assumed to be Y and is converted accordingly.
-        Defaults to False.
+        """bool: If ``True``, the inclination coordinate is ``Y = cos(iota)`` and is converted
+        to ``x_I`` where needed. Default ``False``.
         """
         return False
 
     @property
     def equatorial(self):
-        """
-        If True, the inclination coordinate is assumed to be +/- 1.
-        Defaults to False.
-        """
+        """bool: If ``True``, the inclination coordinate is ``+1`` or ``-1``. Default ``False``."""
         return False
 
     @property
     def circular(self):
-        """
-        If True, the eccentricity coordinate is assumed to be 0.
-        Defaults to False.
-        """
+        """bool: If ``True``, the eccentricity is ``0``. Default ``False``."""
         return False
 
     @property
     def supports_ELQ(self):
-        """
-        If True, this ODE can take as input (and output derivatives of)
-        the integrals of motion (E, L, Q) if initialised with `use_ELQ=True`.
-        Defaults to False.
+        """bool: If ``True``, the ODE can take (and return derivatives of) the integrals of
+        motion ``(E, L, Q)`` when built with ``use_ELQ=True``. Default ``False``.
         """
         return False
 
     @property
     def background(self):
-        """
-        A string describing the background spacetime. Either "Kerr" or "Schwarzschild".
-        Defaults to "Kerr".
-        """
+        """str: The background spacetime, ``"Kerr"`` or ``"Schwarzschild"``. Default ``"Kerr"``."""
         return "Kerr"
 
     @property
     def separatrix_buffer_dist(self):
-        """
-        A float describing the value of "p" at which the trajectory should terminate at,
-        with respect to the separatrix.
-        A value of 0 would mean that the trajectory terminates at the separatrix.
-        Defaults to 0.05
+        """float: Distance in ``p`` above the separatrix at which the trajectory stops.
+
+        A value of 0 would stop the trajectory on the separatrix. Default ``0.05``.
         """
         return 0.05
 
     @property
     def nparams(self):
-        """
-        An integer describing the number of parameters this ODE will integrate.
-        Defaults to 6 (three orbital elements, three orbital phases).
+        """int: Number of integrated quantities. Default ``6`` (three orbital elements, three
+        phases).
         """
         return 6
 
     @property
     def flux_output_convention(self):
-        """
-        A string describing the coordinate convention of the fluxes for this model, as output by `evaluate_rhs`.
-        These are either "pex" or "ELQ". If "ELQ", a Jacobian transformation is performed if
-        the output derivatives of the model are expected to be in the "pex" convention.
-        Defaults to "pex".
+        """str: Coordinate convention of the fluxes returned by :meth:`evaluate_rhs`.
 
-        For models that do not perform interpolation to generate fluxes (e.g., PN5), this property is not accessed.
+        ``"pex"`` (default) or ``"ELQ"``; with ``"ELQ"`` and a pex integration,
+        :meth:`__call__` applies the Jacobian to ``(pdot, edot)``. Setting it validates the
+        value (``ValueError`` otherwise) and updates ``apply_Jacobian_bool``. Models whose
+        fluxes are not interpolated (e.g. PN5) leave it at ``"pex"``.
         """
         return self._flux_output_convention
 
@@ -122,6 +143,18 @@ class ODEBase:
     def add_fixed_parameters(
         self, m1: float, m2: float, a: float, additional_args=None
     ):
+        """Set the per-trajectory constants of the model (called by ``run_inspiral``).
+
+        Sets ``self.massratio`` to :math:`m_1 m_2 / (m_1 + m_2)^2`, ``self.a``,
+        ``self.additional_args`` and ``self.num_add_args``.
+
+        Args:
+            m1: Mass of the massive black hole in solar masses.
+            m2: Mass of the compact object in solar masses.
+            a: Dimensionless spin.
+            additional_args (array-like, optional): Extra model arguments
+                (``num_add_args = len(additional_args)``). Default ``None`` (0 arguments).
+        """
         self.massratio = m1 * m2 / (m1 + m2) ** 2
         self.a = a
         self.additional_args = additional_args
@@ -132,21 +165,43 @@ class ODEBase:
             self.num_add_args = len(additional_args)
 
     def evaluate_rhs(self, y: np.ndarray, **kwargs) -> NotImplementedError:
-        """
-        This function evaluates the right-hand side of the ODE at the point y.
-        An ODE model can be defined by subclassing the ODEBase class and implementing this method.
+        """Evaluate the model's right-hand side at ``y`` (implemented by each model).
+
+        Called by :meth:`__call__` only for in-bounds states, after
+        :meth:`cache_values_and_check_bounds` has set ``p_sep_cache`` (and ``xI_cache``).
+        The fixed parameters are on the instance (``self.a``, ``self.massratio``,
+        ``self.additional_args``).
+
+        Args:
+            y: State, ``(p, e, x)`` or ``(E, L, Q)`` first, then the phases.
+            **kwargs: Forwarded from :meth:`__call__`.
+
+        Returns:
+            list or np.ndarray: Six values: the derivatives of the three orbital
+            quantities (in the model's :attr:`flux_output_convention`) and the three
+            dimensionless frequencies ``(Omega_phi, Omega_theta, Omega_r)``.
+
+        Raises:
+            NotImplementedError: In the base class.
         """
         raise NotImplementedError
 
     def modify_rhs_before_Jacobian(
         self, ydot: np.ndarray, y: np.ndarray, **kwargs
     ) -> np.ndarray:
-        """
-        This function allows the user to modify the right-hand side of the ODE before the Jacobian transform is applied.
-        This is particularly useful if the user wishes to apply modifications to fluxes of the integrals of motion "ELQ",
-        but integrate a trajectory in terms of "pex".
+        """Hook to modify the right-hand side before the ELQ-to-pex Jacobian is applied.
 
-        By default, this function returns the input right-hand side unchanged.
+        Useful to modify fluxes of the integrals of motion ("ELQ") while integrating a
+        trajectory in "pex". :meth:`__call__` ignores the return value: modify ``ydot`` in
+        place. By default it does nothing (returns ``ydot``).
+
+        Args:
+            ydot: The right-hand side, shape ``(6,)``, modified in place.
+            y: The state.
+            **kwargs: Forwarded from :meth:`__call__`.
+
+        Returns:
+            np.ndarray: ``ydot``.
         """
         return ydot
 
@@ -156,12 +211,18 @@ class ODEBase:
         x: Union[float, np.ndarray] = 1,
         a: Optional[Union[float, np.ndarray]] = 0,
     ) -> Union[float, np.ndarray]:
-        """
-        Computes the minimum value of the radial coordinate p for a given eccentricity and inclination for this model.
-        Trajectory models implementing their own interpolants should override this function to return the minimum value
-        corresponding to the precomputed grid boundaries.
+        """Return the minimum semi-latus rectum ``p`` of the model at ``(e, x, a)``.
 
-        By default, this function assumes things are rectilinear and returns `p_sep + self.separatrix_buffer_dist`.
+        Models with their own interpolants override it to return the grid boundary. By
+        default the domain is assumed rectilinear: ``p_sep + separatrix_buffer_dist``.
+
+        Args:
+            e: Eccentricity.
+            x: Inclination coordinate. Default ``1``.
+            a: Dimensionless spin. Default ``0``.
+
+        Returns:
+            float or np.ndarray: Minimum ``p`` in units of :math:`M`.
         """
         return get_separatrix(a, e, x) + self.separatrix_buffer_dist
 
@@ -171,12 +232,20 @@ class ODEBase:
         x: Union[float, np.ndarray] = 1.0,
         a: Optional[Union[float, np.ndarray]] = 0.0,
     ) -> Union[float, np.ndarray]:
-        """
-        Computes the maximum value of the semilatus rectum p for a given eccentricity and inclination for this model.
-        Trajectory models implementing their own interpolants should override this function to return the maximum value
-        corresponding to the precomputed grid boundaries.
+        """Return the maximum semi-latus rectum ``p`` of the model at ``(e, x, a)``.
 
-        By default, this function returns `np.inf` (assumes no bound on p).
+        Models with their own interpolants override it to return the grid boundary. By
+        default there is no bound: ``np.inf`` for a Python ``float`` ``e``, else
+        ``np.full_like(e, np.inf)`` (an array of ``inf`` for a float array; pass floats,
+        since an integer ``e`` gives an integer result that cannot hold ``inf``).
+
+        Args:
+            e: Eccentricity.
+            x: Inclination coordinate. Default ``1.0``.
+            a: Dimensionless spin. Default ``0.0``.
+
+        Returns:
+            float or np.ndarray: Maximum ``p`` in units of :math:`M`.
         """
         if isinstance(e, float):
             return np.inf
@@ -189,12 +258,18 @@ class ODEBase:
         x: Union[float, np.ndarray] = 1.0,
         a: Optional[Union[float, np.ndarray]] = 0.0,
     ) -> Union[float, np.ndarray]:
-        """
-        Computes the minimum value of the eccentricity e for a given semilatus rectum and inclination for this model.
-        Trajectory models implementing their own interpolants should override this function to return the minimum value
-        corresponding to the precomputed grid boundaries.
+        """Return the minimum eccentricity of the model at ``(p, x, a)``.
 
-        By default, this function assumes minimal eccentricity corresponds to circular orbits and returns 0.
+        Models with their own interpolants override it to return the grid boundary. By
+        default circular orbits are allowed: ``0`` (an array of zeros for a non-float ``p``).
+
+        Args:
+            p: Semi-latus rectum in units of :math:`M`.
+            x: Inclination coordinate. Default ``1.0``.
+            a: Dimensionless spin. Default ``0.0``.
+
+        Returns:
+            float or np.ndarray: Minimum eccentricity.
         """
         if isinstance(p, float):
             return 0
@@ -207,12 +282,20 @@ class ODEBase:
         x: Union[float, np.ndarray] = 1,
         a: Optional[Union[float, np.ndarray]] = 0,
     ) -> Union[float, np.ndarray]:
-        """
-        Computes the maximum value of the eccentricity e for a given semilatus rectum and inclination for this model.
-        Trajectory models implementing their own interpolants should override this function to return the minimum value
-        corresponding to the precomputed grid boundaries.
+        """Return the maximum eccentricity of the model at ``(p, x, a)``.
 
-        By default, this function assumes no orbital bounds on eccentricity and returns np.inf.
+        Models with their own interpolants override it to return the grid boundary. By
+        default there is no bound: ``np.inf`` for a Python ``float`` ``p``, else
+        ``np.full_like(p, np.inf)`` (an array of ``inf`` for a float array; pass floats,
+        since an integer ``p`` gives an integer result that cannot hold ``inf``).
+
+        Args:
+            p: Semi-latus rectum in units of :math:`M`.
+            x: Inclination coordinate. Default ``1``.
+            a: Dimensionless spin. Default ``0``.
+
+        Returns:
+            float or np.ndarray: Maximum eccentricity.
         """
         if isinstance(p, float):
             return np.inf
@@ -220,15 +303,39 @@ class ODEBase:
             return np.full_like(p, np.inf)
 
     def isvalid_x(self, x: float):
+        """Check the inclination coordinate against the model's domain (no check here).
+
+        Models raise ``ValueError`` for an invalid ``x``.
+        """
         pass
 
     def isvalid_e(self, e: float, e_buffer=[0, 0]):
+        """Check the eccentricity against the model's domain (no check here).
+
+        Models raise ``ValueError`` for an ``e`` outside their range shrunk by ``e_buffer``.
+        """
         pass
 
     def isvalid_a(self, a: float, a_buffer=[0, 0]):
+        """Check the spin against the model's domain (no check here).
+
+        Models raise ``ValueError`` for an ``a`` outside their range shrunk by ``a_buffer``.
+        """
         pass
 
     def bounds_p(self, e=0, x=1, a=0, p_buffer=[0, 0]):
+        """Return ``[min_p + p_buffer[0], max_p - p_buffer[1]]`` after checking ``x, e, a``.
+
+        Args:
+            e (float, optional): Eccentricity. Default ``0``.
+            x (float, optional): Inclination coordinate. Default ``1``.
+            a (float, optional): Dimensionless spin. Default ``0``.
+            p_buffer (list[float], optional): Margins at the lower and upper bound.
+                Default ``[0, 0]``.
+
+        Returns:
+            list[float]: The allowed ``p`` range in units of :math:`M`.
+        """
         self.isvalid_x(x)
         self.isvalid_e(e)
         self.isvalid_a(a)
@@ -237,6 +344,28 @@ class ODEBase:
     def isvalid_pex(
         self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], e_buffer=[0, 0], a_buffer=[0, 0]
     ):
+        """Check that ``(p, e, x, a)`` lies in the model's domain (start-point check).
+
+        Called by :meth:`~few.trajectory.inspiral.EMRIInspiral.get_inspiral` before every
+        integration.
+
+        Args:
+            p (float, optional): Semi-latus rectum in units of :math:`M`. Default ``20``.
+            e (float, optional): Eccentricity. Default ``0``.
+            x (float, optional): Inclination coordinate. Default ``1``.
+            a (float, optional): Dimensionless spin. Default ``0``.
+            p_buffer (list[float], optional): Margins on the ``p`` range. Default
+                ``[0, 0]``.
+            e_buffer (list[float], optional): Margins on the ``e`` range. Default
+                ``[0, 0]``.
+            a_buffer (list[float], optional): Margins on the ``a`` range. Default
+                ``[0, 0]``.
+
+        Raises:
+            ValueError: From the model's ``isvalid_x`` / ``isvalid_e`` / ``isvalid_a``.
+            AssertionError: If ``p`` is outside :meth:`bounds_p` (an ``assert``, so the
+                check disappears under ``python -O``).
+        """
         self.isvalid_x(x)
         self.isvalid_e(e, e_buffer=e_buffer)
         self.isvalid_a(a, a_buffer=a_buffer)
@@ -246,41 +375,61 @@ class ODEBase:
         )
 
     def modify_rhs(self, ydot: np.ndarray, y: np.ndarray, **kwargs) -> np.ndarray:
-        """
-        This function allows the user to modify the right-hand side of the ODE after any required Jacobian transforms
-        have been applied.
+        """Hook to modify the right-hand side after any Jacobian transform.
 
-        By default, this function returns the input right-hand side unchanged.
+        :meth:`__call__` ignores the return value: modify ``ydot`` in place (e.g.
+        ``ydot[0] *= 1 + self.additional_args[0]``). By default it does nothing (returns
+        ``ydot``).
+
+        Args:
+            ydot: The right-hand side, shape ``(6,)``, modified in place.
+            y: The state.
+            **kwargs: Forwarded from :meth:`__call__`.
+
+        Returns:
+            np.ndarray: ``ydot``.
         """
         return ydot
 
     def interpolate_flux_grids(self, *args) -> NotImplementedError:
-        """
-        This function handles the interpolation of the fluxes from the precomputed grids, including parameter transformations.
-        Each stock model implements this function to handle the specifics of their own interpolants.
-        To easily incorporate interpolated fluxes into their own models, users can subclass the stock models; the
-        interpolated fluxes can then be accessed from `evaluate_rhs` by calling this function.
+        """Interpolate the fluxes from the model's precomputed grids (implemented by each model).
 
-        This method should also handle checking that the input parameters are within the bounds of the precomputed grids.
-        Failure to do so may result in erroneous behaviour during trajectory evaluation in which fluxes are extrapolated.
+        Handles the parameter transformations to the grid coordinates. To reuse a stock
+        model's interpolated fluxes in a custom model, subclass the stock model and call
+        this method from :meth:`evaluate_rhs`.
+
+        Implementations should also check that the inputs lie within the grids; otherwise
+        the fluxes are silently extrapolated during the trajectory evaluation.
+
+        Raises:
+            NotImplementedError: In the base class.
         """
         raise NotImplementedError
 
     def distance_to_outer_boundary(self, y: np.ndarray) -> float:
-        """
-        This function returns the distance to the outer boundary of the interpolation grid. This is necessary for
-        backwards integration, which performs root-finding to ensure that the trajectory ends on this outer boundary.
-        Root-finding is initiated when this function returns a negative value.
+        """Return the distance of ``y`` to the outer boundary of the model's grid.
 
-        Each stock model implements this function to handle the specifics of their own interpolants. For models that
-        do not use interpolation, this function returns a positive constant (such that root-finding never occurs)
-        and does not need to be implemented.
+        Needed for backwards integration, which stops (and root-finds the final point) once
+        this becomes negative. Stock models with interpolated fluxes override it; the
+        default returns the positive constant ``1e10``, so a backwards integration then only
+        stops at ``T``.
+
+        Args:
+            y: State.
+
+        Returns:
+            float: Positive inside the grid, negative outside.
         """
         return 1e10
 
     def get_pex(self, y: np.ndarray) -> tuple[float]:
-        """
-        This function converts the integrals of motion (E, L, Q) to the orbital elements (p, e, x), if required.
+        """Return ``(p, e, x)`` of a state, converting from ``(E, L, Q)`` when ``use_ELQ``.
+
+        Args:
+            y: State.
+
+        Returns:
+            tuple[float]: ``(p, e, x)``.
         """
         if self.use_ELQ:
             E, L, Q = y[:3]
@@ -290,11 +439,16 @@ class ODEBase:
         return p, e, x
 
     def cache_values_and_check_bounds(self, y: np.ndarray) -> bool:
-        """
-        This function checks the input points to ensure they are within the physical bounds of the inspiral parameter space.
-        These checks include ensuring that the separatrix has not been crossed, and that the eccentricity is within bounds.
+        """Check that ``y`` is physical (``e >= 0`` and ``p`` above the separatrix).
 
-        Returns a boolean indicating whether the input was in bounds.
+        Caches the separatrix in ``self.p_sep_cache`` (used by the stock ``evaluate_rhs``)
+        and, for models with ``convert_Y``, the converted ``x_I`` in ``self.xI_cache``.
+
+        Args:
+            y: State.
+
+        Returns:
+            bool: ``True`` if in bounds.
         """
 
         p, e, x_or_Y = self.get_pex(y)
@@ -320,6 +474,40 @@ class ODEBase:
         out: Optional[np.ndarray] = None,
         **kwargs: Optional[dict],
     ) -> np.ndarray:
+        """Evaluate the full right-hand side at ``y`` (the integrator's per-stage call).
+
+        Order: :meth:`cache_values_and_check_bounds`; :meth:`evaluate_rhs` if in bounds,
+        else NaN everywhere (the integrator then retries with a smaller step);
+        :meth:`modify_rhs_before_Jacobian`; the ELQ-to-pex Jacobian
+        (:func:`~few.utils.mappings.jacobian.ELdot_to_PEdot_Jacobian`) on the first two
+        entries when the model's fluxes are "ELQ" and the integration is in "pex";
+        :meth:`modify_rhs`; and a sign flip when ``integrate_backwards``.
+
+        Args:
+            y: State (``p, e, x`` or ``E, L, Q`` first; only the first three entries are
+                read by the stock models).
+            out: Output array of 6 values, written in place. Default ``None`` allocates
+                ``np.zeros(6)``.
+            **kwargs: Forwarded to :meth:`evaluate_rhs` and the two hooks.
+
+        Returns:
+            np.ndarray: ``out``: the derivatives of the three orbital quantities and the
+            three dimensionless frequencies, with respect to the radiation-reaction time.
+
+        Raises:
+            ValueError: From the model (e.g. ``KerrEccEqFlux`` out of the grid in ``p``).
+            few.utils.exceptions.TrajectoryOffGridException: From ``KerrEccEqFlux`` out of
+                the grid in ``e`` or ``a``.
+
+        Example:
+            .. code-block:: python
+
+                from few.trajectory.ode import KerrEccEqFlux
+
+                rhs = KerrEccEqFlux()
+                rhs.add_fixed_parameters(1e6, 1e1, 0.9)
+                pdot, edot, xdot, Om_phi, Om_theta, Om_r = rhs([10.0, 0.3, 1.0])
+        """
         in_bounds = self.cache_values_and_check_bounds(y)
 
         if out is None:
@@ -351,10 +539,36 @@ class ODEBase:
 
 
 def _properties(cls: type) -> list[str]:
+    """Return the names of the properties defined directly on ``cls`` (not inherited)."""
     return [key for key, value in cls.__dict__.items() if isinstance(value, property)]
 
 
 def get_ode_properties(inst_cls: Type[ODEBase]):
+    """Return the property values of an ODE model as a dict.
+
+    Reads the properties defined on the model's first direct base class, updated with those
+    defined on the model's own class (properties from further up the hierarchy are not
+    read). Each getter is evaluated on the class, not the instance, so only constant
+    properties give meaningful values. Called by
+    :class:`~few.trajectory.integrate.Integrate` (``ode_info``) and used in the trajectory
+    tutorial.
+
+    Args:
+        inst_cls: Despite the annotation, an ODE model INSTANCE (its ``__class__`` is
+            read).
+
+    Returns:
+        dict: ``{property name: value}``, e.g. ``equatorial``, ``background``,
+        ``separatrix_buffer_dist``, ``nparams``.
+
+    Example:
+        .. code-block:: python
+
+            from few.trajectory.ode import KerrEccEqFlux
+            from few.trajectory.ode.base import get_ode_properties
+
+            get_ode_properties(KerrEccEqFlux())
+    """
     cls = inst_cls.__class__
 
     # first get all the properties of ODEBase

@@ -1,3 +1,27 @@
+r"""5PN, :math:`e^{10}` post-Newtonian trajectory model for generic (inclined) Kerr orbits.
+
+:class:`PN5` is the ODE of :class:`~few.waveform.waveform.Pn5AAKWaveform` (stock name
+``"PN5"``). Its fluxes are the Sago-Fujita PN expansions (arXiv:1505.01600 to 4PN,
+:math:`e^6`; unpublished 5PN, :math:`e^{10}` extension; authorship and amendment history
+in the source comments of this module),
+implemented as the numba functions ``d{E,L,C,p,e,Y}dt8H_5PNe10``. The inclination
+coordinate of this model is :math:`Y = \cos\iota` (``convert_Y = True``).
+
+The flux functions share one signature ``(q, p, e, Y, Nv, ne)``:
+
+- ``q``: the dimensionless Kerr spin ``a`` (the original code's notation; it is NOT a mass
+  ratio);
+- ``p``: semi-latus rectum in units of :math:`M`; ``e``: eccentricity; ``Y``:
+  :math:`\cos\iota`;
+- ``Nv``: PN truncation, the highest power of :math:`v = p^{-1/2}` kept beyond the
+  Newtonian factor (``Nv / 2`` PN; at most 10, ``0`` is treated as 1);
+- ``ne``: highest power of ``e`` kept in the eccentricity expansion (at most 10).
+
+Each returns the rate of its quantity per unit of the radiation-reaction time, the Newtonian
+factor (e.g. :math:`-\frac{32}{5}(1 - e^2)^{3/2} v^{10}` for ``dEdt``) times a double
+Horner sum of the tabulated coefficients ``a[i][j]`` of :math:`v^i e^j`.
+"""
+
 from math import cosh, log, pow, sinh, sqrt
 from typing import Union
 
@@ -21,51 +45,86 @@ from .base import ODEBase
 
 
 class PN5(ODEBase):
+    r"""5PN post-Newtonian ODE for generic Kerr orbits (the trajectory of ``Pn5AAKWaveform``).
+
+    State ``(p, e, Y, ...)`` with :math:`Y = \cos\iota`. For :math:`Y = 1` the equatorial
+    energy and angular-momentum fluxes are converted to ``(pdot, edot)`` with
+    :func:`~few.utils.mappings.jacobian.ELdot_to_PEdot_Jacobian` and ``Ydot = 0``;
+    otherwise ``(pdot, edot, Ydot)`` come directly from :func:`dpdt8H_5PNe10`,
+    :func:`dedt8H_5PNe10` and :func:`dYdt8H_5PNe10`. The frequencies use
+    :math:`x_I` converted from ``Y`` (``xI_cache``). Domain checked at the start: ``x`` in
+    ``[-1, 1]``, ``e`` in ``[0, 1]``, ``a`` in ``[-1, 1]``, ``p`` above the separatrix plus
+    0.1. The PN fluxes lose accuracy close to the separatrix and at high eccentricity.
+
+    Takes the :class:`~few.trajectory.ode.base.ODEBase` arguments (``use_ELQ`` must stay
+    ``False``).
+
+    Example:
+        .. code-block:: python
+
+            from few.trajectory.inspiral import EMRIInspiral
+
+            traj = EMRIInspiral(func="PN5")
+            # m1, m2 [Msun], a, p0 [M], e0, Y0 = cos(iota); T in years
+            t, p, e, Y, Phi_phi, Phi_theta, Phi_r = traj(1e6, 1e1, 0.5, 12.0, 0.3, 0.8, T=1.0)
+    """
+
     @property
     def convert_Y(self):
+        """bool: ``True``: the inclination coordinate is ``Y = cos(iota)``."""
         return True
 
     @property
     def supports_ELQ(self):
+        """bool: ``False``."""
         return False
 
     @property
     def separatrix_buffer_dist(self):
+        """float: ``0.1``, the stop distance in ``p`` above the separatrix."""
         return 0.1
 
     def max_p(self, e, x, a):
+        """Return ``inf`` (no outer bound in ``p``)."""
         return float("inf")
 
     def min_p(self, e, x, a):
+        """Return ``get_separatrix(a, e, x) + 0.1`` (``x`` as passed: ``Y`` in the start check)."""
         return get_separatrix(a, e, x) + self.separatrix_buffer_dist
 
     def isvalid_x(self, x, x_buffer=[0, 0]):
+        """Raise ``ValueError`` unless ``-1 + x_buffer[0] <= x <= 1 - x_buffer[1]``."""
         xmin = -1 + x_buffer[0]
         xmax = 1 - x_buffer[1]
         if np.any(x < xmin) or np.any(x > xmax):
             raise ValueError(f"X out of bounds. Must be between {xmin} and {xmax}.")
 
     def isvalid_e(self, e, e_buffer=[0, 0]):
+        """Raise ``ValueError`` unless ``e_buffer[0] <= e <= 1 - e_buffer[1]``."""
         emin = 0 + e_buffer[0]
         emax = 1 - e_buffer[1]
         if np.any(e < emin) or np.any(e > emax):
             raise ValueError(f"e out of bounds. Must be between {emin} and {emax}.")
 
     def isvalid_p(self, p, p_buffer=[0, 0]):
+        """Raise ``ValueError`` unless ``p >= 1.1 + p_buffer[0]`` (not used by the start check)."""
         pmin = 1 + self.separatrix_buffer_dist + p_buffer[0]
         if np.any(p < pmin):
             raise ValueError(f"p out of bounds. Must be greater than {pmin}.")
 
     def isvalid_a(self, a, a_buffer=[0, 0]):
+        """Raise ``ValueError`` unless ``-1 + a_buffer[0] <= a <= 1 - a_buffer[1]``."""
         amin = -1 + a_buffer[0]
         amax = 1 - a_buffer[1]
         if np.any(a < amin) or np.any(a > amax):
             raise ValueError(f"a out of bounds. Must be between {amin} and {amax}.")
 
     def bounds_p(self, e, x=1, a=0, p_buffer=[0, 0]):
+        """Return ``[min_p + p_buffer[0], inf]`` (no ``x`` / ``e`` / ``a`` checks)."""
         return [self.min_p(e, x, a) + p_buffer[0], self.max_p(e, x, a) - p_buffer[1]]
 
     def max_e(self, p, x, a):
+        """Return ``1``."""
         return 1
 
     def isvalid_pex(
@@ -79,6 +138,11 @@ class PN5(ODEBase):
         x_buffer=[0, 0],
         a_buffer=[0, 0],
     ):
+        """Check a start point: ``x``, ``e``, ``a`` (``ValueError``), ``p`` (``AssertionError``).
+
+        Same arguments as :meth:`~few.trajectory.ode.base.ODEBase.isvalid_pex`, plus
+        ``x_buffer`` (margins on the ``x`` range).
+        """
         self.isvalid_x(x, x_buffer=x_buffer)
         self.isvalid_e(e, e_buffer=e_buffer)
         self.isvalid_a(a, a_buffer=a_buffer)
@@ -90,6 +154,15 @@ class PN5(ODEBase):
     def evaluate_rhs(
         self, y: Union[list[float], np.ndarray]
     ) -> list[Union[float, np.ndarray]]:
+        """Return ``[pdot, edot, Ydot, Omega_phi, Omega_theta, Omega_r]`` at the state ``y``.
+
+        Args:
+            y: State ``(p, e, Y)`` first.
+
+        Returns:
+            list: Six values; rates per unit of the radiation-reaction time, frequencies
+            dimensionless (evaluated at ``x_I`` = ``xI_cache``).
+        """
         p, e, Y = y[:3]
 
         if Y == 1:
@@ -116,6 +189,22 @@ class PN5(ODEBase):
 
 @njit
 def dEdt8H_5PNe10(q, p, e, Y, Nv, ne):
+    r"""PN energy flux :math:`dE/d\tilde t`.
+
+    Newtonian factor :math:`-\frac{32}{5}(1-e^2)^{3/2} v^{10}`. Used by
+    :meth:`PN5.evaluate_rhs` for equatorial (``Y = 1``) orbits.
+
+    Args:
+        q (float): Dimensionless Kerr spin ``a`` (not a mass ratio).
+        p (float): Semi-latus rectum in units of :math:`M`.
+        e (float): Eccentricity.
+        Y (float): :math:`\cos\iota`.
+        Nv (int): PN truncation in powers of :math:`v = p^{-1/2}` (at most 10).
+        ne (int): Eccentricity truncation in powers of ``e`` (at most 10).
+
+    Returns:
+        float: The specific energy rate per unit of the radiation-reaction time.
+    """
     nv = Nv
 
     v = 1.0 / sqrt(p)
@@ -525,6 +614,15 @@ def dEdt8H_5PNe10(q, p, e, Y, Nv, ne):
 
 @njit
 def dLdt8H_5PNe10(q, p, e, Y, Nv, ne):
+    r"""PN angular-momentum flux :math:`dL_z/d\tilde t`.
+
+    Newtonian factor :math:`-\frac{32}{5}(1-e^2)^{3/2} v^7`. Used by
+    :meth:`PN5.evaluate_rhs` for equatorial (``Y = 1``) orbits. Arguments as for
+    :func:`dEdt8H_5PNe10` (``q`` is the spin).
+
+    Returns:
+        float: The specific angular-momentum rate per unit of the radiation-reaction time.
+    """
     nv = Nv
 
     v = 1.0 / sqrt(p)
@@ -789,6 +887,16 @@ def dLdt8H_5PNe10(q, p, e, Y, Nv, ne):
 
 @njit
 def dCdt8H_5PNe10(q, p, e, Y, Nv, ne):
+    r"""PN Carter-constant flux :math:`dQ/d\tilde t`.
+
+    Newtonian factor :math:`-\frac{64}{5}(1-e^2)^{3/2} v^6 (1 - Y^2)`. Not used by
+    :meth:`PN5.evaluate_rhs`, which evolves ``Y`` directly (:func:`dYdt8H_5PNe10`);
+    provided for users who need the Carter-constant rate. Arguments as for
+    :func:`dEdt8H_5PNe10` (``q`` is the spin).
+
+    Returns:
+        float: The Carter-constant rate per unit of the radiation-reaction time.
+    """
     nv = Nv
 
     v = 1.0 / sqrt(p)
@@ -1141,6 +1249,14 @@ def dCdt8H_5PNe10(q, p, e, Y, Nv, ne):
 
 @njit
 def dpdt8H_5PNe10(q, p, e, Y, Nv, ne):
+    r"""PN rate :math:`dp/d\tilde t` (Newtonian factor :math:`-\frac{64}{5}(1-e^2)^{3/2} v^6`).
+
+    Used by :meth:`PN5.evaluate_rhs` for inclined (``Y != 1``) orbits. Arguments as for
+    :func:`dEdt8H_5PNe10` (``q`` is the spin).
+
+    Returns:
+        float: The semi-latus-rectum rate per unit of the radiation-reaction time.
+    """
     nv = Nv
 
     v = 1.0 / sqrt(p)
@@ -1487,6 +1603,14 @@ def dpdt8H_5PNe10(q, p, e, Y, Nv, ne):
 
 @njit
 def dedt8H_5PNe10(q, p, e, Y, Nv, ne):
+    r"""PN rate :math:`de/d\tilde t` (Newtonian factor :math:`-\frac{304}{15} e (1-e^2)^{3/2} v^8`).
+
+    Used by :meth:`PN5.evaluate_rhs` for inclined (``Y != 1``) orbits (with ``ne = 8``).
+    Arguments as for :func:`dEdt8H_5PNe10` (``q`` is the spin).
+
+    Returns:
+        float: The eccentricity rate per unit of the radiation-reaction time.
+    """
     nv = Nv
 
     v = 1.0 / sqrt(p)
@@ -1837,6 +1961,15 @@ def dedt8H_5PNe10(q, p, e, Y, Nv, ne):
 
 @njit
 def dYdt8H_5PNe10(q: float, p: float, e: float, Y: float, Nv: int, ne: int):
+    r"""PN rate :math:`dY/d\tilde t`.
+
+    Newtonian factor :math:`-\frac{244}{15} q (1-e^2)^{3/2} v^8 (1 - Y^2)`. Used by
+    :meth:`PN5.evaluate_rhs` for inclined (``Y != 1``) orbits (with ``Nv = 7``). Arguments
+    as for :func:`dEdt8H_5PNe10` (``q`` is the spin).
+
+    Returns:
+        float: The rate of :math:`Y = \cos\iota` per unit of the radiation-reaction time.
+    """
     nv = Nv
 
     v = 1.0 / sqrt(p)

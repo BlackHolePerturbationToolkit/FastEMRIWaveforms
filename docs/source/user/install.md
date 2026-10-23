@@ -73,6 +73,9 @@ pip install fastemriwaveforms-cuda12x  # For CUDA 12.x support
 pip install fastemriwaveforms-cuda11x  # For CUDA 11.x support
 ```
 
+No CUDA 13.x plugin wheel is published: the `cuda13x` backend is available from a
+from-source build with a CUDA 13 toolkit (see *From source* below).
+
 :::{attention}
 Be sure to select the right version of the package according to your CUDA driver
 version. Use `nvidia-smi` to check the version of your CUDA driver. Nothing will
@@ -141,12 +144,20 @@ To install FEW from source in any environment, follow these steps:
   pip install -e '.[testing]'
   ```
 
+  - `few` imports `gpubackendtools` (the backend registry of the LISA Analysis Tools
+    stack), which is not yet listed in the `pyproject.toml` dependencies: install
+    [GPUBackendTools](https://github.com/lisa-analysis-tools/GPUBackendTools) (package
+    `gpubackendtools`) in the same environment first if pip does not pull it in.
+
   - To enable GPU support (if available), add the CMake option and install manually
     the required GPU dependencies:
     ```sh
     pip install -e '.[testing]' --config-settings=cmake.define.FEW_WITH_GPU=ON
     pip install cupy-cuda12x 'nvidia-cuda-runtime-cu12==12.4.*' # Replace 12.4 by the CUDA driver version returned by nvidia-smi, keep the '.*' at the end
     ```
+    The GPU backend is built for the CUDA major version of the toolkit found by CMake
+    (`few_backend_cuda11x`, `few_backend_cuda12x` or `few_backend_cuda13x`); with a
+    CUDA 13 toolkit, install `cupy-cuda13x` instead.
 
   - Many options can be passed to the `pip install` command, see [below](#advanced-installation-options)
     for more details.
@@ -191,6 +202,9 @@ few_files fetch --tag testfile
 ```
 
 This ensures all necessary files are available before running tests or using FEW.
+Note that the `testfile` tag includes the Kerr eccentric equatorial amplitude file
+`ZNAmps_l10_m10_n55_DS2Outer.h5` (about 5 GB, used by `FastKerrEccentricEquatorialFlux`).
+`few_files list` shows which registry files are present locally.
 
 ### Test FEW is working correctly
 
@@ -204,11 +218,12 @@ Simply execute, in the environment where FEW is installed:
 python3 -m few.tests
 ```
 
-You should see output indicating the backend in use (e.g., `cpu` or `cuda12x`)
-and a summary of the tests run. For example:
+When downloads are allowed, the test runner first fetches the missing files tagged
+`testfile` (see above). You should see output indicating the backend each test runs
+with and a summary of the tests run. For example:
 
 ```
-AAKWaveform test is running with backend 'cpu'
+  Test 'AAKWaveformTest': running with backend '...'
 [...]
 .......
 ----------------------------------------------------------------------
@@ -217,18 +232,17 @@ Ran 27 tests in 87.305s
 OK
 ```
 
-If you want to restrict FEW to use only the CPU backend, set the environment
-variable before running the tests:
+Each backend test picks the first available backend flavour among those supported by
+the tested class (GPU first for GPU-recommended classes). The `FEW_ENABLED_BACKENDS` option does not restrict
+or force the backends (no FEW code reads it, see
+[Backends management](cfg.md#tunable-utilities)).
+
+Tests can be skipped by tag with `--disable TAG` (repeatable): it skips the tests
+tagged `TAG` (e.g. `slow`, `high_memory`) and the tests that need a data file
+carrying that file tag. The wheel CI, for example, runs:
 
 ```sh
-FEW_ENABLED_BACKENDS="cpu" python -m few.tests
-```
-
-To force the use of the GPU backend (and thus fail the test if it is not available),
-set the environment variable accordingly:
-
-```sh
-FEW_ENABLED_BACKENDS="cpu;cuda12x" python -m few.tests
+python -m few.tests --disable testfile
 ```
 
 If any test fails, review the error messages for missing dependencies or
@@ -492,15 +506,19 @@ Many options are available to change the installation behaviour. These can be se
   - `ON`: ignore pre-installed `LAPACK(E)` and always fetch and compile their sources
   - `OFF`: disable `LAPACK(E)` fetching and only use pre-installed library and headers (install will fail if pre-installed lib and headers are not available)
   - `AUTO` (default): try to detect pre-installed `LAPACK(E)` and their headers. If found, use them, otherwise fetch `LAPACK(E)`.
-- `GBT_LAPACKE_DETECT_WITH=[CMAKE]|PKGCONFIG`: How `LAPACK(E)` should be detected
+- `GBT_LAPACKE_DETECT_WITH=CMAKE|PKGCONFIG|DISABLE|[AUTO]`: How `LAPACK(E)` should be detected (`DISABLE`: no local detection)
   - `CMAKE`: `LAPACK(E)` will be detected using the cmake `FindPackage` command. If your `LAPACK(E)` install provides `lapacke-config.cmake` in a non-standard location, add its path to the `CMAKE_PREFIX_PATH` environment variable.
   - `PKGCONFIG`: `LAPACK(E)` will be detected using `pkg-config` by searching for the files `lapack.pc` and `lapacke.pc` . If these files are provided by your `LAPACK(E)` install in a non-standard location, add their path to the environment variable `PKG_CONFIG_PATH`
-  - `AUTO` (default): attempt both CMake and PkgConfig approaches
-- `FEW_WITH_GPU=ON|OFF|[AUTO]`: Whether GPU-support must be enabled
+  - `AUTO` (default): attempt the PkgConfig approach, then the CMake one
+- `GBT_LAPACKE_EXTRA_LIBS`: Extra libraries linked together with `LAPACKE` (e.g. `gfortran` if importing the CPU backend reports missing Fortran symbols). Defaults to `gfortran` when that library is linkable.
+- `FEW_WITH_GPU=ON|OFF|ONLY|BARE|[AUTO]`: Whether GPU-support must be enabled
   - `ON`: Forcefully enable GPU support (install will fail if GPU prerequisites are not met)
   - `OFF`: Disable GPU support
+  - `ONLY`: Build the GPU backend only, without the CPU one (used to build the GPU plugin wheels)
+  - `BARE`: Build neither backend
   - `AUTO` (default): Check whether `nvcc` and the `CUDA Toolkit` are available in environment and enable/disable GPU support accordingly.
-- `FEW_CUDA_ARCH`: List of CUDA architectures that will be targeted by the CUDA compiler using [CMake CUDA_ARCHITECTURES](https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html) syntax. (Default = `all`).
+- `FEW_CUDA_ARCH`: List of CUDA architectures that will be targeted by the CUDA compiler using [CMake CUDA_ARCHITECTURES](https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html) syntax. (Default = `native`, the GPU of the build machine; the published plugin wheels use `all`).
+- `FEW_MARCH`: Value of the `-march` option of the C++ compiler, if the compiler supports it. (Default = `native`).
 
 Example of custom install with specific options to forcefully enable GPU support with support for the host's GPU only (`native` architecture) using LAPACK fetched from internet:
 
@@ -513,7 +531,7 @@ pip install . \
 
 If you enabled `GPU` support (or it was automatically enabled by the `AUTO` mode), you will also need to install the `nvidia-cuda-runtime`
 package corresponding to the CUDA version detected by `nvidia-smi` as explained in the *Getting Started* section above.
-You will also need to manually install `cupy-cuda11x` or `cupy-cuda12x` according to your CUDA version.
+You will also need to manually install `cupy-cuda11x`, `cupy-cuda12x` or `cupy-cuda13x` according to your CUDA version.
 
 ### conda vs pip installation
 

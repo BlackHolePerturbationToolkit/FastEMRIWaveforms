@@ -18,6 +18,12 @@ The compiled module will have to be declared in `src/few/cutils/CMakeLists.txt` 
 
 See [here](deploy.md#understanding-the-cmake-compilation-mechanism) for details about the compilations detailed in those sections.
 
+Finally, expose the new functions on the backends in `src/few/cutils/__init__.py`: add a field to the
+[`FewBackendMethods`](few.cutils.FewBackendMethods) dataclass, copy it in `FEWBackend.__init__`, and fill it in the
+loader of every backend class (`FEWCpuBackend`, `FEWCuda11xBackend`, `FEWCuda12xBackend`, `FEWCuda13xBackend`).
+A backend-aware class (a [`FewBackendConsumer`](few.utils.baseclasses.FewBackendConsumer)) then reaches them as
+`self.backend.<function>`.
+
 ## Add a *Citable* class
 
 The FastEMRIWaveforms package offers a *citation* framework so that you can specify which articles should
@@ -32,7 +38,7 @@ references:
 ```py3
 from few.utils.citations import Citable, REFERENCE
 
-MyOwnClass(Citable):
+class MyOwnClass(Citable):
 
     @classmethod
     def module_references(cls):
@@ -66,7 +72,7 @@ $ few_citations few.amplitude.ampinterp2d.AmpInterp2D  # replace by your class m
 @software{FastEMRIWaveforms,
   author     = "Katz, Michael and Speri, Lorenzo and Chapman-Bird, Christian and Chua, Alvin J. K. and Warburton, Niels and Hughes, Scott",
   title      = "{FastEMRIWaveforms}",
-  license    = "GPL-3.0",
+  license    = "MIT",
   url        = "https://bhptoolkit.org/FastEMRIWaveforms/html/index.html",
   repository = "https://zenodo.org/records/3969004",
   doi        = "10.5281/zenodo.3969004"
@@ -82,7 +88,7 @@ You may also query the citations directly on an instance of your class:
 @software{FastEMRIWaveforms,
   author     = "Katz, Michael and Speri, Lorenzo and Chapman-Bird, Christian and Chua, Alvin J. K. and Warburton, Niels and Hughes, Scott",
   title      = "{FastEMRIWaveforms}",
-  license    = "GPL-3.0",
+  license    = "MIT",
   url        = "https://bhptoolkit.org/FastEMRIWaveforms/html/index.html",
   repository = "https://zenodo.org/records/3969004",
   doi        = "10.5281/zenodo.3969004"
@@ -92,19 +98,19 @@ You may also query the citations directly on an instance of your class:
 ## Implement access to a file
 
 The FastEMRIWaveforms contain a [File Manager](few.files.FileManager) utility to simplify access to
-files in a way configurable through [configuration options](../user/cfg.md#file-manager).
+files in a way configurable through [configuration options](../user/cfg.md) (section *File manager*).
 
 This file manager should be used to:
 
 - Read a downloadable file
-- Obtain the path to a write-only file (which should be located in the [storage directory](../user/cfg.md#file-storage-path))
+- Obtain the path to a write-only file (which should be located in the storage directory, option `file_storage_path`)
 
 ### Declare a new downloadable file
 
 If you implement a class which requires access to a large file, the recommended approach is to
 
 1. Upload that file to a publicly available storage repository
-2. Declare the file in the [FileRegistry](few.files.FileRegistry) by editing `src/few/files/registry.yml``
+2. Declare the file in the [FileRegistry](few.files.FileRegistry) by editing `src/few/files/registry.yml`
   - If the public repository you are using is not declared yet, add it to the `repositories` section
   - Declare your file in the `files` section by defining:
     - its name (will be used to build the file URL from the `url_pattern` declared with the repository, and to access the file from the file manager)
@@ -114,7 +120,7 @@ If you implement a class which requires access to a large file, the recommended 
 Once this is done, the file can be accessed automatically using its path:
 
 ```py3
-from few import get_file_manager()
+from few import get_file_manager
 file_path = get_file_manager().get_file("filename")
 
 with open(file_path, "r") as fp:
@@ -124,13 +130,13 @@ with open(file_path, "r") as fp:
 or directly open it through the FileManager open method:
 
 ```py3
-from few import get_file_manager()
+from few import get_file_manager
 
 with get_file_manager().open("filename", "r") as fp:
     # Do anything with the file
 ```
 
-The approach to use dopends on whether you need the file path itself (to open it through `h5py` for example), or if you'll directly open it.
+The approach to use depends on whether you need the file path itself (to open it through `h5py` for example), or if you'll directly open it.
 
 If the file is not locally present in one of the file manager search paths, it will be first downloaded automatically.
 
@@ -152,7 +158,8 @@ with open("relative_path/filename", "w") as fp:
   ...
 ```
 
-- Use a relative path, or only filename, relative to the file manager storage path:
+- Use a bare file name, which the file manager opens in its storage directory (a path with a
+  directory part, an absolute path or an existing file is opened as given):
 
 ```py3
 with few.get_file_manager().open("filename", "w") as fp:
@@ -171,13 +178,14 @@ Each configuration entry is defined by:
 - `label`: attribute name of that entry associated to the configuration (final value will be accessible as `few.get_config().label`)
 - `description`: short description, can be used in CLI help message for example
 - `type`: python datatype of this entry
-- `default`: default value, must be of the type defined in `type``
+- `default`: default value, must be of the type defined in `type` (a default of another type is ignored)
 - `cfg_entry` (optional): name of the configuration entry in the FEW config file, if not provided, this entry is not affected by the configuration file
 - `env_var` (optional): environment variable whose value, if defined, will affect this configuration entry. Note that the variable name will be automatically prefixed with `FEW_`, so set `MYCFG` to have the variable `FEW_MYCFG` affect your entry.
 - `cli_flags` (optional): list of command-line parameter flags (e.g. `-x`, `--my-option`, ...) associated to the configuration entry
 - `cli_kwargs` (optional, ignored if `cli_flags` not set): dict of keyword arguments accepted by [argparse.ArgumentParser.add_argument](argparse.ArgumentParser.add_argument) to customize the way CLI parameters are parsed for this entry
 - `convert` (optional): function that can take a [str](str) (and optionally other types) as input, and convert it to a value of type given by the `type`
 - `validate` (optional): function that can take a value of type `type` and return `True` if the value if a valid one for this entry, and `False` otherwise
+- `overwrite` (optional): function `(old, new) -> value` used when several sources set the entry (default: keep the new value; `file_extra_paths` concatenates the lists)
 
 It is also strongly advised to declare the entry as a class attribute
 in the header of the [Configuration](few.utils.config.Configuration) class.
@@ -197,7 +205,7 @@ The list of action to take to add a new configuration option is thus:
 ## Adding log messages
 
 The recommended way to print messages in FEW is to use the package [logger](logging.Logger).
-[pre-commit](./ide.md#pre-commit-apply-common-guidelines-to-your-code) will, by default, complain about the use of [`print`](print) statements which should be replaced by calls to the logger methods:
+[pre-commit](./ide.md#pre-commit-apply-common-guidelines-to-your-code) will, by default, complain about the use of `print` statements which should be replaced by calls to the logger methods:
 
 - `few_logger.debug(message)`: should contain detailed information about the inner working of a piece of code to guide a user or developer during debugging phases
 - `few_logger.info(message)`: should replace most print statements directed to the user

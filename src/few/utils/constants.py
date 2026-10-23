@@ -1,3 +1,13 @@
+r"""Physical constants of FEW, derived from :mod:`lisaconstants` (SI units).
+
+- ``YRSID_SI``: ``lisaconstants.ASTRONOMICAL_YEAR`` in s (converts the waveform duration
+  ``T`` in years to seconds).
+- ``MTSUN_SI``: :math:`G M_\odot / c^3` in s (one solar mass in seconds).
+- ``MRSUN_SI``: :math:`G M_\odot / c^2` in m (half the solar Schwarzschild radius).
+- ``Gpc``: one gigaparsec in m.
+- ``PI``: :math:`\pi` (a float literal).
+"""
+
 from lisaconstants import (
     ASTRONOMICAL_YEAR,
     GM_SUN,

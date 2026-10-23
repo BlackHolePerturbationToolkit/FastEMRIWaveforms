@@ -1,5 +1,22 @@
 # Utilities to aid in FastEMRIWaveforms Packages
 
+"""Analysis and helper utilities of FEW.
+
+- Waveform comparison: :func:`get_overlap` and :func:`get_mismatch` (flat-noise inner
+  product).
+- Frame helpers of :class:`~few.waveform.waveform.GenerateEMRIWaveform` (also called by the
+  LISA Analysis Tools EMRI response): :func:`get_viewing_angles` (source-frame viewing
+  angles) and :func:`get_polarization_angle`.
+- Inverse problems on a trajectory module, solved by Brent's method: :func:`get_p_at_t`
+  (initial ``p0`` giving a requested duration), :func:`get_m2_at_t` (secondary mass) and
+  the generic :func:`get_at_t`.
+- Root finders: the numba scalar :func:`_brentq_jit` and cubic solver :func:`_solveCubic`
+  (used by :mod:`few.utils.geodesic` and the flux ODEs), and the vectorised
+  :func:`brentq_array` (batched trajectories, experimental).
+- Legacy pointer helpers :func:`wrapper` / :func:`pointer_adjust`, duplicates of
+  :mod:`few.cutils.wrappers`.
+"""
+
 from math import acos, cos, sqrt
 from typing import Optional, Tuple
 
@@ -19,24 +36,34 @@ from gpubackendtools import get_first_backend
 def get_overlap(
     time_series_1: np.ndarray, time_series_2: np.ndarray, use_gpu: bool = False
 ) -> float:
-    r"""Calculate the overlap.
+    r"""Return the normalised overlap of two time series (flat-noise inner product).
 
-    Takes two time series and finds which one is shorter in length. It then
-    shortens the longer time series if necessary. Then it performs a
-    normalized correlation calulation on the two time series to give the
-    overlap. The overlap of :math:`a(t)` and
-    :math:`b(t)`, :math:`\gamma_{a,b}`, is given by,
+    If the lengths differ, both series are truncated to the shorter length (from index 0)
+    and a warning is logged. With :math:`\tilde a, \tilde b` the FFTs of the two series,
 
-    .. math:: \gamma_{a,b} = <a,b>/(<a,a><b,b>)^{(1/2)},
+    .. math::
 
-    where :math:`<a,b>` is the inner product of the two time series.
+        \gamma_{a,b} = \mathrm{Re}\,\frac{\sum_k \tilde a_k^* \tilde b_k}
+            {\sqrt{\sum_k |\tilde a_k|^2 \sum_k |\tilde b_k|^2}},
 
-    args:
-        time_series_1: Strain time series 1.
-        time_series_2: Strain time series 2.
-        use_gpu: If True use cupy. If False, use numpy. Default
-            is False.
+    i.e. the zero-lag normalised correlation, without noise weighting or time / phase
+    maximisation.
 
+    Args:
+        time_series_1: First time series (real or complex, e.g. :math:`h_+ - i h_\times`);
+            converted with ``xp.asarray`` if needed.
+        time_series_2: Second time series.
+        use_gpu: Use cupy instead of numpy. Default ``False``.
+
+    Returns:
+        float: The overlap, in :math:`[-1, 1]`.
+
+    Example:
+        >>> import numpy as np
+        >>> from few.utils.utility import get_overlap
+        >>> h = np.exp(2j * np.pi * 1e-3 * 10.0 * np.arange(1000))
+        >>> round(float(get_overlap(h, h)), 12)
+        1.0
     """
 
     # adjust arrays based on GPU usage
@@ -79,22 +106,32 @@ def get_overlap(
 
 
 def get_viewing_angles(qS: float, phiS: float, qK: float, phiK: float) -> Tuple[float, float]:
-        """Transform from the detector frame to the source frame
-        
+        r"""Return the source-frame viewing angles of an observer from the sky and spin angles.
+
+        With :math:`\hat R` the unit vector of the sky position and :math:`\hat S` that of the
+        primary's spin, the polar viewing angle is :math:`\theta = \arccos(-\hat R\cdot\hat S)`
+        (the angle between the spin and the direction to the observer); the azimuthal angle
+        is fixed to :math:`\phi = -\pi/2` by the definition of the source frame. Used by
+        :meth:`~few.waveform.waveform.GenerateEMRIWaveform.__call__` (detector-frame
+        waveforms) and by the LISA Analysis Tools EMRI response.
+
         Args:
-            qS: Sky location polar angle in ecliptic
-                coordinates.
-            phiS: Sky location azimuthal angle in
-                ecliptic coordinates.
-            qK: Initial BH spin polar angle in ecliptic
-                coordinates.
-            phiK: Initial BH spin azimuthal angle in
-                ecliptic coordinates.
+            qS: Polar angle of the sky location in rad (FEW documents ecliptic coordinates;
+                only the relative orientation of sky and spin matters).
+            phiS: Azimuthal angle of the sky location in rad.
+            qK: Polar angle of the primary's spin in rad, in the same frame as ``qS``.
+            phiK: Azimuthal angle of the primary's spin in rad.
 
         Returns:
-            (Polar viewing angle, Azimuthal viewing angle).
-        
-            
+            tuple[float, float]: ``(theta, phi)`` in rad, ``theta`` in :math:`[0, \pi]` and
+            ``phi = -pi/2``.
+
+        Example:
+            >>> import numpy as np
+            >>> from few.utils.utility import get_viewing_angles
+            >>> theta, phi = get_viewing_angles(np.pi / 2, 0.0, 0.0, 0.0)
+            >>> round(float(theta), 12), round(float(phi), 12)
+            (1.570796326795, -1.570796326795)
         """
 
         cqS = np.cos(qS)
@@ -124,22 +161,23 @@ def get_viewing_angles(qS: float, phiS: float, qK: float, phiK: float) -> Tuple[
 
 
 def get_polarization_angle(qS: float, phiS: float, qK: float, phiK: float) -> float:
-        """Transform from the detector frame to the source frame
-        
+        r"""Return the polarization angle that rotates source-frame polarizations to the SSB basis.
+
+        :math:`\psi = -\mathrm{atan2}(u, d)` with
+        :math:`u = \cos q_S \sin q_K \cos(\phi_S - \phi_K) - \cos q_K \sin q_S` and
+        :math:`d = \sin q_K \sin(\phi_S - \phi_K)`; :math:`\psi = \pi/2` when :math:`d = 0`
+        (the ``psi_ldc`` convention of the LISA Data Challenges). Used by
+        :meth:`~few.waveform.waveform.GenerateEMRIWaveform._to_SSB_frame` and by the LISA
+        Analysis Tools EMRI response.
+
         Args:
-            qS: Sky location polar angle in ecliptic
-                coordinates.
-            phiS: Sky location azimuthal angle in
-                ecliptic coordinates.
-            qK: Initial BH spin polar angle in ecliptic
-                coordinates.
-            phiK: Initial BH spin azimuthal angle in
-                ecliptic coordinates.
+            qS: Polar angle of the sky location in rad.
+            phiS: Azimuthal angle of the sky location in rad.
+            qK: Polar angle of the primary's spin in rad, in the same frame as ``qS``.
+            phiK: Azimuthal angle of the primary's spin in rad.
 
         Returns:
-            Polarization angle.
-        
-            
+            float: :math:`\psi` in rad, in :math:`[-\pi, \pi]`.
         """
 
         cqS = np.cos(qS)
@@ -171,18 +209,25 @@ def get_polarization_angle(qS: float, phiS: float, qK: float, phiK: float) -> fl
 def get_mismatch(
     time_series_1: np.ndarray, time_series_2: np.ndarray, use_gpu: bool = False
 ) -> float:
-    """Calculate the mismatch.
+    """Return the mismatch ``1 - overlap`` of two time series.
 
-    The mismatch is 1 - overlap. Therefore, see documentation for
-    :func:`few.utils.utility.overlap` for information on the overlap
-    calculation.
+    See :func:`get_overlap` for the (flat-noise, zero-lag) overlap and the truncation of
+    series of different lengths.
 
-    args:
-        time_series_1: Strain time series 1.
-        time_series_2: Strain time series 2.
-        use_gpu: If True use cupy. If False, use numpy. Default
-            is False.
+    Args:
+        time_series_1: First time series.
+        time_series_2: Second time series.
+        use_gpu: Use cupy instead of numpy. Default ``False``.
 
+    Returns:
+        float: The mismatch, in :math:`[0, 2]`.
+
+    Example:
+        >>> import numpy as np
+        >>> from few.utils.utility import get_mismatch
+        >>> h = np.exp(2j * np.pi * 1e-3 * 10.0 * np.arange(1000))
+        >>> abs(float(get_mismatch(h, h))) < 1e-12
+        True
     """
     overlap = get_overlap(time_series_1, time_series_2, use_gpu=use_gpu)
     return 1.0 - overlap
@@ -190,6 +235,14 @@ def get_mismatch(
 
 @njit(fastmath=False)
 def _solveCubic(A2, A1, A0):
+    """Roots of :math:`r^3 + A_2 r^2 + A_1 r + A_0 = 0` (Cardano / trigonometric form).
+
+    Used by the equatorial branch of :func:`~few.utils.geodesic.ELQ_to_pex`. With three real
+    roots it returns ``(rp, ra, r3)`` = (middle, largest, smallest root), i.e. periapsis,
+    apoapsis and the third root of the radial potential. With one real root (non-negative
+    discriminant) ``ra = rp`` is the real part of the complex pair and ``r3`` the real root,
+    which is not meaningful for bound orbits.
+    """
     # Coefficients
     a = 1.0  # coefficient of r^3
     b = A2  # coefficient of r^2
@@ -251,6 +304,23 @@ def _solveCubic(A2, A1, A0):
 
 @njit(fastmath=False)
 def _brentq_jit(f, a, b, args, tol):
+    """Brent's bracketed root finder for numba code (scalar).
+
+    Args:
+        f: numba-compiled function called as ``f(x, args)``.
+        a (float): One end of the bracket.
+        b (float): Other end; ``f(a)`` and ``f(b)`` must have opposite signs.
+        args (tuple): Extra parameters passed to ``f``.
+        tol (float): Absolute tolerance; iteration stops when half the bracket is below
+            ``2 eps |b| + tol / 2`` (``eps`` the double-precision machine epsilon).
+
+    Returns:
+        float: The root (``a`` or ``b`` directly if ``f`` vanishes there). There is no
+        iteration limit.
+
+    Raises:
+        ValueError: If ``f(a)`` and ``f(b)`` have the same sign.
+    """
     # Machine epsilon for double precision
     eps = 2.220446049250313e-16
 
@@ -341,39 +411,42 @@ def get_at_t(
     xtol: float = 2e-12,
     rtol: float = 8.881784197001252e-16,
 ) -> float:
-    """Root finding wrapper using Brent's method.
+    """Find the value of one trajectory argument that gives a trajectory of duration ``t_out``.
 
-    This function uses scipy's brentq routine to find root.
+    Solves ``t_final(value) = t_out`` with :func:`scipy.optimize.brentq`: for each trial
+    value the argument list is rebuilt (``value`` inserted at ``index_of_interest``) and the
+    trajectory is run with ``T = 2 t_out``; its last time minus ``t_out`` (in seconds) is
+    the root function, ``-t_out`` if the trajectory is empty (it started at the
+    separatrix). Used by :func:`get_p_at_t` and :func:`get_m2_at_t`.
 
-    arguments:
-        traj_module: Instantiated trajectory module. It must output
-            the time array of the trajectory sparse trajectory as the first
-            output value in the tuple.
-        traj_args: List of arguments for the trajectory function.
-            p is removed. **Note**: It must be a list, not a tuple because the
-            new p values are inserted into the argument list.
-        bounds: Minimum and maximum values over which brentq will search for a root.
-        t_out: The desired length of time for the waveform.
-        index_of_interest: Index where to insert the new values in
-            the :code:`traj_args` list.
-        traj_kwargs: Keyword arguments for :code:`traj_module`.
-            Default is an empty dict.
-        xtol: Absolute tolerance of the brentq root-finding - see :code: `np.allclose()` for details.
-            Defaults to 2e-12 (scipy default).
-        rtol: Relative tolerance of the brentq root-finding - see :code: `np.allclose()` for details.
-            Defaults to ~8.8e-16 (scipy default).
+    Args:
+        traj_module: Trajectory module, e.g. :class:`~few.trajectory.inspiral.EMRIInspiral`,
+            whose first output is the time array in seconds.
+        traj_args: Trajectory arguments without the unknown; must be a ``list`` (the trial
+            value is inserted into a copy).
+        bounds: ``[low, high]`` bracket of the unknown; the root function must change sign
+            over it.
+        t_out: Requested duration in years.
+        index_of_interest: Position of the unknown in the full argument list.
+        traj_kwargs: Keyword arguments of ``traj_module``. Default ``None`` (empty). The
+            dict is modified in place: its ``"T"`` is set to ``2 t_out``.
+        xtol: Absolute tolerance of :func:`scipy.optimize.brentq`. Default ``2e-12``
+            (the scipy default).
+        rtol: Relative tolerance of :func:`scipy.optimize.brentq`. Default
+            ``8.881784197001252e-16`` (four machine epsilons, the scipy default).
 
-    returns:
-        Root value.
+    Returns:
+        float: The value of the unknown.
 
+    Raises:
+        ValueError: From :func:`scipy.optimize.brentq` if the root function has the same sign
+            at both bounds.
     """
     if traj_kwargs is None:
         traj_kwargs = {}
 
     def get_time_root(val, traj, inj_args, traj_kwargs, t_out, ind_interest):
-        """
-        Function with one p root at T = t_outp, for brentq input.
-        """
+        """Root function of :func:`get_at_t`: final trajectory time minus ``t_out`` (in s)."""
         inputs = inj_args.copy()
         inputs.insert(ind_interest, val)
         traj_kwargs["T"] = t_out * 2.0
@@ -407,39 +480,60 @@ def get_p_at_t(
     upper_bound_maximum: float = 1e6,
     **kwargs,
 ) -> float:
-    """Find the value of p that will give a specific length inspiral using Brent's method.
+    """Find the initial semi-latus rectum ``p0`` that gives an inspiral of duration ``t_out``.
 
-    If you want to generate an inspiral that is a specific length, you
-    can adjust p accordingly. This function tells you what that value of p
-    is based on the trajectory module and other input parameters at a
-    desired time of observation.
+    Uses Brent's method (:func:`get_at_t`) on the (assumed unique) ``p0`` whose trajectory
+    reaches the plunge after exactly ``t_out`` years. Default bounds come from the ODE's
+    ``func.min_p`` / ``func.max_p`` at ``(e0, x0, a)`` (with ``enforce_schwarz_sep`` in
+    ``traj_kwargs``, the lower bound is at most ``6 + 2 e0``); ``lower_bound_buffer`` is then
+    added to the lower bound and an infinite upper bound is replaced by
+    ``upper_bound_maximum``. Before the root search the lower bound is probed: a trajectory
+    that leaves the flux grid (:class:`~few.utils.exceptions.TrajectoryOffGridException`)
+    raises it by ``0.01`` and retries, until it reaches the upper bound.
 
-    This function uses scipy's brentq routine to find the (presumed only)
-    value of p that gives a trajectory of duration t_out.
+    Args:
+        traj_module: Trajectory module with a ``func`` attribute exposing ``min_p`` /
+            ``max_p`` (e.g. :class:`~few.trajectory.inspiral.EMRIInspiral`); its first output
+            is the time in seconds.
+        t_out: Requested duration in years.
+        traj_args: Trajectory arguments without ``p0``, as a ``list``; for the stock models
+            ``[m1, m2, a, e0, x0]``.
+        index_of_p: Position of ``p0`` in the full argument list ``(m1, m2, a, p0, e0, x0)``.
+            Default ``3``.
+        index_of_a: Position of ``a`` in the full argument list. Default ``2``.
+        index_of_e: Position of ``e0`` in the full argument list. Default ``4``.
+        index_of_x: Position of ``x0`` in the full argument list. Default ``5``.
+        bounds: ``[low, high]`` search range of ``p0``; either entry ``None`` (or ``bounds``
+            ``None``, the default) uses the ODE limits above. A given list is modified in
+            place.
+        lower_bound_buffer: Added to the lower bound so that the search does not start on
+            the separatrix. Default ``1e-6``.
+        upper_bound_maximum: Replaces an infinite upper bound. Default ``1e6``.
+        **kwargs: Forwarded to :func:`get_at_t` (``traj_kwargs``, ``xtol``, ``rtol``).
 
-    arguments:
-        traj_module: Instantiated trajectory module. It must output
-            the time array of the trajectory sparse trajectory as the first
-            output value in the tuple.
-        t_out: The desired length of time for the waveform.
-        traj_args: List of arguments for the trajectory function.
-            p is removed. **Note**: It must be a list, not a tuple because the
-            new p values are inserted into the argument list.
-        index_of_p: Index where to insert the new p values in
-            the :code:`traj_args` list. Default is 3.
-        index_of_a: Index of a in provided :code:`traj_module` arguments. Default is 2.
-        index_of_e: Index of e0 in provided :code:`traj_module` arguments. Default is 4.
-        index_of_x: Index of x0 in provided :code:`traj_module` arguments. Default is 5.
-        bounds: Minimum and maximum values of p over which brentq will search for a root.
-            If not given, will be set to the minimum and maximum values of p for the trajectory modules.
-        **kwargs: Keyword arguments for :func:`get_at_t`.
-        lower_bound_buffer: A float that offsets the lower bound by a small number to prevent starting on the separatrix
-            If not provided, it will default to 1e-6
-        upper_bound_maximum: A float that sets the maximum value of the upper bound to a large finite number if max_p returns inf
-            If not provided, it will default to 1e6
-    returns:
-        Value of p that creates the proper length trajectory.
+    Returns:
+        float: ``p0`` in units of :math:`M`.
 
+    Raises:
+        ValueError: If the trajectory from the lower bound already lasts at least
+            ``t_out`` ("No solution found within the bounds of the interpolants."), or from
+            :func:`scipy.optimize.brentq` if the bracket has no sign change.
+
+    Note:
+        The probing trajectory is run as ``traj_module(m1, m2, a, p, e0, x0, T=...)`` built
+        from ``traj_args[0]``, ``traj_args[1]`` and the three indices, without
+        ``traj_kwargs``.
+
+    Example:
+        .. code-block:: python
+
+            from few.trajectory.inspiral import EMRIInspiral
+            from few.trajectory.ode import KerrEccEqFlux
+            from few.utils.utility import get_p_at_t
+
+            traj = EMRIInspiral(func=KerrEccEqFlux)
+            # [m1, m2, a, e0, x0]; p0 is solved for (index 3 of the full list)
+            p0 = get_p_at_t(traj, 1.0, [1e6, 10.0, 0.9, 0.3, 1.0], index_of_p=3)
     """
 
     # fix indexes for p
@@ -524,34 +618,42 @@ def get_m2_at_t(
     bounds: list[Optional[float]] = None,
     **kwargs,
 ) -> float:
-    """Find the value of m2 that will give a specific length inspiral using Brent's method.
+    """Find the secondary mass ``m2`` that gives an inspiral of duration ``t_out``.
 
-    If you want to generate an inspiral that is a specific length, you
-    can adjust m2 accordingly. This function tells you what that value of m2
-    is based on the trajectory module and other input parameters at a
-    desired time of observation.
+    Uses Brent's method (:func:`get_at_t`) on the (assumed unique) ``m2`` whose trajectory
+    plunges after exactly ``t_out`` years. Both bounds are checked first: the inspiral at the
+    lower bound must last longer than ``t_out``, the one at the upper bound shorter.
 
-    This function uses scipy's brentq routine to find the (presumed only)
-    value of m2 that gives a trajectory of duration t_out.
+    Args:
+        traj_module: Trajectory module (e.g. :class:`~few.trajectory.inspiral.EMRIInspiral`)
+            whose first output is the time in seconds.
+        t_out: Requested duration in years.
+        traj_args: Trajectory arguments without ``m2``, as a ``list``:
+            ``[m1, a, p0, e0, x0]``.
+        index_of_m2: Position of ``m2`` in the full argument list. Default ``1``; the bound
+            checks always build ``(m1, m2, a, p0, e0, x0)``, so other values are not
+            supported consistently.
+        bounds: ``[low, high]`` search range of ``m2`` in solar masses. Default ``None``
+            means ``[0.1, m1]``; a single ``None`` entry is replaced by its default.
+        **kwargs: Forwarded to :func:`get_at_t` (``traj_kwargs``, ``xtol``, ``rtol``).
 
-    arguments:
-        traj_module: Instantiated trajectory module. It must output
-            the time array of the trajectory sparse trajectory as the first
-            output value in the tuple.
-        t_out: The desired length of time for the waveform.
-        traj_args: List of arguments for the trajectory function.
-            p is removed. **Note**: It must be a list, not a tuple because the
-            new p values are inserted into the argument list.
-        index_of_m2: Index where to insert the new p values in
-            the :code:`traj_args` list. Default is 1.
-        bounds: Minimum and maximum values of m2 over which brentq will search for a root.
-            If not given, will be set to [1e-1, m1]. To supply only one of these two limits, set the
-            other limit to None.
-        **kwargs: Keyword arguments for :func:`get_at_t`.
+    Returns:
+        float: ``m2`` in solar masses.
 
-    returns:
-        Value of m2 that creates the proper length trajectory.
+    Raises:
+        ValueError: If either bound check fails ("No solution found within the bounds for
+            secondary mass."), or from :func:`scipy.optimize.brentq`.
 
+    Example:
+        .. code-block:: python
+
+            from few.trajectory.inspiral import EMRIInspiral
+            from few.trajectory.ode import KerrEccEqFlux
+            from few.utils.utility import get_m2_at_t
+
+            traj = EMRIInspiral(func=KerrEccEqFlux)
+            # [m1, a, p0, e0, x0]; m2 is solved for (index 1 of the full list)
+            m2 = get_m2_at_t(traj, 1.0, [1e6, 0.9, 10.0, 0.3, 1.0], index_of_m2=1)
     """
 
     # fix bounds
@@ -633,6 +735,7 @@ def get_m2_at_t(
 
 # TODO: deal with this and make sure it is in gpubackendtools and import what is needed. 
 
+# TODO check: keep/remove/document -- duplicate of few.cutils.wrappers.wrapper; no callers
 def wrapper(*args, **kwargs):
     """Function to convert array and C/C++ class arguments to ptrs
 
@@ -707,6 +810,7 @@ def wrapper(*args, **kwargs):
     return (targs, tkwargs)
 
 
+# TODO check: keep/remove/document -- duplicate of few.cutils.wrappers.pointer_adjust; no callers
 def pointer_adjust(func):
     """Decorator function for cupy/numpy agnostic cython
 
@@ -730,19 +834,31 @@ def pointer_adjust(func):
 
 
 def brentq_array(f, a, b, args, tol, maxiter=200):
-    """Vectorised bracketed root-finder: one root per element of ``a``/``b``.
+    """Vectorised bracketed root finder: one root per element of ``a`` / ``b``.
 
     Anderson-Bjorck regula falsi with a bisection safeguard, run on the whole batch with
     per-element convergence masks (the batched counterpart of the scalar
-    :func:`_brentq_jit` / ``scipy.optimize.brentq`` calls in the trajectory).
+    :func:`_brentq_jit` / ``scipy.optimize.brentq`` calls of the trajectory; part of the
+    experimental trajectory batching of ``docs/traj-batching.md``, not called by FEW
+    itself). An element converges when its bracket width is at most ``tol + 4 eps |c|``
+    (``c`` the latest iterate).
 
     Args:
-        f: ``f(x_array, args) -> array``, evaluated elementwise.
-        a, b: bracket arrays with ``f(a) * f(b) <= 0`` elementwise.
-        args: passed through to ``f`` (e.g. per-element parameters).
-        tol: absolute x tolerance (plus 4 machine epsilons of |x|).
+        f: Callable ``f(x, args)`` returning an array of the shape of ``x``, evaluated
+            elementwise on numpy arrays.
+        a (np.ndarray): Lower ends of the brackets (copied, as float).
+        b (np.ndarray): Upper ends, same shape; ``f(a) * f(b) <= 0`` elementwise.
+        args: Passed through to ``f`` unchanged (e.g. per-element parameters).
+        tol (float): Absolute ``x`` tolerance.
+        maxiter (int, optional): Maximum number of iterations. Default ``200``.
+
+    Returns:
+        np.ndarray: The roots, float, shape of ``a``; an end where ``f`` vanishes is returned
+        directly.
+
     Raises:
-        ValueError: an element has no sign change, or the iteration does not converge.
+        ValueError: If an element has no sign change, or if not every element converged
+            within ``maxiter`` iterations.
     """
     eps = 2.220446049250313e-16
     a = np.array(a, dtype=float, copy=True)

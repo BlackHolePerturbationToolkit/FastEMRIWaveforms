@@ -1,8 +1,22 @@
-"""
+r"""
 Efficient implementations of complete elliptic integrals, obtained by applying
 the duplication theorem to compute Carlson's symmetric forms.
 
-Derived from Carlson's algorithms in the SLATEC library.
+Derived from Carlson's algorithms in the SLATEC library. All functions are numba
+``@njit`` scalar kernels (callable from Python and from other numba code; used by the
+frequency kernels of :mod:`few.utils.geodesic`):
+
+- Carlson forms :func:`RF`, :func:`RD`, :func:`RJ` (duplication iterations) and
+  :func:`RC` (closed form);
+- complete Legendre integrals in terms of the modulus :math:`k` (not the parameter
+  :math:`m = k^2`): :math:`K(k) = R_F(0, 1 - k^2, 1)` (:func:`EllipK`),
+  :math:`E(k) = R_F - \tfrac{k^2}{3} R_D` (:func:`EllipE`) and
+  :math:`\Pi(n, k) = R_F + \tfrac{n}{3} R_J(0, 1 - k^2, 1, 1 - n)` (:func:`EllipPi`, with
+  :math:`\Pi(n, k) = \int_0^{\pi/2} d\theta / [(1 - n\sin^2\theta)\sqrt{1 - k^2\sin^2\theta}]`).
+
+The ``tol`` argument is the convergence threshold of the duplication loop: iteration stops
+when the largest relative deviation of the arguments from their (weighted) mean is at most
+``tol``.
 """
 
 from math import acos, acosh, log, sqrt
@@ -16,14 +30,17 @@ def RF(x: float, y: float, z: float, tol: float = 5e-4) -> float:
     Computes the Carlson symmetric form of the
     elliptic integral of the first kind, :math:`R_F`.
 
+    At most one of :math:`(x, y, z)` may be zero.
+
     Args:
-        x: First argument, :math:`x >= 0`.
-        y: Second argument, :math:`y >= 0`.
-        z: Third argument, :math:`z >= 0`.
-        tol: Numerical tolerance parameter (defaults to 5e-4)
+        x: First argument, :math:`x \ge 0`.
+        y: Second argument, :math:`y \ge 0`.
+        z: Third argument, :math:`z \ge 0`.
+        tol: Convergence threshold of the duplication loop (see the module docstring).
+            Default ``5e-4``.
 
     Returns:
-        The Carlson symmetric form :math:`R_F`.
+        float: :math:`R_F(x, y, z)`.
     """
     # Taylor expansion coefficients
     c1 = 1.0 / 24.0
@@ -60,17 +77,20 @@ def RF(x: float, y: float, z: float, tol: float = 5e-4) -> float:
 def RC(x: float, y: float) -> float:
     r"""
     Computes the reduced Carlson symmetric form of the
-    elliptic integral of the first kind, :math:`R_C`.
+    elliptic integral of the first kind, :math:`R_C(x, y) = R_F(x, y, y)`.
 
     Unlike the other Carlson symmetric forms provided, this one
-    can be computed analytically in terms of transcendental functions.
+    can be computed analytically in terms of transcendental functions:
+    :math:`\arccos(\sqrt{x/y})/\sqrt{y - x}` for :math:`x < y`,
+    :math:`\mathrm{arccosh}(\sqrt{x/y})/\sqrt{x - y}` for :math:`x > y`, and
+    :math:`1/\sqrt{y}` when :math:`|x - y| \le 10^{-8}`. Used inside :func:`RJ`.
 
     Args:
-        x: First argument, :math:`x >= 0`.
-        y: Second argument, :math:`y >= 0`.
+        x: First argument, :math:`x \ge 0`.
+        y: Second argument, :math:`y > 0`.
 
     Returns:
-        The Carlson symmetric form :math:`R_J`.
+        float: :math:`R_C(x, y)`.
     """
 
     diff = x - y
@@ -87,19 +107,21 @@ def RC(x: float, y: float) -> float:
 def RJ(x: float, y: float, z: float, p: float, tol: float = 5e-4) -> float:
     r"""
     Computes the Carlson symmetric form of the
-    elliptic integral of the second kind, :math:`R_J`.
+    elliptic integral of the third kind, :math:`R_J`.
 
     No more than one of :math:`(x, y, z)` may be equal to zero.
 
     Args:
-        x: First argument, :math:`x >= 0`.
-        y: Second argument, :math:`y >= 0`.
-        z: Third argument, :math:`z >= 0`.
-        p: Fourth argument, :math:`p > 0`.
-        tol: Numerical tolerance parameter (defaults to 5e-4)
+        x: First argument, :math:`x \ge 0`.
+        y: Second argument, :math:`y \ge 0`.
+        z: Third argument, :math:`z \ge 0`.
+        p: Fourth argument, :math:`p > 0` (the Cauchy principal value for :math:`p < 0`
+            is not implemented).
+        tol: Convergence threshold of the duplication loop (see the module docstring).
+            Default ``5e-4``.
 
     Returns:
-        The Carlson symmetric form :math:`R_J`.
+        float: :math:`R_J(x, y, z, p)`.
     """
     # Taylor expansion coefficients
     c1 = 3.0 / 14.0
@@ -155,16 +177,17 @@ def RD(x: float, y: float, z: float, tol: float = 5e-4) -> float:
     Computes the reduced Carlson symmetric form of the
     elliptic integral of the second kind, :math:`R_D`.
 
-    It is a requirement that :math:`x+y > 0`.
+    It is a requirement that :math:`x+y > 0`. :math:`R_D(x, y, z) = R_J(x, y, z, z)`.
 
     Args:
-        x: First argument, :math:`x >= 0`.
-        y: Second argument, :math:`y >= 0`.
+        x: First argument, :math:`x \ge 0`.
+        y: Second argument, :math:`y \ge 0`.
         z: Third argument, :math:`z > 0`.
-        tol: Numerical tolerance parameter (defaults to 5e-4)
+        tol: Convergence threshold of the duplication loop (see the module docstring).
+            Default ``5e-4``.
 
     Returns:
-        The Carlson symmetric form :math:`R_D`.
+        float: :math:`R_D(x, y, z)`.
     """
 
     # Taylor expansion coefficients
@@ -216,15 +239,25 @@ def EllipK(k: float, tol: float = 5e-4) -> float:
     r"""
     Computes the complete elliptic integral of the first kind, :math:`K(k)`.
 
-    Switches to a polynomial approximation from Abramowitz & Stegun
-    for :math:`k > 1 - 10^{-10}`.
+    :math:`K(k) = R_F(0, 1 - k^2, 1)`, with :math:`k` the modulus. Switches to a
+    polynomial approximation from Abramowitz & Stegun (in :math:`1 - k^2`, with its
+    logarithmic term) for :math:`k > 1 - 10^{-10}`.
 
     Args:
-        k: The elliptic modulus, where `k \in [0, 1]`.
-        tol: Numerical tolerance parameter (defaults to 5e-4)
+        k: The elliptic modulus, :math:`k \in [0, 1]`.
+        tol: Convergence threshold of :func:`RF`. Default ``5e-4``.
 
     Returns:
-        The complete elliptic integral :math:`K(k)`.
+        float: :math:`K(k)`.
+
+    Raises:
+        ValueError: If :math:`k \notin [0, 1]`.
+
+    Example:
+        >>> import math
+        >>> from few.utils.elliptic import EllipK
+        >>> abs(EllipK(0.0) - math.pi / 2) < 1e-10
+        True
     """
     if k < 0 or k > 1:
         raise ValueError("Elliptic integral K(k) valid only for k in [0, 1].")
@@ -244,15 +277,18 @@ def EllipE(k: float, tol: float = 5e-4) -> float:
     r"""
     Computes the complete elliptic integral of the second kind, :math:`E(k)`.
 
-    Switches to a polynomial approximation from Abramowitz & Stegun
-    for :math:`k > 1 - 10^{-10}`.
+    :math:`E(k) = R_F(0, 1 - k^2, 1) - \tfrac{k^2}{3} R_D(0, 1 - k^2, 1)`. Switches to a
+    polynomial approximation from Abramowitz & Stegun for :math:`k > 1 - 10^{-10}`.
 
     Args:
-        k: The elliptic modulus, where `k \in [0, 1]`.
-        tol: Numerical tolerance parameter (defaults to 5e-4)
+        k: The elliptic modulus, :math:`k \in [0, 1]`.
+        tol: Convergence threshold of :func:`RF` / :func:`RD`. Default ``5e-4``.
 
     Returns:
-        The complete elliptic integral :math:`E(k)`.
+        float: :math:`E(k)`.
+
+    Raises:
+        ValueError: If :math:`k \notin [0, 1]`.
     """
     if k < 0 or k > 1:
         raise ValueError("Elliptic integral E(k) valid only for k in [0, 1].")
@@ -273,13 +309,19 @@ def EllipPi(n: float, k: float, tol: float = 5e-4) -> float:
     r"""
     Computes the complete elliptic integral of the third kind, :math:`\Pi(n, k)`.
 
+    :math:`\Pi(n, k) = R_F(0, 1 - k^2, 1) + \tfrac{n}{3} R_J(0, 1 - k^2, 1, 1 - n)` (see
+    the module docstring for the convention).
+
     Args:
-        n: The characteristic.
-        k: The elliptic modulus, where `k \in [0, 1]`.
-        tol: Numerical tolerance parameter (defaults to 5e-4)
+        n: The characteristic, :math:`n < 1`.
+        k: The elliptic modulus, :math:`k \in [0, 1]`.
+        tol: Convergence threshold of :func:`RF` / :func:`RJ`. Default ``5e-4``.
 
     Returns:
-        The complete elliptic integral :math:`\Pi(n, k)`.
+        float: :math:`\Pi(n, k)`.
+
+    Raises:
+        ValueError: If :math:`k \notin [0, 1]`.
     """
     if k < 0 or k > 1:
         raise ValueError("Elliptic integral Pi(n, k) valid only for k in [0, 1].")

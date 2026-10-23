@@ -3,6 +3,12 @@
 To update the documentation, add or edit pages in `.rst`(reStructuredText) or `*.md` (markdown) format
 within the `docs/source` directory. Remember to add those new files in the table of content in `docs/source/index.rst`.
 
+The API pages are built with `sphinx.ext.autodoc` and `sphinx.ext.napoleon` from the docstrings (Google style:
+`Args:`, `Returns:`, `Raises:`, `Example:` sections). The physics modules are documented in the `user/` pages
+(`main.rst`, `traj.rst`, `amp.rst`, `sum.rst`, `util.rst`), the infrastructure modules in `dev/api.md`.
+A new public module must be added to one of these pages; members that should not be rendered
+(legacy or broken helpers) are listed in the `:exclude-members:` option of their `automodule` directive.
+
 Note that whenever you open a Pull Request on the project [main repository](https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms),
 the documentation will be automatically built and deployed to `org.readthedocs.build` (see the exact link automatically defined at the end of your PR descreiption).
 This lets you check
@@ -37,12 +43,14 @@ You may then open the documentation in your browser at `http://localhost:8000/in
 
 ### Tutorials
 
-By default, when building the documentation locally, notebook tutorials are executed if you have `ipykernel` installed, and errors on execution are ignored.
+By default, when building the documentation locally (`nbsphinx_execute = "auto"` in `docs/source/conf.py`), only the
+notebook tutorials that contain no stored outputs are executed (this needs `ipykernel`), and errors on execution are ignored.
 
 You may force their execution by adding the option `--define nbsphinx_execute=always` to the `sphinx-build` command.
 You may also require the tutorials to run without error by adding the option `--define nbsphinx_allow_errors=0`.
 
-When ReadTheDocs build the documentation, tutorials are always executed and documentation fails to build on errors.
+When ReadTheDocs builds the documentation (the `READTHEDOCS` environment variable is set), tutorials are never executed:
+they are rendered with their stored outputs, and errors are not allowed.
 
 ### Code examples
 
@@ -89,6 +97,8 @@ build succeeded.
 
 ## Add a tutorial
 
-Tutorials (and example notebooks in general) are added to the `docs/source/tutorial` directory in the `-- Copy example notebook --` section of `docs/source/conf.py`. Adapt it to your needs to add supplementary tutorials and example notebooks.
+Tutorials (and example notebooks in general) live in the `examples` directory. The `-- Copy example notebook --` section of
+`docs/source/conf.py` symlinks the listed ones into the `docs/source/tutorial` directory. Adapt it to your needs to add
+supplementary tutorials and example notebooks.
 
 Remember to also declare these new notebooks in the documentation index (`index.rst`).

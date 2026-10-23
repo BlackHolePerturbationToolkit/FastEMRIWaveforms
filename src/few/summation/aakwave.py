@@ -1,3 +1,5 @@
+"""AAK (Augmented Analytic Kludge) summation module (:class:`AAKSummation`)."""
+
 # AAK summation module for Fast EMRI Waveforms
 
 import numpy as np
@@ -20,11 +22,14 @@ class AAKSummation(Pn5AAK, SummationBase):
     trajectory to the Analytic Kludge basis as performed for the Augmented
     Analytic Kludge model. Please see
     `the AAK paper <https://arxiv.org/abs/1510.06245>`_ for more information.
+    The backend kernel ``pyWaveform`` builds the waveform at every output sample from the
+    trajectory's DOP853 dense-output coefficients.
 
-    args:
-        **kwargs: Optional keyword arguments for the base classes:
-            :class:`few.utils.baseclasses.Pn5AAK`.
-            :class:`few.utils.baseclasses.SummationBase`.
+    Args:
+        force_backend: Backend name or object (see
+            :class:`~few.utils.baseclasses.FewBackendConsumer`). Default ``None``.
+        **kwargs: Forwarded to :class:`~few.summation.base.SummationBase` (``pad_output``,
+            ``odd_len``, ``output_type``).
     """
 
     def __init__(self, force_backend: BackendLike = None, **kwargs):
@@ -33,11 +38,12 @@ class AAKSummation(Pn5AAK, SummationBase):
 
     @property
     def waveform_generator(self):
-        """obj: Compiled CPU/GPU that performs the AAK waveform generation."""
+        """callable: The backend's compiled AAK kernel (``pyWaveform`` of ``pyAAK``)."""
         return self.backend.pyWaveform
 
     @classmethod
     def supported_backends(cls):
+        """Backend preference order: ``["cuda13x", "cuda12x", "cuda11x", "cpu"]``."""
         return cls.GPU_RECOMMENDED()
 
     def sum(
@@ -62,54 +68,43 @@ class AAKSummation(Pn5AAK, SummationBase):
     ) -> None:
         r"""Compute an AAK waveform from an input trajectory.
 
-        This function performs the AAK waveform summation and fills the waveform array in-place.
+        This function performs the AAK waveform summation and fills :attr:`waveform`
+        in place. ``qS`` and ``qK`` within ``1e-6`` of a pole are moved ``1e-6`` away (with a
+        warning). For an equatorial trajectory (:math:`|Y| = 1` at the first knot) the
+        :math:`\Phi_\theta` coefficients are replaced by the :math:`\Phi_\phi` ones, in place
+        in ``interp_coeffs``.
 
         **Please note:** the 5PN trajectory and AAK waveform take the parameter
         :math:`Y\equiv\cos{\iota}=L/\sqrt{L^2 + Q}` rather than :math:`x_I` as is accepted
-        for relativistic waveforms and in the generic waveform interface discussed above.
-        The generic waveform interface directly converts :math:`x_I` to :math:`Y`.
+        for relativistic waveforms.
 
-        args:
-            tvec: Array containing the time values
-                associated with the sparse trajectory.
-            m1: Mass of massive black hole in solar masses.
-            a: Dimensionless spin of massive black hole.
-            p: Array containing the trajectory for values of
-                the semi-latus rectum.
-            e: Array containing the trajectory for values of
-                the eccentricity.
-            Y: Array containing the trajectory for values of
-                :math:`\cos{\iota}`. **Note**: This value is different from :math:`x_I`
-                used in the relativistic waveforms.
+        Args:
+            tvec: Trajectory knot times in seconds.
+            m1: Mass in solar masses that sets the frequency scale of the kludge;
+                :class:`~few.waveform.base.AAKWaveformBase` passes the total mass
+                :math:`M = m_1 + m_2`.
+            a: Dimensionless spin of the primary.
             dist: Luminosity distance in Gpc.
-            Phi_phi: Array containing the trajectory for
-                :math:`\Phi_\phi`.
-            Phi_theta: Array containing the trajectory for
-                :math:`\Phi_\theta`.
-            Phi_r: Array containing the trajectory for
-                :math:`\Phi_r`.
-            m2: Mass of compact object in solar masses.
-            qS: Sky location polar angle in ecliptic
-                coordinates.
-            phiS: Sky location azimuthal angle in
-                ecliptic coordinates.
-            qK: Initial BH spin polar angle in ecliptic
-                coordinates.
-            phiK: Initial BH spin azimuthal angle in
-                ecliptic coordinates.
-            nmodes: Number of modes to analyze. This is determined by
-                the eccentricity.
-            *args (tuple, placeholder): Added to create flexibility when calling different
-                amplitude modules. It is not used.
-            mich: If True, produce waveform with
-                long-wavelength response approximation (hI, hII). Please
-                note this is not TDI. If False, return hplus and hcross.
-                Default is False.
-            dt: Time between samples in seconds
-                (inverse of sampling frequency). Default is 10.0.
-            **kwargs: Added to create flexibility when calling different
-                amplitude modules. It is not used.
-
+            m2: Mass in solar masses that sets the amplitude scale;
+                :class:`~few.waveform.base.AAKWaveformBase` passes the reduced mass
+                :math:`\mu = m_1 m_2 / (m_1 + m_2)`.
+            qS: Sky polar angle in rad, SSB ecliptic frame by FEW convention.
+            phiS: Sky azimuthal angle in rad.
+            qK: Polar angle of the primary's spin direction in rad.
+            phiK: Azimuthal angle of the primary's spin direction in rad.
+            nmodes: Number of harmonics to sum (set from the eccentricity by the caller).
+            interp_t: Knot times of the trajectory spline in seconds
+                (``integrator_spline_t``), shape ``(N_p,)``.
+            interp_coeffs: DOP853 dense-output coefficients of
+                ``(p, e, Y, Phi_phi, Phi_theta, Phi_r)`` with the phase rows in rad, shape
+                ``(N_p - 1, 6, 8)``; modified in place for equatorial trajectories.
+            *args: Accepted and ignored.
+            mich: If ``True``, produce the long-wavelength response channels
+                :math:`h_I, h_{II}` (not TDI); if ``False`` (default), :math:`h_+, h_\times`.
+            dt: Sampling interval in seconds. Default ``10.0``.
+            integrate_backwards: If ``True``, shift ``interp_t`` by
+                ``tvec[-1] - int(tvec[-1] / dt) * dt``. Default ``False``.
+            **kwargs: Accepted and ignored.
         """
 
         fill_val = 1e-6

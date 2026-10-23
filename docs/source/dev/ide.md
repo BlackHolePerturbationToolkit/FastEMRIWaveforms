@@ -54,6 +54,8 @@ Successfully installed ... fastemriwaveforms-1.5.1.post1.dev47+g5a3a237.d2025021
 ```
 
 Note that this command also installs the dependencies required to run the tests and to build the documentation.
+`few` also imports `gpubackendtools`, which is not listed in the `pyproject.toml` dependencies: install
+GPUBackendTools in the same environment if pip does not pull it in.
 
 Whenever you want to check tests are correctly running, simply run:
 
@@ -116,7 +118,8 @@ You can make the recompilation verbose by setting the environment variable `SKBU
 (few-venv) FastEMRIWaveforms$ export SKBUILD_EDITABLE_VERBOSE=1
 (few-venv) FastEMRIWaveforms$ python
 >>> import few
->>> few.utils.globals.get_backend("cpu")  # Force loading the CPU backend
+>>> from gpubackendtools import get_backend
+>>> get_backend("few_cpu")  # Force loading the CPU backend
 ...
 Running cmake --build & --install in /workspaces/FastEMRIWaveforms/build/editable
 Change Dir: '/workspaces/FastEMRIWaveforms/build/editable'
@@ -124,7 +127,7 @@ Change Dir: '/workspaces/FastEMRIWaveforms/build/editable'
 Run Build Command(s): /home/few/.local/few-venv/bin/ninja -v
 ninja: no work to do.
 ...
-<few.cutils.CpuBackend object at 0xffffacae3890>
+<few.cutils.FEWCpuBackend object at 0xffffacae3890>
 >>>
 ```
 

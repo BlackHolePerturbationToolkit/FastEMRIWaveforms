@@ -1,3 +1,46 @@
+r"""Kerr geodesic quantities: separatrix, fundamental frequencies, constants of motion.
+
+All quantities are dimensionless, in geometric units (:math:`G = c = 1`) with lengths and
+times in units of the central mass :math:`M`: ``p`` is the semi-latus rectum in units of
+:math:`M`, the frequencies are :math:`M\Omega_i` with respect to Boyer-Lindquist coordinate
+time, and :math:`(E, L_z, Q)` are the energy, axial angular momentum and Carter constant per
+unit mass :math:`\mu` of the secondary (:math:`E/\mu`, :math:`L_z/(\mu M)`,
+:math:`Q/(\mu M)^2`). To convert a frequency to rad/s divide by :math:`M\,T_\odot`
+(``M * MTSUN_SI`` with ``M`` in solar masses, see :mod:`few.utils.constants`).
+
+Main entry points (numba-compiled kernels on the CPU; the two ``use_gpu`` paths run
+``numba.cuda`` kernels on cupy arrays):
+
+- :func:`get_separatrix`: separatrix :math:`p_{\rm sep}(a, e, x_I)` (Stein & Warburton 2020).
+- :func:`get_fundamental_frequencies`: :math:`(\Omega_\phi, \Omega_\theta, \Omega_r)`
+  (Schmidt 2002). Called once per right-hand-side evaluation by
+  :class:`~few.trajectory.ode.flux.KerrEccEqFlux` (scalar path).
+- :func:`get_kerr_geo_constants_of_motion` and its inverse :func:`ELQ_to_pex`.
+- :func:`get_fundamental_frequencies_spin_corrections`: corrections linear in the spin of
+  the secondary (equatorial orbits).
+
+Inclination and spin convention: ``x`` is :math:`x_I = \cos I`, the cosine of the orbital
+inclination (not :math:`Y = \cos\iota`, see :mod:`few.utils.mappings.pn`); ``x = 1`` is
+prograde equatorial and ``x = -1`` retrograde equatorial. For equatorial orbits a retrograde
+orbit may be passed either as ``(a > 0, x = -1)`` or as ``(a < 0, x = +1)``, the convention
+the FEW waveforms use internally (see
+:meth:`~few.utils.baseclasses.KerrEccentricEquatorial.sanity_check_init`): the separatrix and
+the energy depend only on :math:`|a|` and the sign of :math:`a x`, while :math:`L_z` and
+:math:`\Omega_\phi` take the sign of ``x``. :math:`\Omega_\theta` and :math:`\Omega_r` are
+returned non-negative. For inclined orbits (:math:`|x| < 1`) use ``a >= 0`` and give the
+orbital direction by the sign of ``x``: :func:`get_separatrix` uses only :math:`|a|` there.
+
+Array conventions of the public functions: one argument decides between the scalar path
+(numba scalar kernel, Python floats out) and the array path (1-D arrays out); on the array
+path the spin ``a`` (and, in :func:`get_separatrix`, also ``x``) is broadcast from a scalar,
+the other arrays must share one length.
+
+Example:
+    >>> from few.utils.geodesic import get_separatrix
+    >>> get_separatrix(0.0, 0.5, 1.0)
+    7.0
+"""
+
 from math import acos, cos, pow, sqrt
 from typing import Union
 
@@ -11,9 +54,14 @@ from ..utils.utility import _brentq_jit, _solveCubic
 
 @njit(fastmath=False)
 def _ELQ_to_pex_kernel_inner(a, E, Lz, Q):
+    """Scalar kernel of :func:`ELQ_to_pex`: one orbit's ``(E, Lz, Q)`` to ``(p, e, xI)``.
+
+    ``Q < 1e-14`` is treated as equatorial (roots of the radial cubic, ``xI = +1`` if
+    ``Lz > 0`` else ``-1``); otherwise the radial quartic is solved in closed form.
+    """
     # implements the mapping from orbit integrals
-    # (E, Lz, Q) to orbit geometry (p, e, xI).  Also provides the
-    # roots r3 and r4 of the Kerr radial geodesic function.
+    # (E, Lz, Q) to orbit geometry (p, e, xI). The original code also provided the
+    # roots r3 and r4 of the Kerr radial geodesic function; they are not returned here.
 
     # Scott A. Hughes (sahughes@mit.edu) code extracted from Gremlin
     # and converted to standalone form 13 Jan 2024.
@@ -100,6 +148,7 @@ def _ELQ_to_pex_kernel_inner(a, E, Lz, Q):
 
 @njit(fastmath=False)
 def _ELQ_to_pex_kernel(p, e, xI, a, E, Lz, Q):
+    """Array loop of :func:`_ELQ_to_pex_kernel_inner`; fills ``p``, ``e``, ``xI`` in place."""
     for i in range(len(p)):
         p[i], e[i], xI[i] = _ELQ_to_pex_kernel_inner(a[i], E[i], Lz[i], Q[i])
 
@@ -110,21 +159,37 @@ def ELQ_to_pex(
     Lz: Union[float, np.ndarray],
     Q: Union[float, np.ndarray],
 ) -> tuple[Union[float, np.ndarray]]:
-    """Convert from Kerr constants of motion to orbital elements.
+    r"""Convert the Kerr constants of motion :math:`(E, L_z, Q)` to :math:`(p, e, x_I)`.
 
-    arguments:
-        a: Dimensionless spin of massive
-            black hole. If other parameters are arrays and the spin is scalar,
-            it will be cast to a 1D array.
-        E: Values of energy,
-            :math:`E`.
-        Lz: Values of angular momentum,
-            :math:`L_z`.
-        Q: Values of the Carter constant,
-            :math:`Q`.
+    The inverse of :func:`get_kerr_geo_constants_of_motion`. The turning points
+    :math:`r_a, r_p` are the roots of the radial potential (a cubic for equatorial orbits,
+    a quartic solved in closed form otherwise); then :math:`p = 2 r_a r_p / (r_a + r_p)`,
+    :math:`e = (r_a - r_p) / (r_a + r_p)`. Orbits with ``Q < 1e-14`` are treated as
+    equatorial and get ``xI = +1`` if ``Lz > 0``, else ``-1``. Kernel by S. A. Hughes
+    (extracted from Gremlin).
 
-    returns:
-        Tuple of (OmegaPhi, OmegaTheta, OmegaR). These are 1D arrays or scalar values depending on inputs.
+    Args:
+        a: Dimensionless spin of the central black hole. Scalar (broadcast to the length of
+            ``E`` on the array path) or an array of that length.
+        E: Energy per unit mass. A scalar selects the scalar path (all inputs scalars); an
+            array selects the array path.
+        Lz: Axial angular momentum per unit mass, in units of :math:`M`; same length as ``E``.
+        Q: Carter constant per unit mass squared, in units of :math:`M^2`; same length as
+            ``E``.
+
+    Returns:
+        tuple: ``(p, e, xI)``: ``p`` in units of :math:`M`, the eccentricity, and
+        :math:`x_I = \cos I`. Floats on the scalar path, else 1-D ``np.ndarray`` of the
+        length of ``E``.
+
+    Raises:
+        AssertionError: If ``a`` is an array of another length than ``E``.
+
+    Example:
+        >>> from few.utils.geodesic import ELQ_to_pex, get_kerr_geo_constants_of_motion
+        >>> E, L, Q = get_kerr_geo_constants_of_motion(0.9, 10.0, 0.3, 0.5)
+        >>> [round(v, 10) for v in ELQ_to_pex(0.9, E, L, Q)]
+        [10.0, 0.3, 0.5]
     """
     # check if inputs are scalar or array
     if not hasattr(E, "__len__"):
@@ -156,6 +221,11 @@ def ELQ_to_pex(
 
 @njit(fastmath=False)
 def _KerrGeoRadialRoots(a, p, e, En, Q):
+    """Return the radial roots ``(r1, r2, r3, r4)`` of a bound Kerr geodesic.
+
+    ``r1 = p/(1 - e)`` (apoapsis) and ``r2 = p/(1 + e)`` (periapsis); ``r3 >= r4`` follow
+    from the energy ``En`` and the Carter constant ``Q``.
+    """
     r1 = p / (1 - e)
     r2 = p / (1 + e)
     AplusB = (2) / (1 - (En * En)) - (r1 + r2)
@@ -168,6 +238,12 @@ def _KerrGeoRadialRoots(a, p, e, En, Q):
 
 @njit(fastmath=False)
 def _KerrGeoMinoFrequencies_kernel(a, p, e, x):
+    """Mino-time frequencies of a generic (inclined, ``|x| < 1``) orbit.
+
+    Returns:
+        tuple[float, float, float, float]: ``(Gamma, Upsilon_phi, |Upsilon_theta|,
+        Upsilon_r)``; the coordinate-time frequencies are ``Upsilon_i / Gamma``.
+    """
     M = 1.0
 
     En = _KerrGeoEnergy(a, p, e, x)
@@ -260,6 +336,12 @@ def _KerrGeoMinoFrequencies_kernel(a, p, e, x):
 
 @njit(fastmath=False)
 def _KerrCircularMinoFrequencies_kernel(a, p):
+    """Mino-time frequencies of a circular equatorial orbit.
+
+    Returns ``(Gamma, Upsilon_phi, Upsilon_theta, Upsilon_r)``. ``a`` is the signed spin
+    ``a * x`` (the caller folds ``x = +-1`` in and multiplies ``Upsilon_phi`` by ``x``
+    afterwards).
+    """
     CapitalUpsilonR = sqrt(
         (
             p
@@ -284,6 +366,12 @@ def _KerrCircularMinoFrequencies_kernel(a, p):
 
 @njit(fastmath=False)
 def _SchwarzschildGeoCoordinateFrequencies_kernel(p, e):
+    r"""Coordinate-time frequencies of an eccentric Schwarzschild orbit (closed form).
+
+    Returns:
+        tuple[float, float, float]: ``(Omega_phi, Omega_phi, Omega_r)``
+        (:math:`\Omega_\theta = \Omega_\phi` in Schwarzschild), unsigned.
+    """
     qty = sqrt(4 * e / (p - 6.0 + 2 * e))
     EllipE_eval = EllipE(qty)
     EllipK_eval = EllipK(qty)
@@ -349,6 +437,12 @@ def _SchwarzschildGeoCoordinateFrequencies_kernel(p, e):
 
 @njit(fastmath=False)
 def _KerrGeoEquatorialMinoFrequencies_kernel(a, p, e, x):
+    """Mino-time frequencies of an eccentric equatorial orbit (``x = +-1``).
+
+    Returns ``(Gamma, Upsilon_phi, |Upsilon_theta|, Upsilon_r)``; ``Upsilon_phi`` carries
+    the sign of ``x``. The ``1/(r3 - rp)`` terms are skipped when their numerator is
+    exactly zero.
+    """
     M = 1.0
 
     En = _KerrGeoEnergy(a, p, e, x)
@@ -428,6 +522,12 @@ def _KerrGeoEquatorialMinoFrequencies_kernel(a, p, e, x):
 
 @njit(fastmath=False)
 def _KerrGeoCoordinateFrequencies_kernel_inner(a, p, e, x):
+    """Scalar kernel of :func:`get_fundamental_frequencies`.
+
+    Dispatches on the orbit type: generic (``|x| < 1``), eccentric equatorial
+    (``e > 0``, ``|x| = 1``), circular equatorial (``e = 0``, ``|x| = 1``) or Schwarzschild
+    (``a = 0``), and returns ``(Omega_phi, Omega_theta, Omega_r)`` = ``Upsilon_i / Gamma``.
+    """
     if a != 0:
         if e > 0 or abs(x) < 1:
             if abs(x) < 1:
@@ -452,6 +552,7 @@ def _KerrGeoCoordinateFrequencies_kernel_inner(a, p, e, x):
 
 @njit(fastmath=False)
 def _KerrGeoCoordinateFrequencies_kernel_cpu(OmegaPhi, OmegaTheta, OmegaR, a, p, e, x):
+    """CPU array loop of the frequency kernel; fills the three output arrays in place."""
     for i in range(len(OmegaPhi)):
         OmegaPhi[i], OmegaTheta[i], OmegaR[i] = (
             _KerrGeoCoordinateFrequencies_kernel_inner(a[i], p[i], e[i], x[i])
@@ -460,6 +561,7 @@ def _KerrGeoCoordinateFrequencies_kernel_cpu(OmegaPhi, OmegaTheta, OmegaR, a, p,
 
 @cuda.jit
 def _KerrGeoCoordinateFrequencies_kernel_gpu(OmegaPhi, OmegaTheta, OmegaR, a, p, e, x):
+    """``numba.cuda`` kernel of the frequency loop: one thread per orbit (``use_gpu=True``)."""
     i = cuda.grid(1)
     if i < OmegaPhi.size:
         OmegaPhi[i], OmegaTheta[i], OmegaR[i] = (
@@ -474,26 +576,43 @@ def get_fundamental_frequencies(
     x: Union[float, np.ndarray],
     use_gpu: bool = False,
 ) -> tuple[Union[float, np.ndarray]]:
-    r"""Get dimensionless fundamental frequencies.
+    r"""Return the dimensionless fundamental frequencies of a Kerr geodesic.
 
-    Determines fundamental frequencies in generic Kerr from
-    `Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_.
+    Computes the Boyer-Lindquist coordinate-time frequencies
+    :math:`M(\Omega_\phi, \Omega_\theta, \Omega_r)` in generic Kerr as the ratios
+    :math:`\Upsilon_i / \Gamma` of the Mino-time frequencies
+    (`Schmidt 2002 <https://arxiv.org/abs/gr-qc/0202090>`_), with dedicated kernels for
+    eccentric equatorial (``|x| = 1``), circular equatorial (``e = 0``, ``|x| = 1``) and
+    Schwarzschild (``a = 0``, closed form) orbits. :math:`\Omega_\phi` takes the sign of
+    ``x`` (see the module docstring for the retrograde conventions); :math:`\Omega_\theta`
+    and :math:`\Omega_r` are non-negative. On the RUN path
+    :meth:`~few.trajectory.ode.flux.KerrEccEqFlux.evaluate_rhs` calls the scalar path once
+    per right-hand-side evaluation.
 
-    arguments:
-        a: Dimensionless spin of massive
-            black hole. If other parameters are arrays and the spin is scalar,
-            it will be cast to a 1D array.
-        p: Values of separation,
-            :math:`p`.
-        e: Values of eccentricity,
-            :math:`e`.
-        x: Values of cosine of the
-            inclination, :math:`x=\cos{I}`. Please note this is different from
-            :math:`Y=\cos{\iota}`.
+    Args:
+        a: Dimensionless spin of the central black hole. Scalar (broadcast to the length of
+            ``p`` on the array path) or an array of that length.
+        p: Semi-latus rectum in units of :math:`M`. A scalar selects the scalar path (all
+            inputs scalars); an array selects the array path.
+        e: Eccentricity; on the array path an array of the length of ``p`` (not broadcast).
+        x: :math:`x_I = \cos I`, the cosine of the inclination (not :math:`Y = \cos\iota`);
+            on the array path an array of the length of ``p`` (not broadcast).
+        use_gpu: Array path only: run the ``numba.cuda`` kernel on cupy arrays. Default
+            ``False``.
 
-    returns:
-        Tuple of (OmegaPhi, OmegaTheta, OmegaR). These are 1D arrays or scalar values depending on inputs.
+    Returns:
+        tuple: ``(OmegaPhi, OmegaTheta, OmegaR)``, dimensionless (:math:`M\Omega_i`; divide
+        by ``M * MTSUN_SI`` for rad/s). Floats on the scalar path, else 1-D arrays of the
+        length of ``p`` (numpy, or cupy with ``use_gpu=True``).
 
+    Raises:
+        AssertionError: If ``a`` is an array of another length than ``p``.
+
+    Example:
+        >>> from few.utils.geodesic import get_fundamental_frequencies
+        >>> OmegaPhi, OmegaTheta, OmegaR = get_fundamental_frequencies(0.9, 10.0, 0.3, 0.5)
+        >>> round(OmegaPhi, 8), round(OmegaTheta, 8), round(OmegaR, 8)
+        (0.02847803, 0.02703245, 0.02005317)
     """
     if use_gpu:
         import cupy as xp
@@ -537,21 +656,30 @@ def get_fundamental_frequencies(
 
 @njit(fastmath=False)
 def _P(r, a, En, xi):
+    """Helper of the spin corrections: ``En r^2 - a xi`` with ``xi = L_z - a En``."""
     return En * r * r - a * xi
 
 
 @njit(fastmath=False)
 def _deltaP(r, a, En, xi, deltaEn, deltaxi):
+    """Helper of the spin corrections: the secondary-spin correction of :func:`_P`."""
     return deltaEn * r * r - xi / r - a * deltaxi
 
 
 @njit(fastmath=False)
 def _deltaRt(r, am1, a0, a1, a2):
+    """Helper of the spin corrections: ``am1/r + a0 + a1 r + a2 r^2``."""
     return am1 / r + a0 + r * (a1 + r * a2)
 
 
 @njit(fastmath=False)
 def _KerrEqSpinFrequenciesCorrections_kernel_inner(a, p, e, x):
+    """Scalar secondary-spin corrections of an equatorial orbit.
+
+    Returns:
+        tuple[float, float]: ``(deltaOmegaPhi, deltaOmegaR)`` (two values; there is no
+        theta correction).
+    """
     M = 1.0
     En = _KerrGeoEnergy(a, p, e, x)
     xi = _KerrGeoAngularMomentum(a, p, e, x, En) - a * En
@@ -832,6 +960,10 @@ def _KerrEqSpinFrequenciesCorrections_kernel_inner(a, p, e, x):
 
 @njit(fastmath=False)
 def _KerrEqSpinFrequenciesCorrections_kernel(OmegaPhi, OmegaTheta, OmegaR, a, p, e, x):
+    """Array loop of the spin corrections; fills ``OmegaPhi`` and ``OmegaR`` in place.
+
+    ``OmegaTheta`` is left untouched.
+    """
     for i in range(len(OmegaPhi)):
         OmegaPhi[i], OmegaR[i] = _KerrEqSpinFrequenciesCorrections_kernel_inner(
             a[i], p[i], e[i], x[i]
@@ -844,25 +976,32 @@ def get_fundamental_frequencies_spin_corrections(
     e: Union[float, np.ndarray],
     x: Union[float, np.ndarray],
 ) -> tuple[Union[float, np.ndarray]]:
-    r"""Get the leading-order correction term to the fundamental frequencies due to the spin of the secondary compact object.
+    r"""Return the leading-order corrections to the frequencies from the secondary's spin.
 
-    Currently only supported for equatorial orbits.
+    The corrections :math:`\delta\Omega_\phi, \delta\Omega_r`, linear in the spin of the
+    secondary compact object, for equatorial orbits only. Not used elsewhere in FEW.
 
-    arguments:
-        a: Dimensionless spin of massive
-            black hole. If other parameters are arrays and the spin is scalar,
-            it will be cast to a 1D array.
-        p: Values of separation,
-            :math:`p`.
-        e: Values of eccentricity,
-            :math:`e`.
-        x: Values of cosine of the
-            inclination, :math:`x=\cos{I}`. Please note this is different from
-            :math:`Y=\cos{\iota}`.
+    Args:
+        a: Dimensionless spin of the central black hole. Scalar (broadcast to the length of
+            ``p``) or an array of that length.
+        p: Semi-latus rectum in units of :math:`M`; an array selects the array path.
+        e: Eccentricity, an array of the length of ``p`` (not broadcast).
+        x: :math:`x_I = \cos I`; every value must be ``+1`` or ``-1``.
 
-    returns:
-        Tuple of (OmegaPhi, OmegaTheta, OmegaR). These are 1D arrays or scalar values depending on inputs.
+    Returns:
+        tuple: ``(deltaOmegaPhi, OmegaTheta, deltaOmegaR)``, 1-D ``np.ndarray`` of the length
+        of ``p``; the middle entry is all zeros (no polar correction).
 
+    Raises:
+        AssertionError: If any ``|x| != 1``, or if ``a`` has another length than ``p``.
+
+    Warning:
+        The scalar path (scalar ``p``) unpacks three values from a kernel that returns two
+        and therefore fails with ``ValueError``; pass 1-D arrays.
+
+    Note:
+        The normalisation of the corrections (per unit of which secondary-spin parameter)
+        is not stated in the code; check the source derivation before use.
     """
 
     assert np.all(np.abs(x) == 1.0), "Currently only supported for equatorial orbits."
@@ -898,48 +1037,62 @@ def get_fundamental_frequencies_spin_corrections(
 
 @njit(fastmath=False)
 def _CapitalDelta(r, a):
+    r"""Kerr :math:`\Delta(r) = r^2 - 2r + a^2` (``M = 1``)."""
     return (r * r) - 2.0 * r + (a * a)
 
 
 @njit(fastmath=False)
 def _f(r, a, zm):
+    """Schmidt (2002) auxiliary function ``f(r)``; ``zm = sqrt(1 - x^2)``.
+
+    With :func:`_g`, :func:`_h`, :func:`_d` it gives the energy and angular momentum in
+    :func:`_KerrGeoEnergy` / :func:`_KerrGeoAngularMomentum`; the ``*dot`` variants are the
+    derivatives with respect to ``r`` (circular limit).
+    """
     return (r * r * r * r) + (a * a) * (r * (r + 2.0) + (zm * zm) * _CapitalDelta(r, a))
 
 
 @njit(fastmath=False)
 def _g(r, a, zm):
+    """Schmidt (2002) auxiliary function ``g(r) = 2 a r`` (see :func:`_f`)."""
     return 2.0 * a * r
 
 
 @njit(fastmath=False)
 def _h(r, a, zm):
+    """Schmidt (2002) auxiliary function ``h(r)`` (see :func:`_f`); singular at ``zm = 1``."""
     return r * (r - 2.0) + (zm * zm) / (1.0 - (zm * zm)) * _CapitalDelta(r, a)
 
 
 @njit(fastmath=False)
 def _d(r, a, zm):
+    """Schmidt (2002) auxiliary function ``d(r)`` (see :func:`_f`)."""
     return ((r * r) + (a * a) * (zm * zm)) * _CapitalDelta(r, a)
 
 
 @njit(fastmath=False)
 def _fdot(r, a, zm):
+    """``df/dr`` (see :func:`_f`)."""
     zm2 = zm * zm
     return 4.0 * (r * r * r) + (a * a) * (2.0 * r * (1.0 + zm2) + 2.0 * (1 - zm2))
 
 
 @njit(fastmath=False)
 def _gdot(r, a, zm):
+    """``dg/dr = 2 a`` (see :func:`_f`)."""
     return 2.0 * a
 
 
 @njit(fastmath=False)
 def _hdot(r, a, zm):
+    """``dh/dr`` (see :func:`_f`)."""
     zm2 = zm * zm
     return 2.0 * (r - 1.0) * (1.0 + zm2 / (1.0 - zm2))
 
 
 @njit(fastmath=False)
 def _ddot(r, a, zm):
+    """``dd/dr`` (see :func:`_f`)."""
     a2 = a * a
     zm2 = zm * zm
     return (
@@ -949,6 +1102,12 @@ def _ddot(r, a, zm):
 
 @njit(fastmath=False)
 def _KerrGeoEnergy(a, p, e, x):
+    """Energy per unit mass :math:`E` of a bound Kerr geodesic.
+
+    Branches: ``e < 1e-10`` uses the spherical-orbit formulas (A13-A17 of arXiv:2102.02713);
+    ``|x| = 1`` a closed equatorial form; otherwise the generic Schmidt (2002) solution.
+    Depends on ``a`` through ``a^2`` and the sign of ``a x`` only.
+    """
     zm = sqrt(1.0 - x * x)
     sgnax = 1 if a * x > 0 else -1
     if (
@@ -1025,6 +1184,7 @@ def _KerrGeoEnergy(a, p, e, x):
 
 @njit(fastmath=False)
 def _KerrGeoAngularMomentum(a, p, e, x, En):
+    """Axial angular momentum per unit mass :math:`L_z` (sign of ``x``), given the energy ``En``."""
     r1 = p / (1 - e)
 
     zm = sqrt(1 - (x * x))
@@ -1045,6 +1205,7 @@ def _KerrGeoAngularMomentum(a, p, e, x, En):
 
 @njit(fastmath=False)
 def _KerrGeoCarterConstant(a, p, e, x, En, L):
+    """Carter constant per unit mass squared, :math:`Q = (1 - x^2)(a^2(1 - E^2) + L_z^2/x^2)`."""
     zm = sqrt(1 - (x * x))
 
     return (zm * zm) * ((a * a) * (1 - (En * En)) + (L * L) / (1 - (zm * zm)))
@@ -1052,6 +1213,7 @@ def _KerrGeoCarterConstant(a, p, e, x, En, L):
 
 @njit(fastmath=False)
 def _KerrGeoConstantsOfMotion_kernel_inner(a, p, e, x):
+    """Scalar kernel of :func:`get_kerr_geo_constants_of_motion`: returns ``(E, L, Q)``."""
     E_out = _KerrGeoEnergy(a, p, e, x)
     L_out = _KerrGeoAngularMomentum(a, p, e, x, E_out)
     Q_out = _KerrGeoCarterConstant(a, p, e, x, E_out, L_out)
@@ -1060,6 +1222,7 @@ def _KerrGeoConstantsOfMotion_kernel_inner(a, p, e, x):
 
 @njit(fastmath=False)
 def _KerrGeoConstantsOfMotion_kernel(E_out, L_out, Q_out, a, p, e, x):
+    """Array loop of the constants-of-motion kernel; fills the outputs in place."""
     for i in range(len(p)):
         E_out[i], L_out[i], Q_out[i] = _KerrGeoConstantsOfMotion_kernel_inner(
             a[i], p[i], e[i], x[i]
@@ -1072,25 +1235,38 @@ def get_kerr_geo_constants_of_motion(
     e: Union[float, np.ndarray],
     x: Union[float, np.ndarray],
 ) -> tuple[Union[float, np.ndarray]]:
-    r"""Get Kerr constants of motion.
+    r"""Return the Kerr constants of motion :math:`(E, L_z, Q)` of a bound geodesic.
 
-    Determines the constants of motion: :math:`(E, L, Q)` associated with a
-    geodesic orbit in the generic Kerr spacetime.
+    Uses the Schmidt (2002) solution for the energy, then :math:`L_z` (sign of ``x``) and
+    :math:`Q = (1 - x^2)(a^2(1 - E^2) + L_z^2/x^2)`; nearly circular orbits
+    (``e < 1e-10``) use the spherical-orbit formulas. Polar orbits (``x = 0``) are not
+    supported (division by zero in the auxiliary functions). Inverse:
+    :func:`ELQ_to_pex`. Used by :class:`~few.trajectory.inspiral.EMRIInspiral` for
+    trajectories integrated in :math:`(E, L_z, Q)` and by
+    :func:`~few.utils.mappings.pn.xI_to_Y`.
 
-    arguments:
-        a: Dimensionless spin of massive
-            black hole. If other parameters are arrays and the spin is scalar,
-            it will be cast to a 1D array.
-        p: Values of separation,
-            :math:`p`.
-        e: Values of eccentricity,
-            :math:`e`.
-        x: Values of cosine of the
-            inclination, :math:`x=\cos{I}`. Please note this is different from
-            :math:`Y=\cos{\iota}`.
+    Args:
+        a: Dimensionless spin of the central black hole. Scalar (broadcast to the length of
+            ``p`` on the array path) or an array of that length.
+        p: Semi-latus rectum in units of :math:`M`. A scalar selects the scalar path (all
+            inputs scalars); an array selects the array path.
+        e: Eccentricity; an array of the length of ``p`` on the array path.
+        x: :math:`x_I = \cos I` (not :math:`Y = \cos\iota`); an array of the length of ``p``
+            on the array path.
 
-    returns:
-        tuple: Tuple of (E, L, Q). These are 1D arrays or scalar values depending on inputs.
+    Returns:
+        tuple: ``(E, L, Q)``: energy per unit mass, axial angular momentum per unit mass in
+        units of :math:`M`, Carter constant per unit mass squared in units of :math:`M^2`.
+        Floats on the scalar path, else 1-D ``np.ndarray`` of the length of ``p``.
+
+    Raises:
+        AssertionError: If ``a`` is an array of another length than ``p``.
+
+    Example:
+        >>> from few.utils.geodesic import ELQ_to_pex, get_kerr_geo_constants_of_motion
+        >>> E, L, Q = get_kerr_geo_constants_of_motion(0.9, 10.0, 0.3, 0.5)
+        >>> [round(v, 10) for v in ELQ_to_pex(0.9, E, L, Q)]
+        [10.0, 0.3, 0.5]
     """
 
     # check if inputs are scalar or array
@@ -1121,6 +1297,11 @@ def get_kerr_geo_constants_of_motion(
 
 @njit(fastmath=False)
 def _separatrix_polynomial_full(p, args):
+    """Separatrix polynomial of a generic orbit; ``args = (a, e, x)``, root at ``p_sep``.
+
+    Even in ``a`` and ``x``; the root bracket of :func:`_get_separatrix_kernel_inner` picks
+    the branch.
+    """
     a = args[0]
     e = args[1]
     x = args[2]
@@ -1268,6 +1449,7 @@ def _separatrix_polynomial_full(p, args):
 
 @njit(fastmath=False)
 def _separatrix_polynomial_polar(p, args):
+    """Separatrix polynomial of a polar orbit (``x = 0``); ``args = (a, e)``."""
     a = args[0]
     e = args[1]
     return (
@@ -1285,6 +1467,11 @@ def _separatrix_polynomial_polar(p, args):
 
 @njit(fastmath=False)
 def _separatrix_polynomial_equat(p, args):
+    """Separatrix polynomial of an equatorial orbit; ``args = (a, e)``.
+
+    Depends on ``a^2`` only: the prograde and retrograde roots are separated by the
+    bracket.
+    """
     a = args[0]
     e = args[1]
     return (
@@ -1294,11 +1481,17 @@ def _separatrix_polynomial_equat(p, args):
     )
 
 
+# lower end of the root bracket of the polar separatrix, 1 + sqrt(3) + sqrt(3 + 2 sqrt(3))
+# (~5.27); the upper end is 8
 _POLAR_PSEP_X_LO = 1.0 + sqrt(3.0) + sqrt(3.0 + 2.0 * sqrt(3.0))
 
 
 @njit(fastmath=False)
 def _get_separatrix_kernel_inner(a: float, e: float, x: float, tol: float = 1e-13):
+    """Scalar kernel of :func:`get_separatrix` (the bracketed Brent root finds).
+
+    Also called directly by :mod:`few.trajectory.ode.flux` inside numba code.
+    """
     if a == 0:
         # Schwarzschild
         return 6 + 2 * e
@@ -1350,6 +1543,7 @@ def _get_separatrix_kernel_inner(a: float, e: float, x: float, tol: float = 1e-1
 def _get_separatrix_kernel_cpu(
     p_sep: np.ndarray, a: np.ndarray, e: np.ndarray, x: np.ndarray, tol: float = 1e-13
 ):
+    """CPU array loop of the separatrix kernel; fills ``p_sep`` in place."""
     for i in range(len(a)):
         p_sep[i] = _get_separatrix_kernel_inner(a[i], e[i], x[i], tol=tol)
 
@@ -1358,6 +1552,7 @@ def _get_separatrix_kernel_cpu(
 def _get_separatrix_kernel_gpu(
     p_sep: np.ndarray, a: np.ndarray, e: np.ndarray, x: np.ndarray, tol: float = 1e-13
 ):
+    """``numba.cuda`` kernel of the separatrix loop: one thread per orbit (``use_gpu=True``)."""
     i = cuda.grid(1)
     if i < len(a):
         p_sep[i] = _get_separatrix_kernel_inner(a[i], e[i], x[i], tol=tol)
@@ -1370,25 +1565,56 @@ def get_separatrix(
     tol: float = 1e-13,
     use_gpu: bool = False,
 ) -> Union[float, np.ndarray]:
-    r"""Get separatrix in generic Kerr.
+    r"""Return the separatrix :math:`p_{\rm sep}(a, e, x_I)` of bound Kerr orbits.
 
-    Determines separatrix in generic Kerr from
-    `Stein & Warburton 2020 <https://arxiv.org/abs/1912.07609>`_.
+    The separatrix is the semi-latus rectum below which a geodesic plunges
+    (`Stein & Warburton 2020 <https://arxiv.org/abs/1912.07609>`_). It is the root of a
+    polynomial in ``p``, found by Brent's method
+    (:func:`~few.utils.utility._brentq_jit`) in a bracket chosen by the orbit type:
 
-    arguments:
-        a: Dimensionless spin of massive
-            black hole. If other parameters are arrays and the spin is scalar,
-            it will be cast to a 1D array.
-        e: Values of eccentricity,
-            :math:`e`.
-        x: Values of cosine of the
-            inclination, :math:`x=\cos{I}`. Please note this is different from
-            :math:`Y=\cos{\iota}`.
-        tol: Tolerance for root-finding. Default is 1e-13.
+    - ``a == 0``: :math:`6 + 2e` (Schwarzschild), no root finding;
+    - ``|x| == 1`` and ``a x > 0`` (prograde equatorial): bracket ``[1 + e, 6 + 2e]``;
+    - ``|x| == 1`` and ``a x < 0`` (retrograde equatorial): bracket
+      ``[6 + 2e, 5 + e + 4 sqrt(1 + e)]``;
+    - otherwise the polar separatrix is found first (returned for ``x == 0``), then the
+      generic polynomial is solved between the prograde equatorial and the polar values
+      (``x > 0``), or between the polar value and ``12`` (``x < 0``).
 
-    returns:
-        Separatrix value with shape based on input shapes.
+    A retrograde equatorial orbit may be given as ``(a > 0, x = -1)`` or ``(a < 0, x = 1)``
+    (same result). For ``|x| < 1`` only :math:`|a|` enters; the orbital direction is the
+    sign of ``x``. Production callers: the flux trajectory
+    (:class:`~few.trajectory.ode.flux.KerrEccEqFlux`, buffer and grid checks), the
+    amplitude and flux grid maps of :mod:`few.utils.mappings.kerrecceq`, and the LAT EMRI
+    domain mask.
 
+    Args:
+        a: Dimensionless spin of the central black hole. Scalar (broadcast to the length of
+            ``e`` on the array path) or an array of that length.
+        e: Eccentricity. A scalar selects the scalar path (``a`` and ``x`` must then be
+            scalars too); an array selects the array path.
+        x: :math:`x_I = \cos I`, the cosine of the inclination (not
+            :math:`Y = \cos\iota`). Scalar (broadcast) or an array of the length of ``e``.
+        tol: Root-finding tolerance (see :func:`~few.utils.utility._brentq_jit`). Default
+            ``1e-13``.
+        use_gpu: Array path only: run the ``numba.cuda`` kernel on cupy arrays. Default
+            ``False``.
+
+    Returns:
+        float or np.ndarray: :math:`p_{\rm sep}` in units of :math:`M`: a float on the
+        scalar path, otherwise a 1-D float array (cupy with ``use_gpu=True``) of the length
+        of ``e``.
+
+    Raises:
+        AssertionError: If the array lengths of ``a``, ``e``, ``x`` differ.
+        ValueError: From the root finder, if the polynomial has the same sign at both ends
+            of the bracket.
+
+    Example:
+        >>> from few.utils.geodesic import get_separatrix
+        >>> get_separatrix(0.0, 0.5, 1.0)
+        7.0
+        >>> round(get_separatrix(0.9, 0.3, 0.5), 10)
+        4.1009081898
     """
     # determines shape of input
     if not hasattr(e, "__len__"):

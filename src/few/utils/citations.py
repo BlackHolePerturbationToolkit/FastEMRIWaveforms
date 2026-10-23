@@ -1,11 +1,14 @@
 # Collection of citations for modules in FastEMRIWaveforms package
 
-"""
-:code:`few.utils.citations`:
+"""Citations of the FEW modules.
 
-This module is used to collect citations for all modules in the package. This
-module is then imported to add citations to module classes using their :code:`citation`
-attribute.
+The references are read from the package's ``CITATION.cff`` (validated against the bundled
+CFF 1.2.0 JSON schema) into a :class:`CitationRegistry` of :class:`ArticleReference` /
+:class:`SoftwareReference` models. Classes derived from :class:`Citable` (the trajectory
+modules through :class:`~few.trajectory.base.TrajectoryBase`, and
+:class:`~few.utils.baseclasses.Pn5AAK`) list their keys (:class:`REFERENCE`) in
+``module_references`` and return them as BibTeX with ``citation()``; several other modules
+define ``module_references`` as well. The ``few_citations`` console script prints them.
 """
 
 import abc
@@ -18,11 +21,15 @@ from few.utils.exceptions import InvalidInputFile
 
 
 def _hyphen_replace(field: str) -> str:
+    """Alias generator: ``family_names`` -> ``family-names`` (the CFF key style)."""
     return field.replace("_", "-")
 
 
 class HyphenUnderscoreAliasModel(BaseModel):
-    """Pydantic model were hyphen replace underscore in field names."""
+    """Pydantic model whose fields are read from hyphenated keys (``family-names``).
+
+    Unknown keys are ignored and instances are frozen.
+    """
 
     class Config:
         alias_generator = _hyphen_replace
@@ -88,15 +95,15 @@ class ArticleReference(ReferenceABC):
 
     @property
     def arxiv_preprint(self) -> Optional[ArxivIdentifier]:
-        """
-        Detect an arXiv identifier if any.
+        """The first arXiv identifier of the article, or ``None``.
 
-        an arXiv identifier is:
-        - an identifier of type "other"
-        - which starts with "arxiv:" (case insensitive)
-        - whose second part is either:
-          - The arXiv reference (e.g. "arxiv:1912.07609")
-          - The primary class followed by '/' and the reference (e.g. "arxiv:gr-qc/1912.07609")
+        An arXiv identifier is an identifier of type ``"other"`` whose value starts with
+        ``"arxiv:"`` (case-insensitive) and continues with either:
+
+        - the arXiv reference (e.g. ``"arxiv:1912.07609"``), or
+        - the primary class, ``/`` and the reference (e.g. ``"arxiv:gr-qc/1912.07609"``).
+
+        The returned reference and class are lower-cased.
         """
         if self.identifiers is None:
             return None
@@ -114,7 +121,11 @@ class ArticleReference(ReferenceABC):
         return None
 
     def to_bibtex(self) -> str:
-        """Build the BibTeX representation of an article."""
+        """Build the BibTeX ``@article`` entry (key = ``abbreviation``).
+
+        ``pages`` is written as ``start--(start + pages)`` when both are set, or ``start``
+        alone; the arXiv fields are added when :attr:`arxiv_preprint` finds an identifier.
+        """
         arxiv_id = self.arxiv_preprint
 
         line_format = (
@@ -170,7 +181,7 @@ class ArticleReference(ReferenceABC):
 
 
 class SoftwareReference(ReferenceABC):
-    """Description of a Software"""
+    """Description of a software reference (the FEW package itself in ``CITATION.cff``)."""
 
     authors: list[Author]
     title: str
@@ -195,7 +206,7 @@ class SoftwareReference(ReferenceABC):
         return None
 
     def to_bibtex(self) -> str:
-        """Build the BibTeX representation of a software."""
+        """Build the BibTeX ``@software`` entry (key = ``title``)."""
 
         def format_line(key: str, value: str) -> str:
             return """  {:<10} = \"{}\"""".format(key, value)
@@ -236,6 +247,12 @@ Reference = Union[ArticleReference, SoftwareReference]
 
 
 class REFERENCE(enum.Enum):
+    """Keys of the citation registry (``abbreviation`` entries of ``CITATION.cff``).
+
+    ``str(REFERENCE.X)`` is the key; ``FEW_SOFTWARE`` is the package's own entry (its
+    ``title``).
+    """
+
     FEW = "Chua:2020stf"
     LARGER_FEW = "Katz:2021yft"
     FEW_SOFTWARE = "FastEMRIWaveforms"
@@ -253,6 +270,12 @@ class REFERENCE(enum.Enum):
 
 
 class CitationRegistry:
+    """Mapping from citation keys to :class:`ArticleReference` / :class:`SoftwareReference`.
+
+    Args:
+        **kwargs: The references, keyed by their citation key.
+    """
+
     __slots__ = "registry"
 
     registry: dict[str, Reference]
@@ -261,15 +284,29 @@ class CitationRegistry:
         self.registry = kwargs
 
     def get(self, key: Union[str, REFERENCE]) -> Reference:
-        """Return a Reference object from its key."""
+        """Return a Reference object from its key (``KeyError`` if unknown)."""
         return self.registry[key if isinstance(key, str) else key.value]
 
     def all(self) -> Iterable[Reference]:
+        """Return every reference of the registry."""
         return self.registry.values()
 
 
 def build_citation_registry() -> CitationRegistry:
-    """Read the package CITATION.cff and build the corresponding registry."""
+    """Read the package ``CITATION.cff`` and build the corresponding registry.
+
+    The file is read from the repository root in editable installs, else from the package
+    directory, and validated against the bundled ``cff_1_2_0.schema.json``. Each entry of
+    ``references`` is keyed by its ``abbreviation``; the file's top-level software entry is
+    keyed by its ``title``.
+
+    Returns:
+        CitationRegistry: The registry.
+
+    Raises:
+        few.utils.exceptions.InvalidInputFile: If the schema is invalid, the file does not
+            match it, or a reference type is neither ``article`` nor ``software``.
+    """
     import json
     import pathlib
 
@@ -319,6 +356,7 @@ def build_citation_registry() -> CitationRegistry:
     return CitationRegistry(**references, **{cff["title"]: to_reference(cff)})
 
 
+# references cited by every FEW module (the default of Citable.module_references)
 COMMON_REFERENCES = [
     REFERENCE.KERR_ECC_EQ,
     REFERENCE.FEW,
@@ -328,7 +366,19 @@ COMMON_REFERENCES = [
 
 
 class Citable:
-    """Base class for classes associated with specific citations."""
+    """Base class for classes associated with specific citations.
+
+    Subclasses override :meth:`module_references` to list their :class:`REFERENCE` keys;
+    :meth:`citation` returns them as BibTeX. The registry is built once, on first use, and
+    shared by all subclasses (class attribute ``Citable.registry``).
+
+    Example:
+        .. code-block:: python
+
+            from few.trajectory.inspiral import EMRIInspiral
+
+            print(EMRIInspiral.citation())
+    """
 
     registry: Optional[CitationRegistry] = None
 
@@ -357,6 +407,7 @@ class Citable:
 
     @classmethod
     def _get_registry(cls) -> CitationRegistry:
+        """Return the shared registry, building it with :func:`build_citation_registry` once."""
         if Citable.registry is None:
             from few import get_logger
 

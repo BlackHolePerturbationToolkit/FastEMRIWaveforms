@@ -1,3 +1,9 @@
+"""ROMAN neural-network Teukolsky amplitudes for Schwarzschild eccentric orbits.
+
+:class:`RomanAmplitude` is the amplitude module of
+:class:`~few.waveform.waveform.FastSchwarzschildEccentricFlux`.
+"""
+
 # Flux-based Schwarzschild Eccentric amplitude module for Fast EMRI Waveforms
 # performs calculation with a Roman network
 
@@ -30,30 +36,58 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
     used in this module.
 
     When the user inputs :math:`(p,e)`, the neural network determines
-    coefficients for the modes in the reduced basic and transforms it back to
-    amplitude space.
+    coefficients for the modes in the reduced basis (input ``(y(p, e), e)``, see
+    :func:`~few.utils.mappings.schwarzecc.schwarzecc_p_to_y`) and transforms it back to
+    amplitude space; by default the amplitudes are then renormalized to the bicubic-spline
+    flux norm of ``AmplitudeVectorNorm.dat``. Data files: ``SchwarzschildEccentricInput.hdf5``
+    (weights, biases, reduced basis) and ``AmplitudeVectorNorm.dat``, fetched through the
+    file manager. The constructor resets the inherited ``num_teuk_modes`` to the
+    ``num_teuk_modes`` attribute of ``SchwarzschildEccentricInput.hdf5``.
 
-    This module is available for GPU and CPU.
+    This module is available for GPU and CPU (compiled ``neural_layer_wrap`` and
+    ``transform_output_wrap`` of the backend's ``pymatmul``).
 
+    Args:
+        buffer_length (int): Number of trajectory points the work buffers are allocated for.
+            A longer input logs a warning and reallocates the buffers. Default ``1000``.
+        force_backend: Backend name or object (see
+            :class:`~few.utils.baseclasses.FewBackendConsumer`). Default ``None``.
+        **kwargs: Forwarded to :class:`~few.utils.baseclasses.SchwarzschildEccentric`
+            (``lmax`` default 10, ``nmax`` default 30).
 
-    args:
-        buffer_length (int, optional): Number of points to initialize for
-            buffers. This allows the user to limit memory usage. However, if the
-            user requests more length, a warning will be thrown and the
-            buffer_length will be increased accordingly and arrays reallocated.
-            Default is 1000.
-        **kwargs (dict, optional): Keyword arguments for the base classes:
-            :class:`few.utils.baseclasses.SchwarzschildEccentric`,
-            :class:`few.utils.baseclasses.AmplitudeBase`,
-            :class:`few.utils.baseclasses.FewBackendConsumer`.
-            Default is {}.
+    Attributes:
+        data_file (str): Network data file name (``"SchwarzschildEccentricInput.hdf5"``).
+        break_index (int): Half the network output length (number of real/imaginary pairs).
+        transform_factor_inv (float): Inverse of the file's scalar transform factor.
+        buffer_length (int): Current buffer length (number of points).
+        weights (list[xp.ndarray]): Weight matrix of each layer, shape ``(dim1, dim2)``.
+        bias (list[xp.ndarray]): Bias of each layer, shape ``(dim2,)``.
+        dim1 (list[int]): First dimension of each weight matrix.
+        dim2 (list[int]): Second dimension of each weight matrix.
+        num_layers (int): Number of network layers.
+        transform_matrix (xp.ndarray): Complex reduced-basis matrix mapping the network
+            output to the amplitudes.
+        max_num (int): Largest weight-matrix dimension (sets the buffer size).
+        temp_mats (list[xp.ndarray]): The two flat work buffers the layers alternate between.
+        run_relu_arr (np.ndarray): Per layer, 1 if the ReLU activation runs (0 for the last).
+        amp_norm_spline (scipy.interpolate.RectBivariateSpline): Amplitude norm over
+            ``(y, e)``.
 
+    Example:
+        .. code-block:: python
+
+            import numpy as np
+            from few.amplitude.romannet import RomanAmplitude
+
+            amp = RomanAmplitude(force_backend="cpu")
+            # a = 0, p [M], e, xI = 1; returns shape (2, amp.num_teuk_modes)
+            A = amp(0.0, np.array([10.0, 11.0]), np.array([0.2, 0.2]), 1.0)
     """
 
+    # TODO check: keep/remove/document -- doc-only stub (body is pass), never called
     def attributes_RomanAmplitude(self):
         """
         attributes:
-            few_dir (str): absolute path to the FastEMRIWaveforms directory
             break_index (int): length of output vector from network divded by 2.
                 It is really the number of pairs of real and imaginary numbers.
             neural_layer (obj): C++ class for computing neural network operations
@@ -122,22 +156,26 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
 
     @property
     def neural_layer(self):
+        """The backend's compiled dense-layer kernel (``neural_layer_wrap``)."""
         return self.backend.neural_layer_wrap
 
     @property
     def transform_output(self):
+        """The backend's compiled reduced-basis-to-amplitude kernel (``transform_output_wrap``)."""
         return self.backend.transform_output_wrap
 
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
-        """Return citations related to this module"""
+        """Return citations related to this module (``ROMANNET`` plus the parents')."""
         return [REFERENCE.ROMANNET] + super().module_references()
 
     @classmethod
     def supported_backends(cls):
+        """Backend preference order: ``["cuda13x", "cuda12x", "cuda11x", "cpu"]``."""
         return cls.GPU_RECOMMENDED()
 
     def _initialize_weights(self):
+        """Load the layer weights, biases and reduced basis from the data file; allocate buffers."""
         # initalize weights/bias/dimensions for the neural network
 
         self.weights = []
@@ -189,33 +227,27 @@ class RomanAmplitude(AmplitudeBase, SchwarzschildEccentric):
         self.run_relu_arr[-1] = 0
 
     def get_amplitudes(self, a, p, e, xI, *args, specific_modes=None, renormalize_amps=True, **kwargs):
-        """Calculate Teukolsky amplitudes for Schwarzschild eccentric.
+        """Evaluate the ROMAN network along a trajectory (called by ``__call__``).
 
-        This function takes the inputs the trajectory in :math:`(p,e)` as arrays
-        and returns the complex amplitude of all modes to adiabatic order at
-        each step of the trajectory.
+        This function takes the trajectory in :math:`(p,e)` as arrays and returns the complex
+        amplitude of the modes to adiabatic order at each step of the trajectory.
 
-        args:
-            p (1D double numpy.ndarray): Array containing the trajectory for values of
-                the semi-latus rectum.
-            e (1D double numpy.ndarray): Array containing the trajectory for values of
-                the eccentricity.
-            *args (tuple, placeholder): Added to create flexibility when calling different
-                amplitude modules. It is not used.
-            specific_modes (list, optional): List of tuples for (l, m, n) values
-                desired modes. Default is None.
-            renormalize_amps (bool, optional): If True, the amplitudes are
-                renormalized with respect to the flux interpolated by a
-                bicubic spline. This should slightly improve the accuracy
-                of the mode amplitudes. Default is True.
-            **kwargs (dict, placeholder): Added to create flexibility when calling different
-                amplitude modules. It is not used.
+        Args:
+            a (xp.ndarray): Spin; not used (Schwarzschild).
+            p (xp.ndarray): Semi-latus rectum in units of :math:`M`, shape ``(N,)``.
+            e (xp.ndarray): Eccentricity, shape ``(N,)``.
+            xI (xp.ndarray): :math:`x_I`; not used.
+            *args: Accepted and ignored.
+            specific_modes (xp.ndarray, optional): Mode indices (columns) to return. Default
+                ``None`` means all modes.
+            renormalize_amps (bool, optional): If ``True`` (default), rescale the amplitudes at
+                each point so that their total norm (including the :math:`m < 0` modes) matches
+                the bicubic-spline norm ``amp_norm_spline``; this slightly improves accuracy.
+            **kwargs: Accepted and ignored.
 
-        returns:
-            2D array (double): If specific_modes is None, Teukolsky modes in shape (number of trajectory points, number of modes)
-            dict: Dictionary with requested modes.
-
-
+        Returns:
+            xp.ndarray: Complex amplitudes, shape ``(N, num_teuk_modes)``, or
+            ``(N, len(specific_modes))``.
         """
 
         input_len = len(p)

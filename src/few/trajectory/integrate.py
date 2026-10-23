@@ -1,4 +1,30 @@
-# Pn5-based Generic Kerr trajectory module for Fast EMRI Waveforms
+r"""DOP853 integration of the trajectory ODE: stepping, stopping, dense output.
+
+:class:`Integrate` drives a :class:`~few.trajectory.dopr853.DOPR853` stepper over an
+:class:`~few.trajectory.ode.base.ODEBase` model. One call of :meth:`Integrate.run_inspiral`
+integrates one trajectory: adaptive steps with absolute error control (or fixed steps),
+retry-and-halve on failed steps, a stop at ``T`` or at the separatrix buffer, and a final
+point placed on the stopping boundary by root-finding on the dense output. The results stay
+on the instance (:attr:`Integrate.trajectory`, :attr:`Integrate.integrator_t_cache`,
+:attr:`Integrate.integrator_spline_coeff`) and are evaluated with
+:meth:`Integrate.eval_integrator_spline` / :meth:`Integrate.eval_integrator_derivative_spline`.
+
+Units: the integration variable is the radiation-reaction time
+:math:`\tilde t = \nu\, t / (M T_\odot)` with :math:`\nu = m_1 m_2 / (m_1 + m_2)^2`
+(``massratio``), :math:`M = m_1 + m_2` in solar masses and :math:`T_\odot` = ``MTSUN_SI``;
+the ODE state is ``(p, e, x, nu * Phi_phi, nu * Phi_theta, nu * Phi_r)`` (or
+``(E, L, Q, ...)`` for :class:`AELQIntegrate`). Stored times are in seconds
+(``Msec = MTSUN_SI * M / nu`` seconds per unit of :math:`\tilde t`) and stored phases are
+divided by :math:`\nu` (radians) after the integration.
+
+Entry points: :func:`get_integrator` (used by :class:`~few.trajectory.inspiral.EMRIInspiral`)
+returns an :class:`APEXIntegrate` (pex variables, the production path) or an
+:class:`AELQIntegrate`. :class:`BatchedIntegrate` is an experimental CPU reference that
+steps many trajectories at once (see ``docs/traj-batching.md``); it is not used by the
+waveform generators.
+"""
+
+# DOP853 integrator classes of the FEW trajectory module
 
 from __future__ import annotations
 
@@ -19,12 +45,30 @@ from .dopr853 import DOPR853
 from .ode import _STOCK_TRAJECTORY_OPTIONS
 from .ode.base import ODEBase, get_ode_properties
 
+# xtol [s] of the brentq root-find that places the final point on the separatrix buffer
 INNER_THRESHOLD = 1e-10
+# unused
 PERCENT_STEP = 0.25
+# maxiter of that root-find
 MAX_ITER = 1000
 
 
 def get_integrator(func, integrate_constants_of_motion=False, **kwargs):
+    """Build the integrator for an ODE model: pex or ELQ variables.
+
+    Called by :class:`~few.trajectory.inspiral.EMRIInspiral` at construction.
+
+    Args:
+        func (str or type): The ODE model class (an
+            :class:`~few.trajectory.ode.base.ODEBase` subclass) or a stock model name.
+        integrate_constants_of_motion (bool, optional): If ``True``, integrate
+            ``(E, L, Q)``. Default ``False``.
+        **kwargs: Forwarded to the :class:`Integrate` constructor.
+
+    Returns:
+        Integrate: An :class:`AELQIntegrate` when ``integrate_constants_of_motion`` is set,
+        else an :class:`APEXIntegrate`.
+    """
     if integrate_constants_of_motion:
         return AELQIntegrate(
             func=func,
@@ -40,6 +84,18 @@ def get_integrator(func, integrate_constants_of_motion=False, **kwargs):
 
 
 def digest_func(func):
+    """Resolve a stock model name to its ODE class; return a class unchanged.
+
+    Args:
+        func (str or type): A name in ``few.trajectory.ode._STOCK_TRAJECTORY_OPTIONS``
+            (``"KerrEccEqFlux"``, ``"SchwarzEccFlux"``, ``"PN5"``) or an ODE class.
+
+    Returns:
+        type: The ODE class.
+
+    Raises:
+        ValueError: If ``func`` is a string that is not a stock model name.
+    """
     if isinstance(func, str):
         try:
             func = _STOCK_TRAJECTORY_OPTIONS[func]
@@ -49,19 +105,49 @@ def digest_func(func):
 
 
 class Integrate:
-    """Custom integrator class.
+    r"""DOP853 trajectory integrator over an ODE model (base of the pex / ELQ variants).
 
-    Flexible integration options. # TODO: discuss options
+    Builds the ODE model instance ``func(use_ELQ=integrate_constants_of_motion,
+    downsample=downsample, **kwargs)`` and a :class:`~few.trajectory.dopr853.DOPR853`
+    stepper on :meth:`_dopr_ode_wrap`. Each :meth:`run_inspiral` call re-initialises the
+    buffers and integrates one trajectory in the radiation-reaction time (see the module
+    docstring for the units). Subclasses define :meth:`get_pex`, the map from the
+    integrated state to ``(p, e, x)`` used by the stopping checks.
 
     Args:
-        func: ODE base function to integrate.
-        integrate_constants_of_motion: If ``True``, integrate in ELQ rather than orbital parameters.
-        buffer_length: Initial buffer length for trajectory. Will adjust itself if needed.
-        enforce_schwarz_sep: If ``True``, enforce the Schwarzschild separatrix as the separatrix.
-            :math:`p_s = 6 + 2e`.
-        max_iter: Maximum number of iterations for the integrator.
-        **kwargs: Keyword arguments for the ODE function, ``func``.
+        func: The ODE model class, or a stock model name (resolved by
+            :func:`digest_func`).
+        integrate_constants_of_motion: If ``True``, the model integrates ``(E, L, Q)``
+            instead of ``(p, e, x)`` (``use_ELQ``). Default ``False``.
+        downsample (optional): Forwarded to the model constructor (flux-grid downsampling
+            of :class:`~few.trajectory.ode.flux.KerrEccEqFlux`). Default ``None``.
+        buffer_length: Rows preallocated for the trajectory and dense-output arrays;
+            they grow by 100 rows whenever they fill. Default ``10000``.
+        enforce_schwarz_sep: If ``True``, stop at the Schwarzschild separatrix
+            :math:`p_s = 6 + 2e` instead of the Kerr one. Default ``False``.
+        max_iter: Maximum number of accepted adaptive steps per trajectory. Default
+            ``None`` means ``buffer_length``.
+        **kwargs: Forwarded to the model constructor.
 
+    Raises:
+        ValueError: If ``func`` is an unknown stock model name.
+
+    Attributes:
+        func (ODEBase): The ODE model instance.
+        base_func (type): The ODE model class.
+        ode_info (dict): The model's property values
+            (:func:`~few.trajectory.ode.base.get_ode_properties`).
+        dopr (DOPR853): The stepper (``abstol`` and ``fix_step`` are reset by every
+            :meth:`initialize_integrator`).
+        buffer_length (int): Current buffer length (grows during an integration).
+        max_iter (int): Step limit of an adaptive integration.
+        enforce_schwarz_sep (bool): Whether the Schwarzschild separatrix is used.
+
+    Note:
+        ``dopr`` keeps its step-size controller memory (``errOldTemp``,
+        ``previousRejectTemp``) across trajectories, so consecutive trajectories from one
+        instance differ at the integrator-tolerance level from those of a fresh instance;
+        :func:`few.trajectory.pool.reset_stepper` removes it.
     """
 
     def __init__(
@@ -113,74 +199,100 @@ class Integrate:
 
     @property
     def nparams(self) -> int:
-        """Dimensionality of ODE"""
+        """Dimensionality of the ODE state (``func.nparams``; 6 for the stock models)."""
         return self.func.nparams
 
     @property
     def num_add_args(self) -> int:
-        """Number of additional arguments to the ODE"""
+        """Number of additional arguments of the ODE (``func.num_add_args``)."""
         return self.func.num_add_args
 
     @property
     def convert_Y(self):
-        """Convert to Y if needed."""
+        """bool: Whether the model's inclination coordinate is ``Y`` (``func.convert_Y``)."""
         return self.func.convert_Y
 
     @property
     def background(self):
-        """Spacetime background (spin or no spin)"""
+        """str: Spacetime background, ``"Kerr"`` or ``"Schwarzschild"`` (``func.background``)."""
         return self.func.background
 
     @property
     def equatorial(self):
-        """Orbit limited to equatorial plane."""
+        """bool: Whether the model is restricted to equatorial orbits (``func.equatorial``)."""
         return self.func.equatorial
 
     @property
     def circular(self):
-        """Circular orbit."""
+        """bool: Whether the model is restricted to circular orbits (``func.circular``)."""
         return self.func.circular
 
     @property
     def integrate_constants_of_motion(self):
-        """Integrating in ELQ."""
+        """bool: Whether ``(E, L, Q)`` are integrated (``func.use_ELQ``)."""
         return self.func.use_ELQ
 
     @property
     def separatrix_buffer_dist(self):
-        """Buffer distance from separatrix."""
+        """float: Stop distance in ``p`` above the separatrix (``func.separatrix_buffer_dist``)."""
         return self.func.separatrix_buffer_dist
 
     def distance_to_outer_boundary(self, y):
-        """Distance to outer boundary of interpolation grid."""
+        """Return the model's distance to the outer edge of its grid (backwards stop check).
+
+        Args:
+            y (np.ndarray): Integrated state.
+
+        Returns:
+            float: ``func.distance_to_outer_boundary(y)``; negative once outside.
+        """
         return self.func.distance_to_outer_boundary(y)
 
     def _dopr_ode_wrap(self, t, y, ydot, additionalArgs):
+        """Adapt the single-system model call to the stepper's ``ode(x, y, ydot, args)``.
+
+        Evaluates ``func`` on column 0 of ``y`` (shape ``(nparams, 1)``) and writes into
+        column 0 of ``ydot`` in place; ``t`` and ``additionalArgs`` are unused (the model
+        is autonomous and holds its own fixed parameters).
+
+        Returns:
+            np.ndarray: ``ydot``.
+        """
         self.func(y[:, 0], out=ydot[:, 0])
         return ydot
 
     def take_step(
         self, t: float, h: float, y: np.ndarray
     ) -> Tuple[float, float, np.ndarray]:
-        """Take a step of the integrator.
+        """Attempt one DOP853 step (thin wrapper of :meth:`DOPR853.take_step_single`).
+
+        Not used by :meth:`integrate`, which calls the stepper directly. Needs
+        ``tmax_dimensionless`` from a previous :meth:`run_inspiral`.
 
         Args:
-            t: Time.
-            h: Step size.
-            y: Current position of integrator.
+            t: Current time (radiation-reaction units).
+            h: Proposed step size.
+            y: Current state, updated in place when the step is accepted.
 
         Returns:
-            (new time, new step size, new position)
-
+            tuple[bool, float, float]: ``(accepted, t_new, h_new)`` (the return annotation,
+            ``Tuple[float, float, np.ndarray]``, is wrong): whether the step was accepted,
+            the new time (``t + h`` if accepted, else ``t``) and the next proposed step size.
         """
         return self.dopr.take_step_single(t, h, y, self.tmax_dimensionless, None)
 
     def log_failed_step(self, lastError: Exception):
-        """Add to and check failed step count.
+        """Count a failed step and give up after 100 consecutive failures.
+
+        Increments ``bad_num`` (reset to 0 by every accepted step) and ``bad_num_total``
+        and stores ``last_error``.
+
+        Args:
+            lastError: The exception (instance or class) of the failed attempt.
 
         Raises:
-            ValueError: Too many failed tries.
-
+            Exception: ``lastError`` itself, once ``bad_num`` reaches 100 (usually a
+                ``ValueError``).
         """
         # check for number of tries to fix this
         self.bad_num += 1
@@ -190,18 +302,20 @@ class Integrate:
             raise self.last_error
 
     def tune_initial_step_size(self, t0: float, y0: np.ndarray, h_max: float) -> float:
-        """Tune the initial step size of the integrator if using adaptive stepping.
+        """Estimate the first adaptive step size (adapted from scipy's ``select_initial_step``).
 
-        Adapted from scipy.integrate._ivp.common.select_initial_step
+        Uses the absolute tolerance ``dopr.abstol`` as the scale and one explicit Euler
+        probe ``y0 + h0 * f(y0)``; if the probe is out of the model's bounds (the model
+        raises ``ValueError``) the first estimate ``h0`` is returned.
 
         Args:
-            t0: Initial time.
-            y0: Initial state.
-            h_max: Largest step size permitted.
+            t0: Initial time (radiation-reaction units).
+            y0: Initial state, shape ``(nparams,)``.
+            h_max: Largest step permitted.
 
         Returns:
-            Initial step size.
-
+            float: ``min(100 * h0, h1, tmax_dimensionless - t0, h_max)``, or ``h0`` (see
+            above).
         """
 
         # Initialize step size based on the problem's scale
@@ -239,16 +353,36 @@ class Integrate:
         return min(100 * h0, h1, interval_length, h_max)
 
     def integrate(self, t0: float, y0: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        """Integrate from (t0, y0).
+        """Run the stepping loop from ``(t0, y0)`` and fill the trajectory buffers.
+
+        Adaptive mode: the first step comes from :meth:`tune_initial_step_size` (capped at
+        a tenth of the interval and at ``max_step_size``); a step that raises
+        ``ValueError``, returns a NaN step size or state, or exceeds ``max_step_size`` is
+        retried from the last accepted point with half the step (counted by
+        :meth:`log_failed_step`); a step rejected by the error control is retried with the
+        controller's smaller step (and also counted by :meth:`log_failed_step`, so 100
+        consecutive rejections abort). Each accepted step stores its dense-output coefficients
+        (:meth:`DOPR853.prep_evaluate_single`) and the point (time in seconds). The loop ends
+        when :meth:`stop_integrate_check` fires or the time passes ``tmax_dimensionless``;
+        the coefficients of that last step are kept, the point is not, and
+        :meth:`finishing_function` places the final point. Fixed-step mode
+        (``DENSE_STEPPING``) takes steps of ``dt_dimensionless`` without dense output.
 
         Args:
-            t0: Initial time.
-            y0: Initial position.
+            t0: Initial time (radiation-reaction units; 0 from :meth:`run_inspiral`).
+            y0: Initial state, shape ``(nparams,)`` (phases scaled by the mass ratio).
 
         Returns:
-            (Time array, Position array).
+            None: The return annotation (``Tuple[np.ndarray, np.ndarray]``) is wrong; the
+            results are in :attr:`trajectory`, :attr:`integrator_t_cache` and
+            :attr:`integrator_spline_coeff`.
 
-
+        Raises:
+            ValueError: If an adaptive integration exceeds ``max_iter`` accepted steps, or
+                (re-raised by :meth:`log_failed_step`) after 100 consecutive failures.
+                Exceptions other than ``ValueError`` raised inside a step (e.g.
+                :class:`~few.utils.exceptions.TrajectoryOffGridException`) are not retried
+                and propagate immediately.
         """
 
         # store initial values
@@ -389,12 +523,11 @@ class Integrate:
             self.finishing_function(t, y)
 
     def action_function(self, t: float, y: np.ndarray) -> None:
-        """Act on the integrator.
+        """Hook called after every accepted step (a no-op here; override to act on it).
 
         Args:
-            t: Time.
-            y: Current position of integrator.
-
+            t: Time of the accepted step (radiation-reaction units).
+            y: State after the step; may be modified in place.
         """
         return None
 
@@ -406,14 +539,21 @@ class Integrate:
         max_step_size: Optional[float] = None,
         **kwargs,
     ):
-        """Setup the integrator.
+        """Reset the stepper settings and the output buffers for a new trajectory.
+
+        Sets ``dopr.abstol`` and ``dopr.fix_step``, the backwards flag (also on the model,
+        which then negates its right-hand side), ``max_step_size``, and allocates
+        ``trajectory_arr`` ``(buffer_length, nparams + 1)``, ``_integrator_t_cache``
+        ``(buffer_length,)`` and ``dopr_spline_output`` ``(buffer_length, 6, 8)``.
 
         Args:
-            err: Absolute tolerance of the integrator.
-            DENSE_STEPPING: If ``True``, use fixed stepping.
-            integrate_backwards: If ``True``, integrate backwards.
-            **kwargs: For future interoperability.
-
+            err: Absolute tolerance of the DOP853 error control. Default ``1e-11``.
+            DENSE_STEPPING: If ``True``, use fixed steps. Default ``False``.
+            integrate_backwards: If ``True``, integrate backwards. Default ``False``.
+            max_step_size: Largest step in radiation-reaction units. Default ``None``
+                means no limit.
+            **kwargs: Ignored (e.g. the call's ``buffer_length``: the constructor's value
+                is used).
         """
         self.dopr.abstol = err
         self.dopr.fix_step = DENSE_STEPPING
@@ -434,44 +574,55 @@ class Integrate:
 
     @property
     def tolerance(self) -> float:
-        """Absolute tolerance of the integrator."""
+        """Absolute tolerance of the integrator (``dopr.abstol``, the call's ``err``)."""
         return self.dopr.abstol
 
     @property
     def dense_stepping(self) -> bool:
-        """If ``True``, trajectory is using fixed stepping."""
+        """If ``True``, the last trajectory used fixed steps (``dopr.fix_step``)."""
         return self.dopr.fix_step
 
     @property
     def npoints(self) -> int:
-        """Number of points in the trajectory."""
+        """Number of points of the last trajectory."""
         return self.traj_step
 
     @property
     def trajectory(self) -> np.ndarray:
-        """Trajectory array."""
+        """The last trajectory, shape ``(npoints, nparams + 1)`` (a view of the buffer).
+
+        Column 0 is the time in seconds, then the integrated state; after
+        :meth:`run_inspiral` the phase columns 4-6 are in radians.
+        """
         return self.trajectory_arr[: self.traj_step]
 
     @property
     def integrator_t_cache(self) -> np.ndarray:
-        """Spline coefficient time array."""
+        """Knot times of the dense output in seconds, shape ``(npoints,)``."""
         return self._integrator_t_cache[: self.traj_step]
 
     @property
     def integrator_spline_coeff(self) -> np.ndarray:
-        """Spline coefficients from dopr backend."""
+        """DOP853 dense-output coefficients, shape ``(npoints - 1, nparams, 8)``.
+
+        Segment ``i`` spans ``integrator_t_cache[i:i + 2]``; the phase rows (3-5) carry the
+        mass-ratio scaling of the integration (divide by ``massratio`` for radians).
+        """
         return self.dopr_spline_output[: self.traj_step - 1]
 
     def save_point(
         self, t: float, y: np.ndarray, spline_output: Optional[np.ndarray] = None
     ) -> None:
-        """Save point in trajectory array.
+        """Append a point (and the coefficients of the segment ending there) to the buffers.
+
+        Grows the buffers by 100 rows when they are full.
 
         Args:
-            t: Time.
-            y: Current position of integrator.
-            spline_output: Spline coefficients from the backend.
-
+            t: Time in seconds (0 for the first point).
+            y: State at ``t``, shape ``(nparams,)``.
+            spline_output: Dense-output coefficients of the step that ended at ``t``, shape
+                ``(nparams, 8)``, stored as segment ``traj_step - 1`` (with ``t`` as its
+                end knot). Default ``None`` stores no coefficients.
         """
         self.trajectory_arr[self.traj_step, 0] = t
         self.trajectory_arr[self.traj_step, 1:] = y
@@ -514,14 +665,21 @@ class Integrate:
             self.buffer_length += buffer_increment
 
     def eval_integrator_spline(self, t_new: np.ndarray) -> np.ndarray:
-        """Evaluate integration at new time array.
+        """Evaluate the dense-output trajectory at new times.
+
+        Called by the waveform generators (upsampling, LAT's direct EMRI path) and by the
+        final-point root-finding. Outside the integration a phase column is divided by the
+        mass ratio (radians) and, after a backwards integration, shifted by
+        ``trajectory[0, 4:7] + trajectory[-1, 4:7]`` to match the forward phase convention.
 
         Args:
-            t_new: New time array.
+            t_new: Times in seconds, shape ``(N,)``.
 
         Returns:
-            New trajectory.
-
+            np.ndarray: Shape ``(N, 6)``, columns ``p, e, x, Phi_phi, Phi_theta, Phi_r``
+            (phases in rad; in mass-ratio-scaled units while ``generating_trajectory``).
+            Rows with ``t_new < 0`` or ``t_new > integrator_t_cache.max()`` are zero
+            (before the phase shift).
         """
         t_old = self.integrator_t_cache
 
@@ -541,15 +699,23 @@ class Integrate:
         return result
 
     def eval_integrator_derivative_spline(self, t_new: np.ndarray, order: int = 1):
-        """Evaluate integration derivatives at new time array.
+        r"""Evaluate time derivatives of the dense-output trajectory at new times.
+
+        The phase columns are divided by the mass ratio outside the integration, so
+        ``order=1`` gives the angular frequencies in rad/s (the waveform generators divide
+        ``[:, 3:6]`` by :math:`2\pi` for the orbital frequencies in Hz). No backwards-phase
+        shift is applied (it is a constant, so it only matters for ``order=0``).
 
         Args:
-            t_new: New time array.
-            order: Order of derivative to evaluate. Defaults to 1.
+            t_new: Times in seconds, shape ``(N,)``, within ``integrator_t_cache``.
+            order: Derivative order, 0 to 3. Default ``1``.
 
         Returns:
-            New trajectory derivatives.
+            np.ndarray: Shape ``(N, 6)``: the ``order``-th derivatives with respect to time
+            in seconds of ``p, e, x, Phi_phi, Phi_theta, Phi_r``.
 
+        Raises:
+            ValueError: If any ``t_new`` is outside the knot range.
         """
         t_old = self.integrator_t_cache
         result = self.dopr.eval_derivative(
@@ -572,18 +738,37 @@ class Integrate:
         dt: float = 10.0,
         **kwargs,
     ) -> np.ndarray:
-        """Run inspiral integration.
+        r"""Integrate one trajectory (called by :class:`~few.trajectory.inspiral.EMRIInspiral`).
+
+        Sets the unit conversions (``massratio`` :math:`\nu = m_1 m_2 / (m_1 + m_2)^2`,
+        ``tmax_dimensionless``, ``dt_dimensionless``, ``Msec``), resets the buffers
+        (:meth:`initialize_integrator`), loads ``(m1, m2, a, additional_args)`` into the
+        model, runs :meth:`integrate` from ``t = 0``, then divides the stored phases by
+        :math:`\nu` (and, backwards, shifts them to the forward phase convention).
 
         Args:
-            m1: Larger mass in solar masses.
-            m2: Small mass in solar masses.
-            a: Dimensionless spin of central black hole.
-            y0: Initial set of coordinates for integration.
+            m1: Mass of the massive black hole in solar masses.
+            m2: Mass of the compact object in solar masses.
+            a: Dimensionless spin of the massive black hole.
+            y0: Initial state, shape ``(nparams,)``: ``(p0, e0, x0)`` (or ``(E, L, Q)``)
+                followed by the initial phases multiplied by :math:`\nu`.
+            additional_args: Extra model arguments, passed to
+                :meth:`~few.trajectory.ode.base.ODEBase.add_fixed_parameters`.
+            T: Maximum duration in years. Default ``1.0``.
+            dt: Fixed step in seconds (used with ``DENSE_STEPPING``). Default ``10.0``.
+            **kwargs: Forwarded to :meth:`initialize_integrator` (``err``,
+                ``DENSE_STEPPING``, ``integrate_backwards``, ``max_step_size``; others are
+                ignored).
 
         Returns:
-            Trajectory array for integrated coefficients.
+            np.ndarray: :attr:`trajectory`, shape ``(npoints, nparams + 1)``: time in
+            seconds, the state, and the phases in rad (a view of the internal buffer, which
+            the next call overwrites).
 
-
+        Raises:
+            ValueError: From :meth:`integrate`, or for a backwards integration whose start
+                is closer to the separatrix than ``separatrix_buffer_dist``.
+            AssertionError: If ``len(y0) != nparams``.
         """
         # Indicate we are generating a trajectory (alters behaviour of integrator spline)
         self.generating_trajectory = True
@@ -635,16 +820,19 @@ class Integrate:
         return self.trajectory
 
     def stop_integrate_check(self, t: float, y: np.ndarray) -> bool:
-        """Stop the inspiral when close to the separatrix (forwards integration)
-            or when close to the outer grid boundary (backwards integration).
+        """Check the stopping condition after an accepted step.
+
+        Forwards: stop once ``p - p_sep < separatrix_buffer_dist`` (Kerr separatrix
+        :func:`~few.utils.geodesic.get_separatrix`, or :math:`6 + 2e` with
+        ``enforce_schwarz_sep``). Backwards: stop once
+        :meth:`distance_to_outer_boundary` is negative.
 
         Args:
-            t: Time.
-            y: Current position of integrator.
+            t: Time (unused).
+            y: State after the step.
 
         Returns:
-            ``True`` if integration should be stopped. ``False`` otherwise.
-
+            bool or None: ``True`` to stop; ``None`` (falsy) otherwise.
         """
 
         if self.integrate_backwards:
@@ -663,9 +851,16 @@ class Integrate:
                 return True
 
     def inner_func_forward(self, t_step):
-        """
-        Evaluates the distance from the inner boundary at t=t_step.
-        Also caches the state of the system as self._y_inner_cache.
+        """Return the distance of the dense output at ``t_step`` from the stop boundary in ``p``.
+
+        The root-finding target of a forward stop: ``p - (p_sep + separatrix_buffer_dist)``.
+        Caches the evaluated state in ``_y_inner_cache``.
+
+        Args:
+            t_step (float): Time in seconds.
+
+        Returns:
+            float: Positive above the boundary, zero on it.
         """
         self._y_inner_cache = self.eval_integrator_spline(
             np.array(
@@ -685,9 +880,16 @@ class Integrate:
         return p - (p_sep + self.separatrix_buffer_dist)  # we want this to go to zero
 
     def inner_func_backward(self, t_step):
-        """
-        Evaluates the distance from the outer boundary at t=t_step.
-        Also caches the state of the system as self._y_inner_cache.
+        """Return the distance of the dense output at ``t_step`` from the grid's outer edge.
+
+        The root-finding target of a backwards stop (:meth:`distance_to_outer_boundary`).
+        Caches the evaluated state in ``_y_inner_cache``.
+
+        Args:
+            t_step (float): Time in seconds.
+
+        Returns:
+            float: Positive inside the grid, negative outside.
         """
 
         self._y_inner_cache = self.eval_integrator_spline(
@@ -701,9 +903,15 @@ class Integrate:
         return self.distance_to_outer_boundary(self._y_inner_cache)
 
     def finishing_function(self, t: float, y: np.ndarray):
-        """
-        This function is called when the integrator has finished due to reaching a stopping condition. The
-        function identifies the stopping condition and places the final point at the stopping boundary accordingly.
+        """Place the final point after the stepping loop ends (adaptive mode only).
+
+        If the loop stopped before ``tmax`` (a boundary was crossed), calls
+        :meth:`_finishing_function_stop`; otherwise :meth:`_finishing_function_at_tmax`.
+        Does nothing with fixed steps.
+
+        Args:
+            t: Time of the last accepted point (radiation-reaction units).
+            y: State at that point.
         """
         if self.dopr.fix_step:
             return
@@ -719,9 +927,18 @@ class Integrate:
             self._finishing_function_at_tmax()
 
     def _finishing_function_stop(self, t: float):
-        """
-        If the integrator stops due to the separatrix stopping condition, place a point at the inner
-        boundary and finish integration.
+        """Place the final point on the stop boundary by root-finding on the last segment.
+
+        If the last segment also passes ``tmax`` and the boundary is not yet crossed at
+        ``tmax``, the final point goes at ``tmax`` instead. Otherwise ``brentq``
+        (``xtol=INNER_THRESHOLD``, ``rtol=1e-13``, ``maxiter=MAX_ITER``) finds the crossing
+        time between the last point and the segment's end knot.
+
+        Args:
+            t: Time of the last accepted point (radiation-reaction units).
+
+        Raises:
+            RuntimeError: If the root-finding does not converge.
         """
         if self.integrate_backwards:
             distance_func = self.inner_func_backward
@@ -778,9 +995,7 @@ class Integrate:
             )
 
     def _finishing_function_at_tmax(self):
-        """
-        If the integrator walked past tmax during the main loop, place a point at tmax and finish integration.
-        """
+        """Place the final point at ``tmax`` on the dense output of the last segment."""
         y_finish = self.eval_integrator_spline(
             np.array(
                 [
@@ -797,33 +1012,60 @@ class Integrate:
 
     @classmethod
     def get_pex(self, y: np.ndarray) -> np.ndarray:
-        """Handles integrator-specific conversion from y to pex and returns the result."""
+        """Map an integrated state to ``(p, e, x)`` (implemented by the subclasses).
+
+        Args:
+            y: Integrated state.
+
+        Returns:
+            np.ndarray: ``(p, e, x)``.
+
+        Raises:
+            NotImplementedError: Always, in the base class.
+        """
         raise NotImplementedError
 
 
 class APEXIntegrate(Integrate):
-    """
-    An subclass of Integrate for integrating in pex coordinates.
+    """:class:`Integrate` in the orbital elements ``(p, e, x)`` (the default variant).
+
+    Built by :func:`get_integrator` for ``integrate_constants_of_motion=False``; this is
+    the integrator of every FEW waveform model and of the LISA global-fit EMRI path. Takes
+    the :class:`Integrate` arguments.
     """
 
     def get_pex(self, y):
+        """Return the first three state entries ``(p, e, x)`` (a view of ``y``)."""
         return y[:3]
 
 
 class AELQIntegrate(Integrate):
-    """
-    An subclass of Integrate for integrating in ELQ coordinates.
+    """:class:`Integrate` in the constants of motion ``(E, L, Q)``.
+
+    Built by :func:`get_integrator` for ``integrate_constants_of_motion=True``; the model
+    must support ELQ (``supports_ELQ``). Takes the :class:`Integrate` arguments.
     """
 
     def get_pex(self, y):
+        """Convert ``(E, L, Q)`` to ``(p, e, x)`` with :func:`~few.utils.geodesic.ELQ_to_pex`.
+
+        Args:
+            y (np.ndarray): State whose first three entries are ``(E, L, Q)``.
+
+        Returns:
+            tuple: ``(p, e, x)``.
+        """
         p, e, x = ELQ_to_pex(self.a, y[0], y[1], y[2])
         return p, e, x
 
 
 class BatchedIntegrate:
-    """Integrate many EMRI trajectories at once: each DOPR853 step advances every active
-    system, with the right-hand side from ``func.evaluate_rhs_batch`` (no Python loop over
-    systems inside a step). The CPU reference of the device-resident integrator.
+    """Integrate many EMRI trajectories at once (experimental CPU reference).
+
+    Each DOPR853 step advances every active system, with the right-hand side from
+    ``func.evaluate_rhs_batch`` (no Python loop over systems inside a step). It is the CPU
+    reference of a planned device-resident integrator (``docs/traj-batching.md``) and is not
+    wired into :class:`~few.trajectory.inspiral.EMRIInspiral` or the waveform generators.
 
     Per system it follows :class:`Integrate` exactly: the same initial step tuning,
     controller, retry-and-halve rules, separatrix-buffer stop and final-point placement.
@@ -833,6 +1075,36 @@ class BatchedIntegrate:
     Scope: forward integration, pex variables (``use_ELQ=False``), adaptive stepping.
     A fresh DOPR853 is used per :meth:`run` (the scalar DOPR853 keeps controller state
     across trajectories; compare against a fresh scalar integrator).
+
+    Args:
+        func (str or type): ODE model (class or stock name) with an
+            ``evaluate_rhs_batch`` method, in practice
+            :class:`~few.trajectory.ode.flux.KerrEccEqFlux`. Default ``"KerrEccEqFlux"``.
+        err: Absolute tolerance of the error control. Default ``1e-11``.
+        buffer_length: Initial rows per system of the output buffers (grown by 100).
+            Default ``1000``.
+        max_step_size: Largest step in radiation-reaction units. Default ``None`` means no
+            limit.
+        max_iter: Accepted-step limit per system. Default ``None`` means ``buffer_length``.
+        **kwargs: Forwarded to :func:`get_integrator` for the scalar helper integrator
+            (``force_backend`` defaults to ``"cpu"``; the ODE ignores it).
+
+    Raises:
+        NotImplementedError: If the model has no ``evaluate_rhs_batch``, or its class
+            overrides ``evaluate_rhs``, ``modify_rhs`` or ``modify_rhs_before_Jacobian``
+            (the batched RHS only reproduces the stock ``KerrEccEqFlux``).
+
+    Example:
+        .. code-block:: python
+
+            import numpy as np
+            from few.trajectory.integrate import BatchedIntegrate
+
+            bi = BatchedIntegrate("KerrEccEqFlux", err=1e-11)
+            y0 = np.array([[10.0, 12.0], [0.3, 0.2], [1.0, 1.0],
+                           [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]])   # (6, S): pex + phases
+            out = bi.run(1e6, 1e1, 0.9, y0, T=1.0)
+            out.trajectories[0]   # (n_0, 7): t [s], p, e, x, Phi_phi, Phi_theta, Phi_r
     """
 
     def __init__(self, func="KerrEccEqFlux", err: float = 1e-11, buffer_length: int = 1000,
@@ -862,11 +1134,13 @@ class BatchedIntegrate:
 
     # --- RHS through the batched ODE ----------------------------------------------------------
     def _ode(self, t, y, ydot, a_sub):
+        """Stepper callback: write ``evaluate_rhs_batch(y, a_sub)`` into ``ydot`` ``(6, S)``."""
         out, _status = self.func.evaluate_rhs_batch(y, a_sub)
         ydot[:] = out
         return ydot
 
     def _rhs(self, y, a):
+        """Return ``(ydot (6, S), status (S,))`` from ``func.evaluate_rhs_batch``."""
         return self.func.evaluate_rhs_batch(y, a)
 
     def _tune_initial_step(self, y0, a, tmax, h_max):
@@ -888,19 +1162,36 @@ class BatchedIntegrate:
         return np.where(st != 0, h0, h)      # scalar: an off-bounds f1 returns h0
 
     def run(self, m1, m2, a, y0, T: float = 1.0, dt: float = 10.0):
-        """Integrate ``S`` systems. ``y0`` is ``(6, S)`` pex + phases (physical phases).
+        """Integrate ``S`` systems forward from ``y0``.
 
         This is the :meth:`Integrate.run_inspiral`-level contract: ``y0`` is used as given
         (no ``isvalid_pex`` check, no retrograde ``Phi_phi0`` flip as in
-        ``EMRIInspiral.get_inspiral``); ``m1, m2, a`` broadcast to ``S``; ``dt`` is accepted
-        for signature parity and is inert for adaptive stepping (as in the scalar path).
+        :meth:`~few.trajectory.inspiral.EMRIInspiral.get_inspiral`).
 
-        Returns a namespace with ``trajectories`` (list of ``(n_j, 7)``: t [s], p, e, x,
-        Phi_phi, Phi_theta, Phi_r, as :attr:`Integrate.trajectory` after
-        :meth:`Integrate.run_inspiral`), ``status`` (-1 separatrix buffer, -2 tmax,
-        -3 step-size collapse (100 failed tries), -4 max_iter reached), ``nsteps``, and the
-        dense output per system: ``spline_t`` (knot times [s]) and ``spline_coeff``
-        (``(n_j - 1, nparams, 8)``, as :attr:`Integrate.integrator_spline_coeff`).
+        Args:
+            m1 (float or np.ndarray): Massive black hole mass in solar masses, scalar or
+                ``(S,)``.
+            m2 (float or np.ndarray): Compact object mass in solar masses, scalar or
+                ``(S,)``.
+            a (float or np.ndarray): Dimensionless spin, scalar or ``(S,)``.
+            y0 (np.ndarray): Initial states, shape ``(6, S)``: ``p, e, x`` and the physical
+                initial phases in rad (scaled by the mass ratio internally).
+            T: Maximum duration in years. Default ``1.0``.
+            dt: Accepted for signature parity; inert for adaptive stepping (as in the scalar
+                path). Default ``10.0``.
+
+        Returns:
+            types.SimpleNamespace: With fields
+
+            - ``trajectories``: list of ``S`` arrays ``(n_j, 7)``: t [s], p, e, x, Phi_phi,
+              Phi_theta, Phi_r (rad), as :attr:`Integrate.trajectory` after
+              :meth:`Integrate.run_inspiral`;
+            - ``status``: ``(S,)`` int, -1 separatrix buffer, -2 tmax, -3 step-size collapse
+              (100 failed tries), -4 ``max_iter`` reached;
+            - ``nsteps``: ``(S,)`` int, the ``n_j``;
+            - ``spline_t``: list of knot-time arrays [s];
+            - ``spline_coeff``: list of ``(n_j - 1, nparams, 8)`` dense-output coefficients,
+              as :attr:`Integrate.integrator_spline_coeff` (phase rows mass-ratio scaled).
         """
         from types import SimpleNamespace
 

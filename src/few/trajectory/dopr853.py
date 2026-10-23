@@ -1,3 +1,41 @@
+r"""Dormand-Prince 8(5,3) (DOP853) Runge-Kutta stepper with 7th-order dense output.
+
+:class:`DOPR853` holds the Butcher tableau of Hairer's DOP853 (the module-level ``a*``,
+``b*``, ``c*``, ``bhh*``, ``er*`` and dense-output ``d*`` coefficients) and steps a batch of
+``numSys`` independent systems at once, arrays of shape ``(nODE, numSys)``. The trajectory
+integrator (:class:`few.trajectory.integrate.Integrate`) uses it for one system at a time
+through :meth:`DOPR853.take_step_single` and :meth:`DOPR853.prep_evaluate_single`, and
+evaluates the stored dense output with :meth:`DOPR853.eval` /
+:meth:`DOPR853.eval_derivative`; :class:`few.trajectory.integrate.BatchedIntegrate` uses the
+batched :meth:`DOPR853.take_step` / :meth:`DOPR853.prep_evaluate`.
+
+Error control is absolute only (``abstol``; the relative tolerance is fixed to 0), with
+Hairer's step-size controller (``safe = 0.9``, exponent ``alpha = 1/8``, ``beta = 0``,
+step factors clipped to ``[1/3, 6]``). The dense output of a step from :math:`t_0` to
+:math:`t_0 + h` is the polynomial in :math:`s = (t - t_0) / h`
+
+.. math::
+
+    y(s) = r_1 + s\,(r_2 + (1 - s)\,(r_3 + s\,(r_4 + (1 - s)\,(r_5 + s\,(r_6
+    + (1 - s)\,(r_7 + s\, r_8))))))
+
+with the eight coefficient vectors ``rcont1`` ... ``rcont8`` returned by
+:meth:`DOPR853.prep_evaluate`; they do not depend on the time unit, so the stored knots
+can be in any unit (seconds in :class:`~few.trajectory.integrate.Integrate`).
+
+The ``DOPR853.integrate`` batch loop, ``ODE_pendulum``, ``stopping_criterion`` and the
+``__main__`` block are a legacy self-test: they rely on the module-level ``xp`` and
+``tMax`` that only the ``__main__`` block defines, and ``DOPR853.integrate`` passes a
+``fix_step`` keyword that :meth:`DOPR853.take_step` does not accept, so it does not run as
+written.
+
+Warning:
+    Importing this module calls ``np.random.seed(5)``, which reseeds NumPy's global
+    random generator. :mod:`few` imports it (through :mod:`few.waveform`), so the first
+    ``import few`` in every process resets the global ``np.random`` state to the same
+    seed.
+"""
+
 import numpy as np
 
 # try:
@@ -209,7 +247,9 @@ minscale = 1.0 / 3.0
 maxscale = 6.0
 
 
+# TODO check: keep/remove/document -- only used by the __main__ self-test (xp defined only there)
 def ODE_pendulum(x, arg, k, additionalArgs):
+    """Damped-pendulum right-hand side of the legacy ``__main__`` self-test."""
     b = additionalArgs[0]
     c = additionalArgs[1]
     theta, omega = arg[0], arg[1]
@@ -218,6 +258,36 @@ def ODE_pendulum(x, arg, k, additionalArgs):
 
 
 class DOPR853:
+    """DOP853 stepper for a batch of systems, with dense-output coefficients.
+
+    Args:
+        ode (Callable): Right-hand side ``ode(x, y, ydot, additionalArgs)``: ``x`` the
+            times ``(numSys,)``, ``y`` the states ``(nODE, numSys)``; it must write the
+            derivatives into ``ydot`` ``(nODE, numSys)`` in place.
+        stopping_criterion (Callable, optional): Used only by the legacy :meth:`integrate`.
+            Default ``None``.
+        tmax (float, optional): Used only by :meth:`integrate`. Default ``1e300``.
+        max_step (int, optional): Used only by :meth:`integrate`. Default ``int(1e6)``.
+        use_gpu (bool, optional): Select cupy for :attr:`xp`. ``True`` does not work:
+            the module has no ``xp`` (cupy) import, so :attr:`xp` raises ``NameError``.
+            Default ``False``.
+        read_out_to_cpu (bool, optional): Stored as ``read_out_to_cpus``; selects
+            :attr:`xp_read_out`. Default ``True``.
+
+    Attributes:
+        fix_step (bool): If ``True``, steps are taken without error control (fixed
+            stepping). Default ``False``; set per trajectory by the integrator.
+        abstol (float): Absolute tolerance of the error control. Default ``1e-10``; set
+            per trajectory by the integrator (its ``err``).
+        errOldTemp (np.ndarray): Previous accepted error per system, created on the first
+            controlled step and kept across calls (see
+            :func:`few.trajectory.pool.reset_stepper`).
+        previousRejectTemp (np.ndarray): Whether the previous attempt per system was
+            rejected; created and kept like ``errOldTemp``.
+        k_coefficient_storage (list[np.ndarray]): The ten stage arrays of the last
+            controlled :meth:`take_step`, consumed by :meth:`prep_evaluate`.
+    """
+
     def __init__(
         self,
         ode,
@@ -246,10 +316,12 @@ class DOPR853:
 
     @property
     def xp(self):
+        """module: ``numpy`` (``use_gpu=True`` raises ``NameError``: no module ``xp``)."""
         return xp if self.use_gpu else np
 
     @property
     def xp_read_out(self):
+        """module: Array module of the :meth:`integrate` output buffers (``numpy`` by default)."""
         return np if self.read_out_to_cpus else xp
 
     def dormandPrinceSteps(
@@ -269,6 +341,20 @@ class DOPR853:
         k9,
         k10,
     ):
+        """Evaluate the twelve DOP853 stages of one step, writing the stage derivatives.
+
+        Twelve calls of ``ode``. Stages 1-10 go to ``k1`` ... ``k10``; stage 11 (at
+        ``x + c11 h``) is written into ``k2`` and stage 12 (at ``x + h``) into ``k3``,
+        reusing those buffers as Hairer's code does.
+
+        Args:
+            x (np.ndarray): Times of the step start, ``(numSys,)``.
+            solOld (np.ndarray): States at ``x``, ``(nODE, numSys)``.
+            h (np.ndarray): Step sizes, ``(numSys,)``.
+            additionalArgs: Passed through to ``ode``.
+            k1, k2, k3, k4, k5, k6, k7, k8, k9, k10 (np.ndarray): Stage buffers
+                ``(nODE, numSys)``, overwritten.
+        """
         # Create temporary index for use in loops
 
         # Step 1
@@ -389,6 +475,21 @@ class DOPR853:
         k9,
         k10,
     ):
+        """Form the 8th-order solution and the DOP853 error norm of a step, in place.
+
+        Writes ``solNew = solOld + h * sum_i b_i k_i`` and, per system, Hairer's combined
+        5th/3rd-order error estimate ``err = |h| * e5 / sqrt(n * (e5 + 0.01 * e3))``, where
+        ``e5`` and ``e3`` are the sums of squares of the two error vectors scaled by
+        ``1 / abstol`` (absolute tolerance only) and ``n = nODE``.
+
+        Args:
+            err (np.ndarray): Output, ``(numSys,)``; ``<= 1`` means the step is acceptable.
+            solOld (np.ndarray): States at the step start, ``(nODE, numSys)``.
+            solNew (np.ndarray): Output, the proposed states at the step end.
+            h (np.ndarray): Step sizes, ``(numSys,)``.
+            k1, k2, k3, k6, k7, k8, k9, k10 (np.ndarray): Stage derivatives from
+                :meth:`dormandPrinceSteps` (``k2``, ``k3`` holding stages 11 and 12).
+        """
         # Variables used in system
         # err     = 0.0
         # double err2 = 0.0
@@ -447,6 +548,28 @@ class DOPR853:
 
     # Contoller for setting step size on next iteration
     def controllerSuccess(self, flagSuccess, err, errOld, previousReject, h, x):
+        """Accept or reject each system's step and update its step size, in place.
+
+        Accepted (``err <= 1``): ``h *= clip(safe * err**-alpha * errOld**beta, 1/3, 6)``
+        (6 for ``err == 0``), unless the previous attempt was rejected, in which case ``h``
+        is kept; ``errOld = clip(err, 1e-4, 1e300)``. Rejected:
+        ``h *= max(safe * err**-alpha, 1/3)``.
+
+        Args:
+            flagSuccess (np.ndarray): Output, ``(numSys,)`` bool, ``True`` if accepted.
+            err (np.ndarray): Error norms from :meth:`error`, ``(numSys,)``.
+            errOld (np.ndarray): Previous accepted errors, updated.
+            previousReject (np.ndarray): Previous-attempt-rejected flags, updated.
+            h (np.ndarray): Step sizes, replaced by the next proposal.
+            x (np.ndarray): Times (unused).
+
+        Raises:
+            ValueError: If a step size becomes zero.
+
+        Warning:
+            If a step size is already zero on entry the method calls ``breakpoint()``
+            (a debugging leftover) before raising.
+        """
         # flagSuccess and previousReject were bool*
 
         # The error was acceptable
@@ -505,6 +628,24 @@ class DOPR853:
         tmax_dimensionless,
         additional_args,
     ):
+        """Attempt one step of a single system (the per-step call of ``Integrate.integrate``).
+
+        Args:
+            x (float): Current time.
+            h (float): Proposed step size.
+            y (np.ndarray): Current state, ``(nODE,)``; overwritten with the new state when
+                the step is accepted (left unchanged otherwise).
+            tmax_dimensionless (float): Unused (passed through to :meth:`take_step`).
+            additional_args: Passed to ``ode`` (wrapped in a length-1 array).
+
+        Returns:
+            tuple[bool, float, float]: ``(accepted, x_new, h_new)``: ``x_new = x + h`` if
+            accepted, else ``x``; ``h_new`` the next proposed step size.
+
+        Raises:
+            ValueError: If ``ode`` raises one (e.g. the model is out of its grid) or the
+                step size collapses to zero.
+        """
         xTemp = np.array([x])
         hTemp = np.array([h])
         solOldTemp = np.array([y.copy()]).T
@@ -532,6 +673,29 @@ class DOPR853:
         additionalArgsTemp,
         inds=None,
     ):
+        """Attempt one step for a batch of systems, updating the inputs in place.
+
+        Runs :meth:`dormandPrinceSteps`; with error control (``fix_step=False``) also
+        :meth:`error` and :meth:`controllerSuccess`, stores the stage arrays in
+        ``k_coefficient_storage`` for :meth:`prep_evaluate`, and keeps the controller
+        memory in ``errOldTemp`` / ``previousRejectTemp`` (indexed by ``inds``). With
+        ``fix_step=True`` every step is accepted.
+
+        Args:
+            xTemp (np.ndarray): Times ``(numSys,)``; advanced by the step for accepted
+                systems.
+            hTemp (np.ndarray): Step sizes ``(numSys,)``; replaced by the next proposal
+                (unchanged with ``fix_step``).
+            solOldTemp (np.ndarray): States ``(nODE, numSys)``; replaced by the new states
+                for accepted systems.
+            tmax_dimensionless: Unused.
+            additionalArgsTemp: Passed to ``ode``.
+            inds (np.ndarray, optional): Positions of these systems in the controller
+                memory. Default ``None`` means ``arange(numSys)``.
+
+        Returns:
+            np.ndarray: ``(numSys,)`` bool, ``True`` where the step was accepted.
+        """
         hOldTemp = hTemp.copy()
 
         if inds is None:
@@ -647,6 +811,22 @@ class DOPR853:
         return flagSuccess
 
     def prep_evaluate_single(self, x0, y0, h0, x1, y1, additionalArgs):
+        """Dense-output coefficients of the last accepted step of a single system.
+
+        Args:
+            x0 (float): Step start time.
+            y0 (np.ndarray): State at ``x0``, ``(nODE,)``.
+            h0 (float): Step size taken.
+            x1 (float): Step end time.
+            y1 (np.ndarray): State at ``x1``, ``(nODE,)``.
+            additionalArgs: Passed to ``ode``.
+
+        Returns:
+            np.ndarray: ``(nODE, 8)``, the coefficients ``rcont1`` ... ``rcont8``.
+
+        Raises:
+            AssertionError: With ``fix_step=True``.
+        """
         assert not self.fix_step
 
         x0_tmp = np.array([x0])
@@ -662,6 +842,27 @@ class DOPR853:
         return spline_output[0]
 
     def prep_evaluate(self, x0, y0, h0, x1, y1, additionalArgs):
+        """Dense-output coefficients of the last step for a batch of systems.
+
+        Must follow the :meth:`take_step` of that step: it reuses ``k_coefficient_storage``
+        and makes four more ``ode`` calls (the derivative at ``(x1, y1)`` and three extra
+        stages, written into the stored ``k10``, ``k2``, ``k3``).
+
+        Args:
+            x0 (np.ndarray): Step start times ``(numSys,)``.
+            y0 (np.ndarray): States at ``x0``, ``(nODE, numSys)``.
+            h0 (np.ndarray): Step sizes taken ``(numSys,)``.
+            x1 (np.ndarray): Step end times ``(numSys,)``.
+            y1 (np.ndarray): States at ``x1``, ``(nODE, numSys)``.
+            additionalArgs: Passed to ``ode``.
+
+        Returns:
+            np.ndarray: ``(numSys, nODE, 8)``, the coefficients ``rcont1`` ... ``rcont8``
+            of the polynomial given in the module docstring.
+
+        Raises:
+            AssertionError: With ``fix_step=True``.
+        """
         assert not self.fix_step
 
         newDer = np.zeros_like(y0)
@@ -801,6 +1002,21 @@ class DOPR853:
         ).T
 
     def eval(self, t_new: np.ndarray, t_old: np.ndarray, spline_coeffs: np.ndarray):
+        """Evaluate a stored dense output at new times.
+
+        Args:
+            t_new: Evaluation times ``(N,)``, within ``[t_old.min(), t_old.max()]``.
+            t_old: Ascending knot times ``(K,)`` (any unit, the same as ``t_new``).
+            spline_coeffs: Coefficients ``(K - 1, nODE, 8)`` from :meth:`prep_evaluate`.
+
+        Returns:
+            np.ndarray: ``(N, nODE)``, the interpolated states.
+
+        Raises:
+            ValueError: If any ``t_new`` is outside the knot range.
+            AssertionError: With ``fix_step=True``, or if ``spline_coeffs`` is not
+                ``(..., ..., 8)``.
+        """
         assert not self.fix_step
 
         t_min = t_old.min()
@@ -853,6 +1069,24 @@ class DOPR853:
         spline_coeffs: np.ndarray,
         order: int = 1,
     ):
+        """Evaluate a time derivative of a stored dense output at new times.
+
+        Differentiates the dense-output polynomial in ``s`` and divides by the segment
+        length to the power ``order``, so the result is per unit of ``t_old``.
+
+        Args:
+            t_new: Evaluation times ``(N,)``, within ``[t_old.min(), t_old.max()]``.
+            t_old: Ascending knot times ``(K,)``.
+            spline_coeffs: Coefficients ``(K - 1, nODE, 8)`` from :meth:`prep_evaluate`.
+            order: Derivative order, 0 (same as :meth:`eval`), 1, 2 or 3. Default ``1``.
+
+        Returns:
+            np.ndarray: ``(N, nODE)``, the ``order``-th derivatives.
+
+        Raises:
+            ValueError: If any ``t_new`` is outside the knot range.
+            UnboundLocalError: If ``order`` is not 0, 1, 2 or 3.
+        """
         t_min = t_old.min()
         t_max = t_old.max()
         if not np.all((t_min <= t_new) & (t_new <= t_max)):
@@ -925,6 +1159,7 @@ class DOPR853:
     #                             denseDerivOutput[indexOut] = (rcont2 + rcont3 - 2*rcont3*s + rcont4*(2 - 3*s)*s - (-1 + s)*s*(rcont5*(2 - 4*s) + rcont6*(3 - 5*s)*s + (-1 + s)*s*(rcont7*(-3 + 6*s) + rcont8*s*(-4 + 7*s))))/h
 
     # Solver
+    # TODO check: keep/remove/document -- only caller is __main__; take_step(fix_step=...) TypeError
     def integrate(
         self,
         condBound,  # Initial condition stored as a vector
@@ -1255,7 +1490,9 @@ class DOPR853:
         return (denseOutputLoc, denseOutput, step_num)  # denseDerivOutput
 
 
+# TODO check: keep/remove/document -- no callers (the __main__ test passes None); uses module xp
 def stopping_criterion(step_num, denseOutput):
+    """Legacy example stopping rule for :meth:`DOPR853.integrate` (not used anywhere)."""
     stop = xp.zeros_like(step_num, dtype=bool)
     num_diff = 10
     for i, step in enumerate(step_num):

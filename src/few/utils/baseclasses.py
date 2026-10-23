@@ -1,9 +1,20 @@
 # Collection of base classes for FastEMRIWaveforms Packages
 
-"""
-The :code:`few.utils.baseclasses` module contains abstract base classes for the
-various modules. When creating new modules, these classes should be used to maintain
-a common interface and pass information related to each model.
+"""Base classes shared by the FEW modules: backend handling and the waveform-model traits.
+
+- :class:`FewBackendConsumer`: backend selection of every backend-aware FEW module (maps
+  ``force_backend`` onto FEW's registered backends).
+- :class:`SphericalHarmonic`: the ``(l, m, k, n)`` mode bookkeeping of spherical-harmonic
+  models (mode arrays, index maps, the ``+m`` / ``-m`` symmetry) and the generic trajectory /
+  viewing-angle checks.
+- Model classes with their descriptive traits and initial-parameter checks:
+  :class:`SchwarzschildEccentric`, :class:`KerrEccentricEquatorial` (the production
+  ``FastKerrEccentricEquatorialFlux`` model and its amplitude module),
+  :class:`KerrGeneric` (work in progress) and :class:`Pn5AAK` (AAK waveforms).
+- Type helpers ``xp_ndarray`` and ``BackendLike``.
+
+When creating new modules, these classes should be used to keep a common interface and to
+carry the information of each model.
 """
 
 from __future__ import annotations
@@ -29,11 +40,40 @@ from gpubackendtools.parallelbase import ParallelModuleBase
 
 
 class FewBackendConsumer(ParallelModuleBase):
-    """Few Backend Setup
-    
-    Args:
-        force_backend: Backend for GPU Backend Tools Backend Consumer. 
+    """Base class of the FEW modules that run on a compute backend (CPU or CUDA).
 
+    Resolves ``force_backend`` to one of FEW's registered backends (``few_cpu``,
+    ``few_cuda11x``, ``few_cuda12x``, ``few_cuda13x``; registered by ``import few``) and
+    passes it to :class:`gpubackendtools.parallelbase.ParallelModuleBase`, which provides
+    :attr:`backend`, :attr:`xp` (numpy or cupy) and ``build_with_same_backend``. Subclasses
+    implement the classmethod ``supported_backends`` (bare flavour names in order of
+    preference, e.g. ``GPU_RECOMMENDED()``).
+
+    Args:
+        force_backend: Backend to use:
+
+            - ``None`` (default): the first available FEW backend among
+              ``supported_backends()`` (each name prefixed with ``few_``);
+            - a ``"few_<flavour>"`` string, e.g. ``"few_cuda13x"``;
+            - a bare flavour, e.g. ``"cuda13x"`` or ``"cpu"``: mapped to ``few_<flavour>``;
+            - another package's backend name ``"<pkg>_<flavour>"`` (e.g. ``"gbt_cpu"``, as
+              passed down by a parent object): the flavour is kept and FEW's backend of that
+              flavour is used;
+            - a backend instance or a ``(package, flavour)`` tuple: passed to the base class
+              unchanged.
+
+    Raises:
+        ValueError: From the base class, if the resolved name is not a registered backend.
+        gpubackendtools.gpubackendtools.BackendAccessException: From the backend registry,
+            if the requested backend (or every supported one) is unavailable.
+
+    Example:
+        .. code-block:: python
+
+            from few.utils.ylm import GetYlms
+
+            ylm = GetYlms(force_backend="cpu")  # resolved to the few_cpu backend
+            ylm.backend.name
     """
     def __init__(self, force_backend: Optional[str | FEWBackend] =  None):
         if force_backend is None:
@@ -68,6 +108,30 @@ class SphericalHarmonic(FewBackendConsumer):
     As we assume the amplitudes have been remapped to a spherical harmonic basis,
     we use -2 spin-weighted spherical harmonics (:math:`(s=-2)Y_{l,m}`) in place
     of the more generic angular function from Eq. :eq:`emri_wave_eq`.
+
+    The constructor enumerates the modes :math:`2 \le l \le` ``lmax``,
+    :math:`0 \le m \le l`, :math:`|k| \le` ``kmax``, :math:`|n| \le` ``nmax`` (the
+    :math:`m \ge 0` "Teukolsky" modes), sorts them with :math:`m = 0` first, appends a
+    :math:`-m` copy of every :math:`m > 0` mode for the full arrays (``l_arr``, ...), and
+    builds the index maps used by the amplitude modules and the mode selector. The arrays
+    live on the backend (numpy or cupy).
+
+    Args:
+        lmax: Maximum ``l``. Default ``10``.
+        kmax: Maximum ``|k|``. Default ``0`` (equatorial).
+        nmax: Maximum ``|n|``. Default ``0``.
+        force_backend: See :class:`FewBackendConsumer`. Default ``None``.
+
+    Attributes:
+        inverse_lm (np.ndarray): For each entry of the full arrays, the index of its
+            ``(l, m)`` in ``unique_l`` / ``unique_m`` (host array, from ``np.unique``).
+        mode_indexes (xp.ndarray): ``arange(num_teuk_modes)``, the indices of the
+            :math:`m \ge 0` modes.
+        negative_mode_indexes (xp.ndarray): For each :math:`m > 0` mode
+            :math:`(l, m, k, n)`, the index of the stored mode :math:`(l, m, -k, -n)`, whose
+            :math:`(-m, -k, -n)` partner is :math:`(l, -m, k, n)`; for :math:`m = 0` the
+            mode itself. Used by the amplitude modules for :math:`m < 0` requests and
+            negative :math:`x_I`.
     """
 
     lmax: int
@@ -80,22 +144,22 @@ class SphericalHarmonic(FewBackendConsumer):
     """Maximum n value for the model."""
 
     num_modes: int
-    """Total number of modes in the model"""
+    """Number of (l, m, k, n) modes with m >= 0 in the model."""
 
     num_teuk_modes: int
-    """Number of Teukolsky modes in the model."""
+    """Number of Teukolsky (m >= 0) modes in the model; equal to ``num_modes``."""
 
     m0sort: xp_ndarray
-    """1D Array of sorted mode indices with m=0 first, then m<0, then m>0."""
+    """1D array of the enumeration indices of the m >= 0 modes, sorted m = 0 first, then m > 0."""
 
     l_arr_no_mask: xp_ndarray
-    """1D Array of l values for each mode before masking."""
+    """1D Array of l values of the m >= 0 modes (``m0sort`` order), before the -m copies."""
     m_arr_no_mask: xp_ndarray
-    """1D Array of m values for each mode before masking."""
+    """1D Array of m values of the m >= 0 modes (``m0sort`` order), before the -m copies."""
     k_arr_no_mask: xp_ndarray
-    """1D Array of k values for each mode before masking."""
+    """1D Array of k values of the m >= 0 modes (``m0sort`` order), before the -m copies."""
     n_arr_no_mask: xp_ndarray
-    """1D Array of n values for each mode before masking."""
+    """1D Array of n values of the m >= 0 modes (``m0sort`` order), before the -m copies."""
 
     m0mask: xp_ndarray
     """1D Array Mask for m != 0."""
@@ -108,13 +172,13 @@ class SphericalHarmonic(FewBackendConsumer):
     """Number of modes with m > 0."""
 
     l_arr: xp_ndarray
-    """1D Array of l values for each mode."""
+    """1D Array of l values for each mode: the m >= 0 modes, then a -m copy of each m > 0 mode."""
     m_arr: xp_ndarray
-    """1D Array of m values for each mode."""
+    """1D Array of m values for each mode (same layout as ``l_arr``)."""
     k_arr: xp_ndarray
     """1D Array of k values for each mode. Currently always 0 for equatorial orbits."""
     n_arr: xp_ndarray
-    """1D Array of n values for each mode."""
+    """1D Array of n values for each mode (same layout as ``l_arr``)."""
 
     m_zero_up_mask: xp_ndarray
     """1D Mask for m >= 0."""
@@ -127,13 +191,16 @@ class SphericalHarmonic(FewBackendConsumer):
     """Number of unique (l,m) values."""
 
     index_map: dict[tuple[int, int, int, int], int]
-    """Maps mode index to mode tuple."""
+    """Maps each mode tuple (l, m, k, n), m of either sign, to its index in the full arrays."""
     special_index_map: dict[tuple[int, int, int, int], int]
-    """Maps mode index to mode tuple with m > 0."""
+    """Maps a mode tuple to the index of its stored m >= 0 mode: (l, m, k, n) itself for m >= 0,
+    and (l, -m, -k, -n) -> index of (l, m, k, n) for the m < 0 partners."""
     index_map_arr: xp_ndarray
-    """Array mapping mode tuple to mode index - used for fast indexing. Returns -1 if mode does not exist."""
+    """Array form of ``index_map``, indexed ``[l, m, k, n]`` (negative m, k, n wrap around);
+    -1 where the mode does not exist. Shape ``(lmax+1, 2 lmax+1, 2 kmax+1, 2 nmax+1)``."""
     special_index_map_arr: xp_ndarray
-    """Array mapping mode tuple to mode index with m > 0 - used for fast indexing. Returns -1 if mode does not exist."""
+    """Array form of ``special_index_map`` (same indexing and shape); -1 where the mode does
+    not exist."""
 
     def __init__(
         self, lmax: int = 10, kmax: int = 0, nmax: int = 0, force_backend: BackendLike = None
@@ -167,7 +234,7 @@ class SphericalHarmonic(FewBackendConsumer):
             ]
         )
 
-        # sorts so that order is m=0, m<0, m>0
+        # sorts so that order is m=0, then m>0
         self.m0sort = m0sort = self.xp.concatenate(
             [
                 self.xp.arange(self.num_teuk_modes)[m0mask],
@@ -262,7 +329,7 @@ class SphericalHarmonic(FewBackendConsumer):
             except AttributeError:
                 pass
 
-            # regular index to mode tuple
+            # regular map: mode tuple to index
             self.index_map[(l, m, k, n)] = i
             self.index_map_arr[l, m, k, n] = i
             # special map that gives m < 0 indices as m > 0 indices
@@ -292,20 +359,15 @@ class SphericalHarmonic(FewBackendConsumer):
             ]
 
     def sanity_check_viewing_angles(self, theta: float, phi: float):
-        """Sanity check on viewing angles.
+        """Wrap the azimuthal viewing angle; ``theta`` is not checked.
 
-        Make sure parameters are within allowable ranges.
-
-        args:
-            theta (double): Polar viewing angle.
-            phi (double): Azimuthal viewing angle.
+        Args:
+            theta (float): Source-frame polar viewing angle in rad (returned unchanged; the
+                range check is commented out).
+            phi (float): Source-frame azimuthal viewing angle in rad.
 
         Returns:
-            tuple: (theta, phi). Phi is wrapped.
-
-        Raises:
-            ValueError: If any of the angular values are not allowed.
-
+            tuple: ``(theta, phi % (2 pi))``.
         """
         # if theta < 0.0 or theta > np.pi:
         #    raise ValueError("theta must be between 0 and pi.")
@@ -314,23 +376,19 @@ class SphericalHarmonic(FewBackendConsumer):
         return (theta, phi)
 
     def sanity_check_traj(self, a: float, p: np.ndarray, e: np.ndarray, xI: np.ndarray):
-        """Sanity check on parameters output from the trajectory module.
+        r"""Check the trajectory output of a spherical-harmonic waveform.
 
-        Make sure parameters are within allowable ranges.
+        Called by :meth:`~few.waveform.base.SphericalHarmonicWaveformBase._generate_waveform`
+        after the inspiral.
 
-        args:
-            a: Dimensionless spin of massive black hole.
-            p: Array of semi-latus rectum values produced by
-                the trajectory module.
-            e: Array of eccentricity values produced by
-                the trajectory module.
-            xI: Array of cosine(inclination) values produced by the trajectory module.
+        Args:
+            a: Dimensionless spin of the primary.
+            p: Semi-latus rectum along the trajectory, in units of :math:`M`.
+            e: Eccentricity along the trajectory.
+            xI: :math:`x_I = \cos I` along the trajectory.
 
         Raises:
-            ValueError: If any of the trajectory points are not allowed.
-            warn: If any points in the trajectory are allowable,
-                but outside calibration region.
-
+            ValueError: If any ``e < 0``, any ``p < 0``, ``|a| > 1`` or any ``|xI| > 1``.
         """
 
         if np.any(e < 0.0):
@@ -347,12 +405,15 @@ class SphericalHarmonic(FewBackendConsumer):
 
 
 class SchwarzschildEccentric(SphericalHarmonic):
-    """
-    Schwarzschild eccentric base class.
+    """Schwarzschild eccentric model traits (``a = 0``, equatorial, eccentric).
+
+    Base of the Schwarzschild amplitude modules and waveforms
+    (:class:`~few.waveform.waveform.FastSchwarzschildEccentricFlux` and related).
 
     Args:
-        lmax: Maximum l value for the model. Default is 10.
-        nmax: Maximum n value for the model. Default is 30.
+        lmax: Maximum ``l``. Default ``10``.
+        nmax: Maximum ``|n|``. Default ``30``.
+        force_backend: See :class:`FewBackendConsumer`. Default ``None``.
     """
 
     background: str = "Schwarzschild"
@@ -380,31 +441,30 @@ class SchwarzschildEccentric(SphericalHarmonic):
 
     @classmethod
     def supported_backends(cls):
+        """Backend preference: ``GPU_RECOMMENDED()`` (CUDA 13/12/11, then CPU)."""
         return cls.GPU_RECOMMENDED()
 
     def sanity_check_init(
         self, m1: float, m2: float, a: float, p0: float, e0: float, xI: float
     ) -> tuple[float, float]:
-        r"""Sanity check initial parameters.
+        r"""Check the initial parameters against the Schwarzschild eccentric model's domain.
 
-        Make sure parameters are within allowable ranges.
-
-        args:
-            m1: Massive black hole mass in solar masses.
-            m2: compact object mass in solar masses.
-            a: Dimensionless spin of massive black hole :math:`(a = 0)`.
-            p0: Initial semilatus rectum (dimensionless)
-                :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
-                more information on :math:`p_0 \leq 10.0`.
-            e0: Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
-            xI: Initial cosine(inclination) :math:`(x_I = 1)`.
+        Args:
+            m1: Primary (massive black hole) mass in solar masses.
+            m2: Secondary (compact object) mass in solar masses, ``m2 <= m1``.
+            a: Dimensionless spin; must be ``0``.
+            p0: Initial semi-latus rectum in units of :math:`M`:
+                :math:`p_0 \le 16 + 2e_0`, and for :math:`p_0 < 10` also
+                :math:`p_0 \ge 7(6 + 2e_0) - 41.9`.
+            e0: Initial eccentricity, :math:`0 \le e_0 \le 0.75`.
+            xI: Initial :math:`x_I`; ``+1`` or ``-1``.
 
         Returns:
-            (a_fix, xI_fix): a and xI in the correct convention (a >= 0).
+            tuple[float, float]: ``(a, xI)`` unchanged.
 
         Raises:
-            ValueError: If any of the parameters are not allowed.
-
+            ValueError: If a mass, ``p0`` or ``e0`` is negative, ``m1 < m2``, ``e0`` or
+                ``p0`` is out of range, ``a != 0`` or ``|xI| != 1``.
         """
         for val, key in [[m1, "m1"], [p0, "p0"], [e0, "e0"], [m2, "m2"]]:
             test = val < 0.0
@@ -453,12 +513,19 @@ class SchwarzschildEccentric(SphericalHarmonic):
 
 
 class KerrEccentricEquatorial(SphericalHarmonic):
-    """
-    Kerr eccentric equatorial base class.
+    """Kerr eccentric equatorial model traits (the ``FastKerrEccentricEquatorialFlux`` model).
+
+    Base of :class:`~few.amplitude.ampinterp2d.AmpInterpKerrEccEq` and of
+    :class:`~few.waveform.waveform.FastKerrEccentricEquatorialFlux`; the defaults give
+    63 ``(l, m >= 0)`` pairs x 111 values of ``n`` = 6993 Teukolsky modes. Internal
+    convention: equatorial orbits with ``xI = +1`` and a signed spin ``a`` in
+    ``[-0.999, 0.999]``, negative for retrograde orbits (the waveforms map ``xI0 = -1`` to
+    ``(-a, +1)`` before :meth:`sanity_check_init`).
 
     Args:
-        lmax: Maximum l value for the model. Default is 10.
-        nmax: Maximum n value for the model. Default is 55.
+        lmax: Maximum ``l``. Default ``10``.
+        nmax: Maximum ``|n|``. Default ``55``.
+        force_backend: See :class:`FewBackendConsumer`. Default ``None``.
     """
 
     background: str = "Kerr"
@@ -485,31 +552,44 @@ class KerrEccentricEquatorial(SphericalHarmonic):
 
     @classmethod
     def supported_backends(cls):
+        """Backend preference: ``GPU_RECOMMENDED()`` (CUDA 13/12/11, then CPU)."""
         return cls.GPU_RECOMMENDED()
 
     def sanity_check_init(
         self, m1: float, m2: float, a: float, p0: float, e0: float, xI: float
     ) -> tuple[float, float]:
-        r"""Sanity check initial parameters.
+        r"""Check the initial parameters against the KerrEccEq flux grid.
 
-        Make sure parameters are within allowable ranges.
+        Called by :meth:`~few.waveform.base.SphericalHarmonicWaveformBase._generate_waveform`
+        (after it has mapped ``xI0 < 0`` to ``(-a, +1)``). ``xI < 0`` is flipped here too, to
+        ``(-a, -xI)``. The point is then mapped with
+        :func:`~few.utils.mappings.kerrecceq.kerrecceq_forward_map` (flux grid) and must
+        satisfy: ``u`` not NaN (else "too close to the separatrix") and ``u <= 1.000001``
+        (else "outside of our domain"), and ``-1e-6 <= w <= 1.000001``. Points inside the
+        grid's inner edge (``u < 0``) are not rejected here; the trajectory's start check
+        (:meth:`~few.trajectory.ode.flux.KerrEccEqFlux.isvalid_pex`) rejects them.
 
-        args:
-            m1: Massive black hole mass in solar masses.
-            m2: compact object mass in solar masses.
-            a: Dimensionless spin of massive black hole.
-            p0: Initial semilatus rectum (dimensionless)
-                :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
-                more information on :math:`p_0 \leq 10.0`.
-            e0: Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
-            xI: Initial cosine(inclination) :math:`(|x_I| = 1)`.
+        Args:
+            m1: Primary (massive black hole) mass in solar masses.
+            m2: Secondary (compact object) mass in solar masses, ``m2 <= m1``.
+            a: Dimensionless spin, signed (negative for retrograde orbits with ``xI = 1``);
+                at most ``0.999`` after the flip.
+            p0: Initial semi-latus rectum in units of :math:`M`.
+            e0: Initial eccentricity.
+            xI: Initial :math:`x_I`, ``+1`` or ``-1``.
 
         Returns:
-            (a_fix, xI_fix): a and xI in the correct convention (a >= 0).
+            tuple[float, float]: ``(a, xI)`` in the internal convention: ``xI = +1`` and a
+            signed ``a``.
 
         Raises:
-            ValueError: If any of the parameters are not allowed.
+            ValueError: If a mass, ``p0`` or ``e0`` is negative, ``m1 < m2``, ``a > 0.999``
+                after the flip, the grid checks above fail, or ``|xI| != 1``.
 
+        Warning:
+            The ``xI < 0`` branch logs through ``get_logger``, which this module does not
+            import (``NameError``); the waveforms never reach it because they flip
+            ``xI0 < 0`` first.
         """
         # TODO: update function when grids replaced
 
@@ -561,6 +641,7 @@ class KerrEccentricEquatorial(SphericalHarmonic):
 
         return a, xI
 
+# TODO check: keep/remove/document -- only used by the WIP AmpInterpKerrGeneric; only a = 0.7
 class KerrGeneric(SphericalHarmonic):
     """
     Kerr generic base class example.
@@ -605,18 +686,17 @@ class KerrGeneric(SphericalHarmonic):
 
         Make sure parameters are within allowable ranges.
 
-        args:
+        Args:
             m1: Massive black hole mass in solar masses.
             m2: compact object mass in solar masses.
-            a: Dimensionless spin of massive black hole.
-            p0: Initial semilatus rectum (dimensionless)
-                :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
-                more information on :math:`p_0 \leq 10.0`.
-            e0: Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
-            xI: Initial cosine(inclination) :math:`(|x_I| = 1)`.
+            a: Dimensionless spin of massive black hole; must be exactly ``0.7`` (after the
+                flip of a negative ``xI``).
+            p0: Initial semilatus rectum (dimensionless); only checked for sign.
+            e0: Initial eccentricity; only checked for sign.
+            xI: Initial cosine(inclination) :math:`(|x_I| \le 1)`.
 
         Returns:
-            (a_fix, xI_fix): a and xI in the correct convention (a >= 0).
+            (a_fix, xI_fix): a and xI in the correct convention (xI >= 0).
 
         Raises:
             ValueError: If any of the parameters are not allowed.
@@ -656,10 +736,11 @@ class KerrGeneric(SphericalHarmonic):
 
 
 class Pn5AAK(Citable):
-    """Base class for Pn5AAK waveforms.
+    r"""Base class for Pn5AAK waveforms.
 
     This class contains some basic checks and information for AAK waveforms
-    with a 5PN trajectory model. Please see :class:`few.waveform.Pn5AAKWaveform`
+    with a 5PN trajectory model (detector-frame output, inclination parameter
+    :math:`Y = \cos\iota`). Please see :class:`few.waveform.waveform.Pn5AAKWaveform`
     for more details.
     """
 
@@ -681,26 +762,19 @@ class Pn5AAK(Citable):
         return [REFERENCE.PN5] + super().module_references()
 
     def sanity_check_angles(self, qS: float, phiS: float, qK: float, phiK: float):
-        """Sanity check on viewing angles.
+        r"""Check the sky and spin angles of an AAK waveform; wrap the azimuths.
 
-        Make sure parameters are within allowable ranges.
-
-        args:
-            qS (double): Sky location polar angle in ecliptic
-                coordinates.
-            phiS (double): Sky location azimuthal angle in
-                ecliptic coordinates.
-            qK (double): Initial BH spin polar angle in ecliptic
-                coordinates.
-            phiK (double): Initial BH spin azimuthal angle in
-                ecliptic coordinates.
+        Args:
+            qS (float): Sky location polar angle in rad (ecliptic coordinates).
+            phiS (float): Sky location azimuthal angle in rad.
+            qK (float): Initial spin polar angle in rad.
+            phiK (float): Initial spin azimuthal angle in rad.
 
         Returns:
-            tuple: (qS, phiS, qK, phiK). phiS and phiK are wrapped.
+            tuple: ``(qS, phiS % (2 pi), qK, phiK % (2 pi))``.
 
         Raises:
-            ValueError: If any of the angular values are not allowed.
-
+            ValueError: If ``qS`` or ``qK`` is outside :math:`[0, \pi]`.
         """
         if qS < 0.0 or qS > np.pi:
             raise ValueError("qS must be between 0 and pi.")
@@ -713,23 +787,15 @@ class Pn5AAK(Citable):
         return (qS, phiS, qK, phiK)
 
     def sanity_check_traj(self, p: np.ndarray, e: np.ndarray, Y: np.ndarray):
-        r"""Sanity check on parameters output from thte trajectory module.
+        r"""Check the trajectory output of an AAK waveform.
 
-        Make sure parameters are within allowable ranges.
-
-        args:
-            p (1D np.ndarray): Array of semi-latus rectum values produced by
-                the trajectory module.
-            e (1D np.ndarray): Array of eccentricity values produced by
-                the trajectory module.
-            Y (1D np.ndarray): Array of cos:math:`\iota` values produced by
-                the trajectory module.
+        Args:
+            p: Semi-latus rectum along the trajectory, in units of :math:`M`.
+            e: Eccentricity along the trajectory.
+            Y: :math:`Y = \cos\iota` along the trajectory.
 
         Raises:
-            ValueError: If any of the trajectory points are not allowed.
-            warn: If any points in the trajectory are allowable,
-                but outside calibration region.
-
+            ValueError: If any ``e < 0``, any ``p < 0``, or any ``Y`` outside ``[-1, 1]``.
         """
 
         if np.any(e < 0.0):
@@ -746,23 +812,30 @@ class Pn5AAK(Citable):
     def sanity_check_init(
         self, m1: float, m2: float, a: float, p0: float, e0: float, Y0: float
     ):
-        r"""Sanity check initial parameters.
+        r"""Check the initial parameters of an AAK waveform.
 
-        Make sure parameters are within allowable ranges.
+        A negative spin is flipped to ``(-a, -Y0)`` (convention ``a >= 0``). ``p0`` and
+        ``e0`` are only checked for sign.
 
-        args:
-            m1: Massive black hole mass in solar masses.
-            m2: compact object mass in solar masses.
-            a: Dimensionless spin of massive black hole :math:`(0 \leq a \leq 1)`.
-            p0: Initial semilatus rectum (dimensionless)
-                :math:`(10\leq p_0\leq 16 + 2e_0)`. See the documentation for
-                more information on :math:`p_0 \leq 10.0`.
-            e0: Initial eccentricity :math:`(0\leq e_0\leq0.7)`.
-            Y0: Initial cos:math:`\iota` :math:`(-1.0\leq Y_0\leq1.0)`.
+        Args:
+            m1: Primary (massive black hole) mass in solar masses.
+            m2: Secondary (compact object) mass in solar masses, ``m2 <= m1``.
+            a: Dimensionless spin of the primary.
+            p0: Initial semi-latus rectum in units of :math:`M`.
+            e0: Initial eccentricity.
+            Y0: Initial :math:`Y_0 = \cos\iota`, in ``[-1, 1]``.
+
+        Returns:
+            tuple[float, float]: ``(a, Y0)`` with ``a >= 0``.
 
         Raises:
-            ValueError: If any of the parameters are not allowed.
+            ValueError: If a mass, ``p0`` or ``e0`` is negative, ``m1 < m2``, or
+                ``|Y0| > 1``.
 
+        Warning:
+            The two warnings (negative ``a``; mass ratio ``m2 / m1 > 1e-4``) log through
+            ``get_logger``, which this module does not import, so those cases raise
+            ``NameError``.
         """
 
         for val, key in [[m1, "m1"], [p0, "p0"], [e0, "e0"], [m2, "m2"]]:

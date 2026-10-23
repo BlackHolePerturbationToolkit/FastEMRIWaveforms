@@ -1,3 +1,13 @@
+"""Time-domain mode sum from the sparse trajectory, and a batched cubic spline.
+
+- :class:`InterpolatedModeSum`: the time-domain summation module of the fast
+  spherical-harmonic models. The mode amplitudes are fitted with cubic splines on the sparse
+  trajectory knots, the phases come from the trajectory's DOP853 dense-output spline, and the
+  backend kernel ``get_waveform_wrap`` evaluates and sums all modes at every output sample.
+- :class:`CubicSplineInterpolant`: many not-a-knot cubic splines fitted at once with the
+  backend's batched tridiagonal solve (``interpolate_arrays_wrap``).
+"""
+
 # Interpolated summation of modes in python for the FastEMRIWaveforms Package
 
 import numpy as np
@@ -25,11 +35,31 @@ class CubicSplineInterpolant(FewBackendConsumer):
 
     This class can be run on GPUs and CPUs.
 
-    args:
-        t: t values as input for the spline. If 2D, must have shape (ninterps, length).
-        y_all: y values for the spline; shape is (length,) or (ninterps, length).
-        **kwargs: Optional keyword arguments for the base class:
-            :class:`few.utils.baseclasses.FewBackendConsumer`.
+    Args:
+        t: Knots, shape ``(length,)`` (shared by all splines) or ``(ninterps, length)``;
+            at least 3 knots. An ``xp.ndarray`` of the backend.
+        y_all: Values, shape ``(length,)`` or ``(ninterps, length)``.
+        **kwargs: Forwarded to :class:`~few.utils.baseclasses.FewBackendConsumer`
+            (``force_backend``).
+
+    Raises:
+        ValueError: If ``t`` has fewer than 3 knots or more than 2 dimensions.
+
+    Attributes:
+        t (xp.ndarray): Knots, shape ``(ninterps, length)``.
+        interp_array (xp.ndarray): Flattened coefficients ``(y, c1, c2, c3)``; reshape with
+            ``reshape_shape`` = ``(4, length, ninterps)``.
+
+    Example:
+        .. code-block:: python
+
+            import numpy as np
+            from few.summation.interpolatedmodesum import CubicSplineInterpolant
+
+            t = np.linspace(0.0, 10.0, 11)
+            spl = CubicSplineInterpolant(t, np.array([np.sin(t), np.cos(t)]),
+                                         force_backend="cpu")
+            spl(np.array([0.5, 1.5]))  # shape (2, 2)
     """
 
     def __init__(self, t: np.ndarray, y_all: np.ndarray, **kwargs):
@@ -112,34 +142,44 @@ class CubicSplineInterpolant(FewBackendConsumer):
 
     @property
     def interpolate_arrays(self) -> callable:
-        """GPU or CPU waveform generation."""
+        """The backend's batched spline-fit kernel (``interpolate_arrays_wrap``)."""
         return self.backend.interpolate_arrays_wrap
 
     @classmethod
     def supported_backends(cls):
+        """Backend preference order: ``["cuda13x", "cuda12x", "cuda11x", "cpu"]``."""
         return cls.GPU_RECOMMENDED()
 
     @property
     def y(self) -> np.ndarray:
-        """y values associated with the spline"""
+        """Values at the knots, shape ``(ninterps, length)``."""
         return self.interp_array.reshape(self.reshape_shape)[0].T
 
     @property
     def c1(self) -> np.ndarray:
-        """constants for the linear term"""
+        """Linear-term coefficients, shape ``(ninterps, length)``."""
         return self.interp_array.reshape(self.reshape_shape)[1].T
 
     @property
     def c2(self) -> np.ndarray:
-        """constants for the quadratic term"""
+        """Quadratic-term coefficients, shape ``(ninterps, length)``."""
         return self.interp_array.reshape(self.reshape_shape)[2].T
 
     @property
     def c3(self) -> np.ndarray:
-        """constants for the cubic term"""
+        """Cubic-term coefficients, shape ``(ninterps, length)``."""
         return self.interp_array.reshape(self.reshape_shape)[3].T
 
     def _get_inds(self, tnew: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Segment index of each ``tnew`` point, and masks of the points left / right of the knots.
+
+        Args:
+            tnew: New times, shape ``(ninterps, M)``.
+
+        Returns:
+            tuple[xp.ndarray, xp.ndarray, xp.ndarray]: ``(inds, bad_left, bad_right)``, each of
+            shape ``(ninterps, M)``.
+        """
         # find where in the old t array the new t values split
 
         inds = self.xp.zeros((self.ninterps, tnew.shape[1]), dtype=int)
@@ -162,29 +202,25 @@ class CubicSplineInterpolant(FewBackendConsumer):
         return inds, inds_bad_left, inds_bad_right
 
     def __call__(self, tnew: np.ndarray, deriv_order: int = 0) -> np.ndarray:
-        """Evaluation function for the spline
+        """Evaluate all splines (or a derivative) at new times.
 
         Put in an array of new t values at which all interpolants will be
-        evaluated. If t values are outside of the original t values, edge values
-        are used to fill the new array at these points.
+        evaluated. For ``deriv_order=0``, points outside the knot range get the edge values
+        (a warning is logged for points left of the range); derivatives are not allowed
+        outside the range.
 
-        args:
-            tnew: Array of new t values. All of these new
-                t values must be within the bounds of the input t values,
-                including the beginning t and **excluding** the ending t. If tnew is 1D
-                and :code:`self.t` is 2D, tnew will be cast to 2D.
-            deriv_order: Order of the derivative to evaluate. Default
-                is 0 meaning the basic spline is evaluated. deriv_order of 1, 2, and 3
-                correspond to their respective derivatives of the spline. Unlike :code:`scipy`,
-                this is purely an evaluation of the derivative values, not a new class to evaluate
-                for the derivative.
+        Args:
+            tnew: New times, shape ``(M,)`` (used for every spline) or ``(ninterps, M)``.
+            deriv_order: Order of the derivative to evaluate, 0 (default, the spline
+                itself) to 3. Unlike :code:`scipy`, this is purely an evaluation of the
+                derivative values, not a new class to evaluate for the derivative.
 
-        raises:
-            ValueError: a new t value is not in the bounds of the input t array.
+        Returns:
+            xp.ndarray: Shape ``(ninterps, M)``, squeezed (size-1 axes removed).
 
-        returns:
-            1D or 2D array of evaluated spline values (or derivatives).
-
+        Raises:
+            ValueError: If a 2-D ``tnew`` does not have ``ninterps`` rows, if a derivative is
+                requested outside the knot range, or if ``deriv_order > 3``.
         """
 
         tnew = self.xp.atleast_1d(tnew)
@@ -261,14 +297,34 @@ class CubicSplineInterpolant(FewBackendConsumer):
 
 
 class InterpolatedModeSum(SummationBase):
-    """Create waveform by interpolating a sparse trajectory.
+    """Create a time-domain waveform by interpolating the modes along a sparse trajectory.
 
-    It interpolates all of the modes of interest and phases at sparse
-    trajectories. Within the summation phase, the values are calculated using
-    the interpolants and summed.
+    The real and imaginary parts of the mode amplitudes are fitted with
+    :class:`CubicSplineInterpolant` on the trajectory knots; the phases are evaluated from the
+    trajectory's DOP853 dense-output phase coefficients. The backend kernel
+    ``get_waveform_wrap`` evaluates both at every output sample ``i * dt`` and sums the
+    modes with their spherical harmonics (each :math:`m > 0` mode also with its
+    :math:`-m` partner). The time-domain summation module of
+    :class:`~few.waveform.waveform.FastKerrEccentricEquatorialFlux`,
+    :class:`~few.waveform.waveform.FastSchwarzschildEccentricFlux` and
+    :class:`~few.waveform.waveform.FastSchwarzschildEccentricFluxBicubic`.
 
     This class can be run on GPUs and CPUs.
 
+    Args:
+        force_backend: Backend name or object (see
+            :class:`~few.utils.baseclasses.FewBackendConsumer`). Default ``None``.
+        **kwargs: Forwarded to :class:`~few.summation.base.SummationBase` (``pad_output``,
+            ``odd_len``, ``output_type``).
+
+    Example:
+        .. code-block:: python
+
+            from few.waveform import FastKerrEccentricEquatorialFlux
+
+            # built by the waveform model from its sum_kwargs
+            few = FastKerrEccentricEquatorialFlux(sum_kwargs=dict(pad_output=True))
+            few.create_waveform  # the InterpolatedModeSum instance
     """
 
     def __init__(self, force_backend: BackendLike = None, **kwargs):
@@ -276,11 +332,12 @@ class InterpolatedModeSum(SummationBase):
 
     @property
     def get_waveform(self) -> callable:
-        """GPU or CPU waveform generation."""
+        """The backend's mode-summation kernel (``get_waveform_wrap``)."""
         return self.backend.get_waveform_wrap
 
     @classmethod
     def supported_backends(cls):
+        """Backend preference order: ``["cuda13x", "cuda12x", "cuda11x", "cpu"]``."""
         return cls.GPU_RECOMMENDED()
 
     def sum(
@@ -299,31 +356,32 @@ class InterpolatedModeSum(SummationBase):
         integrate_backwards: bool = False,
         **kwargs,
     ):
-        r"""Interpolated summation function.
+        r"""Interpolate the amplitudes and phases and sum the modes into :attr:`waveform`.
 
-        This function interpolates the amplitude and phase information, and
-        creates the final waveform with the combination of ylm values for each
-        mode.
+        Called by :meth:`~few.summation.base.SummationBase.__call__`. The :math:`-m`
+        harmonics (second half of ``ylms``) are multiplied by :math:`(-1)^l` before the
+        kernel, which expects them that way.
 
-        args:
-            t: Array of t values.
-            teuk_modes: Array of complex amplitudes; shape is (len(t), num_teuk_modes).
-            ylms: Array of ylm values for each mode,
-                including m<0. Shape is (num of m==0,) + (num of m>0,)
-                + (num of m<0). Number of m<0 and m>0 is the same, but they are
-                ordered as (m==0 first then) m>0 then m<0.
-            Phi_phi: Array of azimuthal phase values
-                (:math:`\Phi_\phi`).
-            Phi_r: Array of radial phase values
-                 (:math:`\Phi_r`).
-            l_arr: :math:`\ell` values associated with each mode.
-            m_arr: :math:`m` values associated with each mode.
-            k_arr: :math:`k` values associated with each mode.
-            n_arr: :math:`n` values associated with each mode.
-            *args: Added for future flexibility.
-            dt: Time spacing between observations (inverse of sampling
-                rate). Default is 10.0.
-            **kwargs: Added for future flexibility.
+        Args:
+            t: Trajectory knot times in seconds, shape ``(N,)`` (backend array).
+            teuk_modes: Complex amplitudes, shape ``(N, K)``.
+            ylms: Complex spherical harmonics, shape ``(2 K,)``: :math:`Y_{lm}` of the ``K``
+                modes, then :math:`Y_{l,-m}` of the same modes.
+            phase_interp_t: Knot times of the phase spline in seconds
+                (``integrator_spline_t``), shape ``(N_p,)``.
+            phase_interp_coeffs: DOP853 phase coefficients of
+                ``(Phi_phi, Phi_theta, Phi_r)`` in rad (``integrator_spline_phase_coeff``),
+                shape ``(N_p - 1, 3, 8)``.
+            l_arr: :math:`\ell` of each mode, shape ``(K,)``.
+            m_arr: :math:`m` of each mode, shape ``(K,)``.
+            k_arr: :math:`k` of each mode, shape ``(K,)``.
+            n_arr: :math:`n` of each mode, shape ``(K,)``.
+            *args: Accepted and ignored (the waveform base passes ``M, a, p, e, xI``).
+            dt: Output sampling interval in seconds. Default ``10.0``.
+            integrate_backwards: If ``True``, subtract ``t[-1] - int(t[-1] / dt) * dt`` from the
+                amplitude and phase knot times, so the last knot falls on a multiple of ``dt``.
+                Default ``False``.
+            **kwargs: Accepted and ignored.
         """
 
         init_len = len(t)

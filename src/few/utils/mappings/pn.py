@@ -1,3 +1,17 @@
+r"""Conversions between the inclination parameters :math:`Y = \cos\iota` and :math:`x_I = \cos I`.
+
+:math:`x_I = \cos I` describes the inclination of the orbit from the equatorial plane (the
+parameter of the FEW geodesic, flux and Kerr waveform code); :math:`Y = \cos\iota` with
+:math:`\cos\iota = L_z/\sqrt{L_z^2 + Q}` is the inclination parameter of the 5PN trajectory
+(:class:`~few.trajectory.ode.pn5.PN5`) and of the AAK waveform. :func:`Y_to_xI` goes through
+the constants of motion of a given :math:`Y` (the numba kernels ``_PN_E``, ``_PN_L``,
+``_PN_C``); :func:`xI_to_Y` uses :func:`~few.utils.geodesic.get_kerr_geo_constants_of_motion`.
+:func:`Y_to_xI` returns ``Y = +-1`` (equatorial) and ``Y = 0`` (polar) unchanged.
+
+In the private kernels the first argument ``q`` is the dimensionless spin :math:`a` of the
+primary (the name comes from the original code; it is not a mass ratio).
+"""
+
 from math import sqrt
 from typing import Union
 
@@ -9,6 +23,12 @@ from ..geodesic import get_kerr_geo_constants_of_motion
 
 @njit(fastmath=False)
 def _d1(q, p, e, Y):
+    """Auxiliary function ``d`` at periapsis ``r = p/(1 + e)`` (``q`` is the spin ``a``).
+
+    The ``*1`` / ``*2`` kernels (``d, f, g, h`` at periapsis / apoapsis) feed
+    :func:`_PN_E`; each raises ``ValueError`` if ``|q| >= 1``, ``|e| >= 1``, ``p <= 1`` or
+    ``|Y| > 1``.
+    """
     p2 = p * p
     q2 = q * q
     inv_ep4 = 1.0 / ((1.0 + e) ** 4)
@@ -25,6 +45,7 @@ def _d1(q, p, e, Y):
 
 @njit(fastmath=False)
 def _f1(q, p, e, Y):
+    """Auxiliary function ``f`` at periapsis (see :func:`_d1`)."""
     p2 = p * p
     q2 = q * q
     inv_ep4 = 1.0 / ((1.0 + e) ** 4)
@@ -44,6 +65,7 @@ def _f1(q, p, e, Y):
 
 @njit(fastmath=False)
 def _g1(q, p, e, Y):
+    """Auxiliary function ``g`` at periapsis (see :func:`_d1`)."""
     if abs(q) >= 1.0 or abs(e) >= 1.0 or p <= 1.0 or abs(Y) > 1.0:
         raise ValueError("Parameter errors: _g1")
     elif e == 0.0:
@@ -54,6 +76,7 @@ def _g1(q, p, e, Y):
 
 @njit(fastmath=False)
 def _h1(q, p, e, Y):
+    """Auxiliary function ``h`` at periapsis (see :func:`_d1`); depends on ``Y``."""
     q2 = q * q
     p2 = p * p
     Y2 = Y * Y
@@ -78,6 +101,7 @@ def _h1(q, p, e, Y):
 
 @njit(fastmath=False)
 def _d2(q, p, e, Y):
+    """Auxiliary function ``d`` at apoapsis ``r = p/(1 - e)`` (see :func:`_d1`)."""
     q2 = q * q
     p2 = p * p
     inv_em4 = 1.0 / ((-1.0 + e) ** 4)
@@ -96,6 +120,7 @@ def _d2(q, p, e, Y):
 
 @njit(fastmath=False)
 def _f2(q, p, e, Y):
+    """Auxiliary function ``f`` at apoapsis (see :func:`_d1`)."""
     q2 = q * q
     p2 = p * p
     inv_em4 = 1.0 / ((-1.0 + e) ** 4)
@@ -115,6 +140,7 @@ def _f2(q, p, e, Y):
 
 @njit(fastmath=False)
 def _g2(q, p, e, Y):
+    """Auxiliary function ``g`` at apoapsis (see :func:`_d1`)."""
     if abs(q) >= 1.0 or abs(e) >= 1.0 or p <= 1.0 or abs(Y) > 1.0:
         raise ValueError("Parameter errors: _g2")
     elif e == 0.0:
@@ -125,6 +151,7 @@ def _g2(q, p, e, Y):
 
 @njit(fastmath=False)
 def _h2(q, p, e, Y):
+    """Auxiliary function ``h`` at apoapsis (see :func:`_d1`); depends on ``Y``."""
     q2 = q * q
     p2 = p * p
     Y2 = Y * Y
@@ -149,6 +176,11 @@ def _h2(q, p, e, Y):
 
 @njit(fastmath=False)
 def _PN_E(q, p, e, Y):
+    """Energy per unit mass of the orbit ``(q = a, p, e, Y)``.
+
+    Retrograde (sign flip of the square-root term) when exactly one of ``Y`` and ``q`` is
+    negative.
+    """
     d1, f1, g1, h1 = _d1(q, p, e, Y), _f1(q, p, e, Y), _g1(q, p, e, Y), _h1(q, p, e, Y)
     d2, f2, g2, h2 = _d2(q, p, e, Y), _f2(q, p, e, Y), _g2(q, p, e, Y), _h2(q, p, e, Y)
 
@@ -171,6 +203,7 @@ def _PN_E(q, p, e, Y):
 
 @njit(fastmath=False)
 def _PN_L(q, p, e, Y):
+    """Axial angular momentum per unit mass :math:`L_z` (sign of ``Y``) of ``(q = a, p, e, Y)``."""
     E = _PN_E(q, p, e, Y)
     h2 = _h2(q, p, e, Y)
     rhs_first_term = -_g2(q, p, e, Y) * E / h2
@@ -182,6 +215,7 @@ def _PN_L(q, p, e, Y):
 
 @njit(fastmath=False)
 def _PN_C(q, p, e, Y):
+    """Carter constant ``Q = L_z^2 (1/Y^2 - 1)`` of ``(q = a, p, e, Y)``; ``0`` for ``Y = 1``."""
     L = _PN_L(q, p, e, Y)
     if Y == 1.0:
         return 0.0
@@ -191,6 +225,10 @@ def _PN_C(q, p, e, Y):
 
 @njit(fastmath=False)
 def _Y_to_xI_kernel_inner(a, p, e, Y):
+    """Scalar kernel of :func:`Y_to_xI`: ``x_I`` from the ``(E, L_z, Q)`` of ``Y``.
+
+    Returns ``Y`` unchanged for ``|Y| == 1`` or ``Y == 0``.
+    """
     if abs(Y) == 1 or Y == 0.0:
         return Y
 
@@ -209,6 +247,7 @@ def _Y_to_xI_kernel_inner(a, p, e, Y):
 
 @njit
 def _Y_to_xI_kernel(xI, a, p, e, Y):
+    """Array loop of :func:`_Y_to_xI_kernel_inner`; fills ``xI`` in place (0 where ``Y == 0``)."""
     for i in range(len(xI)):
         Y_h = Y[i]
         if Y_h != 0.0:
@@ -223,25 +262,38 @@ def Y_to_xI(
     e: Union[float, np.ndarray],
     Y: Union[float, np.ndarray],
 ) -> Union[float, np.ndarray]:
-    r"""Convert from :math:`Y=\cos{\iota}` to :math:`x_I=\cos{I}`.
+    r"""Convert :math:`Y = \cos\iota` to :math:`x_I = \cos I`.
 
-    Converts between the two different inclination parameters. :math:`\cos{I}\equiv x_I`,
-    where :math:`I` describes the orbit's inclination from the equatorial plane.
-    :math:`\cos{\iota}\equiv Y`, where :math:`\cos{\iota}=L/\sqrt{L^2 + Q}`.
+    :math:`x_I = \cos I`, with :math:`I` the inclination of the orbit from the equatorial
+    plane; :math:`Y = \cos\iota = L_z/\sqrt{L_z^2 + Q}`. Computes :math:`(E, L_z, Q)` of the
+    orbit with the given ``Y`` and converts them to :math:`x_I` with the relation used by
+    :func:`~few.utils.geodesic.ELQ_to_pex`. ``Y = +-1`` and ``Y = 0`` are returned unchanged.
+    Inverse: :func:`xI_to_Y`. Used by the trajectory for models that integrate ``Y``
+    (``convert_Y``, e.g. :class:`~few.trajectory.ode.pn5.PN5`).
 
-    arguments:
-        a: Dimensionless spin of massive
-            black hole. If other parameters are arrays and the spin is scalar,
-            it will be cast to a 1D array.
-        p: Values of separation,
-            :math:`p`.
-        e: Values of eccentricity,
-            :math:`e`.
-        Y: Values of PN cosine of inclination :math:`Y`.
+    Args:
+        a: Dimensionless spin, ``|a| < 1``. Scalar (broadcast to the length of ``e`` on the
+            array path) or an array of that length.
+        p: Semi-latus rectum in units of :math:`M`, ``p > 1``. A scalar selects the scalar
+            path (all inputs scalars); an array selects the array path.
+        e: Eccentricity, ``|e| < 1``; an array of the length of ``p`` on the array path.
+        Y: :math:`Y = \cos\iota`, ``|Y| <= 1``; an array of the length of ``p`` on the
+            array path.
 
-    returns:
-    :math:`x=\cos{I}` values with shape based on input shapes.
+    Returns:
+        float or np.ndarray: :math:`x_I`; a float on the scalar path, else a 1-D array of
+        the length of ``e``.
 
+    Raises:
+        ValueError: From the numba kernels if ``|a| >= 1``, ``|e| >= 1``, ``p <= 1`` or
+            ``|Y| > 1`` (``Y`` neither ``+-1`` nor ``0``).
+        AssertionError: If ``a`` is an array of another length than ``e``.
+
+    Example:
+        >>> from few.utils.mappings.pn import Y_to_xI, xI_to_Y
+        >>> xI = Y_to_xI(0.3, 8.0, 0.4, 0.3)
+        >>> round(float(xI_to_Y(0.3, 8.0, 0.4, xI)), 8)
+        0.3
     """
 
     # determines shape of input
@@ -272,26 +324,28 @@ def xI_to_Y(
     e: Union[float, np.ndarray],
     x: Union[float, np.ndarray],
 ) -> Union[float, np.ndarray]:
-    r"""Convert from :math:`x_I=\cos{I}` to :math:`Y=\cos{\iota}`.
+    r"""Convert :math:`x_I = \cos I` to :math:`Y = \cos\iota = L_z/\sqrt{L_z^2 + Q}`.
 
-    Converts between the two different inclination parameters. :math:`\cos{I}\equiv x_I`,
-    where :math:`I` describes the orbit's inclination from the equatorial plane.
-    :math:`\cos{\iota}\equiv Y`, where :math:`\cos{\iota}=L/\sqrt{L^2 + Q}`.
+    Evaluates the Kerr constants of motion with
+    :func:`~few.utils.geodesic.get_kerr_geo_constants_of_motion` (same scalar / array rules;
+    polar orbits ``x = 0`` are not supported there) and returns
+    :math:`L_z/\sqrt{L_z^2 + Q}`. Inverse: :func:`Y_to_xI`. Used by
+    :class:`~few.waveform.waveform.GenerateEMRIWaveform` for models that expect ``Y``.
 
-    arguments:
-        a: Dimensionless spin of massive
-            black hole. If other parameters are arrays and the spin is scalar,
-            it will be cast to a 1D array.
-        p: Values of separation,
-            :math:`p`.
-        e: Values of eccentricity,
-            :math:`e`.
-        x: Values of cosine of the
-            inclination, :math:`x=\cos{I}`.
+    Args:
+        a: Dimensionless spin. Scalar (broadcast on the array path) or an array.
+        p: Semi-latus rectum in units of :math:`M`; scalar or array.
+        e: Eccentricity.
+        x: :math:`x_I = \cos I`.
 
-    returns:
-        :math:`Y` values with shape based on input shapes.
+    Returns:
+        float or np.ndarray: :math:`Y`, a NumPy float on the scalar path, else a 1-D array
+        of the length of ``p``.
 
+    Example:
+        >>> from few.utils.mappings.pn import xI_to_Y
+        >>> float(xI_to_Y(0.3, 8.0, 0.4, 1.0))
+        1.0
     """
 
     # get constants of motion

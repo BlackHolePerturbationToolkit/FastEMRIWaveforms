@@ -1,22 +1,36 @@
+"""Common call interface of the FEW summation modules (:class:`SummationBase`)."""
+
 from ..utils.baseclasses import BackendLike, FewBackendConsumer
 from ..utils.constants import YRSID_SI
 
 
 class SummationBase(FewBackendConsumer):
-    """Base class used for summation modules.
+    r"""Base class of the summation modules.
 
-    This class provides a common flexible interface to various summation
-    implementations. Specific arguments to each summation module can be found
-    with each associated module discussed below.
+    :meth:`__call__` sets the output length from ``T``, ``dt`` and the trajectory span,
+    allocates the zeroed complex output buffer :attr:`waveform` on the backend and calls the
+    subclass's :meth:`sum`, which fills it (or replaces it). The summed source-frame
+    waveform is :math:`h_+ - i h_\times` (see
+    :class:`~few.waveform.waveform.GenerateEMRIWaveform`).
 
-    args:
-        pad_output: Add zero padding to the waveform for time
-            between plunge and observation time. Default is False.
-        output_type: Type of domain in which to calculate the waveform.
-            Default is 'td' for time domain. Options are 'td' (time domain) or 'fd' (Fourier domain). In the future we hope to add 'tf'
-            (time-frequency) and 'wd' (wavelet domain).
-        odd_len: The waveform output will be padded to be an odd number if True.
-            If ``output_type == "fd"``, odd_len will be set to ``True``. Default is False.
+    Args:
+        output_type: Output domain: ``"td"`` (time domain, default) or ``"fd"`` (frequency
+            domain; forces ``odd_len=True``).
+        pad_output: If ``True``, zero-pad the output from the end of the trajectory (plunge)
+            to the observation time ``T``. Default ``False``.
+        odd_len: If ``True``, add one zero sample when needed so the output length is odd.
+            Default ``False``.
+        force_backend: Backend name or object (see
+            :class:`~few.utils.baseclasses.FewBackendConsumer`). Default ``None``.
+
+    Raises:
+        ValueError: If ``output_type`` is not ``"td"`` or ``"fd"``.
+
+    Attributes:
+        output_type (str): The output domain.
+        pad_output (bool): Whether the output is zero-padded to ``T``.
+        odd_len (bool): Whether the output length is forced odd.
+        dt (float): Sampling interval of the last call in seconds.
     """
 
     def __init__(
@@ -49,35 +63,43 @@ class SummationBase(FewBackendConsumer):
         """int: Number of points the output waveform has been padded by."""
 
         self.waveform = None
-        """Complex waveform given by :math:`h_+ + i*h_x`."""
+        """Output buffer: the complex waveform :math:`h_+ - i h_x` (time domain)."""
 
     @classmethod
     def sum(self, *args, **kwargs):
-        """Sum Generator
+        """Fill :attr:`waveform` (implemented by the subclasses).
 
-        @classmethod that requires a child class to have a sum method.
+        Called by :meth:`__call__` as ``sum(t, *args, dt=dt, **kwargs)`` after the output
+        buffer has been allocated.
 
-        raises:
-            NotImplementedError: The child class does not have this method.
-
+        Raises:
+            NotImplementedError: Always, in the base class.
         """
         raise NotImplementedError
 
     def __call__(self, t: float, *args, T: float = 1.0, dt: float = 10.0, **kwargs):
-        """Common call function for summation modules.
+        """Set the output length, allocate the output buffer and run :meth:`sum`.
 
-        Provides a common interface for summation modules. It can adjust for
-        more dimensions in a model.
+        With ``T`` rounded down to a whole number of samples,
+        ``T_s = int(T * YRSID_SI / dt) * dt``: if ``T_s < t[-1]`` the output covers ``[t[0], T_s]``
+        (``int((T_s - t[0]) / dt) + 1`` samples); otherwise it covers the trajectory
+        (``int((t[-1] - t[0]) / dt) + 1`` samples, :attr:`num_pts`) plus, with
+        ``pad_output``, zeros up to ``T_s`` (:attr:`num_pts_pad`). With ``odd_len`` one more
+        zero is added when the total is even. For ``output_type="fd"`` with an ``f_arr``
+        keyword, the buffer has ``len(f_arr)`` entries instead (and the ``dt`` passed to
+        :meth:`sum` becomes ``2 * max(f_arr)``).
 
-        args:
-            t: Array of t values.
-            *args: Added for flexibility with summation modules. `args`
-                tranfers directly into sum function.
-            dt: Time spacing between observations in seconds (inverse of sampling
-                rate). Default is 10.0.
-            T: Maximum observing time in years. Default is 1.0.
-            **kwargs: Added for future flexibility.
+        Args:
+            t: Trajectory times in seconds, array of shape ``(N,)`` (numpy or cupy).
+            *args: Forwarded to :meth:`sum` (amplitudes, harmonics, phases, mode indices, ...).
+            T: Maximum duration in years. Default ``1.0``.
+            dt: Sampling interval in seconds. Default ``10.0``.
+            **kwargs: Forwarded to :meth:`sum` (``f_arr`` is also read here).
 
+        Returns:
+            xp.ndarray: :attr:`waveform` after :meth:`sum`, on the backend: complex, shape
+            ``(num_pts + num_pts_pad,)`` in the time domain (the subclass may replace it, e.g.
+            the ``(2, n_f)`` array of :class:`~few.summation.fdinterp.FDInterpolatedModeSum`).
         """
 
         n_pts = int(T * YRSID_SI / dt)

@@ -6,7 +6,7 @@ Summation Package
 
 .. automodule:: few.summation
 
-.. autoclass:: few.summation.base.SummationBase
+.. automodule:: few.summation.base
     :members:
     :show-inheritance:
     :inherited-members:
@@ -23,6 +23,7 @@ Interpolated Summation
     :members:
     :show-inheritance:
     :inherited-members:
+    :exclude-members: find_element_in_list, searchsorted2d_vec
 
 Direct Summation
 ~~~~~~~~~~~~~~~~~~

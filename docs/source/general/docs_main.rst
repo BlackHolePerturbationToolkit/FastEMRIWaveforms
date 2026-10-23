@@ -6,10 +6,10 @@ The Fast EMRI Waveforms papers can be found at `arxiv.org/2104.04582 <https://ar
 
 Fast EMRI Waveform models are built for fast evaluation of the EMRI waveform summation equation, given by (`Drasco & Hughes 2006 <https://arxiv.org/abs/gr-qc/0509101>`_),
 
-.. math:: h_+ + ih_x=r^{-1}\sum_{lmkn}A_{lmkn}(t)e^{-i\Phi_{mkn}(t)}V_{lmkn}(\theta,\phi),
+.. math:: h_+ - ih_\times=r^{-1}\sum_{lmkn}A_{lmkn}(t)e^{-i\Phi_{mkn}(t)}V_{lmkn}(\theta,\phi),
     :label: emri_wave_eq
 
-where :math:`h_+ + ih_x` is the two polarizations of the gravitational wave; :math:`r` is the distance; :math:`l,m,k,n` are orbital angular momentum, azimuthal, polar, and radial harmonic indices, respectively; :math:`A_{lmkn}(t)` is a complex amplitude function at time :math:`t`; :math:`A(t)` is a complex amplitude function at time :math:`t`; :math:`\Phi_{mkn}(t)=m\omega_\phi + k\omega_\theta + n\omega_r` where :math:`\omega` is the fundamental frequency for a given direction; and :math:`V_{lmkn}(\theta,\phi`) is the harmonic projection functions based on viewing angles :math:`\theta,phi`. The various modules in this package deal with separate pieces of this equation. The amplitude (:mod:`few.amplitude`) module deals with :math:`A_{lmkn}(t)`. The trajectory (:mod:`few.trajectory`) module finds the orbital trajectories (:math:`p(t), e(t), x_I(t)`) which are fed into the amplitude module and phase trajectories (:math:`\Phi_\phi, \Phi_\theta, \Phi_r`) that are fed into the final summation. Utility modules aid this process from the utilities package (:mod:`few.utils`). Once such utility module is the calculation of :math:`V_{lmkn}(\theta,\phi`) (this is currently limited to the spin-weighted spherical harmonics for Schwarzschild eccentric). For completeness, :math:`A_{lmkn}` is given by,
+where :math:`h_+ - ih_\times` combines the two polarizations of the gravitational wave (the convention of the FEW waveform output: real part :math:`h_+`, imaginary part :math:`-h_\times`); :math:`r` is the distance; :math:`l,m,k,n` are orbital angular momentum, azimuthal, polar, and radial harmonic indices, respectively; :math:`A_{lmkn}(t)` is a complex amplitude function at time :math:`t`; :math:`\Phi_{mkn}(t)=m\Phi_\phi(t) + k\Phi_\theta(t) + n\Phi_r(t)` where :math:`\Phi_\phi, \Phi_\theta, \Phi_r` are the orbital phases (the time integrals of the fundamental frequencies); and :math:`V_{lmkn}(\theta,\phi)` is the harmonic projection functions based on viewing angles :math:`\theta,\phi`. The various modules in this package deal with separate pieces of this equation. The amplitude (:mod:`few.amplitude`) module deals with :math:`A_{lmkn}(t)`. The trajectory (:mod:`few.trajectory`) module finds the orbital trajectories (:math:`p(t), e(t), x_I(t)`) which are fed into the amplitude module and phase trajectories (:math:`\Phi_\phi, \Phi_\theta, \Phi_r`) that are fed into the final summation. Utility modules aid this process from the utilities package (:mod:`few.utils`). Once such utility module is the calculation of :math:`V_{lmkn}(\theta,\phi)`: the spherical-harmonic models (Kerr eccentric equatorial and Schwarzschild eccentric) use the :math:`-2` spin-weighted spherical harmonics (:class:`~few.utils.ylm.GetYlms`), their amplitudes being given in that basis. For completeness, :math:`A_{lmkn}` is given by,
 
 .. math:: A_{lmkn} = -2Z_{lmkn}(a, p, e, x_I)/\omega_{mkn}^2,
 
@@ -25,7 +25,6 @@ Package TODOs
 ===============
 
 - add SNR calculator
-- run trajectory backward
 - zero out modes
 - shared memory based on CUDA_ARCH / upping shared allocation
 - deal with file locations and removing files from git history
@@ -33,6 +32,9 @@ Package TODOs
 
 Change Log
 ===========
+
+This log stops at 1.5.5; for later releases (2.x) see the
+`tags of the repository <https://github.com/BlackHolePerturbationToolkit/FastEMRIWaveforms/tags>`_.
 
 - 1.5.5: pip installable.
 - 1.5.4: Slight bug fix on creating ``few`` file directory.
