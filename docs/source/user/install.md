@@ -137,7 +137,7 @@ To install FEW from source in any environment, follow these steps:
     ```
   - If you're using WSL, you will need to run the following:
     ```sh
-    conda create -n few_env -y -c conda-forge --override-channels cxx-compiler python=3.12  pkgconfig  
+    conda create -n few_env -y -c conda-forge --override-channels cxx-compiler python=3.12 pkgconfig
     conda activate few_env
     ```
 
