@@ -11,6 +11,10 @@ message: >-
   and the documentation).
 type: software
 authors:
+  - given-names: Sarp
+    family-names: Akcay
+    affiliation: University College Dublin
+    orcid: 'https://orcid.org/0000-0003-2216-421X'
   - given-names: Ollie
     family-names: Burke
     orcid: 'https://orcid.org/0000-0003-2393-209X'
@@ -85,6 +89,9 @@ authors:
     family-names: Thompson
     affiliation: University of Southampton
     orcid: 'https://orcid.org/0000-0002-0419-5517'
+  - given-names: David
+    family-names: Trestini
+    orcid: 'https://orcid.org/0000-0002-4140-0591'
   - given-names: Niels
     family-names: Warburton
     affiliation: University College Dublin
