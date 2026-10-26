@@ -492,28 +492,6 @@ class TrajectoryCirc1PAT1R(ODEBase):
         if p > pmax or p < pmin:
             raise ValueError(f"(TrajectoryCirc1PAT1R) Interpolation: p = {p} out of bounds. Must be between {pmin} and {pmax}.")
 
-    def isvalid_pex(self, p=20, e=0, x=1, a=0, p_buffer=[0, 0], separatrix_buffer=None, **kwargs):
-        """Check whether p, e, x, and primary spin are within the valid ranges.
-
-        Args:
-            p (float): Dimensionless semi-latus rectum p=Omega_phi^(-2/3).
-            e (float): Eccentricity (ignored since this model is circular).
-            x (float): Cosine of the inclination angle (ignored since this model is equatorial).
-            a (float): Dimensionless primary spin.
-            p_buffer (list[float, float], optional): Two-element list of non-negative floats specifying how much to shrink the valid p range from below and above, respectively. Defaults to [0.0, 0.0] (no buffer).
-            separatrix_buffer (float, optional): Buffer distance to add to the minimum valid p. Defaults to None, which is treated as 0.0.
-            
-        Raises:
-            ValueError: If p is outside the valid range given e, x, and a.    
-        """
-       
-        self.isvalid_x(x, **kwargs)
-        self.isvalid_e(e, **kwargs)
-        self._isvalidchi1(a, **kwargs)
-        pmin, pmax = self.bounds_p(e, x, a, p_buffer=p_buffer, separatrix_buffer=separatrix_buffer, **kwargs)
-        if p > pmax or p < pmin:
-            raise ValueError(f"(TrajectoryCirc1PAT1R) Interpolation: p = {p} out of bounds. Must be between {pmin} and {pmax}.")
-
     def recommended_bounds_p0_from_nu(self, nu, Delta_phip=0.1):
         """
         Return the recommended range of initial semi-latus rectum p0 (assuming forwards integration) as a function of 
