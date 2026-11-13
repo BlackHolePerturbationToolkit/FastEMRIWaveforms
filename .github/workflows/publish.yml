@@ -181,6 +181,7 @@ jobs:
           CIBW_ARCHS_MACOS: ${{ matrix.arch }}
           CIBW_CONFIG_SETTINGS: >
             cmake.define.FEW_WITH_GPU=OFF
+            cmake.define.FEW_MARCH=armv8.4-a
           CIBW_TEST_COMMAND: python -m few.tests --disable testfile
           CIBW_ENVIRONMENT: >
             SETUPTOOLS_SCM_PRETEND_VERSION="${{ needs.version.outputs.version }}"
@@ -195,6 +196,7 @@ jobs:
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
           CIBW_CONFIG_SETTINGS: >
             cmake.define.FEW_WITH_GPU=OFF
+            cmake.define.FEW_MARCH=${{ matrix.arch == 'x86_64' && 'x86-64-v2' || 'armv8-a' }}
           CIBW_ENVIRONMENT: >
             SETUPTOOLS_SCM_PRETEND_VERSION="${{ needs.version.outputs.version }}"
           CIBW_TEST_COMMAND: python -m few.tests --disable testfile
