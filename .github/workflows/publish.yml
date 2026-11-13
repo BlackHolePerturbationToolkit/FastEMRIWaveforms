@@ -127,7 +127,7 @@ jobs:
             cuda_image_tag: '13_1'
             cuda_pkg_tag: '13-1'
           - release: cpu
-            os: macos-14
+            os: macos-15
             kind: core
             arch: arm64
             macos_ver: 14.0
