@@ -66,6 +66,10 @@ class CubicSplineInterpolant(ParallelModuleBase):
         diag = self.xp.zeros_like(B)
         lower_diag = self.xp.zeros_like(B)
 
+        # all interpolants on one grid (t given in 1D): _get_inds needs a single search
+        self.shared_t = t.ndim == 1
+        """bool: Whether all interpolants share the same t array."""
+
         if t.ndim == 1:
             if len(t) < 2:
                 raise ValueError("t must have length greater than 2.")
@@ -139,14 +143,20 @@ class CubicSplineInterpolant(ParallelModuleBase):
     def _get_inds(self, tnew: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         # find where in the old t array the new t values split
 
-        inds = self.xp.zeros((self.ninterps, tnew.shape[1]), dtype=int)
-
-        # Optional TODO: remove loop ? if speed needed
-        for i, (t, tnew_i) in enumerate(zip(self.t, tnew)):
-            inds[i] = self.xp.searchsorted(t, tnew_i, side="right") - 1
-
+        if self.shared_t:
+            # one search for all interpolants (a Python loop over them costs a few kernel launches and a
+            # device synchronisation per interpolant on GPUs)
+            t = self.t[0]
+            inds = self.xp.searchsorted(t, tnew.ravel(), side="right").reshape(tnew.shape) - 1
             # fix end value
-            inds[i][tnew_i == t[-1]] = len(t) - 2
+            inds = self.xp.where(tnew == t[-1], len(t) - 2, inds)
+        else:
+            inds = self.xp.zeros((self.ninterps, tnew.shape[1]), dtype=int)
+            for i, (t, tnew_i) in enumerate(zip(self.t, tnew)):
+                inds[i] = self.xp.searchsorted(t, tnew_i, side="right") - 1
+
+                # fix end value
+                inds[i][tnew_i == t[-1]] = len(t) - 2
 
         # get values outside the edges
         inds_bad_left = tnew < self.t[:, 0][:, None]
@@ -204,7 +214,7 @@ class CubicSplineInterpolant(ParallelModuleBase):
         # x value for spline
 
         # indexes for which spline
-        inds0 = np.tile(np.arange(self.ninterps), (tnew.shape[1], 1)).T
+        inds0 = self.xp.tile(self.xp.arange(self.ninterps), (tnew.shape[1], 1)).T
         t_here = self.t[(inds0.flatten(), inds.flatten())].reshape(
             self.ninterps, tnew.shape[1]
         )
