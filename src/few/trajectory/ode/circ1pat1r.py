@@ -2,6 +2,7 @@ from numba import jit
 from multispline.spline import CubicSpline
 import numpy as np
 import h5py
+from scipy.optimize import brentq
 
 from typing import Union, Optional
 
@@ -401,10 +402,11 @@ class TrajectoryCirc1PAT1R(ODEBase):
         self.isvalid_x(x, **kwargs)
         self._isvalidchi1(a, **kwargs)
 
-        # Return either the minimum of the grid or the separatrix, whichever is larger.
+        # Return the largest of the minimum of the grid, the separatrix, and (once the parameters are
+        # set, see add_fixed_parameters) the p at which the 1PA flux cancels the 0PA flux.
         # We add the separatrix buffer distance so that when the integration is performed,
         # the ODE will stop some small distance from the edge.
-        return np.max([self._min_p, get_separatrix(a, e, x)]) + separatrix_buffer
+        return np.max([self._min_p, get_separatrix(a, e, x), getattr(self, "_p_flux_cancel", self._min_p)]) + separatrix_buffer
 
     def max_p(self,e=0.0, x = 1.0, a=0.0,
         **kwargs):
@@ -572,6 +574,37 @@ class TrajectoryCirc1PAT1R(ODEBase):
         self._isvalidnu(self.args['nu'])
         self._isvalidchi1(self.args['chi1'])
         self._isvalidchi2(self.args['chi2'])
+
+        self._p_flux_cancel = self.p_flux_cancel(self.args['nu'], self.args['chit1'], self.args['chit2'])
+
+    def p_flux_cancel(self, nu, chit1, chit2):
+        """The p, just above p = 6, at which the total 1PA flux-balance numerator vanishes.
+
+        The 1PA flux contains r0dot ~ 1/(p - 6), so for p -> 6 it
+        grows without bound and cancels the 0PA flux at some p_c > 6 (p_c - 6 ~ nu): there pdot = 0
+        and the 1PAT1R expansion has broken down. The trajectory stops a buffer above p_c (see
+        min_p); like the stopping condition of WaSABI's 1PAT1R model, it is evaluated with the
+        initial nu, chit1, chit2 (and deltaM = 0). Returns self._min_p if the numerator does not
+        change sign between p = 6 and p = 7.
+
+        Args:
+            nu (float): Symmetric mass ratio.
+            chit1 (float): Primary reduced spin.
+            chit2 (float): Secondary reduced spin.
+
+        Returns:
+            float: p_c, or self._min_p.
+        """
+        f = lambda p: self.balance_law_numerator(nu, p, chit1, chit2, 0.0)
+        p_hi = 7.0
+        # scan inwards, geometrically in p - 6, for the first sign change
+        for p_lo in 6.0 + np.geomspace(1.0, 1e-12, 241)[1:]:
+            if p_lo < self._min_p:
+                break
+            if not f(p_lo) > 0:
+                return brentq(f, p_lo, p_hi, xtol=1e-12, rtol=1e-12)
+            p_hi = p_lo
+        return self._min_p
 
     def balance_law_numerator(self, nu, p, chit1, chit2, deltaM):
         """Total 1PA numerator of the flux-balance law, Eq. (84) of Ref. 2510.16113.
