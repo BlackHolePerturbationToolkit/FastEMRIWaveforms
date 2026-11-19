@@ -8,6 +8,39 @@ from ..summation.interpolatedmodesum import CubicSplineInterpolant
 import numpy as np
 
 
+def _make_amplitude_kernel(xp, fuse):
+    """The elementwise part of AmplitudeCirc1PAT1R.get_amplitudes as one function (one fused kernel on GPUs):
+    every piece from its spline values |A/x^n| (a*) and arg(A/x^n) - 2 w ln w (f*) with w = m v^3, the 1PA,
+    1PAchi1, 1PAchi2 and 1PAdeltam combination of _combine_pieces, FEW's overall sign and the conjugate modes.
+    The pieces are combined with real coefficients, so the sign and the conjugation are applied once at the end.
+
+    Arguments broadcast as (time, mode): v, pm6 (= p - 6), chit1, deltaM per time (column); m, n*, odd, conj, lsign per
+    mode; nu, chit2, overall (= sqrt(1 - 4 nu)) scalars.
+    """
+    def kernel(v, m, a0, f0, n0, da0, df0, ad, fd, nd, ae, fe, ne, a1, f1, n1, a2, f2, n2,
+               pm6, chit1, deltaM, nu, chit2, overall, odd, conj, lsign):
+        v2 = v * v
+        w = m * v2 * v
+        log_w = xp.log(xp.where(w > 0, w, 1.0))  # w ln w and v^2 ln w vanish at w = 0
+        tw = 2 * w * log_w
+        # 0PA: A and p dA/dp = -(v/2) dA/dv (see _amplitudes_single_piece)
+        ph0 = v ** (2 * n0) * xp.exp(1j * (f0 + tw))
+        A0 = a0 * ph0
+        dpsi = df0 + 6 * m * v2 * (log_w + 1)
+        pdA0 = -0.5 * ph0 * (2 * n0 * a0 + v * (da0 + 1j * a0 * dpsi))
+        Ad = ad * v ** (2 * nd) * xp.exp(1j * (fd + tw))
+        Ae = ae * v ** (2 * ne) * xp.exp(1j * (fe + tw))
+        A1 = a1 * v ** (2 * n1) * xp.exp(1j * (f1 + tw))
+        A2 = a2 * v ** (2 * n2) * xp.exp(1j * (f2 + tw))
+        dM = -v2 / xp.sqrt(1.0 - 3.0 * v2)
+        A1PA = Ad + Ae / pm6 + A0 + (2.0 / 3.0) * (1.0 + dM) * pdA0  # 1PA (see _amplitudes_single_piece)
+        Adm = -2.0 / 3.0 * pdA0 - A0  # 1PAdeltam
+        comb = A0 + nu * A1PA + chit1 * A1 + chit2 * A2 + nu * deltaM * Adm
+        res = -xp.where(odd, overall * (comb + 2 * nu * A0), comb)  # _combine_pieces; FEW's overall sign
+        return xp.where(conj, lsign * xp.conj(res), res)
+    return fuse(kernel) if fuse is not None else kernel
+
+
 class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
     """Calculate 1PA Teukolsky amplitudes in the slowly-spinning Kerr circular and arbitrary secondary spin regime with 1D cubic spline interpolation.
 
@@ -56,6 +89,10 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
         self.num_teuk_modes = len(self.l_arr_no_mask)
         self._piece_power = {}  # the power n of each mode of each spline (see below)
         self._m_modes = self.xp.asarray(self.m_arr_no_mask, dtype=self.xp.float64)
+        self._odd_m = self.xp.asarray(self.m_arr_no_mask % 2 != 0)
+        self._l_sign = self.xp.asarray((-1.0) ** self.l_arr_no_mask)
+        self._amplitude_kernel = _make_amplitude_kernel(
+            self.xp, self.xp.fuse if self.backend.uses_gpu else None)
 
         with h5py.File(file_path, "r") as f:
             # load attributes in the right order for correct mode sorting later
@@ -284,6 +321,9 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
             mode_indices[conj_mode_mask] -= self.num_m_1_up
 
         data_pieces = {}
+        if not self.zero_PA_amps_only:
+            return self._get_amplitudes_fused(p, nu, chit1, chit2, deltaM, mode_indices, conj_mode_mask,
+                                              all_modes=specific_modes is None)
 
         # Always compute the 0PA piece
         data_key = "0PA"
@@ -307,6 +347,45 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
                 )
 
         return self._combine_pieces(data_pieces, nu, chit1, chit2, deltaM, mode_indices)
+
+    def _get_amplitudes_fused(self, p, nu, chit1, chit2, deltaM, mode_indices, conj_mode_mask, all_modes):
+        """get_amplitudes with all pieces evaluated by one elementwise kernel (_make_amplitude_kernel); the same as
+        combining the pieces of _amplitudes_single_piece with _combine_pieces."""
+        xp = self.xp
+        pc = xp.reshape(xp.asarray(p, dtype=xp.float64), (-1, 1))
+        # the range checks of _amplitudes_single_piece, with a single device-to-host transfer
+        p_lo, p_hi = (float(q) for q in xp.asarray([xp.min(pc), xp.max(pc)]).tolist())
+        for key in ("0PA", "1PA", "1PAchi1", "1PAchi2"):
+            if p_hi > self.r_max[key] or p_lo < self.r_min[key]:
+                raise ValueError(f"(AmplitudeCirc1PAT1R) Some values of p lie outside the amplitude data range [{self.r_min[key]}, {self.r_max[key]}] for the {key} piece")
+        v = 1.0 / xp.sqrt(pc)
+        M = self.num_teuk_modes
+
+        def cols(key, deriv_order=0):
+            # each spline and derivative order is evaluated once here
+            spl = xp.atleast_2d(self.amp_spline[key](v.ravel(), deriv_order=deriv_order).T)
+            if all_modes:  # views, no gather
+                return spl[:, :M], spl[:, M:]
+            return spl[:, mode_indices], spl[:, mode_indices + M]
+
+        def per_mode(arr):
+            return arr if all_modes else arr[mode_indices]
+
+        a0, f0 = cols("0PA")
+        da0, df0 = cols("0PA", 1)
+        ad, fd = cols("1PA/d2G")
+        ae, fe = cols("1PA/E1h1")
+        a1, f1 = cols("1PAchi1")
+        a2, f2 = cols("1PAchi2")
+        n = {key: per_mode(self._piece_power[key]) for key in ("0PA", "1PA/d2G", "1PA/E1h1", "1PAchi1", "1PAchi2")}
+        return self._amplitude_kernel(
+            v, per_mode(self._m_modes), a0, f0, n["0PA"], da0, df0, ad, fd, n["1PA/d2G"], ae, fe, n["1PA/E1h1"],
+            a1, f1, n["1PAchi1"], a2, f2, n["1PAchi2"], pc - 6.0,
+            xp.reshape(xp.asarray(chit1, dtype=xp.float64), (-1, 1)), xp.reshape(xp.asarray(deltaM, dtype=xp.float64), (-1, 1)),
+            # np.float64, not Python floats: under cupy.fuse (CuPy 14.2) a product of two Python-float scalars,
+            # such as 2 * nu in the kernel, loses precision (~1e-4)
+            np.float64(nu), np.float64(chit2), np.float64(np.sqrt(1 - 4 * float(nu))),
+            per_mode(self._odd_m), conj_mode_mask, per_mode(self._l_sign))
 
     def __reduce__(self):
         return (self.__class__, (self.filename,))
