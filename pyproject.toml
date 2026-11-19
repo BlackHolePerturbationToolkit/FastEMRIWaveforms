@@ -47,7 +47,7 @@ dependencies = [
   "h5py",
   "jsonschema",                            # To validate content of file registry
   "lisaconstants",
-  "multispline",
+  "multispline>=0.9.0",
   "numba",
   "numpy",
   "nvidia-ml-py",                          # To detect CUDA version if any

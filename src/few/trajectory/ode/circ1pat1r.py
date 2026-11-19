@@ -1,5 +1,6 @@
-from numba import jit
+from numba import jit, njit
 from multispline.spline import CubicSpline
+from multispline.numba import cubic_eval_d
 import numpy as np
 import h5py
 from scipy.optimize import brentq
@@ -112,6 +113,77 @@ def Echi1(p):
     """
     return -2.*(-3.+2.*p)/(3.*(-3.+p)**(3./2.)*p**2.)
 
+# The flux-balance law compiled with numba. The splines of TrajectoryCirc1PAT1R are passed as one array C of their
+# stacked coefficients (multispline's normalised local-coordinate convention), with the offset, start, spacing and
+# number of intervals of each (offs, x0s, dxs, ns), indexed by the constants below; kp holds the PN power k of the
+# pieces stored as flux / (32/5 x^k). See TrajectoryCirc1PAT1R._build_numba_data.
+_S_F0INF, _S_F0HOR, _S_F0NORM, _S_D2G, _S_E1H1, _S_SLOW, _S_C1INF, _S_C1HOR, _S_C2INF, _S_C2HOR, _S_DE1 = range(11)
+
+
+@njit(cache=True)
+def _spl(sd, i, x, d):
+    """Spline i of the data sd = (C, offs, x0s, dxs, ns, kp) (or its d-th derivative) at x."""
+    C, offs, x0s, dxs, ns = sd[0], sd[1], sd[2], sd[3], sd[4]
+    o = offs[i]
+    n = ns[i]
+    return cubic_eval_d(C[o:o + n], x0s[i], dxs[i], n, x, d)
+
+
+@njit(cache=True)
+def _scaled_flux_nb(sd, i, p):
+    """32/5 p^-k times spline i at 1/p (k = kp[i])."""
+    return (32.0/5.0) * p**(-sd[5][i]) * _spl(sd, i, 1.0 / p, 0)
+
+
+@njit(cache=True)
+def _flux_1PA_nb(sd, p):
+    """TrajectoryCirc1PAT1R.Flux_Energy_1PA_Infinity."""
+    return (_scaled_flux_nb(sd, _S_D2G, p)
+            + (_scaled_flux_nb(sd, _S_E1H1, p) + _scaled_flux_nb(sd, _S_SLOW, p)) / (p - 6.0))
+
+
+@njit(cache=True)
+def _numerator_nb(nu, p, chit1, chit2, deltaM, sd):
+    """TrajectoryCirc1PAT1R.balance_law_numerator."""
+    x = 1.0 / p
+    FluxE0PAInf = _spl(sd, _S_F0INF, x, 0)
+    FluxE0PAHor = _spl(sd, _S_F0HOR, x, 0)
+    FluxE0PADeriv = _spl(sd, _S_F0NORM, x, 1)
+    FluxE0PANorm = FluxE0PAInf + (p**-4)*FluxE0PAHor
+    return (
+        ((32.0/5.0*(p**-5))*FluxE0PAInf + (32.0/5.0*(p**-9))*FluxE0PAHor)
+        + nu * (_flux_1PA_nb(sd, p)
+            + chit1/nu * (_scaled_flux_nb(sd, _S_C1INF, p) + _scaled_flux_nb(sd, _S_C1HOR, p))
+            + chit2/nu * (_scaled_flux_nb(sd, _S_C2INF, p) + _scaled_flux_nb(sd, _S_C2HOR, p))
+            - 2 * deltaM * (32.0/5.0*(p**-5))*FluxE0PANorm
+            - deltaM * (2./3.*p) * (32.0/5.0)*(-5.0*(p**-6)*FluxE0PANorm - (p**-7)*FluxE0PADeriv)
+            + EdeltaM(p) * (32.0/5.0*(p**-9))*FluxE0PAHor
+            + Echi1(p) * (32.0/5.0*(p**-7.5))*FluxE0PAHor))
+
+
+@njit(cache=True)
+def _dEdOmega_nb(nu, p, chit1, chit2, deltaM, sd):
+    """TrajectoryCirc1PAT1R.dEdOmega."""
+    return (dEdOmega0PA(p) + chit1 * dEdOmega_1PA_chit1(p) + chit2 * dEdOmega_1PA_chit2(p)
+            + nu * (deltaM * dEdeltaMdOmega(p) + _spl(sd, _S_DE1, p, 0)))
+
+
+@njit(cache=True)
+def _rhs_nb(nu, p, chit1, chit2, deltaM, evolve_primary, sd):
+    """pdot, Omega_phi, deltaMdot and chit1dot of TrajectoryCirc1PAT1R.evaluate_rhs."""
+    Omega_phi = 1/p**(3./2.)
+    pdot = -_numerator_nb(nu, p, chit1, chit2, deltaM, sd) / _dEdOmega_nb(nu, p, chit1, chit2, deltaM, sd) / dOmegadp(p)
+    if evolve_primary:
+        # horizon angular momentum flux = horizon energy flux / Omega_phi (circular orbits)
+        FluxE0PAHor = _spl(sd, _S_F0HOR, 1.0/p, 0)
+        chit1dot = nu * (32.0/5.0*(p**-7.5)) * FluxE0PAHor
+        deltaMdot = (32.0/5.0*(p**-9.0)) * FluxE0PAHor
+    else:
+        chit1dot = 0.0
+        deltaMdot = 0.0
+    return pdot, Omega_phi, deltaMdot, chit1dot
+
+
 class TrajectoryCirc1PAT1R(ODEBase):
     """Trajectory of the first-post-adiabatic, slowly-spinning circular inspiral model 1PAT1R of Ref. 2510.16113.
 
@@ -208,7 +280,8 @@ class TrajectoryCirc1PAT1R(ODEBase):
             # the normalised total 0PA flux, F_inf + x^4 F_hor (F = 32/5 x^5 (F_inf + x^4 F_hor)), and its x-derivative
             value = (trajectoryData['Flux/Energy/0PA/Infinity'][()][::max(downsample["Flux/Energy/0PA/Infinity"], downsample["Flux/Energy/0PA/Horizon"])]
                 + (grid**4) * trajectoryData['Flux/Energy/0PA/Horizon'][()][::max(downsample["Flux/Energy/0PA/Infinity"], downsample["Flux/Energy/0PA/Horizon"])])
-            self.interpolant_dict["Flux/Energy/0PA/Deriv"] = CubicSpline(grid, value).deriv
+            self._F0Norm_spline = CubicSpline(grid, value)
+            self.interpolant_dict["Flux/Energy/0PA/Deriv"] = self._F0Norm_spline.deriv
             del grid, value # free memory
 
         self.evolve_primary = evolve_primary
@@ -220,6 +293,30 @@ class TrajectoryCirc1PAT1R(ODEBase):
         self._max_chi1 = 1.0
         self._min_chi2 = -1.0
         self._max_chi2 = 1.0
+        self._build_numba_data()
+
+    def _build_numba_data(self):
+        """Stack the coefficients of the splines for the numba flux-balance law (_rhs_nb and friends)."""
+        splines = [None] * 11
+        for key, i in [("Flux/Energy/0PA/Infinity", _S_F0INF), ("Flux/Energy/0PA/Horizon", _S_F0HOR),
+                       ("Flux/Energy/1PA/d2G", _S_D2G), ("Flux/Energy/1PA/E1h1", _S_E1H1),
+                       ("Flux/Energy/1PA/Slowtime", _S_SLOW),
+                       ("Flux/Energy/1PAchi1/Infinity", _S_C1INF), ("Flux/Energy/1PAchi1/Horizon", _S_C1HOR),
+                       ("Flux/Energy/1PAchi2/Infinity", _S_C2INF), ("Flux/Energy/1PAchi2/Horizon", _S_C2HOR),
+                       ("Energy/1PA/dEdOmega", _S_DE1)]:
+            splines[i] = self.interpolant_dict[key]
+        splines[_S_F0NORM] = self._F0Norm_spline
+        coeffs = [np.ascontiguousarray(s.coefficients, dtype=np.float64) for s in splines]
+        ns = np.array([c.shape[0] for c in coeffs], dtype=np.int64)
+        offs = np.concatenate([[0], np.cumsum(ns)[:-1]]).astype(np.int64)
+        kp = np.zeros(11)
+        for key, i in [("Flux/Energy/1PA/d2G", _S_D2G), ("Flux/Energy/1PA/E1h1", _S_E1H1),
+                       ("Flux/Energy/1PA/Slowtime", _S_SLOW),
+                       ("Flux/Energy/1PAchi1/Infinity", _S_C1INF), ("Flux/Energy/1PAchi1/Horizon", _S_C1HOR),
+                       ("Flux/Energy/1PAchi2/Infinity", _S_C2INF), ("Flux/Energy/1PAchi2/Horizon", _S_C2HOR)]:
+            kp[i] = self.flux_power[key]
+        self._spline_data = (np.ascontiguousarray(np.concatenate(coeffs)), offs,
+                             np.array([float(s.x0) for s in splines]), np.array([float(s.dx) for s in splines]), ns, kp)
 
     @classmethod
     def module_references(cls) -> list[REFERENCE]:
@@ -629,9 +726,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
 
         (The powers k are the attribute "k" of the datasets; see _scaled_flux.)
         """
-        return (self._scaled_flux("Flux/Energy/1PA/d2G", p)
-                + (self._scaled_flux("Flux/Energy/1PA/E1h1", p)
-                   + self._scaled_flux("Flux/Energy/1PA/Slowtime", p)) / (p - 6.0))
+        return _flux_1PA_nb(self._spline_data, float(p))
 
     def balance_law_numerator(self, nu, p, chit1, chit2, deltaM):
         """Total 1PA numerator of the flux-balance law, Eq. (84) of Ref. 2510.16113.
@@ -649,25 +744,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
         Returns:
             float: Numerator of the flux-balance law.
         """
-        FluxE0PAInf = self.interpolant_dict["Flux/Energy/0PA/Infinity"](1.0/p)
-        FluxE0PAHor = self.interpolant_dict["Flux/Energy/0PA/Horizon"](1.0/p)
-        FluxE0PADeriv = self.interpolant_dict["Flux/Energy/0PA/Deriv"](1.0/p)
-        # total normalised 0PA flux: F = 32/5 p^-5 FluxE0PANorm, with FluxE0PANorm = Finf + x^4 Fh
-        # (x = 1/p); FluxE0PADeriv is d/dx of FluxE0PANorm (see __init__)
-        FluxE0PANorm = FluxE0PAInf + (p**-4)*FluxE0PAHor
-        return (
-            ((32.0/5.0*(p**-5))*FluxE0PAInf + (32.0/5.0*(p**-9))*FluxE0PAHor)
-            + nu * (self.Flux_Energy_1PA_Infinity(p)
-                + chit1/nu * (self._scaled_flux("Flux/Energy/1PAchi1/Infinity", p)
-                              + self._scaled_flux("Flux/Energy/1PAchi1/Horizon", p))
-                + chit2/nu * (self._scaled_flux("Flux/Energy/1PAchi2/Infinity", p)
-                              + self._scaled_flux("Flux/Energy/1PAchi2/Horizon", p))
-                - 2 * deltaM * (32.0/5.0*(p**-5))*FluxE0PANorm
-                # -deltaM (2/3 p) dF/dp, with dF/dp = 32/5 (-5 p^-6 FluxE0PANorm - p^-7 FluxE0PADeriv)
-                - deltaM * (2./3.*p) * (32.0/5.0)*(-5.0*(p**-6)*FluxE0PANorm - (p**-7)*FluxE0PADeriv)
-                + EdeltaM(p) * (32.0/5.0*(p**-9))*FluxE0PAHor
-                # horizon angular momentum flux = horizon energy flux / Omega_phi (circular orbits)
-                + Echi1(p) * (32.0/5.0*(p**-7.5))*FluxE0PAHor))
+        return _numerator_nb(float(nu), float(p), float(chit1), float(chit2), float(deltaM), self._spline_data)
 
     def dEdOmega(self, nu, p, chit1, chit2, deltaM):
         """1PA derivative of the binding energy with respect to the orbital frequency, Eq. (108) of Ref. 2510.16113.
@@ -682,7 +759,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
         Returns:
             float: dE/dOmega_phi at 1PA order.
         """
-        return (dEdOmega0PA(p) + chit1 * dEdOmega_1PA_chit1(p) + chit2 * dEdOmega_1PA_chit2(p) + nu *  (deltaM * dEdeltaMdOmega(p) + self.interpolant_dict["Energy/1PA/dEdOmega"](p)))
+        return _dEdOmega_nb(float(nu), float(p), float(chit1), float(chit2), float(deltaM), self._spline_data)
 
     def evaluate_rhs(self, y: Union[list[float], np.ndarray]
     ) -> list[Union[float, np.ndarray]]:
@@ -721,11 +798,8 @@ class TrajectoryCirc1PAT1R(ODEBase):
         
 
 
-        Omega_phi = 1/p**(3./2.)
-        pdot = -self.balance_law_numerator(nu, p, chit1, chit2, deltaM)/self.dEdOmega(nu, p, chit1, chit2, deltaM)/dOmegadp(p)
-        # horizon angular momentum flux = horizon energy flux / Omega_phi (circular orbits)
-        chit1dot = nu * (32.0/5.0*(p**-7.5)) * self.interpolant_dict["Flux/Energy/0PA/Horizon"](1.0/p) if self.evolve_primary else 0.0
-        deltaMdot = (32.0/5.0*(p**-9.0)) * self.interpolant_dict["Flux/Energy/0PA/Horizon"](1.0/p) if self.evolve_primary else 0.0
+        pdot, Omega_phi, deltaMdot, chit1dot = _rhs_nb(float(nu), float(p), float(chit1), float(chit2), float(deltaM),
+                                                        bool(self.evolve_primary), self._spline_data)
 
         return [pdot, 0.0, 0.0, Omega_phi, 0.0, 0.0, deltaMdot, chit1dot]
     
