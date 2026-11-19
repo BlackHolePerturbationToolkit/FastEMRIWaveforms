@@ -43,7 +43,7 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
         KerrCirc.__init__(self, force_backend=force_backend, **kwargs)
 
         self.filename = (
-            "Amplitudes1PAT1R.h5" if filename is None else filename
+            "Amplitudes1PAT1R_v2.h5" if filename is None else filename
         )
 
         from few import get_file_manager
@@ -54,35 +54,43 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
         self.r_min = {}; self.r_max = {}
         self.amp_keys = ["0PA", "1PA", "1PAchi1", "1PAchi2", "1PAdeltam"]
         self.num_teuk_modes = len(self.l_arr_no_mask)
+        self._piece_power = {}  # the power n of each mode of each spline (see below)
+        self._m_modes = self.xp.asarray(self.m_arr_no_mask, dtype=self.xp.float64)
 
         with h5py.File(file_path, "r") as f:
             # load attributes in the right order for correct mode sorting later
-            format_string1 = "/{}/l{}/m{}/Infinity"
-            # loop over 0PA, 1PA, 1PAchi1, 1PAchi2
-            for data_key in self.amp_keys:
-                if data_key != "1PAdeltam":
-                    grid = f[f"/{data_key}/Grid"][()]
-                    self.r_min[data_key] = grid.min()
-                    self.r_max[data_key] = grid.max()
-                    num_grid = len(grid)
-                    unique_interp = self._map_coord(grid, data_key)
-                    mode_data = np.zeros((2 * self.num_teuk_modes, num_grid), dtype=np.float64)
+            # each piece is stored as |A/x^n| and arg(A/x^n) - 2 w ln w (w = m v^3, v = sqrt(x), n the attribute "n" of
+            # each dataset) on an increasing grid in x = 1/p, which may include x = 0, and splined in v; m = 0 modes
+            # vanish and are not stored. 1PA is stored as two pieces, d2G and E1h1 (see _amplitudes_single_piece).
+            format_string1 = "/{}/l{}/m{}/{}"
+            for data_key in ["0PA", "1PA/d2G", "1PA/E1h1", "1PAchi1", "1PAchi2"]:
+                group, _, piece = data_key.partition("/")
+                grid = f[f"/{group}/Grid"][()]
+                self.r_min[data_key] = self.r_min[group] = 1.0 / grid.max()
+                self.r_max[data_key] = self.r_max[group] = np.inf if grid.min() == 0 else 1.0 / grid.min()
+                num_grid = len(grid)
+                unique_interp = self.xp.asarray(np.sqrt(grid))
+                mode_data = np.zeros((2 * self.num_teuk_modes, num_grid), dtype=np.float64)
+                power = np.zeros(self.num_teuk_modes)
 
-                    for k, (ell, emm) in enumerate(zip(self.l_arr_no_mask, self.m_arr_no_mask)):
-                        key1 = format_string1.format(data_key, ell, emm)
-                        tmp = f[key1][()]
-                        data_here =  tmp[:, 0] + 1j * tmp[:, 1]
-                        mode_data[k] = data_here.real
-                        mode_data[k + self.num_teuk_modes] = data_here.imag
+                for k, (ell, emm) in enumerate(zip(self.l_arr_no_mask, self.m_arr_no_mask)):
+                    if emm == 0:
+                        continue
+                    ds = f[format_string1.format(group, ell, emm, piece or "Infinity")]
+                    tmp = ds[()]
+                    mode_data[k] = tmp[:, 0]
+                    mode_data[k + self.num_teuk_modes] = tmp[:, 1]
+                    power[k] = ds.attrs["n"]
 
-                    self.amp_spline[data_key] = self.build_with_same_backend(
-                        CubicSplineInterpolant,
-                        args = [
-                            unique_interp, -mode_data#Overall minus sign in waveform to agree with FEW convention
-                        ]
-                    )
-                self.r_min["1PAdeltam"] = self.r_min["0PA"]
-                self.r_max["1PAdeltam"] = self.r_max["0PA"];
+                self._piece_power[data_key] = self.xp.asarray(power)
+                self.amp_spline[data_key] = self.build_with_same_backend(
+                    CubicSplineInterpolant,
+                    args = [
+                        unique_interp, mode_data
+                    ]
+                )
+            self.r_min["1PAdeltam"] = self.r_min["0PA"]
+            self.r_max["1PAdeltam"] = self.r_max["0PA"]
 
         self.zero_PA_amps_only = zero_PA_amps_only
 
@@ -91,8 +99,8 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
         """Return citations related to this module"""
         return [REFERENCE.CIRC_1PAT1R] + super().module_references()
 
-    def _map_coord(self, p, data_key="0PA"):
-        return (self.xp.asarray(p) - self.r_min[data_key]) / (self.r_max[data_key] - self.r_min[data_key])
+    def _map_coord(self, p):
+        return 1.0 / self.xp.sqrt(self.xp.asarray(p, dtype=self.xp.float64))
 
     def _amplitudes_single_piece(self, p, data_key, mode_indices, conj_mode_mask, deriv_order=0
     ) -> Union[dict, np.ndarray]:
@@ -124,19 +132,48 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
             dA_dp = self._amplitudes_single_piece(
                 p, data_key="0PA", mode_indices=mode_indices, conj_mode_mask=conj_mode_mask, deriv_order=1
             )
-            chainrule = 1.0 / (self.r_max["0PA"] - self.r_min["0PA"])
-            return -(2./3. * chainrule * self.xp.reshape(p, (-1, 1))) * dA_dp - A
+            return -(2./3. * self.xp.reshape(p, (-1, 1))) * dA_dp - A
 
         if self.xp.any(p > self.r_max[data_key]) or self.xp.any(p < self.r_min[data_key]):
             raise ValueError(f"(AmplitudeCirc1PAT1R) Some values of p lie outside the amplitude data range [{self.r_min[data_key]}, {self.r_max[data_key]}] for the {data_key} piece")
 
-        p_int = self._map_coord(p, data_key=data_key)
-        if deriv_order > 0:
-            p_int = self.xp.clip(p_int, 0.0, 1.0)
+        # The 1PA piece, the first line of Eq. (2.13) of the technical document (the extra 2 A_0PA of the
+        # odd-m modes is added when the pieces are combined):
+        #   A_1PA + A_0PA + (2/3) (1 + dM) p dA_0PA/dp,   dM = -(1/p) / sqrt(1 - 3/p),
+        # with A_1PA = d2G + E1h1 / (p - 6) and d2G and E1h1 splined; E1h1 is the term with the 0PA r0dot
+        # (which diverges at p = 6) times p - 6.
+        if data_key == "1PA":
+            if deriv_order != 0:
+                raise ValueError("(AmplitudeCirc1PAT1R) only deriv_order 0 is available for the 1PA piece")
+            pc = self.xp.reshape(self.xp.asarray(p, dtype=self.xp.float64), (-1, 1))
+            dM = -(1.0 / pc) / self.xp.sqrt(1.0 - 3.0 / pc)
+            piece = lambda key, deriv_order=0: self._amplitudes_single_piece(
+                p, key, mode_indices, conj_mode_mask, deriv_order=deriv_order)
+            return (piece("1PA/d2G") + piece("1PA/E1h1") / (pc - 6.0) + piece("0PA")
+                    + (2.0 / 3.0) * (1.0 + dM) * pc * piece("0PA", 1))
+
+        if deriv_order > 1:
+            raise ValueError(f"(AmplitudeCirc1PAT1R) only deriv_order 0 and 1 are available for the {data_key} piece")
+
+        # A = |A/x^n| v^(2n) exp(i (arg(A/x^n) - 2 w ln w + 2 w ln w)), from the splines in v = sqrt(x) = 1/sqrt(p)
+        p_int = self._map_coord(p)
+        v = self.xp.reshape(p_int, (-1, 1))
+        n = self._piece_power[data_key][mode_indices]
+        m = self._m_modes[mode_indices]
+        w = m * v**3
+        log_w = self.xp.log(self.xp.where(w > 0, w, 1.0))  # w ln w and v^2 ln w vanish at w = 0
 
         #  TODO: right now, all modes are ALWAYS computed. Need a better 1-d spline setup.
-        teuk_modes = self.xp.atleast_2d(self.amp_spline[data_key](p_int, deriv_order=deriv_order).T)
-        teuk_modes = teuk_modes[:, mode_indices] + 1j * teuk_modes[:, mode_indices + self.num_teuk_modes]
+        spl = self.xp.atleast_2d(self.amp_spline[data_key](p_int).T)
+        abs_A, phi = spl[:, mode_indices], spl[:, mode_indices + self.num_teuk_modes]
+        teuk_modes = -v ** (2 * n) * self.xp.exp(1j * (phi + 2 * w * log_w))  # Overall minus sign in waveform to agree with FEW convention
+        if deriv_order == 0:
+            teuk_modes = abs_A * teuk_modes
+        else:  # dA/dp = -(v^3/2) dA/dv
+            dspl = self.xp.atleast_2d(self.amp_spline[data_key](p_int, deriv_order=1).T)
+            dabs_A, dphi = dspl[:, mode_indices], dspl[:, mode_indices + self.num_teuk_modes]
+            dpsi = dphi + 6 * m * v**2 * (log_w + 1)  # d/dv of the full phase arg(A/x^n)
+            teuk_modes = v**2 * (-0.5 * teuk_modes * (2 * n * abs_A + v * (dabs_A + 1j * abs_A * dpsi)))
 
         teuk_modes[:, conj_mode_mask] = (
             (-1) ** self.l_arr_no_mask[mode_indices[conj_mode_mask]] * self.xp.conj(teuk_modes[:, conj_mode_mask])
