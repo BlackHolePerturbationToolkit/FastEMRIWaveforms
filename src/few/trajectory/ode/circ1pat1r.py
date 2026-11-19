@@ -162,7 +162,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
         fm = get_file_manager()
         file_path = fm.get_file(fp)
 
-        self.interpolation_keys = ["Flux/Energy/0PA/Infinity", "Flux/Energy/0PA/Horizon", "Flux/AngularMomentum/0PA/Horizon", "Flux/Energy/1PA/Infinity", "Flux/Energy/1PAchi1/Infinity", "Flux/Energy/1PAchi1/Horizon", "Flux/Energy/1PAchi2/Infinity", "Flux/Energy/1PAchi2/Horizon", "Energy/1PA/dEdOmega"]
+        self.interpolation_keys = ["Flux/Energy/0PA/Infinity", "Flux/Energy/0PA/Horizon", "Flux/Energy/1PA/Infinity", "Flux/Energy/1PAchi1/Infinity", "Flux/Energy/1PAchi1/Horizon", "Flux/Energy/1PAchi2/Infinity", "Flux/Energy/1PAchi2/Horizon", "Energy/1PA/dEdOmega"]
         self.default_downsample = {key: 1 for key in self.interpolation_keys}
         self.interpolant_dict = {}
         
@@ -600,7 +600,8 @@ class TrajectoryCirc1PAT1R(ODEBase):
                                         + self.interpolant_dict["Flux/Energy/0PA/Horizon"](p))
                         - deltaM * (2./3.*p) * self.interpolant_dict["Flux/Energy/0PA/Deriv"](p) 
                         + EdeltaM(p) * self.interpolant_dict["Flux/Energy/0PA/Horizon"](p) 
-                        + Echi1(p) * self.interpolant_dict["Flux/AngularMomentum/0PA/Horizon"](p))
+                        # horizon angular momentum flux = horizon energy flux / Omega_phi (circular orbits)
+                        + Echi1(p) * p**1.5 * self.interpolant_dict["Flux/Energy/0PA/Horizon"](p))
 
     def dEdOmega(self, nu, p, chit1, chit2, deltaM):
         """1PA derivative of the binding energy with respect to the orbital frequency, Eq. (108) of Ref. 2510.16113.
@@ -656,7 +657,8 @@ class TrajectoryCirc1PAT1R(ODEBase):
 
         Omega_phi = 1/p**(3./2.)
         pdot = -self.balance_law_numerator(nu, p, chit1, chit2, deltaM)/self.dEdOmega(nu, p, chit1, chit2, deltaM)/dOmegadp(p)
-        chit1dot = nu * self.interpolant_dict["Flux/AngularMomentum/0PA/Horizon"](p) if self.evolve_primary else 0.0
+        # horizon angular momentum flux = horizon energy flux / Omega_phi (circular orbits)
+        chit1dot = nu * p**1.5 * self.interpolant_dict["Flux/Energy/0PA/Horizon"](p) if self.evolve_primary else 0.0
         deltaMdot = self.interpolant_dict["Flux/Energy/0PA/Horizon"](p) if self.evolve_primary else 0.0
 
         return [pdot, 0.0, 0.0, Omega_phi, 0.0, 0.0, deltaMdot, chit1dot]
