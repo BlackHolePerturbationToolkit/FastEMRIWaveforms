@@ -118,6 +118,19 @@ if(_FEW_WITH_GPU)
   find_package(CUDAToolkit REQUIRED)
 endif()
 
+option(FEW_WITH_METAL "Build the Apple Silicon Metal time-domain mode sum" OFF)
+set_property(GLOBAL APPEND PROPERTY FEW_OPTION_NAMES FEW_WITH_METAL)
+if(FEW_WITH_METAL)
+  if(NOT APPLE OR NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+    message(FATAL_ERROR "FEW_WITH_METAL requires an Apple Silicon macOS build")
+  endif()
+  get_target_property(_FEW_WITH_CPU fastemriwaveforms WITH_CPU)
+  if(NOT _FEW_WITH_CPU)
+    message(FATAL_ERROR "The Metal backend requires the CPU backend")
+  endif()
+  enable_language(OBJCXX)
+endif()
+
 # ---- Include sources ----
 add_subdirectory(src)
 

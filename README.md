@@ -12,6 +12,14 @@ This package contains a highly modular framework for the rapid generation of acc
 
 **Please see the [citation](#citation) section below for information on citing FEW.** This package is part of the [Black Hole Perturbation Toolkit](https://bhptoolkit.org/).
 
+### Apple Silicon (Metal)
+
+On Apple Silicon Macs, an optional Metal backend accelerates the interpolated
+time-domain mode summation. Build with `--config-settings=cmake.define.FEW_WITH_METAL=ON`
+and select it explicitly with `force_backend="metal"`; the default backend
+selection is unchanged. Results agree with the CPU backend to ~1e-11 relative
+L2 or better. Run `python -m unittest few.tests.test_metal_backend -v` to check it.
+
 ## Getting started
 
 Detailed installation instructions can be found in the [documentation](https://fastemriwaveforms.readthedocs.io/en/stable/user/install.html).
