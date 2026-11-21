@@ -1,5 +1,7 @@
 import dataclasses
 import enum
+import platform
+import sys
 import types
 import typing
 
@@ -101,6 +103,9 @@ class Backend:
         GPU = enum.auto()
         """Flag indicating that backend uses GPU hardware"""
 
+        METAL = enum.auto()
+        """Flag indicating that the time-domain mode sum runs on Metal."""
+
         NONE = 0
         """Special flag representing no activated feature"""
 
@@ -157,6 +162,10 @@ class Backend:
         """Shortcut to check whether a backend uses CUDA devices"""
         return self.supports(feature=Backend.Feature.CUDA)
 
+    @property
+    def uses_metal(self) -> bool:
+        return self.supports(feature=Backend.Feature.METAL)
+
 
 class CpuBackend(Backend):
     """Implementation of the CPU backend"""
@@ -201,6 +210,42 @@ class CpuBackend(Backend):
             methods=self.cpu_methods_loader(),
             features=Backend.Feature.NUMPY,
         )
+
+
+class MetalBackend(Backend):
+    """Explicit Apple Silicon hybrid using NumPy storage and Metal summation."""
+
+    def __init__(self):
+        name = "metal"
+        if sys.platform != "darwin" or platform.machine() != "arm64":
+            raise MissingHardware("The 'metal' backend requires an Apple Silicon Mac.")
+
+        try:
+            import few_backend_metal.pyinterp as metal_pyinterp
+        except (ModuleNotFoundError, ImportError) as error:
+            raise BackendNotInstalled(
+                "The 'metal' backend was not built into this FEW installation."
+            ) from error
+
+        methods = CpuBackend.cpu_methods_loader()
+        try:
+            self._metal_summation = metal_pyinterp.MetalSummation()
+        except RuntimeError as error:
+            raise SoftwareException(
+                "The 'metal' backend could not create its Metal pipeline."
+            ) from error
+        methods.get_waveform_wrap = self._metal_summation.get_waveform_wrap
+        Feature = Backend.Feature
+        super().__init__(
+            name=name,
+            methods=methods,
+            features=Feature.NUMPY | Feature.GPU | Feature.METAL,
+        )
+
+    @property
+    def last_gpu_seconds(self) -> float:
+        """GPU duration reported by the most recent synchronized sum."""
+        return float(self._metal_summation.last_gpu_seconds)
 
 
 class _CudaBackend(Backend):
@@ -592,11 +637,12 @@ KNOWN_BACKENDS = {
     "cuda13x": Cuda13xBackend,
     "cuda12x": Cuda12xBackend,
     "cpu": CpuBackend,
+    "metal": MetalBackend,
 }
 """List of existing backends, per default order of preference."""
 
 CUDA_BACKENDS: typing.List[str] = [
-    name for name in KNOWN_BACKENDS if name != "cpu"
+    name for name, backend in KNOWN_BACKENDS.items() if issubclass(backend, _CudaBackend)
 ]
 """Names of CUDA backends, per default order of preference (newest CUDA major
 first). Single source of truth for CUDA-backend ordering; other modules

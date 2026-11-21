@@ -37,6 +37,9 @@ if(Git_FOUND)
       install(FILES ${CMAKE_CURRENT_BINARY_DIR}/git_version.py
               DESTINATION few_backend_cpu)
     endif()
+    if(FEW_WITH_METAL)
+      install(FILES ${CMAKE_CURRENT_BINARY_DIR}/git_version.py DESTINATION few_backend_metal)
+    endif()
     if(_FEW_WITH_GPU)
       install(FILES ${CMAKE_CURRENT_BINARY_DIR}/git_version.py
               DESTINATION few_backend_cuda${CUDAToolkit_VERSION_MAJOR}x)

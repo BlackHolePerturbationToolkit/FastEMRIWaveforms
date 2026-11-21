@@ -181,6 +181,29 @@ if(FEW_WITH_GPU)
 endif()
 
 # -------------
+# --- Metal time-domain summation ---
+if(FEW_WITH_METAL)
+  find_library(METAL_FRAMEWORK Metal REQUIRED)
+  find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
+  find_library(ACCELERATE_FRAMEWORK Accelerate REQUIRED)
+  add_custom_command(
+    OUTPUT "pymetal.cxx"
+    COMMAND Python::Interpreter -m cython "${CMAKE_CURRENT_SOURCE_DIR}/pymetal.pyx"
+            --output-file "${CMAKE_CURRENT_BINARY_DIR}/pymetal.cxx" -3 -+
+            --module-name "pyinterp"
+    DEPENDS "pymetal.pyx" "metal_sum.hh"
+    VERBATIM)
+  python_add_library(few_metal_pyinterp MODULE WITH_SOABI pymetal.cxx metal_sum.mm)
+  target_sources(few_metal_pyinterp PUBLIC FILE_SET HEADERS FILES metal_sum.hh)
+  set_target_properties(few_metal_pyinterp PROPERTIES
+    OUTPUT_NAME pyinterp OBJCXX_STANDARD 17
+    LIBRARY_OUTPUT_DIRECTORY "${BACKEND_BASE_OUTPUT_DIRECTORY}/few_backend_metal")
+  target_compile_options(few_metal_pyinterp PRIVATE "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>")
+  target_link_libraries(few_metal_pyinterp PRIVATE
+    ${METAL_FRAMEWORK} ${FOUNDATION_FRAMEWORK} ${ACCELERATE_FRAMEWORK})
+  install(TARGETS few_metal_pyinterp DESTINATION few_backend_metal)
+endif()
+
 # --- pyAAK ---
 # -------------
 

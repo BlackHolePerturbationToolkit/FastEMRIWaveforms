@@ -130,6 +130,7 @@ sdist.exclude = [
 wheel.exclude = [
   "**.pyx",
   "**.cu",
+  "**.mm",
   "**.cxx",
   "**.hh",
   "**.h",
