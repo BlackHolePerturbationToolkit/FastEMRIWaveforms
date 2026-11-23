@@ -2,6 +2,7 @@ from numba import jit
 from multispline.spline import CubicSpline
 import numpy as np
 import h5py
+from scipy.optimize import brentq
 
 from typing import Union, Optional
 
@@ -128,7 +129,7 @@ class TrajectoryCirc1PAT1R(ODEBase):
     primary spin from their initial values.
 
     The flux interpolants are read from the HDF5 data file
-    ``Trajectory1PAT1R.h5``.
+    ``Trajectory1PAT1R_v2.h5``.
 
     Args:
         *args
@@ -158,11 +159,11 @@ class TrajectoryCirc1PAT1R(ODEBase):
     ):
         super().__init__(*args, downsample=downsample, **kwargs)
 
-        fp = "Trajectory1PAT1R.h5"
+        fp = "Trajectory1PAT1R_v2.h5"
         fm = get_file_manager()
         file_path = fm.get_file(fp)
 
-        self.interpolation_keys = ["Flux/Energy/0PA/Infinity", "Flux/Energy/0PA/Horizon", "Flux/AngularMomentum/0PA/Horizon", "Flux/Energy/1PA/Infinity", "Flux/Energy/1PAchi1/Infinity", "Flux/Energy/1PAchi1/Horizon", "Flux/Energy/1PAchi2/Infinity", "Flux/Energy/1PAchi2/Horizon", "Energy/1PA/dEdOmega"]
+        self.interpolation_keys = ["Flux/Energy/0PA/Infinity", "Flux/Energy/0PA/Horizon", "Flux/Energy/1PA/d2G", "Flux/Energy/1PA/E1h1", "Flux/Energy/1PA/Slowtime", "Flux/Energy/1PAchi1/Infinity", "Flux/Energy/1PAchi1/Horizon", "Flux/Energy/1PAchi2/Infinity", "Flux/Energy/1PAchi2/Horizon", "Energy/1PA/dEdOmega"]
         self.default_downsample = {key: 1 for key in self.interpolation_keys}
         self.interpolant_dict = {}
         
@@ -178,6 +179,9 @@ class TrajectoryCirc1PAT1R(ODEBase):
 
         min_p_grid = 0
         max_p_grid = np.inf
+        # the fluxes are tabulated on increasing grids in x = 1/p (x = 0 is p = infinity), each divided by
+        # 32/5 x^k with k the attribute "k" of the dataset; Energy/1PA/dEdOmega is tabulated on a grid in p
+        self.flux_power = {}
         with h5py.File(file_path, "r") as trajectoryData:
             for key in self.interpolation_keys:
                 grid = trajectoryData[key.rsplit('/', 1)[0] + '/Grid'][::downsample[key]]
@@ -189,17 +193,22 @@ class TrajectoryCirc1PAT1R(ODEBase):
                     or np.isnan(value).any()
                 ):
                     raise ValueError(f"(TrajectoryCirc1PAT1R) Interpolation: nans in grids or values of interpolating functions of {key}")
-                min_p_grid = max(min_p_grid, np.min(grid))
-                max_p_grid = min(max_p_grid, np.max(grid))
+                if key.startswith("Flux/"):
+                    min_p_grid = max(min_p_grid, 1.0 / grid[-1])
+                    max_p_grid = min(max_p_grid, np.inf if grid[0] == 0 else 1.0 / grid[0])
+                    self.flux_power[key] = float(trajectoryData[key].attrs["k"])
+                else:
+                    min_p_grid = max(min_p_grid, grid[0])
+                    max_p_grid = min(max_p_grid, grid[-1])
                 self.interpolant_dict[key] = CubicSpline(grid, value)
                 del grid, value # free memory
 
             # Add derivative of 0PA flux manually
             grid = trajectoryData['Flux/Energy/0PA/Grid'][::max(downsample["Flux/Energy/0PA/Infinity"], downsample["Flux/Energy/0PA/Horizon"])]
-            value = trajectoryData['Flux/Energy/0PA/Infinity'][()][::max(downsample["Flux/Energy/0PA/Infinity"], downsample["Flux/Energy/0PA/Horizon"])] + trajectoryData['Flux/Energy/0PA/Horizon'][()][::max(downsample["Flux/Energy/0PA/Infinity"], downsample["Flux/Energy/0PA/Horizon"])]
+            # the normalised total 0PA flux, F_inf + x^4 F_hor (F = 32/5 x^5 (F_inf + x^4 F_hor)), and its x-derivative
+            value = (trajectoryData['Flux/Energy/0PA/Infinity'][()][::max(downsample["Flux/Energy/0PA/Infinity"], downsample["Flux/Energy/0PA/Horizon"])]
+                + (grid**4) * trajectoryData['Flux/Energy/0PA/Horizon'][()][::max(downsample["Flux/Energy/0PA/Infinity"], downsample["Flux/Energy/0PA/Horizon"])])
             self.interpolant_dict["Flux/Energy/0PA/Deriv"] = CubicSpline(grid, value).deriv
-            min_p_grid = max(min_p_grid, np.min(grid))
-            max_p_grid = min(max_p_grid, np.max(grid))
             del grid, value # free memory
 
         self.evolve_primary = evolve_primary
@@ -401,10 +410,11 @@ class TrajectoryCirc1PAT1R(ODEBase):
         self.isvalid_x(x, **kwargs)
         self._isvalidchi1(a, **kwargs)
 
-        # Return either the minimum of the grid or the separatrix, whichever is larger.
+        # Return the largest of the minimum of the grid, the separatrix, and (once the parameters are
+        # set, see add_fixed_parameters) the p at which the 1PA flux cancels the 0PA flux.
         # We add the separatrix buffer distance so that when the integration is performed,
         # the ODE will stop some small distance from the edge.
-        return np.max([self._min_p, get_separatrix(a, e, x)]) + separatrix_buffer
+        return np.max([self._min_p, get_separatrix(a, e, x), getattr(self, "_p_flux_cancel", self._min_p)]) + separatrix_buffer
 
     def max_p(self,e=0.0, x = 1.0, a=0.0,
         **kwargs):
@@ -573,6 +583,56 @@ class TrajectoryCirc1PAT1R(ODEBase):
         self._isvalidchi1(self.args['chi1'])
         self._isvalidchi2(self.args['chi2'])
 
+        self._p_flux_cancel = self.p_flux_cancel(self.args['nu'], self.args['chit1'], self.args['chit2'])
+
+    def p_flux_cancel(self, nu, chit1, chit2):
+        """The p, just above p = 6, at which the total 1PA flux-balance numerator vanishes.
+
+        The 1PA flux contains r0dot ~ 1/(p - 6) (the E1h1 and Slowtime pieces), so for p -> 6 it
+        grows without bound and cancels the 0PA flux at some p_c > 6 (p_c - 6 ~ nu): there pdot = 0
+        and the 1PAT1R expansion has broken down. The trajectory stops a buffer above p_c (see
+        min_p); like the stopping condition of WaSABI's 1PAT1R model, it is evaluated with the
+        initial nu, chit1, chit2 (and deltaM = 0). Returns self._min_p if the numerator does not
+        change sign between p = 6 and p = 7.
+
+        Args:
+            nu (float): Symmetric mass ratio.
+            chit1 (float): Primary reduced spin.
+            chit2 (float): Secondary reduced spin.
+
+        Returns:
+            float: p_c, or self._min_p.
+        """
+        f = lambda p: self.balance_law_numerator(nu, p, chit1, chit2, 0.0)
+        p_hi = 7.0
+        # scan inwards, geometrically in p - 6, for the first sign change
+        for p_lo in 6.0 + np.geomspace(1.0, 1e-12, 241)[1:]:
+            if p_lo < self._min_p:
+                break
+            if not f(p_lo) > 0:
+                return brentq(f, p_lo, p_hi, xtol=1e-12, rtol=1e-12)
+            p_hi = p_lo
+        return self._min_p
+
+    def _scaled_flux(self, key, p):
+        """32/5 p^-k times the interpolant of the dataset key on its grid in x = 1/p (k = flux_power[key])."""
+        return (32.0/5.0) * p**(-self.flux_power[key]) * self.interpolant_dict[key](1.0 / p)
+
+    def Flux_Energy_1PA_Infinity(self, p):
+        """The 1PA energy flux to infinity (the coefficient of nu).
+
+        The data hold it in three pieces, each divided by 32/5 p^-k and tabulated against 1/p: d2G (k = 6),
+        and E1h1 and Slowtime (k = 8), the terms with the 0PA pdot/nu = -F_0PA / (dE_0PA/dp) times p - 6,
+        so that the 1/(p - 6) divergence of pdot stays out of the interpolated data:
+
+            F_1PA = 32/5 [p^-6 d2G + p^-8 (E1h1 + Slowtime) / (p - 6)].
+
+        (The powers k are the attribute "k" of the datasets; see _scaled_flux.)
+        """
+        return (self._scaled_flux("Flux/Energy/1PA/d2G", p)
+                + (self._scaled_flux("Flux/Energy/1PA/E1h1", p)
+                   + self._scaled_flux("Flux/Energy/1PA/Slowtime", p)) / (p - 6.0))
+
     def balance_law_numerator(self, nu, p, chit1, chit2, deltaM):
         """Total 1PA numerator of the flux-balance law, Eq. (84) of Ref. 2510.16113.
             plus an additional correction to the delta M term that is missing in Eq. (84).
@@ -589,18 +649,25 @@ class TrajectoryCirc1PAT1R(ODEBase):
         Returns:
             float: Numerator of the flux-balance law.
         """
-        return (self.interpolant_dict["Flux/Energy/0PA/Infinity"](p) 
-                + self.interpolant_dict["Flux/Energy/0PA/Horizon"](p)) \
-                + nu * (self.interpolant_dict["Flux/Energy/1PA/Infinity"](p) 
-                        + chit1/nu * (self.interpolant_dict["Flux/Energy/1PAchi1/Infinity"](p)
-                                        +self.interpolant_dict["Flux/Energy/1PAchi1/Horizon"](p)) 
-                        + chit2/nu * (self.interpolant_dict["Flux/Energy/1PAchi2/Infinity"](p)
-                                        + self.interpolant_dict["Flux/Energy/1PAchi2/Horizon"](p))
-                        - 2 * deltaM * (self.interpolant_dict["Flux/Energy/0PA/Infinity"](p) 
-                                        + self.interpolant_dict["Flux/Energy/0PA/Horizon"](p))
-                        - deltaM * (2./3.*p) * self.interpolant_dict["Flux/Energy/0PA/Deriv"](p) 
-                        + EdeltaM(p) * self.interpolant_dict["Flux/Energy/0PA/Horizon"](p) 
-                        + Echi1(p) * self.interpolant_dict["Flux/AngularMomentum/0PA/Horizon"](p))
+        FluxE0PAInf = self.interpolant_dict["Flux/Energy/0PA/Infinity"](1.0/p)
+        FluxE0PAHor = self.interpolant_dict["Flux/Energy/0PA/Horizon"](1.0/p)
+        FluxE0PADeriv = self.interpolant_dict["Flux/Energy/0PA/Deriv"](1.0/p)
+        # total normalised 0PA flux: F = 32/5 p^-5 FluxE0PANorm, with FluxE0PANorm = Finf + x^4 Fh
+        # (x = 1/p); FluxE0PADeriv is d/dx of FluxE0PANorm (see __init__)
+        FluxE0PANorm = FluxE0PAInf + (p**-4)*FluxE0PAHor
+        return (
+            ((32.0/5.0*(p**-5))*FluxE0PAInf + (32.0/5.0*(p**-9))*FluxE0PAHor)
+            + nu * (self.Flux_Energy_1PA_Infinity(p)
+                + chit1/nu * (self._scaled_flux("Flux/Energy/1PAchi1/Infinity", p)
+                              + self._scaled_flux("Flux/Energy/1PAchi1/Horizon", p))
+                + chit2/nu * (self._scaled_flux("Flux/Energy/1PAchi2/Infinity", p)
+                              + self._scaled_flux("Flux/Energy/1PAchi2/Horizon", p))
+                - 2 * deltaM * (32.0/5.0*(p**-5))*FluxE0PANorm
+                # -deltaM (2/3 p) dF/dp, with dF/dp = 32/5 (-5 p^-6 FluxE0PANorm - p^-7 FluxE0PADeriv)
+                - deltaM * (2./3.*p) * (32.0/5.0)*(-5.0*(p**-6)*FluxE0PANorm - (p**-7)*FluxE0PADeriv)
+                + EdeltaM(p) * (32.0/5.0*(p**-9))*FluxE0PAHor
+                # horizon angular momentum flux = horizon energy flux / Omega_phi (circular orbits)
+                + Echi1(p) * (32.0/5.0*(p**-7.5))*FluxE0PAHor))
 
     def dEdOmega(self, nu, p, chit1, chit2, deltaM):
         """1PA derivative of the binding energy with respect to the orbital frequency, Eq. (108) of Ref. 2510.16113.
@@ -656,8 +723,9 @@ class TrajectoryCirc1PAT1R(ODEBase):
 
         Omega_phi = 1/p**(3./2.)
         pdot = -self.balance_law_numerator(nu, p, chit1, chit2, deltaM)/self.dEdOmega(nu, p, chit1, chit2, deltaM)/dOmegadp(p)
-        chit1dot = nu * self.interpolant_dict["Flux/AngularMomentum/0PA/Horizon"](p) if self.evolve_primary else 0.0
-        deltaMdot = self.interpolant_dict["Flux/Energy/0PA/Horizon"](p) if self.evolve_primary else 0.0
+        # horizon angular momentum flux = horizon energy flux / Omega_phi (circular orbits)
+        chit1dot = nu * (32.0/5.0*(p**-7.5)) * self.interpolant_dict["Flux/Energy/0PA/Horizon"](1.0/p) if self.evolve_primary else 0.0
+        deltaMdot = (32.0/5.0*(p**-9.0)) * self.interpolant_dict["Flux/Energy/0PA/Horizon"](1.0/p) if self.evolve_primary else 0.0
 
         return [pdot, 0.0, 0.0, Omega_phi, 0.0, 0.0, deltaMdot, chit1dot]
     
