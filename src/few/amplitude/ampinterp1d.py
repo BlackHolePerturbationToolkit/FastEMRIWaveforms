@@ -102,7 +102,7 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
     def _map_coord(self, p):
         return 1.0 / self.xp.sqrt(self.xp.asarray(p, dtype=self.xp.float64))
 
-    def _amplitudes_single_piece(self, p, data_key, mode_indices, conj_mode_mask, deriv_order=0
+    def _amplitudes_single_piece(self, p, data_key, mode_indices, conj_mode_mask, deriv_order=0, zero_pa=None
     ) -> Union[dict, np.ndarray]:
         """Generate one of the contributions to the 1PA Teukolsky amplitudes.
 
@@ -117,6 +117,7 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
             mode_indices: Indices of modes to be generated.
             conj_mode_mask: Boolean mask for conjugate modes.
             deriv_order: Order of derivative to compute. Default is 0.
+            zero_pa: The 0PA piece and its p-derivative at p (used by "1PA" and "1PAdeltam"; computed if None).
 
         Returns:
             An array of complex mode amplitudes.
@@ -126,12 +127,9 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
         # using Eq. (120) of 2510.16113 and applying the same reasoning as below Eq. (89). 
         # Corrected by Eq. (5.1) of the technical document. 
         if data_key == "1PAdeltam":
-            A = self._amplitudes_single_piece(
-                p, data_key="0PA", mode_indices=mode_indices, conj_mode_mask=conj_mode_mask
-            )
-            dA_dp = self._amplitudes_single_piece(
-                p, data_key="0PA", mode_indices=mode_indices, conj_mode_mask=conj_mode_mask, deriv_order=1
-            )
+            A, dA_dp = zero_pa if zero_pa is not None else (
+                self._amplitudes_single_piece(p, "0PA", mode_indices, conj_mode_mask),
+                self._amplitudes_single_piece(p, "0PA", mode_indices, conj_mode_mask, deriv_order=1))
             return -(2./3. * self.xp.reshape(p, (-1, 1))) * dA_dp - A
 
         if self.xp.any(p > self.r_max[data_key]) or self.xp.any(p < self.r_min[data_key]):
@@ -149,8 +147,9 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
             dM = -(1.0 / pc) / self.xp.sqrt(1.0 - 3.0 / pc)
             piece = lambda key, deriv_order=0: self._amplitudes_single_piece(
                 p, key, mode_indices, conj_mode_mask, deriv_order=deriv_order)
-            return (piece("1PA/d2G") + piece("1PA/E1h1") / (pc - 6.0) + piece("0PA")
-                    + (2.0 / 3.0) * (1.0 + dM) * pc * piece("0PA", 1))
+            A0, dA0_dp = zero_pa if zero_pa is not None else (piece("0PA"), piece("0PA", 1))
+            return (piece("1PA/d2G") + piece("1PA/E1h1") / (pc - 6.0) + A0
+                    + (2.0 / 3.0) * (1.0 + dM) * pc * dA0_dp)
 
         if deriv_order > 1:
             raise ValueError(f"(AmplitudeCirc1PAT1R) only deriv_order 0 and 1 are available for the {data_key} piece")
@@ -299,9 +298,12 @@ class AmplitudeCirc1PAT1R(AmplitudeBase, KerrCirc):
             for key in ["1PA", "1PAchi1", "1PAchi2", "1PAdeltam"]:
                 data_pieces[key] = zero
         else:
+            # the 0PA piece and its p-derivative enter the 1PA and 1PAdeltam pieces: evaluate them once
+            zero_pa = (data_pieces["0PA"],
+                       self._amplitudes_single_piece(p, "0PA", mode_indices, conj_mode_mask, deriv_order=1))
             for data_key in ["1PA", "1PAchi1", "1PAchi2", "1PAdeltam"]:
                 data_pieces[data_key] = self._amplitudes_single_piece(
-                    p, data_key, mode_indices, conj_mode_mask
+                    p, data_key, mode_indices, conj_mode_mask, zero_pa=zero_pa
                 )
 
         return self._combine_pieces(data_pieces, nu, chit1, chit2, deltaM, mode_indices)
